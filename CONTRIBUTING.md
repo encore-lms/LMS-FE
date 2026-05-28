@@ -6,11 +6,11 @@
 - `develop`: 통합 브랜치. 직접 푸시 금지(protected).
 - 작업 브랜치: `feat/<scope>-<desc>`, `fix/<scope>-<desc>` (예: `feat/auth-login`, `fix/quiz-result-empty`).
 
-scope/type은 커밋 컨벤션(LMS-AGENT-SKILLS `commit-convention/COMMIT_CONVENTION.md`)의 값을 재사용한다.
+scope/type은 [커밋 컨벤션](https://github.com/encore-lms/LMS-AGENT-SKILLS/blob/main/commit-convention/COMMIT_CONVENTION.md)의 값을 재사용한다.
 
 ## 커밋
 
-이 프로젝트는 LMS-AGENT-SKILLS `commit-convention/COMMIT_CONVENTION.md`를 **단일 기준(SSOT)으로 따른다.**
+이 프로젝트는 [LMS-AGENT-SKILLS `commit-convention/COMMIT_CONVENTION.md`](https://github.com/encore-lms/LMS-AGENT-SKILLS/blob/main/commit-convention/COMMIT_CONVENTION.md)를 **단일 기준(SSOT)으로 따른다.**
 
 핵심 (전체 규칙은 위 문서 참조):
 

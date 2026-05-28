@@ -5,17 +5,31 @@ export function LoginPage() {
     <AuthLayout>
       <form
         onSubmit={(event) => event.preventDefault()}
-        style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+        className="flex flex-col gap-3"
       >
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span style={{ fontSize: '13px', color: '#555' }}>아이디</span>
-          <input type="text" disabled placeholder="다음 PR에서 활성화" />
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-gray-600">아이디</span>
+          <input
+            type="text"
+            disabled
+            placeholder="다음 PR에서 활성화"
+            className="rounded border border-gray-300 px-3 py-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+          />
         </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span style={{ fontSize: '13px', color: '#555' }}>비밀번호</span>
-          <input type="password" disabled placeholder="다음 PR에서 활성화" />
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-gray-600">비밀번호</span>
+          <input
+            type="password"
+            disabled
+            placeholder="다음 PR에서 활성화"
+            className="rounded border border-gray-300 px-3 py-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+          />
         </label>
-        <button type="submit" disabled style={{ padding: '8px 16px' }}>
+        <button
+          type="submit"
+          disabled
+          className="rounded border border-gray-300 px-4 py-2 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+        >
           로그인 (준비 중)
         </button>
       </form>

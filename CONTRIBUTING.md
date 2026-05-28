@@ -31,6 +31,14 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
 
 > branch protection은 현재 GitHub 무료 플랜 제약으로 미적용 상태다. 위 규칙은 도구 강제가 아니라 팀 규율로 지킨다(LMS-DOCS `FE_초기_세팅_결정.md` §2 참조).
 
+## 스타일링
+
+- **기본은 Tailwind utility class.** 일반 CSS는 keyframes · 글로벌 reset · 3중 이상 의사클래스 같은 보조 영역에만 사용한다.
+- **색상 · 폰트 · 공통 spacing은 `@theme` 토큰으로만 표현.** `bg-brand` ✅ / `bg-[#1a8c85]` ❌. 토큰이 없으면 토큰을 먼저 추가한다.
+- **같은 className 패턴이 3회 이상 반복되면 `src/components/ui/` 또는 도메인 컴포넌트로 추상화.**
+- **className 순서는 `prettier-plugin-tailwindcss`가 자동 정렬.** 수동 정렬 불필요, lint-staged가 commit 시 자동 적용.
+- 토큰 · 공통 컴포넌트 카탈로그는 dev 환경의 [`/_styleguide`](http://localhost:5173/_styleguide) 라우트에서 조회. 새 화면 작업 전 먼저 확인한다.
+
 ## 로컬 검증
 
 - 커밋 시 pre-commit(husky + lint-staged)이 변경된 파일에 ESLint·Prettier를 자동 적용한다.

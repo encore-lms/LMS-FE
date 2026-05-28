@@ -1,0 +1,14 @@
+# 줄바꿈을 LF로 정규화 (cross-OS diff/충돌 방지)
+* text=auto eol=lf
+
+# 바이너리 자산
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# 텍스트지만 LF 고정
+*.svg text eol=lf

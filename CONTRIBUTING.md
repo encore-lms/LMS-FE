@@ -39,6 +39,18 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
 - **className 순서는 `prettier-plugin-tailwindcss`가 자동 정렬.** 수동 정렬 불필요, lint-staged가 commit 시 자동 적용.
 - 토큰 · 공통 컴포넌트 카탈로그는 dev 환경의 [`/_styleguide`](http://localhost:5173/_styleguide) 라우트에서 조회. 새 화면 작업 전 먼저 확인한다.
 
+### 디자인 토큰 SSOT
+
+- **유일한 출처는 `src/index.css`의 `@theme` 블록.** 이 파일만 편집하면 다음이 자동으로 따라옴:
+  - Tailwind utility (`bg-brand`, `text-fg-muted` 등) — Tailwind v4가 @theme에서 자동 생성
+  - `/_styleguide` 카탈로그 — 런타임에 `getComputedStyle`로 DOM에서 직접 읽음
+  - 모든 컴포넌트의 색상/폰트
+- **Figma Variables**: `LMS Design Tokens` collection ([LMS-UI-UX 파일](https://www.figma.com/design/Xt9rp01qqWNXnhB95jcFSm/LMS-UI-UX)). 코드의 `@theme`에서 `use_figma` 스크립트로 sync. **Figma에서 직접 수정 금지** — 변경은 항상 코드부터.
+- **새 색상 토큰 추가 절차**:
+  1. `src/index.css` `@theme`에 `--color-X: #...` 추가
+  2. `src/features/styleguide/StyleGuidePage.tsx`의 `TOKEN_NAMES` 배열에 `'X'` 한 줄 추가
+  3. PR 머지 후 `use_figma`로 Figma `LMS Design Tokens` collection에 `Color/X` variable 추가 (Claude 자동화)
+
 ### Figma sync 절차 (코드 ↔ 디자인 상태 추적)
 
 - 화면 PR이 `develop`에 머지되면, [Figma 파일](https://www.figma.com/design/Xt9rp01qqWNXnhB95jcFSm/LMS-UI-UX)의 해당 시안을 **`✅ 코드 반영 완료` Section** (`공통` 페이지 내)으로 이동하고 frame name 앞에 `[✅ vX.Y]` 버전 prefix를 추가한다.

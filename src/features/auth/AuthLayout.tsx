@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { BrandPanel } from './BrandPanel'
 
 interface AuthLayoutProps {
   children: ReactNode
@@ -6,13 +7,11 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
-      <section className="w-full max-w-md rounded-lg bg-white p-8 shadow-sm">
-        <header className="mb-6">
-          <h1 className="text-xl font-semibold">LMS 역량증명서</h1>
-        </header>
+    <main className="flex min-h-screen">
+      <BrandPanel />
+      <div className="flex flex-1 items-center justify-center bg-white p-16">
         {children}
-      </section>
+      </div>
     </main>
   )
 }

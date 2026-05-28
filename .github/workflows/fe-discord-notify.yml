@@ -1,0 +1,196 @@
+name: FE Discord Notify
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  notify:
+    name: Notify Discord
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build and send Discord notification
+        env:
+          # webhook URL은 비밀(secrets) — 노출 시 외부에서 채널에 임의 메시지 발송 가능.
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # mention map은 평문(vars). 비어 있으면 멘션 없이 이름만 표시.
+          DISCORD_MENTION_MAP: ${{ vars.DISCORD_MENTION_MAP }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL secret is not set; skipping Discord notification."
+            exit 0
+          fi
+
+          PAYLOAD_FILE="$RUNNER_TEMP/discord-payload.json"
+
+          python3 > "$PAYLOAD_FILE" <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import re
+          import sys
+          import urllib.request
+
+          event_path = os.environ["GITHUB_EVENT_PATH"]
+          with open(event_path, "r", encoding="utf-8") as handle:
+              event = json.load(handle)
+
+          pr = event["pull_request"]
+          repo = event["repository"]["full_name"]
+          token = os.environ.get("GITHUB_TOKEN", "")
+          mention_map_raw = os.environ.get("DISCORD_MENTION_MAP", "").strip()
+
+          try:
+              mention_map = json.loads(mention_map_raw) if mention_map_raw else {}
+              if not isinstance(mention_map, dict):
+                  mention_map = {}
+          except json.JSONDecodeError:
+              mention_map = {}
+
+          people = ["이정훈", "황설현", "박준석"]
+
+          # 작업자는 GitHub login을 그대로 사용. 멘션 매핑이 없어도 식별 가능.
+          worker = pr.get("user", {}).get("login") or pr.get("merged_by", {}).get("login") or "unknown"
+          base_branch = pr.get("base", {}).get("ref", "")
+
+          def request_json(url):
+              request = urllib.request.Request(
+                  url,
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=20) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          files = []
+          api_base = f"https://api.github.com/repos/{repo}"
+          page = 1
+          while True:
+              url = f"{api_base}/pulls/{pr['number']}/files?per_page=100&page={page}"
+              batch = request_json(url)
+              if not batch:
+                  break
+              files.extend(item.get("filename", "") for item in batch)
+              if len(batch) < 100:
+                  break
+              page += 1
+
+          # src/features/<도메인>/... 경로에서 도메인 추출.
+          feature_names = set()
+          other_changed = False
+          for path in files:
+              if path.startswith("src/features/"):
+                  parts = path.split("/")
+                  if len(parts) >= 3:
+                      feature_names.add(parts[2])
+              elif path and not path.startswith(".github/"):
+                  other_changed = True
+
+          area_tokens = sorted(feature_names)
+          if other_changed:
+              area_tokens.append("공통/기타")
+          area_line = ", ".join(area_tokens) if area_tokens else "저장소 설정"
+
+          # PR body의 "리뷰 포인트" / "확인" 섹션에서 한국어 이름 추출.
+          def extract_reviewers_from_body(body):
+              section_lines = []
+              in_section = False
+              for line in (body or "").splitlines():
+                  stripped = line.strip()
+                  if stripped.startswith("##"):
+                      in_section = any(k in stripped for k in ("확인", "리뷰"))
+                      continue
+                  if in_section and stripped:
+                      section_lines.append(stripped)
+              text = "\n".join(section_lines)
+              return [name for name in people if name in text]
+
+          reviewers = extract_reviewers_from_body(pr.get("body") or "")
+          if not reviewers:
+              # 본문에서 못 찾으면 전원 표시 (3명뿐이라 노이즈 적음).
+              reviewers = list(people)
+
+          def resolve_mention(name):
+              value = str(mention_map.get(name, "")).strip()
+              if not value:
+                  return name, False
+              if value.startswith("<@") and value.endswith(">"):
+                  return value, True
+              if value.isdigit():
+                  return f"<@{value}>", True
+              return value, True
+
+          mention_results = [resolve_mention(name) for name in reviewers]
+          resolved_mentions = [value for value, ok in mention_results if ok]
+          plain_names = [value for value, ok in mention_results if not ok]
+
+          # mention_map이 비어 있으면 노이즈 없이 이름만 나열.
+          if resolved_mentions and plain_names:
+              check_line = " ".join(resolved_mentions) + " / " + ", ".join(plain_names)
+          elif resolved_mentions:
+              check_line = " ".join(resolved_mentions)
+          elif plain_names:
+              check_line = ", ".join(plain_names)
+          else:
+              check_line = "없음"
+
+          merged_at = pr.get("merged_at") or dt.datetime.now(dt.timezone.utc).isoformat()
+          date = merged_at[:10]
+          summary = pr.get("title") or "FE 업데이트"
+
+          body = pr.get("body") or ""
+          summary_match = re.search(r"##\s*(?:변경\s*요약|요약)\s*\n(?P<section>.*?)(?:\n##\s|\Z)", body, re.S)
+          if summary_match:
+              lines = []
+              for raw in summary_match.group("section").splitlines():
+                  cleaned = raw.strip().lstrip("-*").strip()
+                  if cleaned and not cleaned.startswith("<!--"):
+                      lines.append(cleaned)
+              if lines:
+                  summary = " / ".join(lines[:3])
+
+          payload = {
+              "allowed_mentions": {
+                  "users": [item.strip("<@>") for item in resolved_mentions]
+              },
+              "embeds": [
+                  {
+                      "title": "LMS FE 업데이트 병합 알림",
+                      "description": summary[:240],
+                      "color": 15844367,
+                      "fields": [
+                          {"name": "작업자", "value": worker, "inline": True},
+                          {"name": "날짜", "value": date, "inline": True},
+                          {"name": "확인 필요", "value": check_line, "inline": False},
+                          {"name": "변경 영역", "value": area_line, "inline": False},
+                          {"name": "PR", "value": pr.get("html_url", ""), "inline": False},
+                          {"name": "Merge Commit", "value": (pr.get("merge_commit_sha") or "")[:12], "inline": True},
+                          {"name": "Branch", "value": base_branch or "-", "inline": True},
+                      ],
+                      "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                  }
+              ],
+          }
+          if resolved_mentions:
+              payload["content"] = " ".join(resolved_mentions)
+
+          json.dump(payload, sys.stdout, ensure_ascii=False)
+          PY
+
+          curl -sS -f -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            --data-binary "@$PAYLOAD_FILE"

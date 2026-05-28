@@ -25,6 +25,7 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
 
 - 대상 브랜치: `develop`.
 - 머지 조건: **상호 리뷰 1명 승인 + CI(lint · typecheck · test · build) 통과**.
+- **1주차 동시 작업 기간 한정 자체 머지 특례**: 황설현·박준석 동시 작업 중이라 외부 리뷰어 부재. CI 통과 + PR 본문 자체 검증을 갖춘 PR은 자체 머지 허용. 1주차 회고 시 재결정.
 - 머지 방식: **Merge commit (`--no-ff`)**. 파일별 커밋이 main에 그대로 남도록. PR 제목이 머지 커밋 제목이 되므로 PR 제목에 `type(scope): 설명` 형식을 적용한다. **머지 커밋 본문은 비움**(설정: `merge_commit_message=BLANK`) — PR 본문은 PR 화면에만 보존되고 main `git log`엔 들어가지 않는다. PR 단위 bisect는 `git bisect --first-parent`.
 - **Release PR (`develop` → `main`)**: 매 주차 검증 완료 시점에 별도 생성한다. PR 제목 형식은 `chore(release): N주차 요약 (vX.Y)` (예: `chore(release): 1주차 부트스트랩·로그인 화면 (v0.1)`). 본문에는 이번 주차에 머지된 PR 번호 목록과 배포 영향 요약을 적는다. main 머지 = "이번 주 배포본 확정" 선언.
 

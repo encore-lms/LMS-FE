@@ -39,6 +39,13 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
 - **className 순서는 `prettier-plugin-tailwindcss`가 자동 정렬.** 수동 정렬 불필요, lint-staged가 commit 시 자동 적용.
 - 토큰 · 공통 컴포넌트 카탈로그는 dev 환경의 [`/_styleguide`](http://localhost:5173/_styleguide) 라우트에서 조회. 새 화면 작업 전 먼저 확인한다.
 
+### Figma sync 절차 (코드 ↔ 디자인 상태 추적)
+
+- 화면 PR이 `develop`에 머지되면, [Figma 파일](https://www.figma.com/design/Xt9rp01qqWNXnhB95jcFSm/LMS-UI-UX)의 해당 시안을 **`✅ 코드 반영 완료` Section** (`공통` 페이지 내)으로 이동하고 frame name 앞에 `[✅ vX.Y]` 버전 prefix를 추가한다.
+- 작업 자동화: Claude + Figma MCP(`use_figma`)로 일괄 처리 가능.
+- 버전 표기: 머지 시점이 아닌 **다음 release 버전 기준** (예: 1주차 작업 → `v0.2`). Release PR(`chore(release):`)에서 한 번에 확정 권장.
+- 디자이너가 시안을 수정해야 할 때는 Section 밖으로 다시 이동해서 작업, 완료 후 재이동.
+
 ## 로컬 검증
 
 - 커밋 시 pre-commit(husky + lint-staged)이 변경된 파일에 ESLint·Prettier를 자동 적용한다.

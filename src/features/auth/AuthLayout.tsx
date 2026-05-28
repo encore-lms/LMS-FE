@@ -6,30 +6,10 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        background: '#f5f6f8',
-      }}
-    >
-      <section
-        style={{
-          width: '100%',
-          maxWidth: '400px',
-          padding: '32px',
-          background: '#ffffff',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-        }}
-      >
-        <header style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>
-            LMS 역량증명서
-          </h1>
+    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
+      <section className="w-full max-w-md rounded-lg bg-white p-8 shadow-sm">
+        <header className="mb-6">
+          <h1 className="text-xl font-semibold">LMS 역량증명서</h1>
         </header>
         {children}
       </section>

@@ -34,16 +34,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <div className="flex w-full flex-col gap-[6px]">
       <div className="flex items-center justify-between">
         <label htmlFor={id} className="flex items-center gap-1">
-          <span className="text-[13px] font-bold text-fg">{label}</span>
+          <span className="text-fg text-[13px] font-bold">{label}</span>
           {required && (
-            <span aria-hidden className="text-sm text-danger">
+            <span aria-hidden className="text-danger text-sm">
               *
             </span>
           )}
         </label>
         {labelAction}
       </div>
-      <div className="focus-within:border-brand flex h-[52px] items-center gap-[10px] rounded-[10px] border-2 border-border bg-white px-4 py-[14px]">
+      <div className="focus-within:border-brand border-border flex h-[52px] items-center gap-[10px] rounded-[10px] border-2 bg-white px-4 py-[14px]">
         {leftIcon && <div className="text-fg-muted shrink-0">{leftIcon}</div>}
         <input
           ref={ref}

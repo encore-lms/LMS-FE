@@ -17,7 +17,9 @@ scope/type은 커밋 컨벤션(LMS-AGENT-SKILLS `commit-convention/COMMIT_CONVEN
 
 - 대상 브랜치: `develop`.
 - 머지 조건: **상호 리뷰 1명 승인 + CI(lint · typecheck · test · build) 통과**.
-- 머지 방식: **Squash merge**. 머지 커밋 메시지도 커밋 컨벤션을 따른다.
+- 머지 방식: **Merge commit (`--no-ff`)**. 파일별 커밋이 main에 그대로 남도록. PR 제목이 머지 커밋 제목이 되므로 PR 제목에 `type(scope): 설명` 형식을 적용한다. PR 단위 bisect는 `git bisect --first-parent`.
+
+> branch protection은 현재 GitHub 무료 플랜 제약으로 미적용 상태다. 위 규칙은 도구 강제가 아니라 팀 규율로 지킨다(LMS-DOCS `FE_초기_세팅_결정.md` §2 참조).
 
 ## 로컬 검증
 

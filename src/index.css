@@ -1,23 +1,35 @@
-:root {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Apple SD Gothic Neo',
-    'Noto Sans KR',
-    sans-serif;
-  line-height: 1.5;
-  color: #1a1a1a;
+@import 'pretendard/dist/web/variable/pretendardvariable.css';
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    'Pretendard Variable', 'Pretendard', system-ui, -apple-system, 'Segoe UI',
+    Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+
+  --color-brand: #1a8c85;
+  --color-brand-deep: #121726;
+
+  --color-fg: #121726;
+  --color-fg-muted: #5c6978;
+  --color-fg-subtle: #9ca3b0;
+
+  --color-border: #e8ebed;
+  --color-divider: #f0f2f5;
+  --color-surface-muted: #f2f5f5;
+
+  --color-danger: #f04545;
+  --color-danger-bg: #fce3e3;
+  --color-warning: #b27300;
+  --color-warning-bg: #fff2c7;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+:root {
+  line-height: 1.5;
+  color: var(--color-fg);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  font-family: var(--font-sans);
 }

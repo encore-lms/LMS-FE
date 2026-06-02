@@ -20,7 +20,9 @@ const TOKEN_NAMES = [
   'accent-bg',
   'accent-strong',
   'success',
+  'success-bg',
   'info',
+  'info-bg',
   'surface',
 ] as const
 

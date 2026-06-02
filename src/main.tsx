@@ -1,7 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 import { router } from '@/app/router'
+import { queryClient } from '@/app/queryClient'
 import { ToastProvider } from '@/components/ui/Toast'
 import '@/index.css'
 
@@ -14,11 +16,18 @@ async function enableMocking() {
 
 async function main() {
   await enableMocking()
+  // React Query devtools는 DEV에서만 동적 import — 프로덕션 번들에서 완전히 제외된다.
+  const Devtools = import.meta.env.DEV
+    ? (await import('@tanstack/react-query-devtools')).ReactQueryDevtools
+    : null
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <ToastProvider>
-        <RouterProvider router={router} />
-      </ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+        {Devtools && <Devtools initialIsOpen={false} />}
+      </QueryClientProvider>
     </StrictMode>,
   )
 }

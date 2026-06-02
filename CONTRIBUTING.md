@@ -58,6 +58,16 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
 - 버전 표기: 머지 시점이 아닌 **다음 release 버전 기준** (예: 1주차 작업 → `v0.2`). Release PR(`chore(release):`)에서 한 번에 확정 권장.
 - 디자이너가 시안을 수정해야 할 때는 Section 밖으로 다시 이동해서 작업, 완료 후 재이동.
 
+## 병렬 작업 규칙 (2인 결합 해소)
+
+도메인 화면은 각자 `src/features/<역할>/` 폴더를 **독점 소유**해 병렬 작업한다. 서로 코드를 건드리지 않게 하는 3가지 규칙:
+
+- **공유 계약은 읽기전용**: `src/shared/{types,constants,api,store}`와 `src/components/{ui,layout}`은 둘 다 **import만** 한다. 변경이 필요하면 도메인 PR에 섞지 말고 별도 `shared` PR로 페어가 합의해 바꾼다.
+- **라우트·메뉴는 자기 feature에서만**: 라우트는 `src/features/<역할>/routes.tsx`, 사이드바 메뉴는 `src/features/<역할>/menu.ts`에 정의한다. 취합 파일 `src/app/router.tsx`와 셸 `src/components/layout`은 새 shell 추가 같은 구조 변경 때만 페어로 손댄다.
+- **공유 컴포넌트·모델은 단일 소유**: 여러 역할이 쓰는 것(예: 증명서 미리보기, 퀴즈 응시 컴포넌트, `MentorTeamAssignment` 타입)은 한 명이 만들고 다른 쪽은 import한다(중복 구현 금지).
+
+폴더 소유·분담은 LMS-DOCS `WBS_FE.md` 주차 회고에서 재배치한다.
+
 ## 로컬 검증
 
 - 커밋 시 pre-commit(husky + lint-staged)이 변경된 파일에 ESLint·Prettier를 자동 적용한다.

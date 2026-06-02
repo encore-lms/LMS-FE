@@ -1,15 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowRight, Info, Mail } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
+import { apiClient } from '@/shared/api'
+import { useAuthActions } from '@/shared/store'
+import { ROLE_HOME } from '@/shared/constants'
+import type { User } from '@/shared/types'
 import { AuthLayout } from './AuthLayout'
 
 export function LoginPage() {
+  const navigate = useNavigate()
+  const { setSession } = useAuthActions()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberEmail, setRememberEmail] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -23,12 +32,27 @@ export function LoginPage() {
     }
   }, [])
 
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    setError(null)
+    setSubmitting(true)
+    try {
+      const res = await apiClient.post<{ token: string; user: User }>(
+        '/auth/login',
+        { email, password },
+      )
+      setSession(res.data.token, res.data.user)
+      navigate(ROLE_HOME[res.data.user.role], { replace: true })
+    } catch {
+      setError('이메일 또는 비밀번호를 확인해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <AuthLayout>
-      <form
-        onSubmit={(event) => event.preventDefault()}
-        className="flex w-[420px] flex-col gap-6"
-      >
+      <form onSubmit={handleSubmit} className="flex w-[420px] flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-fg text-[30px] leading-[38px] font-bold">
             로그인
@@ -82,8 +106,14 @@ export function LoginPage() {
           </div>
         </div>
 
-        <Button type="submit" className="w-full">
-          로그인
+        {error && (
+          <p role="alert" className="text-danger text-sm">
+            {error}
+          </p>
+        )}
+
+        <Button type="submit" className="w-full" disabled={submitting}>
+          {submitting ? '로그인 중…' : '로그인'}
           <ArrowRight className="h-4 w-4" />
         </Button>
 

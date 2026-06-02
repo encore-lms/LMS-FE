@@ -1,3 +1,3 @@
 // shared/store 배럴.
-export { useAuth } from './auth'
+export { useAuth, useAuthActions, useAuthStore } from './auth'
 export type { AuthState } from './auth'

@@ -1,12 +1,9 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '@/shared/store'
 
-// 인증 상태 store(Zustand)는 다음 PR — 현재는 항상 미인증으로 처리.
-function useAuthStub() {
-  return { isAuthenticated: false }
-}
-
+// 인증 가드 — 미인증이면 로그인으로. 인증 상태는 shared/store(Zustand)에서 읽는다.
 export function AuthGuard() {
-  const { isAuthenticated } = useAuthStub()
+  const { isAuthenticated } = useAuth()
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />

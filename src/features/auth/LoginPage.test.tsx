@@ -1,11 +1,31 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { LoginPage } from './LoginPage'
+import { useAuthStore } from '@/shared/store'
+import { apiClient } from '@/shared/api'
+
+vi.mock('@/shared/api', () => ({
+  apiClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
+}))
+
+function renderLogin() {
+  return render(
+    <MemoryRouter>
+      <LoginPage />
+    </MemoryRouter>,
+  )
+}
 
 describe('LoginPage', () => {
+  beforeEach(() => {
+    useAuthStore.getState().clearSession()
+    vi.clearAllMocks()
+  })
+
   it('페이지 제목과 핵심 폼 요소를 렌더한다', () => {
-    render(<LoginPage />)
+    renderLogin()
     expect(
       screen.getByRole('heading', { name: '로그인', level: 1 }),
     ).toBeInTheDocument()
@@ -17,14 +37,14 @@ describe('LoginPage', () => {
   })
 
   it('Brand Panel의 PLAYDATA 카피를 렌더한다', () => {
-    render(<LoginPage />)
+    renderLogin()
     expect(screen.getByText('PLAYDATA')).toBeInTheDocument()
     expect(screen.getByText(/실력은 결과가 아니라/)).toBeInTheDocument()
   })
 
   it('이메일 기억하기 체크박스를 토글한다', async () => {
     const user = userEvent.setup()
-    render(<LoginPage />)
+    renderLogin()
     const checkbox = screen.getByRole('checkbox', { name: '이메일 기억하기' })
     expect(checkbox).not.toBeChecked()
     await user.click(checkbox)
@@ -33,16 +53,41 @@ describe('LoginPage', () => {
 
   it('이메일 input에 값을 입력하면 controlled state가 갱신된다', async () => {
     const user = userEvent.setup()
-    render(<LoginPage />)
+    renderLogin()
     const input = screen.getByPlaceholderText('ai.camp22@playdata.io')
     await user.type(input, 'test@playdata.io')
     expect(input).toHaveValue('test@playdata.io')
   })
 
   it('Caps Lock 상태를 OFF로 초기 표시한다', () => {
-    render(<LoginPage />)
+    renderLogin()
     expect(screen.getByTestId('caps-lock-indicator')).toHaveTextContent(
       'Caps Lock OFF',
     )
+  })
+
+  it('로그인 성공 시 apiClient 호출 후 store에 세션을 저장한다', async () => {
+    const user = userEvent.setup()
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        token: 'tok',
+        user: { id: '1', email: 'a@b.com', name: '김수강', role: 'STUDENT' },
+      },
+    })
+    renderLogin()
+    await user.type(
+      screen.getByPlaceholderText('ai.camp22@playdata.io'),
+      'a@b.com',
+    )
+    await user.type(screen.getByPlaceholderText('••••••••••'), 'pw1234')
+    await user.click(screen.getByRole('button', { name: /로그인/ }))
+
+    await waitFor(() => {
+      expect(useAuthStore.getState().user?.role).toBe('STUDENT')
+    })
+    expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+      email: 'a@b.com',
+      password: 'pw1234',
+    })
   })
 })

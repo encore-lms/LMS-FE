@@ -52,13 +52,15 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
   3. PR 머지 후 `use_figma`로 Figma `LMS Design Tokens` collection에 `Color/X` variable 추가 (Claude 자동화)
 - **폰트 토큰·정합성**: 폰트도 `Typography/*` 토큰으로 Figma에 sync한다(현재 `--font-sans` ↔ `Typography/font-sans` FONT*FAMILY). Figma 시안은 **Pretendard만** 사용한다 — `Icons` 페이지 디바이스 목업의 Apple SF/New York만 예외. Figma↔코드 폰트·토큰 드리프트는 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 스킬로 점검한다(배경: LMS-DOCS `디자인*토큰.md` §Figma 폰트 정합).
 
+- **색 정합·가드레일**: Figma 시안 색은 raw hex가 아니라 `LMS Design Tokens`(`Color/*`) 변수에 바인딩한다(코드 `@theme`에서 단방향 sync). 시안 작성 스킬 `lms-page-figma`(v0.8.0+)가 모든 fill/stroke를 변수로 그리도록 전환됐고(raw RGB 상수 폐기), 토큰과 불일치하는 raw 색은 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 색 census로 탐지·무손실 교정한다. 새 색이 필요하면 위 절차로 토큰을 먼저 추가한다(raw hex 금지).
+
 ### Figma sync 절차 (코드 ↔ 디자인 상태 추적)
 
 - 화면 PR이 `develop`에 머지되면, [Figma 파일](https://www.figma.com/design/Xt9rp01qqWNXnhB95jcFSm/LMS-UI-UX)의 해당 시안을 **`✅ 코드 반영 완료` Section** (`공통` 페이지 내)으로 이동하고 frame name 앞에 `[✅ vX.Y]` 버전 prefix를 추가한다.
 - 작업 자동화: Claude + Figma MCP(`use_figma`)로 일괄 처리 가능.
 - 버전 표기: 머지 시점이 아닌 **다음 release 버전 기준** (예: 1주차 작업 → `v0.2`). Release PR(`chore(release):`)에서 한 번에 확정 권장.
 - 디자이너가 시안을 수정해야 할 때는 Section 밖으로 다시 이동해서 작업, 완료 후 재이동.
-- **정합성 점검(Release 전)**: 주차 Release PR 전 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 스킬을 실행해 전 페이지 비-Pretendard 0(Icons 예외)·토큰 정합을 확인하고, Release PR 본문 체크리스트에 `□ figma-consistency-checks 통과(비-Pretendard 0, Icons 예외)` 1줄을 남긴다.
+- **정합성 점검(Release 전)**: 주차 Release PR 전 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 스킬을 실행해 ① 전 페이지 비-Pretendard 0(Icons 예외), ② 색 census `rawSolids` 0(`Color/*` 미바인딩 fill 없음, Icons 예외)을 확인하고, Release PR 본문 체크리스트에 `□ figma-consistency-checks 통과(폰트 비-Pretendard 0 · 색 미바인딩 0, Icons 예외)` 1줄을 남긴다.
 
 ## 병렬 작업 규칙 (2인 결합 해소)
 

@@ -27,7 +27,9 @@
   --color-accent-strong: #5c4fd9;
 
   --color-success: #0ab080;
+  --color-success-bg: #e6f7f0;
   --color-info: #3b82f5;
+  --color-info-bg: #e9f1fe;
 
   --color-surface: #ffffff;
 }

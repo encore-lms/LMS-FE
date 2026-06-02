@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
+import { Empty } from '@/components/ui/Empty'
 import { Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
 
 const TOKEN_NAMES = [
   'brand',
@@ -49,6 +52,8 @@ function useColorTokens(): ColorToken[] {
 
 export function StyleGuidePage() {
   const [checked, setChecked] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const toast = useToast()
   const colorTokens = useColorTokens()
 
   return (
@@ -167,6 +172,77 @@ export function StyleGuidePage() {
           onChange={setChecked}
           label="체크박스 예시 (토글)"
         />
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-fg mb-4 text-xl font-bold">
+          Modal · Toast · Empty
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={() => setModalOpen(true)}>모달 열기</Button>
+          <Button
+            variant="secondary"
+            onClick={() => toast.success('저장되었습니다')}
+          >
+            성공 토스트
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => toast.danger('오류가 발생했습니다')}
+          >
+            오류 토스트
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => toast.info('처리 중입니다')}
+          >
+            정보 토스트
+          </Button>
+        </div>
+
+        <div className="border-divider mt-6 rounded-xl border">
+          <Empty
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M3 7h18M3 12h18M3 17h10" strokeLinecap="round" />
+              </svg>
+            }
+            title="아직 항목이 없어요"
+            description="첫 항목을 추가하면 여기에 표시됩니다."
+            action={<Button>새 항목 추가</Button>}
+          />
+        </div>
+
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="모달 예시"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setModalOpen(false)}>
+                취소
+              </Button>
+              <Button
+                onClick={() => {
+                  setModalOpen(false)
+                  toast.success('확인했습니다')
+                }}
+              >
+                확인
+              </Button>
+            </>
+          }
+        >
+          <p className="text-fg-muted text-sm">
+            ESC · 배경 클릭 · 닫기 버튼으로 닫을 수 있고, 열려 있는 동안 본문
+            스크롤이 잠깁니다.
+          </p>
+        </Modal>
       </section>
 
       <section className="border-divider mt-16 border-t pt-6">

@@ -7,9 +7,12 @@ import { queryClient } from '@/app/queryClient'
 import { ToastProvider } from '@/components/ui/Toast'
 import '@/index.css'
 
-// 개발 환경에서만 MSW mock 활성화 (BE 없이 로그인 등 진행, 이후 실제 API로 교체)
+// MSW mock 활성화 조건: 로컬 dev(항상) 또는 VITE_ENABLE_MOCK=true(BE 없는 배포 환경, 1주차 한정).
+// BE 합류 시 배포 빌드의 VITE_ENABLE_MOCK 플래그를 제거하면 실제 API로 전환된다.
 async function enableMocking() {
-  if (!import.meta.env.DEV) return
+  const useMock =
+    import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK === 'true'
+  if (!useMock) return
   const { worker } = await import('./mocks/browser')
   await worker.start({ onUnhandledRequest: 'bypass' })
 }

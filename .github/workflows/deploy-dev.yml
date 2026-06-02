@@ -1,0 +1,55 @@
+name: Deploy (dev)
+
+# develop 푸시 시 FE 미니 AWS(S3 + CloudFront)로 자동 배포.
+# 검증(lint·typecheck·test·build)은 ci.yml이 담당하고, 여기서는 빌드 산출물 배포만 한다.
+on:
+  push:
+    branches: [develop]
+
+# 연속 푸시 시 이전 배포는 취소하고 최신 커밋만 반영
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 해시 파일명 에셋은 장기 캐시(immutable), index.html은 no-cache로 항상 최신 진입점 보장
+      - name: Sync to S3
+        run: |
+          aws s3 sync dist/ "s3://${{ secrets.AWS_S3_BUCKET }}" --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+          aws s3 cp dist/index.html "s3://${{ secrets.AWS_S3_BUCKET }}/index.html" \
+            --cache-control "no-cache"
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.AWS_CLOUDFRONT_DIST_ID }}" \
+            --paths "/*"

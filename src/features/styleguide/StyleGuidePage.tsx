@@ -18,6 +18,10 @@ const TOKEN_NAMES = [
   'warning-bg',
   'accent',
   'accent-bg',
+  'accent-strong',
+  'success',
+  'info',
+  'surface',
 ] as const
 
 interface ColorToken {

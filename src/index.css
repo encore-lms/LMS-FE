@@ -24,6 +24,12 @@
 
   --color-accent: #6b5cff;
   --color-accent-bg: #f0eafe;
+  --color-accent-strong: #5c4fd9;
+
+  --color-success: #0ab080;
+  --color-info: #3b82f5;
+
+  --color-surface: #ffffff;
 }
 
 :root {

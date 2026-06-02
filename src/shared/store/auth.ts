@@ -1,21 +1,51 @@
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Role, User } from '@/shared/types'
 
-// 전역 인증 상태 계약 — 공유 읽기전용.
-// 현재는 미인증 스텁(기존 AuthGuard의 useAuthStub을 공식화). AuthGuard·RoleEntry가 이 계약을 의존한다.
-// TODO(pair): Zustand v5로 구현 (WBS §4.1 — 토큰·역할 저장, 새로고침 복구 persist, login/logout 액션).
-//            useAuth(): AuthState 시그니처는 고정 — 내부만 Zustand로 바꾸면 소비자 코드 불변.
+// 전역 인증 상태 — Zustand + localStorage persist(새로고침 후 세션 복구).
+// 읽기는 useAuth()(파생: role·isAuthenticated), 쓰기는 useAuthActions()를 쓴다.
+// (JSON 직렬화라 함수는 저장되지 않고 token·user만 보존된다.)
+interface AuthStoreState {
+  user: User | null
+  token: string | null
+  setSession: (token: string, user: User) => void
+  clearSession: () => void
+}
+
+export const useAuthStore = create<AuthStoreState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      setSession: (token, user) => set({ token, user }),
+      clearSession: () => set({ token: null, user: null }),
+    }),
+    {
+      name: 'lms-auth',
+      storage: createJSONStorage(() => localStorage),
+    },
+  ),
+)
+
+// 파생 읽기 계약 — 시그니처 고정(기존 소비자 AuthGuard·RoleEntry 불변).
 export interface AuthState {
   user: User | null
   role: Role | null
   isAuthenticated: boolean
 }
 
-const STUB: AuthState = {
-  user: null,
-  role: null,
-  isAuthenticated: false,
+export function useAuth(): AuthState {
+  const user = useAuthStore((s) => s.user)
+  return {
+    user,
+    role: user?.role ?? null,
+    isAuthenticated: user !== null,
+  }
 }
 
-export function useAuth(): AuthState {
-  return STUB
+// 로그인/로그아웃 액션 훅 — LoginPage 등에서 사용(실제 API 연동은 후속 axios·MSW PR).
+export function useAuthActions() {
+  const setSession = useAuthStore((s) => s.setSession)
+  const clearSession = useAuthStore((s) => s.clearSession)
+  return { setSession, clearSession }
 }

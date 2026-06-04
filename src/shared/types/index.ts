@@ -24,3 +24,8 @@ export type {
   QuickEntry,
   AdminDashboardSummary,
 } from './admin'
+export type {
+  CertReviewStatus,
+  CertReviewListItem,
+  CertReviewQueue,
+} from './certificates'

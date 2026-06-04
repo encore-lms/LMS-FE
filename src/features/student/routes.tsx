@@ -8,6 +8,7 @@ const AttendanceView = lazy(() => import('./attendance/AttendanceView'))
 const AttendanceFormPage = lazy(
   () => import('./attendance/form/AttendanceFormPage'),
 )
+const ProfilePage = lazy(() => import('./profile/ProfilePage'))
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -19,6 +20,8 @@ export const studentRoutes: RouteObject[] = [
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },
       { path: 'attendance/form', element: <AttendanceFormPage /> },
+      // 마이 프로필 — 사이드바 아님(헤더 아바타 메뉴). 라우트만 등록.
+      { path: 'profile', element: <ProfilePage /> },
       // 다음 PR(응시·결과):
       // { path: 'quizzes/:quizId/take', element: <QuizTakePage /> },
       // { path: 'quizzes/:quizId/result', element: <QuizResultPage /> },

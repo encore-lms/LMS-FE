@@ -1,5 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowRight, Info, Mail } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
@@ -9,16 +11,20 @@ import { useAuthActions } from '@/shared/store'
 import { ROLE_HOME } from '@/shared/constants'
 import type { User } from '@/shared/types'
 import { AuthLayout } from './AuthLayout'
+import { loginSchema, type LoginInput } from './login.schema'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const { setSession } = useAuthActions()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [rememberEmail, setRememberEmail] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -32,10 +38,9 @@ export function LoginPage() {
     }
   }, [])
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    setError(null)
-    setSubmitting(true)
+  // 폼 패턴: handleSubmit이 zod 검증 통과 후에만 onSubmit 호출. 제출 단계 에러는 submitError로 분리.
+  async function onSubmit({ email, password }: LoginInput) {
+    setSubmitError(null)
     try {
       const res = await apiClient.post<{ token: string; user: User }>(
         '/auth/login',
@@ -44,15 +49,17 @@ export function LoginPage() {
       setSession(res.data.token, res.data.user)
       navigate(ROLE_HOME[res.data.user.role], { replace: true })
     } catch {
-      setError('이메일 또는 비밀번호를 확인해주세요.')
-    } finally {
-      setSubmitting(false)
+      setSubmitError('이메일 또는 비밀번호를 확인해주세요.')
     }
   }
 
   return (
     <AuthLayout>
-      <form onSubmit={handleSubmit} className="flex w-[420px] flex-col gap-6">
+      <form
+        noValidate
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex w-[420px] flex-col gap-6"
+      >
         <div className="flex flex-col gap-2">
           <h1 className="text-fg text-[30px] leading-[38px] font-bold">
             로그인
@@ -69,8 +76,8 @@ export function LoginPage() {
           autoComplete="email"
           placeholder="ai.camp22@playdata.io"
           leftIcon={<Mail className="h-4 w-4" />}
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          error={errors.email?.message}
+          {...register('email')}
         />
 
         <Input
@@ -85,8 +92,8 @@ export function LoginPage() {
               비밀번호 찾기 →
             </button>
           }
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          error={errors.password?.message}
+          {...register('password')}
         />
 
         <div className="flex items-center justify-between">
@@ -106,14 +113,14 @@ export function LoginPage() {
           </div>
         </div>
 
-        {error && (
+        {submitError && (
           <p role="alert" className="text-danger text-sm">
-            {error}
+            {submitError}
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? '로그인 중…' : '로그인'}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? '로그인 중…' : '로그인'}
           <ArrowRight className="h-4 w-4" />
         </Button>
 

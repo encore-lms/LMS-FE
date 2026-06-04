@@ -1,0 +1,151 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { FormProvider, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Empty } from '@/components/ui/Empty'
+import type { AttendanceFormPayload, AttendanceFormSubmission } from '../types'
+import {
+  useAttendanceFormMeta,
+  useSubmitAttendanceForm,
+} from '../../api/attendance'
+import { AttendanceActionButton } from '../components/AttendanceActionButton'
+import { PageHeading } from '../components/PageHeading'
+import { InfoBanner } from '../components/InfoBanner'
+import {
+  attendanceFormSchema,
+  ATTENDANCE_FORM_DEFAULTS,
+  type AttendanceFormValues,
+} from './attendanceFormSchema'
+import { OverwriteWarningBanner } from './OverwriteWarningBanner'
+import { FormMetaRow } from './FormMetaRow'
+import { FormStepCard } from './FormStepCard'
+import { AttendanceFormFooter } from './AttendanceFormFooter'
+import { SubmitSuccessCard } from './SubmitSuccessCard'
+import { AttendanceTypeStep } from './steps/AttendanceTypeStep'
+import { OfficialLeaveStep } from './steps/OfficialLeaveStep'
+import { EvidenceUploadStep } from './steps/EvidenceUploadStep'
+import { NoteStep } from './steps/NoteStep'
+
+// 폼 값 → 제출 페이로드. 선택한 유형에 해당하는 조건부 필드만 담고, 공가 미사용 시 공가 필드는 비운다.
+function toPayload(
+  values: AttendanceFormValues,
+  attachmentNames: string[],
+): AttendanceFormPayload {
+  const payload: AttendanceFormPayload = {
+    attendanceType: values.attendanceType,
+    officialLeaveUsed: values.officialLeaveUsed,
+    officialLeaveType: values.officialLeaveUsed
+      ? values.officialLeaveType
+      : null,
+    officialLeaveOtherReason:
+      values.officialLeaveUsed && values.officialLeaveType === 'OTHER'
+        ? values.officialLeaveOtherReason
+        : null,
+    note: values.note ? values.note : null,
+    attachmentNames,
+  }
+  if (values.attendanceType === 'LATE') {
+    payload.expectedArrivalTime = values.expectedArrivalTime
+  }
+  if (values.attendanceType === 'EARLY_LEAVE') {
+    payload.expectedLeaveTime = values.expectedLeaveTime
+  }
+  if (values.attendanceType === 'OUTING') {
+    payload.outingStartTime = values.outingStartTime
+    payload.outingEndTime = values.outingEndTime
+  }
+  return payload
+}
+
+/**
+ * 출결 폼 작성 (/student/attendance/form) — STUDENT 전용(라우터 가드).
+ * 화면 타이틀/설명은 공유 헤더(usePageHeader)에 주입. 4스텝(유형·공가·증빙·비고) + 덮어쓰기 경고 + 성공 카드.
+ * 폼 상태는 RHF + Zod(조건부 필수). 데이터/상태만 여기서 다루고 각 영역은 자식 컴포넌트가 그린다.
+ */
+export default function AttendanceFormPage() {
+  const navigate = useNavigate()
+  const { data: meta, isPending, isError, refetch } = useAttendanceFormMeta()
+  const submitMutation = useSubmitAttendanceForm()
+  const [attachments, setAttachments] = useState<string[]>([])
+  const [submitted, setSubmitted] = useState<AttendanceFormSubmission | null>(
+    null,
+  )
+
+  const methods = useForm<AttendanceFormValues>({
+    resolver: zodResolver(attendanceFormSchema),
+    defaultValues: ATTENDANCE_FORM_DEFAULTS,
+  })
+
+  if (isPending) {
+    return <div className="text-fg-muted p-8">출결 폼을 불러오는 중…</div>
+  }
+  if (isError) {
+    return (
+      <div className="p-8">
+        <Empty
+          title="출결 폼을 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={
+            <AttendanceActionButton onClick={() => refetch()}>
+              다시 시도
+            </AttendanceActionButton>
+          }
+        />
+      </div>
+    )
+  }
+
+  if (submitted) {
+    return (
+      <div className="flex flex-col gap-6 p-8">
+        <PageHeading title="출결 폼 작성" />
+        <SubmitSuccessCard
+          submission={submitted}
+          onHome={() => navigate('/student')}
+        />
+      </div>
+    )
+  }
+
+  const onSubmit = methods.handleSubmit((values) => {
+    submitMutation.mutate(toPayload(values, attachments), {
+      onSuccess: (submission) => setSubmitted(submission),
+    })
+  })
+
+  return (
+    <div className="flex flex-col gap-6 p-8">
+      <PageHeading
+        title="출결 폼 작성"
+        description="모바일에서도 작성 가능한 출결 폼입니다. HRD 원본 출결은 변경되지 않습니다."
+      />
+      {meta.latestSubmission && (
+        <OverwriteWarningBanner latest={meta.latestSubmission} />
+      )}
+      <FormMetaRow meta={meta} />
+      {submitMutation.isError && (
+        <InfoBanner tone="warning" title="제출에 실패했습니다">
+          잠시 후 다시 시도해 주세요.
+        </InfoBanner>
+      )}
+      <FormProvider {...methods}>
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
+          <FormStepCard step={1} title="출결 유형" badge="required">
+            <AttendanceTypeStep />
+          </FormStepCard>
+          <FormStepCard step={2} title="공가 사용" badge="toggle">
+            <OfficialLeaveStep />
+          </FormStepCard>
+          <FormStepCard step={3} title="증빙 첨부" badge="recommended">
+            <EvidenceUploadStep files={attachments} onChange={setAttachments} />
+          </FormStepCard>
+          <NoteStep />
+          <AttendanceFormFooter
+            onCancel={() => navigate('/student/attendance')}
+            submitting={submitMutation.isPending}
+          />
+        </form>
+      </FormProvider>
+    </div>
+  )
+}

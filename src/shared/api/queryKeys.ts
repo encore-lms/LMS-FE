@@ -18,4 +18,6 @@ export const adminKeys = {
     [...adminKeys.all, 'reviews', { filter: filter ?? {} }] as const,
   reviewDetail: (reviewId: string) =>
     [...adminKeys.all, 'reviews', reviewId] as const,
+  snapshot: (certificateId: string) =>
+    [...adminKeys.all, 'snapshot', certificateId] as const,
 } as const

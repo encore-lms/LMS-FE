@@ -9,6 +9,11 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
 import type { CertReviewStatus } from '@/shared/types'
 import { useReviewDetail } from '../api/reviews'
+import {
+  ApproveModal,
+  ChangesRequestModal,
+  MartRecalcModal,
+} from './ReviewModals'
 
 const TABS = [
   '종합 요약',
@@ -52,6 +57,10 @@ export default function ReviewDetailPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useReviewDetail(reviewId)
   const [tab, setTab] = useState(0)
+  const [openModal, setOpenModal] = useState<
+    'changes' | 'approve' | 'mart' | null
+  >(null)
+  const [martResolved, setMartResolved] = useState(false)
 
   if (isPending) {
     return <div className="text-fg-muted p-8">검토 상세를 불러오는 중…</div>
@@ -68,8 +77,12 @@ export default function ReviewDetailPage() {
   }
 
   const d = data
-  const passCount = d.approvalChecks.filter((c) => c.pass).length
-  const allPass = passCount === d.approvalChecks.length
+  // 마트 재계산 실행 시(mock) 원천 데이터 최신성 체크를 통과로 간주 → 승인 활성.
+  const checks = martResolved
+    ? d.approvalChecks.map((c) => (c.key === 'mart' ? { ...c, pass: true } : c))
+    : d.approvalChecks
+  const passCount = checks.filter((c) => c.pass).length
+  const allPass = passCount === checks.length
 
   return (
     <div className="p-8">
@@ -219,7 +232,7 @@ export default function ReviewDetailPage() {
               </span>
             </div>
             <ul className="mt-3 flex flex-col gap-3">
-              {d.approvalChecks.map((c) => (
+              {checks.map((c) => (
                 <li key={c.key} className="flex items-start gap-2">
                   {c.pass ? (
                     <Check className="text-success mt-0.5 h-4 w-4 shrink-0" />
@@ -269,7 +282,11 @@ export default function ReviewDetailPage() {
               <p className="text-fg-muted text-xs">
                 요청 시점 {d.requestedAt} (이후)
               </p>
-              <Button variant="secondary" className="mt-3 w-full">
+              <Button
+                variant="secondary"
+                className="mt-3 w-full"
+                onClick={() => setOpenModal('mart')}
+              >
                 <RotateCw className="h-4 w-4" /> 재계산 요청
               </Button>
             </section>
@@ -348,11 +365,30 @@ export default function ReviewDetailPage() {
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
-          {/* TODO(C2b): 보완 요청·승인 모달 연결 */}
-          <Button variant="secondary">보완 요청</Button>
-          <Button disabled={!allPass}>정식 인증 승인</Button>
+          <Button variant="secondary" onClick={() => setOpenModal('changes')}>
+            보완 요청
+          </Button>
+          <Button disabled={!allPass} onClick={() => setOpenModal('approve')}>
+            정식 인증 승인
+          </Button>
         </div>
       </div>
+
+      <ChangesRequestModal
+        open={openModal === 'changes'}
+        onClose={() => setOpenModal(null)}
+        student={{ name: d.student.name, cohort: d.student.cohort }}
+      />
+      <ApproveModal
+        open={openModal === 'approve'}
+        onClose={() => setOpenModal(null)}
+        student={{ name: d.student.name, cohort: d.student.cohort }}
+      />
+      <MartRecalcModal
+        open={openModal === 'mart'}
+        onClose={() => setOpenModal(null)}
+        onSubmitted={() => setMartResolved(true)}
+      />
     </div>
   )
 }

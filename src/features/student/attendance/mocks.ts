@@ -94,7 +94,8 @@ const mockAttendanceFormMeta: AttendanceFormMeta = {
   },
 }
 
-export const attendanceHandlers = [
+// 자동 수집 규약: features/**/mocks.ts 는 `handlers`를 내보낸다(mocks/handlers.ts가 glob으로 등록).
+export const handlers = [
   http.get('/api/student/attendance/overview', () =>
     ok<AttendanceOverview>(mockAttendanceOverview),
   ),

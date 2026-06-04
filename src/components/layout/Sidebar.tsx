@@ -10,7 +10,7 @@ export function Sidebar({
   items: MenuItem[]
 }) {
   return (
-    <aside className="border-border flex w-60 shrink-0 flex-col overflow-y-auto border-r bg-white">
+    <aside className="border-border flex w-[200px] shrink-0 flex-col overflow-y-auto border-r bg-white">
       <div className="px-5 pt-6 pb-4 text-xl font-bold tracking-tight">
         <span className="text-brand">PLAY</span>
         <span className="text-accent">DATA</span>

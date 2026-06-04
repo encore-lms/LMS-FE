@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { ToastProvider } from '@/components/ui/Toast'
 import ReviewDetailPage from './ReviewDetailPage'
 import { useReviewDetail } from '../api/reviews'
 import type { CertReviewDetail } from '@/shared/types'
@@ -58,9 +59,11 @@ function mockHook(v: Partial<Hook>) {
 
 function renderPage() {
   return render(
-    <MemoryRouter>
-      <ReviewDetailPage />
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter>
+        <ReviewDetailPage />
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 
@@ -70,7 +73,7 @@ describe('ReviewDetailPage', () => {
     renderPage()
     expect(screen.getByText('이서연')).toBeInTheDocument()
     expect(screen.getByText('480h')).toBeInTheDocument()
-    expect(screen.getByText('5 / 6')).toBeInTheDocument() // 승인 필수 체크
+    expect(screen.getByText('5 / 6')).toBeInTheDocument()
     expect(screen.getByText('검토 큐로')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: '정식 인증 승인' }),
@@ -83,6 +86,27 @@ describe('ReviewDetailPage', () => {
     renderPage()
     await user.click(screen.getByRole('button', { name: '프로젝트' }))
     expect(screen.getByText(/준비 중/)).toBeInTheDocument()
+  })
+
+  it('보완 요청 버튼이 모달을 연다', async () => {
+    mockHook({ data: detail, isPending: false, isError: false })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: '보완 요청' }))
+    expect(screen.getByText('사유 코드')).toBeInTheDocument()
+    expect(screen.getByText('missing_evidence')).toBeInTheDocument()
+  })
+
+  it('마트 재계산 실행 후 정식 인증 승인이 활성화된다', async () => {
+    mockHook({ data: detail, isPending: false, isError: false })
+    const user = userEvent.setup()
+    renderPage()
+    expect(
+      screen.getByRole('button', { name: '정식 인증 승인' }),
+    ).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: /재계산 요청/ }))
+    await user.click(screen.getByRole('button', { name: '재계산 실행' }))
+    expect(screen.getByRole('button', { name: '정식 인증 승인' })).toBeEnabled()
   })
 
   it('로딩·에러 상태를 표시한다', () => {

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient, adminKeys } from '@/shared/api'
-import type { CertReviewQueue } from '@/shared/types'
+import type { CertReviewQueue, CertReviewDetail } from '@/shared/types'
 
 // 인증 검토 큐 — /admin/* 엔드포인트라 admin feature 소유. baseURL이 /api라 경로 앞에 안 붙임.
 export function useReviewQueue(filter?: { status?: string }) {
@@ -10,5 +10,17 @@ export function useReviewQueue(filter?: { status?: string }) {
       apiClient
         .get<CertReviewQueue>('/admin/certificates/reviews', filter)
         .then((r) => r.data),
+  })
+}
+
+// 인증 검토 상세.
+export function useReviewDetail(reviewId: string) {
+  return useQuery({
+    queryKey: adminKeys.reviewDetail(reviewId),
+    queryFn: () =>
+      apiClient
+        .get<CertReviewDetail>(`/admin/certificates/reviews/${reviewId}`)
+        .then((r) => r.data),
+    enabled: !!reviewId,
   })
 }

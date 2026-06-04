@@ -27,3 +27,67 @@ export interface CertReviewQueue {
   avgHours: number // 평균 처리 시간
   items: CertReviewListItem[]
 }
+
+// --- 인증 검토 상세 (Flow 11 C2) ---
+
+export interface SkillScore {
+  key: string // 기술·책임감·소통·성장·팀워크·문제해결
+  score: number
+  confirmed: boolean
+}
+
+export interface ApprovalCheck {
+  key: string
+  label: string // 프로필·핵심 지표·6축 점수·대표 근거·원천 데이터 최신성·개인정보
+  detail: string
+  pass: boolean
+}
+
+export interface ReviewRiskFlag {
+  label: string // 결측·개인정보 위험·점수 재검토
+  detail: string
+  count: number
+}
+
+export interface ScoreEvidence {
+  skill: string // "기술 82점"
+  basis: string
+}
+
+export interface ArtifactApproval {
+  title: string
+  by: string
+  status: 'approved' | 'unverified'
+}
+
+export interface AuditEntry {
+  at: string
+  actor: string
+  action: string
+}
+
+// 인증 검토 상세(/admin/certificates/reviews/:reviewId) 응답.
+export interface CertReviewDetail {
+  id: string
+  student: { name: string; certId: string; cohort: string }
+  status: CertReviewStatus
+  assignee: string
+  requestedAt: string
+  martStale: boolean // 원천 데이터 미갱신
+  martLastRefreshed: string
+  metrics: {
+    trainingHours: number // 480
+    attendance: number // 0.962
+    quizAvg: number // 84.7
+    submissionRate: number // 0.91
+    submissionRaw: string // "32/35건"
+  }
+  skills: SkillScore[]
+  skillAvg: number // 81.7
+  payloadPreview: string // JSON 요약 1줄
+  approvalChecks: ApprovalCheck[] // 승인 필수 체크
+  riskFlags: ReviewRiskFlag[]
+  scoreEvidence: ScoreEvidence[] // 점수 근거
+  artifactApprovals: ArtifactApproval[] // 산출물 승인 상태
+  auditLog: AuditEntry[] // 감사 로그
+}

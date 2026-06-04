@@ -7,6 +7,7 @@ import type {
   QuizAttempt,
   AdminDashboardSummary,
   CertReviewQueue,
+  CertReviewDetail,
 } from '@/shared/types'
 import { attendanceHandlers } from '@/features/student/attendance/mocks'
 import { dashboardHandlers } from '@/features/student/dashboard/mocks'
@@ -240,7 +241,120 @@ const certReviewQueue: CertReviewQueue = {
   ],
 }
 
-// 운영(admin) — 대시보드 요약(v2)·인증 검토 큐. 나머지 운영 화면은 후속 PR에서 소비.
+// 인증 검토 상세(/admin/certificates/reviews/:reviewId) — Flow 11 C2.
+const certReviewDetail: CertReviewDetail = {
+  id: 'rev_8b2a',
+  student: { name: '이서연', certId: 'def-5678', cohort: 'DA 5기' },
+  status: 'reviewing',
+  assignee: '황설현',
+  requestedAt: '2026-05-16 09:11',
+  martStale: true,
+  martLastRefreshed: '2026-05-15 23:00',
+  metrics: {
+    trainingHours: 480,
+    attendance: 0.962,
+    quizAvg: 84.7,
+    submissionRate: 0.91,
+    submissionRaw: '32/35건',
+  },
+  skills: [
+    { key: '기술', score: 82, confirmed: true },
+    { key: '책임감', score: 76, confirmed: true },
+    { key: '소통', score: 88, confirmed: true },
+    { key: '성장', score: 79, confirmed: true },
+    { key: '팀워크', score: 84, confirmed: true },
+    { key: '문제해결', score: 81, confirmed: true },
+  ],
+  skillAvg: 81.7,
+  payloadPreview:
+    '{"student":"이서연","course":"DA 5기","trainingHours":480,"attendance":0.962,"averageQuiz":84.7,"submission":0.91,"skills":[{"k":"기술","v":82,"status":"confirmed"}, …]}',
+  approvalChecks: [
+    {
+      key: 'profile',
+      label: '프로필',
+      detail: '이름·과정·필수 URL 오류 없음',
+      pass: true,
+    },
+    {
+      key: 'metric',
+      label: '핵심 지표',
+      detail: '교육시간·출석률·시험평균 산정 가능',
+      pass: true,
+    },
+    {
+      key: 'skill',
+      label: '6축 점수',
+      detail: 'SkillScore.status = confirmed (6/6)',
+      pass: true,
+    },
+    {
+      key: 'evidence',
+      label: '대표 근거',
+      detail: '프로젝트 1 · 트러블슈팅 1 · 기록실 12',
+      pass: true,
+    },
+    {
+      key: 'mart',
+      label: '원천 데이터 최신성',
+      detail: '인증 요청 이후 미갱신 · 재계산 필요',
+      pass: false,
+    },
+    {
+      key: 'privacy',
+      label: '개인정보',
+      detail: '공개 payload에 민감정보 없음',
+      pass: true,
+    },
+  ],
+  riskFlags: [
+    { label: '결측', detail: '평판 항목 2개 미수집', count: 2 },
+    { label: '개인정보 위험', detail: '공개 payload 안전', count: 0 },
+    { label: '점수 재검토', detail: 'SkillScore 재검토 요청 없음', count: 0 },
+  ],
+  scoreEvidence: [
+    { skill: '기술 82점', basis: '프로젝트 v0.3 산출물 + 강사 코멘트 3건' },
+    { skill: '책임감 76점', basis: '동료 평판 5건 평균 + 회의록 기여 12건' },
+    {
+      skill: '소통 88점',
+      basis: 'PR 리뷰 코멘트 28건 + 멘토 평가 · 원천 데이터 변경',
+    },
+    { skill: '성장 79점', basis: '이전 기수 대비 +12점 · 트러블슈팅 14건' },
+  ],
+  artifactApprovals: [
+    {
+      title: '프로젝트 v0.3 (LLM 추천)',
+      by: '강사 김지훈',
+      status: 'approved',
+    },
+    {
+      title: '트러블슈팅 #042 (Airflow)',
+      by: '강사 박지영',
+      status: 'approved',
+    },
+    { title: '블로그 12편 일괄', by: '매니저 황설현', status: 'approved' },
+    { title: '외부 자격증 OPIc IH', by: '외부 검증', status: 'unverified' },
+  ],
+  auditLog: [
+    { at: '05-19 10:24', actor: '황설현', action: '검토 시작' },
+    {
+      at: '05-18 16:08',
+      actor: '시스템',
+      action: '마트 갱신 실패 — 출결 원본 누락',
+    },
+    {
+      at: '05-17 11:42',
+      actor: '황설현',
+      action: '이전 인증 요청 보완 — 평판 항목 보강',
+    },
+    {
+      at: '05-16 09:11',
+      actor: '이서연',
+      action: '인증 요청 (certification_requested)',
+    },
+  ],
+}
+
+// 운영(admin) — 대시보드 요약(v2)·인증 검토 큐·상세. 나머지 운영 화면은 후속 PR에서 소비.
 const adminHandlers = [
   http.get('/api/admin/dashboard', () =>
     ok<AdminDashboardSummary>({
@@ -350,6 +464,10 @@ const adminHandlers = [
 
   http.get('/api/admin/certificates/reviews', () =>
     ok<CertReviewQueue>(certReviewQueue),
+  ),
+
+  http.get('/api/admin/certificates/reviews/:reviewId', ({ params }) =>
+    ok<CertReviewDetail>({ ...certReviewDetail, id: String(params.reviewId) }),
   ),
 ]
 

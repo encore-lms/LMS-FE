@@ -16,4 +16,6 @@ export const adminKeys = {
   dashboard: () => [...adminKeys.all, 'dashboard'] as const,
   reviewQueue: (filter?: { status?: string }) =>
     [...adminKeys.all, 'reviews', { filter: filter ?? {} }] as const,
+  reviewDetail: (reviewId: string) =>
+    [...adminKeys.all, 'reviews', reviewId] as const,
 } as const

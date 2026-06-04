@@ -28,4 +28,11 @@ export type {
   CertReviewStatus,
   CertReviewListItem,
   CertReviewQueue,
+  SkillScore,
+  ApprovalCheck,
+  ReviewRiskFlag,
+  ScoreEvidence,
+  ArtifactApproval,
+  AuditEntry,
+  CertReviewDetail,
 } from './certificates'

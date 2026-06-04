@@ -6,7 +6,9 @@ import type {
   QuizResult,
   QuizAttempt,
   AdminDashboardSummary,
+  CertReviewQueue,
 } from '@/shared/types'
+import { attendanceHandlers } from '@/features/student/attendance/mocks'
 import { dashboardHandlers } from '@/features/student/dashboard/mocks'
 
 // {data} 래핑 헬퍼 — mock 응답은 ApiResponse<T>(= {data:T}) 형태를 지킨다.
@@ -141,7 +143,104 @@ const quizHandlers = [
   ),
 ]
 
-// 운영(admin) — 대시보드 요약(v2). 나머지 운영 화면은 후속 PR에서 소비.
+// 인증 검토 큐(/admin/certificates/reviews) — Flow 11 C1.
+const certReviewQueue: CertReviewQueue = {
+  total: 167,
+  byStatus: {
+    requested: 24,
+    reviewing: 8,
+    changes_requested: 3,
+    certified: 132,
+  },
+  unassigned: 6,
+  riskFlagged: 5,
+  myAssigned: 8,
+  avgHours: 4.2,
+  items: [
+    {
+      id: 'rv1',
+      student: {
+        name: '김민준',
+        studentNo: '2024-AIB3-0027',
+        cohort: 'AI 캠프 22기',
+      },
+      status: 'changes_requested',
+      requestedAt: '05-17 14:32',
+      assignee: '황설현',
+      missingCount: 0,
+      riskFlags: ['개인정보 위험', '점수 재검토'],
+      latestReason: '이력서 연락처 마스킹 누락',
+    },
+    {
+      id: 'rv2',
+      student: {
+        name: '이서연',
+        studentNo: '2024-AIB3-0028',
+        cohort: 'AI 캠프 22기',
+      },
+      status: 'reviewing',
+      requestedAt: '05-16 09:11',
+      assignee: '황설현',
+      missingCount: 2,
+      riskFlags: ['결측'],
+      latestReason: '평판 항목 2개 미수집',
+    },
+    {
+      id: 'rv3',
+      student: {
+        name: '박지훈',
+        studentNo: '2024-AIB3-0029',
+        cohort: 'DA 5기',
+      },
+      status: 'changes_requested',
+      requestedAt: '05-15 17:45',
+      assignee: '황설현',
+      missingCount: 0,
+      riskFlags: ['점수 재검토', '미승인 산출물'],
+      latestReason: '프로젝트 산출물 강사 미승인 1건',
+    },
+    {
+      id: 'rv4',
+      student: {
+        name: '최유진',
+        studentNo: '2024-AIB3-0030',
+        cohort: 'AI 캠프 22기',
+      },
+      status: 'requested',
+      requestedAt: '05-19 08:42',
+      assignee: null,
+      missingCount: 0,
+      riskFlags: [],
+      latestReason: '없음',
+    },
+    {
+      id: 'rv5',
+      student: { name: '정하늘', studentNo: '2024-DA5-0014', cohort: 'DA 5기' },
+      status: 'requested',
+      requestedAt: '05-19 09:12',
+      assignee: null,
+      missingCount: 1,
+      riskFlags: ['결측'],
+      latestReason: '자격증 인증서 미첨부',
+    },
+    {
+      id: 'rv6',
+      student: {
+        name: '한지호',
+        studentNo: '2024-AIB3-0032',
+        cohort: 'AI 캠프 22기',
+      },
+      status: 'reviewing',
+      requestedAt: '05-18 16:30',
+      assignee: '이매니저',
+      missingCount: 0,
+      riskFlags: [],
+      latestReason: '없음',
+    },
+  ],
+}
+
+// 운영(admin) — 대시보드 요약(v2)·인증 검토 큐. 나머지 운영 화면은 후속 PR에서 소비.
 const adminHandlers = [
   http.get('/api/admin/dashboard', () =>
     ok<AdminDashboardSummary>({
@@ -248,6 +347,10 @@ const adminHandlers = [
       ],
     }),
   ),
+
+  http.get('/api/admin/certificates/reviews', () =>
+    ok<CertReviewQueue>(certReviewQueue),
+  ),
 ]
 
 export const handlers = [
@@ -268,5 +371,6 @@ export const handlers = [
   }),
   ...quizHandlers,
   ...adminHandlers,
+  ...attendanceHandlers,
   ...dashboardHandlers,
 ]

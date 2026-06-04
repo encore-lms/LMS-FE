@@ -12,7 +12,7 @@ export const adminMenu: MenuItem[] = [
   { label: '과정·기수·교과목', to: '/admin/courses' },
   { label: '학생 관리', to: '/admin/students' },
   { label: '운영 계정·권한', to: '/admin/accounts' },
-  { label: '인증 검토', to: '/admin/certification-review' },
+  { label: '인증 검토', to: '/admin/certificates/reviews' },
   { label: '평판 관리', to: '/admin/reputation' },
   { label: 'CSV 매핑', to: '/admin/csv' },
   { label: '인입 격리 큐', to: '/admin/quarantine' },

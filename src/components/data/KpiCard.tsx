@@ -5,6 +5,7 @@ export type KpiTone =
   | 'default'
   | 'brand'
   | 'accent'
+  | 'info'
   | 'success'
   | 'warning'
   | 'danger'
@@ -22,6 +23,7 @@ const TONE_VALUE: Record<KpiTone, string> = {
   default: 'text-fg',
   brand: 'text-brand',
   accent: 'text-accent-strong',
+  info: 'text-info',
   success: 'text-success',
   warning: 'text-warning',
   danger: 'text-danger',

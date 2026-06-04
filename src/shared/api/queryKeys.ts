@@ -9,3 +9,9 @@ export const quizKeys = {
     [...quizKeys.all, 'questions', quizId] as const,
   result: (quizId: string) => [...quizKeys.all, 'result', quizId] as const,
 } as const
+
+// 운영(admin) 서버 상태 캐시 키.
+export const adminKeys = {
+  all: ['admin'] as const,
+  dashboard: () => [...adminKeys.all, 'dashboard'] as const,
+} as const

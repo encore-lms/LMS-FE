@@ -51,7 +51,7 @@ describe('LoginPage', () => {
     expect(checkbox).toBeChecked()
   })
 
-  it('이메일 input에 값을 입력하면 controlled state가 갱신된다', async () => {
+  it('이메일 input에 입력하면 값이 반영된다 (RHF register)', async () => {
     const user = userEvent.setup()
     renderLogin()
     const input = screen.getByPlaceholderText('ai.camp22@playdata.io')
@@ -89,5 +89,14 @@ describe('LoginPage', () => {
       email: 'a@b.com',
       password: 'pw1234',
     })
+  })
+
+  it('빈 값으로 제출하면 zod 검증 에러를 표시하고 API를 호출하지 않는다', async () => {
+    const user = userEvent.setup()
+    renderLogin()
+    await user.click(screen.getByRole('button', { name: /로그인/ }))
+    expect(await screen.findByText('이메일을 입력해주세요')).toBeInTheDocument()
+    expect(screen.getByText('비밀번호를 입력해주세요')).toBeInTheDocument()
+    expect(apiClient.post).not.toHaveBeenCalled()
   })
 })

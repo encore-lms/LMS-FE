@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse, type RequestHandler } from 'msw'
 import type {
   Role,
   QuizListItem,
@@ -9,8 +9,15 @@ import type {
   CertReviewQueue,
   CertReviewDetail,
 } from '@/shared/types'
-import { attendanceHandlers } from '@/features/student/attendance/mocks'
-import { dashboardHandlers } from '@/features/student/dashboard/mocks'
+// 기능별 mock 자동 수집 — features/**/mocks.ts 가 `export const handlers`를 내보내면 자동 등록된다.
+// 새 화면이 늘어도 이 파일을 수정하지 않으므로 머지 충돌이 나지 않는다.
+const featureMockModules = import.meta.glob<{ handlers?: RequestHandler[] }>(
+  '../features/**/mocks.ts',
+  { eager: true },
+)
+const featureHandlers = Object.values(featureMockModules).flatMap(
+  (m) => m.handlers ?? [],
+)
 
 // {data} 래핑 헬퍼 — mock 응답은 ApiResponse<T>(= {data:T}) 형태를 지킨다.
 const ok = <T>(data: T) => HttpResponse.json({ data })
@@ -489,6 +496,5 @@ export const handlers = [
   }),
   ...quizHandlers,
   ...adminHandlers,
-  ...attendanceHandlers,
-  ...dashboardHandlers,
+  ...featureHandlers,
 ]

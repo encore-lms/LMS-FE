@@ -18,4 +18,9 @@ export type {
   QuizListItem,
   QuizResult,
 } from './quiz'
-export type { MartState, MartStatus, AdminDashboardSummary } from './admin'
+export type {
+  OverallStatus,
+  DashboardListItem,
+  QuickEntry,
+  AdminDashboardSummary,
+} from './admin'

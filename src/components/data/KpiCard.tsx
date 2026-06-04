@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
 
-export type KpiTone = 'default' | 'brand' | 'success' | 'warning' | 'danger'
+export type KpiTone =
+  | 'default'
+  | 'brand'
+  | 'accent'
+  | 'success'
+  | 'warning'
+  | 'danger'
 
 interface KpiCardProps {
   label: string
@@ -15,6 +21,7 @@ interface KpiCardProps {
 const TONE_VALUE: Record<KpiTone, string> = {
   default: 'text-fg',
   brand: 'text-brand',
+  accent: 'text-accent-strong',
   success: 'text-success',
   warning: 'text-warning',
   danger: 'text-danger',

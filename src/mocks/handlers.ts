@@ -140,14 +140,111 @@ const quizHandlers = [
   ),
 ]
 
-// 운영(admin) — 대시보드 요약. 나머지 운영 화면은 후속 PR에서 소비.
+// 운영(admin) — 대시보드 요약(v2). 나머지 운영 화면은 후속 PR에서 소비.
 const adminHandlers = [
   http.get('/api/admin/dashboard', () =>
     ok<AdminDashboardSummary>({
-      certificationRequests: 12,
-      reviewPending: 5,
-      changesRequested: 3,
-      mart: { state: 'stale', updatedAt: '2026-06-04T01:00:00Z' },
+      status: { level: 'caution', message: '마트 오류 1건' },
+      martUpdatedAt: '2026-05-18T06:00:00Z',
+      kpis: {
+        certificationRequests: { value: 24, newCount: 12, total: 24 },
+        reviewing: { value: 8, avgDays: 1.8 },
+        changesRequested: { value: 5, awaitingStudent: 3 },
+        certified: { value: 142, monthDelta: 18 },
+        martErrors: { value: 1 },
+      },
+      urgentReviews: [
+        {
+          id: 'u1',
+          cohort: '데이터분석 6기',
+          name: '김지원',
+          detail: '인증 요청 · 5일 경과',
+          isNew: true,
+        },
+        {
+          id: 'u2',
+          cohort: '백엔드 11기',
+          name: '이서연',
+          detail: '보완 응답 · 4일 경과',
+          isNew: true,
+        },
+        {
+          id: 'u3',
+          cohort: '프론트엔드 8기',
+          name: '박도윤',
+          detail: '인증 요청 · 3일 경과',
+          isNew: true,
+        },
+        {
+          id: 'u4',
+          cohort: 'AI엔지니어 4기',
+          name: '최하늘',
+          detail: '검토 중 · 3일 경과',
+          isNew: true,
+        },
+        {
+          id: 'u5',
+          cohort: 'DevOps 2기',
+          name: '정민호',
+          detail: '인증 요청 · 2일 경과',
+          isNew: true,
+        },
+      ],
+      riskFlags: [
+        {
+          id: 'r1',
+          cohort: '데이터분석 5기',
+          name: '강유진',
+          detail: '위험 플래그 4건 · 출결 미달',
+        },
+        {
+          id: 'r2',
+          cohort: '백엔드 11기',
+          name: '송재현',
+          detail: '위험 플래그 3건 · 과제 미제출',
+        },
+        {
+          id: 'r3',
+          cohort: '프론트엔드 7기',
+          name: '윤소율',
+          detail: '위험 플래그 3건 · 평판 -2',
+        },
+        {
+          id: 'r4',
+          cohort: 'AI엔지니어 3기',
+          name: '한지훈',
+          detail: '위험 플래그 2건 · 보완 지연',
+        },
+        {
+          id: 'r5',
+          cohort: 'DevOps 1기',
+          name: '임채원',
+          detail: '위험 플래그 2건 · 출결 경고',
+        },
+      ],
+      quickEntry: [
+        {
+          key: 'review',
+          title: '인증 검토 큐',
+          meta: '대기 8건 · 평균 1.8일',
+          to: '/admin/certification-review',
+          cta: '인증 검토로 이동',
+        },
+        {
+          key: 'accounts',
+          title: '운영 계정·권한',
+          meta: '활성 계정 14 · 변경 2',
+          to: '/admin/accounts',
+          cta: '계정 관리로 이동',
+        },
+        {
+          key: 'csv',
+          title: 'CSV 매핑',
+          meta: '대기 매핑 3건',
+          to: '/admin/csv',
+          cta: 'CSV 매핑으로 이동',
+        },
+      ],
     }),
   ),
 ]

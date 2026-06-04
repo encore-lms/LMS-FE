@@ -7,6 +7,7 @@ import type {
   QuizAttempt,
   AdminDashboardSummary,
 } from '@/shared/types'
+import { attendanceHandlers } from '@/features/student/attendance/mocks'
 
 // {data} 래핑 헬퍼 — mock 응답은 ApiResponse<T>(= {data:T}) 형태를 지킨다.
 const ok = <T>(data: T) => HttpResponse.json({ data })
@@ -267,4 +268,5 @@ export const handlers = [
   }),
   ...quizHandlers,
   ...adminHandlers,
+  ...attendanceHandlers,
 ]

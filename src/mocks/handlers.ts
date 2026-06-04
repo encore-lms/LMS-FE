@@ -5,6 +5,7 @@ import type {
   QuizQuestion,
   QuizResult,
   QuizAttempt,
+  AdminDashboardSummary,
 } from '@/shared/types'
 
 // {data} 래핑 헬퍼 — mock 응답은 ApiResponse<T>(= {data:T}) 형태를 지킨다.
@@ -139,6 +140,18 @@ const quizHandlers = [
   ),
 ]
 
+// 운영(admin) — 대시보드 요약. 나머지 운영 화면은 후속 PR에서 소비.
+const adminHandlers = [
+  http.get('/api/admin/dashboard', () =>
+    ok<AdminDashboardSummary>({
+      certificationRequests: 12,
+      reviewPending: 5,
+      changesRequested: 3,
+      mart: { state: 'stale', updatedAt: '2026-06-04T01:00:00Z' },
+    }),
+  ),
+]
+
 export const handlers = [
   http.post('/api/auth/login', async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string }
@@ -156,4 +169,5 @@ export const handlers = [
     })
   }),
   ...quizHandlers,
+  ...adminHandlers,
 ]

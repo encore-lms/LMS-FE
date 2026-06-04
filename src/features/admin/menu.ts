@@ -1,9 +1,12 @@
 import type { MenuItem } from '@/components/layout'
 
-// 운영(매니저/ADMIN) 사이드바 메뉴.
-// 라벨·순서: Figma "운영 대시보드 v2" 사이드바 정합(2026-06-04).
-// 항목 구성: 화면_IA.md §운영 콘솔 기준 유지 — 멘토·이력서·외부 연동은 Figma 사이드바엔
-// 없으나 실제 운영 화면이라 하단에 유지(라우트는 기존 그대로, 라벨만 변경).
+// 운영(매니저/ADMIN) 사이드바 메뉴 — Figma "운영 대시보드 v2" 사이드바와 1:1 (14개).
+// 라벨·순서·구성 모두 Figma v2 정합(2026-06-04).
+//
+// Figma 사이드바에 없어 제외한 실제 운영 화면(라우트는 존재하므로 URL/컨텍스트 진입 가능,
+// 추후 그룹·하위 네비 설계 시 재배치): 학생 이력서 피드백(/admin/resume-feedback),
+// 외부 연동(/admin/integrations), 멘토 배정 관리(/admin/mentor-assignment),
+// 멘토링 일지 관리(/admin/mentor-journals), 멘토링 일지 템플릿(/admin/journal-templates).
 export const adminMenu: MenuItem[] = [
   { label: '대시보드', to: '/admin' },
   { label: '과정·기수·교과목', to: '/admin/courses' },
@@ -19,10 +22,4 @@ export const adminMenu: MenuItem[] = [
   { label: '학습 기록 검토', to: '/admin/record-review' },
   { label: 'PLAY 관리', to: '/admin/play' },
   { label: '설정', to: '/admin/settings' },
-  // Figma v2 사이드바엔 없지만 실제 운영 화면 — 하단 유지
-  { label: '학생 이력서 피드백', to: '/admin/resume-feedback' },
-  { label: '외부 연동', to: '/admin/integrations' },
-  { label: '멘토 배정 관리', to: '/admin/mentor-assignment' },
-  { label: '멘토링 일지 관리', to: '/admin/mentor-journals' },
-  { label: '멘토링 일지 템플릿', to: '/admin/journal-templates' },
 ]

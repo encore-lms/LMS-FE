@@ -5,6 +5,7 @@ import type { RouteObject } from 'react-router-dom'
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
 const ReviewQueuePage = lazy(() => import('./certificates/ReviewQueuePage'))
 const ReviewDetailPage = lazy(() => import('./certificates/ReviewDetailPage'))
+const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -13,6 +14,10 @@ export const adminRoutes: RouteObject[] = [
       { index: true, element: <AdminDashboard /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
+      {
+        path: 'certificates/:certificateId/snapshot',
+        element: <SnapshotPage />,
+      },
     ],
   },
 ]

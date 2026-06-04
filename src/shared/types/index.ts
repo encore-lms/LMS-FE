@@ -35,4 +35,6 @@ export type {
   ArtifactApproval,
   AuditEntry,
   CertReviewDetail,
+  SnapshotEvidence,
+  CertSnapshot,
 } from './certificates'

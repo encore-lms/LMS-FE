@@ -91,3 +91,30 @@ export interface CertReviewDetail {
   artifactApprovals: ArtifactApproval[] // 산출물 승인 상태
   auditLog: AuditEntry[] // 감사 로그
 }
+
+// --- 스냅샷 상세 (Flow 11 C3) ---
+
+export interface SnapshotEvidence {
+  title: string
+  sub: string
+}
+
+// 동결 스냅샷(/admin/certificates/:certificateId/snapshot) 응답.
+export interface CertSnapshot {
+  certificateId: string
+  student: { name: string; certId: string; cohort: string }
+  isPublic: boolean
+  issuedAt: string
+  metrics: {
+    trainingHours: number
+    attendance: number
+    quizAvg: number
+    submissionRate: number
+    submissionRaw: string
+  }
+  skills: SkillScore[]
+  skillAvg: number
+  evidence: SnapshotEvidence[] // 대표 근거(외부 공개)
+  payloadJson: string // 동결 공개 payload (멀티라인)
+  verify: { url: string; snapshotHash: string; verifLevel: string }
+}

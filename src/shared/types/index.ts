@@ -38,3 +38,12 @@ export type {
   SnapshotEvidence,
   CertSnapshot,
 } from './certificates'
+export type {
+  RecordCategory,
+  RecordReviewStatus,
+  RecordDecision,
+  InstructorNote,
+  RecordAttachmentRef,
+  RecordReviewItem,
+  RecordReviewQueue,
+} from './records'

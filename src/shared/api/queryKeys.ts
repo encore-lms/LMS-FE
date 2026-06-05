@@ -20,4 +20,6 @@ export const adminKeys = {
     [...adminKeys.all, 'reviews', reviewId] as const,
   snapshot: (certificateId: string) =>
     [...adminKeys.all, 'snapshot', certificateId] as const,
+  recordReviewQueue: (filter?: { category?: string; status?: string }) =>
+    [...adminKeys.all, 'record-reviews', { filter: filter ?? {} }] as const,
 } as const

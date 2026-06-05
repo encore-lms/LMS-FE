@@ -6,6 +6,9 @@ const AdminDashboard = lazy(() => import('./AdminDashboard'))
 const ReviewQueuePage = lazy(() => import('./certificates/ReviewQueuePage'))
 const ReviewDetailPage = lazy(() => import('./certificates/ReviewDetailPage'))
 const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
+const RecordReviewQueuePage = lazy(
+  () => import('./records/RecordReviewQueuePage'),
+)
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -18,6 +21,7 @@ export const adminRoutes: RouteObject[] = [
         path: 'certificates/:certificateId/snapshot',
         element: <SnapshotPage />,
       },
+      { path: 'records/review', element: <RecordReviewQueuePage /> },
     ],
   },
 ]

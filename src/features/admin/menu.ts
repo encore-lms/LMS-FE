@@ -19,7 +19,7 @@ export const adminMenu: MenuItem[] = [
   { label: '마일리지', to: '/admin/mileage' },
   { label: '증명서 템플릿', to: '/admin/certificate-templates' },
   { label: '퀴즈 운영', to: '/admin/quizzes' },
-  { label: '학습 기록 검토', to: '/admin/record-review' },
+  { label: '학습 기록 검토', to: '/admin/records/review' },
   { label: 'PLAY 관리', to: '/admin/play' },
   { label: '설정', to: '/admin/settings' },
 ]

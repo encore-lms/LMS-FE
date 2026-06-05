@@ -9,6 +9,94 @@ import type {
 // 데이터는 Figma 증명서 미리보기(249:27) 시안 재현. 탭1(종합 요약) 포함.
 const ok = <T>(data: T) => HttpResponse.json({ data })
 
+// 프로젝트별 커밋 잔디밭 mock — 결정론적 패턴(요일·주차 기반). 지표는 그리드에서 산출해 일관성 보장.
+function buildActivity(
+  meta: {
+    id: string
+    name: string
+    period: string
+    weeksLabel: string
+    certified: boolean
+    contrib: string
+  },
+  weeks: number,
+  shape: (w: number, d: number) => number,
+) {
+  const grid = Array.from({ length: weeks }, (_, w) =>
+    Array.from({ length: 7 }, (_, d) => Math.max(0, shape(w, d))),
+  )
+  const flat = grid.flat()
+  const totalCommits = flat.reduce((a, b) => a + b, 0)
+  const activeDays = flat.filter((c) => c > 0).length
+  let s = 0
+  let best = 0
+  for (const c of flat) {
+    if (c > 0) {
+      s += 1
+      best = Math.max(best, s)
+    } else s = 0
+  }
+  return {
+    ...meta,
+    grid,
+    totalCommits,
+    activeDays,
+    totalDays: flat.length,
+    longestStreak: best,
+    weeklyAvg: Math.round((totalCommits / weeks) * 10) / 10,
+  }
+}
+
+const mockCommitActivity = [
+  buildActivity(
+    {
+      id: 'pj1',
+      name: 'Encore Mart — 마이크로서비스 백엔드',
+      period: '2026.02.03 ~ 2026.04.18',
+      weeksLabel: '11주',
+      certified: true,
+      contrib: '38%',
+    },
+    11,
+    (w, d) => {
+      if (d === 6) return 0 // 일요일 휴식
+      const mid = w >= 2 && w <= 8 ? 1 : 0 // 중반 집중
+      const base = (w + d) % 4 === 0 ? 0 : 1 + ((w * 2 + d) % 3)
+      return base + mid
+    },
+  ),
+  buildActivity(
+    {
+      id: 'pj2',
+      name: '한국어 회의록 요약 LLM 파이프라인',
+      period: '2026.01.06 ~ 2026.02.16',
+      weeksLabel: '6주',
+      certified: true,
+      contrib: '100%',
+    },
+    6,
+    (w, d) => {
+      if (d === 6 && w % 2 === 0) return 0
+      return 1 + ((w * 3 + d) % 4) // 단독 100% — 빡센 패턴
+    },
+  ),
+  buildActivity(
+    {
+      id: 'pj3',
+      name: 'MSA 도서 추천 — 시스템 설계',
+      period: '2026.04.06 ~ 2026.04.26',
+      weeksLabel: '3주',
+      certified: false,
+      contrib: '25%',
+    },
+    3,
+    (w, d) => {
+      if (d >= 5) return d === 6 ? 0 : 1
+      return 2 + ((w + d) % 3) // 짧지만 밀도 높음
+    },
+  ),
+]
+
 const mockOverview: CertificateOverview = {
   header: {
     studentName: '김수강',
@@ -428,6 +516,7 @@ const mockOverview: CertificateOverview = {
       summary:
         '응답 320→145ms·결제 자동복구 95%는 Kafka 이벤트 라우팅 + 트랜잭션 격리 재설계의 결과. 배포·모니터링까지 이어져 E2E 운영 가능 수준을 입증.',
     },
+    commitActivity: mockCommitActivity,
   },
   problem: {
     kpis: [

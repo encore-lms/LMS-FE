@@ -1,6 +1,8 @@
 import { cn } from '@/shared/lib/cn'
 import type { CertProjectsTab } from '../types'
 import { TabHead, AiBanner } from './TechTab'
+import { CERT_V2 } from '../config'
+import { ProjectContribution } from '../v2/ProjectContribution'
 
 // 증명서 탭3 프로젝트 — 프로젝트 카드·기여 히트맵·Before/After·공개 산출물.
 const card =
@@ -80,26 +82,33 @@ export function ProjectsTab({ p }: { p: CertProjectsTab }) {
         ))}
       </div>
 
+      {/* v2: 프로젝트별 커밋 잔디밭(선택형) — 켜지면 아래 집계 매트릭스 대신 노출 */}
+      {CERT_V2 && p.commitActivity && (
+        <ProjectContribution activities={p.commitActivity} />
+      )}
+
       <div className="flex flex-col gap-4 lg:flex-row">
-        <section className={cn(card, 'flex flex-1 flex-col gap-3')}>
-          <span className="text-fg text-[15px] font-bold">
-            Contribution Matrix
-          </span>
-          <span className="text-fg-subtle text-[11px]">
-            최근 12주 · 일별 커밋 활동
-          </span>
-          <div className="grid grid-cols-12 gap-1">
-            {p.matrix.map((v, i) => (
-              <span
-                key={i}
-                className={cn(
-                  'aspect-square rounded-[3px]',
-                  HEAT[v] ?? HEAT[0],
-                )}
-              />
-            ))}
-          </div>
-        </section>
+        {!(CERT_V2 && p.commitActivity) && (
+          <section className={cn(card, 'flex flex-1 flex-col gap-3')}>
+            <span className="text-fg text-[15px] font-bold">
+              Contribution Matrix
+            </span>
+            <span className="text-fg-subtle text-[11px]">
+              최근 12주 · 일별 커밋 활동
+            </span>
+            <div className="grid grid-cols-12 gap-1">
+              {p.matrix.map((v, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    'aspect-square rounded-[3px]',
+                    HEAT[v] ?? HEAT[0],
+                  )}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className={cn(card, 'flex flex-1 flex-col gap-3')}>
           <span className="text-fg text-[15px] font-bold">

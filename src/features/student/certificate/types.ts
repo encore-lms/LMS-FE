@@ -7,6 +7,7 @@ export type CertTab =
   | 'projects'
   | 'problem-solving'
   | 'growth-reputation'
+  | 'ai-analysis' // v2 (CERT_V2): AI 분석 통합 탭
 
 export type Tone =
   | 'brand'
@@ -101,6 +102,84 @@ export interface CertSummaryTab {
   projects: CertProject[]
   checklist: CertCheckItem[]
   checkDoneLabel: string // "4 / 5"
+  // v2 (CERT_V2): AI 프로파일링·페르소나·도메인 도넛·온톨로지 맵
+  aiProfile?: CertAiProfile
+  personas?: CertPersona[]
+  domains?: CertDomain[]
+  ontology?: CertOntology
+}
+
+// ── v2 공통 타입 (CERT_V2 플래그 — AI 분석·동료 대비·관계 시각화. 끄면 무시됨) ──
+export interface CertAiProfileRow {
+  label: string // 업무/리더십/학습/소통/기술
+  value: string
+}
+export interface CertAiProfile {
+  rows: CertAiProfileRow[]
+  summary: string // AI 한줄 요약
+  strengths: string // 핵심 강점
+  growth: string // 성장 포인트
+}
+export interface CertPersona {
+  rank: number
+  title: string
+}
+export interface CertDomain {
+  label: string
+  pct: number
+  tone: Tone
+}
+export interface CertAiVerdict {
+  strength: string // 강점
+  gap: string // 보완
+  unique: string // 특이형
+}
+export type OntologyKind =
+  | 'self'
+  | 'subject'
+  | 'skill'
+  | 'method'
+  | 'project'
+  | 'domain'
+export interface CertOntologyNode {
+  id: string
+  label: string
+  x: number // 0~100 (viewBox 비율)
+  y: number // 0~100
+  kind: OntologyKind
+}
+export interface CertOntology {
+  nodes: CertOntologyNode[]
+  edges: [string, string][] // 노드 id 쌍
+}
+/** 탭3 프로젝트 v2 */
+export interface CertProjectsAi {
+  summary: string
+}
+/** 탭4 문제해결·협업 v2 */
+export interface CertProblemCap {
+  label: string
+  score: number
+  tag: string // 연결 PeerTag
+  tone: Tone
+}
+export interface CertProblemAi {
+  caps: CertProblemCap[]
+  style: string // 스타일 종합
+  scaling: string // 확장 종합
+}
+/** 탭5 성장·평판 v2 — AI 상담 감성·키워드 버블 */
+export type SentimentPhase = 'early' | 'mid' | 'late'
+export interface CertSentimentBubble {
+  label: string
+  x: number // 0~100
+  y: number // 0~100
+  r: number // 반지름(px, viewBox 기준)
+  phase: SentimentPhase
+}
+export interface CertSentiment {
+  bubbles: CertSentimentBubble[]
+  trend: string // "V자 변동형: 위기(4회차)→멘토링→급반등"
 }
 
 /** 탭2 기술·검증 */
@@ -108,6 +187,7 @@ export interface CertCategoryScore {
   label: string
   sub: string
   score: number
+  percentile?: string // v2: 동료 대비 "상위 5%" (CERT_V2)
 }
 export interface CertCert {
   name: string
@@ -128,6 +208,7 @@ export interface CertTechTab {
   examTrend: number[]
   certs: CertCert[]
   assignments: CertAssignmentRow[]
+  aiVerdict?: CertAiVerdict // v2: AI 기술 종합 판단 (CERT_V2)
 }
 
 /** 탭3 프로젝트 */
@@ -160,6 +241,7 @@ export interface CertProjectsTab {
   matrix: number[] // 0~3 강도, 주차 순
   beforeAfter: CertBeforeAfter[]
   artifacts: CertArtifact[]
+  ai?: CertProjectsAi // v2 (CERT_V2)
 }
 
 /** 탭4 문제해결·협업 */
@@ -194,6 +276,7 @@ export interface CertProblemTab {
   distribution: CertDistribution[]
   tags: CertTagCloud[]
   tagCases: CertTagCase[]
+  ai?: CertProblemAi // v2 (CERT_V2)
 }
 
 /** 탭5 성장·평판 */
@@ -221,6 +304,7 @@ export interface CertGrowthTab {
   reputation: CertReputation[]
   shortComments: CertShortComment[]
   recommendations: CertRecommendation[]
+  sentiment?: CertSentiment // v2 (CERT_V2)
 }
 
 // ── 보완 요청 상세(/student/certificate/changes-requested) ──

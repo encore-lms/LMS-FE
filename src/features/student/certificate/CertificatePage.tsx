@@ -10,6 +10,8 @@ import { TechTab } from './tabs/TechTab'
 import { ProjectsTab } from './tabs/ProjectsTab'
 import { ProblemTab } from './tabs/ProblemTab'
 import { GrowthTab } from './tabs/GrowthTab'
+import { AiTab } from './tabs/AiTab'
+import { CERT_V2 } from './config'
 import type { CertTab } from './types'
 
 /**
@@ -48,6 +50,7 @@ export default function CertificatePage() {
       {tab === 'projects' && <ProjectsTab p={data.projects} />}
       {tab === 'problem-solving' && <ProblemTab p={data.problem} />}
       {tab === 'growth-reputation' && <GrowthTab g={data.growth} />}
+      {tab === 'ai-analysis' && CERT_V2 && <AiTab data={data} />}
 
       {/* 하단 액션바 */}
       <div className="bg-brand-deep fixed right-8 bottom-6 left-[232px] z-30 flex items-center justify-between rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">

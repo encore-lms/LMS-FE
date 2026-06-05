@@ -1,0 +1,7 @@
+// 수강 역량 증명서 캐시 키 — 기능 로컬(공유 queryKeys 미오염).
+export const certKeys = {
+  all: ['student-certificate'] as const,
+  overview: () => [...certKeys.all, 'overview'] as const,
+  changes: () => [...certKeys.all, 'changes'] as const,
+  publication: () => [...certKeys.all, 'publication'] as const,
+} as const

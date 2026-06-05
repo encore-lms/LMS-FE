@@ -26,6 +26,11 @@ const AttendanceFormPage = lazy(
 const ProfilePage = lazy(() => import('./profile/ProfilePage'))
 const QuizTakePage = lazy(() => import('./quiz/QuizTakePage'))
 const QuizResultPage = lazy(() => import('./quiz/QuizResultPage'))
+const RecordsPage = lazy(() => import('./records/RecordsPage'))
+const BlogFormPage = lazy(() => import('./records/forms/BlogFormPage'))
+const BlogEditPage = lazy(() => import('./records/forms/BlogEditPage'))
+const StudyFormPage = lazy(() => import('./records/forms/StudyFormPage'))
+const CertFormPage = lazy(() => import('./records/forms/CertFormPage'))
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -47,6 +52,12 @@ export const studentRoutes: RouteObject[] = [
       { path: 'certificate/changes-requested', element: <CertChangesPage /> },
       { path: 'certificate/publication', element: <CertPublicationPage /> },
       { path: 'quizzes', element: <QuizListPage /> },
+      // 기록실(목록) + 블로그/스터디/자격증 등록 폼 + 블로그 수정.
+      { path: 'records', element: <RecordsPage /> },
+      { path: 'records/new/blog', element: <BlogFormPage /> },
+      { path: 'records/new/study', element: <StudyFormPage /> },
+      { path: 'records/new/certificate', element: <CertFormPage /> },
+      { path: 'records/blog/:recordId/edit', element: <BlogEditPage /> },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },
       { path: 'attendance/form', element: <AttendanceFormPage /> },

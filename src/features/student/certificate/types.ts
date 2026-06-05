@@ -242,6 +242,22 @@ export interface CertProjectsTab {
   beforeAfter: CertBeforeAfter[]
   artifacts: CertArtifact[]
   ai?: CertProjectsAi // v2 (CERT_V2)
+  commitActivity?: CertProjectActivity[] // v2: 프로젝트별 커밋 잔디밭(선택형)
+}
+/** 탭3 v2 — 프로젝트별 커밋 활동(레포 단위 잔디밭 + 참여 일관성 지표) */
+export interface CertProjectActivity {
+  id: string
+  name: string
+  period: string // "2026.02.03 ~ 2026.04.18"
+  weeksLabel: string // "11주"
+  certified: boolean
+  grid: number[][] // weeks × 7(요일), 칸당 커밋 수
+  totalCommits: number
+  activeDays: number
+  totalDays: number
+  longestStreak: number
+  weeklyAvg: number
+  contrib: string // "38%"
 }
 
 /** 탭4 문제해결·협업 */

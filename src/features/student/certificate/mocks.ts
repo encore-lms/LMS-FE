@@ -1,0 +1,680 @@
+import { http, HttpResponse } from 'msw'
+import type {
+  CertChangesData,
+  CertificateOverview,
+  CertPublicationData,
+} from './types'
+
+// 수강 역량 증명서 mock — 기능 로컬. 자동 수집 규약: `export const handlers`.
+// 데이터는 Figma 증명서 미리보기(249:27) 시안 재현. 탭1(종합 요약) 포함.
+const ok = <T>(data: T) => HttpResponse.json({ data })
+
+const mockOverview: CertificateOverview = {
+  header: {
+    studentName: '김수강',
+    courseName: '백엔드 부트캠프',
+    cohortName: '3기',
+    periodLabel: '2025-03-04 — 2025-09-12 · 총 960h',
+    certId: 'abc-1234',
+    isPublic: false,
+    status: 'changes_requested',
+  },
+  changeFlags: [
+    {
+      id: 'f1',
+      badge: '점수',
+      badgeTone: 'warning',
+      title: '점수 재산정 누락',
+      detail: '재응시 점수가 산출물에 반영되지 않음',
+    },
+    {
+      id: 'f2',
+      badge: '산출물',
+      badgeTone: 'accent',
+      title: '대표 기록 강사 미승인',
+      detail: '8주차 블로그 승인 대기',
+    },
+    {
+      id: 'f3',
+      badge: '개인정보',
+      badgeTone: 'danger',
+      title: '개인정보 위험',
+      detail: '공개 payload 연락처 노출 점검',
+    },
+  ],
+  summary: {
+    overallScore: 86,
+    scoreMax: 100,
+    grade: 'A',
+    confirmedLabel: 'confirmed',
+    ratioLabel: '4 / 5',
+    sourceLabel: '자동 + 360°',
+    kpis: [
+      {
+        key: 'hours',
+        label: '교육시간',
+        value: '960',
+        unit: 'h',
+        delta: 'HRD 기준',
+        deltaTone: 'info',
+      },
+      {
+        key: 'quiz',
+        label: '시험 평균',
+        value: '82',
+        delta: '평균 이상',
+        deltaTone: 'brand',
+      },
+      {
+        key: 'attendance',
+        label: '출석률',
+        value: '88',
+        unit: '%',
+        delta: '정상',
+        deltaTone: 'brand',
+      },
+      {
+        key: 'changes',
+        label: '보완 요청',
+        value: '2',
+        unit: '건',
+        delta: '처리 필요',
+        deltaTone: 'warning',
+      },
+    ],
+    skillAxes: [
+      { key: '기술', score: 82, peer: 74, confirmed: true },
+      { key: '책임감', score: 76, peer: 70, confirmed: true },
+      { key: '소통', score: 88, peer: 80, confirmed: true },
+      { key: '성장', score: 79, peer: 72, confirmed: true },
+      { key: '팀워크', score: 84, peer: 76, confirmed: true },
+      { key: '문제해결', score: 81, peer: 75, confirmed: true },
+    ],
+    skillAvg: 81.7,
+    quizCategories: [
+      { label: '백엔드 기초', score: 92 },
+      { label: 'DB / SQL', score: 84 },
+      { label: '네트워크', score: 78 },
+      { label: '컨테이너', score: 71 },
+      { label: '자료구조', score: 86 },
+    ],
+    evidence: [
+      {
+        id: 'e1',
+        label: '기술 82점',
+        detail: '프로젝트 v0.3 산출물 + 강사 코멘트 3건',
+        tone: 'brand',
+      },
+      {
+        id: 'e2',
+        label: '소통 88점',
+        detail: 'PR 리뷰 28건 + 멘토 평가',
+        tone: 'info',
+      },
+      {
+        id: 'e3',
+        label: '기록 12건',
+        detail: 'PeerReputation 5건 평균 · 회의록 12',
+        tone: 'accent',
+      },
+    ],
+    projects: [
+      {
+        id: 'p1',
+        kind: 'PROJECT',
+        title: 'Encore Mart — 마이크로서비스 백엔드',
+        meta: '주문 도메인 · 강사 승인 · 5/35',
+      },
+      {
+        id: 'p2',
+        kind: 'PROJECT',
+        title: '운영 LLM 추천 파이프라인',
+        meta: '추천 시스템 팀 · 진행 67%',
+      },
+      {
+        id: 'p3',
+        kind: 'RECORD',
+        title: '블로그 12편 일괄 · 자격증 1건',
+        meta: 'PCCE 승인 · 5/13',
+      },
+    ],
+    checklist: [
+      {
+        id: 'c1',
+        label: '점수 재산정 반영',
+        sub: '재응시 점수가 역량 리포트에 반영됨',
+        done: true,
+      },
+      {
+        id: 'c2',
+        label: '핵심 지표 산정 가능',
+        sub: '교육시간·출석률·시험평균 산정 가능',
+        done: true,
+        actionLabel: '리포트 보기',
+      },
+      {
+        id: 'c3',
+        label: '대표 프로젝트 1건 강사 승인',
+        sub: '프로젝트 v0.3 강사 승인 완료',
+        done: true,
+      },
+      {
+        id: 'c4',
+        label: '개인정보 점검',
+        sub: '공개 payload 민감정보 없음',
+        done: true,
+      },
+      {
+        id: 'c5',
+        label: '대표 기록 강사 승인',
+        sub: '8주차 블로그 승인 대기',
+        done: false,
+        actionLabel: '기록실 이동',
+      },
+    ],
+    checkDoneLabel: '4 / 5',
+  },
+  tech: {
+    avgScore: 83,
+    certCount: 1,
+    categories: [
+      {
+        label: '백엔드 기초 (Java · Spring)',
+        sub: 'Quiz #1–4 평균 92.5',
+        score: 92,
+      },
+      {
+        label: 'DB / SQL',
+        sub: 'Quiz #5–7 평균 84.2 · PCSQL 응시 예정',
+        score: 84,
+      },
+      { label: '네트워크 · OS', sub: 'Quiz #8–9 평균 78.0', score: 78 },
+      {
+        label: '알고리즘 · 자료구조',
+        sub: 'Quiz #10–11 평균 71.5 — 보완 필요',
+        score: 71,
+      },
+      {
+        label: '클라우드 · DevOps',
+        sub: 'Quiz #12 80점 · 자격증 PCCE 1건',
+        score: 80,
+      },
+      {
+        label: '트러블슈팅 · 디버깅',
+        sub: '실습 검증 8건 · 코드 리뷰 12회',
+        score: 88,
+      },
+    ],
+    examTrend: [70, 74, 72, 78, 75, 80, 82, 80, 85, 84, 88, 90],
+    certs: [
+      {
+        name: 'PCCE — 파이썬 코딩 입문',
+        detail: '발급 2026-02-14 · 검증 URL 보유',
+        statusLabel: '승인',
+        statusTone: 'success',
+      },
+      {
+        name: 'PCCP — 파이썬 코딩 전문',
+        detail: '제출 2026-03-02 · 운영자 검토 보기',
+        statusLabel: '검토 중',
+        statusTone: 'warning',
+      },
+      {
+        name: 'PCSQL — SQL 개발자 1급',
+        detail: '2026-05-09 응시 예정 · 자가 등록',
+        statusLabel: '응시 예정',
+        statusTone: 'info',
+      },
+    ],
+    assignments: [
+      {
+        week: 'W08',
+        title: 'Spring REST API + JWT 인증',
+        type: '실습',
+        status: '완료',
+      },
+      {
+        week: 'W10',
+        title: 'Kafka 이벤트 라우팅 미니 프로젝트',
+        type: '과제',
+        status: '완료',
+      },
+      {
+        week: 'W12',
+        title: '트랜잭션 격리 수준 비교 분석',
+        type: '리포트',
+        status: '—',
+      },
+      {
+        week: 'W14',
+        title: 'MSA 도서 추천 — 시스템 설계 발표',
+        type: '실습',
+        status: '완료',
+      },
+    ],
+  },
+  projects: {
+    certifiedLabel: '2 / 3',
+    contribAvg: '36%',
+    projects: [
+      {
+        id: 'pj1',
+        badge: 'PROJECT 1',
+        certified: true,
+        title: 'Encore Mart — 마이크로서비스 백엔드',
+        period: '2026.02 — 2026.04',
+        role: '팀 · 백엔드 리드',
+        contrib: '38%',
+        tags: ['Java 17', 'Spring Boot', 'Kafka', 'PostgreSQL', 'Docker'],
+        outcomes: [
+          '주문/결제 도메인 분리 · 트랜잭션 격리 수준 정합',
+          'Kafka 이벤트 라우팅 — 결제 실패 retry 95% 안정화',
+          'API 응답 평균 320ms → 145ms (-55%)',
+        ],
+      },
+      {
+        id: 'pj2',
+        badge: 'PROJECT 2',
+        certified: true,
+        title: '한국어 회의록 요약 LLM 파이프라인',
+        period: '2026.01 — 2026.03',
+        role: '개인 · 100%',
+        contrib: '100%',
+        tags: ['Python', 'Whisper', 'GPT-4', 'KoBART', 'FastAPI'],
+        outcomes: [
+          'Whisper STT + GPT-4 한국어 회의록 요약 자동화',
+          'KoBART 추출 요약 ROUGE-L 0.873',
+          '회의록 35건 검증 · 평균 처리 시간 12초',
+        ],
+      },
+    ],
+    matrix: Array.from({ length: 84 }, (_, i) => (i * 3 + 1) % 4),
+    beforeAfter: [
+      {
+        label: 'API 응답시간(P95)',
+        before: '320ms',
+        after: '145ms',
+        delta: '-55%',
+        good: true,
+      },
+      {
+        label: '결제 실패 자동복구율',
+        before: '42%',
+        after: '95%',
+        delta: '+53%p',
+        good: true,
+      },
+      {
+        label: 'DB connection 점유',
+        before: '180',
+        after: '68',
+        delta: '-62%',
+        good: true,
+      },
+      {
+        label: '트랜잭션 처리 오류',
+        before: '7건/주',
+        after: '0건/주',
+        delta: '100%↓',
+        good: true,
+      },
+    ],
+    artifacts: [
+      {
+        title: 'encore-mart-backend',
+        meta: 'github.com/kimsk · ★24 · 커밋 134 · PR 22',
+      },
+      {
+        title: 'meeting-summarizer-llm',
+        meta: 'github.com/kimsk · ★38 · 단독 100% · 커밋 92',
+      },
+      {
+        title: '비동기 처리 패턴 12편 시리즈',
+        meta: 'velog · 누적 12k 조회 · 12편 발행',
+      },
+      {
+        title: 'MSA 도서 추천 — 시스템 설계 발표',
+        meta: 'PDF · 32 슬라이드 · 발표일 2026-04-12',
+      },
+    ],
+  },
+  problem: {
+    kpis: [
+      {
+        key: 'cases',
+        label: '인증 사례',
+        value: '12',
+        unit: '건',
+        delta: 'STAR 구조 인증 반영',
+        deltaTone: 'brand',
+      },
+      {
+        key: 'independent',
+        label: '독립 해결률',
+        value: '83',
+        unit: '%',
+        delta: '독립 10건 / 동료 도움 2건',
+        deltaTone: 'brand',
+      },
+      {
+        key: 'avgdays',
+        label: '평균 해결 일수',
+        value: '2.3',
+        unit: '일',
+        delta: '문제 발생 → 해결 평균',
+        deltaTone: 'info',
+      },
+      {
+        key: 'tags',
+        label: '협업 태그',
+        value: '37',
+        unit: '회',
+        delta: 'PeerTag 5종 누적',
+        deltaTone: 'accent',
+      },
+    ],
+    cases: [
+      {
+        id: 'pc1',
+        badge: 'DB',
+        badgeTone: 'info',
+        resolved: true,
+        days: '3일',
+        title: 'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
+        detail: '결제 동시 처리 시 데드락 → 격리 수준 재설계, 실패율 8% → 0.2%',
+      },
+      {
+        id: 'pc2',
+        badge: 'DEPLOY',
+        badgeTone: 'accent',
+        resolved: true,
+        days: '2일',
+        title: 'Kafka 컨슈머 ack 미반영 — 메시지 중복 발생',
+        detail:
+          'ack 누락 → 컨슈머 재시작 시 중복 처리. enable.auto.commit=false 전환',
+      },
+      {
+        id: 'pc3',
+        badge: 'PERF',
+        badgeTone: 'warning',
+        resolved: true,
+        days: '1일',
+        title: 'N+1 쿼리 — 사용자 주문 목록 응답 7초',
+        detail: '@EntityGraph + fetch join 설계, 응답 7s → 380ms (-94%)',
+      },
+    ],
+    distribution: [
+      { label: 'DB / SQL', count: '4건 · 33%', pct: 33, tone: 'info' },
+      { label: '배포 / 인프라', count: '3건 · 25%', pct: 25, tone: 'accent' },
+      { label: '성능 / 메모리', count: '2건 · 17%', pct: 17, tone: 'warning' },
+      { label: '네트워크 / API', count: '2건 · 17%', pct: 17, tone: 'brand' },
+      { label: '기타', count: '1건 · 8%', pct: 8, tone: 'success' },
+    ],
+    tags: [
+      { tag: '#논리적설득', count: 10, tone: 'info' },
+      { tag: '#문제해결', count: 7, tone: 'brand' },
+      { tag: '#리더십', count: 6, tone: 'accent' },
+      { tag: '#코드리뷰', count: 5, tone: 'success' },
+      { tag: '#책임감', count: 4, tone: 'warning' },
+      { tag: '#성장', count: 3, tone: 'info' },
+      { tag: '#팀워크', count: 2, tone: 'accent' },
+    ],
+    tagCases: [
+      {
+        tag: '#논리적설득',
+        tone: 'info',
+        detail:
+          'PostgreSQL 격리 수준 논의 — 팀 회의에서 isolation level 변경 설득',
+      },
+      {
+        tag: '#문제해결',
+        tone: 'brand',
+        detail: 'Kafka 메시지 중복 — ack 처리 패턴 변경 후 7건 자동 복구',
+      },
+      {
+        tag: '#리더십',
+        tone: 'accent',
+        detail: 'Encore Mart 도메인 분리 — 백엔드 4인 가이드',
+      },
+      {
+        tag: '#코드리뷰',
+        tone: 'success',
+        detail: 'PR 22 · 동료 코드 리뷰 평균 4.8 / 5.0',
+      },
+    ],
+  },
+  growth: {
+    timeline: [64, 68, 66, 63, 66, 68, 70, 72, 75, 77, 76, 80, 83, 85, 85, 86],
+    startScore: 54,
+    currentScore: 86,
+    reputation: [
+      { key: '기술', score: 4.6, detail: 'PR 22 · 코드 리뷰 평균 4.6' },
+      {
+        key: '책임감',
+        score: 4.8,
+        detail: '리더십 평가 #1 · 동료 평가 5인 일관',
+      },
+      { key: '소통', score: 4.5, detail: '논리적설득 10회 · 코드리뷰 5회' },
+      { key: '성장', score: 4.3, detail: '최근 8주 점수 가속 구간' },
+      { key: '팀워크', score: 4.5, detail: 'Encore Mart 백엔드 4인 협업' },
+    ],
+    shortComments: [
+      {
+        quote: '"디버깅 접근이 논리적. 격리 수준 문제를 팀에 잘 설명함."',
+        by: '백엔드 동료 A',
+        tag: '#논리적설득',
+      },
+      {
+        quote: '"PR 코드 리뷰 코멘트가 따뜻하고 구체적. 함께 일하기 좋음."',
+        by: '백엔드 동료 B',
+        tag: '#코드리뷰',
+      },
+      {
+        quote: '"막힌 부분을 끝까지 파고듦. Kafka ack 처리 사례가 인상적."',
+        by: '백엔드 동료 C',
+        tag: '#문제해결',
+      },
+    ],
+    recommendations: [
+      {
+        role: '강사',
+        name: '이정훈 강사',
+        meta: '백엔드 멘토링 · 6개월',
+        quote:
+          '"트랜잭션 격리 수준 문제를 팀 회의에서 끝까지 정리하며 합의를 끌어냈음. 협업 태도와 기술 깊이 모두 인상적."',
+        date: '2026-05-10 작성',
+      },
+      {
+        role: '멘토',
+        name: '황설현 멘토',
+        meta: '코드 리뷰 · 12회',
+        quote:
+          '"PR 코멘트 품질이 일관되게 높음. 단순 지적이 아닌 구조적 개선 제안이 많아 동료 4인의 코드 품질에 함께 영향을 줌."',
+        date: '2026-05-08 작성',
+      },
+    ],
+  },
+}
+
+const mockChanges: CertChangesData = {
+  roundLabel: '1차 보완 요청',
+  summaryTitle: '정식 인증 전, 아래 3개 항목을 보완 주세요',
+  summarySub:
+    '보완 완료 후 [정식 인증 재요청] 버튼이 활성화됩니다 · 매니저가 다시 검토합니다.',
+  reasons: [
+    {
+      id: 'r1',
+      no: 1,
+      tags: [
+        { label: '근거 자료 누락', tone: 'warning' },
+        { label: '대상: 마이 프로필', tone: 'info' },
+      ],
+      title: 'GitHub URL과 블로그 URL을 추가해 주세요',
+      detail:
+        '외부 검증자가 보는 메인 페이지로 학습 활동을 확인합니다. GitHub URL과 블로그 URL이 비어 있어 근거 확인이 어려우니, 입력 후 재요청 부탁드립니다.',
+      actionLabel: '마이 프로필 이동',
+    },
+    {
+      id: 'r2',
+      no: 2,
+      tags: [
+        { label: '미승인 산출물', tone: 'accent' },
+        { label: '대상: 기록실', tone: 'info' },
+      ],
+      title: '대표 기록의 강사 승인 완료 후 재요청해 주세요',
+      detail:
+        '대표 기록으로 선택한 8주차 블로그 "JPA 영속성 컨텍스트 정리"가 아직 검토 중입니다. 강사 승인이 완료된 산출물만 정식 인증 근거로 사용됩니다.',
+      actionLabel: '기록실 이동',
+    },
+    {
+      id: 'r3',
+      no: 3,
+      tags: [
+        { label: '점수 재요청 필요', tone: 'danger' },
+        { label: '대상: 점수', tone: 'info' },
+      ],
+      title: 'JPA 영속성 컨텍스트 퀴즈를 재응시해 주세요',
+      detail:
+        '해당 퀴즈 결과가 동료 평균보다 낮게 산출되어 역량 리포트가 갱신되지 않았습니다. 재응시 후 점수가 반영되면 재요청해 주세요.',
+      actionLabel: '역량 리포트 이동',
+    },
+  ],
+  relatedAreas: [
+    {
+      id: 'a1',
+      letter: 'P',
+      letterTone: 'accent',
+      label: '프로필',
+      status: '보완 항목 1건',
+      done: false,
+    },
+    {
+      id: 'a2',
+      letter: 'S',
+      letterTone: 'success',
+      label: '점수',
+      status: '보완 항목 1건',
+      done: false,
+    },
+    {
+      id: 'a3',
+      letter: 'R',
+      letterTone: 'info',
+      label: '기록',
+      status: '보완 항목 1건',
+      done: false,
+    },
+    {
+      id: 'a4',
+      letter: 'Pj',
+      letterTone: 'brand',
+      label: '프로젝트',
+      status: '보완 사항 없음',
+      done: true,
+    },
+    {
+      id: 'a5',
+      letter: 'Pi',
+      letterTone: 'brand',
+      label: '개인정보',
+      status: '보완 사항 없음',
+      done: true,
+    },
+  ],
+  checklist: [
+    {
+      id: 'c1',
+      label: 'GitHub URL · 블로그 URL 입력 완료',
+      sub: '프로필 마이페이지 — 마이 프로필에서 추가하세요',
+      done: false,
+      actionLabel: '프로필 이동',
+    },
+    {
+      id: 'c2',
+      label: '대표 기록 강사 승인 완료',
+      sub: '8주차 블로그 검토 대기 중 — 강사 승인 시 자동 완료',
+      done: false,
+      actionLabel: '기록실 이동',
+    },
+    {
+      id: 'c3',
+      label: 'JPA 영속성 컨텍스트 퀴즈 재응시 완료',
+      sub: '역량 리포트의 해당 카테고리에서 재응시 가능',
+      done: false,
+      actionLabel: '역량 리포트 이동',
+    },
+  ],
+  checkDoneLabel: '0 / 3',
+}
+
+const mockPublication: CertPublicationData = {
+  issuedLabel: '수강 역량 증명서 발급 완료',
+  issuedSub: '백엔드 부트캠프 · 3기 · 인증일 2026-09-14',
+  verifyUrl: 'https://verify.playdata.io/cert/abc-1234',
+  toggles: [
+    {
+      id: 't1',
+      label: '외부 검증 URL 공개',
+      sub: '공개 시 위 URL로 누구나 검증 페이지를 볼 수 있습니다',
+      on: true,
+    },
+    {
+      id: 't2',
+      label: '상위 항목 공개',
+      sub: '종합 점수·6축·핵심 지표 등 상위 요약을 공개합니다',
+      on: true,
+    },
+    {
+      id: 't3',
+      label: 'PeerReputation (동료 5축 평가)',
+      sub: '동료 평판 평균 점수를 공개합니다',
+      on: false,
+    },
+    {
+      id: 't4',
+      label: 'ShortComment (동료 코멘트)',
+      sub: '동료 평가 코멘트를 공개합니다 (최대 5개)',
+      on: false,
+    },
+    {
+      id: 't5',
+      label: '검사 메타 공개',
+      sub: '집계 일시·산정 버전 등 메타 정보를 표시합니다',
+      on: true,
+      locked: true,
+    },
+  ],
+  preview: {
+    name: '수강 Kim',
+    course: '백엔드 부트캠프 · 3기',
+    score: 88,
+    attendance: '96%',
+    projects: 2,
+    grade: 'A',
+  },
+  onItems: [
+    '종합 점수·6축 요약',
+    '핵심 지표(교육시간·출석·시험)',
+    '대표 프로젝트 2건',
+    '자격증·외부 인증',
+    'PeerReputation/ShortComment (토글 ON 시)',
+  ],
+  offItems: [
+    '개인 식별 정보(연락처·이메일)',
+    '미승인·검토 중 산출물',
+    '상세 일지·회의록 원문',
+    '동료 평가 원문(코멘트 OFF 시)',
+  ],
+}
+
+export const handlers = [
+  http.get('/api/student/certificate', () =>
+    ok<CertificateOverview>(mockOverview),
+  ),
+  http.get('/api/student/certificate/changes', () =>
+    ok<CertChangesData>(mockChanges),
+  ),
+  http.get('/api/student/certificate/publication', () =>
+    ok<CertPublicationData>(mockPublication),
+  ),
+]

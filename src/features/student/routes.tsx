@@ -15,6 +15,9 @@ const CompetencyReportPage = lazy(
   () => import('./course/competency/CompetencyReportPage'),
 )
 const MentoringPage = lazy(() => import('./mentoring/MentoringPage'))
+const CertificatePage = lazy(() => import('./certificate/CertificatePage'))
+const CertChangesPage = lazy(() => import('./certificate/ChangesRequestedPage'))
+const CertPublicationPage = lazy(() => import('./certificate/PublicationPage'))
 const QuizListPage = lazy(() => import('./quiz/QuizListPage'))
 const AttendanceView = lazy(() => import('./attendance/AttendanceView'))
 const AttendanceFormPage = lazy(
@@ -40,6 +43,9 @@ export const studentRoutes: RouteObject[] = [
       },
       { path: 'course/competency', element: <CompetencyReportPage /> },
       { path: 'mentoring', element: <MentoringPage /> },
+      { path: 'certificate', element: <CertificatePage /> },
+      { path: 'certificate/changes-requested', element: <CertChangesPage /> },
+      { path: 'certificate/publication', element: <CertPublicationPage /> },
       { path: 'quizzes', element: <QuizListPage /> },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },

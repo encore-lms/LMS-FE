@@ -1,7 +1,6 @@
 import { http, HttpResponse, type RequestHandler } from 'msw'
 import type {
   Role,
-  QuizListItem,
   QuizQuestion,
   QuizResult,
   QuizAttempt,
@@ -31,70 +30,8 @@ function roleFromEmail(email: string): Role {
   return 'STUDENT'
 }
 
-const mockQuizzes: QuizListItem[] = [
-  {
-    quiz: {
-      id: 'q1',
-      cohortId: 'c1',
-      title: '1주차 React 퀴즈',
-      gradingMode: 'AUTO',
-      startsAt: '2026-06-01T00:00:00Z',
-      endsAt: '2026-06-30T23:59:59Z',
-      timeLimitMinutes: 30,
-      maxAttempts: 2,
-      shuffleQuestions: false,
-    },
-    myAttemptCount: 0,
-    state: 'available',
-  },
-  {
-    quiz: {
-      id: 'q2',
-      cohortId: 'c1',
-      title: '2주차 TS 퀴즈',
-      gradingMode: 'MIXED',
-      startsAt: '2026-05-20T00:00:00Z',
-      endsAt: '2026-06-10T23:59:59Z',
-      timeLimitMinutes: 45,
-      maxAttempts: 1,
-      shuffleQuestions: true,
-    },
-    myAttemptCount: 1,
-    state: 'pending_manual',
-    latestSubmission: {
-      id: 's2',
-      gradingStatus: 'pending_manual',
-      totalScore: 12,
-      submittedAt: '2026-06-02T10:00:00Z',
-    },
-  },
-  {
-    quiz: {
-      id: 'q3',
-      cohortId: 'c1',
-      title: '오리엔테이션 퀴즈',
-      gradingMode: 'AUTO',
-      startsAt: '2026-05-01T00:00:00Z',
-      endsAt: '2026-05-10T23:59:59Z',
-      timeLimitMinutes: 15,
-      maxAttempts: 1,
-      shuffleQuestions: false,
-    },
-    myAttemptCount: 1,
-    state: 'completed',
-    latestSubmission: {
-      id: 's3',
-      gradingStatus: 'finalized',
-      totalScore: 18,
-      submittedAt: '2026-05-05T09:00:00Z',
-    },
-  },
-]
-
-// 수강생 퀴즈 — 목록은 이번 PR(목록 화면)에서, 나머지는 다음 PR(응시/결과)에서 소비.
+// 수강생 퀴즈 — 목록은 features/student/quiz/mocks.ts(기능 로컬)로 이동. 응시/결과만 여기 유지.
 const quizHandlers = [
-  http.get('/api/student/quizzes', () => ok<QuizListItem[]>(mockQuizzes)),
-
   http.get('/api/student/quizzes/:quizId/questions', ({ params }) =>
     ok<QuizQuestion[]>([
       {

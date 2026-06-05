@@ -5,7 +5,10 @@ import { RequireRole } from '@/features/auth/RequireRole'
 import { RoleEntry } from '@/features/auth/RoleEntry'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { StyleGuidePage } from '@/features/styleguide/StyleGuidePage'
-import { studentRoutes } from '@/features/student/routes'
+import {
+  studentRoutes,
+  studentFullscreenRoutes,
+} from '@/features/student/routes'
 import { instructorRoutes } from '@/features/instructor/routes'
 import { mentorRoutes } from '@/features/mentor/routes'
 import { adminRoutes } from '@/features/admin/routes'
@@ -26,6 +29,8 @@ export const router = createBrowserRouter([
   {
     element: <AuthGuard />,
     children: [
+      // 전체화면(쉘 없음) — 퀴즈 응시 집중 모드. AppShell 밖에서 STUDENT 가드만 적용.
+      guarded(['STUDENT'], studentFullscreenRoutes),
       {
         element: <AppShell menus={MENUS} />,
         children: [

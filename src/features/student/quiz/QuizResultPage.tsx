@@ -1,0 +1,239 @@
+import { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { cn } from '@/shared/lib/cn'
+import { Button } from '@/components/ui/Button'
+import { Empty } from '@/components/ui/Empty'
+import { useQuizResult, useStudentQuizzes } from '../api/quiz'
+import { ResultSummary } from './result/ResultSummary'
+import { QuestionResultRow } from './result/QuestionResultRow'
+
+type Filter = 'all' | 'wrong' | 'pending' | 'feedback'
+
+/**
+ * 퀴즈 결과 (/student/quizzes/:quizId/result) — 쉘 포함. 요약·카테고리별 점수·문제별 결과.
+ * useQuizResult(answers) 기반으로 점수/정답률/카테고리를 파생 계산한다.
+ */
+export default function QuizResultPage() {
+  const { quizId = '' } = useParams()
+  const navigate = useNavigate()
+  const { data, isPending, isError, refetch } = useQuizResult(quizId)
+  const { data: list } = useStudentQuizzes()
+  const [filter, setFilter] = useState<Filter>('all')
+
+  const quiz = list?.find((it) => it.quiz.id === quizId)?.quiz
+
+  const stat = useMemo(() => {
+    const answers = data?.answers ?? []
+    const earned = answers.reduce((s, a) => s + a.earnedPoints, 0)
+    const max = answers.reduce((s, a) => s + a.maxPoints, 0)
+    const correct = answers.filter((a) => a.isCorrect).length
+    const wrong = answers.filter((a) => !a.isCorrect).length
+    const feedback = answers.filter((a) => a.feedback).length
+    const byCat = new Map<string, { earned: number; max: number }>()
+    answers.forEach((a) => {
+      const c = byCat.get(a.categoryId) ?? { earned: 0, max: 0 }
+      c.earned += a.earnedPoints
+      c.max += a.maxPoints
+      byCat.set(a.categoryId, c)
+    })
+    const categories = [...byCat.entries()].map(([name, v]) => ({
+      name,
+      score: v.max > 0 ? Math.round((v.earned / v.max) * 100) : 0,
+    }))
+    return {
+      answers,
+      earned,
+      max,
+      correct,
+      wrong,
+      feedback,
+      total: answers.length,
+      categories,
+    }
+  }, [data])
+
+  if (isPending) {
+    return <div className="text-fg-muted p-8">결과를 불러오는 중…</div>
+  }
+  if (isError || !data) {
+    return (
+      <div className="p-8">
+        <Empty
+          title="결과를 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={<Button onClick={() => refetch()}>다시 시도</Button>}
+        />
+      </div>
+    )
+  }
+
+  const pendingManual = data.submission.gradingStatus === 'pending_manual'
+  const filtered = stat.answers.filter(
+    (a) =>
+      filter === 'all'
+        ? true
+        : filter === 'wrong'
+          ? !a.isCorrect
+          : filter === 'feedback'
+            ? !!a.feedback
+            : false /* pending: 데이터에 표식 없음 */,
+  )
+
+  const FILTERS: { key: Filter; label: string }[] = [
+    { key: 'all', label: `전체 (${stat.total})` },
+    { key: 'wrong', label: `오답 (${stat.wrong})` },
+    { key: 'pending', label: `채점 대기 (0)` },
+    { key: 'feedback', label: `피드백 (${stat.feedback})` },
+  ]
+
+  return (
+    <div className="flex flex-col gap-5 p-8">
+      {/* 메타 행 */}
+      <div className="text-fg flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px]">
+        <Meta
+          label="제출 시각"
+          value={data.submission.submittedAt.replace('T', ' ').slice(0, 16)}
+        />
+        <Meta
+          label="응시 회차"
+          value={`${data.submission.attemptNo} / ${quiz?.maxAttempts ?? '-'}`}
+        />
+        {quiz && (
+          <Meta label="제한 시간" value={`${quiz.timeLimitMinutes}분`} />
+        )}
+        {pendingManual && (
+          <span className="bg-warning-bg text-warning ml-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold">
+            <span className="bg-warning size-1.5 rounded" />
+            수동 채점 대기
+          </span>
+        )}
+      </div>
+
+      <ResultSummary
+        earned={stat.earned}
+        max={stat.max}
+        correct={stat.correct}
+        wrong={stat.wrong}
+        pending={pendingManual ? 1 : 0}
+        notAnswered={0}
+        total={stat.total}
+        autoGradedCount={stat.total}
+        reattemptsLeft={Math.max(
+          0,
+          (quiz?.maxAttempts ?? 1) - data.submission.attemptNo,
+        )}
+      />
+
+      {/* 카테고리별 점수 */}
+      {stat.categories.length > 0 && (
+        <section className="border-border bg-surface flex flex-col gap-4 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)]">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-fg text-[15px] font-semibold">
+              카테고리별 점수
+            </h2>
+            <p className="text-fg-muted text-[12px]">
+              문항별 카테고리는 역량 리포트의 세부 지표와 연결됩니다
+            </p>
+          </div>
+          {stat.categories.map((c) => (
+            <div key={c.name} className="flex flex-col gap-2">
+              <div className="flex items-center justify-between text-[13px]">
+                <span className="text-fg font-medium">{c.name}</span>
+                <span
+                  className={cn(
+                    'font-semibold',
+                    c.score < 70 ? 'text-warning' : 'text-brand',
+                  )}
+                >
+                  {c.score}점
+                </span>
+              </div>
+              <div className="bg-surface-muted border-border h-2 w-full overflow-hidden rounded border">
+                <div
+                  className={cn(
+                    'h-full rounded',
+                    c.score < 70 ? 'bg-warning' : 'bg-brand',
+                  )}
+                  style={{ width: `${c.score}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* 문제별 결과 */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex items-end gap-5">
+          <h2 className="text-fg text-[15px] font-semibold">문제별 결과</h2>
+          <p className="text-fg-muted text-[12px]">
+            총 {stat.total}문항 · 피드백이 있는 답안은 강조 표시됩니다
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilter(f.key)}
+              className={cn(
+                'rounded-full border px-3.5 py-1.5 text-[12px] font-semibold',
+                filter === f.key
+                  ? 'border-brand bg-brand/10 text-brand'
+                  : 'border-border text-fg-muted bg-surface',
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {filtered.length === 0 ? (
+          <Empty title="해당하는 문항이 없어요" />
+        ) : (
+          filtered.map((a, i) => (
+            <QuestionResultRow key={a.questionId} num={i + 1} answer={a} />
+          ))
+        )}
+      </div>
+
+      {/* 액션 */}
+      <div className="flex items-center justify-between pt-2">
+        <button
+          type="button"
+          onClick={() => navigate('/student/quizzes')}
+          className="border-border text-fg-muted rounded-[10px] border px-4 py-3 text-[13px] font-semibold"
+        >
+          퀴즈 목록으로
+        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(`/student/quizzes/${quizId}/take`)}
+            className="border-accent-strong text-accent-strong rounded-[10px] border px-4 py-3 text-[13px] font-semibold"
+          >
+            재응시
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/student/quizzes')}
+            className="bg-brand rounded-[10px] px-10 py-3 text-[13px] font-semibold text-white"
+          >
+            나가기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Meta({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="flex items-center gap-2">
+      <span className="text-fg-subtle">{label}</span>
+      <span className="text-fg font-semibold">{value}</span>
+    </span>
+  )
+}

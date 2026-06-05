@@ -1,84 +1,208 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
-import type { QuizListItem } from '@/shared/types'
 import { useStudentQuizzes } from '../api/quiz'
-import { QuizTabs, type QuizTab } from './QuizTabs'
-import { QuizListItemCard } from './QuizListItemCard'
+import { CourseTabs } from '../course/CourseTabs'
+import type { StudentQuizListItem } from './types'
+import { QuizStatusChips, type QuizStatus } from './list/QuizStatusChips'
+import { AvailableQuizRow } from './list/AvailableQuizRow'
+import { OtherStatusRow } from './list/OtherStatusRow'
 
-const TAB_FILTER: Record<QuizTab, QuizListItem['state']> = {
-  available: 'available',
-  completed: 'completed',
-  pending_manual: 'pending_manual',
+const STATUS_LABEL: Record<QuizStatus, string> = {
+  available: '응시 가능',
+  completed: '완료',
+  pending_manual: '채점 대기',
+  closed: '기간 종료',
 }
 
-const EMPTY_TITLE: Record<QuizTab, string> = {
-  available: '응시할 퀴즈가 없어요',
-  completed: '완료한 퀴즈가 없어요',
-  pending_manual: '채점 대기 중인 퀴즈가 없어요',
-}
-
-const DocIcon = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path
-      d="M5 3h10l4 4v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
-      strokeLinejoin="round"
-    />
-    <path d="M14 3v5h5M8 13h8M8 17h5" strokeLinecap="round" />
-  </svg>
-)
-
-const AlertIcon = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path
-      d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"
-      strokeLinejoin="round"
-    />
-    <path d="M12 9v4M12 17h.01" strokeLinecap="round" />
-  </svg>
-)
-
-/** 수강생 퀴즈 목록 (/student/quizzes) — 탭(응시가능/완료/채점대기)으로 분류, 행에서 응시·결과로 이동 */
+/**
+ * 수강생 퀴즈 목록 (/student/quizzes) — 나의 과정 '퀴즈' 탭. Figma 226:27.
+ * 상태 칩(응시가능/완료/채점대기/기간종료) + 검색. 응시가능 뷰는 카드 2개(응시가능 + 다른 상태 미리보기).
+ */
 export default function QuizListPage() {
   const navigate = useNavigate()
-  const [tab, setTab] = useState<QuizTab>('available')
   const { data, isPending, isError, refetch } = useStudentQuizzes()
+  const [status, setStatus] = useState<QuizStatus>('available')
+  const [query, setQuery] = useState('')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">퀴즈를 불러오는 중…</div>
   }
   if (isError) {
     return (
-      <Empty
-        icon={AlertIcon}
-        title="퀴즈를 불러오지 못했어요"
-        description="잠시 후 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
+      <div className="p-8">
+        <Empty
+          title="퀴즈를 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={<Button onClick={() => refetch()}>다시 시도</Button>}
+        />
+      </div>
     )
   }
 
-  const items = data.filter((it) => it.state === TAB_FILTER[tab])
+  const items = (data as StudentQuizListItem[]) ?? []
+  const counts: Record<QuizStatus, number> = {
+    available: items.filter((q) => q.state === 'available').length,
+    completed: items.filter((q) => q.state === 'completed').length,
+    pending_manual: items.filter((q) => q.state === 'pending_manual').length,
+    closed: items.filter((q) => q.state === 'closed').length,
+  }
+  const q = query.trim().toLowerCase()
+  const match = (it: StudentQuizListItem) =>
+    q === '' || it.quiz.title.toLowerCase().includes(q)
+
+  const available = items.filter((it) => it.state === 'available' && match(it))
+  const others = items.filter((it) => it.state !== 'available' && match(it))
+  const single = items.filter((it) => it.state === status && match(it))
+
+  const goTake = (id: string) => navigate(`/student/quizzes/${id}/take`)
+  const goResult = (id: string) => navigate(`/student/quizzes/${id}/result`)
 
   return (
-    <div className="p-8">
-      <h1 className="text-fg text-2xl font-bold">퀴즈</h1>
-      <QuizTabs value={tab} onChange={setTab} items={data} />
-      {items.length === 0 ? (
-        <Empty icon={DocIcon} title={EMPTY_TITLE[tab]} />
+    <div className="flex flex-col gap-5 p-8">
+      <CourseTabs
+        counts={{ quizzes: items.length, materials: 24, assignments: 1 }}
+      />
+
+      {/* 상태 필터 + 검색 */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <QuizStatusChips counts={counts} active={status} onChange={setStatus} />
+        <div className="border-border bg-surface flex h-[38px] w-[260px] items-center gap-2 rounded-[10px] border px-3.5">
+          <svg
+            viewBox="0 0 24 24"
+            className="text-fg-subtle size-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3-3" strokeLinecap="round" />
+          </svg>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="퀴즈명 검색"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none"
+          />
+        </div>
+      </div>
+
+      {status === 'available' ? (
+        <>
+          {/* 응시 가능 퀴즈 */}
+          <section className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+            <div className="flex items-center justify-between px-6 pt-5 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="bg-warning size-2 rounded-full" />
+                <h2 className="text-fg text-[15px] font-bold">
+                  응시 가능 퀴즈
+                </h2>
+                <span className="bg-warning-bg text-warning rounded-[5px] px-1.5 py-0.5 text-[11px] font-bold">
+                  {available.length}건
+                </span>
+              </div>
+              <span className="text-fg-subtle text-[11px] font-medium">
+                최신순 정렬
+              </span>
+            </div>
+            {available.length === 0 ? (
+              <div className="px-6 pb-6">
+                <Empty title="응시 가능한 퀴즈가 없어요" />
+              </div>
+            ) : (
+              available.map((it, i) => (
+                <Fragment key={it.quiz.id}>
+                  {i > 0 && <div className="bg-divider h-px w-full" />}
+                  <AvailableQuizRow
+                    item={it}
+                    onTake={() => goTake(it.quiz.id)}
+                  />
+                </Fragment>
+              ))
+            )}
+          </section>
+
+          {/* 다른 상태 미리보기 */}
+          {others.length > 0 && (
+            <section className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+              <div className="flex items-center justify-between px-6 pt-5 pb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-fg text-[15px] font-bold">
+                    다른 상태 미리보기
+                  </h2>
+                  <span className="text-fg-muted text-[11px]">
+                    완료·채점 대기·기간 종료
+                  </span>
+                </div>
+                <span className="text-brand text-[12px] font-semibold">
+                  전체 보기 →
+                </span>
+              </div>
+              {others.map((it, i) => (
+                <Fragment key={it.quiz.id}>
+                  {i > 0 && <div className="bg-divider h-px w-full" />}
+                  <OtherStatusRow
+                    item={it}
+                    onResult={() => goResult(it.quiz.id)}
+                  />
+                </Fragment>
+              ))}
+            </section>
+          )}
+        </>
       ) : (
-        <ul className="mt-4 flex flex-col gap-3">
-          {items.map((it) => (
-            <QuizListItemCard
-              key={it.quiz.id}
-              item={it}
-              onTake={() => navigate(`/student/quizzes/${it.quiz.id}/take`)}
-              onResult={() => navigate(`/student/quizzes/${it.quiz.id}/result`)}
-            />
-          ))}
-        </ul>
+        /* 단일 상태 필터 뷰 */
+        <section className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+          <div className="flex items-center gap-2 px-6 pt-5 pb-4">
+            <h2 className="text-fg text-[15px] font-bold">
+              {STATUS_LABEL[status]} 퀴즈
+            </h2>
+            <span className="bg-surface-muted text-fg-muted rounded-[5px] px-1.5 py-0.5 text-[11px] font-bold">
+              {single.length}건
+            </span>
+          </div>
+          {single.length === 0 ? (
+            <div className="px-6 pb-6">
+              <Empty title={`${STATUS_LABEL[status]} 퀴즈가 없어요`} />
+            </div>
+          ) : (
+            single.map((it, i) => (
+              <Fragment key={it.quiz.id}>
+                {i > 0 && <div className="bg-divider h-px w-full" />}
+                <OtherStatusRow
+                  item={it}
+                  onResult={() => goResult(it.quiz.id)}
+                />
+              </Fragment>
+            ))
+          )}
+        </section>
       )}
+
+      {/* 페이지네이션 */}
+      <div className="flex items-center justify-between">
+        <p className="text-fg-muted text-[12px] font-medium">
+          총 {items.length}건 · 응시 가능 {counts.available}건
+        </p>
+        <div className="flex items-center gap-1.5">
+          {['‹', '1', '2', '›'].map((p, i) => (
+            <button
+              key={i}
+              type="button"
+              className={cn(
+                'flex size-9 items-center justify-center rounded-lg text-[12px] font-medium',
+                p === '1'
+                  ? 'bg-brand-deep text-white'
+                  : 'border-border text-fg-muted border',
+              )}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

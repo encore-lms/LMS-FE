@@ -1,7 +1,8 @@
 import { cn } from '@/shared/lib/cn'
 import type { CertTab } from './types'
+import { CERT_V2 } from './config'
 
-// 증명서 5탭 바 — 종합 요약/기술·검증/프로젝트/문제해결·협업/성장·평판.
+// 증명서 탭 바 — 데이터 5탭(+ v2 'AI 분석' 탭은 CERT_V2 켜질 때만).
 const CERT_TABS: { key: CertTab; label: string }[] = [
   { key: 'summary', label: '종합 요약' },
   { key: 'tech', label: '기술·검증' },
@@ -9,6 +10,11 @@ const CERT_TABS: { key: CertTab; label: string }[] = [
   { key: 'problem-solving', label: '문제해결·협업' },
   { key: 'growth-reputation', label: '성장·평판' },
 ]
+// AI 해석 콘텐츠는 데이터 탭에서 분리해 전용 탭으로(데이터 vs AI 구분).
+const AI_TAB: { key: CertTab; label: string } = {
+  key: 'ai-analysis',
+  label: '✦ AI 분석',
+}
 
 export function CertTabs({
   active,
@@ -17,9 +23,10 @@ export function CertTabs({
   active: CertTab
   onChange: (t: CertTab) => void
 }) {
+  const tabs = CERT_V2 ? [...CERT_TABS, AI_TAB] : CERT_TABS
   return (
     <nav className="border-border bg-surface flex w-full gap-1 rounded-[14px] border p-1.5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
-      {CERT_TABS.map((t) => {
+      {tabs.map((t) => {
         const isActive = t.key === active
         return (
           <button

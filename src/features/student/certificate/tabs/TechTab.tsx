@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { cn } from '@/shared/lib/cn'
 import type { CertTechTab, Tone } from '../types'
+import { CERT_V2 } from '../config'
 
 // 증명서 탭2 기술·검증 — 카테고리 점수·시험 추세·자격증 인증·과제 검증.
 const card =
@@ -50,7 +51,16 @@ export function TechTab({ t }: { t: CertTechTab }) {
                 </span>
                 <span className="text-fg-subtle text-[11px]">{c.sub}</span>
               </div>
-              <span className="text-fg text-[16px] font-bold">{c.score}점</span>
+              <div className="flex items-center gap-2">
+                {CERT_V2 && c.percentile && (
+                  <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
+                    {c.percentile}
+                  </span>
+                )}
+                <span className="text-fg text-[16px] font-bold">
+                  {c.score}점
+                </span>
+              </div>
             </div>
             <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
               <div

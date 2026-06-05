@@ -173,6 +173,76 @@ const mockOverview: CertificateOverview = {
       },
     ],
     checkDoneLabel: '4 / 5',
+    // ── v2 (CERT_V2) ──
+    aiProfile: {
+      rows: [
+        { label: '업무', value: '체계적 플래너형' },
+        { label: '리더십', value: '서번트 리더' },
+        { label: '학습', value: '가속 학습형' },
+        { label: '소통', value: '논리적 설명가' },
+        { label: '기술', value: '마이크로서비스 백엔드 엔지니어' },
+      ],
+      summary:
+        '프론트 경험 위에 백엔드·분산 시스템을 쌓은 가속 학습형. 체계적 문제해결과 팀원 지원을 즐기며 후반부에 폭발 성장',
+      strengths:
+        '데이터 기반 문제해결 · 트랜잭션/분산 설계 · 코드 리뷰 리딩 · 프론트+백엔드 크로스',
+      growth: '새 기술 초기 시행착오 · 리더 역할 스트레스 관리',
+    },
+    personas: [
+      { rank: 1, title: '분산 시스템에 강한 백엔드 엔지니어' },
+      { rank: 2, title: '실행형 트러블슈터' },
+      { rank: 3, title: '비즈니스 임팩트 드리븐 설계자' },
+    ],
+    domains: [
+      { label: '커머스 · 주문/결제', pct: 40, tone: 'info' },
+      { label: '추천 · LLM 파이프라인', pct: 30, tone: 'success' },
+      { label: '인프라 · DevOps', pct: 20, tone: 'warning' },
+      { label: '데이터 · 분석', pct: 10, tone: 'accent' },
+    ],
+    ontology: {
+      nodes: [
+        { id: 'me', label: '김수강', x: 50, y: 50, kind: 'self' },
+        { id: 'be', label: '백엔드', x: 28, y: 30, kind: 'subject' },
+        { id: 'db', label: 'DB·SQL', x: 70, y: 28, kind: 'subject' },
+        { id: 'cloud', label: '클라우드', x: 74, y: 72, kind: 'subject' },
+        { id: 'algo', label: '알고리즘', x: 26, y: 72, kind: 'subject' },
+        { id: 'java', label: 'Java', x: 16, y: 18, kind: 'skill' },
+        { id: 'spring', label: 'Spring', x: 40, y: 15, kind: 'skill' },
+        { id: 'kafka', label: 'Kafka', x: 60, y: 15, kind: 'skill' },
+        { id: 'pg', label: 'PostgreSQL', x: 86, y: 34, kind: 'skill' },
+        { id: 'docker', label: 'Docker', x: 90, y: 58, kind: 'skill' },
+        { id: 'aws', label: 'AWS', x: 82, y: 86, kind: 'skill' },
+        { id: 'msa', label: 'MSA', x: 52, y: 33, kind: 'method' },
+        { id: 'tx', label: '트랜잭션', x: 62, y: 44, kind: 'method' },
+        { id: 'mart', label: 'Encore Mart', x: 44, y: 64, kind: 'project' },
+        { id: 'llm', label: 'LLM 추천', x: 64, y: 62, kind: 'project' },
+        { id: 'commerce', label: '커머스', x: 38, y: 86, kind: 'domain' },
+        { id: 'reco', label: '추천', x: 78, y: 78, kind: 'domain' },
+      ],
+      edges: [
+        ['me', 'be'],
+        ['me', 'db'],
+        ['me', 'cloud'],
+        ['me', 'algo'],
+        ['me', 'msa'],
+        ['me', 'tx'],
+        ['me', 'mart'],
+        ['me', 'llm'],
+        ['be', 'java'],
+        ['be', 'spring'],
+        ['be', 'kafka'],
+        ['db', 'pg'],
+        ['cloud', 'docker'],
+        ['cloud', 'aws'],
+        ['msa', 'mart'],
+        ['tx', 'mart'],
+        ['mart', 'kafka'],
+        ['mart', 'pg'],
+        ['mart', 'commerce'],
+        ['llm', 'db'],
+        ['llm', 'reco'],
+      ],
+    },
   },
   tech: {
     avgScore: 83,
@@ -182,27 +252,37 @@ const mockOverview: CertificateOverview = {
         label: '백엔드 기초 (Java · Spring)',
         sub: 'Quiz #1–4 평균 92.5',
         score: 92,
+        percentile: '상위 6%',
       },
       {
         label: 'DB / SQL',
         sub: 'Quiz #5–7 평균 84.2 · PCSQL 응시 예정',
         score: 84,
+        percentile: '상위 14%',
       },
-      { label: '네트워크 · OS', sub: 'Quiz #8–9 평균 78.0', score: 78 },
+      {
+        label: '네트워크 · OS',
+        sub: 'Quiz #8–9 평균 78.0',
+        score: 78,
+        percentile: '상위 22%',
+      },
       {
         label: '알고리즘 · 자료구조',
         sub: 'Quiz #10–11 평균 71.5 — 보완 필요',
         score: 71,
+        percentile: '상위 35%',
       },
       {
         label: '클라우드 · DevOps',
         sub: 'Quiz #12 80점 · 자격증 PCCE 1건',
         score: 80,
+        percentile: '상위 19%',
       },
       {
         label: '트러블슈팅 · 디버깅',
         sub: '실습 검증 8건 · 코드 리뷰 12회',
         score: 88,
+        percentile: '상위 9%',
       },
     ],
     examTrend: [70, 74, 72, 78, 75, 80, 82, 80, 85, 84, 88, 90],
@@ -252,6 +332,13 @@ const mockOverview: CertificateOverview = {
         status: '완료',
       },
     ],
+    // ── v2 (CERT_V2) ──
+    aiVerdict: {
+      strength:
+        '백엔드 기초·트러블슈팅이 누적 상위 10% — 분산/트랜잭션 설계가 실전 뒷받침.',
+      gap: '알고리즘(상위 35%)·네트워크가 상대적 약점, PCSQL 외부 인증으로 보완 중.',
+      unique: '프론트 2년 경험 위 백엔드 전환 → 풀스택 E2E 설계 가능.',
+    },
   },
   projects: {
     certifiedLabel: '2 / 3',
@@ -337,6 +424,10 @@ const mockOverview: CertificateOverview = {
         meta: 'PDF · 32 슬라이드 · 발표일 2026-04-12',
       },
     ],
+    ai: {
+      summary:
+        '응답 320→145ms·결제 자동복구 95%는 Kafka 이벤트 라우팅 + 트랜잭션 격리 재설계의 결과. 배포·모니터링까지 이어져 E2E 운영 가능 수준을 입증.',
+    },
   },
   problem: {
     kpis: [
@@ -442,6 +533,26 @@ const mockOverview: CertificateOverview = {
         detail: 'PR 22 · 동료 코드 리뷰 평균 4.8 / 5.0',
       },
     ],
+    ai: {
+      caps: [
+        {
+          label: '데이터·트랜잭션 처리',
+          score: 95,
+          tag: '#문제해결',
+          tone: 'success',
+        },
+        {
+          label: '장애 대응·디버깅',
+          score: 90,
+          tag: '#책임감',
+          tone: 'success',
+        },
+        { label: '인프라·배포', score: 85, tag: '#팀워크', tone: 'info' },
+      ],
+      style:
+        '개인 프로파일링 → 수치 검증 → 문서화로 일관. 해결 후 팀 전파(리뷰·일정 공유)가 강점.',
+      scaling: '단일 모듈 디버깅 → 파이프라인·시스템 범위로 해결 영역 확장.',
+    },
   },
   growth: {
     timeline: [64, 68, 66, 63, 66, 68, 70, 72, 75, 77, 76, 80, 83, 85, 85, 86],
@@ -493,6 +604,22 @@ const mockOverview: CertificateOverview = {
         date: '2026-05-08 작성',
       },
     ],
+    sentiment: {
+      bubbles: [
+        { label: '학습 불안', x: 16, y: 36, r: 13, phase: 'early' },
+        { label: '적응', x: 24, y: 58, r: 11, phase: 'early' },
+        { label: '진로 고민', x: 11, y: 18, r: 8, phase: 'early' },
+        { label: 'SQL 난관', x: 42, y: 28, r: 12, phase: 'mid' },
+        { label: '스트레스', x: 47, y: 54, r: 14, phase: 'mid' },
+        { label: '멘토링', x: 35, y: 44, r: 10, phase: 'mid' },
+        { label: '자기효능감', x: 66, y: 28, r: 13, phase: 'late' },
+        { label: '성취감', x: 73, y: 50, r: 15, phase: 'late' },
+        { label: '코드리뷰 1위', x: 84, y: 36, r: 12, phase: 'late' },
+        { label: '자신감', x: 88, y: 60, r: 10, phase: 'late' },
+        { label: '성장 회고', x: 60, y: 64, r: 10, phase: 'late' },
+      ],
+      trend: 'V자 변동형: 위기(4주차) → 멘토링 → 급반등',
+    },
   },
 }
 

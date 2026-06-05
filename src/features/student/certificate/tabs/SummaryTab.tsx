@@ -2,6 +2,8 @@ import { Fragment } from 'react'
 import { cn } from '@/shared/lib/cn'
 import type { CertSummaryTab, Tone } from '../types'
 import { SkillRadar } from '../components/SkillRadar'
+import { CERT_V2 } from '../config'
+import { DomainDonut } from '../v2/DomainDonut'
 
 // 증명서 탭1 종합 요약 — 종합 점수·KPI·6축 레이더·360°·퀴즈 카테고리·근거·대표 프로젝트·체크리스트.
 const DELTA: Record<Tone, string> = {
@@ -257,6 +259,9 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
           </Fragment>
         ))}
       </section>
+
+      {/* ── v2 (CERT_V2): 도메인 경험 도넛 (AI 해석은 'AI 분석' 탭으로 분리) ── */}
+      {CERT_V2 && s.domains && <DomainDonut domains={s.domains} />}
     </div>
   )
 }

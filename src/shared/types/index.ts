@@ -20,8 +20,14 @@ export type {
 } from './quiz'
 export type {
   OverallStatus,
-  DashboardListItem,
-  QuickEntry,
+  SyncStatus,
+  Priority,
+  AdminKpi,
+  AdminQueueItem,
+  AdminRiskSignal,
+  AdminShortcut,
+  AdminSyncRow,
+  AdminDecisionLog,
   AdminDashboardSummary,
 } from './admin'
 export type {

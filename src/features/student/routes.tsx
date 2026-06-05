@@ -1,5 +1,6 @@
 import { lazy } from 'react'
 import type { RouteObject } from 'react-router-dom'
+import { OnboardingGate } from './onboarding/OnboardingGate'
 
 // 수강생 라우트 — features/student 소유자만 편집(결합 해소: 공유 router.tsx를 건드리지 않는다).
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
@@ -31,10 +32,13 @@ const BlogFormPage = lazy(() => import('./records/forms/BlogFormPage'))
 const BlogEditPage = lazy(() => import('./records/forms/BlogEditPage'))
 const StudyFormPage = lazy(() => import('./records/forms/StudyFormPage'))
 const CertFormPage = lazy(() => import('./records/forms/CertFormPage'))
+const OnboardingPage = lazy(() => import('./onboarding/OnboardingPage'))
 
 export const studentRoutes: RouteObject[] = [
   {
     path: 'student',
+    // 온보딩 미완료 수강생은 게이트가 /student/onboarding 으로 보낸다(쉘 안 영역 전체).
+    element: <OnboardingGate />,
     children: [
       // 사이드바 '대시보드' → /student (index). 수강생 랜딩 = 대시보드.
       { index: true, element: <DashboardPage /> },
@@ -72,4 +76,6 @@ export const studentRoutes: RouteObject[] = [
 // 전체화면(쉘 없음) 라우트 — 퀴즈 응시 집중 모드. 취합층(router.tsx)이 AppShell 밖에 마운트한다.
 export const studentFullscreenRoutes: RouteObject[] = [
   { path: 'student/quizzes/:quizId/take', element: <QuizTakePage /> },
+  // 온보딩 마법사 — 자체 헤더·푸터의 풀스크린 플로우라 쉘 밖.
+  { path: 'student/onboarding', element: <OnboardingPage /> },
 ]

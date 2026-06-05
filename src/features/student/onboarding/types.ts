@@ -1,0 +1,35 @@
+// 수강생 온보딩 도메인 계약 — 기능 로컬. Figma 225:27 외(풀스크린 3스텝 마법사).
+// /student/onboarding (?step=skills|links). 입력형 마법사라 서버 패치 없이 정적.
+
+export type OnboardingStep = 'pledge' | 'skills' | 'links'
+
+export interface StepMeta {
+  no: number
+  key: OnboardingStep
+  label: string // 다짐 / 스킬 / 외부 URL
+}
+
+export const ONBOARDING_STEPS: StepMeta[] = [
+  { no: 1, key: 'pledge', label: '다짐' },
+  { no: 2, key: 'skills', label: '스킬' },
+  { no: 3, key: 'links', label: '외부 URL' },
+]
+
+/** 관심 스킬 옵션 */
+export const SKILL_OPTIONS: string[] = [
+  'Java',
+  'Spring',
+  'React',
+  'SQL',
+  'Python',
+  'Docker',
+  'Git',
+  'AWS',
+  'JPA',
+  'TypeScript',
+  'REST API',
+  'Linux',
+]
+
+export const PLEDGE_MAX = 300
+export const SKILL_MAX = 6

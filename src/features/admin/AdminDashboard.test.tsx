@@ -10,41 +10,73 @@ vi.mock('./api/dashboard')
 type DashboardHook = ReturnType<typeof useAdminDashboard>
 
 const summary: AdminDashboardSummary = {
-  status: { level: 'caution', message: '마트 오류 1건' },
-  martUpdatedAt: '2026-05-18T06:00:00Z',
-  kpis: {
-    certificationRequests: { value: 24, newCount: 12, total: 24 },
-    reviewing: { value: 8, avgDays: 1.8 },
-    changesRequested: { value: 5, awaitingStudent: 3 },
-    certified: { value: 142, monthDelta: 18 },
-    martErrors: { value: 1 },
+  hero: {
+    status: { level: 'normal', label: '운영 정상' },
+    riskCount: 3,
+    martUpdatedAt: '09:20',
+    martNextAt: '09:50',
+    todayPending: { value: 45, deltaLabel: '어제 대비 +6' },
+    todayDone: { value: 12, avgLabel: '평균 처리 8분' },
   },
-  urgentReviews: [
+  kpis: [
     {
-      id: 'u1',
-      cohort: '데이터분석 6기',
-      name: '김지원',
-      detail: '인증 요청 · 5일 경과',
-      isNew: true,
+      key: 'request',
+      label: '인증 요청',
+      value: '18',
+      delta: '+3',
+      hint: '보완 요청 4건 포함',
+      icon: 'request',
+    },
+    {
+      key: 'certified',
+      label: '인증 완료',
+      value: '1,243',
+      delta: '−4',
+      hint: '누적 마지막 60일',
+      icon: 'certified',
+    },
+    {
+      key: 'mart',
+      label: '마트 오류',
+      value: '2',
+      delta: '+2',
+      hint: '재계산 필요',
+      icon: 'mart',
     },
   ],
-  riskFlags: [
+  queue: [
     {
-      id: 'r1',
-      cohort: '데이터분석 5기',
-      name: '강유진',
-      detail: '위험 플래그 4건 · 출결 미달',
+      id: 'q1',
+      priority: 'P0',
+      type: '출결 이상',
+      target: 'AI 백엔드 3기 김민준',
+      status: 'HRD 퇴실 누락',
+      due: '오늘',
+      action: { label: '확인', to: '/admin/students' },
+    },
+    {
+      id: 'q3',
+      priority: 'P1',
+      type: '기록실',
+      target: 'Airflow 장애 회고',
+      status: '승인 대기',
+      due: '오늘',
+      action: { label: '검토', to: '/admin/records/review' },
     },
   ],
-  quickEntry: [
+  queueSummary: { total: 6, p0: 2, p1: 2, p2: 2 },
+  risks: [{ title: 'HRD 원본 수정 불가', desc: '동기화 값은 읽기 전용' }],
+  shortcuts: [
     {
-      key: 'review',
-      title: '인증 검토 큐',
-      meta: '대기 8건 · 평균 1.8일',
-      to: '/admin/certification-review',
-      cta: '인증 검토로 이동',
+      key: 'accounts',
+      title: '사용자·권한',
+      desc: '계정·역할·기수 관리',
+      to: '/admin/settings/accounts',
+      icon: 'accounts',
     },
   ],
+  sync: [{ name: 'HRD-Net 수강생', at: '05-19 09:10', status: 'normal' }],
+  decisionLog: [{ at: '09:20', text: '출결 이상 2건을 수동 확인으로 전환' }],
 }
 
 function mockHook(value: Partial<DashboardHook>) {
@@ -61,36 +93,30 @@ function renderDash() {
   )
 }
 
-describe('AdminDashboard', () => {
-  it('KPI 5칸과 전체 상태 배지를 렌더한다', () => {
+describe('AdminDashboard (통합 보강)', () => {
+  it('히어로·KPI·우선순위 큐·바로가기·동기화·결정 로그를 렌더한다', () => {
     mockHook({ data: summary, isPending: false, isError: false })
     renderDash()
     expect(
-      screen.getByRole('heading', { name: '운영 대시보드', level: 1 }),
+      screen.getByText('오늘 처리할 운영 이슈를 한 화면에서 파악합니다'),
     ).toBeInTheDocument()
-    // KPI 5칸 값
-    for (const v of ['24', '8', '5', '142', '1']) {
-      expect(screen.getByText(v)).toBeInTheDocument()
-    }
-    expect(screen.getByText('인증 완료')).toBeInTheDocument()
-    expect(screen.getByText(/주의/)).toBeInTheDocument()
+    expect(screen.getByText('운영 정상')).toBeInTheDocument()
+    expect(screen.getByText('인증 요청')).toBeInTheDocument()
+    expect(screen.getByText('1,243')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: '긴급 검토 대상' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('AI 백엔드 3기 김민준')).toBeInTheDocument()
+    expect(screen.getByText('사용자·권한')).toBeInTheDocument()
+    expect(screen.getByText('데이터 동기화 상태')).toBeInTheDocument()
+    expect(screen.getByText('우선순위 결정 로그')).toBeInTheDocument()
   })
 
-  it('긴급 검토·위험 플래그·빠른 진입 항목을 렌더한다', () => {
-    mockHook({ data: summary, isPending: false, isError: false })
-    renderDash()
-    expect(screen.getByText(/김지원/)).toBeInTheDocument()
-    expect(screen.getByText(/강유진/)).toBeInTheDocument()
-    expect(screen.getByText('인증 검토 큐')).toBeInTheDocument()
-  })
-
-  it('로딩 상태를 표시한다', () => {
+  it('로딩·에러 상태를 표시한다', () => {
     mockHook({ isPending: true })
-    renderDash()
+    const { unmount } = renderDash()
     expect(screen.getByText(/불러오는 중/)).toBeInTheDocument()
-  })
-
-  it('에러 시 재시도 버튼을 표시한다', () => {
+    unmount()
     mockHook({ isPending: false, isError: true, refetch: vi.fn() })
     renderDash()
     expect(

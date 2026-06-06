@@ -301,7 +301,7 @@ function CalendarTab({ d }: { d: WorkspaceData }) {
                 <div
                   key={i}
                   className={cn(
-                    'border-border flex min-h-[78px] flex-col gap-1 rounded-lg border p-1.5',
+                    'border-border flex min-h-[78px] flex-col items-start gap-1 rounded-lg border p-1.5',
                     !day && 'opacity-0',
                   )}
                 >
@@ -315,13 +315,11 @@ function CalendarTab({ d }: { d: WorkspaceData }) {
         <section className={cn(card, 'flex flex-col gap-3 lg:w-[280px]')}>
           <span className="text-fg text-[14px] font-bold">다가오는 일정</span>
           {d.upcoming.map((u, i) => (
-            <div key={i} className="flex flex-col gap-1">
+            <div key={i} className="flex flex-col items-start gap-1">
               <span className="text-fg-subtle text-[11px]">{u.date}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-fg text-[13px] font-semibold">
-                  {u.label}
-                </span>
-              </div>
+              <span className="text-fg text-[13px] font-semibold">
+                {u.label}
+              </span>
               <Chip badge={{ label: '일정', tone: u.tone }} />
             </div>
           ))}
@@ -386,11 +384,14 @@ function DocsTab({ d }: { d: WorkspaceData }) {
             <div key={i} className={cn(card, 'flex flex-col gap-2')}>
               <span className="text-fg text-[14px] font-bold">{doc.title}</span>
               <span className="text-fg-subtle text-[11px]">{doc.meta}</span>
-              <div className="flex items-center justify-between pt-1">
+              <div className="mt-auto flex items-center justify-between pt-1">
                 <Chip badge={doc.status} />
-                <span className="text-brand text-[12px] font-semibold">
-                  열기 →
-                </span>
+                <button
+                  type="button"
+                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+                >
+                  열기
+                </button>
               </div>
             </div>
           ))}
@@ -436,11 +437,17 @@ function TeamTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead title="팀원 관리" action="팀원 초대" />
       <div className="flex flex-col gap-4 lg:flex-row">
-        <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
-          {d.members.map((m) => (
-            <div key={m.name} className="flex items-center gap-3">
+        <section className={cn(card, 'flex flex-1 flex-col py-2')}>
+          {d.members.map((m, i) => (
+            <div
+              key={m.name}
+              className={cn(
+                'flex items-center gap-4 py-5',
+                i > 0 && 'border-divider border-t',
+              )}
+            >
               <Avatar name={m.name} tone={m.avatarTone} />
-              <div className="flex w-32 flex-col">
+              <div className="flex w-40 flex-col gap-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-fg text-[13px] font-bold">
                     {m.name}
@@ -457,8 +464,9 @@ function TeamTab({ d }: { d: WorkspaceData }) {
                   </span>
                 </div>
                 <span className="text-fg-subtle text-[11px]">
-                  기여도 {m.contrib}% · {m.role}
+                  기여도 {m.contrib}%
                 </span>
+                <span className="text-fg-subtle text-[11px]">{m.role}</span>
               </div>
               <div className="bg-surface-muted h-2 flex-1 overflow-hidden rounded-full">
                 <div
@@ -466,13 +474,16 @@ function TeamTab({ d }: { d: WorkspaceData }) {
                   style={{ width: `${m.contrib}%` }}
                 />
               </div>
-              <span className="border-border text-fg-muted shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold">
+              <button
+                type="button"
+                className="border-border text-fg-muted shrink-0 rounded-lg border px-3.5 py-1.5 text-[12px] font-semibold"
+              >
                 상세
-              </span>
+              </button>
             </div>
           ))}
         </section>
-        <section className={cn(card, 'flex flex-col gap-3 lg:w-[300px]')}>
+        <section className={cn(card, 'flex flex-col gap-4 lg:w-[300px]')}>
           <span className="text-fg text-[14px] font-bold">역할 정책</span>
           {d.rolePolicy.map((r, i) => (
             <span key={i} className="text-fg-muted text-[12px] leading-5">

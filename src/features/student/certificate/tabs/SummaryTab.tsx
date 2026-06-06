@@ -34,35 +34,28 @@ const card =
 export function SummaryTab({ s }: { s: CertSummaryTab }) {
   return (
     <div className="flex flex-col gap-4">
-      {/* 종합 점수 + KPI */}
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <section
-          className={cn(card, 'flex w-full flex-col gap-3 lg:w-[320px]')}
-        >
-          <span className="text-fg text-[15px] font-bold">
-            핵심 지표 · 종합 요약
-          </span>
-          <div className="flex items-end gap-2">
-            <span className="text-fg text-[56px] leading-none font-bold">
-              {s.overallScore}
+      {/* 종합 요약 헤더 + KPI 한 줄 (Figma 2402:11293) */}
+      <section className={cn(card, 'flex flex-col gap-4')}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-fg text-[16px] font-bold">종합 요약</span>
+            <span className="text-fg-subtle text-[11px]">
+              출결·시험·과제·프로젝트·평판을 한 화면에서 요약 · 자동 산정 + 360°
+              ({s.sourceLabel})
             </span>
-            <span className="text-fg-subtle pb-2 text-[16px] font-semibold">
-              / {s.scoreMax}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="bg-surface-muted text-fg flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold">
+              <span className="bg-success size-1.5 rounded-full" />
+              종합 {s.overallScore} / {s.scoreMax}
             </span>
-            <span className="bg-brand/10 text-brand mb-2 ml-1 rounded-md px-2 py-0.5 text-[12px] font-bold">
+            <span className="bg-surface-muted text-fg flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold">
+              <span className="bg-brand size-1.5 rounded-full" />
               Grade {s.grade}
             </span>
           </div>
-          <span className="text-success text-[12px] font-semibold">
-            ● 6축 평균 {s.confirmedLabel}
-          </span>
-          <div className="text-fg-muted flex items-center gap-3 text-[12px]">
-            <span className="text-fg font-bold">{s.ratioLabel}</span>
-            <span>· {s.sourceLabel}</span>
-          </div>
-        </section>
-
-        <div className="grid flex-1 grid-cols-2 gap-4">
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {s.kpis.map((k) => (
             <div
               key={k.key}
@@ -92,7 +85,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* 레이더 + 360 비교 */}
       <div className="flex flex-col gap-4 lg:flex-row">
@@ -119,29 +112,49 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
           </div>
         </section>
 
-        <section className={cn(card, 'flex flex-1 flex-col gap-3.5')}>
-          <span className="text-fg text-[15px] font-bold">360° 비교</span>
-          {s.skillAxes.map((a) => (
-            <div key={a.key} className="flex items-center gap-3">
-              <span className="text-fg w-14 shrink-0 text-[12px] font-medium">
-                {a.key}
-              </span>
-              <div className="bg-surface-muted relative h-2.5 flex-1 overflow-hidden rounded-full">
-                <div
-                  className={cn('h-full rounded-full', barColor(a.score))}
-                  style={{ width: `${a.score}%` }}
-                />
-              </div>
-              <span className="text-fg w-8 shrink-0 text-right text-[12px] font-bold">
-                {a.score}
-              </span>
-              {a.confirmed && (
-                <span className="bg-success-bg text-success rounded px-1.5 py-0.5 text-[10px] font-bold">
-                  conf
+        <section className={cn(card, 'flex flex-1 flex-col gap-2')}>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-fg text-[15px] font-bold">360° 비교</span>
+            <span className="text-fg-muted text-[11px]">
+              자동 산정 · 동료 · 강사 검증
+            </span>
+          </div>
+          <div className="mt-1 grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-5">
+            <span className="text-fg-subtle pb-2 text-[11px] font-semibold">
+              축
+            </span>
+            <span className="text-fg-subtle pb-2 text-right text-[11px] font-semibold">
+              자동
+            </span>
+            <span className="text-fg-subtle pb-2 text-right text-[11px] font-semibold">
+              동료
+            </span>
+            <span className="text-fg-subtle pb-2 text-right text-[11px] font-semibold">
+              강사
+            </span>
+            {s.skillAxes.map((a) => (
+              <Fragment key={a.key}>
+                <span className="border-divider text-fg border-t py-2.5 text-[12px] font-bold">
+                  {a.key}
                 </span>
-              )}
-            </div>
-          ))}
+                <span className="border-divider text-brand border-t py-2.5 text-right text-[12px] font-bold">
+                  {a.score}
+                </span>
+                <span className="border-divider text-fg-muted border-t py-2.5 text-right text-[12px]">
+                  {(a.peer / 20).toFixed(1)}/5.0
+                </span>
+                <span className="border-divider border-t py-2.5 text-right">
+                  {a.confirmed ? (
+                    <span className="bg-success-bg text-success rounded px-1.5 py-0.5 text-[10px] font-bold">
+                      confirmed
+                    </span>
+                  ) : (
+                    <span className="text-fg-subtle text-[11px]">—</span>
+                  )}
+                </span>
+              </Fragment>
+            ))}
+          </div>
         </section>
       </div>
 

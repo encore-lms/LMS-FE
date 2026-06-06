@@ -47,9 +47,7 @@ export default function AssignmentsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      <CourseTabs
-        counts={{ quizzes: 2, materials: 24, assignments: items.length }}
-      />
+      <CourseTabs />
 
       {/* 상태 필터 드롭다운 */}
       <div className="relative w-fit">

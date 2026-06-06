@@ -36,10 +36,13 @@ export function GrowthTab({ g }: { g: CertGrowthTab }) {
         </span>
         <div className="flex h-[180px] items-end gap-1.5 pt-2">
           {g.timeline.map((v, i) => (
-            <div key={i} className="flex flex-1 flex-col items-center gap-1">
+            <div
+              key={i}
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+            >
               <span className="text-fg-subtle text-[9px]">{v}</span>
               <div
-                className="from-brand to-accent-strong w-full rounded-t bg-gradient-to-t"
+                className="from-brand to-accent-strong w-full shrink-0 rounded-t bg-gradient-to-t"
                 style={{ height: `${(v / max) * 100}%` }}
               />
               <span className="text-fg-subtle text-[8px]">W{i + 1}</span>

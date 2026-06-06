@@ -54,9 +54,7 @@ export default function MaterialsPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <CourseTabs
-        counts={{ quizzes: 2, materials: data.totalCount, assignments: 1 }}
-      />
+      <CourseTabs />
 
       {/* 필터 행 — 카테고리 칩 + 검색/공유 */}
       <div className="flex flex-wrap items-center justify-between gap-3">

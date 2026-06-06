@@ -50,6 +50,10 @@ const TsChangePage = lazy(
 const PlaySelectPage = lazy(() => import('./play/PlaySelectPage'))
 const PlayTypingPage = lazy(() => import('./play/PlayTypingPage'))
 const PlayResultPage = lazy(() => import('./play/PlayResultPage'))
+const MileagePage = lazy(() => import('./mileage/MileagePage'))
+const MileageProductsPage = lazy(() => import('./mileage/ProductsPage'))
+const MileageRequestsPage = lazy(() => import('./mileage/RequestStatesPage'))
+const MileageHistoryPage = lazy(() => import('./mileage/HistoryPage'))
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -99,6 +103,11 @@ export const studentRoutes: RouteObject[] = [
       { path: 'play', element: <PlaySelectPage /> },
       { path: 'play/typing', element: <PlayTypingPage /> },
       { path: 'play/result', element: <PlayResultPage /> },
+      // 마일리지(내 마일리지·상품 신청·구매 요청 상태·사용 내역).
+      { path: 'mileage', element: <MileagePage /> },
+      { path: 'mileage/products', element: <MileageProductsPage /> },
+      { path: 'mileage/requests', element: <MileageRequestsPage /> },
+      { path: 'mileage/history', element: <MileageHistoryPage /> },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },
       { path: 'attendance/form', element: <AttendanceFormPage /> },

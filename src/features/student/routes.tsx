@@ -33,6 +33,12 @@ const BlogEditPage = lazy(() => import('./records/forms/BlogEditPage'))
 const StudyFormPage = lazy(() => import('./records/forms/StudyFormPage'))
 const CertFormPage = lazy(() => import('./records/forms/CertFormPage'))
 const OnboardingPage = lazy(() => import('./onboarding/OnboardingPage'))
+const ProjectListPage = lazy(() => import('./projects/ProjectListPage'))
+const ProjectWizardPage = lazy(
+  () => import('./projects/wizard/ProjectWizardPage'),
+)
+const WorkspacePage = lazy(() => import('./projects/workspace/WorkspacePage'))
+const ChangeRequestPage = lazy(() => import('./projects/ChangeRequestPage'))
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -62,6 +68,14 @@ export const studentRoutes: RouteObject[] = [
       { path: 'records/new/study', element: <StudyFormPage /> },
       { path: 'records/new/certificate', element: <CertFormPage /> },
       { path: 'records/blog/:recordId/edit', element: <BlogEditPage /> },
+      // 프로젝트(목록·생성 마법사·워크스페이스 10탭·변경 제안).
+      { path: 'projects', element: <ProjectListPage /> },
+      { path: 'projects/new', element: <ProjectWizardPage /> },
+      { path: 'projects/:projectId', element: <WorkspacePage /> },
+      {
+        path: 'projects/:projectId/change-requests/new',
+        element: <ChangeRequestPage />,
+      },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },
       { path: 'attendance/form', element: <AttendanceFormPage /> },

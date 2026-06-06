@@ -47,6 +47,9 @@ const TsNewPage = lazy(() => import('./troubleshooting/forms/NewCasePage'))
 const TsChangePage = lazy(
   () => import('./troubleshooting/forms/ChangeRequestPage'),
 )
+const PlaySelectPage = lazy(() => import('./play/PlaySelectPage'))
+const PlayTypingPage = lazy(() => import('./play/PlayTypingPage'))
+const PlayResultPage = lazy(() => import('./play/PlayResultPage'))
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -92,6 +95,10 @@ export const studentRoutes: RouteObject[] = [
         path: 'troubleshooting/:id/change-requests/new',
         element: <TsChangePage />,
       },
+      // PLAY(게임 선택·타자 게임·결과/예외 상태).
+      { path: 'play', element: <PlaySelectPage /> },
+      { path: 'play/typing', element: <PlayTypingPage /> },
+      { path: 'play/result', element: <PlayResultPage /> },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },
       { path: 'attendance/form', element: <AttendanceFormPage /> },

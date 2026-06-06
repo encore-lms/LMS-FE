@@ -1,8 +1,9 @@
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import type {
   CertChangesData,
   CertificateOverview,
   CertPublicationData,
+  CertSentiment,
 } from './types'
 
 // 수강 역량 증명서 mock — 기능 로컬. 자동 수집 규약: `export const handlers`.
@@ -883,6 +884,24 @@ const mockPublication: CertPublicationData = {
   ],
 }
 
+// AI 상담 감성 분석 결과(목) — 실제로는 녹음 음성→STT→키워드 추출 산출물.
+// 정적 미리보기(mockOverview.sentiment)와 구분되게 "새로 분석된" 톤으로 구성.
+const analyzedSentiment: CertSentiment = {
+  bubbles: [
+    { label: '진로 불안', x: 14, y: 30, r: 12, phase: 'early' },
+    { label: '번아웃', x: 23, y: 54, r: 13, phase: 'early' },
+    { label: '방향 고민', x: 10, y: 16, r: 8, phase: 'early' },
+    { label: '협업 갈등', x: 40, y: 26, r: 11, phase: 'mid' },
+    { label: '자료구조 난관', x: 48, y: 52, r: 13, phase: 'mid' },
+    { label: '멘토 조언', x: 34, y: 42, r: 10, phase: 'mid' },
+    { label: '루틴 회복', x: 64, y: 30, r: 12, phase: 'late' },
+    { label: '성취감', x: 74, y: 52, r: 15, phase: 'late' },
+    { label: '발표 자신감', x: 85, y: 36, r: 12, phase: 'late' },
+    { label: '동료 신뢰', x: 88, y: 62, r: 10, phase: 'late' },
+  ],
+  trend: '하강 후 회복형: 번아웃(상담 초반) → 멘토 조언 → 후반 자신감 회복',
+}
+
 export const handlers = [
   http.get('/api/student/certificate', () =>
     ok<CertificateOverview>(mockOverview),
@@ -893,4 +912,9 @@ export const handlers = [
   http.get('/api/student/certificate/publication', () =>
     ok<CertPublicationData>(mockPublication),
   ),
+  // 녹음 업로드 → 분석. 실제 처리시간을 흉내내 약 2.2초 지연 후 결과 반환.
+  http.post('/api/student/certificate/sentiment/analyze', async () => {
+    await delay(2200)
+    return ok<CertSentiment>(analyzedSentiment)
+  }),
 ]

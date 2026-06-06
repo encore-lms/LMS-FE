@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { certKeys } from '../certificate/queryKeys'
 import type {
   CertChangesData,
   CertificateOverview,
   CertPublicationData,
+  CertSentiment,
 } from '../certificate/types'
 
 // 수강 역량 증명서 훅 — 엔드포인트가 /student/* 라 학생 feature 소유.
@@ -37,6 +38,20 @@ export function useCertPublication() {
     queryFn: () =>
       apiClient
         .get<CertPublicationData>('/student/certificate/publication')
+        .then((r) => r.data),
+  })
+}
+
+/**
+ * AI 상담 감성 분석 — 녹음 후 음성→텍스트→키워드 추출 결과(버블) 반환.
+ * 현재 BE 전 단계라 MSW 목(지연 후 결과). 실제 연동 시 payload를
+ * FormData(audio Blob)로 교체하면 호출부는 그대로 유지된다.
+ */
+export function useAnalyzeSentiment() {
+  return useMutation({
+    mutationFn: (payload: { durationSec: number }) =>
+      apiClient
+        .post<CertSentiment>('/student/certificate/sentiment/analyze', payload)
         .then((r) => r.data),
   })
 }

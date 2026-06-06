@@ -39,6 +39,14 @@ const ProjectWizardPage = lazy(
 )
 const WorkspacePage = lazy(() => import('./projects/workspace/WorkspacePage'))
 const ChangeRequestPage = lazy(() => import('./projects/ChangeRequestPage'))
+const TsListPage = lazy(
+  () => import('./troubleshooting/TroubleshootingListPage'),
+)
+const TsDetailPage = lazy(() => import('./troubleshooting/CaseDetailPage'))
+const TsNewPage = lazy(() => import('./troubleshooting/forms/NewCasePage'))
+const TsChangePage = lazy(
+  () => import('./troubleshooting/forms/ChangeRequestPage'),
+)
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -75,6 +83,14 @@ export const studentRoutes: RouteObject[] = [
       {
         path: 'projects/:projectId/change-requests/new',
         element: <ChangeRequestPage />,
+      },
+      // 트러블슈팅(목록·상세·새 작성·변경 제안).
+      { path: 'troubleshooting', element: <TsListPage /> },
+      { path: 'troubleshooting/new', element: <TsNewPage /> },
+      { path: 'troubleshooting/:id', element: <TsDetailPage /> },
+      {
+        path: 'troubleshooting/:id/change-requests/new',
+        element: <TsChangePage />,
       },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },

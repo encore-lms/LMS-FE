@@ -20,6 +20,19 @@ export function SentimentBubbles({
 }) {
   return (
     <AiAnalysisPanel title="AI 상담 감성·키워드 버블" className={className}>
+      <SentimentBubblesView sentiment={sentiment} />
+    </AiAnalysisPanel>
+  )
+}
+
+// 패널 없이 버블 SVG + 범례 + 추세만 — 레코더 등에서 자체 패널 안에 재사용.
+export function SentimentBubblesView({
+  sentiment,
+}: {
+  sentiment: CertSentiment
+}) {
+  return (
+    <>
       <svg viewBox="0 0 100 72" className="h-[240px] w-full">
         {sentiment.bubbles.map((b, i) => (
           <g key={i} className={PHASE[b.phase].color}>
@@ -66,6 +79,6 @@ export function SentimentBubbles({
       <span className="text-fg-muted bg-surface rounded-lg px-3 py-2 text-[12px]">
         {sentiment.trend}
       </span>
-    </AiAnalysisPanel>
+    </>
   )
 }

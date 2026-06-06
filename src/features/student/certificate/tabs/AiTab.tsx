@@ -4,7 +4,7 @@ import { AiBanner } from './TechTab'
 import { AiAnalysisPanel } from '../v2/AiAnalysisPanel'
 import { AiProfile } from '../v2/AiProfile'
 import { OntologyMap } from '../v2/OntologyMap'
-import { SentimentBubbles } from '../v2/SentimentBubbles'
+import { SentimentRecorder } from '../v2/SentimentRecorder'
 
 // 증명서 v2 — AI 분석 통합 탭. 데이터 탭에서 분리한 모든 AI 해석을 한 곳에 모은다.
 // 프로파일링·페르소나·온톨로지·기술/프로젝트/문제해결 판단·상담 감성.
@@ -125,8 +125,8 @@ export function AiTab({ data }: { data: CertificateOverview }) {
         </AiAnalysisPanel>
       )}
 
-      {/* 상담 감성 버블 */}
-      {growth.sentiment && <SentimentBubbles sentiment={growth.sentiment} />}
+      {/* 상담 감성 — 페이지 내 녹음 → 자동 분석 → 키워드 버블 */}
+      <SentimentRecorder initial={growth.sentiment} />
 
       <AiBanner text="AI 분석은 승인된 confirmed 데이터에 기반한 해석이며, 검증된 사실과 구분됩니다. 외부 공개 payload에는 confirmed 인증 + 운영자 승인 시 포함됩니다." />
     </div>

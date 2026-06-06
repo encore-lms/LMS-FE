@@ -54,6 +54,10 @@ const MileagePage = lazy(() => import('./mileage/MileagePage'))
 const MileageProductsPage = lazy(() => import('./mileage/ProductsPage'))
 const MileageRequestsPage = lazy(() => import('./mileage/RequestStatesPage'))
 const MileageHistoryPage = lazy(() => import('./mileage/HistoryPage'))
+// ⚠ Deprecated(프로젝트 상호평가로 흡수) — 보관용 라우트.
+const PeerHubPage = lazy(() => import('./peer/PeerHubPage'))
+const PeerTagPage = lazy(() => import('./peer/PeerTagPage'))
+const PeerReputationPage = lazy(() => import('./peer/PeerReputationPage'))
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -108,6 +112,10 @@ export const studentRoutes: RouteObject[] = [
       { path: 'mileage/products', element: <MileageProductsPage /> },
       { path: 'mileage/requests', element: <MileageRequestsPage /> },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
+      // 동료 평가(Deprecated · 보관) — 프로젝트 워크스페이스 상호평가 탭으로 대체됨.
+      { path: 'peer-evaluations', element: <PeerHubPage /> },
+      { path: 'peer-tag', element: <PeerTagPage /> },
+      { path: 'peer-reputation', element: <PeerReputationPage /> },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },
       { path: 'attendance/form', element: <AttendanceFormPage /> },

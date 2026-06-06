@@ -53,7 +53,7 @@ export default function CompetencyReportPage() {
         </p>
       </div>
 
-      <CourseTabs counts={{ quizzes: 2, materials: 24, assignments: 1 }} />
+      <CourseTabs />
 
       {/* 과정 핵심 지표 */}
       <div className="flex items-baseline gap-3">

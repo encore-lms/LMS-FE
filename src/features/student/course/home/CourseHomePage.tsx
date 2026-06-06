@@ -32,7 +32,7 @@ export default function CourseHomePage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <CourseTabs counts={data.tabCounts} />
+      <CourseTabs />
       <CourseHero hero={data.hero} />
       <CourseKpiCards kpis={data.kpis} />
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">

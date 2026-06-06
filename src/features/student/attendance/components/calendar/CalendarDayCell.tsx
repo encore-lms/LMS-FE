@@ -17,7 +17,7 @@ export function CalendarDayCell({
   return (
     <div
       className={cn(
-        'border-border flex min-h-[76px] flex-col gap-1 border-t border-l p-2',
+        'border-border flex min-h-[76px] flex-col items-start gap-1 border-t border-l p-2',
         !inMonth && 'bg-surface-muted/40',
       )}
     >

@@ -62,9 +62,7 @@ export default function QuizListPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <CourseTabs
-        counts={{ quizzes: items.length, materials: 24, assignments: 1 }}
-      />
+      <CourseTabs />
 
       {/* 상태 필터 + 검색 */}
       <div className="flex flex-wrap items-center justify-between gap-3">

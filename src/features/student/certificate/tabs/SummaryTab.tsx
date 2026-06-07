@@ -4,6 +4,7 @@ import type { CertSummaryTab, Tone } from '../types'
 import { SkillRadar } from '../components/SkillRadar'
 import { CERT_V2 } from '../config'
 import { DomainDonut } from '../v2/DomainDonut'
+import { OntologyMap } from '../v2/OntologyMap'
 
 // 증명서 탭1 종합 요약 — 종합 점수·KPI·6축 레이더·360°·퀴즈 카테고리·근거·대표 프로젝트·체크리스트.
 const DELTA: Record<Tone, string> = {
@@ -203,6 +204,11 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
             </div>
           ))}
         </section>
+
+        {/* v2: 도메인 경험 도넛 — 분석 카드 행에 함께 배치 */}
+        {CERT_V2 && s.domains && (
+          <DomainDonut domains={s.domains} className="flex-1" />
+        )}
       </div>
 
       {/* 대표 프로젝트 기록 */}
@@ -273,8 +279,8 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
         ))}
       </section>
 
-      {/* ── v2 (CERT_V2): 도메인 경험 도넛 (AI 해석은 'AI 분석' 탭으로 분리) ── */}
-      {CERT_V2 && s.domains && <DomainDonut domains={s.domains} />}
+      {/* ── v2 (CERT_V2): 온톨로지 역량 맵 (도메인 도넛은 위 분석 행으로 이동) ── */}
+      {CERT_V2 && s.ontology && <OntologyMap ontology={s.ontology} />}
     </div>
   )
 }

@@ -3,7 +3,6 @@ import type { CertificateOverview, Tone } from '../types'
 import { AiBanner } from './TechTab'
 import { AiAnalysisPanel } from '../v2/AiAnalysisPanel'
 import { AiProfile } from '../v2/AiProfile'
-import { OntologyMap } from '../v2/OntologyMap'
 import { SentimentRecorder } from '../v2/SentimentRecorder'
 
 // 증명서 v2 — AI 분석 통합 탭. 데이터 탭에서 분리한 모든 AI 해석을 한 곳에 모은다.
@@ -34,19 +33,13 @@ export function AiTab({ data }: { data: CertificateOverview }) {
         </div>
       </div>
 
-      {/* 프로파일링/페르소나 + 온톨로지 */}
-      <div className="flex flex-col gap-4 lg:flex-row">
-        {summary.aiProfile && (
-          <AiProfile
-            profile={summary.aiProfile}
-            personas={summary.personas ?? []}
-            className="lg:w-[420px]"
-          />
-        )}
-        {summary.ontology && (
-          <OntologyMap ontology={summary.ontology} className="flex-1" />
-        )}
-      </div>
+      {/* 프로파일링/페르소나 (온톨로지 역량맵은 종합 요약 탭으로 이동) */}
+      {summary.aiProfile && (
+        <AiProfile
+          profile={summary.aiProfile}
+          personas={summary.personas ?? []}
+        />
+      )}
 
       {/* 기술 종합 판단 + 프로젝트 분석 */}
       <div className="flex flex-col gap-4 lg:flex-row">

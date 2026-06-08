@@ -33,11 +33,13 @@ export interface TsStat {
   unit: string
   sub: string
   tone: Tone
+  barPct?: number // 통계카드 진행 트랙바(0~100, Figma 360:1297)
 }
 export interface TsFilter {
   key: string
   label: string
   count: number
+  tone?: Tone // 상태 필터칩 색점(인증완료/검토중/작성중)
 }
 
 /** 목록 사례 카드 */
@@ -64,6 +66,7 @@ export interface TsCase {
 export interface TsListData {
   stats: TsStat[]
   filters: TsFilter[]
+  statusFilters: TsFilter[] // 우측 상태 칩(인증완료·검토중·작성중)
   cases: TsCase[]
   shownLabel: string
 }

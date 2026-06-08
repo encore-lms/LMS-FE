@@ -1,5 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  CheckCircle2,
+  FileText,
+  Flag,
+  Timer,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -7,6 +14,21 @@ import { useTsList } from '../api/troubleshooting'
 import type { Tone, TsCase, TsStatus } from './types'
 
 // 트러블슈팅 사례 목록 (/student/troubleshooting) — Figma 360:1297.
+// 통계카드 우상단 아이콘(노트/체크/깃발/스톱워치) — 키별 매핑.
+const STAT_ICON: Record<string, LucideIcon> = {
+  total: FileText,
+  certified: CheckCircle2,
+  independent: Flag,
+  avgdays: Timer,
+}
+const ICON_TEXT: Record<Tone, string> = {
+  brand: 'text-brand',
+  info: 'text-info',
+  warning: 'text-warning',
+  danger: 'text-danger',
+  accent: 'text-accent-strong',
+  success: 'text-success',
+}
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const CHIP: Record<Tone, string> = {
@@ -67,25 +89,34 @@ export default function TroubleshootingListPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {data.stats.map((s) => (
-          <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
-            <div className="flex items-start justify-between">
-              <span className="text-fg-muted text-[12px]">{s.label}</span>
-              <span className={cn('size-2 rounded-full', ACCENT[s.tone])} />
-            </div>
-            <span className="text-fg text-[26px] leading-none font-bold">
-              {s.value}
-              {s.unit && (
-                <span className="text-fg-muted ml-0.5 text-[13px]">
-                  {s.unit}
-                </span>
+        {data.stats.map((s) => {
+          const Icon = STAT_ICON[s.key] ?? FileText
+          return (
+            <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
+              <div className="flex items-start justify-between">
+                <span className="text-fg-muted text-[12px]">{s.label}</span>
+                <Icon className={cn('size-4 shrink-0', ICON_TEXT[s.tone])} />
+              </div>
+              <span className="text-fg text-[26px] leading-none font-bold">
+                {s.value}
+                {s.unit && (
+                  <span className="text-fg-muted ml-0.5 text-[13px]">
+                    {s.unit}
+                  </span>
+                )}
+              </span>
+              {s.barPct != null && (
+                <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
+                  <div
+                    className={cn('h-full rounded-full', ACCENT[s.tone])}
+                    style={{ width: `${s.barPct}%` }}
+                  />
+                </div>
               )}
-            </span>
-            <span className="text-fg-subtle border-divider border-t pt-2 text-[11px]">
-              {s.sub}
-            </span>
-          </div>
-        ))}
+              <span className="text-fg-subtle text-[11px]">{s.sub}</span>
+            </div>
+          )
+        })}
       </div>
 
       <div className="flex items-center justify-between pt-1">
@@ -96,8 +127,18 @@ export default function TroubleshootingListPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="border-border text-fg-subtle hidden rounded-lg border px-3 py-2 text-[12px] sm:inline">
-            🔍 제목·카테고리·태그 검색
+          <span className="border-border text-fg-subtle hidden items-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] sm:inline-flex">
+            <svg
+              viewBox="0 0 24 24"
+              className="size-3.5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3-3" strokeLinecap="round" />
+            </svg>
+            제목·카테고리·태그 검색
           </span>
           <button
             type="button"
@@ -109,33 +150,50 @@ export default function TroubleshootingListPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {data.filters.map((f) => {
-          const on = f.key === active
-          return (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setActive(f.key)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                on
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted hover:bg-surface-muted border',
-              )}
-            >
-              {f.label}
-              <span
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {data.filters.map((f) => {
+            const on = f.key === active
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setActive(f.key)}
                 className={cn(
-                  'text-[12px]',
-                  on ? 'text-white/70' : 'text-fg-subtle',
+                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
+                  on
+                    ? 'bg-brand-deep text-white'
+                    : 'border-border text-fg-muted hover:bg-surface-muted border',
                 )}
               >
-                {f.count}
-              </span>
-            </button>
-          )
-        })}
+                {f.label}
+                <span
+                  className={cn(
+                    'text-[12px]',
+                    on ? 'text-white/70' : 'text-fg-subtle',
+                  )}
+                >
+                  {f.count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        {/* 우측 상태 칩 (인증 완료·검토 중·작성 중) */}
+        <div className="flex flex-wrap items-center gap-3">
+          {data.statusFilters.map((f) => (
+            <span
+              key={f.key}
+              className="text-fg-muted flex items-center gap-1.5 text-[12px] font-medium"
+            >
+              <span
+                className={cn('size-2 rounded-full', ACCENT[f.tone ?? 'brand'])}
+              />
+              {f.label}
+              <span className="text-fg font-bold">{f.count}</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">

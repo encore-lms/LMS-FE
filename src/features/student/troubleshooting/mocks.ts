@@ -14,6 +14,7 @@ const mockList: TsListData = {
       unit: '건',
       sub: '상황·해결·결과 다 갖춤 가능',
       tone: 'brand',
+      barPct: 100,
     },
     {
       key: 'certified',
@@ -22,6 +23,7 @@ const mockList: TsListData = {
       unit: '건',
       sub: '증명서 내 인증 사례 카드에 반영',
       tone: 'success',
+      barPct: 67,
     },
     {
       key: 'independent',
@@ -30,6 +32,7 @@ const mockList: TsListData = {
       unit: '%',
       sub: '독립 10건 · 동료 도움 2건',
       tone: 'warning',
+      barPct: 83,
     },
     {
       key: 'avgdays',
@@ -38,6 +41,7 @@ const mockList: TsListData = {
       unit: '일',
       sub: '문제 발생 → 해결까지',
       tone: 'accent',
+      barPct: 46,
     },
   ],
   filters: [
@@ -47,6 +51,11 @@ const mockList: TsListData = {
     { key: 'perf', label: '성능', count: 2 },
     { key: 'net', label: '네트워크·API', count: 2 },
     { key: 'etc', label: '기타', count: 1 },
+  ],
+  statusFilters: [
+    { key: 'certified', label: '인증 완료', count: 8, tone: 'success' },
+    { key: 'reviewing', label: '검토 중', count: 3, tone: 'warning' },
+    { key: 'draft', label: '작성 중', count: 1, tone: 'accent' },
   ],
   cases: [
     {

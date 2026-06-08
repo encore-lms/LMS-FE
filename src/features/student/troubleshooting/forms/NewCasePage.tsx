@@ -60,7 +60,7 @@ export default function NewCasePage() {
         <span className="text-fg-subtle text-[11px]">✎ 자동 저장 · 방금</span>
       </div>
 
-      <div className="from-brand to-brand-deep flex flex-col gap-1 rounded-2xl bg-gradient-to-r p-6">
+      <div className="bg-brand flex flex-col gap-1 rounded-2xl p-6">
         <span className="text-[11px] font-bold tracking-wider text-white/70">
           TROUBLESHOOTING · 새 사례
         </span>

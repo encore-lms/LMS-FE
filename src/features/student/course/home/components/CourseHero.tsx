@@ -1,9 +1,9 @@
 import type { CourseHero as CourseHeroType } from '../../types'
 
-// 강의 홈 히어로 — 과정/기수·교육기간·진행률. Figma 그라데이션(teal→purple)을 토큰 스톱으로.
+// 강의 홈 히어로 — 과정/기수·교육기간·진행률. 히어로 배경은 brand 단색 통일(SSOT).
 export function CourseHero({ hero }: { hero: CourseHeroType }) {
   return (
-    <section className="from-brand to-accent-strong flex w-full flex-col gap-[18px] rounded-2xl bg-gradient-to-br p-6 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
+    <section className="bg-brand flex w-full flex-col gap-[18px] rounded-2xl p-6 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <span className="text-[11px] font-semibold tracking-[0.18em] text-white/90">

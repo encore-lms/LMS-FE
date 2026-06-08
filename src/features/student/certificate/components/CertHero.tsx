@@ -9,7 +9,7 @@ export function CertHero({
   onRequest: () => void
 }) {
   return (
-    <section className="from-brand to-accent-strong relative flex items-center justify-between gap-6 overflow-hidden rounded-2xl bg-gradient-to-br px-8 py-7 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
+    <section className="bg-brand relative flex items-center justify-between gap-6 overflow-hidden rounded-2xl px-8 py-7 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
       {/* 장식 씰 링 */}
       <span className="pointer-events-none absolute -top-10 -right-10 size-44 rounded-full border-[18px] border-white/10" />
       <span className="pointer-events-none absolute top-6 right-16 size-24 rounded-full border-8 border-white/10" />

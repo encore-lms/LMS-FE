@@ -46,8 +46,18 @@ export default function ProjectListPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="border-border text-fg-subtle hidden rounded-lg border px-3 py-2 text-[12px] sm:inline">
-            🔍 프로젝트명·스택 검색
+          <span className="border-border text-fg-subtle hidden items-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] sm:inline-flex">
+            <svg
+              viewBox="0 0 24 24"
+              className="size-3.5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3-3" strokeLinecap="round" />
+            </svg>
+            프로젝트명·스택 검색
           </span>
           <button
             type="button"

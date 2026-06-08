@@ -5,7 +5,8 @@ import type { MenuItem } from '@/components/layout'
 // 하위 라우트/화면은 소유자가 features/student/에 추가한다.
 export const studentMenu: MenuItem[] = [
   { label: '대시보드', to: '/student' },
-  { label: '나의 과정', to: '/student/course' },
+  // 나의 과정 = 강의홈·자료실·과제(/student/course/*) + 퀴즈(/student/quizzes)
+  { label: '나의 과정', to: '/student/course', match: ['/student/quizzes'] },
   { label: '출결/태도', to: '/student/attendance' },
   { label: '기록실', to: '/student/records' },
   { label: '프로젝트', to: '/student/projects' },

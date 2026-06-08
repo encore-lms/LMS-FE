@@ -1,8 +1,18 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useCourseMaterials } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
+
+const SORTS = [
+  { key: 'latest', label: '최신 업로드 순' },
+  { key: 'oldest', label: '오래된 순' },
+  { key: 'title', label: '이름순' },
+] as const
+type SortKey = (typeof SORTS)[number]['key']
+const PAGE_SIZE = 8
 import {
   MaterialCategoryChips,
   type CategoryKey,
@@ -21,8 +31,22 @@ export default function MaterialsPage() {
   const [query, setQuery] = useState('')
   const [favOverride, setFavOverride] = useState<Record<string, boolean>>({})
   const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<SortKey>('latest')
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement>(null)
   const [shareOpen, setShareOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!sortOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [sortOpen])
 
   if (isPending) {
     return <div className="text-fg-muted p-8">자료실을 불러오는 중…</div>
@@ -51,6 +75,15 @@ export default function MaterialsPage() {
         prev[id] ?? data.items.find((it) => it.id === id)?.favorited ?? false
       return { ...prev, [id]: !current }
     })
+
+  // 정렬(최신=기본 순서 / 오래된=역순 / 이름=가나다) → 페이지 슬라이싱
+  const sorted = [...items]
+  if (sort === 'oldest') sorted.reverse()
+  else if (sort === 'title')
+    sorted.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const curPage = Math.min(page, pageCount)
+  const pageItems = sorted.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE)
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -110,23 +143,52 @@ export default function MaterialsPage() {
             {items.length}건
           </span>
         </div>
-        <button
-          type="button"
-          className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-medium"
-        >
-          최신 업로드 순 ⌄
-        </button>
+        <div className="relative" ref={sortRef}>
+          <button
+            type="button"
+            onClick={() => setSortOpen((v) => !v)}
+            aria-haspopup="listbox"
+            aria-expanded={sortOpen}
+            className="border-border text-fg-muted flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-medium"
+          >
+            {SORTS.find((s) => s.key === sort)?.label}
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          {sortOpen && (
+            <div className="border-border absolute right-0 z-30 mt-1 w-36 rounded-lg border bg-white p-1 shadow-[0px_8px_24px_0px_rgba(18,23,38,0.12)]">
+              {SORTS.map((o) => (
+                <button
+                  key={o.key}
+                  type="button"
+                  onClick={() => {
+                    setSort(o.key)
+                    setPage(1)
+                    setSortOpen(false)
+                  }}
+                  className={cn(
+                    'w-full rounded-md px-3 py-1.5 text-left text-[12px]',
+                    o.key === sort
+                      ? 'bg-brand/10 text-brand font-semibold'
+                      : 'text-fg-muted hover:bg-surface-muted',
+                  )}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 자료 목록 */}
-      {items.length === 0 ? (
+      {sorted.length === 0 ? (
         <Empty
           title="자료가 없어요"
           description="검색어나 분류를 바꿔보세요."
         />
       ) : (
         <div className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
-          {items.map((it, i) => (
+          {pageItems.map((it, i) => (
             <Fragment key={it.id}>
               {i > 0 && <div className="bg-divider h-px w-full" />}
               <MaterialRow item={it} onToggleFavorite={toggleFavorite} />
@@ -136,10 +198,10 @@ export default function MaterialsPage() {
       )}
 
       <MaterialPagination
-        shownCount={items.length}
-        totalCount={data.totalCount}
-        pageCount={3}
-        page={page}
+        shownCount={pageItems.length}
+        totalCount={sorted.length}
+        pageCount={pageCount}
+        page={curPage}
         onPage={setPage}
       />
 

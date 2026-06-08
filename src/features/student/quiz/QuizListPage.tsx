@@ -26,6 +26,7 @@ export default function QuizListPage() {
   const { data, isPending, isError, refetch } = useStudentQuizzes()
   const [status, setStatus] = useState<QuizStatus>('available')
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
 
   if (isPending) {
     return <div className="text-fg-muted p-8">퀴즈를 불러오는 중…</div>
@@ -59,6 +60,9 @@ export default function QuizListPage() {
 
   const goTake = (id: string) => navigate(`/student/quizzes/${id}/take`)
   const goResult = (id: string) => navigate(`/student/quizzes/${id}/result`)
+
+  const pageCount = Math.max(1, Math.ceil(items.length / 10))
+  const curPage = Math.min(page, pageCount)
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -185,13 +189,23 @@ export default function QuizListPage() {
           총 {items.length}건 · 응시 가능 {counts.available}건
         </p>
         <div className="flex items-center gap-1.5">
-          {['‹', '1', '2', '›'].map((p, i) => (
+          <button
+            type="button"
+            aria-label="이전"
+            onClick={() => setPage(Math.max(1, curPage - 1))}
+            className="border-border text-fg-muted flex size-9 items-center justify-center rounded-lg border text-[12px] font-medium"
+          >
+            ‹
+          </button>
+          {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
             <button
-              key={i}
+              key={p}
               type="button"
+              onClick={() => setPage(p)}
+              aria-current={p === curPage ? 'page' : undefined}
               className={cn(
                 'flex size-9 items-center justify-center rounded-lg text-[12px] font-medium',
-                p === '1'
+                p === curPage
                   ? 'bg-brand-deep text-white'
                   : 'border-border text-fg-muted border',
               )}
@@ -199,6 +213,14 @@ export default function QuizListPage() {
               {p}
             </button>
           ))}
+          <button
+            type="button"
+            aria-label="다음"
+            onClick={() => setPage(Math.min(pageCount, curPage + 1))}
+            className="border-border text-fg-muted flex size-9 items-center justify-center rounded-lg border text-[12px] font-medium"
+          >
+            ›
+          </button>
         </div>
       </div>
     </div>

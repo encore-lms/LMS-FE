@@ -48,7 +48,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         {labelAction}
       </div>
       <div
-        className={`flex h-[52px] items-center gap-[10px] rounded-[10px] border-2 bg-white px-4 py-[14px] ${
+        className={`flex h-[52px] items-center gap-[10px] rounded-[10px] border-2 bg-white px-4 py-[14px] transition-colors duration-300 ease-in-out ${
           error ? 'border-danger' : 'focus-within:border-brand border-border'
         }`}
       >

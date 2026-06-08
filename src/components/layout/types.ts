@@ -5,4 +5,6 @@ export interface MenuItem {
   label: string
   to: string
   icon?: ReactNode
+  /** to 경로 prefix 외에 이 항목을 active로 볼 추가 경로(prefix). 예: 나의 과정 ← /student/quizzes */
+  match?: string[]
 }

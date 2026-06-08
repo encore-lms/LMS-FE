@@ -20,6 +20,8 @@ export interface MileageStat {
   unit: string
   sub: string
   tone: Tone
+  barPct?: number // KPI 진행 트랙바(0~100, Figma 418:1850)
+  delta?: Badge // 숫자 옆 델타칩(▲ +18K / 대기 1)
 }
 
 /** 내 마일리지 */
@@ -35,6 +37,8 @@ export interface MileageProductMini {
   name: string
   limit: string // "잔여 한도 68,000M"
   tone: Tone
+  icon: 'book' | 'video' | 'gift' // 카테고리 아이콘(Figma 418:1850)
+  barPct?: number // 잔여 한도 트랙바
 }
 export interface MileageLimit {
   label: string // "도서"

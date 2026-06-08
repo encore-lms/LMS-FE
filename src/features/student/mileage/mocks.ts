@@ -20,6 +20,8 @@ const mockOverview: MileageOverview = {
       unit: 'M',
       sub: '최근 적립 +20,000M · 03시간 전',
       tone: 'success',
+      barPct: 43,
+      delta: { label: '▲ +18K', tone: 'success' },
     },
     {
       key: 'used',
@@ -28,14 +30,17 @@ const mockOverview: MileageOverview = {
       unit: 'M',
       sub: '도서 구매 1건 · 강의 1건',
       tone: 'accent',
+      barPct: 22,
     },
     {
       key: 'requests',
       label: '구매 요청',
       value: '3',
       unit: '건',
-      sub: '승인 대기 1 · 승인 완료 2',
+      sub: '승인 대기 1건 · 승인 완료 2건',
       tone: 'warning',
+      barPct: 26,
+      delta: { label: '대기 1', tone: 'warning' },
     },
     {
       key: 'limit',
@@ -44,6 +49,7 @@ const mockOverview: MileageOverview = {
       unit: '%',
       sub: '도서·강의 한도 기준 · 잔여 29%',
       tone: 'info',
+      barPct: 71,
     },
   ],
   ledger: [
@@ -89,9 +95,27 @@ const mockOverview: MileageOverview = {
     },
   ],
   products: [
-    { name: '도서 구매', limit: '잔여 한도 68,000M', tone: 'success' },
-    { name: '온라인 강의', limit: '잔여 한도 120,000M', tone: 'info' },
-    { name: '기프티콘', limit: '잔여 한도 30,000M', tone: 'warning' },
+    {
+      name: '도서 구매',
+      limit: '잔여 한도 68,000M',
+      tone: 'brand',
+      icon: 'book',
+      barPct: 9,
+    },
+    {
+      name: '온라인 강의',
+      limit: '잔여 한도 120,000M',
+      tone: 'accent',
+      icon: 'video',
+      barPct: 11,
+    },
+    {
+      name: '기프티콘',
+      limit: '잔여 한도 30,000M',
+      tone: 'warning',
+      icon: 'gift',
+      barPct: 16,
+    },
   ],
   limits: [
     {

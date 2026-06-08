@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import type { PeerHubData, PeerRepData, PeerTagData } from './types'
 
 // 동료 평가 mock — 기능 로컬. 자동 수집 규약: `export const handlers`.
-// ⚠ Deprecated 화면(프로젝트 상호평가로 흡수). Figma 401:1586·402:1644·404:1719 재현.
+// Figma 401:1586·402:1644·404:1719 재현.
 const ok = <T>(data: T) => HttpResponse.json({ data })
 
 const mockHub: PeerHubData = {

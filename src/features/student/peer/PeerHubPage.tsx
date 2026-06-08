@@ -3,10 +3,9 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePeerHub } from '../api/peer'
-import { DeprecationBanner } from './components/DeprecationBanner'
 import type { Tone } from './types'
 
-// 동료 평가 허브 (/student/peer-evaluations) — Figma 401:1586. ⚠ Deprecated.
+// 동료 평가 허브 (/student/peer-evaluations) — Figma 401:1586.
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const DOT: Record<Tone, string> = {
@@ -45,9 +44,6 @@ export default function PeerHubPage() {
           기수 내에서만 가능합니다.
         </p>
       </div>
-
-      <DeprecationBanner />
-
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {data.stats.map((s) => (
           <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>

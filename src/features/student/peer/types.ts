@@ -1,5 +1,4 @@
 // 수강생 동료 평가 도메인 계약 — 기능 로컬(공유 파일 미오염). Figma 401:1586 외.
-// ⚠ Deprecated(2026-05-27): 프로젝트 워크스페이스 상호평가 탭으로 흡수. 보관용 화면.
 // 동료 평가 허브 · PeerTag 부여 · PeerReputation 5축 평가.
 
 export type Tone =

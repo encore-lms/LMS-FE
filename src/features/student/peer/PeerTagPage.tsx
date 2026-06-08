@@ -4,10 +4,9 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePeerTag } from '../api/peer'
-import { DeprecationBanner } from './components/DeprecationBanner'
 import { PEER_TAGS, type PeerMemberStatus, type Tone } from './types'
 
-// PeerTag 부여 (/student/peer-tag) — Figma 402:1644. ⚠ Deprecated.
+// PeerTag 부여 (/student/peer-tag) — Figma 402:1644.
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const STATUS: Record<PeerMemberStatus, string> = {
@@ -67,9 +66,6 @@ export default function PeerTagPage() {
           동기·동료에게 어울리는 협업 태그를 익명으로 부여합니다.
         </p>
       </div>
-
-      <DeprecationBanner />
-
       <div className="flex items-center gap-3">
         <span className="text-fg text-[15px] font-bold">동기수 동료</span>
         <span className="text-fg-subtle text-[12px]">

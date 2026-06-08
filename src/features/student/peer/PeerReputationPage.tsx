@@ -4,10 +4,9 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePeerReputation } from '../api/peer'
-import { DeprecationBanner } from './components/DeprecationBanner'
 import { RECOMMEND_OPTIONS, type Tone } from './types'
 
-// PeerReputation 5축 평가 (/student/peer-reputation) — Figma 404:1719. ⚠ Deprecated.
+// PeerReputation 5축 평가 (/student/peer-reputation) — Figma 404:1719.
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const AVA: Record<Tone, string> = {
@@ -71,9 +70,6 @@ export default function PeerReputationPage() {
           남깁니다.
         </p>
       </div>
-
-      <DeprecationBanner />
-
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-fg text-[15px] font-bold">평가할 동료</span>

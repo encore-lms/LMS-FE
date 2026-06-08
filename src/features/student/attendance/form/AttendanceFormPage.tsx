@@ -71,9 +71,17 @@ export default function AttendanceFormPage() {
     null,
   )
 
+  // 예상 입실 시간 기본값 = 현재 시각(HH:MM). 수강생이 이후 자유롭게 변경 가능.
+  const now = new Date()
+  const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(
+    now.getMinutes(),
+  ).padStart(2, '0')}`
   const methods = useForm<AttendanceFormValues>({
     resolver: zodResolver(attendanceFormSchema),
-    defaultValues: ATTENDANCE_FORM_DEFAULTS,
+    defaultValues: {
+      ...ATTENDANCE_FORM_DEFAULTS,
+      expectedArrivalTime: nowTime,
+    },
   })
 
   if (isPending) {

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { Book, Gift, Video, type LucideIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -7,7 +8,10 @@ import type { Tone } from './types'
 
 // 내 마일리지 (/student/mileage) — Figma 418:1850.
 const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+// KPI 카드는 figma 기준 rounded-14 / p-18 (요약카드 패턴)
+const kpiCard =
+  'border-border bg-surface rounded-[14px] border p-[18px] shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const DOT: Record<Tone, string> = {
   brand: 'bg-brand',
   info: 'bg-info',
@@ -23,6 +27,12 @@ const CHIP: Record<Tone, string> = {
   danger: 'bg-danger-bg text-danger',
   accent: 'bg-accent-bg text-accent-strong',
   success: 'bg-success-bg text-success',
+}
+// 구매 가능 상품 카테고리 아이콘(Figma book-fill/camera-video-fill/gift-fill)
+const PRODUCT_ICON: Record<'book' | 'video' | 'gift', LucideIcon> = {
+  book: Book,
+  video: Video,
+  gift: Gift,
 }
 
 export default function MileagePage() {
@@ -84,15 +94,41 @@ export default function MileagePage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {data.stats.map((s) => (
-          <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
-            <div className="flex items-start justify-between">
-              <span className="text-fg-muted text-[12px]">{s.label}</span>
-              <span className={cn('size-2 rounded-full', DOT[s.tone])} />
+          <div key={s.key} className={cn(kpiCard, 'flex flex-col gap-2')}>
+            <div className="flex items-center justify-between">
+              <span className="text-fg-muted text-[12px] font-medium">
+                {s.label}
+              </span>
+              <span
+                className={cn('size-2 shrink-0 rounded-full', DOT[s.tone])}
+              />
             </div>
-            <span className="text-fg text-[24px] leading-none font-bold">
-              {s.value}
-              <span className="text-fg-muted ml-0.5 text-[13px]">{s.unit}</span>
-            </span>
+            <div className="flex items-end gap-0.5">
+              <span className="text-fg text-[28px] leading-[34px] font-bold">
+                {s.value}
+              </span>
+              <span className="text-fg-muted text-[13px] font-medium">
+                {s.unit}
+              </span>
+              {s.delta && (
+                <span
+                  className={cn(
+                    'ml-1.5 rounded-[5px] px-1.5 py-0.5 text-[10px] font-bold',
+                    CHIP[s.delta.tone],
+                  )}
+                >
+                  {s.delta.label}
+                </span>
+              )}
+            </div>
+            {s.barPct != null && (
+              <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
+                <div
+                  className={cn('h-full rounded-full', DOT[s.tone])}
+                  style={{ width: `${s.barPct}%` }}
+                />
+              </div>
+            )}
             <span className="text-fg-subtle text-[11px]">{s.sub}</span>
           </div>
         ))}
@@ -100,14 +136,19 @@ export default function MileagePage() {
 
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex flex-1 flex-col gap-2')}>
-          <div className="flex items-center justify-between">
-            <span className="text-fg text-[15px] font-bold">
-              최근 적립·사용 내역
-            </span>
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-fg text-[15px] font-bold">
+                최근 적립·사용 내역
+              </span>
+              <span className="text-fg-subtle text-[11px]">
+                최근 30일 · {data.ledger.length}건 표시
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => navigate('/student/mileage/history')}
-              className="text-brand text-[12px] font-semibold"
+              className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-medium"
             >
               전체 내역
             </button>
@@ -156,43 +197,64 @@ export default function MileagePage() {
           ))}
         </section>
 
-        <section className={cn(card, 'flex flex-col gap-3 lg:w-[340px]')}>
-          <div className="flex items-center justify-between">
-            <span className="text-fg text-[15px] font-bold">
-              구매 가능 상품
-            </span>
+        <section className={cn(card, 'flex flex-1 flex-col gap-3.5')}>
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-fg text-[15px] font-bold">
+                구매 가능 상품
+              </span>
+              <span className="text-fg-subtle text-[11px]">
+                잔여 한도 기준 · {data.products.length}종
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => navigate('/student/mileage/products')}
-              className="text-brand text-[12px] font-semibold"
+              className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-medium"
             >
               상품 전체
             </button>
           </div>
-          {data.products.map((p) => (
-            <div key={p.name} className="flex items-center gap-3">
-              <span
-                className={cn(
-                  'size-7 shrink-0 rounded-lg',
-                  DOT[p.tone],
-                  'opacity-80',
-                )}
-              />
-              <div className="flex flex-1 flex-col">
-                <span className="text-fg text-[13px] font-semibold">
-                  {p.name}
+          {data.products.map((p) => {
+            const Icon = PRODUCT_ICON[p.icon]
+            return (
+              <div key={p.name} className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    'flex size-10 shrink-0 items-center justify-center rounded-[10px]',
+                    CHIP[p.tone],
+                  )}
+                >
+                  <Icon className="size-[21px]" />
                 </span>
-                <span className="text-fg-subtle text-[11px]">{p.limit}</span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-fg text-[13px] font-semibold">
+                      {p.name}
+                    </span>
+                    <span className="text-fg-muted shrink-0 text-[11px] font-medium">
+                      {p.limit}
+                    </span>
+                  </div>
+                  {p.barPct != null && (
+                    <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
+                      <div
+                        className={cn('h-full rounded-full', DOT[p.tone])}
+                        style={{ width: `${p.barPct}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/student/mileage/products')}
+                  className="bg-brand text-on-color shrink-0 rounded-lg px-3.5 py-2 text-[12px] font-bold"
+                >
+                  신청 →
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => navigate('/student/mileage/products')}
-                className="bg-brand rounded-lg px-3 py-1.5 text-[12px] font-bold text-white"
-              >
-                신청 →
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </section>
       </div>
 
@@ -227,7 +289,7 @@ export default function MileagePage() {
                 </span>
               </span>
             </div>
-            <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
+            <div className="bg-surface-muted h-2.5 w-full overflow-hidden rounded-full">
               <div
                 className={cn('h-full rounded-full', DOT[l.tone])}
                 style={{ width: `${Math.round((l.used / l.total) * 100)}%` }}

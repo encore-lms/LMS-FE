@@ -1,10 +1,30 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Info,
+  Timer,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { TS_CHANGE_ITEMS } from '../types'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348. 정적 폼.
 const card = 'border-border bg-surface rounded-2xl border p-6'
+// 처리 흐름 단계 톤(Figma 2533:5239) — 아이콘박스 tint + "STEP N" 배지 색.
+type StepTone = 'warning' | 'success' | 'danger'
+const STEP_BG: Record<StepTone, string> = {
+  warning: 'bg-warning-bg',
+  success: 'bg-success-bg',
+  danger: 'bg-danger-bg',
+}
+const STEP_TEXT: Record<StepTone, string> = {
+  warning: 'text-warning',
+  success: 'text-success',
+  danger: 'text-danger',
+}
 const DIFF: Record<
   string,
   { label: string; before: string; after: string; delta: string }
@@ -24,16 +44,35 @@ const DIFF: Record<
     delta: '변경됨 (+58)',
   },
 }
-const STEPS = [
-  { no: '1', label: '강사 검토 큐', sub: '제출 → requested', tone: 'warning' },
+const STEPS: {
+  no: string
+  icon: LucideIcon
+  title: string
+  sub: string
+  tone: StepTone
+}[] = [
   {
-    no: '2',
-    label: '승인 → 원본 반영',
-    sub: '변경 사항 적용',
+    no: 'STEP 1',
+    icon: Timer,
+    title: '강사 검토 큐',
+    sub: 'D+1 영업일 내 검토',
+    tone: 'warning',
+  },
+  {
+    no: 'STEP 2',
+    icon: CheckCircle2,
+    title: '승인 → 원본 반영',
+    sub: '변경 사항 자동 갱신',
     tone: 'success',
   },
-  { no: '3', label: '반려 → 사유 확인', sub: '코멘트 전달', tone: 'danger' },
-] as const
+  {
+    no: 'STEP 3',
+    icon: AlertTriangle,
+    title: '반려 → 사유 회신',
+    sub: '코멘트와 함께 회신',
+    tone: 'danger',
+  },
+]
 
 export default function ChangeRequestPage() {
   const navigate = useNavigate()
@@ -191,29 +230,47 @@ export default function ChangeRequestPage() {
         </span>
       </section>
 
-      <section className={cn(card, 'flex flex-col gap-3')}>
-        <span className="text-fg text-[15px] font-bold">제출 후 처리 흐름</span>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {STEPS.map((s) => (
-            <div
-              key={s.no}
-              className="border-border flex flex-col gap-1 rounded-[12px] border p-4"
-            >
-              <span
-                className={cn(
-                  'flex size-6 items-center justify-center rounded-full text-[12px] font-bold text-white',
-                  s.tone === 'warning'
-                    ? 'bg-warning'
-                    : s.tone === 'success'
-                      ? 'bg-success'
-                      : 'bg-danger',
-                )}
-              >
-                {s.no}
-              </span>
-              <span className="text-fg text-[13px] font-bold">{s.label}</span>
-              <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-            </div>
+      <section className={cn(card, 'flex flex-col gap-3.5')}>
+        <div className="flex items-center gap-2">
+          <Info className="text-info size-4 shrink-0" />
+          <span className="text-fg text-[14px] font-bold">
+            제출 후 처리 흐름
+          </span>
+        </div>
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          {STEPS.map((s, i) => (
+            <Fragment key={s.no}>
+              <div className="flex flex-1 items-center gap-3">
+                <span
+                  className={cn(
+                    'flex size-11 shrink-0 items-center justify-center rounded-[12px]',
+                    STEP_BG[s.tone],
+                  )}
+                >
+                  <s.icon className={cn('size-[22px]', STEP_TEXT[s.tone])} />
+                </span>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={cn(
+                        'rounded px-1.5 py-0.5 text-[10px] font-bold tracking-[0.8px]',
+                        STEP_BG[s.tone],
+                        STEP_TEXT[s.tone],
+                      )}
+                    >
+                      {s.no}
+                    </span>
+                    <span className="text-fg text-[13px] font-bold whitespace-nowrap">
+                      {s.title}
+                    </span>
+                  </div>
+                  <span className="text-fg-muted text-[11px]">{s.sub}</span>
+                </div>
+              </div>
+              {i < STEPS.length - 1 && (
+                <ArrowRight className="text-fg-subtle hidden size-3.5 shrink-0 sm:block" />
+              )}
+            </Fragment>
           ))}
         </div>
       </section>

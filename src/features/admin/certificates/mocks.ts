@@ -40,6 +40,7 @@ const snapshot: CertSnapshot = {
   student: { name: '이서연', certId: 'def-5678', cohort: 'DA 5기' },
   isPublic: false,
   issuedAt: '2026-02-14 10:00',
+  publicToken: 'vfy_kp4q4r2nv0',
   metrics: {
     trainingHours: 480,
     attendance: 0.962,
@@ -65,7 +66,7 @@ const snapshot: CertSnapshot = {
   verify: {
     url: 'verify.playdata.io/cert/vfy_kp4q4r2nv0',
     snapshotHash: 'sha256:a3f8…07e',
-    verifLevel: 'ver_202602_512',
+    verificationId: 'ver_2026Q2_512',
   },
 }
 

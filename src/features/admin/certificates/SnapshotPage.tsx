@@ -1,5 +1,11 @@
-import { useState } from 'react'
-import { AlertTriangle, ArrowLeft, Copy, Download } from 'lucide-react'
+import { useRef, useState } from 'react'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Copy,
+  Download,
+  ExternalLink,
+} from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -26,6 +32,7 @@ export default function SnapshotPage() {
   const toast = useToast()
   const { data, isPending, isError, refetch } = useSnapshot(certificateId)
   const [tab, setTab] = useState(0)
+  const verifyRef = useRef<HTMLElement>(null)
 
   if (isPending) {
     return <div className="text-fg-muted p-8">스냅샷을 불러오는 중…</div>
@@ -46,6 +53,8 @@ export default function SnapshotPage() {
     navigator.clipboard?.writeText(s.verify.url)
     toast.success('공개 검증 URL이 복사됐어요')
   }
+  const previewVerify = () =>
+    verifyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const publicBadge = s.isPublic ? '공개' : 'isPublic = false'
 
   return (
@@ -68,25 +77,55 @@ export default function SnapshotPage() {
         certified 증명서의 동결 스냅샷 · 매니저·운영팀 전용
       </p>
 
-      <div className="bg-brand mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
-        <div className="flex items-center gap-4">
-          <Avatar name={s.student.name} size={56} />
-          <div>
-            <StatusBadge label="certified" tone="success" />
-            <div className="mt-1 flex items-center gap-2">
-              <span className="text-xl font-bold">{s.student.name}</span>
-              <span className="text-sm text-white/70">
-                {s.student.certId} · {s.student.cohort}
-              </span>
+      <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar name={s.student.name} size={56} />
+            <div>
+              <StatusBadge label="certified" tone="success" />
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-xl font-bold">{s.student.name}</span>
+                <span className="text-sm text-white/70">
+                  {s.student.certId} · {s.student.cohort}
+                </span>
+              </div>
             </div>
           </div>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => toast.info('JSON 다운로드 (mock)')}
+            >
+              <Download className="h-4 w-4" /> JSON 다운로드
+            </Button>
+            <Button variant="secondary" onClick={previewVerify}>
+              <ExternalLink className="h-4 w-4" /> 외부 검증 URL 미리보기
+            </Button>
+          </div>
         </div>
-        <Button
-          variant="secondary"
-          onClick={() => toast.info('JSON 다운로드 (mock)')}
-        >
-          <Download className="h-4 w-4" /> JSON 다운로드
-        </Button>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="rounded-lg bg-white/10 px-3 py-2">
+            <p className="text-xs text-white/60">생성 시각</p>
+            <p className="mt-0.5 text-sm font-medium">{s.issuedAt}</p>
+          </div>
+          <div className="rounded-lg bg-white/10 px-3 py-2">
+            <p className="text-xs text-white/60">certificateId</p>
+            <p className="mt-0.5 truncate font-mono text-sm">
+              {s.certificateId}
+            </p>
+          </div>
+          <div className="rounded-lg bg-white/10 px-3 py-2">
+            <p className="text-xs text-white/60">snapshotHash</p>
+            <p className="mt-0.5 truncate font-mono text-sm">
+              {s.verify.snapshotHash}
+            </p>
+          </div>
+          <div className="rounded-lg bg-white/10 px-3 py-2">
+            <p className="text-xs text-white/60">publicToken</p>
+            <p className="mt-0.5 truncate font-mono text-sm">{s.publicToken}</p>
+          </div>
+        </div>
       </div>
 
       <section className="border-border bg-surface mt-6 rounded-xl border">
@@ -213,7 +252,10 @@ export default function SnapshotPage() {
         </div>
       </section>
 
-      <section className="border-border bg-surface mt-6 rounded-xl border p-5">
+      <section
+        ref={verifyRef}
+        className="border-border bg-surface mt-6 rounded-xl border p-5"
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-fg font-bold">외부 검증 URL · 무결성 정보</h2>
           <StatusBadge label={publicBadge} tone="neutral" />
@@ -237,8 +279,10 @@ export default function SnapshotPage() {
             <p className="text-fg font-mono text-xs">{s.verify.snapshotHash}</p>
           </div>
           <div className="border-border rounded-lg border px-3 py-2">
-            <p className="text-fg-subtle text-xs">verifLevel</p>
-            <p className="text-fg font-mono text-xs">{s.verify.verifLevel}</p>
+            <p className="text-fg-subtle text-xs">verificationId</p>
+            <p className="text-fg font-mono text-xs">
+              {s.verify.verificationId}
+            </p>
           </div>
         </div>
       </section>

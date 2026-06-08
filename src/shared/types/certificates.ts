@@ -105,6 +105,7 @@ export interface CertSnapshot {
   student: { name: string; certId: string; cohort: string }
   isPublic: boolean
   issuedAt: string
+  publicToken: string
   metrics: {
     trainingHours: number
     attendance: number
@@ -116,5 +117,5 @@ export interface CertSnapshot {
   skillAvg: number
   evidence: SnapshotEvidence[] // 대표 근거(외부 공개)
   payloadJson: string // 동결 공개 payload (멀티라인)
-  verify: { url: string; snapshotHash: string; verifLevel: string }
+  verify: { url: string; snapshotHash: string; verificationId: string }
 }

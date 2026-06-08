@@ -12,12 +12,30 @@ export interface DashboardHero {
   progressPct: number // 0~100
 }
 
-/** 요약 KPI 4종 */
+/** 요약 KPI 카드(Figma 2455:5068) — 라벨+색점 / 숫자+델타칩 / 진행 트랙바 / 캡션 */
+export type KpiTone =
+  | 'brand'
+  | 'warning'
+  | 'accent'
+  | 'success'
+  | 'info'
+  | 'danger'
+export interface DashboardKpiDelta {
+  label: string // "+2%p" | "D-1" | "✓ 클리어"
+  tone: 'success' | 'warning' | 'danger'
+}
+export interface DashboardKpiItem {
+  key: string
+  label: string
+  value: string
+  unit?: string // "%" | "건"
+  tone: KpiTone // 색점·트랙바 색
+  barPct: number // 0~100 트랙 채움
+  delta?: DashboardKpiDelta
+  caption: string // 하단 보조 한 줄
+}
 export interface DashboardKpis {
-  attendanceRate: number // 출석률 %
-  pendingQuizzes: number // 미응시 퀴즈
-  pendingRecords: number // 승인 대기 기록
-  changeRequests: number // 보완 요청
+  items: DashboardKpiItem[]
 }
 
 /** 할 일 1건 (오늘/이번 주) */

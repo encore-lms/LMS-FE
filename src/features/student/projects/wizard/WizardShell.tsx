@@ -119,7 +119,7 @@ export function WizardShell({
       </div>
 
       {/* 히어로 밴드 */}
-      <div className="from-brand to-brand-deep flex items-center justify-between rounded-2xl bg-gradient-to-r p-6">
+      <div className="bg-brand flex items-center justify-between rounded-2xl p-6">
         <div className="flex flex-col gap-1">
           <span className="text-[11px] font-bold tracking-wider text-white/70">
             STEP {step} · {STEPS[step - 1].label}

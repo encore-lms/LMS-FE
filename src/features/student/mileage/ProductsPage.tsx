@@ -51,7 +51,7 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <div className="from-brand to-brand-deep flex items-center justify-between rounded-2xl bg-gradient-to-r p-5">
+      <div className="bg-brand flex items-center justify-between rounded-2xl p-5">
         <div className="flex items-center gap-6">
           <div className="flex flex-col">
             <span className="text-[11px] font-bold tracking-wider text-white/70">

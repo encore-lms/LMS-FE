@@ -1,10 +1,10 @@
 import type { MentoringData } from '../types'
 
-// 멘토링 히어로 — 팀명·담당 멘토·상태 + 진행/완료 KPI. 그라데이션(teal→purple) 토큰 스톱.
+// 멘토링 히어로 — 팀명·담당 멘토·상태 + 진행/완료 KPI. 히어로 배경은 brand 단색 통일(SSOT).
 export function MentoringHero({ data }: { data: MentoringData }) {
   const { teamName, mentor, kpis, activeRequest } = data
   return (
-    <section className="from-brand to-accent-strong flex items-center justify-between gap-6 rounded-2xl bg-gradient-to-br px-7 py-6 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
+    <section className="bg-brand flex items-center justify-between gap-6 rounded-2xl px-7 py-6 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
       <div className="flex flex-col gap-2">
         <span className="text-[11px] font-semibold tracking-[0.18em] text-white/90">
           MENTORING · 팀 단위 요청

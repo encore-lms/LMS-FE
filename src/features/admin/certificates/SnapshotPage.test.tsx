@@ -16,6 +16,7 @@ const snapshot: CertSnapshot = {
   student: { name: '이서연', certId: 'def-5678', cohort: 'DA 5기' },
   isPublic: false,
   issuedAt: '2026-02-14 10:00',
+  publicToken: 'vfy_kp4q4r2nv0',
   metrics: {
     trainingHours: 480,
     attendance: 0.962,
@@ -33,7 +34,7 @@ const snapshot: CertSnapshot = {
   verify: {
     url: 'verify.playdata.io/cert/vfy_kp4q4r2nv0',
     snapshotHash: 'sha256:a3f8…07e',
-    verifLevel: 'ver_202602_512',
+    verificationId: 'ver_2026Q2_512',
   },
 }
 
@@ -63,6 +64,11 @@ describe('SnapshotPage', () => {
     expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()
     expect(
       screen.getByText('verify.playdata.io/cert/vfy_kp4q4r2nv0'),
+    ).toBeInTheDocument()
+    // hero 정보 카드 + verificationId + 외부 검증 URL 미리보기 버튼 (Figma 정합)
+    expect(screen.getByText('ver_2026Q2_512')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /외부 검증 URL 미리보기/ }),
     ).toBeInTheDocument()
   })
 

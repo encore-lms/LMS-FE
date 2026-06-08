@@ -6,10 +6,10 @@ const ok = <T>(data: T) => HttpResponse.json({ data })
 
 const PAYLOAD = JSON.stringify(
   {
-    version: '2026.02',
-    snapshotHash: 'sha256:a3f8…07e',
-    publicToken: 'vfy_kp4q4r2nv0',
-    issuedAt: '2026-02-14T10:00:00Z',
+    version: '2026.05',
+    snapshotHash: 'sha256:a3f9…07e',
+    publicToken: 'vfy_kp9q4r2nx0',
+    issuedAt: '2026-05-19T11:24:08+09:00',
     student: '이서연',
     course: 'DA 5기',
     trainingHours: 480,
@@ -39,7 +39,8 @@ const snapshot: CertSnapshot = {
   certificateId: 'cert_8b2a',
   student: { name: '이서연', certId: 'def-5678', cohort: 'DA 5기' },
   isPublic: false,
-  issuedAt: '2026-02-14 10:00',
+  issuedAt: '2026-05-19 11:24:08',
+  publicToken: 'vfy_kp9q4r2nx0',
   metrics: {
     trainingHours: 480,
     attendance: 0.962,
@@ -63,9 +64,9 @@ const snapshot: CertSnapshot = {
   ],
   payloadJson: PAYLOAD,
   verify: {
-    url: 'verify.playdata.io/cert/vfy_kp4q4r2nv0',
-    snapshotHash: 'sha256:a3f8…07e',
-    verifLevel: 'ver_202602_512',
+    url: 'verify.playdata.io/cert/vfy_kp9q4r2nx0',
+    snapshotHash: 'sha256:a3f9…07e',
+    verificationId: 'ver_2026Q2_512',
   },
 }
 

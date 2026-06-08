@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Info, Mail } from 'lucide-react'
+import { ArrowRight, Info, Lock, Mail } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
@@ -70,7 +70,7 @@ export function LoginPage() {
         </div>
 
         <Input
-          label="이메일"
+          label="아이디"
           required
           type="email"
           autoComplete="email"
@@ -86,6 +86,7 @@ export function LoginPage() {
           type="password"
           autoComplete="current-password"
           placeholder="••••••••••"
+          leftIcon={<Lock className="h-4 w-4" />}
           rightIcon={<Info className="h-4 w-4" />}
           labelAction={
             <button type="button" className="text-brand text-xs font-medium">

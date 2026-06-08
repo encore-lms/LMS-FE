@@ -249,10 +249,10 @@ export default function SnapshotPage() {
         </p>
         <div className="flex shrink-0 gap-2">
           <Button variant="secondary" onClick={() => navigate(-1)}>
-            검토 상세로
+            검토 상세로 돌아가기
           </Button>
-          <Button onClick={copyUrl}>
-            <Copy className="h-4 w-4" /> 검증 URL 복사
+          <Button onClick={() => toast.info('JSON 다운로드 (mock)')}>
+            <Download className="h-4 w-4" /> JSON 다운로드
           </Button>
         </div>
       </div>

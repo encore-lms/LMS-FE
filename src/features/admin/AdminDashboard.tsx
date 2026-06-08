@@ -146,7 +146,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-8">
       {/* 히어로 */}
-      <div className="bg-brand-deep rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand rounded-xl px-6 py-5 text-white">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold tracking-wider text-white/60">

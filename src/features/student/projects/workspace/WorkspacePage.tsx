@@ -1,10 +1,34 @@
+import { useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useProjectWorkspace } from '../../api/projects'
-import type { Badge, Tone, WorkspaceData, WsTab } from '../types'
+import type {
+  Badge,
+  Tone,
+  WorkspaceData,
+  WsColumn,
+  WsTab,
+  WsTask,
+} from '../types'
 import { WorkspaceShell } from './WorkspaceShell'
+
+// 담당자 이름 → 결정론적 아바타 색(타입에 avatarTone이 없어 이름 해시로 매핑)
+const TONES: Tone[] = [
+  'brand',
+  'info',
+  'warning',
+  'danger',
+  'accent',
+  'success',
+]
+function toneOf(name: string): Tone {
+  let h = 0
+  for (let i = 0; i < name.length; i++)
+    h = (h + name.charCodeAt(i)) % TONES.length
+  return TONES[h]
+}
 
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
@@ -98,13 +122,22 @@ function Chip({ badge }: { badge: Badge }) {
     </span>
   )
 }
-function SectionHead({ title, action }: { title: string; action?: string }) {
+function SectionHead({
+  title,
+  action,
+  onAction,
+}: {
+  title: string
+  action?: string
+  onAction?: () => void
+}) {
   return (
     <div className="flex items-center justify-between">
       <h2 className="text-fg text-[16px] font-bold">{title}</h2>
       {action && (
         <button
           type="button"
+          onClick={onAction}
           className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
         >
           {action}
@@ -125,13 +158,23 @@ function Avatar({ name, tone }: { name: string; tone: Tone }) {
     </span>
   )
 }
-function TaskCard({ t }: { t: WorkspaceData['columns'][0]['tasks'][0] }) {
+function TaskCard({ t }: { t: WsTask }) {
   return (
     <div className="border-border bg-surface flex flex-col gap-2 rounded-[12px] border p-3.5">
       <span className="text-fg text-[13px] font-bold">{t.title}</span>
-      <span className="text-fg-subtle text-[11px]">
-        {t.assignee} · {t.due}
-      </span>
+      <div className="flex items-center gap-1.5">
+        <span
+          className={cn(
+            'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white',
+            SOLID[toneOf(t.assignee)],
+          )}
+        >
+          {t.assignee.slice(0, 1)}
+        </span>
+        <span className="text-fg-subtle text-[11px]">
+          {t.assignee} · {t.due}
+        </span>
+      </div>
       <div className="flex flex-wrap gap-1">
         {t.tags.map((tg, i) => (
           <Chip key={i} badge={tg} />
@@ -254,23 +297,193 @@ function HomeTab({ d }: { d: WorkspaceData }) {
 
 /* ── 보드 ── */
 function BoardTab({ d }: { d: WorkspaceData }) {
+  const [columns, setColumns] = useState(d.columns)
+  const [addCol, setAddCol] = useState<number | null>(null)
+  const drag = useRef<{ col: number; task: number } | null>(null)
+
+  const drop = (toCol: number) => {
+    const from = drag.current
+    drag.current = null
+    if (!from || from.col === toCol) return
+    setColumns((cols) => {
+      const next = cols.map((c) => ({ ...c, tasks: [...c.tasks] }))
+      const [moved] = next[from.col].tasks.splice(from.task, 1)
+      if (moved) next[toCol].tasks.push(moved)
+      return next
+    })
+  }
+  const addTask = (colIdx: number, task: WsTask) =>
+    setColumns((cols) =>
+      cols.map((c, i) =>
+        i === colIdx ? { ...c, tasks: [...c.tasks, task] } : c,
+      ),
+    )
+
   return (
     <div className="flex flex-col gap-4">
-      <SectionHead title="보드" action="작업 추가" />
+      <SectionHead
+        title="보드"
+        action="작업 추가"
+        onAction={() => setAddCol(0)}
+      />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {d.columns.map((col) => (
-          <section key={col.key} className={cn(card, 'flex flex-col gap-3')}>
-            <span className="text-fg text-[14px] font-bold">
-              {col.label}{' '}
-              <span className="text-fg-subtle text-[12px]">
-                {col.tasks.length}
+        {columns.map((col, ci) => (
+          <section
+            key={col.key}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => drop(ci)}
+            className={cn(card, 'flex flex-col gap-3')}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-fg text-[14px] font-bold">
+                {col.label}{' '}
+                <span className="text-fg-subtle text-[12px]">
+                  {col.tasks.length}
+                </span>
               </span>
-            </span>
-            {col.tasks.map((t, i) => (
-              <TaskCard key={i} t={t} />
+              <button
+                type="button"
+                onClick={() => setAddCol(ci)}
+                className="text-fg-muted hover:bg-surface-muted rounded-md px-2 py-1 text-[12px] font-semibold"
+              >
+                + 작업
+              </button>
+            </div>
+            {col.tasks.map((t, ti) => (
+              <div
+                key={ti}
+                draggable
+                onDragStart={() => {
+                  drag.current = { col: ci, task: ti }
+                }}
+                className="cursor-grab active:cursor-grabbing"
+              >
+                <TaskCard t={t} />
+              </div>
             ))}
+            {col.tasks.length === 0 && (
+              <div className="border-border text-fg-subtle rounded-[12px] border border-dashed py-6 text-center text-[11px]">
+                여기로 드래그
+              </div>
+            )}
           </section>
         ))}
+      </div>
+      {addCol !== null && (
+        <AddTaskModal
+          columns={columns}
+          initialCol={addCol}
+          onClose={() => setAddCol(null)}
+          onAdd={(colIdx, task) => {
+            addTask(colIdx, task)
+            setAddCol(null)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ── 작업 추가 모달 ── */
+function AddTaskModal({
+  columns,
+  initialCol,
+  onClose,
+  onAdd,
+}: {
+  columns: WsColumn[]
+  initialCol: number
+  onClose: () => void
+  onAdd: (colIdx: number, task: WsTask) => void
+}) {
+  const [colIdx, setColIdx] = useState(initialCol)
+  const [title, setTitle] = useState('')
+  const [assignee, setAssignee] = useState('')
+  const [due, setDue] = useState('')
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+
+  const submit = () => {
+    if (!title.trim()) return
+    onAdd(colIdx, {
+      title: title.trim(),
+      assignee: assignee.trim() || '미지정',
+      due: due.trim() || '-',
+      tags: [],
+    })
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-[420px] flex-col gap-4 rounded-2xl bg-white p-6 shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-fg text-[16px] font-bold">작업 추가</h3>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">컬럼</span>
+          <select
+            value={colIdx}
+            onChange={(e) => setColIdx(Number(e.target.value))}
+            className={field}
+          >
+            {columns.map((c, i) => (
+              <option key={c.key} value={i}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">제목</span>
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="작업 제목"
+            className={field}
+          />
+        </label>
+        <div className="flex gap-3">
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="text-fg text-[12px] font-bold">담당자</span>
+            <input
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              placeholder="이름"
+              className={field}
+            />
+          </label>
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="text-fg text-[12px] font-bold">마감</span>
+            <input
+              value={due}
+              onChange={(e) => setDue(e.target.value)}
+              placeholder="D-3"
+              className={field}
+            />
+          </label>
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!title.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            추가
+          </button>
+        </div>
       </div>
     </div>
   )

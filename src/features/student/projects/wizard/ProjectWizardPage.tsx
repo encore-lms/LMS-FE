@@ -328,8 +328,18 @@ function Step2(p: {
             초대 {p.invited.length} / 7명
           </span>
         </div>
-        <span className="border-border text-fg-subtle rounded-[10px] border px-4 py-3 text-[13px]">
-          🔍 이름이나 영문 닉네임으로 검색
+        <span className="border-border text-fg-subtle flex items-center gap-2 rounded-[10px] border px-4 py-3 text-[13px]">
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3-3" strokeLinecap="round" />
+          </svg>
+          이름이나 영문 닉네임으로 검색
         </span>
         <span className="text-fg-subtle text-[11px]">
           검색 결과 ({p.candidates.length}명)

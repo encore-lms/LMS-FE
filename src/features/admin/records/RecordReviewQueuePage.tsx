@@ -391,7 +391,7 @@ export default function RecordReviewQueuePage() {
       <p className="text-fg-subtle text-xs">운영 › 학습 기록 검토</p>
       <h1 className="text-fg mt-1 text-2xl font-bold">학습 기록 검토 큐</h1>
 
-      <div className="bg-brand-deep mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
           <p className="font-bold">
             블로그·스터디·자격증 1차 검토 — 승인·반려·보완 요청

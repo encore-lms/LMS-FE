@@ -161,7 +161,7 @@ export default function ReviewQueuePage() {
       <p className="text-fg-subtle text-xs">운영 › 인증 검토</p>
       <h1 className="text-fg mt-1 text-2xl font-bold">인증 검토 큐</h1>
 
-      <div className="bg-brand-deep mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
           <p className="font-bold">정식 인증 요청을 분류·배정·검토합니다</p>
           <p className="mt-1 text-sm text-white/80">

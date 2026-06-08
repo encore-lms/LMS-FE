@@ -68,7 +68,7 @@ export default function SnapshotPage() {
         certified 증명서의 동결 스냅샷 · 매니저·운영팀 전용
       </p>
 
-      <div className="bg-brand-deep mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div className="flex items-center gap-4">
           <Avatar name={s.student.name} size={56} />
           <div>

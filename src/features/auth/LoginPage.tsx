@@ -11,6 +11,8 @@ import { useAuthActions } from '@/shared/store'
 import { ROLE_HOME } from '@/shared/constants'
 import type { User } from '@/shared/types'
 import { AuthLayout } from './AuthLayout'
+import { DemoQuickLogin } from './DemoQuickLogin'
+import type { DemoAccount } from './demoAccounts'
 import { loginSchema, type LoginInput } from './login.schema'
 
 export function LoginPage() {
@@ -23,8 +25,18 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
+
+  // 데모 빠른 로그인: 선택한 역할 계정으로 폼만 채운다(제출은 사용자가 직접).
+  function applyPreset(acc: DemoAccount) {
+    setValue('email', acc.email, { shouldValidate: true, shouldDirty: true })
+    setValue('password', acc.password, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+  }
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -54,7 +66,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout brandSlot={<DemoQuickLogin onPick={applyPreset} />}>
       <form
         noValidate
         onSubmit={handleSubmit(onSubmit)}

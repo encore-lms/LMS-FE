@@ -91,6 +91,26 @@ describe('LoginPage', () => {
     })
   })
 
+  it('데모 빠른 로그인 버튼을 누르면 해당 역할 ID/PW가 폼에 채워진다(제출 안 함)', async () => {
+    const user = userEvent.setup()
+    renderLogin()
+    await user.click(screen.getByRole('button', { name: '강사' }))
+    expect(screen.getByPlaceholderText('ai.camp22@playdata.io')).toHaveValue(
+      'instructor@playdata.io',
+    )
+    expect(screen.getByPlaceholderText('••••••••••')).toHaveValue(
+      'playdata123!',
+    )
+    expect(apiClient.post).not.toHaveBeenCalled()
+  })
+
+  it('스타일 가이드로 이동 링크가 /_styleguide를 가리킨다', () => {
+    renderLogin()
+    expect(
+      screen.getByRole('link', { name: /스타일 가이드로 이동/ }),
+    ).toHaveAttribute('href', '/_styleguide')
+  })
+
   it('빈 값으로 제출하면 zod 검증 에러를 표시하고 API를 호출하지 않는다', async () => {
     const user = userEvent.setup()
     renderLogin()

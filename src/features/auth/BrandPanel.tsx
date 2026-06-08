@@ -1,4 +1,11 @@
-export function BrandPanel() {
+import type { ReactNode } from 'react'
+
+interface BrandPanelProps {
+  /** 소개 문구 자리에 끼워 넣을 노드. 주어지면 기본 문구 대신 렌더(완전 교체). */
+  slot?: ReactNode
+}
+
+export function BrandPanel({ slot }: BrandPanelProps) {
   return (
     <aside
       className="flex w-[720px] flex-col justify-center overflow-clip p-16"
@@ -35,20 +42,22 @@ export function BrandPanel() {
 
         <div className="h-[60px]" />
 
-        <ul className="flex flex-col gap-[10px]">
-          {[
-            'HRD-Net 연동 정식 훈련 과정',
-            '증명서 외부 검증 · snapshotHash 기반 무결성',
-            '역할별(매니저·강사·멘토·수강생) 분리된 콘솔',
-          ].map((item) => (
-            <li key={item} className="flex items-center gap-[10px]">
-              <span className="h-[6px] w-[6px] rounded-full bg-white" />
-              <span className="text-[13px] font-medium text-white/85">
-                {item}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {slot ?? (
+          <ul className="flex flex-col gap-[10px]">
+            {[
+              'HRD-Net 연동 정식 훈련 과정',
+              '증명서 외부 검증 · snapshotHash 기반 무결성',
+              '역할별(매니저·강사·멘토·수강생) 분리된 콘솔',
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-[10px]">
+                <span className="h-[6px] w-[6px] rounded-full bg-white" />
+                <span className="text-[13px] font-medium text-white/85">
+                  {item}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="h-10" />
 

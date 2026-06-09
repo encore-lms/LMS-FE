@@ -33,9 +33,14 @@ export function DomainDonut({
   let acc = 0
   return (
     <section className={cn(card, 'flex flex-col gap-4', className)}>
-      <span className="text-fg text-[15px] font-bold">도메인 경험</span>
-      <div className="flex items-center gap-6">
-        <svg viewBox="0 0 140 140" className="size-[140px] shrink-0">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-fg text-[15px] font-bold">도메인 경험</span>
+        <span className="text-fg-muted text-[11px]">
+          외부 공개 payload에 포함 가능한 항목
+        </span>
+      </div>
+      <div className="flex items-center gap-10">
+        <svg viewBox="0 0 140 140" className="size-[150px] shrink-0">
           <g transform="rotate(-90 70 70)">
             {domains.map((d) => {
               const len = (d.pct / 100) * C
@@ -58,11 +63,14 @@ export function DomainDonut({
             })}
           </g>
         </svg>
-        <div className="flex flex-1 flex-col gap-2">
+        <div className="grid flex-1 grid-cols-1 gap-x-12 gap-y-3 sm:grid-cols-2">
           {domains.map((d) => (
-            <div key={d.label} className="flex items-center gap-2 text-[12px]">
+            <div
+              key={d.label}
+              className="border-divider flex items-center gap-2.5 border-b pb-3 text-[13px] last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0"
+            >
               <span className={cn('size-2.5 rounded-full', DOT[d.tone])} />
-              <span className="text-fg flex-1">{d.label}</span>
+              <span className="text-fg flex-1 font-medium">{d.label}</span>
               <span className="text-fg font-bold">{d.pct}%</span>
             </div>
           ))}

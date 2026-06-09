@@ -142,8 +142,6 @@ export function TechTab({ t }: { t: CertTechTab }) {
           </Fragment>
         ))}
       </section>
-
-      <AiBanner text="MVP 단계에서는 승인·데이터 기반 자동 산정만 노출하며, AI 분석은 confirmed 인증 + 운영자 승인 시 외부 공개 payload에 포함됩니다." />
     </div>
   )
 }

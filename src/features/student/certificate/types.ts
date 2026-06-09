@@ -108,10 +108,8 @@ export interface CertSummaryTab {
   ratioLabel: string // "4 / 5"
   sourceLabel: string // "자동 + 360°"
   kpis: CertKpi[]
-  skillAxes: CertSkillAxis[] // 360° 비교용 역량축
-  radarAxes: CertRadarAxis[] // 6축 자동 산정 레이더용 기술축 (Figma)
+  skillAxes: CertSkillAxis[] // 6축 자동 산정 레이더 + 360° 비교 공용 축
   skillAvg: number
-  skillHighlight?: string // 점수 카드 '6축 평균' 옆 강조 텍스트
   quizCategories: CertScoreBar[]
   evidence: CertEvidence[]
   projects: CertProject[]

@@ -180,20 +180,6 @@ const mockOverview: CertificateOverview = {
     skillAxes: [
       { key: '기술', score: 88, peer: 92, confirmed: true },
       {
-        key: '책임감',
-        score: 90,
-        peer: 96,
-        confirmed: true,
-        note: 'PeerTag #리더십',
-      },
-      {
-        key: '소통',
-        score: 84,
-        peer: 90,
-        confirmed: true,
-        note: 'PeerTag #논리적설득 10회',
-      },
-      {
         key: '성장',
         score: 85,
         peer: 86,
@@ -208,6 +194,20 @@ const mockOverview: CertificateOverview = {
         note: '동료평 평균 4.5',
       },
       {
+        key: '책임감',
+        score: 90,
+        peer: 96,
+        confirmed: true,
+        note: 'PeerTag #리더십',
+      },
+      {
+        key: '소통',
+        score: 84,
+        peer: 90,
+        confirmed: true,
+        note: 'PeerTag #논리적설득 10회',
+      },
+      {
         key: '문제해결',
         score: 79,
         peer: 82,
@@ -215,16 +215,7 @@ const mockOverview: CertificateOverview = {
         note: 'TS 케이스 9건 해결',
       },
     ],
-    radarAxes: [
-      { key: '백엔드', score: 88 },
-      { key: '데이터', score: 75 },
-      { key: '협업', score: 82 },
-      { key: '문제해결', score: 79 },
-      { key: '성장', score: 85 },
-      { key: '신뢰', score: 90 },
-    ],
-    skillHighlight: '백엔드 88 · 신뢰 90 · 협업 82',
-    skillAvg: 81.7,
+    skillAvg: 84.7,
     quizCategories: [
       { label: '백엔드 기초', score: 92 },
       { label: 'DB / SQL', score: 84 },

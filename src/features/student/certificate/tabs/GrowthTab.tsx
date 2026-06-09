@@ -34,11 +34,11 @@ export function GrowthTab({ g }: { g: CertGrowthTab }) {
         <span className="text-fg-subtle text-[11px]">
           주차별 종합 점수 · 최근 {g.timeline.length}주
         </span>
-        <div className="flex h-[180px] items-end gap-1.5 pt-2">
+        <div className="flex h-[150px] items-end justify-center gap-2 pt-2">
           {g.timeline.map((v, i) => (
             <div
               key={i}
-              className="flex h-full flex-1 flex-col items-center justify-end gap-1"
+              className="flex h-full w-5 flex-col items-center justify-end gap-1"
             >
               <span className="text-fg-subtle text-[9px]">{v}</span>
               <div

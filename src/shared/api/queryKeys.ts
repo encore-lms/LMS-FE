@@ -22,4 +22,10 @@ export const adminKeys = {
     [...adminKeys.all, 'snapshot', certificateId] as const,
   recordReviewQueue: (filter?: { category?: string; status?: string }) =>
     [...adminKeys.all, 'record-reviews', { filter: filter ?? {} }] as const,
+  studentAccounts: (filter?: { status?: string }) =>
+    [...adminKeys.all, 'students', { filter: filter ?? {} }] as const,
+  studentAttendance: () =>
+    [...adminKeys.all, 'students', 'attendance'] as const,
+  studentAttendanceForms: () =>
+    [...adminKeys.all, 'students', 'attendance-forms'] as const,
 } as const

@@ -9,6 +9,9 @@ const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
 const RecordReviewQueuePage = lazy(
   () => import('./records/RecordReviewQueuePage'),
 )
+const StudentManagementPage = lazy(
+  () => import('./students/StudentManagementPage'),
+)
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -22,6 +25,7 @@ export const adminRoutes: RouteObject[] = [
         element: <SnapshotPage />,
       },
       { path: 'records/review', element: <RecordReviewQueuePage /> },
+      { path: 'students', element: <StudentManagementPage /> },
     ],
   },
 ]

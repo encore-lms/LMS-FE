@@ -119,7 +119,7 @@ export function AiTab({ data }: { data: CertificateOverview }) {
       )}
 
       {/* 상담 감성 — 키워드 버블(초기 불안 → 중기 탐색 → 후기 성장) */}
-      <SentimentBubbles sentiment={growth.sentiment} />
+      {growth.sentiment && <SentimentBubbles sentiment={growth.sentiment} />}
 
       <AiBanner text="AI 분석은 승인된 confirmed 데이터에 기반한 해석이며, 검증된 사실과 구분됩니다. 외부 공개 payload에는 confirmed 인증 + 운영자 승인 시 포함됩니다." />
     </div>

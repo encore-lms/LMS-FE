@@ -90,19 +90,19 @@ const forms: AttendanceFormData = {
   rows: [],
 }
 
-function ok<T>(data: T) {
-  return { data, isPending: false, isError: false } as unknown as ReturnType<
-    typeof useStudentAccounts
-  >
+function ok(data: unknown) {
+  return { data, isPending: false, isError: false }
 }
 
 function renderPage() {
-  vi.mocked(useStudentAccounts).mockReturnValue(ok(accounts))
+  vi.mocked(useStudentAccounts).mockReturnValue(
+    ok(accounts) as unknown as ReturnType<typeof useStudentAccounts>,
+  )
   vi.mocked(useStudentAttendance).mockReturnValue(
-    ok(attendance) as ReturnType<typeof useStudentAttendance>,
+    ok(attendance) as unknown as ReturnType<typeof useStudentAttendance>,
   )
   vi.mocked(useStudentAttendanceForms).mockReturnValue(
-    ok(forms) as ReturnType<typeof useStudentAttendanceForms>,
+    ok(forms) as unknown as ReturnType<typeof useStudentAttendanceForms>,
   )
   return render(
     <ToastProvider>

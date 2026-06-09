@@ -1,10 +1,8 @@
 import { useSearchParams } from 'react-router-dom'
-import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useCertificateOverview } from '../api/certificate'
 import { CertHero } from './components/CertHero'
-import { CertChangeFlags } from './components/CertChangeFlags'
 import { CertTabs } from './CertTabs'
 import { SummaryTab } from './tabs/SummaryTab'
 import { TechTab } from './tabs/TechTab'
@@ -41,11 +39,8 @@ export default function CertificatePage() {
   const setTab = (t: CertTab) => setParams(t === 'summary' ? {} : { tab: t })
 
   return (
-    <div
-      className={cn('flex flex-col gap-5 p-8', tab === 'summary' && 'pb-24')}
-    >
-      <CertHero header={data.header} onRequest={() => {}} />
-      <CertChangeFlags flags={data.changeFlags} />
+    <div className="flex flex-col gap-5 p-8">
+      <CertHero header={data.header} />
       <CertTabs active={tab} onChange={setTab} />
 
       {tab === 'summary' && <SummaryTab s={data.summary} />}
@@ -54,35 +49,6 @@ export default function CertificatePage() {
       {tab === 'problem-solving' && <ProblemTab p={data.problem} />}
       {tab === 'growth-reputation' && <GrowthTab g={data.growth} />}
       {tab === 'ai-analysis' && CERT_V2 && <AiTab data={data} />}
-
-      {/* 하단 액션바 — 종합 요약(미리보기)에서만 노출(Figma: 상세 탭엔 없음) */}
-      {tab === 'summary' && (
-        <div className="bg-brand-deep fixed right-8 bottom-6 left-[232px] z-30 flex items-center justify-between rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
-          <div className="flex flex-col">
-            <span className="text-[13px] font-bold">
-              요청 전 체크 {data.summary.checkDoneLabel} · 모든 항목 완료 시
-              정식 인증 요청 가능
-            </span>
-            <span className="text-[11px] text-white/70">
-              정식 인증 요청 시 매니저가 1영업일 이내 검토합니다
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold"
-            >
-              증명서 PDF 미리보기
-            </button>
-            <button
-              type="button"
-              className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold"
-            >
-              정식 인증 요청
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

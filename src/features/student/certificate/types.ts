@@ -43,16 +43,28 @@ export interface CertKpi {
   label: string
   value: string
   unit?: string
+  // 구 데이터 탭 KPI — 델타 칩 (tech/projects/problem/growth, 점진 마이그레이션 대상)
   delta?: string
   deltaTone?: Tone
+  // 신 종합요약 KPI (Figma '탭1 종합요약 상세') — 색점 + 진행바 + 보조설명
+  tone?: Tone // 색점 + 진행바 색
+  bar?: number // 0~100 진행바 채움
+  sub?: string // 하단 보조 설명 (예: "768 / 800 시간 · 지각 2회")
 }
 
-/** 6축 역량(레이더 + 360 비교) */
+/** 360° 비교 역량축 (기술/책임감/소통/성장/팀워크/문제해결) */
 export interface CertSkillAxis {
-  key: string // 기술/책임감/소통/성장/팀워크/문제해결
+  key: string
   score: number
-  peer: number // 360 비교용 동료/기준
+  peer: number // 360 비교용 동료/기준 (표시값 = peer/20, 5점 만점)
   confirmed: boolean
+  note?: string // 360 강사·근거 열 텍스트 (없으면 confirmed 배지)
+}
+
+/** 6축 자동 산정 레이더 축 (Figma: 기술 도메인축 — 360°의 역량축과 별개) */
+export interface CertRadarAxis {
+  key: string // 백엔드/데이터/협업/문제해결/성장/신뢰
+  score: number
 }
 
 /** 점수 막대(퀴즈 카테고리 등) */
@@ -91,12 +103,15 @@ export interface CertSummaryTab {
   overallScore: number
   scoreMax: number
   grade: string
+  scoreDelta?: string // "+4점 지난주" — 종합 점수 카드 델타 칩
   confirmedLabel: string
   ratioLabel: string // "4 / 5"
   sourceLabel: string // "자동 + 360°"
   kpis: CertKpi[]
-  skillAxes: CertSkillAxis[]
+  skillAxes: CertSkillAxis[] // 360° 비교용 역량축
+  radarAxes: CertRadarAxis[] // 6축 자동 산정 레이더용 기술축 (Figma)
   skillAvg: number
+  skillHighlight?: string // 점수 카드 '6축 평균' 옆 강조 텍스트
   quizCategories: CertScoreBar[]
   evidence: CertEvidence[]
   projects: CertProject[]

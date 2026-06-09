@@ -1,6 +1,6 @@
 import { cn } from '@/shared/lib/cn'
 import type { CertProblemTab, Tone } from '../types'
-import { TabHead, AiBanner } from './TechTab'
+import { TabHead } from './TechTab'
 
 // 증명서 탭4 문제해결·협업 — KPI·대표 트러블슈팅·문제 분포·PeerTag 클라우드·태그 연결.
 const card =
@@ -196,8 +196,6 @@ export function ProblemTab({ p }: { p: CertProblemTab }) {
           ))}
         </section>
       </div>
-
-      <AiBanner text="MVP 단계에서는 승인·트러블슈팅 카테고리·태그 자동 분류는 데이터 기반으로 표시되며, AI 분석은 confirmed 인증 + 운영자 승인 시 외부 공개 payload에 포함됩니다." />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { cn } from '@/shared/lib/cn'
 import type { CertGrowthTab } from '../types'
-import { TabHead, AiBanner } from './TechTab'
+import { TabHead } from './TechTab'
 
 // 증명서 탭5 성장·평판 — 성장 곡선·Peer Reputation·ShortComment·강사/멘토 추천서.
 const card =
@@ -130,8 +130,6 @@ export function GrowthTab({ g }: { g: CertGrowthTab }) {
           </div>
         ))}
       </section>
-
-      <AiBanner text="MVP 단계에서는 승인·동료 평판·추천서·성장 곡선 데이터만 노출하며, AI 감성 분석은 confirmed 인증 + 운영자 승인 시 외부 공개 payload에 포함됩니다." />
     </div>
   )
 }

@@ -24,8 +24,13 @@ const card =
 
 export function SummaryTab({ s }: { s: CertSummaryTab }) {
   const skillAvg = Math.round(
-    s.radarAxes.reduce((sum, a) => sum + a.score, 0) / s.radarAxes.length,
+    s.skillAxes.reduce((sum, a) => sum + a.score, 0) / s.skillAxes.length,
   )
+  const skillHighlight = [...s.skillAxes]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((a) => `${a.key} ${a.score}`)
+    .join(' · ')
   const miniStats = [
     { v: s.ratioLabel, l: '요청 전 체크 충족' },
     { v: '3 건', l: '보완 권장' },
@@ -84,7 +89,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
               <span className="text-fg-muted font-semibold">
                 6축 평균 · {s.confirmedLabel}
               </span>
-              <span className="text-fg-subtle">{s.skillHighlight}</span>
+              <span className="text-fg-subtle">{skillHighlight}</span>
             </div>
             <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
               <div
@@ -158,7 +163,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
               StudentSkillAxisMart · confirmed only · 0–100
             </span>
           </div>
-          <SkillRadar axes={s.radarAxes} />
+          <SkillRadar axes={s.skillAxes} />
         </section>
 
         <section className={cn(card, 'flex flex-1 flex-col gap-2')}>

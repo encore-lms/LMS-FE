@@ -23,6 +23,8 @@ function bar(s: number) {
 
 export function TechTab({ t }: { t: CertTechTab }) {
   const maxTrend = Math.max(...t.examTrend, 100)
+  const avgTrend =
+    t.examTrend.reduce((a, b) => a + b, 0) / (t.examTrend.length || 1)
   return (
     <div className="flex flex-col gap-4">
       <TabHead
@@ -86,12 +88,25 @@ export function TechTab({ t }: { t: CertTechTab }) {
               >
                 <span className="text-fg-subtle text-[9px]">{v}</span>
                 <div
-                  className="bg-brand w-full shrink-0 rounded-t"
+                  className={cn(
+                    'w-full shrink-0 rounded-t',
+                    v >= avgTrend ? 'bg-brand' : 'bg-info',
+                  )}
                   style={{ height: `${(v / maxTrend) * 100}%` }}
                 />
                 <span className="text-fg-subtle text-[8px]">Q{i + 1}</span>
               </div>
             ))}
+          </div>
+          <div className="text-fg-muted flex items-center gap-3 text-[11px]">
+            <span className="flex items-center gap-1.5">
+              <span className="bg-info size-2 rounded-full" />
+              평균 미만
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="bg-brand size-2 rounded-full" />
+              평균 이상
+            </span>
           </div>
         </section>
 

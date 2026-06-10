@@ -27,6 +27,8 @@ const AttendanceFormPage = lazy(
 const ProfilePage = lazy(() => import('./profile/ProfilePage'))
 const QuizTakePage = lazy(() => import('./quiz/QuizTakePage'))
 const QuizResultPage = lazy(() => import('./quiz/QuizResultPage'))
+const ResumePage = lazy(() => import('./resume/ResumePage'))
+const ResumeEditorPage = lazy(() => import('./resume/ResumeEditorPage'))
 const RecordsPage = lazy(() => import('./records/RecordsPage'))
 const BlogFormPage = lazy(() => import('./records/forms/BlogFormPage'))
 const BlogEditPage = lazy(() => import('./records/forms/BlogEditPage'))
@@ -80,6 +82,10 @@ export const studentRoutes: RouteObject[] = [
       { path: 'certificate/changes-requested', element: <CertChangesPage /> },
       { path: 'certificate/publication', element: <CertPublicationPage /> },
       { path: 'quizzes', element: <QuizListPage /> },
+      // 이력서 관리 — 목록/작성 현황 + 편집기(Doc/Edit). 셸 안(사이드바 '이력서 관리' 유지).
+      { path: 'resume', element: <ResumePage /> },
+      { path: 'resume/new', element: <ResumeEditorPage /> },
+      { path: 'resume/:resumeId/edit', element: <ResumeEditorPage /> },
       // 기록실(목록) + 블로그/스터디/자격증 등록 폼 + 블로그 수정.
       { path: 'records', element: <RecordsPage /> },
       { path: 'records/new/blog', element: <BlogFormPage /> },

@@ -14,7 +14,7 @@ export type RecordStatus = 'approved' | 'reviewing' | 'rejected'
 
 /** 상단 필터 탭(카테고리별 건수) */
 export interface RecordTab {
-  key: string // all/blog/study/cert/resume
+  key: string // all/blog/study/cert
   label: string
   count: number
 }

@@ -70,3 +70,12 @@ export type {
   AttendanceFormSummary,
   AttendanceFormData,
 } from './students'
+export type {
+  EndorsementSnapshotStatus,
+  EndorsementStudent,
+  EndorsementPending,
+  Endorsement,
+  EndorsementQueue,
+  EndorsementStats,
+  EndorsementHistory,
+} from './endorsements'

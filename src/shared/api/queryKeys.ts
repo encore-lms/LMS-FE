@@ -29,3 +29,13 @@ export const adminKeys = {
   studentAttendanceForms: () =>
     [...adminKeys.all, 'students', 'attendance-forms'] as const,
 } as const
+
+// 강사(instructor) 서버 상태 캐시 키.
+export const instructorKeys = {
+  all: ['instructor'] as const,
+  endorsements: () => [...instructorKeys.all, 'endorsements'] as const,
+  endorsementHistory: () =>
+    [...instructorKeys.all, 'endorsements', 'history'] as const,
+  endorsementDetail: (endorsementId: string) =>
+    [...instructorKeys.all, 'endorsements', endorsementId] as const,
+} as const

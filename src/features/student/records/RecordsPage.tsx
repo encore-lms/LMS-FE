@@ -31,7 +31,7 @@ export default function RecordsPage() {
   )
   usePageHeader(
     '기록실',
-    '블로그·스터디·자격증·이력서·GitHub 등 학습 기록을 한 곳에서 관리',
+    '블로그·스터디·자격증·GitHub 등 학습 기록을 한 곳에서 관리',
   )
 
   const modalParam = params.get('modal') === 'delete-blog'

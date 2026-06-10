@@ -11,7 +11,6 @@ const mockOverview: RecordsOverview = {
     { key: 'blog', label: '블로그', count: 12 },
     { key: 'study', label: '스터디', count: 4 },
     { key: 'cert', label: '자격증', count: 3 },
-    { key: 'resume', label: '이력서', count: 1 },
   ],
   stats: [
     {
@@ -19,7 +18,7 @@ const mockOverview: RecordsOverview = {
       label: '전체 기록',
       value: '24',
       unit: '건',
-      sub: '블로그 12 · 스터디 4 · 자격증 3 · 이력서 1',
+      sub: '블로그 12 · 스터디 4 · 자격증 3',
       dotTone: 'success',
     },
     {

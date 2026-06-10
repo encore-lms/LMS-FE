@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import type { CertReviewListItem, CertReviewStatus } from '@/shared/types'
 import { useReviewQueue } from '../api/reviews'
 
@@ -30,6 +31,7 @@ export default function ReviewQueuePage() {
   const { data, isPending, isError, refetch } = useReviewQueue()
   const [tab, setTab] = useState<TabKey>('all')
   const [q, setQ] = useState('')
+  usePageHeader('인증 검토 큐', '운영 › 인증 검토')
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -158,10 +160,7 @@ export default function ReviewQueuePage() {
 
   return (
     <div className="p-8">
-      <p className="text-fg-subtle text-xs">운영 › 인증 검토</p>
-      <h1 className="text-fg mt-1 text-2xl font-bold">인증 검토 큐</h1>
-
-      <div className="bg-brand mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
           <p className="font-bold">정식 인증 요청을 분류·배정·검토합니다</p>
           <p className="mt-1 text-sm text-white/80">

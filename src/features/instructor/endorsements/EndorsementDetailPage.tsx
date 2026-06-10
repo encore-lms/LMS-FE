@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
+import { usePageHeader } from '@/shared/store'
 import { useEndorsement } from '../api/endorsements'
 import { SNAPSHOT_META, formatRemaining } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
@@ -24,6 +25,7 @@ export default function EndorsementDetailPage() {
   const toast = useToast()
   const { data, isPending, isError, refetch } = useEndorsement(endorsementId)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  usePageHeader('강사 추천서 상세/수정', '강사 › 강사 추천서 › 상세/수정')
 
   const {
     register,
@@ -77,11 +79,8 @@ export default function EndorsementDetailPage() {
 
   return (
     <div className="p-8">
-      <p className="text-fg-subtle text-xs">강사 › 강사 추천서 › 상세/수정</p>
-      <h1 className="text-fg mt-1 text-2xl font-bold">강사 추천서 상세/수정</h1>
-
       {/* 안내 배너 */}
-      <div className="border-info/30 bg-info-bg mt-4 flex gap-3 rounded-xl border p-4">
+      <div className="border-info/30 bg-info-bg flex gap-3 rounded-xl border p-4">
         <Info className="text-info mt-0.5 h-5 w-5 shrink-0" />
         <div>
           <p className="text-fg text-sm font-bold">

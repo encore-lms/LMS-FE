@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useMentoring } from '../api/mentoring'
 import { MentoringHero } from './components/MentoringHero'
 import { MentoringStatCards } from './components/MentoringStatCards'
@@ -63,6 +64,7 @@ const POLICY = [
 export default function MentoringPage() {
   const [params] = useSearchParams()
   const { data, isPending, isError, refetch } = useMentoring()
+  usePageHeader('멘토링')
   const [modalOpen, setModalOpen] = useState(
     params.get('modal') === 'cancel-request',
   )
@@ -122,8 +124,7 @@ export default function MentoringPage() {
       )}
 
       {/* 정책 안내 칩 */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-fg text-[12px] font-medium">멘토링</span>
+      <div className="flex items-center justify-end gap-2">
         <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 text-[11px] font-medium">
           ⓘ 팀당 진행 중 요청 1개만 허용 · 확정 후 변경/취소는 멘토만 가능
         </span>

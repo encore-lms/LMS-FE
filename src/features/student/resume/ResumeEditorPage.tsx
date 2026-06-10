@@ -15,6 +15,7 @@ import {
   Send,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import { RESUME_DOC, type ResumeDocEntry } from './mocks'
 
 /** 섹션(제목 + 구분선 + 본문). */
@@ -126,7 +127,8 @@ function DocView() {
   return (
     <div className="border-border flex flex-col gap-8 rounded-2xl border bg-white p-10">
       <div className="flex flex-col gap-3">
-        <h1 className="text-fg text-2xl font-bold">{d.name}</h1>
+        {/* 이력서 문서 내용의 이름 — 페이지 h1은 공유 헤더가 소유하므로 h2로 유지 */}
+        <h2 className="text-fg text-2xl font-bold">{d.name}</h2>
         <div className="text-fg-muted flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[13px]">
           <span className="inline-flex items-center gap-1.5">
             <Phone className="text-fg-subtle h-3.5 w-3.5" />
@@ -181,6 +183,8 @@ function DocView() {
 export default function ResumeEditorPage() {
   const navigate = useNavigate()
   const [mode, setMode] = useState<'edit' | 'doc'>('edit')
+  // 문서 안 이름 h1은 이력서 내용이므로 유지 — 페이지 제목만 공유 헤더에 등록.
+  usePageHeader('이력서 편집기')
 
   return (
     <div className="flex flex-col">

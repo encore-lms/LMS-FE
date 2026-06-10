@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePageHeader } from '@/shared/store'
 import type { BlogFormData } from '../types'
 import { Crumbs, FieldLabel, FormBar, TextInput } from './FormParts'
 import { WeekPicker } from './WeekPicker'
@@ -41,6 +42,7 @@ export function BlogForm({
   const c = COPY[mode]
   const [selectedNo, setSelectedNo] = useState(data.selectedNo)
   const [url, setUrl] = useState(data.url)
+  usePageHeader(c.title, c.sub)
 
   const sel = data.weeks.find((w) => w.no === selectedNo)
   const selectedPill = sel
@@ -56,11 +58,6 @@ export function BlogForm({
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">{c.title}</h1>
-        <p className="text-fg-muted text-[12px]">{c.sub}</p>
-      </div>
-
       <Crumbs items={c.crumbs} />
 
       {mode === 'edit' && data.rejectReason ? (

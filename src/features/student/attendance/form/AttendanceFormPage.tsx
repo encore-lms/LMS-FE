@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import type { AttendanceFormPayload, AttendanceFormSubmission } from '../types'
 import {
   useAttendanceFormMeta,
   useSubmitAttendanceForm,
 } from '../../api/attendance'
 import { AttendanceActionButton } from '../components/AttendanceActionButton'
-import { PageHeading } from '../components/PageHeading'
 import { InfoBanner } from '../components/InfoBanner'
 import {
   attendanceFormSchema,
@@ -70,6 +70,10 @@ export default function AttendanceFormPage() {
   const [submitted, setSubmitted] = useState<AttendanceFormSubmission | null>(
     null,
   )
+  usePageHeader(
+    '출결 폼 작성',
+    '모바일에서도 작성 가능한 출결 폼입니다. HRD 원본 출결은 변경되지 않습니다.',
+  )
 
   // 예상 입실 시간 기본값 = 현재 시각(HH:MM). 수강생이 이후 자유롭게 변경 가능.
   const now = new Date()
@@ -106,7 +110,6 @@ export default function AttendanceFormPage() {
   if (submitted) {
     return (
       <div className="flex flex-col gap-6 p-8">
-        <PageHeading title="출결 폼 작성" />
         <SubmitSuccessCard
           submission={submitted}
           onHome={() => navigate('/student')}
@@ -123,10 +126,6 @@ export default function AttendanceFormPage() {
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      <PageHeading
-        title="출결 폼 작성"
-        description="모바일에서도 작성 가능한 출결 폼입니다. HRD 원본 출결은 변경되지 않습니다."
-      />
       {meta.latestSubmission && (
         <OverwriteWarningBanner latest={meta.latestSubmission} />
       )}

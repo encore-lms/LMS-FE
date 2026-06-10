@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useStudentProfile } from '../api/profile'
 import { ProfileForm } from './components/ProfileForm'
 
@@ -9,6 +10,7 @@ import { ProfileForm } from './components/ProfileForm'
  */
 export default function ProfilePage() {
   const { data, isPending, isError, refetch } = useStudentProfile()
+  usePageHeader('마이 프로필')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">프로필을 불러오는 중…</div>

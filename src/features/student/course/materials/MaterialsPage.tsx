@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useCourseMaterials } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 
@@ -27,6 +28,7 @@ import { ShareMaterialModal } from './components/ShareMaterialModal'
  */
 export default function MaterialsPage() {
   const { data, isPending, isError, refetch } = useCourseMaterials()
+  usePageHeader('자료실')
   const [category, setCategory] = useState<CategoryKey>('all')
   const [query, setQuery] = useState('')
   const [favOverride, setFavOverride] = useState<Record<string, boolean>>({})

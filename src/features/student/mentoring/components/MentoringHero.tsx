@@ -7,9 +7,9 @@ export function MentoringHero({ data }: { data: MentoringData }) {
     <section className="bg-brand flex items-center justify-between gap-6 rounded-2xl px-7 py-6 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
       <div className="flex flex-col gap-2">
         <span className="text-[11px] font-semibold tracking-[0.18em] text-white/90">
-          MENTORING · 팀 단위 요청
+          팀 단위 요청
         </span>
-        <h1 className="text-2xl font-bold">{teamName}</h1>
+        <h2 className="text-2xl font-bold">{teamName}</h2>
         <div className="flex flex-wrap items-center gap-2">
           {mentor.assigned ? (
             <>

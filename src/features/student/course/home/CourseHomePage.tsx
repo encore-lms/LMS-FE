@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useCourseHome } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import { CourseHero } from './components/CourseHero'
@@ -14,6 +15,7 @@ import { CourseNoticeCard } from './components/CourseNoticeCard'
  */
 export default function CourseHomePage() {
   const { data, isPending, isError, refetch } = useCourseHome()
+  usePageHeader('나의 과정')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">강의 홈을 불러오는 중…</div>

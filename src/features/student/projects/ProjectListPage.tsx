@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useProjectList } from '../api/projects'
 import { ProjectStatCards } from './components/ProjectStatCards'
 import { ProjectCard } from './components/ProjectCard'
@@ -12,6 +13,7 @@ export default function ProjectListPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useProjectList()
   const [active, setActive] = useState('all')
+  usePageHeader(data?.headerTitle ?? '프로젝트', data?.headerSub)
 
   if (isPending)
     return <div className="text-fg-muted p-8">프로젝트를 불러오는 중…</div>
@@ -31,11 +33,6 @@ export default function ProjectListPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">{data.headerTitle}</h1>
-        <p className="text-fg-muted text-[12px]">{data.headerSub}</p>
-      </div>
-
       <ProjectStatCards stats={data.stats} />
 
       <div className="flex items-center justify-between pt-1">

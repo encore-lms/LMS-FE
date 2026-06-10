@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePageHeader } from '@/shared/store'
 import {
   Crumbs,
   FieldLabel,
@@ -22,16 +23,13 @@ export default function StudyFormPage() {
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
   const [body, setBody] = useState('')
+  usePageHeader(
+    '스터디 등록',
+    '진행한 스터디 활동을 시간·활동 내역·인증 사진으로 기록',
+  )
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">스터디 등록</h1>
-        <p className="text-fg-muted text-[12px]">
-          진행한 스터디 활동을 시간·활동 내역·인증 사진으로 기록
-        </p>
-      </div>
-
       <Crumbs items={['기록실', '스터디', '새 등록']} />
 
       <div className="flex flex-col gap-2">

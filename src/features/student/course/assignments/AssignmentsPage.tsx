@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useAssignments } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import { AssignmentCard } from './components/AssignmentCard'
@@ -23,6 +24,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 export default function AssignmentsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAssignments()
+  usePageHeader('과제/실습')
   const [filter, setFilter] = useState<Filter>('all')
   const [open, setOpen] = useState(false)
 

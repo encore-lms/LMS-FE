@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { usePageHeader } from '@/shared/store'
 
 // 마일리지 구매 요청 상태 (/student/mileage/requests) — Figma 3357:5971.
 // 구매 요청 확인 모달 / 요청 완료 / 반려 사유 / 한도 초과 오류 4개 상태 카탈로그.
@@ -9,18 +10,12 @@ const input =
 
 export default function RequestStatesPage() {
   const navigate = useNavigate()
+  usePageHeader(
+    '마일리지 구매 요청 상태',
+    '상품 신청 화면에서 이어지는 확인·완료·반려·한도 초과 상태를 한 화면에 고정합니다.',
+  )
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">
-          마일리지 구매 요청 상태
-        </h1>
-        <p className="text-fg-muted text-[12px]">
-          상품 신청 화면에서 이어지는 확인·완료·반려·한도 초과 상태를 한 화면에
-          고정합니다.
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* 구매 요청 확인 모달 */}
         <section className={card}>

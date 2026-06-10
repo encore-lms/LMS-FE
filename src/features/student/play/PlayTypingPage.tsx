@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { usePlayTyping } from '../api/play'
 
 // PLAY 타자 게임 (/student/play/typing) — Figma 428:3015.
@@ -13,6 +14,10 @@ export default function PlayTypingPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = usePlayTyping()
   const [input, setInput] = useState('')
+  usePageHeader(
+    '타자 게임',
+    '세션을 시작하고 제시문을 입력합니다. 결과는 서버 계산값으로 저장됩니다.',
+  )
 
   if (isPending)
     return <div className="text-fg-muted p-8">세션을 불러오는 중…</div>
@@ -30,14 +35,6 @@ export default function PlayTypingPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">타자 게임</h1>
-        <p className="text-fg-muted text-[12px]">
-          세션을 시작하고 제시문을 입력합니다. 결과는 서버 계산값으로
-          저장됩니다.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {data.stats.map((s) => (
           <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>

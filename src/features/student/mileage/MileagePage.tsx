@@ -3,6 +3,7 @@ import { Book, Gift, Video, type LucideIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useMileageOverview } from '../api/mileage'
 import type { Tone } from './types'
 
@@ -38,6 +39,7 @@ const PRODUCT_ICON: Record<'book' | 'video' | 'gift', LucideIcon> = {
 export default function MileagePage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useMileageOverview()
+  usePageHeader('내 마일리지', '적립·사용 현황과 구매 요청 상태를 확인합니다.')
 
   if (isPending)
     return <div className="text-fg-muted p-8">마일리지를 불러오는 중…</div>
@@ -55,13 +57,6 @@ export default function MileagePage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">내 마일리지</h1>
-        <p className="text-fg-muted text-[12px]">
-          적립·사용 현황과 구매 요청 상태를 확인합니다.
-        </p>
-      </div>
-
       {/* 잔액 히어로 */}
       <div className="bg-brand flex items-center justify-between rounded-2xl p-6">
         <div className="flex flex-col gap-1">

@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
+import { usePageHeader } from '@/shared/store'
 import type {
   AdminKpi,
   AdminQueueItem,
@@ -60,6 +61,7 @@ const SYNC_META: Record<SyncStatus, { label: string; tone: BadgeTone }> = {
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAdminDashboard()
+  usePageHeader('대시보드', '운영자 종합 화면 · 오늘 처리할 운영 이슈 현황')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">운영 현황을 불러오는 중…</div>
@@ -152,9 +154,9 @@ export default function AdminDashboard() {
             <p className="text-[11px] font-semibold tracking-wider text-white/60">
               OPERATION CONSOLE · 운영자 종합 화면
             </p>
-            <h1 className="mt-1 text-xl font-bold">
+            <h2 className="mt-1 text-xl font-bold">
               오늘 처리할 운영 이슈를 한 화면에서 파악합니다
-            </h1>
+            </h2>
             <div className="mt-3 flex flex-wrap gap-2">
               <HeroPill
                 icon={<Check className="h-3 w-3" />}

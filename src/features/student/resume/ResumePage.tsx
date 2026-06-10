@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import {
   FEEDBACK_COUNT,
@@ -252,6 +253,7 @@ function ResumeDrawer({
 export default function ResumePage() {
   const navigate = useNavigate()
   const [selected, setSelected] = useState<ResumeSummary | null>(null)
+  usePageHeader('이력서 관리', '이력서 작성 현황과 피드백을 관리합니다.')
 
   const kpis = useMemo(
     () => ({
@@ -265,13 +267,6 @@ export default function ResumePage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">이력서 관리</h1>
-        <p className="text-fg-muted text-[12px]">
-          이력서 작성 현황과 피드백을 관리합니다.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard
           icon={<FileText />}

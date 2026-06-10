@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import { TS_CHANGE_ITEMS } from '../types'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348. 정적 폼.
@@ -82,17 +83,13 @@ export default function ChangeRequestPage() {
   )
   const toggle = (v: string) =>
     setSelected((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))
+  usePageHeader(
+    '트러블슈팅 변경 제안',
+    '인증 완료된 트러블슈팅 사례의 수정·삭제를 강사에게 제안합니다.',
+  )
 
   return (
     <div className="flex flex-col gap-5 p-8 pb-28">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">트러블슈팅 변경 제안</h1>
-        <p className="text-fg-muted text-[12px]">
-          인증 완료된 트러블슈팅 사례의 수정·삭제를 강사에게 제안합니다. 승인 시
-          원본에 반영됩니다.
-        </p>
-      </div>
-
       <div className="flex items-center justify-between">
         <nav className="flex items-center gap-1.5 text-[12px]">
           <button

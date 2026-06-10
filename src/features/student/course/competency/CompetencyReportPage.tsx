@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useCompetencyReport } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import { CompetencyMetricCards } from './components/CompetencyMetricCards'
@@ -25,6 +26,12 @@ const REMEDIATION_CHIP: Record<RemediationTone, string> = {
 export default function CompetencyReportPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useCompetencyReport()
+  usePageHeader(
+    data
+      ? `역량 리포트 — ${data.courseName} · ${data.cohortName}`
+      : '역량 리포트',
+    '과정/기수 범위의 학습 성취와 보완 항목을 확인합니다. 증명서 미리보기와는 별도입니다.',
+  )
 
   if (isPending) {
     return <div className="text-fg-muted p-8">역량 리포트를 불러오는 중…</div>
@@ -43,16 +50,6 @@ export default function CompetencyReportPage() {
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-2xl font-bold">
-          역량 리포트 — {data.courseName} · {data.cohortName}
-        </h1>
-        <p className="text-fg-muted text-[13px]">
-          과정/기수 범위의 학습 성취와 보완 항목을 확인합니다. 증명서
-          미리보기와는 별도입니다.
-        </p>
-      </div>
-
       <CourseTabs />
 
       {/* 과정 핵심 지표 */}

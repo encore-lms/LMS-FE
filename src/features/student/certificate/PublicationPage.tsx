@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useCertPublication } from '../api/certificate'
 
 // 공개 설정 (/student/certificate/publication) — Figma 255:27.
@@ -41,6 +42,7 @@ function Toggle({
 export default function PublicationPage() {
   const { data, isPending, isError, refetch } = useCertPublication()
   const [over, setOver] = useState<Record<string, boolean>>({})
+  usePageHeader('공개 설정')
 
   if (isPending)
     return <div className="text-fg-muted p-8">공개 설정을 불러오는 중…</div>

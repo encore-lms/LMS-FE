@@ -10,9 +10,9 @@ export function HeroBanner({ hero }: { hero: DashboardHero }) {
             {hero.courseName} {hero.cohortName} · {hero.currentWeek}/
             {hero.totalWeeks}주
           </span>
-          <h1 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold">
             안녕하세요, {hero.studentName}님 👋
-          </h1>
+          </h2>
         </div>
         <span className="text-sm font-medium text-white/90">
           진행률 {hero.progressPct}%

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 
 // 프로젝트 변경 제안 (/student/projects/:projectId/change-requests/new) — Figma 345:1083.
 const card =
@@ -26,17 +27,13 @@ export default function ChangeRequestPage() {
   const [selected, setSelected] = useState<string[]>(['설명', '산출물'])
   const toggle = (v: string) =>
     setSelected((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))
+  usePageHeader(
+    '프로젝트 변경 제안',
+    '인증 완료된 프로젝트의 수정·삭제를 강사에게 제안합니다. 승인 시 원본에 반영됩니다.',
+  )
 
   return (
     <div className="flex flex-col gap-5 p-8 pb-24">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">프로젝트 변경 제안</h1>
-        <p className="text-fg-muted text-[12px]">
-          인증 완료된 프로젝트의 수정·삭제를 강사에게 제안합니다. 승인 시 원본에
-          반영됩니다.
-        </p>
-      </div>
-
       <div className="bg-info-bg/60 flex flex-col gap-1 rounded-xl p-4">
         <span className="text-info text-[12px] font-bold">
           ⓘ 인증 완료된 프로젝트입니다

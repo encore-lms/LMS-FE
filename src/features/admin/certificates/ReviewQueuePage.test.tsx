@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import ReviewQueuePage from './ReviewQueuePage'
 import { useReviewQueue } from '../api/reviews'
+import { usePageHeaderStore } from '@/shared/store'
 import type { CertReviewQueue } from '@/shared/types'
 
 vi.mock('../api/reviews')
@@ -84,9 +85,8 @@ describe('ReviewQueuePage', () => {
   it('히어로와 테이블 행을 렌더한다', () => {
     mockHook({ data: queue, isPending: false, isError: false })
     renderPage()
-    expect(
-      screen.getByRole('heading', { name: '인증 검토 큐', level: 1 }),
-    ).toBeInTheDocument()
+    // 제목은 본문이 아닌 공유 헤더(usePageHeader)에 등록된다.
+    expect(usePageHeaderStore.getState().title).toBe('인증 검토 큐')
     expect(
       screen.getByText('정식 인증 요청을 분류·배정·검토합니다'),
     ).toBeInTheDocument()

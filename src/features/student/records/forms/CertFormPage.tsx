@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import {
   Crumbs,
   FieldLabel,
@@ -20,16 +21,13 @@ export default function CertFormPage() {
   const navigate = useNavigate()
   const [type, setType] = useState('PCCP')
   const [title, setTitle] = useState('PCCP Lv.2 합격')
+  usePageHeader(
+    '자격증 등록',
+    '인증 가능한 자격증(PCCE/PCCP/PCSQL) 취득 사진을 등록',
+  )
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">자격증 등록</h1>
-        <p className="text-fg-muted text-[12px]">
-          인증 가능한 자격증(PCCE/PCCP/PCSQL) 취득 사진을 등록
-        </p>
-      </div>
-
       <Crumbs items={['기록실', '자격증', '새 등록']} />
 
       <div className="flex flex-col gap-2">

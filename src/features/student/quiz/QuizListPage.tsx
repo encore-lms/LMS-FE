@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useStudentQuizzes } from '../api/quiz'
 import { CourseTabs } from '../course/CourseTabs'
 import type { StudentQuizListItem } from './types'
@@ -24,6 +25,7 @@ const STATUS_LABEL: Record<QuizStatus, string> = {
 export default function QuizListPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useStudentQuizzes()
+  usePageHeader('퀴즈')
   const [status, setStatus] = useState<QuizStatus>('available')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)

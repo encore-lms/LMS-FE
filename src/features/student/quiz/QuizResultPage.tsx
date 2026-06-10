@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useQuizResult, useStudentQuizzes } from '../api/quiz'
 import { ResultSummary } from './result/ResultSummary'
 import { QuestionResultRow } from './result/QuestionResultRow'
@@ -19,6 +20,7 @@ export default function QuizResultPage() {
   const { data, isPending, isError, refetch } = useQuizResult(quizId)
   const { data: list } = useStudentQuizzes()
   const [filter, setFilter] = useState<Filter>('all')
+  usePageHeader('퀴즈 결과')
 
   const quiz = list?.find((it) => it.quiz.id === quizId)?.quiz
 

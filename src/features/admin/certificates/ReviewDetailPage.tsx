@@ -7,6 +7,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import type { CertReviewStatus } from '@/shared/types'
 import { useReviewDetail } from '../api/reviews'
 import {
@@ -56,6 +57,10 @@ export default function ReviewDetailPage() {
   const { reviewId = '' } = useParams()
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useReviewDetail(reviewId)
+  usePageHeader(
+    '인증 검토 상세',
+    '증명서 미리보기 · 승인 필수 체크 · 점수 근거 검토',
+  )
   const [tab, setTab] = useState(0)
   const [openModal, setOpenModal] = useState<
     'changes' | 'approve' | 'mart' | null

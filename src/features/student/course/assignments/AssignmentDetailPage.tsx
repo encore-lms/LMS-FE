@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useAssignment } from '../../api/course'
 import { AssignmentSummary, STATUS_BADGE } from './components/AssignmentSummary'
 import { SubmissionForm } from './components/SubmissionForm'
@@ -21,6 +22,10 @@ export default function AssignmentDetailPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(
     params.get('toast') === 'submitted' ? '제출이 저장되었습니다.' : null,
+  )
+  usePageHeader(
+    '과제 상세·제출',
+    '마감 전에는 마지막 제출본이 유효합니다. 텍스트·URL·첨부 중 하나 이상을 입력하세요.',
   )
 
   useEffect(() => {
@@ -49,14 +54,8 @@ export default function AssignmentDetailPage() {
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-fg text-[22px] font-bold">과제 상세·제출</h1>
-          <p className="text-fg-muted text-[12px]">
-            마감 전에는 마지막 제출본이 유효합니다. 텍스트·URL·첨부 중 하나
-            이상을 입력하세요.
-          </p>
-        </div>
+      {/* 상태 배지 — 제목은 공유 헤더로 이동, 배지는 본문 우측 정렬로 유지 */}
+      <div className="flex justify-end">
         <span
           className={cn(
             'shrink-0 rounded-md px-2.5 py-1.5 text-[11px] font-semibold',

@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import type { Endorsement, EndorsementSnapshotStatus } from '@/shared/types'
 import { useEndorsementHistory } from '../api/endorsements'
 import { SNAPSHOT_META } from './meta'
@@ -21,6 +22,10 @@ export default function EndorsementHistoryPage() {
   const { data, isPending, isError, refetch } = useEndorsementHistory()
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
+  usePageHeader(
+    '강사 추천서 전체 보기',
+    '담당 기수 누적 추천서 큐 — 기수·기간·스냅샷 반영 상태로 필터링',
+  )
 
   const items = useMemo(() => data?.items ?? [], [data])
 
@@ -140,13 +145,7 @@ export default function EndorsementHistoryPage() {
 
   return (
     <div className="p-8">
-      <p className="text-fg-subtle text-xs">강사 › 강사 추천서 › 전체 보기</p>
-      <h1 className="text-fg mt-1 text-2xl font-bold">강사 추천서 전체 보기</h1>
-      <p className="text-fg-muted mt-1 text-sm">
-        담당 기수 누적 추천서 큐 — 기수·기간·스냅샷 반영 상태로 필터링
-      </p>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="누적 추천서" value={`${stats.total} 건`} />
         <KpiCard
           label="이번 달"

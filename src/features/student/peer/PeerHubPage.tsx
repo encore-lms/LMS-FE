@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { usePeerHub } from '../api/peer'
 import type { Tone } from './types'
 
@@ -20,6 +21,10 @@ const DOT: Record<Tone, string> = {
 export default function PeerHubPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = usePeerHub()
+  usePageHeader(
+    '동료 평가 허브',
+    '동기·동료에게 PeerTag와 5축 평가를 남깁니다. 모든 평가는 익명이며 같은 기수 내에서만 가능합니다.',
+  )
 
   if (isPending)
     return <div className="text-fg-muted p-8">동료 평가를 불러오는 중…</div>
@@ -37,13 +42,6 @@ export default function PeerHubPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">동료 평가 허브</h1>
-        <p className="text-fg-muted text-[12px]">
-          동기·동료에게 PeerTag와 5축 평가를 남깁니다. 모든 평가는 익명이며 같은
-          기수 내에서만 가능합니다.
-        </p>
-      </div>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {data.stats.map((s) => (
           <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>

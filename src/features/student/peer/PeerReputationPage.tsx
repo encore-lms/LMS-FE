@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { usePeerReputation } from '../api/peer'
 import { RECOMMEND_OPTIONS, type Tone } from './types'
 
@@ -34,6 +35,10 @@ export default function PeerReputationPage() {
   const [scores, setScores] = useState<number[]>([])
   const [recommend, setRecommend] = useState('')
   const [comment, setComment] = useState('')
+  usePageHeader(
+    'PeerReputation 5축 평가',
+    '평가할 동료의 기술·책임감·소통·성장·팀워크를 평가하고 추천도를 남깁니다.',
+  )
 
   if (isPending) return <div className="text-fg-muted p-8">불러오는 중…</div>
   if (isError || !data) {
@@ -61,15 +66,6 @@ export default function PeerReputationPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8 pb-28">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">
-          PeerReputation 5축 평가
-        </h1>
-        <p className="text-fg-muted text-[12px]">
-          평가할 동료의 기술·책임감·소통·성장·팀워크를 평가하고 추천도를
-          남깁니다.
-        </p>
-      </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-fg text-[15px] font-bold">평가할 동료</span>

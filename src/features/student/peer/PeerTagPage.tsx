@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { usePeerTag } from '../api/peer'
 import { PEER_TAGS, type PeerMemberStatus, type Tone } from './types'
 
@@ -33,6 +34,10 @@ export default function PeerTagPage() {
     '#끝까지간다',
     '#문서화장인',
   ])
+  usePageHeader(
+    'PeerTag 부여',
+    '동기·동료에게 어울리는 협업 태그를 익명으로 부여합니다.',
+  )
 
   if (isPending) return <div className="text-fg-muted p-8">불러오는 중…</div>
   if (isError || !data) {
@@ -60,12 +65,6 @@ export default function PeerTagPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8 pb-28">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">PeerTag 부여</h1>
-        <p className="text-fg-muted text-[12px]">
-          동기·동료에게 어울리는 협업 태그를 익명으로 부여합니다.
-        </p>
-      </div>
       <div className="flex items-center gap-3">
         <span className="text-fg text-[15px] font-bold">동기수 동료</span>
         <span className="text-fg-subtle text-[12px]">

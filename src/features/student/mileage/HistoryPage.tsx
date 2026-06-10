@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useMileageHistory } from '../api/mileage'
 import type { Tone } from './types'
 
@@ -28,6 +29,7 @@ const CHIP: Record<Tone, string> = {
 export default function HistoryPage() {
   const { data, isPending, isError, refetch } = useMileageHistory()
   const [active, setActive] = useState('all')
+  usePageHeader('마일리지 사용 내역', '적립·사용·구매 요청 내역과 처리 상태')
 
   if (isPending)
     return <div className="text-fg-muted p-8">내역을 불러오는 중…</div>
@@ -45,13 +47,6 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">마일리지 사용 내역</h1>
-        <p className="text-fg-muted text-[12px]">
-          적립·사용·구매 요청 내역과 처리 상태
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {data.stats.map((s) => (
           <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>

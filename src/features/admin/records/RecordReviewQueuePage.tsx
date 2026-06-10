@@ -17,6 +17,7 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import type {
   RecordCategory,
   RecordDecision,
@@ -213,6 +214,7 @@ function PreviewPane({
 // 승인·반려·보완 요청을 한 화면에서 닫는다. (Figma "운영 — 학습 기록 검토 큐" 1507:10816)
 export default function RecordReviewQueuePage() {
   const { data, isPending, isError, refetch } = useRecordReviewQueue()
+  usePageHeader('학습 기록 검토 큐', '운영 › 학습 기록 검토')
   const [tab, setTab] = useState<CategoryTab>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
@@ -388,10 +390,7 @@ export default function RecordReviewQueuePage() {
 
   return (
     <div className="p-8">
-      <p className="text-fg-subtle text-xs">운영 › 학습 기록 검토</p>
-      <h1 className="text-fg mt-1 text-2xl font-bold">학습 기록 검토 큐</h1>
-
-      <div className="bg-brand mt-4 flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
           <p className="font-bold">
             블로그·스터디·자격증 1차 검토 — 승인·반려·보완 요청

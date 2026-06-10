@@ -15,6 +15,7 @@ import {
   Send,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { FEEDBACK, RESUME_DETAIL } from './mocks'
 
@@ -72,6 +73,7 @@ function EntryItem({
 export default function ResumeDetailPage() {
   const navigate = useNavigate()
   const d = RESUME_DETAIL
+  usePageHeader(d.studentName, `${d.cohort} · ${d.resumeName}`)
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -120,7 +122,8 @@ export default function ResumeDetailPage() {
         {/* 좌: 이력서 내용 */}
         <div className="flex flex-1 flex-col gap-8">
           <div className="flex flex-col gap-3">
-            <h1 className="text-fg text-2xl font-bold">{d.studentName}</h1>
+            {/* 이력서 문서 내용의 이름 — 페이지 h1은 공유 헤더가 소유하므로 h2로 유지 */}
+            <h2 className="text-fg text-2xl font-bold">{d.studentName}</h2>
             <div className="text-fg-subtle flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px]">
               <span className="inline-flex items-center gap-1.5">
                 <Phone className="h-3.5 w-3.5" />

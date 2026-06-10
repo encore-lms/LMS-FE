@@ -14,6 +14,7 @@ import {
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import {
   ACTIVE_COHORT,
   COHORTS,
@@ -430,6 +431,7 @@ type TabKey = (typeof TABS)[number]['key']
 export default function ResumePage() {
   const [tab, setTab] = useState<TabKey>('roster')
   const [cohort, setCohort] = useState(ACTIVE_COHORT)
+  usePageHeader('이력서 관리', '수강생 이력서 현황과 피드백을 관리합니다')
 
   return (
     <div className="flex flex-col gap-5 p-8">

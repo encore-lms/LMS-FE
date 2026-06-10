@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import EndorsementsPage from './EndorsementsPage'
 import EndorsementHistoryPage from './EndorsementHistoryPage'
 import { useEndorsementQueue, useEndorsementHistory } from '../api/endorsements'
+import { usePageHeaderStore } from '@/shared/store'
 import type { EndorsementHistory, EndorsementQueue } from '@/shared/types'
 
 vi.mock('../api/endorsements')
@@ -96,9 +97,8 @@ describe('EndorsementsPage', () => {
         <EndorsementsPage />
       </MemoryRouter>,
     )
-    expect(
-      screen.getByRole('heading', { name: '강사 추천서', level: 1 }),
-    ).toBeInTheDocument()
+    // 제목은 본문이 아닌 공유 헤더(usePageHeader)에 등록된다.
+    expect(usePageHeaderStore.getState().title).toBe('강사 추천서')
     expect(screen.getAllByText('윤도현').length).toBeGreaterThan(0)
     expect(screen.getByText('관찰 5개월')).toBeInTheDocument()
     expect(screen.getByText('정민서')).toBeInTheDocument()

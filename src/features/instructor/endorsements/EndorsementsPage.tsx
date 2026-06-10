@@ -8,6 +8,7 @@ import { Empty } from '@/components/ui/Empty'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
+import { usePageHeader } from '@/shared/store'
 import type { EndorsementPending } from '@/shared/types'
 import { useEndorsementQueue } from '../api/endorsements'
 import { SNAPSHOT_META } from './meta'
@@ -20,6 +21,10 @@ export default function EndorsementsPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useEndorsementQueue()
+  usePageHeader(
+    '강사 추천서',
+    '담당 학생을 위한 추천서를 작성하고 증명서 5번 탭(성장·평판)에 공급합니다',
+  )
 
   const pending = useMemo(() => data?.pending ?? [], [data])
   const [studentId, setStudentId] = useState<string | null>(null)
@@ -83,14 +88,8 @@ export default function EndorsementsPage() {
 
   return (
     <div className="p-8">
-      <p className="text-fg-subtle text-xs">강사 › 강사 추천서</p>
-      <h1 className="text-fg mt-1 text-2xl font-bold">강사 추천서</h1>
-      <p className="text-fg-muted mt-1 text-sm">
-        담당 학생을 위한 추천서를 작성하고 증명서 5번 탭(성장·평판)에 공급합니다
-      </p>
-
       {/* 안내 배너 */}
-      <div className="border-info/30 bg-info-bg mt-4 flex gap-3 rounded-xl border p-4">
+      <div className="border-info/30 bg-info-bg flex gap-3 rounded-xl border p-4">
         <Info className="text-info mt-0.5 h-5 w-5 shrink-0" />
         <div>
           <p className="text-fg text-sm font-bold">

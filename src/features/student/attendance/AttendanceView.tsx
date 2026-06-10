@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useAttendanceOverview } from '../api/attendance'
 import { AttendanceActionButton } from './components/AttendanceActionButton'
-import { PageHeading } from './components/PageHeading'
 import { AttendanceSummary } from './components/AttendanceSummary'
 import { HrdAttendanceCalendar } from './components/calendar/HrdAttendanceCalendar'
 import { SubmissionHistory } from './components/history/SubmissionHistory'
@@ -15,6 +15,10 @@ import { SubmissionHistory } from './components/history/SubmissionHistory'
 export default function AttendanceView() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAttendanceOverview()
+  usePageHeader(
+    '출결 / 태도',
+    'HRD-Net 출결 현황과 본인 출결 폼 제출 이력. HRD 원본은 표시 전용입니다.',
+  )
 
   if (isPending) {
     return <div className="text-fg-muted p-8">출결 현황을 불러오는 중…</div>
@@ -37,10 +41,6 @@ export default function AttendanceView() {
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      <PageHeading
-        title="출결 / 태도"
-        description="HRD-Net 출결 현황과 본인 출결 폼 제출 이력. HRD 원본은 표시 전용입니다."
-      />
       <AttendanceSummary summary={data.summary} />
       <HrdAttendanceCalendar calendar={data.calendar} />
       <SubmissionHistory

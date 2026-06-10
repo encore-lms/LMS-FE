@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useStudentDashboard } from '../api/dashboard'
 import { HeroBanner } from './components/HeroBanner'
 import { KpiCards } from './components/KpiCards'
@@ -19,6 +20,7 @@ import { TroubleshootingList } from './components/TroubleshootingList'
  */
 export default function DashboardPage() {
   const { data, isPending, isError, refetch } = useStudentDashboard()
+  usePageHeader('대시보드')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">대시보드를 불러오는 중…</div>

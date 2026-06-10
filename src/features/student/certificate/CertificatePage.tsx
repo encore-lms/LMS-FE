@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useCertificateOverview } from '../api/certificate'
 import { CertHero } from './components/CertHero'
 import { CertTabs } from './CertTabs'
@@ -20,6 +21,7 @@ import type { CertTab } from './types'
 export default function CertificatePage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useCertificateOverview()
+  usePageHeader('수강 역량 증명서')
 
   if (isPending)
     return <div className="text-fg-muted p-8">증명서를 불러오는 중…</div>

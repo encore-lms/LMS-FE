@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useRecordsOverview } from '../api/records'
 import { RecordStatCards } from './components/RecordStatCards'
 import { BlogRecordCard } from './components/BlogRecordCard'
@@ -27,6 +28,10 @@ export default function RecordsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(
     TOAST_MSG[params.get('toast') ?? ''] ?? null,
+  )
+  usePageHeader(
+    '기록실',
+    '블로그·스터디·자격증·이력서·GitHub 등 학습 기록을 한 곳에서 관리',
   )
 
   const modalParam = params.get('modal') === 'delete-blog'
@@ -64,13 +69,6 @@ export default function RecordsPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">기록실</h1>
-        <p className="text-fg-muted text-[12px]">
-          블로그·스터디·자격증·이력서·GitHub 등 학습 기록을 한 곳에서 관리
-        </p>
-      </div>
-
       {/* 필터 탭 */}
       <div className="flex flex-wrap items-center gap-2">
         {data.tabs.map((t) => {

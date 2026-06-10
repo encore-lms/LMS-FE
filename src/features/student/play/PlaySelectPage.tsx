@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { usePlayOverview } from '../api/play'
 
 // PLAY 게임 선택 (/student/play) — Figma 418:2172.
@@ -11,6 +12,7 @@ const card =
 export default function PlaySelectPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = usePlayOverview()
+  usePageHeader('PLAY', '참여한 게임을 선택하고 최근 기록과 랭킹을 확인합니다.')
 
   if (isPending)
     return <div className="text-fg-muted p-8">PLAY를 불러오는 중…</div>
@@ -28,13 +30,6 @@ export default function PlaySelectPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">PLAY</h1>
-        <p className="text-fg-muted text-[12px]">
-          참여한 게임을 선택하고 최근 기록과 랭킹을 확인합니다.
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {data.stats.map((s) => (
           <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>

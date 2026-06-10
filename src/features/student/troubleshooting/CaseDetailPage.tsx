@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useTsCase } from '../api/troubleshooting'
 import type { TsCaseDetail, Tone } from './types'
 
@@ -24,6 +25,10 @@ export default function CaseDetailPage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useTsCase(id)
   const [open, setOpen] = useState(params.get('modal') === 'certify')
+  usePageHeader(
+    '트러블슈팅 사례 상세',
+    '작성한 사례를 확인하고 발표 연결과 인증 요청을 상세 단계에서 진행해요.',
+  )
 
   if (isPending)
     return <div className="text-fg-muted p-8">사례를 불러오는 중…</div>
@@ -61,13 +66,6 @@ export default function CaseDetailPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">트러블슈팅 사례 상세</h1>
-        <p className="text-fg-muted text-[12px]">
-          작성한 사례를 확인하고 발표 연결과 인증 요청을 상세 단계에서 진행해요.
-        </p>
-      </div>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <span

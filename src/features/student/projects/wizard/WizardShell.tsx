@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 
-// 프로젝트 생성 마법사 공통 셸 — 헤더·빵부스러기·스테퍼·히어로 밴드·하단 액션바. Figma 340:981 외.
+// 프로젝트 생성 마법사 공통 셸 — 제목은 공유 헤더에 등록. 빵부스러기·스테퍼·히어로 밴드·하단 액션바. Figma 340:981 외.
 const STEPS = [
   { no: 1, label: '기본 정보', sub: '프로젝트명·설명·기간' },
   { no: 2, label: '팀 설정', sub: 'PM·팀원 초대' },
@@ -38,15 +39,12 @@ export function WizardShell({
   children: ReactNode
 }) {
   const navigate = useNavigate()
+  usePageHeader(
+    '신규 프로젝트 생성',
+    '기본 정보부터 팀·상세 설정까지 단계별로 입력해요.',
+  )
   return (
     <div className="flex flex-col gap-5 p-8 pb-28">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">신규 프로젝트 생성</h1>
-        <p className="text-fg-muted text-[12px]">
-          기본 정보부터 팀·상세 설정까지 단계별로 입력해요.
-        </p>
-      </div>
-
       {/* 빵부스러기 */}
       <div className="flex items-center justify-between">
         <nav className="flex items-center gap-1.5 text-[12px]">

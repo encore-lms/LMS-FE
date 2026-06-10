@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import SnapshotPage from './SnapshotPage'
 import { useSnapshot } from '../api/reviews'
+import { usePageHeaderStore } from '@/shared/store'
 import type { CertSnapshot } from '@/shared/types'
 
 vi.mock('../api/reviews')
@@ -56,9 +57,8 @@ describe('SnapshotPage', () => {
   it('스냅샷 콘텐츠와 검증 URL을 렌더한다', () => {
     mockHook({ data: snapshot, isPending: false, isError: false })
     renderPage()
-    expect(
-      screen.getByRole('heading', { name: '스냅샷 상세', level: 1 }),
-    ).toBeInTheDocument()
+    // 제목은 본문이 아닌 공유 헤더(usePageHeader)에 등록된다.
+    expect(usePageHeaderStore.getState().title).toBe('스냅샷 상세')
     expect(screen.getByText('이서연')).toBeInTheDocument()
     expect(screen.getByText('480h')).toBeInTheDocument()
     expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()

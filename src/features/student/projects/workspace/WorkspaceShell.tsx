@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import type { WsTab } from '../types'
 
-// 프로젝트 워크스페이스 공통 셸 — 제목·메타 + 10탭 바. Figma 342:1032 외.
+// 프로젝트 워크스페이스 공통 셸 — 제목·메타는 공유 헤더에 등록 + 10탭 바. Figma 342:1032 외.
 const TABS: { key: WsTab; label: string }[] = [
   { key: 'home', label: '홈' },
   { key: 'board', label: '보드·작업' },
@@ -29,13 +30,9 @@ export function WorkspaceShell({
   onTab: (t: WsTab) => void
   children: ReactNode
 }) {
+  usePageHeader(title, meta)
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">{title}</h1>
-        <p className="text-fg-muted text-[12px]">{meta}</p>
-      </div>
-
       <nav className="border-border bg-surface flex gap-1 overflow-x-auto rounded-[14px] border p-1.5">
         {TABS.map((t) => {
           const on = t.key === active

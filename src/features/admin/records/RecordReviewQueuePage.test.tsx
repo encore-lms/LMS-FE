@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import RecordReviewQueuePage from './RecordReviewQueuePage'
 import { useRecordReviewQueue } from '../api/records'
+import { usePageHeaderStore } from '@/shared/store'
 import type { RecordReviewQueue } from '@/shared/types'
 
 vi.mock('../api/records')
@@ -86,9 +87,8 @@ describe('RecordReviewQueuePage', () => {
   it('히어로·KPI·테이블 행을 렌더한다', () => {
     mockHook({ data: queue, isPending: false, isError: false })
     render(<RecordReviewQueuePage />)
-    expect(
-      screen.getByRole('heading', { name: '학습 기록 검토 큐', level: 1 }),
-    ).toBeInTheDocument()
+    // 제목은 본문이 아닌 공유 헤더(usePageHeader)에 등록된다.
+    expect(usePageHeaderStore.getState().title).toBe('학습 기록 검토 큐')
     expect(
       screen.getByText('블로그·스터디·자격증 1차 검토 — 승인·반려·보완 요청'),
     ).toBeInTheDocument()

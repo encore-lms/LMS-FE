@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import { AccountsTab } from './AccountsTab'
 import { AttendanceTab } from './AttendanceTab'
 import { AttendanceFormTab } from './AttendanceFormTab'
@@ -17,21 +18,17 @@ const TABS: { key: TabKey; label: string }[] = [
 // MANAGER 전용: HRD-Net 명단 동기화·계정 관제 + 출결/출결 폼 검토를 한 화면에 묶는다.
 export default function StudentManagementPage() {
   const [tab, setTab] = useState<TabKey>('accounts')
+  usePageHeader(
+    '학생 관리',
+    'MANAGER 전용 · HRD-Net 동기화 · 계정·출결·출결 폼 관제',
+  )
 
   return (
     <div className="p-8">
-      <p className="text-fg-subtle text-xs">운영 › 학생 관리</p>
-      <div className="mt-1 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-fg text-2xl font-bold">학생 관리</h1>
-          <p className="text-fg-muted mt-1 text-sm">
-            MANAGER 전용 · HRD-Net 동기화 · 계정·출결·출결 폼 관제
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <StatusBadge label="MANAGER 전용" tone="accent" />
-          <StatusBadge label="/admin/students" tone="neutral" />
-        </div>
+      {/* 제목은 공유 헤더로 이동 — 권한·경로 배지만 본문 우측에 유지 */}
+      <div className="flex justify-end gap-2">
+        <StatusBadge label="MANAGER 전용" tone="accent" />
+        <StatusBadge label="/admin/students" tone="neutral" />
       </div>
 
       <div className="border-divider mt-5 flex gap-1 border-b">

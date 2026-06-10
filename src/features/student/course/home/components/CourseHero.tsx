@@ -9,9 +9,9 @@ export function CourseHero({ hero }: { hero: CourseHeroType }) {
           <span className="text-[11px] font-semibold tracking-[0.18em] text-white/90">
             {hero.trackLabel}
           </span>
-          <h1 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold">
             {hero.courseName} · {hero.cohortName}
-          </h1>
+          </h2>
           <div className="flex items-center gap-2.5 text-[13px] font-medium text-white/90">
             <span>
               교육 기간 {hero.periodStart} — {hero.periodEnd}

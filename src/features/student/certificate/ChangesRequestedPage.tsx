@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useCertChanges } from '../api/certificate'
 import type { Tone } from './types'
 
@@ -27,6 +28,10 @@ const card =
 
 export default function ChangesRequestedPage() {
   const { data, isPending, isError, refetch } = useCertChanges()
+  usePageHeader(
+    '보완 요청',
+    '정식 인증 검토 후 보완 사항을 확인하고 재요청하세요',
+  )
   if (isPending)
     return <div className="text-fg-muted p-8">보완 요청을 불러오는 중…</div>
   if (isError || !data) {
@@ -42,13 +47,6 @@ export default function ChangesRequestedPage() {
   }
   return (
     <div className="flex flex-col gap-5 p-8 pb-24">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">보완 요청</h1>
-        <p className="text-fg-muted text-[12px]">
-          정식 인증 검토 후 보완 사항을 확인하고 재요청하세요
-        </p>
-      </div>
-
       {/* 요약 배너 */}
       <section className="border-danger flex items-center gap-4 rounded-2xl border p-5">
         <span className="bg-danger-bg text-danger flex size-12 shrink-0 items-center justify-center rounded-xl text-2xl">

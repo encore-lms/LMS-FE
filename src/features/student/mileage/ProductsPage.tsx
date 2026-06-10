@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { usePageHeader } from '@/shared/store'
 import { useMileageProducts } from '../api/mileage'
 import type { Tone } from './types'
 
@@ -27,6 +28,10 @@ export default function ProductsPage() {
   const [link, setLink] = useState('')
   const [price, setPrice] = useState('')
   const [memo, setMemo] = useState('')
+  usePageHeader(
+    '마일리지 상품 신청',
+    '상품 타입별 잔여 한도를 확인하고 구매 요청을 제출합니다.',
+  )
 
   if (isPending)
     return <div className="text-fg-muted p-8">상품을 불러오는 중…</div>
@@ -44,13 +49,6 @@ export default function ProductsPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">마일리지 상품 신청</h1>
-        <p className="text-fg-muted text-[12px]">
-          상품 타입별 잔여 한도를 확인하고 구매 요청을 제출합니다.
-        </p>
-      </div>
-
       <div className="bg-brand flex items-center justify-between rounded-2xl p-5">
         <div className="flex items-center gap-6">
           <div className="flex flex-col">

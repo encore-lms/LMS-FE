@@ -14,6 +14,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import { useSnapshot } from '../api/reviews'
 
 const TABS = [
@@ -33,6 +34,10 @@ export default function SnapshotPage() {
   const { data, isPending, isError, refetch } = useSnapshot(certificateId)
   const [tab, setTab] = useState(0)
   const verifyRef = useRef<HTMLElement>(null)
+  usePageHeader(
+    '스냅샷 상세',
+    'certified 증명서의 동결 스냅샷 · 매니저·운영팀 전용',
+  )
 
   if (isPending) {
     return <div className="text-fg-muted p-8">스냅샷을 불러오는 중…</div>
@@ -59,23 +64,20 @@ export default function SnapshotPage() {
 
   return (
     <div className="p-8">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="text-fg-muted hover:text-fg flex items-center gap-1 text-sm font-medium"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> 검토 상세로
-      </button>
-      <div className="mt-1 flex items-center gap-2">
-        <h1 className="text-fg text-2xl font-bold">스냅샷 상세</h1>
+      {/* 제목은 공유 헤더로 이동 — 뒤로가기 + 공개 상태 배지만 본문에 유지 */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="text-fg-muted hover:text-fg flex items-center gap-1 text-sm font-medium"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> 검토 상세로
+        </button>
         <StatusBadge
           label={s.isPublic ? '공개' : '비공개'}
           tone={s.isPublic ? 'success' : 'neutral'}
         />
       </div>
-      <p className="text-fg-subtle mt-1 text-xs">
-        certified 증명서의 동결 스냅샷 · 매니저·운영팀 전용
-      </p>
 
       <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
         <div className="flex items-center justify-between gap-4">

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { usePageHeader } from '@/shared/store'
 
 // PLAY 결과·예외 상태 (/student/play/result) — Figma 3370:5976.
 // 서버 계산 결과 / 저장 실패 / Empty / 기능 미사용 4개 상태 카탈로그.
@@ -7,16 +8,12 @@ const card =
 
 export default function PlayResultPage() {
   const navigate = useNavigate()
+  usePageHeader(
+    'PLAY 결과·예외 상태',
+    '타자 게임 제출 이후 결과·저장 실패·제시문 없음·기능 미사용 상태를 확인합니다.',
+  )
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">PLAY 결과·예외 상태</h1>
-        <p className="text-fg-muted text-[12px]">
-          타자 게임 제출 이후 서버 계산 결과와 저장 실패, 제시문 없음, 기능
-          미사용 상태를 한 화면에서 확인합니다.
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* 결과 화면 */}
         <section className={card}>

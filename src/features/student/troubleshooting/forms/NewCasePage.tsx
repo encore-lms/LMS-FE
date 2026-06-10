@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
 import { TS_CATEGORIES } from '../types'
 
 // 트러블슈팅 새 사례 작성 (/student/troubleshooting/new) — Figma 394:1500. 정적 폼(프리필 예시).
@@ -34,17 +35,13 @@ export default function NewCasePage() {
   const tags = ['#Kafka', '#이벤트소싱', '#멱등성']
   const files = ['kafka-consumer-config.yml', 'dedup-table-schema.png']
   const filled = STAR.filter((s) => star[s.key]?.trim()).length
+  usePageHeader(
+    '새 트러블슈팅 사례',
+    '학습 과정에서 겪은 문제를 상황·해결·결과로 기록하고 팀별 인증을 준비해요.',
+  )
 
   return (
     <div className="flex flex-col gap-5 p-8 pb-28">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg text-[22px] font-bold">새 트러블슈팅 사례</h1>
-        <p className="text-fg-muted text-[12px]">
-          학습 과정에서 겪은 문제를 상황·해결·결과로 기록하고 팀별 인증을
-          준비해요.
-        </p>
-      </div>
-
       <div className="flex items-center justify-between">
         <nav className="flex items-center gap-1.5 text-[12px]">
           <button

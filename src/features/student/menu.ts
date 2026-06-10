@@ -13,6 +13,7 @@ export const studentMenu: MenuItem[] = [
   { label: '트러블슈팅', to: '/student/troubleshooting' },
   { label: '멘토링', to: '/student/mentoring' },
   { label: '수강 역량 증명서', to: '/student/certificate' },
+  { label: '이력서 관리', to: '/student/resume' },
   { label: '마일리지', to: '/student/mileage' },
   { label: 'PLAY', to: '/student/play' },
 ]

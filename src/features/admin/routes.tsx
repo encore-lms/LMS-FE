@@ -12,6 +12,8 @@ const RecordReviewQueuePage = lazy(
 const StudentManagementPage = lazy(
   () => import('./students/StudentManagementPage'),
 )
+const ResumePage = lazy(() => import('./resume/ResumePage'))
+const ResumeDetailPage = lazy(() => import('./resume/ResumeDetailPage'))
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -26,6 +28,8 @@ export const adminRoutes: RouteObject[] = [
       },
       { path: 'records/review', element: <RecordReviewQueuePage /> },
       { path: 'students', element: <StudentManagementPage /> },
+      { path: 'resume', element: <ResumePage /> },
+      { path: 'resume/:resumeId', element: <ResumeDetailPage /> },
     ],
   },
 ]

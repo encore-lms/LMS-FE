@@ -111,3 +111,56 @@ export interface CohortStudentsData {
   riskTotal: number
   rows: CohortStudentRow[]
 }
+
+// ── §4 수강생 상세 (Figma 1334:9714) ──
+// 좌측 탭은 Figma '공통 Tabs Bar - 수강생 상세 좌측 5탭' 기준(이력서 탭은 프레임 미반영 — 후속).
+export type StudentDetailTabKey =
+  | 'quiz'
+  | 'records'
+  | 'projects'
+  | 'troubleshooting'
+  | 'endorsements'
+
+export interface StudentDetailTabItem {
+  id: string
+  title: string // '알고리즘 기초 #3'
+  subtitle: string // '제출 2026-05-17'
+  /** 점수 표기 — '92/100' (없으면 '-') */
+  value: string | null
+  statusLabel: string // 채점 대기 / 채점 완료 / 미응시 / 재시험 권장 …
+  statusTone: 'success' | 'warning' | 'danger' | 'info' | 'accent' | 'neutral'
+  actionLabel: string // 채점 / 결과 / 보기
+  /** 이동 라우트 — null이면 후속 화면(토스트) */
+  to: string | null
+}
+
+export interface StudentDetailTab {
+  title: string // '퀴즈 제출·채점 이력'
+  summary: string // '전체 14건 · 채점 대기 2건 · 평균 84.7'
+  ctaLabel: string // '퀴즈 관리로 →'
+  ctaTo: string | null
+  items: StudentDetailTabItem[]
+}
+
+export interface StudentSupplement {
+  id: string
+  date: string // '2026-05-16'
+  status: 'responded' | 'waiting' // 학생 응답 / 학생 응답 대기
+  code: string // 'unapproved_artifact'
+  category: string // '프로젝트'
+}
+
+export interface StudentDetailData {
+  id: string
+  name: string
+  uuidEmail: string // 'def-5678 · lee.sy@playdata.io'
+  cohortLabel: string
+  certStatus: StudentCertStatus
+  kpis: { label: string; value: string; hint: string }[] // 교육시간·출석률·퀴즈 평균·제출률
+  skillScores: { label: string; score: number }[] // 6축 (SkillScore)
+  warningLine1: string // '결측 0 · 점수 재검토 0'
+  warningLine2: string // '개인정보 위험 0 · 미승인 0'
+  reviewComment: string // 학생 비공개 · 운영자/강사만 조회
+  supplements: StudentSupplement[]
+  tabs: Record<StudentDetailTabKey, StudentDetailTab>
+}

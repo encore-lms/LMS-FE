@@ -187,12 +187,12 @@ describe('DashboardPage (§1)', () => {
     expect(screen.getByText('퀴즈 관리')).toBeInTheDocument()
   })
 
-  it('긴급 행은 D+N 강조와 primary 액션 버튼을 가진다', () => {
+  it('긴급 행은 D+N 빨강 칩 강조, 액션 버튼은 흰 outline (Figma 실측)', () => {
     renderAt('/instructor')
+    expect(screen.getByText('D+5').className).toContain('bg-danger-bg')
     const urgentBtn = screen.getByRole('button', { name: '확인' })
-    expect(urgentBtn.className).toContain('bg-brand-deep')
-    const normalBtn = screen.getByRole('button', { name: '채점 시작' })
-    expect(normalBtn.className).not.toContain('bg-brand-deep')
+    expect(urgentBtn.className).not.toContain('bg-brand-deep')
+    expect(urgentBtn.className).toContain('font-bold')
   })
 })
 
@@ -210,7 +210,7 @@ describe('CohortsPage (§2)', () => {
   it('종료 탭은 종료 과정만 보여준다', async () => {
     const user = userEvent.setup()
     renderAt('/instructor/cohorts')
-    await user.click(screen.getByRole('button', { name: /종료 3/ }))
+    await user.click(screen.getByRole('button', { name: /종료 \(3\)/ }))
     expect(screen.getByText('DA 3기')).toBeInTheDocument()
     expect(screen.queryByText('DA 4기')).not.toBeInTheDocument()
   })

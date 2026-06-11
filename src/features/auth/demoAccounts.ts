@@ -10,6 +10,12 @@ export interface DemoAccount {
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   { label: '매니저', email: 'admin@playdata.io', password: 'playdata123!' },
   { label: '강사', email: 'instructor@playdata.io', password: 'playdata123!' },
+  // 담당 기수 없음 안내(Figma 2750:1974) 시연 — 강사 대시보드 mock이 기수 0으로 분기.
+  {
+    label: '강사 (배정 전)',
+    email: 'instructor-new@playdata.io',
+    password: 'playdata123!',
+  },
   { label: '멘토', email: 'mentor@playdata.io', password: 'playdata123!' },
   { label: '수강생', email: 'student@playdata.io', password: 'playdata123!' },
 ]

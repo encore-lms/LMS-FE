@@ -13,6 +13,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { DashboardKpi, PriorityType } from '@/shared/types'
 import { useInstructorDashboard } from '../api/console'
+import { NoCohortNotice } from './NoCohortNotice'
 
 const PRIORITY_META: Record<PriorityType, { label: string; tone: BadgeTone }> =
   {
@@ -76,6 +77,11 @@ export default function DashboardPage() {
         />
       </div>
     )
+  }
+
+  // 담당 기수 0 — 대시보드 대신 안내 표시 (Figma 2750:1974)
+  if (data.cohortCount === 0) {
+    return <NoCohortNotice />
   }
 
   // 아이콘 박스는 Figma처럼 기능별 틴트 배경 (노랑·파랑·보라)

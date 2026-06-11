@@ -17,6 +17,13 @@ const EndorsementDetailPage = lazy(
   () => import('./endorsements/EndorsementDetailPage'),
 )
 const QuizListPage = lazy(() => import('./quizzes/QuizListPage'))
+const ChangeRequestsPage = lazy(
+  () => import('./change-requests/ChangeRequestsPage'),
+)
+const RecertificationsPage = lazy(
+  () => import('./change-requests/RecertificationsPage'),
+)
+const NoCohortPage = lazy(() => import('./dashboard/NoCohortNotice'))
 const AssignmentsPage = lazy(() => import('./assignments/AssignmentsPage'))
 const AssignmentFormPage = lazy(
   () => import('./assignments/AssignmentFormPage'),
@@ -47,6 +54,11 @@ export const instructorRoutes: RouteObject[] = [
       { path: 'records/review', element: <RecordReviewPage /> },
       { path: 'projects/review', element: <ProjectReviewPage /> },
       { path: 'troubleshooting/review', element: <TsReviewPage /> },
+      // 인증 후 통합 검토 (P0 29 §11~§12 대체) — 변경 제안·재인증, 사이드바 '인증 후 변경 제안' 묶음.
+      { path: 'change-requests', element: <ChangeRequestsPage /> },
+      { path: 'recertifications', element: <RecertificationsPage /> },
+      // 담당 기수 없음 안내 — 대시보드가 cohortCount 0이면 동일 안내로 분기.
+      { path: 'no-cohort', element: <NoCohortPage /> },
       // 강사 추천서 (Flow 08-1) — /history는 :id보다 먼저(정적 경로 우선).
       { path: 'endorsements', element: <EndorsementsPage /> },
       { path: 'endorsements/history', element: <EndorsementHistoryPage /> },

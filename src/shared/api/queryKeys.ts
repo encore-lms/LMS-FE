@@ -30,6 +30,16 @@ export const adminKeys = {
       category,
       submissionId,
     ] as const,
+  quizAnswers: (quizId: string) =>
+    [...adminKeys.all, 'quizzes', quizId, 'answers'] as const,
+  // 영향 계산 — quizAnswers의 하위 키(저장 후 quizAnswers 무효화에 함께 쓸려간다).
+  // changeKey = 직렬화된 변경안(변경안이 다르면 다른 캐시).
+  quizAnswerImpact: (quizId: string, changeKey?: string) =>
+    [
+      ...adminKeys.quizAnswers(quizId),
+      'impact',
+      { changeKey: changeKey ?? '' },
+    ] as const,
   studentAccounts: (filter?: { status?: string }) =>
     [...adminKeys.all, 'students', { filter: filter ?? {} }] as const,
   studentAttendance: () =>

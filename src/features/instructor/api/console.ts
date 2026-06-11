@@ -4,6 +4,7 @@ import type {
   InstructorDashboardData,
   InstructorCohortsData,
   CohortStudentsData,
+  StudentDetailData,
 } from '@/shared/types'
 
 // 강사 콘솔 골격 (대시보드·담당 과정/기수·수강생 목록) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
@@ -23,6 +24,16 @@ export function useInstructorCohorts() {
     queryFn: () =>
       apiClient
         .get<InstructorCohortsData>('/instructor/cohorts')
+        .then((r) => r.data),
+  })
+}
+
+export function useStudentDetail(studentId: string) {
+  return useQuery({
+    queryKey: instructorKeys.studentDetail(studentId),
+    queryFn: () =>
+      apiClient
+        .get<StudentDetailData>(`/instructor/students/${studentId}`)
         .then((r) => r.data),
   })
 }

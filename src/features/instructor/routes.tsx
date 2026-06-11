@@ -5,6 +5,7 @@ import type { RouteObject } from 'react-router-dom'
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
 const CohortStudentsPage = lazy(() => import('./cohorts/CohortStudentsPage'))
+const StudentDetailPage = lazy(() => import('./cohorts/StudentDetailPage'))
 const EndorsementsPage = lazy(() => import('./endorsements/EndorsementsPage'))
 const EndorsementHistoryPage = lazy(
   () => import('./endorsements/EndorsementHistoryPage'),
@@ -31,6 +32,7 @@ export const instructorRoutes: RouteObject[] = [
       // 강사 콘솔 골격 (§2·§3) — 기수 컨텍스트는 후속 화면에 유지.
       { path: 'cohorts', element: <CohortsPage /> },
       { path: 'cohorts/:cohortId/students', element: <CohortStudentsPage /> },
+      { path: 'students/:studentId', element: <StudentDetailPage /> },
       // 강사 추천서 (Flow 08-1) — /history는 :id보다 먼저(정적 경로 우선).
       { path: 'endorsements', element: <EndorsementsPage /> },
       { path: 'endorsements/history', element: <EndorsementHistoryPage /> },

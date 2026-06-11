@@ -65,6 +65,8 @@ export const instructorKeys = {
   cohorts: () => [...instructorKeys.all, 'cohorts'] as const,
   cohortStudents: (cohortId: string) =>
     [...instructorKeys.all, 'cohorts', cohortId, 'students'] as const,
+  studentDetail: (studentId: string) =>
+    [...instructorKeys.all, 'students', studentId] as const,
   quizTemplates: () => [...instructorKeys.all, 'quiz-templates'] as const,
   quizTemplateDetail: (templateId: string) =>
     [...instructorKeys.all, 'quiz-templates', templateId] as const,

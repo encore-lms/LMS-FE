@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
+import { cn } from '@/shared/lib/cn'
 import type { DashboardDeadlineQuiz } from '../types'
 import { SectionCard } from './SectionCard'
 import { MoreLink } from './MoreLink'
 import { Chip } from './Chip'
+import { TONE_SOFT } from './tone'
 
-// 마감 임박 퀴즈 상위 3 — 과목 칩 + 제목 + D-day. 클릭 시 퀴즈 목록으로.
+// 마감 임박 퀴즈 상위 3 — 과목 칩 + 제목/메타(시간·문항) + D-day 칩. 클릭 시 퀴즈 목록으로.
 export function DeadlineQuizzes({
   quizzes,
 }: {
@@ -13,7 +15,8 @@ export function DeadlineQuizzes({
   return (
     <SectionCard
       title="마감 임박 퀴즈"
-      action={<MoreLink to="/student/quizzes" />}
+      subtitle="Top 3 · 응시 가능 기간 임박"
+      action={<MoreLink to="/student/quizzes" label="퀴즈 목록" />}
     >
       {quizzes.length === 0 ? (
         <p className="text-fg-subtle py-4 text-center text-sm">
@@ -27,11 +30,23 @@ export function DeadlineQuizzes({
                 to={q.to}
                 className="hover:bg-surface-muted -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5"
               >
-                <span className="flex min-w-0 items-center gap-2">
-                  <Chip>{q.category}</Chip>
-                  <span className="text-fg truncate text-sm">{q.title}</span>
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <Chip tone={q.categoryTone}>{q.category}</Chip>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-fg truncate text-sm font-medium">
+                      {q.title}
+                    </span>
+                    <span className="text-fg-subtle truncate text-xs">
+                      {q.meta}
+                    </span>
+                  </span>
                 </span>
-                <span className="text-warning shrink-0 text-xs font-semibold">
+                <span
+                  className={cn(
+                    'shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold',
+                    TONE_SOFT[q.dueTone],
+                  )}
+                >
                   {q.due}
                 </span>
               </Link>

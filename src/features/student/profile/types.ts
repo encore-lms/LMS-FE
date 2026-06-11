@@ -44,6 +44,7 @@ export interface StudentProfile {
 
 /** 프로필 저장 페이로드 — 편집 가능한 필드만 (name·과정/기수·완성도는 서버 파생) */
 export interface ProfileUpdatePayload {
+  profileImageUrl: string | null
   displayName: string
   githubUrl: string
   blogUrl: string

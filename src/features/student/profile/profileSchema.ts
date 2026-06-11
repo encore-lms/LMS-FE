@@ -11,6 +11,8 @@ const optionalUrl = z
   .or(z.literal(''))
 
 export const profileSchema = z.object({
+  // 프로필 이미지 — 업로드 시 data URL, 미설정이면 null(이니셜 아바타)
+  profileImageUrl: z.string().nullable(),
   displayName: z
     .string()
     .trim()

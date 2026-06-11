@@ -1,7 +1,7 @@
 import type { ProfileCompletion as ProfileCompletionData } from '../types'
 import { ProfileActionButton } from './ProfileActionButton'
 
-// 프로필 완성도 배너 — 원형 진행률 + 미입력 배지 + 안내 + [미입력 항목 보기].
+// 프로필 완성도 배너 — 원형 진행률 + 미입력 배지 + 안내 + 필수 항목 진행 바 + [미입력 항목 보기].
 const R = 26
 const C = 2 * Math.PI * R
 
@@ -15,10 +15,11 @@ export function ProfileCompletion({
   const { pct, requiredDone, requiredTotal, missingCount, updatedAt } =
     completion
   const updated = `${updatedAt.slice(0, 10)} ${updatedAt.slice(11, 16)}`
+  const requiredPct = Math.round((requiredDone / requiredTotal) * 100)
 
   return (
     <section className="border-border bg-surface flex flex-wrap items-center justify-between gap-4 rounded-xl border p-6">
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
         <div className="relative h-16 w-16 shrink-0">
           <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">
             <circle
@@ -45,22 +46,35 @@ export function ProfileCompletion({
             {pct}%
           </span>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-fg font-bold">프로필 완성도</span>
             {missingCount > 0 && (
               <span className="bg-danger-bg text-danger rounded-full px-2 py-0.5 text-xs font-semibold">
-                증명서 필수 {missingCount}건 누락
+                증명서 필수 — {missingCount}건 누락
               </span>
             )}
           </div>
           <p className="text-fg-muted text-sm">
-            증명서와 외부 공개에 사용될 기본 정보·URL·스킬을 채워주세요. 입력 후
-            저장하면 즉시 반영됩니다.
+            증명서·외부 공개에 사용할 외부 URL {missingCount}건(GitHub·블로그)이
+            비어 있습니다. 입력 후 저장하면 즉시 반영됩니다.
           </p>
-          <span className="text-fg-subtle text-xs">
-            필수 항목 {requiredDone}/{requiredTotal} · 마지막 수정 {updated}
-          </span>
+          <div className="mt-1 flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-fg-subtle text-xs">
+                필수 항목 {requiredDone} / {requiredTotal} 완료
+              </span>
+              <span className="text-fg-subtle text-xs">
+                마지막 수정 {updated}
+              </span>
+            </div>
+            <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
+              <div
+                className="bg-brand h-full rounded-full"
+                style={{ width: `${requiredPct}%` }}
+              />
+            </div>
+          </div>
         </div>
       </div>
       <ProfileActionButton onClick={onViewMissing}>

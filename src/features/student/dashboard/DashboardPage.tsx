@@ -7,7 +7,8 @@ import { KpiCards } from './components/KpiCards'
 import { TodoList } from './components/TodoList'
 import { DeadlineQuizzes } from './components/DeadlineQuizzes'
 import { MentoringSummary } from './components/MentoringSummary'
-import { AttendanceWidget } from './components/AttendanceWidget'
+import { AttendanceCalendar } from './components/AttendanceCalendar'
+import { AttendanceSummary } from './components/AttendanceSummary'
 import { NoticeList } from './components/NoticeList'
 import { NotificationList } from './components/NotificationList'
 import { ProjectList } from './components/ProjectList'
@@ -46,7 +47,10 @@ export default function DashboardPage() {
         <DeadlineQuizzes quizzes={data.deadlineQuizzes} />
       </div>
       <MentoringSummary mentoring={data.mentoring} />
-      <AttendanceWidget attendance={data.attendance} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <AttendanceCalendar attendance={data.attendance} />
+        <AttendanceSummary attendance={data.attendance} />
+      </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <NoticeList notices={data.notices} />
         <NotificationList notifications={data.notifications} />

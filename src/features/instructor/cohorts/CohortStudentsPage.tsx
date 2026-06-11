@@ -24,8 +24,8 @@ export default function CohortStudentsPage() {
   const [cert, setCert] = useState<CertFilter>('all')
   const [risk, setRisk] = useState<RiskFilter>('all')
   usePageHeader(
-    '수강생 목록',
-    '담당 기수 수강생의 증명서·퀴즈·기록실·프로젝트·위험 현황 — 위험 많은 순',
+    data ? `수강생 목록 — ${data.cohortLabel}` : '수강생 목록',
+    '담당 기수 수강생 조회 · 위험/보완 플래그가 있는 학생 빠르게 식별',
   )
 
   const filtered = useMemo(() => {
@@ -207,10 +207,29 @@ export default function CohortStudentsPage() {
           empty="조건에 맞는 수강생이 없어요"
         />
       </div>
-      <p className="text-fg-subtle mt-3 text-xs">
-        {data.cohortLabel} {data.total}명 · 표시 {filtered.length}명 · 위험
-        플래그 {data.riskTotal}건 — 담당 기수 밖 학생은 노출되지 않습니다
-      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <p className="text-fg-subtle text-xs">
+          {data.cohortLabel} {data.total}명 · 표시 {filtered.length}명 · 위험
+          플래그 {data.riskTotal}건 — 담당 기수 밖 학생은 노출되지 않습니다
+        </p>
+        {/* 페이지네이션 — mock은 1페이지 데이터만, 표시는 Figma(1~5) 정합 */}
+        <div className="ml-auto flex gap-1">
+          {['‹', '1', '2', '3', '4', '5', '›'].map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={cn(
+                'h-7 min-w-7 rounded-md px-2 text-xs font-medium',
+                p === '1'
+                  ? 'bg-brand-deep text-white'
+                  : 'border-border text-fg-muted hover:bg-surface-muted border',
+              )}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

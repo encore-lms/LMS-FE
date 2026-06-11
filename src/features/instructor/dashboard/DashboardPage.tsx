@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const { data, isPending, isError, refetch } = useInstructorDashboard()
   usePageHeader(
     '강사 대시보드',
-    '오늘 처리할 채점·검토·인증을 한 화면에서 — 긴급도 + 마감 임박 순',
+    '담당 기수의 채점 대기·검토·인증·보완 요청을 한곳에서',
   )
 
   if (isPending) {
@@ -78,10 +78,12 @@ export default function DashboardPage() {
     )
   }
 
+  // 아이콘 박스는 Figma처럼 기능별 틴트 배경 (노랑·파랑·보라)
   const shortcuts = [
     {
       key: 'quizzes',
       icon: <ClipboardList className="h-5 w-5" />,
+      iconBg: 'bg-warning-bg text-warning',
       title: '퀴즈 관리',
       badge: data.shortcuts.quizzes.badge,
       hint: data.shortcuts.quizzes.hint,
@@ -90,6 +92,7 @@ export default function DashboardPage() {
     {
       key: 'students',
       icon: <Users className="h-5 w-5" />,
+      iconBg: 'bg-info-bg text-info',
       title: '수강생 목록',
       badge: 0,
       hint: data.shortcuts.students.hint,
@@ -98,6 +101,7 @@ export default function DashboardPage() {
     {
       key: 'reviews',
       icon: <Search className="h-5 w-5" />,
+      iconBg: 'bg-accent-bg text-accent-strong',
       title: '검토 화면',
       badge: data.shortcuts.reviews.badge,
       hint: data.shortcuts.reviews.hint,
@@ -116,12 +120,18 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="ml-auto flex gap-2">
-          {data.cohorts.map((c) => (
+          {/* 첫 칩 = 현재 선택 기수 (Figma: 검정 채움) */}
+          {data.cohorts.map((c, i) => (
             <button
               key={c.id}
               type="button"
               onClick={() => navigate('/instructor/cohorts')}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-sm font-medium"
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-sm font-medium',
+                i === 0
+                  ? 'bg-brand-deep font-bold text-white'
+                  : 'border-border text-fg-muted hover:bg-surface-muted border',
+              )}
             >
               {c.label}
             </button>
@@ -176,14 +186,13 @@ export default function DashboardPage() {
               >
                 {p.dday}
               </span>
+              {/* 액션 버튼은 긴급 여부와 무관하게 흰 outline — 긴급 강조는 D+N 칩이 담당 (Figma 실측) */}
               <button
                 type="button"
                 onClick={() => navigate(p.to)}
                 className={cn(
-                  'shrink-0 rounded-lg px-3.5 py-2 text-xs font-bold',
-                  p.urgent
-                    ? 'bg-brand-deep text-white'
-                    : 'border-border text-fg-muted hover:bg-surface-muted border font-medium',
+                  'border-border text-fg hover:bg-surface-muted shrink-0 rounded-lg border bg-white px-3.5 py-2 text-xs',
+                  p.urgent ? 'font-bold' : 'text-fg-muted font-medium',
                 )}
               >
                 {p.actionLabel}
@@ -202,7 +211,12 @@ export default function DashboardPage() {
             onClick={() => navigate(s.to)}
             className="border-border bg-surface hover:bg-surface-muted flex items-center gap-4 rounded-xl border px-4.5 py-5 text-left"
           >
-            <span className="bg-surface-muted text-fg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+            <span
+              className={cn(
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                s.iconBg,
+              )}
+            >
               {s.icon}
             </span>
             <span className="min-w-0 flex-1">

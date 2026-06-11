@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, adminKeys } from '@/shared/api'
 import type {
+  AdminGradingDetail,
   QuizAnswerChangeRequest,
   QuizAnswerImpact,
   QuizAnswersData,
@@ -67,6 +68,63 @@ export function useSaveAnswerChanges(quizId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: adminKeys.quizAnswers(quizId),
+      })
+    },
+  })
+}
+
+// ── 운영 수동 채점 (/admin/quizzes/:quizId/submissions/:submissionId/grade — Figma 1515:10710) ──
+// GET/PATCH 모두 admin 전용 엔드포인트(P0_15_24 API명세) — 강사 useGradingDetail 의존 금지.
+// PATCH는 earnedPoints·피드백·공개 여부만 변경(answerPayload는 조회 전용 — 2026-06-05 확정).
+
+/** 수동 채점 상세 — GET .../submissions/:submissionId/grade */
+export function useAdminGradingDetail(quizId: string, submissionId: string) {
+  return useQuery({
+    queryKey: adminKeys.quizGrading(quizId, submissionId),
+    enabled: !!quizId && !!submissionId,
+    queryFn: () =>
+      apiClient
+        .get<AdminGradingDetail>(
+          `/admin/quizzes/${quizId}/submissions/${submissionId}/grade`,
+        )
+        .then((r) => r.data),
+  })
+}
+
+/** 문항 단위 채점 패치 — 점수·피드백·공개 여부만(조회 전용 answerPayload 불포함) */
+export interface AdminGradeItemPatch {
+  questionId: string
+  earnedPoints: number | null // null = 점수 비움(미채점으로 되돌림)
+  feedback: string
+  feedbackVisible: boolean
+}
+
+/** PATCH 요청 — items(자동 저장) 또는 finalize(채점 완료 확정, gradingStatus=finalized) */
+export interface AdminGradeSaveRequest {
+  items?: AdminGradeItemPatch[]
+  finalize?: boolean
+  // TODO: reasonCode — BE enum 확정 대기(Figma에 사유 코드 선택 UI 없음, FE는 미전송).
+  reasonCode?: string
+}
+
+/**
+ * 채점 저장 mutation — PATCH .../grade.
+ * 점수·피드백 blur 자동 저장과 [채점 완료] 확정이 같은 엔드포인트를 쓴다(임시 저장 = items만).
+ * 성공 시 해당 제출 채점 캐시 무효화 — KPI(변경 이력·현재 점수)가 서버 상태로 갱신된다.
+ */
+export function useSaveGrading(quizId: string, submissionId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: AdminGradeSaveRequest) =>
+      apiClient
+        .patch<AdminGradingDetail>(
+          `/admin/quizzes/${quizId}/submissions/${submissionId}/grade`,
+          payload,
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminKeys.quizGrading(quizId, submissionId),
       })
     },
   })

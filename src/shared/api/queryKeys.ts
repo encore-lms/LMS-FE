@@ -70,6 +70,16 @@ export const instructorKeys = {
   recordReviews: () => [...instructorKeys.all, 'record-reviews'] as const,
   projectReviews: () => [...instructorKeys.all, 'project-reviews'] as const,
   tsReviews: () => [...instructorKeys.all, 'ts-reviews'] as const,
+  assignments: () => [...instructorKeys.all, 'assignments'] as const,
+  assignmentDetail: (assignmentId: string) =>
+    [...instructorKeys.all, 'assignments', assignmentId] as const,
+  assignmentSubmissions: (assignmentId: string) =>
+    [
+      ...instructorKeys.all,
+      'assignments',
+      assignmentId,
+      'submissions',
+    ] as const,
   quizTemplates: () => [...instructorKeys.all, 'quiz-templates'] as const,
   quizTemplateDetail: (templateId: string) =>
     [...instructorKeys.all, 'quiz-templates', templateId] as const,

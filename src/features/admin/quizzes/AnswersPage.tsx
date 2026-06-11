@@ -461,8 +461,8 @@ export default function AnswersPage() {
         </section>
       </div>
 
-      {/* 운영 원칙 배너 — Figma 원문 */}
-      <div className="border-border bg-warning-bg mt-8 rounded-xl border p-5">
+      {/* 운영 원칙 배너 — Figma 원문. 보더는 Figma amber 틴트(#fde68a)의 토큰 근사(warning/30). */}
+      <div className="border-warning/30 bg-warning-bg mt-8 rounded-xl border p-5">
         <p className="text-warning text-sm font-bold">운영 원칙</p>
         <p className="text-warning mt-2 text-sm">
           정답·배점 변경은 저장 전 영향 계산을 먼저 수행하고, 저장 후 재채점

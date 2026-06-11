@@ -6,19 +6,21 @@ export function ExternalUrlsSection() {
   return (
     <ProfileCard
       title="외부 URL"
-      description="증명서 검증 시 공개될 수 있는 링크입니다. 필수 항목은 비우면 인증 요청이 막힙니다."
+      description="증명서 공개 시 검증자가 따라갈 수 있는 링크 — 각 항목 공개 토글 별도"
     >
       <ProfileField
         name="githubUrl"
         label="GitHub URL"
         required
         placeholder="https://github.com/username"
+        hint="증명서 필수 — 미입력 시 인증 요청 불가"
       />
       <ProfileField
         name="blogUrl"
         label="블로그 URL"
         required
         placeholder="https://velog.io/@username"
+        hint="증명서 필수 — 미입력 시 인증 요청 불가"
       />
       <ProfileField
         name="portfolioUrl"

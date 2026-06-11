@@ -4,7 +4,8 @@ import type { MenuItem } from '@/components/layout'
 // (마이프로필·설정은 헤더 아바타 드롭다운. 동료평가→프로젝트 상호평가 흡수, 기수게시판 폐기)
 // 하위 라우트/화면은 소유자가 features/student/에 추가한다.
 export const studentMenu: MenuItem[] = [
-  { label: '대시보드', to: '/student' },
+  // 마이 프로필(헤더 드롭다운 진입, 사이드바 항목 없음)은 홈=대시보드 강조 유지.
+  { label: '대시보드', to: '/student', match: ['/student/profile'] },
   // 나의 과정 = 강의홈·자료실·과제(/student/course/*) + 퀴즈(/student/quizzes)
   { label: '나의 과정', to: '/student/course', match: ['/student/quizzes'] },
   { label: '출결/태도', to: '/student/attendance' },

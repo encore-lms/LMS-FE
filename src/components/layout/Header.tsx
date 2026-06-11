@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, LogOut, Search } from 'lucide-react'
+import { Bell, LogOut, Search, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, useAuthActions, usePageHeaderStore } from '@/shared/store'
 
@@ -8,7 +8,7 @@ import { useAuth, useAuthActions, usePageHeaderStore } from '@/shared/store'
 // 검색(전역) · 알림 목록은 BE 데이터 연동 후속이라 현재는 UI까지. 프로필은 로그아웃까지 실동작.
 export function Header() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const { clearSession } = useAuthActions()
   const title = usePageHeaderStore((s) => s.title)
   const description = usePageHeaderStore((s) => s.description)
@@ -92,6 +92,19 @@ export function Header() {
                 )}
               </div>
               <div className="bg-divider my-1 h-px w-full" />
+              {role === 'STUDENT' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false)
+                    navigate('/student/profile')
+                  }}
+                  className="text-fg hover:bg-surface-muted flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium"
+                >
+                  <User className="h-4 w-4" />
+                  마이 프로필
+                </button>
+              )}
               <button
                 type="button"
                 onClick={logout}

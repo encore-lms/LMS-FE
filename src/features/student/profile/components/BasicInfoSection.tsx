@@ -11,10 +11,7 @@ export function BasicInfoSection({ profile }: { profile: StudentProfile }) {
       title="기본 정보"
       description="증명서에 그대로 반영됩니다. 과정/기수는 HRD-Net 연동(잠금)."
     >
-      <ProfileImageField
-        name={profile.name}
-        imageUrl={profile.profileImageUrl}
-      />
+      <ProfileImageField name={profile.name} />
       <ReadonlyField label="이름 (증명서 반영 · 잠금)" value={profile.name} />
       <ProfileField
         name="displayName"

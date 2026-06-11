@@ -12,15 +12,16 @@ export function SkillsSection() {
   return (
     <ProfileCard
       title="스킬"
-      description="기술 태그·관심 직무 — 증명서 종합 요약에 활용됩니다."
+      description="기술 태그 최대 10개 · 드래그로 순서 변경"
     >
       <div className="flex flex-col gap-2">
-        <span className="text-fg text-[13px] font-bold">기술 태그</span>
+        <span className="text-fg flex items-center gap-1 text-[13px] font-bold">
+          기술 태그
+          {skills.length > 0 && <span className="text-success">✓</span>}
+        </span>
         <TagInput
           value={skills}
           onChange={(v) => setValue('skills', v, { shouldDirty: true })}
-          placeholder="기술 추가"
-          chipClassName="bg-accent-bg text-accent-strong"
         />
       </div>
       <div className="flex flex-col gap-2">
@@ -28,8 +29,6 @@ export function SkillsSection() {
         <TagInput
           value={interests}
           onChange={(v) => setValue('interests', v, { shouldDirty: true })}
-          placeholder="직무 추가"
-          chipClassName="bg-success-bg text-success"
         />
       </div>
     </ProfileCard>

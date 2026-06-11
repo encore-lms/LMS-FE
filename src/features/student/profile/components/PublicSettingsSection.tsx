@@ -3,14 +3,31 @@ import type { ProfileFormValues } from '../profileSchema'
 import { ProfileCard } from './ProfileCard'
 import { Toggle } from './Toggle'
 
-// 공개 설정 — 외부 검증 페이지 노출 항목 5종 토글.
+// 공개 설정 — 외부 검증 페이지 노출 항목 5종 토글. 멘트는 공개/미공개로 분기.
 type SettingKey = keyof ProfileFormValues['publicSettings']
-const ITEMS: { key: SettingKey; label: string }[] = [
-  { key: 'profileImage', label: '프로필 이미지' },
-  { key: 'githubUrl', label: 'GitHub URL' },
-  { key: 'blogUrl', label: '블로그 URL' },
-  { key: 'portfolioUrl', label: '포트폴리오 URL' },
-  { key: 'linkedinUrl', label: 'LinkedIn URL' },
+// pub = 공개(ON)일 때 멘트. 미공개(OFF)는 공통 '미공개 상태'.
+const ITEMS: { key: SettingKey; label: string; pub: string }[] = [
+  {
+    key: 'profileImage',
+    label: '프로필 이미지',
+    pub: '공개 시 증명서·외부 페이지에 노출',
+  },
+  {
+    key: 'githubUrl',
+    label: 'GitHub URL',
+    pub: '공개 시 외부 검증자 연결 가능',
+  },
+  { key: 'blogUrl', label: '블로그 URL', pub: '공개 시 외부 검증자 연결 가능' },
+  {
+    key: 'portfolioUrl',
+    label: '포트폴리오 URL',
+    pub: '포트폴리오 사이트 메타 외 노출',
+  },
+  {
+    key: 'linkedinUrl',
+    label: 'LinkedIn URL',
+    pub: '공개 시 외부 검증자 연결 가능',
+  },
 ]
 
 export function PublicSettingsSection() {
@@ -27,7 +44,7 @@ export function PublicSettingsSection() {
           <Toggle
             key={it.key}
             label={it.label}
-            description={ps[it.key] ? '공개 — 외부 검증 페이지 노출' : '미공개'}
+            description={ps[it.key] ? it.pub : '미공개 상태'}
             checked={ps[it.key]}
             onChange={(checked) =>
               setValue(

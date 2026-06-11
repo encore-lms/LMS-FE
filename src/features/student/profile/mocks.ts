@@ -12,8 +12,9 @@ const mockProfile: StudentProfile = {
   cohortName: '5기',
   email: 'sukang.kim@example.com',
   profileImageUrl: null,
-  githubUrl: 'https://github.com/sukang-kim',
-  blogUrl: 'https://velog.io/@sukang',
+  // 시안(159:27)은 GitHub·블로그가 미입력(필수 누락) 상태 → 빈 값으로 재현
+  githubUrl: '',
+  blogUrl: '',
   portfolioUrl: 'https://yourportfolio.com',
   linkedinUrl: '',
   skills: ['Java', 'Spring Boot', 'JPA', 'MySQL', 'Redis', 'Docker', 'AWS'],

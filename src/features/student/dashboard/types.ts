@@ -2,6 +2,16 @@
 // 대시보드는 여러 도메인 요약을 한 endpoint로 합쳐 받는다(StudentDashboardSummary).
 // 정책(§2): 증명서 위젯·6축 역량·강의 진도율·채점 대기·랭킹·커뮤니티 피드는 대시보드에 노출 안 함.
 
+/** 시맨틱 색조 — 칩/배지/점/막대의 @theme 토큰 매핑 키(components/tone.ts) */
+export type Tone =
+  | 'neutral'
+  | 'brand'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'info'
+  | 'accent'
+
 /** 상단 환영 배너 */
 export interface DashboardHero {
   studentName: string
@@ -10,16 +20,11 @@ export interface DashboardHero {
   totalWeeks: number
   currentWeek: number
   progressPct: number // 0~100
+  todayLabel?: string // "MONDAY · 2026.05.13" — Figma 시안의 상단 날짜 줄
 }
 
 /** 요약 KPI 카드(Figma 2455:5068) — 라벨+색점 / 숫자+델타칩 / 진행 트랙바 / 캡션 */
-export type KpiTone =
-  | 'brand'
-  | 'warning'
-  | 'accent'
-  | 'success'
-  | 'info'
-  | 'danger'
+export type KpiTone = Exclude<Tone, 'neutral'>
 export interface DashboardKpiDelta {
   label: string // "+2%p" | "D-1" | "✓ 클리어"
   tone: 'success' | 'warning' | 'danger'
@@ -41,27 +46,38 @@ export interface DashboardKpis {
 /** 할 일 1건 (오늘/이번 주) */
 export interface DashboardTodo {
   id: string
-  category: string // 퀴즈 / 블로그 / 과제 등
+  category: string // 퀴즈 / 과제 / 프로젝트 / 학습
+  categoryTone: Tone // 카테고리 라벨 색
   title: string
-  due: string // "오늘" / "D-3" 등 표시 문자열
-  to: string // 이동 경로
+  due: string // "오늘 23:59" / "D-1 · 5/14" / "이번 주말"
+  dueKind: 'today' | 'soon' | 'week' // today=빨강 채움칩 · week=회색칩 · soon=무지칩 텍스트
+  to: string
 }
 
 /** 마감 임박 퀴즈 1건 */
 export interface DashboardDeadlineQuiz {
   id: string
-  category: string // BACKEND 등 과목 태그
+  category: string // BACKEND / DATABASE 등 과목 태그
+  categoryTone: Tone
   title: string
+  meta: string // "30분 · 15문항"
   due: string // "D-1" 등
+  dueTone: Tone // D-day 칩 색(임박할수록 danger)
   to: string
 }
 
-/** 멘토링 요약 카운트 */
+/** 멘토링 요약 통계 1셀 */
+export interface DashboardMentoringStat {
+  key: string
+  label: string // 요청 대기 / 조정 제안 / 확정 예약 / 최근 완료
+  caption: string // 팀 요청 후 미응답 등
+  value: number
+  tone: Tone // 숫자·배경 색조
+}
+/** 멘토링 요약 — 통계 4셀 + 안내 셀 */
 export interface DashboardMentoring {
-  waiting: number // 대기
-  reserved: number // 예약
-  completed: number // 완료
-  recent: number // 최근 활동
+  stats: DashboardMentoringStat[]
+  note: { title: string; caption: string }
 }
 
 /** 출결 영역 — 미니 캘린더 + 누적 + 8주 추이 */
@@ -78,13 +94,21 @@ export interface DashboardAttendanceDay {
 }
 
 export interface DashboardAttendance {
-  calendar: { year: number; month: number; days: DashboardAttendanceDay[] }
-  cumulative: {
+  calendar: {
+    year: number
+    month: number
+    today: string // YYYY-MM-DD — "오늘" 강조 + 현재 주 행 강조 기준
+    days: DashboardAttendanceDay[]
+  }
+  summary: {
     presentDays: number
+    totalDays: number
+    attendanceRate: number // 0~100
+    streakDays: number // 연속 출석
     lateCount: number
+    absentCount: number
     earlyLeaveCount: number
     outingCount: number
-    absentCount: number
   }
   trend: { week: string; rate: number }[] // 최근 8주 출석률
 }
@@ -92,33 +116,41 @@ export interface DashboardAttendance {
 /** 공지 1건 (운영/강사) */
 export interface DashboardNotice {
   id: string
-  tag: string // 시스템 / 공지 등
+  tag: string // 긴급 / 공지 / 일반
+  tagTone: Tone
+  dateLabel: string // "5/20"
   title: string
-  date: string
+  relativeTime: string // "1시간 전"
 }
 
 /** 시스템 알림 1건 (본인 관련 이벤트) */
 export interface DashboardNotification {
   id: string
   title: string
-  date: string
+  source: string // 운영자 박지수 / 평판 시스템 / 강사 이정훈
+  relativeTime: string // "1시간 전"
+  unread: boolean
 }
 
 /** 진행 중 프로젝트 1건 */
 export interface DashboardProject {
   id: string
   title: string
-  members: number
-  certified: boolean // 인증 여부 배지
+  subtitle: string // "PM · 백엔드 2주차"
+  accentTone: Tone // 좌측 액센트 바 색
+  progressPct: number // 0~100
+  status: { label: string; tone: Tone } // 인증 중 / 검토 중 / 인증
   to: string
 }
 
 /** 최근 트러블슈팅 1건 */
 export interface DashboardTroubleshooting {
   id: string
-  tag: string // BACKEND 등
+  tag: string // BACKEND / DEPLOY / PERF 등
+  tagTone: Tone
   title: string
-  date: string
+  resolved: boolean // 독립 해결(✓ 표시)
+  dayLabel: string // "3일"
   to: string
 }
 

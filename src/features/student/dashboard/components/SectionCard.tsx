@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
 
-// 대시보드 섹션 카드 래퍼 — 제목(+건수) · 우측 액션(더보기 등) · 본문. 대부분 영역이 이걸 쓴다.
+// 대시보드 섹션 카드 래퍼 — 제목·서브타이틀 · 우측 액션(더보기 등) · 본문. 대부분 영역이 이걸 쓴다.
 export function SectionCard({
   title,
-  count,
+  subtitle,
   action,
   children,
   className,
 }: {
   title: ReactNode
-  count?: ReactNode
+  subtitle?: ReactNode
   action?: ReactNode
   children: ReactNode
   className?: string
@@ -22,14 +22,14 @@ export function SectionCard({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-baseline gap-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-0.5">
           <h2 className="text-fg font-bold">{title}</h2>
-          {count != null && (
-            <span className="text-fg-subtle text-sm">{count}</span>
+          {subtitle != null && (
+            <span className="text-fg-subtle text-xs">{subtitle}</span>
           )}
         </div>
-        {action}
+        {action != null && <div className="shrink-0">{action}</div>}
       </div>
       {children}
     </section>

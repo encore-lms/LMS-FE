@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -8,25 +8,44 @@ import { useAssignment } from '../../api/course'
 import { AssignmentSummary, STATUS_BADGE } from './components/AssignmentSummary'
 import { SubmissionForm } from './components/SubmissionForm'
 import { SubmissionState } from './components/SubmissionState'
+import { SubmissionSummary } from './components/SubmissionSummary'
 import { ConfirmResubmitModal } from './components/ConfirmResubmitModal'
+import type { AssignmentDraft, AssignmentStatus } from './types'
 
 /**
  * 과제 상세·제출 (/student/course/assignments/:assignmentId) — Figma 2236:10410.
- * 제출 폼 + 제출 이력/검토 예시. 제출 저장 → 토스트(2236:10480), 수정 제출 확인 → 모달(2236:10522).
+ * 제출 흐름:
+ *  - 미제출 → 제출 폼(2236:10410). 제출 저장 → 제출 완료 요약(2236:10480) + 토스트.
+ *  - 제출 완료 → 제출 요약(휴지 상태). 제출 보기·수정 → 폼. 제출 저장 → 덮어쓰기 확인 모달(2236:10522).
  */
 export default function AssignmentDetailPage() {
   const { assignmentId = '' } = useParams()
   const navigate = useNavigate()
-  const [params] = useSearchParams()
   const { data, isPending, isError, refetch } = useAssignment(assignmentId)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [toast, setToast] = useState<string | null>(
-    params.get('toast') === 'submitted' ? '제출이 저장되었습니다.' : null,
-  )
   usePageHeader(
     '과제 상세·제출',
     '마감 전에는 마지막 제출본이 유효합니다. 텍스트·URL·첨부 중 하나 이상을 입력하세요.',
   )
+
+  // 제출 상태머신 — data 로드(또는 다른 과제로 전환) 시 초기화
+  const [mode, setMode] = useState<'summary' | 'form'>('form')
+  const [hasHistory, setHasHistory] = useState(false)
+  const [submitted, setSubmitted] = useState<AssignmentDraft | null>(null)
+  const [submittedAt, setSubmittedAt] = useState('')
+  const [toast, setToast] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [pending, setPending] = useState<AssignmentDraft | null>(null)
+
+  useEffect(() => {
+    if (!data) return
+    setMode(data.hasHistory ? 'summary' : 'form')
+    setHasHistory(data.hasHistory)
+    setSubmitted(data.draft)
+    setSubmittedAt(data.submittedAtLabel ?? '')
+    setToast(null)
+    setModalOpen(false)
+    setPending(null)
+  }, [data])
 
   useEffect(() => {
     if (!toast) return
@@ -50,60 +69,84 @@ export default function AssignmentDetailPage() {
   }
 
   const back = () => navigate('/student/course/assignments')
-  const badge = STATUS_BADGE[data.status]
+
+  // 제출 후에는 '제출 완료'로 보이도록 유효 상태 계산
+  const effectiveStatus: AssignmentStatus =
+    hasHistory && data.status === 'not_submitted' ? 'submitted' : data.status
+  const badge = STATUS_BADGE[effectiveStatus]
+
+  // 요약으로 확정(첫 제출·수정 제출 공통)
+  const commit = (draft: AssignmentDraft, msg: string) => {
+    setSubmitted(draft)
+    setSubmittedAt('방금 전')
+    setHasHistory(true)
+    setMode('summary')
+    setModalOpen(false)
+    setPending(null)
+    setToast(msg)
+  }
+  const handleSave = (draft: AssignmentDraft) => {
+    // 기존 제출본이 있으면 덮어쓰기 확인 모달, 첫 제출이면 바로 완료
+    if (hasHistory) {
+      setPending(draft)
+      setModalOpen(true)
+    } else {
+      commit(draft, '과제 제출이 완료되었습니다.')
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      {/* 상태 배지 — 제목은 공유 헤더로 이동, 배지는 본문 우측 정렬로 유지 */}
-      <div className="flex justify-end">
-        <span
-          className={cn(
-            'shrink-0 rounded-md px-2.5 py-1.5 text-[11px] font-semibold',
-            badge.cls,
-          )}
-        >
-          {badge.label}
-        </span>
-      </div>
+      {/* 상태 배지 — 요약(휴지) 상태에서는 카드 안 배지로 충분하므로 폼 모드에서만 노출 */}
+      {mode === 'form' && (
+        <div className="flex justify-end">
+          <span
+            className={cn(
+              'shrink-0 rounded-md px-2.5 py-1.5 text-[11px] font-semibold',
+              badge.cls,
+            )}
+          >
+            {badge.label}
+          </span>
+        </div>
+      )}
 
-      <AssignmentSummary detail={data} />
+      <AssignmentSummary detail={data} status={effectiveStatus} />
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_376px]">
-        <SubmissionForm
-          draft={data.draft}
-          onSave={() => setToast('제출이 저장되었습니다.')}
-          onBack={back}
+      {mode === 'summary' && submitted ? (
+        <SubmissionSummary
+          detail={data}
+          submitted={submitted}
+          submittedAtLabel={submittedAt || '방금 전'}
+          onEdit={() => setMode('form')}
         />
-        <SubmissionState detail={data} onResubmit={() => setModalOpen(true)} />
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_376px]">
+          <SubmissionForm draft={submitted} onSave={handleSave} onBack={back} />
+          <SubmissionState detail={data} />
+        </div>
+      )}
 
       <ConfirmResubmitModal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        onConfirm={() => {
-          setModalOpen(false)
-          setToast('수정 제출이 저장되었습니다.')
-        }}
+        onConfirm={() =>
+          pending && commit(pending, '과제 제출이 완료되었습니다.')
+        }
       />
 
+      {/* 제출 완료 토스트 — 우상단 보라 배너(2236:10480) */}
       {toast && (
-        <div className="bg-brand-deep fixed bottom-8 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-3 text-[13px] font-semibold text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
-          <span className="bg-brand flex size-4 items-center justify-center rounded-full">
-            <svg
-              viewBox="0 0 24 24"
-              className="size-3"
-              fill="none"
-              stroke="white"
-              strokeWidth="3"
-            >
-              <path
-                d="m5 13 4 4L19 7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
+        <div className="bg-accent-strong fixed top-24 right-8 z-50 flex items-center gap-4 rounded-xl px-5 py-3.5 text-[14px] font-semibold text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.24)]">
           {toast}
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            aria-label="닫기"
+            className="text-white/80 hover:text-white"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

@@ -5,5 +5,4 @@ export const courseKeys = {
   materials: () => [...courseKeys.all, 'materials'] as const,
   assignments: () => [...courseKeys.all, 'assignments'] as const,
   assignment: (id: string) => [...courseKeys.all, 'assignment', id] as const,
-  competency: () => [...courseKeys.all, 'competency'] as const,
 } as const

@@ -6,7 +6,6 @@ import type {
   AssignmentDetail,
   AssignmentListItem,
 } from '../course/assignments/types'
-import type { CompetencyReport } from '../course/competency/types'
 
 // 수강생 "나의 과정" 훅 — 엔드포인트가 /student/* 라 학생 feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
@@ -51,16 +50,5 @@ export function useAssignment(id: string) {
         .get<AssignmentDetail>(`/student/course/assignments/${id}`)
         .then((r) => r.data),
     enabled: !!id,
-  })
-}
-
-/** 과정별 역량 리포트 — /student/course/competency */
-export function useCompetencyReport() {
-  return useQuery({
-    queryKey: courseKeys.competency(),
-    queryFn: () =>
-      apiClient
-        .get<CompetencyReport>('/student/course/competency')
-        .then((r) => r.data),
   })
 }

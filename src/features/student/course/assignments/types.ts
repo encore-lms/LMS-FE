@@ -14,7 +14,7 @@ export interface AssignmentListItem {
   status: AssignmentStatus
   dueLabel: string // "마감 D-2" | "마감 5/9 종료"
   dueTone: DueTone
-  evaluationType: string // "피드백제" | "완료 확인제"
+  evaluationType: string // "피드백"
   hasFeedback?: boolean
 }
 
@@ -38,10 +38,11 @@ export interface AssignmentDetail {
   evaluationType: string
   draft: AssignmentDraft | null
   hasHistory: boolean
+  submittedAtLabel?: string // 제출 완료 요약의 '제출 시각' (제출본 있을 때)
   /** 사이드 '검토 완료 예시'(있으면 노출) */
   feedbackExample?: {
     statusLabel: string // "검토 완료"
-    evaluationType: string // "피드백제"
+    evaluationType: string // "피드백"
     feedback: string
   }
 }

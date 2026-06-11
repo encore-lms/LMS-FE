@@ -12,9 +12,6 @@ const AssignmentsPage = lazy(
 const AssignmentDetailPage = lazy(
   () => import('./course/assignments/AssignmentDetailPage'),
 )
-const CompetencyReportPage = lazy(
-  () => import('./course/competency/CompetencyReportPage'),
-)
 const MentoringPage = lazy(() => import('./mentoring/MentoringPage'))
 const CertificatePage = lazy(() => import('./certificate/CertificatePage'))
 const CertChangesPage = lazy(() => import('./certificate/ChangesRequestedPage'))
@@ -76,7 +73,6 @@ export const studentRoutes: RouteObject[] = [
         path: 'course/assignments/:assignmentId',
         element: <AssignmentDetailPage />,
       },
-      { path: 'course/competency', element: <CompetencyReportPage /> },
       { path: 'mentoring', element: <MentoringPage /> },
       { path: 'certificate', element: <CertificatePage /> },
       { path: 'certificate/changes-requested', element: <CertChangesPage /> },

@@ -1,13 +1,7 @@
 import type { AssignmentDetail } from '../types'
 
-// 과제 상세 우측 — 제출 이력 + 검토 완료 예시(강사 피드백) + 수정 제출 확인 버튼.
-export function SubmissionState({
-  detail,
-  onResubmit,
-}: {
-  detail: AssignmentDetail
-  onResubmit: () => void
-}) {
+// 과제 상세 우측(폼 모드) — 제출 이력 + 검토 완료 예시(강사 피드백). 제출 확정은 폼의 '제출 저장'이 담당.
+export function SubmissionState({ detail }: { detail: AssignmentDetail }) {
   const ex = detail.feedbackExample
   return (
     <section className="border-border bg-surface flex flex-col gap-4 rounded-lg border p-6">
@@ -33,14 +27,6 @@ export function SubmissionState({
           </div>
         </div>
       )}
-
-      <button
-        type="button"
-        onClick={onResubmit}
-        className="border-border text-fg mt-2 h-10 w-fit rounded-[10px] border px-[18px] text-[14px] font-semibold"
-      >
-        수정 제출 확인
-      </button>
     </section>
   )
 }

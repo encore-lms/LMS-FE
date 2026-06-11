@@ -1,19 +1,44 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent, KeyboardEvent } from 'react'
 import type { AssignmentDraft } from '../types'
 
-// 과제 제출 폼 — 본문(textarea)·제출 URL(input)·첨부 자산(드롭존) + 목록으로/제출 저장.
+// 과제 제출 폼 — 본문(textarea)·제출 URL(input)·첨부 자산(파일 업로드·링크 추가) + 목록으로/제출 저장.
 export function SubmissionForm({
   draft,
   onSave,
   onBack,
 }: {
   draft: AssignmentDraft | null
-  onSave: () => void
+  onSave: (draft: AssignmentDraft) => void
   onBack: () => void
 }) {
   const [body, setBody] = useState(draft?.body ?? '')
   const [url, setUrl] = useState(draft?.url ?? '')
-  const assets = draft?.assets ?? []
+  const [assets, setAssets] = useState<string[]>(draft?.assets ?? [])
+  const [link, setLink] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const addAssets = (items: string[]) =>
+    setAssets((prev) => [
+      ...prev,
+      ...items.filter((i) => i && !prev.includes(i)),
+    ])
+  const onFiles = (e: ChangeEvent<HTMLInputElement>) => {
+    addAssets(Array.from(e.target.files ?? []).map((f) => f.name))
+    e.target.value = '' // 같은 파일 재선택 허용
+  }
+  const addLink = () => {
+    if (link.trim()) addAssets([link.trim()])
+    setLink('')
+  }
+  const onLinkKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addLink()
+    }
+  }
+  const removeAsset = (a: string) =>
+    setAssets((prev) => prev.filter((x) => x !== a))
 
   return (
     <section className="border-border bg-surface flex flex-col gap-5 rounded-lg border p-6">
@@ -44,14 +69,60 @@ export function SubmissionForm({
         <label className="text-fg text-[13px] font-semibold">
           첨부/링크 자산
         </label>
-        <div className="border-border bg-surface-muted/40 flex flex-col gap-1.5 rounded-[10px] border p-4">
+        <div className="border-border bg-surface-muted/40 flex flex-col gap-3 rounded-[10px] border border-dashed p-4">
           <p className="text-fg-muted text-[13px]">
             파일, GitHub PR, 배포 링크를 추가할 수 있습니다.
           </p>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={onFiles}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="border-border text-fg-muted hover:bg-surface inline-flex shrink-0 items-center gap-1 rounded-lg border bg-white px-3 py-2 text-[12px] font-semibold"
+            >
+              <span className="text-[13px] leading-none">↑</span> 파일 첨부
+            </button>
+            <input
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              onKeyDown={onLinkKey}
+              placeholder="GitHub PR · 배포 링크 URL"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 min-w-0 flex-1 rounded-lg border px-3 text-[12px] outline-none"
+            />
+            <button
+              type="button"
+              onClick={addLink}
+              disabled={!link.trim()}
+              className="bg-brand shrink-0 rounded-lg px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-40"
+            >
+              링크 추가
+            </button>
+          </div>
           {assets.length > 0 && (
-            <p className="text-fg text-[12px] font-medium">
-              {assets.join(' · ')}
-            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {assets.map((a) => (
+                <span
+                  key={a}
+                  className="border-border bg-surface inline-flex max-w-full items-center gap-1.5 rounded-lg border py-1 pr-1.5 pl-2.5 text-[12px]"
+                >
+                  <span className="text-fg max-w-[220px] truncate">{a}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeAsset(a)}
+                    aria-label={`${a} 제거`}
+                    className="text-fg-subtle hover:bg-surface-muted hover:text-danger flex size-4 shrink-0 items-center justify-center rounded leading-none"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -66,7 +137,7 @@ export function SubmissionForm({
         </button>
         <button
           type="button"
-          onClick={onSave}
+          onClick={() => onSave({ body, url, assets })}
           className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
         >
           제출 저장

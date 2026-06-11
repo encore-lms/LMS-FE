@@ -13,7 +13,7 @@ const mockAssignments: AssignmentListItem[] = [
     status: 'not_submitted',
     dueLabel: '마감 D-2',
     dueTone: 'soon',
-    evaluationType: '피드백제',
+    evaluationType: '피드백',
   },
   {
     id: 'as2',
@@ -22,7 +22,7 @@ const mockAssignments: AssignmentListItem[] = [
     status: 'submitted',
     dueLabel: '마감 D-5',
     dueTone: 'normal',
-    evaluationType: '피드백제',
+    evaluationType: '피드백',
   },
   {
     id: 'as3',
@@ -31,7 +31,7 @@ const mockAssignments: AssignmentListItem[] = [
     status: 'reviewed',
     dueLabel: '마감 5/9 종료',
     dueTone: 'ended',
-    evaluationType: '피드백제',
+    evaluationType: '피드백',
     hasFeedback: true,
   },
   {
@@ -41,7 +41,7 @@ const mockAssignments: AssignmentListItem[] = [
     status: 'not_submitted',
     dueLabel: '마감 D-1',
     dueTone: 'soon',
-    evaluationType: '완료 확인제',
+    evaluationType: '피드백',
   },
   {
     id: 'as5',
@@ -50,7 +50,7 @@ const mockAssignments: AssignmentListItem[] = [
     status: 'reviewed',
     dueLabel: '마감 5/7 종료',
     dueTone: 'ended',
-    evaluationType: '완료 확인제',
+    evaluationType: '피드백',
     hasFeedback: true,
   },
 ]
@@ -78,9 +78,10 @@ function detailFor(id: string): AssignmentDetail {
         }
       : null,
     hasHistory: submitted,
+    submittedAtLabel: submitted ? '2026-05-22 14:18' : undefined,
     feedbackExample: {
       statusLabel: '검토 완료',
-      evaluationType: '피드백제',
+      evaluationType: '피드백',
       feedback:
         '연관관계 방향 선택 근거가 명확합니다. 다만 댓글 삭제 정책의 cascade 범위는 한 번 더 분리해 주세요.',
     },

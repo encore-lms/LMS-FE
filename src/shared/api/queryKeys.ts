@@ -61,4 +61,9 @@ export const instructorKeys = {
       'grading',
       submissionId,
     ] as const,
+  quizTemplates: () => [...instructorKeys.all, 'quiz-templates'] as const,
+  quizTemplateDetail: (templateId: string) =>
+    [...instructorKeys.all, 'quiz-templates', templateId] as const,
+  quizTemplateQuestions: (templateId: string) =>
+    [...instructorKeys.all, 'quiz-templates', templateId, 'questions'] as const,
 } as const

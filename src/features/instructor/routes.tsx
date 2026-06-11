@@ -11,6 +11,11 @@ const EndorsementDetailPage = lazy(
   () => import('./endorsements/EndorsementDetailPage'),
 )
 const QuizListPage = lazy(() => import('./quizzes/QuizListPage'))
+const TemplateListPage = lazy(() => import('./quiz-templates/TemplateListPage'))
+const TemplateFormPage = lazy(() => import('./quiz-templates/TemplateFormPage'))
+const TemplateQuestionsPage = lazy(
+  () => import('./quiz-templates/TemplateQuestionsPage'),
+)
 const QuizFormPage = lazy(() => import('./quizzes/QuizFormPage'))
 const QuestionManagePage = lazy(() => import('./quizzes/QuestionManagePage'))
 const SubmissionsPage = lazy(() => import('./quizzes/SubmissionsPage'))
@@ -37,6 +42,17 @@ export const instructorRoutes: RouteObject[] = [
       {
         path: 'quizzes/:quizId/submissions/:submissionId/grade',
         element: <GradingPage />,
+      },
+      // 퀴즈 템플릿 (§10) — /new는 :templateId보다 먼저(정적 경로 우선).
+      { path: 'quiz-templates', element: <TemplateListPage /> },
+      { path: 'quiz-templates/new', element: <TemplateFormPage /> },
+      {
+        path: 'quiz-templates/:templateId/edit',
+        element: <TemplateFormPage />,
+      },
+      {
+        path: 'quiz-templates/:templateId/questions',
+        element: <TemplateQuestionsPage />,
       },
       // TODO(owner): 강사 화면 라우트 추가
     ],

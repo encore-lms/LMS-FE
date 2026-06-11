@@ -95,6 +95,10 @@ export type {
   GradingItemStatus,
   GradingItem,
   GradingDetail,
+  QuizTemplateRow,
+  QuizTemplateListData,
+  QuizTemplateDetail,
+  TemplateQuestionsData,
 } from './instructorQuiz'
 export type {
   SettingsCardSummary,

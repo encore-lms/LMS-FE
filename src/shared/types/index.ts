@@ -101,6 +101,20 @@ export type {
   TemplateQuestionsData,
 } from './instructorQuiz'
 export type {
+  InstructorCohortChip,
+  PriorityType,
+  PriorityItem,
+  DashboardKpi,
+  InstructorDashboardData,
+  CohortStatus,
+  InstructorRole,
+  InstructorCohortRow,
+  InstructorCohortsData,
+  StudentCertStatus,
+  CohortStudentRow,
+  CohortStudentsData,
+} from './instructorConsole'
+export type {
   SettingsCardSummary,
   SettingsAuditLog,
   SettingsHubData,

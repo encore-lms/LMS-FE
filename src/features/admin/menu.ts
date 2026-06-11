@@ -20,7 +20,12 @@ export const adminMenu: MenuItem[] = [
   { label: '마일리지', to: '/admin/mileage' },
   { label: '증명서 템플릿', to: '/admin/certificate-templates' },
   { label: '퀴즈 운영', to: '/admin/quizzes' },
-  { label: '학습 기록 검토', to: '/admin/records/review' },
+  {
+    label: '학습 기록 검토',
+    to: '/admin/records/review',
+    // 검토 상세 3종(/admin/records/{blog|study|certificates}/:id) 진입 시에도 활성 유지
+    match: ['/admin/records'],
+  },
   { label: 'PLAY 관리', to: '/admin/play' },
   { label: '설정', to: '/admin/settings' },
 ]

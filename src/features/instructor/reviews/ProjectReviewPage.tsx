@@ -1,0 +1,199 @@
+import { useMemo, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Empty } from '@/components/ui/Empty'
+import { DataTable, type Column } from '@/components/data/DataTable'
+import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
+import { useToast } from '@/components/ui/use-toast'
+import { usePageHeader } from '@/shared/store'
+import type { ProjectCertReviewStatus, ProjectReviewRow } from '@/shared/types'
+import { useProjectReviews } from '../api/reviews'
+import { QueueFilterBar, QueueStats } from './QueueShell'
+
+type StatusFilter = 'all' | ProjectCertReviewStatus
+
+const STATUS_META: Record<
+  ProjectCertReviewStatus,
+  { label: string; tone: BadgeTone; action: string }
+> = {
+  requested: { label: '인증 요청', tone: 'warning', action: '인증' },
+  supplementing: { label: '보완 중', tone: 'danger', action: '확인' },
+  certified: { label: '인증 완료', tone: 'success', action: '결과' },
+}
+
+// 프로젝트 검토 (/instructor/projects/review) — §14. (Figma 1422:10276)
+// 발표 후 인증 큐 — 인증 시 ProjectCertification 생성, 인증 후 학생 직접 수정 불가(§11 변경 제안 분리).
+export default function ProjectReviewPage() {
+  const toast = useToast()
+  const { data, isPending, isError, refetch } = useProjectReviews()
+  const [q, setQ] = useState('')
+  const [status, setStatus] = useState<StatusFilter>('all')
+  usePageHeader(
+    '프로젝트 검토',
+    '발표 후 인증 큐 — 인증 후 변경은 변경 제안 흐름으로만 가능',
+  )
+
+  const filtered = useMemo(() => {
+    const rows = data?.rows ?? []
+    const needle = q.trim().toLowerCase()
+    return rows.filter((r) => {
+      if (status !== 'all' && r.status !== status) return false
+      if (needle) {
+        const hay = `${r.name} ${r.team}`.toLowerCase()
+        if (!hay.includes(needle)) return false
+      }
+      return true
+    })
+  }, [data, q, status])
+
+  if (isPending) {
+    return <div className="text-fg-muted p-8">인증 큐를 불러오는 중…</div>
+  }
+  if (isError || !data) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<AlertTriangle />}
+          title="인증 큐를 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={<Button onClick={() => refetch()}>다시 시도</Button>}
+        />
+      </div>
+    )
+  }
+
+  const columns: Column<ProjectReviewRow>[] = [
+    {
+      key: 'name',
+      header: '프로젝트명',
+      cell: (r) => (
+        <span className="text-fg text-sm font-medium">{r.name}</span>
+      ),
+    },
+    {
+      key: 'cohort',
+      header: '과정/기수',
+      className: 'w-24',
+      cell: (r) => <StatusBadge label={r.cohortLabel} tone="info" />,
+    },
+    {
+      key: 'team',
+      header: '팀',
+      className: 'w-32',
+      cell: (r) => <span className="text-fg-muted text-sm">{r.team}</span>,
+    },
+    {
+      key: 'stack',
+      header: '기술 스택',
+      className: 'w-44',
+      cell: (r) => <span className="text-fg-muted text-sm">{r.stack}</span>,
+    },
+    {
+      key: 'artifacts',
+      header: '산출물',
+      className: 'w-36',
+      cell: (r) =>
+        r.artifacts === null ? (
+          <span className="text-fg-muted text-sm">-</span>
+        ) : (
+          <StatusBadge label={r.artifacts} tone="neutral" />
+        ),
+    },
+    {
+      key: 'status',
+      header: '인증 상태',
+      className: 'w-28',
+      cell: (r) => (
+        <StatusBadge
+          label={STATUS_META[r.status].label}
+          tone={STATUS_META[r.status].tone}
+        />
+      ),
+    },
+    {
+      key: 'actions',
+      header: '액션',
+      className: 'w-32',
+      cell: (r) => (
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (r.status === 'requested')
+                toast.success(
+                  `${r.name} 인증 — ProjectCertification 생성 (mock)`,
+                )
+              else
+                toast.info(
+                  `${r.name} ${STATUS_META[r.status].action} — 후속 화면 (mock)`,
+                )
+            }}
+            className={
+              r.status === 'requested'
+                ? 'bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white'
+                : 'border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium'
+            }
+          >
+            {STATUS_META[r.status].action}
+          </button>
+          {!(r.status === 'certified' && r.artifacts === null) && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                toast.info(`${r.name} 상세 — 후속 화면 (mock)`)
+              }}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
+            >
+              상세
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ]
+
+  return (
+    <div className="p-8">
+      <QueueStats stats={data.stats} />
+      <QueueFilterBar
+        q={q}
+        onSearch={setQ}
+        searchPlaceholder="이름으로 검색"
+        tabs={[
+          { key: 'all' as StatusFilter, label: '전체', count: data.counts.all },
+          {
+            key: 'requested' as StatusFilter,
+            label: '인증 요청',
+            count: data.counts.requested,
+          },
+          {
+            key: 'supplementing' as StatusFilter,
+            label: '보완 중',
+            count: data.counts.supplementing,
+          },
+          {
+            key: 'certified' as StatusFilter,
+            label: '인증 완료',
+            count: data.counts.certified,
+          },
+        ]}
+        active={status}
+        onTab={setStatus}
+      />
+      <div className="mt-3">
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          rowKey={(r) => r.id}
+          empty="조건에 맞는 프로젝트가 없어요"
+        />
+      </div>
+      <p className="text-fg-subtle mt-3 text-xs">
+        인증 시 ProjectCertification 기록이 생성되며, 인증 후 학생 직접 수정은
+        차단됩니다 (§11 변경 제안 흐름)
+      </p>
+    </div>
+  )
+}

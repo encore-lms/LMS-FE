@@ -1,0 +1,309 @@
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, Plus, Search } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Empty } from '@/components/ui/Empty'
+import { DataTable, type Column } from '@/components/data/DataTable'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
+import type {
+  GradingMode,
+  InstructorQuizRow,
+  QuizVisibility,
+} from '@/shared/types'
+import { useInstructorQuizzes } from '../api/quizzes'
+import { GRADING_MODE_META, VISIBILITY_META } from './meta'
+
+type ModeFilter = 'all' | GradingMode
+type VisibilityFilter = 'all' | QuizVisibility
+
+const COHORTS = ['전체', 'DA 4기', 'FE 7기'] as const
+
+// 퀴즈 관리 목록 (/instructor/quizzes) — §5. (Figma 1337:9753)
+// 제출 있는 퀴즈는 삭제 비활성, 임시저장은 제출 현황 비활성.
+export default function QuizListPage() {
+  const navigate = useNavigate()
+  const toast = useToast()
+  const { data, isPending, isError, refetch } = useInstructorQuizzes()
+  const [q, setQ] = useState('')
+  const [cohort, setCohort] = useState<(typeof COHORTS)[number]>('전체')
+  const [mode, setMode] = useState<ModeFilter>('all')
+  const [visibility, setVisibility] = useState<VisibilityFilter>('all')
+  usePageHeader(
+    '퀴즈 관리',
+    '담당 기수 퀴즈 출제·수정·채점 관제 — 정답/배점 변경 시 자동 재채점',
+  )
+
+  const filtered = useMemo(() => {
+    const items = data?.items ?? []
+    const needle = q.trim().toLowerCase()
+    return items.filter((r) => {
+      if (cohort !== '전체' && r.cohortLabel !== cohort) return false
+      if (mode !== 'all' && r.gradingMode !== mode) return false
+      if (visibility !== 'all' && r.visibility !== visibility) return false
+      if (needle) {
+        const hay = `${r.title} ${r.subject}`.toLowerCase()
+        if (!hay.includes(needle)) return false
+      }
+      return true
+    })
+  }, [data, q, cohort, mode, visibility])
+
+  if (isPending) {
+    return <div className="text-fg-muted p-8">퀴즈 목록을 불러오는 중…</div>
+  }
+  if (isError || !data) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<AlertTriangle />}
+          title="퀴즈 목록을 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={<Button onClick={() => refetch()}>다시 시도</Button>}
+        />
+      </div>
+    )
+  }
+
+  const gradingCell = (r: InstructorQuizRow) => {
+    if (r.manualPending === null)
+      return <span className="text-fg-muted text-sm">-</span>
+    if (r.manualPending > 0)
+      return (
+        <StatusBadge label={`수동 대기 ${r.manualPending}`} tone="warning" />
+      )
+    if (r.gradingMode === 'AUTO')
+      return <StatusBadge label="자동 완료" tone="success" />
+    return <StatusBadge label="완료" tone="success" />
+  }
+
+  const columns: Column<InstructorQuizRow>[] = [
+    {
+      key: 'title',
+      header: '퀴즈명',
+      cell: (r) => (
+        <div>
+          <p className="text-fg text-sm font-medium">{r.title}</p>
+          <p className="text-fg-subtle text-xs">
+            {r.cohortLabel} · {r.subject}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'mode',
+      header: '채점 모드',
+      className: 'w-28',
+      cell: (r) => (
+        <StatusBadge
+          label={GRADING_MODE_META[r.gradingMode].label}
+          tone={GRADING_MODE_META[r.gradingMode].tone}
+        />
+      ),
+    },
+    {
+      key: 'period',
+      header: '기간',
+      className: 'w-36',
+      cell: (r) => (
+        <div className="text-fg-muted text-xs">
+          <p>{r.startAt}</p>
+          <p>~ {r.endAt}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'submitRate',
+      header: '제출률',
+      className: 'w-28',
+      cell: (r) => (
+        <div>
+          <p className="text-fg text-sm font-medium">
+            {r.submitted} / {r.targetCount}
+          </p>
+          <p className="text-fg-subtle text-xs">
+            {r.targetCount > 0
+              ? Math.round((r.submitted / r.targetCount) * 100)
+              : 0}
+            %
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'grading',
+      header: '채점 상태',
+      className: 'w-32',
+      cell: gradingCell,
+    },
+    {
+      key: 'visibility',
+      header: '공개 상태',
+      className: 'w-28',
+      cell: (r) => (
+        <StatusBadge
+          label={VISIBILITY_META[r.visibility].label}
+          tone={VISIBILITY_META[r.visibility].tone}
+        />
+      ),
+    },
+    {
+      key: 'actions',
+      header: '액션',
+      className: 'w-60',
+      cell: (r) => {
+        const hasSubmissions = r.submitted > 0
+        const isDraft = r.visibility === 'draft'
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/instructor/quizzes/${r.id}/edit`)
+              }}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+            >
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                toast.success(`${r.title} 복제 — 임시저장으로 생성 (mock)`)
+              }}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+            >
+              복제
+            </button>
+            <button
+              type="button"
+              disabled={hasSubmissions}
+              title={
+                hasSubmissions
+                  ? '제출이 있는 퀴즈는 삭제할 수 없어요'
+                  : undefined
+              }
+              onClick={(e) => {
+                e.stopPropagation()
+                toast.success(`${r.title} 삭제 (mock)`)
+              }}
+              className={cn(
+                'rounded-md border px-2 py-1 text-xs font-medium',
+                hasSubmissions
+                  ? 'border-border text-fg-subtle cursor-not-allowed opacity-50'
+                  : 'border-danger/40 text-danger hover:bg-danger-bg',
+              )}
+            >
+              삭제
+            </button>
+            <button
+              type="button"
+              disabled={isDraft}
+              title={isDraft ? '임시저장 퀴즈는 제출 현황이 없어요' : undefined}
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/instructor/quizzes/${r.id}/submissions`)
+              }}
+              className={cn(
+                'rounded-md border px-2 py-1 text-xs font-medium',
+                isDraft
+                  ? 'border-border text-fg-subtle cursor-not-allowed opacity-50'
+                  : 'border-border text-fg-muted hover:bg-surface-muted',
+              )}
+            >
+              제출 현황
+            </button>
+          </div>
+        )
+      },
+    },
+  ]
+
+  return (
+    <div className="p-8">
+      {/* 필터 바 */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
+          <Search className="text-fg-subtle h-4 w-4" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="퀴즈명·과목으로 검색"
+            aria-label="퀴즈 검색"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+          />
+        </div>
+        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+          <span className="text-fg-subtle">기수</span>
+          <select
+            value={cohort}
+            onChange={(e) =>
+              setCohort(e.target.value as (typeof COHORTS)[number])
+            }
+            aria-label="기수 필터"
+            className="text-fg bg-transparent text-sm font-medium outline-none"
+          >
+            {COHORTS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+          <span className="text-fg-subtle">채점 모드</span>
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value as ModeFilter)}
+            aria-label="채점 모드 필터"
+            className="text-fg bg-transparent text-sm font-medium outline-none"
+          >
+            <option value="all">전체</option>
+            <option value="AUTO">AUTO</option>
+            <option value="MANUAL">MANUAL</option>
+            <option value="MIXED">MIXED</option>
+          </select>
+        </label>
+        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+          <span className="text-fg-subtle">공개 상태</span>
+          <select
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as VisibilityFilter)}
+            aria-label="공개 상태 필터"
+            className="text-fg bg-transparent text-sm font-medium outline-none"
+          >
+            <option value="all">전체</option>
+            <option value="draft">임시저장</option>
+            <option value="published">공개</option>
+            <option value="closed">종료</option>
+          </select>
+        </label>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-fg-subtle text-xs">
+            총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate('/instructor/quizzes/new')}
+            className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3.5 text-xs font-bold text-white"
+          >
+            <Plus className="h-3.5 w-3.5" /> 퀴즈 생성
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          rowKey={(r) => r.id}
+          onRowClick={(r) => navigate(`/instructor/quizzes/${r.id}/edit`)}
+          empty="조건에 맞는 퀴즈가 없어요"
+        />
+      </div>
+    </div>
+  )
+}

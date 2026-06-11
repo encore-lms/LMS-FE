@@ -28,6 +28,14 @@ export const adminKeys = {
     [...adminKeys.all, 'students', 'attendance'] as const,
   studentAttendanceForms: () =>
     [...adminKeys.all, 'students', 'attendance-forms'] as const,
+  settingsHub: () => [...adminKeys.all, 'settings', 'hub'] as const,
+  settingsAccounts: () => [...adminKeys.all, 'settings', 'accounts'] as const,
+  settingsHrdKeys: () => [...adminKeys.all, 'settings', 'hrd-keys'] as const,
+  settingsCourses: () => [...adminKeys.all, 'settings', 'courses'] as const,
+  settingsCourseConfig: (courseId: string) =>
+    [...adminKeys.all, 'settings', 'courses', courseId] as const,
+  settingsHrdSearch: (page: number) =>
+    [...adminKeys.all, 'settings', 'hrd-search', { page }] as const,
 } as const
 
 // 강사(instructor) 서버 상태 캐시 키.

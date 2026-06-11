@@ -14,6 +14,11 @@ const StudentManagementPage = lazy(
 )
 const ResumePage = lazy(() => import('./resume/ResumePage'))
 const ResumeDetailPage = lazy(() => import('./resume/ResumeDetailPage'))
+const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
+const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
+const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
+const CourseConfigPage = lazy(() => import('./settings/CourseConfigPage'))
+const CourseAddPage = lazy(() => import('./settings/CourseAddPage'))
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -30,6 +35,11 @@ export const adminRoutes: RouteObject[] = [
       { path: 'students', element: <StudentManagementPage /> },
       { path: 'resume', element: <ResumePage /> },
       { path: 'resume/:resumeId', element: <ResumeDetailPage /> },
+      { path: 'settings', element: <SettingsHubPage /> },
+      { path: 'settings/accounts', element: <SettingsAccountsPage /> },
+      { path: 'settings/hrd-api-key', element: <HrdApiKeyPage /> },
+      { path: 'settings/course-config', element: <CourseConfigPage /> },
+      { path: 'settings/courses/new', element: <CourseAddPage /> },
     ],
   },
 ]

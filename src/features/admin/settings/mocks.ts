@@ -1,0 +1,522 @@
+import { http, HttpResponse } from 'msw'
+import type {
+  SettingsHubData,
+  OpsAccountsData,
+  HrdKeyData,
+  CourseListItem,
+  CourseConfigDetail,
+  HrdCourseSearchData,
+} from '@/shared/types'
+
+// 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
+const ok = <T>(data: T) => HttpResponse.json({ data })
+
+// ── 설정 허브 (Figma 1284:8852) ──
+const hub: SettingsHubData = {
+  lastChange: { at: '09:05', by: '김매니저' },
+  accounts: {
+    rows: [
+      { label: '매니저', value: '8명' },
+      { label: '강사', value: '27명' },
+      { label: '멘토', value: '42명' },
+      { label: '최근 변경', value: '09:05 김매니저' },
+    ],
+  },
+  hrdKey: {
+    rows: [
+      { label: '등록된 Key', value: '2개' },
+      { label: '만료 임박', value: '1건 (D-14)' },
+      { label: '폐기 이력', value: '3건' },
+      { label: '마지막 발급', value: '05-12 이매니저' },
+    ],
+  },
+  courseConfig: {
+    rows: [
+      { label: '진행 중 과정', value: '12개' },
+      { label: '기능 토글 변경', value: '최근 7일 4건' },
+      { label: '인증 정책', value: '과정별 다름' },
+      { label: '마지막 변경', value: '05-26 박매니저' },
+    ],
+  },
+  courseAdd: {
+    rows: [
+      { label: '신규 추가', value: '최근 30일 2개' },
+      { label: '검색 소스', value: 'HRD-Net' },
+      { label: '승인 단계', value: 'HRD 검색 → 매핑 → 생성' },
+      { label: '대기 중', value: '0건' },
+    ],
+  },
+  auditLogs: [
+    {
+      id: 'log-1',
+      at: '05-27 09:05',
+      actor: '김매니저',
+      origin: '계정 관리',
+      action: '강사 권한 부여',
+      detail: '이지훈 강사',
+    },
+    {
+      id: 'log-2',
+      at: '05-26 18:42',
+      actor: '박매니저',
+      origin: '교육 과정 설정',
+      action: '기능 토글 변경',
+      detail: 'AI 캠프 22기 · 평판 ON',
+    },
+    {
+      id: 'log-3',
+      at: '05-26 14:21',
+      actor: '김매니저',
+      origin: 'HRD API Key',
+      action: '키 교체',
+      detail: 'prod-key-2026Q2',
+    },
+    {
+      id: 'log-4',
+      at: '05-25 16:08',
+      actor: '이매니저',
+      origin: '교육 과정 추가',
+      action: '신규 과정 생성',
+      detail: 'DA 5기',
+    },
+  ],
+}
+
+// ── 계정 관리 (Figma 1284:8597) ──
+const accounts: OpsAccountsData = {
+  summary: {
+    managers: 8,
+    managersActive: 8,
+    managersInactive: 0,
+    instructors: 27,
+    instructorNoScope: 2,
+    mentors: 42,
+    mentorNoTeam: 3,
+    inactive: 5,
+    inactiveRevoked30d: 2,
+    total: 77,
+  },
+  items: [
+    {
+      id: 'ops-1',
+      name: '이정훈',
+      email: 'lee@playdata.io',
+      role: 'MANAGER',
+      scope: '전체 운영 · 모든 과정·기수',
+      status: 'active',
+      lastLoginAt: '오늘 09:18',
+      isSelf: true,
+    },
+    {
+      id: 'ops-2',
+      name: '김매니저',
+      email: 'kim@playdata.io',
+      role: 'MANAGER',
+      scope: '전체 운영 · 모든 과정·기수',
+      status: 'active',
+      lastLoginAt: '오늘 08:42',
+      isSelf: false,
+    },
+    {
+      id: 'ops-3',
+      name: '이지훈 강사',
+      email: 'instructor.lee@playdata.io',
+      role: 'INSTRUCTOR',
+      scope: 'AI 캠프 22기 · DA 5기',
+      status: 'active',
+      lastLoginAt: '어제 18:03',
+      isSelf: false,
+    },
+    {
+      id: 'ops-4',
+      name: '박강사',
+      email: 'instructor.park@playdata.io',
+      role: 'INSTRUCTOR',
+      scope: '담당 범위 없음',
+      scopeWarning: '강사는 최소 1개 이상 권장',
+      status: 'active',
+      lastLoginAt: '05-22 14:31',
+      isSelf: false,
+    },
+    {
+      id: 'ops-5',
+      name: '김효원 멘토',
+      email: 'mentor.kim@playdata.io',
+      role: 'MENTOR',
+      scope: 'AI 캠프 22기 LLM 추천 시스템 팀',
+      status: 'active',
+      lastLoginAt: '오늘 07:55',
+      isSelf: false,
+    },
+    {
+      id: 'ops-6',
+      name: '박멘토',
+      email: 'mentor.park@playdata.io',
+      role: 'MENTOR',
+      scope: '팀 배정 없음',
+      scopeWarning: '§29 멘토 배정 관리에서 처리',
+      status: 'invited',
+      lastLoginAt: null,
+      isSelf: false,
+    },
+  ],
+}
+
+// ── HRD API Key (Figma 1284:8960) ──
+const hrdKeys: HrdKeyData = {
+  summary: {
+    activeKeys: 1,
+    activeKeysHint: '기본 + 보조 1개',
+    lastTest: { ok: true, at: '05-20 10:22', latency: '220ms' },
+    expiring: 1,
+    expiringHint: 'D-14 알림 대상',
+    recentFail: 0,
+  },
+  keys: [
+    {
+      id: 'key-1',
+      name: 'HRD 운영키 2026',
+      isPrimary: true,
+      maskedKey: 'APIPO****9K2A',
+      createdAt: '2026-05-01',
+      lastUsedAt: '오늘 10:22',
+      status: 'active',
+    },
+    {
+      id: 'key-2',
+      name: 'HRD 보조키',
+      isPrimary: false,
+      maskedKey: 'APIPO****77QA',
+      createdAt: '2026-04-18',
+      lastUsedAt: '05-18 09:00',
+      status: 'active',
+    },
+    {
+      id: 'key-3',
+      name: '구 키 2025',
+      isPrimary: false,
+      maskedKey: 'APIPO****OLD',
+      createdAt: '2025-12-01',
+      lastUsedAt: '04-01 14:20',
+      status: 'revoked',
+    },
+  ],
+  history: [
+    {
+      id: 'hist-1',
+      at: '05-20 10:22',
+      action: 'test',
+      actor: '이정훈',
+      ok: true,
+      response: '220ms',
+      targetKey: 'APIPO****9K2A',
+    },
+    {
+      id: 'hist-2',
+      at: '05-18 09:00',
+      action: 'register',
+      actor: '이정훈',
+      ok: true,
+      response: null,
+      targetKey: 'APIPO****77QA',
+    },
+    {
+      id: 'hist-3',
+      at: '05-12 14:21',
+      action: 'rotate',
+      actor: '김매니저',
+      ok: true,
+      response: null,
+      targetKey: 'APIPO****9K2A ← OLD',
+    },
+    {
+      id: 'hist-4',
+      at: '04-01 14:20',
+      action: 'revoke',
+      actor: '이정훈',
+      ok: true,
+      response: null,
+      targetKey: 'APIPO****OLD',
+    },
+    {
+      id: 'hist-5',
+      at: '03-22 11:15',
+      action: 'test',
+      actor: '이정훈',
+      ok: false,
+      response: 'timeout',
+      targetKey: 'APIPO****OLD',
+    },
+  ],
+}
+
+// ── 교육 과정 설정 (Figma 1284:9243) ──
+const courses: CourseListItem[] = [
+  {
+    id: 'course-ai22',
+    name: 'AI 캠프 22기',
+    code: 'AI22',
+    campus: '강남캠퍼스',
+    status: 'operating',
+  },
+  {
+    id: 'course-ai21',
+    name: 'AI 캠프 21기',
+    code: 'AI21',
+    campus: '강남캠퍼스',
+    status: 'operating',
+  },
+  {
+    id: 'course-da5',
+    name: 'DA 5기',
+    code: 'DA5',
+    campus: '강남캠퍼스',
+    status: 'operating',
+  },
+  {
+    id: 'course-de3',
+    name: 'DE 3기',
+    code: 'DE3',
+    campus: '부산캠퍼스',
+    status: 'operating',
+  },
+  {
+    id: 'course-ai20',
+    name: 'AI 캠프 20기',
+    code: 'AI20',
+    campus: '강남캠퍼스',
+    status: 'ended',
+  },
+]
+
+const courseConfigs: Record<string, CourseConfigDetail> = Object.fromEntries(
+  courses.map((c) => [
+    c.id,
+    {
+      courseId: c.id,
+      name: c.name,
+      campus: c.campus,
+      status: c.status,
+      description:
+        c.id === 'course-ai22'
+          ? 'AI/ML 풀스택 기반 22주 과정 — LLM 추천 시스템·LangGraph·RAG 중심으로 백엔드(FastAPI), 프론트(Next.js), 데이터 파이프라인을 종합 학습합니다.'
+          : `${c.name} 운영 과정 — 기능 토글과 학습/공개 정책을 과정 단위로 관리합니다.`,
+      featureToggles: [
+        {
+          key: 'mileage',
+          label: '마일리지',
+          description: '수강생 마일리지 적립·사용 메뉴 노출',
+          enabled: true,
+        },
+        {
+          key: 'play',
+          label: 'PLAY',
+          description: 'PLAY 게임(타자 등) 노출 — 마일리지와 연동',
+          enabled: true,
+        },
+        {
+          key: 'records',
+          label: '기록실',
+          description: '블로그·자격증·스터디 기록 메뉴 노출',
+          enabled: true,
+        },
+        {
+          key: 'blog',
+          label: '블로그 작성',
+          description: '기록실 내 블로그 직접 작성 폼 허용',
+          enabled: false,
+        },
+        {
+          key: 'library',
+          label: '자료실',
+          description: '강의 자료실 진입 메뉴 노출',
+          enabled: true,
+        },
+      ],
+      learningPolicies: [
+        {
+          key: 'attendance',
+          label: '출결 기준',
+          description: 'HRD-Net 입실/퇴실 기준 · 폼 승인 정책 연동',
+        },
+        {
+          key: 'quiz',
+          label: '퀴즈 응시 정책',
+          description: '단답형/객관식 정답 처리 · 자동 재채점 큐 적용',
+        },
+        {
+          key: 'assignment',
+          label: '과제 제출 정책',
+          description: '마감 정책·재제출 정책·강사 피드백 흐름',
+        },
+      ],
+      publicToggles: [
+        {
+          key: 'studentMenu',
+          label: '수강생 메뉴 노출',
+          description:
+            '수강생 사이드바에 본 과정 메뉴 노출 (기능 토글 OFF 시 자동 숨김)',
+          enabled: true,
+        },
+        {
+          key: 'certificate',
+          label: '증명서 반영',
+          description: '수료 후 본 과정의 성취가 증명서 종합 요약에 반영',
+          enabled: true,
+        },
+      ],
+      impacts: [
+        'PLAY 토글 OFF → 수강생 사이드바의 PLAY 메뉴 즉시 숨김 · 진행 중 게임 점수는 보존',
+        '블로그 작성 OFF → 기록실 신규 블로그 작성 차단 (기존 블로그는 유지 / 자격증·스터디는 정상)',
+        '출결 기준 변경 → 마트 재계산 큐로 자동 등록 — 영향 학생 121명',
+      ],
+    },
+  ]),
+)
+
+// ── 교육 과정 추가 (Figma 1284:9435) — HRD 검색 결과 페이지 1 ──
+const hrdSearch: HrdCourseSearchData = {
+  summary: { total: 128, registrable: 94, registered: 18, ended: 16 },
+  page: 1,
+  pageSize: 12,
+  totalPages: 11,
+  results: [
+    {
+      trprId: 'AIG2026-0001',
+      status: 'unregistered',
+      title: 'SK네트웍스 Family AI 캠프',
+      grade: '22기',
+      period: '2026-03-02 ~ 2026-08-29',
+      capacity: 240,
+      applied: 238,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0017',
+      status: 'registered',
+      title: '클라우드 엔지니어 부트캠프',
+      grade: '7기',
+      period: '2026-04-01 ~ 2026-09-30',
+      capacity: 200,
+      applied: 181,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0011',
+      status: 'unregistered',
+      title: '데이터 엔지니어링 22기',
+      grade: '22기',
+      period: '2026-04-15 ~ 2026-10-15',
+      capacity: 180,
+      applied: 94,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0034',
+      status: 'unregistered',
+      title: '풀스택 부트캠프 14기',
+      grade: '14기',
+      period: '2026-05-12 ~ 2026-11-12',
+      capacity: 160,
+      applied: 112,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0019',
+      status: 'registered',
+      title: 'AI 서비스 기획자 과정',
+      grade: '3기',
+      period: '2026-04-22 ~ 2026-09-22',
+      capacity: 60,
+      applied: 58,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0042',
+      status: 'unregistered',
+      title: '백엔드 개발자 부트캠프 9기',
+      grade: '9기',
+      period: '2026-06-01 ~ 2026-11-30',
+      capacity: 120,
+      applied: 40,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2025-0008',
+      status: 'ended',
+      title: '프론트엔드 실무 과정',
+      grade: '4기',
+      period: '2025-01-10 ~ 2025-06-30',
+      capacity: 180,
+      applied: 176,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0023',
+      status: 'registered',
+      title: 'DA 데이터 분석가 5기',
+      grade: '5기',
+      period: '2026-03-15 ~ 2026-09-15',
+      capacity: 180,
+      applied: 178,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0028',
+      status: 'unregistered',
+      title: 'PM 부트캠프 2기',
+      grade: '2기',
+      period: '2026-05-05 ~ 2026-10-05',
+      capacity: 40,
+      applied: 39,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0051',
+      status: 'unregistered',
+      title: 'AI 응용 LLM 부트캠프',
+      grade: '1기',
+      period: '2026-06-15 ~ 2026-12-15',
+      capacity: 80,
+      applied: 21,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2025-0044',
+      status: 'ended',
+      title: '안드로이드 앱 개발 부트캠프',
+      grade: '6기',
+      period: '2025-09-01 ~ 2026-03-31',
+      capacity: 100,
+      applied: 92,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+    {
+      trprId: 'AIG2026-0060',
+      status: 'unregistered',
+      title: 'MLOps 엔지니어 과정',
+      grade: '2기',
+      period: '2026-07-01 ~ 2026-12-30',
+      capacity: 90,
+      applied: 12,
+      hrdUrl: 'https://www.hrd.go.kr/',
+    },
+  ],
+}
+
+export const handlers = [
+  http.get('/api/admin/settings/hub', () => ok<SettingsHubData>(hub)),
+  http.get('/api/admin/settings/accounts', () => ok<OpsAccountsData>(accounts)),
+  http.get('/api/admin/settings/hrd-api-keys', () => ok<HrdKeyData>(hrdKeys)),
+  http.get('/api/admin/settings/courses', () => ok<CourseListItem[]>(courses)),
+  http.get('/api/admin/settings/courses/:courseId/config', ({ params }) => {
+    const config = courseConfigs[String(params.courseId)]
+    return config
+      ? ok<CourseConfigDetail>(config)
+      : HttpResponse.json({ message: 'not found' }, { status: 404 })
+  }),
+  http.get('/api/admin/settings/hrd-courses', ({ request }) => {
+    const page = Number(new URL(request.url).searchParams.get('page') ?? '1')
+    return ok<HrdCourseSearchData>({ ...hrdSearch, page })
+  }),
+]

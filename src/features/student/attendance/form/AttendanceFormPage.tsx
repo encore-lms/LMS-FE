@@ -70,10 +70,7 @@ export default function AttendanceFormPage() {
   const [submitted, setSubmitted] = useState<AttendanceFormSubmission | null>(
     null,
   )
-  usePageHeader(
-    '출결 폼 작성',
-    '모바일에서도 작성 가능한 출결 폼입니다. HRD 원본 출결은 변경되지 않습니다.',
-  )
+  usePageHeader('출결 폼 작성')
 
   // 예상 입실 시간 기본값 = 현재 시각(HH:MM). 수강생이 이후 자유롭게 변경 가능.
   const now = new Date()
@@ -112,7 +109,7 @@ export default function AttendanceFormPage() {
       <div className="flex flex-col gap-6 p-8">
         <SubmitSuccessCard
           submission={submitted}
-          onHome={() => navigate('/student')}
+          onHome={() => navigate('/student/attendance')}
         />
       </div>
     )

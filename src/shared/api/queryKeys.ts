@@ -46,4 +46,19 @@ export const instructorKeys = {
     [...instructorKeys.all, 'endorsements', 'history'] as const,
   endorsementDetail: (endorsementId: string) =>
     [...instructorKeys.all, 'endorsements', endorsementId] as const,
+  quizzes: () => [...instructorKeys.all, 'quizzes'] as const,
+  quizDetail: (quizId: string) =>
+    [...instructorKeys.all, 'quizzes', quizId] as const,
+  quizQuestions: (quizId: string) =>
+    [...instructorKeys.all, 'quizzes', quizId, 'questions'] as const,
+  quizSubmissions: (quizId: string) =>
+    [...instructorKeys.all, 'quizzes', quizId, 'submissions'] as const,
+  quizGrading: (quizId: string, submissionId: string) =>
+    [
+      ...instructorKeys.all,
+      'quizzes',
+      quizId,
+      'grading',
+      submissionId,
+    ] as const,
 } as const

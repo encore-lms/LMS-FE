@@ -80,6 +80,23 @@ export type {
   EndorsementHistory,
 } from './endorsements'
 export type {
+  QuizVisibility,
+  InstructorQuizRow,
+  InstructorQuizListData,
+  ResultRevealPolicy,
+  QuizFormDetail,
+  InstructorQuestionType,
+  QuestionDifficulty,
+  InstructorQuestion,
+  QuizQuestionsData,
+  SubmissionGradingState,
+  QuizSubmissionRow,
+  QuizSubmissionsData,
+  GradingItemStatus,
+  GradingItem,
+  GradingDetail,
+} from './instructorQuiz'
+export type {
   SettingsCardSummary,
   SettingsAuditLog,
   SettingsHubData,

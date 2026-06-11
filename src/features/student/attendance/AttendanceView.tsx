@@ -15,10 +15,7 @@ import { SubmissionHistory } from './components/history/SubmissionHistory'
 export default function AttendanceView() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAttendanceOverview()
-  usePageHeader(
-    '출결 / 태도',
-    'HRD-Net 출결 현황과 본인 출결 폼 제출 이력. HRD 원본은 표시 전용입니다.',
-  )
+  usePageHeader('출결 / 태도')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">출결 현황을 불러오는 중…</div>

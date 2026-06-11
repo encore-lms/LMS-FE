@@ -1,13 +1,12 @@
 import type { ReactNode } from 'react'
-import { useFormContext } from 'react-hook-form'
+import { Controller, useFormContext } from 'react-hook-form'
+import { cn } from '@/shared/lib/cn'
 import type { AttendanceType } from '../../types'
 import type { AttendanceFormValues } from '../attendanceFormSchema'
+import { TimePicker } from './TimePicker'
 
 // 유형별 조건부 입력 — 선택한 출결 유형에 맞는 시간/사유 입력만 노출(나머지는 언마운트).
-// 라벨 옆 '필수' 배지는 Figma 시안과 동일하게 노출(공유 Input의 * 표기 대신).
-const inputClass =
-  'border-border focus:border-brand text-fg placeholder:text-fg-subtle h-[52px] w-full rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none'
-
+// 시간은 시/분 객관식 스크롤 피커(TimePicker)로 입력. 라벨 옆 '필수' 배지는 Figma 시안과 동일.
 function RequiredBadge() {
   return (
     <span className="bg-danger-bg text-danger rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
@@ -30,6 +29,45 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-danger mt-1 text-xs">{message}</p>
 }
 
+type TimeFieldName =
+  | 'expectedArrivalTime'
+  | 'expectedLeaveTime'
+  | 'outingStartTime'
+  | 'outingEndTime'
+
+// 시간 입력 한 칸 — Controller로 TimePicker를 폼에 연결.
+function TimeField({
+  name,
+  label,
+  className,
+}: {
+  name: TimeFieldName
+  label: string
+  className?: string
+}) {
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<AttendanceFormValues>()
+  return (
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      <FieldLabel>{label}</FieldLabel>
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <TimePicker
+            value={field.value ?? ''}
+            onChange={field.onChange}
+            invalid={!!errors[name]}
+          />
+        )}
+      />
+      <FieldError message={errors[name]?.message} />
+    </div>
+  )
+}
+
 export function ConditionalTimeFields({ type }: { type: AttendanceType }) {
   const {
     register,
@@ -39,49 +77,25 @@ export function ConditionalTimeFields({ type }: { type: AttendanceType }) {
   return (
     <div className="bg-surface-muted flex flex-col gap-3 rounded-xl p-4">
       {type === 'LATE' && (
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel>예상 입실 시간</FieldLabel>
-          <input
-            type="time"
-            className={inputClass}
-            {...register('expectedArrivalTime')}
-          />
-          <FieldError message={errors.expectedArrivalTime?.message} />
-        </div>
+        <TimeField name="expectedArrivalTime" label="예상 입실 시간" />
       )}
 
       {type === 'EARLY_LEAVE' && (
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel>예상 조퇴 시간</FieldLabel>
-          <input
-            type="time"
-            className={inputClass}
-            {...register('expectedLeaveTime')}
-          />
-          <FieldError message={errors.expectedLeaveTime?.message} />
-        </div>
+        <TimeField name="expectedLeaveTime" label="예상 조퇴 시간" />
       )}
 
       {type === 'OUTING' && (
         <div className="flex flex-wrap gap-3">
-          <div className="flex flex-1 basis-48 flex-col gap-1.5">
-            <FieldLabel>외출 시작 시간</FieldLabel>
-            <input
-              type="time"
-              className={inputClass}
-              {...register('outingStartTime')}
-            />
-            <FieldError message={errors.outingStartTime?.message} />
-          </div>
-          <div className="flex flex-1 basis-48 flex-col gap-1.5">
-            <FieldLabel>복귀 시간</FieldLabel>
-            <input
-              type="time"
-              className={inputClass}
-              {...register('outingEndTime')}
-            />
-            <FieldError message={errors.outingEndTime?.message} />
-          </div>
+          <TimeField
+            name="outingStartTime"
+            label="외출 시작 시간"
+            className="flex-1 basis-48"
+          />
+          <TimeField
+            name="outingEndTime"
+            label="복귀 시간"
+            className="flex-1 basis-48"
+          />
         </div>
       )}
 

@@ -16,7 +16,14 @@ const DUE_BADGE: Record<DueTone, string> = {
   ended: 'bg-surface-muted text-fg-subtle',
 }
 
-export function AssignmentSummary({ detail }: { detail: AssignmentDetail }) {
+export function AssignmentSummary({
+  detail,
+  status,
+}: {
+  detail: AssignmentDetail
+  status?: AssignmentStatus // 제출 후 갱신된 유효 상태(미지정 시 detail.status)
+}) {
+  const effectiveStatus = status ?? detail.status
   return (
     <section className="border-border bg-surface flex items-start justify-between gap-6 rounded-lg border p-6">
       <div className="flex min-w-0 flex-col gap-3">
@@ -46,7 +53,7 @@ export function AssignmentSummary({ detail }: { detail: AssignmentDetail }) {
           마감 {detail.dueAtLabel}
         </span>
         <span className="text-fg-muted text-[13px]">
-          제출 상태: {STATUS_BADGE[detail.status].label}
+          제출 상태: {STATUS_BADGE[effectiveStatus].label}
         </span>
       </div>
     </section>

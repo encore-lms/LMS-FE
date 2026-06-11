@@ -309,6 +309,20 @@ export default function RecordReviewDetailPage({
     )
   }
 
+  // 단일 상세 엔드포인트(GET /records/review/:recordId) 응답과 URL 세그먼트 대조 가드.
+  if (data.category !== category) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<AlertTriangle />}
+          title="잘못된 경로예요"
+          description="제출물의 카테고리와 주소가 일치하지 않아요."
+          action={<Button onClick={goQueue}>학습 기록 검토로</Button>}
+        />
+      </div>
+    )
+  }
+
   const d = data
   const hasReason = reason.trim().length > 0
   const busy = reviewAction.isPending
@@ -326,8 +340,9 @@ export default function RecordReviewDetailPage({
         onSuccess: () => {
           const name = d.student.name
           if (decision === 'approve') {
+            // 큐 decide()와 동일 문구 — ✅ 검증된 큐 토스트와 드리프트 금지.
             toast.success(
-              `승인 처리 — ${name}${
+              `승인 — ${name} · RecordReview.status = approved${
                 d.mileageCandidate ? ' · 마일리지 지급 후보 생성' : ''
               }`,
             )
@@ -373,7 +388,10 @@ export default function RecordReviewDetailPage({
               href={d.externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(pill, 'bg-info-bg text-info hover:bg-info-bg/70')}
+              className={cn(
+                pill,
+                'bg-accent-bg text-accent-strong hover:bg-accent-bg/70',
+              )}
             >
               새 탭 열기
             </a>
@@ -382,7 +400,10 @@ export default function RecordReviewDetailPage({
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
-              className={cn(pill, 'bg-info-bg text-info hover:bg-info-bg/70')}
+              className={cn(
+                pill,
+                'bg-accent-bg text-accent-strong hover:bg-accent-bg/70',
+              )}
             >
               라이트박스
             </button>
@@ -391,7 +412,10 @@ export default function RecordReviewDetailPage({
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
-              className={cn(pill, 'bg-info-bg text-info hover:bg-info-bg/70')}
+              className={cn(
+                pill,
+                'bg-accent-bg text-accent-strong hover:bg-accent-bg/70',
+              )}
             >
               이미지 확대
             </button>

@@ -6,10 +6,7 @@ import type {
   RecordReviewActionRequest,
   RecordReviewQueue,
 } from '@/shared/types'
-import {
-  RECORD_SEGMENT_BY_CATEGORY,
-  type RecordSubmissionDetailView,
-} from '../records/detailMeta'
+import type { RecordSubmissionDetailView } from '../records/detailMeta'
 
 // 학습 기록 검토 큐 — /admin/records/review. MANAGER 단독 1차 검토.
 // baseURL이 /api라 경로 앞에 안 붙임.
@@ -26,8 +23,9 @@ export function useRecordReviewQueue(filter?: {
   })
 }
 
-// 검토 상세 — GET /admin/records/{blog|study|certificates}/:submissionId.
-// :submissionId = Record.id(큐 RecordReviewItem.id와 동일 키).
+// 검토 상세 — GET /admin/records/review/{recordId} (P0_15_24 API명세: 유형별 분리 endpoint 없음,
+// 단일 엔드포인트가 유형별 상세+검토 이력 반환). :submissionId = Record.id(큐 RecordReviewItem.id와 동일 키).
+// category는 페이지 세그먼트 검증·캐시 키 용도로만 쓰고 wire 경로에는 넣지 않는다.
 export function useRecordSubmissionDetail(
   category: RecordCategory,
   submissionId: string,
@@ -38,7 +36,7 @@ export function useRecordSubmissionDetail(
     queryFn: () =>
       apiClient
         .get<RecordSubmissionDetailView>(
-          `/admin/records/${RECORD_SEGMENT_BY_CATEGORY[category]}/${submissionId}`,
+          `/admin/records/review/${submissionId}`,
         )
         .then((r) => r.data),
   })
@@ -75,7 +73,10 @@ export function useRecordReviewAction() {
         .post<{
           id: string
           status: string
-        }>(`/admin/records/review/${recordId}/${ACTION_PATH[decision]}`, payload)
+        }>(
+          `/admin/records/review/${recordId}/${ACTION_PATH[decision]}`,
+          payload,
+        )
         .then((r) => r.data),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({

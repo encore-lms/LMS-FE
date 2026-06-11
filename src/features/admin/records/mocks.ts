@@ -4,10 +4,7 @@ import type {
   RecordReviewItem,
   RecordReviewQueue,
 } from '@/shared/types'
-import {
-  recordCategoryFromSegment,
-  type RecordSubmissionDetailView,
-} from './detailMeta'
+import type { RecordSubmissionDetailView } from './detailMeta'
 
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
 // 상태형 mock: 승인/반려/보완 POST가 모듈 레벨 상태를 실제로 바꿔 큐 GET에 반영된다.
@@ -246,6 +243,8 @@ const details = new Map<string, RecordSubmissionDetailView>([
       activityHours: 2,
       activityTimeRange: '20:00~22:00',
       streakCount: 7,
+      // 연속 달성 지급 후보(P0-ADM-REC-007) — 적립 산식은 BE 확정 대기, 표시형 mock 값.
+      mileageCandidate: '+3,000',
       evidenceQuality: { level: 'ok', note: '문제 없음' },
       evidenceImages: [
         { id: 'ev_sy_1', url: '/mock/study-seoyeon-1.jpg', quality: 'ok' },
@@ -269,6 +268,7 @@ const details = new Map<string, RecordSubmissionDetailView>([
       activityHours: 2,
       activityTimeRange: '20:00~22:00',
       streakCount: 3,
+      mileageCandidate: '+3,000',
       evidenceQuality: { level: 'warning', note: '한 장 흐림' },
       evidenceImages: [
         { id: 'ev_ps_1', url: '/mock/study-parkseo-1.jpg', quality: 'ok' },
@@ -298,6 +298,7 @@ const details = new Map<string, RecordSubmissionDetailView>([
       activityHours: 1.5,
       activityTimeRange: '21:00~22:30',
       streakCount: 5,
+      mileageCandidate: '+3,000',
       evidenceQuality: { level: 'ok', note: '문제 없음' },
       evidenceImages: [
         { id: 'ev_jw_1', url: '/mock/study-juwon-1.jpg', quality: 'ok' },
@@ -475,20 +476,11 @@ export const handlers = [
     },
   ),
 
-  // 검토 상세 — 세그먼트(blog|study|certificates)를 RecordCategory로 매핑해 검증.
-  http.get('/api/admin/records/:category/:submissionId', ({ params }) => {
-    const category = recordCategoryFromSegment(String(params.category))
-    if (!category) {
-      return HttpResponse.json(
-        {
-          code: 'UNSUPPORTED_CATEGORY',
-          message: '지원하지 않는 카테고리입니다.',
-        },
-        { status: 404 },
-      )
-    }
-    const detail = details.get(String(params.submissionId))
-    if (!detail || detail.category !== category) return notFound()
+  // 검토 상세 — P0_15_24 API명세의 단일 엔드포인트 GET /records/review/{recordId}(유형별 분리 없음).
+  // URL 세그먼트↔응답 category 대조는 페이지 가드가 수행.
+  http.get('/api/admin/records/review/:recordId', ({ params }) => {
+    const detail = details.get(String(params.recordId))
+    if (!detail) return notFound()
     return ok<RecordSubmissionDetailView>(detail)
   }),
 ]

@@ -120,6 +120,19 @@ export type {
   StudentDetailData,
 } from './instructorConsole'
 export type {
+  ReviewStat,
+  InstructorRecordCategory,
+  InstructorRecordStatus,
+  InstructorRecordRow,
+  InstructorRecordReviewData,
+  ProjectCertReviewStatus,
+  ProjectReviewRow,
+  ProjectReviewData,
+  TsReviewStatus,
+  TsReviewRow,
+  TsReviewData,
+} from './instructorReviews'
+export type {
   SettingsCardSummary,
   SettingsAuditLog,
   SettingsHubData,

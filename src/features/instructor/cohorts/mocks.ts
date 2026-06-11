@@ -58,7 +58,7 @@ const dashboard: InstructorDashboardData = {
       dday: 'D+2',
       urgent: false,
       actionLabel: '검토',
-      to: '/instructor/records',
+      to: '/instructor/records/review',
     },
     {
       id: 'pri-4',
@@ -68,7 +68,7 @@ const dashboard: InstructorDashboardData = {
       dday: 'D+2',
       urgent: false,
       actionLabel: '검토',
-      to: '/instructor/records',
+      to: '/instructor/records/review',
     },
     {
       id: 'pri-5',
@@ -78,7 +78,7 @@ const dashboard: InstructorDashboardData = {
       dday: 'D+1',
       urgent: false,
       actionLabel: '검토',
-      to: '/instructor/records',
+      to: '/instructor/records/review',
     },
     {
       id: 'pri-6',
@@ -379,7 +379,7 @@ const studentDetail: StudentDetailData = {
       title: '기록실 승인 이력',
       summary: '승인 12 · 대기 1 · 반려 0',
       ctaLabel: '검토 화면으로 →',
-      ctaTo: null,
+      ctaTo: '/instructor/records/review',
       items: [
         {
           id: 'sdr-1',
@@ -417,7 +417,7 @@ const studentDetail: StudentDetailData = {
       title: '프로젝트 참여 현황',
       summary: '진행 1 · 인증 완료 1',
       ctaLabel: '프로젝트 검토로 →',
-      ctaTo: null,
+      ctaTo: '/instructor/projects/review',
       items: [
         {
           id: 'sdp-1',
@@ -445,7 +445,7 @@ const studentDetail: StudentDetailData = {
       title: '트러블슈팅 사례',
       summary: '등록 2 · 승인 대기 1',
       ctaLabel: '트러블슈팅 검토로 →',
-      ctaTo: null,
+      ctaTo: '/instructor/troubleshooting/review',
       items: [
         {
           id: 'sdt-1',

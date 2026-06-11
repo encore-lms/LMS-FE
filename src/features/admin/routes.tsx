@@ -38,6 +38,8 @@ const QuizSubmissionsPage = lazy(
 const QuizGradingPage = lazy(
   () => import('@/features/instructor/quizzes/GradingPage'),
 )
+// 정답 관리 (운영 전용 신설 — features/admin/quizzes, Figma 1515:10493)
+const QuizAnswersPage = lazy(() => import('./quizzes/AnswersPage'))
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -76,6 +78,8 @@ export const adminRoutes: RouteObject[] = [
       // 퀴즈 운영 (강사 컴포넌트 재사용, 경로 패턴도 강사와 동일) — /admin/quizzes* 라우트
       { path: 'quizzes', element: <QuizListPage /> },
       { path: 'quizzes/new', element: <QuizFormPage /> },
+      // 정답 관리 — 운영 전용(:quizId 하위지만 정적 'answers' 세그먼트를 동적 앞 컨벤션 위치에)
+      { path: 'quizzes/:quizId/answers', element: <QuizAnswersPage /> },
       { path: 'quizzes/:quizId/edit', element: <QuizFormPage /> },
       { path: 'quizzes/:quizId/questions', element: <QuestionManagePage /> },
       { path: 'quizzes/:quizId/submissions', element: <QuizSubmissionsPage /> },

@@ -31,7 +31,7 @@ export default function CohortsPage() {
   const [status, setStatus] = useState<CohortStatus>('operating')
   usePageHeader(
     '담당 과정/기수',
-    '운영 기간·평가·검토 현황 관제 — 기수 컨텍스트가 후속 화면에 유지됩니다',
+    '강사·보조강사·멘토 배정 기수 진입 · 종료 과정은 필터로 조회',
   )
 
   const filtered = useMemo(() => {
@@ -69,11 +69,36 @@ export default function CohortsPage() {
     { key: 'ended', label: '종료', count: data.ended },
   ]
 
+  // 우상단 컬러 dot + 컬러 hint — Figma 카드 4종 색 구분(파랑·보라·주황·파랑).
   const summaryCards = [
-    { label: '진행 중 과정', unit: '개', ...data.summary.operatingCourses },
-    { label: '담당 수강생', unit: '명', ...data.summary.students },
-    { label: '채점 대기', unit: '건', ...data.summary.gradingPending },
-    { label: '검토 대기', unit: '건', ...data.summary.reviewPending },
+    {
+      label: '진행 중 과정',
+      unit: '개',
+      dot: 'bg-info',
+      hintColor: 'text-info',
+      ...data.summary.operatingCourses,
+    },
+    {
+      label: '담당 수강생',
+      unit: '명',
+      dot: 'bg-accent',
+      hintColor: 'text-info',
+      ...data.summary.students,
+    },
+    {
+      label: '채점 대기',
+      unit: '건',
+      dot: 'bg-warning',
+      hintColor: 'text-info',
+      ...data.summary.gradingPending,
+    },
+    {
+      label: '검토 대기',
+      unit: '건',
+      dot: 'bg-info',
+      hintColor: 'text-info',
+      ...data.summary.reviewPending,
+    },
   ]
 
   const columns: Column<InstructorCohortRow>[] = [
@@ -211,19 +236,20 @@ export default function CohortsPage() {
             className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
           />
         </div>
+        {/* 활성 탭은 brand 채움 (Figma 1324:9636) */}
         {statusTabs.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setStatus(t.key)}
             className={cn(
-              'rounded-md px-3 py-1.5 text-sm font-medium',
+              'rounded-lg px-3.5 py-1.5 text-sm font-medium',
               status === t.key
-                ? 'bg-accent-bg text-accent-strong'
-                : 'text-fg-muted hover:bg-surface-muted',
+                ? 'bg-brand font-bold text-white'
+                : 'border-border text-fg-muted hover:bg-surface-muted border',
             )}
           >
-            {t.label} <span className="text-fg-subtle text-xs">{t.count}</span>
+            {t.label} ({t.count})
           </button>
         ))}
         <span className="text-fg-subtle ml-auto text-xs">
@@ -239,14 +265,17 @@ export default function CohortsPage() {
             key={card.label}
             className="border-border bg-surface rounded-xl border p-4.5"
           >
-            <p className="text-fg-muted text-sm font-medium">{card.label}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-fg-muted text-sm font-medium">{card.label}</p>
+              <span className={cn('h-2 w-2 rounded-full', card.dot)} />
+            </div>
             <p className="text-fg mt-2 text-3xl font-bold">
               {card.value}{' '}
               <span className="text-fg-subtle text-base font-medium">
                 {card.unit}
               </span>
             </p>
-            <p className="text-fg-subtle mt-1.5 text-xs">{card.hint}</p>
+            <p className={cn('mt-1.5 text-xs', card.hintColor)}>{card.hint}</p>
           </div>
         ))}
       </div>

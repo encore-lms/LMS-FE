@@ -204,6 +204,7 @@ export default function CohortStudentsPage() {
           columns={columns}
           rows={filtered}
           rowKey={(r) => r.id}
+          onRowClick={(r) => navigate(`/instructor/students/${r.id}`)}
           empty="조건에 맞는 수강생이 없어요"
         />
       </div>

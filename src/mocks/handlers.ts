@@ -3,6 +3,7 @@ import type {
   Role,
   QuizQuestion,
   QuizResult,
+  QuizAnswer,
   QuizAttempt,
   AdminDashboardSummary,
   CertReviewQueue,
@@ -32,24 +33,177 @@ function roleFromEmail(email: string): Role {
 
 // 수강생 퀴즈 — 목록은 features/student/quiz/mocks.ts(기능 로컬)로 이동. 응시/결과만 여기 유지.
 const quizHandlers = [
-  http.get('/api/student/quizzes/:quizId/questions', ({ params }) =>
-    ok<QuizQuestion[]>([
-      {
-        id: 'qq1',
-        quizId: String(params.quizId),
-        categoryId: 'react',
+  http.get('/api/student/quizzes/:quizId/questions', ({ params }) => {
+    const quizId = String(params.quizId)
+    // 자료구조 중간 퀴즈 — 20문항(객관식 4지선다). 12번 = 시안(242:27) 이진 탐색 문제.
+    const DATA: [
+      string,
+      [string, string, string, string],
+      QuizQuestion['difficulty'],
+    ][] = [
+      [
+        '배열(Array)에 대한 설명으로 옳은 것은?',
+        [
+          '인덱스로 임의 원소에 O(1) 접근',
+          '중간 삽입·삭제가 항상 O(1)',
+          '메모리가 비연속적으로 할당된다',
+          '크기가 자동으로 늘어난다',
+        ],
+        'easy',
+      ],
+      [
+        '단일 연결 리스트(Singly Linked List)의 특징으로 옳은 것은?',
+        [
+          '임의 인덱스 접근이 O(1)',
+          '노드마다 다음 노드의 참조를 가진다',
+          '뒤에서 앞으로 순회가 가능하다',
+          '연속된 메모리 블록이 필요하다',
+        ],
+        'easy',
+      ],
+      [
+        '스택(Stack)의 자료 처리 방식으로 옳은 것은?',
+        [
+          'FIFO(선입선출)',
+          'LIFO(후입선출)',
+          '우선순위가 높은 것부터',
+          '임의 순서로 접근',
+        ],
+        'easy',
+      ],
+      [
+        '큐(Queue)의 자료 처리 방식으로 옳은 것은?',
+        [
+          'LIFO(후입선출)',
+          'FIFO(선입선출)',
+          '양쪽 끝에서 삽입·삭제',
+          '키 순서대로 정렬',
+        ],
+        'easy',
+      ],
+      [
+        '원형 큐(Circular Queue)를 사용하는 주된 이유는?',
+        [
+          '정렬을 자동으로 유지하기 위해',
+          '선형 큐의 빈 공간 낭비를 줄이기 위해',
+          '임의 접근을 빠르게 하기 위해',
+          '중복 원소를 제거하기 위해',
+        ],
+        'normal',
+      ],
+      [
+        '높이가 h인 이진 트리가 가질 수 있는 최대 노드 수는?',
+        ['h', '2h', '2^h − 1', 'h^2'],
+        'normal',
+      ],
+      [
+        '이진 탐색 트리(BST)를 중위 순회(in-order)한 결과는?',
+        ['오름차순 정렬', '내림차순 정렬', '레벨 순서', '무작위 순서'],
+        'normal',
+      ],
+      [
+        '완전 이진 트리를 1-based 배열로 표현할 때, 노드 i의 왼쪽 자식 인덱스는?',
+        ['i + 1', '2i', '2i + 1', 'i / 2'],
+        'normal',
+      ],
+      [
+        '최소 힙(Min-Heap)의 루트 노드에 대한 설명으로 옳은 것은?',
+        ['항상 최댓값', '항상 최솟값', '항상 중앙값', '삽입 순서상 첫 원소'],
+        'normal',
+      ],
+      [
+        '해시 테이블의 평균적인 탐색 시간 복잡도는?',
+        ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)'],
+        'normal',
+      ],
+      [
+        '다음 중 해시 충돌(collision) 해결 방법이 아닌 것은?',
+        [
+          '체이닝(Chaining)',
+          '개방 주소법(Open Addressing)',
+          '이중 해싱(Double Hashing)',
+          '버블 정렬(Bubble Sort)',
+        ],
+        'normal',
+      ],
+      [
+        '다음 중 시간 복잡도가 O(log n)에 해당하는 알고리즘으로 가장 적절한 것을 고르시오. 정렬된 배열에서 특정 값의 위치를 찾을 때 일반적으로 사용되는 분할 정복 기반의 탐색 알고리즘은 무엇인지 선택지에서 고르십시오.',
+        [
+          '선형 탐색 (Linear Search)',
+          '이진 탐색 (Binary Search)',
+          '깊이 우선 탐색 (DFS)',
+          '너비 우선 탐색 (BFS)',
+        ],
+        'normal',
+      ],
+      [
+        '정점이 V개인 그래프를 인접 행렬로 표현할 때 공간 복잡도는?',
+        ['O(V)', 'O(E)', 'O(V^2)', 'O(V + E)'],
+        'normal',
+      ],
+      [
+        '깊이 우선 탐색(DFS)을 반복문으로 구현할 때 주로 사용하는 자료구조는?',
+        ['큐(Queue)', '스택(Stack)', '우선순위 큐', '해시 테이블'],
+        'normal',
+      ],
+      [
+        '너비 우선 탐색(BFS)을 구현할 때 주로 사용하는 자료구조는?',
+        ['스택(Stack)', '큐(Queue)', '힙(Heap)', '연결 리스트'],
+        'normal',
+      ],
+      [
+        '다익스트라(Dijkstra) 알고리즘에서 우선순위 큐를 사용하는 이유는?',
+        [
+          '음수 가중치를 처리하기 위해',
+          '최단 거리 후보를 빠르게 선택하기 위해',
+          '사이클을 탐지하기 위해',
+          '정점을 정렬하기 위해',
+        ],
+        'hard',
+      ],
+      [
+        '다음 정렬 알고리즘 중 안정 정렬(stable sort)이 아닌 것은?',
+        ['병합 정렬', '삽입 정렬', '버블 정렬', '퀵 정렬'],
+        'hard',
+      ],
+      [
+        '병합 정렬(Merge Sort)의 평균 시간 복잡도는?',
+        ['O(n)', 'O(n log n)', 'O(n^2)', 'O(log n)'],
+        'normal',
+      ],
+      [
+        '퀵 정렬(Quick Sort)의 최악 시간 복잡도는?',
+        ['O(n)', 'O(n log n)', 'O(n^2)', 'O(log n)'],
+        'hard',
+      ],
+      [
+        '동적 계획법(DP)의 핵심 아이디어로 가장 적절한 것은?',
+        [
+          '모든 경우를 완전 탐색',
+          '부분 문제의 해를 저장해 재사용',
+          '항상 분할 정복으로 해결',
+          '그리디하게 국소 최적 선택',
+        ],
+        'normal',
+      ],
+    ]
+    const letters = ['a', 'b', 'c', 'd']
+    const questions: QuizQuestion[] = DATA.map(
+      ([prompt, choices, difficulty], i) => ({
+        id: `qq${i + 1}`,
+        quizId,
+        categoryId: '자료구조',
         type: 'multiple_choice',
         gradingType: 'AUTO',
-        prompt: 'useEffect 의존성 배열이 빈 배열일 때 effect 실행 시점은?',
-        maxPoints: 10,
-        orderNo: 1,
-        choices: [
-          { id: 'a', label: '매 렌더마다 실행' },
-          { id: 'b', label: '마운트 시 1회' },
-        ],
-      },
-    ]),
-  ),
+        prompt,
+        maxPoints: 5,
+        orderNo: i + 1,
+        difficulty,
+        choices: choices.map((label, j) => ({ id: letters[j], label })),
+      }),
+    )
+    return ok<QuizQuestion[]>(questions)
+  }),
 
   http.post('/api/student/quizzes/:quizId/attempts', ({ params }) =>
     ok<QuizAttempt>({
@@ -62,30 +216,256 @@ const quizHandlers = [
     }),
   ),
 
-  http.get('/api/student/quizzes/:quizId/result', ({ params }) =>
-    ok<QuizResult>({
-      submission: {
-        id: 's3',
-        quizId: String(params.quizId),
-        attemptNo: 1,
-        submittedAt: '2026-05-05T09:00:00Z',
-        gradingStatus: 'finalized',
-        totalScore: 18,
-      },
-      answers: [
+  http.get('/api/student/quizzes/:quizId/result', ({ params }) => {
+    const quizId = String(params.quizId)
+    // 자료구조 중간 퀴즈 결과 — 20문항(4카테고리). 1·4번 = 시안(243:27), 5번 = 채점 대기(서술).
+    const mc = (
+      questionId: string,
+      categoryId: string,
+      prompt: string,
+      my: string,
+      correct: string,
+      earnedPoints: number,
+      isCorrect: boolean,
+      extra: Partial<QuizAnswer> = {},
+    ): QuizAnswer => ({
+      questionId,
+      prompt,
+      categoryId,
+      maxPoints: 5,
+      answer: { kind: 'multiple_choice', selectedChoiceId: my },
+      correctAnswerKey: correct,
+      earnedPoints,
+      isCorrect,
+      ...extra,
+    })
+    const sa = (
+      questionId: string,
+      categoryId: string,
+      prompt: string,
+      my: string,
+      correct: string | undefined,
+      maxPoints: number,
+      earnedPoints: number,
+      isCorrect: boolean,
+      extra: Partial<QuizAnswer> = {},
+    ): QuizAnswer => ({
+      questionId,
+      prompt,
+      categoryId,
+      maxPoints,
+      answer: { kind: 'short_answer', text: my },
+      correctAnswerKey: correct,
+      earnedPoints,
+      isCorrect,
+      ...extra,
+    })
+    const OOP = '객체지향 설계'
+    const JPA = 'JPA 영속성 컨텍스트'
+    const TX = '트랜잭션/격리 수준'
+    const QD = 'Querydsl & 동적 쿼리'
+    const answers: QuizAnswer[] = [
+      mc(
+        'qq1',
+        JPA,
+        '다음 중 JPA의 1차 캐시(영속성 컨텍스트)에 대한 설명으로 옳은 것은?',
+        '같은 EntityManager 내에서 동일 식별자 조회 시 캐시된 엔티티를 반환한다',
+        '같은 EntityManager 내에서 동일 식별자 조회 시 캐시된 엔티티를 반환한다',
+        5,
+        true,
+      ),
+      mc(
+        'qq2',
+        TX,
+        '@Transactional의 기본 격리 수준(isolation level)으로 옳은 것은?',
+        'READ_UNCOMMITTED',
+        'DEFAULT (DB의 격리 수준을 따름)',
+        0,
+        false,
+      ),
+      sa(
+        'qq3',
+        JPA,
+        '엔티티 매니저가 영속성 컨텍스트를 비우고 동기화하는 메서드 이름을 쓰시오.',
+        'flush()',
+        'flush()',
+        5,
+        5,
+        true,
+      ),
+      sa(
+        'qq4',
+        QD,
+        '지연 로딩(LAZY) 환경에서 N+1 문제를 해결하는 대표 전략 2가지를 쓰시오.',
+        'fetch join, EntityGraph',
+        'fetch join / @EntityGraph / batch_size (3가지 중 2가지 인정)',
+        5,
+        4,
+        true,
         {
-          questionId: 'qq1',
-          prompt: 'useEffect 의존성 배열이 빈 배열일 때 effect 실행 시점은?',
-          categoryId: 'react',
-          maxPoints: 10,
-          answer: { kind: 'multiple_choice', selectedChoiceId: 'b' },
-          correctAnswerKey: 'b',
-          earnedPoints: 10,
-          isCorrect: true,
+          feedback:
+            '두 전략 모두 적절합니다. batch_size 옵션도 함께 익히면 좋습니다.',
         },
-      ],
-    }),
-  ),
+      ),
+      sa(
+        'qq5',
+        TX,
+        '낙관적 락(Optimistic Lock)과 비관적 락(Pessimistic Lock)의 차이를 200자 이내로 서술하시오.',
+        '제출됨 (192자) — 채점 대기 중',
+        undefined,
+        10,
+        0,
+        false,
+        { pending: true },
+      ),
+      mc(
+        'qq6',
+        OOP,
+        'SOLID 원칙 중 "확장에는 열려 있고 변경에는 닫혀 있어야 한다"는 무엇인가?',
+        'OCP (개방-폐쇄 원칙)',
+        'OCP (개방-폐쇄 원칙)',
+        5,
+        true,
+      ),
+      mc(
+        'qq7',
+        OOP,
+        '상속보다 합성(composition)을 권장하는 주된 이유는?',
+        '결합도를 낮추고 유연한 확장이 가능',
+        '결합도를 낮추고 유연한 확장이 가능',
+        5,
+        true,
+      ),
+      mc(
+        'qq8',
+        OOP,
+        '다형성(polymorphism)을 활용한 설계의 이점으로 옳은 것은?',
+        '구현 교체 시 클라이언트 코드 변경 최소화',
+        '구현 교체 시 클라이언트 코드 변경 최소화',
+        5,
+        true,
+      ),
+      mc(
+        'qq9',
+        OOP,
+        '의존성 역전 원칙(DIP)에서 의존해야 하는 대상은?',
+        '추상(인터페이스)',
+        '추상(인터페이스)',
+        5,
+        true,
+      ),
+      mc(
+        'qq10',
+        OOP,
+        '디미터 법칙(Law of Demeter)이 줄이려는 것은?',
+        '객체 간 과도한 결합',
+        '객체 간 과도한 결합',
+        3,
+        true,
+      ),
+      mc(
+        'qq11',
+        JPA,
+        '준영속(detached) 상태의 엔티티를 다시 영속화하는 메서드는?',
+        'merge()',
+        'merge()',
+        5,
+        true,
+      ),
+      mc(
+        'qq12',
+        JPA,
+        '쓰기 지연(write-behind)이 가능한 근본 이유는?',
+        '영속성 컨텍스트가 SQL을 모았다가 flush 시점에 전송',
+        '영속성 컨텍스트가 SQL을 모았다가 flush 시점에 전송',
+        3,
+        true,
+      ),
+      mc(
+        'qq13',
+        JPA,
+        'cascade = REMOVE 사용 시 주의점으로 옳은 것은?',
+        '고아 객체는 자동으로 유지된다',
+        '연관 엔티티가 함께 삭제되어 데이터 유실 위험이 있다',
+        0,
+        false,
+      ),
+      mc(
+        'qq14',
+        TX,
+        'REPEATABLE READ에서 기본적으로 방지되지 않는 현상은?',
+        '팬텀 리드(Phantom Read)',
+        '팬텀 리드(Phantom Read)',
+        5,
+        true,
+      ),
+      mc(
+        'qq15',
+        TX,
+        '트랜잭션 전파 옵션 REQUIRES_NEW의 동작으로 옳은 것은?',
+        '항상 새 트랜잭션을 시작한다',
+        '항상 새 트랜잭션을 시작한다',
+        5,
+        true,
+      ),
+      mc(
+        'qq16',
+        TX,
+        '@Transactional(readOnly = true)의 효과로 옳은 것은?',
+        '플러시 모드 최적화로 더티 체킹을 생략',
+        '플러시 모드 최적화로 더티 체킹을 생략',
+        5,
+        true,
+      ),
+      mc(
+        'qq17',
+        QD,
+        'Querydsl에서 동적 조건 조합에 주로 쓰는 것은?',
+        'BooleanBuilder / BooleanExpression',
+        'BooleanBuilder / BooleanExpression',
+        5,
+        true,
+      ),
+      mc(
+        'qq18',
+        QD,
+        'Querydsl의 컴파일 타임 타입 안정성의 근거는?',
+        'Q타입(메타모델) 생성',
+        'Q타입(메타모델) 생성',
+        5,
+        true,
+      ),
+      mc(
+        'qq19',
+        QD,
+        'fetchJoin()을 사용하는 주된 목적은?',
+        'N+1을 줄이고 연관을 한 번에 조회',
+        'N+1을 줄이고 연관을 한 번에 조회',
+        5,
+        true,
+      ),
+      mc(
+        'qq20',
+        QD,
+        'Querydsl 페이징에서 카운트 쿼리를 분리하는 이유는?',
+        '정렬을 보장하기 위해',
+        '불필요한 조인을 제거해 카운트 성능을 높이기 위해',
+        0,
+        false,
+      ),
+    ]
+    return ok<QuizResult>({
+      submission: {
+        id: 's1',
+        quizId,
+        attemptNo: 1,
+        submittedAt: '2026-05-13T14:32:00Z',
+        gradingStatus: 'pending_manual',
+        totalScore: 82,
+      },
+      answers,
+    })
+  }),
 ]
 
 // 인증 검토 큐(/admin/certificates/reviews) — Flow 11 C1.

@@ -15,7 +15,7 @@ import { CourseNoticeCard } from './components/CourseNoticeCard'
  */
 export default function CourseHomePage() {
   const { data, isPending, isError, refetch } = useCourseHome()
-  usePageHeader('나의 과정')
+  usePageHeader('강의 홈')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">강의 홈을 불러오는 중…</div>

@@ -28,8 +28,9 @@ export default function QuizResultPage() {
     const answers = data?.answers ?? []
     const earned = answers.reduce((s, a) => s + a.earnedPoints, 0)
     const max = answers.reduce((s, a) => s + a.maxPoints, 0)
-    const correct = answers.filter((a) => a.isCorrect).length
-    const wrong = answers.filter((a) => !a.isCorrect).length
+    const pending = answers.filter((a) => a.pending).length
+    const correct = answers.filter((a) => !a.pending && a.isCorrect).length
+    const wrong = answers.filter((a) => !a.pending && !a.isCorrect).length
     const feedback = answers.filter((a) => a.feedback).length
     const byCat = new Map<string, { earned: number; max: number }>()
     answers.forEach((a) => {
@@ -38,16 +39,25 @@ export default function QuizResultPage() {
       c.max += a.maxPoints
       byCat.set(a.categoryId, c)
     })
-    const categories = [...byCat.entries()].map(([name, v]) => ({
-      name,
-      score: v.max > 0 ? Math.round((v.earned / v.max) * 100) : 0,
-    }))
+    const CAT_ORDER = [
+      '객체지향 설계',
+      'JPA 영속성 컨텍스트',
+      '트랜잭션/격리 수준',
+      'Querydsl & 동적 쿼리',
+    ]
+    const categories = [...byCat.entries()]
+      .map(([name, v]) => ({
+        name,
+        score: v.max > 0 ? Math.round((v.earned / v.max) * 100) : 0,
+      }))
+      .sort((a, b) => CAT_ORDER.indexOf(a.name) - CAT_ORDER.indexOf(b.name))
     return {
       answers,
       earned,
       max,
       correct,
       wrong,
+      pending,
       feedback,
       total: answers.length,
       categories,
@@ -70,21 +80,26 @@ export default function QuizResultPage() {
   }
 
   const pendingManual = data.submission.gradingStatus === 'pending_manual'
-  const filtered = stat.answers.filter(
-    (a) =>
-      filter === 'all'
-        ? true
-        : filter === 'wrong'
-          ? !a.isCorrect
-          : filter === 'feedback'
-            ? !!a.feedback
-            : false /* pending: 데이터에 표식 없음 */,
+  const reattemptsLeft = Math.max(
+    0,
+    (quiz?.maxAttempts ?? 1) - data.submission.attemptNo,
+  )
+  const filtered = stat.answers.filter((a) =>
+    filter === 'all'
+      ? true
+      : filter === 'wrong'
+        ? !a.pending && !a.isCorrect
+        : filter === 'feedback'
+          ? !!a.feedback
+          : filter === 'pending'
+            ? !!a.pending
+            : false,
   )
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'all', label: `전체 (${stat.total})` },
     { key: 'wrong', label: `오답 (${stat.wrong})` },
-    { key: 'pending', label: `채점 대기 (0)` },
+    { key: 'pending', label: `채점 대기 (${stat.pending})` },
     { key: 'feedback', label: `피드백 (${stat.feedback})` },
   ]
 
@@ -112,18 +127,15 @@ export default function QuizResultPage() {
       </div>
 
       <ResultSummary
-        earned={stat.earned}
+        earned={data.submission.totalScore}
         max={stat.max}
         correct={stat.correct}
         wrong={stat.wrong}
-        pending={pendingManual ? 1 : 0}
+        pending={stat.pending}
         notAnswered={0}
         total={stat.total}
-        autoGradedCount={stat.total}
-        reattemptsLeft={Math.max(
-          0,
-          (quiz?.maxAttempts ?? 1) - data.submission.attemptNo,
-        )}
+        autoGradedCount={stat.total - stat.pending}
+        reattemptsLeft={reattemptsLeft}
       />
 
       {/* 카테고리별 점수 */}
@@ -216,7 +228,7 @@ export default function QuizResultPage() {
             onClick={() => navigate(`/student/quizzes/${quizId}/take`)}
             className="border-accent-strong text-accent-strong rounded-[10px] border px-4 py-3 text-[13px] font-semibold"
           >
-            재응시
+            재응시 ({reattemptsLeft}회 남음)
           </button>
           <button
             type="button"

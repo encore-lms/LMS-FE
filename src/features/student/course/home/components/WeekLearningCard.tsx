@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { CourseWeek } from '../../types'
 import { WeekRow } from './WeekRow'
 
@@ -18,12 +19,12 @@ export function WeekLearningCard({
           <h2 className="text-fg text-[15px] font-bold">{title}</h2>
           <p className="text-fg-muted text-[11px]">{subtitle}</p>
         </div>
-        <button
-          type="button"
+        <Link
+          to="/student/course/materials"
           className="text-brand shrink-0 text-[12px] font-semibold"
         >
           전체 주차 보기 →
-        </button>
+        </Link>
       </div>
       {weeks.map((w) => (
         <WeekRow key={w.weekNo} week={w} />

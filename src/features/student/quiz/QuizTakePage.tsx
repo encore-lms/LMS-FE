@@ -86,7 +86,7 @@ export default function QuizTakePage() {
             {quiz?.title ?? '퀴즈 응시'}
           </p>
           <p className="text-fg-subtle text-[12px]">
-            플레이데이터 부트캠프 · {current.categoryId}
+            플레이데이터 부트캠프 12기 · {current.categoryId}
           </p>
         </div>
         <div className="flex flex-col items-center gap-1.5">
@@ -160,11 +160,12 @@ export default function QuizTakePage() {
         <div className="flex items-center gap-2">
           <span className="bg-brand size-2 rounded" />
           <span className="text-fg-muted text-[12px] font-medium">
-            임시 저장됨 · 방금 전
+            임시 저장됨 · 12초 전
           </span>
         </div>
         <button
           type="button"
+          onClick={() => navigate('/student/quizzes')}
           className="border-brand text-brand rounded-[10px] border px-5 py-3 text-[14px] font-semibold"
         >
           임시 저장

@@ -142,3 +142,51 @@ export interface GradingDetail {
   items: GradingItem[] // 수동 채점 대상 문항만
   totalManualCount: number
 }
+
+// ── §10 퀴즈 템플릿 (Figma 1354:9948 · 1392:10014 · 3547:2247) ──
+export interface QuizTemplateRow {
+  id: string
+  name: string
+  description: string // '4기 알고리즘 강의용 · 만점 100'
+  isNew: boolean // NEW 배지
+  category: string // '알고리즘'
+  questionCount: number
+  totalPoints: number
+  lastUsedAt: string | null // null = 미사용
+  useCount: number // 복제 횟수 — 0이면 삭제 가능
+}
+
+export interface QuizTemplateListData {
+  total: number
+  totalUseCount: number
+  items: QuizTemplateRow[]
+}
+
+export interface QuizTemplateDetail {
+  id: string
+  name: string
+  category: string
+  description: string
+  gradingMode: GradingMode
+  resultReveal: ResultRevealPolicy
+  shuffleQuestions: boolean
+  shuffleChoices: boolean
+  totalPoints: number
+  questionCount: number
+  /** 메타 기본값 — 복제 시 인스턴스로 전달 (0 = 무제한) */
+  defaultTimeLimitMin: number
+  createdAt: string
+  lastUsedAt: string | null
+  /** 파생 활성 퀴즈 수 — 0보다 크면 편집 시 소급 미반영 경고 */
+  derivedActiveCount: number
+}
+
+export interface TemplateQuestionsData {
+  templateName: string
+  gradingMode: GradingMode
+  totalPoints: number
+  targetPoints: number
+  useCount: number
+  derivedActiveCount: number
+  questions: InstructorQuestion[]
+}

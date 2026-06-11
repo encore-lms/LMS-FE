@@ -10,6 +10,11 @@ const EndorsementHistoryPage = lazy(
 const EndorsementDetailPage = lazy(
   () => import('./endorsements/EndorsementDetailPage'),
 )
+const QuizListPage = lazy(() => import('./quizzes/QuizListPage'))
+const QuizFormPage = lazy(() => import('./quizzes/QuizFormPage'))
+const QuestionManagePage = lazy(() => import('./quizzes/QuestionManagePage'))
+const SubmissionsPage = lazy(() => import('./quizzes/SubmissionsPage'))
+const GradingPage = lazy(() => import('./quizzes/GradingPage'))
 
 export const instructorRoutes: RouteObject[] = [
   {
@@ -22,6 +27,16 @@ export const instructorRoutes: RouteObject[] = [
       {
         path: 'endorsements/:endorsementId',
         element: <EndorsementDetailPage />,
+      },
+      // 퀴즈 Main Flow (§5~§9) — /new는 :quizId보다 먼저(정적 경로 우선).
+      { path: 'quizzes', element: <QuizListPage /> },
+      { path: 'quizzes/new', element: <QuizFormPage /> },
+      { path: 'quizzes/:quizId/edit', element: <QuizFormPage /> },
+      { path: 'quizzes/:quizId/questions', element: <QuestionManagePage /> },
+      { path: 'quizzes/:quizId/submissions', element: <SubmissionsPage /> },
+      {
+        path: 'quizzes/:quizId/submissions/:submissionId/grade',
+        element: <GradingPage />,
       },
       // TODO(owner): 강사 화면 라우트 추가
     ],

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQuizBasePath } from './useQuizBasePath'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle } from 'lucide-react'
@@ -134,6 +135,7 @@ export default function QuizFormPage() {
   const { quizId } = useParams()
   const isEdit = !!quizId
   const navigate = useNavigate()
+  const base = useQuizBasePath()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useInstructorQuizDetail(
     quizId ?? null,
@@ -204,9 +206,8 @@ export default function QuizFormPage() {
     )
     if (hasSubmissions)
       toast.info('정답/배점 변경 시 자동 재채점이 트리거됩니다')
-    if (thenQuestions)
-      navigate(`/instructor/quizzes/${quizId ?? 'quiz-new'}/questions`)
-    else navigate('/instructor/quizzes')
+    if (thenQuestions) navigate(`${base}/${quizId ?? 'quiz-new'}/questions`)
+    else navigate(base)
   }
 
   return (
@@ -414,7 +415,7 @@ export default function QuizFormPage() {
             type="button"
             variant="secondary"
             className="h-10 text-sm"
-            onClick={() => navigate('/instructor/quizzes')}
+            onClick={() => navigate(base)}
           >
             취소
           </Button>

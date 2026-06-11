@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuizBasePath } from './useQuizBasePath'
 import { AlertTriangle, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -25,6 +26,7 @@ const COHORTS = ['전체', 'DA 4기', 'FE 7기'] as const
 // 제출 있는 퀴즈는 삭제 비활성, 임시저장은 제출 현황 비활성.
 export default function QuizListPage() {
   const navigate = useNavigate()
+  const base = useQuizBasePath()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useInstructorQuizzes()
   const [q, setQ] = useState('')
@@ -162,7 +164,7 @@ export default function QuizListPage() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`/instructor/quizzes/${r.id}/edit`)
+                navigate(`${base}/${r.id}/edit`)
               }}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
             >
@@ -205,7 +207,7 @@ export default function QuizListPage() {
               title={isDraft ? '임시저장 퀴즈는 제출 현황이 없어요' : undefined}
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`/instructor/quizzes/${r.id}/submissions`)
+                navigate(`${base}/${r.id}/submissions`)
               }}
               className={cn(
                 'rounded-md border px-2 py-1 text-xs font-medium',
@@ -287,7 +289,7 @@ export default function QuizListPage() {
           </span>
           <button
             type="button"
-            onClick={() => navigate('/instructor/quizzes/new')}
+            onClick={() => navigate(`${base}/new`)}
             className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3.5 text-xs font-bold text-white"
           >
             <Plus className="h-3.5 w-3.5" /> 퀴즈 생성
@@ -300,7 +302,7 @@ export default function QuizListPage() {
           columns={columns}
           rows={filtered}
           rowKey={(r) => r.id}
-          onRowClick={(r) => navigate(`/instructor/quizzes/${r.id}/edit`)}
+          onRowClick={(r) => navigate(`${base}/${r.id}/edit`)}
           empty="조건에 맞는 퀴즈가 없어요"
         />
       </div>

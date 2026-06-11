@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQuizBasePath } from './useQuizBasePath'
 import { AlertTriangle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -20,6 +21,7 @@ type StatusFilter = 'all' | 'manual_pending' | 'not_submitted' | 'done'
 export default function SubmissionsPage() {
   const { quizId = '' } = useParams()
   const navigate = useNavigate()
+  const base = useQuizBasePath()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useQuizSubmissions(quizId)
   const [q, setQ] = useState('')
@@ -178,9 +180,7 @@ export default function SubmissionsPage() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  navigate(
-                    `/instructor/quizzes/${quizId}/submissions/${r.id}/grade`,
-                  )
+                  navigate(`${base}/${quizId}/submissions/${r.id}/grade`)
                 }}
                 className="bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white"
               >
@@ -271,7 +271,7 @@ export default function SubmissionsPage() {
         ))}
         <button
           type="button"
-          onClick={() => navigate(`/instructor/quizzes`)}
+          onClick={() => navigate(`${base}`)}
           className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
         >
           ← 퀴즈 목록으로

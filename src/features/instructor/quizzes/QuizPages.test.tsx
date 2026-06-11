@@ -368,3 +368,30 @@ describe('GradingPage (§9)', () => {
     expect(completeBtn).toBeEnabled()
   })
 })
+
+describe('운영(/admin/quizzes) 마운트 — 강사 컴포넌트 재사용 (P0)', () => {
+  it('admin 경로에서 내부 이동이 /admin/quizzes/*로 향한다', async () => {
+    const user = userEvent.setup()
+    mockAll()
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/admin/quizzes']}>
+          <Routes>
+            <Route path="/admin/quizzes" element={<QuizListPage />} />
+            <Route
+              path="/admin/quizzes/new"
+              element={<div>admin-quiz-new</div>}
+            />
+            <Route
+              path="/instructor/quizzes/new"
+              element={<div>instructor-quiz-new</div>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>,
+    )
+    expect(screen.getByText('알고리즘 기초 #3')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /퀴즈 생성/ }))
+    expect(screen.getByText('admin-quiz-new')).toBeInTheDocument()
+  })
+})

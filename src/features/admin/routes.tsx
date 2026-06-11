@@ -32,6 +32,9 @@ const QuestionManagePage = lazy(
 const QuizSubmissionsPage = lazy(
   () => import('@/features/instructor/quizzes/SubmissionsPage'),
 )
+const QuizGradingPage = lazy(
+  () => import('@/features/instructor/quizzes/GradingPage'),
+)
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -53,12 +56,16 @@ export const adminRoutes: RouteObject[] = [
       { path: 'settings/hrd-api-key', element: <HrdApiKeyPage /> },
       { path: 'settings/course-config', element: <CourseConfigPage /> },
       { path: 'settings/courses/new', element: <CourseAddPage /> },
-      // 퀴즈 운영 (강사 컴포넌트 재사용) — /admin/quizzes* 라우트
+      // 퀴즈 운영 (강사 컴포넌트 재사용, 경로 패턴도 강사와 동일) — /admin/quizzes* 라우트
       { path: 'quizzes', element: <QuizListPage /> },
       { path: 'quizzes/new', element: <QuizFormPage /> },
-      { path: 'quizzes/:quizId', element: <QuizFormPage /> },
+      { path: 'quizzes/:quizId/edit', element: <QuizFormPage /> },
       { path: 'quizzes/:quizId/questions', element: <QuestionManagePage /> },
       { path: 'quizzes/:quizId/submissions', element: <QuizSubmissionsPage /> },
+      {
+        path: 'quizzes/:quizId/submissions/:submissionId/grade',
+        element: <QuizGradingPage />,
+      },
     ],
   },
 ]

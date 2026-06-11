@@ -40,6 +40,9 @@ export const adminKeys = {
       'impact',
       { changeKey: changeKey ?? '' },
     ] as const,
+  // 운영 수동 채점 — admin 전용 엔드포인트(강사 instructorKeys.quizGrading과 별개).
+  quizGrading: (quizId: string, submissionId: string) =>
+    [...adminKeys.all, 'quizzes', quizId, 'grading', submissionId] as const,
   studentAccounts: (filter?: { status?: string }) =>
     [...adminKeys.all, 'students', { filter: filter ?? {} }] as const,
   studentAttendance: () =>

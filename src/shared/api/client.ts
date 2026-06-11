@@ -29,6 +29,8 @@ export interface ApiClient {
   get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>>
   post<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
   put<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
+  // PATCH — 부분 갱신(운영 수동 채점 grade 계약). 기존 메서드 시그니처는 불변(추가만).
+  patch<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
   delete<T>(url: string): Promise<ApiResponse<T>>
 }
 
@@ -43,6 +45,10 @@ export const apiClient: ApiClient = {
   },
   async put<T>(url: string, body?: unknown) {
     const res = await instance.put<ApiResponse<T>>(url, body)
+    return res.data
+  },
+  async patch<T>(url: string, body?: unknown) {
+    const res = await instance.patch<ApiResponse<T>>(url, body)
     return res.data
   },
   async delete<T>(url: string) {

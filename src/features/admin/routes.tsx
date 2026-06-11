@@ -35,11 +35,10 @@ const QuestionManagePage = lazy(
 const QuizSubmissionsPage = lazy(
   () => import('@/features/instructor/quizzes/SubmissionsPage'),
 )
-const QuizGradingPage = lazy(
-  () => import('@/features/instructor/quizzes/GradingPage'),
-)
 // 정답 관리 (운영 전용 신설 — features/admin/quizzes, Figma 1515:10493)
 const QuizAnswersPage = lazy(() => import('./quizzes/AnswersPage'))
+// 수동 채점 (운영 전용 신설 B안 — 강사 GradingPage 대체, Figma 1515:10710)
+const QuizGradingPage = lazy(() => import('./quizzes/GradingPage'))
 
 export const adminRoutes: RouteObject[] = [
   {

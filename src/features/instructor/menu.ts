@@ -11,7 +11,7 @@ export const instructorMenu: MenuItem[] = [
   // 검토 = 학습기록 조회 + 프로젝트 검토 + 트러블슈팅 검토 묶음(Figma '검토' 부모 항목)
   {
     label: '검토',
-    to: '/instructor/records',
+    to: '/instructor/records/review',
     match: ['/instructor/projects', '/instructor/troubleshooting'],
   },
   { label: '인증 후 변경 제안', to: '/instructor/change-requests' },

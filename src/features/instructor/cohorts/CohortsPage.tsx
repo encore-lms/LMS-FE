@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type {
@@ -25,7 +24,6 @@ const ROLE_META: Record<InstructorRole, { label: string; tone: BadgeTone }> = {
 // 기수 컨텍스트는 퀴즈·수강생·검토 화면에 유지됨(액션 4종으로 진입).
 export default function CohortsPage() {
   const navigate = useNavigate()
-  const toast = useToast()
   const { data, isPending, isError, refetch } = useInstructorCohorts()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<CohortStatus>('operating')
@@ -201,7 +199,7 @@ export default function CohortsPage() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              toast.info('학습 기록 검토 — 후속 화면 (mock)')
+              navigate('/instructor/records/review')
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -211,7 +209,7 @@ export default function CohortsPage() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              toast.info('프로젝트 검토 — 후속 화면 (mock)')
+              navigate('/instructor/projects/review')
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
           >

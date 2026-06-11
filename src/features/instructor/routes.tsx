@@ -6,6 +6,9 @@ const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
 const CohortStudentsPage = lazy(() => import('./cohorts/CohortStudentsPage'))
 const StudentDetailPage = lazy(() => import('./cohorts/StudentDetailPage'))
+const RecordReviewPage = lazy(() => import('./reviews/RecordReviewPage'))
+const ProjectReviewPage = lazy(() => import('./reviews/ProjectReviewPage'))
+const TsReviewPage = lazy(() => import('./reviews/TsReviewPage'))
 const EndorsementsPage = lazy(() => import('./endorsements/EndorsementsPage'))
 const EndorsementHistoryPage = lazy(
   () => import('./endorsements/EndorsementHistoryPage'),
@@ -33,6 +36,10 @@ export const instructorRoutes: RouteObject[] = [
       { path: 'cohorts', element: <CohortsPage /> },
       { path: 'cohorts/:cohortId/students', element: <CohortStudentsPage /> },
       { path: 'students/:studentId', element: <StudentDetailPage /> },
+      // 검토 3종 (§13~§15) — 사이드바 '검토' 묶음.
+      { path: 'records/review', element: <RecordReviewPage /> },
+      { path: 'projects/review', element: <ProjectReviewPage /> },
+      { path: 'troubleshooting/review', element: <TsReviewPage /> },
       // 강사 추천서 (Flow 08-1) — /history는 :id보다 먼저(정적 경로 우선).
       { path: 'endorsements', element: <EndorsementsPage /> },
       { path: 'endorsements/history', element: <EndorsementHistoryPage /> },

@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQuizBasePath } from './useQuizBasePath'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -11,6 +12,7 @@ import { QuestionWorkbench } from './QuestionWorkbench'
 export default function QuestionManagePage() {
   const { quizId = '' } = useParams()
   const navigate = useNavigate()
+  const base = useQuizBasePath()
   const { data, isPending, isError, refetch } = useQuizQuestions(quizId)
   usePageHeader('문제 관리', '문항 편집 · 배점 합계 검증 · 학생 미리보기')
 
@@ -42,7 +44,7 @@ export default function QuestionManagePage() {
       itemNoun="문제"
       back={{
         label: '← 퀴즈 설정으로',
-        onClick: () => navigate(`/instructor/quizzes/${quizId}/edit`),
+        onClick: () => navigate(`${base}/${quizId}/edit`),
       }}
       previewLabel="학생 미리보기"
       bodyHint="학생에게 그대로 노출 — 마크다운 지원"

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQuizBasePath } from './useQuizBasePath'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -22,6 +23,7 @@ interface DraftEntry {
 export default function GradingPage() {
   const { quizId = '', submissionId = '' } = useParams()
   const navigate = useNavigate()
+  const base = useQuizBasePath()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useGradingDetail(
     quizId,
@@ -123,9 +125,7 @@ export default function GradingPage() {
           </div>
           <button
             type="button"
-            onClick={() =>
-              navigate(`/instructor/quizzes/${quizId}/submissions`)
-            }
+            onClick={() => navigate(`${base}/${quizId}/submissions`)}
             className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
           >
             ← 제출 현황으로
@@ -290,9 +290,7 @@ export default function GradingPage() {
             type="button"
             variant="secondary"
             className="h-10 text-sm"
-            onClick={() =>
-              navigate(`/instructor/quizzes/${quizId}/submissions`)
-            }
+            onClick={() => navigate(`${base}/${quizId}/submissions`)}
           >
             취소
           </Button>
@@ -314,7 +312,7 @@ export default function GradingPage() {
               toast.success(
                 `채점 완료 — ${data.studentName} ${provisional}/${data.totalScore} 확정 (mock)`,
               )
-              navigate(`/instructor/quizzes/${quizId}/submissions`)
+              navigate(`${base}/${quizId}/submissions`)
             }}
           >
             채점 완료

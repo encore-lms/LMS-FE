@@ -21,13 +21,19 @@ export function QuestionResultRow({
   num: number
   answer: QuizAnswer
 }) {
-  const tone = answer.isCorrect
-    ? { strip: 'bg-brand', badge: 'bg-brand/10 text-brand', score: 'text-fg' }
-    : {
-        strip: 'bg-danger',
-        badge: 'bg-danger-bg text-danger',
-        score: 'text-danger',
+  const tone = answer.pending
+    ? {
+        strip: 'bg-warning',
+        badge: 'bg-warning-bg text-warning',
+        score: 'text-warning',
       }
+    : answer.isCorrect
+      ? { strip: 'bg-brand', badge: 'bg-brand/10 text-brand', score: 'text-fg' }
+      : {
+          strip: 'bg-danger',
+          badge: 'bg-danger-bg text-danger',
+          score: 'text-danger',
+        }
   const correctKey = Array.isArray(answer.correctAnswerKey)
     ? answer.correctAnswerKey.join(', ')
     : answer.correctAnswerKey
@@ -58,7 +64,11 @@ export function QuestionResultRow({
             <span
               className={cn(
                 'text-[13px]',
-                answer.isCorrect ? 'text-fg' : 'text-danger',
+                answer.pending
+                  ? 'text-fg-muted'
+                  : answer.isCorrect
+                    ? 'text-fg'
+                    : 'text-danger',
               )}
             >
               {answerText(answer.answer)}
@@ -83,10 +93,22 @@ export function QuestionResultRow({
             </div>
           )}
         </div>
-        <div className="bg-surface-muted flex w-[120px] shrink-0 flex-col items-start gap-1 rounded-[10px] px-4 py-2.5">
-          <span className="text-fg-subtle text-[11px] font-medium">점수</span>
+        <div
+          className={cn(
+            'flex w-[120px] shrink-0 flex-col items-start gap-1 rounded-[10px] px-4 py-2.5',
+            answer.pending ? 'bg-warning-bg' : 'bg-surface-muted',
+          )}
+        >
+          <span
+            className={cn(
+              'text-[11px] font-medium',
+              answer.pending ? 'text-warning' : 'text-fg-subtle',
+            )}
+          >
+            {answer.pending ? '채점 대기' : '점수'}
+          </span>
           <span className={cn('text-[20px] font-bold', tone.score)}>
-            {answer.earnedPoints} / {answer.maxPoints}
+            {answer.pending ? '—' : answer.earnedPoints} / {answer.maxPoints}
           </span>
         </div>
       </div>

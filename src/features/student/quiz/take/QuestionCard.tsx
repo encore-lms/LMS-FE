@@ -1,11 +1,21 @@
+import { useEffect } from 'react'
 import { cn } from '@/shared/lib/cn'
 import type { QuestionType, QuizQuestion } from '@/shared/types'
 
-// 퀴즈 응시 본문 문제 카드 — 칩(번호/배점/유형) + 발문 + 보기(객관식) 또는 입력(단답/서술).
+// 퀴즈 응시 본문 문제 카드 — 칩(번호/배점/유형/난이도) + 발문 + 보기(객관식) 또는 입력(단답/서술).
 const TYPE_LABEL: Record<QuestionType, string> = {
   multiple_choice: '객관식',
   short_answer: '단답',
   fill_blank: '빈칸',
+}
+
+const DIFFICULTY_LABEL: Record<
+  NonNullable<QuizQuestion['difficulty']>,
+  string
+> = {
+  easy: '쉬움',
+  normal: '보통',
+  hard: '어려움',
 }
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
@@ -23,23 +33,47 @@ export function QuestionCard({
   value: string | undefined
   onChange: (value: string) => void
 }) {
+  const isMultiple = question.type === 'multiple_choice' && !!question.choices
+
+  // A~D 키로 보기 빠르게 선택(객관식).
+  useEffect(() => {
+    if (!isMultiple || !question.choices) return
+    const choices = question.choices
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      const i = OPTION_LETTERS.indexOf(e.key.toUpperCase())
+      if (i >= 0 && i < choices.length) {
+        e.preventDefault()
+        onChange(choices[i].id)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isMultiple, question.choices, onChange])
+
   return (
     <div className="border-border bg-surface flex w-[800px] max-w-full flex-col gap-7 rounded-2xl border p-9 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)]">
       <div className="flex flex-wrap items-center gap-2">
         <span className="bg-accent-strong rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white">
           문제 {index + 1} / {total}
         </span>
-        <span className="bg-brand/10 text-brand rounded-full px-2.5 py-[5px] text-[11px] font-semibold">
+        <span className="bg-surface-muted border-border text-fg-muted rounded-full border px-2.5 py-[5px] text-[11px] font-semibold">
           배점 {question.maxPoints}점
         </span>
         <span className="bg-surface-muted border-border text-fg-muted rounded-full border px-2.5 py-[5px] text-[11px] font-semibold">
           {TYPE_LABEL[question.type]}
         </span>
+        {question.difficulty && (
+          <span className="bg-warning-bg text-warning rounded-full px-2.5 py-[5px] text-[11px] font-semibold">
+            난이도 · {DIFFICULTY_LABEL[question.difficulty]}
+          </span>
+        )}
       </div>
 
       <p className="text-fg text-[18px] leading-[30px]">{question.prompt}</p>
 
-      {question.type === 'multiple_choice' && question.choices ? (
+      {isMultiple && question.choices ? (
         <div className="flex flex-col gap-3">
           {question.choices.map((choice, i) => {
             const selected = value === choice.id
@@ -84,6 +118,19 @@ export function QuestionCard({
           placeholder="답안을 입력하세요"
           className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-xl border px-4 py-3 text-[15px] outline-none"
         />
+      )}
+
+      {isMultiple && (
+        <p className="text-fg-subtle flex items-center gap-1.5 text-[12px]">
+          <kbd className="border-border bg-surface-muted rounded border px-1.5 py-0.5 text-[10px] font-semibold not-italic">
+            A
+          </kbd>
+          ~
+          <kbd className="border-border bg-surface-muted rounded border px-1.5 py-0.5 text-[10px] font-semibold not-italic">
+            D
+          </kbd>
+          키로 빠르게 선택할 수 있어요
+        </p>
       )}
     </div>
   )

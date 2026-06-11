@@ -48,6 +48,7 @@ export interface QuizQuestion {
   prompt: string
   maxPoints: number
   orderNo: number
+  difficulty?: 'easy' | 'normal' | 'hard' // 난이도 — 응시 화면 배지(QuestionDifficulty와 동일 값)
   choices?: QuizChoice[] // 객관식만
 }
 
@@ -90,6 +91,7 @@ export interface QuizAnswer {
   correctAnswerKey?: string | string[] // 정답(공개 정책 시)
   earnedPoints: number
   isCorrect: boolean
+  pending?: boolean // 수동 채점 대기(서술 등) — 점수 미확정
   feedback?: string
 }
 

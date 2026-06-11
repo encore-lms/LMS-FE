@@ -17,6 +17,16 @@ export type {
   QuizAnswer,
   QuizListItem,
   QuizResult,
+  QuizAnswerRowStatus,
+  QuizAnswerRow,
+  QuizAnswersData,
+  QuizAnswerImpact,
+  QuizAnswerChangeItem,
+  QuizAnswerChangeRequest,
+  QuizAnswerChangeLog,
+  AdminGradingQuestionType,
+  AdminGradingItem,
+  AdminGradingDetail,
 } from './quiz'
 export type {
   OverallStatus,
@@ -52,6 +62,14 @@ export type {
   RecordAttachmentRef,
   RecordReviewItem,
   RecordReviewQueue,
+  RecordEvidenceImage,
+  RecordAutoCheck,
+  RecordSubmissionBase,
+  BlogSubmissionDetail,
+  StudySubmissionDetail,
+  CertificateSubmissionDetail,
+  RecordSubmissionDetail,
+  RecordReviewActionRequest,
 } from './records'
 export type {
   StudentTrainingStatus,

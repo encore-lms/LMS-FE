@@ -120,6 +120,15 @@ export type {
   StudentDetailData,
 } from './instructorConsole'
 export type {
+  CertReviewTargetType,
+  ChangeRequestStatus,
+  ChangeDiffItem,
+  InstructorChangeRequestRow,
+  InstructorChangeRequestsData,
+  RecertificationRow,
+  RecertificationsData,
+} from './instructorChangeRequests'
+export type {
   AssignmentSubmissionStatus,
   AssignmentCounts,
   InstructorAssignmentRow,

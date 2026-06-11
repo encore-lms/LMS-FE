@@ -19,6 +19,11 @@ export const instructorMenu: MenuItem[] = [
     to: '/instructor/records/review',
     match: ['/instructor/projects', '/instructor/troubleshooting'],
   },
-  { label: '인증 후 변경 제안', to: '/instructor/change-requests' },
+  // 재인증 통합 검토는 별도 메뉴 없이 같은 항목 하위(Figma 2750:2202 sidebar active 동일).
+  {
+    label: '인증 후 변경 제안',
+    to: '/instructor/change-requests',
+    match: ['/instructor/recertifications'],
+  },
   { label: '강사 추천서', to: '/instructor/endorsements' },
 ]

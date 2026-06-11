@@ -490,9 +490,33 @@ const studentDetail: StudentDetailData = {
   },
 }
 
+// 담당 기수 없음 시연용 변형 (Figma 2750:1974) — instructor-new@* 계정으로 로그인 시 반환.
+const dashboardNoCohort: InstructorDashboardData = {
+  ...dashboard,
+  instructorName: '신규',
+  cohortCount: 0,
+  cohorts: [],
+  priorities: [],
+}
+
+// persist된 auth(localStorage 'lms-auth')에서 이메일을 읽어 mock 분기.
+// MSW 핸들러는 앱 컨텍스트에서 실행되므로 localStorage 접근 가능.
+function isNewInstructor() {
+  try {
+    const raw = localStorage.getItem('lms-auth')
+    if (!raw) return false
+    const email: string = JSON.parse(raw)?.state?.user?.email ?? ''
+    return email.startsWith('instructor-new')
+  } catch {
+    return false
+  }
+}
+
 export const handlers = [
   http.get('/api/instructor/dashboard', () =>
-    ok<InstructorDashboardData>(dashboard),
+    ok<InstructorDashboardData>(
+      isNewInstructor() ? dashboardNoCohort : dashboard,
+    ),
   ),
   http.get('/api/instructor/cohorts', () => ok<InstructorCohortsData>(cohorts)),
   http.get('/api/instructor/cohorts/:cohortId/students', () =>

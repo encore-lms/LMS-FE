@@ -9,6 +9,9 @@ const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
 const RecordReviewQueuePage = lazy(
   () => import('./records/RecordReviewQueuePage'),
 )
+const RecordReviewDetailPage = lazy(
+  () => import('./records/RecordReviewDetailPage'),
+)
 const StudentManagementPage = lazy(
   () => import('./students/StudentManagementPage'),
 )
@@ -48,6 +51,20 @@ export const adminRoutes: RouteObject[] = [
         element: <SnapshotPage />,
       },
       { path: 'records/review', element: <RecordReviewQueuePage /> },
+      // 검토 상세 3종 — 정적 records/review 뒤. URL 세그먼트 certificates(복수)는
+      // 페이지에서 RecordCategory certificate(단수)로 매핑(detailMeta.ts).
+      {
+        path: 'records/blog/:submissionId',
+        element: <RecordReviewDetailPage segment="blog" />,
+      },
+      {
+        path: 'records/study/:submissionId',
+        element: <RecordReviewDetailPage segment="study" />,
+      },
+      {
+        path: 'records/certificates/:submissionId',
+        element: <RecordReviewDetailPage segment="certificates" />,
+      },
       { path: 'students', element: <StudentManagementPage /> },
       { path: 'resume', element: <ResumePage /> },
       { path: 'resume/:resumeId', element: <ResumeDetailPage /> },

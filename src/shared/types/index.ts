@@ -120,6 +120,16 @@ export type {
   StudentDetailData,
 } from './instructorConsole'
 export type {
+  AssignmentSubmissionStatus,
+  AssignmentCounts,
+  InstructorAssignmentRow,
+  InstructorAssignmentListData,
+  AssignmentFormDetail,
+  AssignmentFeedbackItem,
+  AssignmentSubmissionRow,
+  AssignmentSubmissionsData,
+} from './instructorAssignments'
+export type {
   ReviewStat,
   InstructorRecordCategory,
   InstructorRecordStatus,

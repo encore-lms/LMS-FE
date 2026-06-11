@@ -6,7 +6,12 @@ import type { MenuItem } from '@/components/layout'
 export const instructorMenu: MenuItem[] = [
   { label: '대시보드', to: '/instructor' },
   { label: '교육 과정', to: '/instructor/cohorts' },
-  { label: '평가 관리', to: '/instructor/quizzes' },
+  // 과제·실습은 별도 메뉴 없이 평가 관리 하위(Figma 2236:10561 sidebar active=평가 관리).
+  {
+    label: '평가 관리',
+    to: '/instructor/quizzes',
+    match: ['/instructor/assignments'],
+  },
   { label: '퀴즈 템플릿', to: '/instructor/quiz-templates' },
   // 검토 = 학습기록 조회 + 프로젝트 검토 + 트러블슈팅 검토 묶음(Figma '검토' 부모 항목)
   {

@@ -17,6 +17,13 @@ const EndorsementDetailPage = lazy(
   () => import('./endorsements/EndorsementDetailPage'),
 )
 const QuizListPage = lazy(() => import('./quizzes/QuizListPage'))
+const AssignmentsPage = lazy(() => import('./assignments/AssignmentsPage'))
+const AssignmentFormPage = lazy(
+  () => import('./assignments/AssignmentFormPage'),
+)
+const AssignmentSubmissionsPage = lazy(
+  () => import('./assignments/SubmissionsPage'),
+)
 const TemplateListPage = lazy(() => import('./quiz-templates/TemplateListPage'))
 const TemplateFormPage = lazy(() => import('./quiz-templates/TemplateFormPage'))
 const TemplateQuestionsPage = lazy(
@@ -57,6 +64,15 @@ export const instructorRoutes: RouteObject[] = [
         path: 'quizzes/:quizId/submissions/:submissionId/grade',
         element: <GradingPage />,
       },
+      // 과제·실습 Main Flow (P0 30) — /new는 :assignmentId보다 먼저(정적 경로 우선).
+      // :assignmentId가 상세+수정 단일 폼(생성 정책: 생성/수정 후 상세 화면 이동).
+      { path: 'assignments', element: <AssignmentsPage /> },
+      { path: 'assignments/new', element: <AssignmentFormPage /> },
+      {
+        path: 'assignments/:assignmentId/submissions',
+        element: <AssignmentSubmissionsPage />,
+      },
+      { path: 'assignments/:assignmentId', element: <AssignmentFormPage /> },
       // 퀴즈 템플릿 (§10) — /new는 :templateId보다 먼저(정적 경로 우선).
       { path: 'quiz-templates', element: <TemplateListPage /> },
       { path: 'quiz-templates/new', element: <TemplateFormPage /> },

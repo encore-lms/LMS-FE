@@ -388,8 +388,8 @@ export default function GradingPage() {
         })}
       </div>
 
-      {/* 저장 정책 배너 — Figma 원문(info 틴트) */}
-      <div className="border-border bg-info-bg mt-8 rounded-xl border p-5">
+      {/* 저장 정책 배너 — Figma 원문. 보더는 Figma blue 틴트(#bfdbfe)의 토큰 근사(info/30). */}
+      <div className="border-info/30 bg-info-bg mt-8 rounded-xl border p-5">
         <p className="text-info text-sm font-bold">저장 정책</p>
         <p className="text-info mt-2 text-sm">
           문항별 점수와 피드백은 임시 저장되며, 채점 완료 후 학생 결과 화면에

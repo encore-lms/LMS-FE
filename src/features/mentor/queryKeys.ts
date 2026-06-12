@@ -5,4 +5,7 @@ export const mentorKeys = {
   dashboard: () => [...mentorKeys.all, 'dashboard'] as const,
   teams: () => [...mentorKeys.all, 'teams'] as const,
   teamDetail: (teamId: string) => [...mentorKeys.all, 'teams', teamId] as const,
+  requests: () => [...mentorKeys.all, 'mentoring-requests'] as const,
+  requestDetail: (requestId: string) =>
+    [...mentorKeys.all, 'mentoring-requests', requestId] as const,
 } as const

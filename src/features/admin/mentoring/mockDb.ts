@@ -1,5 +1,6 @@
 import type {
-  AdminLogTemplateOption,
+  AdminLogTemplate,
+  AdminLogTemplatesData,
   AdminMentorOption,
   AdminMentoringCohortOption,
   AdminMentoringLogDetail,
@@ -7,10 +8,17 @@ import type {
   AdminMentoringLogRow,
   AdminMentoringLogSnapshotItem,
   AdminMentoringLogsData,
+  AdminMentoringStatisticsData,
+  AdminTeamLogField,
+  AdminTeamLogFieldsData,
+  AdminTemplateField,
   MentorAssignmentCreateRequest,
   MentorAssignmentRow,
   MentorAssignmentsData,
+  MentorTeamStatRow,
   MentoringLogChangeRequestPayload,
+  MentoringTeamStatKey,
+  TemplateCreatePayload,
 } from './types'
 import { MENTORING_LOG_CHANGE_REASON_LABEL } from './types'
 
@@ -41,6 +49,22 @@ interface AdminMockAssignment {
   logTemplateId: string
   /** 조기 종료 사유 — 멘토에게만 표시·수강생 비공개(05-26 §3) */
   earlyEndedReason?: string
+  /**
+   * 평가·추천 제출 결과 — 통계(§33) 표시용 요약(평가 원문·5축 원점수는 비공개 정책상
+   * 운영 mock 에 두지 않음). 원천은 멘토 콘솔 제출 — 역할 교차 동기화는 BE 확정 시.
+   */
+  evaluation?: { submittedAtLabel: string; recommended: boolean }
+}
+
+interface AdminMockTemplate {
+  templateId: string
+  name: string
+  description: string
+  isDefault: boolean
+  isActive: boolean
+  /** '2026-05-19' — 항목·이름 변경 시 갱신 */
+  updatedAt: string
+  fields: AdminTemplateField[]
 }
 
 interface AdminMockLog {
@@ -69,10 +93,13 @@ interface AdminMockLog {
 interface AdminMentoringMockDb {
   cohorts: AdminMentoringCohortOption[]
   mentors: AdminMentorOption[]
-  templates: AdminLogTemplateOption[]
+  /** 일지 템플릿 전체(§31) — 배정 폼 선택지는 여기서 활성만 파생(A1·A2 상태 공유) */
+  logTemplates: AdminMockTemplate[]
   teams: AdminMockTeam[]
   assignments: AdminMockAssignment[]
   logs: AdminMockLog[]
+  /** 팀별 일지 항목 오버라이드(§32) — assignmentId unique(MentoringTeamLogFieldOverride) */
+  teamFieldOverrides: Record<string, AdminTeamLogField[]>
 }
 
 /** 작성 당시 항목 스냅샷(템플릿 v2.1 · 6항목) — 멘토 콘솔 LOG_FIELD_SNAPSHOT 동일 구성. */
@@ -120,16 +147,275 @@ export const adminMentoringDb: AdminMentoringMockDb = {
     { mentorId: 'mentor_lee', name: '이지훈' },
     { mentorId: 'mentor_park', name: '박지영' },
   ],
-  templates: [
+  // 템플릿 5종 — Figma 2746:7909 목록 원문(이름·항목 수·수정일·비활성). 적용 팀 수는
+  // assignments 파생. 기본 v2.1 항목 6종은 Figma 항목 편집 카드 원문 — 일지 스냅샷
+  // (SNAPSHOT_FIELDS)과 달라 '템플릿 변경은 기존 일지 스냅샷 보존' 서사를 함께 시연한다.
+  logTemplates: [
     {
       templateId: 'tpl_default_v21',
-      name: '기본 멘토링 일지 v2.1',
+      name: 'AI 캠프 기본 v2.1',
+      description: '주요 아젠다·수행 내용·멘토 의견 등 핵심 6항목',
       isDefault: true,
+      isActive: true,
+      updatedAt: '2026-05-19',
+      fields: [
+        {
+          fieldId: 'tf_agenda',
+          order: 1,
+          name: '주요 아젠다',
+          helpText: '이번 멘토링에서 다룬 핵심 안건',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_progress',
+          order: 2,
+          name: '수행 내용',
+          helpText: '회의 흐름에 따른 상세 진행 내용',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_opinion',
+          order: 3,
+          name: '멘토 의견 및 요청 사항',
+          helpText: '팀에게 전달하는 권장사항',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_codereview',
+          order: 4,
+          name: '코드리뷰 내용',
+          helpText: '코드 단위 피드백 (선택)',
+          required: false,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_next',
+          order: 5,
+          name: '다음 회차 일정',
+          helpText: 'YYYY-MM-DD HH:MM',
+          required: false,
+          type: 'short_text',
+        },
+        {
+          fieldId: 'tf_memo',
+          order: 6,
+          name: '활동 기록 메모',
+          helpText: '사진 첨부 외 보조 메모',
+          required: false,
+          type: 'short_text',
+        },
+      ],
     },
     {
-      templateId: 'tpl_codereview_v10',
-      name: '코드리뷰 중심 일지 v1.0',
+      templateId: 'tpl_da5_data',
+      name: 'DA 5기 데이터 분석용',
+      description: '분석 주제·데이터 검증 중심 5항목',
       isDefault: false,
+      isActive: true,
+      updatedAt: '2026-05-12',
+      fields: [
+        {
+          fieldId: 'tf_da_topic',
+          order: 1,
+          name: '분석 주제',
+          helpText: '이번 회차에서 다룬 분석 주제',
+          required: true,
+          type: 'short_text',
+        },
+        {
+          fieldId: 'tf_da_progress',
+          order: 2,
+          name: '분석 진행 내용',
+          helpText: '데이터 탐색·모델링 진행 상세',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_da_validate',
+          order: 3,
+          name: '데이터 검증 결과',
+          helpText: '데이터 품질·가설 검증 결과',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_da_opinion',
+          order: 4,
+          name: '멘토 의견',
+          helpText: '팀에게 전달하는 권장사항',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_da_next',
+          order: 5,
+          name: '다음 액션',
+          helpText: '다음 회차까지의 액션 아이템',
+          required: false,
+          type: 'short_text',
+        },
+      ],
+    },
+    {
+      templateId: 'tpl_de3_infra',
+      name: 'DE 3기 인프라 중심',
+      description: '인프라 구성·장애 대응 중심 7항목',
+      isDefault: false,
+      isActive: true,
+      updatedAt: '2026-04-28',
+      fields: [
+        {
+          fieldId: 'tf_de_agenda',
+          order: 1,
+          name: '주요 아젠다',
+          helpText: '이번 멘토링에서 다룬 핵심 안건',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_de_arch',
+          order: 2,
+          name: '인프라 구성 점검',
+          helpText: '아키텍처·리소스 구성 점검 내용',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_de_incident',
+          order: 3,
+          name: '장애 대응 리뷰',
+          helpText: '장애 재현·대응 절차 리뷰',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_de_pipeline',
+          order: 4,
+          name: '파이프라인 점검',
+          helpText: '배포·데이터 파이프라인 점검 (선택)',
+          required: false,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_de_cost',
+          order: 5,
+          name: '비용 점검 메모',
+          helpText: '리소스 사용량 보조 메모 (선택)',
+          required: false,
+          type: 'short_text',
+        },
+        {
+          fieldId: 'tf_de_next',
+          order: 6,
+          name: '다음 회차 일정',
+          helpText: 'YYYY-MM-DD HH:MM',
+          required: false,
+          type: 'short_text',
+        },
+        {
+          fieldId: 'tf_de_memo',
+          order: 7,
+          name: '활동 기록 메모',
+          helpText: '사진 첨부 외 보조 메모',
+          required: false,
+          type: 'short_text',
+        },
+      ],
+    },
+    {
+      templateId: 'tpl_boot_4w',
+      name: '부트캠프 단기 4주',
+      description: '단기 과정용 경량 4항목',
+      isDefault: false,
+      isActive: true,
+      updatedAt: '2026-04-15',
+      fields: [
+        {
+          fieldId: 'tf_bc_agenda',
+          order: 1,
+          name: '주요 아젠다',
+          helpText: '이번 멘토링에서 다룬 핵심 안건',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_bc_progress',
+          order: 2,
+          name: '수행 내용',
+          helpText: '회의 흐름에 따른 상세 진행 내용',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_bc_opinion',
+          order: 3,
+          name: '멘토 의견',
+          helpText: '팀에게 전달하는 권장사항',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_bc_next',
+          order: 4,
+          name: '다음 회차 일정',
+          helpText: 'YYYY-MM-DD HH:MM',
+          required: false,
+          type: 'short_text',
+        },
+      ],
+    },
+    {
+      templateId: 'tpl_legacy_v10',
+      name: '레거시 v1.0 (보관)',
+      description: '구 버전 보관용 — 신규 배정 선택 불가',
+      isDefault: false,
+      isActive: false,
+      updatedAt: '2026-03-02',
+      fields: [
+        {
+          fieldId: 'tf_lg_agenda',
+          order: 1,
+          name: '주요 아젠다',
+          helpText: '이번 멘토링에서 다룬 핵심 안건',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_lg_progress',
+          order: 2,
+          name: '수행 내용',
+          helpText: '회의 흐름에 따른 상세 진행 내용',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_lg_opinion',
+          order: 3,
+          name: '멘토 의견 및 요청 사항',
+          helpText: '팀에게 전달하는 권장사항',
+          required: true,
+          type: 'long_text',
+        },
+        {
+          fieldId: 'tf_lg_output',
+          order: 4,
+          name: '작성 산출물',
+          helpText: '회차 산출물 링크·파일 (선택)',
+          required: false,
+          type: 'short_text',
+        },
+        {
+          fieldId: 'tf_lg_memo',
+          order: 5,
+          name: '활동 기록',
+          helpText: '보조 메모 (선택)',
+          required: false,
+          type: 'short_text',
+        },
+      ],
     },
   ],
   teams: [
@@ -186,6 +472,8 @@ export const adminMentoringDb: AdminMentoringMockDb = {
       recognizedHours: 10,
       status: 'active',
       logTemplateId: 'tpl_default_v21',
+      // N시간 완료 → 평가·추천 최종 제출 완료(통계 '평가 완료 · 추천'·'스냅샷 반영 완료' 행)
+      evaluation: { submittedAtLabel: '05-28 18:40', recommended: true },
     },
     {
       assignmentId: 'asgn_ts',
@@ -489,6 +777,76 @@ export const adminMentoringDb: AdminMentoringMockDb = {
       changeRequest: null,
     },
   ],
+  // 추천시스템 팀(§32 대표) — 기본 v2.1 대비 설명 변경 1 · 신규 추가 1 · 필수 변경 1 ·
+  // 비활성 1(= 변경 3 + 비활성 1, Figma 2749:8024 행 구성). 다른 팀은 오버라이드 없음.
+  teamFieldOverrides: {
+    asgn_rec: [
+      {
+        fieldId: 'tf_agenda',
+        order: 1,
+        name: '주요 아젠다',
+        helpText: '이번 멘토링에서 다룬 핵심 안건',
+        required: true,
+        type: 'long_text',
+        isActive: true,
+      },
+      {
+        fieldId: 'tf_progress',
+        order: 2,
+        name: '수행 내용',
+        helpText: '회의 흐름에 따른 상세 진행 내용',
+        required: true,
+        type: 'long_text',
+        isActive: true,
+      },
+      {
+        fieldId: 'tf_opinion',
+        order: 3,
+        name: '멘토 의견 및 요청 사항',
+        helpText:
+          '팀에게 전달하는 권장사항 (이 팀은 "추천 시스템에 한정해 권장"으로 보강)',
+        required: true,
+        type: 'long_text',
+        isActive: true,
+      },
+      {
+        fieldId: 'tf_codereview',
+        order: 4,
+        name: '코드리뷰 내용',
+        helpText: '코드 단위 피드백 (선택)',
+        required: false,
+        type: 'long_text',
+        isActive: true,
+      },
+      {
+        fieldId: 'fld_rec_llm',
+        order: 5,
+        name: 'LLM 비용·실험 메모',
+        helpText: '이 팀 전용 신규 항목 — 호출 비용·hallucination 사례 기록',
+        required: false,
+        type: 'long_text',
+        isActive: true,
+      },
+      {
+        fieldId: 'tf_next',
+        order: 6,
+        name: '다음 회차 일정',
+        helpText: 'YYYY-MM-DD HH:MM',
+        required: true,
+        type: 'short_text',
+        isActive: true,
+      },
+      {
+        fieldId: 'tf_memo',
+        order: 7,
+        name: '활동 기록 메모',
+        helpText: '사진 첨부 외 보조 메모',
+        required: false,
+        type: 'short_text',
+        isActive: false,
+      },
+    ],
+  },
 }
 
 // ───────────────────────── 공통 파생 ─────────────────────────
@@ -586,7 +944,14 @@ export function buildAssignmentsData(): MentorAssignmentsData {
     },
     cohorts: adminMentoringDb.cohorts,
     mentors: adminMentoringDb.mentors,
-    templates: adminMentoringDb.templates,
+    // 배정 폼 선택지 — 활성 템플릿만(§31 비활성화 = 신규 배정 선택 불가, 기존 스냅샷 보존)
+    templates: adminMentoringDb.logTemplates
+      .filter((t) => t.isActive)
+      .map(({ templateId, name, isDefault }) => ({
+        templateId,
+        name,
+        isDefault,
+      })),
     rows,
     summary: {
       total: rows.length,
@@ -623,8 +988,8 @@ export function createAssignment(
     )
   }
   if (
-    !adminMentoringDb.templates.some(
-      (t) => t.templateId === payload.logTemplateId,
+    !adminMentoringDb.logTemplates.some(
+      (t) => t.templateId === payload.logTemplateId && t.isActive,
     )
   ) {
     return fail(
@@ -982,4 +1347,381 @@ export function createLogChangeRequest(
     ...log.history,
   ]
   return { ok: true, data: buildAdminLogDetail(logId)! }
+}
+
+// ───────────────────────── 일지 템플릿 (§31) ─────────────────────────
+
+/** 'YYYY-MM-DD' 오늘 — 템플릿 수정일 갱신용. */
+function todayIso() {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+const templateOf = (templateId: string) =>
+  adminMentoringDb.logTemplates.find((t) => t.templateId === templateId) ?? null
+
+/** 적용 팀 수 — 현 노출 배정(active·early_ended)이 이 템플릿을 쓰는 수(상태 파생). */
+const appliedTeamCountOf = (templateId: string) =>
+  adminMentoringDb.assignments.filter(
+    (a) =>
+      a.logTemplateId === templateId &&
+      (a.status === 'active' || a.status === 'early_ended'),
+  ).length
+
+function toTemplateView(t: AdminMockTemplate): AdminLogTemplate {
+  return {
+    templateId: t.templateId,
+    name: t.name,
+    description: t.description,
+    isDefault: t.isDefault,
+    isActive: t.isActive,
+    appliedTeamCount: appliedTeamCountOf(t.templateId),
+    updatedAtLabel: t.updatedAt.slice(5),
+    fields: t.fields.map((f) => ({ ...f })),
+  }
+}
+
+/** GET /admin/mentoring/log-templates 응답 빌더 — 비활성 포함 전체(필터는 화면 소관). */
+export function buildLogTemplatesData(): AdminLogTemplatesData {
+  const templates = adminMentoringDb.logTemplates.map(toTemplateView)
+  return {
+    summary: {
+      total: templates.length,
+      defaults: templates.filter((t) => t.isDefault).length,
+    },
+    templates,
+  }
+}
+
+let templateSeq = 0
+let templateFieldSeq = 0
+
+/** POST /admin/mentoring/log-templates — 생성(이름 필수 422, 항목은 편집 카드에서 추가). */
+export function createLogTemplate(
+  payload: Partial<TemplateCreatePayload> | undefined,
+): AdminMentoringMutationResult<AdminLogTemplate> {
+  if (!payload?.name?.trim()) {
+    return fail(
+      422,
+      'MENTORING_TEMPLATE_NAME_REQUIRED',
+      '템플릿 이름을 입력해 주세요.',
+    )
+  }
+  templateSeq += 1
+  const template: AdminMockTemplate = {
+    templateId: `tpl_new_${templateSeq}`,
+    name: payload.name.trim(),
+    description: payload.description?.trim() ?? '',
+    isDefault: false,
+    isActive: true,
+    updatedAt: todayIso(),
+    fields: [],
+  }
+  adminMentoringDb.logTemplates.push(template)
+  return { ok: true, data: toTemplateView(template) }
+}
+
+/** POST /admin/mentoring/log-templates/{id}/duplicate — 복제(항목 포함, 기본 OFF). */
+export function duplicateLogTemplate(
+  templateId: string,
+): AdminMentoringMutationResult<AdminLogTemplate> {
+  const source = templateOf(templateId)
+  if (!source) {
+    return fail(
+      404,
+      'ADMIN_MENTORING_TEMPLATE_NOT_FOUND',
+      '일지 템플릿을 찾을 수 없습니다.',
+    )
+  }
+  templateSeq += 1
+  const copy: AdminMockTemplate = {
+    templateId: `tpl_new_${templateSeq}`,
+    name: `${source.name} (복제)`,
+    description: source.description,
+    isDefault: false,
+    isActive: true,
+    updatedAt: todayIso(),
+    fields: source.fields.map((f) => {
+      templateFieldSeq += 1
+      return { ...f, fieldId: `tfd_${templateFieldSeq}` }
+    }),
+  }
+  adminMentoringDb.logTemplates.push(copy)
+  return { ok: true, data: toTemplateView(copy) }
+}
+
+/** 항목 공통 검증 — 항목명 필수 · 타입 2종만(422 MENTORING_TEMPLATE_FIELD_TYPE_NOT_ALLOWED). */
+function validateFields(
+  fields: AdminTemplateField[] | undefined,
+):
+  | { ok: true; fields: AdminTemplateField[] }
+  | { ok: false; status: number; code: string; message: string } {
+  if (!fields || fields.length === 0) {
+    return fail(
+      422,
+      'MENTORING_TEMPLATE_FIELD_REQUIRED',
+      '항목이 1개 이상 필요합니다.',
+    )
+  }
+  if (fields.some((f) => !f.name?.trim())) {
+    return fail(
+      422,
+      'MENTORING_TEMPLATE_FIELD_NAME_REQUIRED',
+      '항목명을 입력해 주세요.',
+    )
+  }
+  if (fields.some((f) => f.type !== 'short_text' && f.type !== 'long_text')) {
+    return fail(
+      422,
+      'MENTORING_TEMPLATE_FIELD_TYPE_NOT_ALLOWED',
+      '항목 타입은 짧은/긴 텍스트만 허용됩니다 (선택형·점수형·체크리스트 제외).',
+    )
+  }
+  // 표시 순서 정규화(1..N) — 순서 변경·삭제 후 구멍 제거.
+  return {
+    ok: true,
+    fields: fields.map((f, i) => ({ ...f, name: f.name.trim(), order: i + 1 })),
+  }
+}
+
+/**
+ * PATCH /admin/mentoring/log-templates/{id} — 항목 편집(추가·수정·삭제·순서).
+ * 기존 제출 일지·작성 중 초안은 작성 당시 스냅샷 보존(소급 적용 없음 — 403
+ * MENTORING_TEMPLATE_RETROACTIVE_FORBIDDEN 은 BE 게이트, mock 일지는 자체 스냅샷 보유).
+ */
+export function updateTemplateFields(
+  templateId: string,
+  fields: AdminTemplateField[] | undefined,
+): AdminMentoringMutationResult<AdminLogTemplate> {
+  const template = templateOf(templateId)
+  if (!template) {
+    return fail(
+      404,
+      'ADMIN_MENTORING_TEMPLATE_NOT_FOUND',
+      '일지 템플릿을 찾을 수 없습니다.',
+    )
+  }
+  const validated = validateFields(fields)
+  if (!validated.ok) return validated
+  template.fields = validated.fields
+  template.updatedAt = todayIso()
+  return { ok: true, data: toTemplateView(template) }
+}
+
+/**
+ * PATCH /admin/mentoring/log-templates/{id}/status — 비활성화/복원.
+ * 비활성화 = 신규 배정 선택 불가(기존 팀·일지 영향 없음). 기본 템플릿은 비활성화
+ * 불가(기본 1개 유지 — isDefault 단일성 규칙 BE 미확정, mock 자체 게이트 TODO).
+ */
+export function setTemplateStatus(
+  templateId: string,
+  isActive: boolean | undefined,
+): AdminMentoringMutationResult<AdminLogTemplate> {
+  const template = templateOf(templateId)
+  if (!template) {
+    return fail(
+      404,
+      'ADMIN_MENTORING_TEMPLATE_NOT_FOUND',
+      '일지 템플릿을 찾을 수 없습니다.',
+    )
+  }
+  if (typeof isActive !== 'boolean') {
+    return fail(
+      422,
+      'MENTORING_TEMPLATE_STATUS_INVALID',
+      '템플릿 상태 값이 올바르지 않습니다.',
+    )
+  }
+  if (!isActive && template.isDefault) {
+    return fail(
+      422,
+      'MENTORING_TEMPLATE_DEFAULT_DEACTIVATE_FORBIDDEN',
+      '기본 템플릿은 비활성화할 수 없습니다 — 다른 템플릿을 기본으로 지정한 뒤 시도하세요.',
+    )
+  }
+  template.isActive = isActive
+  template.updatedAt = todayIso()
+  return { ok: true, data: toTemplateView(template) }
+}
+
+// ───────────────────────── 팀별 일지 항목 (§32) ─────────────────────────
+
+const visibleAssignmentById = (assignmentId: string) =>
+  adminMentoringDb.assignments.find(
+    (a) =>
+      a.assignmentId === assignmentId &&
+      (a.status === 'active' || a.status === 'early_ended'),
+  ) ?? null
+
+/**
+ * GET /admin/mentoring/assignments/{assignmentId}/log-fields 응답 빌더.
+ * 오버라이드 없으면 배정 템플릿 항목 그대로(전부 활성). templateFields 는 diff 비교·
+ * '템플릿 값 복원' 기준. 화면 라우트는 teamId(/admin/mentoring/teams/:teamId/log-fields),
+ * API 는 assignmentId — 매핑은 배정 보드 조회로 해소(명세 매핑 규칙 미정 TODO).
+ */
+export function buildTeamLogFields(
+  assignmentId: string,
+): AdminTeamLogFieldsData | null {
+  const assignment = visibleAssignmentById(assignmentId)
+  if (!assignment) return null
+  const template = templateOf(assignment.logTemplateId)
+  if (!template) return null
+  const team = adminMentoringDb.teams.find(
+    (t) => t.teamId === assignment.teamId,
+  )!
+  const override = adminMentoringDb.teamFieldOverrides[assignmentId]
+  const fields =
+    override?.map((f) => ({ ...f })) ??
+    template.fields.map((f) => ({ ...f, isActive: true }))
+  return {
+    assignmentId,
+    teamId: team.teamId,
+    teamName: team.teamName,
+    cohortName: cohortOf(team.cohortId).cohortName,
+    mentorName: mentorOf(assignment.mentorId)?.name ?? '',
+    memberCount: team.memberCount,
+    baseTemplateName: template.name,
+    templateFields: template.fields.map((f) => ({ ...f })),
+    fields,
+  }
+}
+
+/**
+ * PUT /admin/mentoring/assignments/{assignmentId}/log-fields — 변경 일괄 저장.
+ * 다음 일지부터 적용 · 작성된 일지/초안은 작성 당시 스냅샷 보존(§32 — mock 일지는
+ * answers+SNAPSHOT_FIELDS 자체 보유라 자동 충족). 활성 항목 0개는 차단.
+ */
+export function saveTeamLogFields(
+  assignmentId: string,
+  fields: AdminTeamLogField[] | undefined,
+): AdminMentoringMutationResult<AdminTeamLogFieldsData> {
+  if (!visibleAssignmentById(assignmentId)) {
+    return fail(
+      404,
+      'ADMIN_MENTORING_ASSIGNMENT_NOT_FOUND',
+      '배정을 찾을 수 없습니다.',
+    )
+  }
+  const validated = validateFields(fields)
+  if (!validated.ok) return validated
+  if (fields!.every((f) => !f.isActive)) {
+    return fail(
+      422,
+      'MENTORING_TEAM_FIELD_ACTIVE_REQUIRED',
+      '활성 항목이 1개 이상 필요합니다.',
+    )
+  }
+  // validateFields 가 이름 trim·순서 정규화(1..N)한 결과에 활성 여부만 입력 순서대로 복원.
+  adminMentoringDb.teamFieldOverrides[assignmentId] = validated.fields.map(
+    (f, i) => ({ ...f, isActive: fields![i].isActive !== false }),
+  )
+  return { ok: true, data: buildTeamLogFields(assignmentId)! }
+}
+
+/** POST /admin/mentoring/assignments/{assignmentId}/log-fields/reset — 템플릿으로 되돌리기. */
+export function resetTeamLogFields(
+  assignmentId: string,
+): AdminMentoringMutationResult<AdminTeamLogFieldsData> {
+  if (!visibleAssignmentById(assignmentId)) {
+    return fail(
+      404,
+      'ADMIN_MENTORING_ASSIGNMENT_NOT_FOUND',
+      '배정을 찾을 수 없습니다.',
+    )
+  }
+  delete adminMentoringDb.teamFieldOverrides[assignmentId]
+  return { ok: true, data: buildTeamLogFields(assignmentId)! }
+}
+
+// ───────────────────────── 멘토 통계 (§33) — 조회 전용 ─────────────────────────
+
+/**
+ * 팀 상태 파생 — 정책 enum 중 통계 노출 5종. 우선순위: 평가 가능(완료/평가 필요) >
+ * 수정 요청 > 일지 필요(제출 일지 0) > 진행 중. reservation_waiting 은 예약(멘토 콘솔)
+ * 소관이라 운영 mock 파생 범위 밖 — BE 확정 시 정합.
+ */
+function statTeamStatusOf(
+  assignment: AdminMockAssignment,
+): MentoringTeamStatKey {
+  const logs = adminMentoringDb.logs.filter(
+    (l) => l.assignmentId === assignment.assignmentId,
+  )
+  const eligible =
+    assignment.status === 'early_ended' ||
+    assignment.recognizedHours >= assignment.allocatedHours
+  if (eligible) {
+    return assignment.evaluation ? 'completed' : 'evaluation_needed'
+  }
+  if (logs.some((l) => l.status === 'change_requested')) {
+    return 'change_requested'
+  }
+  if (!logs.some((l) => l.status !== 'draft')) return 'log_needed'
+  return 'in_progress'
+}
+
+function toStatRow(assignment: AdminMockAssignment): MentorTeamStatRow {
+  const team = adminMentoringDb.teams.find(
+    (t) => t.teamId === assignment.teamId,
+  )!
+  const cohort = cohortOf(team.cohortId)
+  const logs = adminMentoringDb.logs.filter(
+    (l) => l.assignmentId === assignment.assignmentId,
+  )
+  const eligible =
+    assignment.status === 'early_ended' ||
+    assignment.recognizedHours >= assignment.allocatedHours
+  return {
+    assignmentId: assignment.assignmentId,
+    teamId: team.teamId,
+    teamName: team.teamName,
+    mentorId: assignment.mentorId,
+    mentorName: mentorOf(assignment.mentorId)?.name ?? '',
+    courseName: cohort.courseName,
+    cohortLabel: cohort.cohortLabel,
+    allocatedHours: assignment.allocatedHours,
+    recognizedHours: assignment.recognizedHours,
+    logCount: logs.filter((l) => l.status !== 'draft').length,
+    changeRequestCount: logs.filter((l) => l.status === 'change_requested')
+      .length,
+    teamStatus: statTeamStatusOf(assignment),
+    evaluation: assignment.evaluation
+      ? 'submitted'
+      : eligible
+        ? 'needed'
+        : 'not_eligible',
+    recommendation: assignment.evaluation
+      ? assignment.evaluation.recommended
+        ? 'recommended'
+        : 'not_recommended'
+      : 'pending',
+    certificate: assignment.evaluation
+      ? 'reflected'
+      : eligible
+        ? 'waiting_source'
+        : 'not_target',
+    earlyEnded: assignment.status === 'early_ended',
+  }
+}
+
+/**
+ * GET /admin/mentoring/statistics 응답 빌더 — A1 배정·일지 상태 공유 파생(배정 생성·
+ * 조기 종료·수정 요청이 통계에 즉시 반영). 조회 전용 — mutation 빌더 없음(403
+ * MENTORING_STATISTICS_READ_ONLY 는 BE 게이트).
+ */
+export function buildMentoringStatistics(): AdminMentoringStatisticsData {
+  const rows = adminMentoringDb.assignments
+    .filter((a) => a.status === 'active' || a.status === 'early_ended')
+    .map(toStatRow)
+  const summary: Record<MentoringTeamStatKey, number> = {
+    in_progress: 0,
+    log_needed: 0,
+    change_requested: 0,
+    evaluation_needed: 0,
+    completed: 0,
+  }
+  rows.forEach((r) => {
+    summary[r.teamStatus] += 1
+  })
+  return { summary, rows }
 }

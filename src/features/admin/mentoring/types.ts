@@ -12,9 +12,10 @@ export interface AdminMentorOption {
   name: string
 }
 
+/** 배정 폼 선택지 — 전체 템플릿(adminMentoringDb.logTemplates)에서 활성만 파생. */
 export interface AdminLogTemplateOption {
   templateId: string
-  /** '기본 멘토링 일지 v2.1' */
+  /** 'AI 캠프 기본 v2.1' */
   name: string
   isDefault: boolean
 }
@@ -192,4 +193,139 @@ export interface AdminMentoringLogDetail {
 export interface MentoringLogChangeRequestPayload {
   reasonCode: MentoringLogChangeReasonCode
   note: string
+}
+
+// ───────────────────────── 일지 템플릿 (§31) ─────────────────────────
+
+/** 항목 타입 — short_text/long_text 만(선택형·점수형·체크리스트 금지, 422). */
+export type AdminTemplateFieldType = 'short_text' | 'long_text'
+
+/** 일지 항목 = 항목명·설명/도움말·필수 여부·표시 순서·타입(§31 도메인 모델). */
+export interface AdminTemplateField {
+  fieldId: string
+  /** 표시 순서 1~N */
+  order: number
+  name: string
+  helpText: string
+  required: boolean
+  type: AdminTemplateFieldType
+}
+
+export interface AdminLogTemplate {
+  templateId: string
+  name: string
+  description: string
+  /** 기본 템플릿 — 1개만 가능(단일성 규칙은 BE 미확정 TODO, mock 은 1개 고정) */
+  isDefault: boolean
+  isActive: boolean
+  /** 현 노출 배정(active·early_ended)의 적용 수 — mock 상태 파생 */
+  appliedTeamCount: number
+  /** '05-19' — 목록 'MM-DD 수정' 표기 */
+  updatedAtLabel: string
+  fields: AdminTemplateField[]
+}
+
+export interface AdminLogTemplatesData {
+  /** hero '총 N 템플릿 · 기본 M' */
+  summary: { total: number; defaults: number }
+  templates: AdminLogTemplate[]
+}
+
+/** POST /admin/mentoring/log-templates — 이름 필수. */
+export interface TemplateCreatePayload {
+  name: string
+  description: string
+}
+
+/** PATCH /admin/mentoring/log-templates/{templateId} — 항목 전체 교체(추가·수정·삭제·순서). */
+export interface TemplateFieldsUpdatePayload {
+  fields: AdminTemplateField[]
+}
+
+// ───────────────────────── 팀별 일지 항목 (§32) ─────────────────────────
+
+/**
+ * 템플릿 대비 차이 — 행 배지·AMBER strip 노출 키.
+ * disabled > added > required_changed > desc_changed 우선순위로 단일 표시.
+ */
+export type TeamLogFieldDiffStatus =
+  | 'same'
+  | 'desc_changed'
+  | 'added'
+  | 'required_changed'
+  | 'disabled'
+
+/** 팀 일지 항목 — 템플릿 항목 + 팀 오버라이드(비활성 포함). */
+export interface AdminTeamLogField extends AdminTemplateField {
+  /** 비활성화 항목 — 작성된 답변은 보존(§32) */
+  isActive: boolean
+}
+
+/** GET /admin/mentoring/assignments/{assignmentId}/log-fields 응답. */
+export interface AdminTeamLogFieldsData {
+  assignmentId: string
+  teamId: string
+  teamName: string
+  /** 'AI 5기 A반' — hero 컨텍스트 미니 칩 */
+  cohortName: string
+  mentorName: string
+  memberCount: number
+  baseTemplateName: string
+  /** diff 비교·'템플릿 값 복원' 기준이 되는 기본 템플릿 항목(배정 템플릿) */
+  templateFields: AdminTemplateField[]
+  /** 현재 저장된 팀 항목(오버라이드 없으면 템플릿 항목 그대로) */
+  fields: AdminTeamLogField[]
+}
+
+/** PUT /admin/mentoring/assignments/{assignmentId}/log-fields — 변경 일괄 저장. */
+export interface TeamLogFieldsSavePayload {
+  fields: AdminTeamLogField[]
+}
+
+// ───────────────────────── 멘토 통계 (§33) — 조회 전용 ─────────────────────────
+
+/**
+ * 통계 요약·필터의 팀 상태 — 정책 enum 7종 중 통계 화면 노출 5종(3206:3024 오버레이).
+ * reservation_waiting·early_ended 는 운영 통계 mock 파생 범위 밖(예약은 멘토 콘솔 소관,
+ * 조기 종료는 평가 필요/완료로 흡수) — BE 확정 시 정합 TODO.
+ */
+export type MentoringTeamStatKey =
+  | 'in_progress'
+  | 'log_needed'
+  | 'change_requested'
+  | 'evaluation_needed'
+  | 'completed'
+
+export type StatEvaluationState = 'submitted' | 'needed' | 'not_eligible'
+export type StatRecommendationState =
+  | 'recommended'
+  | 'not_recommended'
+  | 'pending'
+export type StatCertificateState = 'reflected' | 'waiting_source' | 'not_target'
+
+/** 멘토/팀별 통계 행 — 수정·변경 요청·보정 액션 없음(403 MENTORING_STATISTICS_READ_ONLY). */
+export interface MentorTeamStatRow {
+  assignmentId: string
+  teamId: string
+  teamName: string
+  mentorId: string
+  mentorName: string
+  courseName: string
+  cohortLabel: string
+  allocatedHours: number
+  recognizedHours: number
+  /** 제출(비초안) 일지 수 */
+  logCount: number
+  /** 현재 수정 요청(재제출 대기) 건수 */
+  changeRequestCount: number
+  teamStatus: MentoringTeamStatKey
+  evaluation: StatEvaluationState
+  recommendation: StatRecommendationState
+  certificate: StatCertificateState
+  earlyEnded: boolean
+}
+
+export interface AdminMentoringStatisticsData {
+  summary: Record<MentoringTeamStatKey, number>
+  rows: MentorTeamStatRow[]
 }

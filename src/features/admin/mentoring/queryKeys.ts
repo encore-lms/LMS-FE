@@ -6,4 +6,8 @@ export const adminMentoringKeys = {
   logs: () => [...adminMentoringKeys.all, 'logs'] as const,
   logDetail: (logId: string) =>
     [...adminMentoringKeys.all, 'logs', logId] as const,
+  logTemplates: () => [...adminMentoringKeys.all, 'log-templates'] as const,
+  teamLogFields: (assignmentId: string) =>
+    [...adminMentoringKeys.all, 'team-log-fields', assignmentId] as const,
+  statistics: () => [...adminMentoringKeys.all, 'statistics'] as const,
 } as const

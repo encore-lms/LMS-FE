@@ -2,12 +2,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { adminMentoringKeys } from './queryKeys'
 import type {
+  AdminLogTemplate,
+  AdminLogTemplatesData,
   AdminMentoringLogDetail,
   AdminMentoringLogsData,
+  AdminMentoringStatisticsData,
+  AdminTeamLogField,
+  AdminTeamLogFieldsData,
+  AdminTemplateField,
   MentorAssignmentCreateRequest,
   MentorAssignmentRow,
   MentorAssignmentsData,
   MentoringLogChangeRequestPayload,
+  TemplateCreatePayload,
 } from './types'
 
 // 운영 멘토링 API 훅 — P0_25_26 명세 경로 그대로(apiClient baseURL /api → 경로 앞 미부착).
@@ -171,6 +178,176 @@ export function useCreateLogChangeRequest() {
         queryKey: adminMentoringKeys.logDetail(vars.logId),
       })
     },
+  })
+}
+
+// ───────────────────────── 일지 템플릿 (§31) ─────────────────────────
+
+/** GET /admin/mentoring/log-templates — 템플릿 목록(항목 포함, 비활성 포함). */
+export function useLogTemplates() {
+  return useQuery({
+    queryKey: adminMentoringKeys.logTemplates(),
+    queryFn: () =>
+      apiClient
+        .get<AdminLogTemplatesData>('/admin/mentoring/log-templates')
+        .then((r) => r.data),
+  })
+}
+
+/** 템플릿 mutation 공통 onSuccess — 목록 + 배정 폼 선택지(배정 보드) 무효화. */
+function useInvalidateTemplates() {
+  const queryClient = useQueryClient()
+  return () => {
+    queryClient.invalidateQueries({
+      queryKey: adminMentoringKeys.logTemplates(),
+    })
+    // 배정 폼 템플릿 선택지가 같은 상태에서 파생 — 비활성화·생성 즉시 반영.
+    queryClient.invalidateQueries({
+      queryKey: adminMentoringKeys.assignments(),
+    })
+  }
+}
+
+/** POST /admin/mentoring/log-templates — 새 템플릿(이름 필수 422). */
+export function useCreateLogTemplate() {
+  const invalidate = useInvalidateTemplates()
+  return useMutation({
+    mutationFn: (payload: TemplateCreatePayload) =>
+      apiClient
+        .post<AdminLogTemplate>('/admin/mentoring/log-templates', payload)
+        .then((r) => r.data),
+    onSuccess: invalidate,
+  })
+}
+
+/** POST /admin/mentoring/log-templates/{id}/duplicate — 복제(항목 포함). */
+export function useDuplicateLogTemplate() {
+  const invalidate = useInvalidateTemplates()
+  return useMutation({
+    mutationFn: (templateId: string) =>
+      apiClient
+        .post<AdminLogTemplate>(
+          `/admin/mentoring/log-templates/${templateId}/duplicate`,
+        )
+        .then((r) => r.data),
+    onSuccess: invalidate,
+  })
+}
+
+/** PATCH /admin/mentoring/log-templates/{id} — 항목 편집(기존 일지 스냅샷 보존·새 일지부터 적용). */
+export function useUpdateTemplateFields() {
+  const invalidate = useInvalidateTemplates()
+  return useMutation({
+    mutationFn: ({
+      templateId,
+      fields,
+    }: {
+      templateId: string
+      fields: AdminTemplateField[]
+    }) =>
+      apiClient
+        .patch<AdminLogTemplate>(
+          `/admin/mentoring/log-templates/${templateId}`,
+          { fields },
+        )
+        .then((r) => r.data),
+    onSuccess: invalidate,
+  })
+}
+
+/** PATCH /admin/mentoring/log-templates/{id}/status — 비활성화/복원(기본 템플릿 비활성화 422). */
+export function useSetTemplateStatus() {
+  const invalidate = useInvalidateTemplates()
+  return useMutation({
+    mutationFn: ({
+      templateId,
+      isActive,
+    }: {
+      templateId: string
+      isActive: boolean
+    }) =>
+      apiClient
+        .patch<AdminLogTemplate>(
+          `/admin/mentoring/log-templates/${templateId}/status`,
+          { isActive },
+        )
+        .then((r) => r.data),
+    onSuccess: invalidate,
+  })
+}
+
+// ───────────────────────── 팀별 일지 항목 (§32) ─────────────────────────
+
+/**
+ * GET /admin/mentoring/assignments/{assignmentId}/log-fields — 팀 항목 + 템플릿 기준.
+ * 화면 라우트는 teamId — assignmentId 매핑은 배정 보드(useMentorAssignments)에서 해소.
+ */
+export function useTeamLogFields(assignmentId: string | null) {
+  return useQuery({
+    queryKey: adminMentoringKeys.teamLogFields(assignmentId ?? ''),
+    enabled: !!assignmentId,
+    queryFn: () =>
+      apiClient
+        .get<AdminTeamLogFieldsData>(
+          `/admin/mentoring/assignments/${assignmentId}/log-fields`,
+        )
+        .then((r) => r.data),
+  })
+}
+
+/** PUT .../log-fields — 변경 일괄 저장(다음 일지부터 적용 · 작성된 일지 보존). */
+export function useSaveTeamLogFields() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      assignmentId,
+      fields,
+    }: {
+      assignmentId: string
+      fields: AdminTeamLogField[]
+    }) =>
+      apiClient
+        .put<AdminTeamLogFieldsData>(
+          `/admin/mentoring/assignments/${assignmentId}/log-fields`,
+          { fields },
+        )
+        .then((r) => r.data),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.teamLogFields(vars.assignmentId),
+      })
+    },
+  })
+}
+
+/** POST .../log-fields/reset — 템플릿으로 되돌리기(이 팀 수정 사항 일괄 복원). */
+export function useResetTeamLogFields() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (assignmentId: string) =>
+      apiClient
+        .post<AdminTeamLogFieldsData>(
+          `/admin/mentoring/assignments/${assignmentId}/log-fields/reset`,
+        )
+        .then((r) => r.data),
+    onSuccess: (_data, assignmentId) => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.teamLogFields(assignmentId),
+      })
+    },
+  })
+}
+
+// ───────────────────────── 멘토 통계 (§33) — 조회 전용 ─────────────────────────
+
+/** GET /admin/mentoring/statistics — 조회 전용(mutation 훅 없음, 403 READ_ONLY 정책). */
+export function useMentoringStatistics() {
+  return useQuery({
+    queryKey: adminMentoringKeys.statistics(),
+    queryFn: () =>
+      apiClient
+        .get<AdminMentoringStatisticsData>('/admin/mentoring/statistics')
+        .then((r) => r.data),
   })
 }
 

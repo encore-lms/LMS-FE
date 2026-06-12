@@ -55,7 +55,10 @@ export default function SnapshotPage() {
 
   const s = data
   const copyUrl = () => {
-    navigator.clipboard?.writeText(s.verify.url)
+    // 외부 검증 public 라우트(/verify/:publicToken)로 실접속 가능한 절대 URL을 복사.
+    navigator.clipboard?.writeText(
+      `${window.location.origin}/verify/${s.publicToken}`,
+    )
     toast.success('공개 검증 URL이 복사됐어요')
   }
   const previewVerify = () =>

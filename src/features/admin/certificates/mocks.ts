@@ -64,7 +64,8 @@ const snapshot: CertSnapshot = {
   ],
   payloadJson: PAYLOAD,
   verify: {
-    url: 'verify.playdata.io/cert/vfy_kp9q4r2nx0',
+    // 외부 검증 라우트(/verify/:publicToken)와 정합 — 복사 시 origin은 화면에서 조합.
+    url: '/verify/vfy_kp9q4r2nx0',
     snapshotHash: 'sha256:a3f9…07e',
     verificationId: 'ver_2026Q2_512',
   },

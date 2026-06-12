@@ -10,8 +10,7 @@ import {
 import type { MentoringLogStatus, MentoringPlaceType } from '../types'
 
 // 멘토링 일지 화면 상태 메타 — Figma 2553:4040 원문 라벨(유효/수정 요청/작성 중).
-// M1 팀 상세 frame 의 LogStatusChip('승인')과 라벨이 다른 것은 Figma frame 간 원문 차이 —
-// 도메인 정본(초안/유효/수정 요청)에 맞는 본 화면 라벨을 일지 영역 정본으로 쓴다.
+// LogStatusChip의 구 '승인' 라벨은 2026-06-13 '유효'로 통일(자동 유효 정책 정합, Figma 동반 정정).
 export interface LogStatusMeta {
   label: string
   icon: LucideIcon

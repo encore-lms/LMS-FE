@@ -3,16 +3,28 @@ import {
   buildAdminLogDetail,
   buildAdminLogsData,
   buildAssignmentsData,
+  buildLogTemplatesData,
+  buildMentoringStatistics,
+  buildTeamLogFields,
   changeAssignmentMentor,
   createAssignment,
   createLogChangeRequest,
+  createLogTemplate,
+  duplicateLogTemplate,
   earlyEndAssignment,
+  resetTeamLogFields,
+  saveTeamLogFields,
+  setTemplateStatus,
   updateAllocatedHours,
+  updateTemplateFields,
   type AdminMentoringMutationResult,
 } from './mockDb'
 import type {
   MentorAssignmentCreateRequest,
   MentoringLogChangeRequestPayload,
+  TeamLogFieldsSavePayload,
+  TemplateCreatePayload,
+  TemplateFieldsUpdatePayload,
 } from './types'
 
 // 운영 멘토링 mock — 기능 로컬. handlers.ts 의 import.meta.glob 자동 수집(export const handlers).
@@ -95,5 +107,73 @@ export const handlers = [
           await jsonOf<Partial<MentoringLogChangeRequestPayload>>(request),
         ),
       ),
+  ),
+
+  // ── 일지 템플릿 (§31) ──
+  http.get('/api/admin/mentoring/log-templates', () =>
+    ok(buildLogTemplatesData()),
+  ),
+  http.post('/api/admin/mentoring/log-templates', async ({ request }) =>
+    respond(
+      createLogTemplate(await jsonOf<Partial<TemplateCreatePayload>>(request)),
+    ),
+  ),
+  http.post(
+    '/api/admin/mentoring/log-templates/:templateId/duplicate',
+    ({ params }) => respond(duplicateLogTemplate(String(params.templateId))),
+  ),
+  http.patch(
+    '/api/admin/mentoring/log-templates/:templateId/status',
+    async ({ params, request }) => {
+      const body = await jsonOf<{ isActive?: boolean }>(request)
+      return respond(
+        setTemplateStatus(String(params.templateId), body?.isActive),
+      )
+    },
+  ),
+  http.patch(
+    '/api/admin/mentoring/log-templates/:templateId',
+    async ({ params, request }) => {
+      const body = await jsonOf<Partial<TemplateFieldsUpdatePayload>>(request)
+      return respond(
+        updateTemplateFields(String(params.templateId), body?.fields),
+      )
+    },
+  ),
+
+  // ── 팀별 일지 항목 (§32) — 명세 경로는 assignmentId(화면 teamId 는 배정 보드로 매핑) ──
+  http.get(
+    '/api/admin/mentoring/assignments/:assignmentId/log-fields',
+    ({ params }) => {
+      const data = buildTeamLogFields(String(params.assignmentId))
+      if (!data) {
+        return HttpResponse.json(
+          {
+            code: 'ADMIN_MENTORING_ASSIGNMENT_NOT_FOUND',
+            message: '배정을 찾을 수 없습니다.',
+          },
+          { status: 404 },
+        )
+      }
+      return ok(data)
+    },
+  ),
+  http.put(
+    '/api/admin/mentoring/assignments/:assignmentId/log-fields',
+    async ({ params, request }) => {
+      const body = await jsonOf<Partial<TeamLogFieldsSavePayload>>(request)
+      return respond(
+        saveTeamLogFields(String(params.assignmentId), body?.fields),
+      )
+    },
+  ),
+  http.post(
+    '/api/admin/mentoring/assignments/:assignmentId/log-fields/reset',
+    ({ params }) => respond(resetTeamLogFields(String(params.assignmentId))),
+  ),
+
+  // ── 멘토 통계 (§33) — 조회 전용(mutation 핸들러 없음) ──
+  http.get('/api/admin/mentoring/statistics', () =>
+    ok(buildMentoringStatistics()),
   ),
 ]

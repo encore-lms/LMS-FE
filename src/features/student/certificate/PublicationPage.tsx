@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useCertPublication } from '../api/certificate'
 
@@ -42,6 +43,7 @@ function Toggle({
 export default function PublicationPage() {
   const { data, isPending, isError, refetch } = useCertPublication()
   const [over, setOver] = useState<Record<string, boolean>>({})
+  const toast = useToast()
   usePageHeader('공개 설정')
 
   if (isPending)
@@ -126,6 +128,13 @@ export default function PublicationPage() {
                 </span>
                 <button
                   type="button"
+                  onClick={() => {
+                    // 상대 경로 mock을 현재 호스트 기준 절대 URL로 — 운영 스냅샷 복사와 동일 패턴
+                    void navigator.clipboard?.writeText(
+                      new URL(data.verifyUrl, window.location.origin).href,
+                    )
+                    toast.success('검증 URL이 복사됐어요')
+                  }}
                   className="text-brand ml-auto shrink-0 text-[11px] font-bold"
                 >
                   복사

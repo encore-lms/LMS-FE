@@ -863,7 +863,9 @@ const mockChanges: CertChangesData = {
 const mockPublication: CertPublicationData = {
   issuedLabel: '수강 역량 증명서 발급 완료',
   issuedSub: '백엔드 부트캠프 · 3기 · 인증일 2026-09-14',
-  verifyUrl: 'https://verify.playdata.io/cert/abc-1234',
+  // 실제 /verify 라우트 기준으로 정합(2026-06-12, 외부검증 #103·#104) — 운영 스냅샷 mock과 동일
+  // 토큰이라 복사→접속 클릭-스루 동작. 페르소나(백엔드 3기 vs 공개 응답 이서연) 정합은 BE 확정 시.
+  verifyUrl: '/verify/vfy_kp9q4r2nx0',
   toggles: [
     {
       id: 't1',

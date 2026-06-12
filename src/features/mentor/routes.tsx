@@ -7,6 +7,10 @@ import type { RouteObject } from 'react-router-dom'
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const TeamsPage = lazy(() => import('./teams/TeamsPage'))
 const TeamDetailPage = lazy(() => import('./teams/TeamDetailPage'))
+const RequestsPage = lazy(() => import('./requests/RequestsPage'))
+const RequestResponseModal = lazy(
+  () => import('./requests/RequestResponseModal'),
+)
 
 export const mentorRoutes: RouteObject[] = [
   {
@@ -17,7 +21,13 @@ export const mentorRoutes: RouteObject[] = [
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'teams', element: <TeamsPage /> },
       { path: 'teams/:teamId', element: <TeamDetailPage /> },
-      // TODO(후속 PR): mentoring-requests(+/:requestId 모달) · mentoring-logs(+/new · /:logId)
+      {
+        path: 'mentoring-requests',
+        element: <RequestsPage />,
+        // URL 라우팅 모달 — 목록 위 오버레이(중첩 라우트, 목록 탭·검색 상태 유지)
+        children: [{ path: ':requestId', element: <RequestResponseModal /> }],
+      },
+      // TODO(후속 PR): mentoring-logs(+/new · /:logId)
       //   · teams/:teamId/{evaluation,recommendation} · evaluations · recommendations
       //   · mentees/:studentId
     ],

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Check,
@@ -17,13 +17,22 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import {
-  FEEDBACK_COUNT,
-  RESUMES,
-  SECTIONS,
-  completionOf,
-  type ResumeSummary,
-} from './mocks'
+import { Button } from '@/components/ui/Button'
+import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
+import { useDeleteResume, useResumes } from '../api/resume'
+import { SECTIONS, completionOf } from './constants'
+import type { ResumeSummary } from './types'
+
+// ISO 날짜 → 'YYYY.MM.DD' 표시용.
+function formatDate(iso: string) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}.${mm}.${dd}`
+}
 
 /** KPI 타일 — 아이콘 + 값 + 라벨. */
 function StatCard({
@@ -58,9 +67,11 @@ function StatCard({
 function ResumeCard({
   resume,
   onOpen,
+  onDelete,
 }: {
   resume: ResumeSummary
   onOpen: () => void
+  onDelete: () => void
 }) {
   const done = new Set(resume.doneSections)
   return (
@@ -83,7 +94,10 @@ function ResumeCard({
             role="button"
             tabIndex={-1}
             aria-label="삭제"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
             className="text-fg-subtle hover:text-danger"
           >
             <Trash2 className="h-4 w-4" />
@@ -131,7 +145,7 @@ function ResumeCard({
 
       <div className="text-fg-subtle flex items-center gap-1.5 text-[12px]">
         <Clock className="h-3.5 w-3.5" />
-        {resume.updatedAt}
+        {formatDate(resume.updatedAt)}
       </div>
     </button>
   )
@@ -162,7 +176,7 @@ function ResumeDrawer({
               {resume.title}
             </span>
             <span className="text-fg-subtle text-[12px]">
-              최종 수정 {resume.updatedAt}
+              최종 수정 {formatDate(resume.updatedAt)}
             </span>
           </div>
           <button
@@ -248,22 +262,54 @@ function ResumeDrawer({
 
 /**
  * 이력서 관리 (/student/resume) — 내 이력서 작성 현황과 피드백 관리.
- * KPI 4종 + 새 이력서 작성 + 이력서 목록(섹션 진행률·칩). 카드 클릭 → 섹션 현황 드로어 → 편집.
+ * 목록·생성·삭제는 mock API(useResumes/useCreateResume/useDeleteResume)로 처리.
+ * 카드 클릭 → 섹션 현황 드로어 → 편집. 휴지통 → 삭제 확인 모달.
  */
 export default function ResumePage() {
   const navigate = useNavigate()
+  const toast = useToast()
+  const { data, isPending, isError, refetch } = useResumes()
+  const deleteResume = useDeleteResume()
   const [selected, setSelected] = useState<ResumeSummary | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ResumeSummary | null>(null)
   usePageHeader('이력서 관리', '이력서 작성 현황과 피드백을 관리합니다.')
 
-  const kpis = useMemo(
-    () => ({
-      total: RESUMES.length,
-      done: RESUMES.filter((r) => r.status === '작성 완료').length,
-      writing: RESUMES.filter((r) => r.status === '작성 중').length,
-      feedback: FEEDBACK_COUNT,
-    }),
-    [],
-  )
+  if (isPending)
+    return <div className="text-fg-muted p-8">이력서를 불러오는 중…</div>
+  if (isError || !data) {
+    return (
+      <div className="p-8">
+        <Empty
+          title="이력서를 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={<Button onClick={() => refetch()}>다시 시도</Button>}
+        />
+      </div>
+    )
+  }
+
+  const resumes = data.resumes
+  const kpis = {
+    total: resumes.length,
+    done: resumes.filter((r) => r.status === '작성 완료').length,
+    writing: resumes.filter((r) => r.status === '작성 중').length,
+    feedback: data.feedbackCount,
+  }
+
+  // 작성 버튼은 편집기로 보내기만 한다(이 시점엔 생성 X). 편집기에서 제출해야 목록에 생긴다.
+  const handleCreate = () => navigate('/student/resume/new')
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    const id = deleteTarget.id
+    deleteResume.mutate(id, {
+      onSuccess: () => {
+        toast.success('이력서를 삭제했어요')
+        setDeleteTarget(null)
+        if (selected?.id === id) setSelected(null)
+      },
+    })
+  }
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -297,7 +343,7 @@ export default function ResumePage() {
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => navigate('/student/resume/new')}
+          onClick={handleCreate}
           className="bg-accent-strong inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[14px] font-bold text-white"
         >
           <Plus className="h-4 w-4" />새 이력서 작성
@@ -312,9 +358,20 @@ export default function ResumePage() {
       </div>
 
       <div className="flex flex-col gap-4">
-        {RESUMES.map((r) => (
-          <ResumeCard key={r.id} resume={r} onOpen={() => setSelected(r)} />
-        ))}
+        {resumes.length === 0 ? (
+          <div className="border-border text-fg-muted rounded-xl border border-dashed p-10 text-center text-[14px]">
+            아직 작성한 이력서가 없어요. “새 이력서 작성”으로 시작하세요.
+          </div>
+        ) : (
+          resumes.map((r) => (
+            <ResumeCard
+              key={r.id}
+              resume={r}
+              onOpen={() => setSelected(r)}
+              onDelete={() => setDeleteTarget(r)}
+            />
+          ))
+        )}
       </div>
 
       {selected && (
@@ -324,6 +381,37 @@ export default function ResumePage() {
           onEdit={() => navigate(`/student/resume/${selected.id}/edit`)}
         />
       )}
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="이력서를 삭제할까요?"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              disabled={deleteResume.isPending}
+              className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:opacity-60"
+            >
+              삭제
+            </button>
+          </>
+        }
+      >
+        <p className="text-fg-muted text-[13px] leading-6">
+          <span className="text-fg font-semibold">{deleteTarget?.title}</span>{' '}
+          이력서를 삭제하면 되돌릴 수 없습니다.
+        </p>
+      </Modal>
     </div>
   )
 }

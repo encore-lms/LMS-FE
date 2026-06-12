@@ -11,6 +11,11 @@ const RequestsPage = lazy(() => import('./requests/RequestsPage'))
 const RequestResponseModal = lazy(
   () => import('./requests/RequestResponseModal'),
 )
+// 폴더명은 mentoring-logs — 루트 .gitignore 의 'logs' 패턴(빌드 로그용)과 충돌 회피.
+const LogsPage = lazy(() => import('./mentoring-logs/LogsPage'))
+const LogDetailModal = lazy(() => import('./mentoring-logs/LogDetailModal'))
+const LogComposePage = lazy(() => import('./mentoring-logs/LogComposePage'))
+const MenteeDetailPage = lazy(() => import('./mentees/MenteeDetailPage'))
 
 export const mentorRoutes: RouteObject[] = [
   {
@@ -27,9 +32,18 @@ export const mentorRoutes: RouteObject[] = [
         // URL 라우팅 모달 — 목록 위 오버레이(중첩 라우트, 목록 탭·검색 상태 유지)
         children: [{ path: ':requestId', element: <RequestResponseModal /> }],
       },
-      // TODO(후속 PR): mentoring-logs(+/new · /:logId)
-      //   · teams/:teamId/{evaluation,recommendation} · evaluations · recommendations
-      //   · mentees/:studentId
+      // 일지 작성/수정 — 정적 'new' 를 동적 :logId 보다 앞에(admin routes 주석 컨벤션)
+      { path: 'mentoring-logs/new', element: <LogComposePage /> },
+      {
+        path: 'mentoring-logs',
+        element: <LogsPage />,
+        // URL 라우팅 상세 모달 — 목록 위 오버레이(필터 상태 유지)
+        children: [{ path: ':logId', element: <LogDetailModal /> }],
+      },
+      // 학생 상세 — 팀 상세에서만 진입하는 보조 상세(독립 목록 없음)
+      { path: 'mentees/:studentId', element: <MenteeDetailPage /> },
+      // TODO(후속 PR): teams/:teamId/{evaluation,recommendation}
+      //   · evaluations · recommendations
     ],
   },
 ]

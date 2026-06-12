@@ -16,4 +16,10 @@ export const mentorKeys = {
     [...mentorKeys.all, 'teams', teamId, 'log-field-snapshot'] as const,
   mentee: (studentId: string) =>
     [...mentorKeys.all, 'mentees', studentId] as const,
+  teamEvaluation: (teamId: string) =>
+    [...mentorKeys.all, 'teams', teamId, 'evaluation'] as const,
+  teamRecommendation: (teamId: string) =>
+    [...mentorKeys.all, 'teams', teamId, 'recommendation'] as const,
+  evaluations: () => [...mentorKeys.all, 'evaluations'] as const,
+  recommendations: () => [...mentorKeys.all, 'recommendations'] as const,
 } as const

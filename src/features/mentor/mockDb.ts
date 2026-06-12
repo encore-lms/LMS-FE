@@ -1,7 +1,20 @@
 import type {
+  EvaluationScoreTuple,
   MenteeDetailData,
   MentorDashboardData,
+  MentorEvaluationDraftPayload,
+  MentorEvaluationMemberEntry,
+  MentorEvaluationSheetData,
+  MentorEvaluationStatus,
+  MentorEvaluationSubmission,
+  MentorEvaluationsData,
   MentorNextReservation,
+  MentorRecommendationCandidate,
+  MentorRecommendationDraftPayload,
+  MentorRecommendationSheetData,
+  MentorRecommendationStatus,
+  MentorRecommendationSubmission,
+  MentorRecommendationsData,
   MentorTeamAssignment,
   MentorTeamDetailData,
   MentorTeamMember,
@@ -140,16 +153,22 @@ interface MentorMockDb {
   requests: MentorMockRequest[]
   /**
    * 제출 완료 멘토 평가·추천(mock) — 완료 팀(NLP 분석 팀)만 존재. 학생 상세(M3)의
-   * 평가 5축·추천 카드 데이터 원천이며, M5 평가·추천 PR 이 이 상태를 소유·확장한다.
+   * 평가 5축·추천 카드 데이터 원천이며, M4 평가·추천 제출 mutation 이 이 상태를 확장한다.
    * 축 순서 고정: 기술·책임감·소통·성장·팀워크(점수 1~5 가정 — 범위 미확정 TODO).
    */
   evaluations: MentorMockEvaluation[]
   recommendations: MentorMockRecommendation[]
+  /** 평가 임시 저장(MentorEvaluation.draftPayload) — teamId 키, 제출 시 제거 */
+  evaluationDrafts: Record<string, MentorEvaluationDraftPayload>
+  /** 추천 임시 저장 — teamId 키, 제출 시 제거 */
+  recommendationDrafts: Record<string, MentorRecommendationDraftPayload>
 }
 
 export interface MentorMockEvaluation {
   teamId: string
   writtenAtLabel: string // '2026-05-15'
+  /** 최종 제출 시각('2026-05-15 20:40') — submittedAt/lockedAt 대응(M4 제출 요약용) */
+  submittedAtLabel?: string
   byStudent: Record<
     string,
     { axes: [number, number, number, number, number]; comment?: string }
@@ -158,10 +177,13 @@ export interface MentorMockEvaluation {
 
 export interface MentorMockRecommendation {
   teamId: string
-  /** 팀당 1명 추천 정책 — 추천 대상 학생 */
-  studentId: string
+  /** 팀당 1명 추천 정책 — 추천 대상 학생. '추천 안 함'이면 null(targetStudentProfileId:null) */
+  studentId: string | null
   submittedAtLabel: string // '2026-05-15 21:10'
+  /** 증명서용 간략 요약(certificateSummary) — 추천 안 함이면 빈 문자열 */
   reason: string
+  /** 수강생 즉시 알림 토글 — BE 계약 'Notification optional'(FE 보존, 확정 시 정합 TODO) */
+  notify?: boolean
 }
 
 /** 학생 상세 '멘토 평가 5축' 고정 축 라벨(05-26 결정 — 운영 커스터마이즈 없음). */
@@ -868,17 +890,35 @@ export const mentorDb: MentorMockDb = {
     {
       teamId: 'team_nlp',
       writtenAtLabel: '2026-05-15',
+      submittedAtLabel: '2026-05-15 20:40',
       byStudent: {
-        // 한예린 — 평균 4.6(Figma 2659:1772 대표값), 멘토 코멘트(선택 입력) 포함.
+        // 한예린 — 평균 4.6(Figma 2659:1772 대표값). 줄글 코멘트는 수강생별 필수(05-29 확정)
+        // — M3 mock 의 미작성분(4명)을 M4 정책 정합으로 보강했다.
         stu_han_y: {
           axes: [5, 4, 5, 5, 4],
           comment:
             '코퍼스 수집 전략과 토픽 모델링 해석 기준을 본인이 주도적으로 정리하면서, 분석 결과를 발표 구조로 옮기는 과정에서 팀의 결정을 끌어냈습니다. 코드 리뷰 코멘트 품질이 안정적이고, 다섯 명 협업에서 신뢰감을 주는 발표를 보여줍니다. 본인 영역에 머무르지 않고 지표 정의·일정 동기화에도 능동적으로 기여.',
         },
-        stu_kim_d: { axes: [4, 4, 4, 5, 4] },
-        stu_park_s: { axes: [4, 5, 4, 4, 5] },
-        stu_lee_g: { axes: [4, 4, 5, 4, 4] },
-        stu_jo: { axes: [3, 4, 4, 4, 5] },
+        stu_kim_d: {
+          axes: [4, 4, 4, 5, 4],
+          comment:
+            '토픽 모델링 실험 설계를 안정적으로 수행했고, 새 기법 적용 전 비교 실험을 스스로 챙기는 학습 태도가 돋보입니다.',
+        },
+        stu_park_s: {
+          axes: [4, 5, 4, 4, 5],
+          comment:
+            '코퍼스 수집·전처리 일정을 끝까지 책임지고, 팀원 작업이 막힐 때 데이터 이슈를 먼저 정리해 공유했습니다.',
+        },
+        stu_lee_g: {
+          axes: [4, 4, 5, 4, 4],
+          comment:
+            'API 설계 논의에서 의견 전달이 명확하고, 분석 결과를 서비스 응답 구조로 옮기는 협업 커뮤니케이션이 좋았습니다.',
+        },
+        stu_jo: {
+          axes: [3, 4, 4, 4, 5],
+          comment:
+            '시각화 화면 구현은 보강이 필요하지만, 발표 자료 협업과 팀 일정 조율에서 꾸준히 팀을 지원했습니다.',
+        },
       },
     },
   ],
@@ -889,8 +929,40 @@ export const mentorDb: MentorMockDb = {
       submittedAtLabel: '2026-05-15 21:10',
       reason:
         '코퍼스 수집 전략 수립부터 토픽 모델링 결과 해석까지 분석 파이프라인 전 구간을 주도했고, 해석 기준을 팀에 명확히 설명해 합의를 이끌었습니다. 최종 발표 리허설에서도 구성·전달 모두 팀 진행 속도를 끌어올린 핵심 기여자입니다.',
+      notify: true,
     },
   ],
+  // 평가 작성 중 초안 — 평가 필요 팀(데이터마트 팀)의 대표 진행 상태(Figma 2553:4279 의
+  // '완료 N + 작성 중 1 + 대기' 카드 상태 재현 — 팀원 구성은 mock 세계관 기준 4명).
+  evaluationDrafts: {
+    team_dm: {
+      entries: [
+        {
+          studentId: 'stu_seo',
+          scores: [5, 4, 5, 5, 4],
+          comment:
+            '집계 마트 성능 점검과 지표 정의 검토를 주도하며 팀 일정도 체계적으로 챙겼습니다.',
+        },
+        {
+          studentId: 'stu_lee_d',
+          scores: [4, 5, 4, 4, 5],
+          comment:
+            'ETL 파이프라인 리뷰 후속 액션을 끝까지 마무리. 데이터 검증 문서화가 꼼꼼합니다.',
+        },
+        {
+          studentId: 'stu_kim_n',
+          scores: [5, 4, null, null, null],
+          comment: '',
+        },
+        {
+          studentId: 'stu_jung',
+          scores: [null, null, null, null, null],
+          comment: '',
+        },
+      ],
+    },
+  },
+  recommendationDrafts: {},
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10
@@ -1077,9 +1149,17 @@ export function buildTeamDetailData(
               (assignment.recognizedHours / assignment.allocatedHours) * 100,
             )
           : 0,
-      // 제출 상태 연동은 평가·추천 PR(M5)에서 — Figma 시안 라벨은 '대기'만 정의.
-      evaluationStatusLabel: team.status === 'completed' ? '완료' : '대기',
-      recommendationStatusLabel: team.status === 'completed' ? '완료' : '대기',
+      // M4 제출 상태 연동 — 제출 즉시 '완료'(제출 후 수정 불가, PATCH/DELETE 없음).
+      evaluationStatusLabel: mentorDb.evaluations.some(
+        (e) => e.teamId === teamId,
+      )
+        ? '완료'
+        : '대기',
+      recommendationStatusLabel: mentorDb.recommendations.some(
+        (r) => r.teamId === teamId,
+      )
+        ? '완료'
+        : '대기',
     },
     // 최신순 정렬 — M3에서 초안(작성 중) 일지가 추가돼 배열 순서 대신 진행 일시 기준 파생.
     recentLogs: sortByPerformedAtDesc(team.logs).map((log) => ({
@@ -1902,4 +1982,462 @@ export function buildMenteeDetail(studentId: string): MenteeDetailData | null {
     }
   }
   return null
+}
+
+// ───────────────────────── 평가 · 추천 (M4) ─────────────────────────
+
+const EMPTY_SCORES: EvaluationScoreTuple = [null, null, null, null, null]
+
+/** 점수 유효성 — 1~5 정수(범위 미확정 TODO — Figma '0~5점 필수' 카피와 충돌 openQuestion). */
+const isValidScore = (s: number | null): s is number =>
+  s != null && Number.isInteger(s) && s >= 1 && s <= 5
+
+/** 평가 입력 완료 — 5축 전 점수 + 줄글 코멘트(필수, 500자 이내). */
+const isCompleteEvaluationEntry = (entry: {
+  scores: EvaluationScoreTuple
+  comment: string
+}) =>
+  entry.scores.every(isValidScore) &&
+  entry.comment.trim().length > 0 &&
+  entry.comment.length <= 500
+
+/** 평가 가능 게이트 — N시간 완료 또는 운영자 조기 종료(P0_35 · 03_멘토.md §6). */
+const isEvaluationEligible = (team: MentorMockTeam) =>
+  toAssignment(team).nHoursDone || team.status === 'early_ended'
+
+const avgOf = (scores: number[]) =>
+  round1(scores.reduce((sum, s) => sum + s, 0) / scores.length)
+
+/** '2026-03-19 21:14' + 24h → '2026-03-20(금) 21:14 까지' (Figma 원문 행 표기 전용). */
+function plus24hLabel(stamp: string) {
+  const d = new Date(stamp.replace(' ', 'T'))
+  d.setDate(d.getDate() + 1)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}(${DOW_LABELS[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())} 까지`
+}
+
+/** 팀원 + 초안/제출본 병합 — 평가 카드 행(read model). */
+function evaluationEntriesOf(
+  team: MentorMockTeam,
+): MentorEvaluationMemberEntry[] {
+  const submitted = mentorDb.evaluations.find((e) => e.teamId === team.teamId)
+  const draft = mentorDb.evaluationDrafts[team.teamId]
+  return team.members.map((member) => {
+    const sub = submitted?.byStudent[member.studentId]
+    const d = draft?.entries.find((e) => e.studentId === member.studentId)
+    return {
+      ...member,
+      scores: sub
+        ? ([...sub.axes] as EvaluationScoreTuple)
+        : d
+          ? ([...d.scores] as EvaluationScoreTuple)
+          : ([...EMPTY_SCORES] as EvaluationScoreTuple),
+      comment: sub ? (sub.comment ?? '') : (d?.comment ?? ''),
+    }
+  })
+}
+
+/** GET /mentor/v1/teams/{teamId}/evaluation — 미배정 팀이면 null(403 처리). */
+export function buildTeamEvaluationSheet(
+  teamId: string,
+): MentorEvaluationSheetData | null {
+  const team = mentorDb.teams.find((t) => t.teamId === teamId)
+  if (!team) return null
+  const assignment = toAssignment(team)
+  const submitted = mentorDb.evaluations.find((e) => e.teamId === teamId)
+  const eligible = isEvaluationEligible(team)
+  const members = evaluationEntriesOf(team)
+  const status: MentorEvaluationStatus = submitted
+    ? 'submitted'
+    : !eligible
+      ? 'not_eligible'
+      : members.every(isCompleteEvaluationEntry)
+        ? 'ready_to_submit'
+        : 'draft'
+  return {
+    teamId,
+    cohortLabel: team.cohortLabel,
+    teamName: team.teamName,
+    memberCount: team.members.length,
+    allocatedHours: assignment.allocatedHours,
+    recognizedHours: assignment.recognizedHours,
+    eligible,
+    eligibleLabel:
+      team.status === 'early_ended'
+        ? '조기 종료 · 평가 가능'
+        : assignment.nHoursDone
+          ? 'N시간 완료 · 평가 가능'
+          : 'N시간 미완료 · 평가 잠금',
+    lockReasonLabel: eligible
+      ? null
+      : `N시간 완료 후 활성 — 인정 ${assignment.recognizedHours}h / 배정 ${assignment.allocatedHours}h`,
+    status,
+    submittedAtLabel:
+      submitted?.submittedAtLabel ?? submitted?.writtenAtLabel ?? null,
+    members,
+  }
+}
+
+export type MentorEvaluationMutationResult =
+  | { ok: true; sheet: MentorEvaluationSheetData }
+  | { ok: false; status: number; code: string; message: string }
+
+const evalError = (
+  status: number,
+  code: string,
+  message: string,
+): MentorEvaluationMutationResult => ({ ok: false, status, code, message })
+
+/** payload 정규화 — 팀원 외 entry 제거 + 점수 범위 클램프 + 코멘트 500자 컷. */
+function normalizeEvaluationPayload(
+  team: MentorMockTeam,
+  payload: MentorEvaluationDraftPayload,
+): MentorEvaluationDraftPayload {
+  return {
+    entries: team.members.map((member) => {
+      const entry = payload.entries.find(
+        (e) => e.studentId === member.studentId,
+      )
+      return {
+        studentId: member.studentId,
+        scores: (entry?.scores ?? EMPTY_SCORES).map((s) =>
+          isValidScore(s) ? s : null,
+        ) as EvaluationScoreTuple,
+        comment: (entry?.comment ?? '').slice(0, 500),
+      }
+    }),
+  }
+}
+
+/** 평가 공통 guard — 미배정 403 · 제출 후 수정 불가 409 · 게이트 422. */
+function guardEvaluation(
+  teamId: string,
+): { team: MentorMockTeam } | MentorEvaluationMutationResult {
+  const team = mentorDb.teams.find((t) => t.teamId === teamId)
+  if (!team)
+    return evalError(
+      403,
+      'MENTOR_SCOPE_FORBIDDEN',
+      '본인에게 배정된 팀이 아닙니다.',
+    )
+  if (mentorDb.evaluations.some((e) => e.teamId === teamId))
+    // 최종 제출 후 PATCH/DELETE endpoint 없음(05-31 확정) — 코드명은 명세 대조 전 추정 TODO.
+    return evalError(
+      409,
+      'MENTOR_EVALUATION_ALREADY_SUBMITTED',
+      '제출된 평가는 수정할 수 없습니다.',
+    )
+  if (!isEvaluationEligible(team))
+    return evalError(
+      422,
+      'MENTOR_EVALUATION_NOT_ELIGIBLE',
+      'N시간 완료 또는 조기 종료 후에 평가할 수 있습니다.',
+    )
+  return { team }
+}
+
+/** PUT /mentor/v1/teams/{teamId}/evaluation/draft — 부분 입력 그대로 보관(자동/임시 저장). */
+export function saveEvaluationDraft(
+  teamId: string,
+  payload: MentorEvaluationDraftPayload,
+): MentorEvaluationMutationResult {
+  const guarded = guardEvaluation(teamId)
+  if ('ok' in guarded) return guarded
+  mentorDb.evaluationDrafts[teamId] = normalizeEvaluationPayload(
+    guarded.team,
+    payload,
+  )
+  return { ok: true, sheet: buildTeamEvaluationSheet(teamId)! }
+}
+
+/**
+ * POST /mentor/v1/teams/{teamId}/evaluation/submit — 최종 제출(submittedAt/lockedAt).
+ * 전원 5축 점수 + 줄글 코멘트 필수(미충족 422), 제출 후 수정·삭제 불가(409).
+ * 제출 후에도 팀 상태는 evaluation_needed 유지 — 추천 제출까지 완료해야 completed
+ * (활동 인정 요건 = 평가 + 추천 제출 완료, P0_32).
+ */
+export function submitEvaluation(
+  teamId: string,
+  payload?: MentorEvaluationDraftPayload,
+): MentorEvaluationMutationResult {
+  const guarded = guardEvaluation(teamId)
+  if ('ok' in guarded) return guarded
+  const { team } = guarded
+  if (payload)
+    mentorDb.evaluationDrafts[teamId] = normalizeEvaluationPayload(
+      team,
+      payload,
+    )
+  const entries = evaluationEntriesOf(team)
+  const missing = entries.filter((e) => !isCompleteEvaluationEntry(e)).length
+  if (missing > 0)
+    // 코드명은 명세 에러 22종 대조 전 추정(MENTOR_EVALUATION_* 계열) — BE 확정 시 정합 TODO.
+    return evalError(
+      422,
+      'MENTOR_EVALUATION_REQUIRED_FIELD_MISSING',
+      `팀원 전체 5축 점수와 줄글 평가 코멘트를 입력해 주세요 (${missing}명 미완료).`,
+    )
+  const stamp = nowStamp().replace('T', ' ')
+  mentorDb.evaluations.push({
+    teamId,
+    writtenAtLabel: stamp.slice(0, 10),
+    submittedAtLabel: stamp,
+    byStudent: Object.fromEntries(
+      entries.map((e) => [
+        e.studentId,
+        {
+          axes: e.scores.map((s) => s!) as [
+            number,
+            number,
+            number,
+            number,
+            number,
+          ],
+          comment: e.comment.trim(),
+        },
+      ]),
+    ),
+  })
+  delete mentorDb.evaluationDrafts[teamId]
+  return { ok: true, sheet: buildTeamEvaluationSheet(teamId)! }
+}
+
+function toEvaluationSubmission(
+  evaluation: MentorMockEvaluation,
+): MentorEvaluationSubmission | null {
+  const team = mentorDb.teams.find((t) => t.teamId === evaluation.teamId)
+  if (!team) return null
+  const entries = Object.values(evaluation.byStudent)
+  const submittedAtLabel =
+    evaluation.submittedAtLabel ?? `${evaluation.writtenAtLabel} 00:00`
+  const commentCount = entries.filter((e) => (e.comment ?? '').trim()).length
+  return {
+    teamId: team.teamId,
+    cohortLabel: team.cohortLabel,
+    teamName: team.teamName,
+    submittedAtLabel,
+    targetCount: entries.length,
+    axisAverages: EVALUATION_AXIS_LABELS.map((label, i) => ({
+      label,
+      value: avgOf(entries.map((e) => e.axes[i])),
+    })),
+    commentsLabel:
+      commentCount === entries.length
+        ? `${entries.length}명 모두 작성`
+        : `${commentCount} / ${entries.length}명 작성`,
+    editDeadlineLabel: plus24hLabel(submittedAtLabel),
+  }
+}
+
+/**
+ * GET /mentor/v1/evaluations — 제출 완료 페이지 요약(최신 제출 우선).
+ * 명세 P0_35 에는 팀 단위 endpoint 만 정의 — 목록 read model 은 mock 보강(BE 확정 시 정합 TODO).
+ */
+export function buildEvaluationsData(): MentorEvaluationsData {
+  return {
+    submissions: mentorDb.evaluations
+      .map(toEvaluationSubmission)
+      .filter((s): s is MentorEvaluationSubmission => s != null)
+      .sort((a, b) => b.submittedAtLabel.localeCompare(a.submittedAtLabel)),
+  }
+}
+
+/** GET /mentor/v1/teams/{teamId}/recommendation — 미배정 팀이면 null(403 처리). */
+export function buildTeamRecommendationSheet(
+  teamId: string,
+): MentorRecommendationSheetData | null {
+  const team = mentorDb.teams.find((t) => t.teamId === teamId)
+  if (!team) return null
+  const evaluation = mentorDb.evaluations.find((e) => e.teamId === teamId)
+  const submitted = mentorDb.recommendations.find((r) => r.teamId === teamId)
+  const draft = mentorDb.recommendationDrafts[teamId]
+  const candidates: MentorRecommendationCandidate[] = team.members.map(
+    (member) => {
+      const sub = evaluation?.byStudent[member.studentId]
+      return {
+        ...member,
+        average: sub ? avgOf(sub.axes) : null,
+        scores: sub
+          ? ([...sub.axes] as EvaluationScoreTuple)
+          : ([...EMPTY_SCORES] as EvaluationScoreTuple),
+      }
+    },
+  )
+  const status: MentorRecommendationStatus = !evaluation
+    ? 'locked_until_evaluation'
+    : submitted
+      ? submitted.studentId
+        ? 'submitted_recommended'
+        : 'submitted_not_recommended'
+      : draft
+        ? 'draft'
+        : 'not_started'
+  return {
+    teamId,
+    cohortLabel: team.cohortLabel,
+    teamName: team.teamName,
+    memberCount: team.members.length,
+    status,
+    teamAverage: evaluation
+      ? avgOf(
+          candidates
+            .map((c) => c.average)
+            .filter((a): a is number => a != null),
+        )
+      : null,
+    candidates,
+    draft: submitted
+      ? {
+          mode: submitted.studentId ? 'recommend' : 'none',
+          studentId: submitted.studentId,
+          summary: submitted.reason,
+          notify: submitted.notify ?? true,
+        }
+      : (draft ?? { mode: null, studentId: null, summary: '', notify: true }),
+    submittedAtLabel: submitted?.submittedAtLabel ?? null,
+  }
+}
+
+export type MentorRecommendationMutationResult =
+  | { ok: true; sheet: MentorRecommendationSheetData }
+  | { ok: false; status: number; code: string; message: string }
+
+const recError = (
+  status: number,
+  code: string,
+  message: string,
+): MentorRecommendationMutationResult => ({ ok: false, status, code, message })
+
+/** 추천 공통 guard — 미배정 403 · 평가 미제출 잠금 422 · 제출 후 수정 불가 409. */
+function guardRecommendation(
+  teamId: string,
+): { team: MentorMockTeam } | MentorRecommendationMutationResult {
+  const team = mentorDb.teams.find((t) => t.teamId === teamId)
+  if (!team)
+    return recError(
+      403,
+      'MENTOR_SCOPE_FORBIDDEN',
+      '본인에게 배정된 팀이 아닙니다.',
+    )
+  if (!mentorDb.evaluations.some((e) => e.teamId === teamId))
+    return recError(
+      422,
+      'MENTOR_RECOMMENDATION_LOCKED_UNTIL_EVALUATION',
+      '팀원 전체 평가를 최종 제출한 뒤 추천을 선택할 수 있습니다.',
+    )
+  if (mentorDb.recommendations.some((r) => r.teamId === teamId))
+    return recError(
+      409,
+      'MENTOR_RECOMMENDATION_ALREADY_SUBMITTED',
+      '제출된 추천은 수정할 수 없습니다.',
+    )
+  return { team }
+}
+
+/** PUT /mentor/v1/teams/{teamId}/recommendation/draft — 자동/임시 저장. */
+export function saveRecommendationDraft(
+  teamId: string,
+  payload: MentorRecommendationDraftPayload,
+): MentorRecommendationMutationResult {
+  const guarded = guardRecommendation(teamId)
+  if ('ok' in guarded) return guarded
+  mentorDb.recommendationDrafts[teamId] = {
+    mode: payload.mode,
+    studentId: payload.mode === 'none' ? null : payload.studentId,
+    summary: (payload.summary ?? '').slice(0, 500),
+    notify: payload.notify ?? true,
+  }
+  return { ok: true, sheet: buildTeamRecommendationSheet(teamId)! }
+}
+
+/**
+ * POST /mentor/v1/teams/{teamId}/recommendation/submit — 최종 제출(팀당 1건 unique).
+ * recommended → 대상 1명 + certificateSummary 필수(MENTOR_RECOMMENDATION_SUMMARY_REQUIRED),
+ * not_recommended → 대상 null · 사유 입력 없음. 제출 후 수정 불가(409).
+ * 추천 제출 = 활동 인정 요건 충족 — 평가 필요 팀은 completed 로 전이(조기 종료 팀은 유지).
+ */
+export function submitRecommendation(
+  teamId: string,
+  payload?: MentorRecommendationDraftPayload,
+): MentorRecommendationMutationResult {
+  const guarded = guardRecommendation(teamId)
+  if ('ok' in guarded) return guarded
+  const { team } = guarded
+  const input = payload ?? mentorDb.recommendationDrafts[teamId]
+  if (!input?.mode)
+    // 코드명은 명세 에러 22종 대조 전 추정(MENTOR_RECOMMENDATION_* 계열) — BE 확정 시 정합 TODO.
+    return recError(
+      422,
+      'MENTOR_RECOMMENDATION_MODE_REQUIRED',
+      '팀원 1명 추천 또는 추천하지 않음 중 하나를 선택해 주세요.',
+    )
+  const summary = (input.summary ?? '').trim()
+  if (input.mode === 'recommend') {
+    if (
+      !input.studentId ||
+      !team.members.some((m) => m.studentId === input.studentId)
+    )
+      return recError(
+        422,
+        'MENTOR_RECOMMENDATION_TARGET_REQUIRED',
+        '추천할 팀원을 선택해 주세요 (팀당 1명).',
+      )
+    if (!summary)
+      return recError(
+        422,
+        'MENTOR_RECOMMENDATION_SUMMARY_REQUIRED',
+        '추천 대상자는 증명서용 간략 요약이 있어야 합니다.',
+      )
+    if (summary.length > 500)
+      return recError(
+        422,
+        'MENTOR_RECOMMENDATION_SUMMARY_LENGTH_EXCEEDED',
+        '증명서용 간략 요약은 500자 이내로 작성해 주세요.',
+      )
+  }
+  mentorDb.recommendations.push({
+    teamId,
+    studentId: input.mode === 'recommend' ? input.studentId : null,
+    submittedAtLabel: nowStamp().replace('T', ' '),
+    reason: input.mode === 'recommend' ? summary : '',
+    notify: input.notify ?? true,
+  })
+  delete mentorDb.recommendationDrafts[teamId]
+  if (team.status === 'evaluation_needed') team.status = 'completed'
+  return { ok: true, sheet: buildTeamRecommendationSheet(teamId)! }
+}
+
+function toRecommendationSubmission(
+  rec: MentorMockRecommendation,
+): MentorRecommendationSubmission | null {
+  const team = mentorDb.teams.find((t) => t.teamId === rec.teamId)
+  if (!team) return null
+  const member = rec.studentId
+    ? team.members.find((m) => m.studentId === rec.studentId)
+    : undefined
+  return {
+    teamId: team.teamId,
+    cohortLabel: team.cohortLabel,
+    teamName: team.teamName,
+    submittedAtLabel: rec.submittedAtLabel,
+    recommended: !!member,
+    targetLabel: member
+      ? `${member.name} (${member.tagLabel ?? (member.role === 'pm' ? 'PM' : '팀원')})`
+      : '추천하지 않음',
+    summaryLabel: member
+      ? `${rec.reason.length}자 · 필수 충족`
+      : '입력 없음 · 추천하지 않음',
+    certificateLabel: '증명서 전체 공개 + 인증 완료 + 최신화 스냅샷 기준',
+    editDeadlineLabel: plus24hLabel(rec.submittedAtLabel),
+  }
+}
+
+/** GET /mentor/v1/recommendations — 제출 완료 페이지 요약(최신 제출 우선, mock 보강 read model). */
+export function buildRecommendationsData(): MentorRecommendationsData {
+  return {
+    submissions: mentorDb.recommendations
+      .map(toRecommendationSubmission)
+      .filter((s): s is MentorRecommendationSubmission => s != null)
+      .sort((a, b) => b.submittedAtLabel.localeCompare(a.submittedAtLabel)),
+  }
 }

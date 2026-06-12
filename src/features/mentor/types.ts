@@ -486,3 +486,161 @@ export interface MentorTeamDetailData {
   evaluation: MentorTeamEvaluationSummary
   recentLogs: MentorTeamLogRow[]
 }
+
+// ───────────────────────── 평가 · 추천 (M4) ─────────────────────────
+
+/**
+ * 5축 점수 튜플 — 축 순서 고정(기술·책임감·소통·성장·팀워크, EVALUATION_AXIS_LABELS).
+ * 점수 범위는 1~5 가정(문서 미확정 TODO — Figma 캡션 '0~5점 필수'와 UI 1~5 세그먼트 충돌
+ * openQuestion). 미입력 축은 null.
+ */
+export type EvaluationScoreTuple = [
+  number | null,
+  number | null,
+  number | null,
+  number | null,
+  number | null,
+]
+
+/** 수강생 1명의 평가 입력 — 초안·제출 payload 공용(MentorEvaluationDraftRequest 대응). */
+export interface MentorEvaluationDraftEntry {
+  studentId: string
+  scores: EvaluationScoreTuple
+  /** 수강생별 줄글 평가 코멘트(필수, 최대 500자) — 원문은 내부 기록(수강생 비공개) */
+  comment: string
+}
+
+/** PUT /mentor/v1/teams/{teamId}/evaluation/draft · POST .../evaluation/submit payload. */
+export interface MentorEvaluationDraftPayload {
+  entries: MentorEvaluationDraftEntry[]
+}
+
+/**
+ * 평가 상태 — MentorEvaluationStatus 4종(P0_32_35 API명세).
+ * ready_to_submit = 전원 5축 + 줄글 입력 완료(제출 전).
+ */
+export type MentorEvaluationStatus =
+  | 'not_eligible'
+  | 'draft'
+  | 'ready_to_submit'
+  | 'submitted'
+
+/** 평가 카드 행 — 팀원 + 초안/제출 입력값 병합 read model. */
+export interface MentorEvaluationMemberEntry extends MentorTeamMember {
+  scores: EvaluationScoreTuple
+  comment: string
+}
+
+/**
+ * GET /mentor/v1/teams/{teamId}/evaluation — 평가 작성 화면 단일 응답.
+ * 가능 조건: N시간 완료 또는 조기 종료(422 MENTOR_EVALUATION_NOT_ELIGIBLE), 잠금 사유 표시.
+ */
+export interface MentorEvaluationSheetData {
+  teamId: string
+  cohortLabel: string
+  teamName: string
+  memberCount: number
+  allocatedHours: number
+  recognizedHours: number
+  /** N시간 완료 또는 조기 종료 — 평가 가능 */
+  eligible: boolean
+  /** hero 상태 칩 — 'N시간 완료 · 평가 가능' | '조기 종료 · 평가 가능' | 'N시간 미완료 · 평가 잠금' */
+  eligibleLabel: string
+  /** 잠금 사유 — eligible 이면 null */
+  lockReasonLabel: string | null
+  status: MentorEvaluationStatus
+  /** 최종 제출 시각 — 미제출이면 null('2026-03-19 21:14') */
+  submittedAtLabel: string | null
+  members: MentorEvaluationMemberEntry[]
+}
+
+/** 제출 완료 페이지 요약 행 — GET /mentor/v1/evaluations. */
+export interface MentorEvaluationSubmission {
+  teamId: string
+  cohortLabel: string
+  teamName: string
+  submittedAtLabel: string // '2026-03-19 21:14'
+  targetCount: number
+  /** 축별 평균 — 축 순서 고정('기술 4.6 · 책임감 4.6 …' 표기용) */
+  axisAverages: { label: string; value: number }[]
+  commentsLabel: string // '5명 모두 작성'
+  /**
+   * '2026-03-20(금) 21:14 까지' — Figma 원문 '24시간 수정 마감' 행. 확정 정책(제출 후
+   * 수정 불가 · PATCH/DELETE 없음)과 충돌(openQuestion) — 표기만 유지, 수정 진입 없음.
+   */
+  editDeadlineLabel: string
+}
+
+export interface MentorEvaluationsData {
+  submissions: MentorEvaluationSubmission[]
+}
+
+/**
+ * 추천 상태 — MentorRecommendationStatus 5종(P0_32_35 API명세).
+ * 진입 조건: 팀원 전체 평가 최종 제출 완료(locked_until_evaluation).
+ */
+export type MentorRecommendationStatus =
+  | 'locked_until_evaluation'
+  | 'not_started'
+  | 'draft'
+  | 'submitted_recommended'
+  | 'submitted_not_recommended'
+
+/** 추천 모드 — 팀당 1명 추천 또는 '추천 안 함' 명시 선택(상호배타). */
+export type MentorRecommendationMode = 'recommend' | 'none'
+
+/** 추천 후보 카드 — 제출된 평가의 5축 점수·평균을 그대로 표시(조회 전용). */
+export interface MentorRecommendationCandidate extends MentorTeamMember {
+  /** 평가 평균(소수 1자리) — 평가 미제출이면 null */
+  average: number | null
+  scores: EvaluationScoreTuple
+}
+
+/**
+ * 추천 초안·제출 payload — MentorRecommendationSubmitRequest(recommendationType) 대응.
+ * notify 는 알림 발송 토글(BE 계약 'Notification optional' — FE 보존용, 확정 시 정합 TODO).
+ */
+export interface MentorRecommendationDraftPayload {
+  mode: MentorRecommendationMode | null
+  /** 추천 대상 — mode 'none'이면 null(targetStudentProfileId:null 대응) */
+  studentId: string | null
+  /** 증명서용 간략 요약 — 추천 시 필수(MENTOR_RECOMMENDATION_SUMMARY_REQUIRED), 최대 500자 */
+  summary: string
+  notify: boolean
+}
+
+/** GET /mentor/v1/teams/{teamId}/recommendation — 추천 선택 화면 단일 응답. */
+export interface MentorRecommendationSheetData {
+  teamId: string
+  cohortLabel: string
+  teamName: string
+  memberCount: number
+  status: MentorRecommendationStatus
+  /** 팀 평가 평균(멤버 평균의 평균, 소수 1자리) — 평가 미제출이면 null */
+  teamAverage: number | null
+  candidates: MentorRecommendationCandidate[]
+  /** 저장된 초안(없으면 기본값) — 제출 후에는 제출본 미러 */
+  draft: MentorRecommendationDraftPayload
+  submittedAtLabel: string | null
+}
+
+/** 제출 완료 페이지 요약 행 — GET /mentor/v1/recommendations. */
+export interface MentorRecommendationSubmission {
+  teamId: string
+  cohortLabel: string
+  teamName: string
+  submittedAtLabel: string
+  recommended: boolean
+  /** '임도형 (AI/ML)' | '추천하지 않음' */
+  targetLabel: string
+  /** '184자 · 필수 충족' | '입력 없음 · 추천하지 않음' */
+  summaryLabel: string
+  /** 증명서 반영 기준 — '증명서 전체 공개 + 인증 완료 + 최신화 스냅샷 기준'(고정 정책) */
+  certificateLabel: string
+  /** 평가와 동일 — Figma 원문 행 유지(제출 후 수정 불가 정책과 충돌 openQuestion) */
+  editDeadlineLabel: string
+}
+
+export interface MentorRecommendationsData {
+  submissions: MentorRecommendationSubmission[]
+}

@@ -8,4 +8,12 @@ export const mentorKeys = {
   requests: () => [...mentorKeys.all, 'mentoring-requests'] as const,
   requestDetail: (requestId: string) =>
     [...mentorKeys.all, 'mentoring-requests', requestId] as const,
+  logs: () => [...mentorKeys.all, 'mentoring-logs'] as const,
+  logDetail: (logId: string) =>
+    [...mentorKeys.all, 'mentoring-logs', logId] as const,
+  logTargets: () => [...mentorKeys.all, 'mentoring-logs', 'targets'] as const,
+  logFields: (teamId: string) =>
+    [...mentorKeys.all, 'teams', teamId, 'log-field-snapshot'] as const,
+  mentee: (studentId: string) =>
+    [...mentorKeys.all, 'mentees', studentId] as const,
 } as const

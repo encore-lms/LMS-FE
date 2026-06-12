@@ -1,16 +1,28 @@
 import { http, HttpResponse } from 'msw'
 import {
   buildDashboardData,
+  buildLogFieldSnapshot,
+  buildMenteeDetail,
+  buildMentoringLogDetail,
+  buildMentoringLogTargets,
+  buildMentoringLogsData,
   buildMentoringRequestDetail,
   buildMentoringRequestsData,
   buildTeamDetailData,
   buildTeamsData,
   respondToMentoringRequest,
+  saveMentoringLogDraft,
+  submitMentoringLog,
   updateConfirmedDetails,
+  updateMentoringLogDraft,
+  type MentoringLogMutationResult,
   type MentoringRequestMockAction,
   type MentoringRequestMutationResult,
 } from './mockDb'
-import type { MentoringRequestActionPayload } from './types'
+import type {
+  MentoringLogDraftPayload,
+  MentoringRequestActionPayload,
+} from './types'
 
 // 멘토 콘솔 mock — 기능 로컬. handlers.ts 의 import.meta.glob 자동 수집(export const handlers).
 // 상태는 mockDb.ts 단일 모듈 소유 — 이후 멘토 PR(예약 응답·일지 제출·평가 등)의 mutation
@@ -25,6 +37,20 @@ const respond = (result: MentoringRequestMutationResult) =>
         { code: result.code, message: result.message },
         { status: result.status },
       )
+
+/** 일지 mutation 결과 → HTTP 응답 — respond 와 동일 규약(401 금지). */
+const respondLog = (result: MentoringLogMutationResult) =>
+  result.ok
+    ? ok(result.log)
+    : HttpResponse.json(
+        { code: result.code, message: result.message },
+        { status: result.status },
+      )
+
+const logPayloadOf = async (request: Request) =>
+  (await request.json().catch(() => undefined)) as
+    | MentoringLogDraftPayload
+    | undefined
 
 // 멘토 응답 3종 + 확정 취소 — 명세 세그먼트 그대로(POST {confirm|reject|counter-propose|cancel}).
 const requestAction = (action: MentoringRequestMockAction) =>
@@ -88,4 +114,88 @@ export const handlers = [
       )
     },
   ),
+
+  // ── 멘토링 일지 (M3) — 정적 세그먼트(targets·draft)를 :logId 보다 앞에 등록 ──
+  http.get('/api/mentor/v1/mentoring-logs/targets', () =>
+    ok(buildMentoringLogTargets()),
+  ),
+  http.get('/api/mentor/v1/mentoring-logs', () => ok(buildMentoringLogsData())),
+  http.get('/api/mentor/v1/mentoring-logs/:logId', ({ params }) => {
+    const detail = buildMentoringLogDetail(String(params.logId))
+    if (!detail) {
+      return HttpResponse.json(
+        { code: 'MENTOR_LOG_NOT_FOUND', message: '일지를 찾을 수 없습니다.' },
+        { status: 404 },
+      )
+    }
+    return ok(detail)
+  }),
+  http.get('/api/mentor/v1/teams/:teamId/log-field-snapshot', ({ params }) => {
+    const fields = buildLogFieldSnapshot(String(params.teamId))
+    if (!fields) {
+      return HttpResponse.json(
+        {
+          code: 'MENTOR_SCOPE_FORBIDDEN',
+          message: '본인에게 배정된 팀이 아닙니다.',
+        },
+        { status: 403 },
+      )
+    }
+    return ok(fields)
+  }),
+  // 초안 저장 — 신규(PUT /draft)·갱신(PUT /:logId/draft). 인정 시간 미반영(DRAFT).
+  http.put('/api/mentor/v1/mentoring-logs/draft', async ({ request }) => {
+    const payload = await logPayloadOf(request)
+    return respondLog(saveMentoringLogDraft(payload ?? { teamId: '' }))
+  }),
+  http.put(
+    '/api/mentor/v1/mentoring-logs/:logId/draft',
+    async ({ params, request }) => {
+      const payload = await logPayloadOf(request)
+      return respondLog(
+        updateMentoringLogDraft(
+          String(params.logId),
+          payload ?? { teamId: '' },
+        ),
+      )
+    },
+  ),
+  // 제출·재제출 — 즉시 자동 유효, 인정 시간 재계산이 M1 팀 누적 상태에 반영(상태형 mock).
+  http.post(
+    '/api/mentor/v1/mentoring-logs/:logId/submit',
+    async ({ params, request }) =>
+      respondLog(
+        submitMentoringLog(
+          String(params.logId),
+          'submit',
+          await logPayloadOf(request),
+        ),
+      ),
+  ),
+  http.post(
+    '/api/mentor/v1/mentoring-logs/:logId/resubmit',
+    async ({ params, request }) =>
+      respondLog(
+        submitMentoringLog(
+          String(params.logId),
+          'resubmit',
+          await logPayloadOf(request),
+        ),
+      ),
+  ),
+
+  // ── 학생 상세 (M3) — 배정 팀 팀원 한정 조회(미배정 403, P0-MTR-DASH-001 준용) ──
+  http.get('/api/mentor/v1/mentees/:studentId', ({ params }) => {
+    const detail = buildMenteeDetail(String(params.studentId))
+    if (!detail) {
+      return HttpResponse.json(
+        {
+          code: 'MENTOR_SCOPE_FORBIDDEN',
+          message: '배정 팀의 팀원만 조회할 수 있습니다.',
+        },
+        { status: 403 },
+      )
+    }
+    return ok(detail)
+  }),
 ]

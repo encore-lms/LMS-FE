@@ -49,6 +49,7 @@ const MentoringLogTemplatesPage = lazy(
 const MentoringTeamLogFieldsPage = lazy(
   () => import('./mentoring/TeamLogFieldsPage'),
 )
+const MentoringStatisticsPage = lazy(() => import('./mentoring/StatisticsPage'))
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -84,6 +85,7 @@ export const adminRoutes: RouteObject[] = [
         path: 'mentoring/log-templates',
         element: <MentoringLogTemplatesPage />,
       },
+      { path: 'mentoring/statistics', element: <MentoringStatisticsPage /> },
       {
         path: 'mentoring/teams/:teamId/log-fields',
         element: <MentoringTeamLogFieldsPage />,

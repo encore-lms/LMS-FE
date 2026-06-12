@@ -199,7 +199,7 @@ describe('EvaluationsSubmittedPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('5명 모두 작성')).toBeInTheDocument()
     expect(screen.getByText('수정 가능 여부')).toBeInTheDocument()
-    expect(screen.getByText('2026-05-16(토) 20:40 까지')).toBeInTheDocument()
+    expect(screen.getByText('최종 제출 완료 — 수정 불가')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '평가 목록' })).toHaveAttribute(
       'href',
       '/mentor/teams',

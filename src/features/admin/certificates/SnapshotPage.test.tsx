@@ -33,7 +33,7 @@ const snapshot: CertSnapshot = {
   evidence: [{ title: 'LLM 추천 시스템 v0.3', sub: '프로젝트 · 강사 승인' }],
   payloadJson: '{\n  "version": "2026.02"\n}',
   verify: {
-    url: 'verify.playdata.io/cert/vfy_kp4q4r2nv0',
+    url: '/verify/vfy_kp4q4r2nv0',
     snapshotHash: 'sha256:a3f8…07e',
     verificationId: 'ver_2026Q2_512',
   },
@@ -62,9 +62,7 @@ describe('SnapshotPage', () => {
     expect(screen.getByText('이서연')).toBeInTheDocument()
     expect(screen.getByText('480h')).toBeInTheDocument()
     expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()
-    expect(
-      screen.getByText('verify.playdata.io/cert/vfy_kp4q4r2nv0'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('/verify/vfy_kp4q4r2nv0')).toBeInTheDocument()
     // hero 정보 카드 + verificationId + 외부 검증 URL 미리보기 버튼 (Figma 정합)
     expect(screen.getByText('ver_2026Q2_512')).toBeInTheDocument()
     expect(
@@ -78,6 +76,10 @@ describe('SnapshotPage', () => {
     renderPage()
     await user.click(screen.getByLabelText('검증 URL 복사'))
     expect(screen.getByText('공개 검증 URL이 복사됐어요')).toBeInTheDocument()
+    // origin + /verify/:publicToken 조합 — 외부 검증 라우트로 실접속 가능한 절대 URL.
+    expect(await window.navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/verify/vfy_kp4q4r2nv0`,
+    )
   })
 
   it('로딩·에러 상태를 표시한다', () => {

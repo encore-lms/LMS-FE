@@ -1,41 +1,208 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import VerifyPage from './VerifyPage'
+import { useVerifyCertificate } from '../api/verify'
 import { externalPublicRoutes } from '../routes'
+import type { ExternalCertificateVerificationResponse } from './types'
 
-function renderPage() {
+vi.mock('../api/verify')
+
+type Hook = ReturnType<typeof useVerifyCertificate>
+
+function mockHook(v: Partial<Hook>) {
+  vi.mocked(useVerifyCertificate).mockReturnValue(v as unknown as Hook)
+}
+
+function mockResult(data: ExternalCertificateVerificationResponse) {
+  mockHook({ data, isPending: false, isError: false })
+}
+
+function renderPage(token = 'vfy_kp9q4r2nx0') {
   return render(
-    <MemoryRouter initialEntries={['/verify/vfy_kp9q4r2nx0']}>
-      <VerifyPage />
+    <MemoryRouter initialEntries={[`/verify/${token}`]}>
+      <Routes>
+        <Route path="/verify/:publicToken" element={<VerifyPage />} />
+      </Routes>
     </MemoryRouter>,
   )
 }
 
-describe('VerifyPage (진입 로딩 셸)', () => {
-  it('전용 topbar와 로딩 상태 마크업을 렌더한다', () => {
+const publicResult: ExternalCertificateVerificationResponse = {
+  resultType: 'certified_public',
+  verificationId: 'ver_2026Q2_512',
+  snapshotVersion: '2026.05',
+  snapshotHash: 'sha256:a3f9…07e',
+  publicSchemaVersion: '2026.06',
+  publicPayload: {
+    issuer: 'PLAYDATA',
+    certifiedDate: '2026-05-19',
+    issuedAt: '2026-05-19 11:24 KST',
+    student: {
+      nameKo: '이서연',
+      nameEn: 'Lee Seoyeon',
+      cohort: 'DA 5기',
+      courseSummary: 'PLAYDATA 데이터 분석 과정 · 480h · 2025-12 ~ 2026-05',
+    },
+    stats: {
+      coreCompetencyGrade: 'A',
+      attendanceRate: '96.2%',
+      examAverage: '84.7',
+      submissionRate: '91%',
+    },
+    skills: [
+      { label: '기술', score: 82 },
+      { label: '책임감', score: 76 },
+      { label: '소통', score: 88 },
+      { label: '성장', score: 79 },
+      { label: '팀워크', score: 84 },
+      { label: '문제해결', score: 81 },
+    ],
+    skillAvg: 81.7,
+    evidenceSummary: '프로젝트 1 · 트러블슈팅 1 · 기록실 12',
+    evidence: [
+      {
+        category: '프로젝트',
+        title: 'LLM 추천 시스템 v0.3',
+        description: 'DA 5기 · 강사 김지훈 승인',
+      },
+    ],
+  },
+}
+
+describe('VerifyPage — 진입 로딩(pending)', () => {
+  it('query pending 동안 로딩 셸을 렌더하고 실데이터를 노출하지 않는다', () => {
+    mockHook({ isPending: true })
     renderPage()
-    // public 전용 topbar — AppShell 미사용이라 직접 렌더.
     expect(screen.getByText('PLAYDATA — 외부 검증')).toBeInTheDocument()
-    expect(screen.getByText('HTTPS · 검증 전용 페이지')).toBeInTheDocument()
-    // 로딩 상태(분기 전) 고정 문구.
     expect(screen.getByText('VERIFYING TOKEN · 자동 분기')).toBeInTheDocument()
     expect(
       screen.getByText('검증 정보를 확인하고 있습니다'),
     ).toBeInTheDocument()
-    expect(screen.getByText('publicToken 유효성')).toBeInTheDocument()
-    expect(
-      screen.getByText('공개 / 비공개 / 미인증 / 잘못된 링크'),
-    ).toBeInTheDocument()
     expect(screen.getByText('분기 완료 전 표시 없음')).toBeInTheDocument()
-    expect(screen.getByText('외부 검증 페이지 정책')).toBeInTheDocument()
-  })
-
-  it('분기 전에는 실데이터(수강생 이름·점수)를 렌더하지 않는다', () => {
-    renderPage()
-    // 명세: 분기 완료 전 어떤 상세 정보도 렌더링하지 않음 — mock 대표값 비노출 확인.
+    // 명세: 분기 완료 전 어떤 상세 정보도 렌더링하지 않음.
     expect(screen.queryByText('이서연')).not.toBeInTheDocument()
     expect(screen.queryByText(/sha256:/)).not.toBeInTheDocument()
+  })
+})
+
+describe('VerifyPage — certified_public(공개 증명서)', () => {
+  it('Hero 진본 배너·핵심 정보·6축·대표 근거·무결성 필드를 렌더한다', () => {
+    mockResult(publicResult)
+    renderPage()
+    expect(
+      screen.getByText('이 증명서는 정식으로 발급된 진본입니다'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('certified · 진본 검증 완료')).toBeInTheDocument()
+    // 핵심 정보 — 아바타와 이름 행에 같은 한글명이 2회.
+    expect(screen.getAllByText('이서연')).toHaveLength(2)
+    expect(screen.getByText('Lee Seoyeon')).toBeInTheDocument()
+    expect(screen.getByText('DA 5기')).toBeInTheDocument()
+    expect(screen.getByText('96.2%')).toBeInTheDocument()
+    // 6축 점수 + 평균.
+    expect(screen.getByText('6축 점수 — 동결 시점')).toBeInTheDocument()
+    expect(screen.getByText('81.7')).toBeInTheDocument()
+    expect(screen.getByText('문제해결')).toBeInTheDocument()
+    // 대표 근거.
+    expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()
+    // 검증 정보 — 무결성(해시는 Hero 칩과 필드 박스 2곳).
+    expect(screen.getAllByText(/sha256:a3f9…07e/)).toHaveLength(2)
+    expect(screen.getByText('vfy_kp9q4r2nx0')).toBeInTheDocument()
+    expect(screen.getByText('ver_2026Q2_512')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /공개 JSON 다운로드/ }),
+    ).toBeInTheDocument()
+  })
+})
+
+describe('VerifyPage — certified_private(비공개 안내)', () => {
+  it('비공개 안내를 렌더하고 상세를 일절 노출하지 않는다', () => {
+    mockResult({
+      resultType: 'certified_private',
+      verificationIdMasked: 'CERT-****-0012',
+      messageCode: 'CERTIFICATE_PRIVATE',
+    })
+    renderPage('vfy_private_demo')
+    expect(screen.getByText('certified · isPublic = false')).toBeInTheDocument()
+    expect(
+      screen.getByText('이 증명서는 비공개 상태입니다'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('certified — 정식 인증 완료')).toBeInTheDocument()
+    expect(
+      screen.getByText('없음 (요청자 식별 불가하게 상세 비표시)'),
+    ).toBeInTheDocument()
+    // 수강생 이름·점수 등 상세 비노출(명세).
+    expect(screen.queryByText('이서연')).not.toBeInTheDocument()
+  })
+})
+
+describe('VerifyPage — not_certified(미인증 안내)', () => {
+  it('미인증 안내를 렌더한다 — status != certified 문구는 pill과 카드 행 2곳', () => {
+    mockResult({
+      resultType: 'not_certified',
+      messageCode: 'CERTIFICATE_NOT_CERTIFIED',
+    })
+    renderPage('vfy_uncert_demo')
+    expect(
+      screen.getByText('아직 인증이 완료되지 않았습니다'),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('status != certified')).toHaveLength(2)
+    expect(
+      screen.getByText('정식 인증 전 · 검토 중 · 보완 요청 중'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('이서연')).not.toBeInTheDocument()
+  })
+})
+
+describe('VerifyPage — invalid_token·expired_token(잘못된 링크)', () => {
+  it('invalid_token이면 잘못된 링크 dead-end(버튼 없음)를 렌더한다', () => {
+    mockResult({
+      resultType: 'invalid_token',
+      messageCode: 'CERTIFICATE_TOKEN_INVALID',
+    })
+    renderPage('no-such-token')
+    expect(screen.getByText('INVALID LINK · 검증 실패')).toBeInTheDocument()
+    expect(screen.getByText('잘못된 검증 링크입니다')).toBeInTheDocument()
+    expect(screen.getByText('이런 경우에 표시됩니다')).toBeInTheDocument()
+    // Figma 그대로 dead-end — 인터랙션 요소 없음.
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('expired_token은 잘못된 링크 화면을 재사용한다(문서 명시)', () => {
+    mockResult({
+      resultType: 'expired_token',
+      messageCode: 'CERTIFICATE_TOKEN_EXPIRED',
+    })
+    renderPage('vfy_expired_demo')
+    expect(screen.getByText('잘못된 검증 링크입니다')).toBeInTheDocument()
+  })
+})
+
+describe('VerifyPage — 비공개 안내 변형 2종(문서 기반, Figma 변형 프레임 부재)', () => {
+  it('public_preparing이면 공개 준비 중 안내를 렌더한다', () => {
+    mockResult({
+      resultType: 'public_preparing',
+      verificationIdMasked: 'CERT-****-0012',
+      messageCode: 'CERTIFICATE_PUBLIC_PAYLOAD_NOT_READY',
+    })
+    renderPage('vfy_preparing_demo')
+    expect(
+      screen.getByText('증명서 공개를 준비하고 있습니다'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('certified · 공개 준비 중')).toBeInTheDocument()
+  })
+
+  it('verification_disabled이면 검증 불가 안내를 렌더한다', () => {
+    mockResult({
+      resultType: 'verification_disabled',
+      messageCode: 'CERTIFICATE_TOKEN_DISABLED',
+    })
+    renderPage('vfy_disabled_demo')
+    expect(
+      screen.getByText('이 증명서는 검증이 불가합니다'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('publicToken 폐기 · 검증 불가')).toBeInTheDocument()
   })
 })
 

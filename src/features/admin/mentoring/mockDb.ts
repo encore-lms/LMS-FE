@@ -302,7 +302,7 @@ export const adminMentoringDb: AdminMentoringMockDb = {
         {
           fieldId: 'tf_de_cost',
           order: 5,
-          name: '비용 점검 메모',
+          name: '리소스 점검 메모',
           helpText: '리소스 사용량 보조 메모 (선택)',
           required: false,
           type: 'short_text',

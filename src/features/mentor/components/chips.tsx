@@ -73,7 +73,8 @@ export function TeamSubTag({ team }: { team: MentorTeamAssignment }) {
   return null
 }
 
-// 일지 상태 칩 — 제출 즉시 자동 유효(도메인 VALID)를 Figma 라벨 '승인'으로 표기(원문 준수).
+// 일지 상태 칩 — 제출 즉시 자동 유효(05-31 확정: 운영 승인 단계 없음). Figma 일부 frame의
+// '승인' 라벨은 정책 드리프트라 '유효'로 통일(Figma 동반 정정 2026-06-13).
 export function LogStatusChip({
   status,
   note,
@@ -85,7 +86,7 @@ export function LogStatusChip({
     return (
       <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap">
         <Check className="h-[11px] w-[11px]" />
-        승인
+        유효
       </span>
     )
   }

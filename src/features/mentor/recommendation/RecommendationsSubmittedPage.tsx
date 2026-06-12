@@ -96,8 +96,9 @@ export default function RecommendationsSubmittedPage() {
           { label: '추천 대상', value: submission.targetLabel },
           { label: '추천 사유 작성', value: submission.summaryLabel },
           { label: '증명서 반영', value: submission.certificateLabel },
-          // Figma 원문 행 — '제출 후 수정 불가' 확정 정책과 카피 충돌(openQuestion, 표기만 유지).
-          { label: '24시간 수정 마감', value: submission.editDeadlineLabel },
+          // 확정 정책(05-29·05-31: 최종 제출 후 수정 불가) 정합 — Figma '24시간 수정 마감' 행은
+          // 정책 충돌 카피라 교체(Figma 동반 정정 2026-06-13).
+          { label: '수정 가능 여부', value: '최종 제출 완료 — 수정 불가' },
         ]}
       />
       {/* '평가·추천 목록' = 사이드바 평가·추천 진입 화면(/mentor/evaluations)으로 연결. */}

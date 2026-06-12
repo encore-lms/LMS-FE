@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
   Clock,
@@ -205,7 +206,7 @@ export default function AssignmentsPage() {
       key: 'actions',
       header: '액션',
       align: 'right',
-      className: 'w-44',
+      className: 'w-56',
       cell: (r) => {
         if (!r.assignmentId) {
           return (
@@ -229,6 +230,13 @@ export default function AssignmentsPage() {
             >
               수정
             </button>
+            {/* 팀별 일지 항목(§32) 진입 — 해당 화면 브레드크럼이 '멘토 배정 관리'로 복귀 */}
+            <Link
+              to={`/admin/mentoring/teams/${r.teamId}/log-fields`}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+            >
+              일지 항목
+            </Link>
             {displayStatus === 'in_progress' && (
               <button
                 type="button"

@@ -1,0 +1,616 @@
+import { useMemo, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Check,
+  Info,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Star,
+  UserPlus,
+  XCircle,
+} from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { DataTable, type Column } from '@/components/data/DataTable'
+import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
+import {
+  apiErrorOf,
+  useMentorAssignments,
+  useResetTeamLogFields,
+  useSaveTeamLogFields,
+  useTeamLogFields,
+} from './api'
+import {
+  FIELD_TYPE_META,
+  FIELD_DIFF_LABEL,
+  requiredChangedLabel,
+} from './statusMeta'
+import {
+  countFieldDiffs,
+  fieldDiffStatus,
+  newFieldId,
+  restoredField,
+} from './fieldDiff'
+import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
+import type { AdminTeamLogField, TeamLogFieldDiffStatus } from './types'
+
+/** §32 보존 정책 — 항목 폼 모달 하단 안내. */
+const TEAM_NOTICE =
+  '이 팀에 한해 적용 — 저장 시 다음 일지부터 반영, 작성된 일지는 보존'
+
+/** 수정 가능 항목 · §32 정본 — Figma 2749:8024 원문. */
+const CAPABILITY_ROWS: { key: string; desc: string }[] = [
+  { key: '항목명', desc: '수정 가능' },
+  { key: '설명/도움말', desc: '수정 가능' },
+  { key: '필수 여부', desc: '수정 가능' },
+  { key: '표시 순서', desc: '수정 가능' },
+  { key: '항목 추가', desc: '가능' },
+  { key: '항목 비활성화', desc: '가능 (작성된 답변은 보존)' },
+  {
+    key: '템플릿으로 되돌리기',
+    desc: '가능 (이 팀 수정 사항 일괄 복원)',
+  },
+]
+
+/** 정규화 — 순서 재부여(이동·복원 제거 후 1..N). */
+const normalized = (fields: AdminTeamLogField[]) =>
+  fields.map((f, i) => ({ ...f, order: i + 1 }))
+
+// 팀별 일지 항목 설정 (/admin/mentoring/teams/:teamId/log-fields) — 운영(MANAGER/ADMIN).
+// 기본 템플릿 오버라이드(§32) — 다음 일지부터 적용 · 작성된 일지 보존 · 템플릿 되돌리기.
+// API 는 assignmentId(명세) — teamId 매핑은 배정 보드 조회로 해소. (Figma 2749:8024)
+export default function TeamLogFieldsPage() {
+  usePageHeader(
+    '팀별 일지 항목 설정',
+    '기본 템플릿과 다른 항목 표시 · 작성된 일지 보존 · 다음 일지부터 적용',
+  )
+  const { teamId } = useParams<{ teamId: string }>()
+  const toast = useToast()
+  const assignmentsQuery = useMentorAssignments()
+  const teamRow = assignmentsQuery.data?.rows.find((r) => r.teamId === teamId)
+  const fieldsQuery = useTeamLogFields(teamRow?.assignmentId ?? null)
+  const saveFields = useSaveTeamLogFields()
+  const resetFields = useResetTeamLogFields()
+
+  // 로컬 편집 초안 — null 이면 서버 저장본 그대로(저장 대기 없음).
+  const [draft, setDraft] = useState<AdminTeamLogField[] | null>(null)
+  const [fieldModal, setFieldModal] = useState<{
+    mode: 'add' | 'edit'
+    field?: AdminTeamLogField
+  } | null>(null)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+
+  const data = fieldsQuery.data
+  const fields = useMemo(
+    () => draft ?? data?.fields ?? [],
+    [draft, data?.fields],
+  )
+  const dirty = draft !== null
+  const counts = useMemo(
+    () =>
+      data
+        ? countFieldDiffs(fields, data.templateFields)
+        : { total: 0, active: 0, inactive: 0, changed: 0 },
+    [data, fields],
+  )
+  const differs = counts.changed > 0 || counts.inactive > 0
+
+  if (
+    assignmentsQuery.isPending ||
+    (teamRow?.assignmentId && fieldsQuery.isPending)
+  ) {
+    return <div className="text-fg-muted p-8">팀 일지 항목을 불러오는 중…</div>
+  }
+  if (assignmentsQuery.isError || (teamRow && fieldsQuery.isError)) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<AlertTriangle />}
+          title="팀 일지 항목을 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={
+            <Button
+              onClick={() =>
+                assignmentsQuery.isError
+                  ? assignmentsQuery.refetch()
+                  : fieldsQuery.refetch()
+              }
+            >
+              다시 시도
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+  if (!teamRow) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<AlertTriangle />}
+          title="팀을 찾을 수 없어요"
+          description="멘토 배정 관리에서 팀을 선택해 다시 진입해 주세요."
+          action={
+            <Link
+              to="/admin/mentors/assignments"
+              className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold"
+            >
+              멘토 배정 관리로
+            </Link>
+          }
+        />
+      </div>
+    )
+  }
+  if (!teamRow.assignmentId || !data) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<UserPlus />}
+          title="멘토 배정 전 팀이에요"
+          description="멘토 배정(N시간·기본 템플릿) 후 팀별 일지 항목을 설정할 수 있어요."
+          action={
+            <Link
+              to="/admin/mentors/assignments"
+              className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold"
+            >
+              멘토 배정 관리로
+            </Link>
+          }
+        />
+      </div>
+    )
+  }
+
+  const update = (next: AdminTeamLogField[]) => setDraft(normalized(next))
+
+  const submitFieldForm = (values: FieldFormValues) => {
+    if (!fieldModal) return
+    if (fieldModal.mode === 'add') {
+      update([
+        ...fields,
+        {
+          fieldId: newFieldId(),
+          order: fields.length + 1,
+          isActive: true,
+          ...values,
+        },
+      ])
+    } else {
+      update(
+        fields.map((f) =>
+          f.fieldId === fieldModal.field!.fieldId ? { ...f, ...values } : f,
+        ),
+      )
+    }
+    setFieldModal(null)
+  }
+
+  const moveField = (field: AdminTeamLogField, dir: -1 | 1) => {
+    const index = fields.findIndex((f) => f.fieldId === field.fieldId)
+    const target = index + dir
+    if (target < 0 || target >= fields.length) return
+    const next = [...fields]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    update(next)
+  }
+
+  const deactivateField = (field: AdminTeamLogField) =>
+    update(
+      fields.map((f) =>
+        f.fieldId === field.fieldId ? { ...f, isActive: false } : f,
+      ),
+    )
+
+  /** 템플릿 값 복원 — 템플릿 항목은 원본 값·활성으로, 신규 추가 항목은 제거. */
+  const restoreField = (field: AdminTeamLogField) => {
+    const restored = restoredField(field, data.templateFields)
+    update(
+      restored
+        ? fields.map((f) => (f.fieldId === field.fieldId ? restored : f))
+        : fields.filter((f) => f.fieldId !== field.fieldId),
+    )
+  }
+
+  const save = () => {
+    if (!dirty) return
+    saveFields.mutate(
+      { assignmentId: data.assignmentId, fields },
+      {
+        onSuccess: () => {
+          setDraft(null)
+          toast.success(
+            '변경 저장 — 다음 일지부터 적용 · 작성된 일지는 그대로 보존',
+          )
+        },
+        onError: (error) =>
+          toast.danger(apiErrorOf(error).message ?? '저장에 실패했어요.'),
+      },
+    )
+  }
+
+  const reset = () =>
+    resetFields.mutate(data.assignmentId, {
+      onSuccess: () => {
+        setDraft(null)
+        setResetConfirmOpen(false)
+        toast.success(
+          `템플릿으로 되돌리기 — ${data.baseTemplateName} 기준으로 일괄 복원`,
+        )
+      },
+      onError: (error) =>
+        toast.danger(apiErrorOf(error).message ?? '되돌리기에 실패했어요.'),
+    })
+
+  const diffBadge = (
+    status: TeamLogFieldDiffStatus,
+    field: AdminTeamLogField,
+  ) => {
+    if (status === 'same') {
+      return (
+        <span className="bg-surface-muted text-fg-muted inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold whitespace-nowrap">
+          <Check className="h-2.5 w-2.5" />
+          {FIELD_DIFF_LABEL.same}
+        </span>
+      )
+    }
+    const label =
+      status === 'required_changed'
+        ? requiredChangedLabel(field.required)
+        : FIELD_DIFF_LABEL[status]
+    return (
+      <span className="bg-warning text-on-color inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold whitespace-nowrap">
+        <AlertTriangle className="h-2.5 w-2.5" />
+        {label}
+      </span>
+    )
+  }
+
+  const columns: Column<AdminTeamLogField>[] = [
+    {
+      key: 'order',
+      header: '순서',
+      className: 'w-14',
+      cell: (f) => (
+        <span className="bg-brand/10 text-brand flex h-8 w-8 items-center justify-center rounded-lg text-[13px] font-bold">
+          {f.order}
+        </span>
+      ),
+    },
+    {
+      key: 'name',
+      header: '항목명 · 설명',
+      cell: (f) => (
+        <div className="min-w-0">
+          <p className="text-fg text-[13px] font-bold">{f.name}</p>
+          {f.helpText && (
+            <p className="text-fg-subtle mt-0.5 text-[11px]">{f.helpText}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'required',
+      header: '필수',
+      className: 'w-16',
+      cell: (f) => (
+        <StatusBadge
+          label={f.required ? '필수' : '선택'}
+          tone={f.required ? 'danger' : 'neutral'}
+        />
+      ),
+    },
+    {
+      key: 'type',
+      header: '타입',
+      className: 'w-24',
+      cell: (f) => (
+        <StatusBadge
+          label={FIELD_TYPE_META[f.type].label}
+          tone={FIELD_TYPE_META[f.type].tone}
+        />
+      ),
+    },
+    {
+      key: 'diff',
+      header: '템플릿 대비',
+      className: 'w-36',
+      cell: (f) => diffBadge(fieldDiffStatus(f, data.templateFields), f),
+    },
+    {
+      key: 'actions',
+      header: '액션',
+      align: 'right',
+      className: 'w-64',
+      cell: (f) => {
+        const status = fieldDiffStatus(f, data.templateFields)
+        const index = fields.findIndex((x) => x.fieldId === f.fieldId)
+        return (
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => setFieldModal({ mode: 'edit', field: f })}
+              className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+            >
+              <Pencil className="h-3 w-3" />
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={() => moveField(f, -1)}
+              disabled={index === 0}
+              aria-label={`${f.name} 위로 이동`}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ArrowUp className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => moveField(f, 1)}
+              disabled={index === fields.length - 1}
+              aria-label={`${f.name} 아래로 이동`}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ArrowDown className="h-3 w-3" />
+            </button>
+            {status === 'same' ? (
+              <button
+                type="button"
+                onClick={() => deactivateField(f)}
+                className="border-danger text-danger hover:bg-danger/10 inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+              >
+                <XCircle className="h-3 w-3" />
+                비활성화
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => restoreField(f)}
+                className="border-info text-info hover:bg-info/10 inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+              >
+                <RotateCcw className="h-3 w-3" />
+                템플릿 값 복원
+              </button>
+            )}
+          </div>
+        )
+      },
+    },
+  ]
+
+  return (
+    <div className="p-8">
+      {/* 상단 — 뒤로가기(멘토 배정 관리) + 현재 위치 + 템플릿 대비 상태 칩 */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Link
+            to="/admin/mentors/assignments"
+            className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-xs font-bold"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            멘토 배정 관리
+          </Link>
+          <span className="text-fg-subtle text-[13px]">›</span>
+          <span className="text-fg text-xs font-medium">팀별 일지 항목</span>
+        </div>
+        {differs && (
+          <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
+            <Info className="h-3 w-3" />
+            기본 템플릿과 다름
+          </span>
+        )}
+      </div>
+
+      {/* Hero — 팀 컨텍스트 + 되돌리기/저장 CTA */}
+      <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
+        <div className="flex flex-col gap-2.5">
+          <span className="bg-surface text-fg w-fit rounded px-2 py-0.5 text-[10px] font-bold">
+            {data.cohortName}
+          </span>
+          <p className="text-on-color text-lg font-bold">
+            {data.teamName} · 일지 항목 설정
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="bg-surface text-fg inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
+              <Star className="text-warning h-3 w-3" />
+              멘토 {data.mentorName} · 팀원 {data.memberCount}명
+            </span>
+            <span className="bg-surface text-fg rounded-md px-2.5 py-1 text-[11px] font-bold">
+              기본 템플릿 — {data.baseTemplateName}
+            </span>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setResetConfirmOpen(true)}
+            disabled={resetFields.isPending || (!differs && !dirty)}
+            className="border-on-color/60 text-on-color hover:bg-surface/10 inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            템플릿으로 되돌리기
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={!dirty || saveFields.isPending}
+            className="bg-surface text-fg hover:bg-surface/90 inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-bold disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Check className="h-4 w-4" />
+            {saveFields.isPending ? '저장 중…' : '변경 저장'}
+          </button>
+        </div>
+      </div>
+
+      {/* 변경 대기 배너 — 템플릿 대비 diff + 저장 대기 상태 */}
+      {(differs || dirty) && (
+        <div className="bg-warning-bg border-warning/50 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
+          <div className="flex items-center gap-3">
+            <span className="bg-surface text-warning flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+              <Info className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-fg text-[13px] font-bold">
+                기본 템플릿과 다른 항목 {counts.changed}건
+                {dirty && ' — 변경 사항 저장 대기'}
+              </p>
+              <p className="text-fg-muted mt-0.5 text-xs">
+                저장 시 다음 일지부터 적용 · 이미 작성된 일지는 작성 당시 항목
+                구조와 답변을 그대로 보존
+              </p>
+            </div>
+          </div>
+          <span className="bg-warning text-on-color rounded-md px-2.5 py-1 text-[11px] font-bold">
+            {counts.changed} 변경
+          </span>
+        </div>
+      )}
+
+      {/* 팀 일지 항목 편집 테이블 */}
+      <div className="mt-4">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-fg text-sm font-bold">팀 일지 항목 편집</p>
+            <p className="text-fg-subtle mt-1 text-[11px]">
+              템플릿 대비 차이가 있는 항목은 &quot;변경됨&quot; 배지로 표시 ·
+              항목 추가·비활성화 가능
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFieldModal({ mode: 'add' })}
+            className="bg-brand-deep text-on-color hover:bg-brand-deep/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
+          >
+            <Plus className="h-3 w-3" />
+            항목 추가
+          </button>
+        </div>
+        <DataTable
+          columns={columns}
+          rows={fields}
+          rowKey={(f) => f.fieldId}
+          rowClassName={(f) => {
+            const status = fieldDiffStatus(f, data.templateFields)
+            return cn(
+              status !== 'same' &&
+                'border-l-warning bg-warning-bg/40 border-l-4',
+              status === 'disabled' && 'opacity-70',
+            )
+          }}
+          empty="활성 항목이 없어요 — 항목을 추가해 주세요"
+        />
+        <div className="text-fg-subtle mt-3 text-xs">
+          총 {counts.total}항목 · 활성 {counts.active} · 비활성{' '}
+          {counts.inactive} · 변경 {counts.changed}
+        </div>
+      </div>
+
+      {/* 수정 가능 항목 · §32 정본 */}
+      <div className="border-border bg-surface mt-6 rounded-xl border">
+        <div className="px-5 pt-5 pb-3">
+          <p className="text-fg text-sm font-bold">수정 가능 항목 · §32 정본</p>
+          <p className="text-fg-subtle mt-1 text-xs">
+            이 팀에 한해 적용 — 다음 일지부터 반영, 작성된 일지는 보존
+          </p>
+        </div>
+        <ul className="divide-divider divide-y">
+          {CAPABILITY_ROWS.map((row) => (
+            <li
+              key={row.key}
+              className="flex items-center justify-between gap-4 px-5 py-2.5"
+            >
+              <span className="flex items-center gap-4">
+                <span className="bg-brand/10 text-brand w-44 shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold">
+                  {row.key}
+                </span>
+                <span className="text-fg-muted text-xs font-medium">
+                  {row.desc}
+                </span>
+              </span>
+              <Check className="text-success h-3.5 w-3.5 shrink-0" />
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 데이터 보존 정책 · §32 */}
+      <div className="bg-info-bg border-info/30 mt-4 rounded-xl border p-5">
+        <p className="text-fg text-sm font-bold">데이터 보존 정책 · §32</p>
+        <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
+          <li>
+            • 이미 작성된 일지는 작성 당시 항목 구조와 답변을 그대로 보존합니다
+          </li>
+          <li>• 팀별 항목 수정은 다음 일지부터 적용됩니다</li>
+          <li>
+            • 팀별 수정이 있으면 항목 행에 &quot;변경됨&quot; 배지 + AMBER
+            strip이 노출됩니다
+          </li>
+        </ul>
+      </div>
+
+      {fieldModal && (
+        <FieldFormModal
+          open
+          onClose={() => setFieldModal(null)}
+          title={
+            fieldModal.mode === 'add'
+              ? `항목 추가 — ${data.teamName}`
+              : `항목 수정 — ${fieldModal.field!.name}`
+          }
+          initial={fieldModal.field}
+          // §32 수정 가능 항목에 타입 없음 — 템플릿 유래 기존 항목은 타입 잠금(신규 추가 항목은 허용)
+          typeEditable={
+            fieldModal.mode === 'add' ||
+            !data.templateFields.some(
+              (t) => t.fieldId === fieldModal.field!.fieldId,
+            )
+          }
+          notice={TEAM_NOTICE}
+          onSubmit={submitFieldForm}
+        />
+      )}
+
+      {/* 되돌리기 확인 — 파괴적 일괄 복원(확인 모달 frame 미존재 — 가드 목적 신설) */}
+      <Modal
+        open={resetConfirmOpen}
+        onClose={() => setResetConfirmOpen(false)}
+        title="템플릿으로 되돌리기"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(false)}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-4 py-2 text-sm font-bold"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              disabled={resetFields.isPending}
+              className="bg-danger text-on-color hover:bg-danger/90 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {resetFields.isPending ? '복원 중…' : '일괄 복원'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-fg-muted text-sm">
+          이 팀의 수정 사항을 일괄 복원해 기본 템플릿(
+          <span className="text-fg font-bold">{data.baseTemplateName}</span>
+          )과 동일하게 되돌립니다. 작성된 일지·답변은 그대로 보존됩니다.
+        </p>
+      </Modal>
+    </div>
+  )
+}

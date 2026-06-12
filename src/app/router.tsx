@@ -12,7 +12,10 @@ import {
 import { instructorRoutes } from '@/features/instructor/routes'
 import { mentorRoutes } from '@/features/mentor/routes'
 import { adminRoutes } from '@/features/admin/routes'
-import { externalRoutes } from '@/features/external/routes'
+import {
+  externalRoutes,
+  externalPublicRoutes,
+} from '@/features/external/routes'
 import type { Role } from '@/shared/types'
 import { MENUS } from './menus'
 
@@ -26,6 +29,8 @@ function guarded(allow: Role[], routes: RouteObject[]): RouteObject {
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/_styleguide', element: <StyleGuidePage /> },
+  // 비로그인 public — 외부 검증(/verify/:publicToken). AuthGuard 밖 최상위 마운트.
+  ...externalPublicRoutes,
   {
     element: <AuthGuard />,
     children: [

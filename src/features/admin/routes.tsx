@@ -39,6 +39,9 @@ const QuizSubmissionsPage = lazy(
 const QuizAnswersPage = lazy(() => import('./quizzes/AnswersPage'))
 // 수동 채점 (운영 전용 신설 B안 — 강사 GradingPage 대체, Figma 1515:10710)
 const QuizGradingPage = lazy(() => import('./quizzes/GradingPage'))
+// 멘토링 관리 (운영 전용 신설 — features/admin/mentoring, Figma 2744:7725 / 2745:7815)
+const MentorAssignmentsPage = lazy(() => import('./mentoring/AssignmentsPage'))
+const MentoringLogsPage = lazy(() => import('./mentoring/LogsPage'))
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -66,6 +69,9 @@ export const adminRoutes: RouteObject[] = [
         path: 'records/certificates/:submissionId',
         element: <RecordReviewDetailPage segment="certificates" />,
       },
+      // 멘토링 관리 — 배정(/admin/mentors/*)·일지(/admin/mentoring/*). 정적 세그먼트만(동적 :id 화면은 후속 PR).
+      { path: 'mentors/assignments', element: <MentorAssignmentsPage /> },
+      { path: 'mentoring/logs', element: <MentoringLogsPage /> },
       { path: 'students', element: <StudentManagementPage /> },
       { path: 'resume', element: <ResumePage /> },
       { path: 'resume/:resumeId', element: <ResumeDetailPage /> },

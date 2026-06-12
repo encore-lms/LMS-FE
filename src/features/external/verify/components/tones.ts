@@ -7,30 +7,34 @@ export type VerifyTone = 'info' | 'success' | 'warning' | 'danger'
 
 export const VERIFY_TONES: Record<
   VerifyTone,
-  { text: string; bg: string; border: string; dot: string }
+  { text: string; bg: string; border: string; dot: string; solid: string }
 > = {
   info: {
     text: 'text-info',
     bg: 'bg-info-bg',
     border: 'border-info/25',
     dot: 'bg-info',
+    solid: 'bg-info',
   },
   success: {
     text: 'text-success',
     bg: 'bg-success-bg',
     border: 'border-success/25',
     dot: 'bg-success',
+    solid: 'bg-success',
   },
   warning: {
     text: 'text-warning',
     bg: 'bg-warning-bg',
     border: 'border-warning/25',
     dot: 'bg-warning',
+    solid: 'bg-warning',
   },
   danger: {
     text: 'text-danger',
     bg: 'bg-danger-bg',
     border: 'border-danger/25',
     dot: 'bg-danger',
+    solid: 'bg-danger',
   },
 }

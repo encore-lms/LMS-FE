@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import {
   buildDashboardData,
+  buildEvaluationsData,
   buildLogFieldSnapshot,
   buildMenteeDetail,
   buildMentoringLogDetail,
@@ -8,18 +9,29 @@ import {
   buildMentoringLogsData,
   buildMentoringRequestDetail,
   buildMentoringRequestsData,
+  buildRecommendationsData,
   buildTeamDetailData,
+  buildTeamEvaluationSheet,
+  buildTeamRecommendationSheet,
   buildTeamsData,
   respondToMentoringRequest,
+  saveEvaluationDraft,
   saveMentoringLogDraft,
+  saveRecommendationDraft,
+  submitEvaluation,
   submitMentoringLog,
+  submitRecommendation,
   updateConfirmedDetails,
   updateMentoringLogDraft,
+  type MentorEvaluationMutationResult,
+  type MentorRecommendationMutationResult,
   type MentoringLogMutationResult,
   type MentoringRequestMockAction,
   type MentoringRequestMutationResult,
 } from './mockDb'
 import type {
+  MentorEvaluationDraftPayload,
+  MentorRecommendationDraftPayload,
   MentoringLogDraftPayload,
   MentoringRequestActionPayload,
 } from './types'
@@ -42,6 +54,24 @@ const respond = (result: MentoringRequestMutationResult) =>
 const respondLog = (result: MentoringLogMutationResult) =>
   result.ok
     ? ok(result.log)
+    : HttpResponse.json(
+        { code: result.code, message: result.message },
+        { status: result.status },
+      )
+
+/** 평가 mutation 결과 → HTTP 응답 — respond 와 동일 규약(401 금지). */
+const respondEvaluation = (result: MentorEvaluationMutationResult) =>
+  result.ok
+    ? ok(result.sheet)
+    : HttpResponse.json(
+        { code: result.code, message: result.message },
+        { status: result.status },
+      )
+
+/** 추천 mutation 결과 → HTTP 응답 — respond 와 동일 규약(401 금지). */
+const respondRecommendation = (result: MentorRecommendationMutationResult) =>
+  result.ok
+    ? ok(result.sheet)
     : HttpResponse.json(
         { code: result.code, message: result.message },
         { status: result.status },
@@ -198,4 +228,82 @@ export const handlers = [
     }
     return ok(detail)
   }),
+
+  // ── 평가 · 추천 (M4) — GET/PUT(draft)/POST(submit) /teams/{teamId}/{evaluation|recommendation}* ──
+  http.get('/api/mentor/v1/teams/:teamId/evaluation', ({ params }) => {
+    const sheet = buildTeamEvaluationSheet(String(params.teamId))
+    if (!sheet) {
+      return HttpResponse.json(
+        {
+          code: 'MENTOR_SCOPE_FORBIDDEN',
+          message: '본인에게 배정된 팀이 아닙니다.',
+        },
+        { status: 403 },
+      )
+    }
+    return ok(sheet)
+  }),
+  http.put(
+    '/api/mentor/v1/teams/:teamId/evaluation/draft',
+    async ({ params, request }) => {
+      const payload = (await request.json().catch(() => undefined)) as
+        | MentorEvaluationDraftPayload
+        | undefined
+      return respondEvaluation(
+        saveEvaluationDraft(String(params.teamId), payload ?? { entries: [] }),
+      )
+    },
+  ),
+  http.post(
+    '/api/mentor/v1/teams/:teamId/evaluation/submit',
+    async ({ params, request }) => {
+      const payload = (await request.json().catch(() => undefined)) as
+        | MentorEvaluationDraftPayload
+        | undefined
+      return respondEvaluation(submitEvaluation(String(params.teamId), payload))
+    },
+  ),
+  http.get('/api/mentor/v1/teams/:teamId/recommendation', ({ params }) => {
+    const sheet = buildTeamRecommendationSheet(String(params.teamId))
+    if (!sheet) {
+      return HttpResponse.json(
+        {
+          code: 'MENTOR_SCOPE_FORBIDDEN',
+          message: '본인에게 배정된 팀이 아닙니다.',
+        },
+        { status: 403 },
+      )
+    }
+    return ok(sheet)
+  }),
+  http.put(
+    '/api/mentor/v1/teams/:teamId/recommendation/draft',
+    async ({ params, request }) => {
+      const payload = (await request.json().catch(() => undefined)) as
+        | MentorRecommendationDraftPayload
+        | undefined
+      return respondRecommendation(
+        saveRecommendationDraft(
+          String(params.teamId),
+          payload ?? { mode: null, studentId: null, summary: '', notify: true },
+        ),
+      )
+    },
+  ),
+  http.post(
+    '/api/mentor/v1/teams/:teamId/recommendation/submit',
+    async ({ params, request }) => {
+      const payload = (await request.json().catch(() => undefined)) as
+        | MentorRecommendationDraftPayload
+        | undefined
+      return respondRecommendation(
+        submitRecommendation(String(params.teamId), payload),
+      )
+    },
+  ),
+  // 제출 완료 페이지 요약 — 명세 P0_35 는 팀 단위 endpoint 만 정의(목록은 mock 보강 read model).
+  http.get('/api/mentor/v1/evaluations', () => ok(buildEvaluationsData())),
+  http.get('/api/mentor/v1/recommendations', () =>
+    ok(buildRecommendationsData()),
+  ),
 ]

@@ -16,6 +16,16 @@ const LogsPage = lazy(() => import('./mentoring-logs/LogsPage'))
 const LogDetailModal = lazy(() => import('./mentoring-logs/LogDetailModal'))
 const LogComposePage = lazy(() => import('./mentoring-logs/LogComposePage'))
 const MenteeDetailPage = lazy(() => import('./mentees/MenteeDetailPage'))
+const EvaluationPage = lazy(() => import('./evaluation/EvaluationPage'))
+const EvaluationsSubmittedPage = lazy(
+  () => import('./evaluation/EvaluationsSubmittedPage'),
+)
+const RecommendationPage = lazy(
+  () => import('./recommendation/RecommendationPage'),
+)
+const RecommendationsSubmittedPage = lazy(
+  () => import('./recommendation/RecommendationsSubmittedPage'),
+)
 
 export const mentorRoutes: RouteObject[] = [
   {
@@ -26,6 +36,10 @@ export const mentorRoutes: RouteObject[] = [
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'teams', element: <TeamsPage /> },
       { path: 'teams/:teamId', element: <TeamDetailPage /> },
+      // 평가·추천 (M4) — 팀 단위 작성 화면. 게이트(N시간 완료/조기 종료 · 평가 제출 후
+      // 추천 활성)는 화면에서 잠금 안내, mock 이 422 로 이중 차단.
+      { path: 'teams/:teamId/evaluation', element: <EvaluationPage /> },
+      { path: 'teams/:teamId/recommendation', element: <RecommendationPage /> },
       {
         path: 'mentoring-requests',
         element: <RequestsPage />,
@@ -42,8 +56,9 @@ export const mentorRoutes: RouteObject[] = [
       },
       // 학생 상세 — 팀 상세에서만 진입하는 보조 상세(독립 목록 없음)
       { path: 'mentees/:studentId', element: <MenteeDetailPage /> },
-      // TODO(후속 PR): teams/:teamId/{evaluation,recommendation}
-      //   · evaluations · recommendations
+      // 제출 완료 페이지 — Figma 2582:6400/6476(?toast=submitted 공통 토스트 1회 표시).
+      { path: 'evaluations', element: <EvaluationsSubmittedPage /> },
+      { path: 'recommendations', element: <RecommendationsSubmittedPage /> },
     ],
   },
 ]

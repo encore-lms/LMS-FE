@@ -39,7 +39,7 @@ const COPY: Record<
 > = {
   private: {
     pill: 'certified · isPublic = false',
-    icon: <Lock size={36} aria-hidden />,
+    icon: <Lock size={40} aria-hidden />,
     title: '이 증명서는 비공개 상태입니다',
     subtitle:
       '정식 인증은 완료되었으나 수강생이 외부 공개를 켜지 않아 상세 정보를 표시할 수 없습니다.',
@@ -130,17 +130,23 @@ export function VerifyPrivateView({ variant }: { variant: Variant }) {
   const c = COPY[variant]
   return (
     <main className="mx-auto flex w-full max-w-[640px] flex-col items-center gap-5 px-4 pt-16 pb-[60px]">
-      <VerifyStatusPill tone="info" icon={<Lock size={13} aria-hidden />}>
+      <VerifyStatusPill
+        tone="info"
+        shape="chip"
+        icon={<Lock size={13} aria-hidden />}
+      >
         {c.pill}
       </VerifyStatusPill>
-      <VerifyStatusIcon tone="info">{c.icon}</VerifyStatusIcon>
+      <VerifyStatusIcon tone="info" variant="solid-ring">
+        {c.icon}
+      </VerifyStatusIcon>
       <h1 className="text-fg w-full text-center text-[28px] leading-9 font-bold">
         {c.title}
       </h1>
       <p className="text-fg-muted max-w-[560px] text-center text-sm leading-[22px]">
         {c.subtitle}
       </p>
-      <VerifyStatusCard rows={c.rows} />
+      <VerifyStatusCard rows={c.rows} radius={14} />
       <VerifyNoticeCard variant="strip">{c.notice}</VerifyNoticeCard>
       <VerifyPolicyBox title="외부 검증 페이지 정책" withIcon>
         로그인 없이 접근 · 공개 payload만 사용 · 내부 근거 노출 없음 ·

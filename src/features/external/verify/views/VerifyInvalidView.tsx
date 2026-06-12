@@ -20,10 +20,14 @@ const CASES = [
 export function VerifyInvalidView() {
   return (
     <main className="mx-auto flex w-full max-w-[640px] flex-col items-center gap-5 px-4 pt-16 pb-[60px]">
-      <VerifyStatusPill tone="danger" icon={<XCircle size={13} aria-hidden />}>
+      <VerifyStatusPill
+        tone="danger"
+        shape="chip"
+        icon={<XCircle size={13} aria-hidden />}
+      >
         INVALID LINK · 검증 실패
       </VerifyStatusPill>
-      <VerifyStatusIcon tone="danger">
+      <VerifyStatusIcon tone="danger" variant="solid-ring">
         <XCircle size={36} aria-hidden />
       </VerifyStatusIcon>
       <h1 className="text-fg w-full text-center text-[28px] leading-9 font-bold">

@@ -13,13 +13,20 @@ export interface VerifyStatusRow {
  * /verify 상태 화면 공유 상태 카드 — 행 단위 두 변형.
  * ① 라벨/값 우측정렬 행(Figma 3198:168 — 진입·미인증) ② 아이콘 타일 행(Figma 541:2907 — 비공개).
  */
-export function VerifyStatusCard({ rows }: { rows: VerifyStatusRow[] }) {
+export function VerifyStatusCard({
+  rows,
+  radius = 18,
+}: {
+  rows: VerifyStatusRow[]
+  /** Figma 라디우스 — 진입·미인증 18 / 비공개 14. */
+  radius?: 18 | 14
+}) {
   const hasIcon = rows.some((row) => row.icon)
   return (
     <div
-      className={`border-border bg-surface flex w-full flex-col rounded-[18px] border shadow-[0_12px_28px_rgba(15,23,42,0.05)] ${
-        hasIcon ? 'divide-divider divide-y' : 'gap-2.5 px-6 py-[18px]'
-      }`}
+      className={`border-border bg-surface flex w-full flex-col border shadow-[0_12px_28px_rgba(15,23,42,0.05)] ${
+        radius === 14 ? 'rounded-[14px]' : 'rounded-[18px]'
+      } ${hasIcon ? 'divide-divider divide-y' : 'gap-2.5 px-6 py-[18px]'}`}
     >
       {rows.map((row) =>
         row.icon ? (

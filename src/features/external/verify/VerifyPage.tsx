@@ -36,6 +36,9 @@ function resolveView(
     case 'invalid_token':
     case 'expired_token':
       return <VerifyInvalidView />
+    default:
+      // BE가 미지의 resultType을 줄 때의 안전망 — 상세 비노출 dead-end로 수렴.
+      return <VerifyInvalidView />
   }
 }
 

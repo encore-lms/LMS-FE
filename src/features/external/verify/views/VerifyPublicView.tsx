@@ -22,19 +22,26 @@ const CATEGORY_CHIP: Record<string, string> = {
 }
 
 // 흰 카드 공통 셸 — 헤더(좌 타이틀·우 보조) + divider + 바디. Figma 카드 공통 패턴.
+// 라디우스: 핵심 정보(2815:370)=16, 6축·대표 근거·검증 정보(2815:402~)=14.
 function SectionCard({
   title,
   icon,
   aside,
+  radius = 14,
   children,
 }: {
   title: string
   icon?: ReactNode
   aside?: ReactNode
+  radius?: 16 | 14
   children: ReactNode
 }) {
   return (
-    <section className="border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+    <section
+      className={`border-border bg-surface border shadow-[0_2px_8px_rgba(18,23,38,0.04)] ${
+        radius === 16 ? 'rounded-2xl' : 'rounded-[14px]'
+      }`}
+    >
       <div className="border-divider flex items-center justify-between gap-4 border-b px-6 pt-[18px] pb-3.5">
         <h2 className="text-fg flex items-center gap-2 text-[15px] font-bold">
           {icon}
@@ -150,6 +157,7 @@ export function VerifyPublicView({
 
       {/* 핵심 정보 — 아바타·이름·기수 칩·스탯 칩 4. */}
       <SectionCard
+        radius={16}
         title="핵심 정보"
         icon={
           <Star size={16} className="fill-fg-muted text-fg-muted" aria-hidden />

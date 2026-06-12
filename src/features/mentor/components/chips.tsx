@@ -1,0 +1,105 @@
+import { AlertTriangle, Check } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
+import type {
+  MentorTeamAssignment,
+  MentorTeamStatus,
+  MentoringLogStatus,
+} from '../types'
+import { TEAM_STATUS_META } from './statusMeta'
+
+// 코호트 칩 — 기수 트랙별 고정색(AI=accent · DA=info 가정, Figma 칩 색 혼용은 info로 통일).
+// 틴트 매핑: #f0edfa→accent-bg · #e0edfc→info-bg.
+export function CohortChip({
+  label,
+  mini = false,
+}: {
+  label: string
+  mini?: boolean
+}) {
+  const tone = label.startsWith('AI')
+    ? 'bg-accent-bg text-accent-strong'
+    : label.startsWith('DA')
+      ? 'bg-info-bg text-info'
+      : 'bg-surface-muted text-fg-muted'
+  return (
+    <span
+      className={cn(
+        'inline-flex font-bold whitespace-nowrap',
+        mini
+          ? 'rounded px-[5px] py-px text-[10px]'
+          : 'rounded-[5px] px-2 py-[3px] text-[11px]',
+        tone,
+      )}
+    >
+      {label}
+    </span>
+  )
+}
+
+// 팀 상태 칩 — 아이콘 + 라벨(진행 중/평가 필요/수정 요청/완료 …).
+export function TeamStatusChip({ status }: { status: MentorTeamStatus }) {
+  const meta = TEAM_STATUS_META[status]
+  const Icon = meta.icon
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap',
+        meta.chip,
+      )}
+    >
+      <Icon className="h-[11px] w-[11px]" />
+      {meta.label}
+    </span>
+  )
+}
+
+// 'N시간 완료'·'초과 멘토링' 보조 태그 — 상태가 아닌 부가 라벨(팀명 옆 9px).
+// 틴트 매핑: #d6f2e8→success-bg · #f0edfa→accent-bg.
+export function TeamSubTag({ team }: { team: MentorTeamAssignment }) {
+  if (team.excessHours > 0) {
+    return (
+      <span className="bg-accent-bg text-accent-strong inline-flex rounded px-[5px] py-px text-[9px] font-bold whitespace-nowrap">
+        초과 멘토링 {team.excessHours}h
+      </span>
+    )
+  }
+  if (team.nHoursDone) {
+    return (
+      <span className="bg-success-bg text-success inline-flex rounded px-[5px] py-px text-[9px] font-bold whitespace-nowrap">
+        ✓ N시간 완료
+      </span>
+    )
+  }
+  return null
+}
+
+// 일지 상태 칩 — 제출 즉시 자동 유효(도메인 VALID)를 Figma 라벨 '승인'으로 표기(원문 준수).
+export function LogStatusChip({
+  status,
+  note,
+}: {
+  status: MentoringLogStatus
+  note?: string
+}) {
+  if (status === 'valid') {
+    return (
+      <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap">
+        <Check className="h-[11px] w-[11px]" />
+        승인
+      </span>
+    )
+  }
+  if (status === 'change_requested') {
+    return (
+      <span className="bg-danger-bg text-danger inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap">
+        <AlertTriangle className="h-[11px] w-[11px]" />
+        수정 요청{note ? ` — ${note}` : ''}
+      </span>
+    )
+  }
+  return (
+    <span className="bg-surface-muted text-fg-muted inline-flex items-center rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap">
+      초안
+    </span>
+  )
+}

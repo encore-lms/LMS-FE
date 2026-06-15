@@ -1,0 +1,446 @@
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AlertTriangle, ChevronLeft, MinusCircle } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Empty } from '@/components/ui/Empty'
+import { Avatar } from '@/components/ui/Avatar'
+import { Checkbox } from '@/components/ui/Checkbox'
+import { Modal } from '@/components/ui/Modal'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { DataTable, type Column } from '@/components/data/DataTable'
+import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
+// 운영 액션 모달 v2 공통 — 처리 요약 + 메모 + 권한 확인(설정 화면과 동일 골격, 재사용).
+import {
+  ActionModal,
+  type ActionModalSpec,
+} from '@/features/admin/settings/ActionModal'
+import { MileageTabs } from '../MileageTabs'
+import { useDirectPayRoster } from './api'
+import type { MileageStudent, PayKind } from './types'
+
+const QUICK_ADD = [1000, 5000, 10000, 50000]
+
+// 마일리지 직접 지급 (/admin/mileage/direct-pay) — 운영(MANAGER/ADMIN) 신규.
+// Figma 1226:6549 + 실행 확인(1306:8365)·결과(1306:8401) 모달.
+// 다중 수강생 일괄 지급/차감 · 한도 자동 검증. 실제 처리는 BE 계약(P0_16) 미확정 → mock 흐름.
+export default function DirectPayPage() {
+  usePageHeader(
+    '마일리지 직접 지급',
+    '다중 수강생 일괄 지급/차감 · 누적 상한·보유액·부분 지급 자동 검증',
+  )
+  const { data, isPending, isError, refetch } = useDirectPayRoster()
+  const navigate = useNavigate()
+
+  const [selected, setSelected] = useState<Set<string>>(
+    new Set(['stu-1', 'stu-2', 'stu-3', 'stu-4']),
+  )
+  const [kind, setKind] = useState<PayKind>('grant')
+  const [amount, setAmount] = useState(50000)
+  const [reason, setReason] = useState('중간 발표 우수상 — 선택 4명에게 지급')
+  const [confirm, setConfirm] = useState<ActionModalSpec | null>(null)
+  const [result, setResult] = useState<{ count: number; total: number } | null>(
+    null,
+  )
+
+  const students = useMemo(() => data?.students ?? [], [data])
+  const selectedCount = selected.size
+  const total = selectedCount * amount
+  const word = kind === 'grant' ? '지급' : '차감'
+  const canSubmit = selectedCount > 0 && amount > 0 && reason.trim().length > 0
+
+  if (isPending) {
+    return <div className="text-fg-muted p-8">대상 명단을 불러오는 중…</div>
+  }
+  if (isError || !data) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<AlertTriangle />}
+          title="대상 명단을 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={<Button onClick={() => refetch()}>다시 시도</Button>}
+        />
+      </div>
+    )
+  }
+
+  const { course, cohortLabel, totalStudents, nearLimitCount } = data
+  const allSelected = students.length > 0 && selected.size === students.length
+
+  const toggle = (id: string, on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  const toggleAll = (on: boolean) =>
+    setSelected(on ? new Set(students.map((s) => s.id)) : new Set())
+
+  const openConfirm = () => {
+    setConfirm({
+      title: `마일리지 ${word} 실행 확인`,
+      subtitle: `선택 수강생에게 직접 ${word}을 실행합니다.`,
+      rows: [
+        {
+          label: '대상',
+          value: `선택 ${selectedCount}명 · ${course} ${cohortLabel}`,
+        },
+        {
+          label: '금액',
+          value: `1인 ${amount.toLocaleString()}M · 총 ${total.toLocaleString()}M`,
+        },
+        { label: '사유', value: reason },
+        {
+          label: '검증',
+          value: `누적 한도 초과 0건 · 보유액 검증 완료`,
+        },
+      ],
+      confirmLabel: '실행',
+    })
+  }
+
+  const runPay = () => {
+    // TODO: 실제 일괄 지급/차감 처리(MileageTransaction 생성·한도 검증, P0_16 BE 계약 확정 후)
+    const count = selectedCount
+    setConfirm(null)
+    setResult({ count, total })
+  }
+
+  const columns: Column<MileageStudent>[] = [
+    {
+      key: 'select',
+      header: <Checkbox checked={allSelected} onChange={toggleAll} label="" />,
+      className: 'w-12',
+      cell: (s) => (
+        <Checkbox
+          checked={selected.has(s.id)}
+          onChange={(on) => toggle(s.id, on)}
+          label=""
+        />
+      ),
+    },
+    {
+      key: 'student',
+      header: '수강생',
+      cell: (s) => (
+        <div className="flex items-center gap-2.5">
+          <Avatar name={s.name} size={28} />
+          <div className="min-w-0">
+            <p className="text-fg flex items-center gap-1.5 text-[13px] font-semibold">
+              {s.name}
+              {s.nearLimit && <StatusBadge label="상한 근접" tone="warning" />}
+            </p>
+            <p className="text-fg-subtle font-mono text-[11px]">{s.uuid}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'held',
+      header: '보유',
+      className: 'w-28',
+      cell: (s) => (
+        <span className="text-fg text-[13px] tabular-nums">
+          {s.held.toLocaleString()} <span className="text-fg-subtle">M</span>
+        </span>
+      ),
+    },
+    {
+      key: 'used',
+      header: '사용',
+      className: 'w-28',
+      cell: (s) => (
+        <span className="text-fg-muted text-[13px] tabular-nums">
+          {s.used.toLocaleString()} M
+        </span>
+      ),
+    },
+    {
+      key: 'accrued',
+      header: '누적',
+      className: 'w-28',
+      cell: (s) => (
+        <span className="text-fg-muted text-[13px] tabular-nums">
+          {s.accrued.toLocaleString()} M
+        </span>
+      ),
+    },
+  ]
+
+  return (
+    <div className="p-8">
+      {/* 브레드크럼 */}
+      <Link
+        to="/admin/mileage"
+        className="text-fg-muted hover:text-fg inline-flex items-center gap-1 text-[13px]"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        마일리지 관리
+        <span className="text-fg-subtle">› 직접 지급</span>
+      </Link>
+
+      {/* 클러스터 탭 + 과정/기수 */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <MileageTabs />
+        <div className="flex items-center gap-2">
+          <select
+            aria-label="과정"
+            defaultValue="ai"
+            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          >
+            <option value="ai">{course}</option>
+          </select>
+          <select
+            aria-label="기수"
+            defaultValue="22"
+            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          >
+            <option value="22">{cohortLabel}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 2단 — 수강생 다중 선택(좌) + 지급 폼(우) */}
+      <div className="mt-5 flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-fg text-base font-bold">
+                수강생 목록 · 다중 선택
+              </p>
+              <p className="text-fg-muted text-xs">
+                이름·보유·사용·누적 — 체크박스로 일괄 선택
+              </p>
+            </div>
+            <StatusBadge
+              label={`선택 ${selectedCount} / ${totalStudents}`}
+              tone="accent"
+            />
+          </div>
+          <DataTable
+            columns={columns}
+            rows={students}
+            rowKey={(s) => s.id}
+            empty="대상 수강생이 없어요"
+          />
+          <div className="text-fg-subtle mt-3 text-xs">
+            총 {totalStudents}명 · 선택 {selectedCount}명 · 상한 근접{' '}
+            {nearLimitCount}명
+          </div>
+        </div>
+
+        {/* 지급 폼 */}
+        <aside className="w-full lg:w-[360px] lg:shrink-0">
+          <div className="border-border bg-surface rounded-xl border p-5">
+            <p className="text-fg text-base font-bold">{word} 폼</p>
+            <p className="text-fg-muted mt-0.5 text-xs">
+              선택 {selectedCount}명에 일괄 적용 · 한도 자동 검증
+            </p>
+
+            {/* 구분 */}
+            <p className="text-fg mt-4 text-[13px] font-semibold">
+              구분 <span className="text-danger">*</span>
+            </p>
+            <div className="border-border bg-surface-muted/40 mt-1.5 grid grid-cols-2 gap-1 rounded-lg p-1">
+              {(['grant', 'deduct'] as PayKind[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setKind(k)}
+                  className={cn(
+                    'inline-flex items-center justify-center gap-1 rounded-md py-2 text-[13px] font-semibold transition-colors',
+                    kind === k
+                      ? k === 'grant'
+                        ? 'bg-brand text-white'
+                        : 'bg-fg text-white'
+                      : 'text-fg-muted',
+                  )}
+                >
+                  {k === 'deduct' && <MinusCircle className="h-3.5 w-3.5" />}
+                  {k === 'grant' ? '지급' : '차감'}
+                </button>
+              ))}
+            </div>
+
+            {/* 금액 */}
+            <p className="text-fg mt-4 text-[13px] font-semibold">
+              금액 (1인당) <span className="text-danger">*</span>
+            </p>
+            <div className="border-border focus-within:border-brand mt-1.5 flex items-center rounded-lg border bg-white px-3">
+              <input
+                value={amount.toLocaleString()}
+                onChange={(e) =>
+                  setAmount(Number(e.target.value.replace(/[^\d]/g, '')) || 0)
+                }
+                inputMode="numeric"
+                aria-label="금액 (1인당)"
+                className="text-fg h-11 flex-1 bg-transparent text-lg font-bold outline-none"
+              />
+              <span className="text-fg-subtle text-sm">M</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {QUICK_ADD.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setAmount((a) => a + d)}
+                  className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-[11px] font-semibold"
+                >
+                  +{d.toLocaleString()}
+                </button>
+              ))}
+            </div>
+
+            {/* 사유 */}
+            <p className="text-fg mt-4 text-[13px] font-semibold">
+              사유 <span className="text-danger">*</span>
+            </p>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              aria-label="사유"
+              className="border-border focus:border-brand text-fg placeholder:text-fg-subtle mt-1.5 w-full rounded-lg border bg-white p-3 text-sm outline-none"
+            />
+
+            {/* 합계 요약 */}
+            <div className="border-success/30 bg-success-bg/50 mt-4 flex flex-col gap-1.5 rounded-lg border p-3.5 text-[13px]">
+              <div className="flex items-center justify-between">
+                <span className="text-fg-muted">선택 인원</span>
+                <span className="text-fg font-bold">{selectedCount}명</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-fg-muted">1인당 {word}</span>
+                <span className="text-fg font-bold tabular-nums">
+                  {amount.toLocaleString()} M
+                </span>
+              </div>
+              <div className="border-success/20 flex items-center justify-between border-t pt-1.5">
+                <span className="text-fg-muted">총 {word} 예정</span>
+                <span className="text-success text-lg font-bold tabular-nums">
+                  {kind === 'grant' ? '+' : '-'}
+                  {total.toLocaleString()} M
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={openConfirm}
+              className="bg-brand-deep hover:bg-brand-deep/90 mt-4 h-11 w-full rounded-lg text-[14px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {word} 실행 — {kind === 'grant' ? '+' : '-'}
+              {total.toLocaleString()}M / {selectedCount}명
+            </button>
+          </div>
+
+          {/* 한도 규칙 §18 */}
+          <div className="border-border bg-surface mt-4 rounded-xl border p-4">
+            <p className="text-fg text-[13px] font-bold">한도 규칙 · §18</p>
+            <ul className="mt-2.5 flex flex-col gap-2.5">
+              <RuleRow
+                tone="warning"
+                title="누적 적립 상한 초과"
+                desc="잔여 한도까지 부분 지급 또는 409 오류"
+              />
+              <RuleRow
+                tone="danger"
+                title="차감 금액 > 보유액"
+                desc="처리 차단 — 부분 차감 없음"
+              />
+              <RuleRow
+                tone="info"
+                title="일부 학생만 부분 지급"
+                desc="partialApplied=true 안내 표시"
+              />
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      {/* 실행 확인 모달 — 운영 액션 모달 공통 재사용 */}
+      <ActionModal
+        spec={confirm}
+        onClose={() => setConfirm(null)}
+        onConfirm={runPay}
+      />
+
+      {/* 지급 결과 모달 */}
+      <Modal
+        open={!!result}
+        onClose={() => setResult(null)}
+        title={`마일리지 ${word} 결과`}
+        footer={
+          <Button
+            onClick={() => {
+              setResult(null)
+              navigate('/admin/mileage/history')
+            }}
+          >
+            내역 보기
+          </Button>
+        }
+      >
+        {result && (
+          <>
+            <p className="text-fg-muted -mt-1 mb-4 text-sm">
+              {result.count}명 {word} 완료 · 원장 {result.count}건 생성
+            </p>
+            <dl className="flex flex-col gap-2 text-sm">
+              <div className="flex gap-3">
+                <dt className="text-fg-muted w-24 shrink-0">{word}</dt>
+                <dd className="text-fg font-medium">
+                  {result.total.toLocaleString()}M · {result.count}명
+                </dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="text-fg-muted w-24 shrink-0">부분 {word}</dt>
+                <dd className="text-fg">0건 · 한도 정상</dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="text-fg-muted w-24 shrink-0">원장</dt>
+                <dd className="text-fg">{result.count}건 · 즉시 반영</dd>
+              </div>
+            </dl>
+            <div className="bg-success-bg mt-4 rounded-lg p-3">
+              <p className="text-success text-xs font-bold">다음 액션</p>
+              <p className="text-fg-muted mt-0.5 text-xs">
+                {result.count}명 {word} 완료 · 원장 {result.count}건 생성
+              </p>
+            </div>
+          </>
+        )}
+      </Modal>
+    </div>
+  )
+}
+
+// 한도 규칙 한 줄.
+function RuleRow({
+  tone,
+  title,
+  desc,
+}: {
+  tone: 'warning' | 'danger' | 'info'
+  title: string
+  desc: string
+}) {
+  const dot =
+    tone === 'warning'
+      ? 'bg-warning'
+      : tone === 'danger'
+        ? 'bg-danger'
+        : 'bg-info'
+  return (
+    <li className="flex gap-2">
+      <span className={cn('mt-1.5 size-1.5 shrink-0 rounded-full', dot)} />
+      <span className="min-w-0">
+        <span className="text-fg block text-[13px] font-medium">{title}</span>
+        <span className="text-fg-muted block text-xs">{desc}</span>
+      </span>
+    </li>
+  )
+}

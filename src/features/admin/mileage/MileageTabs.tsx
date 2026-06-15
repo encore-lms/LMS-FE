@@ -5,7 +5,7 @@ import { cn } from '@/shared/lib/cn'
 // 아직 구현 안 된 탭은 비활성(disabled)으로 표시해 404를 막는다. 각 화면 구현 시 ready에 추가.
 const TABS: { label: string; to: string; ready: boolean }[] = [
   { label: '지급 내역', to: '/admin/mileage/history', ready: true },
-  { label: '직접 지급', to: '/admin/mileage/direct-pay', ready: false },
+  { label: '직접 지급', to: '/admin/mileage/direct-pay', ready: true },
   { label: '구매 요청', to: '/admin/mileage/purchase-requests', ready: false },
   { label: '상품 관리', to: '/admin/mileage/products', ready: false },
   { label: '타입 한도', to: '/admin/mileage/type-limits', ready: false },

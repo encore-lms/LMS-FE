@@ -8,7 +8,7 @@ const TABS: { label: string; to: string; ready: boolean }[] = [
   { label: '직접 지급', to: '/admin/mileage/direct-pay', ready: true },
   { label: '구매 요청', to: '/admin/mileage/purchase-requests', ready: true },
   { label: '상품 관리', to: '/admin/mileage/products', ready: false },
-  { label: '타입 한도', to: '/admin/mileage/type-limits', ready: false },
+  { label: '타입 한도', to: '/admin/mileage/type-limits', ready: true },
 ]
 
 export function MileageTabs() {

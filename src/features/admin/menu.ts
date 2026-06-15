@@ -30,6 +30,6 @@ export const adminMenu: MenuItem[] = [
     // 배정(/admin/mentors/*) + 일지·템플릿·통계(/admin/mentoring/*) 진입 시 활성 유지
     match: ['/admin/mentoring', '/admin/mentors'],
   },
-  { label: 'PLAY 관리', to: '/admin/play' },
+  { label: 'PLAY 관리', to: '/admin/play/typing-texts' },
   { label: '설정', to: '/admin/settings' },
 ]

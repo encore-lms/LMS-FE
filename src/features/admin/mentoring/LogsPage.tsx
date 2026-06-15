@@ -12,6 +12,7 @@ import { useAdminMentoringLogDetail, useAdminMentoringLogs } from './api'
 import { LOG_STATUS_META, logDisplayStatus } from './statusMeta'
 import { LogDetailPanel } from './LogDetailPanel'
 import { ChangeRequestModal } from './ChangeRequestModal'
+import { MentoringTabs } from './MentoringTabs'
 import type { AdminMentoringLogRow, AdminMentoringLogStatus } from './types'
 
 type StatusFilter = 'all' | AdminMentoringLogStatus
@@ -149,6 +150,7 @@ export default function LogsPage() {
 
   return (
     <div className="p-8">
+      <MentoringTabs />
       {/* Hero — CTA 없음. 잠금 안내 + 제출·처리 대기 칩 */}
       <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
         <div className="flex flex-col gap-3">

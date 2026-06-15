@@ -6,7 +6,7 @@ import { cn } from '@/shared/lib/cn'
 const TABS: { label: string; to: string; ready: boolean }[] = [
   { label: '지급 내역', to: '/admin/mileage/history', ready: true },
   { label: '직접 지급', to: '/admin/mileage/direct-pay', ready: true },
-  { label: '구매 요청', to: '/admin/mileage/purchase-requests', ready: false },
+  { label: '구매 요청', to: '/admin/mileage/purchase-requests', ready: true },
   { label: '상품 관리', to: '/admin/mileage/products', ready: false },
   { label: '타입 한도', to: '/admin/mileage/type-limits', ready: false },
 ]

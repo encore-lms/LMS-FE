@@ -39,6 +39,10 @@ const MileageHistoryPage = lazy(() => import('./mileage/history/HistoryPage'))
 const MileageDirectPayPage = lazy(
   () => import('./mileage/direct-pay/DirectPayPage'),
 )
+// 마일리지 구매 요청 (클러스터 sub — features/admin/mileage/purchase-requests, Figma 1235:6815)
+const MileagePurchasePage = lazy(
+  () => import('./mileage/purchase-requests/PurchaseRequestsPage'),
+)
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
@@ -87,6 +91,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
       { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },
+      { path: 'mileage/purchase-requests', element: <MileagePurchasePage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {

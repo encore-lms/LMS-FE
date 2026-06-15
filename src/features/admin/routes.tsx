@@ -23,6 +23,8 @@ const EducationPage = lazy(() => import('./education/EducationPage'))
 const CertificateTemplatePage = lazy(
   () => import('./certificate-template/CertificateTemplatePage'),
 )
+// CSV 매핑·업로드 (운영 전용 신설 — features/admin/csv, Figma 1521:10678)
+const CsvMappingPage = lazy(() => import('./csv/CsvMappingPage'))
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
@@ -64,6 +66,7 @@ export const adminRoutes: RouteObject[] = [
       { index: true, element: <AdminDashboard /> },
       { path: 'education', element: <EducationPage /> },
       { path: 'certificate-template', element: <CertificateTemplatePage /> },
+      { path: 'csv-mapping', element: <CsvMappingPage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {

@@ -13,7 +13,7 @@ export const adminMenu: MenuItem[] = [
   { label: '운영 계정·권한', to: '/admin/settings/accounts' },
   { label: '인증 검토', to: '/admin/certificates/reviews' },
   { label: '평판 관리', to: '/admin/reputation' },
-  { label: 'CSV 매핑', to: '/admin/csv' },
+  { label: 'CSV 매핑', to: '/admin/csv-mapping' },
   { label: '인입 격리 큐', to: '/admin/quarantine' },
   { label: '마일리지', to: '/admin/mileage' },
   { label: '증명서 템플릿', to: '/admin/certificate-template' },

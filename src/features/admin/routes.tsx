@@ -31,6 +31,8 @@ const IngestionQueuePage = lazy(() => import('./ingestion/IngestionQueuePage'))
 const ReputationPage = lazy(() => import('./reputation/ReputationPage'))
 // PLAY 타자 관리 (운영 전용 신설 — features/admin/play, Figma 3380:7959)
 const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
+// 마일리지 관리 허브 (운영 전용 신설 — features/admin/mileage, Figma 1127:5639)
+const MileagePage = lazy(() => import('./mileage/MileagePage'))
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
@@ -76,6 +78,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'ingestion/quarantine', element: <IngestionQueuePage /> },
       { path: 'reputation', element: <ReputationPage /> },
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
+      { path: 'mileage', element: <MileagePage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {

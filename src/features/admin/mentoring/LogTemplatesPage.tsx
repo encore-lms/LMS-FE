@@ -28,6 +28,7 @@ import { FIELD_TYPE_META } from './statusMeta'
 import { newFieldId } from './fieldDiff'
 import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
 import { TemplateFormModal } from './TemplateFormModal'
+import { MentoringTabs } from './MentoringTabs'
 import type { AdminLogTemplate, AdminTemplateField } from './types'
 
 /** §31 보존 정책 — 항목 폼 모달 하단 안내(작업 요구 고정 문구). */
@@ -172,6 +173,7 @@ export default function LogTemplatesPage() {
 
   return (
     <div className="p-8">
+      <MentoringTabs />
       {/* Hero — 총계 칩 + 반영 정책 경고 칩 + 복제/생성 CTA */}
       <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
         <div className="flex flex-col gap-3">

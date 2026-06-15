@@ -13,6 +13,7 @@ import {
   STAT_TEAM_STATUS_LABEL,
   evaluationCellMeta,
 } from './statusMeta'
+import { MentoringTabs } from './MentoringTabs'
 import type {
   MentorTeamStatRow,
   MentoringTeamStatKey,
@@ -173,6 +174,7 @@ export default function StatisticsPage() {
 
   return (
     <div className="p-8">
+      <MentoringTabs />
       {/* 접근 경계 + 조회 전용 안내 칩 */}
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <span className="bg-info-bg text-info inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">

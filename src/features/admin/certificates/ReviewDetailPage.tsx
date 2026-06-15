@@ -91,13 +91,25 @@ export default function ReviewDetailPage() {
 
   return (
     <div className="p-8">
-      <button
-        type="button"
-        onClick={() => navigate('/admin/certificates/reviews')}
-        className="text-fg-muted hover:text-fg flex items-center gap-1 text-sm font-medium"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> 검토 큐로
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => navigate('/admin/certificates/reviews')}
+          className="text-fg-muted hover:text-fg flex items-center gap-1 text-sm font-medium"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> 검토 큐로
+        </button>
+        {/* 동결 스냅샷 진입(인증 완료 후 생성) — 검토 상세에서 스냅샷·감사로그로 연결 */}
+        <button
+          type="button"
+          onClick={() =>
+            navigate(`/admin/certificates/${d.student.certId}/snapshot`)
+          }
+          className="text-brand text-sm font-semibold hover:underline"
+        >
+          스냅샷 보기 →
+        </button>
+      </div>
 
       <div className="border-border bg-surface mt-3 flex items-start justify-between gap-4 rounded-xl border p-6">
         <div className="flex items-center gap-4">

@@ -76,10 +76,22 @@ export default function SnapshotPage() {
         >
           <ArrowLeft className="h-3.5 w-3.5" /> 검토 상세로
         </button>
-        <StatusBadge
-          label={s.isPublic ? '공개' : '비공개'}
-          tone={s.isPublic ? 'success' : 'neutral'}
-        />
+        <div className="flex items-center gap-3">
+          {/* 감사 로그 진입 — 스냅샷과 형제(증명서 하위) */}
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/admin/certificates/${certificateId}/audit`)
+            }
+            className="text-brand text-sm font-semibold hover:underline"
+          >
+            감사 로그 →
+          </button>
+          <StatusBadge
+            label={s.isPublic ? '공개' : '비공개'}
+            tone={s.isPublic ? 'success' : 'neutral'}
+          />
+        </div>
       </div>
 
       <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">

@@ -3,8 +3,8 @@ import type { MenuItem } from '@/components/layout'
 // 운영(매니저/ADMIN) 사이드바 메뉴 — Figma "운영 대시보드 v2" 사이드바 기준
 // (2026-06-12 갱신: '멘토링 관리' 포함 16개). 라벨·순서·구성 모두 Figma 정합.
 //
-// Figma 사이드바에 없어 제외한 운영 화면 후보(추후 그룹·하위 네비 설계 시 재배치):
-// 학생 이력서 피드백(/admin/resume-feedback), 외부 연동(/admin/integrations).
+// Figma 사이드바에 없던 '외부 연동'은 진입점 확보를 위해 추가(2026-06-15) — URL 직접 입력 제거.
+// 여전히 제외 중: 학생 이력서 피드백(/admin/resume-feedback).
 export const adminMenu: MenuItem[] = [
   { label: '대시보드', to: '/admin' },
   { label: '과정·기수·교과목', to: '/admin/education' },
@@ -31,5 +31,6 @@ export const adminMenu: MenuItem[] = [
     match: ['/admin/mentoring', '/admin/mentors'],
   },
   { label: 'PLAY 관리', to: '/admin/play/typing-texts' },
+  { label: '외부 연동', to: '/admin/integrations' },
   { label: '설정', to: '/admin/settings' },
 ]

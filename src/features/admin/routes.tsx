@@ -33,6 +33,8 @@ const ReputationPage = lazy(() => import('./reputation/ReputationPage'))
 const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
 // 마일리지 관리 허브 (운영 전용 신설 — features/admin/mileage, Figma 1127:5639)
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
+// 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
+const MileageHistoryPage = lazy(() => import('./mileage/history/HistoryPage'))
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
@@ -79,6 +81,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'reputation', element: <ReputationPage /> },
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
       { path: 'mileage', element: <MileagePage /> },
+      { path: 'mileage/history', element: <MileageHistoryPage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {

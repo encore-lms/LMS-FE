@@ -16,6 +16,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { useIngestionQueue } from './api'
 import type { IngestionSession, SessionStatus } from './types'
 
@@ -42,6 +43,7 @@ export default function IngestionQueuePage() {
   const [domain, setDomain] = useState<string>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [sort, setSort] = useState<Sort>('failed')
+  const [retryTarget, setRetryTarget] = useState<IngestionSession | null>(null)
 
   const sessions = useMemo(() => data?.sessions ?? [], [data])
   const domains = useMemo(
@@ -80,6 +82,30 @@ export default function IngestionQueuePage() {
   const { summary, details } = data
   const activeId = selectedId ?? sessions[0]?.id
   const detail = activeId ? details[activeId] : undefined
+
+  // 재시도 확인 모달 — 운영 액션 모달 v2 공통 골격(ActionModal) 재사용.
+  const retrySpec: ActionModalSpec | null = retryTarget
+    ? {
+        title: '세션 재시도',
+        subtitle:
+          '격리된 실패 행만 다시 인입합니다. 성공 행은 유지되며 결과는 세션 이력·감사 로그에 남습니다.',
+        rows: [
+          { label: '도메인', value: retryTarget.domain },
+          { label: '대상 세션', value: retryTarget.at },
+          { label: '실패 행', value: `${retryTarget.failedRows}건` },
+          { label: '처리', value: '실패 행만 재인입 (성공 행 유지)' },
+        ],
+        confirmLabel: '재시도',
+      }
+    : null
+  const handleRetry = () => {
+    // TODO: 세션 재시도 mutation(실패 행만 재인입, P0_20 BE 계약 확정 후) — 매니저 메모는 감사 로그 사유로 전달
+    const domain = retryTarget?.domain ?? ''
+    toast.success(
+      `${domain} 재시도 요청을 보냈습니다 — 결과는 세션 이력에 반영됩니다.`,
+    )
+    setRetryTarget(null)
+  }
 
   const columns: Column<IngestionSession>[] = [
     {
@@ -151,10 +177,9 @@ export default function IngestionQueuePage() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              // TODO: 세션 재시도(P0_20 BE 계약 확정 후)
               onClick={(e) => {
                 e.stopPropagation()
-                toast.info('재시도는 준비 중입니다.')
+                setRetryTarget(s)
               }}
               className="text-brand inline-flex items-center gap-1 text-[13px] font-semibold hover:underline"
             >
@@ -193,7 +218,7 @@ export default function IngestionQueuePage() {
   return (
     <div className="p-8">
       {/* 히어로 배너 — 목적 + 핵심 액션 */}
-      <div className="bg-brand-deep flex flex-col gap-4 rounded-2xl p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-brand flex flex-col gap-4 rounded-xl p-6 text-white sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-[17px] font-bold">
             CSV 대량 인입의 실패 행을 추적·수정·재시도합니다
@@ -217,7 +242,7 @@ export default function IngestionQueuePage() {
             type="button"
             // 새 CSV 인입 — CSV 매핑·업로드 화면으로 이동
             onClick={() => navigate('/admin/csv-mapping')}
-            className="bg-surface text-brand-deep inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90"
+            className="bg-surface text-brand inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90"
           >
             <Upload className="h-4 w-4" />새 CSV 인입
           </button>
@@ -426,6 +451,13 @@ export default function IngestionQueuePage() {
           <li>결정적 폐기는 복구 불가 — 폐기 전 실패 행 다운로드를 권장</li>
         </ul>
       </div>
+
+      {/* 재시도 확인 모달 (Figma 1306:8009 / 결과 1306:8045) */}
+      <ActionModal
+        spec={retrySpec}
+        onClose={() => setRetryTarget(null)}
+        onConfirm={() => handleRetry()}
+      />
     </div>
   )
 }

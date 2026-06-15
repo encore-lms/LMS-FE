@@ -8,6 +8,7 @@ import {
   Receipt,
   ShoppingCart,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -46,6 +47,7 @@ export default function MileagePage() {
   )
   const { data, isPending, isError, refetch } = useMileageOverview()
   const toast = useToast()
+  const navigate = useNavigate()
 
   if (isPending) {
     return <div className="text-fg-muted p-8">마일리지 현황을 불러오는 중…</div>
@@ -66,8 +68,9 @@ export default function MileagePage() {
   const { hero, alerts, tabs } = data
 
   const openTab = (t: MileageTabCard) => {
-    // TODO: 클러스터 진입 화면 구현 후 navigate(t.route) (P0_16)
-    toast.info(`${t.cta}는 준비 중입니다.`)
+    // 구현된 탭은 해당 화면으로 이동, 미구현 탭은 준비 중 토스트(ready 플래그 기준).
+    if (t.ready) navigate(t.route)
+    else toast.info(`${t.cta}는 준비 중입니다.`)
   }
 
   return (
@@ -81,7 +84,7 @@ export default function MileagePage() {
       </div>
 
       {/* 히어로 — 과정/기수 + 발행·사용·잔액 */}
-      <div className="bg-brand-deep rounded-2xl p-6 text-white">
+      <div className="bg-brand rounded-xl p-6 text-white">
         <p className="text-[17px] font-bold">
           마일리지 지급·차감·구매·상품·한도를 한 곳에서 운영합니다
         </p>

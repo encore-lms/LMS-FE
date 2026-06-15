@@ -6,8 +6,10 @@ import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
+import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
+import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { useReputation } from './api'
 import type {
   EndorsementStatus,
@@ -56,6 +58,14 @@ export default function ReputationPage() {
   const toast = useToast()
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
+  // 푸시 확인 모달(단건·일괄 공용) + 평판 상세 모달.
+  const [pushAction, setPushAction] = useState<{
+    spec: ActionModalSpec
+    result: string
+  } | null>(null)
+  const [detailStudent, setDetailStudent] = useState<ReputationStudent | null>(
+    null,
+  )
 
   const students = useMemo(() => data?.students ?? [], [data])
   const filtered = useMemo(() => {
@@ -168,9 +178,22 @@ export default function ReputationPage() {
               <button
                 key={t}
                 type="button"
-                // TODO: 평판 요청 푸시(LMS 알림, P0_25 BE 계약 확정 후)
                 onClick={() =>
-                  toast.info(`${s.name} ${PUSH_LABEL[t]}는 준비 중입니다.`)
+                  setPushAction({
+                    spec: {
+                      title: `${PUSH_LABEL[t]} 요청`,
+                      subtitle:
+                        'LMS 알림으로 평판 입력을 요청합니다. 외부 토큰 URL은 사용하지 않습니다.',
+                      rows: [
+                        { label: '수강생', value: `${s.name} · ${s.uuid}` },
+                        { label: '대상', value: PUSH_LABEL[t] },
+                        { label: '채널', value: 'LMS 알림' },
+                        { label: '처리', value: '요청 후 상태 = 요청 중' },
+                      ],
+                      confirmLabel: '푸시',
+                    },
+                    result: `${s.name} ${PUSH_LABEL[t]} 요청을 보냈습니다.`,
+                  })
                 }
                 className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[12px] font-semibold"
               >
@@ -181,8 +204,7 @@ export default function ReputationPage() {
           )}
           <button
             type="button"
-            // TODO: 수강생 평판 상세(P0_25)
-            onClick={() => toast.info(`${s.name} 평판 상세는 준비 중입니다.`)}
+            onClick={() => setDetailStudent(s)}
             className="text-brand text-[13px] font-semibold hover:underline"
           >
             상세
@@ -203,7 +225,7 @@ export default function ReputationPage() {
       </div>
 
       {/* 히어로 — 수집 현황 + 일괄 푸시 */}
-      <div className="bg-brand-deep flex flex-col gap-4 rounded-2xl p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-brand flex flex-col gap-4 rounded-xl p-6 text-white sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-[17px] font-bold">
             수강생별 평판 수집 현황과 요청 푸시 추적
@@ -218,13 +240,23 @@ export default function ReputationPage() {
         </div>
         <button
           type="button"
-          // TODO: 누락 수강생 일괄 요청 푸시(P0_25)
           onClick={() =>
-            toast.info(
-              `누락 ${summary.missingStudents}명 일괄 요청 푸시는 준비 중입니다.`,
-            )
+            setPushAction({
+              spec: {
+                title: '누락 일괄 요청 푸시',
+                subtitle: `누락 수강생 ${summary.missingStudents}명에게 평판 입력을 일괄 요청합니다.`,
+                rows: [
+                  { label: '대상', value: `누락 ${summary.missingStudents}명` },
+                  { label: '기수', value: summary.cohortLabel },
+                  { label: '채널', value: 'LMS 알림' },
+                  { label: '처리', value: '강사·멘토·동료 누락 항목별 발송' },
+                ],
+                confirmLabel: '일괄 푸시',
+              },
+              result: `누락 ${summary.missingStudents}명에게 요청 푸시를 보냈습니다.`,
+            })
           }
-          className="bg-surface text-brand-deep inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90"
+          className="bg-surface text-brand inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90"
         >
           <Send className="h-4 w-4" />
           일괄 요청 푸시 — 누락 {summary.missingStudents}명
@@ -340,6 +372,87 @@ export default function ReputationPage() {
           <li>푸시는 LMS 알림으로 처리 · 외부 토큰 URL 미사용</li>
         </ul>
       </div>
+
+      {/* 푸시 확인 모달 (Figma 푸시 확인 1306:8113 / 결과 1306:8149) */}
+      <ActionModal
+        spec={pushAction?.spec ?? null}
+        onClose={() => setPushAction(null)}
+        onConfirm={() => {
+          // TODO: 평판 요청 푸시 mutation(LMS 알림, P0_25 BE 계약 확정 후) — 매니저 메모는 감사 로그 사유로 전달
+          if (pushAction) toast.success(pushAction.result)
+          setPushAction(null)
+        }}
+      />
+
+      {/* 평판 상세 모달 (Figma 평판 상세 1306:8078) — 행 데이터 기반 읽기 전용 */}
+      <Modal
+        open={!!detailStudent}
+        onClose={() => setDetailStudent(null)}
+        title={detailStudent ? `${detailStudent.name} 평판 상세` : ''}
+      >
+        {detailStudent && (
+          <div className="flex flex-col gap-4">
+            <p className="text-fg-subtle font-mono text-xs">
+              {detailStudent.uuid}
+            </p>
+            <div className="border-border rounded-xl border p-4">
+              <dl className="flex flex-col gap-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-fg-muted">강사 추천서</dt>
+                  <dd className="flex items-center gap-2">
+                    <StatusBadge
+                      label={
+                        ENDORSEMENT_META[detailStudent.endorsementStatus].label
+                      }
+                      tone={
+                        ENDORSEMENT_META[detailStudent.endorsementStatus].tone
+                      }
+                    />
+                    <span className="text-fg-subtle text-xs">
+                      {detailStudent.endorsementBy}
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-fg-muted">멘토 평가·추천</dt>
+                  <dd className="flex items-center gap-2">
+                    <StatusBadge
+                      label={
+                        MENTOR_EVAL_META[detailStudent.mentorEvalStatus].label
+                      }
+                      tone={
+                        MENTOR_EVAL_META[detailStudent.mentorEvalStatus].tone
+                      }
+                    />
+                    <span className="text-fg-subtle text-xs">
+                      {detailStudent.mentorBy}
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-fg-muted">동료 5축</dt>
+                  <dd className="text-fg font-semibold tabular-nums">
+                    {detailStudent.peerCount} / {detailStudent.peerTotal}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-fg-muted">누락 푸시 대상</dt>
+                  <dd className="text-fg text-right">
+                    {detailStudent.pushTargets.length === 0
+                      ? '없음 (완료)'
+                      : detailStudent.pushTargets
+                          .map((t) => PUSH_LABEL[t])
+                          .join(' · ')}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <p className="text-fg-subtle text-xs">
+              상세 평판 항목·입력 이력은 BE(P0_25) 연동 후 제공됩니다.
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

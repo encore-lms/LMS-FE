@@ -31,6 +31,10 @@ const IngestionQueuePage = lazy(() => import('./ingestion/IngestionQueuePage'))
 const ReputationPage = lazy(() => import('./reputation/ReputationPage'))
 // PLAY 타자 관리 (운영 전용 신설 — features/admin/play, Figma 3380:7959)
 const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
+// 타자 제시문 일괄 업로드 (PLAY sub — features/admin/play/bulk, Figma 1546:11329)
+const PlayBulkUploadPage = lazy(() => import('./play/bulk/BulkUploadPage'))
+// 외부 연동 (운영 전용 신설 — features/admin/integrations, Figma 1546:11613)
+const IntegrationsPage = lazy(() => import('./integrations/IntegrationsPage'))
 // 마일리지 관리 허브 (운영 전용 신설 — features/admin/mileage, Figma 1127:5639)
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
 // 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
@@ -46,6 +50,10 @@ const MileagePurchasePage = lazy(
 // 마일리지 상품 관리 (클러스터 sub — features/admin/mileage/products, Figma 1246:7113)
 const MileageProductsPage = lazy(
   () => import('./mileage/products/ProductsPage'),
+)
+// 마일리지 타입 한도 설정 (클러스터 sub — features/admin/mileage/type-limits, Figma 1252:7320)
+const MileageTypeLimitsPage = lazy(
+  () => import('./mileage/type-limits/TypeLimitsPage'),
 )
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
@@ -80,6 +88,9 @@ const MentoringTeamLogFieldsPage = lazy(
   () => import('./mentoring/TeamLogFieldsPage'),
 )
 const MentoringStatisticsPage = lazy(() => import('./mentoring/StatisticsPage'))
+// 감사 로그 (운영 전용 신설 — features/admin/audit, Figma 1521:11112)
+// 경로는 증명서(soulhn 소유) 하위지만 컴포넌트는 admin/audit(본인 소유)에 둠.
+const AuditLogPage = lazy(() => import('./audit/AuditLogPage'))
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -92,16 +103,24 @@ export const adminRoutes: RouteObject[] = [
       { path: 'ingestion/quarantine', element: <IngestionQueuePage /> },
       { path: 'reputation', element: <ReputationPage /> },
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
+      { path: 'play/typing-texts/bulk', element: <PlayBulkUploadPage /> },
+      { path: 'integrations', element: <IntegrationsPage /> },
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
       { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },
       { path: 'mileage/purchase-requests', element: <MileagePurchasePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },
+      { path: 'mileage/type-limits', element: <MileageTypeLimitsPage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {
         path: 'certificates/:certificateId/snapshot',
         element: <SnapshotPage />,
+      },
+      // 감사 로그 — 스냅샷과 형제(증명서 하위). 컴포넌트는 admin/audit 소유.
+      {
+        path: 'certificates/:certificateId/audit',
+        element: <AuditLogPage />,
       },
       { path: 'records/review', element: <RecordReviewQueuePage /> },
       // 검토 상세 3종 — 정적 records/review 뒤. URL 세그먼트 certificates(복수)는

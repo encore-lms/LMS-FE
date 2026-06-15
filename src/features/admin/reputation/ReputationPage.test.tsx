@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -105,12 +105,36 @@ describe('ReputationPage (평판 관리)', () => {
     expect(screen.queryByText('박지훈')).toBeNull()
   })
 
-  it('일괄 요청 푸시 — 준비 중 토스트를 띄운다', async () => {
+  it('일괄 요청 푸시 — 확인 모달을 거쳐 결과 토스트를 띄운다', async () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /일괄 요청 푸시/ }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('누락 일괄 요청 푸시')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: '일괄 푸시' }))
     expect(
-      await screen.findByText('누락 38명 일괄 요청 푸시는 준비 중입니다.'),
+      await screen.findByText('누락 38명에게 요청 푸시를 보냈습니다.'),
     ).toBeInTheDocument()
+  })
+
+  it('단건 강사 푸시 — 확인 모달을 거쳐 결과 토스트를 띄운다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /강사 푸시/ }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('강사 푸시 요청')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: '푸시' }))
+    expect(
+      await screen.findByText('박지훈 강사 푸시 요청을 보냈습니다.'),
+    ).toBeInTheDocument()
+  })
+
+  it('평판 상세 — 행 데이터 기반 상세 모달을 연다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '상세' })[0])
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('김민준 평판 상세')).toBeInTheDocument()
+    expect(within(dialog).getByText('abc-1234')).toBeInTheDocument()
   })
 })

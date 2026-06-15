@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import MileagePage from './MileagePage'
 import { useMileageOverview } from './api'
@@ -46,6 +46,7 @@ const overview: MileageOverview = {
       stats: [{ label: '이번 달 거래', value: '482건' }],
       cta: '지급 내역 보기',
       route: '/admin/mileage/history',
+      ready: true,
     },
     {
       id: 'products',
@@ -95,12 +96,36 @@ describe('MileagePage (마일리지 관리 허브)', () => {
     expect(screen.getByText(/5개 탭은 URL에 반영됩니다/)).toBeInTheDocument()
   })
 
-  it('콘텐츠 탭 CTA — 준비 중 토스트를 띄운다', async () => {
-    renderPage()
+  it('구현된 탭 CTA(지급 내역) — 해당 화면으로 이동한다', async () => {
+    vi.mocked(useMileageOverview).mockReturnValue({
+      data: overview,
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useMileageOverview>)
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/admin/mileage']}>
+          <Routes>
+            <Route path="/admin/mileage" element={<MileagePage />} />
+            <Route
+              path="/admin/mileage/history"
+              element={<div>HISTORY ROUTE</div>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>,
+    )
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /지급 내역 보기/ }))
+    expect(screen.getByText('HISTORY ROUTE')).toBeInTheDocument()
+  })
+
+  it('미구현 탭 CTA(상품 관리) — 준비 중 토스트를 띄운다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /상품 관리 열기/ }))
     expect(
-      await screen.findByText('지급 내역 보기는 준비 중입니다.'),
+      await screen.findByText('상품 관리 열기는 준비 중입니다.'),
     ).toBeInTheDocument()
   })
 })

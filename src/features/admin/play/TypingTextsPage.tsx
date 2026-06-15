@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -8,6 +9,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { usePlayTypingTexts } from './api'
+import { PassageFormModal } from './PassageFormModal'
+import { downloadTypingSampleCsv } from './sampleCsv'
 import type { PassageStatus, TypingPassage, UploadValidationRow } from './types'
 
 const STATUS_META: Record<PassageStatus, { label: string; tone: BadgeTone }> = {
@@ -40,9 +43,13 @@ export default function TypingTextsPage() {
   )
   const { data, isPending, isError, refetch } = usePlayTypingTexts()
   const toast = useToast()
+  const navigate = useNavigate()
   const [language, setLanguage] = useState('all')
   const [level, setLevel] = useState('all')
   const [status, setStatus] = useState<'all' | PassageStatus>('all')
+  // 제시문 추가·수정 폼 모달(formPassage=null → 추가).
+  const [formOpen, setFormOpen] = useState(false)
+  const [formPassage, setFormPassage] = useState<TypingPassage | null>(null)
 
   const passages = useMemo(() => data?.passages ?? [], [data])
   const filtered = useMemo(
@@ -124,8 +131,10 @@ export default function TypingTextsPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            // TODO: 제시문 수정 모달(P0_15 BE 계약 확정 후)
-            onClick={() => toast.info(`${p.title} 수정은 준비 중입니다.`)}
+            onClick={() => {
+              setFormPassage(p)
+              setFormOpen(true)
+            }}
             className="text-accent-strong text-[12px] font-semibold hover:underline"
           >
             수정
@@ -215,24 +224,28 @@ export default function TypingTextsPage() {
       <div className="flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
-          // TODO: 업로드 양식 샘플 다운로드(P0_15)
-          onClick={() => toast.info('샘플 다운로드는 준비 중입니다.')}
+          onClick={() => {
+            downloadTypingSampleCsv()
+            toast.success('샘플 CSV 양식을 내려받았습니다.')
+          }}
           className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
         >
           샘플 다운로드
         </button>
         <button
           type="button"
-          // TODO: CSV/Excel 일괄 업로드(검증 모달, P0_15)
-          onClick={() => toast.info('일괄 업로드는 준비 중입니다.')}
+          // CSV/Excel 일괄 업로드 — 검증 미리보기 화면으로 이동
+          onClick={() => navigate('/admin/play/typing-texts/bulk')}
           className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
         >
           일괄 업로드
         </button>
         <button
           type="button"
-          // TODO: 제시문 추가 모달(P0_15)
-          onClick={() => toast.info('제시문 추가는 준비 중입니다.')}
+          onClick={() => {
+            setFormPassage(null)
+            setFormOpen(true)
+          }}
           className="bg-accent-strong h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors hover:opacity-90"
         >
           제시문 추가
@@ -402,6 +415,21 @@ export default function TypingTextsPage() {
           </div>
         </div>
       </div>
+
+      {/* 제시문 추가·수정 폼 모달 (Figma 1557:11159) */}
+      <PassageFormModal
+        open={formOpen}
+        passage={formPassage}
+        onClose={() => setFormOpen(false)}
+        onSubmit={(mode) => {
+          toast.success(
+            mode === 'edit'
+              ? '제시문을 수정했습니다.'
+              : '제시문을 추가했습니다.',
+          )
+          setFormOpen(false)
+        }}
+      />
     </div>
   )
 }

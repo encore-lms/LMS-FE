@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -40,6 +41,7 @@ export default function TypingTextsPage() {
   )
   const { data, isPending, isError, refetch } = usePlayTypingTexts()
   const toast = useToast()
+  const navigate = useNavigate()
   const [language, setLanguage] = useState('all')
   const [level, setLevel] = useState('all')
   const [status, setStatus] = useState<'all' | PassageStatus>('all')
@@ -223,8 +225,8 @@ export default function TypingTextsPage() {
         </button>
         <button
           type="button"
-          // TODO: CSV/Excel 일괄 업로드(검증 모달, P0_15)
-          onClick={() => toast.info('일괄 업로드는 준비 중입니다.')}
+          // CSV/Excel 일괄 업로드 — 검증 미리보기 화면으로 이동
+          onClick={() => navigate('/admin/play/typing-texts/bulk')}
           className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
         >
           일괄 업로드

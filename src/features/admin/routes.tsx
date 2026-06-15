@@ -17,6 +17,8 @@ const StudentManagementPage = lazy(
 )
 const ResumePage = lazy(() => import('./resume/ResumePage'))
 const ResumeDetailPage = lazy(() => import('./resume/ResumeDetailPage'))
+// 과정·기수·교과목 통합 관리 (운영 전용 신설 — features/admin/education, Figma 1543:11011)
+const EducationPage = lazy(() => import('./education/EducationPage'))
 // 증명서 템플릿 (운영 전용 신설 — features/admin/certificate-template, Figma 1521:10895)
 const CertificateTemplatePage = lazy(
   () => import('./certificate-template/CertificateTemplatePage'),
@@ -60,6 +62,7 @@ export const adminRoutes: RouteObject[] = [
     path: 'admin',
     children: [
       { index: true, element: <AdminDashboard /> },
+      { path: 'education', element: <EducationPage /> },
       { path: 'certificate-template', element: <CertificateTemplatePage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -108,12 +108,30 @@ describe('ProductsPage (마일리지 상품 관리)', () => {
     expect(screen.queryByText('문화상품권 5만원권')).toBeNull()
   })
 
-  it('상품 등록 — 준비 중 토스트를 띄운다', async () => {
+  it('상품 등록 — 폼 모달을 열고 제출 시 성공 토스트를 띄운다', async () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /상품 등록/ }))
-    expect(
-      await screen.findByText('상품 등록은 준비 중입니다.'),
-    ).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('상품 등록')).toBeInTheDocument()
+    // 빈 제출 → 검증 에러
+    await user.click(within(dialog).getByRole('button', { name: '등록' }))
+    expect(screen.getByText('상품명을 입력해주세요')).toBeInTheDocument()
+    // 입력 후 제출 (기본 타입 GIFTICON=고정가 → 가격 필요)
+    await user.type(
+      screen.getByPlaceholderText('상품명을 입력하세요'),
+      '신규 상품',
+    )
+    await user.type(screen.getByPlaceholderText('예: 50000'), '30000')
+    await user.click(within(dialog).getByRole('button', { name: '등록' }))
+    expect(await screen.findByText('상품을 등록했습니다.')).toBeInTheDocument()
+  })
+
+  it('수정 — 폼 모달이 수정 모드로 열린다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '수정' })[0])
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('상품 수정')).toBeInTheDocument()
   })
 })

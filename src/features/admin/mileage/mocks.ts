@@ -86,6 +86,7 @@ const overview: MileageOverview = {
       ],
       cta: '구매 요청 열기',
       route: '/admin/mileage/purchase-requests',
+      ready: true,
     },
     {
       id: 'products',
@@ -99,6 +100,7 @@ const overview: MileageOverview = {
       ],
       cta: '상품 관리 열기',
       route: '/admin/mileage/products',
+      ready: true,
     },
     {
       id: 'type-limits',
@@ -111,6 +113,7 @@ const overview: MileageOverview = {
       ],
       cta: '타입 한도 열기',
       route: '/admin/mileage/type-limits',
+      ready: true,
     },
   ],
 }

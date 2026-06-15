@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { MileageTabs } from '../MileageTabs'
+import { ProductFormModal } from './ProductFormModal'
 import { useMileageProducts } from './api'
 import type { Product, ProductType } from './types'
 
@@ -26,6 +27,9 @@ export default function ProductsPage() {
   const { data, isPending, isError, refetch } = useMileageProducts()
   const toast = useToast()
   const [type, setType] = useState<TypeFilter>('all')
+  // 상품 등록·수정 폼 모달(formProduct=null → 등록).
+  const [formOpen, setFormOpen] = useState(false)
+  const [formProduct, setFormProduct] = useState<Product | null>(null)
 
   const products = useMemo(() => data?.products ?? [], [data])
   const filtered = useMemo(
@@ -114,8 +118,10 @@ export default function ProductsPage() {
         </div>
         <button
           type="button"
-          // TODO: 상품 등록 폼 모달(이미지·타입·가격·순서·활성, P0_16)
-          onClick={() => toast.info('상품 등록은 준비 중입니다.')}
+          onClick={() => {
+            setFormProduct(null)
+            setFormOpen(true)
+          }}
           className="bg-brand hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
         >
           <Plus className="h-4 w-4" />
@@ -129,11 +135,15 @@ export default function ProductsPage() {
           <ProductCard
             key={p.id}
             product={p}
-            onEdit={() => toast.info(`${p.name} 수정은 준비 중입니다.`)}
+            onEdit={() => {
+              setFormProduct(p)
+              setFormOpen(true)
+            }}
             onDelete={() =>
               p.referenced
                 ? undefined
-                : toast.info(`${p.name} 삭제는 준비 중입니다.`)
+                : // TODO: 상품 삭제 확인(참조 중 제한, P0_16)
+                  toast.info(`${p.name} 삭제는 준비 중입니다.`)
             }
           />
         ))}
@@ -188,6 +198,19 @@ export default function ProductsPage() {
           </li>
         </ul>
       </div>
+
+      {/* 상품 등록·수정 폼 모달 (Figma 1306:8434) */}
+      <ProductFormModal
+        open={formOpen}
+        product={formProduct}
+        onClose={() => setFormOpen(false)}
+        onSubmit={(mode) => {
+          toast.success(
+            mode === 'edit' ? '상품을 수정했습니다.' : '상품을 등록했습니다.',
+          )
+          setFormOpen(false)
+        }}
+      />
     </div>
   )
 }

@@ -1,5 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ChevronLeft, UploadCloud } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  UploadCloud,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -8,6 +14,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { downloadTypingSampleCsv } from '../sampleCsv'
 import { usePlayBulkPreview } from './api'
 import type {
   BulkFieldRow,
@@ -52,6 +59,8 @@ export default function BulkUploadPage() {
   )
   const { data, isPending, isError, refetch } = usePlayBulkPreview()
   const toast = useToast()
+  // 검증 실행 상태 전이 — 실행 후 결과 배너 노출(매핑 규칙 적용·오류 재집계는 BE TODO).
+  const [validated, setValidated] = useState(false)
 
   if (isPending) {
     return (
@@ -184,21 +193,43 @@ export default function BulkUploadPage() {
       <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
-          // TODO: 업로드 양식 샘플 다운로드(P0_15)
-          onClick={() => toast.info('샘플 다운로드는 준비 중입니다.')}
+          onClick={() => {
+            downloadTypingSampleCsv()
+            toast.success('샘플 CSV 양식을 내려받았습니다.')
+          }}
           className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
         >
           샘플 다운로드
         </button>
         <button
           type="button"
-          // TODO: 검증 실행(매핑 규칙 적용·오류 재집계, P0_15)
-          onClick={() => toast.info('검증 실행은 준비 중입니다.')}
+          // TODO: 검증 실행 mutation(매핑 규칙 적용·오류 재집계, P0_15) — 현재는 mock 결과 재노출
+          onClick={() => {
+            setValidated(true)
+            toast.success(
+              `검증 완료 — 정상 ${summary.normalRows.toLocaleString()}행 · 오류 ${summary.errorRows}행`,
+            )
+          }}
           className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
         >
-          검증 실행
+          {validated ? '재검증' : '검증 실행'}
         </button>
       </div>
+
+      {/* 검증 결과 배너 (Figma 검증 결과 1557:11207) */}
+      {validated && (
+        <div className="border-success/30 bg-success-bg mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border p-4">
+          <p className="text-success inline-flex items-center gap-1.5 text-sm font-bold">
+            <CheckCircle2 className="h-4 w-4" />
+            검증 완료
+          </p>
+          <p className="text-success/90 text-[13px]">
+            정상 {summary.normalRows.toLocaleString()}행 · 오류{' '}
+            {summary.errorRows}행 · 중복 후보 {summary.dupCandidates}건 · 예상
+            반영 {summary.estimated.toLocaleString()}행
+          </p>
+        </div>
+      )}
 
       {/* KPI 5종 */}
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

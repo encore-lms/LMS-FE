@@ -199,8 +199,11 @@ export default function IntegrationsPage() {
         </div>
         <button
           type="button"
-          // TODO: 연동 상태 새로고침(P0_23)
-          onClick={() => toast.info('연동 상태 새로고침은 준비 중입니다.')}
+          // 새로고침 — 연동 상태 재조회(refetch). TODO: 실시간 상태·증분 동기화는 BE(P0_23) 확정 후.
+          onClick={() => {
+            refetch()
+            toast.success('연동 상태를 새로고침했습니다.')
+          }}
           className="bg-brand hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
         >
           <RefreshCw className="h-4 w-4" />

@@ -84,7 +84,7 @@ export default function MileagePage() {
       </div>
 
       {/* 히어로 — 과정/기수 + 발행·사용·잔액 */}
-      <div className="bg-brand-deep rounded-2xl p-6 text-white">
+      <div className="bg-brand rounded-xl p-6 text-white">
         <p className="text-[17px] font-bold">
           마일리지 지급·차감·구매·상품·한도를 한 곳에서 운영합니다
         </p>

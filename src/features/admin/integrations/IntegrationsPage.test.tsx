@@ -69,6 +69,7 @@ function renderPage() {
     data: overview,
     isPending: false,
     isError: false,
+    refetch: vi.fn(),
   } as unknown as ReturnType<typeof useIntegrations>)
   return render(
     <ToastProvider>
@@ -99,12 +100,12 @@ describe('IntegrationsPage (외부 연동)', () => {
     expect(screen.queryByText('Notion')).toBeNull()
   })
 
-  it('연동 상태 새로고침 — 준비 중 토스트를 띄운다', async () => {
+  it('연동 상태 새로고침 — 재조회 후 성공 토스트를 띄운다', async () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /연동 상태 새로고침/ }))
     expect(
-      await screen.findByText('연동 상태 새로고침은 준비 중입니다.'),
+      await screen.findByText('연동 상태를 새로고침했습니다.'),
     ).toBeInTheDocument()
   })
 })

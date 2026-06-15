@@ -8,6 +8,8 @@ import { usePlayBulkPreview } from './api'
 import type { BulkUploadData } from './types'
 
 vi.mock('./api')
+// 샘플 다운로드 helper는 실제 anchor click(jsdom 미지원) → 모킹해 토스트만 검증.
+vi.mock('../sampleCsv')
 
 // 타자 일괄 업로드 — KPI·필드 표·검증 항목·처리 기준 렌더 + 액션 토스트.
 
@@ -94,12 +96,26 @@ describe('BulkUploadPage (타자 일괄 업로드)', () => {
     ).toBeInTheDocument()
   })
 
-  it('검증 실행 — 준비 중 토스트를 띄운다', async () => {
+  it('검증 실행 — 결과 배너·성공 토스트 노출 후 버튼이 재검증으로 전환', async () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: '검증 실행' }))
     expect(
-      await screen.findByText('검증 실행은 준비 중입니다.'),
+      await screen.findByText('검증 완료 — 정상 238행 · 오류 7행'),
+    ).toBeInTheDocument()
+    // 결과 배너(중복 후보·예상 반영 카운트)
+    expect(
+      screen.getByText(/중복 후보 13건 · 예상 반영 225행/),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '재검증' })).toBeInTheDocument()
+  })
+
+  it('샘플 다운로드 — 성공 토스트를 띄운다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '샘플 다운로드' }))
+    expect(
+      await screen.findByText('샘플 CSV 양식을 내려받았습니다.'),
     ).toBeInTheDocument()
   })
 })

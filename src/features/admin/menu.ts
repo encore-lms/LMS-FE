@@ -7,7 +7,7 @@ import type { MenuItem } from '@/components/layout'
 // 학생 이력서 피드백(/admin/resume-feedback), 외부 연동(/admin/integrations).
 export const adminMenu: MenuItem[] = [
   { label: '대시보드', to: '/admin' },
-  { label: '과정·기수·교과목', to: '/admin/courses' },
+  { label: '과정·기수·교과목', to: '/admin/education' },
   { label: '학생 관리', to: '/admin/students' },
   { label: '이력서 관리', to: '/admin/resume' },
   { label: '운영 계정·권한', to: '/admin/settings/accounts' },

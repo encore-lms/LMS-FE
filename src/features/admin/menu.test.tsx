@@ -39,4 +39,32 @@ describe('adminMenu 사이드바 active highlight', () => {
     expect(active('인증 검토')).toBe(false)
     expect(active('인입 격리 큐')).toBe(true)
   })
+
+  // 설정 하위 화면 — 운영 계정·권한이 별도 메뉴라 '설정'이 end=true로 잠기던 갭 보강(match).
+  it('설정 하위(hrd-api-key)에서 설정이 활성·운영 계정·권한은 비활성', () => {
+    renderAt('/admin/settings/hrd-api-key')
+    expect(active('설정')).toBe(true)
+    expect(active('운영 계정·권한')).toBe(false)
+  })
+
+  it('설정 하위(course-config)에서 설정이 활성', () => {
+    renderAt('/admin/settings/course-config')
+    expect(active('설정')).toBe(true)
+  })
+
+  it('설정 하위(courses/new)에서 설정이 활성', () => {
+    renderAt('/admin/settings/courses/new')
+    expect(active('설정')).toBe(true)
+  })
+
+  it('운영 계정·권한 경로에서는 운영 계정·권한만 활성(설정 비활성 — 이중 하이라이트 방지)', () => {
+    renderAt('/admin/settings/accounts')
+    expect(active('운영 계정·권한')).toBe(true)
+    expect(active('설정')).toBe(false)
+  })
+
+  it('설정 허브(/admin/settings)에서 설정이 활성', () => {
+    renderAt('/admin/settings')
+    expect(active('설정')).toBe(true)
+  })
 })

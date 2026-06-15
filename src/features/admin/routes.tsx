@@ -33,6 +33,8 @@ const ReputationPage = lazy(() => import('./reputation/ReputationPage'))
 const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
 // 타자 제시문 일괄 업로드 (PLAY sub — features/admin/play/bulk, Figma 1546:11329)
 const PlayBulkUploadPage = lazy(() => import('./play/bulk/BulkUploadPage'))
+// 외부 연동 (운영 전용 신설 — features/admin/integrations, Figma 1546:11613)
+const IntegrationsPage = lazy(() => import('./integrations/IntegrationsPage'))
 // 마일리지 관리 허브 (운영 전용 신설 — features/admin/mileage, Figma 1127:5639)
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
 // 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
@@ -95,6 +97,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'reputation', element: <ReputationPage /> },
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
       { path: 'play/typing-texts/bulk', element: <PlayBulkUploadPage /> },
+      { path: 'integrations', element: <IntegrationsPage /> },
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
       { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },

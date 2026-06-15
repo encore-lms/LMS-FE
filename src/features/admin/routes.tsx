@@ -35,6 +35,10 @@ const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
 // 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
 const MileageHistoryPage = lazy(() => import('./mileage/history/HistoryPage'))
+// 마일리지 직접 지급 (클러스터 sub — features/admin/mileage/direct-pay, Figma 1226:6549)
+const MileageDirectPayPage = lazy(
+  () => import('./mileage/direct-pay/DirectPayPage'),
+)
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
@@ -82,6 +86,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
+      { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {

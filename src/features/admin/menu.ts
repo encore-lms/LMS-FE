@@ -16,7 +16,7 @@ export const adminMenu: MenuItem[] = [
   { label: 'CSV 매핑', to: '/admin/csv' },
   { label: '인입 격리 큐', to: '/admin/quarantine' },
   { label: '마일리지', to: '/admin/mileage' },
-  { label: '증명서 템플릿', to: '/admin/certificate-templates' },
+  { label: '증명서 템플릿', to: '/admin/certificate-template' },
   { label: '퀴즈 운영', to: '/admin/quizzes' },
   {
     label: '학습 기록 검토',

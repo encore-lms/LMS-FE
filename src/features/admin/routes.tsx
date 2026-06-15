@@ -17,6 +17,10 @@ const StudentManagementPage = lazy(
 )
 const ResumePage = lazy(() => import('./resume/ResumePage'))
 const ResumeDetailPage = lazy(() => import('./resume/ResumeDetailPage'))
+// 증명서 템플릿 (운영 전용 신설 — features/admin/certificate-template, Figma 1521:10895)
+const CertificateTemplatePage = lazy(
+  () => import('./certificate-template/CertificateTemplatePage'),
+)
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
@@ -56,6 +60,7 @@ export const adminRoutes: RouteObject[] = [
     path: 'admin',
     children: [
       { index: true, element: <AdminDashboard /> },
+      { path: 'certificate-template', element: <CertificateTemplatePage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {

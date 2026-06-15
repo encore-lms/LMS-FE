@@ -56,6 +56,7 @@ const overview: MileageOverview = {
       stats: [{ label: '활성 상품', value: '18개', positive: true }],
       cta: '상품 관리 열기',
       route: '/admin/mileage/products',
+      ready: true,
     },
   ],
 }
@@ -120,12 +121,27 @@ describe('MileagePage (마일리지 관리 허브)', () => {
     expect(screen.getByText('HISTORY ROUTE')).toBeInTheDocument()
   })
 
-  it('미구현 탭 CTA(상품 관리) — 준비 중 토스트를 띄운다', async () => {
-    renderPage()
+  it('상품 관리 CTA — 해당 화면으로 이동한다', async () => {
+    vi.mocked(useMileageOverview).mockReturnValue({
+      data: overview,
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useMileageOverview>)
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/admin/mileage']}>
+          <Routes>
+            <Route path="/admin/mileage" element={<MileagePage />} />
+            <Route
+              path="/admin/mileage/products"
+              element={<div>PRODUCTS ROUTE</div>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>,
+    )
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /상품 관리 열기/ }))
-    expect(
-      await screen.findByText('상품 관리 열기는 준비 중입니다.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('PRODUCTS ROUTE')).toBeInTheDocument()
   })
 })

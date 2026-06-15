@@ -47,6 +47,10 @@ const MileageDirectPayPage = lazy(
 const MileagePurchasePage = lazy(
   () => import('./mileage/purchase-requests/PurchaseRequestsPage'),
 )
+// 마일리지 상품 관리 (클러스터 sub — features/admin/mileage/products, Figma 1246:7113)
+const MileageProductsPage = lazy(
+  () => import('./mileage/products/ProductsPage'),
+)
 // 마일리지 타입 한도 설정 (클러스터 sub — features/admin/mileage/type-limits, Figma 1252:7320)
 const MileageTypeLimitsPage = lazy(
   () => import('./mileage/type-limits/TypeLimitsPage'),
@@ -105,6 +109,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'mileage/history', element: <MileageHistoryPage /> },
       { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },
       { path: 'mileage/purchase-requests', element: <MileagePurchasePage /> },
+      { path: 'mileage/products', element: <MileageProductsPage /> },
       { path: 'mileage/type-limits', element: <MileageTypeLimitsPage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },

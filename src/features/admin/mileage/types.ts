@@ -47,8 +47,10 @@ export interface MileageTabCard {
   stats: MileageTabStat[]
   /** CTA 라벨 — 예: "지급 내역 보기" */
   cta: string
-  /** 진입 라우트(미구현 — TODO) */
+  /** 진입 라우트 */
   route: string
+  /** 진입 화면 구현 완료 여부 — true면 CTA가 navigate, 아니면 준비 중 토스트 */
+  ready?: boolean
 }
 
 export interface MileageOverview {

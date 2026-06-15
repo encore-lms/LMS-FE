@@ -58,6 +58,7 @@ const overview: MileageOverview = {
       ],
       cta: '지급 내역 보기',
       route: '/admin/mileage/history',
+      ready: true,
     },
     {
       id: 'direct-pay',
@@ -71,6 +72,7 @@ const overview: MileageOverview = {
       ],
       cta: '직접 지급 열기',
       route: '/admin/mileage/direct-pay',
+      ready: true,
     },
     {
       id: 'purchase-requests',

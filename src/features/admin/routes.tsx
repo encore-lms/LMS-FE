@@ -27,6 +27,8 @@ const CertificateTemplatePage = lazy(
 const CsvMappingPage = lazy(() => import('./csv/CsvMappingPage'))
 // 인입 격리 큐 (운영 전용 신설 — features/admin/ingestion, Figma 1185:6029)
 const IngestionQueuePage = lazy(() => import('./ingestion/IngestionQueuePage'))
+// 평판 관리 (운영 전용 신설 — features/admin/reputation, Figma 1193:6267)
+const ReputationPage = lazy(() => import('./reputation/ReputationPage'))
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
@@ -70,6 +72,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'certificate-template', element: <CertificateTemplatePage /> },
       { path: 'csv-mapping', element: <CsvMappingPage /> },
       { path: 'ingestion/quarantine', element: <IngestionQueuePage /> },
+      { path: 'reputation', element: <ReputationPage /> },
       { path: 'certificates/reviews', element: <ReviewQueuePage /> },
       { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {

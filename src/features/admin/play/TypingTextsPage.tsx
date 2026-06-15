@@ -1,0 +1,407 @@
+import { useMemo, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Empty } from '@/components/ui/Empty'
+import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
+import { DataTable, type Column } from '@/components/data/DataTable'
+import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/shared/lib/cn'
+import { usePageHeader } from '@/shared/store'
+import { usePlayTypingTexts } from './api'
+import type { PassageStatus, TypingPassage, UploadValidationRow } from './types'
+
+const STATUS_META: Record<PassageStatus, { label: string; tone: BadgeTone }> = {
+  active: { label: '활성', tone: 'success' },
+  inactive: { label: '비활성', tone: 'neutral' },
+  error: { label: '오류', tone: 'danger' },
+}
+
+const LANGUAGES = ['Python', '한글', '영문']
+const LEVELS = ['쉬움', '보통', '어려움']
+
+// 폼 모달 기준(우측 참조 패널) — Figma 동결 텍스트.
+const FORM_CRITERIA: { label: string; desc: string }[] = [
+  { label: '제목', desc: '필수 · 80자 이내' },
+  { label: '내용', desc: '필수 · 타자 입력 대상 원문' },
+  { label: '언어', desc: 'Python / 한글 / 영문' },
+  { label: '난이도', desc: '쉬움 / 보통 / 어려움' },
+  { label: '정렬 순서', desc: '기본 0' },
+  { label: '활성 여부', desc: '비활성 시 수강생 미노출' },
+]
+
+// PLAY 타자 관리 (/admin/play/typing-texts) — 운영(MANAGER/ADMIN) 신규.
+// Figma 3380:7959(보강). 과정별 PLAY 타자 제시문 등록·노출 상태·일괄 업로드 오류 관리.
+// 운영은 콘텐츠 관리만 — 세션 진행·결과 제출은 P0_14(수강생) 범위. 추가·수정·복제·업로드
+// 흐름은 별도 시안 미설계 → 토스트 + TODO.
+export default function TypingTextsPage() {
+  usePageHeader(
+    'PLAY 타자 관리',
+    '과정별 PLAY 제시문 등록 · 노출 상태 · 업로드 오류 관리',
+  )
+  const { data, isPending, isError, refetch } = usePlayTypingTexts()
+  const toast = useToast()
+  const [language, setLanguage] = useState('all')
+  const [level, setLevel] = useState('all')
+  const [status, setStatus] = useState<'all' | PassageStatus>('all')
+
+  const passages = useMemo(() => data?.passages ?? [], [data])
+  const filtered = useMemo(
+    () =>
+      passages.filter((p) => {
+        if (language !== 'all' && p.language !== language) return false
+        if (level !== 'all' && p.level !== level) return false
+        if (status !== 'all' && p.status !== status) return false
+        return true
+      }),
+    [passages, language, level, status],
+  )
+
+  if (isPending) {
+    return <div className="text-fg-muted p-8">PLAY 제시문을 불러오는 중…</div>
+  }
+  if (isError || !data) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<AlertTriangle />}
+          title="PLAY 제시문을 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          action={<Button onClick={() => refetch()}>다시 시도</Button>}
+        />
+      </div>
+    )
+  }
+
+  const { summary, uploadValidation, uploadErrorRows } = data
+
+  const columns: Column<TypingPassage>[] = [
+    {
+      key: 'title',
+      header: '제목',
+      cell: (p) => (
+        <div className="min-w-0">
+          <p className="text-fg text-[14px] font-medium">{p.title}</p>
+          <p className="text-fg-muted text-xs">{p.previewNote}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'language',
+      header: '언어',
+      className: 'w-20',
+      cell: (p) => <span className="text-fg text-[13px]">{p.language}</span>,
+    },
+    {
+      key: 'level',
+      header: '난이도',
+      className: 'w-20',
+      cell: (p) => <span className="text-fg text-[13px]">{p.level}</span>,
+    },
+    {
+      key: 'order',
+      header: '정렬',
+      className: 'w-16',
+      cell: (p) => (
+        <span className="text-fg text-[13px] tabular-nums">{p.order}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: '상태',
+      className: 'w-20',
+      cell: (p) => (
+        <StatusBadge
+          label={STATUS_META[p.status].label}
+          tone={STATUS_META[p.status].tone}
+        />
+      ),
+    },
+    {
+      key: 'action',
+      header: '액션',
+      className: 'w-24',
+      cell: (p) => (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            // TODO: 제시문 수정 모달(P0_15 BE 계약 확정 후)
+            onClick={() => toast.info(`${p.title} 수정은 준비 중입니다.`)}
+            className="text-accent-strong text-[12px] font-semibold hover:underline"
+          >
+            수정
+          </button>
+          <button
+            type="button"
+            // TODO: 제시문 복제(P0_15)
+            onClick={() => toast.info(`${p.title} 복제는 준비 중입니다.`)}
+            className="text-accent-strong text-[12px] font-semibold hover:underline"
+          >
+            복제
+          </button>
+        </div>
+      ),
+    },
+  ]
+
+  const uploadColumns: Column<UploadValidationRow>[] = [
+    {
+      key: 'rowNo',
+      header: '행',
+      className: 'w-14',
+      cell: (r) => (
+        <span className="text-fg text-[12px] tabular-nums">{r.rowNo}</span>
+      ),
+    },
+    {
+      key: 'title',
+      header: 'title',
+      cell: (r) => (
+        <span
+          className={cn(
+            'text-[12px]',
+            r.titleError ? 'text-danger' : 'text-fg',
+          )}
+        >
+          {r.title}
+        </span>
+      ),
+    },
+    {
+      key: 'content',
+      header: 'content',
+      cell: (r) => (
+        <span
+          className={cn(
+            'text-[12px]',
+            r.contentError ? 'text-danger' : 'text-fg',
+          )}
+        >
+          {r.content}
+        </span>
+      ),
+    },
+    {
+      key: 'language',
+      header: 'language',
+      className: 'w-24',
+      cell: (r) => <span className="text-fg text-[12px]">{r.language}</span>,
+    },
+    {
+      key: 'level',
+      header: 'level',
+      className: 'w-20',
+      cell: (r) => <span className="text-fg text-[12px]">{r.level}</span>,
+    },
+    {
+      key: 'result',
+      header: '검증 결과',
+      className: 'w-28',
+      cell: (r) => (
+        <span
+          className={cn(
+            'text-[12px] font-semibold',
+            r.ok ? 'text-success' : 'text-danger',
+          )}
+        >
+          {r.result}
+        </span>
+      ),
+    },
+  ]
+
+  return (
+    <div className="p-8">
+      {/* 액션 툴바 — 헤더 우측 액션 대체 */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          // TODO: 업로드 양식 샘플 다운로드(P0_15)
+          onClick={() => toast.info('샘플 다운로드는 준비 중입니다.')}
+          className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
+        >
+          샘플 다운로드
+        </button>
+        <button
+          type="button"
+          // TODO: CSV/Excel 일괄 업로드(검증 모달, P0_15)
+          onClick={() => toast.info('일괄 업로드는 준비 중입니다.')}
+          className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
+        >
+          일괄 업로드
+        </button>
+        <button
+          type="button"
+          // TODO: 제시문 추가 모달(P0_15)
+          onClick={() => toast.info('제시문 추가는 준비 중입니다.')}
+          className="bg-accent-strong h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors hover:opacity-90"
+        >
+          제시문 추가
+        </button>
+      </div>
+
+      {/* 노출 조건 배너 */}
+      <div className="border-warning/30 bg-warning-bg/50 mt-4 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-warning text-sm font-bold">
+            노출 조건: CourseFeatureConfig.playEnabled = true
+          </p>
+          <p className="text-warning/90 mt-1 text-xs leading-relaxed">
+            PLAY 기능이 꺼진 과정은 운영 메뉴와 수강생 PLAY 화면 모두
+            숨겨집니다. 기능을 켜기 전에는 제시문을 등록해도 수강생에게 노출되지
+            않습니다.
+          </p>
+        </div>
+        <StatusBadge
+          label={`비활성 과정 ${summary.disabledCourses}개`}
+          tone="warning"
+        />
+      </div>
+
+      {/* 필터 */}
+      <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
+        <select
+          aria-label="과정/기수 필터"
+          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          defaultValue="be3"
+        >
+          <option value="be3">백엔드 부트캠프 3기</option>
+        </select>
+        <select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          aria-label="언어 필터"
+          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+        >
+          <option value="all">언어 전체</option>
+          {LANGUAGES.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+        <select
+          value={level}
+          onChange={(e) => setLevel(e.target.value)}
+          aria-label="난이도 필터"
+          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+        >
+          <option value="all">난이도 전체</option>
+          {LEVELS.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as 'all' | PassageStatus)}
+          aria-label="활성 상태 필터"
+          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+        >
+          <option value="all">활성 상태 전체</option>
+          {(Object.keys(STATUS_META) as PassageStatus[]).map((key) => (
+            <option key={key} value={key}>
+              {STATUS_META[key].label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* 2단 — 제시문 목록(좌) + 폼 기준 패널(우) */}
+      <div className="mt-4 flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-fg text-base font-bold">
+              타자 제시문 목록
+            </span>
+            <span className="text-fg-muted text-xs">
+              활성 {summary.active} · 비활성 {summary.inactive} · 오류{' '}
+              {summary.error}
+            </span>
+          </div>
+          <DataTable
+            columns={columns}
+            rows={filtered}
+            rowKey={(p) => p.id}
+            empty="조건에 맞는 제시문이 없어요"
+          />
+        </div>
+
+        <aside className="w-full lg:w-[336px] lg:shrink-0">
+          <div className="border-border bg-surface rounded-xl border p-5">
+            <p className="text-fg text-base font-bold">제시문 폼 모달 기준</p>
+            <dl className="mt-4 flex flex-col gap-3.5">
+              {FORM_CRITERIA.map((c) => (
+                <div key={c.label}>
+                  <dt className="text-fg text-[13px] font-semibold">
+                    {c.label}
+                  </dt>
+                  <dd className="text-fg-muted mt-0.5 text-xs">{c.desc}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="border-warning/30 bg-warning-bg/50 mt-4 rounded-lg border p-3.5">
+              <p className="text-warning text-sm font-bold">
+                활성 변경 확인 필요
+              </p>
+              <p className="text-warning/90 mt-1 text-xs leading-relaxed">
+                진행 중 세션에는 기존 제시문을 유지하고, 새 세션부터 변경된 활성
+                상태를 적용합니다.
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* 명세 경계(좌) + 일괄 업로드 검증(우) */}
+      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+        <aside className="border-border bg-info-bg/40 w-full rounded-xl border p-5 lg:w-[220px] lg:shrink-0">
+          <p className="text-fg text-[13px] font-bold">명세 경계</p>
+          <p className="text-fg-muted mt-2 text-xs leading-relaxed">
+            운영 화면은 콘텐츠 관리만 담당합니다. 수강생 세션 진행과 결과 제출은
+            P0_14 범위입니다.
+          </p>
+        </aside>
+
+        <div className="border-border bg-surface min-w-0 flex-1 rounded-xl border p-5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-fg text-base font-bold">일괄 업로드 검증</p>
+              <p className="text-fg-muted mt-1 text-xs">
+                CSV/Excel 업로드 후 필수 열, 중복 제목, 빈 내용, 잘못된 난이도를
+                저장 전에 검증합니다.
+              </p>
+            </div>
+            <StatusBadge label={`오류 ${uploadErrorRows}행`} tone="danger" />
+          </div>
+          <div className="mt-4">
+            <DataTable
+              columns={uploadColumns}
+              rows={uploadValidation}
+              rowKey={(r) => r.id}
+              empty="검증할 행이 없어요"
+            />
+          </div>
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              // TODO: 오류 행만 CSV로 추출(P0_15)
+              onClick={() => toast.info('오류 행 내려받기는 준비 중입니다.')}
+              className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
+            >
+              오류 행 내려받기
+            </button>
+            <button
+              type="button"
+              // TODO: 정상 행만 저장(오류 행 제외 인입, P0_15)
+              onClick={() => toast.info('정상 행만 저장은 준비 중입니다.')}
+              className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
+            >
+              정상 행만 저장
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

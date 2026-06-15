@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -126,6 +126,21 @@ describe('IngestionQueuePage (인입 격리 큐)', () => {
     )
     expect(
       await screen.findByText('실패 행 일괄 다운로드는 준비 중입니다.'),
+    ).toBeInTheDocument()
+  })
+
+  it('재시도 — 확인 모달을 열고 확정 시 성공 토스트를 띄운다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '재시도' })[0])
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('세션 재시도')).toBeInTheDocument()
+    expect(
+      within(dialog).getByText('실패 행만 재인입 (성공 행 유지)'),
+    ).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: '재시도' }))
+    expect(
+      await screen.findByText(/재시도 요청을 보냈습니다/),
     ).toBeInTheDocument()
   })
 })

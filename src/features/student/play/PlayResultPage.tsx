@@ -148,10 +148,10 @@ export default function PlayResultPage() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/student')}
+            onClick={() => navigate('/student/play')}
             className="bg-brand w-fit rounded-lg px-4 py-2 text-[12px] font-bold text-white"
           >
-            대시보드로 돌아가기
+            PLAY로 돌아가기
           </button>
         </section>
       </div>

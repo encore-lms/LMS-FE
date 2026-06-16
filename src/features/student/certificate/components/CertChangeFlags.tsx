@@ -1,7 +1,7 @@
 import { cn } from '@/shared/lib/cn'
 import type { CertChangeFlag, Tone } from '../types'
 
-// 보완이 필요한 항목 — 미리보기 상단 경고 카드들(점수/산출물/개인정보).
+// 보완이 필요한 항목 — 미리보기 상단 경고 카드들(좌측 색 바 + 배지 + 이동). Figma 249:27.
 const BADGE: Record<Tone, string> = {
   brand: 'bg-brand/10 text-brand',
   info: 'bg-info-bg text-info',
@@ -10,35 +10,64 @@ const BADGE: Record<Tone, string> = {
   accent: 'bg-accent-bg text-accent-strong',
   success: 'bg-success-bg text-success',
 }
+const BAR: Record<Tone, string> = {
+  brand: 'bg-brand',
+  info: 'bg-info',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  accent: 'bg-accent-strong',
+  success: 'bg-success',
+}
 
-export function CertChangeFlags({ flags }: { flags: CertChangeFlag[] }) {
+export function CertChangeFlags({
+  flags,
+  onCta,
+}: {
+  flags: CertChangeFlag[]
+  onCta: (cta: string) => void
+}) {
   if (flags.length === 0) return null
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <h2 className="text-fg text-[15px] font-bold">보완이 필요한 항목</h2>
-        <span className="bg-warning-bg text-warning rounded-md px-2 py-0.5 text-[11px] font-bold">
-          {flags.length}건
-        </span>
+      <div className="flex items-end justify-between">
+        <div className="flex flex-col">
+          <h2 className="text-fg text-[16px] font-bold">보완이 필요한 항목</h2>
+          <span className="text-fg-subtle text-[12px]">
+            정식 인증 요청 전 처리 권장 · 총 {flags.length}건
+          </span>
+        </div>
+        <span className="text-fg-subtle text-[11px]">최근 갱신 03:12</span>
       </div>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         {flags.map((f) => (
           <div
             key={f.id}
-            className="border-border bg-surface flex flex-col gap-1.5 rounded-[12px] border p-4"
+            className="border-border bg-surface flex overflow-hidden rounded-[12px] border"
           >
-            <span
-              className={cn(
-                'w-fit rounded-md px-2 py-0.5 text-[10px] font-bold',
-                BADGE[f.badgeTone],
-              )}
-            >
-              {f.badge}
-            </span>
-            <span className="text-fg text-[13px] font-semibold">{f.title}</span>
-            <span className="text-fg-muted text-[11px] leading-4">
-              {f.detail}
-            </span>
+            <span className={cn('w-1.5 shrink-0', BAR[f.badgeTone])} />
+            <div className="flex flex-1 flex-col gap-2 p-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'rounded px-2 py-0.5 text-[10px] font-bold',
+                    BADGE[f.badgeTone],
+                  )}
+                >
+                  {f.badge}
+                </span>
+                <span className="text-fg text-[13px] font-bold">{f.title}</span>
+              </div>
+              <span className="text-fg-muted text-[12px] leading-5">
+                {f.detail}
+              </span>
+              <button
+                type="button"
+                onClick={() => onCta(f.cta)}
+                className="text-brand w-fit text-[12px] font-semibold"
+              >
+                {f.cta} →
+              </button>
+            </div>
           </div>
         ))}
       </div>

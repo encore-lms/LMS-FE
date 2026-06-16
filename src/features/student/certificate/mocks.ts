@@ -111,24 +111,60 @@ const mockOverview: CertificateOverview = {
   changeFlags: [
     {
       id: 'f1',
-      badge: '점수',
-      badgeTone: 'warning',
-      title: '점수 재산정 누락',
-      detail: '재응시 점수가 산출물에 반영되지 않음',
+      badge: '필수',
+      badgeTone: 'danger',
+      title: '필수 데이터 누락',
+      detail: '외부 URL 2건 미입력 (GitHub · 블로그)',
+      cta: '프로필 이동',
     },
     {
       id: 'f2',
-      badge: '산출물',
-      badgeTone: 'accent',
-      title: '대표 기록 강사 미승인',
-      detail: '8주차 블로그 승인 대기',
+      badge: '주의',
+      badgeTone: 'warning',
+      title: '미승인 산출물',
+      detail: '8주차 회고 블로그 — 검토 대기 중',
+      cta: '기록실 이동',
     },
     {
       id: 'f3',
-      badge: '개인정보',
-      badgeTone: 'danger',
+      badge: '주의',
+      badgeTone: 'warning',
       title: '개인정보 위험',
-      detail: '공개 payload 연락처 노출 점검',
+      detail: '프로젝트 카드에 전화번호가 노출됨',
+      cta: '공개 항목 수정',
+    },
+  ],
+  requestChecklist: [
+    {
+      id: 'rc1',
+      pass: true,
+      label: '필수 프로필 존재',
+      sub: '이름, 과정, 외부 URL 형식 검증 완료',
+    },
+    {
+      id: 'rc2',
+      pass: false,
+      label: '핵심 지표 산정 가능',
+      sub: '외부 URL 2건 미입력 — 프로젝트 카드 인증 누락 위험',
+      cta: '프로필 이동',
+    },
+    {
+      id: 'rc3',
+      pass: true,
+      label: '대표 프로젝트 / 기록 승인',
+      sub: '프로젝트 2건 · 기록 12건 강사 승인 완료',
+    },
+    {
+      id: 'rc4',
+      pass: true,
+      label: '개인정보 위험 없음',
+      sub: '프로젝트 카드 전화번호 자동 마스킹 적용',
+    },
+    {
+      id: 'rc5',
+      pass: true,
+      label: '마트 최신성',
+      sub: 'StudentSkillAxisMart · 2026-05-14 03:12 갱신',
     },
   ],
   summary: {
@@ -751,9 +787,12 @@ const mockOverview: CertificateOverview = {
 
 const mockChanges: CertChangesData = {
   roundLabel: '1차 보완 요청',
-  summaryTitle: '정식 인증 전, 아래 3개 항목을 보완 주세요',
+  summaryTitle: '정식 인증 전, 아래 3개 항목을 보완해 주세요',
   summarySub:
     '보완 완료 후 [정식 인증 재요청] 버튼이 활성화됩니다 · 매니저가 다시 검토합니다.',
+  requestedAt: '2026-05-12 14:30',
+  reviewer: '매니저 박지수',
+  replyWithin: '1영업일 이내',
   reasons: [
     {
       id: 'r1',
@@ -861,64 +900,64 @@ const mockChanges: CertChangesData = {
 }
 
 const mockPublication: CertPublicationData = {
+  issuedBadge: 'CERTIFIED · 정식 인증 완료',
   issuedLabel: '수강 역량 증명서 발급 완료',
-  issuedSub: '백엔드 부트캠프 · 3기 · 인증일 2026-09-14',
-  // 실제 /verify 라우트 기준으로 정합(2026-06-12, 외부검증 #103·#104) — 운영 스냅샷 mock과 동일
-  // 토큰이라 복사→접속 클릭-스루 동작. 페르소나(백엔드 3기 vs 공개 응답 이서연) 정합은 BE 확정 시.
+  issuedSub: '김수강 · 백엔드 부트캠프 3기 · 인증일 2026.05.14',
+  verifyId: 'VERIFY-2026-BB23-K1234',
+  urlIssueDate: '2026-05-15 · 다음날 자동 활성',
+  // 토큰 경로(새 탭 이동) / 표시·복사용 URL은 publicUrl 별도.
   verifyUrl: '/verify/vfy_kp9q4r2nx0',
-  toggles: [
+  publicUrl: 'https://verify.playdata.io/v/abc123ef9456',
+  urlToggle: {
+    id: 'url',
+    label: '외부 검증 URL 공개',
+    badge: '공개 가능',
+    sub: '수료일 다음날 00:00 KST 이후 활성 · 운영자 최신화 이후 외부 반영',
+    on: false,
+    info: '현재 비공개 — 외부 검증자가 URL에 접근하면 비공개 안내만 표시됩니다. 정식 인증 마크는 유지됩니다.',
+  },
+  growthToggles: [
     {
-      id: 't1',
-      label: '외부 검증 URL 공개',
-      sub: '공개 시 위 URL로 누구나 검증 페이지를 볼 수 있습니다',
-      on: true,
-    },
-    {
-      id: 't2',
-      label: '상위 항목 공개',
-      sub: '종합 점수·6축·핵심 지표 등 상위 요약을 공개합니다',
-      on: true,
-    },
-    {
-      id: 't3',
-      label: 'PeerReputation (동료 5축 평가)',
-      sub: '동료 평판 평균 점수를 공개합니다',
+      id: 'peer',
+      label: 'PeerReputation (동료 5축 평균)',
+      sub: '외부 공개 페이로드에 포함 시 검증자가 5축 점수 확인 가능',
       on: false,
     },
     {
-      id: 't4',
-      label: 'ShortComment (동료 코멘트)',
-      sub: '동료 평가 코멘트를 공개합니다 (최대 5개)',
+      id: 'short',
+      label: 'ShortComment',
+      sub: '동료가 작성한 짧은 코멘트 최대 5개 공개 — 기본 OFF',
       on: false,
-    },
-    {
-      id: 't5',
-      label: '검사 메타 공개',
-      sub: '집계 일시·산정 버전 등 메타 정보를 표시합니다',
-      on: true,
-      locked: true,
     },
   ],
+  recommendRow: {
+    label: '강사·멘토 추천서',
+    tag: '자동 · 토글 없음',
+    sub: '개별 토글 없음 — 인증 완료 + 최신화 이후 공개 스냅샷에 포함됨',
+    chip: '최신화 이후 포함',
+  },
   preview: {
     name: '수강 Kim',
-    course: '백엔드 부트캠프 · 3기',
-    score: 88,
-    attendance: '96%',
-    projects: 2,
-    grade: 'A',
+    period: '백엔드 부트캠프 · 3기 · 2025.11 ~ 2026.05',
+    metrics: [
+      { v: '86', l: '종합 점수' },
+      { v: '96%', l: '출석률' },
+      { v: '2', l: '인증 프로젝트' },
+      { v: 'A', l: '등급' },
+    ],
   },
   onItems: [
-    '종합 점수·6축 요약',
-    '핵심 지표(교육시간·출석·시험)',
-    '대표 프로젝트 2건',
-    '자격증·외부 인증',
-    'PeerReputation/ShortComment (토글 ON 시)',
+    { mark: 'check', text: '증명서 헤더 (이름·과정·기간)' },
+    { mark: 'check', text: '종합 점수 + 6축 레이더' },
+    { mark: 'check', text: '대표 프로젝트·기록 (강사 인증 항목)' },
+    { mark: 'check', text: '검증 QR + 검증 ID' },
+    { mark: 'dot', text: 'PeerReputation / ShortComment (별도 토글)' },
   ],
   offItems: [
-    '개인 식별 정보(연락처·이메일)',
-    '미승인·검토 중 산출물',
-    '상세 일지·회의록 원문',
-    '동료 평가 원문(코멘트 OFF 시)',
+    { mark: 'dot', text: '검증 페이지 접근 시 비공개 안내만' },
+    { mark: 'dot', text: '본문 데이터 노출 없음' },
+    { mark: 'check', text: '정식 인증 마크는 유지' },
+    { mark: 'check', text: '수강생 본인 페이지에서는 정상 확인' },
   ],
 }
 

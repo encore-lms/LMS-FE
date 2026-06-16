@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  ArrowRight,
+  Check,
   CheckCircle2,
   FileText,
   Flag,
+  Send,
   Timer,
   type LucideIcon,
 } from 'lucide-react'
@@ -58,6 +61,7 @@ export default function TroubleshootingListPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useTsList()
   const [active, setActive] = useState('all')
+  const [query, setQuery] = useState('')
   usePageHeader(
     '트러블슈팅',
     '겪어 해결한 사례를 상황·해결·결과로 기록하고 팀별 인증을 준비하세요.',
@@ -77,12 +81,25 @@ export default function TroubleshootingListPage() {
     )
   }
 
+  // 이어 작성(draft) → 상세(인증 요청 준비) · 사례 열기(그 외) → 변경 제안
   const open = (c: TsCase) =>
     navigate(
       c.status === 'draft'
         ? `/student/troubleshooting/${c.id}`
-        : `/student/troubleshooting/${c.id}`,
+        : `/student/troubleshooting/${c.id}/change-requests/new`,
     )
+
+  // 카테고리 칩 + 검색어(제목·카테고리·태그)로 사례 필터.
+  const q = query.trim().toLowerCase()
+  const visible = data.cases.filter((c) => {
+    if (active !== 'all' && c.categoryKey !== active) return false
+    if (!q) return true
+    return (
+      c.title.toLowerCase().includes(q) ||
+      c.category.toLowerCase().includes(q) ||
+      c.tags.some((t) => t.toLowerCase().includes(q))
+    )
+  })
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -125,10 +142,10 @@ export default function TroubleshootingListPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="border-border text-fg-subtle hidden items-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] sm:inline-flex">
+          <div className="relative hidden sm:block">
             <svg
               viewBox="0 0 24 24"
-              className="size-3.5 shrink-0"
+              className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.8"
@@ -136,8 +153,13 @@ export default function TroubleshootingListPage() {
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3-3" strokeLinecap="round" />
             </svg>
-            제목·카테고리·태그 검색
-          </span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="제목·카테고리·태그 검색"
+              className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
+            />
+          </div>
           <button
             type="button"
             onClick={() => navigate('/student/troubleshooting/new')}
@@ -195,7 +217,12 @@ export default function TroubleshootingListPage() {
       </div>
 
       <div className="flex flex-col gap-4">
-        {data.cases.map((c) => (
+        {visible.length === 0 && (
+          <div className="border-border text-fg-subtle rounded-2xl border border-dashed p-10 text-center text-[13px]">
+            검색·필터 조건에 맞는 사례가 없어요.
+          </div>
+        )}
+        {visible.map((c) => (
           <section
             key={c.id}
             className="border-border bg-surface relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6"
@@ -225,14 +252,16 @@ export default function TroubleshootingListPage() {
                   {c.statusLabel}
                 </span>
                 {c.independent && (
-                  <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
-                    ★ 독립 해결
+                  <span className="bg-brand/10 text-brand flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
+                    <Check className="size-3" /> 독립 해결
                   </span>
                 )}
-                <span className="text-fg-subtle text-[11px]">⏱ {c.days}</span>
+                <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
+                  <Timer className="size-3" /> {c.days}
+                </span>
                 {c.repLinked && (
-                  <span className="text-fg-subtle text-[11px]">
-                    🔗 대표 연결
+                  <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
+                    <Send className="size-3" /> 발표 연결
                   </span>
                 )}
               </div>
@@ -240,13 +269,14 @@ export default function TroubleshootingListPage() {
                 type="button"
                 onClick={() => open(c)}
                 className={cn(
-                  'shrink-0 rounded-lg px-4 py-2 text-[12px] font-bold',
+                  'inline-flex shrink-0 items-center gap-1 rounded-lg px-4 py-2 text-[12px] font-bold',
                   c.status === 'draft'
                     ? 'bg-brand text-white'
                     : 'border-border text-fg-muted hover:bg-surface-muted border',
                 )}
               >
-                {c.actionLabel} →
+                {c.actionLabel}
+                <ArrowRight className="size-3" />
               </button>
             </div>
             <h3 className="text-fg text-[16px] font-bold">{c.title}</h3>
@@ -284,7 +314,9 @@ export default function TroubleshootingListPage() {
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <span className="text-fg-subtle text-[12px]">{data.shownLabel}</span>
+        <span className="text-fg-subtle text-[12px]">
+          {data.cases.length}건 중 {visible.length}건 표시
+        </span>
         <div className="flex items-center gap-1">
           <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px]">
             ‹

@@ -46,6 +46,7 @@ export interface TsFilter {
 export interface TsCase {
   id: string
   category: string
+  categoryKey: string // 필터 칩 키(all 제외): DB·deploy·perf·net·etc
   categoryTone: Tone
   status: TsStatus
   statusLabel: string

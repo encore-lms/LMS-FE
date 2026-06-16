@@ -9,6 +9,8 @@ export function useTsList() {
     queryKey: tsKeys.list(),
     queryFn: () =>
       apiClient.get<TsListData>('/student/troubleshooting').then((r) => r.data),
+    // 새 사례 제출분(setQueryData)이 세션 내 유지되도록 재요청 억제(새로고침 시 mock 복원).
+    staleTime: Infinity,
   })
 }
 

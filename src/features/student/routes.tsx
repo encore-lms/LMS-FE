@@ -30,7 +30,9 @@ const RecordsPage = lazy(() => import('./records/RecordsPage'))
 const BlogFormPage = lazy(() => import('./records/forms/BlogFormPage'))
 const BlogEditPage = lazy(() => import('./records/forms/BlogEditPage'))
 const StudyFormPage = lazy(() => import('./records/forms/StudyFormPage'))
+const StudyEditPage = lazy(() => import('./records/forms/StudyEditPage'))
 const CertFormPage = lazy(() => import('./records/forms/CertFormPage'))
+const CertEditPage = lazy(() => import('./records/forms/CertEditPage'))
 const OnboardingPage = lazy(() => import('./onboarding/OnboardingPage'))
 const ProjectListPage = lazy(() => import('./projects/ProjectListPage'))
 const ProjectWizardPage = lazy(
@@ -88,6 +90,11 @@ export const studentRoutes: RouteObject[] = [
       { path: 'records/new/study', element: <StudyFormPage /> },
       { path: 'records/new/certificate', element: <CertFormPage /> },
       { path: 'records/blog/:recordId/edit', element: <BlogEditPage /> },
+      { path: 'records/study/:recordId/edit', element: <StudyEditPage /> },
+      {
+        path: 'records/certificate/:recordId/edit',
+        element: <CertEditPage />,
+      },
       // 프로젝트(목록·생성 마법사·워크스페이스 10탭·변경 제안).
       { path: 'projects', element: <ProjectListPage /> },
       { path: 'projects/new', element: <ProjectWizardPage /> },

@@ -12,30 +12,39 @@ const DOT: Record<Tone, string> = {
 }
 
 export function RecordStatCards({ stats }: { stats: RecordStat[] }) {
+  // 첫 카드(전체 기록)를 100% 기준으로 각 카드의 비율 막대를 채운다.
+  const total = parseInt(stats[0]?.value ?? '1', 10) || 1
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {stats.map((s) => (
-        <div
-          key={s.key}
-          className="border-border bg-surface flex flex-col gap-3 rounded-2xl border p-5"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-fg-muted text-[12px] font-medium">
-              {s.label}
+      {stats.map((s) => {
+        const fill = Math.min(1, (parseInt(s.value, 10) || 0) / total)
+        return (
+          <div
+            key={s.key}
+            className="border-border bg-surface flex flex-col gap-3 rounded-2xl border p-5"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-fg-muted text-[12px] font-medium">
+                {s.label}
+              </span>
+              <span className={cn('size-2 rounded-full', DOT[s.dotTone])} />
+            </div>
+            <span className="text-fg text-[28px] leading-none font-bold">
+              {s.value}
+              <span className="text-fg-muted ml-1 text-[14px] font-medium">
+                {s.unit}
+              </span>
             </span>
-            <span className={cn('size-2 rounded-full', DOT[s.dotTone])} />
+            <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
+              <span
+                className={cn('block h-full rounded-full', DOT[s.dotTone])}
+                style={{ width: `${fill * 100}%` }}
+              />
+            </div>
+            <span className="text-fg-subtle text-[11px]">{s.sub}</span>
           </div>
-          <span className="text-fg text-[28px] leading-none font-bold">
-            {s.value}
-            <span className="text-fg-muted ml-1 text-[14px] font-medium">
-              {s.unit}
-            </span>
-          </span>
-          <span className="text-fg-subtle border-divider border-t pt-2.5 text-[11px]">
-            {s.sub}
-          </span>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

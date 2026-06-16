@@ -47,11 +47,26 @@ export function FieldLabel({
   )
 }
 
-const inputCls =
-  'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
+const inputBase =
+  'bg-surface text-fg placeholder:text-fg-subtle w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
+const inputBorder = 'border-border focus:border-brand'
 
-export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={cn(inputCls, props.className)} />
+export function TextInput({
+  error,
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { error?: boolean }) {
+  return (
+    <input
+      {...props}
+      aria-invalid={error || undefined}
+      className={cn(
+        inputBase,
+        error ? 'border-danger focus:border-danger' : inputBorder,
+        className,
+      )}
+    />
+  )
 }
 
 export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -59,7 +74,8 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       {...props}
       className={cn(
-        inputCls,
+        inputBase,
+        inputBorder,
         'min-h-[112px] resize-none leading-6',
         props.className,
       )}

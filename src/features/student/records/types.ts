@@ -12,6 +12,9 @@ export type Tone =
 /** 기록 상태 */
 export type RecordStatus = 'approved' | 'reviewing' | 'rejected'
 
+/** 기록 카테고리 — 탭 구분(전체 제외) */
+export type RecordCategory = 'blog' | 'study' | 'cert'
+
 /** 상단 필터 탭(카테고리별 건수) */
 export interface RecordTab {
   key: string // all/blog/study/cert
@@ -36,9 +39,10 @@ export interface SubmitBanner {
   actionLabel: string // "블로그 제출"
 }
 
-/** 블로그 기록 카드 */
+/** 기록 카드(블로그·스터디·자격증 공통 표시 모델) */
 export interface BlogRecord {
   id: string
+  category: RecordCategory // 탭 구분
   weekLabel: string // "10주차"
   dateRange: string // "5/6 ~ 5/12"
   status: RecordStatus
@@ -85,4 +89,34 @@ export interface BlogFormData {
   selectedNo: number // 기본 선택 주차
   url: string // 수정 시 기존 URL
   rejectReason?: { title: string; detail: string } // 수정(반려) 시
+}
+
+/** 첨부 파일 메타(기존 첨부 표시용) */
+export interface UploadedFileMeta {
+  id: string
+  name: string
+  size: string // "2.1MB"
+}
+
+/** 스터디 등록/수정 폼 데이터 */
+export interface StudyFormData {
+  title: string
+  date: string // "2026-06-17(수)"
+  startTime: string // "19:00"
+  endTime: string // "21:30"
+  body: string
+  files: UploadedFileMeta[] // 수정 시 기존 첨부
+  rejectReason?: { title: string; detail: string }
+}
+
+/** 자격증 종류 */
+export type CertType = 'PCCE' | 'PCCP' | 'PCSQL'
+
+/** 자격증 등록/수정 폼 데이터 */
+export interface CertFormData {
+  certType: CertType
+  title: string
+  fileName?: string // 수정 시 기존 첨부 파일명
+  fileSize?: string
+  rejectReason?: { title: string; detail: string }
 }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useTsCase } from '../api/troubleshooting'
+import { TsToast } from './components/TsToast'
 import type { TsCaseDetail, Tone } from './types'
 
 // 트러블슈팅 사례 상세 (/student/troubleshooting/:id) + 인증 요청 모달(?modal=certify) — Figma 3283:5853·3283:5949.
@@ -25,6 +26,7 @@ export default function CaseDetailPage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useTsCase(id)
   const [open, setOpen] = useState(params.get('modal') === 'certify')
+  const [toast, setToast] = useState<string | null>(null)
   usePageHeader(
     '트러블슈팅 사례 상세',
     '작성한 사례를 확인하고 발표 연결과 인증 요청을 상세 단계에서 진행해요.',
@@ -47,6 +49,18 @@ export default function CaseDetailPage() {
   const closeModal = () => {
     setOpen(false)
     if (params.get('modal')) setParams({}, { replace: true })
+  }
+
+  // 인증 완료 사례는 인증 요청 대신 변경 제안으로만 수정 가능.
+  const isCertified = data.status === 'certified'
+  const goChangeRequest = () =>
+    navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
+  // 발표 연결: 전용 화면이 Figma에 없어(상세 내 stat만 존재) 안내 토스트로 처리.
+  const notifyPresentation = () =>
+    setToast('발표 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
+  const onCertifyRequested = () => {
+    closeModal()
+    setToast('인증 요청이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
   }
 
   const stats = [
@@ -105,17 +119,28 @@ export default function CaseDetailPage() {
           </button>
           <button
             type="button"
+            onClick={notifyPresentation}
             className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
           >
             발표 연결
           </button>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
-          >
-            인증 요청
-          </button>
+          {isCertified ? (
+            <button
+              type="button"
+              onClick={goChangeRequest}
+              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+            >
+              변경 제안
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+            >
+              인증 요청
+            </button>
+          )}
         </div>
       </div>
 
@@ -198,17 +223,28 @@ export default function CaseDetailPage() {
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
+                onClick={notifyPresentation}
                 className="border-border text-fg flex-1 rounded-lg border py-2.5 text-[12px] font-semibold"
               >
                 발표 연결
               </button>
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
-              >
-                인증 요청
-              </button>
+              {isCertified ? (
+                <button
+                  type="button"
+                  onClick={goChangeRequest}
+                  className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
+                >
+                  변경 제안
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
+                >
+                  인증 요청
+                </button>
+              )}
             </div>
           </section>
 
@@ -243,7 +279,14 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
-      {open && <CertifyModal data={data} onClose={closeModal} />}
+      {open && (
+        <CertifyModal
+          data={data}
+          onClose={closeModal}
+          onConfirm={onCertifyRequested}
+        />
+      )}
+      {toast && <TsToast message={toast} onClose={() => setToast(null)} />}
     </div>
   )
 }
@@ -251,10 +294,18 @@ export default function CaseDetailPage() {
 function CertifyModal({
   data,
   onClose,
+  onConfirm,
 }: {
   data: TsCaseDetail
   onClose: () => void
+  onConfirm: () => void
 }) {
+  const [checked, setChecked] = useState<boolean[]>(() =>
+    data.certChecklist.map(() => true),
+  )
+  const allChecked = checked.every(Boolean)
+  const toggle = (i: number) =>
+    setChecked((p) => p.map((v, j) => (j === i ? !v : v)))
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -279,12 +330,22 @@ function CertifyModal({
             요청 전 체크리스트
           </span>
           {data.certChecklist.map((c, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <span className="bg-success flex size-4 shrink-0 items-center justify-center rounded text-[10px] text-white">
-                ✓
+            <button
+              key={i}
+              type="button"
+              onClick={() => toggle(i)}
+              className="flex items-start gap-2 text-left"
+            >
+              <span
+                className={cn(
+                  'mt-px flex size-4 shrink-0 items-center justify-center rounded text-[10px] text-white transition-colors',
+                  checked[i] ? 'bg-success' : 'border-border bg-surface border',
+                )}
+              >
+                {checked[i] && '✓'}
               </span>
               <span className="text-fg-muted text-[12px] leading-4">{c}</span>
-            </div>
+            </button>
           ))}
         </div>
         <div className="bg-info-bg/60 text-fg-muted rounded-lg p-3 text-[11px] leading-4">
@@ -301,8 +362,9 @@ function CertifyModal({
           </button>
           <button
             type="button"
-            onClick={onClose}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+            onClick={onConfirm}
+            disabled={!allChecked}
+            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
           >
             인증 요청
           </button>

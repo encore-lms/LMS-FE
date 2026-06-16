@@ -17,6 +17,13 @@ export type Tone =
   | 'accent'
   | 'success'
 
+/** 증명서 라이프사이클 상태 (draft→under_review→issued/changes_requested) */
+export type CertStatus =
+  | 'draft' // 정식 인증 전(미리보기)
+  | 'under_review' // 요청 접수 · 매니저 검토 중
+  | 'changes_requested' // 보완 요청
+  | 'issued' // 정식 인증 완료
+
 /** 헤더/히어로 */
 export interface CertHeader {
   studentName: string
@@ -25,16 +32,26 @@ export interface CertHeader {
   periodLabel: string // "2025-03-04 — 2025-09-12 · 총 960h"
   certId: string // "abc-1234"
   isPublic: boolean
-  status: 'draft' | 'changes_requested' | 'issued'
+  status: CertStatus
 }
 
 /** 보완이 필요한 항목(미리보기 상단 카드) */
 export interface CertChangeFlag {
   id: string
-  badge: string // "점수" | "산출물" | "개인정보"
+  badge: string // "필수" | "주의"
   badgeTone: Tone
   title: string
   detail: string
+  cta: string // "프로필 이동" | "기록실 이동" | "공개 항목 수정"
+}
+
+/** 요청 전 체크리스트(미리보기 하단) — 5개 충족 시 정식 인증 요청 가능 */
+export interface CertReqCheck {
+  id: string
+  pass: boolean // ✓ 통과 / ! 미충족
+  label: string
+  sub: string
+  cta?: string // 미충족 시 이동 라벨("프로필 이동")
 }
 
 /** KPI 카드 */
@@ -357,13 +374,16 @@ export interface CertChangesData {
   roundLabel: string // "1차 보완 요청"
   summaryTitle: string
   summarySub: string
+  requestedAt: string // "2026-05-12 14:30"
+  reviewer: string // "매니저 박지수"
+  replyWithin: string // "1영업일 이내"
   reasons: CertReasonItem[]
   relatedAreas: CertRelatedArea[]
   checklist: CertCheckItem[]
   checkDoneLabel: string // "0 / 3"
 }
 
-// ── 공개 설정(/student/certificate/publication) ──
+// ── 공개 설정(/student/certificate/publication) — Figma 255:27 ──
 export interface CertPublicToggle {
   id: string
   label: string
@@ -371,27 +391,38 @@ export interface CertPublicToggle {
   on: boolean
   locked?: boolean
 }
+export interface CertPubItem {
+  mark: 'check' | 'dot' // ✓ 노출 / · 비노출
+  text: string
+}
 export interface CertPublicationData {
-  issuedLabel: string
-  issuedSub: string
-  verifyUrl: string
-  toggles: CertPublicToggle[]
+  issuedBadge: string // "CERTIFIED · 정식 인증 완료"
+  issuedLabel: string // "수강 역량 증명서 발급 완료"
+  issuedSub: string // "김수강 · 백엔드 부트캠프 3기 · 인증일 2026.05.14"
+  verifyId: string // "VERIFY-2026-BB23-K1234"
+  urlIssueDate: string // "2026-05-15 · 다음날 자동 활성"
+  verifyUrl: string // "/verify/..." (새 탭 이동용 토큰 경로)
+  publicUrl: string // "https://verify.playdata.io/v/abc123ef9456" (표시·복사용)
+  // 외부 검증 URL 공개 토글(별도 카드 + 안내 행)
+  urlToggle: CertPublicToggle & { badge: string; info: string }
+  // 성장·평판 공개 항목(PeerReputation / ShortComment)
+  growthToggles: CertPublicToggle[]
+  // 강사·멘토 추천서 — 개별 토글 없음(자동 포함)
+  recommendRow: { label: string; tag: string; sub: string; chip: string }
   preview: {
     name: string
-    course: string
-    score: number
-    attendance: string
-    projects: number
-    grade: string
+    period: string // "백엔드 부트캠프 · 3기 · 2025.11 ~ 2026.05"
+    metrics: { v: string; l: string }[] // 86 종합 점수 / 96% 출석률 / 2 인증 프로젝트 / A 등급
   }
-  onItems: string[]
-  offItems: string[]
+  onItems: CertPubItem[]
+  offItems: CertPubItem[]
 }
 
 /** 증명서 미리보기 전체(헤더 + 보완 플래그 + 5탭). */
 export interface CertificateOverview {
   header: CertHeader
   changeFlags: CertChangeFlag[]
+  requestChecklist: CertReqCheck[]
   summary: CertSummaryTab
   tech: CertTechTab
   projects: CertProjectsTab

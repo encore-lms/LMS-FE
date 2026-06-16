@@ -4,9 +4,26 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageHistory } from '../api/mileage'
-import type { Tone } from './types'
+import type { HistoryRow, Tone } from './types'
 
 // 마일리지 사용 내역 (/student/mileage/history) — Figma 418:2066.
+// 필터 키 → 행 매칭(구분 또는 처리 상태 기준)
+function matchFilter(r: HistoryRow, key: string): boolean {
+  switch (key) {
+    case 'earn':
+      return r.kind.label === '적립'
+    case 'spend':
+      return r.kind.label === '사용'
+    case 'request':
+      return r.kind.label === '구매 요청'
+    case 'pending':
+      return r.status.label === '대기'
+    case 'rejected':
+      return r.status.label === '반려'
+    default:
+      return true
+  }
+}
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const DOT: Record<Tone, string> = {
@@ -25,10 +42,19 @@ const CHIP: Record<Tone, string> = {
   accent: 'bg-accent-bg text-accent-strong',
   success: 'bg-success-bg text-success',
 }
+// 조회 기간 옵션(일수). mock이라 기준 시점은 가장 최근 행 날짜로 잡는다.
+const PERIODS = [
+  { key: '7', label: '최근 7일', days: 7 },
+  { key: '30', label: '최근 30일', days: 30 },
+  { key: '90', label: '최근 90일', days: 90 },
+  { key: 'all', label: '전체 기간', days: Infinity },
+]
 
 export default function HistoryPage() {
   const { data, isPending, isError, refetch } = useMileageHistory()
   const [active, setActive] = useState('all')
+  const [query, setQuery] = useState('')
+  const [period, setPeriod] = useState('30')
   usePageHeader('마일리지 사용 내역', '적립·사용·구매 요청 내역과 처리 상태')
 
   if (isPending)
@@ -44,6 +70,22 @@ export default function HistoryPage() {
       </div>
     )
   }
+
+  // 필터 칩 + 기간 + 내용 검색으로 행 필터
+  const q = query.trim().toLowerCase()
+  const refTime = Math.max(...data.rows.map((r) => new Date(r.date).getTime()))
+  const periodDays = PERIODS.find((p) => p.key === period)?.days ?? Infinity
+  const periodLabel =
+    PERIODS.find((p) => p.key === period)?.label ?? '최근 30일'
+  const visible = data.rows.filter((r) => {
+    if (!matchFilter(r, active)) return false
+    if (q !== '' && !r.content.toLowerCase().includes(q)) return false
+    if (periodDays !== Infinity) {
+      const days = (refTime - new Date(r.date).getTime()) / 86_400_000
+      if (days > periodDays) return false
+    }
+    return true
+  })
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -93,12 +135,26 @@ export default function HistoryPage() {
           })}
         </div>
         <div className="flex items-center gap-2">
-          <span className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold">
-            최근 30일 ▾
-          </span>
-          <span className="border-border text-fg-subtle hidden rounded-lg border px-3 py-1.5 text-[12px] sm:inline">
-            🔍 내역 검색
-          </span>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="border-border text-fg-muted bg-surface focus:border-brand rounded-lg border px-3 py-1.5 text-[12px] font-semibold focus:outline-none"
+          >
+            {PERIODS.map((p) => (
+              <option key={p.key} value={p.key}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <div className="border-border focus-within:border-brand hidden items-center gap-1.5 rounded-lg border px-3 py-1.5 sm:flex">
+            <span className="text-fg-subtle text-[12px]">🔍</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="내역 검색"
+              className="text-fg placeholder:text-fg-subtle w-28 bg-transparent text-[12px] outline-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -111,7 +167,12 @@ export default function HistoryPage() {
           <span>상태</span>
           <span>처리 메모</span>
         </div>
-        {data.rows.map((r, i) => (
+        {visible.length === 0 && (
+          <div className="text-fg-subtle border-divider border-t px-5 py-10 text-center text-[12px]">
+            조건에 맞는 내역이 없어요.
+          </div>
+        )}
+        {visible.map((r, i) => (
           <div
             key={i}
             className="border-divider grid grid-cols-[100px_88px_1fr_120px_72px_140px] items-center gap-3 border-t px-5 py-3.5 text-[12px]"
@@ -152,7 +213,9 @@ export default function HistoryPage() {
       </section>
 
       <div className="flex items-center justify-between pt-1">
-        <span className="text-fg-subtle text-[12px]">{data.shownLabel}</span>
+        <span className="text-fg-subtle text-[12px]">
+          {periodLabel} {visible.length}건 표시 · 총 누적 28건
+        </span>
         <div className="flex items-center gap-1">
           <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px]">
             ‹

@@ -11,7 +11,8 @@ const ok = <T>(data: T) => HttpResponse.json({ data })
 
 const mockOverview: MileageOverview = {
   balance: '128,400',
-  balanceSub: '이번 달 적립 · 다음 만료 7월 후 2,000M',
+  balanceDelta: '▲ +18,000M',
+  balanceSub: '이번 달 적립 · 다음 만료 7일 후 2,000M',
   stats: [
     {
       key: 'balance',
@@ -136,7 +137,7 @@ const mockOverview: MileageOverview = {
       label: '기프티콘',
       used: 30000,
       total: 50000,
-      status: { label: '주의 60% 사용', tone: 'warning' },
+      status: { label: '주의 (60% 사용)', tone: 'warning' },
       tone: 'warning',
     },
   ],
@@ -163,6 +164,9 @@ const mockProducts: MileageProductsData = {
       desc: '개별 도서 링크 + 가격 입력 후 신청',
       limit: '58,000',
       tone: 'success',
+      icon: 'book',
+      categoryKey: 'book',
+      barPct: 18,
     },
     {
       id: 'p2',
@@ -175,6 +179,9 @@ const mockProducts: MileageProductsData = {
       desc: '강의 링크 + 가격 입력 후 신청',
       limit: '120,000',
       tone: 'info',
+      icon: 'video',
+      categoryKey: 'course',
+      barPct: 18,
     },
     {
       id: 'p3',
@@ -188,6 +195,9 @@ const mockProducts: MileageProductsData = {
       desc: '교환권 즉시 발급 · 자동 승인',
       limit: '30,000',
       tone: 'warning',
+      icon: 'cup',
+      categoryKey: 'gift',
+      barPct: 18,
     },
     {
       id: 'p4',
@@ -198,9 +208,12 @@ const mockProducts: MileageProductsData = {
       ],
       priceType: '고정가',
       price: '45,000M',
-      desc: '입문 투 매니지 강좌 (3편 세트)',
+      desc: '신청 후 매니저 검토 (1영업일)',
       limit: '58,000',
       tone: 'success',
+      icon: 'book',
+      categoryKey: 'book',
+      barPct: 18,
     },
     {
       id: 'p5',
@@ -214,6 +227,9 @@ const mockProducts: MileageProductsData = {
       desc: 'AWS 실습 크레딧 즉시 지급',
       limit: '120,000',
       tone: 'info',
+      icon: 'video',
+      categoryKey: 'course',
+      barPct: 18,
     },
     {
       id: 'p6',
@@ -224,9 +240,12 @@ const mockProducts: MileageProductsData = {
       ],
       priceType: '고정가',
       price: '5,000M',
-      desc: 'GS25·CU 통합 모바일 쿠폰',
+      desc: 'GS25·CU 통합 모바일권',
       limit: '30,000',
       tone: 'warning',
+      icon: 'gift',
+      categoryKey: 'gift',
+      barPct: 18,
     },
   ],
 }

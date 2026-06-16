@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Book, Coffee, Gift, Send, Video, type LucideIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -18,8 +19,35 @@ const CHIP: Record<Tone, string> = {
   accent: 'bg-accent-bg text-accent-strong',
   success: 'bg-success-bg text-success',
 }
+const DOT: Record<Tone, string> = {
+  brand: 'bg-brand',
+  info: 'bg-info',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  accent: 'bg-accent-strong',
+  success: 'bg-success',
+}
+// 카드 좌상단 아이콘(Figma book-fill/camera-video-fill/cup-hot-fill/gift-fill)
+const PRODUCT_ICON: Record<'book' | 'video' | 'cup' | 'gift', LucideIcon> = {
+  book: Book,
+  video: Video,
+  cup: Coffee,
+  gift: Gift,
+}
 const input =
   'border-border bg-surface text-fg focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
+
+// 직접 신청 — 상품 링크는 http/https URL만 허용
+function isValidUrl(s: string): boolean {
+  const v = s.trim()
+  if (!v) return false
+  try {
+    const u = new URL(v)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
 
 export default function ProductsPage() {
   const navigate = useNavigate()
@@ -45,6 +73,17 @@ export default function ProductsPage() {
         />
       </div>
     )
+  }
+
+  // 카테고리 필터 + 직접 신청 제출(링크·가격 필수)
+  const visible = data.products.filter(
+    (p) => active === 'all' || p.categoryKey === active,
+  )
+  const urlOk = isValidUrl(link)
+  const canSubmit = urlOk && price.trim() !== ''
+  const submitDirect = () => {
+    if (!canSubmit) return
+    navigate('/student/mileage/requests')
   }
 
   return (
@@ -118,43 +157,62 @@ export default function ProductsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {data.products.map((p) => (
-          <section key={p.id} className={cn(card, 'flex flex-col gap-2.5')}>
-            <div className="flex flex-wrap gap-1.5">
-              {p.badges.map((b, i) => (
+        {visible.map((p) => {
+          const Icon = PRODUCT_ICON[p.icon]
+          return (
+            <section key={p.id} className={cn(card, 'flex flex-col gap-2.5')}>
+              <div className="flex items-start justify-between gap-2">
                 <span
-                  key={i}
                   className={cn(
-                    'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                    CHIP[b.tone],
+                    'flex size-10 shrink-0 items-center justify-center rounded-[10px]',
+                    CHIP[p.tone],
                   )}
                 >
-                  {b.label}
+                  <Icon className="size-[21px]" />
                 </span>
-              ))}
-            </div>
-            <span className="text-fg text-[15px] font-bold">{p.name}</span>
-            <span className="text-brand text-[13px] font-bold">
-              {p.price ?? p.priceType}
-            </span>
-            <span className="text-fg-muted min-h-[32px] text-[12px] leading-5">
-              {p.desc}
-            </span>
-            <div className="flex items-center justify-between">
-              <span className="text-fg-subtle text-[11px]">잔여 한도</span>
-              <span className="text-fg text-[13px] font-bold">{p.limit}M</span>
-            </div>
-            <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
-              <div className="bg-brand h-full w-2/3 rounded-full" />
-            </div>
-            <button
-              type="button"
-              className="bg-brand mt-1 rounded-lg py-2.5 text-[13px] font-bold text-white"
-            >
-              신청하기 →
-            </button>
-          </section>
-        ))}
+                <div className="flex flex-wrap justify-end gap-1.5">
+                  {p.badges.map((b, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                        CHIP[b.tone],
+                      )}
+                    >
+                      {b.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <span className="text-fg text-[15px] font-bold">{p.name}</span>
+              <span className="text-brand text-[13px] font-bold">
+                {p.price ?? p.priceType}
+              </span>
+              <span className="text-fg-muted min-h-[32px] text-[12px] leading-5">
+                {p.desc}
+              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-fg-subtle text-[11px]">잔여 한도</span>
+                <span className="text-fg text-[13px] font-bold">
+                  {p.limit}M
+                </span>
+              </div>
+              <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
+                <div
+                  className={cn('h-full rounded-full', DOT[p.tone])}
+                  style={{ width: `${p.barPct ?? 18}%` }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/student/mileage/requests')}
+                className="bg-brand mt-1 rounded-lg py-2.5 text-[13px] font-bold text-white"
+              >
+                신청하기 →
+              </button>
+            </section>
+          )
+        })}
       </div>
 
       <section className={cn(card, 'flex flex-col gap-3')}>
@@ -176,34 +234,70 @@ export default function ProductsPage() {
               상품 링크 <span className="text-danger">*</span>
             </span>
             <input
-              className={input}
+              className={cn(
+                input,
+                link.trim() !== '' &&
+                  !urlOk &&
+                  'border-danger focus:border-danger',
+              )}
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="https://..."
             />
+            <span
+              className={cn(
+                'text-[11px]',
+                link.trim() !== '' && !urlOk ? 'text-danger' : 'text-fg-subtle',
+              )}
+            >
+              http:// 또는 https:// 로 시작하는 올바른 URL을 입력하세요.
+            </span>
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-fg text-[12px] font-bold">
               신청 가격 <span className="text-danger">*</span>
             </span>
-            <input
-              className={input}
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="가격 입력 (단위: M)"
-            />
+            <div className="border-border bg-surface focus-within:border-brand flex w-full items-center rounded-[10px] border px-4 text-[14px]">
+              <input
+                inputMode="numeric"
+                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent py-3 outline-none"
+                value={price ? Number(price).toLocaleString() : ''}
+                onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ''))}
+                placeholder="가격만 입력"
+              />
+              <span className="text-fg-muted ml-1 font-semibold">M</span>
+            </div>
+            <span className="text-fg-subtle text-[11px]">
+              숫자만 입력하면 단위 M이 자동으로 붙습니다.
+            </span>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-fg text-[12px] font-bold">
-            매니저에게 남길 메모
-          </span>
-          <textarea
-            className={cn(input, 'min-h-[80px] resize-none leading-6')}
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            placeholder="구매 목적이나 확인이 필요한 내용을 적어주세요."
-          />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_200px]">
+          <div className="flex flex-col gap-2">
+            <span className="text-fg text-[12px] font-bold">
+              매니저에게 남길 메모
+            </span>
+            <textarea
+              className={cn(input, 'min-h-[96px] resize-none leading-6')}
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="구매 목적이나 확인이 필요한 내용을 적어주세요."
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-[12px] font-bold text-transparent select-none">
+              제출
+            </span>
+            <button
+              type="button"
+              onClick={submitDirect}
+              disabled={!canSubmit}
+              className="bg-brand flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[10px] py-4 text-white disabled:opacity-50"
+            >
+              <Send className="size-5" />
+              <span className="text-[13px] font-bold">요청 제출</span>
+            </button>
+          </div>
         </div>
         <div className="bg-info-bg/60 text-fg-muted rounded-xl p-3 text-[11px]">
           ⓘ 유연가 신청은 매니저 검토 후 마일리지가 차감됩니다. 승인되지 않으면

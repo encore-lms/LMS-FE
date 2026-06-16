@@ -49,6 +49,7 @@ export interface MileageLimit {
 }
 export interface MileageOverview {
   balance: string // "128,400"
+  balanceDelta: string // "▲ +18,000M" (히어로 델타칩)
   balanceSub: string
   stats: MileageStat[]
   ledger: LedgerEntry[]
@@ -66,6 +67,9 @@ export interface MileageProduct {
   desc: string
   limit: string // "58,000"
   tone: Tone
+  icon: 'book' | 'video' | 'cup' | 'gift' // 카드 좌상단 아이콘(Figma 418:1961)
+  categoryKey: 'book' | 'course' | 'gift' // 필터 키(도서/온라인 강의/기프티콘)
+  barPct?: number // 잔여 한도 트랙바
 }
 export interface MileageProductsData {
   balance: string

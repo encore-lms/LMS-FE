@@ -67,7 +67,12 @@ export default function MileagePage() {
             {data.balance}
             <span className="ml-1 text-[18px]">M</span>
           </span>
-          <span className="text-[12px] text-white/80">{data.balanceSub}</span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-bold text-white">
+              {data.balanceDelta}
+            </span>
+            <span className="text-[12px] text-white/80">{data.balanceSub}</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

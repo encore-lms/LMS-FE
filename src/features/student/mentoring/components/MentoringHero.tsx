@@ -7,7 +7,7 @@ export function MentoringHero({ data }: { data: MentoringData }) {
     <section className="bg-brand flex items-center justify-between gap-6 rounded-2xl px-7 py-6 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
       <div className="flex flex-col gap-2">
         <span className="text-[11px] font-semibold tracking-[0.18em] text-white/90">
-          팀 단위 요청
+          MENTORING · 팀 단위 요청
         </span>
         <h2 className="text-2xl font-bold">{teamName}</h2>
         <div className="flex flex-wrap items-center gap-2">
@@ -35,9 +35,24 @@ export function MentoringHero({ data }: { data: MentoringData }) {
               </span>
             </>
           ) : (
-            <span className="bg-warning-bg text-warning flex items-center gap-1.5 rounded-[7px] px-2.5 py-[5px] text-[12px] font-bold">
-              ⏱ 멘토 배정 대기
-            </span>
+            <>
+              <span className="bg-surface text-fg flex items-center gap-1.5 rounded-[7px] py-1 pr-2.5 pl-1">
+                <span className="bg-accent-strong flex size-5 items-center justify-center rounded-full text-[10px] font-bold text-white">
+                  {mentor.name.slice(0, 1)}
+                </span>
+                <span className="text-[12px] font-bold">
+                  아직 배정된 멘토가 없습니다
+                </span>
+              </span>
+              <span className="bg-warning-bg text-warning flex items-center gap-1.5 rounded-[7px] px-2.5 py-[5px] text-[12px] font-bold">
+                ⏱ 멘토 배정 대기
+              </span>
+              <span className="flex items-center gap-1.5 rounded-[7px] bg-white/15 px-2.5 py-[5px] text-[11px] font-medium">
+                <span>요청 불가</span>
+                <span>·</span>
+                <span>멘토 배정 전</span>
+              </span>
+            </>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
-// 멘토링 요청 취소 확인 모달 — Figma 3083:6106. 사유(선택) 입력 + 돌아가기/요청 취소.
+// 멘토링 요청 취소 확인 모달 — Figma 3083:6106.
+// 본문 + "취소 가능 조건" 안내 박스 + 돌아가기/요청 취소.
 export function CancelRequestModal({
   open,
   onClose,
@@ -26,23 +27,25 @@ export function CancelRequestModal({
           </span>
           <div className="flex flex-col gap-1">
             <span className="text-warning text-[10px] font-bold tracking-[0.12em]">
-              CANCEL CONFIRM
+              CANCEL_CONFIRM
             </span>
             <h2 className="text-fg text-[17px] font-bold">
               멘토링 요청을 취소할까요?
             </h2>
             <p className="text-fg-muted text-[13px] leading-5">
-              취소 후 진행 중 요청이 없어 팀에서 다시 새 멘토링 요청을 보낼 수
-              있습니다. 멘토 제안도 함께 사라집니다.
+              확정 전 요청만 수강생이 취소할 수 있습니다. 취소하면 팀원 모두에게
+              요청 취소 상태가 표시됩니다.
             </p>
           </div>
         </div>
 
-        <textarea
-          rows={3}
-          placeholder="취소 사유를 남기면 멘토에게 전달됩니다 (선택)"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-[72px] w-full rounded-[10px] border p-3 text-[13px] outline-none"
-        />
+        <div className="bg-surface-muted flex flex-col gap-1 rounded-[10px] p-3.5">
+          <span className="text-fg text-[12px] font-bold">취소 가능 조건</span>
+          <span className="text-fg-muted text-[12px] leading-5">
+            요청 대기 또는 조정 제안 상태에서만 취소 가능 · 확정 후 변경/취소는
+            멘토만 가능
+          </span>
+        </div>
 
         <div className="flex items-center justify-end gap-2">
           <button

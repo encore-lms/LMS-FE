@@ -1,3 +1,4 @@
+import { AlertTriangle, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { BlogRecord, RecordStatus } from '../types'
 
@@ -42,7 +43,7 @@ export function BlogRecordCard({
       <h3 className="text-fg text-[16px] font-bold">{record.title}</h3>
 
       <div className="flex items-center gap-1.5 text-[12px]">
-        <span className="text-fg-subtle">🔗</span>
+        <Link2 className="text-fg-subtle size-3.5 shrink-0" />
         <span className="text-fg-muted truncate">{record.url}</span>
         <a
           href={record.url}
@@ -57,7 +58,8 @@ export function BlogRecordCard({
       {record.rejectReason && (
         <div className="border-danger/40 bg-danger-bg/50 flex flex-col gap-2 rounded-[12px] border p-3.5">
           <span className="text-danger flex items-center gap-1.5 text-[12px] font-bold">
-            ⚠ {record.rejectReason.title}
+            <AlertTriangle className="size-3.5 shrink-0" />
+            {record.rejectReason.title}
           </span>
           <span className="text-fg-muted text-[12px] leading-5">
             {record.rejectReason.detail}

@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 // 기록실 우하단 다크 토스트 — 삭제 완료(2173:15383)·수정 완료(2211:15861).
 export function RecordToast({
   message,
@@ -15,7 +17,7 @@ export function RecordToast({
         aria-label="닫기"
         className="text-white/60 transition-colors hover:text-white"
       >
-        ✕
+        <X className="size-4" />
       </button>
     </div>
   )

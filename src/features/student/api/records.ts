@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { recordKeys } from '../records/queryKeys'
-import type { BlogFormData, RecordsOverview } from '../records/types'
+import type {
+  BlogFormData,
+  CertFormData,
+  RecordsOverview,
+  StudyFormData,
+} from '../records/types'
 
 // 기록실 훅 — 엔드포인트가 /student/* 라 학생 feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
@@ -31,6 +36,28 @@ export function useBlogRecord(recordId: string) {
     queryFn: () =>
       apiClient
         .get<BlogFormData>(`/student/records/blog/${recordId}`)
+        .then((r) => r.data),
+  })
+}
+
+/** 스터디 수정 폼 — 기존 기록 프리필 */
+export function useStudyRecord(recordId: string) {
+  return useQuery({
+    queryKey: recordKeys.study(recordId),
+    queryFn: () =>
+      apiClient
+        .get<StudyFormData>(`/student/records/study/${recordId}`)
+        .then((r) => r.data),
+  })
+}
+
+/** 자격증 수정 폼 — 기존 기록 프리필 */
+export function useCertRecord(recordId: string) {
+  return useQuery({
+    queryKey: recordKeys.cert(recordId),
+    queryFn: () =>
+      apiClient
+        .get<CertFormData>(`/student/records/certificate/${recordId}`)
         .then((r) => r.data),
   })
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 
@@ -161,12 +162,12 @@ export function ChangesRequestModal({
           <p className="text-fg-subtle mb-2 text-xs">
             미입력 시 14일 자동 적용
           </p>
-          <input
-            type="date"
+          <DateTimePicker
+            mode="date"
             value={due}
-            onChange={(e) => setDue(e.target.value)}
-            aria-label="권장 기한"
-            className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            onChange={setDue}
+            ariaLabel="권장 기한"
+            placeholder="날짜 선택"
           />
         </div>
         <div className="bg-info-bg text-fg-muted rounded-lg p-3 text-xs">

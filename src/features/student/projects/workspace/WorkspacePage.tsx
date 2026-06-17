@@ -4,6 +4,7 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { useProjectWorkspace } from '../../api/projects'
 import type {
@@ -804,11 +805,12 @@ function AddMeetingModal({
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">일자</span>
-          <input
-            type="date"
+          <DateTimePicker
+            mode="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={field}
+            onChange={setDate}
+            ariaLabel="회의 일자"
+            placeholder="날짜 선택"
           />
         </label>
         <label className="flex flex-col gap-1.5">

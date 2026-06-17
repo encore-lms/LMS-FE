@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import LogComposePage from './LogComposePage'
@@ -123,15 +123,25 @@ describe('LogComposePage', () => {
   it('작성 완료 제출 — 초안 생성 후 submit, 목록(?toast=submitted)으로 복귀한다', async () => {
     const user = userEvent.setup()
     renderPage()
-    fireEvent.change(screen.getByLabelText('진행 일자'), {
-      target: { value: '2026-05-28' },
-    })
-    fireEvent.change(screen.getByLabelText('시작 시각'), {
-      target: { value: '14:00' },
-    })
-    fireEvent.change(screen.getByLabelText('종료 시각'), {
-      target: { value: '15:58' },
-    })
+    // 진행 일자 — 달력 기본=이번 달, 15일 선택(소요시간은 시작/종료 시각으로만 산정)
+    const now = new Date()
+    const expectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-15`
+    await user.click(screen.getByRole('button', { name: '진행 일자' }))
+    await user.click(within(screen.getByRole('dialog')).getByText('15'))
+    // 시작 14:00 = 오후 02시 00분
+    await user.click(screen.getByRole('button', { name: '시작 시각' }))
+    const startDlg = screen.getByRole('dialog')
+    await user.click(within(startDlg).getByRole('button', { name: '오후' }))
+    await user.click(within(startDlg).getByRole('button', { name: '02시' }))
+    await user.click(within(startDlg).getByRole('button', { name: '00분' }))
+    await user.click(within(startDlg).getByRole('button', { name: '적용' }))
+    // 종료 15:58 = 오후 03시 58분 → 118분
+    await user.click(screen.getByRole('button', { name: '종료 시각' }))
+    const endDlg = screen.getByRole('dialog')
+    await user.click(within(endDlg).getByRole('button', { name: '오후' }))
+    await user.click(within(endDlg).getByRole('button', { name: '03시' }))
+    await user.click(within(endDlg).getByRole('button', { name: '58분' }))
+    await user.click(within(endDlg).getByRole('button', { name: '적용' }))
     // 실제 진행 시간 자동 산정(118분 → 2시간) — 인정 시간 프리뷰
     expect(screen.getByText('2시간 (118분)')).toBeInTheDocument()
     await user.type(
@@ -155,7 +165,7 @@ describe('LogComposePage', () => {
         mode: 'submit',
         payload: expect.objectContaining({
           teamId: 'team_rec',
-          sessionDate: '2026-05-28',
+          sessionDate: expectedDate,
           startTime: '14:00',
           endTime: '15:58',
           placeType: 'offline',

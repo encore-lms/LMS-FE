@@ -3,10 +3,10 @@ import { Controller, useFormContext } from 'react-hook-form'
 import { cn } from '@/shared/lib/cn'
 import type { AttendanceType } from '../../types'
 import type { AttendanceFormValues } from '../attendanceFormSchema'
-import { TimePicker } from './TimePicker'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
 // 유형별 조건부 입력 — 선택한 출결 유형에 맞는 시간/사유 입력만 노출(나머지는 언마운트).
-// 시간은 시/분 객관식 스크롤 피커(TimePicker)로 입력. 라벨 옆 '필수' 배지는 Figma 시안과 동일.
+// 시간은 공용 DateTimePicker(mode="time", 분 단위 정밀)로 입력. 라벨 옆 '필수' 배지는 Figma 시안과 동일.
 function RequiredBadge() {
   return (
     <span className="bg-danger-bg text-danger rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
@@ -35,7 +35,7 @@ type TimeFieldName =
   | 'outingStartTime'
   | 'outingEndTime'
 
-// 시간 입력 한 칸 — Controller로 TimePicker를 폼에 연결.
+// 시간 입력 한 칸 — Controller로 공용 DateTimePicker를 폼에 연결.
 function TimeField({
   name,
   label,
@@ -56,14 +56,16 @@ function TimeField({
         control={control}
         name={name}
         render={({ field }) => (
-          <TimePicker
+          <DateTimePicker
+            mode="time"
+            minuteStep={1}
             value={field.value ?? ''}
             onChange={field.onChange}
-            invalid={!!errors[name]}
+            error={errors[name]?.message}
+            ariaLabel={label}
           />
         )}
       />
-      <FieldError message={errors[name]?.message} />
     </div>
   )
 }

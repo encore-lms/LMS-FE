@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Input } from '@/components/ui/Input'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -154,12 +155,14 @@ export default function QuizFormPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<QuizInput>({
     resolver: zodResolver(quizSchema),
-    defaultValues: { cohortOption: COHORT_OPTIONS[0] },
+    // startAt/endAt 은 Controller(DateTimePicker)라 빈 문자열로 초기화 → 미입력 시 min(1) 메시지 노출
+    defaultValues: { cohortOption: COHORT_OPTIONS[0], startAt: '', endAt: '' },
   })
 
   // 수정 모드 — 상세 도착 시 폼·라디오·토글 동기화.
@@ -276,19 +279,36 @@ export default function QuizFormPage() {
           적용)
         </p>
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          <Input
-            label="시작일"
-            required
-            placeholder="2026-05-12 09:00"
-            error={errors.startAt?.message}
-            {...register('startAt')}
+          {/* 시작·종료 일시 — 공용 DateTimePicker(datetime). 저장값은 "YYYY-MM-DD HH:mm"(공백)이라 경계에서 'T'와 변환 */}
+          <Controller
+            control={control}
+            name="startAt"
+            render={({ field }) => (
+              <DateTimePicker
+                mode="datetime"
+                label="시작일"
+                required
+                placeholder="2026-05-12 09:00"
+                error={errors.startAt?.message}
+                value={field.value ? field.value.replace(' ', 'T') : ''}
+                onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
+              />
+            )}
           />
-          <Input
-            label="종료일"
-            required
-            placeholder="2026-05-18 23:59"
-            error={errors.endAt?.message}
-            {...register('endAt')}
+          <Controller
+            control={control}
+            name="endAt"
+            render={({ field }) => (
+              <DateTimePicker
+                mode="datetime"
+                label="종료일"
+                required
+                placeholder="2026-05-18 23:59"
+                error={errors.endAt?.message}
+                value={field.value ? field.value.replace(' ', 'T') : ''}
+                onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
+              />
+            )}
           />
           <Input
             label="제한 시간 (분)"

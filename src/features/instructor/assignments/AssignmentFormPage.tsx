@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Input } from '@/components/ui/Input'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useAssignmentDetail } from '../api/assignments'
@@ -43,12 +44,14 @@ export default function AssignmentFormPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<AssignmentInput>({
     resolver: zodResolver(assignmentSchema),
-    defaultValues: { cohortLabel: COHORT_OPTIONS[0] },
+    // dueAt 은 Controller(DateTimePicker)라 빈 문자열로 초기화 → 미입력 시 min(1) 메시지 노출
+    defaultValues: { cohortLabel: COHORT_OPTIONS[0], dueAt: '' },
   })
 
   // 수정 모드 — 상세 도착 시 폼·첨부 자료 동기화.
@@ -128,12 +131,21 @@ export default function AssignmentFormPage() {
               error={errors.title?.message}
               {...register('title')}
             />
-            <Input
-              label="마감일시"
-              required
-              placeholder="2026-05-24 23:59"
-              error={errors.dueAt?.message}
-              {...register('dueAt')}
+            {/* 마감일시 — 공용 DateTimePicker(datetime). 저장값 "YYYY-MM-DD HH:mm"(공백) ↔ picker 'T' 변환 */}
+            <Controller
+              control={control}
+              name="dueAt"
+              render={({ field }) => (
+                <DateTimePicker
+                  mode="datetime"
+                  label="마감일시"
+                  required
+                  placeholder="2026-05-24 23:59"
+                  error={errors.dueAt?.message}
+                  value={field.value ? field.value.replace(' ', 'T') : ''}
+                  onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
+                />
+              )}
             />
           </div>
           <label className="mt-4 flex w-full flex-col gap-[6px]">

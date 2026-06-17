@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { tsKeys } from '../queryKeys'
 import {
   TS_CATEGORIES,
@@ -296,11 +297,12 @@ export default function NewCasePage() {
               <span className="text-fg text-[13px] font-bold">
                 문제 발생일 <span className="text-danger">*</span>
               </span>
-              <input
-                type="date"
-                className={input}
+              <DateTimePicker
+                mode="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={setDate}
+                ariaLabel="문제 발생일"
+                placeholder="날짜 선택"
               />
             </div>
             <div className="flex flex-col gap-2">

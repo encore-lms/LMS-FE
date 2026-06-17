@@ -19,9 +19,9 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { TsToast } from '../components/TsToast'
 import { TS_CHANGE_ITEMS } from '../types'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348.
@@ -156,9 +156,12 @@ export default function ChangeRequestPage() {
     '트러블슈팅 변경 제안',
     '인증 완료된 트러블슈팅 사례의 수정·삭제를 강사에게 제안합니다.',
   )
+  const toast = useToast()
 
   const handleSubmit = () => {
     setSubmitted(true)
+    // 공용 토스트(앱 루트 ToastProvider) — navigate(-1) 이후에도 유지된다.
+    toast.success('변경 제안이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
     window.setTimeout(() => navigate(-1), 1400)
   }
 
@@ -618,12 +621,6 @@ export default function ChangeRequestPage() {
           </button>
         </div>
       </div>
-      {submitted && (
-        <TsToast
-          message="변경 제안이 접수되었습니다. 강사 검토 큐로 전달됐어요."
-          onClose={() => setSubmitted(false)}
-        />
-      )}
     </div>
   )
 }

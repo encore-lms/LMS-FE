@@ -11,6 +11,7 @@ import type {
   Tone,
   WorkspaceData,
   WsColumn,
+  WsMeeting,
   WsTab,
   WsTask,
 } from '../types'
@@ -696,11 +697,18 @@ function AddScheduleModal({
 
 /* ── 회의록 ── */
 function MeetingsTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
+  const [meetings, setMeetings] = useState(d.meetings)
+  const [adding, setAdding] = useState(false)
   return (
     <div className="flex flex-col gap-4">
-      <SectionHead title="회의록" action="회의록 작성" />
+      <SectionHead
+        title="회의록"
+        action="회의록 작성"
+        onAction={() => setAdding(true)}
+      />
       <section className={cn(card, 'flex flex-col')}>
-        {d.meetings.map((m, i) => (
+        {meetings.map((m, i) => (
           <div
             key={i}
             className={cn(
@@ -719,7 +727,98 @@ function MeetingsTab({ d }: { d: WorkspaceData }) {
           </div>
         ))}
       </section>
+      {adding && (
+        <AddMeetingModal
+          onClose={() => setAdding(false)}
+          onAdd={(meeting) => {
+            setMeetings((prev) => [meeting, ...prev])
+            setAdding(false)
+            toast.success('회의록을 작성했습니다')
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function AddMeetingModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void
+  onAdd: (meeting: WsMeeting) => void
+}) {
+  const [title, setTitle] = useState('')
+  const [date, setDate] = useState('2026-05-28')
+  const [summary, setSummary] = useState('')
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const submit = () => {
+    if (!title.trim() || !summary.trim()) return
+    onAdd({
+      title: title.trim(),
+      meta: `${date} · 참석 4명`,
+      summary: summary.trim(),
+      status: { label: '진행', tone: 'warning' },
+    })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="회의록 작성"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!title.trim() || !summary.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            저장
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">제목</span>
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="회의 제목"
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">일자</span>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">요약</span>
+          <textarea
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder="결정 사항 또는 액션 아이템"
+            className={cn(field, 'min-h-24 resize-none py-2 leading-5')}
+          />
+        </label>
+      </div>
+    </Modal>
   )
 }
 

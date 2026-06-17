@@ -92,4 +92,23 @@ describe('WorkspacePage home', () => {
     expect(screen.getAllByText('최종 리허설').length).toBeGreaterThan(0)
     expect(await screen.findByText('일정을 추가했습니다')).toBeInTheDocument()
   })
+
+  it('회의록 작성 모달로 새 회의록을 목록에 추가한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=meetings')
+
+    await user.click(screen.getByRole('button', { name: '회의록 작성' }))
+    await user.type(
+      screen.getByPlaceholderText('회의 제목'),
+      '릴리즈 점검 회의',
+    )
+    await user.type(
+      screen.getByPlaceholderText('결정 사항 또는 액션 아이템'),
+      '릴리즈 전 인증 요청 자료를 점검했습니다.',
+    )
+    await user.click(screen.getByRole('button', { name: '저장' }))
+
+    expect(screen.getByText('릴리즈 점검 회의')).toBeInTheDocument()
+    expect(await screen.findByText('회의록을 작성했습니다')).toBeInTheDocument()
+  })
 })

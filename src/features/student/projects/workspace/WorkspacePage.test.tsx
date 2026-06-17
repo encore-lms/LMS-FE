@@ -191,4 +191,27 @@ describe('WorkspacePage home', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('제출 완료')).toBeInTheDocument()
   })
+
+  it('인증 요청은 체크리스트 완료 후 제출 상태로 전환한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=certification')
+
+    await user.click(screen.getByRole('button', { name: '인증 요청 제출' }))
+    expect(
+      await screen.findByText('요청 전 체크리스트를 모두 완료해 주세요'),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: '트러블슈팅 연결 완료 전환' }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: '상호평가 제출 완료 완료 전환' }),
+    )
+    await user.click(screen.getByRole('button', { name: '인증 요청 제출' }))
+
+    expect(
+      await screen.findByText('인증 요청을 제출했습니다'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('검토 중')).toBeInTheDocument()
+  })
 })

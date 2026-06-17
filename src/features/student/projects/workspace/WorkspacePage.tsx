@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -1554,6 +1554,19 @@ function PeerTab({ d }: { d: WorkspaceData }) {
 
 /* ── 인증 요청 ── */
 function CertTab({ d }: { d: WorkspaceData }) {
+  const navigate = useNavigate()
+  const toast = useToast()
+  const [checks, setChecks] = useState(d.certChecklist)
+  const [requested, setRequested] = useState(false)
+  const allDone = checks.every((check) => check.status.tone === 'success')
+  const submit = () => {
+    if (!allDone) {
+      toast.warning('요청 전 체크리스트를 모두 완료해 주세요')
+      return
+    }
+    setRequested(true)
+    toast.success('인증 요청을 제출했습니다')
+  }
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-fg text-[16px] font-bold">프로젝트 인증 요청</h2>
@@ -1562,7 +1575,7 @@ function CertTab({ d }: { d: WorkspaceData }) {
           <span className="text-fg pb-2 text-[14px] font-bold">
             요청 전 체크리스트
           </span>
-          {d.certChecklist.map((c, i) => {
+          {checks.map((c, i) => {
             const done = c.status.tone === 'success'
             return (
               <div
@@ -1572,7 +1585,23 @@ function CertTab({ d }: { d: WorkspaceData }) {
                   i > 0 && 'border-divider border-t',
                 )}
               >
-                <span
+                <button
+                  type="button"
+                  onClick={() =>
+                    setChecks((prev) =>
+                      prev.map((item, idx) =>
+                        idx === i
+                          ? {
+                              ...item,
+                              status: done
+                                ? { label: '필요', tone: 'danger' }
+                                : { label: '완료', tone: 'success' },
+                            }
+                          : item,
+                      ),
+                    )
+                  }
+                  aria-label={`${c.label} 완료 전환`}
                   className={cn(
                     'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
                     done
@@ -1581,7 +1610,7 @@ function CertTab({ d }: { d: WorkspaceData }) {
                   )}
                 >
                   {done ? '✓' : ''}
-                </span>
+                </button>
                 <span className="text-fg flex-1 text-[13px] font-semibold">
                   {c.label}
                 </span>
@@ -1594,7 +1623,13 @@ function CertTab({ d }: { d: WorkspaceData }) {
           <section className={cn(card, 'flex flex-col gap-3')}>
             <div className="flex items-center justify-between">
               <span className="text-fg text-[14px] font-bold">인증 상태</span>
-              <Chip badge={d.certStatus} />
+              <Chip
+                badge={
+                  requested
+                    ? { label: '검토 중', tone: 'warning' }
+                    : d.certStatus
+                }
+              />
             </div>
             <span className="text-fg-muted text-[12px] leading-5">
               요청하면 담당 강사가 산출물과 발표 내용을 검토합니다. 인증 완료 후
@@ -1602,12 +1637,16 @@ function CertTab({ d }: { d: WorkspaceData }) {
             </span>
             <button
               type="button"
+              onClick={submit}
               className="bg-brand rounded-lg py-3 text-[13px] font-bold text-white"
             >
               인증 요청 제출
             </button>
             <button
               type="button"
+              onClick={() =>
+                navigate(`/student/projects/${d.id}/change-requests/new`)
+              }
               className="border-border text-fg rounded-lg border py-2.5 text-[13px] font-semibold"
             >
               변경 제안 보기

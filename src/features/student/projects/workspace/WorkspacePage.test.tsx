@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -172,5 +172,23 @@ describe('WorkspacePage home', () => {
 
     expect(screen.getByText('에러율')).toBeInTheDocument()
     expect(await screen.findByText('지표를 추가했습니다')).toBeInTheDocument()
+  })
+
+  it('상호평가 점수와 코멘트를 입력하고 제출한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=peer-evaluation')
+
+    const score = screen.getByRole('slider', { name: /김민웅 협업 점수/ })
+    fireEvent.change(score, { target: { value: '5' } })
+    await user.type(
+      screen.getAllByPlaceholderText(/선택 코멘트/)[0],
+      '협업 근거를 확인했습니다.',
+    )
+    await user.click(screen.getByRole('button', { name: '제출' }))
+
+    expect(
+      await screen.findByText('상호평가를 제출했습니다'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('제출 완료')).toBeInTheDocument()
   })
 })

@@ -1430,6 +1430,18 @@ function AddMetricModal({
 
 /* ── 상호평가 ── */
 function PeerTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
+  const [submitted, setSubmitted] = useState(false)
+  const [scores, setScores] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      d.peerTargets.flatMap((target) =>
+        target.axes.map((axis) => [`${target.name}:${axis.key}`, axis.score]),
+      ),
+    ),
+  )
+  const [comments, setComments] = useState<Record<string, string>>({})
+  const setScore = (name: string, key: string, score: number) =>
+    setScores((prev) => ({ ...prev, [`${name}:${key}`]: score }))
   return (
     <div className="flex flex-col gap-4 pb-4">
       <div className="flex flex-col gap-1">
@@ -1450,7 +1462,13 @@ function PeerTab({ d }: { d: WorkspaceData }) {
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Chip badge={d.peerMyStatus} />
+          <Chip
+            badge={
+              submitted
+                ? { label: '제출 완료', tone: 'success' }
+                : d.peerMyStatus
+            }
+          />
           <Chip badge={d.peerTeamStatus} />
         </div>
       </section>
@@ -1469,14 +1487,20 @@ function PeerTab({ d }: { d: WorkspaceData }) {
                 <span className="text-fg w-16 shrink-0 text-[12px] font-medium">
                   {a.key}
                 </span>
-                <div className="bg-surface-muted h-2 flex-1 overflow-hidden rounded-full">
-                  <div
-                    className="bg-brand h-full rounded-full"
-                    style={{ width: `${(a.score / 5) * 100}%` }}
-                  />
-                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={5}
+                  step={0.5}
+                  value={scores[`${t.name}:${a.key}`]}
+                  onChange={(e) =>
+                    setScore(t.name, a.key, Number(e.target.value))
+                  }
+                  aria-label={`${t.name} ${a.key} 점수`}
+                  className="accent-brand flex-1"
+                />
                 <span className="text-fg w-7 shrink-0 text-right text-[12px] font-bold">
-                  {a.score.toFixed(1)}
+                  {scores[`${t.name}:${a.key}`].toFixed(1)}
                 </span>
               </div>
             ))}
@@ -1488,9 +1512,14 @@ function PeerTab({ d }: { d: WorkspaceData }) {
                 <Chip key={i} badge={tg} />
               ))}
             </div>
-            <span className="border-border text-fg-subtle flex-1 rounded-lg border px-3 py-2 text-[11px]">
-              선택 코멘트: 프로젝트에서 드러난 협업/기여 근거를 적어주세요.
-            </span>
+            <textarea
+              value={comments[t.name] ?? ''}
+              onChange={(e) =>
+                setComments((prev) => ({ ...prev, [t.name]: e.target.value }))
+              }
+              placeholder="선택 코멘트: 프로젝트에서 드러난 협업/기여 근거를 적어주세요."
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-10 flex-1 resize-none rounded-lg border px-3 py-2 text-[11px] focus:outline-none"
+            />
           </div>
         </section>
       ))}
@@ -1502,12 +1531,17 @@ function PeerTab({ d }: { d: WorkspaceData }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => toast.info('상호평가를 임시 저장했습니다')}
             className="border-border text-fg rounded-lg border px-4 py-2.5 text-[13px] font-semibold"
           >
             임시 저장
           </button>
           <button
             type="button"
+            onClick={() => {
+              setSubmitted(true)
+              toast.success('상호평가를 제출했습니다')
+            }}
             className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
           >
             제출

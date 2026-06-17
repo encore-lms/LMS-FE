@@ -12,6 +12,7 @@ import type {
   WorkspaceData,
   WsColumn,
   WsDoc,
+  WsIssue,
   WsMeeting,
   WsTab,
   WsTask,
@@ -975,11 +976,18 @@ function AddDocModal({
 
 /* ── 이슈 ── */
 function IssuesTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
+  const [issues, setIssues] = useState(d.issues)
+  const [adding, setAdding] = useState(false)
   return (
     <div className="flex flex-col gap-4">
-      <SectionHead title="이슈" action="이슈 등록" />
+      <SectionHead
+        title="이슈"
+        action="이슈 등록"
+        onAction={() => setAdding(true)}
+      />
       <section className={cn(card, 'flex flex-col')}>
-        {d.issues.map((it, i) => (
+        {issues.map((it, i) => (
           <div
             key={i}
             className={cn(
@@ -993,13 +1001,109 @@ function IssuesTab({ d }: { d: WorkspaceData }) {
             </div>
             <Chip badge={it.priority} />
             <Chip badge={it.status} />
-            <span className="border-border text-fg-muted shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold">
+            <button
+              type="button"
+              onClick={() => toast.info(`${it.title} 상세를 열었습니다`)}
+              className="border-border text-fg-muted shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+            >
               상세
-            </span>
+            </button>
           </div>
         ))}
       </section>
+      {adding && (
+        <AddIssueModal
+          onClose={() => setAdding(false)}
+          onAdd={(issue) => {
+            setIssues((prev) => [issue, ...prev])
+            setAdding(false)
+            toast.success('이슈를 등록했습니다')
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function AddIssueModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void
+  onAdd: (issue: WsIssue) => void
+}) {
+  const [title, setTitle] = useState('')
+  const [priority, setPriority] = useState('P1')
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const submit = () => {
+    if (!title.trim()) return
+    onAdd({
+      title: title.trim(),
+      meta: '백엔드 · 담당 김수강',
+      priority: {
+        label: priority,
+        tone:
+          priority === 'P0'
+            ? 'danger'
+            : priority === 'P1'
+              ? 'warning'
+              : 'accent',
+      },
+      status: { label: '열림', tone: 'info' },
+    })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="이슈 등록"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!title.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            등록
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">제목</span>
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="이슈 제목"
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">우선순위</span>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            className={field}
+          >
+            <option value="P0">P0</option>
+            <option value="P1">P1</option>
+            <option value="P2">P2</option>
+          </select>
+        </label>
+      </div>
+    </Modal>
   )
 }
 

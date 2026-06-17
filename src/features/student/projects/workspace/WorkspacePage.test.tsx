@@ -131,4 +131,17 @@ describe('WorkspacePage home', () => {
     expect(screen.getByText('릴리즈 체크리스트')).toBeInTheDocument()
     expect(await screen.findByText('문서를 추가했습니다')).toBeInTheDocument()
   })
+
+  it('이슈 등록 모달로 새 이슈를 목록에 추가한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=issues')
+
+    await user.click(screen.getByRole('button', { name: '이슈 등록' }))
+    await user.type(screen.getByPlaceholderText('이슈 제목'), 'Redis 연결 지연')
+    await user.selectOptions(screen.getByRole('combobox'), 'P0')
+    await user.click(screen.getByRole('button', { name: '등록' }))
+
+    expect(screen.getByText('Redis 연결 지연')).toBeInTheDocument()
+    expect(await screen.findByText('이슈를 등록했습니다')).toBeInTheDocument()
+  })
 })

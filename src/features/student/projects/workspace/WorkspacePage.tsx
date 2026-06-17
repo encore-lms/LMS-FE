@@ -14,6 +14,7 @@ import type {
   WsDoc,
   WsIssue,
   WsMeeting,
+  WsMember,
   WsTab,
   WsTask,
 } from '../types'
@@ -1109,12 +1110,19 @@ function AddIssueModal({
 
 /* ── 팀 관리 ── */
 function TeamTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
+  const [members, setMembers] = useState(d.members)
+  const [inviting, setInviting] = useState(false)
   return (
     <div className="flex flex-col gap-4">
-      <SectionHead title="팀원 관리" action="팀원 초대" />
+      <SectionHead
+        title="팀원 관리"
+        action="팀원 초대"
+        onAction={() => setInviting(true)}
+      />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex flex-1 flex-col py-2')}>
-          {d.members.map((m, i) => (
+          {members.map((m, i) => (
             <div
               key={m.name}
               className={cn(
@@ -1152,6 +1160,7 @@ function TeamTab({ d }: { d: WorkspaceData }) {
               </div>
               <button
                 type="button"
+                onClick={() => toast.info(`${m.name} 상세를 열었습니다`)}
                 className="border-border text-fg-muted shrink-0 rounded-lg border px-3.5 py-1.5 text-[12px] font-semibold"
               >
                 상세
@@ -1168,7 +1177,89 @@ function TeamTab({ d }: { d: WorkspaceData }) {
           ))}
         </section>
       </div>
+      {inviting && (
+        <InviteMemberModal
+          onClose={() => setInviting(false)}
+          onAdd={(member) => {
+            setMembers((prev) => [...prev, member])
+            setInviting(false)
+            toast.success('팀원을 초대했습니다')
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function InviteMemberModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void
+  onAdd: (member: WsMember) => void
+}) {
+  const [name, setName] = useState('')
+  const [role, setRole] = useState('백엔드')
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const submit = () => {
+    if (!name.trim()) return
+    onAdd({
+      name: name.trim(),
+      role,
+      kind: '팀원',
+      contrib: 0,
+      avatarTone: 'info',
+    })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="팀원 초대"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!name.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            초대
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">이름</span>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="팀원 이름"
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">역할</span>
+          <input
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            placeholder="역할"
+            className={field}
+          />
+        </label>
+      </div>
+    </Modal>
   )
 }
 

@@ -144,4 +144,18 @@ describe('WorkspacePage home', () => {
     expect(screen.getByText('Redis 연결 지연')).toBeInTheDocument()
     expect(await screen.findByText('이슈를 등록했습니다')).toBeInTheDocument()
   })
+
+  it('팀원 초대 모달로 새 팀원을 추가한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=team')
+
+    await user.click(screen.getByRole('button', { name: '팀원 초대' }))
+    await user.type(screen.getByPlaceholderText('팀원 이름'), '오세훈')
+    await user.clear(screen.getByPlaceholderText('역할'))
+    await user.type(screen.getByPlaceholderText('역할'), '문서')
+    await user.click(screen.getByRole('button', { name: '초대' }))
+
+    expect(screen.getByText('오세훈')).toBeInTheDocument()
+    expect(await screen.findByText('팀원을 초대했습니다')).toBeInTheDocument()
+  })
 })

@@ -158,4 +158,19 @@ describe('WorkspacePage home', () => {
     expect(screen.getByText('오세훈')).toBeInTheDocument()
     expect(await screen.findByText('팀원을 초대했습니다')).toBeInTheDocument()
   })
+
+  it('성과 지표 추가 모달로 새 지표를 추가한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=outcomes')
+
+    await user.click(screen.getByRole('button', { name: '지표 추가' }))
+    await user.type(screen.getByPlaceholderText('지표명'), '에러율')
+    await user.type(screen.getByPlaceholderText('Before'), '3.2%')
+    await user.type(screen.getByPlaceholderText('After'), '0.8%')
+    await user.type(screen.getByPlaceholderText('+12%'), '-75%')
+    await user.click(screen.getByRole('button', { name: '추가' }))
+
+    expect(screen.getByText('에러율')).toBeInTheDocument()
+    expect(await screen.findByText('지표를 추가했습니다')).toBeInTheDocument()
+  })
 })

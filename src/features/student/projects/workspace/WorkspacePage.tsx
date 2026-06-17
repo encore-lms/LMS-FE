@@ -11,6 +11,7 @@ import type {
   Tone,
   WorkspaceData,
   WsColumn,
+  WsDoc,
   WsMeeting,
   WsTab,
   WsTask,
@@ -824,27 +825,45 @@ function AddMeetingModal({
 
 /* ── 문서·파일·위키 ── */
 function DocsTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
+  const [activeCategory, setActiveCategory] = useState('전체')
+  const [docs, setDocs] = useState(d.docs)
+  const [adding, setAdding] = useState(false)
+  const visibleDocs =
+    activeCategory === '전체'
+      ? docs
+      : docs.filter(
+          (doc) =>
+            doc.title.includes(activeCategory) ||
+            doc.meta.includes(activeCategory),
+        )
   return (
     <div className="flex flex-col gap-4">
-      <SectionHead title="문서·파일·위키" action="문서 추가" />
+      <SectionHead
+        title="문서·파일·위키"
+        action="문서 추가"
+        onAction={() => setAdding(true)}
+      />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex flex-col gap-1.5 lg:w-[180px]')}>
-          {d.docCategories.map((c, i) => (
-            <span
+          {d.docCategories.map((c) => (
+            <button
               key={c}
+              type="button"
+              onClick={() => setActiveCategory(c)}
               className={cn(
-                'rounded-lg px-3 py-2 text-[12px] font-semibold',
-                i === 0
+                'rounded-lg px-3 py-2 text-left text-[12px] font-semibold',
+                c === activeCategory
                   ? 'bg-brand/10 text-brand'
                   : 'text-fg-muted hover:bg-surface-muted',
               )}
             >
               {c}
-            </span>
+            </button>
           ))}
         </section>
         <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
-          {d.docs.map((doc, i) => (
+          {visibleDocs.map((doc, i) => (
             <div key={i} className={cn(card, 'flex flex-col gap-2')}>
               <span className="text-fg text-[14px] font-bold">{doc.title}</span>
               <span className="text-fg-subtle text-[11px]">{doc.meta}</span>
@@ -852,6 +871,7 @@ function DocsTab({ d }: { d: WorkspaceData }) {
                 <Chip badge={doc.status} />
                 <button
                   type="button"
+                  onClick={() => toast.info(`${doc.title}을 열었습니다`)}
                   className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
                 >
                   열기
@@ -861,7 +881,95 @@ function DocsTab({ d }: { d: WorkspaceData }) {
           ))}
         </div>
       </div>
+      {adding && (
+        <AddDocModal
+          categories={d.docCategories.filter((category) => category !== '전체')}
+          onClose={() => setAdding(false)}
+          onAdd={(doc) => {
+            setDocs((prev) => [doc, ...prev])
+            setAdding(false)
+            toast.success('문서를 추가했습니다')
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function AddDocModal({
+  categories,
+  onClose,
+  onAdd,
+}: {
+  categories: string[]
+  onClose: () => void
+  onAdd: (doc: WsDoc) => void
+}) {
+  const [title, setTitle] = useState('')
+  const [category, setCategory] = useState(categories[0] ?? '위키')
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const submit = () => {
+    if (!title.trim()) return
+    onAdd({
+      title: title.trim(),
+      meta: `${category} · 방금`,
+      status: { label: '초안', tone: 'info' },
+    })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="문서 추가"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!title.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            추가
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">제목</span>
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="문서 제목"
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">카테고리</span>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className={field}
+          >
+            {categories.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </Modal>
   )
 }
 

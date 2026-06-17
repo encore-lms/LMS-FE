@@ -111,4 +111,24 @@ describe('WorkspacePage home', () => {
     expect(screen.getByText('릴리즈 점검 회의')).toBeInTheDocument()
     expect(await screen.findByText('회의록을 작성했습니다')).toBeInTheDocument()
   })
+
+  it('문서 카테고리 필터와 문서 추가 액션을 반영한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=docs')
+
+    await user.click(screen.getByRole('button', { name: '설계 문서' }))
+    expect(screen.getByText('ERD 설계 문서')).toBeInTheDocument()
+    expect(screen.queryByText('API 명세서 v2')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '문서 추가' }))
+    await user.selectOptions(screen.getByRole('combobox'), '설계 문서')
+    await user.type(
+      screen.getByPlaceholderText('문서 제목'),
+      '릴리즈 체크리스트',
+    )
+    await user.click(screen.getByRole('button', { name: '추가' }))
+
+    expect(screen.getByText('릴리즈 체크리스트')).toBeInTheDocument()
+    expect(await screen.findByText('문서를 추가했습니다')).toBeInTheDocument()
+  })
 })

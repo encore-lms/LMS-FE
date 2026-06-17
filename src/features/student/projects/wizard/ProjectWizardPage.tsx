@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { useForm, type UseFormRegisterReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -31,43 +34,88 @@ const CHIP_ON: Record<Tone, string> = {
   success: 'border-success bg-success text-white',
 }
 
+const DEFAULT_WIZARD_VALUES = {
+  name: 'Encore Mart — 마이크로서비스 백엔드',
+  desc: '주문/결제 도메인을 마이크로서비스로 분리하고 Kafka 이벤트 라우팅으로 결제 실패율을 안정화하는 백엔드 프로젝트.',
+  start: '2026-06-01',
+  end: '2026-07-15',
+  invited: ['c2', 'c3', 'c4'],
+  stacks: ['Java 17', 'Spring Boot', 'PostgreSQL', 'Apache Kafka', 'Docker'],
+  domain: '커머스',
+  deliverables: ['GitHub 리포지토리', '기술 문서·회고', '발표 자료'],
+  checks: [false, false, false],
+}
+
+const wizardSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    desc: z.string().trim().min(1).max(500),
+    start: z.string().min(1),
+    end: z.string().min(1),
+    invited: z.array(z.string()).max(6),
+    stacks: z.array(z.string()).min(1).max(12),
+    domain: z.string().min(1),
+    deliverables: z.array(z.string()).min(1),
+    checks: z.array(z.boolean()).length(3),
+  })
+  .superRefine(({ start, end }, ctx) => {
+    const days = getProjectDays(start, end)
+    if (days < 7) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['end'],
+        message: '최소 7일 이상이어야 합니다.',
+      })
+    }
+  })
+
+type WizardFormValues = z.infer<typeof wizardSchema>
+
+function getProjectDays(start: string, end: string) {
+  const d = Math.round((+new Date(end) - +new Date(start)) / 86400000) + 1
+  return Number.isFinite(d) && d > 0 ? d : 0
+}
+
+function toggleString(list: string[], value: string) {
+  return list.includes(value)
+    ? list.filter((item) => item !== value)
+    : [...list, value]
+}
+
 // 신규 프로젝트 생성 4단계 마법사 (/student/projects/new) — Figma 340:981·347:1134·349:1185·353:1241.
 export default function ProjectWizardPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useProjectWizard()
 
   const [step, setStep] = useState(1)
-  const [name, setName] = useState('Encore Mart — 마이크로서비스 백엔드')
-  const [desc, setDesc] = useState(
-    '주문/결제 도메인을 마이크로서비스로 분리하고 Kafka 이벤트 라우팅으로 결제 실패율을 안정화하는 백엔드 프로젝트.',
-  )
-  const [start, setStart] = useState('2026-06-01')
-  const [end, setEnd] = useState('2026-07-15')
-  const [invited, setInvited] = useState<string[]>(['c2', 'c3', 'c4'])
-  const [stacks, setStacks] = useState<string[]>([
-    'Java 17',
-    'Spring Boot',
-    'PostgreSQL',
-    'Apache Kafka',
-    'Docker',
-  ])
-  const [domain, setDomain] = useState('커머스')
-  const [deliverables, setDeliverables] = useState<string[]>([
-    'GitHub 리포지토리',
-    '기술 문서·회고',
-    '발표 자료',
-  ])
-  const [checks, setChecks] = useState([false, false, false])
+  const {
+    register,
+    setValue,
+    watch,
+    trigger,
+    formState: { errors },
+  } = useForm<WizardFormValues>({
+    resolver: zodResolver(wizardSchema),
+    mode: 'onChange',
+    defaultValues: DEFAULT_WIZARD_VALUES,
+  })
+
+  const name = watch('name')
+  const desc = watch('desc')
+  const start = watch('start')
+  const end = watch('end')
+  const invited = watch('invited')
+  const stacks = watch('stacks')
+  const domain = watch('domain')
+  const deliverables = watch('deliverables')
+  const checks = watch('checks')
 
   const stackTone = useMemo(() => {
     const m = new Map<string, Tone>()
     STACK_CATALOG.forEach((g) => g.items.forEach((it) => m.set(it, g.tone)))
     return m
   }, [])
-  const days = useMemo(() => {
-    const d = Math.round((+new Date(end) - +new Date(start)) / 86400000) + 1
-    return Number.isFinite(d) && d > 0 ? d : 0
-  }, [start, end])
+  const days = useMemo(() => getProjectDays(start, end), [start, end])
 
   if (isPending) return <div className="text-fg-muted p-8">불러오는 중…</div>
   if (isError || !data) {
@@ -82,8 +130,14 @@ export default function ProjectWizardPage() {
     )
   }
 
-  const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
-    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
+  const updateArrayField = (
+    field: 'invited' | 'stacks' | 'deliverables',
+    value: string,
+  ) =>
+    setValue(field, toggleString(watch(field), value), {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
 
   const team = [
     {
@@ -98,9 +152,30 @@ export default function ProjectWizardPage() {
       .map((c) => ({ ...c, pm: false })),
   ]
   const checkedCount = checks.filter(Boolean).length
+  const step1Count = [name.trim(), desc.trim(), start, end && days >= 7].filter(
+    Boolean,
+  ).length
+  const step1Ready = step1Count === 4 && !errors.end
+  const step3Ready =
+    stacks.length > 0 && Boolean(domain) && deliverables.length > 0
 
-  const next = () =>
-    step < 4 ? setStep(step + 1) : navigate('/student/projects')
+  const next = async () => {
+    if (step === 1) {
+      if (await trigger(['name', 'desc', 'start', 'end'])) setStep(2)
+      return
+    }
+    if (step === 2) {
+      if (await trigger('invited')) setStep(3)
+      return
+    }
+    if (step === 3) {
+      if (await trigger(['stacks', 'domain', 'deliverables'])) setStep(4)
+      return
+    }
+    if ((await trigger()) && checkedCount === 3) {
+      navigate('/student/projects')
+    }
+  }
   const left = () =>
     step === 1 ? navigate('/student/projects') : setStep(step - 1)
 
@@ -108,7 +183,7 @@ export default function ProjectWizardPage() {
     1: {
       heroTitle: '프로젝트명·설명·기간을 입력하세요',
       heroSub: '작성자는 자동으로 PM이 되며, 다음 단계에서 팀원을 초대해요.',
-      summary: '필수 4 / 4 입력 완료',
+      summary: `필수 ${step1Count} / 4 입력 완료`,
       summarySub: '다음 단계에서 PM 자동 지정 · 팀원 초대 후 확인',
       leftLabel: '취소',
       rightLabel: '다음 — 팀 설정 →',
@@ -150,7 +225,11 @@ export default function ProjectWizardPage() {
       onLeft={left}
       onRight={next}
       rightTone={step === 4 ? 'success' : 'brand'}
-      rightDisabled={step === 4 && checkedCount < 3}
+      rightDisabled={
+        (step === 1 && !step1Ready) ||
+        (step === 3 && !step3Ready) ||
+        (step === 4 && checkedCount < 3)
+      }
     >
       {step === 1 && (
         <Step1
@@ -159,10 +238,16 @@ export default function ProjectWizardPage() {
           start={start}
           end={end}
           days={days}
-          onName={setName}
-          onDesc={setDesc}
-          onStart={setStart}
-          onEnd={setEnd}
+          nameInput={register('name')}
+          descInput={register('desc')}
+          startInput={register('start')}
+          endInput={register('end')}
+          invalid={{
+            name: Boolean(errors.name),
+            desc: Boolean(errors.desc),
+            start: Boolean(errors.start),
+            end: Boolean(errors.end),
+          }}
         />
       )}
       {step === 2 && (
@@ -173,7 +258,7 @@ export default function ProjectWizardPage() {
           candidates={data.candidates}
           invited={invited}
           team={team}
-          onToggle={(id) => toggle(invited, setInvited, id)}
+          onToggle={(id) => updateArrayField('invited', id)}
         />
       )}
       {step === 3 && (
@@ -182,9 +267,11 @@ export default function ProjectWizardPage() {
           stackTone={stackTone}
           domain={domain}
           deliverables={deliverables}
-          onStack={(v) => toggle(stacks, setStacks, v)}
-          onDomain={setDomain}
-          onDeliverable={(v) => toggle(deliverables, setDeliverables, v)}
+          onStack={(v) => updateArrayField('stacks', v)}
+          onDomain={(v) =>
+            setValue('domain', v, { shouldDirty: true, shouldValidate: true })
+          }
+          onDeliverable={(v) => updateArrayField('deliverables', v)}
         />
       )}
       {step === 4 && (
@@ -196,7 +283,13 @@ export default function ProjectWizardPage() {
           domain={domain}
           deliverables={deliverables}
           checks={checks}
-          onCheck={(i) => setChecks(checks.map((c, j) => (j === i ? !c : c)))}
+          onCheck={(i) =>
+            setValue(
+              'checks',
+              checks.map((c, j) => (j === i ? !c : c)),
+              { shouldDirty: true, shouldValidate: true },
+            )
+          }
         />
       )}
     </WizardShell>
@@ -210,10 +303,11 @@ function Step1(p: {
   start: string
   end: string
   days: number
-  onName: (v: string) => void
-  onDesc: (v: string) => void
-  onStart: (v: string) => void
-  onEnd: (v: string) => void
+  nameInput: UseFormRegisterReturn
+  descInput: UseFormRegisterReturn
+  startInput: UseFormRegisterReturn
+  endInput: UseFormRegisterReturn
+  invalid: Record<'name' | 'desc' | 'start' | 'end', boolean>
 }) {
   const input =
     'border-border bg-surface text-fg focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
@@ -227,20 +321,20 @@ function Step1(p: {
           저장된 값은 자동 저장되며 다음 단계에서도 수정할 수 있어요
         </span>
       </div>
-      <Field label="프로젝트명" required counter={`${p.name.length} / 90`}>
+      <Field label="프로젝트명" required counter={`${p.name.length} / 80`}>
         <input
           className={input}
-          value={p.name}
-          maxLength={90}
-          onChange={(e) => p.onName(e.target.value)}
+          maxLength={80}
+          aria-invalid={p.invalid.name}
+          {...p.nameInput}
         />
       </Field>
       <Field label="프로젝트 설명" required counter={`${p.desc.length} / 500`}>
         <textarea
           className={cn(input, 'min-h-[120px] resize-none leading-6')}
-          value={p.desc}
           maxLength={500}
-          onChange={(e) => p.onDesc(e.target.value)}
+          aria-invalid={p.invalid.desc}
+          {...p.descInput}
         />
         <span className="text-fg-subtle text-[11px]">
           무엇을 만들고 왜 만드는지 한두 단락으로 설명하면 좋습니다 · Markdown
@@ -252,8 +346,8 @@ function Step1(p: {
           <input
             type="date"
             className={input}
-            value={p.start}
-            onChange={(e) => p.onStart(e.target.value)}
+            aria-invalid={p.invalid.start}
+            {...p.startInput}
           />
           <span className="text-fg-subtle text-[11px]">
             교육 기간 내에서 정합니다
@@ -263,8 +357,8 @@ function Step1(p: {
           <input
             type="date"
             className={input}
-            value={p.end}
-            onChange={(e) => p.onEnd(e.target.value)}
+            aria-invalid={p.invalid.end}
+            {...p.endInput}
           />
           <span className="text-fg-subtle text-[11px]">
             시작일로부터 최소 7일 이상
@@ -667,7 +761,7 @@ function Field({
   label: string
   required?: boolean
   counter?: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -712,7 +806,7 @@ function SummaryCard({
 }: {
   step: string
   title: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <section className={cn(card, 'flex flex-col gap-1.5')}>

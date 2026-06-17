@@ -8,7 +8,7 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
-import { useProjectWizard } from '../../api/projects'
+import { useCreateProject, useProjectWizard } from '../../api/projects'
 import {
   DELIVERABLES,
   DOMAINS,
@@ -91,6 +91,7 @@ export default function ProjectWizardPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useProjectWizard()
+  const createProject = useCreateProject()
 
   const [step, setStep] = useState(1)
   const {
@@ -187,7 +188,25 @@ export default function ProjectWizardPage() {
       return
     }
     if ((await trigger()) && checkedCount === 3) {
-      navigate('/student/projects')
+      createProject.mutate(
+        {
+          name,
+          desc,
+          start,
+          end,
+          teamSize: team.length,
+          stacks,
+          domain,
+          deliverables,
+        },
+        {
+          onSuccess: () => {
+            toast.success('프로젝트가 생성되었습니다')
+            navigate('/student/projects')
+          },
+          onError: () => toast.danger('프로젝트 생성에 실패했습니다'),
+        },
+      )
     }
   }
   const left = () =>
@@ -242,7 +261,7 @@ export default function ProjectWizardPage() {
       rightDisabled={
         (step === 1 && !step1Ready) ||
         (step === 3 && !step3Ready) ||
-        (step === 4 && checkedCount < 3)
+        (step === 4 && (checkedCount < 3 || createProject.isPending))
       }
     >
       {step === 1 && (
@@ -299,6 +318,7 @@ export default function ProjectWizardPage() {
           domain={domain}
           deliverables={deliverables}
           checks={checks}
+          onEditStep={setStep}
           onCheck={(i) =>
             setValue(
               'checks',
@@ -682,6 +702,7 @@ function Step4(p: {
   domain: string
   deliverables: string[]
   checks: boolean[]
+  onEditStep: (step: number) => void
   onCheck: (i: number) => void
 }) {
   const CONFIRMS = [
@@ -691,7 +712,11 @@ function Step4(p: {
   ]
   return (
     <div className="flex flex-col gap-4">
-      <SummaryCard step="STEP 1" title="기본 정보">
+      <SummaryCard
+        step="STEP 1"
+        title="기본 정보"
+        onEdit={() => p.onEditStep(1)}
+      >
         <span className="text-fg-subtle text-[11px]">프로젝트명</span>
         <span className="text-fg text-[15px] font-bold">{p.name}</span>
         <span className="text-fg-muted bg-surface-muted/50 mt-1 rounded-lg p-3 text-[12px] leading-5">
@@ -699,7 +724,7 @@ function Step4(p: {
         </span>
       </SummaryCard>
 
-      <SummaryCard step="STEP 2" title="팀 구성">
+      <SummaryCard step="STEP 2" title="팀 구성" onEdit={() => p.onEditStep(2)}>
         {p.team.map((m) => (
           <div key={m.id} className="flex items-center gap-2 py-1">
             <Avatar name={m.name} tone={m.avatarTone} sm />
@@ -721,7 +746,11 @@ function Step4(p: {
         ))}
       </SummaryCard>
 
-      <SummaryCard step="STEP 3" title="상세 설정">
+      <SummaryCard
+        step="STEP 3"
+        title="상세 설정"
+        onEdit={() => p.onEditStep(3)}
+      >
         <span className="text-fg-subtle text-[11px]">기술 스택</span>
         <div className="flex flex-wrap gap-1.5">
           {p.stacks.map((s) => (
@@ -832,10 +861,12 @@ function Avatar({
 function SummaryCard({
   step,
   title,
+  onEdit,
   children,
 }: {
   step: string
   title: string
+  onEdit: () => void
   children: ReactNode
 }) {
   return (
@@ -847,7 +878,13 @@ function SummaryCard({
           </span>
           <span className="text-fg text-[14px] font-bold">{title}</span>
         </div>
-        <span className="text-brand text-[12px] font-semibold">✎ 수정</span>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-brand text-[12px] font-semibold"
+        >
+          ✎ 수정
+        </button>
       </div>
       {children}
     </section>

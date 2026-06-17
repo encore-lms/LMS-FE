@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
-import { useProjectWizard } from '../../api/projects'
+import { useCreateProject, useProjectWizard } from '../../api/projects'
 import type { ProjectWizardData } from '../types'
 import ProjectWizardPage from './ProjectWizardPage'
 
@@ -21,12 +21,17 @@ const wizardData: ProjectWizardData = {
 }
 
 function renderPage() {
+  const mutate = vi.fn((_input, options) => options?.onSuccess?.())
   vi.mocked(useProjectWizard).mockReturnValue({
     data: wizardData,
     isPending: false,
     isError: false,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useProjectWizard>)
+  vi.mocked(useCreateProject).mockReturnValue({
+    mutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useCreateProject>)
 
   render(
     <ToastProvider>
@@ -106,6 +111,35 @@ describe('ProjectWizardPage', () => {
 
     expect(
       await screen.findByText('직접 추가는 준비 중입니다'),
+    ).toBeInTheDocument()
+  })
+
+  it('4단계 수정 버튼과 생성 버튼을 실제 액션으로 연결한다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+    await user.click(screen.getByRole('button', { name: /다음.*상세 설정/ }))
+    await user.click(screen.getByRole('button', { name: /다음.*생성 확인/ }))
+
+    await user.click(screen.getAllByRole('button', { name: /수정/ })[0])
+    expect(
+      screen.getByText('프로젝트명·설명·기간을 입력하세요'),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+    await user.click(screen.getByRole('button', { name: /다음.*상세 설정/ }))
+    await user.click(screen.getByRole('button', { name: /다음.*생성 확인/ }))
+    for (const checkbox of screen.getAllByRole('button', {
+      name: /초대된 팀원에게|프로젝트 생성 후에도|인증 완료된/,
+    })) {
+      await user.click(checkbox)
+    }
+    await user.click(screen.getByRole('button', { name: /^✓ 프로젝트 생성$/ }))
+
+    expect(useCreateProject().mutate).toHaveBeenCalled()
+    expect(
+      await screen.findByText('프로젝트가 생성되었습니다'),
     ).toBeInTheDocument()
   })
 })

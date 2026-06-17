@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -7,13 +8,82 @@ import { usePageHeader } from '@/shared/store'
 import { useProjectList } from '../api/projects'
 import { ProjectStatCards } from './components/ProjectStatCards'
 import { ProjectCard } from './components/ProjectCard'
+import type { ProjectKind, ProjectSummary } from './types'
 
 // 프로젝트 목록 (/student/projects) — Figma 337:930.
+const PAGE_SIZE = 3
+
 export default function ProjectListPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useProjectList()
-  const [active, setActive] = useState('all')
+  const [activeStatus, setActiveStatus] = useState('all')
+  const [activeKind, setActiveKind] = useState<'all' | ProjectKind>('all')
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
   usePageHeader(data?.headerTitle ?? '프로젝트', data?.headerSub)
+
+  const filteredProjects = useMemo(() => {
+    if (!data) return []
+    const normalized = query.trim().toLowerCase()
+
+    return data.projects.filter((project) => {
+      const matchesStatus =
+        activeStatus === 'all' ||
+        project.status === activeStatus ||
+        (activeStatus === 'representative' && project.representative)
+      const matchesKind = activeKind === 'all' || project.kind === activeKind
+      const matchesQuery =
+        !normalized ||
+        [
+          project.title,
+          project.kindLabel,
+          project.statusLabel,
+          project.pm,
+          project.teamLabel,
+          project.period,
+          ...project.tags,
+          ...project.outcomes,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalized)
+
+      return matchesStatus && matchesKind && matchesQuery
+    })
+  }, [activeKind, activeStatus, data, query])
+
+  useEffect(() => {
+    setPage(1)
+  }, [activeKind, activeStatus, query])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
+  const pageProjects = filteredProjects.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  )
+  const allProjects = data?.projects ?? []
+  const teamCount = allProjects.filter(
+    (project) => project.kind === 'team',
+  ).length
+  const personalCount = allProjects.filter(
+    (project) => project.kind === 'personal',
+  ).length
+
+  const open = (project: ProjectSummary) => {
+    const suffix = project.status === 'reviewing' ? '?tab=certification' : ''
+    navigate(`/student/projects/${project.id}${suffix}`)
+  }
+
+  const shownLabel =
+    data && filteredProjects.length === data.projects.length && !query
+      ? data.shownLabel
+      : `${filteredProjects.length}건 표시 · 인증 완료 ${
+          filteredProjects.filter((p) => p.status === 'certified').length
+        } / 검토 중 ${
+          filteredProjects.filter((p) => p.status === 'reviewing').length
+        } / 작성 중 ${
+          filteredProjects.filter((p) => p.status === 'draft').length
+        }`
 
   if (isPending)
     return <div className="text-fg-muted p-8">프로젝트를 불러오는 중…</div>
@@ -29,8 +99,6 @@ export default function ProjectListPage() {
     )
   }
 
-  const open = (id: string) => navigate(`/student/projects/${id}`)
-
   return (
     <div className="flex flex-col gap-5 p-8">
       <ProjectStatCards stats={data.stats} />
@@ -39,78 +107,144 @@ export default function ProjectListPage() {
         <div className="flex items-center gap-2">
           <h2 className="text-fg text-[16px] font-bold">참여 프로젝트</h2>
           <span className="text-fg-subtle text-[12px]">
-            {data.projects.length}건
+            {filteredProjects.length}건
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="border-border text-fg-subtle hidden items-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] sm:inline-flex">
-            <svg
-              viewBox="0 0 24 24"
-              className="size-3.5 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3-3" strokeLinecap="round" />
-            </svg>
-            프로젝트명·스택 검색
-          </span>
+          <label className="border-border text-fg-subtle focus-within:border-brand hidden h-9 items-center gap-2 rounded-lg border bg-white px-3 text-[12px] sm:inline-flex">
+            <Search className="size-3.5 shrink-0" strokeWidth={2} />
+            <input
+              aria-label="프로젝트명·스택 검색"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="프로젝트명·스택 검색"
+              className="placeholder:text-fg-subtle text-fg w-44 bg-transparent outline-none"
+            />
+          </label>
           <button
             type="button"
             onClick={() => navigate('/student/projects/new')}
-            className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+            className="bg-brand inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-bold text-white"
           >
-            ✓ 신규 프로젝트
+            신규 프로젝트
+            <ArrowRight className="size-3.5" strokeWidth={2.4} />
           </button>
         </div>
       </div>
 
       {/* 필터 칩 */}
-      <div className="flex flex-wrap items-center gap-2">
-        {data.filters.map((f) => {
-          const on = f.key === active
-          return (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setActive(f.key)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                on
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted hover:bg-surface-muted border',
-              )}
-            >
-              {f.label}
-              <span
+      <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {data.filters.map((f) => {
+            const on = f.key === activeStatus
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setActiveStatus(f.key)}
                 className={cn(
-                  'text-[12px]',
-                  on ? 'text-white/70' : 'text-fg-subtle',
+                  'flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
+                  on
+                    ? 'bg-brand-deep text-white'
+                    : 'border-border text-fg-muted hover:bg-surface-muted border',
                 )}
               >
-                {f.count}
-              </span>
-            </button>
-          )
-        })}
+                {f.label}
+                <span
+                  className={cn(
+                    'rounded-md px-1.5 text-[12px]',
+                    on
+                      ? 'bg-white/15 text-white'
+                      : 'bg-surface-muted text-fg-subtle',
+                  )}
+                >
+                  {f.count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { key: 'team' as const, label: '팀', count: teamCount },
+            { key: 'personal' as const, label: '개인', count: personalCount },
+          ].map((f) => {
+            const on = activeKind === f.key
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setActiveKind(on ? 'all' : f.key)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors',
+                  on
+                    ? 'border-brand bg-brand/10 text-brand'
+                    : 'border-border text-fg-muted hover:bg-surface-muted',
+                )}
+              >
+                {f.label}
+                <span className="bg-surface-muted text-fg-subtle rounded-md px-1.5">
+                  {f.count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
-        {data.projects.map((p) => (
-          <ProjectCard key={p.id} project={p} onOpen={open} />
-        ))}
+        {pageProjects.length > 0 ? (
+          pageProjects.map((p) => (
+            <ProjectCard key={p.id} project={p} onOpen={open} />
+          ))
+        ) : (
+          <Empty
+            title="조건에 맞는 프로젝트가 없어요"
+            description="검색어와 필터를 다시 조정해 주세요."
+          />
+        )}
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <span className="text-fg-subtle text-[12px]">{data.shownLabel}</span>
+        <span className="text-fg-subtle text-[12px]">{shownLabel}</span>
         <div className="flex items-center gap-1">
-          <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px]">
-            ‹
-          </span>
-          <span className="bg-brand-deep flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold text-white">
-            1
-          </span>
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+            aria-label="이전 페이지"
+          >
+            <ChevronLeft className="size-4" strokeWidth={2.2} />
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+            (pageNo) => (
+              <button
+                key={pageNo}
+                type="button"
+                onClick={() => setPage(pageNo)}
+                className={cn(
+                  'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
+                  pageNo === page
+                    ? 'bg-brand-deep text-white'
+                    : 'border-border text-fg-subtle border',
+                )}
+              >
+                {pageNo}
+              </button>
+            ),
+          )}
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() =>
+              setPage((current) => Math.min(totalPages, current + 1))
+            }
+            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+            aria-label="다음 페이지"
+          >
+            <ChevronRight className="size-4" strokeWidth={2.2} />
+          </button>
         </div>
       </div>
     </div>

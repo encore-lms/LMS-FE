@@ -1,4 +1,15 @@
 import { cn } from '@/shared/lib/cn'
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Flag,
+  Pencil,
+  Star,
+  Timer,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import type { ProjectStatus, ProjectSummary, Tone } from '../types'
 
 // 프로젝트 목록 카드 — 좌측 색 바 + 상태 배지 + 메타 + 태그 + 핵심 성과 + 액션.
@@ -10,10 +21,10 @@ const ACCENT: Record<Tone, string> = {
   accent: 'bg-accent-strong',
   success: 'bg-success',
 }
-const STATUS: Record<ProjectStatus, { cls: string; icon: string }> = {
-  certified: { cls: 'bg-success-bg text-success', icon: '✓' },
-  reviewing: { cls: 'bg-warning-bg text-warning', icon: '⏳' },
-  draft: { cls: 'bg-accent-bg text-accent-strong', icon: '✎' },
+const STATUS: Record<ProjectStatus, { cls: string; Icon: LucideIcon }> = {
+  certified: { cls: 'bg-success-bg text-success', Icon: CheckCircle2 },
+  reviewing: { cls: 'bg-warning-bg text-warning', Icon: Timer },
+  draft: { cls: 'bg-accent-bg text-accent-strong', Icon: Pencil },
 }
 
 export function ProjectCard({
@@ -21,9 +32,11 @@ export function ProjectCard({
   onOpen,
 }: {
   project: ProjectSummary
-  onOpen: (id: string) => void
+  onOpen: (project: ProjectSummary) => void
 }) {
   const st = STATUS[project.status]
+  const StatusIcon = st.Icon
+
   return (
     <section className="border-border bg-surface relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6">
       <span
@@ -41,15 +54,17 @@ export function ProjectCard({
             </span>
             <span
               className={cn(
-                'rounded px-2 py-0.5 text-[11px] font-bold',
+                'inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold',
                 st.cls,
               )}
             >
-              {st.icon} {project.statusLabel}
+              <StatusIcon className="size-3" strokeWidth={2.3} />
+              {project.statusLabel}
             </span>
             {project.representative && (
-              <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
-                ★ 대표 후보
+              <span className="bg-brand/10 text-brand inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
+                <Star className="size-3 fill-current" strokeWidth={2.3} />
+                대표 후보
               </span>
             )}
           </div>
@@ -57,7 +72,7 @@ export function ProjectCard({
         </div>
         <button
           type="button"
-          onClick={() => onOpen(project.id)}
+          onClick={() => onOpen(project)}
           className={cn(
             'shrink-0 rounded-lg px-4 py-2.5 text-[12px] font-bold',
             project.status === 'reviewing'
@@ -65,14 +80,24 @@ export function ProjectCard({
               : 'bg-brand text-white',
           )}
         >
-          {project.actionLabel} →
+          {project.actionLabel}
+          <ArrowRight className="ml-1 inline size-3.5" strokeWidth={2.4} />
         </button>
       </div>
 
       <div className="text-fg-muted flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
-        <span>🏳 {project.pm}</span>
-        <span>👤 {project.teamLabel}</span>
-        <span>📅 {project.period}</span>
+        <span className="inline-flex items-center gap-1">
+          <Flag className="size-3.5" strokeWidth={2.2} />
+          {project.pm}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Users className="size-3.5" strokeWidth={2.2} />
+          {project.teamLabel}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Calendar className="size-3.5" strokeWidth={2.2} />
+          {project.period}
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -88,7 +113,8 @@ export function ProjectCard({
 
       <div className="bg-surface-muted/50 flex flex-col gap-1.5 rounded-[12px] p-4">
         <span className="text-success flex items-center gap-1.5 text-[12px] font-bold">
-          ✓ 핵심 성과
+          <CheckCircle2 className="size-3.5" strokeWidth={2.3} />
+          핵심 성과
         </span>
         {project.outcomes.map((o, i) => (
           <span key={i} className="text-fg-muted flex gap-1.5 text-[12px]">

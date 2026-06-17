@@ -95,7 +95,7 @@ export default function WorkspacePage() {
       active={tab}
       onTab={setTab}
     >
-      {tab === 'home' && <HomeTab d={data} />}
+      {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
       {tab === 'board' && <BoardTab d={data} />}
       {tab === 'calendar' && <CalendarTab d={data} />}
       {tab === 'meetings' && <MeetingsTab d={data} />}
@@ -185,17 +185,49 @@ function TaskCard({ t }: { t: WsTask }) {
 }
 
 /* ── 홈 ── */
-function HomeTab({ d }: { d: WorkspaceData }) {
+function HomeTab({
+  d,
+  onTab,
+}: {
+  d: WorkspaceData
+  onTab: (t: WsTab) => void
+}) {
+  const [doneTasks, setDoneTasks] = useState<Set<string>>(new Set())
+  const statTab = (label: string): WsTab =>
+    label.includes('이슈')
+      ? 'issues'
+      : label.includes('인증')
+        ? 'certification'
+        : 'board'
+  const toggleDone = (title: string) =>
+    setDoneTasks((prev) => {
+      const next = new Set(prev)
+      if (next.has(title)) next.delete(title)
+      else next.add(title)
+      return next
+    })
   return (
     <div className="flex flex-col gap-4">
       {d.banner && (
-        <div className="bg-info-bg/60 text-fg-muted rounded-xl px-4 py-3 text-[12px]">
-          ⓘ {d.banner}
+        <div className="bg-info-bg/60 text-fg-muted flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-[12px]">
+          <span>ⓘ {d.banner}</span>
+          <button
+            type="button"
+            onClick={() => onTab('peer-evaluation')}
+            className="bg-brand shrink-0 rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+          >
+            상호평가 작성
+          </button>
         </div>
       )}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {d.stats.map((s) => (
-          <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
+          <button
+            key={s.label}
+            type="button"
+            onClick={() => onTab(statTab(s.label))}
+            className={cn(card, 'flex flex-col gap-2 text-left')}
+          >
             <span className="text-fg-muted text-[12px]">{s.label}</span>
             <span className="text-fg text-[26px] leading-none font-bold">
               {s.value}
@@ -206,7 +238,7 @@ function HomeTab({ d }: { d: WorkspaceData }) {
               )}
             </span>
             <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-          </div>
+          </button>
         ))}
       </div>
       <div className="flex flex-col gap-4 lg:flex-row">
@@ -218,6 +250,17 @@ function HomeTab({ d }: { d: WorkspaceData }) {
                 key={i}
                 className="border-border flex items-center gap-3 rounded-[10px] border p-3"
               >
+                <button
+                  type="button"
+                  onClick={() => toggleDone(t.title)}
+                  aria-label={`${t.title} 완료 전환`}
+                  className={cn(
+                    'border-border flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold',
+                    doneTasks.has(t.title) && 'bg-success text-white',
+                  )}
+                >
+                  {doneTasks.has(t.title) ? '✓' : ''}
+                </button>
                 <span className="text-fg flex-1 text-[13px] font-semibold">
                   {t.title}
                 </span>

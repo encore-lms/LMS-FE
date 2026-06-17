@@ -127,7 +127,7 @@ const mockWizard: ProjectWizardData = {
   ],
 }
 
-const mockWorkspace: WorkspaceData = {
+export const mockWorkspace: WorkspaceData = {
   id: 'p1',
   title: '주문 관리 MSA 백엔드',
   meta: '팀 프로젝트 · 4명 · 2026-04-01 ~ 2026-05-30 · PM 김민웅',

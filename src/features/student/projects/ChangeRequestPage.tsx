@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
+import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 
 // 프로젝트 변경 제안 (/student/projects/:projectId/change-requests/new) — Figma 345:1083.
@@ -21,12 +23,36 @@ const DIFF: Record<string, { before: string; after: string }> = {
 
 export default function ChangeRequestPage() {
   const navigate = useNavigate()
+  const { projectId = 'unknown' } = useParams()
+  const toast = useToast()
   const [reason, setReason] = useState(
     '결제 모듈 리팩터링 결과를 설명에 반영하고, 최신 API 명세서로 산출물을 교체하기 위함입니다.',
   )
   const [selected, setSelected] = useState<string[]>(['설명', '산출물'])
+  const submitChangeRequest = useMutation({
+    mutationFn: async () => {
+      // 계약 확정 시 apiClient.post(`/student/projects/${projectId}/change-requests`, { reason, items: selected })로 교체.
+      await Promise.resolve({ projectId, reason, items: selected })
+    },
+    onSuccess: () => {
+      toast.success('변경 제안을 저장했습니다')
+      navigate(-1)
+    },
+    onError: () => toast.danger('변경 제안 저장에 실패했습니다'),
+  })
   const toggle = (v: string) =>
     setSelected((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))
+  const submit = () => {
+    if (!reason.trim()) {
+      toast.danger('변경 사유를 입력해 주세요')
+      return
+    }
+    if (selected.length === 0) {
+      toast.danger('변경 항목을 선택해 주세요')
+      return
+    }
+    submitChangeRequest.mutate()
+  }
   usePageHeader(
     '프로젝트 변경 제안',
     '인증 완료된 프로젝트의 수정·삭제를 강사에게 제안합니다. 승인 시 원본에 반영됩니다.',
@@ -147,8 +173,9 @@ export default function ChangeRequestPage() {
           </span>
           <button
             type="button"
-            onClick={() => navigate(-1)}
-            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
+            onClick={submit}
+            disabled={submitChangeRequest.isPending}
+            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:opacity-50"
           >
             변경 제안 저장
           </button>

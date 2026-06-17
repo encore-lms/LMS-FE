@@ -58,7 +58,7 @@ export default function AssignmentsPage() {
           onClick={() => setOpen((v) => !v)}
           className="border-border bg-surface text-fg flex items-center gap-2 rounded-[10px] border px-3.5 py-[9px] text-[13px] font-medium"
         >
-          상태: {activeLabel}
+          {activeLabel}
           <span className="text-fg-subtle text-[10px]">▾</span>
         </button>
         {open && (

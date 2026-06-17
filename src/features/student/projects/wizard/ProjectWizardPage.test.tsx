@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ToastProvider } from '@/components/ui/Toast'
 import { useProjectWizard } from '../../api/projects'
 import type { ProjectWizardData } from '../types'
 import ProjectWizardPage from './ProjectWizardPage'
@@ -28,11 +29,13 @@ function renderPage() {
   } as unknown as ReturnType<typeof useProjectWizard>)
 
   render(
-    <MemoryRouter initialEntries={['/student/projects/new']}>
-      <Routes>
-        <Route path="/student/projects/new" element={<ProjectWizardPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/student/projects/new']}>
+        <Routes>
+          <Route path="/student/projects/new" element={<ProjectWizardPage />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 
@@ -90,6 +93,19 @@ describe('ProjectWizardPage', () => {
     expect(screen.getByText('초대 2 / 7명')).toBeInTheDocument()
     expect(
       screen.getByText('팀 3명 구성 완료 (PM 1 + 팀원 2)'),
+    ).toBeInTheDocument()
+  })
+
+  it('3단계 직접 추가 버튼은 준비 중 토스트를 띄운다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+    await user.click(screen.getByRole('button', { name: /다음.*상세 설정/ }))
+    await user.click(screen.getAllByRole('button', { name: '+ 직접 추가' })[0])
+
+    expect(
+      await screen.findByText('직접 추가는 준비 중입니다'),
     ).toBeInTheDocument()
   })
 })

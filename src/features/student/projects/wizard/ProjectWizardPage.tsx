@@ -7,6 +7,7 @@ import { Search, Send, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { useToast } from '@/components/ui/use-toast'
 import { useProjectWizard } from '../../api/projects'
 import {
   DELIVERABLES,
@@ -88,6 +89,7 @@ function toggleString(list: string[], value: string) {
 // 신규 프로젝트 생성 4단계 마법사 (/student/projects/new) — Figma 340:981·347:1134·349:1185·353:1241.
 export default function ProjectWizardPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const { data, isPending, isError, refetch } = useProjectWizard()
 
   const [step, setStep] = useState(1)
@@ -285,6 +287,7 @@ export default function ProjectWizardPage() {
             setValue('domain', v, { shouldDirty: true, shouldValidate: true })
           }
           onDeliverable={(v) => updateArrayField('deliverables', v)}
+          onDirectAdd={() => toast.info('직접 추가는 준비 중입니다')}
         />
       )}
       {step === 4 && (
@@ -538,6 +541,7 @@ function Step3(p: {
   onStack: (v: string) => void
   onDomain: (v: string) => void
   onDeliverable: (v: string) => void
+  onDirectAdd: () => void
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -594,9 +598,13 @@ function Step3(p: {
                   </button>
                 )
               })}
-              <span className="text-fg-subtle px-2 py-1.5 text-[12px]">
+              <button
+                type="button"
+                onClick={p.onDirectAdd}
+                className="border-border text-fg-subtle hover:border-brand/50 rounded-full border border-dashed px-3 py-1.5 text-[12px]"
+              >
                 + 직접 추가
-              </span>
+              </button>
             </div>
           </div>
         ))}

@@ -4,7 +4,7 @@ import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useCertificateOverview } from '../api/certificate'
 import { CertHero } from './components/CertHero'
-import { CertPreview } from './components/CertPreview'
+import { CertRequestTestNav } from './components/CertRequestTestNav'
 import { CertTabs } from './CertTabs'
 import { SummaryTab } from './tabs/SummaryTab'
 import { TechTab } from './tabs/TechTab'
@@ -17,10 +17,9 @@ import { useCertFlow } from './useCertFlow'
 import type { CertTab } from './types'
 
 /**
- * 수강 역량 증명서 (/student/certificate).
- * - ?tab 없음 → 증명서 미리보기 랜딩(Figma 249:27, CertPreview): 리치 히어로 + 보완 항목 +
- *   요청 전 체크리스트 + 정식 인증 요청 액션바.
- * - ?tab=X    → 탭 상세(Figma 2402:xxxx): 슬림 히어로 + 탭 콘텐츠, 하단 액션바 없음.
+ * 수강 역량 증명서 (/student/certificate) — 인셸 작업 화면.
+ * - 사이드바 진입 = 종합요약 탭(기본). 슬림 히어로 + 상단 테스트 네비(정식 인증 요청 흐름 + 미리보기) + 탭 콘텐츠.
+ * - 미리보기는 별도 전체화면 라우트(/student/certificate/preview, 사이드바 없음)에서 본다.
  */
 export default function CertificatePage() {
   const [params, setParams] = useSearchParams()
@@ -42,16 +41,15 @@ export default function CertificatePage() {
     )
   }
 
-  const tabParam = params.get('tab') as CertTab | null
-  // ?tab 없음 = 증명서 미리보기 랜딩
-  if (!tabParam) return <CertPreview data={data} />
-
-  // ?tab=X = 탭 상세(슬림). 하단 정식 인증 요청 액션바는 미리보기 전용.
-  const tab = tabParam
+  // ?tab 없으면 종합요약 탭 기본. AI 탭은 CERT_V2 플래그 ON일 때만.
+  const tab = (params.get('tab') as CertTab | null) ?? 'summary'
   const setTab = (t: CertTab) => setParams({ tab: t })
+
   return (
     <div className="flex flex-col gap-5 p-8">
       <CertHero header={data.header} status={status} />
+      {/* 정식 인증 요청 흐름 + 미리보기 — FE 목 전용 테스트 네비 */}
+      <CertRequestTestNav data={data} />
       <CertTabs active={tab} onChange={setTab} />
 
       {tab === 'summary' && <SummaryTab s={data.summary} />}

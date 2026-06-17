@@ -3,6 +3,7 @@ import { useForm, type UseFormRegisterReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Search, Send, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -40,6 +41,7 @@ const DEFAULT_WIZARD_VALUES = {
   start: '2026-06-01',
   end: '2026-07-15',
   invited: ['c2', 'c3', 'c4'],
+  teamSearch: '',
   stacks: ['Java 17', 'Spring Boot', 'PostgreSQL', 'Apache Kafka', 'Docker'],
   domain: '커머스',
   deliverables: ['GitHub 리포지토리', '기술 문서·회고', '발표 자료'],
@@ -53,6 +55,7 @@ const wizardSchema = z
     start: z.string().min(1),
     end: z.string().min(1),
     invited: z.array(z.string()).max(6),
+    teamSearch: z.string().max(60),
     stacks: z.array(z.string()).min(1).max(12),
     domain: z.string().min(1),
     deliverables: z.array(z.string()).min(1),
@@ -105,6 +108,7 @@ export default function ProjectWizardPage() {
   const start = watch('start')
   const end = watch('end')
   const invited = watch('invited')
+  const teamSearch = watch('teamSearch')
   const stacks = watch('stacks')
   const domain = watch('domain')
   const deliverables = watch('deliverables')
@@ -151,6 +155,14 @@ export default function ProjectWizardPage() {
       .filter((c) => invited.includes(c.id))
       .map((c) => ({ ...c, pm: false })),
   ]
+  const normalizedTeamSearch = teamSearch.trim().toLowerCase()
+  const candidates = normalizedTeamSearch
+    ? data.candidates.filter((candidate) =>
+        `${candidate.name} ${candidate.meta}`
+          .toLowerCase()
+          .includes(normalizedTeamSearch),
+      )
+    : data.candidates
   const checkedCount = checks.filter(Boolean).length
   const step1Count = [name.trim(), desc.trim(), start, end && days >= 7].filter(
     Boolean,
@@ -255,7 +267,8 @@ export default function ProjectWizardPage() {
           pmName={data.pmName}
           pmMeta={data.pmMeta}
           cohortLabel={data.cohortLabel}
-          candidates={data.candidates}
+          candidates={candidates}
+          searchInput={register('teamSearch')}
           invited={invited}
           team={team}
           onToggle={(id) => updateArrayField('invited', id)}
@@ -383,6 +396,7 @@ function Step2(p: {
   pmMeta: string
   cohortLabel: string
   candidates: TeamCandidate[]
+  searchInput: UseFormRegisterReturn
   invited: string[]
   team: {
     id: string
@@ -422,19 +436,14 @@ function Step2(p: {
             초대 {p.invited.length} / 7명
           </span>
         </div>
-        <span className="border-border text-fg-subtle flex items-center gap-2 rounded-[10px] border px-4 py-3 text-[13px]">
-          <svg
-            viewBox="0 0 24 24"
-            className="size-4 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3-3" strokeLinecap="round" />
-          </svg>
-          이름이나 영문 닉네임으로 검색
-        </span>
+        <label className="border-border text-fg-subtle focus-within:border-brand flex items-center gap-2 rounded-[10px] border px-4 py-3 text-[13px]">
+          <Search className="size-4 shrink-0" aria-hidden="true" />
+          <input
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent focus:outline-none"
+            placeholder="이름이나 영문 닉네임으로 검색"
+            {...p.searchInput}
+          />
+        </label>
         <span className="text-fg-subtle text-[11px]">
           검색 결과 ({p.candidates.length}명)
         </span>
@@ -472,8 +481,8 @@ function Step2(p: {
               PM 1명 + 최대 팀원 6명 · 최대 7명까지
             </span>
           </div>
-          <span className="text-brand text-[12px] font-bold">
-            ✈ {p.team.length} / 7
+          <span className="text-brand flex items-center gap-1 text-[12px] font-bold">
+            <Send className="size-3.5" aria-hidden="true" /> {p.team.length} / 7
           </span>
         </div>
         {p.team.map((m) => (
@@ -486,21 +495,34 @@ function Step2(p: {
               </span>
               <span className="text-fg-subtle text-[11px]">{m.meta}</span>
             </div>
-            <span
-              className={cn(
-                'rounded px-2 py-0.5 text-[10px] font-bold',
-                m.pm
-                  ? 'bg-accent-strong text-white'
-                  : 'bg-surface-muted text-fg-muted',
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  'rounded px-2 py-0.5 text-[10px] font-bold',
+                  m.pm
+                    ? 'bg-accent-strong text-white'
+                    : 'bg-surface-muted text-fg-muted',
+                )}
+              >
+                {m.pm ? 'PM' : '팀원'}
+              </span>
+              {!m.pm && (
+                <button
+                  type="button"
+                  onClick={() => p.onToggle(m.id)}
+                  aria-label={`${m.name} 초대 취소`}
+                  className="border-border text-fg-subtle hover:text-fg flex size-7 items-center justify-center rounded-lg border"
+                >
+                  <X className="size-3.5" aria-hidden="true" />
+                </button>
               )}
-            >
-              {m.pm ? 'PM' : '팀원'}
-            </span>
+            </div>
           </div>
         ))}
-        <div className="bg-info-bg/60 text-fg-muted rounded-xl p-3 text-[11px]">
-          ⓘ 초대된 팀원에게 알림이 발송됩니다. 수락 시점부터 워크스페이스에
-          참여할 수 있습니다.
+        <div className="bg-info-bg/60 text-fg-muted flex items-center gap-2 rounded-xl p-3 text-[11px]">
+          <Send className="text-info size-4 shrink-0" aria-hidden="true" />
+          초대된 팀원에게 알림이 발송됩니다. 수락 시점부터 워크스페이스에 참여할
+          수 있습니다.
         </div>
       </section>
     </div>

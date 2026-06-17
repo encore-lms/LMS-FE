@@ -72,4 +72,24 @@ describe('ProjectWizardPage', () => {
       screen.getByDisplayValue('Redis Stream 정산 플랫폼'),
     ).toBeInTheDocument()
   })
+
+  it('2단계 팀원 검색과 초대 취소를 팀 구성에 반영한다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+
+    await user.type(
+      screen.getByPlaceholderText('이름이나 영문 닉네임으로 검색'),
+      '최하늘',
+    )
+    expect(screen.getByText('검색 결과 (1명)')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '박준석 초대 취소' }))
+
+    expect(screen.getByText('초대 2 / 7명')).toBeInTheDocument()
+    expect(
+      screen.getByText('팀 3명 구성 완료 (PM 1 + 팀원 2)'),
+    ).toBeInTheDocument()
+  })
 })

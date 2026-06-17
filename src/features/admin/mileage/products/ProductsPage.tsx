@@ -7,12 +7,23 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import {
+  ActionModal,
+  type ActionModalSpec,
+} from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
 import { ProductFormModal } from './ProductFormModal'
-import { useMileageProducts } from './api'
+import { useDeleteProduct, useMileageProducts, useUpsertProduct } from './api'
 import type { Product, ProductType } from './types'
 
 const PRICE_MODE_LABEL = { fixed: '고정가', flexible: '수강생 입력' } as const
+
+// 신규 등록 시 타입별 기본 대표 이미지(이모지 mock).
+const EMOJI_BY_TYPE: Record<ProductType, string> = {
+  GIFTICON: '🎁',
+  BOOK: '📚',
+  LECTURE: '🎬',
+}
 
 type TypeFilter = 'all' | ProductType
 
@@ -25,11 +36,15 @@ export default function ProductsPage() {
     '상품 등록·수정·삭제 · 타입별 가격 방식 분기 · 참조 중 삭제 제한',
   )
   const { data, isPending, isError, refetch } = useMileageProducts()
+  const upsert = useUpsertProduct()
+  const remove = useDeleteProduct()
   const toast = useToast()
   const [type, setType] = useState<TypeFilter>('all')
   // 상품 등록·수정 폼 모달(formProduct=null → 등록).
   const [formOpen, setFormOpen] = useState(false)
   const [formProduct, setFormProduct] = useState<Product | null>(null)
+  // 삭제 확인 모달 대상.
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
 
   const products = useMemo(() => data?.products ?? [], [data])
   const filtered = useMemo(
@@ -54,6 +69,22 @@ export default function ProductsPage() {
   }
 
   const { course, cohortLabel, total, typeCounts, typePricing } = data
+
+  const deleteSpec: ActionModalSpec | null = deleteTarget
+    ? {
+        title: '상품 삭제',
+        subtitle: `${deleteTarget.name} 상품을 삭제합니다.`,
+        rows: [
+          {
+            label: '상품',
+            value: `[${deleteTarget.type}] ${deleteTarget.name}`,
+          },
+          { label: '판매', value: `${deleteTarget.salesCount}건` },
+          { label: '주의', value: '삭제 후 복구할 수 없습니다.' },
+        ],
+        confirmLabel: '삭제',
+      }
+    : null
 
   return (
     <div className="p-8">
@@ -139,12 +170,7 @@ export default function ProductsPage() {
               setFormProduct(p)
               setFormOpen(true)
             }}
-            onDelete={() =>
-              p.referenced
-                ? undefined
-                : // TODO: 상품 삭제 확인(참조 중 제한, P0_16)
-                  toast.info(`${p.name} 삭제는 준비 중입니다.`)
-            }
+            onDelete={() => setDeleteTarget(p)}
           />
         ))}
       </div>
@@ -204,11 +230,58 @@ export default function ProductsPage() {
         open={formOpen}
         product={formProduct}
         onClose={() => setFormOpen(false)}
-        onSubmit={(mode) => {
-          toast.success(
-            mode === 'edit' ? '상품을 수정했습니다.' : '상품을 등록했습니다.',
-          )
-          setFormOpen(false)
+        onSubmit={(mode, values) => {
+          const next: Product = {
+            id: formProduct?.id ?? crypto.randomUUID(),
+            emoji: formProduct?.emoji ?? EMOJI_BY_TYPE[values.type],
+            type: values.type,
+            name: values.name,
+            priceMode: values.type === 'GIFTICON' ? 'fixed' : 'flexible',
+            price:
+              values.type === 'GIFTICON' && values.price
+                ? Number(values.price).toLocaleString()
+                : null,
+            order: values.order,
+            salesCount: formProduct?.salesCount ?? 0,
+            active: values.active,
+            referenced: formProduct?.referenced ?? false,
+          }
+          upsert.mutate(next, {
+            onSuccess: () => {
+              toast.success(
+                mode === 'edit'
+                  ? '상품을 수정했습니다.'
+                  : '상품을 등록했습니다.',
+              )
+              setFormOpen(false)
+            },
+            onError: () =>
+              toast.danger(
+                '상품 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+              ),
+          })
+        }}
+      />
+
+      {/* 상품 삭제 확인 — 운영 액션 모달 공통 재사용 */}
+      <ActionModal
+        spec={deleteSpec}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          const name = deleteTarget.name
+          remove.mutate(deleteTarget.id, {
+            onSuccess: () => {
+              setDeleteTarget(null)
+              toast.success(`${name} 상품을 삭제했습니다.`)
+            },
+            onError: () => {
+              setDeleteTarget(null)
+              toast.danger(
+                '상품 삭제에 실패했어요. 잠시 후 다시 시도해 주세요.',
+              )
+            },
+          })
         }}
       />
     </div>

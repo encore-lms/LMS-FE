@@ -15,7 +15,7 @@ import {
   type ActionModalSpec,
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
-import { usePurchaseQueue } from './api'
+import { usePurchaseProcess, usePurchaseQueue } from './api'
 import type { PurchaseRequest, PurchaseStatus } from './types'
 
 const STATUS_META: Record<
@@ -40,10 +40,15 @@ export default function PurchaseRequestsPage() {
     '수강생 상품 구매 요청 승인·수정 요청·반려 · 타입 한도 자동 검증',
   )
   const { data, isPending, isError, refetch } = usePurchaseQueue()
+  const processReq = usePurchaseProcess()
   const toast = useToast()
   const [status, setStatus] = useState<StatusFilter>('pending')
   const [q, setQ] = useState('')
-  const [process, setProcess] = useState<ActionModalSpec | null>(null)
+  const [process, setProcess] = useState<{
+    spec: ActionModalSpec
+    id: string
+    next: PurchaseStatus
+  } | null>(null)
 
   const requests = useMemo(() => data?.requests ?? [], [data])
   const filtered = useMemo(() => {
@@ -84,31 +89,40 @@ export default function PurchaseRequestsPage() {
     limitExceededCount,
   } = data
 
+  const NEXT_STATUS: Record<'승인' | '수정 요청' | '반려', PurchaseStatus> = {
+    승인: 'approved',
+    '수정 요청': 'revision',
+    반려: 'rejected',
+  }
   const openProcess = (
     r: PurchaseRequest,
     action: '승인' | '수정 요청' | '반려',
   ) => {
     setProcess({
-      title: `구매 요청 ${action}`,
-      subtitle: `${r.studentName} · ${r.productName}`,
-      rows: [
-        {
-          label: '수강생',
-          value: `${r.studentName} · ${course} ${cohortLabel}`,
-        },
-        { label: '상품', value: `[${r.type}] ${r.productName}` },
-        {
-          label: '수량·가격',
-          value: `${r.qty}개 · ${r.price.toLocaleString()}M`,
-        },
-        {
-          label: '검증',
-          value: r.limitExceeded
-            ? '타입 한도 초과 — 승인 차단'
-            : '타입 한도 정상',
-        },
-      ],
-      confirmLabel: action,
+      id: r.id,
+      next: NEXT_STATUS[action],
+      spec: {
+        title: `구매 요청 ${action}`,
+        subtitle: `${r.studentName} · ${r.productName}`,
+        rows: [
+          {
+            label: '수강생',
+            value: `${r.studentName} · ${course} ${cohortLabel}`,
+          },
+          { label: '상품', value: `[${r.type}] ${r.productName}` },
+          {
+            label: '수량·가격',
+            value: `${r.qty}개 · ${r.price.toLocaleString()}M`,
+          },
+          {
+            label: '검증',
+            value: r.limitExceeded
+              ? '타입 한도 초과 — 승인 차단'
+              : '타입 한도 정상',
+          },
+        ],
+        confirmLabel: action,
+      },
     })
   }
 
@@ -365,13 +379,26 @@ export default function PurchaseRequestsPage() {
 
       {/* 처리 모달 — 운영 액션 모달 공통 재사용 */}
       <ActionModal
-        spec={process}
+        spec={process?.spec ?? null}
         onClose={() => setProcess(null)}
-        onConfirm={() => {
-          // TODO: 승인(원장 차감)·수정 요청·반려 처리(MileageOrder 상태 전이, P0_16)
-          const label = process?.confirmLabel ?? '처리'
-          setProcess(null)
-          toast.success(`구매 요청 ${label} 처리됨 (mock)`)
+        onConfirm={(memo) => {
+          if (!process) return
+          const label = process.spec.confirmLabel
+          processReq.mutate(
+            { id: process.id, next: process.next, memo },
+            {
+              onSuccess: () => {
+                setProcess(null)
+                toast.success(`구매 요청 ${label} 처리됨`)
+              },
+              onError: () => {
+                setProcess(null)
+                toast.danger(
+                  `구매 요청 ${label} 처리에 실패했어요. 잠시 후 다시 시도해 주세요.`,
+                )
+              },
+            },
+          )
         }}
       />
     </div>

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import IngestionQueuePage from './IngestionQueuePage'
-import { useIngestionQueue } from './api'
+import { useIngestionAction, useIngestionQueue } from './api'
 import type { IngestionOverview } from './types'
 
 vi.mock('./api')
@@ -77,6 +77,10 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useIngestionQueue>)
+  vi.mocked(useIngestionAction).mockReturnValue({
+    mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  } as unknown as ReturnType<typeof useIngestionAction>)
   return render(
     <ToastProvider>
       <MemoryRouter>

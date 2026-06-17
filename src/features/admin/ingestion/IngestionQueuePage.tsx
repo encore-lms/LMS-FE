@@ -17,7 +17,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
-import { useIngestionQueue } from './api'
+import { useIngestionAction, useIngestionQueue } from './api'
 import type { IngestionSession, SessionStatus } from './types'
 
 const STATUS_META: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
@@ -37,6 +37,7 @@ type Sort = 'failed' | 'recent'
 export default function IngestionQueuePage() {
   usePageHeader('인입 격리 큐', 'CSV 대량 인입 실패 행 추적·수정·재시도')
   const { data, isPending, isError, refetch } = useIngestionQueue()
+  const sessionAction = useIngestionAction()
   const toast = useToast()
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -44,6 +45,9 @@ export default function IngestionQueuePage() {
   const [status, setStatus] = useState<StatusFilter>('all')
   const [sort, setSort] = useState<Sort>('failed')
   const [retryTarget, setRetryTarget] = useState<IngestionSession | null>(null)
+  const [discardTarget, setDiscardTarget] = useState<IngestionSession | null>(
+    null,
+  )
 
   const sessions = useMemo(() => data?.sessions ?? [], [data])
   const domains = useMemo(
@@ -98,13 +102,57 @@ export default function IngestionQueuePage() {
         confirmLabel: '재시도',
       }
     : null
-  const handleRetry = () => {
-    // TODO: 세션 재시도 mutation(실패 행만 재인입, P0_20 BE 계약 확정 후) — 매니저 메모는 감사 로그 사유로 전달
-    const domain = retryTarget?.domain ?? ''
-    toast.success(
-      `${domain} 재시도 요청을 보냈습니다 — 결과는 세션 이력에 반영됩니다.`,
+  const handleRetry = (memo: string) => {
+    if (!retryTarget) return
+    const target = retryTarget
+    sessionAction.mutate(
+      { id: target.id, action: 'retry', memo },
+      {
+        onSuccess: () => {
+          setRetryTarget(null)
+          toast.success(
+            `${target.domain} 재시도 요청을 보냈습니다 — 결과는 세션 이력에 반영됩니다.`,
+          )
+        },
+        onError: () => {
+          setRetryTarget(null)
+          toast.danger('세션 재시도에 실패했어요. 잠시 후 다시 시도해 주세요.')
+        },
+      },
     )
-    setRetryTarget(null)
+  }
+
+  // 결정적 폐기 확인 모달 — 운영 액션 모달 공통 골격 재사용.
+  const discardSpec: ActionModalSpec | null = discardTarget
+    ? {
+        title: '세션 결정적 폐기',
+        subtitle:
+          '이 세션의 실패 행을 폐기합니다. 폐기 후에는 복구할 수 없습니다.',
+        rows: [
+          { label: '도메인', value: discardTarget.domain },
+          { label: '대상 세션', value: discardTarget.at },
+          { label: '실패 행', value: `${discardTarget.failedRows}건` },
+          { label: '처리', value: '복구 불가 — 폐기 전 실패 행 다운로드 권장' },
+        ],
+        confirmLabel: '폐기',
+      }
+    : null
+  const handleDiscard = (memo: string) => {
+    if (!discardTarget) return
+    const target = discardTarget
+    sessionAction.mutate(
+      { id: target.id, action: 'discard', memo },
+      {
+        onSuccess: () => {
+          setDiscardTarget(null)
+          toast.success(`${target.domain} 세션을 폐기했습니다.`)
+        },
+        onError: () => {
+          setDiscardTarget(null)
+          toast.danger('세션 폐기에 실패했어요. 잠시 후 다시 시도해 주세요.')
+        },
+      },
+    )
   }
 
   const columns: Column<IngestionSession>[] = [
@@ -199,10 +247,9 @@ export default function IngestionQueuePage() {
             {s.status === 'has_failure' && (
               <button
                 type="button"
-                // TODO: 결정적 폐기(복구 불가, P0_20)
                 onClick={(e) => {
                   e.stopPropagation()
-                  toast.info('폐기는 준비 중입니다.')
+                  setDiscardTarget(s)
                 }}
                 className="text-danger text-[13px] font-semibold hover:underline"
               >
@@ -421,7 +468,12 @@ export default function IngestionQueuePage() {
                       title="결정적 폐기"
                       desc="이 세션의 실패 행을 폐기 — 복구 불가"
                       tone="danger"
-                      onClick={() => toast.info('폐기는 준비 중입니다.')}
+                      onClick={() => {
+                        const s = sessions.find(
+                          (x) => x.id === detail.sessionId,
+                        )
+                        if (s) setDiscardTarget(s)
+                      }}
                     />
                   </div>
                 </div>
@@ -456,7 +508,14 @@ export default function IngestionQueuePage() {
       <ActionModal
         spec={retrySpec}
         onClose={() => setRetryTarget(null)}
-        onConfirm={() => handleRetry()}
+        onConfirm={(memo) => handleRetry(memo)}
+      />
+
+      {/* 결정적 폐기 확인 모달 */}
+      <ActionModal
+        spec={discardSpec}
+        onClose={() => setDiscardTarget(null)}
+        onConfirm={(memo) => handleDiscard(memo)}
       />
     </div>
   )

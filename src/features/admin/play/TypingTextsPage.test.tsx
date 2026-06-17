@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import TypingTextsPage from './TypingTextsPage'
-import { usePlayTypingTexts } from './api'
+import { usePlayTypingTexts, useUpsertPassage } from './api'
 import type { PlayOverview } from './types'
 
 vi.mock('./api')
@@ -72,6 +72,10 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof usePlayTypingTexts>)
+  vi.mocked(useUpsertPassage).mockReturnValue({
+    mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  } as unknown as ReturnType<typeof useUpsertPassage>)
   return render(
     <ToastProvider>
       <MemoryRouter>

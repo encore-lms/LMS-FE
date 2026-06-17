@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import ReputationPage from './ReputationPage'
-import { useReputation } from './api'
+import { useReputation, useReputationPush } from './api'
 import type { ReputationOverview } from './types'
 
 vi.mock('./api')
@@ -65,6 +65,10 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useReputation>)
+  vi.mocked(useReputationPush).mockReturnValue({
+    mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  } as unknown as ReturnType<typeof useReputationPush>)
   return render(
     <ToastProvider>
       <MemoryRouter>

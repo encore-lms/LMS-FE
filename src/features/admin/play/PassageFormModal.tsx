@@ -8,13 +8,23 @@ import type { TypingPassage } from './types'
 const LANGUAGES = ['Python', '한글', '영문']
 const LEVELS = ['쉬움', '보통', '어려움']
 
+/** 폼 입력값 — 추가/수정 시 페이지로 전달해 목록에 반영한다. */
+export interface PassageFormValues {
+  title: string
+  content: string
+  language: string
+  level: string
+  order: number
+  active: boolean
+}
+
 export interface PassageFormModalProps {
   open: boolean
   /** 수정 대상(없으면 신규 추가) */
   passage: TypingPassage | null
   onClose: () => void
-  /** 검증 통과 후 호출 — mode로 추가/수정 분기 */
-  onSubmit: (mode: 'create' | 'edit') => void
+  /** 검증 통과 후 호출 — mode로 추가/수정 분기 + 입력값 전달 */
+  onSubmit: (mode: 'create' | 'edit', values: PassageFormValues) => void
 }
 
 // 제시문 추가·수정 폼 모달 (Figma 1557:11159) — 제시문 폼 모달 기준 6필드.
@@ -52,8 +62,14 @@ export function PassageFormModal({
     if (!content.trim()) next.content = '내용을 입력해주세요'
     setErrors(next)
     if (next.title || next.content) return
-    // TODO: 제시문 생성·수정 mutation(GameContent, P0_15 BE 계약 확정 후)
-    onSubmit(mode)
+    onSubmit(mode, {
+      title: title.trim(),
+      content: content.trim(),
+      language,
+      level,
+      order: Number(order) || 0,
+      active,
+    })
   }
 
   const selectClass =

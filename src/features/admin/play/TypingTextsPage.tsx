@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { usePlayTypingTexts } from './api'
+import { usePlayTypingTexts, useUpsertPassage } from './api'
 import { PassageFormModal } from './PassageFormModal'
 import { downloadTypingSampleCsv } from './sampleCsv'
 import type { PassageStatus, TypingPassage, UploadValidationRow } from './types'
@@ -42,6 +42,7 @@ export default function TypingTextsPage() {
     '과정별 PLAY 제시문 등록 · 노출 상태 · 업로드 오류 관리',
   )
   const { data, isPending, isError, refetch } = usePlayTypingTexts()
+  const upsert = useUpsertPassage()
   const toast = useToast()
   const navigate = useNavigate()
   const [language, setLanguage] = useState('all')
@@ -421,13 +422,33 @@ export default function TypingTextsPage() {
         open={formOpen}
         passage={formPassage}
         onClose={() => setFormOpen(false)}
-        onSubmit={(mode) => {
-          toast.success(
-            mode === 'edit'
-              ? '제시문을 수정했습니다.'
-              : '제시문을 추가했습니다.',
-          )
-          setFormOpen(false)
+        onSubmit={(mode, values) => {
+          const status: PassageStatus = values.active ? 'active' : 'inactive'
+          const next: TypingPassage = {
+            id: formPassage?.id ?? crypto.randomUUID(),
+            title: values.title,
+            previewNote: values.content
+              ? values.content.replace(/\s+/g, ' ').slice(0, 80)
+              : (formPassage?.previewNote ?? ''),
+            language: values.language,
+            level: values.level,
+            order: values.order,
+            status,
+          }
+          upsert.mutate(next, {
+            onSuccess: () => {
+              toast.success(
+                mode === 'edit'
+                  ? '제시문을 수정했습니다.'
+                  : '제시문을 추가했습니다.',
+              )
+              setFormOpen(false)
+            },
+            onError: () =>
+              toast.danger(
+                '제시문 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+              ),
+          })
         }}
       />
     </div>

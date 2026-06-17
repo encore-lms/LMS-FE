@@ -538,15 +538,23 @@ function AddTaskModal({
 
 /* ── 캘린더 ── */
 function CalendarTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
+  const [events, setEvents] = useState(d.calEvents)
+  const [upcoming, setUpcoming] = useState(d.upcoming)
+  const [adding, setAdding] = useState(false)
   const offset = (new Date('2026-05-01').getDay() + 6) % 7
   const cells: (number | null)[] = [
     ...Array.from({ length: offset }, () => null),
     ...Array.from({ length: 31 }, (_, i) => i + 1),
   ]
-  const eventOf = (day: number) => d.calEvents.find((e) => e.day === day)
+  const eventOf = (day: number) => events.find((e) => e.day === day)
   return (
     <div className="flex flex-col gap-4">
-      <SectionHead title={d.calMonth} action="일정 추가" />
+      <SectionHead
+        title={d.calMonth}
+        action="일정 추가"
+        onAction={() => setAdding(true)}
+      />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex-1')}>
           <div className="text-fg-subtle grid grid-cols-7 gap-1 pb-2 text-center text-[11px] font-semibold">
@@ -574,7 +582,7 @@ function CalendarTab({ d }: { d: WorkspaceData }) {
         </section>
         <section className={cn(card, 'flex flex-col gap-3 lg:w-[280px]')}>
           <span className="text-fg text-[14px] font-bold">다가오는 일정</span>
-          {d.upcoming.map((u, i) => (
+          {upcoming.map((u, i) => (
             <div key={i} className="flex flex-col items-start gap-1">
               <span className="text-fg-subtle text-[11px]">{u.date}</span>
               <span className="text-fg text-[13px] font-semibold">
@@ -585,7 +593,104 @@ function CalendarTab({ d }: { d: WorkspaceData }) {
           ))}
         </section>
       </div>
+      {adding && (
+        <AddScheduleModal
+          onClose={() => setAdding(false)}
+          onAdd={(item) => {
+            setEvents((prev) => [...prev, item])
+            setUpcoming((prev) => [
+              ...prev,
+              { date: `5/${item.day}`, label: item.label, tone: item.tone },
+            ])
+            setAdding(false)
+            toast.success('일정을 추가했습니다')
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function AddScheduleModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void
+  onAdd: (item: { day: number; label: string; tone: Tone }) => void
+}) {
+  const [day, setDay] = useState('28')
+  const [label, setLabel] = useState('')
+  const [tone, setTone] = useState<Tone>('brand')
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const submit = () => {
+    const parsedDay = Number(day)
+    if (!label.trim() || parsedDay < 1 || parsedDay > 31) return
+    onAdd({ day: parsedDay, label: label.trim(), tone })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="일정 추가"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!label.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            추가
+          </button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">일자</span>
+          <input
+            type="number"
+            min={1}
+            max={31}
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 sm:col-span-2">
+          <span className="text-fg text-[12px] font-bold">일정명</span>
+          <input
+            autoFocus
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="일정명"
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 sm:col-span-3">
+          <span className="text-fg text-[12px] font-bold">유형</span>
+          <select
+            value={tone}
+            onChange={(e) => setTone(e.target.value as Tone)}
+            className={field}
+          >
+            <option value="brand">작업</option>
+            <option value="info">회의</option>
+            <option value="warning">발표</option>
+            <option value="accent">인증</option>
+          </select>
+        </label>
+      </div>
+    </Modal>
   )
 }
 

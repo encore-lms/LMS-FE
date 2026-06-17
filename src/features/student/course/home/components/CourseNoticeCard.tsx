@@ -12,16 +12,11 @@ const TAG: Record<NoticeTone, string> = {
 export function CourseNoticeCard({ notices }: { notices: CourseNotice[] }) {
   return (
     <section className="border-border bg-surface flex w-full flex-col gap-3.5 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-fg text-[15px] font-bold">공지</h2>
-          <p className="text-fg-muted text-[11px]">
-            {notices.length}건 · 최근 7일
-          </p>
-        </div>
-        <button type="button" className="text-brand text-[12px] font-semibold">
-          기수 게시판 →
-        </button>
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-fg text-[15px] font-bold">공지</h2>
+        <p className="text-fg-muted text-[11px]">
+          {notices.length}건 · 최근 7일
+        </p>
       </div>
       {notices.map((n, i) => (
         <Fragment key={n.id}>

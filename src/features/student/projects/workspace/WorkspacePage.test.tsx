@@ -2,13 +2,14 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ToastProvider } from '@/components/ui/Toast'
 import { useProjectWorkspace } from '../../api/projects'
 import { mockWorkspace } from '../mocks'
 import WorkspacePage from './WorkspacePage'
 
 vi.mock('../../api/projects')
 
-function renderPage() {
+function renderPage(initialEntry = '/student/projects/p1') {
   vi.mocked(useProjectWorkspace).mockReturnValue({
     data: mockWorkspace,
     isPending: false,
@@ -17,14 +18,16 @@ function renderPage() {
   } as unknown as ReturnType<typeof useProjectWorkspace>)
 
   render(
-    <MemoryRouter initialEntries={['/student/projects/p1']}>
-      <Routes>
-        <Route
-          path="/student/projects/:projectId"
-          element={<WorkspacePage />}
-        />
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route
+            path="/student/projects/:projectId"
+            element={<WorkspacePage />}
+          />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 
@@ -57,5 +60,22 @@ describe('WorkspacePage home', () => {
     await user.click(checkbox)
 
     expect(checkbox).toHaveTextContent('✓')
+  })
+
+  it('보드 작업 추가 모달로 새 작업을 목록에 추가한다', async () => {
+    const user = userEvent.setup()
+    renderPage('/student/projects/p1?tab=board')
+
+    await user.click(screen.getByRole('button', { name: '작업 추가' }))
+    await user.type(
+      screen.getByPlaceholderText('작업 제목'),
+      '결제 웹훅 재처리',
+    )
+    await user.type(screen.getByPlaceholderText('이름'), '김수강')
+    await user.type(screen.getByPlaceholderText('D-3'), 'D-7')
+    await user.click(screen.getByRole('button', { name: '추가' }))
+
+    expect(screen.getByText('결제 웹훅 재처리')).toBeInTheDocument()
+    expect(await screen.findByText('작업을 추가했습니다')).toBeInTheDocument()
   })
 })

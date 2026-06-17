@@ -3,6 +3,8 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
 import { useProjectWorkspace } from '../../api/projects'
 import type {
   Badge,
@@ -340,6 +342,7 @@ function HomeTab({
 
 /* ── 보드 ── */
 function BoardTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
   const [columns, setColumns] = useState(d.columns)
   const [addCol, setAddCol] = useState<number | null>(null)
   const drag = useRef<{ col: number; task: number } | null>(null)
@@ -354,6 +357,7 @@ function BoardTab({ d }: { d: WorkspaceData }) {
       if (moved) next[toCol].tasks.push(moved)
       return next
     })
+    toast.info('작업 상태를 변경했습니다')
   }
   const addTask = (colIdx: number, task: WsTask) =>
     setColumns((cols) =>
@@ -420,6 +424,7 @@ function BoardTab({ d }: { d: WorkspaceData }) {
           onAdd={(colIdx, task) => {
             addTask(colIdx, task)
             setAddCol(null)
+            toast.success('작업을 추가했습니다')
           }}
         />
       )}
@@ -457,15 +462,31 @@ function AddTaskModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
+    <Modal
+      open
+      onClose={onClose}
+      title="작업 추가"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!title.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            추가
+          </button>
+        </>
+      }
     >
-      <div
-        className="flex w-[420px] flex-col gap-4 rounded-2xl bg-white p-6 shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-fg text-[16px] font-bold">작업 추가</h3>
+      <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">컬럼</span>
           <select
@@ -510,25 +531,8 @@ function AddTaskModal({
             />
           </label>
         </div>
-        <div className="flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!title.trim()}
-            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
-          >
-            추가
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 

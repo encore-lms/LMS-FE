@@ -1,44 +1,14 @@
 import { type ReactNode } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { cn } from '@/shared/lib/cn'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
 // 새 멘토링 요청 폼.
 // - disabled(진행 중 요청 1건 / 멘토 미배정): 읽기 전용 placeholder 표시.
-// - 활성: 실제 입력 폼(RHF + Zod). 제출하면 onSubmit 으로 값 전달 → 부모가 요청 생성 + 토스트.
-
-// 희망 일정 선택지 (FE 목 — 실제로는 BE/달력 연동).
-// 현재 달의 1일~말일을 모두 노출한다 (6월=30일, 7월=31일 ...).
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-function buildDateOptions(): string[] {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth() // 0-indexed
-  const lastDay = new Date(year, month + 1, 0).getDate() // 이번 달 말일
-  const mm = String(month + 1).padStart(2, '0')
-  return Array.from({ length: lastDay }, (_, i) => {
-    const day = i + 1
-    const dd = String(day).padStart(2, '0')
-    const wd = WEEKDAYS[new Date(year, month, day).getDay()]
-    return `${year}-${mm}-${dd}(${wd})`
-  })
-}
-const DATE_OPTIONS = buildDateOptions()
-const TIME_OPTIONS = [
-  '09:00',
-  '10:00',
-  '11:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-  '17:00',
-  '18:00',
-  '19:00',
-  '20:00',
-  '21:00',
-]
+// - 활성: 실제 입력 폼(RHF + Zod). 희망 일정은 공용 DateTimePicker(날짜 1 + 시작/종료 시각 2)로 입력.
+//   제출하면 onSubmit 으로 값 전달 → 부모가 요청 생성 + 토스트.
 
 const schema = z
   .object({
@@ -159,6 +129,7 @@ function EditableForm({
 }) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<NewRequestValues>({
@@ -197,47 +168,48 @@ function EditableForm({
           }
         >
           <div className="flex flex-col gap-2">
-            {/* 날짜는 전용 줄(풀 width)로 빼 긴 날짜 문자열이 잘리지 않게 한다 */}
-            <select {...register('date')} defaultValue="" className={fieldCls}>
-              <option value="" disabled>
-                날짜 선택
-              </option>
-              {DATE_OPTIONS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
+            {/* 날짜는 전용 줄(달력), 시작·종료 시각은 한 줄에 나란히 — 공용 DateTimePicker */}
+            <Controller
+              control={control}
+              name="date"
+              render={({ field }) => (
+                <DateTimePicker
+                  mode="date"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="날짜 선택"
+                  ariaLabel="희망 날짜"
+                />
+              )}
+            />
             <div className="flex items-center gap-2">
-              <select
-                {...register('startTime')}
-                defaultValue=""
-                className={fieldCls}
-              >
-                <option value="" disabled>
-                  시작 시각
-                </option>
-                {TIME_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="startTime"
+                render={({ field }) => (
+                  <DateTimePicker
+                    mode="time"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="시작 시각"
+                    ariaLabel="시작 시각"
+                  />
+                )}
+              />
               <span className="text-fg-subtle text-[13px]">~</span>
-              <select
-                {...register('endTime')}
-                defaultValue=""
-                className={fieldCls}
-              >
-                <option value="" disabled>
-                  종료 시각
-                </option>
-                {TIME_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="endTime"
+                render={({ field }) => (
+                  <DateTimePicker
+                    mode="time"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="종료 시각"
+                    ariaLabel="종료 시각"
+                  />
+                )}
+              />
             </div>
           </div>
         </FormField>

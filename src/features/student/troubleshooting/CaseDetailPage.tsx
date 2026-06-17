@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useTsCase } from '../api/troubleshooting'
-import { TsToast } from './components/TsToast'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
 import type { TsCaseDetail, Tone } from './types'
 
 // 트러블슈팅 사례 상세 (/student/troubleshooting/:id) + 인증 요청 모달(?modal=certify) — Figma 3283:5853·3283:5949.
@@ -26,7 +27,7 @@ export default function CaseDetailPage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useTsCase(id)
   const [open, setOpen] = useState(params.get('modal') === 'certify')
-  const [toast, setToast] = useState<string | null>(null)
+  const toast = useToast()
   usePageHeader(
     '트러블슈팅 사례 상세',
     '작성한 사례를 확인하고 발표 연결과 인증 요청을 상세 단계에서 진행해요.',
@@ -57,10 +58,10 @@ export default function CaseDetailPage() {
     navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
   // 발표 연결: 전용 화면이 Figma에 없어(상세 내 stat만 존재) 안내 토스트로 처리.
   const notifyPresentation = () =>
-    setToast('발표 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
+    toast.info('발표 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
   const onCertifyRequested = () => {
     closeModal()
-    setToast('인증 요청이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
+    toast.success('인증 요청이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
   }
 
   const stats = [
@@ -286,7 +287,6 @@ export default function CaseDetailPage() {
           onConfirm={onCertifyRequested}
         />
       )}
-      {toast && <TsToast message={toast} onClose={() => setToast(null)} />}
     </div>
   )
 }
@@ -307,22 +307,35 @@ function CertifyModal({
   const toggle = (i: number) =>
     setChecked((p) => p.map((v, j) => (j === i ? !v : v)))
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
+    <Modal
+      open
+      onClose={onClose}
+      size="md"
+      title="인증 요청"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={!allChecked}
+            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            인증 요청
+          </button>
+        </>
+      }
     >
-      <div
-        className="bg-surface flex w-[440px] max-w-full flex-col gap-4 rounded-2xl p-6 shadow-[0px_20px_48px_0px_rgba(18,23,38,0.24)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col gap-1">
-          <h2 className="text-fg text-[18px] font-bold">인증 요청</h2>
-          <span className="text-fg-muted text-[12px]">
-            발표 연결과 체크리스트를 확인하고 강사 검토 큐로 제출합니다.
-          </span>
-        </div>
+      <div className="flex flex-col gap-4">
+        <p className="text-fg-muted -mt-1 text-[12px]">
+          발표 연결과 체크리스트를 확인하고 강사 검토 큐로 제출합니다.
+        </p>
         <Field label="발표 연결" value={data.certPresentation} />
         <Field label="교과목/검토자" value={data.certReviewer} />
         <div className="flex flex-col gap-2">
@@ -352,25 +365,8 @@ function CertifyModal({
           제출 후 상태가 submitted가 되며, 인증 완료 전까지 보완 요청을 받을 수
           있습니다.
         </div>
-        <div className="mt-1 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={!allChecked}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            인증 요청
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 

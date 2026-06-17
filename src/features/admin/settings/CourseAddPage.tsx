@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -193,26 +194,25 @@ export default function CourseAddPage() {
               className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
             />
           </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-fg text-xs font-bold">조회기간 시작</span>
-            <input
-              type="date"
-              value={form.from}
-              onChange={(e) => setForm((f) => ({ ...f, from: e.target.value }))}
-              aria-label="조회기간 시작"
-              className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-fg text-xs font-bold">조회기간 종료</span>
-            <input
-              type="date"
-              value={form.to}
-              onChange={(e) => setForm((f) => ({ ...f, to: e.target.value }))}
-              aria-label="조회기간 종료"
-              className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
-            />
-          </label>
+          {/* 공통 DateTimePicker(date 모드) — 조회기간 범위. 시작≤종료 자동 제약. */}
+          <DateTimePicker
+            mode="date"
+            label="조회기간 시작"
+            value={form.from}
+            onChange={(v) => setForm((f) => ({ ...f, from: v }))}
+            ariaLabel="조회기간 시작"
+            max={form.to || undefined}
+            placeholder="시작일"
+          />
+          <DateTimePicker
+            mode="date"
+            label="조회기간 종료"
+            value={form.to}
+            onChange={(v) => setForm((f) => ({ ...f, to: v }))}
+            ariaLabel="조회기간 종료"
+            min={form.from || undefined}
+            placeholder="종료일"
+          />
           <div className="flex gap-2">
             <button
               type="button"

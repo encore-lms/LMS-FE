@@ -1,15 +1,13 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
-  Calendar,
-  Clock,
   Image as ImageIcon,
   Plus,
   Upload,
   X,
 } from 'lucide-react'
-import { cn } from '@/shared/lib/cn'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { usePageHeader } from '@/shared/store'
 import type { StudyFormData } from '../types'
 import {
@@ -21,35 +19,6 @@ import {
   TextInput,
 } from './FormParts'
 import { useFileUpload } from './useFileUpload'
-
-// 날짜 객관식 — 이번 달 1일~말일.
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-function buildDateOptions(): string[] {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth()
-  const last = new Date(year, month + 1, 0).getDate()
-  const mm = String(month + 1).padStart(2, '0')
-  return Array.from({ length: last }, (_, i) => {
-    const d = i + 1
-    const dd = String(d).padStart(2, '0')
-    return `${year}-${mm}-${dd}(${WEEKDAYS[new Date(year, month, d).getDay()]})`
-  })
-}
-const TIME_OPTIONS = [
-  '09:00',
-  '10:00',
-  '11:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-  '17:00',
-  '18:00',
-  '19:00',
-  '20:00',
-  '21:00',
-]
 
 const COPY = {
   create: {
@@ -89,11 +58,6 @@ export function StudyForm({
   const { files, add, remove } = useFileUpload(initial?.files ?? [])
   const [touched, setTouched] = useState(false)
   usePageHeader(c.title, c.sub)
-
-  // 프리필 날짜가 옵션(이번 달)에 없으면 맨 앞에 끼워 항상 보이게 한다.
-  const baseDates = buildDateOptions()
-  const dateOptions =
-    date && !baseDates.includes(date) ? [date, ...baseDates] : baseDates
 
   const timeError = !!startTime && !!endTime && endTime <= startTime
   const valid = !!(
@@ -154,26 +118,26 @@ export function StudyForm({
           일정
         </FieldLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <SelectField
-            icon={<Calendar className="size-4" />}
+          <DateTimePicker
+            mode="date"
             value={date}
             onChange={setDate}
             placeholder="날짜 선택"
-            options={dateOptions}
+            ariaLabel="스터디 날짜"
           />
-          <SelectField
-            icon={<Clock className="size-4" />}
+          <DateTimePicker
+            mode="time"
             value={startTime}
             onChange={setStartTime}
             placeholder="시작 시각"
-            options={TIME_OPTIONS}
+            ariaLabel="시작 시각"
           />
-          <SelectField
-            icon={<Clock className="size-4" />}
+          <DateTimePicker
+            mode="time"
             value={endTime}
             onChange={setEndTime}
             placeholder="종료 시각"
-            options={TIME_OPTIONS}
+            ariaLabel="종료 시각"
           />
         </div>
         {touched && timeError && (
@@ -280,46 +244,6 @@ export function StudyForm({
         disabled={!valid}
         footer={c.footer}
       />
-    </div>
-  )
-}
-
-// 아이콘 + 네이티브 select (객관식)
-function SelectField({
-  icon,
-  value,
-  onChange,
-  placeholder,
-  options,
-}: {
-  icon: ReactNode
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
-  options: string[]
-}) {
-  return (
-    <div className="relative">
-      <span className="text-fg-subtle pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2">
-        {icon}
-      </span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(
-          'border-border bg-surface focus:border-brand w-full rounded-[10px] border py-3 pr-4 pl-10 text-[14px] focus:outline-none',
-          value ? 'text-fg' : 'text-fg-subtle',
-        )}
-      >
-        <option value="" disabled>
-          {placeholder}
-        </option>
-        {options.map((o) => (
-          <option key={o} value={o} className="text-fg">
-            {o}
-          </option>
-        ))}
-      </select>
     </div>
   )
 }

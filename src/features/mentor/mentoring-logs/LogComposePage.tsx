@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { Avatar } from '@/components/ui/Avatar'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -465,34 +466,43 @@ function LogComposeForm({
           <div className="flex flex-col gap-1">
             <span className={FIELD_LABEL}>진행 일시 *</span>
             <div className="flex flex-wrap items-center gap-2">
-              <label className="sr-only" htmlFor="log-date">
-                진행 일자
-              </label>
-              <input
-                id="log-date"
-                type="date"
-                {...register('sessionDate')}
-                className={cn(INPUT_BOX, 'flex-1 basis-40')}
-              />
-              <label className="sr-only" htmlFor="log-start">
-                시작 시각
-              </label>
-              <input
-                id="log-start"
-                type="time"
-                {...register('startTime')}
-                className={cn(INPUT_BOX, 'w-[120px]')}
-              />
+              {/* 공통 DateTimePicker — 날짜(달력) + 시작·종료 시각(분 단위 정밀: minuteStep=1) */}
+              <div className="w-[136px]">
+                <DateTimePicker
+                  mode="date"
+                  value={sessionDate ?? ''}
+                  onChange={(v) =>
+                    setValue('sessionDate', v, { shouldValidate: true })
+                  }
+                  ariaLabel="진행 일자"
+                  placeholder="날짜 선택"
+                />
+              </div>
+              <div className="w-[150px]">
+                <DateTimePicker
+                  mode="time"
+                  minuteStep={1}
+                  value={startTime ?? ''}
+                  onChange={(v) =>
+                    setValue('startTime', v, { shouldValidate: true })
+                  }
+                  ariaLabel="시작 시각"
+                  placeholder="시작"
+                />
+              </div>
               <ArrowRight className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
-              <label className="sr-only" htmlFor="log-end">
-                종료 시각
-              </label>
-              <input
-                id="log-end"
-                type="time"
-                {...register('endTime')}
-                className={cn(INPUT_BOX, 'w-[120px]')}
-              />
+              <div className="w-[150px]">
+                <DateTimePicker
+                  mode="time"
+                  minuteStep={1}
+                  value={endTime ?? ''}
+                  onChange={(v) =>
+                    setValue('endTime', v, { shouldValidate: true })
+                  }
+                  ariaLabel="종료 시각"
+                  placeholder="종료"
+                />
+              </div>
             </div>
             <span className={HELPER}>
               시작·종료 시각을 분 단위까지 입력 · 합계 자동 산정

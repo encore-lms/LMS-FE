@@ -194,7 +194,8 @@ describe('AssignmentFormPage', () => {
     expect(
       screen.getByDisplayValue('JPA 연관관계 매핑 실습'),
     ).toBeInTheDocument()
-    expect(screen.getByDisplayValue('2026-05-24 23:59')).toBeInTheDocument()
+    // 마감일시는 공용 DateTimePicker — 트리거에 표시값(오전/오후 12시간제)이 렌더된다
+    expect(screen.getByText('2026-05-24 오후 11:59')).toBeInTheDocument()
     expect(screen.getByText('jpa-mapping-guide.pdf')).toBeInTheDocument()
     expect(screen.getByText('생성 정책')).toBeInTheDocument()
   })

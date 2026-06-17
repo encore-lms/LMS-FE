@@ -1,5 +1,9 @@
 import { http, HttpResponse } from 'msw'
-import type { StudentDashboardSummary, DashboardAttendanceDay } from './types'
+import type {
+  StudentDashboardSummary,
+  DashboardAttendanceDay,
+  DashboardNotification,
+} from './types'
 
 // 대시보드 mock — 기능 로컬. mocks/handlers.ts에서 import 후 spread로 등록(공유 최소 터치).
 // 데이터는 Figma 시안(140:5)을 재현.
@@ -337,5 +341,9 @@ const mockDashboard: StudentDashboardSummary = {
 export const handlers = [
   http.get('/api/student/dashboard', () =>
     ok<StudentDashboardSummary>(mockDashboard),
+  ),
+  // 헤더 알림 벨 — 대시보드 알림과 동일 데이터(경량 엔드포인트로 분리해 헤더가 전체 요약을 패치하지 않게).
+  http.get('/api/student/notifications', () =>
+    ok<DashboardNotification[]>(mockDashboard.notifications),
   ),
 ]

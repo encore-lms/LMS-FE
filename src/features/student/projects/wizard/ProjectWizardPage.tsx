@@ -7,6 +7,7 @@ import { Search, Send, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateProject, useProjectWizard } from '../../api/projects'
 import {
@@ -273,8 +274,12 @@ export default function ProjectWizardPage() {
           days={days}
           nameInput={register('name')}
           descInput={register('desc')}
-          startInput={register('start')}
-          endInput={register('end')}
+          onStartChange={(v) =>
+            setValue('start', v, { shouldDirty: true, shouldValidate: true })
+          }
+          onEndChange={(v) =>
+            setValue('end', v, { shouldDirty: true, shouldValidate: true })
+          }
           invalid={{
             name: Boolean(errors.name),
             desc: Boolean(errors.desc),
@@ -341,8 +346,8 @@ function Step1(p: {
   days: number
   nameInput: UseFormRegisterReturn
   descInput: UseFormRegisterReturn
-  startInput: UseFormRegisterReturn
-  endInput: UseFormRegisterReturn
+  onStartChange: (v: string) => void
+  onEndChange: (v: string) => void
   invalid: Record<'name' | 'desc' | 'start' | 'end', boolean>
 }) {
   const input =
@@ -379,22 +384,30 @@ function Step1(p: {
       </Field>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="시작일" required>
-          <input
-            type="date"
-            className={input}
-            aria-invalid={p.invalid.start}
-            {...p.startInput}
+          <DateTimePicker
+            mode="date"
+            value={p.start}
+            onChange={p.onStartChange}
+            error={
+              p.invalid.start ? '교육 기간 내 날짜를 선택하세요' : undefined
+            }
+            ariaLabel="시작일"
+            placeholder="시작일"
+            max={p.end || undefined}
           />
           <span className="text-fg-subtle text-[11px]">
             교육 기간 내에서 정합니다
           </span>
         </Field>
         <Field label="종료일" required>
-          <input
-            type="date"
-            className={input}
-            aria-invalid={p.invalid.end}
-            {...p.endInput}
+          <DateTimePicker
+            mode="date"
+            value={p.end}
+            onChange={p.onEndChange}
+            error={p.invalid.end ? '시작일로부터 7일 이상 뒤로' : undefined}
+            ariaLabel="종료일"
+            placeholder="종료일"
+            min={p.start || undefined}
           />
           <span className="text-fg-subtle text-[11px]">
             시작일로부터 최소 7일 이상

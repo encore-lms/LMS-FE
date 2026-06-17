@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
+import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/shared/lib/cn'
 
 // 확장자 → 파일 형식 배지(라벨·색)
@@ -32,7 +33,7 @@ interface ShareFile {
   size: string
 }
 
-// 자료 공유 모달 — 학생 공유 자료 등록. 파일 업로드/링크 공유 탭 + 메타 입력 + 공유하기.
+// 자료 공유 모달 — 공용 Modal 사용. 파일 업로드/링크 공유 탭 + 메타 입력 + 공유하기.
 export function ShareMaterialModal({
   open,
   onClose,
@@ -71,36 +72,35 @@ export function ShareMaterialModal({
   const removeFile = (id: string) =>
     setFiles((prev) => prev.filter((f) => f.id !== id))
 
-  if (!open) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-    >
-      <div
-        className="bg-surface flex max-h-[90vh] w-[560px] max-w-full flex-col gap-4 overflow-y-auto rounded-2xl p-6 shadow-[0px_20px_48px_0px_rgba(18,23,38,0.24)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* 헤더 */}
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-fg text-[20px] font-bold">자료 공유</h2>
-            <p className="text-fg-muted text-[13px]">
-              학습 정리 자료나 참고 링크를 같은 기수 수강생에게 공유합니다.
-            </p>
-          </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      title="자료 공유"
+      footer={
+        <>
           <button
             type="button"
             onClick={onClose}
-            aria-label="닫기"
-            className="border-border text-fg-muted flex size-8 shrink-0 items-center justify-center rounded-lg border"
+            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
           >
-            ✕
+            취소
           </button>
-        </div>
+          <button
+            type="button"
+            onClick={onShared}
+            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+          >
+            공유하기
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <p className="text-fg-muted -mt-1 text-[13px]">
+          학습 정리 자료나 참고 링크를 같은 기수 수강생에게 공유합니다.
+        </p>
 
         {/* 안내 배너 */}
         <div className="bg-info-bg flex gap-2 rounded-[10px] p-3.5">
@@ -256,26 +256,8 @@ export function ShareMaterialModal({
             />
           </Field>
         )}
-
-        {/* 푸터 */}
-        <div className="mt-1 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={onShared}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
-          >
-            공유하기
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 

@@ -1,4 +1,6 @@
-// 멘토링 요청 취소 확인 모달 — Figma 3083:6106.
+import { Modal } from '@/components/ui/Modal'
+
+// 멘토링 요청 취소 확인 모달 — Figma 3083:6106. 공용 Modal 사용(portal·ESC·배경클릭·스크롤락).
 // 본문 + "취소 가능 조건" 안내 박스 + 돌아가기/요청 취소.
 export function CancelRequestModal({
   open,
@@ -9,18 +11,31 @@ export function CancelRequestModal({
   onClose: () => void
   onConfirm: () => void
 }) {
-  if (!open) return null
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="md"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+          >
+            돌아가기
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+          >
+            요청 취소
+          </button>
+        </>
+      }
     >
-      <div
-        className="bg-surface flex w-[460px] max-w-full flex-col gap-4 rounded-2xl p-6 shadow-[0px_20px_48px_0px_rgba(18,23,38,0.24)]"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3">
           <span className="bg-warning-bg text-warning flex size-9 shrink-0 items-center justify-center rounded-full text-[16px] font-bold">
             !
@@ -46,24 +61,7 @@ export function CancelRequestModal({
             멘토만 가능
           </span>
         </div>
-
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-          >
-            돌아가기
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
-          >
-            요청 취소
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   )
 }

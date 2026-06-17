@@ -38,7 +38,19 @@ export function ProjectCard({
   const StatusIcon = st.Icon
 
   return (
-    <section className="border-border bg-surface relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6">
+    <section
+      role="button"
+      tabIndex={0}
+      aria-label={`${project.title} 상세 보기`}
+      onClick={() => onOpen(project)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen(project)
+        }
+      }}
+      className="border-border bg-surface focus-visible:ring-brand/40 hover:border-brand/40 relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+    >
       <span
         className={cn(
           'absolute top-0 left-0 h-full w-1',
@@ -72,7 +84,10 @@ export function ProjectCard({
         </div>
         <button
           type="button"
-          onClick={() => onOpen(project)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpen(project)
+          }}
           className={cn(
             'shrink-0 rounded-lg px-4 py-2.5 text-[12px] font-bold',
             project.status === 'reviewing'

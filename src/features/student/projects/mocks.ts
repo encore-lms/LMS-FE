@@ -582,8 +582,534 @@ export const mockWorkspace: WorkspaceData = {
   },
 }
 
+// 실시간 채팅 서버(p2) — 검토 중 팀 프로젝트. 식별·인물 관련 필드만 재정의하고
+// 캘린더·역할 정책 등 일반 구조는 p1에서 재사용.
+export const mockWorkspaceP2: WorkspaceData = {
+  ...mockWorkspace,
+  id: 'p2',
+  title: '실시간 채팅 서버',
+  meta: '팀 프로젝트 · 3명 · 2026-03-20 ~ 2026-04-25 · PM 예칼',
+  banner:
+    '인증 검토 중이에요 · 담당 강사가 산출물과 발표 내용을 확인하고 있어요 (D+9 감사 검토 대기)',
+  stats: [
+    {
+      label: '전체 진행률',
+      value: '100',
+      unit: '%',
+      sub: '42 / 42 작업 완료',
+      tone: 'brand',
+    },
+    {
+      label: '내 작업',
+      value: '0',
+      unit: '건',
+      sub: '모두 완료',
+      tone: 'info',
+    },
+    {
+      label: '열린 이슈',
+      value: '1',
+      unit: '건',
+      sub: 'P2 1',
+      tone: 'warning',
+    },
+    {
+      label: '인증까지',
+      value: '검토 중',
+      unit: '',
+      sub: 'D+9 감사 검토',
+      tone: 'accent',
+    },
+  ],
+  myTasks: [
+    {
+      title: 'WebSocket 세션 sticky 검증',
+      assignee: '나',
+      due: '완료',
+      tags: [
+        { label: '백엔드', tone: 'info' },
+        { label: '완료', tone: 'success' },
+      ],
+    },
+    {
+      title: '부하 테스트 리포트 정리',
+      assignee: '나',
+      due: '완료',
+      tags: [
+        { label: '테스트', tone: 'accent' },
+        { label: '완료', tone: 'success' },
+      ],
+    },
+  ],
+  activities: [
+    { who: '예칼', action: '인증 요청을 제출했습니다', when: '2일 전' },
+    {
+      who: '정해린',
+      action: 'Redis Pub/Sub 채번 적용을 완료했습니다',
+      when: '5일 전',
+    },
+    {
+      who: '오세훈',
+      action: 'Nginx 무중단 배포 설정을 머지했습니다',
+      when: '6일 전',
+    },
+  ],
+  columns: [
+    { key: 'todo', label: '할 일', tasks: [] },
+    { key: 'doing', label: '진행 중', tasks: [] },
+    {
+      key: 'review',
+      label: '검토 대기',
+      tasks: [
+        {
+          title: '인증 발표 자료 보완',
+          assignee: '예칼',
+          due: 'D-2',
+          tags: [
+            { label: '문서', tone: 'accent' },
+            { label: '보통', tone: 'warning' },
+          ],
+        },
+      ],
+    },
+  ],
+  meetings: [
+    {
+      title: '인증 발표 리허설',
+      meta: '2026-04-23 · 참석 3명',
+      summary: '발표 시나리오 점검',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      title: '부하 테스트 결과 공유',
+      meta: '2026-04-20 · 참석 3명',
+      summary: '동시 5천명 안정 운영 확인',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      title: '스프린트 최종 회고',
+      meta: '2026-04-18 · 참석 3명',
+      summary: '액션 아이템 2건',
+      status: { label: '완료', tone: 'success' },
+    },
+  ],
+  docs: [
+    {
+      title: '채팅 프로토콜 명세',
+      meta: 'PDF · 0.8MB',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      title: '부하 테스트 결과',
+      meta: 'CSV · 180KB',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      title: '배포 아키텍처 (Nginx)',
+      meta: 'Wiki · 3일 전',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      title: '인증 발표 자료',
+      meta: 'PPTX · 6.1MB',
+      status: { label: '검토', tone: 'accent' },
+    },
+  ],
+  issues: [
+    {
+      title: '재접속 시 중복 메시지 수신',
+      meta: '버그 · 담당 정해린',
+      priority: { label: 'P2', tone: 'info' },
+      status: { label: '열림', tone: 'info' },
+    },
+  ],
+  members: [
+    {
+      name: '예칼',
+      role: 'PM · 백엔드',
+      kind: 'PM',
+      contrib: 45,
+      avatarTone: 'accent',
+    },
+    {
+      name: '정해린',
+      role: 'WebSocket · Redis',
+      kind: '팀원',
+      contrib: 30,
+      avatarTone: 'info',
+    },
+    {
+      name: '오세훈',
+      role: '인프라 · Nginx',
+      kind: '팀원',
+      contrib: 25,
+      avatarTone: 'warning',
+    },
+  ],
+  metrics: [
+    {
+      label: '동시 접속자',
+      before: '500',
+      after: '5,000',
+      delta: '+900%',
+      good: true,
+    },
+    {
+      label: '장애 복구 시간',
+      before: '32s',
+      after: '8s',
+      delta: '-75%',
+      good: true,
+    },
+    {
+      label: '메시지 지연(P95)',
+      before: '180ms',
+      after: '60ms',
+      delta: '-67%',
+      good: true,
+    },
+  ],
+  stack: ['Spring Boot', 'WebSocket', 'Redis', 'Nginx', 'JUnit5', 'Docker'],
+  peerDue: '마감 종료',
+  peerMyStatus: { label: '내 상태: 제출 완료', tone: 'success' },
+  peerTeamStatus: { label: '팀 제출 3/3', tone: 'success' },
+  peerTargets: [
+    {
+      name: '예칼',
+      role: 'PM',
+      axes: [
+        { key: '협업', score: 4.5 },
+        { key: '소통', score: 4.5 },
+        { key: '책임감', score: 5.0 },
+        { key: '문제해결', score: 4.5 },
+        { key: '기술 기여', score: 4.5 },
+      ],
+      tags: [
+        { label: '리더십', tone: 'accent' },
+        { label: '일정 준수', tone: 'info' },
+      ],
+    },
+    {
+      name: '오세훈',
+      role: '인프라',
+      axes: [
+        { key: '협업', score: 4.5 },
+        { key: '소통', score: 4.0 },
+        { key: '책임감', score: 4.5 },
+        { key: '문제해결', score: 4.5 },
+        { key: '기술 기여', score: 4.5 },
+      ],
+      tags: [
+        { label: '문제해결', tone: 'brand' },
+        { label: '기술 기여', tone: 'accent' },
+      ],
+    },
+  ],
+  certChecklist: [
+    {
+      label: '프로젝트 기본 정보 입력',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      label: '팀원 및 기여도 확인',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      label: '성과 지표 3개 이상 등록',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      label: '산출물 공개 범위 확인',
+      status: { label: '완료', tone: 'success' },
+    },
+    { label: '트러블슈팅 연결', status: { label: '완료', tone: 'success' } },
+    { label: '상호평가 제출 완료', status: { label: '완료', tone: 'success' } },
+  ],
+  certStatus: { label: '검토 중', tone: 'warning' },
+  certRecentChange: {
+    label: '발표 자료 보완 요청',
+    status: { label: '검토 중', tone: 'warning' },
+    date: '2026-04-26 제출 · 감사 검토 중',
+  },
+}
+
+// 포트폴리오 REST API(p3) — 진행 중 개인 프로젝트. 팀원이 없어 상호평가는 해당 없음.
+export const mockWorkspaceP3: WorkspaceData = {
+  ...mockWorkspace,
+  id: 'p3',
+  title: '포트폴리오 REST API',
+  meta: '개인 프로젝트 · 1명 · 2026-05-02 ~ 진행 중 · PM 예칼',
+  banner: undefined,
+  stats: [
+    {
+      label: '전체 진행률',
+      value: '60',
+      unit: '%',
+      sub: '18 / 30 작업 완료',
+      tone: 'brand',
+    },
+    {
+      label: '내 작업',
+      value: '5',
+      unit: '건',
+      sub: '진행 2 · 대기 3',
+      tone: 'info',
+    },
+    {
+      label: '열린 이슈',
+      value: '2',
+      unit: '건',
+      sub: 'P1 1 · P2 1',
+      tone: 'warning',
+    },
+    {
+      label: '인증까지',
+      value: '작성 중',
+      unit: '',
+      sub: '진행률 60%',
+      tone: 'accent',
+    },
+  ],
+  myTasks: [
+    {
+      title: 'JWT 인증 필터 작성',
+      assignee: '나',
+      due: 'D-2',
+      tags: [
+        { label: '백엔드', tone: 'info' },
+        { label: '보통', tone: 'warning' },
+      ],
+    },
+    {
+      title: 'Refresh Token rotation 구현',
+      assignee: '나',
+      due: 'D-3',
+      tags: [
+        { label: '보안', tone: 'danger' },
+        { label: '보통', tone: 'warning' },
+      ],
+    },
+    {
+      title: '엔티티 연관관계 리팩터링',
+      assignee: '나',
+      due: 'D-5',
+      tags: [
+        { label: '설계', tone: 'accent' },
+        { label: '보통', tone: 'warning' },
+      ],
+    },
+  ],
+  activities: [
+    {
+      who: '예칼',
+      action: 'JWT 인증 모듈 초안을 커밋했습니다',
+      when: '1시간 전',
+    },
+    { who: '예칼', action: 'ERD 3NF 정규화를 정리했습니다', when: '어제' },
+    {
+      who: '예칼',
+      action: 'GitHub Actions CI 파이프라인을 추가했습니다',
+      when: '2일 전',
+    },
+  ],
+  columns: [
+    {
+      key: 'todo',
+      label: '할 일',
+      tasks: [
+        {
+          title: 'Swagger 문서화',
+          assignee: '예칼',
+          due: 'D-6',
+          tags: [
+            { label: '문서', tone: 'accent' },
+            { label: '보통', tone: 'warning' },
+          ],
+        },
+        {
+          title: '통합 테스트 추가',
+          assignee: '예칼',
+          due: 'D-7',
+          tags: [
+            { label: '테스트', tone: 'accent' },
+            { label: '보통', tone: 'warning' },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'doing',
+      label: '진행 중',
+      tasks: [
+        {
+          title: 'JWT 인증 필터 작성',
+          assignee: '예칼',
+          due: 'D-2',
+          tags: [
+            { label: '백엔드', tone: 'info' },
+            { label: '보통', tone: 'warning' },
+          ],
+        },
+        {
+          title: '상품 검색 인덱스 튜닝',
+          assignee: '예칼',
+          due: 'D-4',
+          tags: [
+            { label: '성능', tone: 'warning' },
+            { label: '보통', tone: 'warning' },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'review',
+      label: '검토 대기',
+      tasks: [
+        {
+          title: 'ERD 정규화 검토',
+          assignee: '예칼',
+          due: 'D-1',
+          tags: [
+            { label: '설계', tone: 'accent' },
+            { label: '보통', tone: 'warning' },
+          ],
+        },
+      ],
+    },
+  ],
+  meetings: [
+    {
+      title: '멘토 코드 리뷰 세션',
+      meta: '2026-05-20 · 참석 2명',
+      summary: '인증 흐름 피드백 4건',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      title: '아키텍처 점검',
+      meta: '2026-05-12 · 참석 2명',
+      summary: '레이어 분리 방향 확정',
+      status: { label: '완료', tone: 'success' },
+    },
+  ],
+  docs: [
+    {
+      title: 'ERD 설계 문서',
+      meta: 'Wiki · 1일 전',
+      status: { label: '진행', tone: 'warning' },
+    },
+    {
+      title: 'API 명세 (Swagger)',
+      meta: 'Wiki · 작성 중',
+      status: { label: '초안', tone: 'info' },
+    },
+    {
+      title: 'README 정리',
+      meta: 'Markdown · 3일 전',
+      status: { label: '완료', tone: 'success' },
+    },
+  ],
+  issues: [
+    {
+      title: '게시글 목록 N+1 쿼리 발생',
+      meta: '성능 · 담당 예칼',
+      priority: { label: 'P1', tone: 'warning' },
+      status: { label: '진행', tone: 'accent' },
+    },
+    {
+      title: 'Refresh Token 재사용 탐지 누락',
+      meta: '보안 · 담당 예칼',
+      priority: { label: 'P2', tone: 'info' },
+      status: { label: '열림', tone: 'info' },
+    },
+  ],
+  members: [
+    {
+      name: '예칼',
+      role: '백엔드 (개인)',
+      kind: 'PM',
+      contrib: 100,
+      avatarTone: 'accent',
+    },
+  ],
+  metrics: [
+    {
+      label: 'API 응답 시간(P95)',
+      before: '210ms',
+      after: '95ms',
+      delta: '-55%',
+      good: true,
+    },
+    {
+      label: '테스트 커버리지',
+      before: '0%',
+      after: '64%',
+      delta: '+64%p',
+      good: true,
+    },
+    {
+      label: '게시글 조회 쿼리 수',
+      before: '21',
+      after: '3',
+      delta: '-86%',
+      good: true,
+    },
+  ],
+  stack: [
+    'Spring Boot',
+    'JPA',
+    'PostgreSQL',
+    'Spring Security',
+    'JWT',
+    'Docker',
+    'GitHub Actions',
+  ],
+  peerDue: '해당 없음',
+  peerMyStatus: { label: '개인 프로젝트 · 상호평가 없음', tone: 'info' },
+  peerTeamStatus: { label: '팀원 없음', tone: 'info' },
+  peerTargets: [],
+  certChecklist: [
+    {
+      label: '프로젝트 기본 정보 입력',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      label: '팀원 및 기여도 확인',
+      status: { label: '완료', tone: 'success' },
+    },
+    {
+      label: '성과 지표 3개 이상 등록',
+      status: { label: '진행', tone: 'warning' },
+    },
+    {
+      label: '산출물 공개 범위 확인',
+      status: { label: '필요', tone: 'danger' },
+    },
+    { label: '트러블슈팅 연결', status: { label: '필요', tone: 'danger' } },
+    {
+      label: '상호평가 제출 완료',
+      status: { label: '해당 없음', tone: 'info' },
+    },
+  ],
+  certStatus: { label: '검토 전', tone: 'info' },
+  certRecentChange: {
+    label: '변경 제안 없음',
+    status: { label: '없음', tone: 'info' },
+    date: '아직 제출된 변경 제안이 없습니다',
+  },
+}
+
+// projectId → 워크스페이스. 미등록 id(신규 생성 draft 등)는 p1을 기본값으로 응답.
+const workspaces: Record<string, WorkspaceData> = {
+  p1: mockWorkspace,
+  p2: mockWorkspaceP2,
+  p3: mockWorkspaceP3,
+}
+
 export const handlers = [
   http.get('/api/student/projects', () => ok(mockList)),
   http.get('/api/student/projects/wizard', () => ok(mockWizard)),
-  http.get('/api/student/projects/:projectId', () => ok(mockWorkspace)),
+  http.get('/api/student/projects/:projectId', ({ params }) => {
+    const id = String(params.projectId)
+    return ok(workspaces[id] ?? mockWorkspace)
+  }),
 ]

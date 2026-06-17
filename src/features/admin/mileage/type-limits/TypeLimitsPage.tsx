@@ -83,7 +83,7 @@ export default function TypeLimitsPage() {
       return next
     })
     setConfirm(null)
-    toast.success(`타입 한도 ${changeCount}건 저장됨 (mock)`)
+    toast.success(`타입 한도 ${changeCount}건 저장됨`)
   }
 
   return (

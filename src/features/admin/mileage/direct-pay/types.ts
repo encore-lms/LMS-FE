@@ -26,3 +26,20 @@ export interface DirectPayData {
   nearLimitCount: number
   students: MileageStudent[]
 }
+
+/** 일괄 지급/차감 실행 입력 */
+export interface DirectPayInput {
+  ids: string[]
+  kind: PayKind
+  /** 1인당 금액 */
+  amount: number
+  reason: string
+  /** 매니저 메모(선택) — 감사 로그 기록용 */
+  memo?: string
+}
+
+/** 실행 결과 요약 */
+export interface DirectPayResult {
+  count: number
+  total: number
+}

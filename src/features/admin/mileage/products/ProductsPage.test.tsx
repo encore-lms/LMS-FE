@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import ProductsPage from './ProductsPage'
-import { useMileageProducts } from './api'
+import { useDeleteProduct, useMileageProducts, useUpsertProduct } from './api'
 import type { ProductsData } from './types'
 
 vi.mock('./api')
@@ -76,6 +76,16 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useMileageProducts>)
+  const mutateMock = {
+    mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  }
+  vi.mocked(useUpsertProduct).mockReturnValue(
+    mutateMock as unknown as ReturnType<typeof useUpsertProduct>,
+  )
+  vi.mocked(useDeleteProduct).mockReturnValue(
+    mutateMock as unknown as ReturnType<typeof useDeleteProduct>,
+  )
   return render(
     <ToastProvider>
       <MemoryRouter>

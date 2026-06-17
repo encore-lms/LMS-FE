@@ -14,13 +14,23 @@ const TYPES: { value: ProductType; label: string }[] = [
 // GIFTICON=고정가(가격 입력 필수), BOOK·LECTURE=유연가(수강생 구매 시 입력 — 매니저 가격 입력 안 함).
 const isFixedType = (t: ProductType) => t === 'GIFTICON'
 
+/** 폼 입력값 — 등록/수정 시 페이지로 전달해 목록에 반영한다. */
+export interface ProductFormValues {
+  type: ProductType
+  name: string
+  /** 고정가 입력값(유연가는 빈 문자열) */
+  price: string
+  order: number
+  active: boolean
+}
+
 export interface ProductFormModalProps {
   open: boolean
   /** 수정 대상(없으면 신규 등록) */
   product: Product | null
   onClose: () => void
-  /** 검증 통과 후 호출 — mode로 등록/수정 분기 */
-  onSubmit: (mode: 'create' | 'edit') => void
+  /** 검증 통과 후 호출 — mode로 등록/수정 분기 + 입력값 전달 */
+  onSubmit: (mode: 'create' | 'edit', values: ProductFormValues) => void
 }
 
 // 상품 등록·수정 폼 모달 (Figma 1306:8434) — §20 폼 입력(타입·상품명·가격[고정가 한정]·정렬·활성).
@@ -57,8 +67,13 @@ export function ProductFormModal({
     if (fixed && !price.trim()) next.price = '고정가 상품은 가격이 필요해요'
     setErrors(next)
     if (next.name || next.price) return
-    // TODO: 상품 생성·수정 mutation(MileageProduct, P0_16 BE 계약 확정 후)
-    onSubmit(mode)
+    onSubmit(mode, {
+      type,
+      name: name.trim(),
+      price: fixed ? price.trim() : '',
+      order: Number(order) || 0,
+      active,
+    })
   }
 
   return (

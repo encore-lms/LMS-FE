@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import DirectPayPage from './DirectPayPage'
-import { useDirectPayRoster } from './api'
+import { useDirectPayRoster, useDirectPaySubmit } from './api'
 import type { DirectPayData } from './types'
 
 vi.mock('./api')
@@ -59,6 +59,10 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useDirectPayRoster>)
+  vi.mocked(useDirectPaySubmit).mockReturnValue({
+    mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  } as unknown as ReturnType<typeof useDirectPaySubmit>)
   return render(
     <ToastProvider>
       <MemoryRouter>

@@ -51,25 +51,34 @@ export default function AccountsPage() {
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
-  const [modal, setModal] = useState<ActionModalSpec | null>(null)
+  // 비활성화 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
+  const [statusOverride, setStatusOverride] = useState<
+    Record<string, OpsAccount['status']>
+  >({})
+  const [modal, setModal] = useState<{
+    spec: ActionModalSpec
+    deactivate?: OpsAccount
+  } | null>(null)
   usePageHeader(
     '운영 설정 · 계정 관리',
     '§3 정본 — 매니저·강사·멘토의 역할·담당 범위·상태를 관리합니다',
   )
+  const statusOf = (a: OpsAccount) => statusOverride[a.id] ?? a.status
 
   const filtered = useMemo(() => {
     const items = data?.items ?? []
     const needle = q.trim().toLowerCase()
     return items.filter((a) => {
       if (role !== 'all' && a.role !== role) return false
-      if (status !== 'all' && a.status !== status) return false
+      if (status !== 'all' && (statusOverride[a.id] ?? a.status) !== status)
+        return false
       if (needle) {
         const hay = `${a.name} ${a.email} ${a.scope}`.toLowerCase()
         if (!hay.includes(needle)) return false
       }
       return true
     })
-  }, [data, role, status, q])
+  }, [data, role, status, q, statusOverride])
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -89,23 +98,32 @@ export default function AccountsPage() {
 
   const openAction = (a: OpsAccount, action: string) => {
     setModal({
-      title: `운영 계정 ${action}`,
-      subtitle: '역할과 담당 범위를 변경합니다.',
-      rows: [
-        { label: '계정', value: `${a.name} · ${a.role}` },
-        { label: '담당 범위', value: a.scope },
-        {
-          label: '권한 보호',
-          value: a.isSelf ? '본인 매니저 권한 회수 방지' : '해당 없음',
-        },
-        { label: '감사 로그', value: 'role_assignment_updated 기록' },
-      ],
-      confirmLabel: '저장',
+      spec: {
+        title: `운영 계정 ${action}`,
+        subtitle: '역할과 담당 범위를 변경합니다.',
+        rows: [
+          { label: '계정', value: `${a.name} · ${a.role}` },
+          { label: '담당 범위', value: a.scope },
+          {
+            label: '권한 보호',
+            value: a.isSelf ? '본인 매니저 권한 회수 방지' : '해당 없음',
+          },
+          { label: '감사 로그', value: 'role_assignment_updated 기록' },
+        ],
+        confirmLabel: '저장',
+      },
     })
   }
 
   const onConfirm = (memo: string) => {
-    toast.success('변경 저장 — 감사 로그 기록 (mock)')
+    const target = modal?.deactivate
+    if (target) {
+      // 비활성 상태 전이 — 목록 배지·상태 필터·KPI 즉시 반영(낙관).
+      setStatusOverride((p) => ({ ...p, [target.id]: 'inactive' }))
+      toast.success(`${target.name} · 비활성화 — 감사 로그 기록`)
+    } else {
+      toast.success('변경 저장 — 감사 로그 기록')
+    }
     if (memo.trim()) toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
     setModal(null)
   }
@@ -157,8 +175,8 @@ export default function AccountsPage() {
       className: 'w-24',
       cell: (a) => (
         <StatusBadge
-          label={STATUS_LABEL[a.status]}
-          tone={STATUS_TONE[a.status]}
+          label={STATUS_LABEL[statusOf(a)]}
+          tone={STATUS_TONE[statusOf(a)]}
         />
       ),
     },
@@ -215,7 +233,20 @@ export default function AccountsPage() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.success(`${a.name} · 비활성화 — 감사 로그 기록 (mock)`)
+                setModal({
+                  spec: {
+                    title: '운영 계정 비활성화',
+                    subtitle: `${a.name} 계정을 비활성화합니다. 로그인이 차단됩니다.`,
+                    rows: [
+                      { label: '계정', value: `${a.name} · ${a.role}` },
+                      { label: '담당 범위', value: a.scope },
+                      { label: '처리', value: '상태 = 비활성 · 로그인 차단' },
+                      { label: '감사 로그', value: 'account_deactivated 기록' },
+                    ],
+                    confirmLabel: '비활성화',
+                  },
+                  deactivate: a,
+                })
               }}
               className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
             >
@@ -269,15 +300,17 @@ export default function AccountsPage() {
             type="button"
             onClick={() =>
               setModal({
-                title: '새 계정 추가',
-                subtitle: '운영진 계정을 새로 만들고 초대를 보냅니다.',
-                rows: [
-                  { label: '계정', value: '이메일 초대 — 첫 로그인 시 활성' },
-                  { label: '기본 권한', value: '역할별 RoleAssignment 적용' },
-                  { label: '담당 범위', value: '생성 후 담당 범위에서 배정' },
-                  { label: '감사 로그', value: 'account_created 기록' },
-                ],
-                confirmLabel: '저장',
+                spec: {
+                  title: '새 계정 추가',
+                  subtitle: '운영진 계정을 새로 만들고 초대를 보냅니다.',
+                  rows: [
+                    { label: '계정', value: '이메일 초대 — 첫 로그인 시 활성' },
+                    { label: '기본 권한', value: '역할별 RoleAssignment 적용' },
+                    { label: '담당 범위', value: '생성 후 담당 범위에서 배정' },
+                    { label: '감사 로그', value: 'account_created 기록' },
+                  ],
+                  confirmLabel: '저장',
+                },
               })
             }
             className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
@@ -427,7 +460,7 @@ export default function AccountsPage() {
       </div>
 
       <ActionModal
-        spec={modal}
+        spec={modal?.spec ?? null}
         onClose={() => setModal(null)}
         onConfirm={onConfirm}
       />

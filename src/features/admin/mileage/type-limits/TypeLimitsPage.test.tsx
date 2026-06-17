@@ -80,8 +80,6 @@ describe('TypeLimitsPage (마일리지 타입 한도)', () => {
     expect(screen.getByText('마일리지 타입 한도 저장')).toBeInTheDocument()
     expect(screen.getByText('100,000M → 150,000M')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '한도 저장' }))
-    expect(
-      await screen.findByText('타입 한도 1건 저장됨 (mock)'),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('타입 한도 1건 저장됨')).toBeInTheDocument()
   })
 })

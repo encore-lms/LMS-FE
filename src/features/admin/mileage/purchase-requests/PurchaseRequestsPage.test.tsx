@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import PurchaseRequestsPage from './PurchaseRequestsPage'
-import { usePurchaseQueue } from './api'
+import { usePurchaseProcess, usePurchaseQueue } from './api'
 import type { PurchaseData } from './types'
 
 vi.mock('./api')
@@ -81,6 +81,10 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof usePurchaseQueue>)
+  vi.mocked(usePurchaseProcess).mockReturnValue({
+    mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  } as unknown as ReturnType<typeof usePurchaseProcess>)
   return render(
     <ToastProvider>
       <MemoryRouter>
@@ -119,8 +123,6 @@ describe('PurchaseRequestsPage (마일리지 구매 요청)', () => {
     expect(screen.getByText('구매 요청 승인')).toBeInTheDocument()
     const all = screen.getAllByRole('button', { name: '승인' })
     await user.click(all[all.length - 1])
-    expect(
-      await screen.findByText('구매 요청 승인 처리됨 (mock)'),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('구매 요청 승인 처리됨')).toBeInTheDocument()
   })
 })

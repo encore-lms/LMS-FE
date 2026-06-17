@@ -10,7 +10,11 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
-import { useReputation } from './api'
+import {
+  useReputation,
+  useReputationPush,
+  type ReputationPushInput,
+} from './api'
 import type {
   EndorsementStatus,
   MentorEvalStatus,
@@ -55,6 +59,7 @@ export default function ReputationPage() {
     '수강생별 평판 수집 현황 · 강사·멘토·동료 요청 푸시 · 내부 사용자 전용',
   )
   const { data, isPending, isError, refetch } = useReputation()
+  const push = useReputationPush()
   const toast = useToast()
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
@@ -62,6 +67,7 @@ export default function ReputationPage() {
   const [pushAction, setPushAction] = useState<{
     spec: ActionModalSpec
     result: string
+    payload: ReputationPushInput
   } | null>(null)
   const [detailStudent, setDetailStudent] = useState<ReputationStudent | null>(
     null,
@@ -193,6 +199,7 @@ export default function ReputationPage() {
                       confirmLabel: '푸시',
                     },
                     result: `${s.name} ${PUSH_LABEL[t]} 요청을 보냈습니다.`,
+                    payload: { kind: 'single', studentId: s.id, target: t },
                   })
                 }
                 className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[12px] font-semibold"
@@ -254,6 +261,7 @@ export default function ReputationPage() {
                 confirmLabel: '일괄 푸시',
               },
               result: `누락 ${summary.missingStudents}명에게 요청 푸시를 보냈습니다.`,
+              payload: { kind: 'bulk' },
             })
           }
           className="bg-surface text-brand inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90"
@@ -377,10 +385,24 @@ export default function ReputationPage() {
       <ActionModal
         spec={pushAction?.spec ?? null}
         onClose={() => setPushAction(null)}
-        onConfirm={() => {
-          // TODO: 평판 요청 푸시 mutation(LMS 알림, P0_25 BE 계약 확정 후) — 매니저 메모는 감사 로그 사유로 전달
-          if (pushAction) toast.success(pushAction.result)
-          setPushAction(null)
+        onConfirm={(memo) => {
+          if (!pushAction) return
+          const { result, payload } = pushAction
+          push.mutate(
+            { ...payload, memo },
+            {
+              onSuccess: () => {
+                setPushAction(null)
+                toast.success(result)
+              },
+              onError: () => {
+                setPushAction(null)
+                toast.danger(
+                  '요청 푸시에 실패했어요. 잠시 후 다시 시도해 주세요.',
+                )
+              },
+            },
+          )
         }}
       />
 

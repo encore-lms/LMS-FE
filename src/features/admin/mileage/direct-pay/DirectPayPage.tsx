@@ -7,6 +7,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { useToast } from '@/components/ui/use-toast'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -16,7 +17,7 @@ import {
   type ActionModalSpec,
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
-import { useDirectPayRoster } from './api'
+import { useDirectPayRoster, useDirectPaySubmit } from './api'
 import type { MileageStudent, PayKind } from './types'
 
 const QUICK_ADD = [1000, 5000, 10000, 50000]
@@ -30,7 +31,9 @@ export default function DirectPayPage() {
     '다중 수강생 일괄 지급/차감 · 누적 상한·보유액·부분 지급 자동 검증',
   )
   const { data, isPending, isError, refetch } = useDirectPayRoster()
+  const submit = useDirectPaySubmit()
   const navigate = useNavigate()
+  const toast = useToast()
 
   const [selected, setSelected] = useState<Set<string>>(
     new Set(['stu-1', 'stu-2', 'stu-3', 'stu-4']),
@@ -101,11 +104,26 @@ export default function DirectPayPage() {
     })
   }
 
-  const runPay = () => {
-    // TODO: 실제 일괄 지급/차감 처리(MileageTransaction 생성·한도 검증, P0_16 BE 계약 확정 후)
+  const runPay = (memo: string) => {
+    // 실행 시점의 선택 인원·총액을 동결(처리 후 선택을 비우므로 결과 모달엔 동결값 사용).
     const count = selectedCount
-    setConfirm(null)
-    setResult({ count, total })
+    const grandTotal = total
+    submit.mutate(
+      { ids: [...selected], kind, amount, reason, memo },
+      {
+        onSuccess: () => {
+          setConfirm(null)
+          setResult({ count, total: grandTotal })
+          setSelected(new Set()) // 처리 완료 — 선택 초기화(목록은 캐시 갱신으로 보유/누적 즉시 반영)
+        },
+        onError: () => {
+          setConfirm(null)
+          toast.danger(
+            `마일리지 ${word} 처리에 실패했어요. 잠시 후 다시 시도해 주세요.`,
+          )
+        },
+      },
+    )
   }
 
   const columns: Column<MileageStudent>[] = [

@@ -95,6 +95,10 @@ export default function ProjectWizardPage() {
   const createProject = useCreateProject()
 
   const [step, setStep] = useState(1)
+  // 그룹별 직접 추가한 커스텀 스택 — 스텝 이동에도 유지되도록 부모에서 보관.
+  const [customStacksByGroup, setCustomStacksByGroup] = useState<
+    Record<string, string[]>
+  >({})
   const {
     register,
     setValue,
@@ -146,6 +150,47 @@ export default function ProjectWizardPage() {
       shouldDirty: true,
       shouldValidate: true,
     })
+
+  // 스택 토글 — 커스텀 스택을 해제하면 그룹 칩 목록에서도 제거.
+  const onStackToggle = (value: string) => {
+    const next = toggleString(watch('stacks'), value)
+    setValue('stacks', next, { shouldDirty: true, shouldValidate: true })
+    if (!next.includes(value)) {
+      setCustomStacksByGroup((prev) => {
+        let changed = false
+        const out: Record<string, string[]> = {}
+        for (const [group, list] of Object.entries(prev)) {
+          const filtered = list.filter((s) => s !== value)
+          if (filtered.length !== list.length) changed = true
+          out[group] = filtered
+        }
+        return changed ? out : prev
+      })
+    }
+  }
+
+  // 그룹별 직접 추가 — 커스텀 스택을 해당 그룹 칩으로 등록하고 선택.
+  const addCustomStack = (group: string, raw: string) => {
+    const value = raw.trim()
+    if (!value) return
+    const inCatalog = STACK_CATALOG.some((g) => g.items.includes(value))
+    const inCustom = Object.values(customStacksByGroup).some((list) =>
+      list.includes(value),
+    )
+    if (!inCatalog && !inCustom) {
+      setCustomStacksByGroup((prev) => ({
+        ...prev,
+        [group]: [...(prev[group] ?? []), value],
+      }))
+    }
+    const current = watch('stacks')
+    if (!current.includes(value) && current.length < 12) {
+      setValue('stacks', [...current, value], {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    }
+  }
 
   const team = [
     {
@@ -306,14 +351,15 @@ export default function ProjectWizardPage() {
         <Step3
           stacks={stacks}
           stackTone={stackTone}
+          customStacksByGroup={customStacksByGroup}
           domain={domain}
           deliverables={deliverables}
-          onStack={(v) => updateArrayField('stacks', v)}
+          onStack={onStackToggle}
+          onAddStack={addCustomStack}
           onDomain={(v) =>
             setValue('domain', v, { shouldDirty: true, shouldValidate: true })
           }
           onDeliverable={(v) => updateArrayField('deliverables', v)}
-          onDirectAdd={() => toast.info('직접 추가는 준비 중입니다')}
         />
       )}
       {step === 4 && (
@@ -596,13 +642,41 @@ function Step2(p: {
 function Step3(p: {
   stacks: string[]
   stackTone: Map<string, Tone>
+  customStacksByGroup: Record<string, string[]>
   domain: string
   deliverables: string[]
   onStack: (v: string) => void
+  onAddStack: (group: string, value: string) => void
   onDomain: (v: string) => void
   onDeliverable: (v: string) => void
-  onDirectAdd: () => void
 }) {
+  // 스택 직접 추가(그룹별 인라인 입력) · 도메인 '기타' 직접 입력 — 입력값을 칩으로 추가/선택.
+  const [openStackGroup, setOpenStackGroup] = useState<string | null>(null)
+  const [stackInput, setStackInput] = useState('')
+  const [domainInput, setDomainInput] = useState('')
+
+  const addStack = () => {
+    const v = stackInput.trim()
+    if (v && openStackGroup) p.onAddStack(openStackGroup, v)
+    setStackInput('')
+    setOpenStackGroup(null)
+  }
+  // 요약 칩 색상 — 카탈로그 톤 우선, 없으면 커스텀 스택이 속한 그룹 톤.
+  const stackToneFor = (s: string): Tone =>
+    p.stackTone.get(s) ??
+    STACK_CATALOG.find((g) =>
+      (p.customStacksByGroup[g.label] ?? []).includes(s),
+    )?.tone ??
+    'brand'
+  const addDomain = () => {
+    const v = domainInput.trim()
+    if (!v) return
+    p.onDomain(v)
+    setDomainInput('')
+  }
+  // 커스텀 도메인은 RHF domain 값에서 파생 — Step3 언마운트 후 복귀해도 칩 유지.
+  const isCustomDomain = Boolean(p.domain) && !DOMAINS.includes(p.domain)
+
   return (
     <div className="flex flex-col gap-4">
       <section className={cn(card, 'flex flex-col gap-4')}>
@@ -621,7 +695,7 @@ function Step3(p: {
                 key={s}
                 className={cn(
                   'flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-bold text-white',
-                  AVA[p.stackTone.get(s) ?? 'brand'],
+                  AVA[stackToneFor(s)],
                 )}
               >
                 {s}
@@ -639,32 +713,67 @@ function Step3(p: {
               {g.label}
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {g.items.map((it) => {
-                const on = p.stacks.includes(it)
-                return (
-                  <button
-                    key={it}
-                    type="button"
-                    onClick={() => p.onStack(it)}
-                    className={cn(
-                      'rounded-full border px-3 py-1.5 text-[12px] font-semibold',
-                      on
-                        ? CHIP_ON[g.tone]
-                        : 'border-border text-fg-muted hover:border-brand/50',
-                    )}
-                  >
-                    {on && '✓ '}
-                    {it}
-                  </button>
-                )
-              })}
+              {[...g.items, ...(p.customStacksByGroup[g.label] ?? [])].map(
+                (it) => {
+                  const on = p.stacks.includes(it)
+                  return (
+                    <button
+                      key={it}
+                      type="button"
+                      onClick={() => p.onStack(it)}
+                      className={cn(
+                        'rounded-full border px-3 py-1.5 text-[12px] font-semibold',
+                        on
+                          ? CHIP_ON[g.tone]
+                          : 'border-border text-fg-muted hover:border-brand/50',
+                      )}
+                    >
+                      {on && '✓ '}
+                      {it}
+                    </button>
+                  )
+                },
+              )}
               <button
                 type="button"
-                onClick={p.onDirectAdd}
+                onClick={() => {
+                  setOpenStackGroup(g.label)
+                  setStackInput('')
+                }}
                 className="border-border text-fg-subtle hover:border-brand/50 rounded-full border border-dashed px-3 py-1.5 text-[12px]"
               >
                 + 직접 추가
               </button>
+              {openStackGroup === g.label && (
+                <span className="flex items-center gap-1.5">
+                  <input
+                    autoFocus
+                    value={stackInput}
+                    maxLength={30}
+                    onChange={(e) => setStackInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addStack()
+                      } else if (e.key === 'Escape') {
+                        setOpenStackGroup(null)
+                        setStackInput('')
+                      }
+                    }}
+                    placeholder="스택 이름"
+                    aria-label={`${g.label} 스택 직접 입력`}
+                    className="border-brand w-32 rounded-full border px-3 py-1.5 text-[12px] outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={addStack}
+                    disabled={!stackInput.trim()}
+                    className="bg-brand rounded-full px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-40"
+                  >
+                    추가
+                  </button>
+                </span>
+              )}
             </div>
           </div>
         ))}
@@ -678,7 +787,7 @@ function Step3(p: {
           프로젝트가 다루는 도메인을 선택하세요 (1개)
         </span>
         <div className="flex flex-wrap gap-2">
-          {DOMAINS.map((d) => {
+          {(isCustomDomain ? [...DOMAINS, p.domain] : DOMAINS).map((d) => {
             const on = d === p.domain
             return (
               <button
@@ -698,6 +807,33 @@ function Step3(p: {
             )
           })}
         </div>
+        {p.domain === '기타' && (
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus
+              value={domainInput}
+              maxLength={30}
+              onChange={(e) => setDomainInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addDomain()
+                }
+              }}
+              placeholder="도메인을 직접 입력하고 추가하세요"
+              aria-label="기타 도메인 직접 입력"
+              className="border-border focus:border-brand flex-1 rounded-lg border px-3.5 py-2 text-[12px] outline-none"
+            />
+            <button
+              type="button"
+              onClick={addDomain}
+              disabled={!domainInput.trim()}
+              className="border-brand text-brand shrink-0 rounded-lg border px-4 py-2 text-[12px] font-semibold disabled:opacity-40"
+            >
+              추가
+            </button>
+          </div>
+        )}
       </section>
 
       <section className={cn(card, 'flex flex-col gap-3')}>

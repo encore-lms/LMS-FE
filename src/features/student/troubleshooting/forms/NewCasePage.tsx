@@ -99,6 +99,8 @@ export default function NewCasePage() {
     'Kafka 컨슈머 리밸런싱으로 메시지 중복 처리',
   )
   const [category, setCategory] = useState('DB')
+  const [customCategories, setCustomCategories] = useState<string[]>([])
+  const [customInput, setCustomInput] = useState('')
   const [date, setDate] = useState('2026-04-22')
   const [days, setDays] = useState('3 일')
   const [independent, setIndependent] = useState(true)
@@ -135,6 +137,18 @@ export default function NewCasePage() {
   }
   const removeTag = (tag: string) => setTags((p) => p.filter((t) => t !== tag))
 
+  // '기타' 직접 입력 — 입력값을 커스텀 카테고리 칩으로 추가하고 바로 선택.
+  const addCustomCategory = () => {
+    const name = customInput.trim()
+    if (!name) return
+    const exists =
+      TS_CATEGORIES.some((c) => c.key === name) ||
+      customCategories.includes(name)
+    if (!exists) setCustomCategories((p) => [...p, name])
+    setCategory(name)
+    setCustomInput('')
+  }
+
   const addFiles = (list: FileList | null) => {
     if (!list || list.length === 0) return
     setFiles((p) => [
@@ -151,7 +165,11 @@ export default function NewCasePage() {
 
   // 제출 — 새 사례를 만들어 목록 캐시 맨 앞에 추가하고 목록으로 이동.
   const submit = () => {
-    const tone = TS_CATEGORIES.find((c) => c.key === category)?.tone ?? 'brand'
+    // 직접 추가한 카테고리는 '기타'와 동일하게 etc 키·success 톤으로 저장.
+    const isCustom = customCategories.includes(category)
+    const tone =
+      TS_CATEGORIES.find((c) => c.key === category)?.tone ??
+      (isCustom ? 'success' : 'brand')
     const newCase: TsCase = {
       id: `ts_${Math.random().toString(36).slice(2, 7)}`,
       category,
@@ -264,7 +282,13 @@ export default function NewCasePage() {
             카테고리 <span className="text-danger">*</span>
           </span>
           <div className="flex flex-wrap gap-2">
-            {TS_CATEGORIES.map((c) => {
+            {[
+              ...TS_CATEGORIES,
+              ...customCategories.map((key) => ({
+                key,
+                tone: 'success' as Tone,
+              })),
+            ].map((c) => {
               const on = c.key === category
               return (
                 <button
@@ -290,6 +314,32 @@ export default function NewCasePage() {
               )
             })}
           </div>
+          {category === '기타' && (
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                className={cn(input, 'flex-1')}
+                value={customInput}
+                maxLength={20}
+                onChange={(e) => setCustomInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addCustomCategory()
+                  }
+                }}
+                placeholder="카테고리를 직접 입력하고 추가하세요"
+                aria-label="기타 카테고리 직접 입력"
+              />
+              <button
+                type="button"
+                onClick={addCustomCategory}
+                disabled={!customInput.trim()}
+                className="border-brand text-brand shrink-0 rounded-[10px] border px-4 py-3 text-[13px] font-semibold disabled:opacity-40"
+              >
+                추가
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

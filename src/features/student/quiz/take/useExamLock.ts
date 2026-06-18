@@ -18,7 +18,7 @@ type FsDocument = Document & { webkitExitFullscreen?: () => Promise<void> }
  * - release(): 제출/시간초과 등 정상 종료 — 전체화면 해제 + 락 비활성(이탈 차단 해제).
  *
  * 반환 violations: 응시 중 전체화면이 해제된 누적 횟수(= 이탈 횟수). ESC 1회 = 1회로 집계해
- * 경고/자동 제출 임계 판정이 예측 가능하도록 한다(탭 전환 이중 집계는 두지 않음).
+ * 이탈 기록·표시가 예측 가능하도록 한다(탭 전환 이중 집계는 두지 않음).
  */
 export function useExamLock() {
   const [phase, setPhase] = useState<ExamLockPhase>('intro')

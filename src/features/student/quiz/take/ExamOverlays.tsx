@@ -12,7 +12,6 @@ export function ExamIntro({
   total,
   timeLimitMinutes,
   violationLimit,
-  warningSeconds,
   submitSeconds,
   onStart,
 }: {
@@ -20,14 +19,13 @@ export function ExamIntro({
   total: number
   timeLimitMinutes: number
   violationLimit: number
-  warningSeconds: number
   submitSeconds: number
   onStart: () => void
 }) {
   const rules = [
     '전체화면(집중 모드)으로 진행돼요. ESC 등으로 화면을 벗어나면 "이탈"로 기록돼요.',
     '한 문제씩 풀고 다음으로 넘어가며, 모든 문제를 풀어야 제출할 수 있어요.',
-    `이탈 1~${violationLimit}회: ${warningSeconds}초 동안 잠긴 뒤 다시 문제로 돌아가 이어 풀 수 있어요.`,
+    `이탈 1~${violationLimit}회: 곧바로 문제로 돌아가 이어 풀 수 있어요(이탈은 기록돼요).`,
     `이탈 ${violationLimit + 1}회째부터: ${submitSeconds}초 뒤 자동 제출되어 시험이 종료돼요.`,
     '이탈한 동안에도 시험 시간은 계속 흘러요. 탭 전환·새 창·개발자 도구·우클릭은 제한돼요.',
     '제한 시간이 지나면 자동으로 제출돼요.',
@@ -77,10 +75,10 @@ export function ExamIntro({
  * 재진입 오버레이 — ESC/F11 등으로 전체화면이 풀리면(응시 active 동안) 화면 전체를 덮어 문제를 가린다.
  *
  * 정책(이탈 = 전체화면 해제):
- *  - 1~limit회(경고): secondsLeft(10초) 동안 잠금 후 "문제로 돌아가기"가 활성화 → 이어서 응시.
+ *  - 1~limit회(경고): 카운트다운 없이 "문제로 돌아가기"가 바로 활성화 → 즉시 이어서 응시.
  *  - limit 초과(fatal, 4회째~): secondsLeft(5초) 카운트다운 뒤 페이지가 자동 제출(시험 종료).
  *
- * secondsLeft: 남은 유예 초(null = 시작 전). fatal=true면 0에서 자동 제출, false면 0에서 복귀 허용.
+ * secondsLeft: 남은 유예 초. 경고 케이스는 null(카운트다운 없이 즉시 복귀), fatal 케이스만 0에서 자동 제출.
  */
 export function ExamRelockOverlay({
   violations,

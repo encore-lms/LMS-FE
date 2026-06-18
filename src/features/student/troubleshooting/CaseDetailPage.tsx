@@ -76,6 +76,21 @@ export default function CaseDetailPage() {
   // 인증 모달의 프로젝트 필드 — 연결됐으면 실시간 연결값, 아니면 서버 표시값.
   const certProjectValue =
     TS_PROJECT_LINK && link ? linkLabel : data.certProject
+  // 연결되면 '프로젝트 연결 필요' 체크 항목을 완료로 전환(플래그 ON).
+  const checklist = TS_PROJECT_LINK
+    ? data.checklist.map((c) =>
+        c.label.includes('프로젝트 연결')
+          ? {
+              label: link ? '프로젝트 연결됨' : '프로젝트 연결 필요',
+              status: link
+                ? { label: '완료', tone: 'success' as Tone }
+                : { label: '필요', tone: 'warning' as Tone },
+            }
+          : c,
+      )
+    : data.checklist
+  // 프로젝트 미연결이면 인증 요청 불가(플래그 ON). OFF면 기존처럼 항상 가능.
+  const canCertify = TS_PROJECT_LINK ? projectLinked : true
   // 플래그 ON: 연결 모달, OFF: 기존 안내 토스트(전용 화면이 Figma 미설계라 폴백).
   const openProjectLink = () => {
     if (TS_PROJECT_LINK) setLinkModal(true)
@@ -173,7 +188,13 @@ export default function CaseDetailPage() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+              disabled={!canCertify}
+              title={
+                canCertify
+                  ? undefined
+                  : '프로젝트를 연결해야 인증 요청할 수 있어요'
+              }
+              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
               인증 요청
             </button>
@@ -238,7 +259,7 @@ export default function CaseDetailPage() {
               작성 폼이 아니라 상세 화면에서 프로젝트 연결과 인증 요청을
               진행해요.
             </span>
-            {data.checklist.map((c, i) => {
+            {checklist.map((c, i) => {
               const done = c.status.tone === 'success'
               return (
                 <div key={i} className="flex items-center gap-2.5">
@@ -293,12 +314,18 @@ export default function CaseDetailPage() {
                 <button
                   type="button"
                   onClick={() => setOpen(true)}
-                  className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
+                  disabled={!canCertify}
+                  className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   인증 요청
                 </button>
               )}
             </div>
+            {!canCertify && (
+              <span className="text-fg-subtle text-center text-[11px]">
+                프로젝트를 연결해야 인증 요청을 보낼 수 있어요.
+              </span>
+            )}
           </section>
 
           <section className={cn(card, 'flex flex-col gap-3')}>

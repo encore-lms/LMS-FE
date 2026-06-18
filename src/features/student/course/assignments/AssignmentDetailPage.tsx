@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useAssignment } from '../../api/course'
 import { AssignmentSummary, STATUS_BADGE } from './components/AssignmentSummary'
@@ -22,6 +23,7 @@ export default function AssignmentDetailPage() {
   const { assignmentId = '' } = useParams()
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAssignment(assignmentId)
+  const toast = useToast()
   usePageHeader(
     '과제 상세·제출',
     '마감 전에는 마지막 제출본이 유효합니다. 텍스트·URL·첨부 중 하나 이상을 입력하세요.',
@@ -32,7 +34,6 @@ export default function AssignmentDetailPage() {
   const [hasHistory, setHasHistory] = useState(false)
   const [submitted, setSubmitted] = useState<AssignmentDraft | null>(null)
   const [submittedAt, setSubmittedAt] = useState('')
-  const [toast, setToast] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [pending, setPending] = useState<AssignmentDraft | null>(null)
 
@@ -42,16 +43,9 @@ export default function AssignmentDetailPage() {
     setHasHistory(data.hasHistory)
     setSubmitted(data.draft)
     setSubmittedAt(data.submittedAtLabel ?? '')
-    setToast(null)
     setModalOpen(false)
     setPending(null)
   }, [data])
-
-  useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 2800)
-    return () => clearTimeout(t)
-  }, [toast])
 
   if (isPending) {
     return <div className="text-fg-muted p-8">과제를 불러오는 중…</div>
@@ -83,7 +77,7 @@ export default function AssignmentDetailPage() {
     setMode('summary')
     setModalOpen(false)
     setPending(null)
-    setToast(msg)
+    toast.success(msg)
   }
   const handleSave = (draft: AssignmentDraft) => {
     // 기존 제출본이 있으면 덮어쓰기 확인 모달, 첫 제출이면 바로 완료
@@ -134,21 +128,6 @@ export default function AssignmentDetailPage() {
           pending && commit(pending, '과제 제출이 완료되었습니다.')
         }
       />
-
-      {/* 제출 완료 토스트 — 우상단 보라 배너(2236:10480) */}
-      {toast && (
-        <div className="bg-accent-strong fixed top-24 right-8 z-50 flex items-center gap-4 rounded-xl px-5 py-3.5 text-[14px] font-semibold text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.24)]">
-          {toast}
-          <button
-            type="button"
-            onClick={() => setToast(null)}
-            aria-label="닫기"
-            className="text-white/80 hover:text-white"
-          >
-            ✕
-          </button>
-        </div>
-      )}
     </div>
   )
 }

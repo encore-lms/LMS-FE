@@ -178,23 +178,33 @@ export function StyleGuidePage() {
         <h2 className="text-fg mb-4 text-xl font-bold">
           Modal · Toast · Empty
         </h2>
+        <p className="text-fg-muted mb-3 text-sm">
+          공용 토스트(Figma 공통 컴포넌트) — 누른 버튼 근처에 뜬다. 앱 전역에서
+          이 토스트만 사용한다.
+        </p>
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => setModalOpen(true)}>모달 열기</Button>
           <Button
             variant="secondary"
-            onClick={() => toast.success('저장되었습니다')}
+            onClick={() => toast.success('작업이 완료되었습니다')}
           >
             성공 토스트
           </Button>
           <Button
             variant="secondary"
-            onClick={() => toast.danger('오류가 발생했습니다')}
+            onClick={() => toast.danger('작업을 완료하지 못했습니다')}
           >
             오류 토스트
           </Button>
           <Button
             variant="secondary"
-            onClick={() => toast.info('처리 중입니다')}
+            onClick={() => toast.warning('확인이 필요합니다')}
+          >
+            경고 토스트
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => toast.info('조회가 완료되었습니다')}
           >
             정보 토스트
           </Button>

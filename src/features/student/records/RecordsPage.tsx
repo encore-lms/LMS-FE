@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useRecordsOverview } from '../api/records'
 import { RecordStatCards } from './components/RecordStatCards'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
-import { RecordToast } from './components/RecordToast'
 import type { BlogRecord, RecordStatus, RecordsOverview } from './types'
 
 const UPDATED_MSG = '블로그 기록이 수정되었습니다.'
@@ -31,7 +31,7 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 /**
  * 기록실 (/student/records) — Figma 246:27.
  * 필터 탭·요약 통계·제출 배너·블로그 기록 목록. 상태 변형:
- * ?toast=deleted|blog-updated (우하단 토스트), ?modal=delete-blog (삭제 확인 모달).
+ * ?toast=deleted|blog-updated (공용 토스트), ?modal=delete-blog (삭제 확인 모달).
  */
 export default function RecordsPage() {
   const { data, isPending, isError, refetch } = useRecordsOverview()
@@ -58,6 +58,7 @@ export default function RecordsPage() {
 
 function RecordsView({ data }: { data: RecordsOverview }) {
   const navigate = useNavigate()
+  const toast = useToast()
   const [params, setParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('blog')
   // 목록을 로컬 상태로 둬 삭제 시 해당 기록만 제거(새로고침하면 mock 그대로 복원).
@@ -65,22 +66,28 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   const [sort, setSort] = useState<SortKey>('latest')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [toast, setToast] = useState<string | null>(() => {
-    const t = params.get('toast')
-    if (t === 'deleted') return '블로그 기록이 삭제되었습니다.'
-    if (t === 'blog-updated') return UPDATED_MSG
-    if (t === 'study-updated') return '스터디 기록이 수정되었습니다.'
-    if (t === 'cert-updated') return '자격증 기록이 수정되었습니다.'
-    return null
-  })
 
   const modalParam = params.get('modal') === 'delete-blog'
 
+  // 다른 화면에서 ?toast=... 로 진입하면(수정/삭제 후 복귀) 공용 토스트로 한 번 알린다.
+  const greeted = useRef(false)
   useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 3600)
-    return () => clearTimeout(t)
-  }, [toast])
+    if (greeted.current) return
+    const t = params.get('toast')
+    const msg =
+      t === 'deleted'
+        ? '블로그 기록이 삭제되었습니다.'
+        : t === 'blog-updated'
+          ? UPDATED_MSG
+          : t === 'study-updated'
+            ? '스터디 기록이 수정되었습니다.'
+            : t === 'cert-updated'
+              ? '자격증 기록이 수정되었습니다.'
+              : null
+    if (!msg) return
+    greeted.current = true
+    toast.success(msg)
+  }, [params, toast])
 
   // 탭(카테고리) + 상태 필터 + 정렬(주차 번호 기준).
   const weekNo = (r: BlogRecord) => parseInt(r.weekLabel, 10) || 0
@@ -138,7 +145,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   const confirmDelete = () => {
     if (deleteTarget) {
       setRecords((prev) => prev.filter((r) => r.id !== deleteTarget.id))
-      setToast(`'${deleteTarget.title}' 기록이 삭제되었습니다.`)
+      toast.success(`'${deleteTarget.title}' 기록이 삭제되었습니다.`)
     }
     closeModal()
   }
@@ -293,8 +300,6 @@ function RecordsView({ data }: { data: RecordsOverview }) {
           onConfirm={confirmDelete}
         />
       )}
-
-      {toast && <RecordToast message={toast} onClose={() => setToast(null)} />}
     </div>
   )
 }

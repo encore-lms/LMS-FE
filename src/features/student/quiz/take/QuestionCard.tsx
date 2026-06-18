@@ -18,8 +18,6 @@ const DIFFICULTY_LABEL: Record<
   hard: '어려움',
 }
 
-const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
-
 export function QuestionCard({
   question,
   index,
@@ -35,15 +33,16 @@ export function QuestionCard({
 }) {
   const isMultiple = question.type === 'multiple_choice' && !!question.choices
 
-  // A~D 키로 보기 빠르게 선택(객관식).
+  // 1~9 숫자 키로 보기 빠르게 선택(객관식).
   useEffect(() => {
     if (!isMultiple || !question.choices) return
     const choices = question.choices
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement | null)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
-      const i = OPTION_LETTERS.indexOf(e.key.toUpperCase())
-      if (i >= 0 && i < choices.length) {
+      if (!/^[1-9]$/.test(e.key)) return
+      const i = Number(e.key) - 1
+      if (i < choices.length) {
         e.preventDefault()
         onChange(choices[i].id)
       }
@@ -103,7 +102,7 @@ export function QuestionCard({
                     selected ? 'text-brand' : 'text-fg-muted',
                   )}
                 >
-                  {OPTION_LETTERS[i]}.
+                  {i + 1}.
                 </span>
                 <span className="text-fg text-[15px]">{choice.label}</span>
               </button>
@@ -120,14 +119,14 @@ export function QuestionCard({
         />
       )}
 
-      {isMultiple && (
+      {isMultiple && question.choices && (
         <p className="text-fg-subtle flex items-center gap-1.5 text-[12px]">
           <kbd className="border-border bg-surface-muted rounded border px-1.5 py-0.5 text-[10px] font-semibold not-italic">
-            A
+            1
           </kbd>
           ~
           <kbd className="border-border bg-surface-muted rounded border px-1.5 py-0.5 text-[10px] font-semibold not-italic">
-            D
+            {question.choices.length}
           </kbd>
           키로 빠르게 선택할 수 있어요
         </p>

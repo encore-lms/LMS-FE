@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { TestModeBar } from '@/components/dev/TestModeBar'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useMentoring } from '../api/mentoring'
@@ -366,7 +367,8 @@ function MentoringView({ data }: { data: MentoringData }) {
   )
 }
 
-// 데모/시뮬레이션 컨트롤 (FE 목 전용) — BE 연동 시 컴포넌트와 사용처를 함께 제거한다.
+// 데모/시뮬레이션 컨트롤 (FE 목 전용) — 공용 TestModeBar(보라 테스트색)로 감싼다.
+// BE 연동 시 컴포넌트와 사용처를 함께 제거한다.
 // 1) 멘토 배정 전/후 화면 전환  2) "일정 경과" → 진행 중 슬롯 해제(BE 자동 처리 흉내).
 function DemoControls({
   noMentor,
@@ -380,10 +382,10 @@ function DemoControls({
   onElapse: () => void
 }) {
   return (
-    <div className="border-border bg-surface-muted flex flex-wrap items-center gap-2 self-start rounded-lg border border-dashed px-2.5 py-1.5">
-      <span className="text-fg-subtle text-[11px] font-semibold">
-        🔧 데모 · FE 목 전용
-      </span>
+    <TestModeBar
+      note="멘토 배정 전/후 · 일정 경과 시뮬레이션"
+      className="self-start"
+    >
       <div className="flex items-center gap-1">
         {(
           [
@@ -398,8 +400,8 @@ function DemoControls({
             className={cn(
               'rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors',
               noMentor === value
-                ? 'bg-brand text-white'
-                : 'text-fg-muted hover:text-fg',
+                ? 'bg-accent-strong text-white'
+                : 'text-accent-strong/70 hover:text-accent-strong',
             )}
           >
             {label}
@@ -411,11 +413,11 @@ function DemoControls({
           type="button"
           onClick={onElapse}
           title="진행 중 요청/예약의 일정이 지난 상황을 시뮬레이션 (실제로는 BE가 처리)"
-          className="border-border text-fg-muted hover:text-fg rounded-md border border-dashed px-2.5 py-1 text-[11px] font-bold transition-colors"
+          className="border-accent-strong/40 text-accent-strong hover:bg-accent-strong/10 rounded-md border border-dashed px-2.5 py-1 text-[11px] font-bold transition-colors"
         >
           ⏩ 일정 경과 시뮬레이션
         </button>
       )}
-    </div>
+    </TestModeBar>
   )
 }

@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { useToast, type ToastTone } from '@/components/ui/use-toast'
 import { TestModeBar } from '@/components/dev/TestModeBar'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -16,10 +17,6 @@ import {
 import { ConfirmedReservationCard } from './components/ConfirmedReservationCard'
 import { HistoryTable } from './components/HistoryTable'
 import { CancelRequestModal } from './components/CancelRequestModal'
-import {
-  MentoringToast,
-  type MentoringToastTone,
-} from './components/MentoringToast'
 import type {
   MentoringActiveRequest,
   MentoringData,
@@ -29,37 +26,11 @@ import type {
 
 type ToastKey = 'requested' | 'accepted' | 'canceled'
 
-const TOAST: Record<
-  ToastKey,
-  {
-    tone: MentoringToastTone
-    label: string
-    message: string
-    sub: string
-    action: string
-  }
-> = {
-  requested: {
-    tone: 'success',
-    label: 'REQUESTED',
-    message: '멘토링 요청이 제출되었습니다',
-    sub: '팀원 모두가 요청 상태를 볼 수 있습니다. 멘토가 응답하면 조정 제안 또는 확정 예약으로 표시됩니다.',
-    action: '멘토링 보기 →',
-  },
-  accepted: {
-    tone: 'success',
-    label: 'ACCEPTED',
-    message: '조정 제안을 수락했습니다',
-    sub: '확정 예약으로 전환되었습니다. 확정 후 일정·장소 변경이나 취소는 멘토만 가능합니다.',
-    action: '확정 예약 보기 →',
-  },
-  canceled: {
-    tone: 'warning',
-    label: 'CANCELED',
-    message: '멘토링 요청이 취소되었습니다',
-    sub: '진행 중 요청이 없어 새 멘토링 요청을 다시 보낼 수 있습니다.',
-    action: '새 요청 작성 →',
-  },
+// 멘토링 완료 알림 — 공용 토스트(Figma 공통 Toast)로 표시한다.
+const TOAST: Record<ToastKey, { tone: ToastTone; message: string }> = {
+  requested: { tone: 'success', message: '멘토링 요청이 제출되었습니다' },
+  accepted: { tone: 'success', message: '조정 제안을 수락했습니다' },
+  canceled: { tone: 'warning', message: '멘토링 요청이 취소되었습니다' },
 }
 
 const POLICY = [
@@ -105,6 +76,7 @@ export default function MentoringPage() {
 }
 
 function MentoringView({ data }: { data: MentoringData }) {
+  const toast = useToast()
   const [params, setParams] = useSearchParams()
   const noMentor = params.get('state') === 'no-mentor' || !data.mentor.assigned
 
@@ -117,17 +89,19 @@ function MentoringView({ data }: { data: MentoringData }) {
   const [history, setHistory] = useState<MentoringHistoryRow[]>(data.history)
   // 새로 수락한 확정 예약이 "진행 중 슬롯"을 점유 중인지. 초기 목 예약(과거 일정)은 참고용이라 false.
   const [reservationUpcoming, setReservationUpcoming] = useState(false)
-  const [toast, setToast] = useState<ToastKey | null>(() => {
-    const t = params.get('toast') as ToastKey | null
-    return t && TOAST[t] ? t : null
-  })
   const [modalOpen, setModalOpen] = useState(
     params.get('modal') === 'cancel-request',
   )
 
-  const topRef = useRef<HTMLDivElement>(null)
-  const formRef = useRef<HTMLDivElement>(null)
-  const reservationRef = useRef<HTMLDivElement>(null)
+  // 다른 화면에서 ?toast=... 로 진입하면 공용 토스트로 한 번 알린다.
+  const greeted = useRef(false)
+  useEffect(() => {
+    if (greeted.current) return
+    const t = params.get('toast') as ToastKey | null
+    if (!t || !TOAST[t]) return
+    greeted.current = true
+    toast[TOAST[t].tone](TOAST[t].message)
+  }, [params, toast])
 
   // 멘토 미배정: 히어로(배정 대기)·0 통계·비활성 폼·정책만. 진행 요청/예약/기록은 숨김.
   const display: MentoringData = noMentor
@@ -201,14 +175,14 @@ function MentoringView({ data }: { data: MentoringData }) {
         memo: '오프라인이 더 효율적 — 캠퍼스 추천',
       },
     })
-    setToast('requested')
+    toast.success(TOAST.requested.message)
   }
 
   // 요청 취소 / 제안 거절 → 진행 중 요청 해제 + canceled 토스트(폼 활성화).
   const cancelRequest = () => {
     setActiveRequest(null)
     setModalOpen(false)
-    setToast('canceled')
+    toast.warning(TOAST.canceled.message)
   }
 
   // 제안 수락 → 멘토 제안을 확정 예약으로 전환(슬롯 점유 유지) + accepted 토스트.
@@ -229,7 +203,7 @@ function MentoringView({ data }: { data: MentoringData }) {
       setReservationUpcoming(true)
     }
     setActiveRequest(null)
-    setToast('accepted')
+    toast.success(TOAST.accepted.message)
   }
 
   // ─── SIMULATION ONLY (FE 목 전용) — BE 연동 시 이 함수와 호출부 제거 ───
@@ -254,18 +228,6 @@ function MentoringView({ data }: { data: MentoringData }) {
       // 확정 전 요청(요청 대기/조정 제안)은 일정이 지나면 세션 없이 만료된다.
       setActiveRequest(null)
     }
-    setToast(null)
-  }
-
-  // 토스트 액션 — 관련 영역으로 스크롤.
-  const handleToastAction = () => {
-    const target =
-      toast === 'accepted'
-        ? reservationRef.current
-        : toast === 'canceled'
-          ? formRef.current
-          : topRef.current
-    target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   // 데모용 — 멘토 배정 전/후 화면을 임의로 전환 (?state=no-mentor 토글).
@@ -276,24 +238,11 @@ function MentoringView({ data }: { data: MentoringData }) {
     p.delete('toast')
     p.delete('modal')
     setParams(p, { replace: true })
-    setToast(null)
     setModalOpen(false)
   }
 
   return (
-    <div ref={topRef} className="flex flex-col gap-5 p-8">
-      {toast && (
-        <MentoringToast
-          tone={TOAST[toast].tone}
-          label={TOAST[toast].label}
-          message={TOAST[toast].message}
-          sub={TOAST[toast].sub}
-          actionLabel={TOAST[toast].action}
-          onAction={handleToastAction}
-          onClose={() => setToast(null)}
-        />
-      )}
-
+    <div className="flex flex-col gap-5 p-8">
       {/* 데모 컨트롤 (FE 목 전용) — 멘토 배정 전/후 + 일정 경과 시뮬레이션 */}
       <DemoControls
         noMentor={noMentor}
@@ -323,18 +272,14 @@ function MentoringView({ data }: { data: MentoringData }) {
         />
       )}
 
-      <div ref={formRef}>
-        <NewRequestForm
-          disabled={slotTaken || noMentor}
-          variant={noMentor ? 'no-mentor' : 'active'}
-          onSubmit={submitRequest}
-        />
-      </div>
+      <NewRequestForm
+        disabled={slotTaken || noMentor}
+        variant={noMentor ? 'no-mentor' : 'active'}
+        onSubmit={submitRequest}
+      />
 
       {display.reservation && (
-        <div ref={reservationRef}>
-          <ConfirmedReservationCard r={display.reservation} />
-        </div>
+        <ConfirmedReservationCard r={display.reservation} />
       )}
       {display.history.length > 0 && <HistoryTable rows={display.history} />}
 

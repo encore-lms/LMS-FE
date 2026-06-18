@@ -94,7 +94,7 @@ export interface TsCaseDetail {
   categoryTone: Tone
   status: TsStatus
   statusLabel: string
-  presentationLinked: boolean // 발표 연결
+  projectLinked: boolean // 프로젝트 연결
   independent: boolean
   days: string
   situation: string
@@ -104,7 +104,7 @@ export interface TsCaseDetail {
   checklist: TsCheck[]
   timeline: TsTimeline[]
   // 인증 요청 모달
-  certPresentation: string // "Final LMS 프로젝트 · 중간 발표"
+  certProject: string // "주문 관리 MSA 백엔드 · 결제 실패 재시도 이슈"
   certReviewer: string // "클라우드 배포 · 강사 검토"
   certChecklist: string[]
 }

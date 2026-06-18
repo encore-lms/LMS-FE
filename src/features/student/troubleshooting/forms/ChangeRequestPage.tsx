@@ -234,7 +234,7 @@ export default function ChangeRequestPage() {
               <Flag className="size-3" /> 독립 해결
             </span>
             <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
-              <Send className="size-3" /> 발표 연결
+              <Send className="size-3" /> 프로젝트 연결
             </span>
           </div>
           <span className="text-fg-subtle flex shrink-0 items-center gap-1 text-[11px]">

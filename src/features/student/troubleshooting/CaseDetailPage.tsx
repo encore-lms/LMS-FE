@@ -30,7 +30,7 @@ export default function CaseDetailPage() {
   const toast = useToast()
   usePageHeader(
     '트러블슈팅 사례 상세',
-    '작성한 사례를 확인하고 발표 연결과 인증 요청을 상세 단계에서 진행해요.',
+    '작성한 사례를 확인하고 프로젝트 연결과 인증 요청을 상세 단계에서 진행해요.',
   )
 
   if (isPending)
@@ -56,9 +56,9 @@ export default function CaseDetailPage() {
   const isCertified = data.status === 'certified'
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
-  // 발표 연결: 전용 화면이 Figma에 없어(상세 내 stat만 존재) 안내 토스트로 처리.
-  const notifyPresentation = () =>
-    toast.info('발표 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
+  // 프로젝트 연결: 전용 화면이 Figma에 없어(상세 내 stat만 존재) 안내 토스트로 처리.
+  const notifyProjectLink = () =>
+    toast.info('프로젝트 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
   const onCertifyRequested = () => {
     closeModal()
     toast.success('인증 요청이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
@@ -67,9 +67,9 @@ export default function CaseDetailPage() {
   const stats = [
     { label: '인증 상태', value: data.statusLabel, tone: 'accent' as Tone },
     {
-      label: '발표 연결',
-      value: data.presentationLinked ? '연결됨' : '미연결',
-      tone: (data.presentationLinked ? 'success' : 'danger') as Tone,
+      label: '프로젝트 연결',
+      value: data.projectLinked ? '연결됨' : '미연결',
+      tone: (data.projectLinked ? 'success' : 'danger') as Tone,
     },
     {
       label: '독립 해결',
@@ -99,14 +99,14 @@ export default function CaseDetailPage() {
           >
             {data.category}
           </span>
-          {!data.presentationLinked && (
+          {!data.projectLinked && (
             <span
               className={cn(
                 'rounded px-2 py-0.5 text-[11px] font-bold',
                 CHIP.warning,
               )}
             >
-              발표 미연결
+              프로젝트 미연결
             </span>
           )}
         </div>
@@ -120,10 +120,10 @@ export default function CaseDetailPage() {
           </button>
           <button
             type="button"
-            onClick={notifyPresentation}
+            onClick={notifyProjectLink}
             className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
           >
-            발표 연결
+            프로젝트 연결
           </button>
           {isCertified ? (
             <button
@@ -199,7 +199,8 @@ export default function CaseDetailPage() {
               인증 요청 준비
             </span>
             <span className="text-fg-subtle text-[11px]">
-              작성 폼이 아니라 상세 화면에서 발표 연결과 인증 요청을 진행해요.
+              작성 폼이 아니라 상세 화면에서 프로젝트 연결과 인증 요청을
+              진행해요.
             </span>
             {data.checklist.map((c, i) => {
               const done = c.status.tone === 'success'
@@ -224,10 +225,10 @@ export default function CaseDetailPage() {
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
-                onClick={notifyPresentation}
+                onClick={notifyProjectLink}
                 className="border-border text-fg flex-1 rounded-lg border py-2.5 text-[12px] font-semibold"
               >
-                발표 연결
+                프로젝트 연결
               </button>
               {isCertified ? (
                 <button
@@ -334,9 +335,9 @@ function CertifyModal({
     >
       <div className="flex flex-col gap-4">
         <p className="text-fg-muted -mt-1 text-[12px]">
-          발표 연결과 체크리스트를 확인하고 강사 검토 큐로 제출합니다.
+          프로젝트 연결과 체크리스트를 확인하고 강사 검토 큐로 제출합니다.
         </p>
-        <Field label="발표 연결" value={data.certPresentation} />
+        <Field label="프로젝트 연결" value={data.certProject} />
         <Field label="교과목/검토자" value={data.certReviewer} />
         <div className="flex flex-col gap-2">
           <span className="text-fg text-[12px] font-bold">

@@ -261,7 +261,7 @@ export default function TroubleshootingListPage() {
                 </span>
                 {c.repLinked && (
                   <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
-                    <Send className="size-3" /> 발표 연결
+                    <Send className="size-3" /> 프로젝트 연결
                   </span>
                 )}
               </div>

@@ -332,7 +332,7 @@ const mockCase: TsCaseDetail = {
   categoryTone: 'accent',
   status: 'draft',
   statusLabel: '작성 중',
-  presentationLinked: false,
+  projectLinked: false,
   independent: true,
   days: '3일',
   situation:
@@ -352,7 +352,7 @@ const mockCase: TsCaseDetail = {
     },
     { label: '첨부 근거 2개 등록', status: { label: '완료', tone: 'success' } },
     {
-      label: '발표 프로젝트 연결 필요',
+      label: '프로젝트 연결 필요',
       status: { label: '필요', tone: 'warning' },
     },
     {
@@ -380,11 +380,11 @@ const mockCase: TsCaseDetail = {
       state: 'todo',
     },
   ],
-  certPresentation: 'Final LMS 프로젝트 · 중간 발표',
+  certProject: '주문 관리 MSA 백엔드 · 인증 토큰 만료 이슈',
   certReviewer: '클라우드 배포 · 강사 검토',
   certChecklist: [
     '상황/해결/결과 3개 항목이 모두 작성됨',
-    '발표 프로젝트 또는 교과목이 연결됨',
+    '프로젝트 또는 교과목이 연결됨',
     '첨부 근거와 소요 일수가 확인됨',
     '동일 사례로 진행 중인 요청이 없음',
   ],
@@ -398,7 +398,7 @@ const mockCaseCertified: TsCaseDetail = {
   categoryTone: 'info',
   status: 'certified',
   statusLabel: '인증 완료',
-  presentationLinked: true,
+  projectLinked: true,
   independent: true,
   days: '3일',
   situation:
@@ -418,7 +418,7 @@ const mockCaseCertified: TsCaseDetail = {
     },
     { label: '첨부 근거 2개 등록', status: { label: '완료', tone: 'success' } },
     {
-      label: '발표 프로젝트 연결됨',
+      label: '프로젝트 연결됨',
       status: { label: '완료', tone: 'success' },
     },
     { label: '인증 완료(잠금)', status: { label: '완료', tone: 'success' } },
@@ -438,14 +438,21 @@ const mockCaseCertified: TsCaseDetail = {
       state: 'current',
     },
   ],
-  certPresentation: 'Final LMS 프로젝트 · 중간 발표',
+  certProject: '주문 관리 MSA 백엔드 · Kafka 컨슈머 지연 이슈',
   certReviewer: '클라우드 배포 · 강사 검토',
   certChecklist: [
     '상황/해결/결과 3개 항목이 모두 작성됨',
-    '발표 프로젝트 또는 교과목이 연결됨',
+    '프로젝트 또는 교과목이 연결됨',
     '첨부 근거와 소요 일수가 확인됨',
     '동일 사례로 진행 중인 요청이 없음',
   ],
+  // 이미 프로젝트 'Kafka 컨슈머 지연' 이슈에 연결된 상태(TS_PROJECT_LINK 시 표시).
+  projectLink: {
+    projectId: 'p1',
+    projectTitle: '주문 관리 MSA 백엔드',
+    issueId: 'iss-p1-1',
+    issueTitle: 'Kafka 컨슈머 지연',
+  },
 }
 
 // 인증 완료 사례 id 집합 — 상세 분기에 사용.

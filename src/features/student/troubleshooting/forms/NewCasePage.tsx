@@ -223,8 +223,8 @@ export default function NewCasePage() {
             상황·해결·결과로 기록하세요
           </span>
           <span className="text-[12px] text-white/80">
-            상황 · 해결 · 결과 3개 항목을 채우면 사례를 저장할 수 있습니다. 발표
-            연결과 인증 요청은 저장 후 진행합니다.
+            상황 · 해결 · 결과 3개 항목을 채우면 사례를 저장할 수 있습니다.
+            프로젝트 연결과 인증 요청은 저장 후 진행합니다.
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -573,7 +573,7 @@ export default function NewCasePage() {
             {files.length}개
           </span>
           <span className="text-[11px] text-white/70">
-            사례 저장 후 발표 연결과 인증 요청은 상세 화면에서 진행합니다
+            사례 저장 후 프로젝트 연결과 인증 요청은 상세 화면에서 진행합니다
           </span>
         </div>
         <div className="flex items-center gap-2">

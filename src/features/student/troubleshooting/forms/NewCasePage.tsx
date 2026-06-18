@@ -15,6 +15,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { tsKeys } from '../queryKeys'
+import { buildCaseDetail } from '../detail'
 import {
   TS_CATEGORIES,
   type TsCase,
@@ -163,8 +164,9 @@ export default function NewCasePage() {
   const removeFile = (id: string) =>
     setFiles((p) => p.filter((f) => f.id !== id))
 
-  // 제출 — 새 사례를 만들어 목록 캐시 맨 앞에 추가하고 목록으로 이동.
-  const submit = () => {
+  // 저장 — 새 사례를 만들어 목록 캐시 맨 앞에 추가. openDetail이면 그 사례 상세로
+  // (프로젝트 연결·인증 요청 진행), 아니면 목록으로(이어 작성 상태로 남김).
+  const save = (openDetail: boolean) => {
     // 직접 추가한 카테고리는 '기타'와 동일하게 etc 키·success 톤으로 저장.
     const isCustom = customCategories.includes(category)
     const tone =
@@ -193,7 +195,13 @@ export default function NewCasePage() {
     queryClient.setQueryData<TsListData>(tsKeys.list(), (old) =>
       old ? { ...old, cases: [newCase, ...old.cases] } : old,
     )
-    navigate('/student/troubleshooting')
+    // 상세를 실제 입력 내용으로 열 수 있도록 상세 캐시도 시드(MSW 폴백 대신).
+    queryClient.setQueryData(tsKeys.case(newCase.id), buildCaseDetail(newCase))
+    navigate(
+      openDetail
+        ? `/student/troubleshooting/${newCase.id}`
+        : '/student/troubleshooting',
+    )
   }
 
   return (
@@ -579,14 +587,14 @@ export default function NewCasePage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={submit}
+            onClick={() => save(false)}
             className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold"
           >
             임시 저장
           </button>
           <button
             type="button"
-            onClick={submit}
+            onClick={() => save(true)}
             className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold"
           >
             사례 저장 →

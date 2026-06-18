@@ -21,5 +21,8 @@ export function useTsCase(id: string) {
       apiClient
         .get<TsCaseDetail>(`/student/troubleshooting/${id}`)
         .then((r) => r.data),
+    // 새 사례 작성 시 시드한 상세(setQueryData)와 인증 요청 상태 전환이 세션 내
+    // 유지되도록 재요청 억제(새로고침 시 mock 복원) — 목록(useTsList)과 동일 정책.
+    staleTime: Infinity,
   })
 }

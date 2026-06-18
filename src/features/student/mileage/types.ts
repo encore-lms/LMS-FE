@@ -62,7 +62,7 @@ export interface MileageProduct {
   id: string
   name: string
   badges: Badge[]
-  priceType: string // "유연가" | "고정가"
+  priceType: string // "직접 입력" | "고정가"
   price?: string // "10,000M" (고정가)
   desc: string
   limit: string // "58,000"

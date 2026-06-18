@@ -124,7 +124,7 @@ export default function ProductsPage() {
           </span>
         </div>
         <span className="text-fg-subtle text-[12px]">
-          운영자 등록 상품 + 유연가 신청 가능
+          운영자 등록 상품 + 직접 신청 가능
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -219,7 +219,7 @@ export default function ProductsPage() {
         <div className="flex items-center gap-2">
           <span className="text-fg text-[15px] font-bold">직접 신청</span>
           <span className="bg-accent-bg text-accent-strong rounded px-1.5 py-0.5 text-[10px] font-bold">
-            유연가
+            가격 직접 입력
           </span>
           <span className="text-fg-subtle text-[11px]">
             매니저 검토 1영업일
@@ -300,7 +300,7 @@ export default function ProductsPage() {
           </div>
         </div>
         <div className="bg-info-bg/60 text-fg-muted rounded-xl p-3 text-[11px]">
-          ⓘ 유연가 신청은 매니저 검토 후 마일리지가 차감됩니다. 승인되지 않으면
+          ⓘ 직접 신청은 매니저 검토 후 마일리지가 차감됩니다. 승인되지 않으면
           마일리지는 그대로 보존됩니다.
         </div>
       </section>

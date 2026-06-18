@@ -164,9 +164,10 @@ export default function NewCasePage() {
   const removeFile = (id: string) =>
     setFiles((p) => p.filter((f) => f.id !== id))
 
-  // 저장 — 새 사례를 만들어 목록 캐시 맨 앞에 추가. openDetail이면 그 사례 상세로
-  // (프로젝트 연결·인증 요청 진행), 아니면 목록으로(이어 작성 상태로 남김).
-  const save = (openDetail: boolean) => {
+  // 저장 — 새 사례를 만들어 목록 캐시 맨 앞에 추가하고 목록(/student/troubleshooting)으로
+  // 이동. asDraft=true(임시 저장) → 작성 중 '이어 작성', false(사례 저장) → 인증 완료
+  // '사례 열기'(목록에서 사례 열기 → 변경 제안).
+  const save = (asDraft: boolean) => {
     // 직접 추가한 카테고리는 '기타'와 동일하게 etc 키·success 톤으로 저장.
     const isCustom = customCategories.includes(category)
     const tone =
@@ -177,12 +178,12 @@ export default function NewCasePage() {
       category,
       categoryKey: CATEGORY_KEY[category] ?? 'etc',
       categoryTone: tone,
-      status: 'draft',
-      statusLabel: '작성 중',
+      status: asDraft ? 'draft' : 'certified',
+      statusLabel: asDraft ? '작성 중' : '인증 완료',
       independent,
       days: days.trim() || '진행 중',
       repLinked: false,
-      accentTone: tone,
+      accentTone: asDraft ? tone : 'success',
       title: title.trim() || '제목 없는 사례',
       createdAt: '작성 방금',
       updatedAt: '최근 수정 방금',
@@ -190,18 +191,14 @@ export default function NewCasePage() {
       resolution: star.resolution,
       result: star.result,
       tags,
-      actionLabel: '이어 작성',
+      actionLabel: asDraft ? '이어 작성' : '사례 열기',
     }
     queryClient.setQueryData<TsListData>(tsKeys.list(), (old) =>
       old ? { ...old, cases: [newCase, ...old.cases] } : old,
     )
-    // 상세를 실제 입력 내용으로 열 수 있도록 상세 캐시도 시드(MSW 폴백 대신).
+    // 상세도 실제 입력 내용으로 열 수 있도록 상세 캐시 시드(MSW 폴백 대신).
     queryClient.setQueryData(tsKeys.case(newCase.id), buildCaseDetail(newCase))
-    navigate(
-      openDetail
-        ? `/student/troubleshooting/${newCase.id}`
-        : '/student/troubleshooting',
-    )
+    navigate('/student/troubleshooting')
   }
 
   return (
@@ -581,20 +578,21 @@ export default function NewCasePage() {
             {files.length}개
           </span>
           <span className="text-[11px] text-white/70">
-            사례 저장 후 프로젝트 연결과 인증 요청은 상세 화면에서 진행합니다
+            임시 저장은 ‘이어 작성’으로, 사례 저장은 ‘사례 열기(변경 제안)’로
+            목록에 추가됩니다
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => save(false)}
+            onClick={() => save(true)}
             className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold"
           >
             임시 저장
           </button>
           <button
             type="button"
-            onClick={() => save(true)}
+            onClick={() => save(false)}
             className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold"
           >
             사례 저장 →

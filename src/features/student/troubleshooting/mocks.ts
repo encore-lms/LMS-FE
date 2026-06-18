@@ -1,5 +1,12 @@
 import { http, HttpResponse } from 'msw'
-import type { TsCaseDetail, TsListData } from './types'
+import type {
+  TsCase,
+  TsCaseDetail,
+  TsListData,
+  TsProjectLink,
+  TsStatus,
+  TsTimeline,
+} from './types'
 
 // 트러블슈팅 mock — 기능 로컬. 자동 수집 규약: `export const handlers`.
 // Figma 목록(360:1297)·상세(3283:5853) 시안 재현.
@@ -325,151 +332,164 @@ const mockList: TsListData = {
   shownLabel: '12건 중 12건 표시',
 }
 
-const mockCase: TsCaseDetail = {
-  id: 'ts3',
-  title: 'API 인증 토큰 만료로 배포 후 요청 실패',
-  category: '배포·인프라',
-  categoryTone: 'accent',
-  status: 'draft',
-  statusLabel: '작성 중',
-  projectLinked: false,
-  independent: true,
-  days: '3일',
-  situation:
-    '배포 직후 모든 API 요청이 401로 실패했습니다. 로컬에서는 정상 동작했지만 운영 환경에서 인증 토큰 만료 시간이 즉시 지난 값으로 계산되었습니다.',
-  resolution:
-    '서버 시간대 설정과 토큰 만료 계산 로직을 비교해 UTC/KST 변환 누락을 확인했습니다. 만료 시간 저장을 UTC 기준으로 통일하고 배포 환경 변수 검증 체크를 추가했습니다.',
-  result:
-    '재배포 후 401 오류가 사라졌고, 인증 실패 재현 테스트와 배포 체크리스트가 추가되었습니다. 같은 이슈 재발 시 배포 전 검증 단계에서 차단할 수 있습니다.',
-  attachments: [
-    { label: 'server-log.txt', kind: 'file' },
-    { label: 'fix-pr 링크', kind: 'link' },
-  ],
-  checklist: [
-    {
-      label: '상황/해결/결과 입력 완료',
-      status: { label: '완료', tone: 'success' },
-    },
-    { label: '첨부 근거 2개 등록', status: { label: '완료', tone: 'success' } },
-    {
-      label: '프로젝트 연결 필요',
-      status: { label: '필요', tone: 'warning' },
-    },
-    {
-      label: '중복 인증 요청 없음',
-      status: { label: '완료', tone: 'success' },
-    },
-  ],
-  timeline: [
-    {
-      key: 'draft',
-      label: '작성 중 (draft)',
-      sub: '현재 상태',
-      state: 'current',
-    },
-    {
-      key: 'submitted',
-      label: '검토 중 (submitted)',
-      sub: '인증 요청 후 전환',
-      state: 'todo',
-    },
-    {
-      key: 'certified',
-      label: '인증 완료 (certified)',
-      sub: '강사 승인 후 잠금',
-      state: 'todo',
-    },
-  ],
-  certProject: '주문 관리 MSA 백엔드 · 인증 토큰 만료 이슈',
-  certReviewer: '클라우드 배포 · 강사 검토',
-  certChecklist: [
-    '상황/해결/결과 3개 항목이 모두 작성됨',
-    '프로젝트 또는 교과목이 연결됨',
-    '첨부 근거와 소요 일수가 확인됨',
-    '동일 사례로 진행 중인 요청이 없음',
-  ],
-}
+// ── 상세 — 목록 사례에서 파생(사례별 일관성) ──
+// 상세 전용 객체를 따로 두지 않고, 목록 카드(mockList.cases)와 같은 사례를 입력으로
+// 상태별 타임라인·체크리스트·프로젝트 연결을 규칙으로 생성한다. 어떤 사례를 클릭해도
+// 제목·상태·내용이 목록과 일치한다.
 
-// 인증 완료 사례 상세 — 변경 제안 진입 컨텍스트(certified → 변경 제안만 수정 가능).
-const mockCaseCertified: TsCaseDetail = {
-  id: 'ts1',
-  title: 'Kafka 컨슈머 리밸런싱으로 메시지 중복 처리',
-  category: 'DB',
-  categoryTone: 'info',
-  status: 'certified',
-  statusLabel: '인증 완료',
-  projectLinked: true,
-  independent: true,
-  days: '3일',
-  situation:
-    '스케일아웃 시 컨슈머 리밸런싱이 발생하면서 동일 주문 이벤트가 두 번 처리되어 멱등성이 깨졌습니다.',
-  resolution:
-    '멱등성 보장키 + ack 처리 패턴을 재설계하고, 외부 키 기반 dedup 테이블을 적용했습니다.',
-  result:
-    '중복 처리 0건/주 누적, 결제 실패율 8% → 0.4%. 같은 이벤트 그룹 중복도 제거했습니다.',
-  attachments: [
-    { label: 'kafka-consumer-config.yml', kind: 'file' },
-    { label: 'fix-pr 링크', kind: 'link' },
-  ],
-  checklist: [
-    {
-      label: '상황/해결/결과 입력 완료',
-      status: { label: '완료', tone: 'success' },
-    },
-    { label: '첨부 근거 2개 등록', status: { label: '완료', tone: 'success' } },
-    {
-      label: '프로젝트 연결됨',
-      status: { label: '완료', tone: 'success' },
-    },
-    { label: '인증 완료(잠금)', status: { label: '완료', tone: 'success' } },
-  ],
-  timeline: [
-    { key: 'draft', label: '작성 중 (draft)', sub: '작성 완료', state: 'done' },
-    {
-      key: 'submitted',
-      label: '검토 중 (submitted)',
-      sub: '강사 검토 완료',
-      state: 'done',
-    },
-    {
-      key: 'certified',
-      label: '인증 완료 (certified)',
-      sub: '현재 상태 · 변경 제안으로만 수정',
-      state: 'current',
-    },
-  ],
-  certProject: '주문 관리 MSA 백엔드 · Kafka 컨슈머 지연 이슈',
-  certReviewer: '클라우드 배포 · 강사 검토',
-  certChecklist: [
-    '상황/해결/결과 3개 항목이 모두 작성됨',
-    '프로젝트 또는 교과목이 연결됨',
-    '첨부 근거와 소요 일수가 확인됨',
-    '동일 사례로 진행 중인 요청이 없음',
-  ],
-  // 이미 프로젝트 'Kafka 컨슈머 지연' 이슈에 연결된 상태(TS_PROJECT_LINK 시 표시).
-  projectLink: {
+// repLinked 사례만 프로젝트(이슈)에 연결됨 — 목록 카드의 '프로젝트 연결' 표시와 일치.
+const PROJECT_LINK_BY_ID: Record<string, TsProjectLink> = {
+  ts1: {
     projectId: 'p1',
     projectTitle: '주문 관리 MSA 백엔드',
     issueId: 'iss-p1-1',
     issueTitle: 'Kafka 컨슈머 지연',
   },
+  ts6: {
+    projectId: 'p1',
+    projectTitle: '주문 관리 MSA 백엔드',
+    issueId: 'iss-p1-3',
+    issueTitle: 'Docker 배포 환경변수 누락',
+  },
+  ts9: {
+    projectId: 'p2',
+    projectTitle: '실시간 채팅 서버',
+    issueId: 'iss-p2-1',
+    issueTitle: 'WebSocket 재연결 폭주',
+  },
 }
 
-// 인증 완료 사례 id 집합 — 상세 분기에 사용.
-const CERTIFIED_IDS = new Set([
-  'ts1',
-  'ts4',
-  'ts6',
-  'ts8',
-  'ts9',
-  'ts10',
-  'ts11',
-  'ts12',
-])
+const TIMELINE_STATE: Record<TsStatus, Record<string, TsTimeline['state']>> = {
+  draft: { draft: 'current', submitted: 'todo', certified: 'todo' },
+  reviewing: { draft: 'done', submitted: 'current', certified: 'todo' },
+  certified: { draft: 'done', submitted: 'done', certified: 'current' },
+}
+
+function buildTimeline(status: TsStatus): TsTimeline[] {
+  const s = TIMELINE_STATE[status]
+  return [
+    {
+      key: 'draft',
+      label: '작성 중 (draft)',
+      sub: s.draft === 'current' ? '현재 상태' : '작성 완료',
+      state: s.draft,
+    },
+    {
+      key: 'submitted',
+      label: '검토 중 (submitted)',
+      sub:
+        s.submitted === 'current'
+          ? '현재 상태 · 강사 검토 대기'
+          : s.submitted === 'done'
+            ? '강사 검토 완료'
+            : '인증 요청 후 전환',
+      state: s.submitted,
+    },
+    {
+      key: 'certified',
+      label: '인증 완료 (certified)',
+      sub:
+        s.certified === 'current'
+          ? '현재 상태 · 변경 제안으로만 수정'
+          : '강사 승인 후 잠금',
+      state: s.certified,
+    },
+  ]
+}
+
+function buildDetail(c: TsCase): TsCaseDetail {
+  const projectLink = PROJECT_LINK_BY_ID[c.id] ?? null
+  const linked = !!projectLink
+  const tagWord = (c.tags[0] ?? '#evidence').replace(/^#/, '')
+  return {
+    id: c.id,
+    title: c.title,
+    category: c.category,
+    categoryTone: c.categoryTone,
+    status: c.status,
+    statusLabel: c.statusLabel,
+    projectLinked: linked,
+    independent: c.independent,
+    days: c.days,
+    situation: c.situation,
+    resolution: c.resolution,
+    result: c.result,
+    attachments: [
+      { label: `${tagWord}-evidence.log`, kind: 'file' },
+      { label: 'fix-pr 링크', kind: 'link' },
+    ],
+    checklist: [
+      {
+        label: '상황/해결/결과 입력 완료',
+        status: { label: '완료', tone: 'success' },
+      },
+      {
+        label: '첨부 근거 2개 등록',
+        status: { label: '완료', tone: 'success' },
+      },
+      linked
+        ? {
+            label: '프로젝트 연결됨',
+            status: { label: '완료', tone: 'success' },
+          }
+        : {
+            label: '프로젝트 연결 필요',
+            status: { label: '필요', tone: 'warning' },
+          },
+      c.status === 'certified'
+        ? {
+            label: '인증 완료(잠금)',
+            status: { label: '완료', tone: 'success' },
+          }
+        : {
+            label: '중복 인증 요청 없음',
+            status: { label: '완료', tone: 'success' },
+          },
+    ],
+    timeline: buildTimeline(c.status),
+    certProject: projectLink
+      ? `${projectLink.projectTitle} · ${projectLink.issueTitle ?? '프로젝트만 연결'}`
+      : '연결된 프로젝트 없음',
+    certReviewer: `${c.category} · 강사 검토`,
+    certChecklist: [
+      '상황/해결/결과 3개 항목이 모두 작성됨',
+      '프로젝트 또는 교과목이 연결됨',
+      '첨부 근거와 소요 일수가 확인됨',
+      '동일 사례로 진행 중인 요청이 없음',
+    ],
+    projectLink,
+  }
+}
+
+// 클라이언트에서 새로 만든 사례(서버 목록에 없는 id)용 폴백 — 작성 중 빈 상세.
+function buildFallback(id: string): TsCaseDetail {
+  return buildDetail({
+    id,
+    category: '기타',
+    categoryKey: 'etc',
+    categoryTone: 'success',
+    status: 'draft',
+    statusLabel: '작성 중',
+    independent: false,
+    days: '진행 중',
+    repLinked: false,
+    accentTone: 'accent',
+    title: '작성 중 사례',
+    createdAt: '작성 방금',
+    updatedAt: '최근 수정 방금',
+    situation: '작성 중인 사례입니다. 상황을 입력하세요.',
+    resolution: '해결 과정을 입력하세요.',
+    result: '결과와 학습 내용을 입력하세요.',
+    tags: [],
+    actionLabel: '이어 작성',
+  })
+}
 
 export const handlers = [
   http.get('/api/student/troubleshooting', () => ok(mockList)),
-  http.get('/api/student/troubleshooting/:id', ({ params }) =>
-    ok(CERTIFIED_IDS.has(String(params.id)) ? mockCaseCertified : mockCase),
-  ),
+  http.get('/api/student/troubleshooting/:id', ({ params }) => {
+    const id = String(params.id)
+    const found = mockList.cases.find((c) => c.id === id)
+    return ok(found ? buildDetail(found) : buildFallback(id))
+  }),
 ]

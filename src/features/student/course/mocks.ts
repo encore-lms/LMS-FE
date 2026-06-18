@@ -184,6 +184,7 @@ const mockMaterials: CourseMaterials = {
       sizeLabel: '2.4MB',
       favorited: true,
       canPreview: true,
+      fileUrl: '/materials/sample.pdf',
     },
     {
       id: 'm2',
@@ -196,6 +197,7 @@ const mockMaterials: CourseMaterials = {
       sizeLabel: '0.9MB',
       favorited: false,
       canPreview: false,
+      fileUrl: '/materials/sample.docx',
     },
     {
       id: 'm3',
@@ -208,6 +210,7 @@ const mockMaterials: CourseMaterials = {
       sizeLabel: '1.2MB',
       favorited: false,
       canPreview: false,
+      fileUrl: '/materials/sample.zip',
     },
     {
       id: 'm4',
@@ -219,6 +222,8 @@ const mockMaterials: CourseMaterials = {
       favorited: false,
       canPreview: false,
       isExternalLink: true,
+      fileUrl:
+        'https://docs.spring.io/spring-framework/reference/data-access/transaction.html',
     },
     {
       id: 'm5',
@@ -231,6 +236,7 @@ const mockMaterials: CourseMaterials = {
       sizeLabel: '3.1MB',
       favorited: true,
       canPreview: true,
+      fileUrl: '/materials/sample.pdf',
     },
     {
       id: 'm6',
@@ -243,6 +249,7 @@ const mockMaterials: CourseMaterials = {
       sizeLabel: '1.1MB',
       favorited: true,
       canPreview: true,
+      fileUrl: '/materials/sample.pdf',
     },
     {
       id: 'm7',
@@ -255,6 +262,7 @@ const mockMaterials: CourseMaterials = {
       sizeLabel: '0.8MB',
       favorited: false,
       canPreview: false,
+      fileUrl: '/materials/sample.docx',
     },
     {
       id: 'm8',
@@ -266,6 +274,7 @@ const mockMaterials: CourseMaterials = {
       favorited: false,
       canPreview: false,
       isExternalLink: true,
+      fileUrl: 'https://roadmap.sh/backend',
     },
   ],
 }

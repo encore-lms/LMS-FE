@@ -106,6 +106,7 @@ export interface MaterialItem {
   favorited: boolean
   canPreview: boolean // PDF/이미지면 '미리보기' 노출
   isExternalLink?: boolean // LINK면 '다운로드' 대신 '링크 열기'
+  fileUrl?: string // 파일 URL(다운로드/미리보기) 또는 외부 링크 주소. 없으면 버튼 비활성
 }
 
 /** 카테고리 칩 1개 (전체 + 4분류) */

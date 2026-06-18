@@ -24,6 +24,31 @@ const CATEGORY_PILL: Record<MaterialCategory, { cls: string; label: string }> =
     shared: { cls: 'bg-accent-bg text-accent-strong', label: '학생 공유' },
   }
 
+// 다운로드 파일명 확장자 — 제목 + 형식으로 저장 파일명을 만든다.
+const FILE_EXT: Record<MaterialFileType, string> = {
+  PDF: 'pdf',
+  DOC: 'docx',
+  ZIP: 'zip',
+  IMG: 'png',
+  VIDEO: 'mp4',
+  LINK: '',
+}
+
+function openInNewTab(url: string) {
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+// 같은 출처(public/materials/*) 파일은 download 속성으로 저장된다.
+function downloadFile(url: string, filename: string) {
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
 function Sep() {
   return <span className="bg-border h-3 w-px shrink-0" />
 }
@@ -53,6 +78,20 @@ export function MaterialRow({
   onToggleFavorite: (id: string) => void
 }) {
   const cat = CATEGORY_PILL[item.category]
+  const hasFile = !!item.fileUrl
+
+  const handlePreview = () => {
+    if (item.fileUrl) openInNewTab(item.fileUrl)
+  }
+  const handleDownloadOrOpen = () => {
+    if (!item.fileUrl) return
+    if (item.isExternalLink) {
+      openInNewTab(item.fileUrl)
+    } else {
+      downloadFile(item.fileUrl, `${item.title}.${FILE_EXT[item.fileType]}`)
+    }
+  }
+
   return (
     <div className="flex w-full items-center gap-3.5 px-6 py-3.5">
       <FileTypeIcon fileType={item.fileType} />
@@ -132,14 +171,18 @@ export function MaterialRow({
         {item.canPreview && (
           <button
             type="button"
-            className="border-border text-fg-muted rounded-lg border px-3.5 py-[7px] text-[12px] font-medium"
+            onClick={handlePreview}
+            disabled={!hasFile}
+            className="border-border text-fg-muted rounded-lg border px-3.5 py-[7px] text-[12px] font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
             미리보기
           </button>
         )}
         <button
           type="button"
-          className="bg-brand rounded-lg px-3.5 py-[7px] text-[12px] font-bold text-white"
+          onClick={handleDownloadOrOpen}
+          disabled={!hasFile}
+          className="bg-brand rounded-lg px-3.5 py-[7px] text-[12px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {item.isExternalLink ? '링크 열기' : '다운로드'}
         </button>

@@ -185,13 +185,12 @@ export default function CaseDetailPage() {
   }
   const onCertifyRequested = () => {
     closeModal()
-    applyStatus('reviewing')
-    toast.success('인증 요청이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
-    // 강사 승인 시뮬레이션(데모) — 잠시 후 검토 중 → 인증 완료로 전환.
-    window.setTimeout(() => {
-      applyStatus('certified')
-      toast.success('강사가 인증을 승인했어요. 인증 완료로 전환됐어요.')
-    }, 3000)
+    // 인증 요청 즉시 인증 완료 처리(강사 승인 단계 생략) — 사례가 인증 완료로 추가된다.
+    // 이후 목록에서 '사례 열기' → 변경 제안으로 이어진다.
+    applyStatus('certified')
+    toast.success(
+      '인증이 완료됐어요. 목록에서 ‘사례 열기 → 변경 제안’으로 이어집니다.',
+    )
   }
 
   const stats = [

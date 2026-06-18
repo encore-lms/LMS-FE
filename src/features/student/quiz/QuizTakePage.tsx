@@ -19,11 +19,10 @@ function fmt(sec: number) {
 }
 
 // 이탈(전체화면 해제) 정책:
-//  - 1~3회: 경고. WARNING_GRACE_SECONDS(10초) 잠금 후 "문제로 돌아가기"로 이어서 응시.
+//  - 1~3회: 경고. "문제로 돌아가기"를 바로 눌러 즉시 이어서 응시(강제 대기 없음).
 //  - 4회째부터: SUBMIT_GRACE_SECONDS(5초) 카운트다운 뒤 자동 제출(시험 종료).
 // 어느 경우든 이탈한 동안 시험 타이머는 계속 흐른다(시간 손해 = 추가 억제).
 const VIOLATION_LIMIT = 3
-const WARNING_GRACE_SECONDS = 10
 const SUBMIT_GRACE_SECONDS = 5
 
 /**
@@ -132,17 +131,17 @@ export default function QuizTakePage() {
     if (lock.isFullscreen) enteredFsOnceRef.current = true
   }, [lock.isFullscreen])
 
-  // 진입 후 전체화면이 풀리면(ESC 등) 유예 카운트다운 시작 → 복귀하면 취소.
-  // 1~3회는 10초, 4회째부터는 5초로 카운트다운한다.
+  // 진입 후 전체화면이 풀리면(ESC 등): 4회째(이탈 > 3)부터만 유예 카운트다운 후 자동 제출.
+  // 1~3회(경고)는 카운트다운 없이(graceLeft=null) 재진입 오버레이의 버튼이 바로 활성화 → 즉시 복귀.
   useEffect(() => {
     const escaped =
       lock.phase === 'active' && !lock.isFullscreen && enteredFsOnceRef.current
-    if (!escaped) {
+    const fatal = lock.violations > VIOLATION_LIMIT
+    if (!escaped || !fatal) {
       setGraceLeft(null)
       return
     }
-    const fatal = lock.violations > VIOLATION_LIMIT
-    setGraceLeft(fatal ? SUBMIT_GRACE_SECONDS : WARNING_GRACE_SECONDS)
+    setGraceLeft(SUBMIT_GRACE_SECONDS)
     const t = setInterval(() => {
       setGraceLeft((s) => (s === null ? s : Math.max(0, s - 1)))
     }, 1000)
@@ -188,7 +187,6 @@ export default function QuizTakePage() {
         total={total}
         timeLimitMinutes={quiz?.timeLimitMinutes ?? 0}
         violationLimit={VIOLATION_LIMIT}
-        warningSeconds={WARNING_GRACE_SECONDS}
         submitSeconds={SUBMIT_GRACE_SECONDS}
         onStart={() => void lock.start()}
       />

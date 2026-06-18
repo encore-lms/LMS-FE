@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
@@ -8,7 +9,15 @@ import { usePageHeader } from '@/shared/store'
 import { useTsCase } from '../api/troubleshooting'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import type { TsCaseDetail, TsProjectLink, Tone } from './types'
+import { tsKeys } from './queryKeys'
+import type {
+  TsCaseDetail,
+  TsListData,
+  TsProjectLink,
+  TsStatus,
+  TsTimeline,
+  Tone,
+} from './types'
 import { TS_PROJECT_LINK } from './config'
 import { ProjectLinkModal } from './components/ProjectLinkModal'
 
@@ -24,6 +33,33 @@ const CHIP: Record<Tone, string> = {
   success: 'bg-success-bg text-success',
 }
 
+// 상태 전환(데모 상태머신) — 목록 카드 표시값과 상세 타임라인을 함께 맞춘다.
+const STATUS_FLOW: Record<
+  TsStatus,
+  { statusLabel: string; actionLabel: string; accentTone: Tone }
+> = {
+  draft: {
+    statusLabel: '작성 중',
+    actionLabel: '이어 작성',
+    accentTone: 'accent',
+  },
+  reviewing: {
+    statusLabel: '검토 중',
+    actionLabel: '사례 열기',
+    accentTone: 'warning',
+  },
+  certified: {
+    statusLabel: '인증 완료',
+    actionLabel: '사례 열기',
+    accentTone: 'success',
+  },
+}
+const TIMELINE_STATE: Record<TsStatus, Record<string, TsTimeline['state']>> = {
+  draft: { draft: 'current', submitted: 'todo', certified: 'todo' },
+  reviewing: { draft: 'done', submitted: 'current', certified: 'todo' },
+  certified: { draft: 'done', submitted: 'done', certified: 'current' },
+}
+
 export default function CaseDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
@@ -36,6 +72,7 @@ export default function CaseDetailPage() {
     TsProjectLink | null | undefined
   >(undefined)
   const toast = useToast()
+  const queryClient = useQueryClient()
   usePageHeader(
     '트러블슈팅 사례 상세',
     '작성한 사례를 확인하고 프로젝트 연결과 인증 요청을 상세 단계에서 진행해요.',
@@ -60,10 +97,46 @@ export default function CaseDetailPage() {
     if (params.get('modal')) setParams({}, { replace: true })
   }
 
-  // 인증 완료 사례는 인증 요청 대신 변경 제안으로만 수정 가능.
+  // 인증 완료 사례는 인증 요청 대신 변경 제안으로만 수정 가능. 검토 중은 대기.
   const isCertified = data.status === 'certified'
+  const isReviewing = data.status === 'reviewing'
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
+  // 상태 전환 — 목록 카드(표시값)와 상세(상태·타임라인) 캐시를 함께 갱신(데모 상태머신).
+  const applyStatus = (status: TsStatus) => {
+    const meta = STATUS_FLOW[status]
+    queryClient.setQueryData<TsListData>(tsKeys.list(), (old) =>
+      old
+        ? {
+            ...old,
+            cases: old.cases.map((c) =>
+              c.id === id
+                ? {
+                    ...c,
+                    status,
+                    statusLabel: meta.statusLabel,
+                    actionLabel: meta.actionLabel,
+                    accentTone: meta.accentTone,
+                  }
+                : c,
+            ),
+          }
+        : old,
+    )
+    queryClient.setQueryData<TsCaseDetail>(tsKeys.case(id), (old) =>
+      old
+        ? {
+            ...old,
+            status,
+            statusLabel: meta.statusLabel,
+            timeline: old.timeline.map((t) => ({
+              ...t,
+              state: TIMELINE_STATE[status][t.key] ?? t.state,
+            })),
+          }
+        : old,
+    )
+  }
   // 프로젝트(이슈 단위) 연결 상태 — linkOverride(이 화면 변경)가 있으면 그것, 없으면 서버 값.
   const link: TsProjectLink | null =
     linkOverride !== undefined ? linkOverride : (data.projectLink ?? null)
@@ -112,7 +185,13 @@ export default function CaseDetailPage() {
   }
   const onCertifyRequested = () => {
     closeModal()
+    applyStatus('reviewing')
     toast.success('인증 요청이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
+    // 강사 승인 시뮬레이션(데모) — 잠시 후 검토 중 → 인증 완료로 전환.
+    window.setTimeout(() => {
+      applyStatus('certified')
+      toast.success('강사가 인증을 승인했어요. 인증 완료로 전환됐어요.')
+    }, 3000)
   }
 
   const stats = [
@@ -183,6 +262,14 @@ export default function CaseDetailPage() {
               className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
             >
               변경 제안
+            </button>
+          ) : isReviewing ? (
+            <button
+              type="button"
+              disabled
+              className="bg-warning-bg text-warning cursor-not-allowed rounded-lg px-4 py-2 text-[12px] font-bold"
+            >
+              검토 중
             </button>
           ) : (
             <button
@@ -310,6 +397,14 @@ export default function CaseDetailPage() {
                 >
                   변경 제안
                 </button>
+              ) : isReviewing ? (
+                <button
+                  type="button"
+                  disabled
+                  className="bg-warning-bg text-warning flex-1 cursor-not-allowed rounded-lg py-2.5 text-[12px] font-bold"
+                >
+                  검토 중 · 강사 승인 대기
+                </button>
               ) : (
                 <button
                   type="button"
@@ -321,7 +416,7 @@ export default function CaseDetailPage() {
                 </button>
               )}
             </div>
-            {!canCertify && (
+            {!isCertified && !isReviewing && !canCertify && (
               <span className="text-fg-subtle text-center text-[11px]">
                 프로젝트를 연결해야 인증 요청을 보낼 수 있어요.
               </span>

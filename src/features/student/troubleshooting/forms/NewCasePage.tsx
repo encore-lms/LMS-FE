@@ -579,7 +579,7 @@ export default function NewCasePage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate('/student/troubleshooting')}
+            onClick={submit}
             className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold"
           >
             임시 저장

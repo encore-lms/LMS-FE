@@ -81,12 +81,12 @@ export default function TroubleshootingListPage() {
     )
   }
 
-  // 이어 작성(draft) → 상세(인증 요청 준비) · 사례 열기(그 외) → 변경 제안
+  // 인증 완료 → 변경 제안. 작성 중(이어 작성)·검토 중 → 상세(변경 제안은 인증 완료만).
   const open = (c: TsCase) =>
     navigate(
-      c.status === 'draft'
-        ? `/student/troubleshooting/${c.id}`
-        : `/student/troubleshooting/${c.id}/change-requests/new`,
+      c.status === 'certified'
+        ? `/student/troubleshooting/${c.id}/change-requests/new`
+        : `/student/troubleshooting/${c.id}`,
     )
 
   // 카테고리 칩 + 검색어(제목·카테고리·태그)로 사례 필터.

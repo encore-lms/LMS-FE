@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast, type ToastTone } from '@/components/ui/use-toast'
-import { TestModeBar } from '@/components/dev/TestModeBar'
+import { TestModeFab } from '@/components/dev/TestModeFab'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useMentoring } from '../api/mentoring'
@@ -312,7 +312,7 @@ function MentoringView({ data }: { data: MentoringData }) {
   )
 }
 
-// 데모/시뮬레이션 컨트롤 (FE 목 전용) — 공용 TestModeBar(보라 테스트색)로 감싼다.
+// 데모/시뮬레이션 컨트롤 (FE 목 전용) — 우하단 플로팅 버튼(TestModeFab, 보라 테스트색)으로 감싼다.
 // BE 연동 시 컴포넌트와 사용처를 함께 제거한다.
 // 1) 멘토 배정 전/후 화면 전환  2) "일정 경과" → 진행 중 슬롯 해제(BE 자동 처리 흉내).
 function DemoControls({
@@ -327,10 +327,7 @@ function DemoControls({
   onElapse: () => void
 }) {
   return (
-    <TestModeBar
-      note="멘토 배정 전/후 · 일정 경과 시뮬레이션"
-      className="self-start"
-    >
+    <TestModeFab note="멘토 배정 전/후 · 일정 경과 시뮬레이션">
       <div className="flex items-center gap-1">
         {(
           [
@@ -363,6 +360,6 @@ function DemoControls({
           ⏩ 일정 경과 시뮬레이션
         </button>
       )}
-    </TestModeBar>
+    </TestModeFab>
   )
 }

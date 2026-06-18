@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/ui/use-toast'
-import { TestModeBar } from '@/components/dev/TestModeBar'
+import { TestModeFab } from '@/components/dev/TestModeFab'
 import { useCertFlow } from '../useCertFlow'
 import type { CertificateOverview } from '../types'
 
-// 정식 인증 요청 흐름(데모 상태 전이) + 미리보기 진입 — FE 목 전용 테스트 네비.
-// 증명서 인셸 페이지 상단에 노출. [미리보기]는 사이드바 없는 전체화면 미리보기로 이동한다.
+// 정식 인증 요청 흐름(데모 상태 전이) + 미리보기 진입 — FE 목 전용 테스트 컨트롤.
+// 증명서 화면 우하단 플로팅 버튼(TestModeFab)으로 노출. [미리보기]는 사이드바 없는 전체화면 미리보기로 이동한다.
 // BE 연동 시 상태 전이는 각 PATCH 엔드포인트로 교체하고, 미리보기 버튼만 남긴다.
 export function CertRequestTestNav({ data }: { data: CertificateOverview }) {
   const navigate = useNavigate()
@@ -29,7 +29,7 @@ export function CertRequestTestNav({ data }: { data: CertificateOverview }) {
     'bg-accent-strong rounded-lg px-4 py-2 text-[13px] font-bold text-white'
 
   return (
-    <TestModeBar note="정식 인증 요청 흐름 (FE 목 · 상태 전이 시뮬레이션)">
+    <TestModeFab note="정식 인증 요청 흐름 (FE 목 · 상태 전이 시뮬레이션)">
       {status === 'draft' && (
         <>
           <button
@@ -116,6 +116,6 @@ export function CertRequestTestNav({ data }: { data: CertificateOverview }) {
           {previewBtn}
         </>
       )}
-    </TestModeBar>
+    </TestModeFab>
   )
 }

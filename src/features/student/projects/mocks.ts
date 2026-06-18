@@ -124,6 +124,17 @@ const mockWizard: ProjectWizardData = {
     { id: 'c2', name: '박지호', meta: '풀스택 · 1팀', avatarTone: 'warning' },
     { id: 'c3', name: '최유나', meta: '백엔드 · 2팀', avatarTone: 'info' },
     { id: 'c4', name: '한지우', meta: '백엔드 · 3팀', avatarTone: 'success' },
+    { id: 'c5', name: '정민준', meta: '프론트엔드 · 1팀', avatarTone: 'brand' },
+    { id: 'c6', name: '강서윤', meta: '백엔드 · 2팀', avatarTone: 'info' },
+    { id: 'c7', name: '윤도현', meta: '데브옵스 · 4팀', avatarTone: 'accent' },
+    { id: 'c8', name: '임하준', meta: '풀스택 · 3팀', avatarTone: 'warning' },
+    { id: 'c9', name: '송지아', meta: '백엔드 · 1팀', avatarTone: 'danger' },
+    {
+      id: 'c10',
+      name: '오태양',
+      meta: '프론트엔드 · 4팀',
+      avatarTone: 'brand',
+    },
   ],
 }
 

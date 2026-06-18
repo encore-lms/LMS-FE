@@ -160,13 +160,14 @@ export default function ProjectWizardPage() {
       .map((c) => ({ ...c, pm: false })),
   ]
   const normalizedTeamSearch = teamSearch.trim().toLowerCase()
+  // 검색어가 있을 때만 후보를 노출 — 빈 검색이면 결과를 숨겨 검색을 유도한다.
   const candidates = normalizedTeamSearch
     ? data.candidates.filter((candidate) =>
         `${candidate.name} ${candidate.meta}`
           .toLowerCase()
           .includes(normalizedTeamSearch),
       )
-    : data.candidates
+    : []
   const checkedCount = checks.filter(Boolean).length
   const step1Count = [name.trim(), desc.trim(), start, end && days >= 7].filter(
     Boolean,
@@ -294,6 +295,7 @@ export default function ProjectWizardPage() {
           pmMeta={data.pmMeta}
           cohortLabel={data.cohortLabel}
           candidates={candidates}
+          searchQuery={teamSearch.trim()}
           searchInput={register('teamSearch')}
           invited={invited}
           team={team}
@@ -432,6 +434,7 @@ function Step2(p: {
   pmMeta: string
   cohortLabel: string
   candidates: TeamCandidate[]
+  searchQuery: string
   searchInput: UseFormRegisterReturn
   invited: string[]
   team: {
@@ -480,33 +483,57 @@ function Step2(p: {
             {...p.searchInput}
           />
         </label>
-        <span className="text-fg-subtle text-[11px]">
-          검색 결과 ({p.candidates.length}명)
-        </span>
-        {p.candidates.map((c) => {
-          const on = p.invited.includes(c.id)
-          return (
-            <div key={c.id} className="flex items-center gap-3">
-              <Avatar name={c.name} tone={c.avatarTone} />
-              <div className="flex flex-1 flex-col">
-                <span className="text-fg text-[13px] font-bold">{c.name}</span>
-                <span className="text-fg-subtle text-[11px]">{c.meta}</span>
+        {p.searchQuery === '' ? (
+          <div className="border-border text-fg-subtle flex flex-col items-center gap-1.5 rounded-xl border border-dashed px-4 py-8 text-center">
+            <Search className="size-5" aria-hidden="true" />
+            <span className="text-[12px] font-semibold">
+              이름이나 영문 닉네임으로 검색해 동료를 초대하세요
+            </span>
+            <span className="text-[11px]">
+              같은 기수({p.cohortLabel}) 동료만 검색됩니다
+            </span>
+          </div>
+        ) : (
+          <>
+            <span className="text-fg-subtle text-[11px]">
+              검색 결과 ({p.candidates.length}명)
+            </span>
+            {p.candidates.length === 0 ? (
+              <div className="border-border text-fg-subtle rounded-xl border border-dashed px-4 py-6 text-center text-[12px]">
+                ‘{p.searchQuery}’에 해당하는 동료를 찾지 못했어요
               </div>
-              <button
-                type="button"
-                onClick={() => p.onToggle(c.id)}
-                className={cn(
-                  'rounded-lg px-3.5 py-2 text-[12px] font-bold',
-                  on
-                    ? 'bg-success-bg text-success'
-                    : 'bg-brand-deep text-white',
-                )}
-              >
-                {on ? '✓ 초대됨' : '초대하기'}
-              </button>
-            </div>
-          )
-        })}
+            ) : (
+              p.candidates.map((c) => {
+                const on = p.invited.includes(c.id)
+                return (
+                  <div key={c.id} className="flex items-center gap-3">
+                    <Avatar name={c.name} tone={c.avatarTone} />
+                    <div className="flex flex-1 flex-col">
+                      <span className="text-fg text-[13px] font-bold">
+                        {c.name}
+                      </span>
+                      <span className="text-fg-subtle text-[11px]">
+                        {c.meta}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => p.onToggle(c.id)}
+                      className={cn(
+                        'rounded-lg px-3.5 py-2 text-[12px] font-bold',
+                        on
+                          ? 'bg-success-bg text-success'
+                          : 'bg-brand-deep text-white',
+                      )}
+                    >
+                      {on ? '✓ 초대됨' : '초대하기'}
+                    </button>
+                  </div>
+                )
+              })
+            )}
+          </>
+        )}
       </section>
 
       <section className={cn(card, 'flex flex-col gap-3')}>

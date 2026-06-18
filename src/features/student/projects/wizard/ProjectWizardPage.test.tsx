@@ -101,7 +101,7 @@ describe('ProjectWizardPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('3단계 직접 추가 버튼은 준비 중 토스트를 띄운다', async () => {
+  it('3단계 직접 추가로 입력한 커스텀 스택을 해당 그룹과 요약에 칩으로 추가한다', async () => {
     const user = userEvent.setup()
     renderPage()
 
@@ -109,9 +109,13 @@ describe('ProjectWizardPage', () => {
     await user.click(screen.getByRole('button', { name: /다음.*상세 설정/ }))
     await user.click(screen.getAllByRole('button', { name: '+ 직접 추가' })[0])
 
-    expect(
-      await screen.findByText('직접 추가는 준비 중입니다'),
-    ).toBeInTheDocument()
+    const input = screen.getByLabelText(/스택 직접 입력/)
+    await user.type(input, 'Elixir')
+    await user.click(screen.getByRole('button', { name: '추가' }))
+
+    // 해당 그룹에 선택된 칩으로 추가됨 + 선택 요약에도 노출
+    expect(screen.getByRole('button', { name: '✓ Elixir' })).toBeInTheDocument()
+    expect(screen.getByText('Elixir')).toBeInTheDocument()
   })
 
   it('4단계 수정 버튼과 생성 버튼을 실제 액션으로 연결한다', async () => {

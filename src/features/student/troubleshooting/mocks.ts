@@ -446,6 +446,13 @@ const mockCaseCertified: TsCaseDetail = {
     '첨부 근거와 소요 일수가 확인됨',
     '동일 사례로 진행 중인 요청이 없음',
   ],
+  // 이미 프로젝트 'Kafka 컨슈머 지연' 이슈에 연결된 상태(TS_PROJECT_LINK 시 표시).
+  projectLink: {
+    projectId: 'p1',
+    projectTitle: '주문 관리 MSA 백엔드',
+    issueId: 'iss-p1-1',
+    issueTitle: 'Kafka 컨슈머 지연',
+  },
 }
 
 // 인증 완료 사례 id 집합 — 상세 분기에 사용.

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -7,7 +8,9 @@ import { usePageHeader } from '@/shared/store'
 import { useTsCase } from '../api/troubleshooting'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import type { TsCaseDetail, Tone } from './types'
+import type { TsCaseDetail, TsProjectLink, Tone } from './types'
+import { TS_PROJECT_LINK } from './config'
+import { ProjectLinkModal } from './components/ProjectLinkModal'
 
 // 트러블슈팅 사례 상세 (/student/troubleshooting/:id) + 인증 요청 모달(?modal=certify) — Figma 3283:5853·3283:5949.
 const card =
@@ -27,6 +30,11 @@ export default function CaseDetailPage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useTsCase(id)
   const [open, setOpen] = useState(params.get('modal') === 'certify')
+  const [linkModal, setLinkModal] = useState(false)
+  // undefined = 아직 변경 안 함(서버 값 사용), 그 외 = 사용자가 이 화면에서 바꾼 연결 상태.
+  const [linkOverride, setLinkOverride] = useState<
+    TsProjectLink | null | undefined
+  >(undefined)
   const toast = useToast()
   usePageHeader(
     '트러블슈팅 사례 상세',
@@ -56,9 +64,37 @@ export default function CaseDetailPage() {
   const isCertified = data.status === 'certified'
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
-  // 프로젝트 연결: 전용 화면이 Figma에 없어(상세 내 stat만 존재) 안내 토스트로 처리.
-  const notifyProjectLink = () =>
-    toast.info('프로젝트 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
+  // 프로젝트(이슈 단위) 연결 상태 — linkOverride(이 화면 변경)가 있으면 그것, 없으면 서버 값.
+  const link: TsProjectLink | null =
+    linkOverride !== undefined ? linkOverride : (data.projectLink ?? null)
+  const projectLinked = TS_PROJECT_LINK ? !!link : data.projectLinked
+  const linkLabel = link
+    ? link.issueTitle
+      ? `${link.projectTitle} · ${link.issueTitle}`
+      : link.projectTitle
+    : '미연결'
+  // 인증 모달의 프로젝트 필드 — 연결됐으면 실시간 연결값, 아니면 서버 표시값.
+  const certProjectValue =
+    TS_PROJECT_LINK && link ? linkLabel : data.certProject
+  // 플래그 ON: 연결 모달, OFF: 기존 안내 토스트(전용 화면이 Figma 미설계라 폴백).
+  const openProjectLink = () => {
+    if (TS_PROJECT_LINK) setLinkModal(true)
+    else
+      toast.info('프로젝트 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
+  }
+  const onLinkChange = (next: TsProjectLink | null) => {
+    setLinkOverride(next)
+    setLinkModal(false)
+    toast.success(
+      next
+        ? `프로젝트에 연결했어요 — ${
+            next.issueTitle
+              ? `${next.projectTitle} · ${next.issueTitle}`
+              : next.projectTitle
+          }`
+        : '프로젝트 연결을 해제했어요.',
+    )
+  }
   const onCertifyRequested = () => {
     closeModal()
     toast.success('인증 요청이 접수되었습니다. 강사 검토 큐로 전달됐어요.')
@@ -68,8 +104,8 @@ export default function CaseDetailPage() {
     { label: '인증 상태', value: data.statusLabel, tone: 'accent' as Tone },
     {
       label: '프로젝트 연결',
-      value: data.projectLinked ? '연결됨' : '미연결',
-      tone: (data.projectLinked ? 'success' : 'danger') as Tone,
+      value: projectLinked ? '연결됨' : '미연결',
+      tone: (projectLinked ? 'success' : 'danger') as Tone,
     },
     {
       label: '독립 해결',
@@ -99,7 +135,7 @@ export default function CaseDetailPage() {
           >
             {data.category}
           </span>
-          {!data.projectLinked && (
+          {!projectLinked && (
             <span
               className={cn(
                 'rounded px-2 py-0.5 text-[11px] font-bold',
@@ -120,10 +156,10 @@ export default function CaseDetailPage() {
           </button>
           <button
             type="button"
-            onClick={notifyProjectLink}
+            onClick={openProjectLink}
             className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
           >
-            프로젝트 연결
+            {projectLinked ? '연결 변경' : '프로젝트 연결'}
           </button>
           {isCertified ? (
             <button
@@ -222,13 +258,28 @@ export default function CaseDetailPage() {
                 </div>
               )
             })}
+            {TS_PROJECT_LINK && (
+              <div
+                className={cn(
+                  'flex items-start gap-2 rounded-lg p-2.5 text-[11px] leading-4',
+                  link
+                    ? 'bg-success-bg text-success'
+                    : 'bg-warning-bg text-warning',
+                )}
+              >
+                <Link2 className="mt-px size-3.5 shrink-0" />
+                <span className="text-fg font-medium">
+                  {link ? linkLabel : '연결된 프로젝트·이슈가 없어요'}
+                </span>
+              </div>
+            )}
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
-                onClick={notifyProjectLink}
+                onClick={openProjectLink}
                 className="border-border text-fg flex-1 rounded-lg border py-2.5 text-[12px] font-semibold"
               >
-                프로젝트 연결
+                {projectLinked ? '연결 변경' : '프로젝트 연결'}
               </button>
               {isCertified ? (
                 <button
@@ -284,8 +335,18 @@ export default function CaseDetailPage() {
       {open && (
         <CertifyModal
           data={data}
+          projectValue={certProjectValue}
           onClose={closeModal}
           onConfirm={onCertifyRequested}
+        />
+      )}
+
+      {TS_PROJECT_LINK && (
+        <ProjectLinkModal
+          open={linkModal}
+          current={link}
+          onClose={() => setLinkModal(false)}
+          onLink={onLinkChange}
         />
       )}
     </div>
@@ -294,10 +355,12 @@ export default function CaseDetailPage() {
 
 function CertifyModal({
   data,
+  projectValue,
   onClose,
   onConfirm,
 }: {
   data: TsCaseDetail
+  projectValue: string
   onClose: () => void
   onConfirm: () => void
 }) {
@@ -337,7 +400,7 @@ function CertifyModal({
         <p className="text-fg-muted -mt-1 text-[12px]">
           프로젝트 연결과 체크리스트를 확인하고 강사 검토 큐로 제출합니다.
         </p>
-        <Field label="프로젝트 연결" value={data.certProject} />
+        <Field label="프로젝트 연결" value={projectValue} />
         <Field label="교과목/검토자" value={data.certReviewer} />
         <div className="flex flex-col gap-2">
           <span className="text-fg text-[12px] font-bold">

@@ -5,29 +5,26 @@ import { Button } from '@/components/ui/Button'
 /**
  * 시작 게이트 — 전체화면은 브라우저 정책상 사용자 클릭에서만 진입 가능해,
  * 응시 전 유의사항을 안내하고 "시작하기" 클릭으로 전체화면+응시를 시작한다.
- * 이탈 정책 숫자(limit·유예초)는 페이지 상수에서 받아 안내 문구가 실제 동작과 어긋나지 않게 한다.
+ * 카운트다운 초(countdownSeconds)는 페이지 상수에서 받아 안내 문구가 실제 동작과 어긋나지 않게 한다.
  */
 export function ExamIntro({
   title,
   total,
   timeLimitMinutes,
-  violationLimit,
-  submitSeconds,
+  countdownSeconds,
   onStart,
 }: {
   title: string
   total: number
   timeLimitMinutes: number
-  violationLimit: number
-  submitSeconds: number
+  countdownSeconds: number
   onStart: () => void
 }) {
   const rules = [
     '전체화면(집중 모드)으로 진행돼요. ESC 등으로 화면을 벗어나면 "이탈"로 기록돼요.',
     '한 문제씩 풀고 다음으로 넘어가며, 모든 문제를 풀어야 제출할 수 있어요.',
-    `이탈 1~${violationLimit}회: 곧바로 문제로 돌아가 이어 풀 수 있어요(이탈은 기록돼요).`,
-    `이탈 ${violationLimit + 1}회째부터: ${submitSeconds}초 뒤 자동 제출되어 시험이 종료돼요.`,
-    '이탈한 동안에도 시험 시간은 계속 흘러요. 탭 전환·새 창·개발자 도구·우클릭은 제한돼요.',
+    `이탈하면 ${countdownSeconds}초 카운트다운이 뜨고, ${countdownSeconds}초가 지나면 자동으로 문제로 돌아가요. 그 전에도 "문제로 돌아가기" 버튼으로 언제든 복귀할 수 있어요.`,
+    '이탈 횟수에 따른 자동 제출은 없지만, 이탈한 동안에도 시험 시간은 계속 흘러요. 탭 전환·새 창·개발자 도구·우클릭은 제한돼요.',
     '제한 시간이 지나면 자동으로 제출돼요.',
   ]
   return (
@@ -74,40 +71,36 @@ export function ExamIntro({
 /**
  * 재진입 오버레이 — ESC/F11 등으로 전체화면이 풀리면(응시 active 동안) 화면 전체를 덮어 문제를 가린다.
  *
- * 정책(이탈 = 전체화면 해제):
- *  - 1~limit회(경고): 카운트다운 없이 "문제로 돌아가기"가 바로 활성화 → 즉시 이어서 응시.
- *  - limit 초과(fatal, 4회째~): secondsLeft(5초) 카운트다운 뒤 페이지가 자동 제출(시험 종료).
+ * 정책(이탈 = 전체화면 해제): 한도·자동 제출 없음.
+ *  - 이탈하면 secondsLeft(10초) 카운트다운이 표시되고, 0초가 되면 자동으로 닫혀 문제로 돌아간다.
+ *  - 그 전에도 "문제로 돌아가기"는 처음부터 활성화되어 카운트다운 도중 언제든 눌러 즉시 복귀할 수 있다.
+ *  - 전체화면 재진입은 브라우저 정책상 사용자 클릭에서만 가능 — 버튼 클릭만 전체화면을 다시 걸고,
+ *    0초 자동 복귀는 전체화면 없이 이어서 진행된다.
  *
- * secondsLeft: 남은 유예 초. 경고 케이스는 null(카운트다운 없이 즉시 복귀), fatal 케이스만 0에서 자동 제출.
+ * secondsLeft: 표시용 남은 초(null = 카운트다운 없음). 버튼 활성/복귀를 막지 않는다.
  */
 export function ExamRelockOverlay({
   violations,
-  limit,
   secondsLeft,
-  fatal,
   onRelock,
 }: {
   violations: number
-  limit: number
   secondsLeft: number | null
-  fatal: boolean
   onRelock: () => void
 }) {
-  const canReturn = secondsLeft === null || secondsLeft <= 0
   return (
     <div className="bg-fg/85 fixed inset-0 z-50 flex items-center justify-center px-6 backdrop-blur-lg">
       <div className="bg-surface flex w-[460px] max-w-full flex-col items-center gap-5 rounded-2xl p-9 text-center shadow-[0px_8px_24px_0px_rgba(0,0,0,0.2)]">
         <span className="bg-danger-bg text-danger flex size-14 items-center justify-center rounded-full text-[26px]">
-          {fatal ? '🚫' : '⚠️'}
+          ⚠️
         </span>
         <div className="flex flex-col gap-1.5">
           <h2 className="text-fg text-[19px] font-bold">
-            {fatal ? '이탈 한도를 초과했어요' : '집중 모드가 해제됐어요'}
+            집중 모드가 해제됐어요
           </h2>
           <p className="text-fg-muted text-[13px] leading-[20px]">
-            {fatal
-              ? `이탈이 ${limit}회를 넘어 잠시 후 시험이 자동 제출돼요.`
-              : `잠시 후 다시 문제로 돌아가 이어 풀 수 있어요. 단, 이탈이 ${limit}회를 넘으면(${limit + 1}회째) 자동 제출돼요.`}
+            카운트다운이 끝나면 자동으로 문제로 돌아가요. 그 전에도 아래
+            버튼으로 언제든 복귀할 수 있어요.
           </p>
         </div>
 
@@ -116,23 +109,17 @@ export function ExamRelockOverlay({
             <span className="text-danger text-[44px] leading-none font-bold tabular-nums">
               {secondsLeft}
             </span>
-            <span className="text-fg-subtle text-[12px]">
-              {fatal ? '초 후 자동 제출' : '초 후 돌아갈 수 있어요'}
-            </span>
+            <span className="text-fg-subtle text-[12px]">초 후 자동 복귀</span>
           </div>
         )}
 
         <p className="bg-warning-bg text-warning rounded-lg px-3 py-1.5 text-[12px] font-semibold">
-          이탈 {violations}회 (기록됨) · 한도 {limit}회
+          이탈 {violations}회 (기록됨)
         </p>
 
-        {!fatal && (
-          <Button className="w-full" disabled={!canReturn} onClick={onRelock}>
-            {canReturn
-              ? '문제로 돌아가기'
-              : `문제로 돌아가기 (${secondsLeft}초)`}
-          </Button>
-        )}
+        <Button className="w-full" onClick={onRelock}>
+          문제로 돌아가기
+        </Button>
       </div>
     </div>
   )

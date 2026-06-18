@@ -18,12 +18,12 @@ function fmt(sec: number) {
   return `${h}:${m}:${ss}`
 }
 
-// 이탈(전체화면 해제) 정책:
-//  - 1~3회: 경고. "문제로 돌아가기"를 바로 눌러 즉시 이어서 응시(강제 대기 없음).
-//  - 4회째부터: SUBMIT_GRACE_SECONDS(5초) 카운트다운 뒤 자동 제출(시험 종료).
-// 어느 경우든 이탈한 동안 시험 타이머는 계속 흐른다(시간 손해 = 추가 억제).
-const VIOLATION_LIMIT = 3
-const SUBMIT_GRACE_SECONDS = 5
+// 이탈(전체화면 해제) 정책: 한도·자동 제출 없음.
+//  - 이탈하면 재진입 오버레이에 RELOCK_COUNTDOWN_SECONDS(10초) 카운트다운이 표시되지만,
+//    "문제로 돌아가기"는 처음부터 활성화되어 도중이든 0초 이후든 언제든 눌러 이어서 응시할 수 있다.
+//  - 0초가 되어도 자동 제출하지 않는다. 이탈한 동안에도 시험 타이머는 계속 흐르고(시간 손해 = 억제),
+//    이탈 횟수는 기록·표시만 한다.
+const RELOCK_COUNTDOWN_SECONDS = 10
 
 /**
  * 퀴즈 응시 (/student/quizzes/:quizId/take) — 전체화면 집중 모드(쉘 없음).
@@ -49,8 +49,10 @@ export default function QuizTakePage() {
   const [maxReached, setMaxReached] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [remain, setRemain] = useState<number | null>(null)
-  // 이탈(전체화면 해제) 후 자동 제출까지 남은 유예 초. null = 카운트다운 없음.
+  // 이탈(전체화면 해제) 후 재진입 오버레이의 카운트다운 남은 초. null = 카운트다운 없음.
   const [graceLeft, setGraceLeft] = useState<number | null>(null)
+  // 카운트다운이 0이 되어 자동으로 문제로 돌아갔는지 — true면 오버레이를 닫고 그대로 이어 푼다.
+  const [autoReturned, setAutoReturned] = useState(false)
 
   const lock = useExamLock()
   // 우리가 의도한 이탈(제출/시간초과)만 허용 — 그 외 모든 라우터 이동을 막는다.
@@ -131,34 +133,31 @@ export default function QuizTakePage() {
     if (lock.isFullscreen) enteredFsOnceRef.current = true
   }, [lock.isFullscreen])
 
-  // 진입 후 전체화면이 풀리면(ESC 등): 4회째(이탈 > 3)부터만 유예 카운트다운 후 자동 제출.
-  // 1~3회(경고)는 카운트다운 없이(graceLeft=null) 재진입 오버레이의 버튼이 바로 활성화 → 즉시 복귀.
+  // 진입 후 전체화면이 풀리면(ESC 등) 재진입 오버레이의 카운트다운을 시작.
+  //  - 0초가 되면 자동으로 오버레이를 닫고 문제로 돌아간다(autoReturned).
+  //  - 그 전에도 "문제로 돌아가기" 버튼으로 언제든 즉시 복귀할 수 있다.
+  // 전체화면 재진입은 브라우저 정책상 클릭 제스처에서만 가능하므로, 자동 복귀(0초)는 전체화면 없이
+  // 진행되고(버튼 클릭만 전체화면을 다시 건다), 한도·자동 제출은 없다.
   useEffect(() => {
     const escaped =
       lock.phase === 'active' && !lock.isFullscreen && enteredFsOnceRef.current
-    const fatal = lock.violations > VIOLATION_LIMIT
-    if (!escaped || !fatal) {
+    if (!escaped) {
       setGraceLeft(null)
+      setAutoReturned(false)
       return
     }
-    setGraceLeft(SUBMIT_GRACE_SECONDS)
+    setAutoReturned(false)
+    setGraceLeft(RELOCK_COUNTDOWN_SECONDS)
     const t = setInterval(() => {
       setGraceLeft((s) => (s === null ? s : Math.max(0, s - 1)))
     }, 1000)
     return () => clearInterval(t)
-  }, [lock.phase, lock.isFullscreen, lock.violations])
+  }, [lock.phase, lock.isFullscreen])
 
-  // 유예 만료 시: 4회째 이상(이탈 > 3)만 자동 제출. 1~3회는 제출하지 않고 복귀를 허용한다.
+  // 카운트다운이 0에 도달하면 자동으로 오버레이를 닫아 문제로 돌아간다.
   useEffect(() => {
-    if (
-      graceLeft === 0 &&
-      lock.phase === 'active' &&
-      lock.violations > VIOLATION_LIMIT
-    ) {
-      leaveToResult()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graceLeft, lock.phase, lock.violations])
+    if (graceLeft === 0) setAutoReturned(true)
+  }, [graceLeft])
 
   // 답을 고른 뒤 Enter → 다음 문제. 텍스트 입력(단답/서술) 중에는 줄바꿈이므로 제외.
   // 마지막 문제에서는 동작하지 않음 — 제출은 오직 클릭으로만.
@@ -186,8 +185,7 @@ export default function QuizTakePage() {
         title={quiz?.title ?? '퀴즈 응시'}
         total={total}
         timeLimitMinutes={quiz?.timeLimitMinutes ?? 0}
-        violationLimit={VIOLATION_LIMIT}
-        submitSeconds={SUBMIT_GRACE_SECONDS}
+        countdownSeconds={RELOCK_COUNTDOWN_SECONDS}
         onStart={() => void lock.start()}
       />
     )
@@ -332,14 +330,16 @@ export default function QuizTakePage() {
         )}
       </footer>
 
-      {/* 전체화면이 풀리면(ESC/F11) 문제를 가리고 재진입을 강제 */}
-      {lock.phase === 'active' && !lock.isFullscreen && (
+      {/* 전체화면이 풀리면(ESC/F11) 문제를 가리는 오버레이 — 카운트다운 0초 또는 버튼 클릭 시 닫힘 */}
+      {lock.phase === 'active' && !lock.isFullscreen && !autoReturned && (
         <ExamRelockOverlay
           violations={lock.violations}
-          limit={VIOLATION_LIMIT}
           secondsLeft={graceLeft}
-          fatal={lock.violations > VIOLATION_LIMIT}
-          onRelock={() => void lock.relock()}
+          onRelock={() => {
+            // 버튼은 카운트다운 도중 언제든 활성화 — 즉시 닫고 전체화면 재진입(클릭 제스처)을 시도.
+            setAutoReturned(true)
+            void lock.relock()
+          }}
         />
       )}
     </div>

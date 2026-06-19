@@ -45,3 +45,30 @@ body {
   min-height: 100vh;
   font-family: var(--font-sans);
 }
+
+/* 인쇄(브라우저 'PDF로 저장') — 이력서 문서(.resume-print)만 출력하고 앱 셸은 숨김 */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .resume-print,
+  .resume-print * {
+    visibility: visible;
+  }
+  .resume-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    /* 배경색·칩 색이 인쇄에 그대로 나오도록 */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    margin: 16mm;
+  }
+}

@@ -1,8 +1,14 @@
 import { http, HttpResponse } from 'msw'
+import {
+  INTRO_QUESTIONS,
+  computeDoneSections,
+  isResumeComplete,
+} from './constants'
 import type {
   ResumeCreatePayload,
   ResumeDetail,
   ResumeListResponse,
+  ResumeStatus,
   ResumeSummary,
   ResumeUpdatePayload,
 } from './types'
@@ -19,28 +25,16 @@ const notFound = () =>
     { status: 404 },
   )
 
-// 섹션 작성 여부 판정 → doneSections(파생). 서버가 내용을 보고 계산하는 것을 흉내.
-function computeDoneSections(d: ResumeDetail): string[] {
-  const done: string[] = []
-  if (d.basicInfo.name && d.basicInfo.email) done.push('기본정보')
-  if (d.strength.trim()) done.push('핵심역량/강점')
-  if (d.educations.length) done.push('학력사항')
-  if (d.careers.length) done.push('경력사항')
-  if (d.certificates.length) done.push('자격사항')
-  if (d.awards.length) done.push('수상내역')
-  if (d.trainings.length) done.push('교육경험')
-  if (d.activities.length) done.push('기타활동')
-  if (d.skills.length) done.push('기술스택')
-  if (d.projects.length) done.push('프로젝트 경험')
-  if (d.coverLetters.some((c) => c.content.trim())) done.push('자기소개서')
-  return done
+// 작성 완료는 11개 섹션이 모두 작성됐을 때만 인정 — 아니면 작성 중으로 강등(단일 기준 강제).
+function clampStatus(d: ResumeDetail): ResumeStatus {
+  return isResumeComplete(d) ? d.status : '작성 중'
 }
 
 function toSummary(d: ResumeDetail): ResumeSummary {
   return {
     id: d.id,
     title: d.title,
-    status: d.status,
+    status: clampStatus(d),
     doneSections: computeDoneSections(d),
     updatedAt: d.updatedAt,
   }
@@ -83,10 +77,7 @@ const store: ResumeDetail[] = [
     activities: [],
     skills: ['Java', 'Spring Boot', 'MySQL'],
     projects: [],
-    coverLetters: [
-      { question: '자기소개', content: '' },
-      { question: '지원동기', content: '' },
-    ],
+    coverLetters: INTRO_QUESTIONS.map((q) => ({ question: q, content: '' })),
     doneSections: [],
     updatedAt: '2026-06-10T09:00:00Z',
   },
@@ -127,7 +118,14 @@ const store: ResumeDetail[] = [
         description: '',
       },
     ],
-    awards: [],
+    awards: [
+      {
+        title: '교내 해커톤 우수상',
+        subtitle: '한국대학교',
+        period: '2021.11',
+        description: '실시간 협업 메모 서비스로 우수상 수상',
+      },
+    ],
     trainings: [
       {
         title: '클라우드 부트캠프',
@@ -136,7 +134,14 @@ const store: ResumeDetail[] = [
         description: 'AWS 기반 인프라 실습 과정',
       },
     ],
-    activities: [],
+    activities: [
+      {
+        title: '개발 동아리',
+        subtitle: '운영진',
+        period: '2020.03 ~ 2021.12',
+        description: '주간 알고리즘 스터디 운영 및 신입 멘토링',
+      },
+    ],
     skills: ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'AWS'],
     projects: [
       {
@@ -146,16 +151,15 @@ const store: ResumeDetail[] = [
         description: '실시간 알림·피드 기능 구현',
       },
     ],
-    coverLetters: [
-      {
-        question: '자기소개',
-        content: '성장과 협업을 중요하게 생각하는 개발자입니다.',
-      },
-      {
-        question: '지원동기',
-        content: '제품의 처음과 끝을 책임지는 경험을 이어가고 싶습니다.',
-      },
-    ],
+    coverLetters: INTRO_QUESTIONS.map((q) => ({
+      question: q,
+      content:
+        q === '자기소개'
+          ? '성장과 협업을 중요하게 생각하는 개발자입니다.'
+          : q === '지원동기'
+            ? '제품의 처음과 끝을 책임지는 경험을 이어가고 싶습니다.'
+            : '',
+    })),
     doneSections: [],
     updatedAt: '2026-06-11T15:20:00Z',
   },
@@ -186,10 +190,7 @@ function emptyDetail(id: string, title: string): ResumeDetail {
     activities: [],
     skills: [],
     projects: [],
-    coverLetters: [
-      { question: '자기소개', content: '' },
-      { question: '지원동기', content: '' },
-    ],
+    coverLetters: INTRO_QUESTIONS.map((q) => ({ question: q, content: '' })),
     doneSections: [],
     updatedAt: new Date().toISOString(),
   }
@@ -216,14 +217,18 @@ export const handlers = [
     return HttpResponse.json({ data: toSummary(detail) }, { status: 201 })
   }),
 
-  // 단건 조회(편집기 로드) — doneSections 는 항상 최신 계산값으로 반환
+  // 단건 조회(편집기 로드) — doneSections·status 는 항상 최신 계산값으로 반환
   http.get('/api/student/resume/:resumeId', ({ params }) => {
     const d = store.find((r) => r.id === String(params.resumeId))
     if (!d) return notFound()
-    return ok<ResumeDetail>({ ...d, doneSections: computeDoneSections(d) })
+    return ok<ResumeDetail>({
+      ...d,
+      doneSections: computeDoneSections(d),
+      status: clampStatus(d),
+    })
   }),
 
-  // 저장/제출 — 편집 필드를 병합하고 doneSections·updatedAt 재계산
+  // 저장/제출 — 편집 필드를 병합하고 doneSections·updatedAt·status 재계산
   http.put('/api/student/resume/:resumeId', async ({ params, request }) => {
     const idx = store.findIndex((r) => r.id === String(params.resumeId))
     if (idx === -1) return notFound()
@@ -236,6 +241,8 @@ export const handlers = [
       doneSections: [],
     }
     updated.doneSections = computeDoneSections(updated)
+    // 11개 섹션이 모두 작성됐을 때만 작성 완료 유지(아니면 작성 중).
+    updated.status = clampStatus(updated)
     store[idx] = updated
     return ok<ResumeSummary>(toSummary(updated))
   }),

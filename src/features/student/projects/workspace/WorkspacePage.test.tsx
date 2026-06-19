@@ -4,14 +4,26 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
 import { useProjectWorkspace } from '../../api/projects'
-import { mockWorkspace } from '../mocks'
+import { mockWorkspace, mockWorkspaceP3 } from '../mocks'
+import type { WorkspaceData } from '../types'
 import WorkspacePage from './WorkspacePage'
+import { useProjectFlow, type ProjectPhase } from './useProjectFlow'
 
 vi.mock('../../api/projects')
 
-function renderPage(initialEntry = '/student/projects/p1') {
+function renderPage(
+  initialEntry = '/student/projects/p1',
+  data: WorkspaceData = mockWorkspace,
+  phase?: ProjectPhase,
+) {
+  // 생애주기 시뮬레이션 상태를 테스트별로 고정(없으면 진입 시 상태에서 초기화).
+  useProjectFlow.setState(
+    phase
+      ? { forProjectId: data.id, phase }
+      : { forProjectId: null, phase: 'active' },
+  )
   vi.mocked(useProjectWorkspace).mockReturnValue({
-    data: mockWorkspace,
+    data,
     isPending: false,
     isError: false,
     refetch: vi.fn(),
@@ -38,7 +50,8 @@ describe('WorkspacePage home', () => {
 
   it('홈 배너와 지표 카드 액션으로 관련 탭으로 이동한다', async () => {
     const user = userEvent.setup()
-    renderPage()
+    // 완료 배너는 완료 확정 이후에만 — reviewing 단계로 고정
+    renderPage('/student/projects/p1', mockWorkspace, 'reviewing')
 
     await user.click(screen.getByRole('button', { name: '상호평가 작성' }))
     expect(screen.getByText('프로젝트 상호평가')).toBeInTheDocument()
@@ -55,7 +68,7 @@ describe('WorkspacePage home', () => {
     renderPage()
 
     const checkbox = screen.getByRole('button', {
-      name: '결제 실패 재시도 로직 구현 완료 전환',
+      name: '주문 도메인 트랜잭션 격리 수준 PR 리뷰 완료 전환',
     })
     await user.click(checkbox)
 
@@ -178,7 +191,7 @@ describe('WorkspacePage home', () => {
     const user = userEvent.setup()
     renderPage('/student/projects/p1?tab=peer-evaluation')
 
-    const score = screen.getByRole('slider', { name: /김민웅 협업 점수/ })
+    const score = screen.getByRole('slider', { name: /박지호 협업 점수/ })
     fireEvent.change(score, { target: { value: '5' } })
     await user.type(
       screen.getAllByPlaceholderText(/선택 코멘트/)[0],
@@ -194,7 +207,12 @@ describe('WorkspacePage home', () => {
 
   it('인증 요청은 체크리스트 완료 후 제출 상태로 전환한다', async () => {
     const user = userEvent.setup()
-    renderPage('/student/projects/p1?tab=certification')
+    // 인증 요청은 완료 확정(기간 종료) 이후에만 — completed 단계로 고정
+    renderPage(
+      '/student/projects/p3?tab=certification',
+      mockWorkspaceP3,
+      'completed',
+    )
 
     await user.click(screen.getByRole('button', { name: '인증 요청 제출' }))
     expect(
@@ -202,10 +220,10 @@ describe('WorkspacePage home', () => {
     ).toBeInTheDocument()
 
     await user.click(
-      screen.getByRole('button', { name: '트러블슈팅 연결 완료 전환' }),
+      screen.getByRole('button', { name: '성과 지표 3개 이상 등록 완료 전환' }),
     )
     await user.click(
-      screen.getByRole('button', { name: '상호평가 제출 완료 완료 전환' }),
+      screen.getByRole('button', { name: '산출물 공개 범위 확인 완료 전환' }),
     )
     await user.click(screen.getByRole('button', { name: '인증 요청 제출' }))
 

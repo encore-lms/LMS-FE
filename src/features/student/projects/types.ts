@@ -182,6 +182,7 @@ export interface WsDoc {
   title: string
   meta: string
   status: Badge
+  category: string // docCategories('API 명세'·'설계 문서'·'발표 자료'·'첨부 파일'·'위키') 중 하나
 }
 export interface WsIssue {
   title: string
@@ -217,12 +218,15 @@ export interface WsActivity {
   who: string
   action: string
   when: string
+  kind?: '작업' | '회의록' | '산출물' | '이슈' // 활동 종류 칩/아이콘
 }
 export interface WorkspaceData {
   id: string
   title: string
   meta: string // "팀 프로젝트 · 4명 · 2026-04-01 ~ 2026-05-30 · PM 김민웅"
-  banner?: string // 상단 안내(완료 등)
+  /** 프로젝트 라이프사이클 — 완료 배너·상호평가·인증 UI 게이트. draft=작성 중(완료 확정 전) */
+  status: ProjectStatus
+  banner?: string // 완료 확정 이후 상단 안내(상호평가 등)
   // home
   stats: {
     label: string
@@ -261,4 +265,6 @@ export interface WorkspaceData {
   certChecklist: WsCheck[]
   certStatus: Badge
   certRecentChange: { label: string; status: Badge; date: string }
+  /** 인증 요청 진행 정보(검토 중일 때) — 홈 인증 상태 카드. 없으면 최근 변경 제안으로 폴백. */
+  certInfo?: { requestedAt: string; reviewer: string; eta: string }
 }

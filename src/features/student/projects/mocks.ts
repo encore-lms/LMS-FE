@@ -1,5 +1,11 @@
 import { http, HttpResponse } from 'msw'
-import type { ProjectListData, ProjectWizardData, WorkspaceData } from './types'
+import type {
+  ProjectKind,
+  ProjectListData,
+  ProjectSummary,
+  ProjectWizardData,
+  WorkspaceData,
+} from './types'
 
 // 프로젝트 mock — 기능 로컬. 자동 수집 규약: `export const handlers`.
 // Figma 프로젝트 목록(337:930)·생성 마법사(340:981 외) 시안 재현.
@@ -141,97 +147,102 @@ const mockWizard: ProjectWizardData = {
 export const mockWorkspace: WorkspaceData = {
   id: 'p1',
   title: '주문 관리 MSA 백엔드',
-  meta: '팀 프로젝트 · 4명 · 2026-04-01 ~ 2026-05-30 · PM 김민웅',
+  meta: '팀 프로젝트 · 4명 · 2026-06-01 ~ 2026-07-15 · PM 김수강',
+  status: 'certified',
   banner:
-    '프로젝트가 완료되어 종료되었어요 · 인증 요청으로 증명서 대표 후보로 등록할 수 있어요',
+    '프로젝트가 완벽히 종료 되었네요 · 강사·운영 완료 확정 후 3일 안에 팀원 상호평가를 제출해야 내 증명서 협업 근거가 최신화됩니다.',
   stats: [
     {
-      label: '전체 진행률',
-      value: '92',
+      label: '작업 진행률',
+      value: '58',
       unit: '%',
-      sub: '58 / 63 작업 완료',
+      sub: '32 / 55 작업 완료',
       tone: 'brand',
     },
     {
-      label: '내 작업',
-      value: '4',
+      label: '회의록',
+      value: '8',
       unit: '건',
-      sub: '진행 2 · 대기 2',
+      sub: '최근 회의 5/24',
+      tone: 'accent',
+    },
+    {
+      label: '산출물',
+      value: '12',
+      unit: '건',
+      sub: '문서 7 · 파일 4 · 위키 1',
       tone: 'info',
     },
     {
       label: '열린 이슈',
       value: '3',
       unit: '건',
-      sub: 'P0 1 · P1 2',
+      sub: 'P0 1건 · P1 2건',
       tone: 'warning',
-    },
-    {
-      label: '인증까지',
-      value: 'D-3',
-      unit: '',
-      sub: '상호평가 마감 임박',
-      tone: 'accent',
     },
   ],
   myTasks: [
     {
-      title: '결제 실패 재시도 로직 구현',
+      title: '주문 도메인 트랜잭션 격리 수준 PR 리뷰',
       assignee: '나',
-      due: 'D-1',
+      due: '#42 · 5/28(수) 마감 · D-1',
       tags: [
-        { label: '백엔드', tone: 'info' },
+        { label: '리뷰', tone: 'accent' },
         { label: '긴급', tone: 'danger' },
       ],
     },
     {
-      title: '통합 테스트 시나리오 작성',
+      title: 'Kafka dedup 테이블 마이그레이션 작성',
       assignee: '나',
-      due: 'D-4',
+      due: '#48 · 5/29(목) 마감 · D-2',
       tags: [
-        { label: '테스트', tone: 'accent' },
-        { label: '보통', tone: 'warning' },
+        { label: '개발', tone: 'success' },
+        { label: '긴급', tone: 'danger' },
       ],
     },
     {
-      title: '주문 취소 API 설계',
+      title: '5/24 회의록 결정사항 정리 + 액션 아이템 등록',
       assignee: '나',
-      due: 'D-5',
-      tags: [
-        { label: '백엔드', tone: 'info' },
-        { label: '보통', tone: 'warning' },
-      ],
+      due: '#51 · 5/30(금) 마감 · D-3',
+      tags: [{ label: '문서', tone: 'info' }],
     },
     {
-      title: '결제 모듈 단위 테스트',
+      title: '결제 실패 시나리오 단위 테스트 추가',
       assignee: '나',
-      due: 'D-3',
-      tags: [
-        { label: '테스트', tone: 'accent' },
-        { label: '보통', tone: 'warning' },
-      ],
+      due: '#39 · 5/26 완료 · 2일 전',
+      tags: [{ label: '테스트', tone: 'success' }],
     },
   ],
   activities: [
     {
-      who: '김민웅',
-      action: '인증 토큰 만료 처리 PR을 열었습니다',
-      when: '10분 전',
-    },
-    {
-      who: '이서연',
-      action: 'API 명세서 v2를 승인 후보로 등록했습니다',
-      when: '1시간 전',
-    },
-    {
       who: '박지호',
-      action: '장바구니 캐시 무효화 구현을 진행 중으로 옮겼습니다',
-      when: '3시간 전',
+      action: '#42 주문 도메인 트랜잭션 격리 수준 PR 리뷰 요청',
+      when: '1시간 전',
+      kind: '작업',
     },
     {
       who: '최유나',
-      action: '스프린트 3 회고 회의록을 작성했습니다',
+      action: '5/26 백엔드 회고 회의록 작성 완료 · 결정 4건',
+      when: '3시간 전',
+      kind: '회의록',
+    },
+    {
+      who: '김수강',
+      action: 'GitHub `encore-mart-backend` 메인 브랜치 PR #18 머지',
       when: '어제',
+      kind: '산출물',
+    },
+    {
+      who: '한지우',
+      action: '#13 결제 콜백 타임아웃 발생 — P1 신규 이슈 등록',
+      when: '2일 전',
+      kind: '이슈',
+    },
+    {
+      who: '박지호',
+      action: '#39 결제 실패 시나리오 단위 테스트 추가 — 완료',
+      when: '2일 전',
+      kind: '작업',
     },
   ],
   columns: [
@@ -387,31 +398,37 @@ export const mockWorkspace: WorkspaceData = {
       title: 'API 명세서 v2',
       meta: 'PDF · 1.2MB',
       status: { label: '승인 후보', tone: 'info' },
+      category: 'API 명세',
     },
     {
       title: 'ERD 설계 문서',
       meta: 'Wiki · 12분 전',
       status: { label: '초안', tone: 'warning' },
+      category: '설계 문서',
     },
     {
       title: '중간 발표 자료',
       meta: 'PPTX · 8.4MB',
       status: { label: '검토', tone: 'accent' },
+      category: '발표 자료',
     },
     {
       title: '배포 아키텍처',
       meta: 'Wiki · 어제',
       status: { label: '완료', tone: 'success' },
+      category: '위키',
     },
     {
       title: '성능 테스트 결과',
       meta: 'CSV · 240KB',
       status: { label: '완료', tone: 'success' },
+      category: '첨부 파일',
     },
     {
       title: 'README 정리',
       meta: 'Markdown · 2일 전',
       status: { label: '완료', tone: 'success' },
+      category: '위키',
     },
   ],
   issues: [
@@ -448,29 +465,29 @@ export const mockWorkspace: WorkspaceData = {
   ],
   members: [
     {
-      name: '김민웅',
-      role: '백엔드 · 인프라',
+      name: '김수강',
+      role: '백엔드 · PM',
       kind: 'PM',
       contrib: 40,
       avatarTone: 'accent',
     },
     {
-      name: '이서연',
-      role: 'API 문서',
+      name: '박지호',
+      role: '풀스택 · 팀원',
       kind: '팀원',
       contrib: 25,
-      avatarTone: 'info',
-    },
-    {
-      name: '박지호',
-      role: 'Kafka · 실시간',
-      kind: '팀원',
-      contrib: 20,
       avatarTone: 'warning',
     },
     {
       name: '최유나',
-      role: 'QA · 발표',
+      role: '백엔드 · 팀원',
+      kind: '팀원',
+      contrib: 20,
+      avatarTone: 'info',
+    },
+    {
+      name: '한지우',
+      role: '백엔드 · 팀원',
       kind: '팀원',
       contrib: 15,
       avatarTone: 'success',
@@ -484,44 +501,35 @@ export const mockWorkspace: WorkspaceData = {
   ],
   metrics: [
     {
-      label: 'API 평균 응답 시간',
-      before: '420ms',
-      after: '120ms',
-      delta: '-71%',
+      label: '결제 실패율',
+      before: '8.0%',
+      after: '0.4%',
+      delta: '-95%',
       good: true,
     },
     {
-      label: '테스트 커버리지',
-      before: '35%',
-      after: '82%',
-      delta: '+47%p',
+      label: 'API 응답 P95',
+      before: '320ms',
+      after: '145ms',
+      delta: '-55%',
       good: true,
     },
     {
-      label: '주문 처리 TPS',
-      before: '240',
-      after: '1,200',
-      delta: '+400%',
+      label: '중복 처리/주',
+      before: '7건',
+      after: '0건',
+      delta: '-100%',
       good: true,
     },
   ],
-  stack: [
-    'Spring Boot',
-    'JPA',
-    'Kafka',
-    'Docker',
-    'Redis',
-    'JUnit5',
-    'PostgreSQL',
-    'GitHub Actions',
-  ],
+  stack: ['Java 17', 'Spring Boot', 'PostgreSQL', 'Apache Kafka', 'Docker'],
   peerDue: 'D-3',
   peerMyStatus: { label: '내 상태: 미제출', tone: 'warning' },
   peerTeamStatus: { label: '팀 제출 3/4', tone: 'info' },
   peerTargets: [
     {
-      name: '김민웅',
-      role: 'PM',
+      name: '박지호',
+      role: '풀스택',
       axes: [
         { key: '협업', score: 4.5 },
         { key: '소통', score: 4.5 },
@@ -535,7 +543,7 @@ export const mockWorkspace: WorkspaceData = {
       ],
     },
     {
-      name: '이서연',
+      name: '최유나',
       role: '백엔드',
       axes: [
         { key: '협업', score: 4.5 },
@@ -550,8 +558,8 @@ export const mockWorkspace: WorkspaceData = {
       ],
     },
     {
-      name: '최유나',
-      role: '프론트엔드',
+      name: '한지우',
+      role: '백엔드',
       axes: [
         { key: '협업', score: 4.5 },
         { key: '소통', score: 4.5 },
@@ -582,14 +590,19 @@ export const mockWorkspace: WorkspaceData = {
       label: '산출물 공개 범위 확인',
       status: { label: '완료', tone: 'success' },
     },
-    { label: '트러블슈팅 연결', status: { label: '필요', tone: 'danger' } },
-    { label: '상호평가 제출 완료', status: { label: '진행', tone: 'warning' } },
+    { label: '트러블슈팅 연결', status: { label: '완료', tone: 'success' } },
+    { label: '상호평가 제출 완료', status: { label: '완료', tone: 'success' } },
   ],
-  certStatus: { label: '검토 전', tone: 'info' },
+  certStatus: { label: '인증 완료', tone: 'success' },
+  certInfo: {
+    requestedAt: '2026-05-25',
+    reviewer: '임수현 강사',
+    eta: '2026-05-30',
+  },
   certRecentChange: {
     label: '성과 지표 보정 요청',
-    status: { label: '요청됨', tone: 'warning' },
-    date: '2026-05-14 제출 · 검토 대기',
+    status: { label: '승인', tone: 'success' },
+    date: '2026-05-28 승인 · 반영 완료',
   },
 }
 
@@ -598,6 +611,7 @@ export const mockWorkspace: WorkspaceData = {
 export const mockWorkspaceP2: WorkspaceData = {
   ...mockWorkspace,
   id: 'p2',
+  status: 'reviewing',
   title: '실시간 채팅 서버',
   meta: '팀 프로젝트 · 3명 · 2026-03-20 ~ 2026-04-25 · PM 예칼',
   banner:
@@ -709,21 +723,25 @@ export const mockWorkspaceP2: WorkspaceData = {
       title: '채팅 프로토콜 명세',
       meta: 'PDF · 0.8MB',
       status: { label: '완료', tone: 'success' },
+      category: 'API 명세',
     },
     {
       title: '부하 테스트 결과',
       meta: 'CSV · 180KB',
       status: { label: '완료', tone: 'success' },
+      category: '첨부 파일',
     },
     {
       title: '배포 아키텍처 (Nginx)',
       meta: 'Wiki · 3일 전',
       status: { label: '완료', tone: 'success' },
+      category: '위키',
     },
     {
       title: '인증 발표 자료',
       meta: 'PPTX · 6.1MB',
       status: { label: '검토', tone: 'accent' },
+      category: '발표 자료',
     },
   ],
   issues: [
@@ -837,6 +855,11 @@ export const mockWorkspaceP2: WorkspaceData = {
     { label: '상호평가 제출 완료', status: { label: '완료', tone: 'success' } },
   ],
   certStatus: { label: '검토 중', tone: 'warning' },
+  certInfo: {
+    requestedAt: '2026-04-23',
+    reviewer: '감사팀 · 임수현 강사',
+    eta: 'D+9 (감사 검토 중)',
+  },
   certRecentChange: {
     label: '발표 자료 보완 요청',
     status: { label: '검토 중', tone: 'warning' },
@@ -848,6 +871,7 @@ export const mockWorkspaceP2: WorkspaceData = {
 export const mockWorkspaceP3: WorkspaceData = {
   ...mockWorkspace,
   id: 'p3',
+  status: 'draft',
   title: '포트폴리오 REST API',
   meta: '개인 프로젝트 · 1명 · 2026-05-02 ~ 진행 중 · PM 예칼',
   banner: undefined,
@@ -1007,16 +1031,19 @@ export const mockWorkspaceP3: WorkspaceData = {
       title: 'ERD 설계 문서',
       meta: 'Wiki · 1일 전',
       status: { label: '진행', tone: 'warning' },
+      category: '설계 문서',
     },
     {
       title: 'API 명세 (Swagger)',
       meta: 'Wiki · 작성 중',
       status: { label: '초안', tone: 'info' },
+      category: 'API 명세',
     },
     {
       title: 'README 정리',
       meta: 'Markdown · 3일 전',
       status: { label: '완료', tone: 'success' },
+      category: '위키',
     },
   ],
   issues: [
@@ -1095,13 +1122,14 @@ export const mockWorkspaceP3: WorkspaceData = {
       label: '산출물 공개 범위 확인',
       status: { label: '필요', tone: 'danger' },
     },
-    { label: '트러블슈팅 연결', status: { label: '필요', tone: 'danger' } },
+    { label: '트러블슈팅 연결', status: { label: '완료', tone: 'success' } },
     {
       label: '상호평가 제출 완료',
-      status: { label: '해당 없음', tone: 'info' },
+      status: { label: '해당 없음', tone: 'success' },
     },
   ],
   certStatus: { label: '검토 전', tone: 'info' },
+  certInfo: undefined,
   certRecentChange: {
     label: '변경 제안 없음',
     status: { label: '없음', tone: 'info' },
@@ -1116,11 +1144,232 @@ const workspaces: Record<string, WorkspaceData> = {
   p3: mockWorkspaceP3,
 }
 
+// 프로젝트 목록은 세션 동안 가변 — 생성/삭제가 실제로 반영되도록 스토어로 관리.
+let projectStore: ProjectSummary[] = [...mockList.projects]
+let createdSeq = 0
+
+interface CreateProjectBody {
+  name: string
+  desc: string
+  start: string
+  end: string
+  teamSize: number
+  stacks: string[]
+  domain: string
+  deliverables: string[]
+}
+
+// 생성 입력 → 목록 카드. 신규는 항상 '작성 중' 상태로 시작.
+function toSummary(input: CreateProjectBody): ProjectSummary {
+  const kind: ProjectKind = input.teamSize > 1 ? 'team' : 'personal'
+  createdSeq += 1
+  return {
+    id: `new-${createdSeq}`,
+    kind,
+    kindLabel: kind === 'team' ? '팀' : '개인',
+    status: 'draft',
+    statusLabel: '작성 중',
+    representative: false,
+    accentTone: 'accent',
+    title: input.name,
+    pm: '김수강 PM',
+    teamLabel: kind === 'team' ? `팀 ${input.teamSize}명` : '개인 프로젝트',
+    period: `${input.start} ~ ${input.end} · 작성 중`,
+    tags: input.stacks,
+    outcomes: [input.domain, ...input.deliverables],
+    actionLabel: '워크스페이스 열기',
+  }
+}
+
+// 현재 스토어로 목록 응답을 재구성 — 통계/필터 카운트를 실시간 반영.
+function buildListResponse(): ProjectListData {
+  const projects = projectStore
+  const countBy = (pred: (p: ProjectSummary) => boolean) =>
+    projects.filter(pred).length
+  const team = countBy((p) => p.kind === 'team')
+  const personal = countBy((p) => p.kind === 'personal')
+  const certified = countBy((p) => p.status === 'certified')
+  const reviewing = countBy((p) => p.status === 'reviewing')
+  const draft = countBy((p) => p.status === 'draft')
+  const representative = countBy((p) => p.representative)
+  const statOverride: Record<string, { value: string; sub?: string }> = {
+    joined: {
+      value: String(projects.length),
+      sub: `팀 ${team}건 · 개인 ${personal}건`,
+    },
+    certified: { value: String(certified) },
+    reviewing: { value: String(reviewing) },
+    draft: { value: String(draft) },
+  }
+  return {
+    ...mockList,
+    stats: mockList.stats.map((s) => {
+      const o = statOverride[s.key]
+      return o ? { ...s, value: o.value, sub: o.sub ?? s.sub } : s
+    }),
+    filters: [
+      { key: 'all', label: '전체', count: projects.length },
+      { key: 'certified', label: '인증 완료', count: certified },
+      { key: 'reviewing', label: '검토 중', count: reviewing },
+      { key: 'draft', label: '작성 중', count: draft },
+      { key: 'representative', label: '대표 후보', count: representative },
+    ],
+    projects,
+    shownLabel: `${projects.length}건 모두 표시 · 인증 완료 ${certified} / 검토 중 ${reviewing} / 작성 중 ${draft}`,
+  }
+}
+
+// 신규·미등록 프로젝트의 빈 초안 워크스페이스 — 완료 배너·상호평가·인증 화면이 뜨지 않도록
+// p1 복사가 아니라 '작성 중' 기본값으로 생성한다.
+function buildDraftWorkspace(opts: {
+  id: string
+  title?: string
+  meta?: string
+  stack?: string[]
+  kind?: ProjectKind
+}): WorkspaceData {
+  const kind = opts.kind ?? 'team'
+  return {
+    id: opts.id,
+    title: opts.title ?? '새 프로젝트',
+    meta:
+      opts.meta ??
+      (kind === 'team' ? '팀 프로젝트 · 작성 중' : '개인 프로젝트 · 작성 중'),
+    status: 'draft',
+    banner: undefined,
+    stats: [
+      {
+        label: '작업 진행률',
+        value: '0',
+        unit: '%',
+        sub: '0 / 0 작업 완료',
+        tone: 'brand',
+      },
+      {
+        label: '회의록',
+        value: '0',
+        unit: '건',
+        sub: '아직 없음',
+        tone: 'accent',
+      },
+      {
+        label: '산출물',
+        value: '0',
+        unit: '건',
+        sub: '아직 없음',
+        tone: 'info',
+      },
+      {
+        label: '열린 이슈',
+        value: '0',
+        unit: '건',
+        sub: '아직 없음',
+        tone: 'warning',
+      },
+    ],
+    myTasks: [],
+    activities: [],
+    columns: [
+      { key: 'todo', label: '할 일', tasks: [] },
+      { key: 'doing', label: '진행 중', tasks: [] },
+      { key: 'review', label: '검토 대기', tasks: [] },
+    ],
+    calMonth: '2026년 6월',
+    calEvents: [],
+    upcoming: [],
+    meetings: [],
+    docCategories: [
+      '전체',
+      'API 명세',
+      '설계 문서',
+      '발표 자료',
+      '첨부 파일',
+      '위키',
+    ],
+    docs: [],
+    issues: [],
+    members: [
+      {
+        name: '김수강',
+        role: kind === 'team' ? '백엔드 · PM' : '백엔드 (개인)',
+        kind: 'PM',
+        contrib: 100,
+        avatarTone: 'accent',
+      },
+    ],
+    rolePolicy: [
+      'PM은 인증 요청과 팀원 초대를 관리합니다',
+      '팀원은 본인 작업과 산출물을 등록합니다',
+      '기여도 합계는 100% 이내로 유지합니다',
+      '인증 후 변경은 변경 제안으로 제출합니다',
+    ],
+    metrics: [],
+    stack: opts.stack ?? [],
+    peerDue: '완료 확정 후 안내',
+    peerMyStatus: { label: '완료 확정 전', tone: 'info' },
+    peerTeamStatus: { label: '완료 확정 전', tone: 'info' },
+    peerTargets: [],
+    certChecklist: [
+      {
+        label: '프로젝트 기본 정보 입력',
+        status: { label: '완료', tone: 'success' },
+      },
+      {
+        label: '팀원 및 기여도 확인',
+        status: { label: '필요', tone: 'danger' },
+      },
+      {
+        label: '성과 지표 3개 이상 등록',
+        status: { label: '필요', tone: 'danger' },
+      },
+      {
+        label: '산출물 공개 범위 확인',
+        status: { label: '필요', tone: 'danger' },
+      },
+      { label: '트러블슈팅 연결', status: { label: '필요', tone: 'danger' } },
+      {
+        label: '상호평가 제출 완료',
+        status: { label: '완료 확정 전', tone: 'info' },
+      },
+    ],
+    certStatus: { label: '검토 전', tone: 'info' },
+    certInfo: undefined,
+    certRecentChange: {
+      label: '변경 제안 없음',
+      status: { label: '없음', tone: 'info' },
+      date: '아직 제출된 변경 제안이 없습니다',
+    },
+  }
+}
+
 export const handlers = [
-  http.get('/api/student/projects', () => ok(mockList)),
+  http.get('/api/student/projects', () => ok(buildListResponse())),
   http.get('/api/student/projects/wizard', () => ok(mockWizard)),
+  http.post('/api/student/projects', async ({ request }) => {
+    const body = (await request.json()) as CreateProjectBody
+    const created = toSummary(body)
+    projectStore = [created, ...projectStore]
+    // 새 프로젝트는 '작성 중' 빈 워크스페이스로 등록 — 완료/인증 화면이 뜨지 않게.
+    workspaces[created.id] = buildDraftWorkspace({
+      id: created.id,
+      title: created.title,
+      meta:
+        created.kind === 'team'
+          ? `팀 프로젝트 · ${body.teamSize}명 · ${body.start} ~ ${body.end} · PM 김수강`
+          : `개인 프로젝트 · 1명 · ${body.start} ~ ${body.end} · PM 김수강`,
+      stack: body.stacks,
+      kind: created.kind,
+    })
+    return ok(created)
+  }),
+  http.delete('/api/student/projects/:projectId', ({ params }) => {
+    const id = String(params.projectId)
+    projectStore = projectStore.filter((p) => p.id !== id)
+    delete workspaces[id]
+    return ok({ id })
+  }),
   http.get('/api/student/projects/:projectId', ({ params }) => {
     const id = String(params.projectId)
-    return ok(workspaces[id] ?? mockWorkspace)
+    return ok(workspaces[id] ?? buildDraftWorkspace({ id }))
   }),
 ]

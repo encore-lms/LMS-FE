@@ -3,7 +3,26 @@ import { useForm, type UseFormRegisterReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Search, Send, X } from 'lucide-react'
+import {
+  Book,
+  Check,
+  CircleCheck,
+  Clipboard,
+  Command,
+  Eye,
+  FileArchive,
+  FileText,
+  Film,
+  Globe,
+  Info,
+  Link2,
+  Pencil,
+  Search,
+  Send,
+  Video,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -35,6 +54,42 @@ const CHIP_ON: Record<Tone, string> = {
   danger: 'border-danger bg-danger text-white',
   accent: 'border-accent-strong bg-accent-strong text-white',
   success: 'border-success bg-success text-white',
+}
+// 옅은 톤 칩(요약 카드 등) — 워크스페이스 CHIP과 동일 규약.
+const CHIP_SOFT: Record<Tone, string> = {
+  brand: 'bg-brand/10 text-brand',
+  info: 'bg-info-bg text-info',
+  warning: 'bg-warning-bg text-warning',
+  danger: 'bg-danger-bg text-danger',
+  accent: 'bg-accent-bg text-accent-strong',
+  success: 'bg-success-bg text-success',
+}
+
+// 카탈로그 스택 → 그룹 톤(정적). 커스텀 스택은 그룹 매칭으로 보강.
+const STACK_TONE = new Map<string, Tone>()
+STACK_CATALOG.forEach((g) =>
+  g.items.forEach((it) => STACK_TONE.set(it, g.tone)),
+)
+
+// 도메인 아이콘 — Figma 349:1185(도메인 행) 기준. lucide로 매핑.
+const DOMAIN_ICON: Record<string, LucideIcon> = {
+  커머스: FileArchive, // file-earmark-zip-fill
+  핀테크: Clipboard, // clipboard-fill
+  '미디어·콘텐츠': Video, // camera-video-fill
+  '교육·학습': Book, // book-fill
+  헬스케어: CircleCheck, // check-circle-fill
+  '소셜·커뮤니티': Eye, // eye
+  '생산성 도구': Pencil, // pencil-fill
+  기타: Info, // info-circle-fill
+}
+
+// 산출물 형태 아이콘·톤 — Figma 산출물 카드/요약 칩 기준.
+const DELIVERABLE_META: Record<string, { icon: LucideIcon; tone: Tone }> = {
+  'GitHub 리포지토리': { icon: Link2, tone: 'info' }, // link-45deg
+  '배포 URL': { icon: Globe, tone: 'brand' },
+  '기술 문서·회고': { icon: FileText, tone: 'accent' }, // file-earmark-text-fill
+  '발표 자료': { icon: Video, tone: 'warning' }, // camera-video-fill
+  '데모 영상': { icon: Film, tone: 'success' },
 }
 
 const DEFAULT_WIZARD_VALUES = {
@@ -122,12 +177,13 @@ export default function ProjectWizardPage() {
   const deliverables = watch('deliverables')
   const checks = watch('checks')
 
-  const stackTone = useMemo(() => {
-    const m = new Map<string, Tone>()
-    STACK_CATALOG.forEach((g) => g.items.forEach((it) => m.set(it, g.tone)))
-    return m
-  }, [])
   const days = useMemo(() => getProjectDays(start, end), [start, end])
+  // 칩 톤 해석 — 카탈로그 톤 우선, 없으면 커스텀 스택이 속한 그룹 톤(요약 단계까지 공유).
+  const stackToneFor = (s: string): Tone =>
+    STACK_TONE.get(s) ??
+    STACK_CATALOG.find((g) => (customStacksByGroup[g.label] ?? []).includes(s))
+      ?.tone ??
+    'brand'
 
   if (isPending) return <div className="text-fg-muted p-8">불러오는 중…</div>
   if (isError || !data) {
@@ -350,7 +406,7 @@ export default function ProjectWizardPage() {
       {step === 3 && (
         <Step3
           stacks={stacks}
-          stackTone={stackTone}
+          stackToneFor={stackToneFor}
           customStacksByGroup={customStacksByGroup}
           domain={domain}
           deliverables={deliverables}
@@ -368,6 +424,7 @@ export default function ProjectWizardPage() {
           desc={desc}
           team={team}
           stacks={stacks}
+          stackToneFor={stackToneFor}
           domain={domain}
           deliverables={deliverables}
           checks={checks}
@@ -641,7 +698,7 @@ function Step2(p: {
 /* ── Step 3 상세 설정 ── */
 function Step3(p: {
   stacks: string[]
-  stackTone: Map<string, Tone>
+  stackToneFor: (s: string) => Tone
   customStacksByGroup: Record<string, string[]>
   domain: string
   deliverables: string[]
@@ -661,13 +718,6 @@ function Step3(p: {
     setStackInput('')
     setOpenStackGroup(null)
   }
-  // 요약 칩 색상 — 카탈로그 톤 우선, 없으면 커스텀 스택이 속한 그룹 톤.
-  const stackToneFor = (s: string): Tone =>
-    p.stackTone.get(s) ??
-    STACK_CATALOG.find((g) =>
-      (p.customStacksByGroup[g.label] ?? []).includes(s),
-    )?.tone ??
-    'brand'
   const addDomain = () => {
     const v = domainInput.trim()
     if (!v) return
@@ -694,13 +744,18 @@ function Step3(p: {
               <span
                 key={s}
                 className={cn(
-                  'flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-bold text-white',
-                  AVA[stackToneFor(s)],
+                  'flex items-center gap-1.5 rounded-full py-1 pr-1.5 pl-3 text-[12px] font-bold text-white',
+                  AVA[p.stackToneFor(s)],
                 )}
               >
                 {s}
-                <button type="button" onClick={() => p.onStack(s)}>
-                  ✕
+                <button
+                  type="button"
+                  onClick={() => p.onStack(s)}
+                  aria-label={`${s} 제거`}
+                  className="flex size-[18px] items-center justify-center rounded-full bg-white/25 text-white transition-colors hover:bg-white/40"
+                >
+                  <X className="size-3" strokeWidth={2.5} aria-hidden="true" />
                 </button>
               </span>
             ))}
@@ -789,20 +844,25 @@ function Step3(p: {
         <div className="flex flex-wrap gap-2">
           {(isCustomDomain ? [...DOMAINS, p.domain] : DOMAINS).map((d) => {
             const on = d === p.domain
+            const Icon = DOMAIN_ICON[d] ?? Info
             return (
               <button
                 key={d}
                 type="button"
                 onClick={() => p.onDomain(d)}
                 className={cn(
-                  'rounded-lg border px-3.5 py-2 text-[12px] font-semibold',
+                  'flex items-center gap-2 rounded-lg border px-3.5 py-2 text-[12px] font-semibold',
                   on
                     ? 'border-brand bg-brand text-white'
                     : 'border-border text-fg-muted hover:border-brand/50',
                 )}
               >
-                {on && '✓ '}
+                <Icon
+                  className={cn('size-4', on ? 'text-white' : 'text-fg-subtle')}
+                  aria-hidden="true"
+                />
                 {d}
+                {on && <Check className="size-3.5" aria-hidden="true" />}
               </button>
             )
           })}
@@ -875,12 +935,15 @@ function Step4(p: {
   desc: string
   team: { id: string; name: string; avatarTone: Tone; pm: boolean }[]
   stacks: string[]
+  stackToneFor: (s: string) => Tone
   domain: string
   deliverables: string[]
   checks: boolean[]
   onEditStep: (step: number) => void
   onCheck: (i: number) => void
 }) {
+  const DomainIcon = DOMAIN_ICON[p.domain] ?? Info
+  const memberCount = p.team.filter((m) => !m.pm).length
   const CONFIRMS = [
     '초대된 팀원에게 알림이 발송되며, 수락 시점부터 워크스페이스에 참여할 수 있습니다.',
     '프로젝트 생성 후에도 워크스페이스에서 항목별로 수정 가능합니다.',
@@ -891,6 +954,9 @@ function Step4(p: {
       <SummaryCard
         step="STEP 1"
         title="기본 정보"
+        sub="프로젝트명·설명·기간"
+        icon={FileText}
+        iconTone="success"
         onEdit={() => p.onEditStep(1)}
       >
         <span className="text-fg-subtle text-[11px]">프로젝트명</span>
@@ -900,7 +966,14 @@ function Step4(p: {
         </span>
       </SummaryCard>
 
-      <SummaryCard step="STEP 2" title="팀 구성" onEdit={() => p.onEditStep(2)}>
+      <SummaryCard
+        step="STEP 2"
+        title="팀 구성"
+        sub={`PM 1명 + 팀원 ${memberCount}명`}
+        icon={Send}
+        iconTone="info"
+        onEdit={() => p.onEditStep(2)}
+      >
         {p.team.map((m) => (
           <div key={m.id} className="flex items-center gap-2 py-1">
             <Avatar name={m.name} tone={m.avatarTone} sm />
@@ -925,35 +998,58 @@ function Step4(p: {
       <SummaryCard
         step="STEP 3"
         title="상세 설정"
+        sub={`스택 ${p.stacks.length} · 도메인 1 · 산출물 ${p.deliverables.length}`}
+        icon={Command}
+        iconTone="warning"
         onEdit={() => p.onEditStep(3)}
       >
-        <span className="text-fg-subtle text-[11px]">기술 스택</span>
-        <div className="flex flex-wrap gap-1.5">
-          {p.stacks.map((s) => (
-            <span
-              key={s}
-              className="bg-brand/10 text-brand rounded-md px-2 py-0.5 text-[11px] font-semibold"
-            >
-              {s}
-            </span>
-          ))}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-fg-subtle text-[11px]">기술 스택</span>
+          <div className="flex flex-wrap gap-1.5">
+            {p.stacks.map((s) => (
+              <span
+                key={s}
+                className={cn(
+                  'rounded-md px-2 py-0.5 text-[11px] font-bold',
+                  CHIP_SOFT[p.stackToneFor(s)],
+                )}
+              >
+                {s}
+              </span>
+            ))}
+          </div>
         </div>
-        <span className="text-fg-subtle mt-1 text-[11px]">도메인</span>
-        <span className="bg-brand w-fit rounded-md px-2 py-0.5 text-[11px] font-bold text-white">
-          ✓ {p.domain}
-        </span>
-        <span className="text-fg-subtle mt-1 text-[11px]">
-          산출물 형태 · {p.deliverables.length}건
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          {p.deliverables.map((d) => (
-            <span
-              key={d}
-              className="bg-surface-muted text-fg-muted rounded-md px-2 py-0.5 text-[11px] font-medium"
-            >
-              {d}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-fg-subtle text-[11px]">도메인</span>
+            <span className="bg-brand flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-bold text-white">
+              <DomainIcon className="size-3.5" aria-hidden="true" />
+              {p.domain}
             </span>
-          ))}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-fg-subtle text-[11px]">
+              산출물 형태 · {p.deliverables.length}건
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {p.deliverables.map((d) => {
+                const meta = DELIVERABLE_META[d]
+                const Icon = meta?.icon ?? FileText
+                return (
+                  <span
+                    key={d}
+                    className={cn(
+                      'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold',
+                      CHIP_SOFT[meta?.tone ?? 'brand'],
+                    )}
+                  >
+                    <Icon className="size-3.5" aria-hidden="true" />
+                    {d}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </SummaryCard>
 
@@ -1037,29 +1133,49 @@ function Avatar({
 function SummaryCard({
   step,
   title,
+  sub,
+  icon: Icon,
+  iconTone,
   onEdit,
   children,
 }: {
   step: string
   title: string
+  sub?: string
+  icon: LucideIcon
+  iconTone: Tone
   onEdit: () => void
   children: ReactNode
 }) {
   return (
-    <section className={cn(card, 'flex flex-col gap-1.5')}>
+    <section className={cn(card, 'flex flex-col gap-3')}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 text-[10px] font-bold">
-            {step}
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              'flex size-10 shrink-0 items-center justify-center rounded-xl text-white',
+              AVA[iconTone],
+            )}
+          >
+            <Icon className="size-5" aria-hidden="true" />
           </span>
-          <span className="text-fg text-[14px] font-bold">{title}</span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 text-[10px] font-bold">
+                {step}
+              </span>
+              <span className="text-fg text-[14px] font-bold">{title}</span>
+            </div>
+            {sub && <span className="text-fg-subtle text-[11px]">{sub}</span>}
+          </div>
         </div>
         <button
           type="button"
           onClick={onEdit}
-          className="text-brand text-[12px] font-semibold"
+          className="border-border text-fg-muted hover:text-fg flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold"
         >
-          ✎ 수정
+          <Pencil className="size-3" aria-hidden="true" />
+          수정
         </button>
       </div>
       {children}

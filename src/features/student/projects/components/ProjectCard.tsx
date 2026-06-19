@@ -2,6 +2,7 @@ import { cn } from '@/shared/lib/cn'
 import {
   ArrowRight,
   Calendar,
+  Check,
   CheckCircle2,
   Flag,
   Pencil,
@@ -11,7 +12,8 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import type { ProjectStatus, ProjectSummary, Tone } from '../types'
+import type { ProjectSummary, Tone } from '../types'
+import type { ProjectPhase } from '../workspace/useProjectFlow'
 
 // 프로젝트 목록 카드 — 좌측 색 바 + 상태 배지 + 메타 + 태그 + 핵심 성과 + 액션.
 const ACCENT: Record<Tone, string> = {
@@ -22,22 +24,41 @@ const ACCENT: Record<Tone, string> = {
   accent: 'bg-accent-strong',
   success: 'bg-success',
 }
-const STATUS: Record<ProjectStatus, { cls: string; Icon: LucideIcon }> = {
-  certified: { cls: 'bg-success-bg text-success', Icon: CheckCircle2 },
-  reviewing: { cls: 'bg-warning-bg text-warning', Icon: Timer },
-  draft: { cls: 'bg-accent-bg text-accent-strong', Icon: Pencil },
+// 생애주기 단계별 상태 배지 — 작성 중 → 작성 완료 → 검토 중 → 인증 완료.
+const PHASE: Record<
+  ProjectPhase,
+  { label: string; cls: string; Icon: LucideIcon }
+> = {
+  active: {
+    label: '작성 중',
+    cls: 'bg-accent-bg text-accent-strong',
+    Icon: Pencil,
+  },
+  completed: { label: '작성 완료', cls: 'bg-info-bg text-info', Icon: Check },
+  reviewing: {
+    label: '검토 중',
+    cls: 'bg-warning-bg text-warning',
+    Icon: Timer,
+  },
+  certified: {
+    label: '인증 완료',
+    cls: 'bg-success-bg text-success',
+    Icon: CheckCircle2,
+  },
 }
 
 export function ProjectCard({
   project,
+  phase,
   onOpen,
   onDelete,
 }: {
   project: ProjectSummary
+  phase: ProjectPhase
   onOpen: (project: ProjectSummary) => void
   onDelete?: (project: ProjectSummary) => void
 }) {
-  const st = STATUS[project.status]
+  const st = PHASE[phase]
   const StatusIcon = st.Icon
 
   return (
@@ -74,7 +95,7 @@ export function ProjectCard({
               )}
             >
               <StatusIcon className="size-3" strokeWidth={2.3} />
-              {project.statusLabel}
+              {st.label}
             </span>
             {project.representative && (
               <span className="bg-brand/10 text-brand inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
@@ -107,7 +128,7 @@ export function ProjectCard({
             }}
             className={cn(
               'rounded-lg px-4 py-2.5 text-[12px] font-bold',
-              project.status === 'reviewing'
+              phase === 'reviewing'
                 ? 'border-border text-fg-muted hover:bg-surface-muted border'
                 : 'bg-brand text-white',
             )}

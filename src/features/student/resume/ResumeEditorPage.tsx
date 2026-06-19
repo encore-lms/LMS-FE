@@ -25,6 +25,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateResume, useResume, useUpdateResume } from '../api/resume'
+import { PeriodField } from './PeriodField'
 import {
   INTRO_QUESTIONS,
   SECTIONS,
@@ -219,13 +220,11 @@ function ItemSectionEditor({
                 placeholder="부제 (역할/학위/발급처 등)"
                 className={cn(inputCls, 'w-[200px] text-[13px]')}
               />
-              <input
-                value={it.period}
-                onChange={(e) => update(i, { period: e.target.value })}
-                placeholder="기간 (예: 2025.07 ~ 2025.12)"
-                className={cn(inputCls, 'w-[200px] text-[13px]')}
-              />
             </div>
+            <PeriodField
+              value={it.period}
+              onChange={(v) => update(i, { period: v })}
+            />
             <textarea
               value={it.description}
               onChange={(e) => update(i, { description: e.target.value })}

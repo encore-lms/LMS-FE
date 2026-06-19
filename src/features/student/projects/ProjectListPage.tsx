@@ -4,8 +4,10 @@ import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useProjectList } from '../api/projects'
+import { useDeleteProject, useProjectList } from '../api/projects'
 import { ProjectStatCards } from './components/ProjectStatCards'
 import { ProjectCard } from './components/ProjectCard'
 import type { ProjectKind, ProjectSummary } from './types'
@@ -15,11 +17,16 @@ const PAGE_SIZE = 3
 
 export default function ProjectListPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const { data, isPending, isError, refetch } = useProjectList()
+  const deleteProject = useDeleteProject()
   const [activeStatus, setActiveStatus] = useState('all')
   const [activeKind, setActiveKind] = useState<'all' | ProjectKind>('all')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
+  const [pendingDelete, setPendingDelete] = useState<ProjectSummary | null>(
+    null,
+  )
   usePageHeader(data?.headerTitle ?? '프로젝트', data?.headerSub)
 
   const filteredProjects = useMemo(() => {
@@ -195,7 +202,12 @@ export default function ProjectListPage() {
       <div className="flex flex-col gap-4">
         {pageProjects.length > 0 ? (
           pageProjects.map((p) => (
-            <ProjectCard key={p.id} project={p} onOpen={open} />
+            <ProjectCard
+              key={p.id}
+              project={p}
+              onOpen={open}
+              onDelete={setPendingDelete}
+            />
           ))
         ) : (
           <Empty
@@ -247,6 +259,48 @@ export default function ProjectListPage() {
           </button>
         </div>
       </div>
+
+      <Modal
+        open={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        title="프로젝트 삭제"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setPendingDelete(null)}
+              className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!pendingDelete) return
+                const target = pendingDelete
+                deleteProject.mutate(target.id, {
+                  onSuccess: () => {
+                    toast.success(`‘${target.title}’ 프로젝트를 삭제했습니다`)
+                    setPendingDelete(null)
+                  },
+                  onError: () => toast.danger('프로젝트 삭제에 실패했습니다'),
+                })
+              }}
+              disabled={deleteProject.isPending}
+              className="bg-danger rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+            >
+              삭제
+            </button>
+          </>
+        }
+      >
+        <p className="text-fg-muted text-[13px] leading-6">
+          <b className="text-fg">{pendingDelete?.title}</b> 프로젝트를
+          삭제할까요? 이 작업은 되돌릴 수 없으며, 연결된 워크스페이스 정보도
+          함께 제거됩니다.
+        </p>
+      </Modal>
     </div>
   )
 }

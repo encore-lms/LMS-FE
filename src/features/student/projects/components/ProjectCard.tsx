@@ -7,6 +7,7 @@ import {
   Pencil,
   Star,
   Timer,
+  Trash2,
   Users,
   type LucideIcon,
 } from 'lucide-react'
@@ -30,9 +31,11 @@ const STATUS: Record<ProjectStatus, { cls: string; Icon: LucideIcon }> = {
 export function ProjectCard({
   project,
   onOpen,
+  onDelete,
 }: {
   project: ProjectSummary
   onOpen: (project: ProjectSummary) => void
+  onDelete?: (project: ProjectSummary) => void
 }) {
   const st = STATUS[project.status]
   const StatusIcon = st.Icon
@@ -82,22 +85,37 @@ export function ProjectCard({
           </div>
           <h3 className="text-fg text-[17px] font-bold">{project.title}</h3>
         </div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onOpen(project)
-          }}
-          className={cn(
-            'shrink-0 rounded-lg px-4 py-2.5 text-[12px] font-bold',
-            project.status === 'reviewing'
-              ? 'border-border text-fg-muted hover:bg-surface-muted border'
-              : 'bg-brand text-white',
+        <div className="flex shrink-0 items-center gap-2">
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(project)
+              }}
+              aria-label={`${project.title} 삭제`}
+              className="border-border text-fg-subtle hover:border-danger hover:text-danger flex size-10 items-center justify-center rounded-lg border transition-colors"
+            >
+              <Trash2 className="size-4" strokeWidth={2} />
+            </button>
           )}
-        >
-          {project.actionLabel}
-          <ArrowRight className="ml-1 inline size-3.5" strokeWidth={2.4} />
-        </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpen(project)
+            }}
+            className={cn(
+              'rounded-lg px-4 py-2.5 text-[12px] font-bold',
+              project.status === 'reviewing'
+                ? 'border-border text-fg-muted hover:bg-surface-muted border'
+                : 'bg-brand text-white',
+            )}
+          >
+            {project.actionLabel}
+            <ArrowRight className="ml-1 inline size-3.5" strokeWidth={2.4} />
+          </button>
+        </div>
       </div>
 
       <div className="text-fg-muted flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">

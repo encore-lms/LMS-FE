@@ -1,5 +1,21 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import {
+  ArrowRight,
+  Calendar,
+  CircleCheck,
+  Clipboard,
+  Command,
+  FileText,
+  Files,
+  Link2,
+  ListChecks,
+  Send,
+  Timer,
+  TriangleAlert,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -7,10 +23,13 @@ import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { useProjectWorkspace } from '../../api/projects'
+import { ProjectFlowTestNav } from './ProjectFlowTestNav'
+import { useProjectFlow, type ProjectPhase } from './useProjectFlow'
 import type {
   Badge,
   Tone,
   WorkspaceData,
+  WsActivity,
   WsColumn,
   WsDoc,
   WsIssue,
@@ -55,6 +74,84 @@ const SOLID: Record<Tone, string> = {
   accent: 'bg-accent-strong',
   success: 'bg-success',
 }
+const TEXT: Record<Tone, string> = {
+  brand: 'text-brand',
+  info: 'text-info',
+  warning: 'text-warning',
+  danger: 'text-danger',
+  accent: 'text-accent-strong',
+  success: 'text-success',
+}
+
+// 홈 KPI 아이콘 — 라벨 키워드로 매핑(Figma 342:1032 KPI 행).
+function kpiIcon(label: string): LucideIcon {
+  if (label.includes('이슈')) return TriangleAlert
+  if (label.includes('회의')) return FileText
+  if (label.includes('산출') || label.includes('문서')) return Files
+  if (label.includes('인증')) return CircleCheck
+  return Clipboard
+}
+// KPI 카드가 이동할 탭.
+function kpiTarget(label: string): WsTab {
+  if (label.includes('이슈')) return 'issues'
+  if (label.includes('회의')) return 'meetings'
+  if (label.includes('산출') || label.includes('문서')) return 'docs'
+  if (label.includes('인증')) return 'certification'
+  return 'board'
+}
+// KPI 우상단 링크 라벨.
+function kpiLinkLabel(tab: WsTab): string {
+  if (tab === 'meetings') return '회의록'
+  if (tab === 'docs') return '문서·파일'
+  if (tab === 'issues') return '이슈'
+  if (tab === 'certification') return '인증'
+  return '보드·작업'
+}
+
+// KPI 진행바 채움 — 퍼센트는 값, 'a / b'는 비율, 그 외(건수)는 시각적 채움(Figma는 전 카드에 바).
+function kpiFill(stat: { value: string; unit: string; sub: string }): number {
+  const n = Number(stat.value.replace(/[^\d.]/g, ''))
+  if (stat.unit === '%')
+    return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 30
+  const m = stat.sub.match(/(\d+)\s*\/\s*(\d+)/)
+  if (m && Number(m[2]) > 0)
+    return Math.min(100, (Number(m[1]) / Number(m[2])) * 100)
+  return Number.isFinite(n) ? Math.min(100, Math.max(8, n * 5)) : 30
+}
+
+// 활동 아이콘·톤 — kind 우선(완료 작업은 체크), kind 없으면 본문 키워드 추론(타 워크스페이스 폴백).
+function activityVisual(a: WsActivity): { Icon: LucideIcon; tone: Tone } {
+  if (a.kind === '작업' && /완료\s*$/.test(a.action))
+    return { Icon: CircleCheck, tone: 'success' }
+  switch (a.kind) {
+    case '회의록':
+      return { Icon: FileText, tone: 'info' }
+    case '산출물':
+      return { Icon: Link2, tone: 'accent' }
+    case '이슈':
+      return { Icon: TriangleAlert, tone: 'warning' }
+    case '작업':
+      return { Icon: Clipboard, tone: 'brand' }
+  }
+  if (/PR|머지|커밋|GitHub|브랜치|배포|push/i.test(a.action))
+    return { Icon: Link2, tone: 'info' }
+  if (a.action.includes('회의록')) return { Icon: FileText, tone: 'accent' }
+  if (a.action.includes('이슈')) return { Icon: TriangleAlert, tone: 'warning' }
+  if (a.action.includes('완료')) return { Icon: CircleCheck, tone: 'success' }
+  return { Icon: Clipboard, tone: 'brand' }
+}
+// 완료 배너(§17) — 종료된 모든 프로젝트에 동일하게 노출(프로젝트별 데이터에 의존하지 않음).
+const COMPLETION_BANNER = {
+  title: '프로젝트가 완벽히 종료 되었네요',
+  desc: '강사·운영 완료 확정 후 3일 안에 팀원 상호평가를 제출해야 내 증명서 협업 근거가 최신화됩니다.',
+}
+
+// 생애주기 단계 → 인증 상태 배지(목 데이터 대신 시뮬레이션 단계를 따른다).
+function phaseCertBadge(phase: ProjectPhase): Badge {
+  if (phase === 'certified') return { label: '인증 완료', tone: 'success' }
+  if (phase === 'reviewing') return { label: '검토 중', tone: 'warning' }
+  return { label: '검토 전', tone: 'info' }
+}
 const TABS: WsTab[] = [
   'home',
   'board',
@@ -77,6 +174,11 @@ export default function WorkspacePage() {
     ? (raw as WsTab)
     : 'home'
   const { data, isPending, isError, refetch } = useProjectWorkspace(projectId)
+  // 생애주기 시뮬레이션 — 프로젝트 진입 시 워크스페이스 상태로 1회 초기화(테스트 FAB로 진행).
+  const initFlow = useProjectFlow((s) => s.initForProject)
+  useEffect(() => {
+    if (data) initFlow(projectId, data.status)
+  }, [projectId, data, initFlow])
 
   if (isPending)
     return <div className="text-fg-muted p-8">워크스페이스를 불러오는 중…</div>
@@ -96,23 +198,26 @@ export default function WorkspacePage() {
     setParams(t === 'home' ? {} : { tab: t }, { replace: true })
 
   return (
-    <WorkspaceShell
-      title={data.title}
-      meta={data.meta}
-      active={tab}
-      onTab={setTab}
-    >
-      {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
-      {tab === 'board' && <BoardTab d={data} />}
-      {tab === 'calendar' && <CalendarTab d={data} />}
-      {tab === 'meetings' && <MeetingsTab d={data} />}
-      {tab === 'docs' && <DocsTab d={data} />}
-      {tab === 'issues' && <IssuesTab d={data} />}
-      {tab === 'team' && <TeamTab d={data} />}
-      {tab === 'outcomes' && <OutcomesTab d={data} />}
-      {tab === 'peer-evaluation' && <PeerTab d={data} />}
-      {tab === 'certification' && <CertTab d={data} />}
-    </WorkspaceShell>
+    <>
+      <WorkspaceShell
+        title={data.title}
+        meta={data.meta}
+        active={tab}
+        onTab={setTab}
+      >
+        {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
+        {tab === 'board' && <BoardTab d={data} />}
+        {tab === 'calendar' && <CalendarTab d={data} />}
+        {tab === 'meetings' && <MeetingsTab d={data} />}
+        {tab === 'docs' && <DocsTab d={data} />}
+        {tab === 'issues' && <IssuesTab d={data} />}
+        {tab === 'team' && <TeamTab d={data} />}
+        {tab === 'outcomes' && <OutcomesTab d={data} />}
+        {tab === 'peer-evaluation' && <PeerTab d={data} />}
+        {tab === 'certification' && <CertTab d={data} />}
+      </WorkspaceShell>
+      <ProjectFlowTestNav />
+    </>
   )
 }
 
@@ -199,13 +304,14 @@ function HomeTab({
   d: WorkspaceData
   onTab: (t: WsTab) => void
 }) {
-  const [doneTasks, setDoneTasks] = useState<Set<string>>(new Set())
-  const statTab = (label: string): WsTab =>
-    label.includes('이슈')
-      ? 'issues'
-      : label.includes('인증')
-        ? 'certification'
-        : 'board'
+  const phase = useProjectFlow((s) => s.phase)
+  // 완료 표시된 할 일은 처음부터 체크 상태로 시작(Figma의 마지막 항목).
+  const [doneTasks, setDoneTasks] = useState<Set<string>>(
+    () =>
+      new Set(
+        d.myTasks.filter((t) => t.due.includes('완료')).map((t) => t.title),
+      ),
+  )
   const toggleDone = (title: string) =>
     setDoneTasks((prev) => {
       const next = new Set(prev)
@@ -213,104 +319,344 @@ function HomeTab({
       else next.add(title)
       return next
     })
+  // 마감 임박 = 미완료 + 마감(D-n) 표기가 있는 할 일.
+  const dueSoonCount = d.myTasks.filter(
+    (t) => /D-\d/.test(t.due) && !doneTasks.has(t.title),
+  ).length
+
   return (
     <div className="flex flex-col gap-4">
-      {d.banner && (
-        <div className="bg-info-bg/60 text-fg-muted flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-[12px]">
-          <span>ⓘ {d.banner}</span>
+      {/* 완료·상호평가 안내 배너 — 종료(완료 확정 이후, active 아님)면 모든 프로젝트에 동일 노출. 상호평가 탭과 동일 조건. */}
+      {phase !== 'active' && (
+        <div className="bg-brand/10 border-brand/20 flex items-center justify-between gap-4 rounded-2xl border p-5">
+          <div className="flex items-center gap-3.5">
+            <span className="bg-brand flex size-11 shrink-0 items-center justify-center rounded-full text-white">
+              <CircleCheck className="size-5" aria-hidden="true" />
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-fg text-[15px] font-bold">
+                {COMPLETION_BANNER.title}
+              </span>
+              <span className="text-fg-muted text-[12px] leading-5">
+                {COMPLETION_BANNER.desc}
+              </span>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => onTab('peer-evaluation')}
-            className="bg-brand shrink-0 rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+            className="bg-brand shrink-0 rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
           >
             상호평가 작성
           </button>
         </div>
       )}
+
+      {/* KPI 카드 */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {d.stats.map((s) => (
-          <button
-            key={s.label}
-            type="button"
-            onClick={() => onTab(statTab(s.label))}
-            className={cn(card, 'flex flex-col gap-2 text-left')}
-          >
-            <span className="text-fg-muted text-[12px]">{s.label}</span>
-            <span className="text-fg text-[26px] leading-none font-bold">
-              {s.value}
-              {s.unit && (
-                <span className="text-fg-muted ml-0.5 text-[13px]">
-                  {s.unit}
-                </span>
+        {d.stats.map((s) => {
+          const Icon = kpiIcon(s.label)
+          const target = kpiTarget(s.label)
+          const fill = kpiFill(s)
+          return (
+            <button
+              key={s.label}
+              type="button"
+              onClick={() => onTab(target)}
+              className={cn(
+                card,
+                'hover:border-brand/40 flex min-h-[136px] flex-col gap-3 text-left transition-colors',
               )}
-            </span>
-            <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-          </button>
-        ))}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-fg-muted flex items-center gap-1.5 text-[12px] font-semibold">
+                  <Icon
+                    className={cn('size-4', TEXT[s.tone])}
+                    aria-hidden="true"
+                  />
+                  {s.label}
+                </span>
+                <span className="text-fg-subtle flex items-center gap-0.5 text-[11px] font-semibold">
+                  {kpiLinkLabel(target)}
+                  <ArrowRight className="size-3" aria-hidden="true" />
+                </span>
+              </div>
+              <span className="text-fg text-[28px] leading-none font-bold">
+                {s.value}
+                {s.unit && (
+                  <span className="text-fg-muted ml-0.5 text-[14px]">
+                    {s.unit}
+                  </span>
+                )}
+              </span>
+              <div className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
+                <div
+                  className={cn('h-full rounded-full', SOLID[s.tone])}
+                  style={{ width: `${fill}%` }}
+                />
+              </div>
+              <span className="text-fg-subtle mt-auto text-[11px]">
+                {s.sub}
+              </span>
+            </button>
+          )
+        })}
       </div>
+
       <div className="flex flex-col gap-4 lg:flex-row">
+        {/* 좌측: 내 할 일 · 최근 활동 */}
         <div className="flex flex-1 flex-col gap-4">
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <SectionHead title="내 할 일" />
-            {d.myTasks.map((t, i) => (
-              <div
-                key={i}
-                className="border-border flex items-center gap-3 rounded-[10px] border p-3"
+          <section className={cn(card, 'flex flex-col')}>
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-2">
+                <ListChecks className="text-brand size-4" aria-hidden="true" />
+                <h2 className="text-fg text-[15px] font-bold">내 할 일</h2>
+                {dueSoonCount > 0 && (
+                  <span className="bg-danger-bg text-danger rounded-full px-2 py-0.5 text-[11px] font-bold">
+                    마감 임박 {dueSoonCount}건
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => onTab('board')}
+                className="text-fg-subtle hover:text-brand flex items-center gap-0.5 text-[12px] font-semibold"
               >
-                <button
-                  type="button"
-                  onClick={() => toggleDone(t.title)}
-                  aria-label={`${t.title} 완료 전환`}
+                보드·작업 전체 보기
+                <ArrowRight className="size-3" aria-hidden="true" />
+              </button>
+            </div>
+            {d.myTasks.map((t, i) => {
+              const done = doneTasks.has(t.title)
+              const urgent = t.tags.some((tg) => tg.tone === 'danger')
+              const category =
+                t.tags.find((tg) => tg.tone !== 'danger') ?? t.tags[0]
+              return (
+                <div
+                  key={i}
                   className={cn(
-                    'border-border flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold',
-                    doneTasks.has(t.title) && 'bg-success text-white',
+                    'flex items-center gap-3 py-3',
+                    i > 0 && 'border-divider border-t',
                   )}
                 >
-                  {doneTasks.has(t.title) ? '✓' : ''}
-                </button>
-                <span className="text-fg flex-1 text-[13px] font-semibold">
-                  {t.title}
-                </span>
-                <span className="text-fg-subtle text-[11px]">{t.due}</span>
-                {t.tags.slice(0, 2).map((tg, j) => (
-                  <Chip key={j} badge={tg} />
-                ))}
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => toggleDone(t.title)}
+                    aria-label={`${t.title} 완료 전환`}
+                    className={cn(
+                      'flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold transition-colors',
+                      done
+                        ? 'bg-success border-success text-white'
+                        : 'border-border text-fg-subtle',
+                    )}
+                  >
+                    {done ? '✓' : ''}
+                  </button>
+                  {category && <Chip badge={category} />}
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span
+                      className={cn(
+                        'truncate text-[13px] font-semibold',
+                        done ? 'text-fg-subtle line-through' : 'text-fg',
+                      )}
+                    >
+                      {t.title}
+                    </span>
+                    <span className="text-fg-subtle text-[11px]">{t.due}</span>
+                  </div>
+                  {urgent && !done && (
+                    <span className="bg-danger-bg text-danger flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold">
+                      <Timer className="size-3" aria-hidden="true" />
+                      긴급
+                    </span>
+                  )}
+                </div>
+              )
+            })}
           </section>
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <SectionHead title="최근 활동" />
-            {d.activities.map((a, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <Avatar name={a.who} tone="info" />
-                <span className="text-fg-muted flex-1 text-[12px]">
-                  <b className="text-fg">{a.who}</b> {a.action}
+
+          <section className={cn(card, 'flex flex-col')}>
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-2">
+                <Timer className="text-fg-muted size-4" aria-hidden="true" />
+                <h2 className="text-fg text-[15px] font-bold">최근 활동</h2>
+                <span className="bg-surface-muted text-fg-subtle rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                  최근 7일
                 </span>
-                <span className="text-fg-subtle text-[11px]">{a.when}</span>
               </div>
-            ))}
+              <button
+                type="button"
+                onClick={() => onTab('board')}
+                className="text-fg-subtle hover:text-brand flex items-center gap-0.5 text-[12px] font-semibold"
+              >
+                전체 보기
+                <ArrowRight className="size-3" aria-hidden="true" />
+              </button>
+            </div>
+            {d.activities.map((a, i) => {
+              const { Icon, tone } = activityVisual(a)
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    'flex items-center gap-3 py-3',
+                    i > 0 && 'border-divider border-t',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex size-8 shrink-0 items-center justify-center rounded-lg',
+                      CHIP[tone],
+                    )}
+                  >
+                    <Icon className="size-4" aria-hidden="true" />
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-fg text-[12px] font-bold">
+                        {a.who}
+                      </span>
+                      {a.kind && (
+                        <span className="bg-surface-muted text-fg-subtle rounded px-1.5 py-0.5 text-[10px] font-bold">
+                          {a.kind}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-fg-muted truncate text-[12px]">
+                      {a.action}
+                    </span>
+                  </div>
+                  <span className="text-fg-subtle shrink-0 text-[11px]">
+                    {a.when}
+                  </span>
+                </div>
+              )
+            })}
           </section>
         </div>
-        <div className="flex flex-col gap-4 lg:w-[360px]">
-          <section className={cn(card, 'flex flex-col gap-2')}>
-            <span className="text-fg text-[14px] font-bold">팀 구성</span>
+
+        {/* 우측: 인증 상태 · 팀원 · 성과 지표 · 기술 스택 */}
+        <div className="flex flex-col gap-4 lg:w-[380px]">
+          <section
+            className={cn(
+              'bg-surface flex flex-col gap-3 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]',
+              phase === 'certified'
+                ? 'border-success/50'
+                : phase === 'reviewing'
+                  ? 'border-warning/50'
+                  : 'border-border',
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CircleCheck
+                  className="text-success size-4"
+                  aria-hidden="true"
+                />
+                <span className="text-fg text-[14px] font-bold">인증 상태</span>
+              </div>
+              <Chip badge={phaseCertBadge(phase)} />
+            </div>
+            {(phase === 'reviewing' || phase === 'certified') && d.certInfo ? (
+              <div className="flex flex-col gap-2 text-[12px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-fg-muted flex items-center gap-1.5">
+                    <Calendar className="size-3.5" aria-hidden="true" />
+                    요청일
+                  </span>
+                  <span className="text-fg font-semibold">
+                    {d.certInfo.requestedAt}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-fg-muted flex items-center gap-1.5">
+                    <Send className="size-3.5" aria-hidden="true" />
+                    검토자
+                  </span>
+                  <span className="text-fg font-semibold">
+                    {d.certInfo.reviewer}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-fg-muted flex items-center gap-1.5">
+                    <Timer className="size-3.5" aria-hidden="true" />
+                    {phase === 'certified' ? '인증일' : '예상 회신'}
+                  </span>
+                  <span className="text-fg font-semibold">
+                    {d.certInfo.eta}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-fg-muted text-[12px]">
+                    최근 변경 제안
+                  </span>
+                  <Chip badge={d.certRecentChange.status} />
+                </div>
+                <span className="text-fg text-[13px] font-semibold">
+                  {d.certRecentChange.label}
+                </span>
+                <span className="text-fg-subtle text-[11px]">
+                  {d.certRecentChange.date}
+                </span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => onTab('certification')}
+              className="border-border text-fg hover:border-brand/50 flex items-center justify-center gap-1 rounded-lg border py-2.5 text-[12px] font-semibold transition-colors"
+            >
+              인증 요청 탭 보기
+              <ArrowRight className="size-3.5" aria-hidden="true" />
+            </button>
+          </section>
+
+          <section className={cn(card, 'flex flex-col gap-2.5')}>
+            <div className="flex items-center gap-2">
+              <Users className="text-brand size-4" aria-hidden="true" />
+              <span className="text-fg text-[14px] font-bold">팀원</span>
+              <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[11px] font-bold">
+                {d.members.length}명
+              </span>
+            </div>
             {d.members.map((m) => (
               <div key={m.name} className="flex items-center gap-2.5">
                 <Avatar name={m.name} tone={m.avatarTone} />
                 <div className="flex flex-1 flex-col">
                   <span className="text-fg text-[12px] font-bold">
                     {m.name}
+                    {m.kind === 'PM' && ' (본인)'}
                   </span>
                   <span className="text-fg-subtle text-[11px]">{m.role}</span>
                 </div>
-                <span className="text-fg-muted text-[11px] font-bold">
-                  {m.contrib}%
-                </span>
+                <span
+                  className="bg-success size-2 rounded-full"
+                  aria-hidden="true"
+                />
               </div>
             ))}
           </section>
+
           <section className={cn(card, 'flex flex-col gap-2.5')}>
-            <span className="text-fg text-[14px] font-bold">성과 요약</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CircleCheck
+                  className="text-success size-4"
+                  aria-hidden="true"
+                />
+                <span className="text-fg text-[14px] font-bold">성과 지표</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onTab('outcomes')}
+                className="text-fg-subtle hover:text-brand flex items-center gap-0.5 text-[11px] font-semibold"
+              >
+                성과·기술
+                <ArrowRight className="size-3" aria-hidden="true" />
+              </button>
+            </div>
             {d.metrics.map((m) => (
               <div
                 key={m.label}
@@ -318,21 +664,34 @@ function HomeTab({
               >
                 <span className="text-fg-muted">{m.label}</span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-fg font-bold">{m.after}</span>
-                  <span className="bg-success-bg text-success rounded px-1 py-0.5 text-[10px] font-bold">
-                    {m.delta}
+                  <span className="text-fg-subtle">{m.before}</span>
+                  <span className="text-fg-subtle">→</span>
+                  <span
+                    className={cn(
+                      'font-bold',
+                      m.good ? 'text-success' : 'text-danger',
+                    )}
+                  >
+                    {m.after}
                   </span>
                 </span>
               </div>
             ))}
           </section>
-          <section className={cn(card, 'flex flex-col gap-2')}>
-            <span className="text-fg text-[14px] font-bold">기술 스택</span>
+
+          <section className={cn(card, 'flex flex-col gap-2.5')}>
+            <div className="flex items-center gap-2">
+              <Command className="text-brand size-4" aria-hidden="true" />
+              <span className="text-fg text-[14px] font-bold">기술 스택</span>
+              <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[11px] font-bold">
+                {d.stack.length}
+              </span>
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {d.stack.map((s) => (
                 <span
                   key={s}
-                  className="bg-surface-muted text-fg-muted rounded-md px-2 py-0.5 text-[11px] font-medium"
+                  className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 text-[11px] font-medium"
                 >
                   {s}
                 </span>
@@ -836,11 +1195,7 @@ function DocsTab({ d }: { d: WorkspaceData }) {
   const visibleDocs =
     activeCategory === '전체'
       ? docs
-      : docs.filter(
-          (doc) =>
-            doc.title.includes(activeCategory) ||
-            doc.meta.includes(activeCategory),
-        )
+      : docs.filter((doc) => doc.category === activeCategory)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -866,7 +1221,7 @@ function DocsTab({ d }: { d: WorkspaceData }) {
             </button>
           ))}
         </section>
-        <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid flex-1 grid-cols-1 content-start gap-3 sm:grid-cols-2">
           {visibleDocs.map((doc, i) => (
             <div key={i} className={cn(card, 'flex flex-col gap-2')}>
               <span className="text-fg text-[14px] font-bold">{doc.title}</span>
@@ -919,6 +1274,7 @@ function AddDocModal({
       title: title.trim(),
       meta: `${category} · 방금`,
       status: { label: '초안', tone: 'info' },
+      category,
     })
   }
 
@@ -1442,8 +1798,34 @@ function PeerTab({ d }: { d: WorkspaceData }) {
     ),
   )
   const [comments, setComments] = useState<Record<string, string>>({})
+  const phase = useProjectFlow((s) => s.phase)
   const setScore = (name: string, key: string, score: number) =>
     setScores((prev) => ({ ...prev, [`${name}:${key}`]: score }))
+
+  // 완료 확정 전(진행 중)에는 상호평가가 열리지 않음 (§17)
+  if (phase === 'active') {
+    return (
+      <div className="flex flex-col gap-4">
+        <h2 className="text-fg text-[16px] font-bold">프로젝트 상호평가</h2>
+        <section
+          className={cn(
+            card,
+            'flex flex-col items-center gap-2 py-12 text-center',
+          )}
+        >
+          <Timer className="text-fg-subtle size-8" aria-hidden="true" />
+          <span className="text-fg text-[14px] font-bold">
+            아직 상호평가가 열리지 않았어요
+          </span>
+          <span className="text-fg-muted max-w-md text-[12px] leading-5">
+            강사·운영이 프로젝트 완료를 확정하면 팀원 상호평가를 진행할 수
+            있어요.
+          </span>
+        </section>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4 pb-4">
       <div className="flex flex-col gap-1">
@@ -1559,14 +1941,15 @@ function CertTab({ d }: { d: WorkspaceData }) {
   const navigate = useNavigate()
   const toast = useToast()
   const [checks, setChecks] = useState(d.certChecklist)
-  const [requested, setRequested] = useState(false)
+  const phase = useProjectFlow((s) => s.phase)
+  const setPhase = useProjectFlow((s) => s.setPhase)
   const allDone = checks.every((check) => check.status.tone === 'success')
   const submit = () => {
     if (!allDone) {
       toast.warning('요청 전 체크리스트를 모두 완료해 주세요')
       return
     }
-    setRequested(true)
+    setPhase('reviewing')
     toast.success('인증 요청을 제출했습니다')
   }
   return (
@@ -1625,25 +2008,40 @@ function CertTab({ d }: { d: WorkspaceData }) {
           <section className={cn(card, 'flex flex-col gap-3')}>
             <div className="flex items-center justify-between">
               <span className="text-fg text-[14px] font-bold">인증 상태</span>
-              <Chip
-                badge={
-                  requested
-                    ? { label: '검토 중', tone: 'warning' }
-                    : d.certStatus
-                }
-              />
+              <Chip badge={phaseCertBadge(phase)} />
             </div>
             <span className="text-fg-muted text-[12px] leading-5">
-              요청하면 담당 강사가 산출물과 발표 내용을 검토합니다. 인증 완료 후
-              프로젝트는 증명서 대표 후보가 됩니다.
+              {phase === 'certified'
+                ? '인증이 완료된 프로젝트입니다. 원본 정보 수정은 변경 제안으로만 가능합니다.'
+                : phase === 'reviewing'
+                  ? '담당 강사가 산출물과 발표 내용을 검토하고 있어요. 승인되면 인증이 완료됩니다.'
+                  : phase === 'completed'
+                    ? '요청하면 담당 강사가 산출물과 발표 내용을 검토합니다. 인증 완료 후 프로젝트는 증명서 대표 후보가 됩니다.'
+                    : '프로젝트 진행 중이에요. 기간이 종료되어 완료 확정되면 인증을 요청할 수 있습니다.'}
             </span>
-            <button
-              type="button"
-              onClick={submit}
-              className="bg-brand rounded-lg py-3 text-[13px] font-bold text-white"
-            >
-              인증 요청 제출
-            </button>
+            {phase === 'certified' ? (
+              <div className="bg-success-bg text-success flex items-center justify-center gap-1.5 rounded-lg py-3 text-[13px] font-bold">
+                <CircleCheck className="size-4" aria-hidden="true" />
+                인증 완료
+              </div>
+            ) : phase === 'reviewing' ? (
+              <div className="bg-warning-bg text-warning flex items-center justify-center gap-1.5 rounded-lg py-3 text-[13px] font-bold">
+                <Timer className="size-4" aria-hidden="true" />
+                강사 검토 중
+              </div>
+            ) : phase === 'completed' ? (
+              <button
+                type="button"
+                onClick={submit}
+                className="bg-brand rounded-lg py-3 text-[13px] font-bold text-white"
+              >
+                인증 요청 제출
+              </button>
+            ) : (
+              <div className="border-border text-fg-subtle flex items-center justify-center rounded-lg border border-dashed py-3 text-[12px] font-semibold">
+                기간 종료 후 인증 요청 가능
+              </div>
+            )}
             <button
               type="button"
               onClick={() =>

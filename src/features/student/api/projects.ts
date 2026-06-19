@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { projectKeys } from '../projects/queryKeys'
 import type {
-  ProjectKind,
   ProjectListData,
   ProjectSummary,
   ProjectWizardData,
@@ -44,27 +43,15 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: async (input: CreateProjectInput) => {
-      // 계약 확정 시 apiClient.post('/student/projects', input)로 교체.
-      await Promise.resolve()
-      return buildCreatedProject(input)
-    },
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: projectKeys.list() })
-      const previous = queryClient.getQueryData<ProjectListData>(
-        projectKeys.list(),
+      const res = await apiClient.post<ProjectSummary>(
+        '/student/projects',
+        input,
       )
-      const created = buildCreatedProject(input)
-
-      queryClient.setQueryData<ProjectListData>(projectKeys.list(), (old) =>
-        old ? prependProject(old, created) : old,
-      )
-
-      return { previous }
+      return res.data
     },
-    onError: (_error, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(projectKeys.list(), context.previous)
-      }
+    // 생성 후 목록을 다시 불러와 서버(mock)가 영속화한 새 프로젝트를 반영.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
     },
   })
 }
@@ -79,35 +66,17 @@ export function useProjectWorkspace(id: string) {
   })
 }
 
-function buildCreatedProject(input: CreateProjectInput): ProjectSummary {
-  const kind: ProjectKind = input.teamSize > 1 ? 'team' : 'personal'
-  return {
-    id: `draft-${input.name}-${input.start}`.replace(/\s+/g, '-'),
-    kind,
-    kindLabel: kind === 'team' ? '팀' : '개인',
-    status: 'draft',
-    statusLabel: '작성 중',
-    representative: false,
-    accentTone: 'accent',
-    title: input.name,
-    pm: '김수강 PM',
-    teamLabel: kind === 'team' ? `팀 ${input.teamSize}명` : '개인 프로젝트',
-    period: `${input.start} ~ ${input.end} · 작성 중`,
-    tags: input.stacks,
-    outcomes: [input.domain, ...input.deliverables],
-    actionLabel: '워크스페이스 열기',
-  }
-}
+// 프로젝트 삭제 — 모든 프로젝트(기본·신규 공통) 대상. 성공 시 목록 갱신.
+export function useDeleteProject() {
+  const queryClient = useQueryClient()
 
-function prependProject(
-  data: ProjectListData,
-  project: ProjectSummary,
-): ProjectListData {
-  return {
-    ...data,
-    projects: [
-      project,
-      ...data.projects.filter((item) => item.id !== project.id),
-    ],
-  }
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete<{ id: string }>(`/student/projects/${id}`)
+      return id
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+    },
+  })
 }

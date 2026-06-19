@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ToastProvider } from '@/components/ui/Toast'
 import ProjectListPage from './ProjectListPage'
-import { useProjectList } from '../api/projects'
+import { useDeleteProject, useProjectList } from '../api/projects'
 import type { ProjectListData } from './types'
 
 vi.mock('../api/projects')
@@ -96,14 +97,20 @@ function renderPage() {
     isError: false,
     refetch,
   } as unknown as ReturnType<typeof useProjectList>)
+  vi.mocked(useDeleteProject).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useDeleteProject>)
 
   render(
-    <MemoryRouter initialEntries={['/student/projects']}>
-      <Routes>
-        <Route path="/student/projects" element={<ProjectListPage />} />
-        <Route path="*" element={<LocationProbe />} />
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/student/projects']}>
+        <Routes>
+          <Route path="/student/projects" element={<ProjectListPage />} />
+          <Route path="*" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 

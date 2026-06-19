@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
@@ -24,7 +24,11 @@ import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { useProjectWorkspace } from '../../api/projects'
 import { ProjectFlowTestNav } from './ProjectFlowTestNav'
-import { useProjectFlow, type ProjectPhase } from './useProjectFlow'
+import {
+  statusToPhase,
+  useProjectFlow,
+  type ProjectPhase,
+} from './useProjectFlow'
 import type {
   Badge,
   Tone,
@@ -174,11 +178,6 @@ export default function WorkspacePage() {
     ? (raw as WsTab)
     : 'home'
   const { data, isPending, isError, refetch } = useProjectWorkspace(projectId)
-  // 생애주기 시뮬레이션 — 프로젝트 진입 시 워크스페이스 상태로 1회 초기화(테스트 FAB로 진행).
-  const initFlow = useProjectFlow((s) => s.initForProject)
-  useEffect(() => {
-    if (data) initFlow(projectId, data.status)
-  }, [projectId, data, initFlow])
 
   if (isPending)
     return <div className="text-fg-muted p-8">워크스페이스를 불러오는 중…</div>
@@ -216,7 +215,7 @@ export default function WorkspacePage() {
         {tab === 'peer-evaluation' && <PeerTab d={data} />}
         {tab === 'certification' && <CertTab d={data} />}
       </WorkspaceShell>
-      <ProjectFlowTestNav />
+      <ProjectFlowTestNav projectId={projectId} status={data.status} />
     </>
   )
 }
@@ -304,7 +303,7 @@ function HomeTab({
   d: WorkspaceData
   onTab: (t: WsTab) => void
 }) {
-  const phase = useProjectFlow((s) => s.phase)
+  const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   // 완료 표시된 할 일은 처음부터 체크 상태로 시작(Figma의 마지막 항목).
   const [doneTasks, setDoneTasks] = useState<Set<string>>(
     () =>
@@ -1798,7 +1797,7 @@ function PeerTab({ d }: { d: WorkspaceData }) {
     ),
   )
   const [comments, setComments] = useState<Record<string, string>>({})
-  const phase = useProjectFlow((s) => s.phase)
+  const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const setScore = (name: string, key: string, score: number) =>
     setScores((prev) => ({ ...prev, [`${name}:${key}`]: score }))
 
@@ -1941,7 +1940,7 @@ function CertTab({ d }: { d: WorkspaceData }) {
   const navigate = useNavigate()
   const toast = useToast()
   const [checks, setChecks] = useState(d.certChecklist)
-  const phase = useProjectFlow((s) => s.phase)
+  const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const setPhase = useProjectFlow((s) => s.setPhase)
   const allDone = checks.every((check) => check.status.tone === 'success')
   const submit = () => {
@@ -1949,7 +1948,7 @@ function CertTab({ d }: { d: WorkspaceData }) {
       toast.warning('요청 전 체크리스트를 모두 완료해 주세요')
       return
     }
-    setPhase('reviewing')
+    setPhase(d.id, 'reviewing')
     toast.success('인증 요청을 제출했습니다')
   }
   return (

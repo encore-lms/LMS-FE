@@ -16,12 +16,8 @@ function renderPage(
   data: WorkspaceData = mockWorkspace,
   phase?: ProjectPhase,
 ) {
-  // 생애주기 시뮬레이션 상태를 테스트별로 고정(없으면 진입 시 상태에서 초기화).
-  useProjectFlow.setState(
-    phase
-      ? { forProjectId: data.id, phase }
-      : { forProjectId: null, phase: 'active' },
-  )
+  // 생애주기 시뮬레이션 단계를 테스트별로 고정(없으면 진입 시 상태에서 파생).
+  useProjectFlow.setState({ phases: phase ? { [data.id]: phase } : {} })
   vi.mocked(useProjectWorkspace).mockReturnValue({
     data,
     isPending: false,

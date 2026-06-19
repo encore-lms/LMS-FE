@@ -1,21 +1,34 @@
 import { useToast } from '@/components/ui/use-toast'
 import { TestModeFab } from '@/components/dev/TestModeFab'
-import { useProjectFlow, type ProjectPhase } from './useProjectFlow'
+import type { ProjectStatus } from '../types'
+import {
+  statusToPhase,
+  useProjectFlow,
+  type ProjectPhase,
+} from './useProjectFlow'
 
 // 프로젝트 생애주기 데모(완료 확정·인증 흐름) — FE 목 전용 테스트 컨트롤.
-// 워크스페이스 우하단 플로팅 버튼(TestModeFab)으로 노출.
+// 워크스페이스 우하단 플로팅 버튼(TestModeFab)으로 노출. 단계는 프로젝트별로 보관돼 목록과 공유된다.
 // 학생이 [인증 요청]을 보내면 강사 승인은 여기 [강사 인증 승인]으로 시뮬레이션한다.
 const PHASE_LABEL: Record<ProjectPhase, string> = {
-  active: '진행 중 (완료 확정 전)',
-  completed: '완료 확정 · 상호평가 진행',
+  active: '작성 중 (완료 확정 전)',
+  completed: '작성 완료 · 상호평가 진행',
   reviewing: '인증 검토 중',
   certified: '인증 완료',
 }
 
-export function ProjectFlowTestNav() {
+export function ProjectFlowTestNav({
+  projectId,
+  status,
+}: {
+  projectId: string
+  status: ProjectStatus
+}) {
   const toast = useToast()
-  const phase = useProjectFlow((s) => s.phase)
-  const setPhase = useProjectFlow((s) => s.setPhase)
+  const phase =
+    useProjectFlow((s) => s.phases[projectId]) ?? statusToPhase(status)
+  const setPhaseFor = useProjectFlow((s) => s.setPhase)
+  const setPhase = (p: ProjectPhase) => setPhaseFor(projectId, p)
 
   const solidBtn =
     'bg-accent-strong rounded-lg px-3 py-2 text-[12px] font-bold text-white'

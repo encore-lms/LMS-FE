@@ -10,7 +10,21 @@ import { usePageHeader } from '@/shared/store'
 import { useDeleteProject, useProjectList } from '../api/projects'
 import { ProjectStatCards } from './components/ProjectStatCards'
 import { ProjectCard } from './components/ProjectCard'
-import type { ProjectKind, ProjectSummary } from './types'
+import type {
+  ProjectFilter,
+  ProjectKind,
+  ProjectStat,
+  ProjectSummary,
+} from './types'
+import {
+  statusToPhase,
+  useProjectFlow,
+  type ProjectPhase,
+} from './workspace/useProjectFlow'
+
+// 생애주기 단계 → 상태 필터 키(작성 중=active는 draft 키 재사용).
+const phaseFilterKey = (phase: ProjectPhase): string =>
+  phase === 'active' ? 'draft' : phase
 
 // 프로젝트 목록 (/student/projects) — Figma 337:930.
 const PAGE_SIZE = 3
@@ -29,14 +43,24 @@ export default function ProjectListPage() {
   )
   usePageHeader(data?.headerTitle ?? '프로젝트', data?.headerSub)
 
+  const phases = useProjectFlow((s) => s.phases)
+  // 각 프로젝트의 현재 단계 — 사용자가 진행한 단계 우선, 없으면 목록 상태에서 파생.
+  const projects = useMemo(
+    () =>
+      (data?.projects ?? []).map((p) => ({
+        ...p,
+        phase: phases[p.id] ?? statusToPhase(p.status),
+      })),
+    [data, phases],
+  )
+
   const filteredProjects = useMemo(() => {
-    if (!data) return []
     const normalized = query.trim().toLowerCase()
 
-    return data.projects.filter((project) => {
+    return projects.filter((project) => {
       const matchesStatus =
         activeStatus === 'all' ||
-        project.status === activeStatus ||
+        phaseFilterKey(project.phase) === activeStatus ||
         (activeStatus === 'representative' && project.representative)
       const matchesKind = activeKind === 'all' || project.kind === activeKind
       const matchesQuery =
@@ -44,7 +68,6 @@ export default function ProjectListPage() {
         [
           project.title,
           project.kindLabel,
-          project.statusLabel,
           project.pm,
           project.teamLabel,
           project.period,
@@ -57,7 +80,7 @@ export default function ProjectListPage() {
 
       return matchesStatus && matchesKind && matchesQuery
     })
-  }, [activeKind, activeStatus, data, query])
+  }, [activeKind, activeStatus, projects, query])
 
   useEffect(() => {
     setPage(1)
@@ -68,29 +91,66 @@ export default function ProjectListPage() {
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
   )
-  const allProjects = data?.projects ?? []
-  const teamCount = allProjects.filter(
-    (project) => project.kind === 'team',
-  ).length
-  const personalCount = allProjects.filter(
-    (project) => project.kind === 'personal',
-  ).length
+  const teamCount = projects.filter((p) => p.kind === 'team').length
+  const personalCount = projects.filter((p) => p.kind === 'personal').length
+  const byPhase = (ph: ProjectPhase) =>
+    projects.filter((p) => p.phase === ph).length
+
+  // 통계·필터를 현재 단계 기준으로 재구성 — 목록 배지와 항상 일치.
+  const stats: ProjectStat[] = [
+    {
+      key: 'draft',
+      label: '작성 중',
+      value: String(byPhase('active')),
+      unit: '건',
+      sub: '진행 중',
+      tone: 'accent',
+    },
+    {
+      key: 'completed',
+      label: '작성 완료',
+      value: String(byPhase('completed')),
+      unit: '건',
+      sub: '상호평가·인증 요청',
+      tone: 'info',
+    },
+    {
+      key: 'reviewing',
+      label: '검토 중',
+      value: String(byPhase('reviewing')),
+      unit: '건',
+      sub: '강사 검토 대기',
+      tone: 'warning',
+    },
+    {
+      key: 'certified',
+      label: '인증 완료',
+      value: String(byPhase('certified')),
+      unit: '건',
+      sub: '대표 후보 가능',
+      tone: 'success',
+    },
+  ]
+  const filters: ProjectFilter[] = [
+    { key: 'all', label: '전체', count: projects.length },
+    { key: 'certified', label: '인증 완료', count: byPhase('certified') },
+    { key: 'reviewing', label: '검토 중', count: byPhase('reviewing') },
+    { key: 'completed', label: '작성 완료', count: byPhase('completed') },
+    { key: 'draft', label: '작성 중', count: byPhase('active') },
+    {
+      key: 'representative',
+      label: '대표 후보',
+      count: projects.filter((p) => p.representative).length,
+    },
+  ]
 
   const open = (project: ProjectSummary) => {
-    const suffix = project.status === 'reviewing' ? '?tab=certification' : ''
+    const phase = phases[project.id] ?? statusToPhase(project.status)
+    const suffix = phase === 'reviewing' ? '?tab=certification' : ''
     navigate(`/student/projects/${project.id}${suffix}`)
   }
 
-  const shownLabel =
-    data && filteredProjects.length === data.projects.length && !query
-      ? data.shownLabel
-      : `${filteredProjects.length}건 표시 · 인증 완료 ${
-          filteredProjects.filter((p) => p.status === 'certified').length
-        } / 검토 중 ${
-          filteredProjects.filter((p) => p.status === 'reviewing').length
-        } / 작성 중 ${
-          filteredProjects.filter((p) => p.status === 'draft').length
-        }`
+  const shownLabel = `${filteredProjects.length}건 표시 · 작성 중 ${byPhase('active')} / 작성 완료 ${byPhase('completed')} / 검토 중 ${byPhase('reviewing')} / 인증 완료 ${byPhase('certified')}`
 
   if (isPending)
     return <div className="text-fg-muted p-8">프로젝트를 불러오는 중…</div>
@@ -108,7 +168,7 @@ export default function ProjectListPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <ProjectStatCards stats={data.stats} />
+      <ProjectStatCards stats={stats} />
 
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2">
@@ -142,7 +202,7 @@ export default function ProjectListPage() {
       {/* 필터 칩 */}
       <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3">
         <div className="flex flex-wrap items-center gap-2">
-          {data.filters.map((f) => {
+          {filters.map((f) => {
             const on = f.key === activeStatus
             return (
               <button
@@ -205,6 +265,7 @@ export default function ProjectListPage() {
             <ProjectCard
               key={p.id}
               project={p}
+              phase={p.phase}
               onOpen={open}
               onDelete={setPendingDelete}
             />

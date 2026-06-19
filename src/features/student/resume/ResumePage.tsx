@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Check,
@@ -24,6 +24,10 @@ import { useToast } from '@/components/ui/use-toast'
 import { useDeleteResume, useResumes } from '../api/resume'
 import { SECTIONS, completionOf } from './constants'
 import type { ResumeSummary } from './types'
+
+// 상태 필터 옵션 — '전체' + ResumeStatus. 필터 버튼 팝오버에서 선택.
+const STATUS_FILTERS = ['전체', '작성 중', '작성 완료'] as const
+type StatusFilter = (typeof STATUS_FILTERS)[number]
 
 // ISO 날짜 → 'YYYY.MM.DD' 표시용.
 function formatDate(iso: string) {
@@ -89,6 +93,7 @@ function ResumeCard({
           <StatusBadge
             label={resume.status}
             tone={resume.status === '작성 완료' ? 'success' : 'warning'}
+            icon={resume.status === '작성 완료' ? <CheckCircle2 /> : <Clock />}
           />
           <span
             role="button"
@@ -272,7 +277,22 @@ export default function ResumePage() {
   const deleteResume = useDeleteResume()
   const [selected, setSelected] = useState<ResumeSummary | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ResumeSummary | null>(null)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filterRef = useRef<HTMLDivElement>(null)
   usePageHeader('이력서 관리', '이력서 작성 현황과 피드백을 관리합니다.')
+
+  // 필터 팝오버 — 바깥 클릭 시 닫기.
+  useEffect(() => {
+    if (!filterOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [filterOpen])
 
   if (isPending)
     return <div className="text-fg-muted p-8">이력서를 불러오는 중…</div>
@@ -295,6 +315,11 @@ export default function ResumePage() {
     writing: resumes.filter((r) => r.status === '작성 중').length,
     feedback: data.feedbackCount,
   }
+  // KPI는 전체 기준, 목록만 상태 필터 적용.
+  const visibleResumes =
+    statusFilter === '전체'
+      ? resumes
+      : resumes.filter((r) => r.status === statusFilter)
 
   // 작성 버튼은 편집기로 보내기만 한다(이 시점엔 생성 X). 편집기에서 제출해야 목록에 생긴다.
   const handleCreate = () => navigate('/student/resume/new')
@@ -348,13 +373,49 @@ export default function ResumePage() {
         >
           <Plus className="h-4 w-4" />새 이력서 작성
         </button>
-        <button
-          type="button"
-          aria-label="필터"
-          className="border-border text-fg-muted hover:bg-surface-muted flex size-10 items-center justify-center rounded-lg border"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-        </button>
+        <div className="relative" ref={filterRef}>
+          <button
+            type="button"
+            aria-label="상태 필터"
+            aria-haspopup="menu"
+            aria-expanded={filterOpen}
+            onClick={() => setFilterOpen((v) => !v)}
+            className={cn(
+              'relative flex size-10 items-center justify-center rounded-lg border transition-colors',
+              statusFilter !== '전체'
+                ? 'border-accent-strong text-accent-strong bg-accent-bg'
+                : 'border-border text-fg-muted hover:bg-surface-muted',
+            )}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {statusFilter !== '전체' && (
+              <span className="bg-accent-strong absolute -top-1 -right-1 size-2 rounded-full" />
+            )}
+          </button>
+          {filterOpen && (
+            <div className="border-border absolute right-0 z-30 mt-1 w-40 rounded-lg border bg-white p-1 shadow-[0px_8px_24px_0px_rgba(18,23,38,0.12)]">
+              {STATUS_FILTERS.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(f)
+                    setFilterOpen(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-[13px]',
+                    f === statusFilter
+                      ? 'bg-accent-bg text-accent-strong font-semibold'
+                      : 'text-fg-muted hover:bg-surface-muted',
+                  )}
+                >
+                  {f}
+                  {f === statusFilter && <Check className="h-3.5 w-3.5" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -362,8 +423,12 @@ export default function ResumePage() {
           <div className="border-border text-fg-muted rounded-xl border border-dashed p-10 text-center text-[14px]">
             아직 작성한 이력서가 없어요. “새 이력서 작성”으로 시작하세요.
           </div>
+        ) : visibleResumes.length === 0 ? (
+          <div className="border-border text-fg-muted rounded-xl border border-dashed p-10 text-center text-[14px]">
+            ‘{statusFilter}’ 상태의 이력서가 없어요.
+          </div>
         ) : (
-          resumes.map((r) => (
+          visibleResumes.map((r) => (
             <ResumeCard
               key={r.id}
               resume={r}

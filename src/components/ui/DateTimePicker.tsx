@@ -3,10 +3,10 @@ import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 
 // 공통 날짜·시간 선택기 (Figma 공통 컴포넌트). 라이브러리 없이 디자인 토큰으로 구현.
-// 3모드: date(달력) · time(시·분) · datetime(달력 선택 후 시간 선택). 네이티브 type=date/time 대체.
-// 값 포맷 — date: 'YYYY-MM-DD' · time: 'HH:mm' · datetime: 'YYYY-MM-DDTHH:mm'. 빈값은 ''.
+// 4모드: date(달력) · time(시·분) · datetime(달력 선택 후 시간 선택) · month(연·월 격자). 네이티브 type=date/time 대체.
+// 값 포맷 — date: 'YYYY-MM-DD' · time: 'HH:mm' · datetime: 'YYYY-MM-DDTHH:mm' · month: 'YYYY-MM'. 빈값은 ''.
 
-export type DateTimeMode = 'date' | 'time' | 'datetime'
+export type DateTimeMode = 'date' | 'time' | 'datetime' | 'month'
 
 export interface DateTimePickerProps {
   mode?: DateTimeMode
@@ -20,9 +20,9 @@ export interface DateTimePickerProps {
   disabled?: boolean
   error?: string
   ariaLabel?: string
-  /** 선택 가능한 최소 날짜(YYYY-MM-DD) — 범위 입력의 종료일 등 */
+  /** 선택 가능한 최소값(date: YYYY-MM-DD · month: YYYY-MM) — 범위 입력의 종료일 등 */
   min?: string
-  /** 선택 가능한 최대 날짜(YYYY-MM-DD) */
+  /** 선택 가능한 최대값(date: YYYY-MM-DD · month: YYYY-MM) */
   max?: string
   className?: string
 }
@@ -48,6 +48,10 @@ function parseDate(s: string) {
 function parseTime(s: string) {
   const m = /(\d{2}):(\d{2})(?::\d{2})?$/.exec(s)
   return m ? { h: +m[1], min: +m[2] } : null
+}
+function parseMonth(s: string) {
+  const m = /^(\d{4})-(\d{2})$/.exec(s)
+  return m ? { y: +m[1], m: +m[2] - 1 } : null
 }
 function monthCells(y: number, m: number): (number | null)[] {
   const startDow = new Date(y, m, 1).getDay()
@@ -91,10 +95,11 @@ export function DateTimePicker({
   )
   const parsedDate = parseDate(value)
   const parsedTime = parseTime(value)
+  const parsedMonth = mode === 'month' ? parseMonth(value) : null
 
-  // 달력에 표시 중인 연/월(선택값 있으면 그 달, 없으면 이번 달).
+  // 달력에 표시 중인 연/월(선택값 있으면 그 달, 없으면 이번 달). month 모드는 연도만 사용.
   const [cursor, setCursor] = useState(() => ({
-    y: parsedDate?.y ?? today.getFullYear(),
+    y: parsedDate?.y ?? parsedMonth?.y ?? today.getFullYear(),
     m: parsedDate?.m ?? today.getMonth(),
   }))
   // 시간 드래프트(적용 전까지 보관) — 12시간제 + 오전/오후.
@@ -138,6 +143,7 @@ export function DateTimePicker({
       parsedDate ? toDateStr(parsedDate.y, parsedDate.m, parsedDate.d) : null,
     )
     if (parsedDate) setCursor({ y: parsedDate.y, m: parsedDate.m })
+    else if (parsedMonth) setCursor((c) => ({ ...c, y: parsedMonth.y }))
     setOpen((v) => !v)
   }
 
@@ -155,6 +161,14 @@ export function DateTimePicker({
       setDraftDate(ds)
       setView('time')
     }
+  }
+
+  // month — 연·월 격자에서 한 달 선택. 값은 'YYYY-MM'. min/max 도 'YYYY-MM' 로 비교(문자열 사전순).
+  const pickMonth = (m: number) => {
+    const ms = `${cursor.y}-${pad(m + 1)}`
+    if (!inRange(ms)) return
+    onChange(ms)
+    setOpen(false)
   }
 
   const applyTime = () => {
@@ -177,6 +191,7 @@ export function DateTimePicker({
   const display = (() => {
     if (mode === 'time')
       return parsedTime ? fmtTime(parsedTime.h, parsedTime.min) : ''
+    if (mode === 'month') return parsedMonth ? value : ''
     if (mode === 'date') return parsedDate ? value : ''
     // datetime
     if (parsedDate && parsedTime) {
@@ -227,7 +242,59 @@ export function DateTimePicker({
             role="dialog"
             className="border-border absolute left-0 z-50 mt-1.5 w-[300px] rounded-xl border bg-white p-3 shadow-[0px_12px_32px_0px_rgba(18,23,38,0.16)]"
           >
-            {view === 'calendar' ? (
+            {mode === 'month' ? (
+              <>
+                {/* 연도 네비게이션 */}
+                <div className="mb-2 flex items-center justify-between">
+                  <button
+                    type="button"
+                    aria-label="이전 해"
+                    onClick={() => setCursor((c) => ({ ...c, y: c.y - 1 }))}
+                    className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="text-fg text-[13px] font-bold">
+                    {cursor.y}년
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="다음 해"
+                    onClick={() => setCursor((c) => ({ ...c, y: c.y + 1 }))}
+                    className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* 월 격자(1~12월) */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {Array.from({ length: 12 }, (_, m) => {
+                    const ms = `${cursor.y}-${pad(m + 1)}`
+                    const selected = value === ms
+                    const disabledMonth = !inRange(ms)
+                    return (
+                      <button
+                        key={ms}
+                        type="button"
+                        disabled={disabledMonth}
+                        onClick={() => pickMonth(m)}
+                        className={cn(
+                          'flex h-9 items-center justify-center rounded-md text-[13px] tabular-nums transition-colors',
+                          selected
+                            ? 'bg-brand font-bold text-white'
+                            : 'text-fg hover:bg-surface-muted',
+                          disabledMonth &&
+                            'cursor-not-allowed opacity-30 hover:bg-transparent',
+                        )}
+                      >
+                        {m + 1}월
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            ) : view === 'calendar' ? (
               <>
                 {/* 월 네비게이션 */}
                 <div className="mb-2 flex items-center justify-between">

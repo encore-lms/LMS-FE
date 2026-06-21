@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -56,12 +56,19 @@ const STATUS: Record<TsStatus, Tone> = {
   reviewing: 'warning',
   draft: 'accent',
 }
+// 페이지당 사례 수 — 3건씩 × 4페이지(전체 12건) 구성.
+const PAGE_SIZE = 3
 
 export default function TroubleshootingListPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useTsList()
   const [active, setActive] = useState('all')
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+  // 카테고리·검색어가 바뀌면 1페이지로 되돌린다.
+  useEffect(() => {
+    setPage(1)
+  }, [active, query])
   usePageHeader(
     '트러블슈팅',
     '겪어 해결한 사례를 상황·해결·결과로 기록하고 팀별 인증을 준비하세요.',
@@ -100,6 +107,14 @@ export default function TroubleshootingListPage() {
       c.tags.some((t) => t.toLowerCase().includes(q))
     )
   })
+
+  // 현재 필터 결과를 PAGE_SIZE 단위로 나눠 현재 페이지만 표시.
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const pageSafe = Math.min(page, totalPages)
+  const pageItems = visible.slice(
+    (pageSafe - 1) * PAGE_SIZE,
+    pageSafe * PAGE_SIZE,
+  )
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -222,7 +237,7 @@ export default function TroubleshootingListPage() {
             검색·필터 조건에 맞는 사례가 없어요.
           </div>
         )}
-        {visible.map((c) => (
+        {pageItems.map((c) => (
           <section
             key={c.id}
             className="border-border bg-surface relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6"
@@ -315,28 +330,43 @@ export default function TroubleshootingListPage() {
 
       <div className="flex items-center justify-between pt-1">
         <span className="text-fg-subtle text-[12px]">
-          {data.cases.length}건 중 {visible.length}건 표시
+          {visible.length}건 중 {pageItems.length}건 표시
         </span>
         <div className="flex items-center gap-1">
-          <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px]">
+          <button
+            type="button"
+            disabled={pageSafe <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            aria-label="이전 페이지"
+            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+          >
             ‹
-          </span>
-          {['1', '2', '3', '4'].map((n) => (
-            <span
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+            <button
               key={n}
+              type="button"
+              onClick={() => setPage(n)}
+              aria-current={n === pageSafe ? 'page' : undefined}
               className={cn(
                 'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
-                n === '1'
+                n === pageSafe
                   ? 'bg-brand-deep text-white'
                   : 'border-border text-fg-muted border',
               )}
             >
               {n}
-            </span>
+            </button>
           ))}
-          <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px]">
+          <button
+            type="button"
+            disabled={pageSafe >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            aria-label="다음 페이지"
+            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+          >
             ›
-          </span>
+          </button>
         </div>
       </div>
     </div>

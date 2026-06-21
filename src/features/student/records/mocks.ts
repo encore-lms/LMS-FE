@@ -1,7 +1,10 @@
 import { http, HttpResponse } from 'msw'
 import type {
   BlogFormData,
+  BlogRecord,
   CertFormData,
+  RecordCategory,
+  RecordStatus,
   RecordsOverview,
   StudyFormData,
   WeekCell,
@@ -243,6 +246,162 @@ const mockOverview: RecordsOverview = {
   ],
   shownLabel: '12건 중 4건 표시',
 }
+
+// ── 데모 페이지네이션용 데이터 보충 ──
+// mock 기록이 카테고리당 3~4건뿐이라 페이지가 1개만 나왔다.
+// 1·2·3 페이지가 실제로 동작하도록 카테고리별 12건(4건/페이지 × 3페이지)을 채운다.
+// 앞쪽(손수 작성) 기록이 1페이지에 그대로 노출되고, 부족분만 합성 기록으로 보충.
+const PER_CATEGORY = 12
+
+const FILLERS: Record<RecordCategory, string[]> = {
+  blog: [
+    'Spring Bean 생명주기와 스코프 정리',
+    '트랜잭션 전파(Propagation) 옵션 비교',
+    'REST API 설계 원칙과 HTTP 상태코드',
+    'N+1 문제와 페치 조인 해결기',
+    'DB 인덱스와 실행계획(EXPLAIN) 분석',
+    '동시성 제어 — 낙관적 락 vs 비관적 락',
+    'DI/IoC 컨테이너 동작 원리 정리',
+    'HTTP 캐시와 ETag 적용 회고',
+  ],
+  study: [
+    '알고리즘 스터디 — 다이나믹 프로그래밍',
+    'DB 스터디 — 정규화와 반정규화',
+    '네트워크 스터디 — HTTP/2 vs HTTP/3',
+    '운영체제 스터디 — 가상 메모리와 페이징',
+    'CS 면접 스터디 — SOLID 원칙',
+    '알고리즘 스터디 — 그래프 탐색(BFS·DFS)',
+    '디자인 패턴 스터디 — 팩토리·빌더',
+    '보안 스터디 — JWT와 세션 인증 비교',
+  ],
+  cert: [
+    '정보처리기사',
+    '리눅스마스터 2급',
+    'PCCE 성적 인증',
+    'ADsP (데이터분석 준전문가)',
+    'AWS Certified Developer – Associate',
+    '네트워크관리사 2급',
+    'SQLP (SQL 전문가)',
+    'CKA (Kubernetes Administrator)',
+    '정보보안기사',
+  ],
+}
+
+const FILL_STATUS: {
+  status: RecordStatus
+  statusLabel: string
+  statusAt: string
+}[] = [
+  { status: 'approved', statusLabel: '승인', statusAt: '2026.04.12 승인' },
+  {
+    status: 'reviewing',
+    statusLabel: '검토 중',
+    statusAt: '검토 대기 · 결과 대기 중',
+  },
+  { status: 'rejected', statusLabel: '반려', statusAt: '2026.04.12 반려' },
+]
+
+// base(손수 작성) 뒤에 합성 기록을 붙여 카테고리당 PER_CATEGORY건을 만든다.
+function fillCategory(
+  base: BlogRecord[],
+  category: RecordCategory,
+): BlogRecord[] {
+  const out = [...base]
+  const pool = FILLERS[category]
+  const isCert = category === 'cert'
+  let i = 0
+  while (out.length < PER_CATEGORY) {
+    const st = FILL_STATUS[i % FILL_STATUS.length]
+    out.push({
+      id: `${category}-f${i + 1}`,
+      category,
+      weekLabel: isCert ? '취득' : `${((base.length + i) % 12) + 1}주차`,
+      dateRange: isCert ? '2026.01' : '4/1 ~ 4/7',
+      status: st.status,
+      statusLabel: st.statusLabel,
+      title: pool[i % pool.length],
+      url: `https://example.com/${category}/${i + 1}`,
+      instructor: isCert ? '운영자 검토' : '강사 이정훈',
+      submittedAt: '2026.04.10 제출',
+      statusAt: st.statusAt,
+      ...(st.status === 'rejected'
+        ? {
+            rejectReason: {
+              title: '반려 사유',
+              detail: '내용·출처 보완 후 다시 제출해 주세요.',
+            },
+          }
+        : {}),
+      canEdit: st.status === 'rejected',
+      canDelete: st.status !== 'approved',
+    })
+    i++
+  }
+  return out
+}
+
+const filledRecords: BlogRecord[] = [
+  ...fillCategory(
+    mockOverview.records.filter((r) => r.category === 'blog'),
+    'blog',
+  ),
+  ...fillCategory(
+    mockOverview.records.filter((r) => r.category === 'study'),
+    'study',
+  ),
+  ...fillCategory(
+    mockOverview.records.filter((r) => r.category === 'cert'),
+    'cert',
+  ),
+]
+const catCount = (c: RecordCategory) =>
+  filledRecords.filter((r) => r.category === c).length
+const statusCount = (s: RecordStatus) =>
+  filledRecords.filter((r) => r.status === s).length
+
+// mockOverview를 보충된 데이터로 동기화(탭 배지·요약 통계·목록 일관).
+mockOverview.records = filledRecords
+mockOverview.listCount = catCount('blog')
+mockOverview.tabs = [
+  { key: 'all', label: '전체', count: filledRecords.length },
+  { key: 'blog', label: '블로그', count: catCount('blog') },
+  { key: 'study', label: '스터디', count: catCount('study') },
+  { key: 'cert', label: '자격증', count: catCount('cert') },
+]
+mockOverview.stats = [
+  {
+    key: 'total',
+    label: '전체 기록',
+    value: String(filledRecords.length),
+    unit: '건',
+    sub: `블로그 ${catCount('blog')} · 스터디 ${catCount('study')} · 자격증 ${catCount('cert')}`,
+    dotTone: 'success',
+  },
+  {
+    key: 'approved',
+    label: '승인 완료',
+    value: String(statusCount('approved')),
+    unit: '건',
+    sub: '증명서 외부 공개 가능',
+    dotTone: 'success',
+  },
+  {
+    key: 'reviewing',
+    label: '검토 중',
+    value: String(statusCount('reviewing')),
+    unit: '건',
+    sub: '운영자 검토 진행',
+    dotTone: 'accent',
+  },
+  {
+    key: 'rejected',
+    label: '반려',
+    value: String(statusCount('rejected')),
+    unit: '건',
+    sub: '수정 후 재제출 필요',
+    dotTone: 'danger',
+  },
+]
 
 // 블로그 등록 폼 주차 그리드(생성 컨텍스트).
 const createWeeks: WeekCell[] = [

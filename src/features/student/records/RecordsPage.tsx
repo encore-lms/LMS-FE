@@ -27,6 +27,8 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'reviewing', label: '검토 중' },
   { value: 'rejected', label: '반려' },
 ]
+// 페이지당 기록 수 — 4건씩 × 3페이지(카테고리당 12건) 구성.
+const PAGE_SIZE = 4
 
 /**
  * 기록실 (/student/records) — Figma 246:27.
@@ -66,6 +68,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   const [sort, setSort] = useState<SortKey>('latest')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
 
   const modalParam = params.get('modal') === 'delete-blog'
 
@@ -102,6 +105,20 @@ function RecordsView({ data }: { data: RecordsOverview }) {
       sort === 'latest' ? weekNo(b) - weekNo(a) : weekNo(a) - weekNo(b),
     )
   }, [records, activeTab, statusFilter, sort])
+
+  // 페이지네이션 — 현재 필터 결과(visible)를 PAGE_SIZE 단위로 나눠 표시.
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  // 탭·정렬·상태 필터가 바뀌면 1페이지로 되돌린다.
+  useEffect(() => {
+    setPage(1)
+  }, [activeTab, sort, statusFilter])
+
+  // 목록이 줄어 현재 페이지가 비면 마지막 페이지로 보정(삭제 등).
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
 
   // 활성 탭 기준 목록 제목·총 건수.
   const activeTabInfo = data.tabs.find((t) => t.key === activeTab)
@@ -254,7 +271,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
         />
       ) : (
         <div className="flex flex-col gap-4">
-          {visible.map((r) => (
+          {pageItems.map((r) => (
             <BlogRecordCard
               key={r.id}
               record={r}
@@ -268,28 +285,47 @@ function RecordsView({ data }: { data: RecordsOverview }) {
       {/* 푸터 + 페이지네이션 */}
       <div className="flex items-center justify-between pt-1">
         <span className="text-fg-subtle text-[12px]">
-          {totalCount}건 중 {visible.length}건 표시
+          {visible.length}건 중 {pageItems.length}건 표시
         </span>
         <div className="flex items-center gap-1">
-          <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            aria-label="이전 페이지"
+            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border disabled:opacity-40"
+          >
             <ChevronLeft className="size-4" />
-          </span>
-          {['1', '2', '3'].map((n) => (
-            <span
-              key={n}
-              className={cn(
-                'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
-                n === '1'
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted border',
-              )}
-            >
-              {n}
-            </span>
-          ))}
-          <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border">
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+            (pageNo) => (
+              <button
+                key={pageNo}
+                type="button"
+                onClick={() => setPage(pageNo)}
+                aria-current={pageNo === page ? 'page' : undefined}
+                className={cn(
+                  'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
+                  pageNo === page
+                    ? 'bg-brand-deep text-white'
+                    : 'border-border text-fg-muted border',
+                )}
+              >
+                {pageNo}
+              </button>
+            ),
+          )}
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() =>
+              setPage((current) => Math.min(totalPages, current + 1))
+            }
+            aria-label="다음 페이지"
+            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border disabled:opacity-40"
+          >
             <ChevronRight className="size-4" />
-          </span>
+          </button>
         </div>
       </div>
 

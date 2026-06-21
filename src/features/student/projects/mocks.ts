@@ -121,6 +121,92 @@ const mockList: ProjectListData = {
   shownLabel: '3건 모두 표시 · 인증 완료 1 / 검토 중 1 / 작성 중 1',
 }
 
+// ── 데모 페이지네이션용 프로젝트 보충 ──
+// 기본 3건이라 목록이 1페이지뿐 → 1·2·3 페이지가 실제로 동작하도록 작성 중 프로젝트를 보충(총 9건).
+// 앞쪽(p1~p3)이 1페이지에 그대로 노출되고, 상세는 아래 workspaces에 작성 중 워크스페이스로 등록한다.
+const PROJECT_FILLERS: {
+  title: string
+  kind: ProjectKind
+  tags: string[]
+  outcomes: string[]
+}[] = [
+  {
+    title: '쿠폰·프로모션 정산 배치',
+    kind: 'team',
+    tags: ['Spring Batch', 'JPA', 'MySQL', 'Redis'],
+    outcomes: [
+      '정산 배치 처리량 3배 개선',
+      '중복 정산 0건 · 멱등 처리',
+      '야간 배치 40분 → 12분',
+    ],
+  },
+  {
+    title: '알림 발송 게이트웨이',
+    kind: 'team',
+    tags: ['Spring Boot', 'Kafka', 'FCM', 'Redis'],
+    outcomes: [
+      '발송 성공률 99.7%',
+      '대량 발송 큐 분리',
+      '재시도·실패 정책 표준화',
+    ],
+  },
+  {
+    title: '상품 검색 API',
+    kind: 'personal',
+    tags: ['Spring Boot', 'Elasticsearch', 'JPA'],
+    outcomes: ['검색 응답 P95 90ms', '형태소 분석 적용', '오타 보정 추가'],
+  },
+  {
+    title: '회원 등급 관리 서비스',
+    kind: 'team',
+    tags: ['Spring Boot', 'JPA', 'PostgreSQL'],
+    outcomes: [
+      '등급 산정 규칙 엔진화',
+      '정합성 검증 자동화',
+      '관리자 대시보드 연동',
+    ],
+  },
+  {
+    title: '파일 업로드 스토리지 모듈',
+    kind: 'personal',
+    tags: ['Spring Boot', 'AWS S3', 'Spring Security'],
+    outcomes: [
+      '프리사인드 URL 적용',
+      '업로드 실패율 2% → 0.1%',
+      '용량 정책 분리',
+    ],
+  },
+  {
+    title: '결제 웹훅 수신 서버',
+    kind: 'team',
+    tags: ['Spring Boot', 'Kafka', 'MySQL', 'Docker'],
+    outcomes: ['웹훅 멱등 처리', '이벤트 유실 0건', '재처리 콘솔 구축'],
+  },
+]
+
+mockList.projects = [
+  ...mockList.projects,
+  ...PROJECT_FILLERS.map((f, i): ProjectSummary => {
+    const kind = f.kind
+    return {
+      id: `pf${i + 1}`,
+      kind,
+      kindLabel: kind === 'team' ? '팀' : '개인',
+      status: 'draft',
+      statusLabel: '작성 중',
+      representative: false,
+      accentTone: 'accent',
+      title: f.title,
+      pm: '예칼 PM',
+      teamLabel: kind === 'team' ? '팀 3명' : '개인 프로젝트',
+      period: '2026-05-01 ~ 진행 중 · 작성 중',
+      tags: f.tags,
+      outcomes: f.outcomes,
+      actionLabel: '워크스페이스 열기',
+    }
+  }),
+]
+
 const mockWizard: ProjectWizardData = {
   cohortLabel: '백엔드 부트캠프 3기',
   pmName: '김수강',
@@ -1142,6 +1228,21 @@ const workspaces: Record<string, WorkspaceData> = {
   p1: mockWorkspace,
   p2: mockWorkspaceP2,
   p3: mockWorkspaceP3,
+}
+
+// 보충 프로젝트(pf*)도 카드를 열면 제목·상태가 맞는 작성 중 워크스페이스가 뜨도록 등록.
+for (const p of mockList.projects) {
+  if (!p.id.startsWith('pf')) continue
+  workspaces[p.id] = buildDraftWorkspace({
+    id: p.id,
+    title: p.title,
+    meta:
+      p.kind === 'team'
+        ? '팀 프로젝트 · 3명 · 2026-05-01 ~ 진행 중 · PM 김수강'
+        : '개인 프로젝트 · 1명 · 2026-05-01 ~ 진행 중 · PM 김수강',
+    stack: p.tags,
+    kind: p.kind,
+  })
 }
 
 // 프로젝트 목록은 세션 동안 가변 — 생성/삭제가 실제로 반영되도록 스토어로 관리.

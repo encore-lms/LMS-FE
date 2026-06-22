@@ -5,8 +5,9 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
+import { TestModeFab } from '@/components/dev/TestModeFab'
 import { usePageHeader } from '@/shared/store'
-import { useRecordsOverview } from '../api/records'
+import { useRecordsOverview, useSimulateReview } from '../api/records'
 import { RecordStatCards } from './components/RecordStatCards'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
@@ -22,13 +23,22 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'oldest', label: '오래된순' },
 ]
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: '상태 전체' },
+  { value: 'all', label: '전체' },
+  { value: 'draft', label: '임시저장' },
   { value: 'approved', label: '승인' },
   { value: 'reviewing', label: '검토 중' },
   { value: 'rejected', label: '반려' },
 ]
 // 페이지당 기록 수 — 4건씩 × 3페이지(카테고리당 12건) 구성.
 const PAGE_SIZE = 4
+// 카테고리 탭 유지 키 — 기록 보고 돌아와도 마지막 탭이 고정되게 sessionStorage에 보존.
+const RECORDS_TAB_KEY = 'lms:records-tab'
+// 검토 시뮬레이션 목록의 카테고리 라벨.
+const CATEGORY_LABEL: Record<string, string> = {
+  blog: '블로그',
+  study: '스터디',
+  cert: '자격증',
+}
 
 /**
  * 기록실 (/student/records) — Figma 246:27.
@@ -61,14 +71,52 @@ export default function RecordsPage() {
 function RecordsView({ data }: { data: RecordsOverview }) {
   const navigate = useNavigate()
   const toast = useToast()
+  const reviewSim = useSimulateReview()
+
+  // (테스트 UI) 운영자 검토 시뮬레이션 — 지정 기록을 승인/반려.
+  const simReview = (id: string, action: 'approve' | 'reject') =>
+    reviewSim.mutate(
+      { id, action },
+      {
+        onSuccess: (res) => {
+          if (!res.record) return
+          if (action === 'approve') {
+            toast.success(`'${res.record.title}' 승인 처리(시뮬레이션)`)
+          } else {
+            toast.warning(`'${res.record.title}' 반려 처리(시뮬레이션)`)
+          }
+        },
+      },
+    )
   const [params, setParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState('blog')
-  // 목록을 로컬 상태로 둬 삭제 시 해당 기록만 제거(새로고침하면 mock 그대로 복원).
-  const [records, setRecords] = useState<BlogRecord[]>(data.records)
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      return sessionStorage.getItem(RECORDS_TAB_KEY) ?? 'blog'
+    } catch {
+      return 'blog'
+    }
+  })
+  // 탭 변경을 보존 — 기록 보고 돌아와도 마지막 카테고리 탭이 유지된다.
+  const setActiveTab = (key: string) => {
+    setActiveTabState(key)
+    try {
+      sessionStorage.setItem(RECORDS_TAB_KEY, key)
+    } catch {
+      // 보존 실패는 무시
+    }
+  }
+  // 목록은 쿼리(data.records)에서 파생 — 검토 시뮬레이션/등록 결과가 즉시 반영된다.
+  // 삭제는 로컬 deletedIds로만 가린다(새로고침하면 mock 그대로 복원).
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
+  const records = data.records.filter((r) => !deletedIds.has(r.id))
+  // 검토 시뮬레이션 대상 — 검토 중 기록(신규 포함).
+  const reviewing = records.filter((r) => r.status === 'reviewing')
   const [sort, setSort] = useState<SortKey>('latest')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
+  // 검토 시뮬레이션 — 동작(승인/반려)을 먼저 고르고 대상 기록을 클릭한다.
+  const [simAction, setSimAction] = useState<'approve' | 'reject' | null>(null)
 
   const modalParam = params.get('modal') === 'delete-blog'
 
@@ -86,7 +134,19 @@ function RecordsView({ data }: { data: RecordsOverview }) {
             ? '스터디 기록이 수정되었습니다.'
             : t === 'cert-updated'
               ? '자격증 기록이 수정되었습니다.'
-              : null
+              : t === 'blog-created'
+                ? '블로그 기록이 등록되었습니다.'
+                : t === 'study-created'
+                  ? '스터디 기록이 등록되었습니다.'
+                  : t === 'cert-created'
+                    ? '자격증 기록이 등록되었습니다.'
+                    : t === 'study-saved'
+                      ? '스터디 기록을 임시저장했습니다.'
+                      : t === 'cert-saved'
+                        ? '자격증 기록을 임시저장했습니다.'
+                        : t === 'blog-saved'
+                          ? '블로그 기록을 임시저장했습니다.'
+                          : null
     if (!msg) return
     greeted.current = true
     toast.success(msg)
@@ -139,7 +199,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
         ? {
             route: '/student/records/new/certificate',
             title: '자격증 등록',
-            sub: '인증 가능한 자격증(PCCE/PCCP/PCSQL) 취득 사진을 등록',
+            sub: '자격증(PCCE·PCCP·PCSQL 또는 기타) 취득 증빙을 등록',
             action: '자격증 등록',
           }
         : {
@@ -161,7 +221,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
 
   const confirmDelete = () => {
     if (deleteTarget) {
-      setRecords((prev) => prev.filter((r) => r.id !== deleteTarget.id))
+      setDeletedIds((prev) => new Set(prev).add(deleteTarget.id))
       toast.success(`'${deleteTarget.title}' 기록이 삭제되었습니다.`)
     }
     closeModal()
@@ -176,8 +236,16 @@ function RecordsView({ data }: { data: RecordsOverview }) {
         : rec?.category === 'cert'
           ? 'certificate'
           : 'blog'
-    navigate(`/student/records/${base}/${id}/edit`)
+    // 임시저장(draft) 기록 수정은 반려 재제출과 구분 — 저장 시 임시저장으로 유지되게 표시.
+    const suffix = rec?.status === 'draft' ? '?from=draft' : ''
+    navigate(`/student/records/${base}/${id}/edit${suffix}`)
   }
+
+  // 검토 시뮬레이션 대상 — 현재 탭 카테고리의 '검토 중' 기록만(전체 탭이면 모두). 승인·임시저장 제외.
+  const simList =
+    activeTab === 'all'
+      ? reviewing
+      : reviewing.filter((r) => r.category === activeTab)
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -260,27 +328,30 @@ function RecordsView({ data }: { data: RecordsOverview }) {
         </div>
       </div>
 
-      {visible.length === 0 ? (
-        <Empty
-          title="표시할 기록이 없어요"
-          description={
-            statusFilter !== 'all'
-              ? '다른 상태 필터를 선택해 보세요.'
-              : '아직 등록된 블로그 기록이 없습니다.'
-          }
-        />
-      ) : (
-        <div className="flex flex-col gap-4">
-          {pageItems.map((r) => (
-            <BlogRecordCard
-              key={r.id}
-              record={r}
-              onEdit={goEdit}
-              onDelete={(id) => setDeleteId(id)}
-            />
-          ))}
-        </div>
-      )}
+      {/* 목록 영역 — 페이지마다 카드 수·높이가 달라도 페이지네이션 위치가 튀지 않게 최소 높이 고정 */}
+      <div className="min-h-[560px]">
+        {visible.length === 0 ? (
+          <Empty
+            title="표시할 기록이 없어요"
+            description={
+              statusFilter !== 'all'
+                ? '다른 상태 필터를 선택해 보세요.'
+                : '아직 등록된 블로그 기록이 없습니다.'
+            }
+          />
+        ) : (
+          <div className="flex flex-col gap-4">
+            {pageItems.map((r) => (
+              <BlogRecordCard
+                key={r.id}
+                record={r}
+                onEdit={goEdit}
+                onDelete={(id) => setDeleteId(id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 푸터 + 페이지네이션 */}
       <div className="flex items-center justify-between pt-1">
@@ -336,6 +407,81 @@ function RecordsView({ data }: { data: RecordsOverview }) {
           onConfirm={confirmDelete}
         />
       )}
+
+      <TestModeFab note="운영자 검토 시뮬레이션 — 동작을 고른 뒤 '검토 중' 기록을 클릭하세요(현재 탭 기준).">
+        {simAction === null ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setSimAction('approve')}
+              className="bg-success rounded-md px-3 py-1.5 text-[12px] font-bold text-white"
+            >
+              ✓ 승인
+            </button>
+            <button
+              type="button"
+              onClick={() => setSimAction('reject')}
+              className="bg-danger rounded-md px-3 py-1.5 text-[12px] font-bold text-white"
+            >
+              ✕ 반려
+            </button>
+          </>
+        ) : (
+          <div className="flex w-full flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span
+                className={cn(
+                  'text-[12px] font-bold',
+                  simAction === 'approve' ? 'text-success' : 'text-danger',
+                )}
+              >
+                {simAction === 'approve' ? '승인' : '반려'}할 기록 선택
+              </span>
+              <button
+                type="button"
+                onClick={() => setSimAction(null)}
+                className="text-fg-subtle hover:text-fg text-[11px] font-semibold"
+              >
+                ← 뒤로
+              </button>
+            </div>
+            {simList.length === 0 ? (
+              <span className="text-fg-muted text-[12px]">
+                검토 중인 기록이 없어요.
+              </span>
+            ) : (
+              <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto">
+                {simList.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => simReview(r.id, simAction)}
+                    disabled={reviewSim.isPending}
+                    className="border-border bg-surface hover:bg-surface-muted flex items-center gap-2 rounded-lg border p-2 text-left disabled:opacity-50"
+                  >
+                    <span className="text-fg-subtle shrink-0 text-[10px]">
+                      {CATEGORY_LABEL[r.category] ?? r.category}
+                    </span>
+                    <span className="text-fg flex-1 truncate text-[12px] font-semibold">
+                      {r.title}
+                    </span>
+                    <span
+                      className={cn(
+                        'shrink-0 text-[11px] font-bold',
+                        simAction === 'approve'
+                          ? 'text-success'
+                          : 'text-danger',
+                      )}
+                    >
+                      {simAction === 'approve' ? '승인' : '반려'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </TestModeFab>
     </div>
   )
 }

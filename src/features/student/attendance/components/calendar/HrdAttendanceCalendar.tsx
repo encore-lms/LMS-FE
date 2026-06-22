@@ -46,7 +46,12 @@ export function HrdAttendanceCalendar({
         HRD-Net 원본 출결 데이터입니다. 이 화면에서는 수정할 수 없습니다.
         {!isDataMonth && ' · 해당 월 데이터가 없습니다.'}
       </InfoBanner>
-      <CalendarGrid year={view.year} month={view.month} days={days} />
+      <CalendarGrid
+        year={view.year}
+        month={view.month}
+        days={days}
+        today={calendar.today}
+      />
     </section>
   )
 }

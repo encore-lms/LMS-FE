@@ -1,7 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { courseKeys } from '../course/queryKeys'
-import type { CourseHome, CourseMaterials } from '../course/types'
+import type {
+  CourseHome,
+  CourseMaterials,
+  MaterialItem,
+  ShareMaterialInput,
+} from '../course/types'
 import type {
   AssignmentDetail,
   AssignmentListItem,
@@ -27,6 +32,30 @@ export function useCourseMaterials() {
       apiClient
         .get<CourseMaterials>('/student/course/materials')
         .then((r) => r.data),
+  })
+}
+
+/** 자료 공유 — 학생 공유 자료 등록 후 목록 갱신(invalidate) */
+export function useShareMaterial() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ShareMaterialInput) =>
+      apiClient
+        .post<MaterialItem>('/student/course/materials', input)
+        .then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: courseKeys.materials() }),
+  })
+}
+
+/** 자료 삭제 — 본인 공유 자료만 삭제(서버에서도 검증) 후 목록 갱신 */
+export function useDeleteMaterial() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiClient
+        .delete<{ id: string }>(`/student/course/materials/${id}`)
+        .then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: courseKeys.materials() }),
   })
 }
 

@@ -73,9 +73,12 @@ function StarIcon({ filled }: { filled: boolean }) {
 export function MaterialRow({
   item,
   onToggleFavorite,
+  onDelete,
 }: {
   item: MaterialItem
   onToggleFavorite: (id: string) => void
+  /** 본인이 올린 학생 공유 자료에만 삭제 노출(없으면 버튼 숨김) */
+  onDelete?: (item: MaterialItem) => void
 }) {
   const cat = CATEGORY_PILL[item.category]
   const hasFile = !!item.fileUrl
@@ -186,6 +189,15 @@ export function MaterialRow({
         >
           {item.isExternalLink ? '링크 열기' : '다운로드'}
         </button>
+        {item.ownedByMe && onDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete(item)}
+            className="border-border text-danger hover:bg-danger-bg rounded-lg border px-3.5 py-[7px] text-[12px] font-medium"
+          >
+            삭제
+          </button>
+        )}
       </div>
     </div>
   )

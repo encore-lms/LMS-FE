@@ -69,6 +69,7 @@ export interface AttendanceSummary {
 export interface HrdAttendanceCalendarData {
   year: number
   month: number // 1~12
+  today?: string // YYYY-MM-DD — 오늘 날짜(당일 셀 강조용)
   days: HrdAttendanceDay[]
 }
 

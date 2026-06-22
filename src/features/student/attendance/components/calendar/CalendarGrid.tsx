@@ -9,9 +9,10 @@ interface CalendarGridProps {
   year: number
   month: number // 1~12
   days: HrdAttendanceDay[]
+  today?: string // YYYY-MM-DD — 당일 셀 강조
 }
 
-export function CalendarGrid({ year, month, days }: CalendarGridProps) {
+export function CalendarGrid({ year, month, days, today }: CalendarGridProps) {
   const statusByDate = new Map<string, HrdAttendanceStatus | null>(
     days.map((d) => [d.date, d.status]),
   )
@@ -27,6 +28,7 @@ export function CalendarGrid({ year, month, days }: CalendarGridProps) {
         day: prevMonthDays + offset,
         inMonth: false,
         status: null as HrdAttendanceStatus | null,
+        isToday: false,
       }
     }
     if (offset > daysInMonth) {
@@ -35,6 +37,7 @@ export function CalendarGrid({ year, month, days }: CalendarGridProps) {
         day: offset - daysInMonth,
         inMonth: false,
         status: null as HrdAttendanceStatus | null,
+        isToday: false,
       }
     }
     const date = `${year}-${pad(month)}-${pad(offset)}`
@@ -43,6 +46,7 @@ export function CalendarGrid({ year, month, days }: CalendarGridProps) {
       day: offset,
       inMonth: true,
       status: statusByDate.get(date) ?? null,
+      isToday: !!today && date === today,
     }
   })
 
@@ -63,6 +67,7 @@ export function CalendarGrid({ year, month, days }: CalendarGridProps) {
             day={c.day}
             inMonth={c.inMonth}
             status={c.status}
+            isToday={c.isToday}
           />
         ))}
       </div>

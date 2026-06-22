@@ -59,20 +59,143 @@ const mockAttendanceSubmissions: AttendanceFormSubmission[] = [
       { id: 'att-seed-1', fileName: '진단서.pdf', size: 0, contentType: '' },
     ],
   },
+  // 페이지네이션 데모용 과거 제출 — 예전 기록도 넘겨 볼 수 있게 보강.
+  {
+    id: 'af4',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-05-02',
+    submittedAt: '2026-05-02T09:05:00Z',
+    attendanceType: 'LATE',
+    expectedArrivalTime: '09:40',
+    officialLeaveUsed: false,
+    officialLeaveType: null,
+    note: '지하철 지연',
+  },
+  {
+    id: 'af5',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-04-28',
+    submittedAt: '2026-04-28T14:10:00Z',
+    attendanceType: 'EARLY_LEAVE',
+    expectedLeaveTime: '16:00',
+    officialLeaveUsed: false,
+    officialLeaveType: null,
+    note: '병원 예약',
+  },
+  {
+    id: 'af6',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-04-24',
+    submittedAt: '2026-04-24T13:00:00Z',
+    attendanceType: 'OUTING',
+    outingStartTime: '13:00',
+    outingEndTime: '15:00',
+    officialLeaveUsed: true,
+    officialLeaveType: 'RESERVE',
+    note: '예비군 훈련',
+  },
+  {
+    id: 'af7',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-04-20',
+    submittedAt: '2026-04-20T08:55:00Z',
+    attendanceType: 'ABSENT',
+    officialLeaveUsed: true,
+    officialLeaveType: 'VACATION',
+    note: '가족 경조사',
+  },
+  {
+    id: 'af8',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-04-16',
+    submittedAt: '2026-04-16T09:20:00Z',
+    attendanceType: 'LATE',
+    expectedArrivalTime: '10:00',
+    officialLeaveUsed: false,
+    officialLeaveType: null,
+    note: '교통 체증',
+  },
+  {
+    id: 'af9',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-04-10',
+    submittedAt: '2026-04-10T13:30:00Z',
+    attendanceType: 'OUTING',
+    outingStartTime: '13:30',
+    outingEndTime: '16:30',
+    officialLeaveUsed: true,
+    officialLeaveType: 'INTERVIEW',
+    note: '면접',
+  },
+  {
+    id: 'af10',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-04-06',
+    submittedAt: '2026-04-06T15:00:00Z',
+    attendanceType: 'EARLY_LEAVE',
+    expectedLeaveTime: '15:30',
+    officialLeaveUsed: false,
+    officialLeaveType: null,
+    note: '몸살 기운',
+  },
+  {
+    id: 'af11',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-04-02',
+    submittedAt: '2026-04-02T09:10:00Z',
+    attendanceType: 'LATE',
+    expectedArrivalTime: '09:35',
+    officialLeaveUsed: false,
+    officialLeaveType: null,
+    note: '버스 지연',
+  },
+  {
+    id: 'af12',
+    studentId: 'mock-1',
+    cohortId: 'c1',
+    targetDate: '2026-03-27',
+    submittedAt: '2026-03-27T08:45:00Z',
+    attendanceType: 'ABSENT',
+    officialLeaveUsed: true,
+    officialLeaveType: 'SICK',
+    note: '장염',
+  },
 ]
 
-const mockCalendarDays: HrdAttendanceDay[] = [
-  { date: '2026-05-01', status: 'PRESENT' },
-  { date: '2026-05-04', status: 'LATE' },
-  { date: '2026-05-05', status: 'PRESENT' },
-  { date: '2026-05-06', status: 'ABSENT' },
-  { date: '2026-05-07', status: 'PRESENT' },
-  { date: '2026-05-08', status: 'OUTING' },
-  { date: '2026-05-11', status: 'EARLY_LEAVE' },
-  { date: '2026-05-12', status: 'LATE' },
-  { date: '2026-05-13', status: 'PRESENT' },
-  { date: '2026-05-14', status: 'PRESENT' },
-]
+// 캘린더·대상일자는 현재 월 기준으로 만든다(조회 시 항상 이번 달이 먼저 보이도록).
+const now = new Date()
+const CUR_YEAR = now.getFullYear()
+const CUR_MONTH = now.getMonth() + 1 // 1~12
+const TODAY_DATE = now.getDate()
+const pad2 = (n: number) => String(n).padStart(2, '0')
+const isoDate = (day: number) => `${CUR_YEAR}-${pad2(CUR_MONTH)}-${pad2(day)}`
+const TODAY_ISO = isoDate(TODAY_DATE)
+
+// 이번 달 평일 출결 — 대부분 출석, 며칠은 변형. 오늘까지만 채운다.
+const SPECIAL_STATUS: Record<number, HrdAttendanceStatus> = {
+  4: 'LATE',
+  6: 'ABSENT',
+  8: 'OUTING',
+  11: 'EARLY_LEAVE',
+  12: 'LATE',
+}
+const mockCalendarDays: HrdAttendanceDay[] = []
+for (let day = 1; day <= TODAY_DATE; day++) {
+  const dow = new Date(CUR_YEAR, CUR_MONTH - 1, day).getDay()
+  if (dow === 0 || dow === 6) continue // 주말 제외
+  mockCalendarDays.push({
+    date: isoDate(day),
+    status: SPECIAL_STATUS[day] ?? 'PRESENT',
+  })
+}
 
 const mockAttendanceOverview: AttendanceOverview = {
   ...ATTENDANCE_COHORT,
@@ -85,13 +208,18 @@ const mockAttendanceOverview: AttendanceOverview = {
     outingCount: 0,
     absentCount: 1,
   },
-  calendar: { year: 2026, month: 5, days: mockCalendarDays },
+  calendar: {
+    year: CUR_YEAR,
+    month: CUR_MONTH,
+    today: TODAY_ISO,
+    days: mockCalendarDays,
+  },
   submissions: mockAttendanceSubmissions,
 }
 
 const mockAttendanceFormMeta: AttendanceFormMeta = {
   ...ATTENDANCE_COHORT,
-  targetDate: '2026-05-22',
+  targetDate: TODAY_ISO,
   canSubmit: true,
   latestSubmission: {
     attendanceType: 'LATE',

@@ -51,3 +51,26 @@ export function useSubmitAttendanceForm() {
     },
   })
 }
+
+/** 제출 이력의 증빙 첨부만 사후 수정 — 성공 시 출결 캐시 무효화 */
+export function useUpdateAttendanceAttachments() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      attachmentNames,
+    }: {
+      id: string
+      attachmentNames: string[]
+    }) =>
+      apiClient
+        .patch<AttendanceFormSubmission>(
+          `/student/attendance-forms/me/submissions/${id}/attachments`,
+          { attachmentNames },
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all })
+    },
+  })
+}

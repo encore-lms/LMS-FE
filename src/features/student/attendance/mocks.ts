@@ -1,10 +1,12 @@
 import { http, HttpResponse } from 'msw'
 import type {
+  AttendanceAttachment,
   AttendanceOverview,
   AttendanceFormMeta,
   AttendanceFormSubmission,
   AttendanceFormPayload,
   HrdAttendanceDay,
+  HrdAttendanceStatus,
 } from './types'
 
 // 출결 mock — 기능 로컬. mocks/handlers.ts에서 import 후 spread로 등록(공유 핸들러 파일 최소 터치).
@@ -53,6 +55,9 @@ const mockAttendanceSubmissions: AttendanceFormSubmission[] = [
     officialLeaveUsed: true,
     officialLeaveType: 'SICK',
     note: '감기 몸살로 결석',
+    attachments: [
+      { id: 'att-seed-1', fileName: '진단서.pdf', size: 0, contentType: '' },
+    ],
   },
 ]
 
@@ -94,6 +99,18 @@ const mockAttendanceFormMeta: AttendanceFormMeta = {
   },
 }
 
+// 첨부 파일명(string[]) → 첨부 메타(AttendanceAttachment[]). mock은 파일명만 보존.
+let attachmentSeq = 0
+const toAttachments = (names: string[] = []): AttendanceAttachment[] =>
+  names.map((fileName) => ({
+    id: `att-${attachmentSeq++}`,
+    fileName,
+    size: 0,
+    contentType: '',
+  }))
+
+let submissionSeq = 0
+
 // 자동 수집 규약: features/**/mocks.ts 는 `handlers`를 내보낸다(mocks/handlers.ts가 glob으로 등록).
 export const handlers = [
   http.get('/api/student/attendance/overview', () =>
@@ -104,16 +121,18 @@ export const handlers = [
     ok<AttendanceFormMeta>(mockAttendanceFormMeta),
   ),
 
+  // 출결 폼 제출 — 제출 이력(같은 대상일자 1건 덮어쓰기)과 HRD 캘린더에 실제 반영한다.
   http.post(
     '/api/student/attendance-forms/:cohortId/submissions',
     async ({ request, params }) => {
       const body = (await request.json()) as AttendanceFormPayload
-      return ok<AttendanceFormSubmission>({
-        id: 'af-new',
+      const targetDate = mockAttendanceFormMeta.targetDate
+      const submission: AttendanceFormSubmission = {
+        id: `af-new-${submissionSeq++}`,
         studentId: 'mock-1',
         cohortId: String(params.cohortId),
-        targetDate: mockAttendanceFormMeta.targetDate,
-        submittedAt: '2026-05-22T09:00:00Z',
+        targetDate,
+        submittedAt: `${targetDate}T09:00:00Z`,
         attendanceType: body.attendanceType,
         expectedArrivalTime: body.expectedArrivalTime ?? null,
         expectedLeaveTime: body.expectedLeaveTime ?? null,
@@ -123,8 +142,44 @@ export const handlers = [
         officialLeaveType: body.officialLeaveType ?? null,
         officialLeaveOtherReason: body.officialLeaveOtherReason ?? null,
         note: body.note ?? null,
-        attachments: null,
-      })
+        attachments: toAttachments(body.attachmentNames),
+      }
+      // 제출 이력: 같은 대상일자 기존 1건은 덮어쓰고 최신을 맨 앞에 둔다.
+      const prevIdx = mockAttendanceSubmissions.findIndex(
+        (s) => s.targetDate === targetDate,
+      )
+      if (prevIdx >= 0) mockAttendanceSubmissions.splice(prevIdx, 1)
+      mockAttendanceSubmissions.unshift(submission)
+      // 캘린더: 대상일자 상태를 출결 유형으로 표시(있으면 갱신, 없으면 추가).
+      const status: HrdAttendanceStatus = body.attendanceType
+      const day = mockCalendarDays.find((d) => d.date === targetDate)
+      if (day) day.status = status
+      else mockCalendarDays.push({ date: targetDate, status })
+      // 폼 메타의 최근 제출도 갱신(다음 진입 시 덮어쓰기 경고에 반영).
+      mockAttendanceFormMeta.latestSubmission = {
+        attendanceType: submission.attendanceType,
+        submittedAt: submission.submittedAt,
+      }
+      return ok<AttendanceFormSubmission>(submission)
+    },
+  ),
+
+  // 증빙 첨부만 따로 수정 — 제출 이력에서 사후 증빙 추가/교체(다른 항목은 불변).
+  http.patch(
+    '/api/student/attendance-forms/:cohortId/submissions/:id/attachments',
+    async ({ request, params }) => {
+      const body = (await request.json()) as { attachmentNames: string[] }
+      const target = mockAttendanceSubmissions.find(
+        (s) => s.id === String(params.id),
+      )
+      if (!target) {
+        return HttpResponse.json(
+          { message: '제출 이력을 찾을 수 없습니다.' },
+          { status: 404 },
+        )
+      }
+      target.attachments = toAttachments(body.attachmentNames)
+      return ok<AttendanceFormSubmission>(target)
     },
   ),
 ]

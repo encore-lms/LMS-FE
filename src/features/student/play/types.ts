@@ -49,6 +49,7 @@ export interface PlayOverview {
 export interface TypingPrompt {
   title: string
   meta: string // "고급 · 620자"
+  text: string // 선택 시 입력 영역에 노출할 제시문 본문
 }
 export interface TypingSession {
   stats: PlayStat[]
@@ -58,5 +59,6 @@ export interface TypingSession {
   promptName: string
   basis: string
   reward: string
+  durationSec: number // 세션 제한 시간(초) — 타이머 기준
   otherPrompts: TypingPrompt[]
 }

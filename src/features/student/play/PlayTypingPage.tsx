@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { usePlayTyping } from '../api/play'
 
@@ -10,14 +12,60 @@ import { usePlayTyping } from '../api/play'
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 
+type SessionStatus = 'running' | 'paused' | 'finished'
+
+const fmtTime = (sec: number) =>
+  `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`
+
 export default function PlayTypingPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const { data, isPending, isError, refetch } = usePlayTyping()
-  const [input, setInput] = useState('')
   usePageHeader(
     '타자 게임',
     '세션을 시작하고 제시문을 입력합니다. 결과는 서버 계산값으로 저장됩니다.',
   )
+
+  // 제시문 선택 — 현재 제시문 + 다른 제시문을 하나의 목록으로 다룬다.
+  const prompts = useMemo(() => {
+    if (!data) return []
+    return [
+      { title: data.promptName, level: data.level, text: data.text },
+      ...data.otherPrompts.map((p) => ({
+        title: p.title,
+        level: p.meta,
+        text: p.text,
+      })),
+    ]
+  }, [data])
+
+  const [selected, setSelected] = useState(0)
+  const [input, setInput] = useState('')
+  const [status, setStatus] = useState<SessionStatus>('running')
+  const [remaining, setRemaining] = useState(0)
+  const [leaveTo, setLeaveTo] = useState<string | null>(null)
+
+  // 세션 로드 시 타이머 초기화.
+  useEffect(() => {
+    if (data) setRemaining(data.durationSec)
+  }, [data])
+
+  // 타이머 — 진행 중이고 나가기 확인 모달이 닫혀 있을 때만 카운트다운.
+  useEffect(() => {
+    if (status !== 'running' || leaveTo) return
+    const id = setInterval(() => {
+      setRemaining((r) => (r <= 1 ? 0 : r - 1))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [status, leaveTo])
+
+  // 시간 종료 처리.
+  useEffect(() => {
+    if (remaining === 0 && status === 'running') {
+      setStatus('finished')
+      toast.warning('시간이 종료되었어요. 결과를 제출해 주세요.')
+    }
+  }, [remaining, status, toast])
 
   if (isPending)
     return <div className="text-fg-muted p-8">세션을 불러오는 중…</div>
@@ -33,18 +81,60 @@ export default function PlayTypingPage() {
     )
   }
 
+  const active = prompts[selected]
+  const others = prompts
+    .map((p, i) => ({ ...p, i }))
+    .filter((p) => p.i !== selected)
+
+  const selectPrompt = (i: number) => {
+    setSelected(i)
+    setInput('')
+    setRemaining(data.durationSec)
+    setStatus('running')
+    toast.info(`제시문을 "${prompts[i].title}"(으)로 변경했어요.`)
+  }
+
+  const togglePause = () => {
+    if (status === 'finished') return
+    setStatus((s) => (s === 'paused' ? 'running' : 'paused'))
+  }
+
+  const submit = () => {
+    setStatus('finished')
+    navigate('/student/play/result', {
+      state: { sessionId: data.sessionId, prompt: active.title, input },
+    })
+  }
+
+  const confirmLeave = () => {
+    const to = leaveTo
+    setLeaveTo(null)
+    if (to) navigate(to)
+  }
+
   return (
     <div className="flex flex-col gap-5 p-8">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {data.stats.map((s) => (
-          <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
-            <span className="text-fg-muted text-[12px]">{s.label}</span>
-            <span className="text-brand text-[24px] leading-none font-bold">
-              {s.value}
-            </span>
-            <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-          </div>
-        ))}
+        {data.stats.map((s) => {
+          const isTimer = s.label === '남은 시간'
+          return (
+            <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
+              <span className="text-fg-muted text-[12px]">{s.label}</span>
+              <span className="text-brand text-[24px] leading-none font-bold">
+                {isTimer ? fmtTime(remaining) : s.value}
+              </span>
+              <span className="text-fg-subtle text-[11px]">
+                {isTimer
+                  ? status === 'paused'
+                    ? '일시정지됨'
+                    : status === 'finished'
+                      ? '시간 종료'
+                      : '세션 진행 중'
+                  : s.sub}
+              </span>
+            </div>
+          )
+        })}
       </div>
 
       <div className="flex flex-col gap-4 lg:flex-row">
@@ -53,11 +143,11 @@ export default function PlayTypingPage() {
             <div className="flex items-center gap-2">
               <span className="text-fg text-[15px] font-bold">제시문</span>
               <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
-                {data.level}
+                {active.level}
               </span>
             </div>
             <p className="bg-surface-muted/50 text-fg rounded-xl p-4 text-[14px] leading-7">
-              {data.text}
+              {active.text}
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -65,21 +155,30 @@ export default function PlayTypingPage() {
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="제시문을 보고 여기에 입력하세요..."
-              className="border-border bg-surface text-fg focus:border-brand min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none"
+              disabled={status !== 'running'}
+              placeholder={
+                status === 'paused'
+                  ? '일시정지 상태입니다. 이어하기를 누르면 입력할 수 있어요.'
+                  : status === 'finished'
+                    ? '세션이 종료되었습니다.'
+                    : '제시문을 보고 여기에 입력하세요...'
+              }
+              className="border-border bg-surface text-fg focus:border-brand min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold"
+                onClick={togglePause}
+                disabled={status === 'finished'}
+                className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
-                일시정지
+                {status === 'paused' ? '이어하기' : '일시정지'}
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/student/play')}
+                onClick={() => setLeaveTo('/student/play')}
                 className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold"
               >
                 저장하지 않고 나가기
@@ -87,7 +186,7 @@ export default function PlayTypingPage() {
             </div>
             <button
               type="button"
-              onClick={() => navigate('/student/play/result')}
+              onClick={submit}
               className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
             >
               결과 제출
@@ -99,7 +198,7 @@ export default function PlayTypingPage() {
           <span className="text-fg text-[15px] font-bold">플레이 정보</span>
           {[
             { label: '세션 ID', value: data.sessionId },
-            { label: '제시문', value: data.promptName },
+            { label: '제시문', value: active.title },
             { label: '계산 기준', value: data.basis },
             { label: '보상', value: data.reward },
           ].map((r) => (
@@ -113,7 +212,7 @@ export default function PlayTypingPage() {
           ))}
           <button
             type="button"
-            onClick={() => navigate('/student/play')}
+            onClick={() => setLeaveTo('/student/play')}
             className="border-border text-fg mt-1 rounded-lg border py-2.5 text-[12px] font-semibold"
           >
             다른 게임 선택
@@ -124,22 +223,43 @@ export default function PlayTypingPage() {
       <section className={cn(card, 'flex flex-col gap-3')}>
         <span className="text-fg text-[15px] font-bold">다른 제시문</span>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {data.otherPrompts.map((p) => (
+          {others.map((p) => (
             <div
               key={p.title}
               className="border-border flex flex-col gap-2 rounded-[12px] border p-4"
             >
               <span className="text-fg text-[13px] font-bold">{p.title}</span>
-              <span className="text-fg-subtle text-[11px]">{p.meta}</span>
+              <span className="text-fg-subtle text-[11px]">{p.level}</span>
               <div className="flex justify-end">
-                <span className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => selectPrompt(p.i)}
+                  className="border-border text-fg hover:border-brand hover:text-brand rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                >
                   선택
-                </span>
+                </button>
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      <Modal
+        open={leaveTo !== null}
+        onClose={() => setLeaveTo(null)}
+        title="게임을 나갈까요?"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setLeaveTo(null)}>
+              계속하기
+            </Button>
+            <Button onClick={confirmLeave}>나가기</Button>
+          </>
+        }
+      >
+        지금 나가면 현재 입력과 진행 시간은 저장되지 않습니다.
+      </Modal>
     </div>
   )
 }

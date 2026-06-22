@@ -82,10 +82,23 @@ const mockTyping: TypingSession = {
   promptName: 'Java Stream API',
   basis: '서버 재계산',
   reward: '랭킹 반영 후 지급',
+  durationSec: 150,
   otherPrompts: [
-    { title: 'Spring Transaction', meta: '고급 · 620자' },
-    { title: 'HTTP Cache 전략', meta: '중급 · 510자' },
-    { title: 'DB Index 설계', meta: '고급 · 580자' },
+    {
+      title: 'Spring Transaction',
+      meta: '고급 · 620자',
+      text: '스프링의 선언적 트랜잭션은 프록시를 통해 메서드 경계에서 시작과 커밋을 제어합니다. 전파 옵션과 격리 수준을 잘못 조합하면 예상치 못한 잠금이나 롤백이 발생할 수 있으므로 경계를 명확히 설계해야 합니다.',
+    },
+    {
+      title: 'HTTP Cache 전략',
+      meta: '중급 · 510자',
+      text: '효율적인 캐시 전략은 응답 시간을 줄이고 서버 부하를 낮춥니다. 캐시 제어 헤더와 검증 토큰을 적절히 사용하면 변경된 자원만 다시 내려받게 만들어 대역폭을 아낄 수 있습니다.',
+    },
+    {
+      title: 'DB Index 설계',
+      meta: '고급 · 580자',
+      text: '인덱스는 조회 성능을 높이지만 쓰기 비용과 저장 공간을 늘립니다. 자주 사용하는 조회 조건과 정렬 순서를 분석해 복합 인덱스의 컬럼 순서를 신중하게 결정해야 합니다.',
+    },
   ],
 }
 

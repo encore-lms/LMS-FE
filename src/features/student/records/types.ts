@@ -9,8 +9,8 @@ export type Tone =
   | 'accent'
   | 'success'
 
-/** 기록 상태 */
-export type RecordStatus = 'approved' | 'reviewing' | 'rejected'
+/** 기록 상태 — draft(작성 중·임시저장)는 수강생 본인에게만 노출, 검토 큐에는 안 올라간다 */
+export type RecordStatus = 'draft' | 'approved' | 'reviewing' | 'rejected'
 
 /** 기록 카테고리 — 탭 구분(전체 제외) */
 export type RecordCategory = 'blog' | 'study' | 'cert'
@@ -87,6 +87,7 @@ export interface BlogFormData {
   weeks: WeekCell[]
   moreLabel: string // "더보기 13~21"
   selectedNo: number // 기본 선택 주차
+  title: string // 글 제목(목록 카드 제목으로 노출). 생성 시 빈 문자열
   url: string // 수정 시 기존 URL
   rejectReason?: { title: string; detail: string } // 수정(반려) 시
 }
@@ -109,14 +110,44 @@ export interface StudyFormData {
   rejectReason?: { title: string; detail: string }
 }
 
-/** 자격증 종류 */
-export type CertType = 'PCCE' | 'PCCP' | 'PCSQL'
+/** 자격증 종류 — 인증 프리셋 3종 + 기타(직접 입력) */
+export type CertType = 'PCCE' | 'PCCP' | 'PCSQL' | 'OTHER'
 
 /** 자격증 등록/수정 폼 데이터 */
 export interface CertFormData {
   certType: CertType
   title: string
+  otherCertName?: string // certType='OTHER'일 때 직접 입력한 자격증명
   fileName?: string // 수정 시 기존 첨부 파일명
   fileSize?: string
   rejectReason?: { title: string; detail: string }
+}
+
+// ── 등록(생성) 입력 ──
+
+/** 블로그 기록 등록 입력 — 선택 주차 + 제목 + 외부 URL */
+export interface CreateBlogRecordInput {
+  weekNo: number
+  weekLabel: string
+  dateRange: string
+  title: string
+  url: string
+}
+
+/** 스터디 기록 등록 입력 — 제목·일정·증빙 개수. draft=true면 임시저장(작성 중) */
+export interface CreateStudyRecordInput {
+  title: string
+  date: string
+  startTime: string
+  endTime: string
+  fileCount: number
+  draft?: boolean
+}
+
+/** 자격증 기록 등록 입력 — 종류·제목. draft=true면 임시저장(작성 중) */
+export interface CreateCertRecordInput {
+  certType: CertType
+  title: string
+  otherCertName?: string
+  draft?: boolean
 }

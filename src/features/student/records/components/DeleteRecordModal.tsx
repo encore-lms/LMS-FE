@@ -4,6 +4,7 @@ import type { BlogRecord, RecordStatus } from '../types'
 
 // 블로그 기록 삭제 확인 모달 (?modal=delete-blog) — Figma 2173:15095. 공용 Modal 사용(조건부 렌더 = 항상 open).
 const STATUS: Record<RecordStatus, string> = {
+  draft: 'bg-surface-muted text-fg-muted',
   approved: 'bg-success-bg text-success',
   reviewing: 'bg-accent-bg text-accent-strong',
   rejected: 'bg-danger-bg text-danger',

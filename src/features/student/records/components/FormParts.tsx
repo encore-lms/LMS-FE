@@ -104,7 +104,7 @@ export function FormatRow({
   )
 }
 
-/** 하단 액션바 (이전·취소 ... 제출) + 보조 안내 */
+/** 하단 액션바 (이전·취소 ... [임시저장] 제출) + 보조 안내 */
 export function FormBar({
   backLabel,
   onBack,
@@ -113,6 +113,9 @@ export function FormBar({
   onSubmit,
   disabled,
   footer,
+  secondaryLabel,
+  onSecondary,
+  secondaryDisabled,
 }: {
   backLabel: string
   onBack: () => void
@@ -121,6 +124,10 @@ export function FormBar({
   onSubmit: () => void
   disabled?: boolean
   footer?: string
+  /** 보조 액션(예: 임시저장) — 있으면 제출 왼쪽에 아웃라인 버튼으로 노출 */
+  secondaryLabel?: string
+  onSecondary?: () => void
+  secondaryDisabled?: boolean
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -134,6 +141,16 @@ export function FormBar({
         </button>
         <div className="flex items-center gap-4">
           {note && <span className="text-fg-subtle text-[12px]">{note}</span>}
+          {secondaryLabel && onSecondary && (
+            <button
+              type="button"
+              onClick={onSecondary}
+              disabled={secondaryDisabled}
+              className="border-border text-fg hover:bg-surface-muted rounded-[10px] border px-5 py-3 text-[14px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {secondaryLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={onSubmit}

@@ -4,6 +4,7 @@ import { AlertTriangle, Award, Check, Upload, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { CertFormData, CertType } from '../types'
+import { useCreateCertRecord, useUpdateCertRecord } from '../../api/records'
 import { Crumbs, FieldLabel, FormatRow, FormBar, TextInput } from './FormParts'
 import { useFileUpload } from './useFileUpload'
 
@@ -11,13 +12,14 @@ const TYPES: { key: CertType; name: string; sub: string }[] = [
   { key: 'PCCE', name: 'PCCE', sub: 'Python 기초' },
   { key: 'PCCP', name: 'PCCP', sub: 'Python 중급' },
   { key: 'PCSQL', name: 'PCSQL', sub: 'SQL 개발자' },
+  { key: 'OTHER', name: '기타', sub: '직접 입력' },
 ]
 
 const COPY = {
   create: {
     crumbs: ['기록실', '자격증', '새 등록'],
     title: '자격증 등록',
-    sub: '인증 가능한 자격증(PCCE/PCCP/PCSQL) 취득 사진을 등록',
+    sub: '자격증(PCCE·PCCP·PCSQL 또는 기타) 취득 증빙을 등록',
     back: '이전·취소',
     submit: '제출',
     footer:
@@ -36,14 +38,24 @@ const COPY = {
 export function CertForm({
   mode,
   initial,
+  recordId,
+  isDraft = false,
 }: {
   mode: 'create' | 'edit'
   initial?: CertFormData
+  recordId?: string
+  /** 임시저장(작성 중) 기록 수정 중인지 — true면 저장 시 임시저장으로 유지(반려 재제출과 구분) */
+  isDraft?: boolean
 }) {
   const navigate = useNavigate()
   const c = COPY[mode]
+  const createMutation = useCreateCertRecord()
+  const updateMutation = useUpdateCertRecord(recordId ?? '')
   const [certType, setCertType] = useState<CertType>(
     initial?.certType ?? 'PCCP',
+  )
+  const [otherCertName, setOtherCertName] = useState(
+    initial?.otherCertName ?? '',
   )
   const [title, setTitle] = useState(initial?.title ?? '')
   // 단일 첨부 — 수정 시 기존 파일로 시드.
@@ -61,16 +73,45 @@ export function CertForm({
   usePageHeader(c.title, c.sub)
 
   const file = files[0]
-  const valid = !!(certType && title.trim() && file)
+  const otherValid = certType !== 'OTHER' || !!otherCertName.trim()
+  // 증빙 파일 외 핵심 입력 — 임시저장 기준. 제출은 여기에 증빙 파일이 더 필요.
+  const baseValid = !!(certType && title.trim() && otherValid)
+  const valid = baseValid && !!file
+  const otherName = certType === 'OTHER' ? otherCertName.trim() : undefined
 
   const submit = () => {
     if (!valid) return
-    navigate(
-      mode === 'edit'
-        ? '/student/records?toast=cert-updated'
-        : '/student/records',
+    // 제출은 검토 중으로 전환(등록·수정 공통). 수정은 변경 반영.
+    if (mode === 'edit') {
+      updateMutation.mutate(
+        { certType, title, otherCertName: otherName, draft: false },
+        { onSuccess: () => navigate('/student/records?toast=cert-updated') },
+      )
+      return
+    }
+    createMutation.mutate(
+      { certType, title, otherCertName: otherName, draft: false },
+      { onSuccess: () => navigate('/student/records?toast=cert-created') },
     )
   }
+
+  // 임시저장 — 증빙 없이도 저장(작성 중·본인만). 등록 또는 임시저장 기록 수정에서 사용.
+  const saveDraft = () => {
+    if (!baseValid) return
+    if (mode === 'edit') {
+      updateMutation.mutate(
+        { certType, title, otherCertName: otherName, draft: true },
+        { onSuccess: () => navigate('/student/records?toast=cert-saved') },
+      )
+      return
+    }
+    createMutation.mutate(
+      { certType, title, otherCertName: otherName, draft: true },
+      { onSuccess: () => navigate('/student/records?toast=cert-saved') },
+    )
+  }
+  // 임시저장은 등록·수정(반려 재제출 포함) 어디서든 가능.
+  const canSaveDraft = true
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     replace(e.target.files)
@@ -81,7 +122,7 @@ export function CertForm({
     <div className="flex flex-col gap-5 p-8">
       <Crumbs items={c.crumbs} />
 
-      {mode === 'edit' && initial?.rejectReason && (
+      {mode === 'edit' && !isDraft && initial?.rejectReason && (
         <div className="border-danger/40 bg-danger-bg/50 flex flex-col gap-1 rounded-[14px] border p-4">
           <span className="text-danger flex items-center gap-1.5 text-[13px] font-bold">
             <AlertTriangle className="size-3.5 shrink-0" />
@@ -94,10 +135,13 @@ export function CertForm({
       )}
 
       <div className="flex flex-col gap-2">
-        <FieldLabel required hint="인증 가능한 3종">
+        <FieldLabel
+          required
+          hint="프리셋 3종(PCCE·PCCP·PCSQL) + 기타 직접 입력"
+        >
           자격증 종류
         </FieldLabel>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {TYPES.map((t) => {
             const on = t.key === certType
             return (
@@ -130,6 +174,13 @@ export function CertForm({
             )
           })}
         </div>
+        {certType === 'OTHER' && (
+          <TextInput
+            value={otherCertName}
+            onChange={(e) => setOtherCertName(e.target.value)}
+            placeholder="자격증명을 직접 입력하세요 (예: 정보처리기사)"
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -143,7 +194,7 @@ export function CertForm({
 
       {/* 증빙 파일 업로드 (단일) */}
       <div className="flex flex-col gap-2">
-        <FieldLabel required hint="이미지 파일 · 최대 30MB">
+        <FieldLabel hint="제출 시 필요 · 임시저장은 증빙 없이 가능">
           증빙 파일
         </FieldLabel>
         <FormatRow />
@@ -217,10 +268,23 @@ export function CertForm({
       <FormBar
         backLabel={c.back}
         onBack={() => navigate('/student/records')}
-        note={valid ? '● 종류·제목·파일 모두 입력됨' : undefined}
+        note={
+          valid
+            ? '● 제출 가능'
+            : baseValid
+              ? '증빙 추가 시 제출 가능 · 지금은 임시저장'
+              : undefined
+        }
         submitLabel={c.submit}
         onSubmit={submit}
-        disabled={!valid}
+        disabled={
+          !valid || createMutation.isPending || updateMutation.isPending
+        }
+        secondaryLabel={canSaveDraft ? '임시저장' : undefined}
+        onSecondary={canSaveDraft ? saveDraft : undefined}
+        secondaryDisabled={
+          !baseValid || createMutation.isPending || updateMutation.isPending
+        }
         footer={c.footer}
       />
     </div>

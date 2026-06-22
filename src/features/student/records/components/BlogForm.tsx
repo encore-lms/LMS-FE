@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { usePageHeader } from '@/shared/store'
+import { useToast } from '@/components/ui/use-toast'
 import type { BlogFormData } from '../types'
+import { useCreateBlogRecord, useUpdateBlogRecord } from '../../api/records'
 import { Crumbs, FieldLabel, FormBar, TextInput } from './FormParts'
 import { WeekPicker } from './WeekPicker'
 
@@ -16,7 +18,8 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
-// 블로그 등록/수정 폼 본문 — 주차 선택 + 외부 URL. mode 로 등록/수정 분기.
+// 블로그 등록/수정 폼 본문 — 주차 선택 + 제목 + 외부 URL. mode 로 등록/수정 분기.
+// (블로그는 임시저장 없이 제출만 — 주차당 1개)
 const COPY = {
   create: {
     title: '블로그 등록',
@@ -45,34 +48,70 @@ const COPY = {
 export function BlogForm({
   mode,
   data,
+  recordId,
 }: {
   mode: 'create' | 'edit'
   data: BlogFormData
+  recordId?: string
 }) {
   const navigate = useNavigate()
+  const toast = useToast()
   const c = COPY[mode]
+  const createMutation = useCreateBlogRecord()
+  const updateMutation = useUpdateBlogRecord(recordId ?? '')
   const [selectedNo, setSelectedNo] = useState(data.selectedNo)
+  const [title, setTitle] = useState(data.title)
   const [url, setUrl] = useState(data.url)
   const [touched, setTouched] = useState(false)
   usePageHeader(c.title, c.sub)
 
+  // 서버 오류 메시지 추출(주차 중복 409 등) — 없으면 일반 안내.
+  const errorMessage = (err: unknown) => {
+    const msg = (
+      err as { response?: { data?: { message?: string } } } | undefined
+    )?.response?.data?.message
+    return msg ?? '제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  }
+
   const urlValid = isHttpUrl(url)
   const urlError = touched && !urlValid
+  const titleValid = !!title.trim()
+  const valid = urlValid && titleValid
+  const pending = createMutation.isPending || updateMutation.isPending
 
   const sel = data.weeks.find((w) => w.no === selectedNo)
   const selectedPill = sel
     ? `선택: ${sel.label} · ${sel.range} (${c.pillSuffix})`
     : '주차를 선택하세요'
 
+  // 제출 — 제목·URL 필수. 등록/수정 모두 검토 중으로 전환된다(블로그는 임시저장 없음).
   const submit = () => {
-    if (!urlValid) {
+    if (!valid) {
       setTouched(true)
       return
     }
-    navigate(
-      mode === 'edit'
-        ? '/student/records?toast=blog-updated'
-        : '/student/records',
+    if (mode === 'edit') {
+      updateMutation.mutate(
+        { url, title: title.trim() },
+        {
+          onSuccess: () => navigate('/student/records?toast=blog-updated'),
+          onError: (err) => toast.danger(errorMessage(err)),
+        },
+      )
+      return
+    }
+    createMutation.mutate(
+      {
+        weekNo: selectedNo,
+        weekLabel: sel?.label ?? `${selectedNo}주차`,
+        dateRange: sel?.range ?? '',
+        title: title.trim(),
+        url,
+      },
+      {
+        onSuccess: () => navigate('/student/records?toast=blog-created'),
+        onError: (err) => toast.danger(errorMessage(err)),
+      },
     )
   }
 
@@ -109,7 +148,21 @@ export function BlogForm({
         selectedNo={selectedNo}
         onSelect={setSelectedNo}
         selectedPill={selectedPill}
+        locked={mode === 'edit'}
       />
+
+      <div className="flex flex-col gap-2">
+        <FieldLabel required hint="기록실 목록에 표시될 글 제목">
+          제목
+        </FieldLabel>
+        <TextInput
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={() => setTouched(true)}
+          error={touched && !titleValid}
+          placeholder="예) JPA 영속성 컨텍스트의 1차 캐시 정리"
+        />
+      </div>
 
       <div className="flex flex-col gap-2">
         <FieldLabel
@@ -145,7 +198,7 @@ export function BlogForm({
         note={c.note}
         submitLabel={c.submit}
         onSubmit={submit}
-        disabled={!urlValid}
+        disabled={!valid || pending}
         footer={c.footer}
       />
     </div>

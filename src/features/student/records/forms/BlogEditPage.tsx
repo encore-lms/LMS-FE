@@ -21,5 +21,5 @@ export default function BlogEditPage() {
       </div>
     )
   }
-  return <BlogForm mode="edit" data={data} />
+  return <BlogForm mode="edit" data={data} recordId={recordId} />
 }

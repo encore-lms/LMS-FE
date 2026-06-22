@@ -10,6 +10,7 @@ import {
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { usePageHeader } from '@/shared/store'
 import type { StudyFormData } from '../types'
+import { useCreateStudyRecord, useUpdateStudyRecord } from '../../api/records'
 import {
   Crumbs,
   FieldLabel,
@@ -44,12 +45,19 @@ const COPY = {
 export function StudyForm({
   mode,
   initial,
+  recordId,
+  isDraft = false,
 }: {
   mode: 'create' | 'edit'
   initial?: StudyFormData
+  recordId?: string
+  /** 임시저장(작성 중) 기록 수정 중인지 — true면 저장 시 임시저장으로 유지(반려 재제출과 구분) */
+  isDraft?: boolean
 }) {
   const navigate = useNavigate()
   const c = COPY[mode]
+  const createMutation = useCreateStudyRecord()
+  const updateMutation = useUpdateStudyRecord(recordId ?? '')
   const [title, setTitle] = useState(initial?.title ?? '')
   const [date, setDate] = useState(initial?.date ?? '')
   const [startTime, setStartTime] = useState(initial?.startTime ?? '')
@@ -60,27 +68,63 @@ export function StudyForm({
   usePageHeader(c.title, c.sub)
 
   const timeError = !!startTime && !!endTime && endTime <= startTime
-  const valid = !!(
+  // 증빙 파일 외 핵심 입력 — 임시저장 기준. 제출은 여기에 증빙 1개 이상이 더 필요.
+  const baseValid = !!(
     title.trim() &&
     date &&
     startTime &&
     endTime &&
     body.trim() &&
-    files.length > 0 &&
     !timeError
   )
+  const valid = baseValid && files.length > 0
 
   const submit = () => {
     if (!valid) {
       setTouched(true)
       return
     }
-    navigate(
-      mode === 'edit'
-        ? '/student/records?toast=study-updated'
-        : '/student/records',
+    // 제출은 검토 중으로 전환(등록·수정 공통). 수정은 변경 반영.
+    if (mode === 'edit') {
+      updateMutation.mutate(
+        { title, date, draft: false },
+        { onSuccess: () => navigate('/student/records?toast=study-updated') },
+      )
+      return
+    }
+    createMutation.mutate(
+      {
+        title,
+        date,
+        startTime,
+        endTime,
+        fileCount: files.length,
+        draft: false,
+      },
+      { onSuccess: () => navigate('/student/records?toast=study-created') },
     )
   }
+
+  // 임시저장 — 증빙 없이도 저장(작성 중·본인만). 등록 또는 임시저장 기록 수정에서 사용.
+  const saveDraft = () => {
+    if (!baseValid) {
+      setTouched(true)
+      return
+    }
+    if (mode === 'edit') {
+      updateMutation.mutate(
+        { title, date, draft: true },
+        { onSuccess: () => navigate('/student/records?toast=study-saved') },
+      )
+      return
+    }
+    createMutation.mutate(
+      { title, date, startTime, endTime, fileCount: files.length, draft: true },
+      { onSuccess: () => navigate('/student/records?toast=study-saved') },
+    )
+  }
+  // 임시저장은 등록·수정(반려 재제출 포함) 어디서든 가능.
+  const canSaveDraft = true
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     add(e.target.files)
@@ -91,7 +135,7 @@ export function StudyForm({
     <div className="flex flex-col gap-5 p-8">
       <Crumbs items={c.crumbs} />
 
-      {mode === 'edit' && initial?.rejectReason && (
+      {mode === 'edit' && !isDraft && initial?.rejectReason && (
         <div className="border-danger/40 bg-danger-bg/50 flex flex-col gap-1 rounded-[14px] border p-4">
           <span className="text-danger flex items-center gap-1.5 text-[13px] font-bold">
             <AlertTriangle className="size-3.5 shrink-0" />
@@ -163,7 +207,7 @@ export function StudyForm({
 
       {/* 증빙자료 업로드 */}
       <div className="flex flex-col gap-2">
-        <FieldLabel required hint="이미지 파일 · 첨부 최대 30MB">
+        <FieldLabel hint="제출 시 1개 이상 필요 · 임시저장은 증빙 없이 가능">
           증빙자료
         </FieldLabel>
         <FormatRow />
@@ -238,10 +282,23 @@ export function StudyForm({
       <FormBar
         backLabel={c.back}
         onBack={() => navigate('/student/records')}
-        note={valid ? '● 모든 항목 입력됨' : undefined}
+        note={
+          valid
+            ? '● 제출 가능'
+            : baseValid
+              ? '증빙 추가 시 제출 가능 · 지금은 임시저장'
+              : undefined
+        }
         submitLabel={c.submit}
         onSubmit={submit}
-        disabled={!valid}
+        disabled={
+          !valid || createMutation.isPending || updateMutation.isPending
+        }
+        secondaryLabel={canSaveDraft ? '임시저장' : undefined}
+        onSecondary={canSaveDraft ? saveDraft : undefined}
+        secondaryDisabled={
+          !baseValid || createMutation.isPending || updateMutation.isPending
+        }
         footer={c.footer}
       />
     </div>

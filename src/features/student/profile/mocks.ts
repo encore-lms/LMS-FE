@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { StudentProfile, ProfileUpdatePayload } from './types'
+import { readProfileOverlay, mergeProfileOverlay } from './overlay'
 
 // 마이 프로필 mock — 기능 로컬. 자동 수집 규약: `export const handlers`.
 // (mocks/handlers.ts 가 import.meta.glob 으로 자동 등록 → handlers.ts 안 건드림)
@@ -36,11 +37,15 @@ const mockProfile: StudentProfile = {
 }
 
 export const handlers = [
-  http.get('/api/student/profile', () => ok<StudentProfile>(mockProfile)),
+  // 온보딩/이전 저장에서 보존한 오버레이를 기본 프로필 위에 덮어써 반영.
+  http.get('/api/student/profile', () =>
+    ok<StudentProfile>({ ...mockProfile, ...readProfileOverlay() }),
+  ),
 
   http.put('/api/student/profile', async ({ request }) => {
     const body = (await request.json()) as ProfileUpdatePayload
-    // mock: 제출분을 기존 프로필에 머지해 echo (완성도는 서버 파생이라 그대로)
-    return ok<StudentProfile>({ ...mockProfile, ...body })
+    // mock: 제출분을 오버레이에 보존(새로고침 후에도 유지) 후 머지해 echo (완성도는 서버 파생).
+    mergeProfileOverlay(body)
+    return ok<StudentProfile>({ ...mockProfile, ...readProfileOverlay() })
   }),
 ]

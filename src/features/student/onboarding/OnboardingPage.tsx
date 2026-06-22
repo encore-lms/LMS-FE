@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { useAuth } from '@/shared/store'
+import { mergeProfileOverlay } from '../profile/overlay'
 import { markOnboarded } from './completed'
 import { OnboardingShell } from './components/OnboardingShell'
 import { PledgeStep } from './steps/PledgeStep'
 import { SkillsStep } from './steps/SkillsStep'
 import { LinksStep } from './steps/LinksStep'
-import { SKILL_MAX, type OnboardingStep } from './types'
+import { SKILL_MAX, isValidUrl, type OnboardingStep } from './types'
 
 /**
  * 수강생 온보딩 (/student/onboarding) — Figma 225:27 외. 풀스크린 3스텝 마법사.
- * ?step=skills|links 로 단계 전환(없으면 다짐). 시작하기/건너뛰기 → 대시보드.
+ * ?step=skills|links 로 단계 전환(없으면 다짐). 다짐(필수) 통과 후 진행.
+ * step2(스킬)만 건너뛰기(→step3) 허용, step3은 시작하기로만 완료 → 대시보드.
+ * 완료 시 스킬·외부 URL 을 프로필 오버레이에 저장 → 마이 프로필에 실제 반영.
  */
 export default function OnboardingPage() {
   const navigate = useNavigate()
@@ -33,8 +36,13 @@ export default function OnboardingPage() {
 
   const go = (s: OnboardingStep) =>
     setParams(s === 'pledge' ? {} : { step: s }, { replace: true })
-  // 완료/건너뛰기 모두 온보딩 완료로 표시 → 게이트 통과 후 대시보드.
+  // 시작하기 시 입력값을 프로필 오버레이에 저장 → 마이 프로필 반영 + 온보딩 완료 표시.
   const finish = () => {
+    mergeProfileOverlay({
+      skills,
+      blogUrl: blogUrl.trim(),
+      githubUrl: githubUrl.trim(),
+    })
     if (user) markOnboarded(user.id)
     navigate('/student')
   }
@@ -51,8 +59,26 @@ export default function OnboardingPage() {
   const isFirst = step === 'pledge'
   const isLast = step === 'links'
 
+  // 필수/형식 검증 — 통과해야 다음(마지막은 시작하기)으로 진행.
+  // 다짐: 필수 → 빈칸 차단. 외부 URL: 선택이지만 입력 시 형식 검증.
+  const blogOk = blogUrl.trim() === '' || isValidUrl(blogUrl)
+  const githubOk = githubUrl.trim() === '' || isValidUrl(githubUrl)
+  const canAdvance =
+    step === 'pledge'
+      ? pledge.trim().length > 0
+      : step === 'links'
+        ? blogOk && githubOk
+        : true
+
   return (
-    <OnboardingShell step={step}>
+    <OnboardingShell
+      step={step}
+      skills={skills}
+      blogUrl={blogUrl}
+      githubUrl={githubUrl}
+      onBlog={setBlogUrl}
+      onGithub={setGithubUrl}
+    >
       {step === 'pledge' && <PledgeStep value={pledge} onChange={setPledge} />}
       {step === 'skills' && (
         <SkillsStep selected={skills} onToggle={toggleSkill} />
@@ -66,15 +92,19 @@ export default function OnboardingPage() {
         />
       )}
 
-      {/* 하단 액션바 */}
+      {/* 하단 액션바 — 건너뛰기는 스킬(step2)에서만, step3로 이동. step1·step3은 불가 */}
       <div className="border-divider mt-5 flex items-center justify-between border-t pt-5">
-        <button
-          type="button"
-          onClick={finish}
-          className="text-fg-muted hover:text-fg text-[13px] font-semibold"
-        >
-          건너뛰기
-        </button>
+        {step === 'skills' ? (
+          <button
+            type="button"
+            onClick={() => go('links')}
+            className="text-fg-muted hover:text-fg text-[13px] font-semibold"
+          >
+            건너뛰기
+          </button>
+        ) : (
+          <span />
+        )}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -91,10 +121,16 @@ export default function OnboardingPage() {
           </button>
           <button
             type="button"
+            disabled={!canAdvance}
             onClick={() =>
               isLast ? finish() : go(step === 'pledge' ? 'skills' : 'links')
             }
-            className="bg-brand rounded-[10px] px-5 py-2.5 text-[13px] font-bold text-white transition-colors hover:opacity-90"
+            className={cn(
+              'rounded-[10px] px-5 py-2.5 text-[13px] font-bold text-white transition-colors',
+              canAdvance
+                ? 'bg-brand hover:opacity-90'
+                : 'bg-brand/40 cursor-not-allowed',
+            )}
           >
             {isLast ? '시작하기' : '다음 →'}
           </button>

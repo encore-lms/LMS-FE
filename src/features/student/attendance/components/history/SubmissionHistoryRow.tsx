@@ -5,11 +5,14 @@ import {
   formatSubmittedAt,
 } from '../../attendanceConstants'
 
-// 제출 이력 단일 행 — 제출 일시 / 출결 유형(배지) / 공가 사용 / 공가 유형 / 비고.
+// 제출 이력 단일 행 — 제출 일시 / 출결 유형(배지) / 공가 사용 / 공가 유형 / 비고 / 증빙(+수정).
 export function SubmissionHistoryRow({
   submission,
+  onEditAttachments,
 }: {
   submission: AttendanceFormSubmission
+  /** 증빙 첨부만 사후 수정 — 행의 "증빙 수정" 클릭 시 해당 제출 전달 */
+  onEditAttachments: (submission: AttendanceFormSubmission) => void
 }) {
   const {
     submittedAt,
@@ -17,7 +20,9 @@ export function SubmissionHistoryRow({
     officialLeaveUsed,
     officialLeaveType,
     note,
+    attachments,
   } = submission
+  const fileCount = attachments?.length ?? 0
   return (
     <tr className="border-divider border-t">
       <td className="text-fg px-4 py-3 text-sm">
@@ -37,6 +42,20 @@ export function SubmissionHistoryRow({
         {officialLeaveType ? OFFICIAL_LEAVE_LABEL[officialLeaveType] : '—'}
       </td>
       <td className="text-fg-muted px-4 py-3 text-sm">{note ?? '—'}</td>
+      <td className="px-4 py-3 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-fg-muted">
+            {fileCount > 0 ? `${fileCount}개` : '없음'}
+          </span>
+          <button
+            type="button"
+            onClick={() => onEditAttachments(submission)}
+            className="text-brand shrink-0 text-xs font-semibold hover:underline"
+          >
+            {fileCount > 0 ? '증빙 수정' : '증빙 추가'}
+          </button>
+        </div>
+      </td>
     </tr>
   )
 }

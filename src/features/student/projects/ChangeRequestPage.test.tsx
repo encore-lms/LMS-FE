@@ -2,9 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
 import ChangeRequestPage from './ChangeRequestPage'
+import { useProjectFlow } from './workspace/useProjectFlow'
 
 function renderPage() {
   const queryClient = new QueryClient({
@@ -30,30 +31,37 @@ function renderPage() {
 }
 
 describe('ChangeRequestPage', () => {
-  it('빈 변경 사유 제출을 차단하고 danger 토스트를 띄운다', async () => {
+  beforeEach(() => {
+    // 모듈 전역 zustand 스토어 — 테스트 간 수정 권한 상태 누수 방지.
+    useProjectFlow.setState({ phases: {}, editRequests: {} })
+  })
+
+  it('빈 수정 사유로 권한 요청을 차단하고 danger 토스트를 띄운다', async () => {
     const user = userEvent.setup()
     renderPage()
 
     await user.clear(
-      screen.getByDisplayValue(
-        '결제 모듈 리팩터링 결과를 설명에 반영하고, 최신 API 명세서로 산출물을 교체하기 위함입니다.',
-      ),
+      screen.getByPlaceholderText('왜 다시 수정해야 하는지 적어주세요'),
     )
-    await user.click(screen.getByRole('button', { name: '변경 제안 저장' }))
+    await user.click(screen.getByRole('button', { name: '수정 권한 요청' }))
 
     expect(
-      await screen.findByText('변경 사유를 입력해 주세요'),
+      await screen.findByText('수정 사유를 입력해 주세요'),
     ).toBeInTheDocument()
   })
 
-  it('변경 제안을 저장하면 성공 토스트를 띄운다', async () => {
+  it('수정 권한을 요청하면 성공 토스트와 승인 대기 상태를 보여준다', async () => {
     const user = userEvent.setup()
     renderPage()
 
-    await user.click(screen.getByRole('button', { name: '변경 제안 저장' }))
+    await user.click(screen.getByRole('button', { name: '수정 권한 요청' }))
 
     expect(
-      await screen.findByText('변경 제안을 저장했습니다'),
+      await screen.findByText('수정 권한을 요청했어요'),
+    ).toBeInTheDocument()
+    // 승인 대기 상태로 전환 — '요청 취소' 액션은 requested 상태에만 존재.
+    expect(
+      await screen.findByRole('button', { name: '요청 취소' }),
     ).toBeInTheDocument()
   })
 })

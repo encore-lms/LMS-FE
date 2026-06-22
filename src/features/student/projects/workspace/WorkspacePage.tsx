@@ -25,6 +25,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { useProjectWorkspace } from '../../api/projects'
 import { ProjectFlowTestNav } from './ProjectFlowTestNav'
 import {
+  formatEditUntil,
+  isEditWindowExpired,
   statusToPhase,
   useProjectFlow,
   type ProjectPhase,
@@ -1942,6 +1944,11 @@ function CertTab({ d }: { d: WorkspaceData }) {
   const [checks, setChecks] = useState(d.certChecklist)
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const setPhase = useProjectFlow((s) => s.setPhase)
+  const editRequest = useProjectFlow((s) => s.editRequests[d.id])
+  // 만료된 승인은 잠금으로 표시(자동 잠금 정리는 변경 제안 화면에서 수행).
+  const editStatus = isEditWindowExpired(editRequest)
+    ? 'none'
+    : (editRequest?.status ?? 'none')
   const allDone = checks.every((check) => check.status.tone === 'success')
   const submit = () => {
     if (!allDone) {
@@ -2011,7 +2018,13 @@ function CertTab({ d }: { d: WorkspaceData }) {
             </div>
             <span className="text-fg-muted text-[12px] leading-5">
               {phase === 'certified'
-                ? '인증이 완료된 프로젝트입니다. 원본 정보 수정은 변경 제안으로만 가능합니다.'
+                ? editStatus === 'approved'
+                  ? `수정 권한이 열렸어요. ${formatEditUntil(editRequest?.editAllowedUntil)}까지 원본을 직접 수정할 수 있어요.`
+                  : editStatus === 'requested'
+                    ? '수정 권한 요청이 강사 승인 대기 중이에요.'
+                    : editStatus === 'submitted'
+                      ? '수정 완료를 제출했어요. 강사 최종 확인을 기다리는 중이에요.'
+                      : '인증이 완료된 프로젝트입니다. 원본 수정은 강사에게 수정 권한을 요청한 뒤 가능합니다.'
                 : phase === 'reviewing'
                   ? '담당 강사가 산출물과 발표 내용을 검토하고 있어요. 승인되면 인증이 완료됩니다.'
                   : phase === 'completed'
@@ -2041,15 +2054,36 @@ function CertTab({ d }: { d: WorkspaceData }) {
                 기간 종료 후 인증 요청 가능
               </div>
             )}
-            <button
-              type="button"
-              onClick={() =>
-                navigate(`/student/projects/${d.id}/change-requests/new`)
-              }
-              className="border-border text-fg rounded-lg border py-2.5 text-[13px] font-semibold"
-            >
-              변경 제안 보기
-            </button>
+            {phase === 'certified' && (
+              <>
+                {editStatus === 'approved' && editRequest?.editAllowedUntil && (
+                  <div className="bg-success-bg/60 text-success flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-bold">
+                    <Timer className="size-3.5" aria-hidden="true" />
+                    수정 가능 ~ {formatEditUntil(editRequest.editAllowedUntil)}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/student/projects/${d.id}/change-requests/new`)
+                  }
+                  className={cn(
+                    'rounded-lg py-2.5 text-[13px] font-semibold',
+                    editStatus === 'approved'
+                      ? 'bg-brand text-white'
+                      : 'border-border text-fg border',
+                  )}
+                >
+                  {editStatus === 'none'
+                    ? '수정 권한 요청'
+                    : editStatus === 'requested'
+                      ? '승인 대기 중 — 요청 보기'
+                      : editStatus === 'approved'
+                        ? '수정 진행 · 완료 제출'
+                        : '최종 확인 대기 — 제출 보기'}
+                </button>
+              </>
+            )}
           </section>
           <section className={cn(card, 'flex flex-col gap-2')}>
             <span className="text-fg text-[14px] font-bold">

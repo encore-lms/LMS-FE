@@ -7,6 +7,8 @@ import { usePageHeader } from '@/shared/store'
 import { useAssignments } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import { AssignmentCard } from './components/AssignmentCard'
+// 페이지네이션은 자료실과 동일 컴포넌트 재사용(같은 '나의 과정' 도메인).
+import { MaterialPagination } from '../materials/components/MaterialPagination'
 import type { AssignmentStatus } from './types'
 
 type Filter = 'all' | AssignmentStatus
@@ -16,6 +18,7 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'submitted', label: '제출 완료' },
   { key: 'reviewed', label: '검토 완료' },
 ]
+const PAGE_SIZE = 5
 
 /**
  * 과제/실습 목록 (/student/course/assignments) — 나의 과정 '과제/실습' 탭. Figma 407:1785.
@@ -27,6 +30,7 @@ export default function AssignmentsPage() {
   usePageHeader('과제/실습')
   const [filter, setFilter] = useState<Filter>('all')
   const [open, setOpen] = useState(false)
+  const [page, setPage] = useState(1)
 
   if (isPending) {
     return <div className="text-fg-muted p-8">과제를 불러오는 중…</div>
@@ -46,6 +50,11 @@ export default function AssignmentsPage() {
   const items = data ?? []
   const shown = items.filter((it) => filter === 'all' || it.status === filter)
   const activeLabel = FILTERS.find((f) => f.key === filter)?.label ?? '전체'
+
+  // 항목이 많아지면 스크롤 대신 페이지로 끊어 본다(자료실과 동일 규칙).
+  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
+  const curPage = Math.min(page, pageCount)
+  const pageItems = shown.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE)
 
   return (
     <div className="flex flex-col gap-6 p-8">
@@ -69,6 +78,7 @@ export default function AssignmentsPage() {
                 type="button"
                 onClick={() => {
                   setFilter(f.key)
+                  setPage(1)
                   setOpen(false)
                 }}
                 className={cn(
@@ -89,15 +99,26 @@ export default function AssignmentsPage() {
       {shown.length === 0 ? (
         <Empty title="해당 상태의 과제가 없어요" />
       ) : (
-        <div className="flex flex-col gap-3">
-          {shown.map((it) => (
-            <AssignmentCard
-              key={it.id}
-              item={it}
-              onAction={() => navigate(`/student/course/assignments/${it.id}`)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-3">
+            {pageItems.map((it) => (
+              <AssignmentCard
+                key={it.id}
+                item={it}
+                onAction={() =>
+                  navigate(`/student/course/assignments/${it.id}`)
+                }
+              />
+            ))}
+          </div>
+          <MaterialPagination
+            shownCount={pageItems.length}
+            totalCount={shown.length}
+            pageCount={pageCount}
+            page={curPage}
+            onPage={setPage}
+          />
+        </>
       )}
     </div>
   )

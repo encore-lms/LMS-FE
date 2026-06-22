@@ -2,6 +2,16 @@ import { useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/shared/lib/cn'
+import type { MaterialFileType, ShareMaterialInput } from '../../types'
+
+// 첨부 파일명 확장자 → 자료 형식(MaterialFileType). 목록 배지/아이콘과 맞춘다.
+function fileTypeFromName(name: string): MaterialFileType {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  if (ext === 'pdf') return 'PDF'
+  if (ext === 'zip') return 'ZIP'
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return 'IMG'
+  return 'DOC'
+}
 
 // 확장자 → 파일 형식 배지(라벨·색)
 const EXT_BADGE: Record<string, { label: string; cls: string }> = {
@@ -41,15 +51,37 @@ export function ShareMaterialModal({
 }: {
   open: boolean
   onClose: () => void
-  onShared: () => void
+  onShared: (payload: ShareMaterialInput) => void
 }) {
   const [tab, setTab] = useState<'file' | 'link'>('file')
+  const [title, setTitle] = useState('')
+  const [link, setLink] = useState('')
   const [files, setFiles] = useState<ShareFile[]>([
     { id: 'seed', name: 'jpa-n-plus-one-note.pdf', size: '1.1 MB' },
   ])
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const idRef = useRef(0)
+
+  // 입력값을 자료 공유 페이로드로 변환해 상위로 올린다(제목 미입력 시 파일명/기본값).
+  const handleShare = () => {
+    if (tab === 'file') {
+      const first = files[0]
+      onShared({
+        title: title.trim() || first?.name || '제목 없는 자료',
+        fileType: first ? fileTypeFromName(first.name) : 'DOC',
+        sizeLabel: first?.size,
+      })
+    } else {
+      onShared({
+        title: title.trim() || '공유 링크',
+        fileType: 'LINK',
+        fileUrl: link.trim() || undefined,
+      })
+    }
+    setTitle('')
+    setLink('')
+  }
 
   const addFiles = (list: FileList | null) => {
     if (!list || list.length === 0) return
@@ -89,7 +121,7 @@ export function ShareMaterialModal({
           </button>
           <button
             type="button"
-            onClick={onShared}
+            onClick={handleShare}
             className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
           >
             공유하기
@@ -141,6 +173,8 @@ export function ShareMaterialModal({
         {/* 제목 */}
         <Field label="제목">
           <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="예) JPA N+1 문제 정리 노트"
             className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
           />
@@ -251,6 +285,8 @@ export function ShareMaterialModal({
         ) : (
           <Field label="공유 링크">
             <input
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
               placeholder="https://github.com/... 또는 블로그 URL"
               className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
             />

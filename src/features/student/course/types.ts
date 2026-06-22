@@ -107,6 +107,15 @@ export interface MaterialItem {
   canPreview: boolean // PDF/이미지면 '미리보기' 노출
   isExternalLink?: boolean // LINK면 '다운로드' 대신 '링크 열기'
   fileUrl?: string // 파일 URL(다운로드/미리보기) 또는 외부 링크 주소. 없으면 버튼 비활성
+  ownedByMe?: boolean // 본인이 올린 학생 공유 자료(수정·삭제 가능). 공식 자료는 false/미설정.
+}
+
+/** 자료 공유 입력 — 학생이 올리는 '학생 공유' 자료(POST /student/course/materials) */
+export interface ShareMaterialInput {
+  title: string
+  fileType: MaterialFileType
+  sizeLabel?: string // 파일 업로드일 때 표시 크기
+  fileUrl?: string // 링크 공유일 때 외부 URL
 }
 
 /** 카테고리 칩 1개 (전체 + 4분류) */

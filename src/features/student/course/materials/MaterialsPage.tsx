@@ -3,8 +3,14 @@ import { ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
-import { useCourseMaterials } from '../../api/course'
+import {
+  useCourseMaterials,
+  useShareMaterial,
+  useDeleteMaterial,
+} from '../../api/course'
+import type { MaterialItem } from '../types'
 import { CourseTabs } from '../CourseTabs'
 
 const SORTS = [
@@ -28,6 +34,9 @@ import { ShareMaterialModal } from './components/ShareMaterialModal'
  */
 export default function MaterialsPage() {
   const { data, isPending, isError, refetch } = useCourseMaterials()
+  const shareMutation = useShareMaterial()
+  const deleteMutation = useDeleteMaterial()
+  const [deleteTarget, setDeleteTarget] = useState<MaterialItem | null>(null)
   usePageHeader('자료실')
   const [category, setCategory] = useState<CategoryKey>('all')
   const [query, setQuery] = useState('')
@@ -86,6 +95,17 @@ export default function MaterialsPage() {
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
   const curPage = Math.min(page, pageCount)
   const pageItems = sorted.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE)
+
+  const handleDelete = () => {
+    if (!deleteTarget) return
+    deleteMutation.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null)
+        setToast('자료가 삭제되었습니다')
+        setTimeout(() => setToast(null), 2800)
+      },
+    })
+  }
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -193,7 +213,11 @@ export default function MaterialsPage() {
           {pageItems.map((it, i) => (
             <Fragment key={it.id}>
               {i > 0 && <div className="bg-divider h-px w-full" />}
-              <MaterialRow item={it} onToggleFavorite={toggleFavorite} />
+              <MaterialRow
+                item={it}
+                onToggleFavorite={toggleFavorite}
+                onDelete={setDeleteTarget}
+              />
             </Fragment>
           ))}
         </div>
@@ -210,12 +234,51 @@ export default function MaterialsPage() {
       <ShareMaterialModal
         open={shareOpen}
         onClose={() => setShareOpen(false)}
-        onShared={() => {
-          setShareOpen(false)
-          setToast('자료가 공유되었습니다')
-          setTimeout(() => setToast(null), 2800)
+        onShared={(payload) => {
+          shareMutation.mutate(payload, {
+            onSuccess: () => {
+              // 새 자료(학생 공유)가 맨 앞에 보이도록 필터·정렬·페이지를 초기화한다.
+              setShareOpen(false)
+              setCategory('all')
+              setSort('latest')
+              setPage(1)
+              setToast('자료가 공유되었습니다')
+              setTimeout(() => setToast(null), 2800)
+            },
+          })
         }}
       />
+
+      <Modal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        size="sm"
+        title="자료 삭제"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:opacity-60"
+            >
+              삭제
+            </button>
+          </>
+        }
+      >
+        <p className="text-fg-muted text-[14px] leading-[22px]">
+          <span className="text-fg font-semibold">{deleteTarget?.title}</span>{' '}
+          자료를 삭제할까요? 삭제하면 되돌릴 수 없습니다.
+        </p>
+      </Modal>
 
       {toast && (
         <div className="bg-accent-strong fixed right-8 bottom-8 z-50 flex items-center gap-3 rounded-[10px] px-5 py-3 text-[13px] font-semibold text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">

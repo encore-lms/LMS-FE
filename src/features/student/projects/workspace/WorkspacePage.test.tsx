@@ -1,15 +1,67 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
 import { useProjectWorkspace } from '../../api/projects'
+import { tsKeys } from '../../troubleshooting/queryKeys'
+import { useProjectTsLinks } from '../../troubleshooting/projectLinks'
+import type { TsListData } from '../../troubleshooting/types'
 import { mockWorkspace, mockWorkspaceP3 } from '../mocks'
 import type { WorkspaceData } from '../types'
 import WorkspacePage from './WorkspacePage'
 import { useProjectFlow, type ProjectPhase } from './useProjectFlow'
 
 vi.mock('../../api/projects')
+
+// 이슈 탭이 useTsList로 읽는 트러블슈팅 목록 시드 — 인증 완료(ts1) + 작성 중(ts3).
+const tsListSeed: TsListData = {
+  stats: [],
+  filters: [],
+  statusFilters: [],
+  shownLabel: '',
+  cases: [
+    {
+      id: 'ts1',
+      category: 'DB',
+      categoryKey: 'DB',
+      categoryTone: 'info',
+      status: 'certified',
+      statusLabel: '인증 완료',
+      independent: true,
+      days: '3일',
+      accentTone: 'info',
+      title: 'Kafka 컨슈머 리밸런싱으로 메시지 중복 처리',
+      createdAt: '작성 2026-04-22',
+      updatedAt: '수정 2026-05-10',
+      situation: '상황',
+      resolution: '해결',
+      result: '결과',
+      tags: ['#Kafka'],
+      actionLabel: '사례 열기',
+    },
+    {
+      id: 'ts3',
+      category: 'DB',
+      categoryKey: 'DB',
+      categoryTone: 'info',
+      status: 'draft',
+      statusLabel: '작성 중',
+      independent: false,
+      days: '진행 중',
+      accentTone: 'accent',
+      title: 'Redis 캐시 stampede로 DB 부하 급증',
+      createdAt: '작성 2026-05-13',
+      updatedAt: '수정 2026-05-13',
+      situation: '상황',
+      resolution: '해결',
+      result: '결과',
+      tags: ['#Redis'],
+      actionLabel: '이어 작성',
+    },
+  ],
+}
 
 function renderPage(
   initialEntry = '/student/projects/p1',
@@ -25,23 +77,33 @@ function renderPage(
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useProjectWorkspace>)
 
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  // 이슈 탭의 useTsList가 네트워크 없이 바로 데이터를 받도록 캐시 시드.
+  queryClient.setQueryData<TsListData>(tsKeys.list(), tsListSeed)
+
   render(
-    <ToastProvider>
-      <MemoryRouter initialEntries={[initialEntry]}>
-        <Routes>
-          <Route
-            path="/student/projects/:projectId"
-            element={<WorkspacePage />}
-          />
-        </Routes>
-      </MemoryRouter>
-    </ToastProvider>,
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route
+              path="/student/projects/:projectId"
+              element={<WorkspacePage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
+    </QueryClientProvider>,
   )
 }
 
 describe('WorkspacePage home', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // 프로젝트↔트러블슈팅 연결 스토어 초기화(테스트 간 누수 방지).
+    useProjectTsLinks.setState({ links: { p1: ['ts1'] } })
   })
 
   it('홈 배너와 지표 카드 액션으로 관련 탭으로 이동한다', async () => {
@@ -55,7 +117,7 @@ describe('WorkspacePage home', () => {
     await user.click(screen.getByRole('button', { name: '홈' }))
     await user.click(screen.getByRole('button', { name: /열린 이슈/ }))
     expect(
-      screen.getByRole('button', { name: '이슈 등록' }),
+      screen.getByRole('button', { name: '트러블슈팅 연결' }),
     ).toBeInTheDocument()
   })
 
@@ -141,17 +203,37 @@ describe('WorkspacePage home', () => {
     expect(await screen.findByText('문서를 추가했습니다')).toBeInTheDocument()
   })
 
-  it('이슈 등록 모달로 새 이슈를 목록에 추가한다', async () => {
+  it('이슈 탭에서 인증 완료 트러블슈팅만 연결 후보로 뜨고 연결할 수 있다', async () => {
     const user = userEvent.setup()
+    // 연결 없이 시작 — 빈 상태부터 검증.
+    useProjectTsLinks.setState({ links: { p1: [] } })
     renderPage('/student/projects/p1?tab=issues')
 
-    await user.click(screen.getByRole('button', { name: '이슈 등록' }))
-    await user.type(screen.getByPlaceholderText('이슈 제목'), 'Redis 연결 지연')
-    await user.selectOptions(screen.getByRole('combobox'), 'P0')
-    await user.click(screen.getByRole('button', { name: '등록' }))
+    expect(
+      screen.getByText('연결된 인증 트러블슈팅이 없어요'),
+    ).toBeInTheDocument()
 
-    expect(screen.getByText('Redis 연결 지연')).toBeInTheDocument()
-    expect(await screen.findByText('이슈를 등록했습니다')).toBeInTheDocument()
+    // 연결 피커 — 인증 완료(ts1)만 후보, 작성 중(ts3)은 제외.
+    await user.click(screen.getByRole('button', { name: '트러블슈팅 연결' }))
+    expect(
+      screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Redis 캐시 stampede로 DB 부하 급증'),
+    ).not.toBeInTheDocument()
+
+    // 연결 후 완료 — 연결된 카드로 노출.
+    await user.click(
+      screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
+    )
+    expect(
+      await screen.findByText('트러블슈팅을 연결했어요'),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '완료' }))
+
+    expect(
+      screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
+    ).toBeInTheDocument()
   })
 
   it('팀원 초대 모달로 새 팀원을 추가한다', async () => {

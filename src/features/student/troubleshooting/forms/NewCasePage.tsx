@@ -216,7 +216,6 @@ export default function NewCasePage() {
       statusLabel: meta.statusLabel,
       independent,
       days: days.trim() || '진행 중',
-      repLinked: existing?.repLinked ?? false,
       accentTone: meta.accentTone,
       title: title.trim() || '제목 없는 사례',
       createdAt: existing?.createdAt ?? '작성 방금',

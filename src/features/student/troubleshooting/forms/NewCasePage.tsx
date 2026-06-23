@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Check,
@@ -13,13 +13,16 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useToast } from '@/components/ui/use-toast'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { tsKeys } from '../queryKeys'
 import { buildCaseDetail } from '../detail'
+import { TS_STATUS_META } from '../flow'
 import {
   TS_CATEGORIES,
   type TsCase,
   type TsListData,
+  type TsStatus,
   type Tone,
 } from '../types'
 
@@ -96,36 +99,62 @@ let fileSeq = 0
 export default function NewCasePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const toast = useToast()
+  // ?id=<caseId> 면 '이어 작성'(기존 작성 중 사례 편집) — 목록 캐시에서 기존 값을 불러와 채운다.
+  const [params] = useSearchParams()
+  const editId = params.get('id')
+  const existing = editId
+    ? queryClient
+        .getQueryData<TsListData>(tsKeys.list())
+        ?.cases.find((c) => c.id === editId)
+    : undefined
+  const isEdit = !!existing
+
   const [title, setTitle] = useState(
-    'Kafka 컨슈머 리밸런싱으로 메시지 중복 처리',
+    existing?.title ?? 'Kafka 컨슈머 리밸런싱으로 메시지 중복 처리',
   )
-  const [category, setCategory] = useState('DB')
-  const [customCategories, setCustomCategories] = useState<string[]>([])
+  const [category, setCategory] = useState(existing?.category ?? 'DB')
+  // 기존 카테고리가 기본 카탈로그에 없으면(직접 입력한 '기타') 커스텀 칩으로 복원.
+  const [customCategories, setCustomCategories] = useState<string[]>(
+    existing && !TS_CATEGORIES.some((c) => c.key === existing.category)
+      ? [existing.category]
+      : [],
+  )
   const [customInput, setCustomInput] = useState('')
   const [date, setDate] = useState('2026-04-22')
-  const [days, setDays] = useState('3 일')
-  const [independent, setIndependent] = useState(true)
-  const [star, setStar] = useState<Record<string, string>>({
-    situation:
-      '스케일아웃 시 컨슈머 리밸런싱이 발생하면서 동일 주문 이벤트가 두 번 처리되어 재고가 잘못 차감됐습니다. 결제도 중복 청구되어 사용자 문의가 급증했습니다.',
-    resolution:
-      '중복 처리 목표를 세우고 dedup 테이블 추가, ack 정책 정리, 트랜잭션 정합성 점검까지 해결 과정을 기록했습니다.',
-    result:
-      '중복 처리 0건/주, 결제 실패율 8% → 0.4%, 컨슈머 lag 평균 1.2s → 240ms. 학습: 컨슈머 그룹 토폴로지가 우선이었음을 확인.',
-  })
-  const [tags, setTags] = useState<string[]>([
-    '#Kafka',
-    '#이벤트소싱',
-    '#멱등성',
-  ])
+  const [days, setDays] = useState(existing?.days ?? '3 일')
+  const [independent, setIndependent] = useState(existing?.independent ?? true)
+  const [star, setStar] = useState<Record<string, string>>(
+    existing
+      ? {
+          situation: existing.situation,
+          resolution: existing.resolution,
+          result: existing.result,
+        }
+      : {
+          situation:
+            '스케일아웃 시 컨슈머 리밸런싱이 발생하면서 동일 주문 이벤트가 두 번 처리되어 재고가 잘못 차감됐습니다. 결제도 중복 청구되어 사용자 문의가 급증했습니다.',
+          resolution:
+            '중복 처리 목표를 세우고 dedup 테이블 추가, ack 정책 정리, 트랜잭션 정합성 점검까지 해결 과정을 기록했습니다.',
+          result:
+            '중복 처리 0건/주, 결제 실패율 8% → 0.4%, 컨슈머 lag 평균 1.2s → 240ms. 학습: 컨슈머 그룹 토폴로지가 우선이었음을 확인.',
+        },
+  )
+  const [tags, setTags] = useState<string[]>(
+    existing?.tags ?? ['#Kafka', '#이벤트소싱', '#멱등성'],
+  )
   const [tagInput, setTagInput] = useState('')
-  const [files, setFiles] = useState<UploadFile[]>([
-    { id: 'f1', name: 'kafka-consumer-config.yml', size: '3.2 KB' },
-    { id: 'f2', name: 'dedup-table-schema.png', size: '118 KB' },
-  ])
+  const [files, setFiles] = useState<UploadFile[]>(
+    isEdit
+      ? []
+      : [
+          { id: 'f1', name: 'kafka-consumer-config.yml', size: '3.2 KB' },
+          { id: 'f2', name: 'dedup-table-schema.png', size: '118 KB' },
+        ],
+  )
   const filled = STAR.filter((s) => star[s.key]?.trim()).length
   usePageHeader(
-    '새 트러블슈팅 사례',
+    isEdit ? '트러블슈팅 사례 이어 작성' : '새 트러블슈팅 사례',
     '학습 과정에서 겪은 문제를 상황·해결·결과로 기록하고 팀별 인증을 준비해요.',
   )
 
@@ -164,40 +193,60 @@ export default function NewCasePage() {
   const removeFile = (id: string) =>
     setFiles((p) => p.filter((f) => f.id !== id))
 
-  // 저장 — 새 사례를 만들어 목록 캐시 맨 앞에 추가하고 목록(/student/troubleshooting)으로
-  // 이동. asDraft=true(임시 저장) → 작성 중 '이어 작성', false(사례 저장) → 인증 완료
-  // '사례 열기'(목록에서 사례 열기 → 변경 제안).
+  // 저장 — 목록/상세 캐시를 갱신하고 항상 메인 홈(목록)으로 돌아간다.
+  // 같은 id면 교체(이어 작성), 없으면 맨 앞에 추가.
+  //   asDraft=true (임시 저장)  → 작성 중(draft) · 목록에서 '이어 작성'.
+  //   asDraft=false (사례 저장)  → 검토 중(reviewing)으로 제출 · 목록에서 '검토 중' 배지 + '사례 열기'.
+  //     (강사 인증 승인은 상세 화면 테스트 FAB(TsFlowTestNav)에서 시뮬레이션 → 인증 완료)
   const save = (asDraft: boolean) => {
     // 직접 추가한 카테고리는 '기타'와 동일하게 etc 키·success 톤으로 저장.
     const isCustom = customCategories.includes(category)
     const tone =
       TS_CATEGORIES.find((c) => c.key === category)?.tone ??
       (isCustom ? 'success' : 'brand')
-    const newCase: TsCase = {
-      id: `ts_${Math.random().toString(36).slice(2, 7)}`,
+    const id = editId ?? `ts_${Math.random().toString(36).slice(2, 7)}`
+    const status: TsStatus = asDraft ? 'draft' : 'reviewing'
+    const meta = TS_STATUS_META[status]
+    const nextCase: TsCase = {
+      id,
       category,
       categoryKey: CATEGORY_KEY[category] ?? 'etc',
       categoryTone: tone,
-      status: asDraft ? 'draft' : 'certified',
-      statusLabel: asDraft ? '작성 중' : '인증 완료',
+      status,
+      statusLabel: meta.statusLabel,
       independent,
       days: days.trim() || '진행 중',
-      repLinked: false,
-      accentTone: asDraft ? tone : 'success',
+      repLinked: existing?.repLinked ?? false,
+      accentTone: meta.accentTone,
       title: title.trim() || '제목 없는 사례',
-      createdAt: '작성 방금',
+      createdAt: existing?.createdAt ?? '작성 방금',
       updatedAt: '최근 수정 방금',
       situation: star.situation,
       resolution: star.resolution,
       result: star.result,
       tags,
-      actionLabel: asDraft ? '이어 작성' : '사례 열기',
+      actionLabel: meta.actionLabel,
     }
-    queryClient.setQueryData<TsListData>(tsKeys.list(), (old) =>
-      old ? { ...old, cases: [newCase, ...old.cases] } : old,
-    )
+    queryClient.setQueryData<TsListData>(tsKeys.list(), (old) => {
+      if (!old) return old
+      const exists = old.cases.some((c) => c.id === id)
+      return {
+        ...old,
+        cases: exists
+          ? old.cases.map((c) => (c.id === id ? nextCase : c))
+          : [nextCase, ...old.cases],
+      }
+    })
     // 상세도 실제 입력 내용으로 열 수 있도록 상세 캐시 시드(MSW 폴백 대신).
-    queryClient.setQueryData(tsKeys.case(newCase.id), buildCaseDetail(newCase))
+    queryClient.setQueryData(tsKeys.case(id), buildCaseDetail(nextCase))
+    toast.success(
+      asDraft
+        ? isEdit
+          ? '이어 작성 내용을 임시 저장했어요 · 작성 중'
+          : '임시 저장했어요 · 목록에 작성 중으로 남겼어요'
+        : '사례를 저장했어요 · 검토 중으로 제출됐어요 (강사 인증 대기)',
+    )
+    // 임시 저장·사례 저장 모두 메인 홈(목록)으로 — 거기서 상태 배지와 다음 액션(이어 작성/사례 열기)을 본다.
     navigate('/student/troubleshooting')
   }
 
@@ -213,7 +262,9 @@ export default function NewCasePage() {
             ← 트러블슈팅 목록
           </button>
           <span className="text-fg-subtle">›</span>
-          <span className="text-fg font-semibold">새 사례 작성</span>
+          <span className="text-fg font-semibold">
+            {isEdit ? '이어 작성' : '새 사례 작성'}
+          </span>
         </nav>
         <span className="text-fg-subtle text-[11px]">✎ 자동 저장 · 1분 전</span>
       </div>
@@ -228,8 +279,9 @@ export default function NewCasePage() {
             상황·해결·결과로 기록하세요
           </span>
           <span className="text-[12px] text-white/80">
-            상황 · 해결 · 결과 3개 항목을 채우면 사례를 저장할 수 있습니다.
-            프로젝트 연결과 인증 요청은 저장 후 진행합니다.
+            상황 · 해결 · 결과 3개 항목을 채우고 저장하세요. 임시 저장은 ‘작성
+            중’으로 남아 이어 작성할 수 있고, 사례 저장은 ‘검토 중’으로 제출돼
+            강사 인증을 기다립니다.
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -578,8 +630,7 @@ export default function NewCasePage() {
             {files.length}개
           </span>
           <span className="text-[11px] text-white/70">
-            임시 저장은 ‘이어 작성’으로, 사례 저장은 ‘사례 열기(변경 제안)’로
-            목록에 추가됩니다
+            임시 저장 → 작성 중(이어 작성) · 사례 저장 → 검토 중(강사 인증 대기)
           </span>
         </div>
         <div className="flex items-center gap-2">

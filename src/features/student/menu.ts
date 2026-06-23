@@ -10,13 +10,11 @@ export const studentMenu: MenuItem[] = [
   { label: '나의 과정', to: '/student/course', match: ['/student/quizzes'] },
   { label: '출결/태도', to: '/student/attendance' },
   { label: '기록실', to: '/student/records' },
-  { label: '프로젝트', to: '/student/projects' },
-  { label: '트러블슈팅', to: '/student/troubleshooting' },
-  // 멘토링·마일리지: 사이드바 토글 off(임시) — 라우트(/student/mentoring·/student/mileage)는 유지.
-  //   진입 방법(헤더 메뉴/직접 URL 등)은 별도 결정 예정.
-  // { label: '멘토링', to: '/student/mentoring' },
   { label: '수강 역량 증명서', to: '/student/certificate' },
   { label: '이력서 관리', to: '/student/resume' },
-  // { label: '마일리지', to: '/student/mileage' },
+  { label: '프로젝트', to: '/student/projects' },
+  { label: '트러블슈팅', to: '/student/troubleshooting' },
+  { label: '멘토링', to: '/student/mentoring' },
+  { label: '마일리지', to: '/student/mileage' },
   { label: 'PLAY', to: '/student/play' },
 ]

@@ -51,7 +51,6 @@ const TsChangePage = lazy(
 )
 const PlaySelectPage = lazy(() => import('./play/PlaySelectPage'))
 const PlayTypingPage = lazy(() => import('./play/PlayTypingPage'))
-const PlayResultPage = lazy(() => import('./play/PlayResultPage'))
 const PlayTypingResultPage = lazy(() => import('./play/PlayTypingResultPage'))
 const PlayCodingPage = lazy(() => import('./play/PlayCodingPage'))
 const PlayCodingResultPage = lazy(() => import('./play/PlayCodingResultPage'))
@@ -116,7 +115,9 @@ export const studentRoutes: RouteObject[] = [
         path: 'troubleshooting/:id/change-requests/new',
         element: <TsChangePage />,
       },
-      // PLAY(게임 선택·타자/코딩/CS퀴즈 게임·게임별 결과·결과/예외 상태).
+      // PLAY(게임 선택·타자/코딩/CS퀴즈 게임·게임별 결과).
+      // 결과·예외 상태(저장 실패·제시문 없음·기능 미사용)는 별도 페이지가 아니라
+      // 상태에 따라 뜨는 PlayStateModal 모달로 처리한다(Figma 3370:5976 states 명세).
       { path: 'play', element: <PlaySelectPage /> },
       { path: 'play/typing', element: <PlayTypingPage /> },
       { path: 'play/typing/result', element: <PlayTypingResultPage /> },
@@ -124,7 +125,6 @@ export const studentRoutes: RouteObject[] = [
       { path: 'play/coding/result', element: <PlayCodingResultPage /> },
       { path: 'play/quiz', element: <PlayQuizPage /> },
       { path: 'play/quiz/result', element: <PlayQuizResultPage /> },
-      { path: 'play/result', element: <PlayResultPage /> },
       // 마일리지(내 마일리지·상품 신청·사용 내역). 구매 요청 내역은 사용 내역에 병합됨.
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },

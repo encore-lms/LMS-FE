@@ -3,6 +3,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   CircleCheck,
   Clipboard,
   Command,
@@ -857,7 +859,8 @@ function AddTaskModal({
   const [colIdx, setColIdx] = useState(initialCol)
   const [title, setTitle] = useState('')
   const [assignee, setAssignee] = useState('')
-  const [due, setDue] = useState('')
+  // 마감은 'D-' 고정 + 숫자만(마감 지난 D+는 없음). 빈값이면 '-'.
+  const [dueDays, setDueDays] = useState('')
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
 
@@ -866,7 +869,7 @@ function AddTaskModal({
     onAdd(colIdx, {
       title: title.trim(),
       assignee: assignee.trim() || '미지정',
-      due: due.trim() || '-',
+      due: dueDays ? `D-${dueDays}` : '-',
       tags: [],
     })
   }
@@ -933,12 +936,19 @@ function AddTaskModal({
           </label>
           <label className="flex flex-1 flex-col gap-1.5">
             <span className="text-fg text-[12px] font-bold">마감</span>
-            <input
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-              placeholder="D-3"
-              className={field}
-            />
+            <div className="border-border focus-within:border-brand flex h-10 items-center rounded-lg border px-3">
+              <span className="text-fg-muted text-[13px] font-semibold">
+                D-
+              </span>
+              <input
+                value={dueDays}
+                onChange={(e) => setDueDays(e.target.value.replace(/\D/g, ''))}
+                inputMode="numeric"
+                placeholder="3"
+                aria-label="마감 일수"
+                className="text-fg placeholder:text-fg-subtle ml-1 w-full bg-transparent text-[13px] outline-none"
+              />
+            </div>
           </label>
         </div>
       </div>
@@ -947,72 +957,208 @@ function AddTaskModal({
 }
 
 /* ── 캘린더 ── */
+// 달력 — 기존 mock 일정(day만 보유)은 이 기준월에 매핑해 표시한다.
+const CAL_BASE = '2026-05'
+const WEEK = ['일', '월', '화', '수', '목', '금', '토']
+const pad2 = (n: number) => String(n).padStart(2, '0')
+const dateStr = (y: number, m: number, d: number) =>
+  `${y}-${pad2(m + 1)}-${pad2(d)}`
+// 'YYYY-MM-DD' → '2026년 6월 23일 (월)'. 숫자 파트로 Date 생성(타임존 안전).
+function formatKoreanDate(s: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (!m) return s
+  const [y, mo, d] = [+m[1], +m[2], +m[3]]
+  return `${y}년 ${mo}월 ${d}일 (${WEEK[new Date(y, mo - 1, d).getDay()]})`
+}
+// 색(tone) → 유형명. 기존 일정에 유형명을 부여하고, 유형 선택지의 기본값으로도 쓴다.
+const TONE_TYPE: Record<Tone, string> = {
+  brand: '작업',
+  info: '회의',
+  warning: '발표',
+  accent: '인증',
+  success: '기타',
+  danger: '기타',
+}
+// 일정 유형 선택지(객관식) + 기타(직접 입력).
+const SCHEDULE_TYPES: { v: string; label: string; tone: Tone }[] = [
+  { v: 'brand', label: '작업', tone: 'brand' },
+  { v: 'info', label: '회의', tone: 'info' },
+  { v: 'warning', label: '발표', tone: 'warning' },
+  { v: 'accent', label: '인증', tone: 'accent' },
+  { v: 'etc', label: '기타', tone: 'success' },
+]
+
+interface CalItem {
+  date: string // YYYY-MM-DD
+  label: string // 일정명
+  tone: Tone
+  type: string // 유형명(작업/회의/…/직접 입력)
+}
+
 function CalendarTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
-  const [events, setEvents] = useState(d.calEvents)
-  const [upcoming, setUpcoming] = useState(d.upcoming)
-  const [adding, setAdding] = useState(false)
-  const offset = (new Date('2026-05-01').getDay() + 6) % 7
+  const today = new Date()
+  const todayStr = dateStr(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  )
+  // 기본은 현재 월. ‹ › 로 이동.
+  const [cursor, setCursor] = useState({
+    y: today.getFullYear(),
+    m: today.getMonth(),
+  })
+  const [events, setEvents] = useState<CalItem[]>(() =>
+    d.calEvents.map((e) => ({
+      date: `${CAL_BASE}-${pad2(e.day)}`,
+      label: e.label,
+      tone: e.tone,
+      type: TONE_TYPE[e.tone],
+    })),
+  )
+  // null = 닫힘, 그 외 = 해당 날짜(YYYY-MM-DD)로 일정 추가 모달 열림.
+  const [addDate, setAddDate] = useState<string | null>(null)
+
+  const offset = (new Date(cursor.y, cursor.m, 1).getDay() + 6) % 7
+  const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate()
   const cells: (number | null)[] = [
     ...Array.from({ length: offset }, () => null),
-    ...Array.from({ length: 31 }, (_, i) => i + 1),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
-  const eventOf = (day: number) => events.find((e) => e.day === day)
+  const eventsOf = (day: number) =>
+    events.filter((e) => e.date === dateStr(cursor.y, cursor.m, day))
+  const prevMonth = () =>
+    setCursor((c) =>
+      c.m === 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m: c.m - 1 },
+    )
+  const nextMonth = () =>
+    setCursor((c) =>
+      c.m === 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m: c.m + 1 },
+    )
+  // 다가오는 일정 — 오늘 이후 일정을 날짜순으로(데모).
+  const upcoming = [...events]
+    .filter((e) => e.date >= todayStr)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 6)
+
+  const navBtn =
+    'text-fg-muted hover:bg-surface-muted hover:text-fg flex size-8 items-center justify-center rounded-lg border border-border transition-colors'
+
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
-        title={d.calMonth}
+        title="캘린더"
         action="일정 추가"
-        onAction={() => setAdding(true)}
+        onAction={() => setAddDate(todayStr)}
       />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex-1')}>
+          {/* 연·월 네비게이션 */}
+          <div className="mb-3 flex items-center justify-between">
+            <button
+              type="button"
+              aria-label="이전 달"
+              onClick={prevMonth}
+              className={navBtn}
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <span className="text-fg text-[15px] font-bold">
+              {cursor.y}년 {cursor.m + 1}월
+            </span>
+            <button
+              type="button"
+              aria-label="다음 달"
+              onClick={nextMonth}
+              className={navBtn}
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
           <div className="text-fg-subtle grid grid-cols-7 gap-1 pb-2 text-center text-[11px] font-semibold">
             {['월', '화', '수', '목', '금', '토', '일'].map((w) => (
               <span key={w}>{w}</span>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-1">
-            {cells.map((day, i) => {
-              const ev = day ? eventOf(day) : undefined
-              return (
-                <div
-                  key={i}
-                  className={cn(
-                    'border-border flex min-h-[78px] flex-col items-start gap-1 rounded-lg border p-1.5',
-                    !day && 'opacity-0',
-                  )}
-                >
-                  <span className="text-fg-subtle text-[11px]">{day}</span>
-                  {ev && <Chip badge={{ label: ev.label, tone: ev.tone }} />}
-                </div>
-              )
-            })}
+            {cells.map((day, i) =>
+              day === null ? (
+                <div key={i} className="min-h-[78px] opacity-0" />
+              ) : (
+                (() => {
+                  const ds = dateStr(cursor.y, cursor.m, day)
+                  const isToday = ds === todayStr
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setAddDate(ds)}
+                      aria-label={`${cursor.m + 1}월 ${day}일 일정 추가`}
+                      className={cn(
+                        'flex min-h-[78px] flex-col items-start gap-1 rounded-lg border p-1.5 text-left transition-colors',
+                        isToday
+                          ? 'border-brand bg-brand/5'
+                          : 'border-border hover:border-brand/50 hover:bg-surface-muted/60',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex size-5 items-center justify-center rounded-full text-[11px]',
+                          isToday
+                            ? 'bg-brand font-bold text-white'
+                            : 'text-fg-subtle',
+                        )}
+                      >
+                        {day}
+                      </span>
+                      {eventsOf(day).map((ev, idx) => (
+                        <span key={idx} className="flex flex-col gap-0.5">
+                          <Chip badge={{ label: ev.type, tone: ev.tone }} />
+                          <span className="text-fg-muted line-clamp-1 text-[10px]">
+                            {ev.label}
+                          </span>
+                        </span>
+                      ))}
+                    </button>
+                  )
+                })()
+              ),
+            )}
           </div>
         </section>
         <section className={cn(card, 'flex flex-col gap-3 lg:w-[280px]')}>
           <span className="text-fg text-[14px] font-bold">다가오는 일정</span>
-          {upcoming.map((u, i) => (
-            <div key={i} className="flex flex-col items-start gap-1">
-              <span className="text-fg-subtle text-[11px]">{u.date}</span>
-              <span className="text-fg text-[13px] font-semibold">
-                {u.label}
-              </span>
-              <Chip badge={{ label: '일정', tone: u.tone }} />
-            </div>
-          ))}
+          {upcoming.length === 0 ? (
+            <span className="text-fg-subtle text-[12px]">
+              예정된 일정이 없어요.
+            </span>
+          ) : (
+            upcoming.map((u, i) => (
+              <div key={i} className="flex flex-col items-start gap-1">
+                <span className="text-fg-subtle text-[11px]">
+                  {Number(u.date.slice(5, 7))}/{Number(u.date.slice(8, 10))}
+                </span>
+                <span className="text-fg text-[13px] font-semibold">
+                  {u.label}
+                </span>
+                <Chip badge={{ label: u.type, tone: u.tone }} />
+              </div>
+            ))
+          )}
         </section>
       </div>
-      {adding && (
+      {addDate !== null && (
         <AddScheduleModal
-          onClose={() => setAdding(false)}
+          initialDate={addDate}
+          onClose={() => setAddDate(null)}
           onAdd={(item) => {
             setEvents((prev) => [...prev, item])
-            setUpcoming((prev) => [
-              ...prev,
-              { date: `5/${item.day}`, label: item.label, tone: item.tone },
-            ])
-            setAdding(false)
+            // 추가한 일정의 달로 이동해 바로 보이게.
+            setCursor({
+              y: Number(item.date.slice(0, 4)),
+              m: Number(item.date.slice(5, 7)) - 1,
+            })
+            setAddDate(null)
             toast.success('일정을 추가했습니다')
           }}
         />
@@ -1022,21 +1168,28 @@ function CalendarTab({ d }: { d: WorkspaceData }) {
 }
 
 function AddScheduleModal({
+  initialDate,
   onClose,
   onAdd,
 }: {
+  initialDate: string
   onClose: () => void
-  onAdd: (item: { day: number; label: string; tone: Tone }) => void
+  onAdd: (item: CalItem) => void
 }) {
-  const [day, setDay] = useState('28')
+  const [date, setDate] = useState(initialDate)
   const [label, setLabel] = useState('')
-  const [tone, setTone] = useState<Tone>('brand')
+  const [typeKey, setTypeKey] = useState('brand')
+  const [customType, setCustomType] = useState('')
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const isEtc = typeKey === 'etc'
+  const picked =
+    SCHEDULE_TYPES.find((t) => t.v === typeKey) ?? SCHEDULE_TYPES[0]
+  const tone: Tone = picked.tone
+  const typeName = isEtc ? customType.trim() || '기타' : picked.label
   const submit = () => {
-    const parsedDay = Number(day)
-    if (!label.trim() || parsedDay < 1 || parsedDay > 31) return
-    onAdd({ day: parsedDay, label: label.trim(), tone })
+    if (!label.trim() || !date) return
+    onAdd({ date, label: label.trim(), tone, type: typeName })
   }
 
   return (
@@ -1064,19 +1217,25 @@ function AddScheduleModal({
         </>
       }
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">일자</span>
-          <input
-            type="number"
-            min={1}
-            max={31}
-            value={day}
-            onChange={(e) => setDay(e.target.value)}
-            className={field}
+      <div className="flex flex-col gap-3">
+        {/* 선택한 일자를 한눈에 — 달력 셀 클릭 또는 아래 선택기로 변경 */}
+        <div className="bg-brand/5 border-brand/20 flex items-center gap-2 rounded-xl border px-4 py-3">
+          <Calendar className="text-brand size-4 shrink-0" />
+          <span className="text-fg text-[15px] font-bold">
+            {formatKoreanDate(date)}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">일자 변경</span>
+          <DateTimePicker
+            mode="date"
+            value={date}
+            onChange={setDate}
+            ariaLabel="일정 날짜"
+            placeholder="날짜 선택"
           />
-        </label>
-        <label className="flex flex-col gap-1.5 sm:col-span-2">
+        </div>
+        <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">일정명</span>
           <input
             autoFocus
@@ -1086,19 +1245,29 @@ function AddScheduleModal({
             className={field}
           />
         </label>
-        <label className="flex flex-col gap-1.5 sm:col-span-3">
+        <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">유형</span>
           <select
-            value={tone}
-            onChange={(e) => setTone(e.target.value as Tone)}
+            value={typeKey}
+            onChange={(e) => setTypeKey(e.target.value)}
             className={field}
           >
-            <option value="brand">작업</option>
-            <option value="info">회의</option>
-            <option value="warning">발표</option>
-            <option value="accent">인증</option>
+            {SCHEDULE_TYPES.map((t) => (
+              <option key={t.v} value={t.v}>
+                {t.label}
+              </option>
+            ))}
           </select>
         </label>
+        {isEtc && (
+          <input
+            value={customType}
+            onChange={(e) => setCustomType(e.target.value)}
+            placeholder="유형을 직접 입력하세요"
+            aria-label="유형 직접 입력"
+            className={field}
+          />
+        )}
       </div>
     </Modal>
   )
@@ -1173,7 +1342,10 @@ function AddMeetingModal({
   onAdd: (meeting: WsMeeting) => void
 }) {
   const [title, setTitle] = useState('')
-  const [date, setDate] = useState('2026-05-28')
+  const now = new Date()
+  const [date, setDate] = useState(
+    dateStr(now.getFullYear(), now.getMonth(), now.getDate()),
+  )
   const [summary, setSummary] = useState('')
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
@@ -1223,8 +1395,14 @@ function AddMeetingModal({
             className={field}
           />
         </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">일자</span>
+        <div className="bg-brand/5 border-brand/20 flex items-center gap-2 rounded-xl border px-4 py-3">
+          <Calendar className="text-brand size-4 shrink-0" />
+          <span className="text-fg text-[15px] font-bold">
+            {formatKoreanDate(date)}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">일자 변경</span>
           <DateTimePicker
             mode="date"
             value={date}
@@ -1232,7 +1410,7 @@ function AddMeetingModal({
             ariaLabel="회의 일자"
             placeholder="날짜 선택"
           />
-        </label>
+        </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">요약</span>
           <textarea
@@ -1485,10 +1663,31 @@ function AddDocModal({
   )
 }
 
-// 문서 상세 — 형식·정보·카테고리·상태 + 미리보기 영역. 다운로드는 데모 토스트.
+// 문서 상세 — 형식·정보·카테고리·상태 + 미리보기 영역.
+// 다운로드: 백엔드 바이너리 대신 문서 메타로 생성한 데모 파일을 실제로 내려받는다(모든 프로젝트 동일).
 function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
   const toast = useToast()
   const { type, detail } = parseDocMeta(doc.meta)
+  const handleDownload = () => {
+    const content =
+      `# ${doc.title}\n\n` +
+      `카테고리: ${doc.category}\n` +
+      `형식: ${type}\n` +
+      `정보: ${detail || '-'}\n` +
+      `상태: ${doc.status.label}\n\n` +
+      `(데모 파일입니다. 실제 산출물 바이너리는 백엔드 연동 시 제공됩니다.)\n`
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${doc.title.replace(/[\\/:*?"<>|]/g, '_')}.txt`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    toast.success(`${doc.title} 다운로드를 시작했어요`)
+    onClose()
+  }
   return (
     <Modal
       open
@@ -1505,10 +1704,7 @@ function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
           </button>
           <button
             type="button"
-            onClick={() => {
-              toast.info(`${doc.title} 다운로드를 시작합니다`)
-              onClose()
-            }}
+            onClick={handleDownload}
             className="bg-brand flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-bold text-white"
           >
             <Download className="size-4" aria-hidden="true" />
@@ -1557,7 +1753,8 @@ function IssuesTab({ d }: { d: WorkspaceData }) {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending } = useTsList()
-  const linkedIds = useProjectTsLinks((s) => s.links[d.id] ?? [])
+  // 명시적 연결이 없는 프로젝트는 기본 연결을 사용 — 모든 프로젝트의 이슈 탭이 동일하게 보인다.
+  const linkedIds = useProjectTsLinks((s) => s.linksFor(d.id))
   const unlink = useProjectTsLinks((s) => s.unlink)
   const [picking, setPicking] = useState(false)
 
@@ -1714,6 +1911,8 @@ function TeamTab({ d }: { d: WorkspaceData }) {
   const [openMember, setOpenMember] = useState<WsMember | null>(null)
   const [editing, setEditing] = useState<number | null>(null)
   const [removing, setRemoving] = useState<number | null>(null)
+  // 본인 = 첫 멤버(작성자·PM, PM 위임해도 목록 인덱스 0 유지). 본인 기여도는 수정 불가.
+  const SELF_INDEX = 0
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -1747,6 +1946,11 @@ function TeamTab({ d }: { d: WorkspaceData }) {
                   >
                     {m.kind}
                   </span>
+                  {i === SELF_INDEX && (
+                    <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
+                      본인
+                    </span>
+                  )}
                 </div>
                 <span className="text-fg-subtle text-[11px]">
                   기여도 {m.contrib}%
@@ -1810,6 +2014,7 @@ function TeamTab({ d }: { d: WorkspaceData }) {
       {editing !== null && members[editing] && (
         <EditMemberModal
           member={members[editing]}
+          isSelf={editing === SELF_INDEX}
           othersTotal={members.reduce(
             (acc, mm, idx) => (idx === editing ? acc : acc + mm.contrib),
             0,
@@ -1883,6 +2088,58 @@ function TeamTab({ d }: { d: WorkspaceData }) {
   )
 }
 
+// 역할 객관식 — 프리셋 선택 + '기타' 직접 입력. value가 프리셋이 아니면 기타로 간주.
+const ROLE_PRESETS = [
+  '프론트엔드',
+  '백엔드',
+  '풀스택',
+  'PM',
+  '데브옵스',
+  '기획',
+  '디자인',
+]
+const fieldCls =
+  'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+
+function RoleSelect({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}) {
+  const isPreset = ROLE_PRESETS.includes(value)
+  const selectValue = isPreset ? value : '기타'
+  return (
+    <div className="flex flex-col gap-2">
+      <select
+        value={selectValue}
+        onChange={(e) =>
+          onChange(e.target.value === '기타' ? '' : e.target.value)
+        }
+        aria-label="역할 선택"
+        className={fieldCls}
+      >
+        {ROLE_PRESETS.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+        <option value="기타">기타 (직접 입력)</option>
+      </select>
+      {selectValue === '기타' && (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="역할을 직접 입력하세요"
+          aria-label="역할 직접 입력"
+          className={fieldCls}
+        />
+      )}
+    </div>
+  )
+}
+
 function InviteMemberModal({
   onClose,
   onAdd,
@@ -1895,10 +2152,10 @@ function InviteMemberModal({
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
   const submit = () => {
-    if (!name.trim()) return
+    if (!name.trim() || !role.trim()) return
     onAdd({
       name: name.trim(),
-      role,
+      role: role.trim(),
       kind: '팀원',
       contrib: 0,
       avatarTone: 'info',
@@ -1922,7 +2179,7 @@ function InviteMemberModal({
           <button
             type="button"
             onClick={submit}
-            disabled={!name.trim()}
+            disabled={!name.trim() || !role.trim()}
             className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
           >
             초대
@@ -1941,15 +2198,10 @@ function InviteMemberModal({
             className={field}
           />
         </label>
-        <label className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">역할</span>
-          <input
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            placeholder="역할"
-            className={field}
-          />
-        </label>
+          <RoleSelect value={role} onChange={setRole} />
+        </div>
       </div>
     </Modal>
   )
@@ -1960,11 +2212,14 @@ function InviteMemberModal({
 function EditMemberModal({
   member,
   othersTotal,
+  isSelf,
   onClose,
   onSave,
 }: {
   member: WsMember
   othersTotal: number
+  /** 본인 여부 — 본인 기여도는 수정 불가(슬라이더 잠금). */
+  isSelf: boolean
   onClose: () => void
   onSave: (patch: {
     role: string
@@ -1972,22 +2227,18 @@ function EditMemberModal({
     kind: WsMember['kind']
   }) => void
 }) {
-  const [role, setRole] = useState(member.role)
-  const [contrib, setContrib] = useState(String(member.contrib))
+  // 기존 역할이 '백엔드 · 팀원'처럼 결합형이면 앞 전문분야만 취해 객관식과 맞춘다.
+  const [role, setRole] = useState(member.role.split(' · ')[0])
+  // 기여도는 0~100% 슬라이더로 조정(숫자 입력 대체). 본인은 잠금이라 항상 원래 값 유지.
+  const [contrib, setContrib] = useState(member.contrib)
   const [kind, setKind] = useState<WsMember['kind']>(member.kind)
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
-  const contribNum = Number(contrib)
-  const validContrib =
-    contrib.trim() !== '' &&
-    Number.isFinite(contribNum) &&
-    contribNum >= 0 &&
-    contribNum <= 100
-  const teamTotal = othersTotal + (validContrib ? contribNum : 0)
+  const teamTotal = othersTotal + contrib
   const over = teamTotal > 100
   const submit = () => {
-    if (!role.trim() || !validContrib) return
-    onSave({ role: role.trim(), contrib: contribNum, kind })
+    if (!role.trim()) return
+    onSave({ role: role.trim(), contrib, kind })
   }
 
   return (
@@ -2007,7 +2258,7 @@ function EditMemberModal({
           <button
             type="button"
             onClick={submit}
-            disabled={!role.trim() || !validContrib}
+            disabled={!role.trim()}
             className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
           >
             저장
@@ -2020,16 +2271,10 @@ function EditMemberModal({
           <Avatar name={member.name} tone={member.avatarTone} />
           <span className="text-fg text-[14px] font-bold">{member.name}</span>
         </div>
-        <label className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">역할</span>
-          <input
-            autoFocus
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            placeholder="역할"
-            className={field}
-          />
-        </label>
+          <RoleSelect value={role} onChange={setRole} />
+        </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">구분</span>
           <select
@@ -2041,18 +2286,35 @@ function EditMemberModal({
             <option value="PM">PM (위임 시 기존 PM은 팀원으로 변경)</option>
           </select>
         </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">기여도 (%)</span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-fg text-[12px] font-bold">기여도</span>
+            <span
+              className={cn(
+                'text-[13px] font-bold',
+                isSelf ? 'text-fg-subtle' : 'text-brand',
+              )}
+            >
+              {contrib}%
+            </span>
+          </div>
           <input
-            type="number"
+            type="range"
             min={0}
             max={100}
+            step={1}
             value={contrib}
-            onChange={(e) => setContrib(e.target.value)}
-            placeholder="0 ~ 100"
-            className={field}
+            onChange={(e) => setContrib(Number(e.target.value))}
+            disabled={isSelf}
+            aria-label="기여도"
+            className="accent-brand h-2 w-full cursor-pointer rounded-full disabled:cursor-not-allowed disabled:opacity-50"
           />
-        </label>
+          {isSelf && (
+            <span className="text-fg-subtle text-[11px]">
+              본인 기여도는 수정할 수 없어요 · 기여도는 팀원이 평가합니다.
+            </span>
+          )}
+        </div>
         <div
           className={cn(
             'rounded-lg px-3 py-2 text-[12px] font-semibold',

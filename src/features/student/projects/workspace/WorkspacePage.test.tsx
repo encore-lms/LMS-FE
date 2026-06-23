@@ -143,7 +143,7 @@ describe('WorkspacePage home', () => {
       '결제 웹훅 재처리',
     )
     await user.type(screen.getByPlaceholderText('이름'), '김수강')
-    await user.type(screen.getByPlaceholderText('D-3'), 'D-7')
+    await user.type(screen.getByLabelText('마감 일수'), '7')
     await user.click(screen.getByRole('button', { name: '추가' }))
 
     expect(screen.getByText('결제 웹훅 재처리')).toBeInTheDocument()
@@ -154,9 +154,8 @@ describe('WorkspacePage home', () => {
     const user = userEvent.setup()
     renderPage('/student/projects/p1?tab=calendar')
 
+    // 헤더 '일정 추가' → 오늘 날짜로 모달이 열린다(현재 월 기준).
     await user.click(screen.getByRole('button', { name: '일정 추가' }))
-    await user.clear(screen.getByRole('spinbutton'))
-    await user.type(screen.getByRole('spinbutton'), '29')
     await user.type(screen.getByPlaceholderText('일정명'), '최종 리허설')
     await user.click(screen.getByRole('button', { name: '추가' }))
 
@@ -242,8 +241,9 @@ describe('WorkspacePage home', () => {
 
     await user.click(screen.getByRole('button', { name: '팀원 초대' }))
     await user.type(screen.getByPlaceholderText('팀원 이름'), '오세훈')
-    await user.clear(screen.getByPlaceholderText('역할'))
-    await user.type(screen.getByPlaceholderText('역할'), '문서')
+    // 역할은 객관식 — '기타' 선택 후 직접 입력.
+    await user.selectOptions(screen.getByLabelText('역할 선택'), '기타')
+    await user.type(screen.getByLabelText('역할 직접 입력'), '문서')
     await user.click(screen.getByRole('button', { name: '초대' }))
 
     expect(screen.getByText('오세훈')).toBeInTheDocument()

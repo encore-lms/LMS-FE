@@ -6,6 +6,7 @@ import {
   CircleCheck,
   Clipboard,
   Command,
+  Download,
   FileText,
   Files,
   Link2,
@@ -295,6 +296,47 @@ function TaskCard({ t }: { t: WsTask }) {
       </div>
     </div>
   )
+}
+
+// 상세 모달 공용 — "라벨 · 값" 한 줄.
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2.5">
+      <span className="text-fg-muted text-[12px]">{label}</span>
+      <span className="text-fg text-[12px] font-semibold">{value}</span>
+    </div>
+  )
+}
+// 팀원 프로필 활동 요약 박스.
+function StatBox({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+}) {
+  return (
+    <div className="border-border flex flex-col gap-1 rounded-xl border p-3">
+      <span className="text-fg-muted flex items-center gap-1.5 text-[11px]">
+        <Icon className="size-3.5" aria-hidden="true" />
+        {label}
+      </span>
+      <span className="text-fg text-[18px] font-bold">{value}</span>
+    </div>
+  )
+}
+// "2026-05-14 · 참석 4명" → 날짜·참석 인원 분해(인원 표기 없으면 undefined).
+function parseMeetingMeta(meta: string): { date: string; attendees?: number } {
+  const date = meta.split(' · ')[0] ?? meta
+  const m = meta.match(/참석\s*(\d+)\s*명/)
+  return { date, attendees: m ? Number(m[1]) : undefined }
+}
+// "PDF · 1.2MB" → 형식·부가정보 분해.
+function parseDocMeta(meta: string): { type: string; detail: string } {
+  const [type, detail] = meta.split(' · ')
+  return { type: type ?? meta, detail: detail ?? '' }
 }
 
 /* ── 홈 ── */
@@ -1064,6 +1106,7 @@ function MeetingsTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
   const [meetings, setMeetings] = useState(d.meetings)
   const [adding, setAdding] = useState(false)
+  const [openMeeting, setOpenMeeting] = useState<WsMeeting | null>(null)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -1088,9 +1131,23 @@ function MeetingsTab({ d }: { d: WorkspaceData }) {
               {m.summary}
             </span>
             <Chip badge={m.status} />
+            <button
+              type="button"
+              onClick={() => setOpenMeeting(m)}
+              className="border-border text-fg-muted shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+            >
+              열기
+            </button>
           </div>
         ))}
       </section>
+      {openMeeting && (
+        <MeetingDetailModal
+          meeting={openMeeting}
+          members={d.members}
+          onClose={() => setOpenMeeting(null)}
+        />
+      )}
       {adding && (
         <AddMeetingModal
           onClose={() => setAdding(false)}
@@ -1187,12 +1244,100 @@ function AddMeetingModal({
   )
 }
 
+// 회의 상세 — 날짜·요약·참석자(팀원에서 참석 인원만큼 파생).
+function MeetingDetailModal({
+  meeting,
+  members,
+  onClose,
+}: {
+  meeting: WsMeeting
+  members: WsMember[]
+  onClose: () => void
+}) {
+  const { date, attendees } = parseMeetingMeta(meeting.meta)
+  const attendList = attendees != null ? members.slice(0, attendees) : members
+  const extra =
+    attendees != null && attendees > attendList.length
+      ? attendees - attendList.length
+      : 0
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="회의록 상세"
+      footer={
+        <button
+          type="button"
+          onClick={onClose}
+          className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+        >
+          닫기
+        </button>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-fg text-[16px] font-bold">
+              {meeting.title}
+            </span>
+            <span className="text-fg-muted flex items-center gap-1.5 text-[12px]">
+              <Calendar className="size-3.5" aria-hidden="true" />
+              {date}
+            </span>
+          </div>
+          <Chip badge={meeting.status} />
+        </div>
+
+        <div className="bg-surface-muted flex flex-col gap-1 rounded-xl p-4">
+          <span className="text-fg-subtle text-[11px] font-semibold">
+            핵심 요약
+          </span>
+          <span className="text-fg text-[13px] font-semibold">
+            {meeting.summary}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
+          <span className="text-fg flex items-center gap-1.5 text-[13px] font-bold">
+            <Users className="text-brand size-4" aria-hidden="true" />
+            참석자
+            {attendees != null && (
+              <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[11px] font-bold">
+                {attendees}명
+              </span>
+            )}
+          </span>
+          <div className="flex flex-col gap-2">
+            {attendList.map((m) => (
+              <div key={m.name} className="flex items-center gap-2.5">
+                <Avatar name={m.name} tone={m.avatarTone} />
+                <div className="flex flex-col">
+                  <span className="text-fg text-[12px] font-bold">
+                    {m.name}
+                    {m.kind === 'PM' && ' · PM'}
+                  </span>
+                  <span className="text-fg-subtle text-[11px]">{m.role}</span>
+                </div>
+              </div>
+            ))}
+            {extra > 0 && (
+              <span className="text-fg-subtle text-[11px]">외 {extra}명</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 /* ── 문서·파일·위키 ── */
 function DocsTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
   const [activeCategory, setActiveCategory] = useState('전체')
   const [docs, setDocs] = useState(d.docs)
   const [adding, setAdding] = useState(false)
+  const [openDoc, setOpenDoc] = useState<WsDoc | null>(null)
   const visibleDocs =
     activeCategory === '전체'
       ? docs
@@ -1231,7 +1376,7 @@ function DocsTab({ d }: { d: WorkspaceData }) {
                 <Chip badge={doc.status} />
                 <button
                   type="button"
-                  onClick={() => toast.info(`${doc.title}을 열었습니다`)}
+                  onClick={() => setOpenDoc(doc)}
                   className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
                 >
                   열기
@@ -1241,6 +1386,9 @@ function DocsTab({ d }: { d: WorkspaceData }) {
           ))}
         </div>
       </div>
+      {openDoc && (
+        <DocDetailModal doc={openDoc} onClose={() => setOpenDoc(null)} />
+      )}
       {adding && (
         <AddDocModal
           categories={d.docCategories.filter((category) => category !== '전체')}
@@ -1329,6 +1477,70 @@ function AddDocModal({
             ))}
           </select>
         </label>
+      </div>
+    </Modal>
+  )
+}
+
+// 문서 상세 — 형식·정보·카테고리·상태 + 미리보기 영역. 다운로드는 데모 토스트.
+function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
+  const toast = useToast()
+  const { type, detail } = parseDocMeta(doc.meta)
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="문서 상세"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            닫기
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              toast.info(`${doc.title} 다운로드를 시작합니다`)
+              onClose()
+            }}
+            className="bg-brand flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-bold text-white"
+          >
+            <Download className="size-4" aria-hidden="true" />
+            다운로드
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <span className="bg-brand/10 text-brand flex size-14 shrink-0 items-center justify-center rounded-2xl">
+            <FileText className="size-7" aria-hidden="true" />
+          </span>
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <span className="text-fg text-[15px] font-bold">{doc.title}</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="bg-surface-muted text-fg-muted rounded-md px-2 py-0.5 text-[11px] font-semibold">
+                {doc.category}
+              </span>
+              <Chip badge={doc.status} />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-divider divide-divider flex flex-col divide-y rounded-xl border">
+          <DetailRow label="형식" value={type} />
+          <DetailRow label="정보" value={detail || '-'} />
+          <DetailRow label="카테고리" value={doc.category} />
+          <DetailRow label="상태" value={doc.status.label} />
+        </div>
+
+        <div className="border-border text-fg-subtle flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed py-8 text-center">
+          <Files className="size-7" aria-hidden="true" />
+          <span className="text-[12px]">{type} 미리보기 영역</span>
+        </div>
       </div>
     </Modal>
   )
@@ -1472,6 +1684,7 @@ function TeamTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
   const [members, setMembers] = useState(d.members)
   const [inviting, setInviting] = useState(false)
+  const [openMember, setOpenMember] = useState<WsMember | null>(null)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -1519,7 +1732,7 @@ function TeamTab({ d }: { d: WorkspaceData }) {
               </div>
               <button
                 type="button"
-                onClick={() => toast.info(`${m.name} 상세를 열었습니다`)}
+                onClick={() => setOpenMember(m)}
                 className="border-border text-fg-muted shrink-0 rounded-lg border px-3.5 py-1.5 text-[12px] font-semibold"
               >
                 상세
@@ -1536,6 +1749,13 @@ function TeamTab({ d }: { d: WorkspaceData }) {
           ))}
         </section>
       </div>
+      {openMember && (
+        <MemberProfileModal
+          member={openMember}
+          d={d}
+          onClose={() => setOpenMember(null)}
+        />
+      )}
       {inviting && (
         <InviteMemberModal
           onClose={() => setInviting(false)}
@@ -1617,6 +1837,120 @@ function InviteMemberModal({
             className={field}
           />
         </label>
+      </div>
+    </Modal>
+  )
+}
+
+// 팀원 프로필 — 기여도 + 워크스페이스 데이터에서 담당 작업·이슈 집계, 상호평가 협업 태그.
+function MemberProfileModal({
+  member,
+  d,
+  onClose,
+}: {
+  member: WsMember
+  d: WorkspaceData
+  onClose: () => void
+}) {
+  // 본인(PM)은 보드/내 할 일에서 '나'로 기재되므로 별칭으로 함께 집계.
+  const aliases =
+    member.kind === 'PM' ? new Set([member.name, '나']) : new Set([member.name])
+  const boardTasks = d.columns.reduce(
+    (acc, col) => acc + col.tasks.filter((t) => aliases.has(t.assignee)).length,
+    0,
+  )
+  const myTaskCount =
+    member.kind === 'PM'
+      ? d.myTasks.filter((t) => aliases.has(t.assignee)).length
+      : 0
+  const taskCount = boardTasks + myTaskCount
+  const issueCount = d.issues.filter((it) =>
+    it.meta.includes(member.name),
+  ).length
+  const peer = d.peerTargets.find((p) => p.name === member.name)
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="팀원 프로필"
+      footer={
+        <button
+          type="button"
+          onClick={onClose}
+          className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+        >
+          닫기
+        </button>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <span
+            className={cn(
+              'flex size-16 shrink-0 items-center justify-center rounded-full text-[24px] font-bold text-white',
+              SOLID[member.avatarTone],
+            )}
+          >
+            {member.name.slice(0, 1)}
+          </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-fg text-[18px] font-bold">
+                {member.name}
+              </span>
+              <span
+                className={cn(
+                  'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                  member.kind === 'PM'
+                    ? 'bg-accent-bg text-accent-strong'
+                    : 'bg-surface-muted text-fg-muted',
+                )}
+              >
+                {member.kind}
+              </span>
+            </div>
+            <span className="text-fg-muted text-[12px]">{member.role}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-[12px]">
+            <span className="text-fg-muted">기여도</span>
+            <span className="text-fg font-bold">{member.contrib}%</span>
+          </div>
+          <div className="bg-surface-muted h-2 overflow-hidden rounded-full">
+            <div
+              className="bg-brand h-full rounded-full"
+              style={{ width: `${member.contrib}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <StatBox
+            icon={ListChecks}
+            label="담당 작업"
+            value={`${taskCount}건`}
+          />
+          <StatBox
+            icon={TriangleAlert}
+            label="담당 이슈"
+            value={`${issueCount}건`}
+          />
+        </div>
+
+        {peer && peer.tags.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className="text-fg-subtle text-[11px] font-semibold">
+              상호평가 협업 태그
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {peer.tags.map((tg, i) => (
+                <Chip key={i} badge={tg} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   )

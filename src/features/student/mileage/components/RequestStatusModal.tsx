@@ -78,11 +78,11 @@ export function RequestStatusModal({
               type="button"
               onClick={() => {
                 onClose()
-                navigate('/student/mileage/requests')
+                navigate('/student/mileage/history')
               }}
               className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
             >
-              구매 요청 내역 보기
+              사용 내역 보기
             </button>
           )}
         </>

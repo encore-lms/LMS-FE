@@ -94,13 +94,6 @@ export default function MileagePage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate('/student/mileage/requests')}
-            className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold text-white"
-          >
-            구매 요청 내역
-          </button>
-          <button
-            type="button"
             onClick={() => navigate('/student/mileage/history')}
             className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold text-white"
           >

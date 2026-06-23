@@ -132,10 +132,10 @@ export default function ProductsPage() {
         </div>
         <button
           type="button"
-          onClick={() => navigate('/student/mileage/requests')}
+          onClick={() => navigate('/student/mileage/history')}
           className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold text-white"
         >
-          구매 요청 내역 →
+          사용 내역 →
         </button>
       </div>
 

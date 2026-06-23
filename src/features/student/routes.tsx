@@ -59,7 +59,6 @@ const PlayQuizPage = lazy(() => import('./play/PlayQuizPage'))
 const PlayQuizResultPage = lazy(() => import('./play/PlayQuizResultPage'))
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
 const MileageProductsPage = lazy(() => import('./mileage/ProductsPage'))
-const MileageRequestsPage = lazy(() => import('./mileage/RequestStatesPage'))
 const MileageHistoryPage = lazy(() => import('./mileage/HistoryPage'))
 const PeerHubPage = lazy(() => import('./peer/PeerHubPage'))
 const PeerTagPage = lazy(() => import('./peer/PeerTagPage'))
@@ -126,10 +125,9 @@ export const studentRoutes: RouteObject[] = [
       { path: 'play/quiz', element: <PlayQuizPage /> },
       { path: 'play/quiz/result', element: <PlayQuizResultPage /> },
       { path: 'play/result', element: <PlayResultPage /> },
-      // 마일리지(내 마일리지·상품 신청·구매 요청 내역·사용 내역).
+      // 마일리지(내 마일리지·상품 신청·사용 내역). 구매 요청 내역은 사용 내역에 병합됨.
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },
-      { path: 'mileage/requests', element: <MileageRequestsPage /> },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
       // 동료 평가 — 기수 단위 PeerTag와 PeerReputation 입력.
       { path: 'peer-evaluations', element: <PeerHubPage /> },

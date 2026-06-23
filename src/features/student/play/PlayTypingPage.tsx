@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { usePlayTyping } from '../api/play'
 import { CharCompare } from './CharCompare'
+import { PlayResultModal } from './PlayResultModal'
 import { StatStrip } from './StatStrip'
 import { pushPlay } from './history'
 import { card, computeMetrics, fmtTime } from './shared'
@@ -45,6 +46,8 @@ export default function PlayTypingPage() {
   // null = 아직 미초기화 — 0으로 시작하면 마운트 직후 "시간 종료"로 오인되므로 null로 둔다.
   const [remaining, setRemaining] = useState<number | null>(null)
   const [leaveTo, setLeaveTo] = useState<string | null>(null)
+  // 종료 시 결과를 담아 결과 모달을 띄운다(서버 계산 결과 상태). null = 모달 닫힘.
+  const [result, setResult] = useState<TypingResult | null>(null)
   const backspacesRef = useRef(0)
   const submittedRef = useRef(false)
 
@@ -87,12 +90,12 @@ export default function PlayTypingPage() {
     }
   }, [input, active, status, toast])
 
-  // 종료되면 결과 계산 후 결과 페이지로 1회 이동.
+  // 종료되면 결과를 1회 계산해 결과 모달을 띄운다(서버 계산 결과 상태). 페이지 이동 대신 모달.
   useEffect(() => {
     if (status !== 'finished' || submittedRef.current || !data || !active)
       return
     submittedRef.current = true
-    const result: TypingResult = {
+    const payload: TypingResult = {
       sessionId: data.sessionId,
       promptName: active.title,
       durationSec: data.durationSec,
@@ -108,11 +111,11 @@ export default function PlayTypingPage() {
       best: m.score >= data.personalBest,
     }
     pushPlay('typing', {
-      detail: `${result.cpm}타 · ${result.accuracy.toFixed(1)}% · ${result.score.toLocaleString()}`,
-      score: result.score,
+      detail: `${payload.cpm}타 · ${payload.accuracy.toFixed(1)}% · ${payload.score.toLocaleString()}`,
+      score: payload.score,
     })
-    navigate('/student/play/typing/result', { state: { result } })
-  }, [status, data, active, elapsedSec, m, navigate])
+    setResult(payload)
+  }, [status, data, active, elapsedSec, m])
 
   if (isPending)
     return <div className="text-fg-muted p-8">세션을 불러오는 중…</div>
@@ -140,6 +143,16 @@ export default function PlayTypingPage() {
     backspacesRef.current = 0
     submittedRef.current = false
     toast.info(`제시문을 "${prompts[i].title}"(으)로 변경했어요.`)
+  }
+
+  // 결과 모달의 "다시 플레이" — 현재 제시문 그대로 새 세션 시작.
+  const restart = () => {
+    setResult(null)
+    setInput('')
+    setRemaining(data.durationSec)
+    setStatus('running')
+    backspacesRef.current = 0
+    submittedRef.current = false
   }
 
   const togglePause = () => {
@@ -334,6 +347,24 @@ export default function PlayTypingPage() {
       >
         지금 나가면 현재 입력과 진행 시간은 저장되지 않습니다.
       </Modal>
+
+      <PlayResultModal
+        open={result !== null}
+        onClose={() => setResult(null)}
+        metrics={
+          result
+            ? [
+                { label: 'WPM', value: String(result.wpm) },
+                { label: 'CPM', value: String(result.cpm) },
+                { label: '정확도', value: `${result.accuracy.toFixed(1)}%` },
+                { label: 'Score', value: result.score.toLocaleString() },
+              ]
+            : []
+        }
+        onReplay={restart}
+        detailTo="/student/play/typing/result"
+        detailState={result ? { result } : undefined}
+      />
     </div>
   )
 }

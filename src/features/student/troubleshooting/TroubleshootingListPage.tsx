@@ -88,13 +88,19 @@ export default function TroubleshootingListPage() {
     )
   }
 
-  // 인증 완료 → 변경 제안. 작성 중(이어 작성)·검토 중 → 상세(변경 제안은 인증 완료만).
-  const open = (c: TsCase) =>
-    navigate(
-      c.status === 'certified'
-        ? `/student/troubleshooting/${c.id}/change-requests/new`
-        : `/student/troubleshooting/${c.id}`,
-    )
+  // 상태별 진입 분기:
+  //   작성 중(draft)   → '이어 작성': 작성 폼으로(기존 내용 이어서 작성).
+  //   검토 중(reviewing) → '사례 열기': 상세로(강사 승인 대기 표시).
+  //   인증 완료(certified) → '사례 열기': 변경 제안 페이지로(원본 잠금 → 변경 제안만 가능).
+  const open = (c: TsCase) => {
+    if (c.status === 'draft') {
+      navigate(`/student/troubleshooting/new?id=${c.id}`)
+    } else if (c.status === 'certified') {
+      navigate(`/student/troubleshooting/${c.id}/change-requests/new`)
+    } else {
+      navigate(`/student/troubleshooting/${c.id}`)
+    }
+  }
 
   // 카테고리 칩 + 검색어(제목·카테고리·태그)로 사례 필터.
   const q = query.trim().toLowerCase()

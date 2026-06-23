@@ -37,7 +37,7 @@ const TIMELINE_STATE: Record<TsStatus, Record<string, TsTimeline['state']>> = {
   certified: { draft: 'done', submitted: 'done', certified: 'current' },
 }
 
-function buildTimeline(status: TsStatus): TsTimeline[] {
+export function buildTimeline(status: TsStatus): TsTimeline[] {
   const s = TIMELINE_STATE[status]
   return [
     {

@@ -9,6 +9,13 @@ import { usePlayOverview } from '../api/play'
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 
+// 게임 key → 입장 라우트. 미정의 key는 게임 선택에 머문다(준비 중 가드).
+const GAME_ROUTE: Record<string, string> = {
+  typing: '/student/play/typing',
+  'coding-speed': '/student/play/coding',
+  'cs-quiz': '/student/play/quiz',
+}
+
 export default function PlaySelectPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = usePlayOverview()
@@ -84,7 +91,9 @@ export default function PlaySelectPage() {
                 {on ? (
                   <button
                     type="button"
-                    onClick={() => navigate('/student/play/typing')}
+                    onClick={() =>
+                      navigate(GAME_ROUTE[g.key] ?? '/student/play')
+                    }
                     className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
                   >
                     게임 입장

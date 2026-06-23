@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
@@ -7,15 +7,15 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { usePlayTyping } from '../api/play'
+import { CharCompare } from './CharCompare'
+import { StatStrip } from './StatStrip'
+import { pushPlay } from './history'
+import { card, computeMetrics, fmtTime } from './shared'
+import type { TypingResult } from './types'
 
-// PLAY 타자 게임 (/student/play/typing) — Figma 428:3015.
-const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
-
+// PLAY 타자 게임 (/student/play/typing) — Figma 428:3015 · 결과 4925:7266.
+// 제시문을 그대로 입력 → 현재 타수·정확도·예상 점수 실시간 계산 → 결과 페이지로 제출.
 type SessionStatus = 'running' | 'paused' | 'finished'
-
-const fmtTime = (sec: number) =>
-  `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`
 
 export default function PlayTypingPage() {
   const navigate = useNavigate()
@@ -23,10 +23,10 @@ export default function PlayTypingPage() {
   const { data, isPending, isError, refetch } = usePlayTyping()
   usePageHeader(
     '타자 게임',
-    '세션을 시작하고 제시문을 입력합니다. 결과는 서버 계산값으로 저장됩니다.',
+    '제시문을 정확하고 빠르게 입력합니다. 결과는 서버 계산값으로 저장됩니다.',
   )
 
-  // 제시문 선택 — 현재 제시문 + 다른 제시문을 하나의 목록으로 다룬다.
+  // 현재 제시문 + 다른 제시문을 하나의 목록으로 다룬다.
   const prompts = useMemo(() => {
     if (!data) return []
     return [
@@ -42,34 +42,81 @@ export default function PlayTypingPage() {
   const [selected, setSelected] = useState(0)
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<SessionStatus>('running')
-  const [remaining, setRemaining] = useState(0)
+  // null = 아직 미초기화 — 0으로 시작하면 마운트 직후 "시간 종료"로 오인되므로 null로 둔다.
+  const [remaining, setRemaining] = useState<number | null>(null)
   const [leaveTo, setLeaveTo] = useState<string | null>(null)
+  const backspacesRef = useRef(0)
+  const submittedRef = useRef(false)
 
-  // 세션 로드 시 타이머 초기화.
+  const active = prompts[selected]
+
+  // 세션 로드 시 타이머 초기화(매 진입 시 전체 시간으로 fresh 시작).
   useEffect(() => {
     if (data) setRemaining(data.durationSec)
   }, [data])
 
-  // 타이머 — 진행 중이고 나가기 확인 모달이 닫혀 있을 때만 카운트다운.
+  // 타이머 — 진행 중이고 나가기 모달이 닫혀 있을 때만 카운트다운(미초기화 null은 건너뜀).
   useEffect(() => {
     if (status !== 'running' || leaveTo) return
     const id = setInterval(() => {
-      setRemaining((r) => (r <= 1 ? 0 : r - 1))
+      setRemaining((r) => (r === null ? r : r <= 1 ? 0 : r - 1))
     }, 1000)
     return () => clearInterval(id)
   }, [status, leaveTo])
 
-  // 시간 종료 처리.
+  // 시간 종료 → 종료 처리(아래 제출 effect가 결과로 보냄). null일 땐 발동하지 않는다.
   useEffect(() => {
-    if (remaining === 0 && status === 'running') {
+    if (remaining === 0 && status === 'running' && data) {
       setStatus('finished')
-      toast.warning('시간이 종료되었어요. 결과를 제출해 주세요.')
+      toast.warning('시간이 종료되어 결과를 제출합니다.')
     }
-  }, [remaining, status, toast])
+  }, [remaining, status, data, toast])
+
+  const elapsedSec =
+    data && remaining !== null ? data.durationSec - remaining : 0
+  const m = useMemo(
+    () => computeMetrics(input, active?.text ?? '', elapsedSec),
+    [input, active, elapsedSec],
+  )
+
+  // 제시문을 끝까지 정확히 입력하면 자동 종료(완주).
+  useEffect(() => {
+    if (status === 'running' && active && input === active.text) {
+      setStatus('finished')
+      toast.success('완주했어요! 결과를 제출합니다.')
+    }
+  }, [input, active, status, toast])
+
+  // 종료되면 결과 계산 후 결과 페이지로 1회 이동.
+  useEffect(() => {
+    if (status !== 'finished' || submittedRef.current || !data || !active)
+      return
+    submittedRef.current = true
+    const result: TypingResult = {
+      sessionId: data.sessionId,
+      promptName: active.title,
+      durationSec: data.durationSec,
+      elapsedSec,
+      correctChars: m.correct,
+      cpm: m.cpm,
+      wpm: m.wpm,
+      accuracy: Math.round(m.accuracy * 10) / 10,
+      typos: m.typos,
+      backspaces: backspacesRef.current,
+      comboBonus: m.comboBonus,
+      score: m.score,
+      best: m.score >= data.personalBest,
+    }
+    pushPlay('typing', {
+      detail: `${result.cpm}타 · ${result.accuracy.toFixed(1)}% · ${result.score.toLocaleString()}`,
+      score: result.score,
+    })
+    navigate('/student/play/typing/result', { state: { result } })
+  }, [status, data, active, elapsedSec, m, navigate])
 
   if (isPending)
     return <div className="text-fg-muted p-8">세션을 불러오는 중…</div>
-  if (isError || !data) {
+  if (isError || !data || !active) {
     return (
       <div className="p-8">
         <Empty
@@ -81,7 +128,6 @@ export default function PlayTypingPage() {
     )
   }
 
-  const active = prompts[selected]
   const others = prompts
     .map((p, i) => ({ ...p, i }))
     .filter((p) => p.i !== selected)
@@ -91,6 +137,8 @@ export default function PlayTypingPage() {
     setInput('')
     setRemaining(data.durationSec)
     setStatus('running')
+    backspacesRef.current = 0
+    submittedRef.current = false
     toast.info(`제시문을 "${prompts[i].title}"(으)로 변경했어요.`)
   }
 
@@ -99,43 +147,33 @@ export default function PlayTypingPage() {
     setStatus((s) => (s === 'paused' ? 'running' : 'paused'))
   }
 
-  const submit = () => {
-    setStatus('finished')
-    navigate('/student/play/result', {
-      state: { sessionId: data.sessionId, prompt: active.title, input },
-    })
-  }
-
-  const confirmLeave = () => {
-    const to = leaveTo
-    setLeaveTo(null)
-    if (to) navigate(to)
-  }
+  const stats = [
+    {
+      label: '남은 시간',
+      value: fmtTime(remaining ?? data.durationSec),
+      sub:
+        status === 'paused'
+          ? '일시정지됨'
+          : status === 'finished'
+            ? '세션 종료'
+            : '세션 진행 중',
+    },
+    { label: '현재 타수', value: `${m.cpm}타`, sub: '실시간 입력 기준' },
+    {
+      label: '정확도',
+      value: `${m.accuracy.toFixed(1)}%`,
+      sub: `오타 ${m.typos}회`,
+    },
+    {
+      label: '예상 점수',
+      value: m.score.toLocaleString(),
+      sub: '제출 시 서버 재계산',
+    },
+  ]
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {data.stats.map((s) => {
-          const isTimer = s.label === '남은 시간'
-          return (
-            <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
-              <span className="text-fg-muted text-[12px]">{s.label}</span>
-              <span className="text-brand text-[24px] leading-none font-bold">
-                {isTimer ? fmtTime(remaining) : s.value}
-              </span>
-              <span className="text-fg-subtle text-[11px]">
-                {isTimer
-                  ? status === 'paused'
-                    ? '일시정지됨'
-                    : status === 'finished'
-                      ? '시간 종료'
-                      : '세션 진행 중'
-                  : s.sub}
-              </span>
-            </div>
-          )
-        })}
-      </div>
+      <StatStrip stats={stats} />
 
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
@@ -146,24 +184,51 @@ export default function PlayTypingPage() {
                 {active.level}
               </span>
             </div>
-            <p className="bg-surface-muted/50 text-fg rounded-xl p-4 text-[14px] leading-7">
-              {active.text}
-            </p>
+            <CharCompare target={active.text} input={input} />
           </div>
           <div className="flex flex-col gap-2">
-            <span className="text-fg text-[15px] font-bold">입력 영역</span>
+            <div className="flex items-center gap-2">
+              <span className="text-fg text-[15px] font-bold">입력 영역</span>
+              <span
+                className={cn(
+                  'rounded-full px-2 py-0.5 text-[11px] font-bold',
+                  m.typos > 0
+                    ? 'bg-danger-bg text-danger'
+                    : input.length > 0
+                      ? 'bg-success-bg text-success'
+                      : 'bg-surface-muted text-fg-subtle',
+                )}
+              >
+                {m.typos > 0
+                  ? `오타 ${m.typos}자`
+                  : input.length > 0
+                    ? '정확하게 입력 중'
+                    : '입력을 시작하세요'}
+              </span>
+            </div>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Backspace' || e.key === 'Delete')
+                  backspacesRef.current += 1
+              }}
               disabled={status !== 'running'}
               placeholder={
                 status === 'paused'
                   ? '일시정지 상태입니다. 이어하기를 누르면 입력할 수 있어요.'
                   : status === 'finished'
                     ? '세션이 종료되었습니다.'
-                    : '제시문을 보고 여기에 입력하세요...'
+                    : '제시문을 보고 여기에 입력하세요. 글자가 맞으면 초록, 틀리면 빨강으로 표시됩니다.'
               }
-              className="border-border bg-surface text-fg focus:border-brand min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              className={cn(
+                'bg-surface text-fg min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
+                m.typos > 0
+                  ? 'border-danger focus:border-danger'
+                  : input.length > 0
+                    ? 'border-success focus:border-success'
+                    : 'border-border focus:border-brand',
+              )}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -186,8 +251,9 @@ export default function PlayTypingPage() {
             </div>
             <button
               type="button"
-              onClick={submit}
-              className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
+              onClick={() => setStatus('finished')}
+              disabled={status === 'finished' || input.length === 0}
+              className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               결과 제출
             </button>
@@ -254,7 +320,15 @@ export default function PlayTypingPage() {
             <Button variant="secondary" onClick={() => setLeaveTo(null)}>
               계속하기
             </Button>
-            <Button onClick={confirmLeave}>나가기</Button>
+            <Button
+              onClick={() => {
+                const to = leaveTo
+                setLeaveTo(null)
+                if (to) navigate(to)
+              }}
+            >
+              나가기
+            </Button>
           </>
         }
       >

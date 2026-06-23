@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageProducts } from '../api/mileage'
-import type { Tone } from './types'
+import { useMileageStore, parseMoney, type MileageRequest } from './store'
+import { ProductApplyModal } from './components/ProductApplyModal'
+import { RequestStatusModal } from './components/RequestStatusModal'
+import type { MileageProduct, Tone } from './types'
 
 // 마일리지 상품 신청 (/student/mileage/products) — Figma 418:1961.
 const card =
@@ -52,10 +55,16 @@ function isValidUrl(s: string): boolean {
 export default function ProductsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useMileageProducts()
+  const balance = useMileageStore((s) => s.balance)
+  const submit = useMileageStore((s) => s.submit)
   const [active, setActive] = useState('all')
   const [link, setLink] = useState('')
   const [price, setPrice] = useState('')
   const [memo, setMemo] = useState('')
+  const [applyProduct, setApplyProduct] = useState<MileageProduct | null>(null)
+  const [resultRequest, setResultRequest] = useState<MileageRequest | null>(
+    null,
+  )
   usePageHeader(
     '마일리지 상품 신청',
     '상품 타입별 잔여 한도를 확인하고 구매 요청을 제출합니다.',
@@ -80,10 +89,24 @@ export default function ProductsPage() {
     (p) => active === 'all' || p.categoryKey === active,
   )
   const urlOk = isValidUrl(link)
-  const canSubmit = urlOk && price.trim() !== ''
+  const directAmount = Number(price || 0)
+  const directOver = directAmount > balance
+  const canSubmit =
+    urlOk && price.trim() !== '' && directAmount > 0 && !directOver
   const submitDirect = () => {
     if (!canSubmit) return
-    navigate('/student/mileage/requests')
+    // 직접 신청은 매니저 검토 대상(자동 승인 아님) → PENDING, 승인 전 차감 없음
+    const req = submit({
+      product: '직접 신청 상품',
+      amount: directAmount,
+      autoApprove: false,
+      link: link.trim(),
+      memo: memo.trim() || undefined,
+    })
+    setLink('')
+    setPrice('')
+    setMemo('')
+    setResultRequest(req)
   }
 
   return (
@@ -95,7 +118,7 @@ export default function ProductsPage() {
               BALANCE · 보유
             </span>
             <span className="text-[22px] font-bold text-white">
-              {data.balance}M
+              {balance.toLocaleString()}M
             </span>
           </div>
           <div className="flex flex-col">
@@ -109,10 +132,10 @@ export default function ProductsPage() {
         </div>
         <button
           type="button"
-          onClick={() => navigate('/student/mileage/history')}
+          onClick={() => navigate('/student/mileage/requests')}
           className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold text-white"
         >
-          신청 내역 →
+          구매 요청 내역 →
         </button>
       </div>
 
@@ -159,6 +182,8 @@ export default function ProductsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((p) => {
           const Icon = PRODUCT_ICON[p.icon]
+          // 고정가 상품은 잔액으로 살 수 있을 때만 신청 가능, 직접 입력은 항상 가능(금액은 모달에서 확인)
+          const affordable = p.price == null || parseMoney(p.price) <= balance
           return (
             <section key={p.id} className={cn(card, 'flex flex-col gap-2.5')}>
               <div className="flex items-start justify-between gap-2">
@@ -205,10 +230,16 @@ export default function ProductsPage() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/student/mileage/requests')}
-                className="bg-brand mt-1 rounded-lg py-2.5 text-[13px] font-bold text-white"
+                onClick={() => affordable && setApplyProduct(p)}
+                disabled={!affordable}
+                className={cn(
+                  'mt-1 rounded-lg py-2.5 text-[13px] font-bold',
+                  affordable
+                    ? 'bg-brand text-white'
+                    : 'bg-surface-muted text-fg-subtle cursor-not-allowed',
+                )}
               >
-                신청하기 →
+                {affordable ? '신청하기 →' : '잔액 부족 · 신청 불가'}
               </button>
             </section>
           )
@@ -299,11 +330,32 @@ export default function ProductsPage() {
             </button>
           </div>
         </div>
-        <div className="bg-info-bg/60 text-fg-muted rounded-xl p-3 text-[11px]">
-          ⓘ 직접 신청은 매니저 검토 후 마일리지가 차감됩니다. 승인되지 않으면
-          마일리지는 그대로 보존됩니다.
-        </div>
+        {directOver ? (
+          <div className="border-danger/40 bg-danger-bg/50 text-danger rounded-xl border p-3 text-[11px] font-semibold">
+            ⓘ 신청 금액이 보유 마일리지({balance.toLocaleString()}M)를{' '}
+            {(directAmount - balance).toLocaleString()}M 초과했습니다 · 신청
+            불가
+          </div>
+        ) : (
+          <div className="bg-info-bg/60 text-fg-muted rounded-xl p-3 text-[11px]">
+            ⓘ 직접 신청은 매니저 검토 후 마일리지가 차감됩니다. 승인되지 않으면
+            마일리지는 그대로 보존됩니다.
+          </div>
+        )}
       </section>
+
+      <ProductApplyModal
+        product={applyProduct}
+        onClose={() => setApplyProduct(null)}
+        onSubmitted={(req) => {
+          setApplyProduct(null)
+          setResultRequest(req)
+        }}
+      />
+      <RequestStatusModal
+        request={resultRequest}
+        onClose={() => setResultRequest(null)}
+      />
     </div>
   )
 }

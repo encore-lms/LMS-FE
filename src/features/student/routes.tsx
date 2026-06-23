@@ -126,7 +126,7 @@ export const studentRoutes: RouteObject[] = [
       { path: 'play/quiz', element: <PlayQuizPage /> },
       { path: 'play/quiz/result', element: <PlayQuizResultPage /> },
       { path: 'play/result', element: <PlayResultPage /> },
-      // 마일리지(내 마일리지·상품 신청·구매 요청 상태·사용 내역).
+      // 마일리지(내 마일리지·상품 신청·구매 요청 내역·사용 내역).
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },
       { path: 'mileage/requests', element: <MileageRequestsPage /> },

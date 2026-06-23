@@ -34,11 +34,16 @@ export function Modal({
   closeOnBackdrop = true,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  // onClose는 부모에서 인라인 함수로 넘어와 매 렌더 신원이 바뀐다.
+  // effect deps에 직접 넣으면 입력마다 effect가 재실행돼 panelRef.focus()가
+  // 입력 포커스를 빼앗으므로(한 글자만 입력됨), ref로 최신값만 참조한다.
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKey)
     const prevOverflow = document.body.style.overflow
@@ -48,7 +53,7 @@ export function Modal({
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 

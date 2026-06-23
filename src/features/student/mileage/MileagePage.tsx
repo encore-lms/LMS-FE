@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Book, Gift, Video, type LucideIcon } from 'lucide-react'
+import { Book, Coffee, Gift, Video, type LucideIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
-import { useMileageOverview } from '../api/mileage'
-import type { Tone } from './types'
+import { useMileageOverview, useMileageProducts } from '../api/mileage'
+import { useMileageStore, parseMoney, type MileageRequest } from './store'
+import { ProductApplyModal } from './components/ProductApplyModal'
+import { RequestStatusModal } from './components/RequestStatusModal'
+import type { MileageProduct, Tone } from './types'
 
 // 내 마일리지 (/student/mileage) — Figma 418:1850.
 const card =
@@ -29,17 +33,30 @@ const CHIP: Record<Tone, string> = {
   accent: 'bg-accent-bg text-accent-strong',
   success: 'bg-success-bg text-success',
 }
-// 구매 가능 상품 카테고리 아이콘(Figma book-fill/camera-video-fill/gift-fill)
-const PRODUCT_ICON: Record<'book' | 'video' | 'gift', LucideIcon> = {
+// 구매 가능 상품 카드 아이콘(Figma book-fill/camera-video-fill/cup-hot-fill/gift-fill)
+const PRODUCT_ICON: Record<MileageProduct['icon'], LucideIcon> = {
   book: Book,
   video: Video,
+  cup: Coffee,
   gift: Gift,
 }
 
 export default function MileagePage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useMileageOverview()
+  const { data: productsData } = useMileageProducts()
+  const balance = useMileageStore((s) => s.balance)
   usePageHeader('내 마일리지', '적립·사용 현황과 구매 요청 상태를 확인합니다.')
+
+  // 구매 가능 상품 "신청" → 신청 폼(모달) → 제출 결과 모달
+  const [applyProduct, setApplyProduct] = useState<MileageProduct | null>(null)
+  const [resultRequest, setResultRequest] = useState<MileageRequest | null>(
+    null,
+  )
+  // 실제 보유 잔액으로 살 수 있는 상품만 노출(고정가는 가격≤잔액, 직접 입력은 항상 노출)
+  const affordable = (productsData?.products ?? []).filter(
+    (p) => p.price == null || parseMoney(p.price) <= balance,
+  )
 
   if (isPending)
     return <div className="text-fg-muted p-8">마일리지를 불러오는 중…</div>
@@ -64,7 +81,7 @@ export default function MileagePage() {
             BALANCE · 보유 마일리지
           </span>
           <span className="text-[36px] leading-none font-bold text-white">
-            {data.balance}
+            {balance.toLocaleString()}
             <span className="ml-1 text-[18px]">M</span>
           </span>
           <div className="flex items-center gap-2">
@@ -75,6 +92,13 @@ export default function MileagePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/student/mileage/requests')}
+            className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold text-white"
+          >
+            구매 요청 내역
+          </button>
           <button
             type="button"
             onClick={() => navigate('/student/mileage/history')}
@@ -105,7 +129,7 @@ export default function MileagePage() {
             </div>
             <div className="flex items-end gap-0.5">
               <span className="text-fg text-[28px] leading-[34px] font-bold">
-                {s.value}
+                {s.key === 'balance' ? balance.toLocaleString() : s.value}
               </span>
               <span className="text-fg-muted text-[13px] font-medium">
                 {s.unit}
@@ -204,7 +228,8 @@ export default function MileagePage() {
                 구매 가능 상품
               </span>
               <span className="text-fg-subtle text-[11px]">
-                잔여 한도 기준 · {data.products.length}종
+                보유 {balance.toLocaleString()}M 기준 · {affordable.length}종
+                구매 가능
               </span>
             </div>
             <button
@@ -215,10 +240,15 @@ export default function MileagePage() {
               상품 전체
             </button>
           </div>
-          {data.products.map((p) => {
+          {affordable.length === 0 && (
+            <div className="text-fg-subtle py-6 text-center text-[12px]">
+              지금 잔액으로 구매 가능한 상품이 없어요.
+            </div>
+          )}
+          {affordable.map((p) => {
             const Icon = PRODUCT_ICON[p.icon]
             return (
-              <div key={p.name} className="flex items-center gap-3">
+              <div key={p.id} className="flex items-center gap-3">
                 <span
                   className={cn(
                     'flex size-10 shrink-0 items-center justify-center rounded-[10px]',
@@ -227,27 +257,17 @@ export default function MileagePage() {
                 >
                   <Icon className="size-[21px]" />
                 </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-fg text-[13px] font-semibold">
-                      {p.name}
-                    </span>
-                    <span className="text-fg-muted shrink-0 text-[11px] font-medium">
-                      {p.limit}
-                    </span>
-                  </div>
-                  {p.barPct != null && (
-                    <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
-                      <div
-                        className={cn('h-full rounded-full', DOT[p.tone])}
-                        style={{ width: `${p.barPct}%` }}
-                      />
-                    </div>
-                  )}
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-fg truncate text-[13px] font-semibold">
+                    {p.name}
+                  </span>
+                  <span className="text-brand text-[12px] font-bold">
+                    {p.price ?? '가격 직접 입력'}
+                  </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigate('/student/mileage/products')}
+                  onClick={() => setApplyProduct(p)}
                   className="bg-brand text-on-color shrink-0 rounded-lg px-3.5 py-2 text-[12px] font-bold"
                 >
                   신청 →
@@ -298,6 +318,19 @@ export default function MileagePage() {
           </div>
         ))}
       </section>
+
+      <ProductApplyModal
+        product={applyProduct}
+        onClose={() => setApplyProduct(null)}
+        onSubmitted={(req) => {
+          setApplyProduct(null)
+          setResultRequest(req)
+        }}
+      />
+      <RequestStatusModal
+        request={resultRequest}
+        onClose={() => setResultRequest(null)}
+      />
     </div>
   )
 }

@@ -4,7 +4,12 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageHistory } from '../api/mileage'
+import { useMileageStore, type MileageRequest } from './store'
+import { RequestStatusModal } from './components/RequestStatusModal'
 import type { HistoryRow, Tone } from './types'
+
+// 표시 행 — 구매 요청에서 온 행은 원본 요청을 실어 클릭 시 상태/반려 모달을 연다.
+type Row = HistoryRow & { request?: MileageRequest }
 
 // 마일리지 사용 내역 (/student/mileage/history) — Figma 418:2066.
 // 필터 키 → 행 매칭(구분 또는 처리 상태 기준)
@@ -22,6 +27,40 @@ function matchFilter(r: HistoryRow, key: string): boolean {
       return r.status.label === '반려'
     default:
       return true
+  }
+}
+
+// 스토어 구매 요청 → 사용 내역 행. 승인=사용/완료, 대기=구매 요청/대기, 반려=구매 요청/반려.
+function requestToRow(r: MileageRequest): HistoryRow {
+  const amount = `-${r.amount.toLocaleString()}M`
+  if (r.status === 'approved')
+    return {
+      date: r.date,
+      kind: { label: '사용', tone: 'accent' },
+      content: r.product,
+      amount,
+      positive: false,
+      status: { label: '완료', tone: 'success' },
+      memo: r.memo ?? '승인 완료',
+    }
+  if (r.status === 'rejected')
+    return {
+      date: r.date,
+      kind: { label: '구매 요청', tone: 'info' },
+      content: r.product,
+      amount,
+      positive: false,
+      status: { label: '반려', tone: 'danger' },
+      memo: r.reason ?? '반려',
+    }
+  return {
+    date: r.date,
+    kind: { label: '구매 요청', tone: 'info' },
+    content: r.product,
+    amount,
+    positive: false,
+    status: { label: '대기', tone: 'warning' },
+    memo: r.memo ?? '매니저 검토 중',
   }
 }
 const card =
@@ -49,12 +88,16 @@ const PERIODS = [
   { key: '90', label: '최근 90일', days: 90 },
   { key: 'all', label: '전체 기간', days: Infinity },
 ]
+const PAGE_SIZE = 5
 
 export default function HistoryPage() {
   const { data, isPending, isError, refetch } = useMileageHistory()
+  const requests = useMileageStore((s) => s.requests)
   const [active, setActive] = useState('all')
   const [query, setQuery] = useState('')
-  const [period, setPeriod] = useState('30')
+  const [period, setPeriod] = useState('all')
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<MileageRequest | null>(null)
   usePageHeader('마일리지 사용 내역', '적립·사용·구매 요청 내역과 처리 상태')
 
   if (isPending)
@@ -71,13 +114,24 @@ export default function HistoryPage() {
     )
   }
 
+  // mock 적립 내역 + 스토어 구매 요청(제출/승인/반려)을 한 목록으로 병합.
+  // 구매 요청은 스토어가 단일 출처라 mock의 구매/사용 행은 제외(중복 방지), 적립만 가져온다.
+  const mergedRows: Row[] = [
+    ...requests.map((r) => ({ ...requestToRow(r), request: r })),
+    ...data.rows.filter((r) => r.kind.label === '적립'),
+  ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+
   // 필터 칩 + 기간 + 내용 검색으로 행 필터
   const q = query.trim().toLowerCase()
-  const refTime = Math.max(...data.rows.map((r) => new Date(r.date).getTime()))
+  const refTime = Math.max(...mergedRows.map((r) => new Date(r.date).getTime()))
   const periodDays = PERIODS.find((p) => p.key === period)?.days ?? Infinity
   const periodLabel =
     PERIODS.find((p) => p.key === period)?.label ?? '최근 30일'
-  const visible = data.rows.filter((r) => {
+  const filters = data.filters.map((f) => ({
+    ...f,
+    count: mergedRows.filter((r) => matchFilter(r, f.key)).length,
+  }))
+  const visible = mergedRows.filter((r) => {
     if (!matchFilter(r, active)) return false
     if (q !== '' && !r.content.toLowerCase().includes(q)) return false
     if (periodDays !== Infinity) {
@@ -86,6 +140,11 @@ export default function HistoryPage() {
     }
     return true
   })
+
+  // 필터 결과를 페이지 단위로 자른다. 필터가 바뀌어 페이지 수가 줄면 마지막 페이지로 보정.
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const curPage = Math.min(page, pageCount)
+  const pageRows = visible.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE)
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -107,13 +166,16 @@ export default function HistoryPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          {data.filters.map((f) => {
+          {filters.map((f) => {
             const on = f.key === active
             return (
               <button
                 key={f.key}
                 type="button"
-                onClick={() => setActive(f.key)}
+                onClick={() => {
+                  setActive(f.key)
+                  setPage(1)
+                }}
                 className={cn(
                   'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
                   on
@@ -137,7 +199,10 @@ export default function HistoryPage() {
         <div className="flex items-center gap-2">
           <select
             value={period}
-            onChange={(e) => setPeriod(e.target.value)}
+            onChange={(e) => {
+              setPeriod(e.target.value)
+              setPage(1)
+            }}
             className="border-border text-fg-muted bg-surface focus:border-brand rounded-lg border px-3 py-1.5 text-[12px] font-semibold focus:outline-none"
           >
             {PERIODS.map((p) => (
@@ -150,7 +215,10 @@ export default function HistoryPage() {
             <span className="text-fg-subtle text-[12px]">🔍</span>
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setPage(1)
+              }}
               placeholder="내역 검색"
               className="text-fg placeholder:text-fg-subtle w-28 bg-transparent text-[12px] outline-none"
             />
@@ -172,10 +240,16 @@ export default function HistoryPage() {
             조건에 맞는 내역이 없어요.
           </div>
         )}
-        {visible.map((r, i) => (
+        {pageRows.map((r, i) => (
           <div
             key={i}
-            className="border-divider grid grid-cols-[100px_88px_1fr_120px_72px_140px] items-center gap-3 border-t px-5 py-3.5 text-[12px]"
+            onClick={() => r.request && setSelected(r.request)}
+            role={r.request ? 'button' : undefined}
+            className={cn(
+              'border-divider grid grid-cols-[100px_88px_1fr_120px_72px_140px] items-center gap-3 border-t px-5 py-3.5 text-[12px]',
+              r.request &&
+                'hover:bg-surface-muted cursor-pointer transition-colors',
+            )}
           >
             <span className="text-fg-subtle">{r.date}</span>
             <span>
@@ -214,30 +288,52 @@ export default function HistoryPage() {
 
       <div className="flex items-center justify-between pt-1">
         <span className="text-fg-subtle text-[12px]">
-          {periodLabel} {visible.length}건 표시 · 총 누적 28건
+          {periodLabel} · 총 {visible.length}건 중 {pageRows.length}건 표시
         </span>
-        <div className="flex items-center gap-1">
-          <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px]">
-            ‹
-          </span>
-          {['1', '2', '3'].map((n) => (
-            <span
-              key={n}
-              className={cn(
-                'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
-                n === '1'
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted border',
-              )}
+        {pageCount > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="이전 페이지"
+              disabled={curPage <= 1}
+              onClick={() => setPage(curPage - 1)}
+              className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
             >
-              {n}
-            </span>
-          ))}
-          <span className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px]">
-            ›
-          </span>
-        </div>
+              ‹
+            </button>
+            {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-current={n === curPage ? 'page' : undefined}
+                onClick={() => setPage(n)}
+                className={cn(
+                  'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
+                  n === curPage
+                    ? 'bg-brand-deep text-white'
+                    : 'border-border text-fg-muted border',
+                )}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-label="다음 페이지"
+              disabled={curPage >= pageCount}
+              onClick={() => setPage(curPage + 1)}
+              className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
+
+      <RequestStatusModal
+        request={selected}
+        onClose={() => setSelected(null)}
+      />
     </div>
   )
 }

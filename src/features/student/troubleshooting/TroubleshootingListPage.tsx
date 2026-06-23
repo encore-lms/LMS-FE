@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowRight,
-  Check,
   CheckCircle2,
   FileText,
   Flag,
-  Send,
   Timer,
   type LucideIcon,
 } from 'lucide-react'
@@ -15,7 +12,8 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useTsList } from '../api/troubleshooting'
-import type { Tone, TsCase, TsStatus } from './types'
+import { TsCaseCard } from './components/TsCaseCard'
+import type { Tone, TsCase } from './types'
 
 // 트러블슈팅 사례 목록 (/student/troubleshooting) — Figma 360:1297.
 // 통계카드 우상단 아이콘(노트/체크/깃발/스톱워치) — 키별 매핑.
@@ -35,14 +33,6 @@ const ICON_TEXT: Record<Tone, string> = {
 }
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
 const ACCENT: Record<Tone, string> = {
   brand: 'bg-brand',
   info: 'bg-info',
@@ -50,11 +40,6 @@ const ACCENT: Record<Tone, string> = {
   danger: 'bg-danger',
   accent: 'bg-accent-strong',
   success: 'bg-success',
-}
-const STATUS: Record<TsStatus, Tone> = {
-  certified: 'success',
-  reviewing: 'warning',
-  draft: 'accent',
 }
 // 페이지당 사례 수 — 3건씩 × 4페이지(전체 12건) 구성.
 const PAGE_SIZE = 3
@@ -91,12 +76,11 @@ export default function TroubleshootingListPage() {
   // 상태별 진입 분기:
   //   작성 중(draft)   → '이어 작성': 작성 폼으로(기존 내용 이어서 작성).
   //   검토 중(reviewing) → '사례 열기': 상세로(강사 승인 대기 표시).
-  //   인증 완료(certified) → '사례 열기': 변경 제안 페이지로(원본 잠금 → 변경 제안만 가능).
+  //   인증 완료(certified) → '사례 열기': 상세로(원본 잠금 → 상세에서 '변경 제안' 버튼만 노출).
+  //     변경 제안 페이지로 바로 진입하지 않고, 상세에서 사용자가 직접 변경 제안을 시작한다.
   const open = (c: TsCase) => {
     if (c.status === 'draft') {
       navigate(`/student/troubleshooting/new?id=${c.id}`)
-    } else if (c.status === 'certified') {
-      navigate(`/student/troubleshooting/${c.id}/change-requests/new`)
     } else {
       navigate(`/student/troubleshooting/${c.id}`)
     }
@@ -244,93 +228,7 @@ export default function TroubleshootingListPage() {
           </div>
         )}
         {pageItems.map((c) => (
-          <section
-            key={c.id}
-            className="border-border bg-surface relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6"
-          >
-            <span
-              className={cn(
-                'absolute top-0 left-0 h-full w-1',
-                ACCENT[c.accentTone],
-              )}
-            />
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span
-                  className={cn(
-                    'rounded px-2 py-0.5 text-[11px] font-bold',
-                    CHIP[c.categoryTone],
-                  )}
-                >
-                  {c.category}
-                </span>
-                <span
-                  className={cn(
-                    'rounded px-2 py-0.5 text-[11px] font-bold',
-                    CHIP[STATUS[c.status]],
-                  )}
-                >
-                  {c.statusLabel}
-                </span>
-                {c.independent && (
-                  <span className="bg-brand/10 text-brand flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
-                    <Check className="size-3" /> 독립 해결
-                  </span>
-                )}
-                <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
-                  <Timer className="size-3" /> {c.days}
-                </span>
-                {c.repLinked && (
-                  <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
-                    <Send className="size-3" /> 프로젝트 연결
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => open(c)}
-                className={cn(
-                  'inline-flex shrink-0 items-center gap-1 rounded-lg px-4 py-2 text-[12px] font-bold',
-                  c.status === 'draft'
-                    ? 'bg-brand text-white'
-                    : 'border-border text-fg-muted hover:bg-surface-muted border',
-                )}
-              >
-                {c.actionLabel}
-                <ArrowRight className="size-3" />
-              </button>
-            </div>
-            <h3 className="text-fg text-[16px] font-bold">{c.title}</h3>
-            <span className="text-fg-subtle text-[11px]">
-              {c.createdAt} · {c.updatedAt}
-            </span>
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-              {[
-                { label: '상황', text: c.situation },
-                { label: '해결', text: c.resolution },
-                { label: '결과', text: c.result },
-              ].map((b) => (
-                <div
-                  key={b.label}
-                  className="bg-surface-muted/50 flex flex-col gap-1 rounded-[10px] p-3"
-                >
-                  <span className="text-fg-subtle text-[11px] font-bold">
-                    {b.label}
-                  </span>
-                  <span className="text-fg-muted line-clamp-3 text-[12px] leading-5">
-                    {b.text}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {c.tags.map((t) => (
-                <span key={t} className="text-fg-muted text-[11px]">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </section>
+          <TsCaseCard key={c.id} c={c} onOpen={open} />
         ))}
       </div>
 

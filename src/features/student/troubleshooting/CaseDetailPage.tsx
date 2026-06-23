@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -10,12 +9,14 @@ import { useTsCase } from '../api/troubleshooting'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { applyTsStatus } from './flow'
-import type { TsCaseDetail, TsProjectLink, Tone } from './types'
-import { TS_PROJECT_LINK } from './config'
-import { ProjectLinkModal } from './components/ProjectLinkModal'
+import type { TsCaseDetail, Tone } from './types'
 import { TsFlowTestNav } from './components/TsFlowTestNav'
 
-// 트러블슈팅 사례 상세 (/student/troubleshooting/:id) + 인증 요청 모달(?modal=certify) — Figma 3283:5853·3283:5949.
+// 트러블슈팅 사례 상세 (/student/troubleshooting/:id) + 인증 요청 모달(?modal=certify).
+// 두 가지 모드로 쓰인다:
+//   - 기본(주인): 작성/인증 요청/검토 중/변경 제안 흐름 + 강사 인증 테스트 FAB.
+//   - 보기 전용(?view=1): 프로젝트 워크스페이스의 연결 사례에서 진입. 인증/변경 제안/FAB 없이
+//     STAR 본문·상태·이력만 자세히 보여준다(인증 완료여도 변경 제안 안 뜸).
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const CHIP: Record<Tone, string> = {
@@ -33,16 +34,15 @@ export default function CaseDetailPage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useTsCase(id)
   const [open, setOpen] = useState(params.get('modal') === 'certify')
-  const [linkModal, setLinkModal] = useState(false)
-  // undefined = 아직 변경 안 함(서버 값 사용), 그 외 = 사용자가 이 화면에서 바꾼 연결 상태.
-  const [linkOverride, setLinkOverride] = useState<
-    TsProjectLink | null | undefined
-  >(undefined)
   const toast = useToast()
   const queryClient = useQueryClient()
+  // 프로젝트 연결 사례에서 들어오면 보기 전용 — 인증/변경 제안/FAB를 모두 숨긴다.
+  const viewOnly = params.get('view') === '1'
   usePageHeader(
-    '트러블슈팅 사례 상세',
-    '작성한 사례를 확인하고 프로젝트 연결과 인증 요청을 상세 단계에서 진행해요.',
+    viewOnly ? '트러블슈팅 사례' : '트러블슈팅 사례 상세',
+    viewOnly
+      ? '연결된 트러블슈팅 사례의 내용을 확인합니다.'
+      : '작성한 사례를 확인하고 인증 요청·변경 제안을 진행해요.',
   )
 
   if (isPending)
@@ -69,52 +69,6 @@ export default function CaseDetailPage() {
   const isReviewing = data.status === 'reviewing'
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
-  // 프로젝트(이슈 단위) 연결 상태 — linkOverride(이 화면 변경)가 있으면 그것, 없으면 서버 값.
-  const link: TsProjectLink | null =
-    linkOverride !== undefined ? linkOverride : (data.projectLink ?? null)
-  const projectLinked = TS_PROJECT_LINK ? !!link : data.projectLinked
-  const linkLabel = link
-    ? link.issueTitle
-      ? `${link.projectTitle} · ${link.issueTitle}`
-      : link.projectTitle
-    : '미연결'
-  // 인증 모달의 프로젝트 필드 — 연결됐으면 실시간 연결값, 아니면 서버 표시값.
-  const certProjectValue =
-    TS_PROJECT_LINK && link ? linkLabel : data.certProject
-  // 연결되면 '프로젝트 연결 필요' 체크 항목을 완료로 전환(플래그 ON).
-  const checklist = TS_PROJECT_LINK
-    ? data.checklist.map((c) =>
-        c.label.includes('프로젝트 연결')
-          ? {
-              label: link ? '프로젝트 연결됨' : '프로젝트 연결 필요',
-              status: link
-                ? { label: '완료', tone: 'success' as Tone }
-                : { label: '필요', tone: 'warning' as Tone },
-            }
-          : c,
-      )
-    : data.checklist
-  // 프로젝트 미연결이면 인증 요청 불가(플래그 ON). OFF면 기존처럼 항상 가능.
-  const canCertify = TS_PROJECT_LINK ? projectLinked : true
-  // 플래그 ON: 연결 모달, OFF: 기존 안내 토스트(전용 화면이 Figma 미설계라 폴백).
-  const openProjectLink = () => {
-    if (TS_PROJECT_LINK) setLinkModal(true)
-    else
-      toast.info('프로젝트 연결 화면은 아직 준비되지 않았어요 (Figma 미설계).')
-  }
-  const onLinkChange = (next: TsProjectLink | null) => {
-    setLinkOverride(next)
-    setLinkModal(false)
-    toast.success(
-      next
-        ? `프로젝트에 연결했어요 — ${
-            next.issueTitle
-              ? `${next.projectTitle} · ${next.issueTitle}`
-              : next.projectTitle
-          }`
-        : '프로젝트 연결을 해제했어요.',
-    )
-  }
   const onCertifyRequested = () => {
     closeModal()
     // 인증 '요청' → 검토 중(reviewing)으로 제출. 강사 인증 승인은 테스트 FAB(TsFlowTestNav)로
@@ -125,11 +79,6 @@ export default function CaseDetailPage() {
 
   const stats = [
     { label: '인증 상태', value: data.statusLabel, tone: 'accent' as Tone },
-    {
-      label: '프로젝트 연결',
-      value: projectLinked ? '연결됨' : '미연결',
-      tone: (projectLinked ? 'success' : 'danger') as Tone,
-    },
     {
       label: '독립 해결',
       value: data.independent ? '예' : '아니오',
@@ -158,78 +107,51 @@ export default function CaseDetailPage() {
           >
             {data.category}
           </span>
-          {!projectLinked && (
-            <span
-              className={cn(
-                'rounded px-2 py-0.5 text-[11px] font-bold',
-                CHIP.warning,
-              )}
-            >
-              프로젝트 미연결
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate('/student/troubleshooting')}
+            onClick={() =>
+              viewOnly ? navigate(-1) : navigate('/student/troubleshooting')
+            }
             className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
           >
-            목록으로
+            {viewOnly ? '뒤로' : '목록으로'}
           </button>
-          <button
-            type="button"
-            onClick={openProjectLink}
-            className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
-          >
-            {projectLinked ? '연결 변경' : '프로젝트 연결'}
-          </button>
-          {isCertified ? (
-            <button
-              type="button"
-              onClick={goChangeRequest}
-              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
-            >
-              변경 제안
-            </button>
-          ) : isReviewing ? (
-            <button
-              type="button"
-              disabled
-              className="bg-warning-bg text-warning cursor-not-allowed rounded-lg px-4 py-2 text-[12px] font-bold"
-            >
-              검토 중
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              disabled={!canCertify}
-              title={
-                canCertify
-                  ? undefined
-                  : '프로젝트를 연결해야 인증 요청할 수 있어요'
-              }
-              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              인증 요청
-            </button>
-          )}
+          {!viewOnly &&
+            (isCertified ? (
+              <button
+                type="button"
+                onClick={goChangeRequest}
+                className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+              >
+                변경 제안
+              </button>
+            ) : isReviewing ? (
+              <button
+                type="button"
+                disabled
+                className="bg-warning-bg text-warning cursor-not-allowed rounded-lg px-4 py-2 text-[12px] font-bold"
+              >
+                검토 중
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+              >
+                인증 요청
+              </button>
+            ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {stats.map((s) => (
           <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
             <span className="text-fg-muted text-[12px]">{s.label}</span>
-            <span
-              className={cn(
-                'text-[20px] font-bold',
-                s.tone === 'danger' ? 'text-danger' : 'text-fg',
-              )}
-            >
-              {s.value}
-            </span>
+            <span className="text-fg text-[20px] font-bold">{s.value}</span>
           </div>
         ))}
       </div>
@@ -267,90 +189,81 @@ export default function CaseDetailPage() {
         </section>
 
         <div className="flex flex-col gap-4 lg:w-[320px]">
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <span className="text-fg text-[14px] font-bold">
-              인증 요청 준비
-            </span>
-            <span className="text-fg-subtle text-[11px]">
-              작성 폼이 아니라 상세 화면에서 프로젝트 연결과 인증 요청을
-              진행해요.
-            </span>
-            {checklist.map((c, i) => {
-              const done = c.status.tone === 'success'
-              return (
-                <div key={i} className="flex items-center gap-2.5">
-                  <span
-                    className={cn(
-                      'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
-                      done
-                        ? 'bg-success text-white'
-                        : 'bg-warning-bg text-warning',
-                    )}
-                  >
-                    {done ? '✓' : '!'}
-                  </span>
-                  <span className="text-fg flex-1 text-[12px] font-medium">
-                    {c.label}
-                  </span>
-                </div>
-              )
-            })}
-            {TS_PROJECT_LINK && (
-              <div
-                className={cn(
-                  'flex items-start gap-2 rounded-lg p-2.5 text-[11px] leading-4',
-                  link
-                    ? 'bg-success-bg text-success'
-                    : 'bg-warning-bg text-warning',
-                )}
-              >
-                <Link2 className="mt-px size-3.5 shrink-0" />
-                <span className="text-fg font-medium">
-                  {link ? linkLabel : '연결된 프로젝트·이슈가 없어요'}
-                </span>
-              </div>
-            )}
-            <div className="flex gap-2 pt-1">
+          {/* 인증 완료 사례는 인증 요청이 끝났으므로 '인증 요청 준비'를 숨기고,
+              수정은 변경 제안으로만 진행한다(상단 변경 제안 버튼). */}
+          {!viewOnly && isCertified && (
+            <section className={cn(card, 'flex flex-col gap-3')}>
+              <span className="text-fg text-[14px] font-bold">인증 완료</span>
+              <span className="text-fg-subtle text-[11px]">
+                인증이 완료된 사례입니다. 내용을 수정하려면 변경 제안으로
+                요청하세요.
+              </span>
               <button
                 type="button"
-                onClick={openProjectLink}
-                className="border-border text-fg flex-1 rounded-lg border py-2.5 text-[12px] font-semibold"
+                onClick={goChangeRequest}
+                className="bg-brand rounded-lg py-2.5 text-[12px] font-bold text-white"
               >
-                {projectLinked ? '연결 변경' : '프로젝트 연결'}
+                변경 제안
               </button>
-              {isCertified ? (
-                <button
-                  type="button"
-                  onClick={goChangeRequest}
-                  className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
-                >
-                  변경 제안
-                </button>
-              ) : isReviewing ? (
-                <button
-                  type="button"
-                  disabled
-                  className="bg-warning-bg text-warning flex-1 cursor-not-allowed rounded-lg py-2.5 text-[12px] font-bold"
-                >
-                  검토 중 · 강사 승인 대기
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setOpen(true)}
-                  disabled={!canCertify}
-                  className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  인증 요청
-                </button>
-              )}
-            </div>
-            {!isCertified && !isReviewing && !canCertify && (
-              <span className="text-fg-subtle text-center text-[11px]">
-                프로젝트를 연결해야 인증 요청을 보낼 수 있어요.
+            </section>
+          )}
+          {!viewOnly && !isCertified && (
+            <section className={cn(card, 'flex flex-col gap-3')}>
+              <span className="text-fg text-[14px] font-bold">
+                인증 요청 준비
               </span>
-            )}
-          </section>
+              <span className="text-fg-subtle text-[11px]">
+                상황·해결·결과와 근거를 확인하고 강사 검토 큐로 인증을 요청해요.
+              </span>
+              {data.checklist.map((c, i) => {
+                const done = c.status.tone === 'success'
+                return (
+                  <div key={i} className="flex items-center gap-2.5">
+                    <span
+                      className={cn(
+                        'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
+                        done
+                          ? 'bg-success text-white'
+                          : 'bg-warning-bg text-warning',
+                      )}
+                    >
+                      {done ? '✓' : '!'}
+                    </span>
+                    <span className="text-fg flex-1 text-[12px] font-medium">
+                      {c.label}
+                    </span>
+                  </div>
+                )
+              })}
+              <div className="flex gap-2 pt-1">
+                {isCertified ? (
+                  <button
+                    type="button"
+                    onClick={goChangeRequest}
+                    className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
+                  >
+                    변경 제안
+                  </button>
+                ) : isReviewing ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="bg-warning-bg text-warning flex-1 cursor-not-allowed rounded-lg py-2.5 text-[12px] font-bold"
+                  >
+                    검토 중 · 강사 승인 대기
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
+                  >
+                    인증 요청
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
 
           <section className={cn(card, 'flex flex-col gap-3')}>
             <span className="text-fg text-[14px] font-bold">상태 이력</span>
@@ -383,38 +296,26 @@ export default function CaseDetailPage() {
         </div>
       </div>
 
-      {open && (
+      {open && !viewOnly && (
         <CertifyModal
           data={data}
-          projectValue={certProjectValue}
           onClose={closeModal}
           onConfirm={onCertifyRequested}
         />
       )}
 
-      {TS_PROJECT_LINK && (
-        <ProjectLinkModal
-          open={linkModal}
-          current={link}
-          onClose={() => setLinkModal(false)}
-          onLink={onLinkChange}
-        />
-      )}
-
-      {/* 테스트 시뮬레이션 — 강사 인증 승인(검토 중 → 인증 완료). BE 연동·강사 검토 화면 연결 시 제거. */}
-      <TsFlowTestNav id={data.id} status={data.status} />
+      {/* 테스트 시뮬레이션 — 강사 인증 승인(검토 중 → 인증 완료). 보기 전용/BE 연동 시 제외. */}
+      {!viewOnly && <TsFlowTestNav id={data.id} status={data.status} />}
     </div>
   )
 }
 
 function CertifyModal({
   data,
-  projectValue,
   onClose,
   onConfirm,
 }: {
   data: TsCaseDetail
-  projectValue: string
   onClose: () => void
   onConfirm: () => void
 }) {
@@ -452,9 +353,8 @@ function CertifyModal({
     >
       <div className="flex flex-col gap-4">
         <p className="text-fg-muted -mt-1 text-[12px]">
-          프로젝트 연결과 체크리스트를 확인하고 강사 검토 큐로 제출합니다.
+          체크리스트를 확인하고 강사 검토 큐로 제출합니다.
         </p>
-        <Field label="프로젝트 연결" value={projectValue} />
         <Field label="교과목/검토자" value={data.certReviewer} />
         <div className="flex flex-col gap-2">
           <span className="text-fg text-[12px] font-bold">

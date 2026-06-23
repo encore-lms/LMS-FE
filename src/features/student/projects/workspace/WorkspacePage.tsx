@@ -24,6 +24,10 @@ import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { useProjectWorkspace } from '../../api/projects'
+import { useTsList } from '../../api/troubleshooting'
+import { TsCaseCard } from '../../troubleshooting/components/TsCaseCard'
+import { useProjectTsLinks } from '../../troubleshooting/projectLinks'
+import type { TsCase } from '../../troubleshooting/types'
 import { ProjectFlowTestNav } from './ProjectFlowTestNav'
 import {
   formatEditUntil,
@@ -39,7 +43,6 @@ import type {
   WsActivity,
   WsColumn,
   WsDoc,
-  WsIssue,
   WsMeeting,
   WsMember,
   WsTab,
@@ -1547,133 +1550,157 @@ function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
 }
 
 /* ── 이슈 ── */
+// 이슈 탭 — 프로젝트(워크스페이스)에서 해결한 트러블슈팅 중 "인증 완료" 사례만 연결해
+// 트러블슈팅 목록 화면과 같은 카드로 보여준다(연결 방향: 프로젝트 → 사례, 보기 전용).
+// 카드를 누르면 공용 사례 상세를 보기 전용(?view=1)으로 연다.
 function IssuesTab({ d }: { d: WorkspaceData }) {
+  const navigate = useNavigate()
   const toast = useToast()
-  const [issues, setIssues] = useState(d.issues)
-  const [adding, setAdding] = useState(false)
+  const { data, isPending } = useTsList()
+  const linkedIds = useProjectTsLinks((s) => s.links[d.id] ?? [])
+  const unlink = useProjectTsLinks((s) => s.unlink)
+  const [picking, setPicking] = useState(false)
+
+  const cases = data?.cases ?? []
+  // 연결된 사례 중 인증 완료만 노출(연결도 인증 완료만 허용하지만 상태 변동 방어).
+  const linked = linkedIds
+    .map((id) => cases.find((c) => c.id === id))
+    .filter((c): c is TsCase => !!c && c.status === 'certified')
+
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
-        title="이슈"
-        action="이슈 등록"
-        onAction={() => setAdding(true)}
+        title="연결된 트러블슈팅"
+        action="트러블슈팅 연결"
+        onAction={() => setPicking(true)}
       />
-      <section className={cn(card, 'flex flex-col')}>
-        {issues.map((it, i) => (
-          <div
-            key={i}
-            className={cn(
-              'flex items-center gap-3 py-3.5',
-              i > 0 && 'border-divider border-t',
-            )}
-          >
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-fg text-[14px] font-bold">{it.title}</span>
-              <span className="text-fg-subtle text-[11px]">{it.meta}</span>
-            </div>
-            <Chip badge={it.priority} />
-            <Chip badge={it.status} />
-            <button
-              type="button"
-              onClick={() => toast.info(`${it.title} 상세를 열었습니다`)}
-              className="border-border text-fg-muted shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
-            >
-              상세
-            </button>
-          </div>
-        ))}
-      </section>
-      {adding && (
-        <AddIssueModal
-          onClose={() => setAdding(false)}
-          onAdd={(issue) => {
-            setIssues((prev) => [issue, ...prev])
-            setAdding(false)
-            toast.success('이슈를 등록했습니다')
-          }}
+      <p className="text-fg-subtle -mt-2 text-[12px]">
+        이 프로젝트에서 해결한 트러블슈팅 중 인증 완료된 사례만 연결해 보여줘요.
+        카드를 누르면 사례 내용을 자세히 볼 수 있어요.
+      </p>
+      {isPending ? (
+        <div className="text-fg-muted p-6 text-[13px]">
+          트러블슈팅을 불러오는 중…
+        </div>
+      ) : linked.length === 0 ? (
+        <Empty
+          title="연결된 인증 트러블슈팅이 없어요"
+          description="‘트러블슈팅 연결’로 인증 완료된 사례를 연결하세요."
+        />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {linked.map((c) => (
+            <TsCaseCard
+              key={c.id}
+              c={c}
+              actionLabel="보기"
+              onOpen={(t) =>
+                navigate(`/student/troubleshooting/${t.id}?view=1`)
+              }
+              onRemove={() => {
+                unlink(d.id, c.id)
+                toast.info('프로젝트 연결을 해제했어요 (사례는 그대로예요)')
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {picking && (
+        <TsLinkPickerModal
+          projectId={d.id}
+          cases={cases}
+          linkedIds={linkedIds}
+          onClose={() => setPicking(false)}
         />
       )}
     </div>
   )
 }
 
-function AddIssueModal({
+// 연결 피커 — 인증 완료된 사례만 토글로 연결/해제한다.
+function TsLinkPickerModal({
+  projectId,
+  cases,
+  linkedIds,
   onClose,
-  onAdd,
 }: {
+  projectId: string
+  cases: TsCase[]
+  linkedIds: string[]
   onClose: () => void
-  onAdd: (issue: WsIssue) => void
 }) {
-  const [title, setTitle] = useState('')
-  const [priority, setPriority] = useState('P1')
-  const field =
-    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
-  const submit = () => {
-    if (!title.trim()) return
-    onAdd({
-      title: title.trim(),
-      meta: '백엔드 · 담당 김수강',
-      priority: {
-        label: priority,
-        tone:
-          priority === 'P0'
-            ? 'danger'
-            : priority === 'P1'
-              ? 'warning'
-              : 'accent',
-      },
-      status: { label: '열림', tone: 'info' },
-    })
+  const toast = useToast()
+  const link = useProjectTsLinks((s) => s.link)
+  const unlink = useProjectTsLinks((s) => s.unlink)
+  const certified = cases.filter((c) => c.status === 'certified')
+  const toggle = (c: TsCase) => {
+    if (linkedIds.includes(c.id)) {
+      unlink(projectId, c.id)
+      toast.info('연결을 해제했어요')
+    } else {
+      link(projectId, c.id)
+      toast.success('트러블슈팅을 연결했어요')
+    }
   }
-
   return (
     <Modal
       open
       onClose={onClose}
-      title="이슈 등록"
+      title="트러블슈팅 연결"
       footer={
-        <>
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!title.trim()}
-            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
-          >
-            등록
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={onClose}
+          className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white"
+        >
+          완료
+        </button>
       }
     >
-      <div className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">제목</span>
-          <input
-            autoFocus
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="이슈 제목"
-            className={field}
-          />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">우선순위</span>
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            className={field}
-          >
-            <option value="P0">P0</option>
-            <option value="P1">P1</option>
-            <option value="P2">P2</option>
-          </select>
-        </label>
+      <div className="flex flex-col gap-2">
+        <p className="text-fg-subtle text-[12px]">
+          인증 완료된 트러블슈팅 사례만 연결할 수 있어요.
+        </p>
+        {certified.length === 0 ? (
+          <div className="text-fg-subtle py-6 text-center text-[13px]">
+            연결할 인증 완료 사례가 없어요.
+          </div>
+        ) : (
+          certified.map((c) => {
+            const on = linkedIds.includes(c.id)
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => toggle(c)}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left',
+                  on ? 'border-brand bg-brand/5' : 'border-border',
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white',
+                    on ? 'bg-brand' : 'border-border bg-surface border',
+                  )}
+                >
+                  {on && '✓'}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-fg truncate text-[13px] font-semibold">
+                    {c.title}
+                  </span>
+                  <span className="text-fg-subtle text-[11px]">
+                    {c.category} · {c.days}
+                  </span>
+                </div>
+                <span className="bg-success-bg text-success shrink-0 rounded px-2 py-0.5 text-[10px] font-bold">
+                  인증 완료
+                </span>
+              </button>
+            )
+          })
+        )}
       </div>
     </Modal>
   )
@@ -1685,6 +1712,8 @@ function TeamTab({ d }: { d: WorkspaceData }) {
   const [members, setMembers] = useState(d.members)
   const [inviting, setInviting] = useState(false)
   const [openMember, setOpenMember] = useState<WsMember | null>(null)
+  const [editing, setEditing] = useState<number | null>(null)
+  const [removing, setRemoving] = useState<number | null>(null)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -1730,13 +1759,35 @@ function TeamTab({ d }: { d: WorkspaceData }) {
                   style={{ width: `${m.contrib}%` }}
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => setOpenMember(m)}
-                className="border-border text-fg-muted shrink-0 rounded-lg border px-3.5 py-1.5 text-[12px] font-semibold"
-              >
-                상세
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenMember(m)}
+                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+                >
+                  상세
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(i)}
+                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+                >
+                  수정
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRemoving(i)}
+                  disabled={m.kind === 'PM'}
+                  title={
+                    m.kind === 'PM'
+                      ? 'PM은 삭제할 수 없어요. 다른 팀원에게 PM을 위임한 뒤 삭제하세요.'
+                      : undefined
+                  }
+                  className="border-border text-danger hover:bg-danger-bg rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  삭제
+                </button>
+              </div>
             </div>
           ))}
         </section>
@@ -1755,6 +1806,68 @@ function TeamTab({ d }: { d: WorkspaceData }) {
           d={d}
           onClose={() => setOpenMember(null)}
         />
+      )}
+      {editing !== null && members[editing] && (
+        <EditMemberModal
+          member={members[editing]}
+          othersTotal={members.reduce(
+            (acc, mm, idx) => (idx === editing ? acc : acc + mm.contrib),
+            0,
+          )}
+          onClose={() => setEditing(null)}
+          onSave={(patch) => {
+            setMembers((prev) =>
+              prev.map((mm, idx) => {
+                if (idx === editing) return { ...mm, ...patch }
+                // PM 위임 — 다른 멤버를 PM으로 지정하면 기존 PM은 팀원으로 강등.
+                if (patch.kind === 'PM' && mm.kind === 'PM')
+                  return { ...mm, kind: '팀원' }
+                return mm
+              }),
+            )
+            setEditing(null)
+            toast.success('팀원 정보를 수정했습니다')
+          }}
+        />
+      )}
+      {removing !== null && members[removing] && (
+        <Modal
+          open
+          onClose={() => setRemoving(null)}
+          title="팀원 삭제"
+          size="sm"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setRemoving(null)}
+                className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const name = members[removing].name
+                  setMembers((prev) =>
+                    prev.filter((_, idx) => idx !== removing),
+                  )
+                  setRemoving(null)
+                  toast.success(`${name} 님을 팀에서 삭제했습니다`)
+                }}
+                className="bg-danger rounded-lg px-4 py-2 text-[13px] font-bold text-white"
+              >
+                삭제
+              </button>
+            </>
+          }
+        >
+          <p className="text-fg-muted text-[13px] leading-6">
+            <span className="text-fg font-bold">{members[removing].name}</span>{' '}
+            ({members[removing].role}) 님을 팀에서 삭제할까요? 삭제하면 기여도
+            막대와 상호평가 대상에서 제외됩니다.
+          </p>
+        </Modal>
       )}
       {inviting && (
         <InviteMemberModal
@@ -1837,6 +1950,120 @@ function InviteMemberModal({
             className={field}
           />
         </label>
+      </div>
+    </Modal>
+  )
+}
+
+// 팀원 정보 수정 — 역할·구분(PM 위임)·기여도. 기여도 합 100% 원칙(문서 §기여도)을
+// 팀 합계로 라이브 표시해 초과 시 경고한다.
+function EditMemberModal({
+  member,
+  othersTotal,
+  onClose,
+  onSave,
+}: {
+  member: WsMember
+  othersTotal: number
+  onClose: () => void
+  onSave: (patch: {
+    role: string
+    contrib: number
+    kind: WsMember['kind']
+  }) => void
+}) {
+  const [role, setRole] = useState(member.role)
+  const [contrib, setContrib] = useState(String(member.contrib))
+  const [kind, setKind] = useState<WsMember['kind']>(member.kind)
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const contribNum = Number(contrib)
+  const validContrib =
+    contrib.trim() !== '' &&
+    Number.isFinite(contribNum) &&
+    contribNum >= 0 &&
+    contribNum <= 100
+  const teamTotal = othersTotal + (validContrib ? contribNum : 0)
+  const over = teamTotal > 100
+  const submit = () => {
+    if (!role.trim() || !validContrib) return
+    onSave({ role: role.trim(), contrib: contribNum, kind })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="팀원 정보 수정"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!role.trim() || !validContrib}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            저장
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <div className="bg-surface-muted flex items-center gap-3 rounded-xl p-3">
+          <Avatar name={member.name} tone={member.avatarTone} />
+          <span className="text-fg text-[14px] font-bold">{member.name}</span>
+        </div>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">역할</span>
+          <input
+            autoFocus
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            placeholder="역할"
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">구분</span>
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as WsMember['kind'])}
+            className={field}
+          >
+            <option value="팀원">팀원</option>
+            <option value="PM">PM (위임 시 기존 PM은 팀원으로 변경)</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">기여도 (%)</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={contrib}
+            onChange={(e) => setContrib(e.target.value)}
+            placeholder="0 ~ 100"
+            className={field}
+          />
+        </label>
+        <div
+          className={cn(
+            'rounded-lg px-3 py-2 text-[12px] font-semibold',
+            over
+              ? 'bg-danger-bg text-danger'
+              : 'bg-surface-muted text-fg-muted',
+          )}
+        >
+          팀 기여도 합계 {teamTotal}%{' '}
+          {over ? '· 100%를 초과합니다 (합 100% 권장)' : '/ 100%'}
+        </div>
       </div>
     </Modal>
   )

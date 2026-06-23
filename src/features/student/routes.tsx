@@ -52,6 +52,11 @@ const TsChangePage = lazy(
 const PlaySelectPage = lazy(() => import('./play/PlaySelectPage'))
 const PlayTypingPage = lazy(() => import('./play/PlayTypingPage'))
 const PlayResultPage = lazy(() => import('./play/PlayResultPage'))
+const PlayTypingResultPage = lazy(() => import('./play/PlayTypingResultPage'))
+const PlayCodingPage = lazy(() => import('./play/PlayCodingPage'))
+const PlayCodingResultPage = lazy(() => import('./play/PlayCodingResultPage'))
+const PlayQuizPage = lazy(() => import('./play/PlayQuizPage'))
+const PlayQuizResultPage = lazy(() => import('./play/PlayQuizResultPage'))
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
 const MileageProductsPage = lazy(() => import('./mileage/ProductsPage'))
 const MileageRequestsPage = lazy(() => import('./mileage/RequestStatesPage'))
@@ -112,9 +117,14 @@ export const studentRoutes: RouteObject[] = [
         path: 'troubleshooting/:id/change-requests/new',
         element: <TsChangePage />,
       },
-      // PLAY(게임 선택·타자 게임·결과/예외 상태).
+      // PLAY(게임 선택·타자/코딩/CS퀴즈 게임·게임별 결과·결과/예외 상태).
       { path: 'play', element: <PlaySelectPage /> },
       { path: 'play/typing', element: <PlayTypingPage /> },
+      { path: 'play/typing/result', element: <PlayTypingResultPage /> },
+      { path: 'play/coding', element: <PlayCodingPage /> },
+      { path: 'play/coding/result', element: <PlayCodingResultPage /> },
+      { path: 'play/quiz', element: <PlayQuizPage /> },
+      { path: 'play/quiz/result', element: <PlayQuizResultPage /> },
       { path: 'play/result', element: <PlayResultPage /> },
       // 마일리지(내 마일리지·상품 신청·구매 요청 상태·사용 내역).
       { path: 'mileage', element: <MileagePage /> },

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link2 } from 'lucide-react'
+import { FileText, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -263,16 +263,28 @@ export default function CaseDetailPage() {
                 {link ? link.projectTitle : '연결된 프로젝트 없음'}
               </span>
             </div>
-            <div className="border-divider flex items-center gap-2 border-t pt-4">
+            <div className="border-divider flex flex-col gap-2 border-t pt-4">
               <span className="text-fg-subtle text-[11px]">첨부 근거</span>
-              {data.attachments.map((a) => (
-                <span
-                  key={a.label}
-                  className="bg-surface-muted text-fg-muted rounded-md px-2 py-1 text-[11px] font-medium"
-                >
-                  {a.label}
-                </span>
-              ))}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {data.attachments.map((a) => (
+                  <div
+                    key={a.label}
+                    className="border-border hover:border-brand/50 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 transition-colors"
+                  >
+                    <span className="bg-success-bg text-success flex size-9 shrink-0 items-center justify-center rounded-lg">
+                      <FileText className="size-4" />
+                    </span>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-fg truncate text-[12px] font-semibold">
+                        {a.label}
+                      </span>
+                      <span className="text-fg-subtle text-[11px]">
+                        업로드 파일
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 

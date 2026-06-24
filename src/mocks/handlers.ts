@@ -872,16 +872,21 @@ const adminHandlers = [
 
 export const handlers = [
   http.post('/api/auth/login', async ({ request }) => {
-    const body = (await request.json()) as { email: string; password: string }
-    const email = body.email ?? ''
+    const body = (await request.json()) as {
+      userId?: string
+      email?: string
+      password: string
+    }
+    // BE 계약: 로그인 ID 필드는 userId(운영=이메일, 수강생=studentUuid). 구 email도 fallback.
+    const loginId = body.userId ?? body.email ?? ''
     return HttpResponse.json({
       data: {
         token: 'mock-token',
         user: {
           id: 'mock-1',
-          email,
+          email: loginId,
           name: '테스트 사용자',
-          role: roleFromEmail(email),
+          role: roleFromEmail(loginId),
         },
       },
     })

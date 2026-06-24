@@ -86,7 +86,7 @@ describe('LoginPage', () => {
       expect(useAuthStore.getState().user?.role).toBe('STUDENT')
     })
     expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
-      email: 'a@b.com',
+      userId: 'a@b.com',
       password: 'pw1234',
     })
   })

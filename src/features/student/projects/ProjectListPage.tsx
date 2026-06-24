@@ -10,6 +10,7 @@ import { usePageHeader } from '@/shared/store'
 import { useDeleteProject, useProjectList } from '../api/projects'
 import { ProjectStatCards } from './components/ProjectStatCards'
 import { ProjectCard } from './components/ProjectCard'
+import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
 import type {
   ProjectFilter,
   ProjectKind,
@@ -25,6 +26,10 @@ import {
 // 생애주기 단계 → 상태 필터 키(작성 중=active는 draft 키 재사용).
 const phaseFilterKey = (phase: ProjectPhase): string =>
   phase === 'active' ? 'draft' : phase
+
+// period 문자열 앞의 시작일(YYYY-MM-DD) — 최신순 정렬 키. 없으면 빈 문자열(맨 뒤).
+const startDateKey = (p: ProjectSummary): string =>
+  p.period.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? ''
 
 // 프로젝트 목록 (/student/projects) — Figma 337:930.
 const PAGE_SIZE = 3
@@ -44,14 +49,17 @@ export default function ProjectListPage() {
   usePageHeader(data?.headerTitle ?? '프로젝트', data?.headerSub)
 
   const phases = useProjectFlow((s) => s.phases)
-  // 각 프로젝트의 현재 단계 — 사용자가 진행한 단계 우선, 없으면 목록 상태에서 파생.
+  const repIds = useRepresentatives((s) => s.ids)
+  const toggleRep = useRepresentatives((s) => s.toggle)
+  // 각 프로젝트의 현재 단계·대표 후보 여부 — 단계는 진행 단계 우선, 대표 후보는 스토어 기준.
   const projects = useMemo(
     () =>
       (data?.projects ?? []).map((p) => ({
         ...p,
+        representative: repIds.includes(p.id),
         phase: phases[p.id] ?? statusToPhase(p.status),
       })),
-    [data, phases],
+    [data, phases, repIds],
   )
 
   const filteredProjects = useMemo(() => {
@@ -82,12 +90,23 @@ export default function ProjectListPage() {
     })
   }, [activeKind, activeStatus, projects, query])
 
+  // 대표 후보를 항상 최상단에, 그 외에는 최신순(시작일 내림차순)으로 정렬.
+  const sortedProjects = useMemo(
+    () =>
+      [...filteredProjects].sort((a, b) => {
+        const rep = Number(b.representative) - Number(a.representative)
+        if (rep !== 0) return rep
+        return startDateKey(b).localeCompare(startDateKey(a))
+      }),
+    [filteredProjects],
+  )
+
   useEffect(() => {
     setPage(1)
   }, [activeKind, activeStatus, query])
 
-  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
-  const pageProjects = filteredProjects.slice(
+  const totalPages = Math.max(1, Math.ceil(sortedProjects.length / PAGE_SIZE))
+  const pageProjects = sortedProjects.slice(
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
   )
@@ -148,6 +167,19 @@ export default function ProjectListPage() {
     const phase = phases[project.id] ?? statusToPhase(project.status)
     const suffix = phase === 'reviewing' ? '?tab=certification' : ''
     navigate(`/student/projects/${project.id}${suffix}`)
+  }
+
+  // 대표 후보 토글 — 인증 완료만 지정 가능(카드에서 별만 노출), 최대 3개.
+  const onToggleRep = (project: ProjectSummary) => {
+    const result = toggleRep(project.id)
+    if (result === 'added')
+      toast.success(`‘${project.title}’ 대표 후보로 지정했어요`)
+    else if (result === 'removed')
+      toast.info(`‘${project.title}’ 대표 후보에서 해제했어요`)
+    else
+      toast.danger(
+        `대표 후보는 최대 ${MAX_REPRESENTATIVES}개까지 지정할 수 있어요`,
+      )
   }
 
   const shownLabel = `${filteredProjects.length}건 표시 · 작성 중 ${byPhase('active')} / 작성 완료 ${byPhase('completed')} / 검토 중 ${byPhase('reviewing')} / 인증 완료 ${byPhase('certified')}`
@@ -268,6 +300,7 @@ export default function ProjectListPage() {
               phase={p.phase}
               onOpen={open}
               onDelete={setPendingDelete}
+              onToggleRep={onToggleRep}
             />
           ))
         ) : (

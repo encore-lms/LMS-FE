@@ -52,14 +52,19 @@ export function ProjectCard({
   phase,
   onOpen,
   onDelete,
+  onToggleRep,
 }: {
   project: ProjectSummary
   phase: ProjectPhase
   onOpen: (project: ProjectSummary) => void
   onDelete?: (project: ProjectSummary) => void
+  /** 대표 후보 토글 — 인증 완료 프로젝트에서만 별(★)로 노출. */
+  onToggleRep?: (project: ProjectSummary) => void
 }) {
   const st = PHASE[phase]
   const StatusIcon = st.Icon
+  // 인증 완료 프로젝트만 대표 후보로 지정할 수 있다.
+  const canToggleRep = phase === 'certified' && !!onToggleRep
 
   return (
     <section
@@ -107,6 +112,38 @@ export function ProjectCard({
           <h3 className="text-fg text-[17px] font-bold">{project.title}</h3>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {canToggleRep && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleRep(project)
+              }}
+              aria-pressed={project.representative}
+              aria-label={
+                project.representative
+                  ? `${project.title} 대표 후보 해제`
+                  : `${project.title} 대표 후보 지정`
+              }
+              title={
+                project.representative ? '대표 후보 해제' : '대표 후보로 지정'
+              }
+              className={cn(
+                'flex size-10 items-center justify-center rounded-lg border transition-colors',
+                project.representative
+                  ? 'border-brand bg-brand/10 text-brand'
+                  : 'border-border text-fg-subtle hover:border-brand/50 hover:text-brand',
+              )}
+            >
+              <Star
+                className={cn(
+                  'size-4',
+                  project.representative && 'fill-current',
+                )}
+                strokeWidth={2}
+              />
+            </button>
+          )}
           {onDelete && (
             <button
               type="button"

@@ -150,6 +150,9 @@ export function CaseContentForm({
   const [tags, setTags] = useState<string[]>(existing?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
   const [files, setFiles] = useState<UploadFile[]>([])
+  // 근거 링크 — 파일 외에 PR·블로그·문서 등 링크도 근거로 첨부(변경 제안과 동일 규약).
+  const [links, setLinks] = useState<string[]>([])
+  const [linkInput, setLinkInput] = useState('')
 
   const filled = STAR.filter((s) => star[s.key]?.trim()).length
   const projectLinked = !!projectLink
@@ -198,6 +201,20 @@ export function CaseContentForm({
   }
   const removeFile = (id: string) =>
     setFiles((p) => p.filter((f) => f.id !== id))
+  const addLink = () => {
+    const v = linkInput.trim()
+    if (!v) return
+    // URL만 허용 — http(s):// 형식이 아니면 추가하지 않는다.
+    if (!/^https?:\/\/.+/i.test(v)) {
+      toast.danger('올바른 URL을 입력해 주세요 (http:// 또는 https://로 시작)')
+      return
+    }
+    if (links.includes(v)) return
+    setLinks((p) => [...p, v])
+    setLinkInput('')
+  }
+  const removeLink = (url: string) =>
+    setLinks((p) => p.filter((l) => l !== url))
 
   // 저장 — 항상 draft로 저장하고 completed 플래그만 다르게 둔다(목록·상세 캐시 함께 갱신).
   //   completed=false (임시 저장) → 이어 작성. completed=true (작성 완료) → 상세에서 인증 요청.
@@ -608,6 +625,47 @@ export function CaseContentForm({
                   }}
                 />
               </label>
+            </div>
+            {links.map((url) => (
+              <span
+                key={url}
+                className="border-border flex items-center gap-2 rounded-[10px] border px-3 py-2.5 text-[12px]"
+              >
+                <Link2 className="text-fg-subtle size-3.5 shrink-0" />
+                <span className="text-fg-muted flex-1 truncate">{url}</span>
+                <button
+                  type="button"
+                  onClick={() => removeLink(url)}
+                  aria-label="링크 제거"
+                  className="text-fg-subtle hover:text-fg"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </span>
+            ))}
+            <div className="flex items-center gap-2">
+              <div className="border-border focus-within:border-brand flex flex-1 items-center gap-2 rounded-[10px] border px-3 py-2.5">
+                <Link2 className="text-fg-subtle size-3.5 shrink-0" />
+                <input
+                  value={linkInput}
+                  onChange={(e) => setLinkInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addLink()
+                    }
+                  }}
+                  placeholder="https:// 근거 링크를 붙여넣고 Enter"
+                  className="text-fg placeholder:text-fg-subtle flex-1 bg-transparent text-[12px] outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={addLink}
+                className="border-border text-fg-muted hover:bg-surface-muted shrink-0 rounded-[10px] border px-3.5 py-2.5 text-[12px] font-semibold"
+              >
+                링크 추가
+              </button>
             </div>
           </section>
         </div>

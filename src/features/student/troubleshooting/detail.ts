@@ -72,10 +72,11 @@ export function buildCaseDetail(c: TsCase): TsCaseDetail {
     situation: c.situation,
     resolution: c.resolution,
     result: c.result,
-    // 첨부 근거 — 작성 폼에서 업로드한 파일만(로그·캡처 등). 링크 첨부는 제공하지 않는다.
+    // 첨부 근거 — 업로드한 파일(로그·캡처) + 근거 링크(URL). 링크는 http(s) URL만 허용.
     attachments: [
       { label: `${tagWord}-evidence.log`, kind: 'file' },
       { label: `${tagWord}-screenshot.png`, kind: 'file' },
+      { label: 'https://github.com/playdata/lms/pull/142', kind: 'link' },
     ],
     checklist: [
       {

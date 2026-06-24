@@ -136,7 +136,7 @@ export default function CaseDetailPage() {
   // 인증 요청(검토 중 전환) — 편집 폼 사이드바의 인증 요청 버튼이 준비 항목 확인 후 호출.
   const onCertify = () => {
     setCertModal(false)
-    applyTsStatus(queryClient, id, 'reviewing')
+    applyTsStatus(queryClient, id, 'reviewing', 'cert')
     toast.success('인증 요청을 보냈어요 · 강사 검토 대기 (검토 중)')
     // 홈으로 가지 않고 머문다 — 상태가 검토 중으로 바뀌며 같은 페이지가 잠금 화면으로 전환된다.
   }

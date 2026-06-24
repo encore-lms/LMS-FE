@@ -179,7 +179,7 @@ export default function ChangeRequestPage() {
     if (selected.includes('결과') && DIFF['결과'])
       patch.result = DIFF['결과'].after
     patchTsCase(queryClient, id, patch)
-    applyTsStatus(queryClient, id, 'reviewing')
+    applyTsStatus(queryClient, id, 'reviewing', 'change')
     toast.success('변경 제안을 보냈어요 · 강사 검토 대기 (검토 중)')
     navigate('/student/troubleshooting')
   }

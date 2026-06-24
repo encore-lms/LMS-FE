@@ -18,6 +18,7 @@ import { useTsList } from '../api/troubleshooting'
 import { tsKeys } from './queryKeys'
 import { useProjectTsLinks } from './projectLinks'
 import { TsCaseCard } from './components/TsCaseCard'
+import { RejectNoticeModal } from './components/RejectNoticeModal'
 import {
   TS_LINKABLE_PROJECTS,
   type Tone,
@@ -74,6 +75,8 @@ export default function TroubleshootingListPage() {
   const [page, setPage] = useState(1)
   // 삭제 확인 대상 — 인증 완료 전(작성 중·검토 중) 사례만 삭제 가능.
   const [delTarget, setDelTarget] = useState<TsCase | null>(null)
+  // 반려 사유 모달 대상 — 카드의 '반려 사유' 클릭 시 사유(코멘트)를 보여준다.
+  const [reasonTarget, setReasonTarget] = useState<TsCase | null>(null)
   // 카테고리·검색어가 바뀌면 1페이지로 되돌린다.
   useEffect(() => {
     setPage(1)
@@ -279,6 +282,7 @@ export default function TroubleshootingListPage() {
                 c.status === 'certified' ? undefined : () => setDelTarget(c)
               }
               removeLabel="삭제"
+              onShowReason={() => setReasonTarget(c)}
             />
           )
         })}
@@ -356,6 +360,16 @@ export default function TroubleshootingListPage() {
             있어요. 삭제하면 목록에서 사라집니다.
           </p>
         </Modal>
+      )}
+
+      {/* 강사 반려 사유 — 카드 '반려 사유' 클릭 시 코멘트 회신을 보여준다(확인 후 페이지에서 보완). */}
+      {reasonTarget?.rejectionReason && (
+        <RejectNoticeModal
+          kind={reasonTarget.rejectionFrom ?? 'cert'}
+          reviewer={`${reasonTarget.category} · 임수현 강사`}
+          reason={reasonTarget.rejectionReason}
+          onClose={() => setReasonTarget(null)}
+        />
       )}
     </div>
   )

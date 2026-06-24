@@ -56,7 +56,7 @@ export function LoginPage() {
     try {
       const res = await apiClient.post<{ token: string; user: User }>(
         '/auth/login',
-        { email, password },
+        { userId: email, password }, // BE 계약: 로그인 ID 필드명은 userId
       )
       setSession(res.data.token, res.data.user)
       navigate(ROLE_HOME[res.data.user.role], { replace: true })

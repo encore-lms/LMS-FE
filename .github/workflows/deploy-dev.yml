@@ -5,6 +5,9 @@ name: Deploy (dev)
 on:
   push:
     branches: [develop]
+  # develop push 이벤트가 유실돼 자동 배포가 누락된 경우 수동 재배포용
+  # (Actions 탭 Run workflow 또는 gh workflow run deploy-dev.yml --ref develop)
+  workflow_dispatch:
 
 # 연속 푸시 시 이전 배포는 취소하고 최신 커밋만 반영
 concurrency:

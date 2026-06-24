@@ -30,7 +30,7 @@ describe('LoginPage', () => {
       screen.getByRole('heading', { name: '로그인', level: 1 }),
     ).toBeInTheDocument()
     expect(
-      screen.getByPlaceholderText('ai.camp22@playdata.io'),
+      screen.getByPlaceholderText('이메일 또는 수강생 코드'),
     ).toBeInTheDocument()
     expect(screen.getByPlaceholderText('••••••••••')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /로그인/ })).toBeEnabled()
@@ -45,7 +45,7 @@ describe('LoginPage', () => {
   it('이메일 기억하기 체크박스를 토글한다', async () => {
     const user = userEvent.setup()
     renderLogin()
-    const checkbox = screen.getByRole('checkbox', { name: '이메일 기억하기' })
+    const checkbox = screen.getByRole('checkbox', { name: '아이디 기억하기' })
     expect(checkbox).not.toBeChecked()
     await user.click(checkbox)
     expect(checkbox).toBeChecked()
@@ -54,7 +54,7 @@ describe('LoginPage', () => {
   it('이메일 input에 입력하면 값이 반영된다 (RHF register)', async () => {
     const user = userEvent.setup()
     renderLogin()
-    const input = screen.getByPlaceholderText('ai.camp22@playdata.io')
+    const input = screen.getByPlaceholderText('이메일 또는 수강생 코드')
     await user.type(input, 'test@playdata.io')
     expect(input).toHaveValue('test@playdata.io')
   })
@@ -76,7 +76,7 @@ describe('LoginPage', () => {
     })
     renderLogin()
     await user.type(
-      screen.getByPlaceholderText('ai.camp22@playdata.io'),
+      screen.getByPlaceholderText('이메일 또는 수강생 코드'),
       'a@b.com',
     )
     await user.type(screen.getByPlaceholderText('••••••••••'), 'pw1234')
@@ -91,11 +91,35 @@ describe('LoginPage', () => {
     })
   })
 
+  it('이메일이 아닌 숫자 수강생 코드도 검증을 통과해 제출된다', async () => {
+    const user = userEvent.setup()
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        token: 'tok',
+        user: { id: '1', email: '', name: '수강생', role: 'STUDENT' },
+      },
+    })
+    renderLogin()
+    await user.type(
+      screen.getByPlaceholderText('이메일 또는 수강생 코드'),
+      '109012389',
+    )
+    await user.type(screen.getByPlaceholderText('••••••••••'), 'pw1234')
+    await user.click(screen.getByRole('button', { name: /로그인/ }))
+
+    await waitFor(() => {
+      expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+        userId: '109012389',
+        password: 'pw1234',
+      })
+    })
+  })
+
   it('데모 빠른 로그인 버튼을 누르면 해당 역할 ID/PW가 폼에 채워진다(제출 안 함)', async () => {
     const user = userEvent.setup()
     renderLogin()
     await user.click(screen.getByRole('button', { name: '강사' }))
-    expect(screen.getByPlaceholderText('ai.camp22@playdata.io')).toHaveValue(
+    expect(screen.getByPlaceholderText('이메일 또는 수강생 코드')).toHaveValue(
       'instructor@playdata.io',
     )
     expect(screen.getByPlaceholderText('••••••••••')).toHaveValue(
@@ -115,7 +139,7 @@ describe('LoginPage', () => {
     const user = userEvent.setup()
     renderLogin()
     await user.click(screen.getByRole('button', { name: /로그인/ }))
-    expect(await screen.findByText('이메일을 입력해주세요')).toBeInTheDocument()
+    expect(await screen.findByText('아이디를 입력해주세요')).toBeInTheDocument()
     expect(screen.getByText('비밀번호를 입력해주세요')).toBeInTheDocument()
     expect(apiClient.post).not.toHaveBeenCalled()
   })

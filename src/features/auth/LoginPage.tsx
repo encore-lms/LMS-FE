@@ -84,9 +84,9 @@ export function LoginPage() {
         <Input
           label="아이디"
           required
-          type="email"
-          autoComplete="email"
-          placeholder="ai.camp22@playdata.io"
+          type="text"
+          autoComplete="username"
+          placeholder="이메일 또는 수강생 코드"
           leftIcon={<Mail className="h-4 w-4" />}
           error={errors.email?.message}
           {...register('email')}
@@ -113,7 +113,7 @@ export function LoginPage() {
           <Checkbox
             checked={rememberEmail}
             onChange={setRememberEmail}
-            label="이메일 기억하기"
+            label="아이디 기억하기"
           />
           <div
             data-testid="caps-lock-indicator"

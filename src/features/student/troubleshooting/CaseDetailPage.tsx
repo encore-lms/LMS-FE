@@ -1,22 +1,34 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
 import { useTsCase } from '../api/troubleshooting'
-import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { applyTsStatus } from './flow'
-import type { TsCaseDetail, Tone } from './types'
+import { tsKeys } from './queryKeys'
+import { useProjectTsLinks } from './projectLinks'
+import {
+  TS_LINKABLE_PROJECTS,
+  type TsCaseDetail,
+  type TsListData,
+  type TsProjectLink,
+  type Tone,
+} from './types'
 import { TsFlowTestNav } from './components/TsFlowTestNav'
+import { ProjectLinkModal } from './components/ProjectLinkModal'
+import { CaseContentForm } from './components/CaseContentForm'
 
-// 트러블슈팅 사례 상세 (/student/troubleshooting/:id) + 인증 요청 모달(?modal=certify).
-// 두 가지 모드로 쓰인다:
-//   - 기본(주인): 작성/인증 요청/검토 중/변경 제안 흐름 + 강사 인증 테스트 FAB.
-//   - 보기 전용(?view=1): 프로젝트 워크스페이스의 연결 사례에서 진입. 인증/변경 제안/FAB 없이
-//     STAR 본문·상태·이력만 자세히 보여준다(인증 완료여도 변경 제안 안 뜸).
+// 트러블슈팅 사례 상세 (/student/troubleshooting/:id) — 트러블슈팅 흐름의 단일 페이지.
+//   - 작성 중(draft·미완료)   : 편집 폼(임시 저장·작성 완료). 프로젝트 연결 가능.
+//   - 작성 완료(draft·완료)   : 상세(보기) + '인증 요청 준비'에서 인증 요청 / '수정'으로 복귀.
+//   - 검토 중(reviewing)      : 상세(잠금). 내용 수정 불가, 강사 승인 대기.
+//   - 인증 완료(certified)    : 상세(잠금) + '인증 완료' 배지 + 변경 제안만.
+//   - 보기 전용(?view=1)      : 프로젝트 워크스페이스 연결 사례에서 진입. 액션 없이 내용만.
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const CHIP: Record<Tone, string> = {
@@ -31,18 +43,46 @@ const CHIP: Record<Tone, string> = {
 export default function CaseDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
-  const { data, isPending, isError, refetch } = useTsCase(id)
-  const [open, setOpen] = useState(params.get('modal') === 'certify')
-  const toast = useToast()
+  const [params] = useSearchParams()
   const queryClient = useQueryClient()
-  // 프로젝트 연결 사례에서 들어오면 보기 전용 — 인증/변경 제안/FAB를 모두 숨긴다.
+  const { data, isPending, isError, refetch } = useTsCase(id)
+  const [linkModal, setLinkModal] = useState(false)
+  const [certModal, setCertModal] = useState(false)
+  // 프로젝트 연결은 projectLinks 스토어(사례↔프로젝트 단일 소스) — 워크스페이스와 동기.
+  const connectedPid = useProjectTsLinks((s) => s.projectIdFor(id))
+  const connectCase = useProjectTsLinks((s) => s.connectCase)
+  const disconnectCase = useProjectTsLinks((s) => s.disconnectCase)
+  const toast = useToast()
+  // 프로젝트 연결 사례에서 들어오면 보기 전용 — 편집/요청/FAB를 모두 숨긴다.
   const viewOnly = params.get('view') === '1'
+
+  // 페이지 제목 — 진입 맥락별로 다르게.
+  const status = data?.status
+  const completed = !!data?.completed
+  const inList = !!queryClient
+    .getQueryData<TsListData>(tsKeys.list())
+    ?.cases.some((c) => c.id === id)
   usePageHeader(
-    viewOnly ? '트러블슈팅 사례' : '트러블슈팅 사례 상세',
+    viewOnly
+      ? '트러블슈팅 사례'
+      : status === 'certified'
+        ? '트러블슈팅 사례 상세'
+        : status === 'reviewing'
+          ? '트러블슈팅 사례 검토중'
+          : completed
+            ? '트러블슈팅 사례 인증요청'
+            : inList
+              ? '트러블슈팅 사례 이어작성'
+              : '새 트러블슈팅 사례',
     viewOnly
       ? '연결된 트러블슈팅 사례의 내용을 확인합니다.'
-      : '작성한 사례를 확인하고 인증 요청·변경 제안을 진행해요.',
+      : status === 'certified'
+        ? '인증 완료된 사례예요. 수정은 변경 제안으로 진행해요.'
+        : status === 'reviewing'
+          ? '강사 인증 검토 중이에요. 완료 전까지 내용은 잠깁니다.'
+          : completed
+            ? '작성을 마쳤어요. 프로젝트 연결을 확인하고 인증을 요청하세요.'
+            : '상황·해결·결과를 기록하고 프로젝트 연결·작성 완료를 진행해요.',
   )
 
   if (isPending)
@@ -59,26 +99,54 @@ export default function CaseDetailPage() {
     )
   }
 
-  const closeModal = () => {
-    setOpen(false)
-    if (params.get('modal')) setParams({}, { replace: true })
-  }
-
-  // 인증 완료 사례는 인증 요청 대신 변경 제안으로만 수정 가능. 검토 중은 대기.
   const isCertified = data.status === 'certified'
   const isReviewing = data.status === 'reviewing'
+  const isDraft = data.status === 'draft'
+  // draft(작성 중·작성 완료)는 항상 편집 가능. 인증 요청(검토 중)부터 잠금, 인증 완료는 변경 제안만.
+  const editing = !viewOnly && isDraft
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
-  const onCertifyRequested = () => {
-    closeModal()
-    // 인증 '요청' → 검토 중(reviewing)으로 제출. 강사 인증 승인은 테스트 FAB(TsFlowTestNav)로
-    // 시뮬레이션해 certified 로 전이된다(강사 승인 단계를 건너뛰지 않는다).
+
+  // 프로젝트 연결 — projectLinks 스토어에서 파생(사례가 연결된 프로젝트).
+  const link: TsProjectLink | null = connectedPid
+    ? {
+        projectId: connectedPid,
+        projectTitle:
+          TS_LINKABLE_PROJECTS.find((p) => p.id === connectedPid)?.title ??
+          connectedPid,
+      }
+    : null
+  const projectLinked = !!link
+  const onLinkChange = (next: TsProjectLink | null) => {
+    if (next) connectCase(next.projectId, id)
+    else disconnectCase(id)
+    setLinkModal(false)
+    toast.success(
+      next
+        ? `프로젝트에 연결했어요 — ${next.projectTitle}`
+        : '프로젝트 연결을 해제했어요.',
+    )
+  }
+
+  // 인증 요청(검토 중 전환) — 편집 폼 사이드바의 인증 요청 버튼이 준비 항목 확인 후 호출.
+  const onCertify = () => {
+    setCertModal(false)
     applyTsStatus(queryClient, id, 'reviewing')
     toast.success('인증 요청을 보냈어요 · 강사 검토 대기 (검토 중)')
+    // 홈으로 가지 않고 머문다 — 상태가 검토 중으로 바뀌며 같은 페이지가 잠금 화면으로 전환된다.
   }
 
   const stats = [
-    { label: '인증 상태', value: data.statusLabel, tone: 'accent' as Tone },
+    {
+      label: '인증 상태',
+      value: data.statusLabel,
+      tone: (isCertified ? 'success' : 'accent') as Tone,
+    },
+    {
+      label: '프로젝트 연결',
+      value: link ? link.projectTitle : '미연결',
+      tone: (projectLinked ? 'success' : 'danger') as Tone,
+    },
     {
       label: '독립 해결',
       value: data.independent ? '예' : '아니오',
@@ -88,13 +156,13 @@ export default function CaseDetailPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-5 p-8">
+    <div className={cn('flex flex-col gap-5 p-8', editing && 'pb-28')}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <span
             className={cn(
               'rounded px-2 py-0.5 text-[11px] font-bold',
-              CHIP.accent,
+              isCertified ? CHIP.success : CHIP.accent,
             )}
           >
             {data.statusLabel}
@@ -107,8 +175,27 @@ export default function CaseDetailPage() {
           >
             {data.category}
           </span>
+          {!viewOnly && !isCertified && !projectLinked && (
+            <span
+              className={cn(
+                'rounded px-2 py-0.5 text-[11px] font-bold',
+                CHIP.warning,
+              )}
+            >
+              프로젝트 미연결
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          {!viewOnly && isCertified && (
+            <button
+              type="button"
+              onClick={goChangeRequest}
+              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+            >
+              변경 제안
+            </button>
+          )}
           <button
             type="button"
             onClick={() =>
@@ -118,189 +205,174 @@ export default function CaseDetailPage() {
           >
             {viewOnly ? '뒤로' : '목록으로'}
           </button>
-          {!viewOnly &&
-            (isCertified ? (
-              <button
-                type="button"
-                onClick={goChangeRequest}
-                className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
-              >
-                변경 제안
-              </button>
-            ) : isReviewing ? (
-              <button
-                type="button"
-                disabled
-                className="bg-warning-bg text-warning cursor-not-allowed rounded-lg px-4 py-2 text-[12px] font-bold"
-              >
-                검토 중
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
-              >
-                인증 요청
-              </button>
-            ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        {stats.map((s) => (
-          <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
-            <span className="text-fg-muted text-[12px]">{s.label}</span>
-            <span className="text-fg text-[20px] font-bold">{s.value}</span>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {stats.map((s) => {
+          // 프로젝트 연결 카드는 연결되면 프로젝트명을 보여줘 길어질 수 있어 작게·말줄임.
+          const long = s.label === '프로젝트 연결' && projectLinked
+          return (
+            <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
+              <span className="text-fg-muted text-[12px]">{s.label}</span>
+              <span
+                className={cn(
+                  'truncate font-bold',
+                  long ? 'text-[14px]' : 'text-[20px]',
+                  s.tone === 'danger' ? 'text-danger' : 'text-fg',
+                )}
+                title={s.value}
+              >
+                {s.value}
+              </span>
+            </div>
+          )
+        })}
       </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <section className={cn(card, 'flex flex-1 flex-col gap-5')}>
-          <div className="flex flex-col gap-1">
-            <span className="text-fg-subtle text-[11px]">사례 제목</span>
-            <h2 className="text-fg text-[18px] font-bold">{data.title}</h2>
-          </div>
-          {[
-            { label: '상황', text: data.situation },
-            { label: '해결', text: data.resolution },
-            { label: '결과', text: data.result },
-          ].map((b) => (
-            <div
-              key={b.label}
-              className="border-divider flex flex-col gap-1.5 border-t pt-4"
-            >
-              <span className="text-fg text-[14px] font-bold">{b.label}</span>
-              <p className="text-fg-muted text-[13px] leading-6">{b.text}</p>
+      {editing ? (
+        <CaseContentForm
+          caseId={id}
+          projectLink={link}
+          onConnectProject={() => setLinkModal(true)}
+          onRequestCert={() => setCertModal(true)}
+        />
+      ) : (
+        <div className="flex flex-col gap-4 lg:flex-row">
+          <section className={cn(card, 'flex flex-1 flex-col gap-5')}>
+            <div className="flex flex-col gap-1">
+              <span className="text-fg-subtle text-[11px]">사례 제목</span>
+              <h2 className="text-fg text-[18px] font-bold">{data.title}</h2>
             </div>
-          ))}
-          <div className="border-divider flex items-center gap-2 border-t pt-4">
-            <span className="text-fg-subtle text-[11px]">첨부 근거</span>
-            {data.attachments.map((a) => (
-              <span
-                key={a.label}
-                className="bg-surface-muted text-fg-muted rounded-md px-2 py-1 text-[11px] font-medium"
+            {[
+              { label: '상황', text: data.situation },
+              { label: '해결', text: data.resolution },
+              { label: '결과', text: data.result },
+            ].map((b) => (
+              <div
+                key={b.label}
+                className="border-divider flex flex-col gap-1.5 border-t pt-4"
               >
-                {a.label}
-              </span>
-            ))}
-          </div>
-        </section>
-
-        <div className="flex flex-col gap-4 lg:w-[320px]">
-          {/* 인증 완료 사례는 인증 요청이 끝났으므로 '인증 요청 준비'를 숨기고,
-              수정은 변경 제안으로만 진행한다(상단 변경 제안 버튼). */}
-          {!viewOnly && isCertified && (
-            <section className={cn(card, 'flex flex-col gap-3')}>
-              <span className="text-fg text-[14px] font-bold">인증 완료</span>
-              <span className="text-fg-subtle text-[11px]">
-                인증이 완료된 사례입니다. 내용을 수정하려면 변경 제안으로
-                요청하세요.
-              </span>
-              <button
-                type="button"
-                onClick={goChangeRequest}
-                className="bg-brand rounded-lg py-2.5 text-[12px] font-bold text-white"
-              >
-                변경 제안
-              </button>
-            </section>
-          )}
-          {!viewOnly && !isCertified && (
-            <section className={cn(card, 'flex flex-col gap-3')}>
-              <span className="text-fg text-[14px] font-bold">
-                인증 요청 준비
-              </span>
-              <span className="text-fg-subtle text-[11px]">
-                상황·해결·결과와 근거를 확인하고 강사 검토 큐로 인증을 요청해요.
-              </span>
-              {data.checklist.map((c, i) => {
-                const done = c.status.tone === 'success'
-                return (
-                  <div key={i} className="flex items-center gap-2.5">
-                    <span
-                      className={cn(
-                        'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
-                        done
-                          ? 'bg-success text-white'
-                          : 'bg-warning-bg text-warning',
-                      )}
-                    >
-                      {done ? '✓' : '!'}
-                    </span>
-                    <span className="text-fg flex-1 text-[12px] font-medium">
-                      {c.label}
-                    </span>
-                  </div>
-                )
-              })}
-              <div className="flex gap-2 pt-1">
-                {isCertified ? (
-                  <button
-                    type="button"
-                    onClick={goChangeRequest}
-                    className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
-                  >
-                    변경 제안
-                  </button>
-                ) : isReviewing ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="bg-warning-bg text-warning flex-1 cursor-not-allowed rounded-lg py-2.5 text-[12px] font-bold"
-                  >
-                    검토 중 · 강사 승인 대기
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setOpen(true)}
-                    className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
-                  >
-                    인증 요청
-                  </button>
-                )}
+                <span className="text-fg text-[14px] font-bold">{b.label}</span>
+                <p className="text-fg-muted text-[13px] leading-6">{b.text}</p>
               </div>
-            </section>
-          )}
-
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <span className="text-fg text-[14px] font-bold">상태 이력</span>
-            {data.timeline.map((t) => (
-              <div key={t.key} className="flex items-start gap-2.5">
+            ))}
+            <div className="border-divider flex items-center gap-2 border-t pt-4">
+              <span className="text-fg-subtle text-[11px]">연결 프로젝트</span>
+              <span className="text-fg text-[12px] font-semibold">
+                {link ? link.projectTitle : '연결된 프로젝트 없음'}
+              </span>
+            </div>
+            <div className="border-divider flex items-center gap-2 border-t pt-4">
+              <span className="text-fg-subtle text-[11px]">첨부 근거</span>
+              {data.attachments.map((a) => (
                 <span
+                  key={a.label}
+                  className="bg-surface-muted text-fg-muted rounded-md px-2 py-1 text-[11px] font-medium"
+                >
+                  {a.label}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          <div className="flex flex-col gap-4 lg:w-[320px]">
+            {/* 검토 중 — 잠금(수정 불가), 강사 승인 대기 */}
+            {!viewOnly && isReviewing && (
+              <section className={cn(card, 'flex flex-col gap-3')}>
+                <span className="text-warning text-[14px] font-bold">
+                  검토 중
+                </span>
+                <span className="text-fg-subtle text-[11px]">
+                  강사 인증 검토를 기다리고 있어요. 인증 완료 전까지 내용은 잠겨
+                  있어요.
+                </span>
+                <div
                   className={cn(
-                    'mt-1 size-2.5 shrink-0 rounded-full',
-                    t.state === 'current'
-                      ? 'bg-brand'
-                      : t.state === 'done'
-                        ? 'bg-success'
-                        : 'bg-border',
+                    'flex items-start gap-2 rounded-lg p-2.5 text-[11px] leading-4',
+                    link ? 'bg-success-bg' : 'bg-warning-bg',
                   )}
-                />
-                <div className="flex flex-col">
+                >
+                  <Link2
+                    className={cn(
+                      'mt-px size-3.5 shrink-0',
+                      link ? 'text-success' : 'text-warning',
+                    )}
+                  />
+                  <span className="text-fg font-medium">
+                    {link ? link.projectTitle : '연결된 프로젝트가 없어요'}
+                  </span>
+                </div>
+              </section>
+            )}
+
+            {/* 인증 완료 — 잠금, 변경 제안만 */}
+            {!viewOnly && isCertified && (
+              <section className={cn(card, 'flex flex-col gap-3')}>
+                <span className="text-success text-[14px] font-bold">
+                  ✓ 인증 완료
+                </span>
+                <span className="text-fg-subtle text-[11px]">
+                  인증이 완료된 사례예요. 내용은 잠겨 있고, 수정하려면 변경
+                  제안으로 요청하세요.
+                </span>
+                <button
+                  type="button"
+                  onClick={goChangeRequest}
+                  className="bg-brand rounded-lg py-2.5 text-[12px] font-bold text-white"
+                >
+                  변경 제안
+                </button>
+              </section>
+            )}
+
+            <section className={cn(card, 'flex flex-col gap-3')}>
+              <span className="text-fg text-[14px] font-bold">상태 이력</span>
+              {data.timeline.map((t) => (
+                <div key={t.key} className="flex items-start gap-2.5">
                   <span
                     className={cn(
-                      'text-[13px] font-semibold',
-                      t.state === 'todo' ? 'text-fg-subtle' : 'text-fg',
+                      'mt-1 size-2.5 shrink-0 rounded-full',
+                      t.state === 'current'
+                        ? 'bg-brand'
+                        : t.state === 'done'
+                          ? 'bg-success'
+                          : 'bg-border',
                     )}
-                  >
-                    {t.label}
-                  </span>
-                  <span className="text-fg-subtle text-[11px]">{t.sub}</span>
+                  />
+                  <div className="flex flex-col">
+                    <span
+                      className={cn(
+                        'text-[13px] font-semibold',
+                        t.state === 'todo' ? 'text-fg-subtle' : 'text-fg',
+                      )}
+                    >
+                      {t.label}
+                    </span>
+                    <span className="text-fg-subtle text-[11px]">{t.sub}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </section>
+              ))}
+            </section>
+          </div>
         </div>
-      </div>
+      )}
 
-      {open && !viewOnly && (
+      {!viewOnly && (
+        <ProjectLinkModal
+          open={linkModal}
+          current={link}
+          onClose={() => setLinkModal(false)}
+          onLink={onLinkChange}
+        />
+      )}
+
+      {certModal && (
         <CertifyModal
           data={data}
-          onClose={closeModal}
-          onConfirm={onCertifyRequested}
+          projectValue={link ? link.projectTitle : '미연결'}
+          onClose={() => setCertModal(false)}
+          onConfirm={onCertify}
         />
       )}
 
@@ -312,10 +384,12 @@ export default function CaseDetailPage() {
 
 function CertifyModal({
   data,
+  projectValue,
   onClose,
   onConfirm,
 }: {
   data: TsCaseDetail
+  projectValue: string
   onClose: () => void
   onConfirm: () => void
 }) {
@@ -353,8 +427,9 @@ function CertifyModal({
     >
       <div className="flex flex-col gap-4">
         <p className="text-fg-muted -mt-1 text-[12px]">
-          체크리스트를 확인하고 강사 검토 큐로 제출합니다.
+          프로젝트 연결과 체크리스트를 확인하고 강사 검토 큐로 제출합니다.
         </p>
+        <Field label="프로젝트 연결" value={projectValue} />
         <Field label="교과목/검토자" value={data.certReviewer} />
         <div className="flex flex-col gap-2">
           <span className="text-fg text-[12px] font-bold">
@@ -380,8 +455,7 @@ function CertifyModal({
           ))}
         </div>
         <div className="bg-info-bg/60 text-fg-muted rounded-lg p-3 text-[11px] leading-4">
-          제출 후 상태가 submitted가 되며, 인증 완료 전까지 보완 요청을 받을 수
-          있습니다.
+          제출 후 상태가 검토 중이 되며, 인증 완료 전까지 내용은 잠깁니다.
         </div>
       </div>
     </Modal>

@@ -1,7 +1,21 @@
 // 트러블슈팅 상세 — 목록 사례(TsCase)에서 상세(TsCaseDetail)를 파생.
 // mock 핸들러와 새 사례 작성(상세 캐시 시드)에서 공유한다. msw 비의존이라 앱 번들에
 // 안전하게 포함된다. 어떤 사례를 열어도 제목·상태·내용이 목록과 일치한다.
-import type { TsCase, TsCaseDetail, TsStatus, TsTimeline } from './types'
+import type {
+  TsCase,
+  TsCaseDetail,
+  TsProjectLink,
+  TsStatus,
+  TsTimeline,
+} from './types'
+
+// 일부 사례를 프로젝트에 연결된 상태로 시드(데모) — ts2는 미연결로 두어 '프로젝트 연결' 흐름을 보여준다.
+// BE 연동 시 서버 연결값으로 대체. 연결 단위는 프로젝트(이슈 단위 연결은 제외).
+export const PROJECT_LINK_BY_ID: Record<string, TsProjectLink> = {
+  ts1: { projectId: 'p1', projectTitle: '주문 관리 MSA 백엔드' },
+  ts6: { projectId: 'p1', projectTitle: '주문 관리 MSA 백엔드' },
+  ts9: { projectId: 'p2', projectTitle: '실시간 채팅 서버' },
+}
 
 const TIMELINE_STATE: Record<TsStatus, Record<string, TsTimeline['state']>> = {
   draft: { draft: 'current', submitted: 'todo', certified: 'todo' },
@@ -42,6 +56,8 @@ export function buildTimeline(status: TsStatus): TsTimeline[] {
 }
 
 export function buildCaseDetail(c: TsCase): TsCaseDetail {
+  const projectLink = PROJECT_LINK_BY_ID[c.id] ?? null
+  const linked = !!projectLink
   const tagWord = (c.tags[0] ?? '#evidence').replace(/^#/, '')
   return {
     id: c.id,
@@ -50,6 +66,7 @@ export function buildCaseDetail(c: TsCase): TsCaseDetail {
     categoryTone: c.categoryTone,
     status: c.status,
     statusLabel: c.statusLabel,
+    completed: c.completed ?? false,
     independent: c.independent,
     days: c.days,
     situation: c.situation,
@@ -68,6 +85,15 @@ export function buildCaseDetail(c: TsCase): TsCaseDetail {
         label: '첨부 근거 2개 등록',
         status: { label: '완료', tone: 'success' },
       },
+      linked
+        ? {
+            label: '프로젝트 연결됨',
+            status: { label: '완료', tone: 'success' },
+          }
+        : {
+            label: '프로젝트 연결 필요',
+            status: { label: '필요', tone: 'warning' },
+          },
       c.status === 'certified'
         ? {
             label: '인증 완료(잠금)',
@@ -79,13 +105,17 @@ export function buildCaseDetail(c: TsCase): TsCaseDetail {
           },
     ],
     timeline: buildTimeline(c.status),
+    certProject: projectLink
+      ? projectLink.projectTitle
+      : '연결된 프로젝트 없음',
     certReviewer: `${c.category} · 강사 검토`,
     certChecklist: [
       '상황/해결/결과 3개 항목이 모두 작성됨',
-      '교과목 발표/검토 대상이 맞음',
+      '관련 프로젝트가 연결되어 있음',
       '첨부 근거와 소요 일수가 확인됨',
       '동일 사례로 진행 중인 요청이 없음',
     ],
+    projectLink,
   }
 }
 

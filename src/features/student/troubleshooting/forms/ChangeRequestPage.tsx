@@ -21,10 +21,9 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
-import { TestModeFab } from '@/components/dev/TestModeFab'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { patchTsCase } from '../flow'
+import { applyTsStatus, patchTsCase } from '../flow'
 import { TS_CHANGE_ITEMS, type TsCase } from '../types'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348.
@@ -131,9 +130,6 @@ export default function ChangeRequestPage() {
     'https://blog.example.com/kafka-idempotency-key',
   ])
   const [linkInput, setLinkInput] = useState('')
-  // 변경 제안 흐름(데모): false = 작성 중, true = 강사 검토 대기(requested).
-  // 강사 승인(시뮬)은 테스트 FAB에서 처리해 실제 사례 본문에 반영한다.
-  const [requested, setRequested] = useState(false)
 
   const toggle = (v: string) =>
     setSelected((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))
@@ -165,7 +161,9 @@ export default function ChangeRequestPage() {
   )
   const toast = useToast()
 
-  // 변경 제안 저장 — 강사 검토 큐로 제출(requested). 강사 승인 전까지 추가 변경 불가.
+  // 변경 제안 저장 — 제안한 변경을 본문에 반영하고 '검토 중'(강사 변경 승인 대기)으로
+  // 전환한 뒤 홈으로 간다. 강사 변경 승인(인증)은 여기가 아니라 사례 열기 → 상세(검토 중)의
+  // 테스트 FAB에서 한다. 승인되면 다시 인증 완료로 목록에 그대로 남는다.
   const handleSubmit = () => {
     if (!reason.trim()) {
       toast.danger('변경 사유를 입력해 주세요.')
@@ -175,20 +173,14 @@ export default function ChangeRequestPage() {
       toast.danger('변경할 항목을 1개 이상 선택해 주세요.')
       return
     }
-    setRequested(true)
-    toast.success('변경 제안을 보냈어요 · 강사 검토 대기')
-  }
-
-  // 강사 변경 승인(시뮬) — 선택 항목의 수정안을 실제 사례 본문에 반영하고 메인 홈으로.
-  // BE 연동·강사 검토 화면 연결 시 이 시뮬과 테스트 FAB는 제거한다.
-  const approveChange = () => {
     const patch: Partial<TsCase> = { updatedAt: '최근 수정 방금' }
     if (selected.includes('해결') && DIFF['해결'])
       patch.resolution = DIFF['해결'].after
     if (selected.includes('결과') && DIFF['결과'])
       patch.result = DIFF['결과'].after
     patchTsCase(queryClient, id, patch)
-    toast.success('강사가 변경을 승인했어요 · 인증 완료에 반영됐어요')
+    applyTsStatus(queryClient, id, 'reviewing')
+    toast.success('변경 제안을 보냈어요 · 강사 검토 대기 (검토 중)')
     navigate('/student/troubleshooting')
   }
 
@@ -209,33 +201,9 @@ export default function ChangeRequestPage() {
           <span className="text-fg font-semibold">변경 제안</span>
         </nav>
         <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
-          {requested ? (
-            <>
-              <Timer className="size-3" /> 강사 검토 대기
-            </>
-          ) : (
-            <>
-              <Pencil className="size-3" /> 신규 작성 · 미저장
-            </>
-          )}
+          <Pencil className="size-3" /> 신규 작성 · 미저장
         </span>
       </div>
-
-      {/* 강사 검토 대기 배너 — 변경 제안 저장 후 강사 승인을 기다리는 상태 */}
-      {requested && (
-        <div className="border-info/50 bg-info-bg/50 flex items-center gap-2 rounded-xl border p-4">
-          <Timer className="text-info size-4 shrink-0" />
-          <div className="flex flex-col">
-            <span className="text-info text-[13px] font-bold">
-              변경 제안을 강사 검토 큐로 보냈어요
-            </span>
-            <span className="text-fg-muted text-[11px]">
-              강사가 승인하면 선택한 항목이 원본 사례에 반영되고 다시 인증
-              완료(잠금) 상태가 됩니다.
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* 경고 배너 + 3단계 안내 */}
       <div className="border-warning/50 bg-warning-bg/50 flex flex-col gap-2.5 rounded-xl border p-4">
@@ -646,14 +614,12 @@ export default function ChangeRequestPage() {
       <div className="bg-brand-deep fixed right-8 bottom-6 left-[232px] z-30 flex items-center justify-between rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
         <div className="flex flex-col gap-0.5">
           <span className="text-[13px] font-bold">
-            {requested
-              ? '변경 제안 제출됨 · 강사 검토 대기'
-              : `변경 항목 ${selected.length} / ${TS_CHANGE_ITEMS.length} 선택 · 변경 사유 ${reason.length}자 작성 완료`}
+            변경 항목 {selected.length} / {TS_CHANGE_ITEMS.length} 선택 · 변경
+            사유 {reason.length}자 작성
           </span>
           <span className="text-[11px] text-white/70">
-            {requested
-              ? '강사 승인은 우하단 테스트 버튼(🧪)으로 시뮬레이션할 수 있어요'
-              : '저장 시 강사 검토 큐에 `requested` 상태로 등록됩니다 · 검토 진행 중에는 추가 변경 불가'}
+            저장하면 검토 중으로 전환돼 홈으로 가요 · 강사 변경 승인은 사례 열기
+            → 상세에서 진행
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -662,55 +628,17 @@ export default function ChangeRequestPage() {
             onClick={() => navigate('/student/troubleshooting')}
             className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold"
           >
-            {requested ? '닫기' : '취소'}
+            취소
           </button>
-          {requested ? (
-            <span className="bg-brand/40 rounded-lg px-5 py-2.5 text-[13px] font-bold">
-              강사 승인 대기 중
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold"
-            >
-              변경 제안 저장 →
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold"
+          >
+            변경 제안 저장 →
+          </button>
         </div>
       </div>
-
-      {/* 테스트 시뮬레이션 — 강사 변경 승인(요청 → 본문 반영 → 인증 완료). BE 연동·강사 화면 연결 시 제거. */}
-      <TestModeFab note="트러블슈팅 변경 제안 (FE 목 · 강사 변경 승인 시뮬)">
-        <span className="text-accent-strong w-full text-[11px] font-semibold">
-          현재: {requested ? '강사 검토 대기' : '작성 중'}
-        </span>
-        {requested ? (
-          <>
-            <button
-              type="button"
-              onClick={approveChange}
-              className="bg-success rounded-lg px-3 py-2 text-[12px] font-bold text-white"
-            >
-              🧑‍🏫 강사 변경 승인 (시뮬)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setRequested(false)
-                toast.info('변경 제안을 취소했어요 · 다시 작성할 수 있어요')
-              }}
-              className="border-accent-strong/50 text-accent-strong rounded-lg border px-3 py-2 text-[12px] font-bold"
-            >
-              ↺ 요청 취소
-            </button>
-          </>
-        ) : (
-          <span className="text-fg-subtle text-[11px]">
-            먼저 ‘변경 제안 저장’을 보내세요
-          </span>
-        )}
-      </TestModeFab>
     </div>
   )
 }

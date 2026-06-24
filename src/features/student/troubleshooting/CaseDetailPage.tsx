@@ -62,6 +62,11 @@ export default function CaseDetailPage() {
   const inList = !!queryClient
     .getQueryData<TsListData>(tsKeys.list())
     ?.cases.some((c) => c.id === id)
+  // 태그 — 상세(TsCaseDetail)엔 없어 목록 캐시에서 가져온다(첨부 근거와 함께 표시).
+  const caseTags =
+    queryClient
+      .getQueryData<TsListData>(tsKeys.list())
+      ?.cases.find((c) => c.id === id)?.tags ?? []
   usePageHeader(
     viewOnly
       ? '트러블슈팅 사례'
@@ -266,26 +271,55 @@ export default function CaseDetailPage() {
             <div className="border-divider flex flex-col gap-2 border-t pt-4">
               <span className="text-fg-subtle text-[11px]">첨부 근거</span>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {data.attachments.map((a) => (
-                  <div
-                    key={a.label}
-                    className="border-border hover:border-brand/50 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 transition-colors"
-                  >
-                    <span className="bg-success-bg text-success flex size-9 shrink-0 items-center justify-center rounded-lg">
-                      <FileText className="size-4" />
-                    </span>
-                    <div className="flex min-w-0 flex-col">
-                      <span className="text-fg truncate text-[12px] font-semibold">
-                        {a.label}
+                {data.attachments.map((a) => {
+                  const isLink = a.kind === 'link'
+                  return (
+                    <div
+                      key={a.label}
+                      className="border-border hover:border-brand/50 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 transition-colors"
+                    >
+                      <span
+                        className={cn(
+                          'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                          isLink
+                            ? 'bg-info-bg text-info'
+                            : 'bg-success-bg text-success',
+                        )}
+                      >
+                        {isLink ? (
+                          <Link2 className="size-4" />
+                        ) : (
+                          <FileText className="size-4" />
+                        )}
                       </span>
-                      <span className="text-fg-subtle text-[11px]">
-                        업로드 파일
-                      </span>
+                      <div className="flex min-w-0 flex-col">
+                        <span className="text-fg truncate text-[12px] font-semibold">
+                          {a.label}
+                        </span>
+                        <span className="text-fg-subtle text-[11px]">
+                          {isLink ? '링크' : '업로드 파일'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
+            {caseTags.length > 0 && (
+              <div className="border-divider flex flex-col gap-2 border-t pt-4">
+                <span className="text-fg-subtle text-[11px]">태그</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {caseTags.map((t) => (
+                    <span
+                      key={t}
+                      className="bg-brand/10 text-brand rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           <div className="flex flex-col gap-4 lg:w-[320px]">

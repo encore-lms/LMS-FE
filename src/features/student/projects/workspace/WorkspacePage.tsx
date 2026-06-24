@@ -1768,7 +1768,7 @@ function IssuesTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="연결된 트러블슈팅"
-        action="트러블슈팅 연결"
+        action="트러블슈팅 관리"
         onAction={() => setPicking(true)}
       />
       <p className="text-fg-subtle -mt-2 text-[12px]">
@@ -1782,7 +1782,7 @@ function IssuesTab({ d }: { d: WorkspaceData }) {
       ) : linked.length === 0 ? (
         <Empty
           title="연결된 인증 트러블슈팅이 없어요"
-          description="‘트러블슈팅 연결’로 인증 완료된 사례를 연결하세요."
+          description="‘트러블슈팅 관리’로 인증 완료된 사례를 연결하세요."
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -1843,7 +1843,7 @@ function TsLinkPickerModal({
     <Modal
       open
       onClose={onClose}
-      title="트러블슈팅 연결"
+      title="트러블슈팅 관리"
       footer={
         <button
           type="button"

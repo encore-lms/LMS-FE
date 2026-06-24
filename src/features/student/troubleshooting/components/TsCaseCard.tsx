@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Timer, X } from 'lucide-react'
+import { ArrowRight, Check, Link2, Timer, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { TsCase, TsStatus, Tone } from '../types'
 
@@ -32,14 +32,17 @@ export function TsCaseCard({
   actionLabel,
   onRemove,
   removeLabel = '연결 해제',
+  connection,
 }: {
   c: TsCase
   onOpen: (c: TsCase) => void
   /** 우상단 버튼 라벨. 미지정 시 사례의 기본 액션(이어 작성/사례 열기). */
   actionLabel?: string
-  /** 지정 시 보조 '연결 해제' 버튼을 노출(프로젝트 연결 카드 전용 — 실제 사례는 삭제하지 않음). */
+  /** 지정 시 우상단 보조 버튼을 노출 — 목록은 사례 삭제, 워크스페이스는 연결 해제(removeLabel로 구분). */
   onRemove?: () => void
   removeLabel?: string
+  /** 헤더에 프로젝트 연결 상태 칩 — 인증 완료 사례에 연결됨(프로젝트명)/연결 필요 표시. */
+  connection?: { label: string; ok: boolean }
 }) {
   const label = actionLabel ?? c.actionLabel
   // 작성 중(이어 작성)만 강조 버튼, 나머지는 보조 버튼.
@@ -70,6 +73,18 @@ export function TsCaseCard({
           {c.independent && (
             <span className="bg-brand/10 text-brand flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
               <Check className="size-3" /> 독립 해결
+            </span>
+          )}
+          {connection && (
+            <span
+              className={cn(
+                'flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold',
+                connection.ok
+                  ? 'bg-success-bg text-success'
+                  : 'bg-warning-bg text-warning',
+              )}
+            >
+              <Link2 className="size-3" /> {connection.label}
             </span>
           )}
           <span className="text-fg-subtle flex items-center gap-1 text-[11px]">

@@ -19,6 +19,12 @@ interface ProjectTsLinksState {
   links: Record<string, string[]>
   /** 해당 프로젝트의 현재 연결 목록(명시 없으면 프로젝트별 기본값, 그것도 없으면 빈 목록). */
   linksFor: (projectId: string) => string[]
+  /** 사례가 연결된 프로젝트 id(없으면 null) — 사례 ↔ 프로젝트 역방향 조회(카드·상세 표시). */
+  projectIdFor: (caseId: string) => string | null
+  /** 사례를 한 프로젝트에만 연결 — 기존 다른 프로젝트 연결은 해제(단일 연결 보장). */
+  connectCase: (projectId: string, caseId: string) => void
+  /** 사례를 모든 프로젝트에서 연결 해제. */
+  disconnectCase: (caseId: string) => void
   link: (projectId: string, caseId: string) => void
   unlink: (projectId: string, caseId: string) => void
 }
@@ -26,6 +32,41 @@ interface ProjectTsLinksState {
 export const useProjectTsLinks = create<ProjectTsLinksState>((set, get) => ({
   links: {},
   linksFor: (projectId) => get().links[projectId] ?? SEED[projectId] ?? [],
+  projectIdFor: (caseId) => {
+    const s = get()
+    const pids = new Set([...Object.keys(SEED), ...Object.keys(s.links)])
+    for (const pid of pids) {
+      const cur = s.links[pid] ?? SEED[pid] ?? []
+      if (cur.includes(caseId)) return pid
+    }
+    return null
+  },
+  // 사례 → 프로젝트(단일). 다른 프로젝트에 연결돼 있었으면 거기서 떼고 새 프로젝트에 붙인다.
+  connectCase: (projectId, caseId) =>
+    set((s) => {
+      const pids = new Set([...Object.keys(SEED), ...Object.keys(s.links)])
+      const links = { ...s.links }
+      for (const pid of pids) {
+        const cur = links[pid] ?? SEED[pid] ?? []
+        links[pid] =
+          pid === projectId
+            ? cur.includes(caseId)
+              ? cur
+              : [...cur, caseId]
+            : cur.filter((x) => x !== caseId)
+      }
+      return { links }
+    }),
+  disconnectCase: (caseId) =>
+    set((s) => {
+      const pids = new Set([...Object.keys(SEED), ...Object.keys(s.links)])
+      const links = { ...s.links }
+      for (const pid of pids) {
+        const cur = links[pid] ?? SEED[pid] ?? []
+        links[pid] = cur.filter((x) => x !== caseId)
+      }
+      return { links }
+    }),
   link: (projectId, caseId) =>
     set((s) => {
       const cur = s.links[projectId] ?? SEED[projectId] ?? []

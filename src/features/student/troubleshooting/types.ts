@@ -50,6 +50,7 @@ export interface TsCase {
   categoryTone: Tone
   status: TsStatus
   statusLabel: string
+  completed?: boolean // 작성 완료(인증 요청 준비) 여부 — draft 사례에만 의미
   independent: boolean // 독립 해결
   days: string // "3일"
   accentTone: Tone
@@ -93,6 +94,7 @@ export interface TsCaseDetail {
   categoryTone: Tone
   status: TsStatus
   statusLabel: string
+  completed: boolean // 작성 완료(인증 요청 준비) 여부 — draft 사례에만 의미
   independent: boolean
   days: string
   situation: string
@@ -102,9 +104,49 @@ export interface TsCaseDetail {
   checklist: TsCheck[]
   timeline: TsTimeline[]
   // 인증 요청 모달
+  certProject: string // 인증 모달 표시용 — 연결된 프로젝트명(없으면 안내 문구)
   certReviewer: string // "클라우드 배포 · 강사 검토"
   certChecklist: string[]
+  // 프로젝트 연결 — 없으면 미연결. 연결 단위는 프로젝트(이슈 단위 연결은 제외).
+  projectLink?: TsProjectLink | null
 }
+
+/**
+ * 사례 ↔ 프로젝트 연결. 연결 단위는 "프로젝트"(이슈 단위 연결은 제외).
+ * projectTitle 은 표시용 비정규화 값.
+ */
+export interface TsProjectLink {
+  projectId: string
+  projectTitle: string
+}
+
+/** 연결 모달 선택지 — 추후 /student/projects 워크스페이스로 대체될 정적 카탈로그. */
+export interface TsLinkableProject {
+  id: string
+  title: string
+  kindLabel: string // "팀" | "개인"
+  desc: string // 짧은 설명(부제)
+}
+export const TS_LINKABLE_PROJECTS: TsLinkableProject[] = [
+  {
+    id: 'p1',
+    title: '주문 관리 MSA 백엔드',
+    kindLabel: '팀',
+    desc: '주문·결제 도메인 마이크로서비스',
+  },
+  {
+    id: 'p2',
+    title: '실시간 채팅 서버',
+    kindLabel: '팀',
+    desc: 'WebSocket 기반 실시간 채팅 인프라',
+  },
+  {
+    id: 'p3',
+    title: '포트폴리오 REST API',
+    kindLabel: '개인',
+    desc: '개인 포트폴리오 백엔드 API',
+  },
+]
 
 /** 변경 제안 변경 항목 */
 export const TS_CHANGE_ITEMS = [

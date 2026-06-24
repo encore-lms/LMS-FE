@@ -117,7 +117,7 @@ describe('WorkspacePage home', () => {
     await user.click(screen.getByRole('button', { name: '홈' }))
     await user.click(screen.getByRole('button', { name: /열린 이슈/ }))
     expect(
-      screen.getByRole('button', { name: '트러블슈팅 연결' }),
+      screen.getByRole('button', { name: '트러블슈팅 관리' }),
     ).toBeInTheDocument()
   })
 
@@ -213,7 +213,7 @@ describe('WorkspacePage home', () => {
     ).toBeInTheDocument()
 
     // 연결 피커 — 인증 완료(ts1)만 후보, 작성 중(ts3)은 제외.
-    await user.click(screen.getByRole('button', { name: '트러블슈팅 연결' }))
+    await user.click(screen.getByRole('button', { name: '트러블슈팅 관리' }))
     expect(
       screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
     ).toBeInTheDocument()

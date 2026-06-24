@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   CheckCircle2,
   FileText,
@@ -10,10 +11,27 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useTsList } from '../api/troubleshooting'
+import { tsKeys } from './queryKeys'
+import { useProjectTsLinks } from './projectLinks'
 import { TsCaseCard } from './components/TsCaseCard'
-import type { Tone, TsCase } from './types'
+import {
+  TS_LINKABLE_PROJECTS,
+  type Tone,
+  type TsCase,
+  type TsListData,
+} from './types'
+
+// 목록 카드 우상단 버튼 라벨 — 상태/작성완료 기준.
+//   작성 중(미완료) 이어 작성 · 작성 완료 인증요청 · 검토 중 검토 중 · 인증 완료 사례 열기
+function listActionLabel(c: TsCase): string {
+  if (c.status === 'draft') return c.completed ? '인증요청' : '이어 작성'
+  if (c.status === 'reviewing') return '검토 중'
+  return '사례 열기'
+}
 
 // 트러블슈팅 사례 목록 (/student/troubleshooting) — Figma 360:1297.
 // 통계카드 우상단 아이콘(노트/체크/깃발/스톱워치) — 키별 매핑.
@@ -46,10 +64,16 @@ const PAGE_SIZE = 3
 
 export default function TroubleshootingListPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  // 프로젝트 연결 상태(인증완료 카드 표시) — 스토어 전체 구독으로 연결 변경 시 즉시 반영.
+  const projectLinks = useProjectTsLinks()
   const { data, isPending, isError, refetch } = useTsList()
   const [active, setActive] = useState('all')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
+  // 삭제 확인 대상 — 인증 완료 전(작성 중·검토 중) 사례만 삭제 가능.
+  const [delTarget, setDelTarget] = useState<TsCase | null>(null)
   // 카테고리·검색어가 바뀌면 1페이지로 되돌린다.
   useEffect(() => {
     setPage(1)
@@ -73,17 +97,23 @@ export default function TroubleshootingListPage() {
     )
   }
 
-  // 상태별 진입 분기:
-  //   작성 중(draft)   → '이어 작성': 작성 폼으로(기존 내용 이어서 작성).
-  //   검토 중(reviewing) → '사례 열기': 상세로(강사 승인 대기 표시).
-  //   인증 완료(certified) → '사례 열기': 상세로(원본 잠금 → 상세에서 '변경 제안' 버튼만 노출).
-  //     변경 제안 페이지로 바로 진입하지 않고, 상세에서 사용자가 직접 변경 제안을 시작한다.
+  // 트러블슈팅 흐름은 상세(/:id) 한 페이지로 통일 — 어떤 상태든 상세로 진입한다.
+  //   작성 중(draft)     → 상세에서 바로 편집(이어 작성).
+  //   검토 중(reviewing) → 읽기전용 + '수정'으로 보완(인증 완료 전까지).
+  //   인증 완료(certified) → 잠금 + '변경 제안'.
   const open = (c: TsCase) => {
-    if (c.status === 'draft') {
-      navigate(`/student/troubleshooting/new?id=${c.id}`)
-    } else {
-      navigate(`/student/troubleshooting/${c.id}`)
-    }
+    navigate(`/student/troubleshooting/${c.id}`)
+  }
+  // 삭제 — 인증 완료 전 사례만(목록·상세 캐시에서 제거). 확인 모달을 거친다.
+  const confirmRemove = () => {
+    if (!delTarget) return
+    const rid = delTarget.id
+    queryClient.setQueryData<TsListData>(tsKeys.list(), (old) =>
+      old ? { ...old, cases: old.cases.filter((c) => c.id !== rid) } : old,
+    )
+    queryClient.removeQueries({ queryKey: tsKeys.case(rid) })
+    toast.success('사례를 삭제했어요')
+    setDelTarget(null)
   }
 
   // 카테고리 칩 + 검색어(제목·카테고리·태그)로 사례 필터.
@@ -227,9 +257,31 @@ export default function TroubleshootingListPage() {
             검색·필터 조건에 맞는 사례가 없어요.
           </div>
         )}
-        {pageItems.map((c) => (
-          <TsCaseCard key={c.id} c={c} onOpen={open} />
-        ))}
+        {pageItems.map((c) => {
+          // 인증 완료 사례만 프로젝트 연결 칩 — 연결됨(프로젝트명)/연결 필요.
+          const proj = TS_LINKABLE_PROJECTS.find(
+            (p) => p.id === projectLinks.projectIdFor(c.id),
+          )
+          return (
+            <TsCaseCard
+              key={c.id}
+              c={c}
+              onOpen={open}
+              actionLabel={listActionLabel(c)}
+              connection={
+                c.status === 'certified'
+                  ? proj
+                    ? { label: proj.title, ok: true }
+                    : { label: '연결 필요', ok: false }
+                  : undefined
+              }
+              onRemove={
+                c.status === 'certified' ? undefined : () => setDelTarget(c)
+              }
+              removeLabel="삭제"
+            />
+          )
+        })}
       </div>
 
       <div className="flex items-center justify-between pt-1">
@@ -273,6 +325,38 @@ export default function TroubleshootingListPage() {
           </button>
         </div>
       </div>
+
+      {delTarget && (
+        <Modal
+          open
+          onClose={() => setDelTarget(null)}
+          size="sm"
+          title="사례 삭제"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setDelTarget(null)}
+                className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemove}
+                className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+              >
+                삭제
+              </button>
+            </>
+          }
+        >
+          <p className="text-fg-muted text-[13px] leading-5">
+            ‘{delTarget.title}’ 사례를 삭제할까요? 인증 완료 전 사례만 삭제할 수
+            있어요. 삭제하면 목록에서 사라집니다.
+          </p>
+        </Modal>
+      )}
     </div>
   )
 }

@@ -36,8 +36,15 @@ export const TS_STATUS_META: Record<
 }
 
 // 목록 카드 + 상세 캐시를 한 번에 전이시킨다(목록·상세 동기화).
-export function applyTsStatus(qc: QueryClient, id: string, status: TsStatus) {
+// reviewFrom — 검토 중(reviewing) 진입 시 출처(인증 요청/변경 제안)를 기록해 반려 모달 종류를 구분.
+export function applyTsStatus(
+  qc: QueryClient,
+  id: string,
+  status: TsStatus,
+  reviewFrom?: 'cert' | 'change',
+) {
   const meta = TS_STATUS_META[status]
+  const rf = reviewFrom ? { reviewFrom } : {}
   qc.setQueryData<TsListData>(tsKeys.list(), (old) =>
     old
       ? {
@@ -50,6 +57,7 @@ export function applyTsStatus(qc: QueryClient, id: string, status: TsStatus) {
                   statusLabel: meta.statusLabel,
                   actionLabel: meta.actionLabel,
                   accentTone: meta.accentTone,
+                  ...rf,
                 }
               : c,
           ),
@@ -63,6 +71,7 @@ export function applyTsStatus(qc: QueryClient, id: string, status: TsStatus) {
           status,
           statusLabel: meta.statusLabel,
           timeline: buildTimeline(status),
+          ...rf,
         }
       : old,
   )
@@ -88,4 +97,93 @@ export function patchTsCase(
     }
   })
   if (updated) qc.setQueryData(tsKeys.case(id), buildCaseDetail(updated))
+}
+
+// 강사 반려(데모) — 인증 요청(reviewing)·변경 제안을 반려하면 '이어 작성'(draft·미완료)으로
+// 되돌리고 반려 사유를 보관한다. 학생은 사유를 반영해 보완 후 다시 요청/제안할 수 있다.
+// BE 연동·강사 화면 연결 시 이 시뮬은 제거한다.
+export const TS_REJECT_REASON: Record<'cert' | 'change', string> = {
+  cert: '첨부된 로그가 운영 환경 기준이 아니라 재현이 어렵습니다. 운영 로그와 재현 절차를 보강해 다시 요청해 주세요.',
+  change:
+    '변경 후 결과 수치의 출처가 불명확합니다. 근거 링크를 첨부해 변경 사유를 보강한 뒤 다시 제안해 주세요.',
+}
+
+export function rejectTsCase(qc: QueryClient, id: string) {
+  const from =
+    qc.getQueryData<TsListData>(tsKeys.list())?.cases.find((c) => c.id === id)
+      ?.reviewFrom ?? 'cert'
+  const reason = TS_REJECT_REASON[from]
+  if (from === 'change') {
+    // 변경 제안 반려 — 원본은 인증 완료 유지(변경 미반영). 사유를 보관하고 다시 제안할 수 있다.
+    const meta = TS_STATUS_META.certified
+    qc.setQueryData<TsListData>(tsKeys.list(), (old) =>
+      old
+        ? {
+            ...old,
+            cases: old.cases.map((c) =>
+              c.id === id
+                ? {
+                    ...c,
+                    status: 'certified',
+                    statusLabel: meta.statusLabel,
+                    actionLabel: meta.actionLabel,
+                    accentTone: meta.accentTone,
+                    rejectionReason: reason,
+                    rejectionFrom: 'change',
+                  }
+                : c,
+            ),
+          }
+        : old,
+    )
+    qc.setQueryData<TsCaseDetail>(tsKeys.case(id), (old) =>
+      old
+        ? {
+            ...old,
+            status: 'certified',
+            statusLabel: meta.statusLabel,
+            completed: false,
+            timeline: buildTimeline('certified'),
+            rejectionReason: reason,
+            rejectionFrom: 'change',
+          }
+        : old,
+    )
+    return
+  }
+  // 인증 요청 반려 — '이어 작성'(draft·미완료)으로 되돌린다.
+  qc.setQueryData<TsListData>(tsKeys.list(), (old) =>
+    old
+      ? {
+          ...old,
+          cases: old.cases.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  status: 'draft',
+                  completed: false,
+                  statusLabel: '반려',
+                  actionLabel: '이어 작성',
+                  accentTone: 'danger',
+                  rejectionReason: reason,
+                  rejectionFrom: 'cert',
+                }
+              : c,
+          ),
+        }
+      : old,
+  )
+  qc.setQueryData<TsCaseDetail>(tsKeys.case(id), (old) =>
+    old
+      ? {
+          ...old,
+          status: 'draft',
+          completed: false,
+          statusLabel: '반려',
+          timeline: buildTimeline('draft'),
+          rejectionReason: reason,
+          rejectionFrom: 'cert',
+        }
+      : old,
+  )
 }

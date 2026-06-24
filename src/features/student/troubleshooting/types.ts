@@ -62,6 +62,11 @@ export interface TsCase {
   result: string
   tags: string[]
   actionLabel: string // "사례 열기" | "이어 작성"
+  // 검토 출처 — 검토 중(reviewing) 진입이 인증 요청인지 변경 제안인지. 반려 시 모달 종류 결정.
+  reviewFrom?: 'cert' | 'change'
+  // 강사 반려 — 인증 요청/변경 제안이 반려되면 사유를 보관하고 '이어 작성'으로 되돌린다.
+  rejectionReason?: string
+  rejectionFrom?: 'cert' | 'change' // 반려 출처(인증 요청 / 변경 제안)
 }
 
 export interface TsListData {
@@ -109,6 +114,9 @@ export interface TsCaseDetail {
   certChecklist: string[]
   // 프로젝트 연결 — 없으면 미연결. 연결 단위는 프로젝트(이슈 단위 연결은 제외).
   projectLink?: TsProjectLink | null
+  // 강사 반려 사유(있으면 반려 안내 모달 노출). 인증 요청/변경 제안 반려 시 설정.
+  rejectionReason?: string
+  rejectionFrom?: 'cert' | 'change'
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/components/ui/use-toast'
 import { TestModeFab } from '@/components/dev/TestModeFab'
-import { applyTsStatus } from '../flow'
+import { applyTsStatus, rejectTsCase } from '../flow'
 import type { TsStatus } from '../types'
 
 // 트러블슈팅 인증 흐름 데모 — FE 목 전용 테스트 컨트롤(사례 상세 우하단 FAB).
@@ -28,6 +28,8 @@ export function TsFlowTestNav({
     'bg-success rounded-lg px-3 py-2 text-[12px] font-bold text-white'
   const ghostBtn =
     'border-accent-strong/50 text-accent-strong hover:bg-accent-strong/10 rounded-lg border px-3 py-2 text-[12px] font-bold transition-colors'
+  const dangerBtn =
+    'border-danger/50 text-danger hover:bg-danger-bg rounded-lg border px-3 py-2 text-[12px] font-bold transition-colors'
 
   return (
     <TestModeFab note="트러블슈팅 인증 흐름 (FE 목 · 강사 인증 시뮬레이션)">
@@ -49,16 +51,28 @@ export function TsFlowTestNav({
       )}
 
       {status === 'reviewing' && (
-        <button
-          type="button"
-          onClick={() => {
-            applyTsStatus(queryClient, id, 'certified')
-            toast.success('강사가 인증을 승인했어요 · 인증 완료')
-          }}
-          className={solidBtn}
-        >
-          🧑‍🏫 강사 인증 승인 (시뮬)
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              applyTsStatus(queryClient, id, 'certified')
+              toast.success('강사가 인증을 승인했어요 · 인증 완료')
+            }}
+            className={solidBtn}
+          >
+            🧑‍🏫 강사 인증 승인 (시뮬)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              rejectTsCase(queryClient, id)
+              toast.danger('강사가 반려했어요 · 사유를 확인하고 보완하세요')
+            }}
+            className={dangerBtn}
+          >
+            🧑‍🏫 강사 반려 (시뮬)
+          </button>
+        </>
       )}
 
       {status !== 'draft' && (

@@ -72,9 +72,10 @@ export function buildCaseDetail(c: TsCase): TsCaseDetail {
     situation: c.situation,
     resolution: c.resolution,
     result: c.result,
+    // 첨부 근거 — 작성 폼에서 업로드한 파일만(로그·캡처 등). 링크 첨부는 제공하지 않는다.
     attachments: [
       { label: `${tagWord}-evidence.log`, kind: 'file' },
-      { label: 'fix-pr 링크', kind: 'link' },
+      { label: `${tagWord}-screenshot.png`, kind: 'file' },
     ],
     checklist: [
       {

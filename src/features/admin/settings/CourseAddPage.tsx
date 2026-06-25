@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import {
   AlertTriangle,
+  CheckCircle2,
   ExternalLink,
+  FileText,
   Info,
   PlusCircle,
   RotateCcw,
   Search,
+  XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -244,23 +247,27 @@ export default function CourseAddPage() {
           label="검색 결과"
           value={data.summary.total}
           hint="scn_cnt 기준"
+          icon={<FileText className="h-4 w-4" />}
         />
         <KpiCard
           label="등록 가능"
           value={data.summary.registrable}
           tone="info"
           hint="종료 제외 미등록"
+          icon={<PlusCircle className="h-4 w-4" />}
         />
         <KpiCard
           label="이미 등록"
           value={data.summary.registered}
           tone="success"
           hint="(trprId + 기수) 매칭"
+          icon={<CheckCircle2 className="h-4 w-4" />}
         />
         <KpiCard
           label="종료 과정"
           value={data.summary.ended}
           hint="endDate < today 비활성"
+          icon={<XCircle className="h-4 w-4" />}
         />
       </div>
 

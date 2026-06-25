@@ -17,6 +17,8 @@ interface KpiCardProps {
   hint?: string
   /** 값 색 강조 — 상태성 지표(대기·경고 등)에 사용 */
   tone?: KpiTone
+  /** 라벨 우측 보조 아이콘 (선택) — 미지정 시 기존과 동일하게 렌더 */
+  icon?: ReactNode
 }
 
 const TONE_VALUE: Record<KpiTone, string> = {
@@ -36,10 +38,14 @@ export function KpiCard({
   value,
   hint,
   tone = 'default',
+  icon,
 }: KpiCardProps) {
   return (
     <div className="border-border bg-surface flex flex-col gap-1 rounded-xl border p-5">
-      <span className="text-fg-muted text-sm font-medium">{label}</span>
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-fg-muted text-sm font-medium">{label}</span>
+        {icon && <span className="text-fg-subtle shrink-0">{icon}</span>}
+      </div>
       <span className={cn('text-3xl font-bold', TONE_VALUE[tone])}>
         {value}
       </span>

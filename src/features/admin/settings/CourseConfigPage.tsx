@@ -1,6 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ComponentType } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, FileText, Info, Save } from 'lucide-react'
+import {
+  AlertTriangle,
+  BadgeCheck,
+  BookOpen,
+  CheckCircle2,
+  ClipboardList,
+  Coins,
+  Eye,
+  FileText,
+  FolderOpen,
+  Gamepad2,
+  Info,
+  PenLine,
+  Save,
+  SlidersHorizontal,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -44,7 +59,23 @@ function Toggle({
   )
 }
 
-// 토글 행 — 아이콘 박스 + 이름(+변경됨 배지) + 설명 + 스위치.
+// 기능 토글·공개 정책 키별 고유 아이콘 + 컬러 (Figma 1284:9243 기준).
+type IconDef = { Icon: ComponentType<{ className?: string }>; tint: string }
+const TOGGLE_ICON: Record<string, IconDef> = {
+  mileage: { Icon: Coins, tint: 'bg-warning-bg text-warning' },
+  play: { Icon: Gamepad2, tint: 'bg-accent-bg text-accent-strong' },
+  records: { Icon: BookOpen, tint: 'bg-success-bg text-success' },
+  blog: { Icon: PenLine, tint: 'bg-info-bg text-info' },
+  library: { Icon: FolderOpen, tint: 'bg-brand/10 text-brand' },
+  studentMenu: { Icon: Eye, tint: 'bg-accent-bg text-accent-strong' },
+  certificate: { Icon: BadgeCheck, tint: 'bg-success-bg text-success' },
+}
+const DEFAULT_TOGGLE_ICON: IconDef = {
+  Icon: FileText,
+  tint: 'bg-surface-muted text-fg-muted',
+}
+
+// 토글 행 — 키별 컬러 아이콘 박스 + 이름(+변경됨 배지) + 설명 + 스위치.
 function ToggleRow({
   toggle,
   changed,
@@ -54,10 +85,16 @@ function ToggleRow({
   changed: boolean
   onChange: () => void
 }) {
+  const { Icon, tint } = TOGGLE_ICON[toggle.key] ?? DEFAULT_TOGGLE_ICON
   return (
     <div className="border-divider flex items-center gap-4 border-t px-5 py-3.5 first:border-t-0">
-      <div className="bg-surface-muted text-fg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-        <FileText className="h-4 w-4" />
+      <div
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
+          tint,
+        )}
+      >
+        <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
@@ -282,11 +319,16 @@ export default function CourseConfigPage() {
         <div className="flex flex-col gap-4">
           {/* 기본 정보 */}
           <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider border-b px-5 py-4">
-              <p className="text-fg text-sm font-bold">기본 정보</p>
-              <p className="text-fg-subtle text-xs">
-                과정명·설명·교육장·운영 상태
-              </p>
+            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+              <div className="bg-info-bg text-info flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                <FileText className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-fg text-sm font-bold">기본 정보</p>
+                <p className="text-fg-subtle text-xs">
+                  과정명·설명·교육장·운영 상태
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-3 px-5 py-4">
               <div>
@@ -321,13 +363,18 @@ export default function CourseConfigPage() {
 
           {/* 기능 토글 */}
           <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider border-b px-5 py-4">
-              <p className="text-fg text-sm font-bold">
-                기능 토글 {config?.featureToggles.length ?? 0}
-              </p>
-              <p className="text-fg-subtle text-xs">
-                수강생/매니저 사이드바 탭 노출 제어 · 끌 경우 신규 사용 차단
-              </p>
+            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+              <div className="bg-accent-bg text-accent-strong flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                <SlidersHorizontal className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-fg text-sm font-bold">
+                  기능 토글 {config?.featureToggles.length ?? 0}
+                </p>
+                <p className="text-fg-subtle text-xs">
+                  수강생/매니저 사이드바 탭 노출 제어 · 끌 경우 신규 사용 차단
+                </p>
+              </div>
             </div>
             <div>
               {(config?.featureToggles ?? []).map((t) => (
@@ -343,11 +390,16 @@ export default function CourseConfigPage() {
 
           {/* 학습 정책 */}
           <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider border-b px-5 py-4">
-              <p className="text-fg text-sm font-bold">학습 정책</p>
-              <p className="text-fg-subtle text-xs">
-                출결·퀴즈·과제 정책 — 마트 재계산 영향
-              </p>
+            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+              <div className="bg-warning-bg text-warning flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                <ClipboardList className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-fg text-sm font-bold">학습 정책</p>
+                <p className="text-fg-subtle text-xs">
+                  출결·퀴즈·과제 정책 — 마트 재계산 영향
+                </p>
+              </div>
             </div>
             <div>
               {(config?.learningPolicies ?? []).map((p, i) => (
@@ -374,11 +426,16 @@ export default function CourseConfigPage() {
 
           {/* 공개 정책 */}
           <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider border-b px-5 py-4">
-              <p className="text-fg text-sm font-bold">공개 정책</p>
-              <p className="text-fg-subtle text-xs">
-                수강생 메뉴 노출 여부 · 증명서 반영 여부
-              </p>
+            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+              <div className="bg-success-bg text-success flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                <Eye className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-fg text-sm font-bold">공개 정책</p>
+                <p className="text-fg-subtle text-xs">
+                  수강생 메뉴 노출 여부 · 증명서 반영 여부
+                </p>
+              </div>
             </div>
             <div>
               {(config?.publicToggles ?? []).map((t) => (

@@ -2,13 +2,13 @@ import { ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 
-// 설정 하위 화면 공통 브레드크럼 — [← 설정 허브] › 설정 › {현재} + 우측 route 칩.
+// 설정 하위 화면 공통 브레드크럼 — [← 설정 허브] › 설정 › {현재} (route 전달 시에만 우측 칩).
 export function SettingsBreadcrumb({
   current,
   route,
 }: {
   current: string
-  route: string
+  route?: string
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -22,9 +22,11 @@ export function SettingsBreadcrumb({
       <span className="text-fg-muted text-xs font-medium">설정</span>
       <span className="text-fg-subtle text-sm">›</span>
       <span className="text-fg text-xs font-medium">{current}</span>
-      <div className="ml-auto">
-        <StatusBadge label={route} tone="neutral" />
-      </div>
+      {route && (
+        <div className="ml-auto">
+          <StatusBadge label={route} tone="neutral" />
+        </div>
+      )}
     </div>
   )
 }

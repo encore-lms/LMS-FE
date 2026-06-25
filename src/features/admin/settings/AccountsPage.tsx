@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Clock, Info, KeyRound, UserPlus } from 'lucide-react'
+import { AlertTriangle, Clock, Info, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
@@ -11,6 +11,7 @@ import { usePageHeader } from '@/shared/store'
 import type { OpsAccount, OpsRole } from '@/shared/types'
 import { useOpsAccounts } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
+import { ScopeModal } from './ScopeModal'
 import { SettingsBreadcrumb } from './SettingsBreadcrumb'
 import { SettingsTabs } from './SettingsTabs'
 
@@ -21,6 +22,13 @@ const ROLE_TONE: Record<OpsRole, BadgeTone> = {
   MANAGER: 'accent',
   INSTRUCTOR: 'info',
   MENTOR: 'success',
+}
+
+// 역할 표 배지 라벨 — MANAGER·MENTOR는 한글 표기(요청). INSTRUCTOR는 기존 표기 유지.
+const ROLE_LABEL: Record<OpsRole, string> = {
+  MANAGER: '매니저',
+  INSTRUCTOR: 'INSTRUCTOR',
+  MENTOR: '멘토',
 }
 
 const STATUS_LABEL: Record<OpsAccount['status'], string> = {
@@ -51,18 +59,18 @@ export default function AccountsPage() {
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
-  // 비활성화 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
+  // 비활성화·담당 범위 변경 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
   const [statusOverride, setStatusOverride] = useState<
     Record<string, OpsAccount['status']>
   >({})
+  const [scopeOverride, setScopeOverride] = useState<Record<string, string>>({})
   const [modal, setModal] = useState<{
     spec: ActionModalSpec
     deactivate?: OpsAccount
   } | null>(null)
-  usePageHeader(
-    '운영 설정 · 계정 관리',
-    '§3 정본 — 매니저·강사·멘토의 역할·담당 범위·상태를 관리합니다',
-  )
+  // 담당 범위 모달 대상 계정 — non-null이면 ScopeModal이 열린다.
+  const [scopeTarget, setScopeTarget] = useState<OpsAccount | null>(null)
+  usePageHeader('운영 설정 · 계정 관리')
   const statusOf = (a: OpsAccount) => statusOverride[a.id] ?? a.status
 
   const filtered = useMemo(() => {
@@ -128,6 +136,18 @@ export default function AccountsPage() {
     setModal(null)
   }
 
+  // 담당 범위 저장 — 표의 담당 범위 셀에 즉시 반영(낙관). 빈 선택은 '담당 범위 없음'.
+  const onScopeSave = (account: OpsAccount, scope: string[]) => {
+    setScopeOverride((p) => ({
+      ...p,
+      [account.id]: scope.length ? scope.join(' · ') : '담당 범위 없음',
+    }))
+    toast.success(
+      `${account.name} · 담당 범위 ${scope.length}건 저장 — 감사 로그 기록`,
+    )
+    setScopeTarget(null)
+  }
+
   const columns: Column<OpsAccount>[] = [
     {
       key: 'user',
@@ -153,21 +173,27 @@ export default function AccountsPage() {
       key: 'role',
       header: '역할',
       className: 'w-28',
-      cell: (a) => <StatusBadge label={a.role} tone={ROLE_TONE[a.role]} />,
+      cell: (a) => (
+        <StatusBadge label={ROLE_LABEL[a.role]} tone={ROLE_TONE[a.role]} />
+      ),
     },
     {
       key: 'scope',
       header: '담당 범위',
-      cell: (a) => (
-        <div>
-          <span className="text-fg-muted text-sm">{a.scope}</span>
-          {a.scopeWarning && (
-            <p className="text-warning mt-0.5 flex items-center gap-1 text-xs">
-              <Info className="h-3 w-3" /> {a.scopeWarning}
-            </p>
-          )}
-        </div>
-      ),
+      cell: (a) => {
+        const edited = scopeOverride[a.id]
+        return (
+          <div>
+            <span className="text-fg-muted text-sm">{edited ?? a.scope}</span>
+            {/* 담당 범위를 편집하면 '범위 없음' 경고는 해소된 것으로 본다. */}
+            {!edited && a.scopeWarning && (
+              <p className="text-warning mt-0.5 flex items-center gap-1 text-xs">
+                <Info className="h-3 w-3" /> {a.scopeWarning}
+              </p>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: 'status',
@@ -208,7 +234,7 @@ export default function AccountsPage() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              openAction(a, '담당 범위 변경')
+              setScopeTarget(a)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -273,10 +299,7 @@ export default function AccountsPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb
-        current="계정 관리"
-        route="/admin/settings/accounts"
-      />
+      <SettingsBreadcrumb current="계정 관리" />
 
       {/* 히어로 */}
       <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
@@ -287,15 +310,6 @@ export default function AccountsPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              toast.info('임시 비밀번호는 발급 시 1회만 표시됩니다')
-            }
-            className="flex items-center gap-1.5 rounded-lg border border-white px-3.5 py-2 text-xs font-semibold"
-          >
-            <KeyRound className="h-3.5 w-3.5" /> 임시 비밀번호 보기
-          </button>
           <button
             type="button"
             onClick={() =>
@@ -463,6 +477,12 @@ export default function AccountsPage() {
         spec={modal?.spec ?? null}
         onClose={() => setModal(null)}
         onConfirm={onConfirm}
+      />
+
+      <ScopeModal
+        account={scopeTarget}
+        onClose={() => setScopeTarget(null)}
+        onSave={onScopeSave}
       />
     </div>
   )

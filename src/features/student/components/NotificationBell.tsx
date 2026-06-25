@@ -1,23 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bell } from 'lucide-react'
 import { useStudentNotifications } from '../api/notifications'
+import { useLocalNotificationStore } from './localNotifications'
 
 // 헤더 알림 벨 — 대시보드 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기(로컬 반영).
 // 읽음 처리 mutation은 BE 계약 확정 후 — 현재는 로컬 readIds 로 미확인 점을 끈다.
+// 멘션 등 FE 발생 알림(localNotifications)을 서버 알림 위에 합성한다.
 export function NotificationBell() {
   const { data } = useStudentNotifications()
+  const localItems = useLocalNotificationStore((s) => s.items)
   const [open, setOpen] = useState(false)
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const ref = useRef<HTMLDivElement>(null)
 
-  // 서버 unread 와 로컬 읽음 처리를 합성.
+  // 로컬 알림(최신) + 서버 알림을 합치고, 로컬 읽음 처리를 합성.
   const notifications = useMemo(
     () =>
-      (data ?? []).map((n) => ({
+      [...localItems, ...(data ?? [])].map((n) => ({
         ...n,
         unread: n.unread && !readIds.has(n.id),
       })),
-    [data, readIds],
+    [data, localItems, readIds],
   )
   const unreadCount = notifications.filter((n) => n.unread).length
 
@@ -30,7 +33,8 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
 
-  const markAllRead = () => setReadIds(new Set((data ?? []).map((n) => n.id)))
+  const markAllRead = () =>
+    setReadIds(new Set([...localItems, ...(data ?? [])].map((n) => n.id)))
 
   return (
     <div className="relative" ref={ref}>

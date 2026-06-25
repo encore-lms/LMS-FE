@@ -179,10 +179,7 @@ export default function CourseConfigPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb
-        current="교육 과정 설정"
-        route="/admin/settings/course-config"
-      />
+      <SettingsBreadcrumb current="교육 과정 설정" />
 
       {/* 히어로 */}
       <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
@@ -399,26 +396,6 @@ export default function CourseConfigPage() {
               ))}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* 변경 영향 안내 */}
-      <div className="bg-info-bg mt-5 flex items-start gap-3.5 rounded-xl p-5">
-        <div className="bg-surface flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-          <Info className="text-info h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-fg text-sm font-bold">
-            변경 시 영향을 받는 화면 — §6 완료 기준
-          </p>
-          <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
-            {(config?.impacts ?? []).map((impact) => (
-              <li key={impact} className="flex items-start gap-2">
-                <span className="bg-info mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
-                {impact}
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
 

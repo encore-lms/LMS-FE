@@ -6,7 +6,6 @@ import { Avatar } from '@/components/ui/Avatar'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { OpsAccount, OpsRole } from '@/shared/types'
 import { useOpsAccounts } from '../api/settings'
@@ -43,14 +42,6 @@ const STATUS_TONE: Record<OpsAccount['status'], BadgeTone> = {
   invited: 'warning',
   inactive: 'neutral',
 }
-
-const POLICY_ITEMS = [
-  { label: '역할 변경', value: '감사 로그 자동 저장' },
-  { label: '강사 경고', value: '담당 범위 없을 시 표시' },
-  { label: '멘토 경고', value: '팀 배정 §29에서 별도' },
-  { label: '본인 권한', value: '매니저 권한 회수 방지' },
-  { label: '기본 권한', value: '역할별 RoleAssignment' },
-]
 
 // 운영 계정 관리 (/admin/settings/accounts) — 매니저·강사·멘토 계정/권한 관제. (Figma 1284:8597)
 // 수정·담당 범위·비번 초기화·비활성화는 운영 액션 모달 v2(1306:8221)로 확인 후 실행.
@@ -310,9 +301,6 @@ export default function AccountsPage() {
       <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
         <div>
           <p className="text-xl font-bold">운영진 계정과 기본 권한 범위 관리</p>
-          <p className="mt-1 text-xs">
-            §3 정본 — 매니저·강사·멘토의 역할·담당 범위·상태를 관리합니다
-          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button
@@ -383,8 +371,7 @@ export default function AccountsPage() {
             <span className="text-fg-subtle text-xs font-medium">계정</span>
           </p>
           <p className="text-warning flex items-center gap-1 text-xs">
-            <Info className="h-3 w-3" /> 팀 배정 없음 {summary.mentorNoTeam}명 ·
-            §29
+            <Info className="h-3 w-3" /> 팀 배정 없음 {summary.mentorNoTeam}명
           </p>
         </div>
         <div className="border-border bg-surface rounded-xl border p-4">
@@ -454,28 +441,6 @@ export default function AccountsPage() {
       <div className="text-fg-subtle mt-3 text-xs">
         총 {summary.total}건 · 매니저 {summary.managers} · 강사{' '}
         {summary.instructors} · 멘토 {summary.mentors}
-      </div>
-
-      {/* 정책 카드 */}
-      <div className="bg-info-bg mt-6 flex items-start gap-3.5 rounded-xl p-5">
-        <div className="bg-surface flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-          <Info className="text-info h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-fg text-sm font-bold">
-            권한 변경 정책 · §3 완료 기준
-          </p>
-          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
-            {POLICY_ITEMS.map((p) => (
-              <div key={p.label}>
-                <p className="text-fg-subtle text-[10px] font-medium">
-                  {p.label}
-                </p>
-                <p className={cn('text-fg text-xs font-bold')}>{p.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       <ActionModal

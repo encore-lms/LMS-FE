@@ -24,7 +24,6 @@ import { AccountDetailModal } from './AccountDetailModal'
 import { AccountEditModal, type AccountEditValues } from './AccountEditModal'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { ScopeModal } from './ScopeModal'
-import { SettingsBreadcrumb } from './SettingsBreadcrumb'
 import { SettingsTabs } from './SettingsTabs'
 import { TempPasswordModal } from './TempPasswordModal'
 
@@ -403,8 +402,6 @@ export default function AccountsPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb current="계정 관리" />
-
       {/* 히어로 — 운영 대시보드 히어로와 같은 높이감(라벨 + 제목 + 요약 칩). */}
       <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
         <div className="flex flex-wrap items-start justify-between gap-4">

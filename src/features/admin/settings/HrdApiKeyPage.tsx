@@ -28,7 +28,6 @@ import type {
 } from '@/shared/types'
 import { useHrdKeys } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
-import { SettingsBreadcrumb } from './SettingsBreadcrumb'
 import { SettingsTabs } from './SettingsTabs'
 import { hrdKeySchema, type HrdKeyInput } from './hrdKey.schema'
 
@@ -348,8 +347,6 @@ export default function HrdApiKeyPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb current="HRD API Key" />
-
       {/* 히어로 */}
       <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>

@@ -14,10 +14,17 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import type { OpsAccount, OpsRole } from '@/shared/types'
+import type { OpsAccount, OpsAccountsSummary, OpsRole } from '@/shared/types'
 import { useOpsAccounts, useSettingsHub } from '../api/settings'
+import {
+  AccountCreateModal,
+  type AccountCreateValues,
+} from './AccountCreateModal'
+import { AccountDetailModal } from './AccountDetailModal'
+import { AccountEditModal, type AccountEditValues } from './AccountEditModal'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { ScopeModal } from './ScopeModal'
+import { SettingsBreadcrumb } from './SettingsBreadcrumb'
 import { SettingsTabs } from './SettingsTabs'
 import { TempPasswordModal } from './TempPasswordModal'
 
@@ -72,14 +79,75 @@ export default function AccountsPage() {
   const [scopeTarget, setScopeTarget] = useState<OpsAccount | null>(null)
   // 비밀번호 초기화 모달 대상 계정 — non-null이면 TempPasswordModal이 열린다.
   const [pwTarget, setPwTarget] = useState<OpsAccount | null>(null)
+  // 새 계정 추가 모달 개폐 + 추가된 계정(낙관, 새로고침 리셋). 표 상단에 노출.
+  const [createOpen, setCreateOpen] = useState(false)
+  const [addedAccounts, setAddedAccounts] = useState<OpsAccount[]>([])
+  // 사용자 정보 상세 모달 대상 — 표 행 클릭 시 열린다(수정은 별도 '수정' 버튼).
+  const [detailTarget, setDetailTarget] = useState<OpsAccount | null>(null)
+  // 수정 모달 대상 + 역할 변경 낙관 반영(상태는 statusOverride 공유).
+  const [editTarget, setEditTarget] = useState<OpsAccount | null>(null)
+  const [roleOverride, setRoleOverride] = useState<Record<string, OpsRole>>({})
   usePageHeader('운영 설정 · 계정 관리')
   const statusOf = (a: OpsAccount) => statusOverride[a.id] ?? a.status
+  const scopeOf = (a: OpsAccount) => scopeOverride[a.id] ?? a.scope
+  const roleOf = (a: OpsAccount) => roleOverride[a.id] ?? a.role
+
+  // 추가된 계정 + API 샘플 목록 병합 (추가분은 맨 위).
+  const allItems = useMemo(
+    () => [...addedAccounts, ...(data?.items ?? [])],
+    [addedAccounts, data],
+  )
+
+  // 요약(KPI)은 items가 전체의 샘플이라 재계산이 아닌 'API 집계 + 액션 델타'로 반영.
+  // 추가/수정(역할·상태)·비활성화 모두 델타로 보정.
+  const derivedSummary = useMemo<OpsAccountsSummary | undefined>(() => {
+    const base = data?.summary
+    if (!base) return undefined
+    const s = { ...base }
+    const apply = (role: OpsRole, st: OpsAccount['status'], sign: number) => {
+      if (role === 'MANAGER') {
+        s.managers += sign
+        if (st === 'active') s.managersActive += sign
+        if (st === 'inactive') s.managersInactive += sign
+      } else if (role === 'INSTRUCTOR') {
+        s.instructors += sign
+      } else if (role === 'MENTOR') {
+        s.mentors += sign
+      }
+      if (st === 'inactive') s.inactive += sign
+    }
+    // 추가된 계정: 순증
+    for (const a of addedAccounts) {
+      const role = roleOverride[a.id] ?? a.role
+      const st = statusOverride[a.id] ?? a.status
+      s.total += 1
+      apply(role, st, +1)
+      if (role === 'INSTRUCTOR' && (!a.scope || a.scope === '담당 범위 없음'))
+        s.instructorNoScope += 1
+      if (
+        role === 'MENTOR' &&
+        (a.scope === '팀 배정 없음' || a.scope === '담당 범위 없음')
+      )
+        s.mentorNoTeam += 1
+    }
+    // 기존(샘플) 계정의 역할/상태 변경분만 보정
+    for (const a of data?.items ?? []) {
+      const effR = roleOverride[a.id] ?? a.role
+      const effS = statusOverride[a.id] ?? a.status
+      if (effR !== a.role || effS !== a.status) {
+        apply(a.role, a.status, -1)
+        apply(effR, effS, +1)
+      }
+    }
+    return s
+  }, [data, addedAccounts, roleOverride, statusOverride])
 
   const filtered = useMemo(() => {
-    const items = data?.items ?? []
+    const items = allItems
     const needle = q.trim().toLowerCase()
     return items.filter((a) => {
-      if (role !== 'all' && a.role !== role) return false
+      if (role !== 'all' && (roleOverride[a.id] ?? a.role) !== role)
+        return false
       if (status !== 'all' && (statusOverride[a.id] ?? a.status) !== status)
         return false
       if (needle) {
@@ -88,7 +156,7 @@ export default function AccountsPage() {
       }
       return true
     })
-  }, [data, role, status, q, statusOverride])
+  }, [allItems, role, status, q, statusOverride, roleOverride])
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -104,26 +172,24 @@ export default function AccountsPage() {
     )
   }
 
-  const { summary } = data
+  const summary = derivedSummary ?? data.summary
 
-  const openAction = (a: OpsAccount, action: string) => {
-    setModal({
-      spec: {
-        title: `운영 계정 ${action}`,
-        subtitle: '역할과 담당 범위를 변경합니다.',
-        rows: [
-          { label: '계정', value: `${a.name} · ${a.role}` },
-          { label: '담당 범위', value: a.scope },
-          {
-            label: '권한 보호',
-            value: a.isSelf ? '본인 매니저 권한 회수 방지' : '해당 없음',
-          },
-          { label: '감사 로그', value: 'role_assignment_updated 기록' },
-        ],
-        confirmLabel: '저장',
-      },
-    })
+  // 수정 권한: 담당 매니저만 같은 과정·기수의 강사/멘토를 수정 (매니저↔매니저 불가).
+  const currentUser = data.items.find((a) => a.isSelf) ?? null
+  const scopeOverlap = (managerScope: string, targetScope: string) => {
+    if (/전체|모든\s*과정/.test(managerScope)) return true
+    if (!targetScope || /없음/.test(targetScope)) return false
+    return managerScope
+      .split('·')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .some((t) => targetScope.includes(t))
   }
+  const canEdit = (a: OpsAccount) =>
+    !!currentUser &&
+    roleOf(currentUser) === 'MANAGER' &&
+    (roleOf(a) === 'INSTRUCTOR' || roleOf(a) === 'MENTOR') &&
+    scopeOverlap(scopeOf(currentUser), scopeOf(a))
 
   const onConfirm = (memo: string) => {
     const target = modal?.deactivate
@@ -148,6 +214,35 @@ export default function AccountsPage() {
       `${account.name} · 담당 범위 ${scope.length}건 저장 — 감사 로그 기록`,
     )
     setScopeTarget(null)
+  }
+
+  // 새 계정 추가 — 목록 상단에 낙관적 추가(상태=초대 전). KPI는 derivedSummary가 반영.
+  const onCreate = (values: AccountCreateValues) => {
+    const acc: OpsAccount = {
+      id: `new-${Date.now()}`,
+      name: values.name,
+      email: values.email,
+      role: values.role,
+      scope: '담당 범위 없음',
+      scopeWarning:
+        values.role === 'INSTRUCTOR' ? '강사는 최소 1개 이상 권장' : undefined,
+      status: 'invited',
+      lastLoginAt: null,
+      isSelf: false,
+    }
+    setAddedAccounts((p) => [acc, ...p])
+    toast.success(
+      `${acc.name} · 계정 초대 발송 — account_created 감사 로그 기록`,
+    )
+    setCreateOpen(false)
+  }
+
+  // 계정 수정 저장 — 역할·상태 낙관 반영. 담당 범위는 ScopeModal에서 별도.
+  const onEditSave = (account: OpsAccount, values: AccountEditValues) => {
+    setRoleOverride((p) => ({ ...p, [account.id]: values.role }))
+    setStatusOverride((p) => ({ ...p, [account.id]: values.status }))
+    toast.success(`${account.name} · 계정 수정 — role_assignment_updated 기록`)
+    setEditTarget(null)
   }
 
   const columns: Column<OpsAccount>[] = [
@@ -175,9 +270,10 @@ export default function AccountsPage() {
       key: 'role',
       header: '역할',
       className: 'w-28',
-      cell: (a) => (
-        <StatusBadge label={ROLE_LABEL[a.role]} tone={ROLE_TONE[a.role]} />
-      ),
+      cell: (a) => {
+        const ro = roleOf(a)
+        return <StatusBadge label={ROLE_LABEL[ro]} tone={ROLE_TONE[ro]} />
+      },
     },
     {
       key: 'scope',
@@ -234,16 +330,20 @@ export default function AccountsPage() {
       className: 'w-72',
       cell: (a) => (
         <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              openAction(a, '수정')
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            수정
-          </button>
+          {canEdit(a) ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditTarget(a)
+              }}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+            >
+              수정
+            </button>
+          ) : (
+            <span className="text-fg-subtle px-2 py-1 text-xs">수정 불가</span>
+          )}
           <button
             type="button"
             onClick={(e) => {
@@ -303,6 +403,8 @@ export default function AccountsPage() {
 
   return (
     <div className="p-8">
+      <SettingsBreadcrumb current="계정 관리" />
+
       {/* 히어로 — 운영 대시보드 히어로와 같은 높이감(라벨 + 제목 + 요약 칩). */}
       <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -331,30 +433,7 @@ export default function AccountsPage() {
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={() =>
-                setModal({
-                  spec: {
-                    title: '새 계정 추가',
-                    subtitle: '운영진 계정을 새로 만들고 초대를 보냅니다.',
-                    rows: [
-                      {
-                        label: '계정',
-                        value: '이메일 초대 — 첫 로그인 시 활성',
-                      },
-                      {
-                        label: '기본 권한',
-                        value: '역할별 RoleAssignment 적용',
-                      },
-                      {
-                        label: '담당 범위',
-                        value: '생성 후 담당 범위에서 배정',
-                      },
-                      { label: '감사 로그', value: 'account_created 기록' },
-                    ],
-                    confirmLabel: '저장',
-                  },
-                })
-              }
+              onClick={() => setCreateOpen(true)}
               className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
             >
               <UserPlus className="h-3.5 w-3.5" /> 새 계정 추가
@@ -470,7 +549,7 @@ export default function AccountsPage() {
           columns={columns}
           rows={filtered}
           rowKey={(a) => a.id}
-          onRowClick={(a) => openAction(a, '수정')}
+          onRowClick={(a) => setDetailTarget(a)}
           empty="조건에 맞는 계정이 없어요"
         />
       </div>
@@ -534,6 +613,34 @@ export default function AccountsPage() {
       />
 
       <TempPasswordModal account={pwTarget} onClose={() => setPwTarget(null)} />
+
+      <AccountCreateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={onCreate}
+      />
+
+      <AccountDetailModal
+        account={detailTarget}
+        role={detailTarget ? roleOf(detailTarget) : 'MANAGER'}
+        scope={detailTarget ? scopeOf(detailTarget) : ''}
+        status={detailTarget ? statusOf(detailTarget) : 'active'}
+        canEdit={detailTarget ? canEdit(detailTarget) : false}
+        onClose={() => setDetailTarget(null)}
+        onEdit={() => {
+          const a = detailTarget
+          setDetailTarget(null)
+          if (a) setEditTarget(a)
+        }}
+      />
+
+      <AccountEditModal
+        account={editTarget}
+        role={editTarget ? roleOf(editTarget) : 'MANAGER'}
+        status={editTarget ? statusOf(editTarget) : 'active'}
+        onClose={() => setEditTarget(null)}
+        onSave={onEditSave}
+      />
     </div>
   )
 }

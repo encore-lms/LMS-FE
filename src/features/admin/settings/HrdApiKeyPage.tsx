@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -57,23 +57,26 @@ export default function HrdApiKeyPage() {
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all')
   const [activateNow, setActivateNow] = useState(true)
   const [modal, setModal] = useState<ActionModalSpec | null>(null)
-  usePageHeader(
-    '운영 설정 · HRD API Key',
-    'HRD-Net 연동 API Key를 등록·교체·폐기합니다',
-  )
+  // 폐기/등록 낙관 반영 — mock(새로고침 리셋).
+  const [revokedIds, setRevokedIds] = useState<Record<string, boolean>>({})
+  const [addedKeys, setAddedKeys] = useState<HrdApiKey[]>([])
+  const [addedHistory, setAddedHistory] = useState<HrdKeyHistoryRow[]>([])
+  usePageHeader('운영 설정 · HRD API Key')
 
   const {
     register,
     handleSubmit,
     reset,
+    setFocus,
     formState: { errors },
   } = useForm<HrdKeyInput>({ resolver: zodResolver(hrdKeySchema) })
+  const formRef = useRef<HTMLFormElement>(null)
 
   const filteredHistory = useMemo(() => {
-    const rows = data?.history ?? []
+    const rows = [...addedHistory, ...(data?.history ?? [])]
     if (historyFilter === 'all') return rows
     return rows.filter((h) => h.action === historyFilter)
-  }, [data, historyFilter])
+  }, [data, addedHistory, historyFilter])
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -90,6 +93,14 @@ export default function HrdApiKeyPage() {
   }
 
   const { summary } = data
+  const keys = [...addedKeys, ...data.keys]
+  const statusOf = (k: HrdApiKey) => (revokedIds[k.id] ? 'revoked' : k.status)
+  // 'MM-DD HH:MM' 스탬프 (mock 이력용).
+  const stamp = () => {
+    const d = new Date()
+    const p = (n: number) => String(n).padStart(2, '0')
+    return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+  }
 
   const openHistoryDetail = (h: HrdKeyHistoryRow) => {
     setModal({
@@ -109,12 +120,79 @@ export default function HrdApiKeyPage() {
   }
 
   const onRegister = handleSubmit((input) => {
+    const masked = `${input.key.slice(0, 4).toUpperCase()}****${input.key
+      .slice(-4)
+      .toUpperCase()}`
+    const key: HrdApiKey = {
+      id: `key-new-${Date.now()}`,
+      name: input.name,
+      isPrimary: false,
+      maskedKey: masked,
+      createdAt: new Date().toISOString().slice(0, 10),
+      lastUsedAt: '미사용',
+      status: 'active',
+    }
+    setAddedKeys((p) => [key, ...p])
+    setAddedHistory((p) => [
+      {
+        id: `hist-reg-${Date.now()}`,
+        at: stamp(),
+        action: 'register',
+        actor: '나',
+        ok: true,
+        response: null,
+        targetKey: masked,
+      },
+      ...p,
+    ])
     toast.success(
-      `${input.name} 등록 — ${activateNow ? '즉시 사용' : '보조키 보관'} (mock)`,
+      `${input.name} 등록 — ${activateNow ? '즉시 사용' : '보조키 보관'}`,
     )
-    toast.info('활성 키가 1개 이상이면 등록은 자동으로 교체로 처리됩니다')
     reset()
   })
+
+  const revokeKey = (k: HrdApiKey) => {
+    setRevokedIds((p) => ({ ...p, [k.id]: true }))
+    setAddedHistory((p) => [
+      {
+        id: `hist-rev-${Date.now()}`,
+        at: stamp(),
+        action: 'revoke',
+        actor: '나',
+        ok: true,
+        response: null,
+        targetKey: k.maskedKey,
+      },
+      ...p,
+    ])
+    toast.success(`${k.name} 폐기 — 감사 로그 기록`)
+  }
+
+  // 교체 — 등록 폼으로 스크롤·포커스(새 키 등록이 곧 교체).
+  const rotate = (name?: string) => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setFocus('name')
+    toast.info(
+      `${name ? `${name} ` : ''}키 교체 — 아래 폼에서 새 키를 등록하면 기존 활성 키가 자동 교체됩니다`,
+    )
+  }
+
+  // 연결 테스트 — mock 성공 + 이력 1행 추가.
+  const testConnection = (name: string, targetKey: string) => {
+    setAddedHistory((p) => [
+      {
+        id: `hist-test-${Date.now()}`,
+        at: stamp(),
+        action: 'test',
+        actor: '나',
+        ok: true,
+        response: '220ms',
+        targetKey,
+      },
+      ...p,
+    ])
+    toast.success(`${name} 연결 테스트 성공 · 220ms`)
+  }
 
   const keyColumns: Column<HrdApiKey>[] = [
     {
@@ -156,43 +234,42 @@ export default function HrdApiKeyPage() {
       key: 'status',
       header: '상태',
       className: 'w-20',
-      cell: (k) => (
-        <StatusBadge
-          label={k.status === 'active' ? '활성' : '폐기'}
-          tone={k.status === 'active' ? 'success' : 'neutral'}
-        />
-      ),
+      cell: (k) => {
+        const st = statusOf(k)
+        return (
+          <StatusBadge
+            label={st === 'active' ? '활성' : '폐기'}
+            tone={st === 'active' ? 'success' : 'neutral'}
+          />
+        )
+      },
     },
     {
       key: 'actions',
       header: '',
       align: 'right',
       cell: (k) =>
-        k.status === 'revoked' ? (
+        statusOf(k) === 'revoked' ? (
           <span className="text-fg-subtle text-xs">폐기됨 — 작업 불가</span>
         ) : (
           <div className="flex justify-end gap-1.5">
             <button
               type="button"
-              onClick={() =>
-                toast.success(`${k.name} 연결 테스트 성공 · 220ms (mock)`)
-              }
+              onClick={() => testConnection(k.name, k.maskedKey)}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
             >
               연결 테스트
             </button>
             <button
               type="button"
-              onClick={() => toast.info(`${k.name} 교체 — 새 키 등록 폼 사용`)}
+              onClick={() => rotate(k.name)}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
             >
               교체
             </button>
             <button
               type="button"
-              onClick={() =>
-                toast.success(`${k.name} 폐기 — 감사 로그 기록 (mock)`)
-              }
+              onClick={() => revokeKey(k)}
               className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
             >
               폐기
@@ -274,12 +351,13 @@ export default function HrdApiKeyPage() {
       <SettingsBreadcrumb current="HRD API Key" />
 
       {/* 히어로 */}
-      <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
+      <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
-          <p className="text-xl font-bold">
-            HRD-Net 연동 API Key를 등록·교체·폐기합니다
+          <p className="text-[11px] font-semibold tracking-wider text-white/60">
+            HRD API KEY · HRD-Net 연동
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+          <p className="mt-1 text-xl font-bold">HRD API Key 관리</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
             <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1">
               <CheckCircle2 className="h-3 w-3" />
               {summary.lastTest.ok ? '활성 키 연결 정상' : '활성 키 연결 실패'}
@@ -293,14 +371,14 @@ export default function HrdApiKeyPage() {
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => toast.success('연결 테스트 성공 · 220ms (mock)')}
+            onClick={() => testConnection('활성 키', '활성 키')}
             className="flex items-center gap-1.5 rounded-lg border border-white px-3.5 py-2 text-xs font-semibold"
           >
             <PlugZap className="h-3.5 w-3.5" /> 연결 테스트
           </button>
           <button
             type="button"
-            onClick={() => toast.info('키 교체 — 새 키 등록 시 자동 교체 처리')}
+            onClick={() => rotate()}
             className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
           >
             <RefreshCw className="h-3.5 w-3.5" /> 키 교체
@@ -354,17 +432,18 @@ export default function HrdApiKeyPage() {
                 키 원문은 마스킹되어 표시 · 암호화 저장 · 재조회 불가
               </p>
             </div>
-            <StatusBadge label={`총 ${data.keys.length}건`} tone="neutral" />
+            <StatusBadge label={`총 ${keys.length}건`} tone="neutral" />
           </div>
           <DataTable
             columns={keyColumns}
-            rows={data.keys}
+            rows={keys}
             rowKey={(k) => k.id}
             empty="등록된 키가 없어요"
           />
         </div>
 
         <form
+          ref={formRef}
           onSubmit={onRegister}
           className="border-border bg-surface h-fit rounded-xl border p-5"
         >
@@ -426,7 +505,7 @@ export default function HrdApiKeyPage() {
               type="button"
               variant="secondary"
               className="h-10 flex-1 text-sm"
-              onClick={() => toast.success('연결 테스트 성공 · 220ms (mock)')}
+              onClick={() => testConnection('새 키', '—')}
             >
               연결 테스트
             </Button>

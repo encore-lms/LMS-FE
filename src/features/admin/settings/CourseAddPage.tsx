@@ -42,6 +42,8 @@ export default function CourseAddPage() {
   const [page, setPage] = useState(1)
   const { data, isPending, isError, refetch } = useHrdCourseSearch(page)
   const [form, setForm] = useState(SEARCH_DEFAULTS)
+  // 조회 시 적용된 과정명 필터(클라이언트). 빈 값이면 전체.
+  const [appliedQuery, setAppliedQuery] = useState('')
   const [modal, setModal] = useState<ActionModalSpec | null>(null)
   // 등록/제거 낙관적 토글 — mock이라 영속 없음(새로고침 초기화).
   const [registeredOverride, setRegisteredOverride] = useState<
@@ -50,10 +52,7 @@ export default function CourseAddPage() {
   const [pendingCourse, setPendingCourse] = useState<HrdCourseResult | null>(
     null,
   )
-  usePageHeader(
-    '운영 설정 · 교육 과정 추가',
-    'HRD-Net에서 훈련 과정을 검색해 LMS에 등록합니다',
-  )
+  usePageHeader('운영 설정 · 교육 과정 추가')
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -68,6 +67,12 @@ export default function CourseAddPage() {
       />
     )
   }
+
+  const results = appliedQuery
+    ? data.results.filter(
+        (r) => r.title.includes(appliedQuery) || r.grade.includes(appliedQuery),
+      )
+    : data.results
 
   const isRegistered = (c: HrdCourseResult) =>
     registeredOverride[c.trprId] ?? c.status === 'registered'
@@ -109,12 +114,13 @@ export default function CourseAddPage() {
       <SettingsBreadcrumb current="교육 과정 추가" />
 
       {/* 히어로 */}
-      <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
+      <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
-          <p className="text-xl font-bold">
-            HRD-Net에서 훈련 과정을 검색해 LMS에 등록합니다
+          <p className="text-[11px] font-semibold tracking-wider text-white/60">
+            COURSE ADD · HRD-Net 과정 등록
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+          <p className="mt-1 text-xl font-bold">교육 과정 추가</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-white/15 px-2.5 py-1 font-mono">
               APIPO0101T.do
             </span>
@@ -206,7 +212,10 @@ export default function CourseAddPage() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setForm(SEARCH_DEFAULTS)}
+              onClick={() => {
+                setForm(SEARCH_DEFAULTS)
+                setAppliedQuery('')
+              }}
               className="border-border text-fg-muted hover:bg-surface-muted flex h-10 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium"
             >
               <RotateCcw className="h-3.5 w-3.5" /> 검색 조건 초기화
@@ -214,8 +223,15 @@ export default function CourseAddPage() {
             <button
               type="button"
               onClick={() => {
+                const q = form.title.trim()
                 setPage(1)
-                toast.success(`HRD-Net 조회 — ${data.summary.total}건 (mock)`)
+                setAppliedQuery(q)
+                const n = q
+                  ? data.results.filter(
+                      (r) => r.title.includes(q) || r.grade.includes(q),
+                    ).length
+                  : data.results.length
+                toast.success(`HRD-Net 조회 — ${n}건`)
               }}
               className="bg-brand-deep flex h-10 items-center gap-1.5 rounded-lg px-4 text-xs font-bold text-white"
             >
@@ -265,7 +281,7 @@ export default function CourseAddPage() {
         <span className="text-fg-subtle text-xs">정렬: 시작일 DESC</span>
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {data.results.map((c) => {
+        {results.map((c) => {
           const registered = isRegistered(c)
           const ended = c.status === 'ended'
           return (
@@ -340,6 +356,12 @@ export default function CourseAddPage() {
           )
         })}
       </div>
+
+      {results.length === 0 && (
+        <p className="text-fg-subtle py-10 text-center text-sm">
+          조건에 맞는 과정이 없어요
+        </p>
+      )}
 
       {/* 페이지네이션 */}
       <div className="mt-4 flex items-center justify-between">

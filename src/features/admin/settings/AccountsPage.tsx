@@ -1,5 +1,12 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, ChevronDown, Clock, Info, UserPlus } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  ChevronDown,
+  Clock,
+  Info,
+  UserPlus,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
@@ -8,10 +15,9 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import type { OpsAccount, OpsRole } from '@/shared/types'
-import { useOpsAccounts } from '../api/settings'
+import { useOpsAccounts, useSettingsHub } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { ScopeModal } from './ScopeModal'
-import { SettingsBreadcrumb } from './SettingsBreadcrumb'
 import { SettingsTabs } from './SettingsTabs'
 import { TempPasswordModal } from './TempPasswordModal'
 
@@ -47,6 +53,8 @@ const STATUS_TONE: Record<OpsAccount['status'], BadgeTone> = {
 // 수정·담당 범위·비번 초기화·비활성화는 운영 액션 모달 v2(1306:8221)로 확인 후 실행.
 export default function AccountsPage() {
   const { data, isPending, isError, refetch } = useOpsAccounts()
+  // 설정 변경 감사 로그(설정 탭 하단) — 설정 허브에서 이전된 '최근 감사 로그' 섹션용.
+  const { data: hub } = useSettingsHub()
   const toast = useToast()
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -295,35 +303,63 @@ export default function AccountsPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb current="계정 관리" />
-
-      {/* 히어로 */}
-      <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
-        <div>
-          <p className="text-xl font-bold">운영진 계정과 기본 권한 범위 관리</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              setModal({
-                spec: {
-                  title: '새 계정 추가',
-                  subtitle: '운영진 계정을 새로 만들고 초대를 보냅니다.',
-                  rows: [
-                    { label: '계정', value: '이메일 초대 — 첫 로그인 시 활성' },
-                    { label: '기본 권한', value: '역할별 RoleAssignment 적용' },
-                    { label: '담당 범위', value: '생성 후 담당 범위에서 배정' },
-                    { label: '감사 로그', value: 'account_created 기록' },
-                  ],
-                  confirmLabel: '저장',
-                },
-              })
-            }
-            className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
-          >
-            <UserPlus className="h-3.5 w-3.5" /> 새 계정 추가
-          </button>
+      {/* 히어로 — 운영 대시보드 히어로와 같은 높이감(라벨 + 제목 + 요약 칩). */}
+      <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-white/60">
+              MANAGER ACCOUNTS · 운영 계정·권한
+            </p>
+            <h2 className="mt-1 text-xl font-bold">
+              운영진 계정과 기본 권한 범위 관리
+            </h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                매니저 {summary.managers}
+              </span>
+              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                강사 {summary.instructors}
+              </span>
+              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                멘토 {summary.mentors}
+              </span>
+              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                비활성 {summary.inactive}
+              </span>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setModal({
+                  spec: {
+                    title: '새 계정 추가',
+                    subtitle: '운영진 계정을 새로 만들고 초대를 보냅니다.',
+                    rows: [
+                      {
+                        label: '계정',
+                        value: '이메일 초대 — 첫 로그인 시 활성',
+                      },
+                      {
+                        label: '기본 권한',
+                        value: '역할별 RoleAssignment 적용',
+                      },
+                      {
+                        label: '담당 범위',
+                        value: '생성 후 담당 범위에서 배정',
+                      },
+                      { label: '감사 로그', value: 'account_created 기록' },
+                    ],
+                    confirmLabel: '저장',
+                  },
+                })
+              }
+              className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
+            >
+              <UserPlus className="h-3.5 w-3.5" /> 새 계정 추가
+            </button>
+          </div>
         </div>
       </div>
 
@@ -442,6 +478,48 @@ export default function AccountsPage() {
         총 {summary.total}건 · 매니저 {summary.managers} · 강사{' '}
         {summary.instructors} · 멘토 {summary.mentors}
       </div>
+
+      {/* 최근 감사 로그 — 설정 허브에서 이전(설정 탭에 유지). */}
+      {hub && (
+        <div className="border-border bg-surface mt-6 rounded-2xl border shadow-sm">
+          <div className="flex items-center justify-between px-5 pt-4 pb-3">
+            <div>
+              <p className="text-fg text-sm font-bold">최근 감사 로그</p>
+              <p className="text-fg-subtle text-[11px]">
+                설정 변경 7일 이력 요약 · 전체는 감사 로그 페이지에서
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                toast.info('감사 로그 전체 페이지는 후속 화면 (mock)')
+              }
+              className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
+            >
+              전체 로그 <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          {hub.auditLogs.map((log) => (
+            <div
+              key={log.id}
+              className="border-divider flex items-center gap-4 border-t px-5 py-3"
+            >
+              <div className="w-24 shrink-0">
+                <p className="text-fg text-xs font-bold">{log.at}</p>
+                <p className="text-fg-subtle text-[11px]">{log.actor}</p>
+              </div>
+              <span className="bg-surface-muted text-fg-muted shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                {log.origin}
+              </span>
+              <p className="text-xs">
+                <span className="text-fg font-bold">{log.action}</span>
+                <span className="text-fg-subtle"> · </span>
+                <span className="text-fg-muted">{log.detail}</span>
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <ActionModal
         spec={modal?.spec ?? null}

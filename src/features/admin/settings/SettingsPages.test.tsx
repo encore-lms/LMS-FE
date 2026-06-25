@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
-import SettingsHubPage from './SettingsHubPage'
 import AccountsPage from './AccountsPage'
 import HrdApiKeyPage from './HrdApiKeyPage'
 import CourseConfigPage from './CourseConfigPage'
@@ -257,30 +256,7 @@ function renderWith(ui: React.ReactElement) {
   )
 }
 
-describe('SettingsHubPage', () => {
-  it('4개 설정 카드와 최근 감사 로그를 렌더한다', () => {
-    renderWith(<SettingsHubPage />)
-    expect(
-      screen.getByText('운영에 필요한 4개 설정에 진입합니다'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: /계정 관리 열기/ }),
-    ).toHaveAttribute('href', '/admin/settings/accounts')
-    expect(screen.getByRole('link', { name: /키 관리 열기/ })).toHaveAttribute(
-      'href',
-      '/admin/settings/hrd-api-key',
-    )
-    expect(
-      screen.getByRole('link', { name: /과정 설정 열기/ }),
-    ).toHaveAttribute('href', '/admin/settings/course-config')
-    expect(
-      screen.getByRole('link', { name: /과정 추가 열기/ }),
-    ).toHaveAttribute('href', '/admin/settings/courses/new')
-    expect(screen.getByText('강사 권한 부여')).toBeInTheDocument()
-  })
-})
-
-describe('AccountsPage (설정 · 계정 관리)', () => {
+describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
   it('KPI·계정 테이블·담당 범위 경고를 렌더한다', () => {
     renderWith(<AccountsPage />)
     expect(screen.getAllByText('MANAGER').length).toBeGreaterThan(0)

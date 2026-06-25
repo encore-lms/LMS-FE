@@ -40,11 +40,10 @@ describe('adminMenu 사이드바 active highlight', () => {
     expect(active('인입 격리 큐')).toBe(true)
   })
 
-  // 설정 하위 화면 — 운영 계정·권한이 별도 메뉴라 '설정'이 end=true로 잠기던 갭 보강(match).
-  it('설정 하위(hrd-api-key)에서 설정이 활성·운영 계정·권한은 비활성', () => {
+  // 설정 하위 화면 — 계정 관리가 설정 랜딩이 되며 하위 탭은 prefix 매칭으로 '설정' 활성 유지.
+  it('설정 하위(hrd-api-key)에서 설정이 활성', () => {
     renderAt('/admin/settings/hrd-api-key')
     expect(active('설정')).toBe(true)
-    expect(active('운영 계정·권한')).toBe(false)
   })
 
   it('설정 하위(course-config)에서 설정이 활성', () => {
@@ -57,13 +56,7 @@ describe('adminMenu 사이드바 active highlight', () => {
     expect(active('설정')).toBe(true)
   })
 
-  it('운영 계정·권한 경로에서는 운영 계정·권한만 활성(설정 비활성 — 이중 하이라이트 방지)', () => {
-    renderAt('/admin/settings/accounts')
-    expect(active('운영 계정·권한')).toBe(true)
-    expect(active('설정')).toBe(false)
-  })
-
-  it('설정 허브(/admin/settings)에서 설정이 활성', () => {
+  it('설정 랜딩(/admin/settings = 계정 관리)에서 설정이 활성', () => {
     renderAt('/admin/settings')
     expect(active('설정')).toBe(true)
   })

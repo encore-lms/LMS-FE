@@ -812,7 +812,7 @@ const adminHandlers = [
           key: 'accounts',
           title: '사용자·권한',
           desc: '계정·역할·기수 관리',
-          to: '/admin/settings/accounts',
+          to: '/admin/settings',
           icon: 'accounts',
         },
         {

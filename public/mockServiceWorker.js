@@ -96,6 +96,13 @@ addEventListener('fetch', function (event) {
     return
   }
 
+  // [커스텀] 강의 영상(/video/*) 바이패스 — 서비스워커를 거치면 HTTP Range가 깨져
+  // <video> 시킹/이어보기가 안 된다(seekable=0). 네트워크로 직접 보내 206 응답을 받게 한다.
+  // (msw init 으로 이 파일을 재생성하면 이 블록을 다시 추가해야 함)
+  if (new URL(event.request.url).pathname.startsWith('/video/')) {
+    return
+  }
+
   // Opening the DevTools triggers the "only-if-cached" request
   // that cannot be handled by the worker. Bypass such requests.
   if (

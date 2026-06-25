@@ -11,6 +11,7 @@ import type {
   AssignmentDetail,
   AssignmentListItem,
 } from '../course/assignments/types'
+import type { OnlineCourse } from '../course/online/types'
 
 // 수강생 "나의 과정" 훅 — 엔드포인트가 /student/* 라 학생 feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
@@ -21,6 +22,15 @@ export function useCourseHome() {
     queryKey: courseKeys.home(),
     queryFn: () =>
       apiClient.get<CourseHome>('/student/course').then((r) => r.data),
+  })
+}
+
+/** 온라인 교육(KDC) — /student/course/online */
+export function useOnlineCourse() {
+  return useQuery({
+    queryKey: courseKeys.online(),
+    queryFn: () =>
+      apiClient.get<OnlineCourse>('/student/course/online').then((r) => r.data),
   })
 }
 

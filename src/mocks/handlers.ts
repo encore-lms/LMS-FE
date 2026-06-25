@@ -31,6 +31,12 @@ function roleFromEmail(email: string): Role {
   return 'STUDENT'
 }
 
+// 개발용 교육 타입 흉내 — 로그인 ID에 'kdc'가 들어가면 K-디지털 기초역량훈련(온라인형),
+// 그 외 수강생은 K-디지털 트레이닝(부트캠프형). 두 진입 화면을 모두 바로 테스트할 수 있다.
+function trainingTypeFromEmail(email: string): 'KDT' | 'KDC' {
+  return email.toLowerCase().includes('kdc') ? 'KDC' : 'KDT'
+}
+
 // 수강생 퀴즈 — 목록은 features/student/quiz/mocks.ts(기능 로컬)로 이동. 응시/결과만 여기 유지.
 const quizHandlers = [
   http.get('/api/student/quizzes/:quizId/questions', ({ params }) => {
@@ -887,6 +893,7 @@ export const handlers = [
           email: loginId,
           name: '테스트 사용자',
           role: roleFromEmail(loginId),
+          trainingType: trainingTypeFromEmail(loginId),
         },
       },
     })

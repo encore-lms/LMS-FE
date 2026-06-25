@@ -2,6 +2,7 @@
 export const courseKeys = {
   all: ['student-course'] as const,
   home: () => [...courseKeys.all, 'home'] as const,
+  online: () => [...courseKeys.all, 'online'] as const,
   materials: () => [...courseKeys.all, 'materials'] as const,
   assignments: () => [...courseKeys.all, 'assignments'] as const,
   assignment: (id: string) => [...courseKeys.all, 'assignment', id] as const,

@@ -14,6 +14,8 @@ export const studentMenu: MenuItem[] = [
   { label: '이력서 관리', to: '/student/resume' },
   { label: '프로젝트', to: '/student/projects' },
   { label: '트러블슈팅', to: '/student/troubleshooting' },
+  // QnA 게시판 — FE 선반영(기수 게시판 폐기 2026-05-21 이후 재도입 프로토타입). 정식화 시 재합의 필요.
+  { label: 'QnA 게시판', to: '/student/qna' },
   { label: '멘토링', to: '/student/mentoring' },
   { label: '마일리지', to: '/student/mileage' },
   { label: 'PLAY', to: '/student/play' },

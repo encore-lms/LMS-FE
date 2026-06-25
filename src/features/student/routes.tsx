@@ -49,6 +49,10 @@ const TsNewPage = lazy(() => import('./troubleshooting/forms/NewCasePage'))
 const TsChangePage = lazy(
   () => import('./troubleshooting/forms/ChangeRequestPage'),
 )
+// QnA 게시판 — 목록·작성·상세(FE 선반영). 기수 게시판 폐기(2026-05-21) 이후 재도입 프로토타입.
+const QnaListPage = lazy(() => import('./qna/QnaListPage'))
+const QnaNewPage = lazy(() => import('./qna/forms/NewQuestionPage'))
+const QnaDetailPage = lazy(() => import('./qna/QnaDetailPage'))
 const PlaySelectPage = lazy(() => import('./play/PlaySelectPage'))
 const PlayTypingPage = lazy(() => import('./play/PlayTypingPage'))
 const PlayTypingResultPage = lazy(() => import('./play/PlayTypingResultPage'))
@@ -115,6 +119,10 @@ export const studentRoutes: RouteObject[] = [
         path: 'troubleshooting/:id/change-requests/new',
         element: <TsChangePage />,
       },
+      // QnA 게시판(목록·작성·상세). FE 선반영 — 실 BE API 없음(mock 전용).
+      { path: 'qna', element: <QnaListPage /> },
+      { path: 'qna/new', element: <QnaNewPage /> },
+      { path: 'qna/:id', element: <QnaDetailPage /> },
       // PLAY(게임 선택·타자/코딩/CS퀴즈 게임·게임별 결과).
       // 결과·예외 상태(저장 실패·제시문 없음·기능 미사용)는 별도 페이지가 아니라
       // 상태에 따라 뜨는 PlayStateModal 모달로 처리한다(Figma 3370:5976 states 명세).

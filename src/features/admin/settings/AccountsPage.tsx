@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Clock, Info, UserPlus } from 'lucide-react'
+import { AlertTriangle, ChevronDown, Clock, Info, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
@@ -24,10 +24,10 @@ const ROLE_TONE: Record<OpsRole, BadgeTone> = {
   MENTOR: 'success',
 }
 
-// 역할 표 배지 라벨 — MANAGER·MENTOR는 한글 표기(요청). INSTRUCTOR는 기존 표기 유지.
+// 역할 표 배지 라벨 — 한글 표기로 통일.
 const ROLE_LABEL: Record<OpsRole, string> = {
   MANAGER: '매니저',
-  INSTRUCTOR: 'INSTRUCTOR',
+  INSTRUCTOR: '강사',
   MENTOR: '멘토',
 }
 
@@ -180,14 +180,26 @@ export default function AccountsPage() {
     {
       key: 'scope',
       header: '담당 범위',
+      className: 'w-72',
+      // 담당 범위는 이 컬럼에서 계정별로 직접 선택한다 — 셀을 누르면 과정·기수 선택 모달.
       cell: (a) => {
         const edited = scopeOverride[a.id]
         return (
           <div>
-            <span className="text-fg-muted text-sm">{edited ?? a.scope}</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setScopeTarget(a)
+              }}
+              className="border-border hover:border-brand hover:bg-surface-muted text-fg-muted flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-sm"
+            >
+              <span className="truncate">{edited ?? a.scope}</span>
+              <ChevronDown className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
+            </button>
             {/* 담당 범위를 편집하면 '범위 없음' 경고는 해소된 것으로 본다. */}
             {!edited && a.scopeWarning && (
-              <p className="text-warning mt-0.5 flex items-center gap-1 text-xs">
+              <p className="text-warning mt-1 flex items-center gap-1 text-xs">
                 <Info className="h-3 w-3" /> {a.scopeWarning}
               </p>
             )}
@@ -229,16 +241,6 @@ export default function AccountsPage() {
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
           >
             수정
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setScopeTarget(a)
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            담당 범위
           </button>
           <button
             type="button"

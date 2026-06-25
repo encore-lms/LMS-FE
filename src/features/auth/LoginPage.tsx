@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Info, Lock, Mail } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, Info, Lock, Mail } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
@@ -20,6 +20,7 @@ export function LoginPage() {
   const { setSession } = useAuthActions()
   const [rememberEmail, setRememberEmail] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
@@ -95,11 +96,25 @@ export function LoginPage() {
         <Input
           label="비밀번호"
           required
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           autoComplete="current-password"
           placeholder="••••••••••"
           leftIcon={<Lock className="h-4 w-4" />}
-          rightIcon={<Info className="h-4 w-4" />}
+          rightIcon={
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+              aria-pressed={showPassword}
+              className="hover:text-fg flex items-center transition-colors"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          }
           labelAction={
             <button type="button" className="text-brand text-xs font-medium">
               비밀번호 찾기 →

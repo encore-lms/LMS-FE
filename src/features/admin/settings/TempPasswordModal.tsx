@@ -51,7 +51,7 @@ export function TempPasswordModal({
     <Modal
       open={!!account}
       onClose={onClose}
-      title={account ? `비밀번호 초기화 — ${account.name}` : undefined}
+      title="비밀번호 초기화"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -64,8 +64,8 @@ export function TempPasswordModal({
       }
     >
       <p className="text-fg-muted -mt-1 mb-4 text-sm">
-        {account?.name} 계정의 임시 비밀번호를 발급합니다. 발급된 비밀번호로
-        로그인한 뒤 비밀번호를 재설정하도록 안내하세요.
+        이 계정의 임시 비밀번호를 발급합니다. 발급된 비밀번호로 로그인한 뒤
+        비밀번호를 재설정하도록 안내하세요.
       </p>
 
       {/* 임시 비밀번호 표시 */}

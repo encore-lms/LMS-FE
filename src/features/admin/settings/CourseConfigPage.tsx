@@ -10,7 +10,6 @@ import { usePageHeader } from '@/shared/store'
 import type { CourseFeatureToggle } from '@/shared/types'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
-import { SettingsBreadcrumb } from './SettingsBreadcrumb'
 import { SettingsTabs } from './SettingsTabs'
 
 // 토글 스위치 — 기능 토글·공개 정책 행 공용.
@@ -147,11 +146,11 @@ export default function CourseConfigPage() {
     setModal({
       kind: 'cancel',
       title: '교육 과정 설정 취소 확인',
-      subtitle: '저장하지 않은 변경을 버리고 설정 허브로 돌아갑니다.',
+      subtitle: '저장하지 않은 변경을 버리고 설정으로 돌아갑니다.',
       rows: [
         { label: '미저장 변경', value: `${changedCount}건` },
         { label: '저장 영향', value: '없음' },
-        { label: '결과', value: '설정 허브로 이동' },
+        { label: '결과', value: '설정으로 이동' },
         { label: '주의', value: '버린 변경은 복구되지 않음' },
       ],
       confirmLabel: '버리기',
@@ -176,8 +175,6 @@ export default function CourseConfigPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb current="교육 과정 설정" />
-
       {/* 히어로 */}
       <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>

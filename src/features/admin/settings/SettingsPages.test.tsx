@@ -266,13 +266,30 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
     expect(screen.getByText('비활성화 불가')).toBeInTheDocument()
   })
 
-  it('수정 액션은 처리 요약 모달을 연다', async () => {
+  it('수정 액션은 운영 계정 수정 모달(역할·상태 편집)을 연다', async () => {
     const user = userEvent.setup()
     renderWith(<AccountsPage />)
     await user.click(screen.getAllByRole('button', { name: '수정' })[0])
     expect(screen.getByText('운영 계정 수정')).toBeInTheDocument()
-    expect(screen.getByText('처리 요약')).toBeInTheDocument()
-    expect(screen.getByText('role_assignment_updated 기록')).toBeInTheDocument()
+    // 새 편집 모달 — 저장 버튼 + 감사 로그 안내(모달 고유)
+    expect(screen.getByRole('button', { name: '저장' })).toBeInTheDocument()
+    expect(
+      screen.getByText(/role_assignment_updated 감사 로그가 기록됩니다/),
+    ).toBeInTheDocument()
+  })
+
+  it('행 클릭은 사용자 정보 상세 모달을 연다', async () => {
+    const user = userEvent.setup()
+    renderWith(<AccountsPage />)
+    await user.click(screen.getByText('instructor.park@playdata.io'))
+    expect(screen.getByText('사용자 정보')).toBeInTheDocument()
+  })
+
+  it('매니저 행은 수정 불가 — 담당 매니저만 강사/멘토 수정', () => {
+    renderWith(<AccountsPage />)
+    // 이정훈(매니저)은 수정 불가, 박강사(강사)만 수정 버튼
+    expect(screen.getAllByText('수정 불가').length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: '수정' })).toHaveLength(1)
   })
 
   it('역할 필터는 해당 역할만 남긴다', async () => {

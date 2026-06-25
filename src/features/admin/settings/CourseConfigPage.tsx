@@ -93,10 +93,7 @@ export default function CourseConfigPage() {
   const [modal, setModal] = useState<
     (ActionModalSpec & { kind: 'save' | 'cancel' }) | null
   >(null)
-  usePageHeader(
-    '운영 설정 · 교육 과정 설정',
-    '과정별 기능 토글과 학습/공개 정책을 관리합니다',
-  )
+  usePageHeader('운영 설정 · 교육 과정 설정')
 
   const courseId = selectedId ?? courses?.[0]?.id ?? null
   const { data: config } = useCourseConfig(courseId)
@@ -182,12 +179,13 @@ export default function CourseConfigPage() {
       <SettingsBreadcrumb current="교육 과정 설정" />
 
       {/* 히어로 */}
-      <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
+      <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
-          <p className="text-xl font-bold">
-            과정별 기능 토글과 학습/공개 정책을 관리합니다
+          <p className="text-[11px] font-semibold tracking-wider text-white/60">
+            COURSE CONFIG · 과정별 기능·정책
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+          <p className="mt-1 text-xl font-bold">교육 과정 설정</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1">
               <FileText className="h-3 w-3" /> {config?.name ?? '-'} 선택
             </span>

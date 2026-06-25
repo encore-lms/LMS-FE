@@ -10,7 +10,6 @@ export const adminMenu: MenuItem[] = [
   { label: '과정·기수·교과목', to: '/admin/education' },
   { label: '학생 관리', to: '/admin/students' },
   { label: '이력서 관리', to: '/admin/resume' },
-  { label: '운영 계정·권한', to: '/admin/settings/accounts' },
   {
     label: '인증 검토',
     to: '/admin/certificates/reviews',
@@ -37,15 +36,7 @@ export const adminMenu: MenuItem[] = [
   },
   { label: 'PLAY 관리', to: '/admin/play/typing-texts' },
   { label: '외부 연동', to: '/admin/integrations' },
-  {
-    label: '설정',
-    to: '/admin/settings',
-    // 하위 설정 화면(hrd-api-key·course-config·courses/new) 진입 시에도 활성 유지.
-    // 운영 계정·권한(/admin/settings/accounts)은 별도 메뉴라 match에서 제외 — 이중 하이라이트 방지.
-    match: [
-      '/admin/settings/hrd-api-key',
-      '/admin/settings/course-config',
-      '/admin/settings/courses',
-    ],
-  },
+  // 설정 — 랜딩(/admin/settings)이 계정 관리이며, 하위 탭(hrd-api-key·course-config·
+  // courses/new)은 prefix 매칭으로 활성 유지. 운영 계정·권한 메뉴는 설정으로 통합되어 폐지.
+  { label: '설정', to: '/admin/settings' },
 ]

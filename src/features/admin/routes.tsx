@@ -55,7 +55,7 @@ const MileageProductsPage = lazy(
 const MileageTypeLimitsPage = lazy(
   () => import('./mileage/type-limits/TypeLimitsPage'),
 )
-const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'))
+// 계정 관리 = 설정 탭 랜딩(/admin/settings). 별도 운영 계정 권한 페이지/라우트는 폐지.
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
 const CourseConfigPage = lazy(() => import('./settings/CourseConfigPage'))
@@ -153,8 +153,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'students', element: <StudentManagementPage /> },
       { path: 'resume', element: <ResumePage /> },
       { path: 'resume/:resumeId', element: <ResumeDetailPage /> },
-      { path: 'settings', element: <SettingsHubPage /> },
-      { path: 'settings/accounts', element: <SettingsAccountsPage /> },
+      { path: 'settings', element: <SettingsAccountsPage /> },
       { path: 'settings/hrd-api-key', element: <HrdApiKeyPage /> },
       { path: 'settings/course-config', element: <CourseConfigPage /> },
       { path: 'settings/courses/new', element: <CourseAddPage /> },

@@ -49,14 +49,6 @@ const HISTORY_FILTERS: { key: HistoryFilter; label: string }[] = [
   { key: 'test', label: '테스트' },
 ]
 
-const POLICY_ITEMS = [
-  { label: '키 표시', value: '앞/뒤 일부만 마스킹' },
-  { label: '저장', value: '암호화 저장' },
-  { label: '조회', value: '원문 재조회 불가' },
-  { label: '이력', value: '등록·교체·폐기·테스트 기록' },
-  { label: '연결 테스트', value: '성공/실패 사유 표시' },
-]
-
 // HRD API Key 관리 (/admin/settings/hrd-api-key) — 등록·교체·폐기 + 이력. (Figma 1284:8960)
 // 키 원문은 마스킹 표시·암호화 저장·재조회 불가(§5). 이력 상세는 운영 액션 모달 v2(1306:8257).
 export default function HrdApiKeyPage() {
@@ -279,10 +271,7 @@ export default function HrdApiKeyPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb
-        current="HRD API Key"
-        route="/admin/settings/hrd-api-key"
-      />
+      <SettingsBreadcrumb current="HRD API Key" />
 
       {/* 히어로 */}
       <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
@@ -486,26 +475,6 @@ export default function HrdApiKeyPage() {
           onRowClick={openHistoryDetail}
           empty="이력이 없어요"
         />
-      </div>
-
-      {/* 보안 규칙 */}
-      <div className="bg-info-bg mt-6 flex items-start gap-3.5 rounded-xl p-5">
-        <div className="bg-surface flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-          <ShieldCheck className="text-info h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-fg text-sm font-bold">보안 규칙 · §5 완료 기준</p>
-          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
-            {POLICY_ITEMS.map((p) => (
-              <div key={p.label}>
-                <p className="text-fg-subtle text-[10px] font-medium">
-                  {p.label}
-                </p>
-                <p className="text-fg text-xs font-bold">{p.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       <ActionModal

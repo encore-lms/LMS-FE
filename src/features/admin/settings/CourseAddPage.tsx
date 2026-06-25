@@ -27,13 +27,6 @@ const STATUS_TONE: Record<HrdCourseStatus, BadgeTone> = {
   ended: 'neutral',
 }
 
-const POLICY_ITEMS = [
-  '본 화면은 과정·기수만 등록 — 담당자(매니저·강사·멘토) 배정과 기능 토글은 §3 계정 관리·§6 교육 과정 설정에서 수행',
-  '(trainingInstitutionId + trainingGrade) 1:1 정책 — 이중 등록은 카드 액션이 자동으로 [시스템 등록 제거]로 토글',
-  'endDate < today → [종료된 과정] disabled로 표시',
-  '마지막 기수 제거 시 교육 과정 자체도 함께 삭제 (useCourseStore)',
-]
-
 // 검색 폼 기본값 — 이전 LMS CourseAddView와 동일 구성(인증키·와일드카드 like 검색).
 const SEARCH_DEFAULTS = {
   org: '플레이데이터',
@@ -113,10 +106,7 @@ export default function CourseAddPage() {
 
   return (
     <div className="p-8">
-      <SettingsBreadcrumb
-        current="교육 과정 추가"
-        route="/admin/settings/courses/new"
-      />
+      <SettingsBreadcrumb current="교육 과정 추가" />
 
       {/* 히어로 */}
       <div className="bg-brand mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl px-7 py-5 text-white">
@@ -373,24 +363,6 @@ export default function CourseAddPage() {
               {p}
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* 등록 정책 */}
-      <div className="bg-info-bg mt-6 flex items-start gap-3.5 rounded-xl p-5">
-        <div className="bg-surface flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-          <Info className="text-info h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-fg text-sm font-bold">등록 정책 · §7 완료 기준</p>
-          <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
-            {POLICY_ITEMS.map((item) => (
-              <li key={item} className="flex items-start gap-2">
-                <span className="bg-info mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
-                {item}
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
 

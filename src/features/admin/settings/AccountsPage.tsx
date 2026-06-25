@@ -14,6 +14,7 @@ import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { ScopeModal } from './ScopeModal'
 import { SettingsBreadcrumb } from './SettingsBreadcrumb'
 import { SettingsTabs } from './SettingsTabs'
+import { TempPasswordModal } from './TempPasswordModal'
 
 type RoleFilter = 'all' | OpsRole
 type StatusFilter = 'all' | 'active' | 'invited' | 'inactive'
@@ -70,6 +71,8 @@ export default function AccountsPage() {
   } | null>(null)
   // 담당 범위 모달 대상 계정 — non-null이면 ScopeModal이 열린다.
   const [scopeTarget, setScopeTarget] = useState<OpsAccount | null>(null)
+  // 비밀번호 초기화 모달 대상 계정 — non-null이면 TempPasswordModal이 열린다.
+  const [pwTarget, setPwTarget] = useState<OpsAccount | null>(null)
   usePageHeader('운영 설정 · 계정 관리')
   const statusOf = (a: OpsAccount) => statusOverride[a.id] ?? a.status
 
@@ -246,7 +249,7 @@ export default function AccountsPage() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              toast.success(`${a.name} · 임시 비밀번호 발급 (1회 표시 · 30초)`)
+              setPwTarget(a)
             }}
             className="bg-info-bg text-info hover:bg-info-bg/70 rounded-md px-2 py-1 text-xs font-medium"
           >
@@ -486,6 +489,8 @@ export default function AccountsPage() {
         onClose={() => setScopeTarget(null)}
         onSave={onScopeSave}
       />
+
+      <TempPasswordModal account={pwTarget} onClose={() => setPwTarget(null)} />
     </div>
   )
 }

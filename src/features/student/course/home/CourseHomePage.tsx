@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
-import { usePageHeader } from '@/shared/store'
+import { usePageHeader, useAuth } from '@/shared/store'
 import { useCourseHome } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
+import { OnlineCoursePage } from '../online/OnlineCoursePage'
+import { TrainingTypeTestNav } from '../TrainingTypeTestNav'
 import { CourseHero } from './components/CourseHero'
 import { CourseKpiCards } from './components/CourseKpiCards'
 import { WeekLearningCard } from './components/WeekLearningCard'
@@ -10,10 +12,25 @@ import { MiniListCard } from './components/MiniListCard'
 import { CourseNoticeCard } from './components/CourseNoticeCard'
 
 /**
- * 강의 홈 (/student/course) — 나의 과정 랜딩. 탭바 + 히어로 + KPI4 + 주차별 학습/사이드 + 공지.
- * 데이터/상태만 여기서 다루고 각 영역은 components/* 가 그린다(영역별 격리).
+ * 나의 과정 (/student/course) 진입점 — 수강생 교육 타입으로 화면을 분기한다.
+ * KDC(K-디지털 기초역량훈련) → 온라인 교육 화면, 그 외(KDT 등) → 기존 강의 홈.
  */
 export default function CourseHomePage() {
+  const { user } = useAuth()
+  return (
+    <>
+      {user?.trainingType === 'KDC' ? <OnlineCoursePage /> : <KdtCourseHome />}
+      {/* [테스트] 나의 과정 테스트 FAB(교육 타입 전환 + KDC 주차 잠금) — 삭제 시 이 줄과 위 import 제거 */}
+      <TrainingTypeTestNav />
+    </>
+  )
+}
+
+/**
+ * 강의 홈 — K-디지털 트레이닝(부트캠프형) 랜딩. 탭바 + 히어로 + KPI4 + 주차별 학습/사이드 + 공지.
+ * 데이터/상태만 여기서 다루고 각 영역은 components/* 가 그린다(영역별 격리).
+ */
+function KdtCourseHome() {
   const { data, isPending, isError, refetch } = useCourseHome()
   usePageHeader('강의 홈')
 

@@ -169,23 +169,23 @@ export function useTestHrdKey() {
   })
 }
 
+// 등록된 LMS 과정 목록 — learning-service. 실 BE 전용(mock 모드에선 401).
 export function useCourseList() {
   return useQuery({
     queryKey: adminKeys.settingsCourses(),
     queryFn: () =>
-      apiClient
-        .get<CourseListItem[]>('/admin/settings/courses')
-        .then((r) => r.data),
+      apiClient.get<CourseListItem[]>('/admin/courses').then((r) => r.data),
   })
 }
 
+// 등록 과정 상세(기본 정보 + 기수) — learning-service.
 export function useCourseConfig(courseId: string | null) {
   return useQuery({
     queryKey: adminKeys.settingsCourseConfig(courseId ?? ''),
     enabled: !!courseId,
     queryFn: () =>
       apiClient
-        .get<CourseConfigDetail>(`/admin/settings/courses/${courseId}/config`)
+        .get<CourseConfigDetail>(`/admin/courses/${courseId}`)
         .then((r) => r.data),
   })
 }

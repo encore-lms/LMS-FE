@@ -1,10 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import type {
-  SettingsHubData,
-  OpsAccountsData,
-  CourseListItem,
-  CourseConfigDetail,
-} from '@/shared/types'
+import type { SettingsHubData, OpsAccountsData } from '@/shared/types'
 import type { SettingsAuditData } from './settingsAudit.types'
 
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
@@ -339,130 +334,6 @@ const accounts: OpsAccountsData = {
   ],
 }
 
-// ── 교육 과정 설정 (Figma 1284:9243) ──
-const courses: CourseListItem[] = [
-  {
-    id: 'course-ai22',
-    name: 'AI 캠프 22기',
-    code: 'AI22',
-    campus: '강남캠퍼스',
-    status: 'operating',
-  },
-  {
-    id: 'course-ai21',
-    name: 'AI 캠프 21기',
-    code: 'AI21',
-    campus: '강남캠퍼스',
-    status: 'operating',
-  },
-  {
-    id: 'course-da5',
-    name: 'DA 5기',
-    code: 'DA5',
-    campus: '강남캠퍼스',
-    status: 'operating',
-  },
-  {
-    id: 'course-de3',
-    name: 'DE 3기',
-    code: 'DE3',
-    campus: '부산캠퍼스',
-    status: 'operating',
-  },
-  {
-    id: 'course-ai20',
-    name: 'AI 캠프 20기',
-    code: 'AI20',
-    campus: '강남캠퍼스',
-    status: 'ended',
-  },
-]
-
-const courseConfigs: Record<string, CourseConfigDetail> = Object.fromEntries(
-  courses.map((c) => [
-    c.id,
-    {
-      courseId: c.id,
-      name: c.name,
-      campus: c.campus,
-      status: c.status,
-      description:
-        c.id === 'course-ai22'
-          ? 'AI/ML 풀스택 기반 22주 과정 — LLM 추천 시스템·LangGraph·RAG 중심으로 백엔드(FastAPI), 프론트(Next.js), 데이터 파이프라인을 종합 학습합니다.'
-          : `${c.name} 운영 과정 — 기능 토글과 학습/공개 정책을 과정 단위로 관리합니다.`,
-      featureToggles: [
-        {
-          key: 'mileage',
-          label: '마일리지',
-          description: '수강생 마일리지 적립·사용 메뉴 노출',
-          enabled: true,
-        },
-        {
-          key: 'play',
-          label: 'PLAY',
-          description: 'PLAY 게임(타자 등) 노출 — 마일리지와 연동',
-          enabled: true,
-        },
-        {
-          key: 'records',
-          label: '기록실',
-          description: '블로그·자격증·스터디 기록 메뉴 노출',
-          enabled: true,
-        },
-        {
-          key: 'blog',
-          label: '블로그 작성',
-          description: '기록실 내 블로그 직접 작성 폼 허용',
-          enabled: false,
-        },
-        {
-          key: 'library',
-          label: '자료실',
-          description: '강의 자료실 진입 메뉴 노출',
-          enabled: true,
-        },
-      ],
-      learningPolicies: [
-        {
-          key: 'attendance',
-          label: '출결 기준',
-          description: 'HRD-Net 입실/퇴실 기준 · 폼 승인 정책 연동',
-        },
-        {
-          key: 'quiz',
-          label: '퀴즈 응시 정책',
-          description: '단답형/객관식 정답 처리 · 자동 재채점 큐 적용',
-        },
-        {
-          key: 'assignment',
-          label: '과제 제출 정책',
-          description: '마감 정책·재제출 정책·강사 피드백 흐름',
-        },
-      ],
-      publicToggles: [
-        {
-          key: 'studentMenu',
-          label: '수강생 메뉴 노출',
-          description:
-            '수강생 사이드바에 본 과정 메뉴 노출 (기능 토글 OFF 시 자동 숨김)',
-          enabled: true,
-        },
-        {
-          key: 'certificate',
-          label: '증명서 반영',
-          description: '수료 후 본 과정의 성취가 증명서 종합 요약에 반영',
-          enabled: true,
-        },
-      ],
-      impacts: [
-        'PLAY 토글 OFF → 수강생 사이드바의 PLAY 메뉴 즉시 숨김 · 진행 중 게임 점수는 보존',
-        '블로그 작성 OFF → 기록실 신규 블로그 작성 차단 (기존 블로그는 유지 / 자격증·스터디는 정상)',
-        '출결 기준 변경 → 마트 재계산 큐로 자동 등록 — 영향 학생 121명',
-      ],
-    },
-  ]),
-)
-
 // ── 설정 감사 로그 (Figma 5190:11189) ──
 const settingsAudit: SettingsAuditData = {
   summary: {
@@ -648,12 +519,5 @@ export const handlers = [
   ),
   http.get('/api/admin/settings/accounts', () => ok<OpsAccountsData>(accounts)),
   // HRD API Key는 learning-service(:8082) 실연동 — dev proxy가 처리(MSW mock 제거).
-  http.get('/api/admin/settings/courses', () => ok<CourseListItem[]>(courses)),
-  http.get('/api/admin/settings/courses/:courseId/config', ({ params }) => {
-    const config = courseConfigs[String(params.courseId)]
-    return config
-      ? ok<CourseConfigDetail>(config)
-      : HttpResponse.json({ message: 'not found' }, { status: 404 })
-  }),
-  // 교육 과정 추가(HRD-Net 검색·등록)는 learning-service(:8082) 실연동 — dev proxy가 처리(mock 제거).
+  // 교육 과정 설정·추가(과정 목록/상세/검색/등록)도 learning-service 실연동 — dev proxy가 처리(mock 제거).
 ]

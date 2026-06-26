@@ -132,11 +132,24 @@ export interface HrdKeySummary {
 // ── 교육 과정 설정 (Figma 1284:9243) ──
 export type CourseOperationStatus = 'operating' | 'ended' // 운영 중 / 종료
 
+// 등록된 LMS 과정 목록 1건(과정 단위 집계 — learning-service /admin/courses).
 export interface CourseListItem {
+  courseId: string
+  title: string // 'SK네트웍스 Family AI 캠프'
+  cohortCount: number // 등록된 기수 수
+  status: CourseOperationStatus
+  startDate: string | null // 최소 기수 시작 (YYYY-MM-DD)
+  endDate: string | null // 최대 기수 종료
+  updatedAt: string
+}
+
+// 과정에 속한 기수 1건.
+export interface CourseCohort {
   id: string
-  name: string // 'AI 캠프 22기'
-  code: string // 'AI22'
-  campus: string // '강남캠퍼스'
+  trprId: string
+  grade: string // '36기'
+  startDate: string
+  endDate: string
   status: CourseOperationStatus
 }
 
@@ -153,17 +166,14 @@ export interface CourseLearningPolicy {
   description: string
 }
 
+// 과정 상세(기본 정보 + 기수). 토글/정책은 후속 단위에서 BE 영속화 예정 — 현재 FE 기본값.
 export interface CourseConfigDetail {
   courseId: string
-  name: string
-  campus: string
+  title: string
   status: CourseOperationStatus
-  description: string
-  featureToggles: CourseFeatureToggle[] // 기능 토글 5
-  learningPolicies: CourseLearningPolicy[] // 학습 정책 3 (조회 전용 행)
-  publicToggles: CourseFeatureToggle[] // 공개 정책 2 — 수강생 메뉴 노출·증명서 반영
-  /** 변경 시 영향을 받는 화면 안내 — §6 완료 기준 */
-  impacts: string[]
+  startDate: string | null
+  endDate: string | null
+  cohorts: CourseCohort[]
 }
 
 // ── 교육 과정 추가 (Figma 1284:9435) ──

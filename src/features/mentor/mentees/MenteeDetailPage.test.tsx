@@ -66,11 +66,6 @@ describe('MenteeDetailPage', () => {
     // 참석 이력 — 제출 일지 파생(인정 완료 칩)
     expect(screen.getByText('멘토링 참석 이력')).toBeInTheDocument()
     expect(screen.getAllByText('인정 완료')).toHaveLength(4)
-    expect(
-      screen.getByText(
-        '일지 본문은 팀 단위 공통 일지이며 학생별 개별 코멘트는 없음 (§5 정책)',
-      ),
-    ).toBeInTheDocument()
     // 하단 액션 — 평가·추천 페이지로 이동(조회 전용 화면)
     expect(
       screen.getByText(

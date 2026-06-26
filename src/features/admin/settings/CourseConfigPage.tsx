@@ -15,6 +15,7 @@ import {
   PenLine,
   Save,
   SlidersHorizontal,
+  XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -126,6 +127,8 @@ export default function CourseConfigPage() {
   const [courseQuery, setCourseQuery] = useState('')
   // 토글 변경 dirty 셋 — '{group}:{key}' 단위로 켜짐/꺼짐 추적(mock, 저장 시 초기화).
   const [changes, setChanges] = useState<Record<string, boolean>>({})
+  // 저장된 토글 값 영속(세션) — key: `${courseId}:${group}:${key}`. 저장 시 변경값 반영.
+  const [applied, setApplied] = useState<Record<string, boolean>>({})
   const [modal, setModal] = useState<
     (ActionModalSpec & { kind: 'save' | 'cancel' }) | null
   >(null)
@@ -161,9 +164,12 @@ export default function CourseConfigPage() {
   const toggleChange = (group: string, key: string) =>
     setChanges((p) => ({ ...p, [`${group}:${key}`]: !p[`${group}:${key}`] }))
   const isChanged = (group: string, key: string) => !!changes[`${group}:${key}`]
-  // 변경 dirty면 시각적으로 토글 상태 반전 — mock 저장 전 미리보기.
+  // 저장된 값(applied) 우선, 없으면 과정 기본값. 저장은 세션 동안 유지(mock).
+  const baseEnabled = (group: string, t: CourseFeatureToggle) =>
+    applied[`${courseId}:${group}:${t.key}`] ?? t.enabled
+  // 변경 dirty면 시각적으로 토글 상태 반전 — 저장 전 미리보기.
   const effectiveEnabled = (group: string, t: CourseFeatureToggle) =>
-    isChanged(group, t.key) ? !t.enabled : t.enabled
+    isChanged(group, t.key) ? !baseEnabled(group, t) : baseEnabled(group, t)
 
   const openSave = () =>
     setModal({
@@ -196,7 +202,21 @@ export default function CourseConfigPage() {
   const onConfirm = (memo: string) => {
     if (!modal) return
     if (modal.kind === 'save') {
-      // 저장 피드백(1306:8610)은 토스트로 요약 — 변경 적용 후 dirty 초기화.
+      // 변경된 토글의 미리보기 값을 applied에 영속 — 저장 후에도 상태 유지(세션, mock).
+      setApplied((prev) => {
+        const next = { ...prev }
+        const persist = (group: string, toggles: CourseFeatureToggle[]) => {
+          for (const t of toggles) {
+            if (isChanged(group, t.key)) {
+              next[`${courseId}:${group}:${t.key}`] = effectiveEnabled(group, t)
+            }
+          }
+        }
+        persist('feature', config?.featureToggles ?? [])
+        persist('public', config?.publicToggles ?? [])
+        return next
+      })
+      // 저장 피드백은 토스트로 요약 — 변경 적용 후 dirty 초기화.
       toast.success(
         `교육 과정 설정 저장 — 변경 ${changedCount}건 · 감사 로그에 기록됨`,
       )
@@ -224,7 +244,11 @@ export default function CourseConfigPage() {
               <FileText className="h-3 w-3" /> {config?.name ?? '-'} 선택
             </span>
             <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1">
-              <CheckCircle2 className="h-3 w-3" />
+              {config?.status === 'ended' ? (
+                <XCircle className="h-3 w-3" />
+              ) : (
+                <CheckCircle2 className="h-3 w-3" />
+              )}
               {config?.status === 'ended' ? '종료' : '운영 중'}
             </span>
             {changedCount > 0 && (
@@ -348,7 +372,11 @@ export default function CourseConfigPage() {
                   운영 상태
                 </p>
                 <p className="text-fg mt-0.5 flex items-center gap-1 text-sm font-medium">
-                  <CheckCircle2 className="text-success h-3.5 w-3.5" />
+                  {config?.status === 'ended' ? (
+                    <XCircle className="text-fg-subtle h-3.5 w-3.5" />
+                  ) : (
+                    <CheckCircle2 className="text-success h-3.5 w-3.5" />
+                  )}
                   {config?.status === 'ended' ? '종료' : '운영 중'}
                 </p>
               </div>

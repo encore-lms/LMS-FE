@@ -302,11 +302,12 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
 })
 
 describe('HrdApiKeyPage', () => {
-  it('키 테이블과 폐기 키의 작업 불가 상태를 렌더한다', () => {
+  it('키 테이블과 폐기 키 삭제 버튼을 렌더한다', () => {
     renderWith(<HrdApiKeyPage />)
     expect(screen.getByText('HRD 운영키 2026')).toBeInTheDocument()
     expect(screen.getAllByText('APIPO****9K2A').length).toBeGreaterThan(0)
-    expect(screen.getByText('폐기됨 — 작업 불가')).toBeInTheDocument()
+    expect(screen.getByText('폐기됨')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '삭제' })).toBeInTheDocument()
   })
 
   it('빈 폼 등록 제출은 검증 에러를 보여준다', async () => {

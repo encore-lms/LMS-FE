@@ -910,11 +910,6 @@ const courseFeaturesMockHandler = http.get('/api/student/course-features', () =>
       features: {
         mileage: true,
         play: true,
-        records: true,
-        blog: true,
-        library: true,
-        studentMenu: true,
-        certificate: true,
       },
     },
   }),

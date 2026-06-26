@@ -132,7 +132,7 @@ export interface HrdKeySummary {
 // ── 교육 과정 설정 (Figma 1284:9243) ──
 export type CourseOperationStatus = 'operating' | 'ended' // 운영 중 / 종료
 
-// 등록된 LMS 과정 목록 1건(과정 단위 집계 — learning-service /admin/courses).
+// 등록된 LMS 과정 목록 1건(= Education, 과정 단위 집계 — learning-service /admin/courses).
 export interface CourseListItem {
   courseId: string
   title: string // 'SK네트웍스 Family AI 캠프'
@@ -140,33 +140,21 @@ export interface CourseListItem {
   status: CourseOperationStatus
   startDate: string | null // 최소 기수 시작 (YYYY-MM-DD)
   endDate: string | null // 최대 기수 종료
-  updatedAt: string
 }
 
-// 과정에 속한 기수 1건.
+// 과정에 속한 기수 1건(+기수별 기능 토글 mileage·play). 정본 Cohort + CohortFeatureConfig.
 export interface CourseCohort {
   id: string
-  trprId: string
-  grade: string // '36기'
+  cohortNo: string // '36'
+  hrdTrprId: string | null
   startDate: string
   endDate: string
   status: CourseOperationStatus
+  mileageEnabled: boolean
+  playEnabled: boolean
 }
 
-export interface CourseFeatureToggle {
-  key: string // 'mileage' | 'play' | 'records' | 'blog' | 'library'
-  label: string // '마일리지'
-  description: string
-  enabled: boolean
-}
-
-export interface CourseLearningPolicy {
-  key: string // 'attendance' | 'quiz' | 'assignment'
-  label: string
-  description: string
-}
-
-// 과정 상세(기본 정보 + 기수 + 토글/정책). 토글 enabled는 과정별 저장값(없으면 카탈로그 기본값).
+// 과정 상세(기본 정보 + 기수). 기능 토글(mileage·play)은 기수별로 가진다.
 export interface CourseConfigDetail {
   courseId: string
   title: string
@@ -174,9 +162,6 @@ export interface CourseConfigDetail {
   startDate: string | null
   endDate: string | null
   cohorts: CourseCohort[]
-  featureToggles: CourseFeatureToggle[]
-  publicToggles: CourseFeatureToggle[]
-  learningPolicies: CourseLearningPolicy[]
 }
 
 // ── 교육 과정 추가 (Figma 1284:9435) ──

@@ -1,18 +1,13 @@
-import { useMemo, useState, type ComponentType } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
-  BadgeCheck,
-  BookOpen,
   CheckCircle2,
-  ClipboardList,
   Coins,
-  Eye,
   FileText,
   FolderOpen,
   Gamepad2,
   Info,
-  PenLine,
   Save,
   SlidersHorizontal,
   XCircle,
@@ -23,17 +18,27 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import type { CourseFeatureToggle } from '@/shared/types'
+import type { CourseCohort } from '@/shared/types'
 import {
   useCourseConfig,
   useCourseList,
-  useUpdateCourseSettings,
+  useUpdateCohortSettings,
 } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { SettingsTabs } from './SettingsTabs'
 
-// 토글 스위치 — 기능 토글·공개 정책 행 공용.
-function Toggle({
+type ToggleKey = 'mileage' | 'play'
+
+const TOGGLES: { key: ToggleKey; label: string; Icon: typeof Coins }[] = [
+  { key: 'mileage', label: '마일리지', Icon: Coins },
+  { key: 'play', label: 'PLAY', Icon: Gamepad2 },
+]
+
+const periodLabel = (start: string | null, end: string | null) =>
+  start && end ? `${start} ~ ${end}` : '-'
+
+// 토글 스위치.
+function Switch({
   checked,
   label,
   onChange,
@@ -64,80 +69,20 @@ function Toggle({
   )
 }
 
-// 기능 토글·공개 정책 키별 고유 아이콘 + 컬러 (Figma 1284:9243 기준).
-type IconDef = { Icon: ComponentType<{ className?: string }>; tint: string }
-const TOGGLE_ICON: Record<string, IconDef> = {
-  mileage: { Icon: Coins, tint: 'bg-warning-bg text-warning' },
-  play: { Icon: Gamepad2, tint: 'bg-accent-bg text-accent-strong' },
-  records: { Icon: BookOpen, tint: 'bg-success-bg text-success' },
-  blog: { Icon: PenLine, tint: 'bg-info-bg text-info' },
-  library: { Icon: FolderOpen, tint: 'bg-brand/10 text-brand' },
-  studentMenu: { Icon: Eye, tint: 'bg-accent-bg text-accent-strong' },
-  certificate: { Icon: BadgeCheck, tint: 'bg-success-bg text-success' },
-}
-const DEFAULT_TOGGLE_ICON: IconDef = {
-  Icon: FileText,
-  tint: 'bg-surface-muted text-fg-muted',
-}
-
-// 토글 행 — 키별 컬러 아이콘 박스 + 이름(+변경됨 배지) + 설명 + 스위치.
-function ToggleRow({
-  toggle,
-  changed,
-  onChange,
-}: {
-  toggle: CourseFeatureToggle
-  changed: boolean
-  onChange: () => void
-}) {
-  const { Icon, tint } = TOGGLE_ICON[toggle.key] ?? DEFAULT_TOGGLE_ICON
-  return (
-    <div className="border-divider flex items-center gap-4 border-t px-5 py-3.5 first:border-t-0">
-      <div
-        className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-          tint,
-        )}
-      >
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
-          {toggle.label}
-          {changed && (
-            <span className="bg-warning-bg text-warning rounded px-1 py-px text-[10px] font-bold">
-              변경됨
-            </span>
-          )}
-        </p>
-        <p className="text-fg-muted text-xs">{toggle.description}</p>
-      </div>
-      <Toggle
-        checked={toggle.enabled}
-        label={toggle.label}
-        onChange={onChange}
-      />
-    </div>
-  )
-}
-
-const periodLabel = (start: string | null, end: string | null) =>
-  start && end ? `${start} ~ ${end}` : '-'
-
-// 교육 과정 설정 (/admin/settings/course-config) — 등록된 과정의 기본 정보 + 기능 토글·정책. (Figma 1284:9243)
-// 과정 목록·기본 정보는 learning-service 실 데이터. 토글/정책은 현재 기본값(후속 단위에서 BE 영속화).
+// 교육 과정 설정 (/admin/settings/course-config) — 등록 과정의 기본 정보 + 기수별 기능 토글(mileage·play).
+// 토글은 정본 CohortFeatureConfig 기준으로 기수 단위 저장. 저장 시 변경된 기수만 PUT.
 export default function CourseConfigPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data: courses, isPending, isError, refetch } = useCourseList()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [courseQuery, setCourseQuery] = useState('')
-  // 토글 변경 dirty 셋 — '{group}:{key}' 단위로 켜짐/꺼짐 추적(저장 시 초기화).
+  // 토글 변경 dirty 셋 — '{cohortId}:{toggleKey}' 단위로 추적(저장 시 초기화).
   const [changes, setChanges] = useState<Record<string, boolean>>({})
   const [modal, setModal] = useState<
     (ActionModalSpec & { kind: 'save' | 'cancel' }) | null
   >(null)
-  const updateSettings = useUpdateCourseSettings()
+  const updateCohort = useUpdateCohortSettings()
   usePageHeader('운영 설정 · 교육 과정 설정')
 
   const courseId = selectedId ?? courses?.[0]?.courseId ?? null
@@ -178,24 +123,38 @@ export default function CourseConfigPage() {
     )
   }
 
+  const cohorts = config?.cohorts ?? []
+  const dirtyKey = (cohortId: string, key: ToggleKey) => `${cohortId}:${key}`
+  const isChanged = (cohortId: string, key: ToggleKey) =>
+    !!changes[dirtyKey(cohortId, key)]
+  // base는 BE 저장값(cohort.mileageEnabled/playEnabled). 변경 dirty면 반전(저장 전 미리보기).
+  const baseEnabled = (cohort: CourseCohort, key: ToggleKey) =>
+    key === 'mileage' ? cohort.mileageEnabled : cohort.playEnabled
+  const effective = (cohort: CourseCohort, key: ToggleKey) =>
+    isChanged(cohort.id, key)
+      ? !baseEnabled(cohort, key)
+      : baseEnabled(cohort, key)
+  const toggle = (cohortId: string, key: ToggleKey) =>
+    setChanges((p) => ({
+      ...p,
+      [dirtyKey(cohortId, key)]: !p[dirtyKey(cohortId, key)],
+    }))
+
   const changedCount = Object.values(changes).filter(Boolean).length
-  const toggleChange = (group: string, key: string) =>
-    setChanges((p) => ({ ...p, [`${group}:${key}`]: !p[`${group}:${key}`] }))
-  const isChanged = (group: string, key: string) => !!changes[`${group}:${key}`]
-  // base는 BE 저장값(config.toggle.enabled). 변경 dirty면 반전해 저장 전 미리보기.
-  const effectiveEnabled = (group: string, t: CourseFeatureToggle) =>
-    isChanged(group, t.key) ? !t.enabled : t.enabled
+  const changedCohorts = cohorts.filter(
+    (c) => isChanged(c.id, 'mileage') || isChanged(c.id, 'play'),
+  )
 
   const openSave = () =>
     setModal({
       kind: 'save',
       title: '교육 과정 설정 저장 확인',
-      subtitle: '기능 토글과 공개 정책 변경을 저장합니다.',
+      subtitle: '기수별 기능 토글(마일리지·PLAY) 변경을 저장합니다.',
       rows: [
-        { label: '변경 건수', value: `${changedCount}건` },
         { label: '대상 과정', value: config?.title ?? '-' },
+        { label: '변경 기수', value: `${changedCohorts.length}개` },
+        { label: '변경 토글', value: `${changedCount}건` },
         { label: '영향', value: '수강생 메뉴 노출 재계산' },
-        { label: '감사 로그', value: '정책 변경 이력 기록' },
       ],
       confirmLabel: '저장',
     })
@@ -214,7 +173,7 @@ export default function CourseConfigPage() {
       confirmLabel: '버리기',
     })
 
-  const onConfirm = () => {
+  const onConfirm = async () => {
     if (!modal) return
     if (modal.kind === 'cancel') {
       setChanges({})
@@ -222,34 +181,28 @@ export default function CourseConfigPage() {
       navigate('/admin/settings')
       return
     }
-    if (!courseId) return
-    // 변경된(dirty) 토글만 모아 저장 — 새 값은 base의 반전.
-    const toggles: { key: string; enabled: boolean }[] = []
-    const collect = (group: string, list: CourseFeatureToggle[]) => {
-      for (const t of list) {
-        if (isChanged(group, t.key))
-          toggles.push({ key: t.key, enabled: !t.enabled })
-      }
-    }
-    collect('feature', config?.featureToggles ?? [])
-    collect('public', config?.publicToggles ?? [])
-    if (toggles.length === 0) {
+    if (!courseId || changedCohorts.length === 0) {
       setModal(null)
       return
     }
-    updateSettings.mutate(
-      { courseId, toggles },
-      {
-        onSuccess: () => {
-          toast.success(
-            `교육 과정 설정 저장 — 변경 ${toggles.length}건 · 감사 로그에 기록됨`,
-          )
-          setChanges({})
-          setModal(null)
-        },
-        onError: () => toast.danger('교육 과정 설정 저장에 실패했어요'),
-      },
-    )
+    try {
+      // 변경된 기수만 순차 저장(각 PUT이 최신 상세를 반환해 캐시 갱신).
+      for (const c of changedCohorts) {
+        await updateCohort.mutateAsync({
+          courseId,
+          cohortId: c.id,
+          mileageEnabled: effective(c, 'mileage'),
+          playEnabled: effective(c, 'play'),
+        })
+      }
+      toast.success(
+        `교육 과정 설정 저장 — ${changedCohorts.length}개 기수 · 감사 로그에 기록됨`,
+      )
+      setChanges({})
+      setModal(null)
+    } catch {
+      toast.danger('기수 기능 토글 저장에 실패했어요')
+    }
   }
 
   return (
@@ -258,7 +211,7 @@ export default function CourseConfigPage() {
       <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
           <p className="text-[11px] font-semibold tracking-wider text-white/60">
-            COURSE CONFIG · 과정별 기능·정책
+            COURSE CONFIG · 과정별 기능
           </p>
           <p className="mt-1 text-xl font-bold">교육 과정 설정</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
@@ -291,7 +244,8 @@ export default function CourseConfigPage() {
           <button
             type="button"
             onClick={openSave}
-            className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
+            disabled={changedCount === 0}
+            className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" /> 정책 저장
           </button>
@@ -341,14 +295,7 @@ export default function CourseConfigPage() {
               )}
             >
               <div className="min-w-0">
-                <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
-                  {c.title}
-                  {c.courseId === courseId && changedCount > 0 && (
-                    <span className="bg-warning-bg text-warning rounded px-1 py-px text-[10px] font-bold">
-                      {changedCount}
-                    </span>
-                  )}
-                </p>
+                <p className="text-fg text-sm font-medium">{c.title}</p>
                 <p className="text-fg-subtle text-xs">
                   기수 {c.cohortCount}개 · {periodLabel(c.startDate, c.endDate)}
                 </p>
@@ -371,9 +318,7 @@ export default function CourseConfigPage() {
               </div>
               <div>
                 <p className="text-fg text-sm font-bold">기본 정보</p>
-                <p className="text-fg-subtle text-xs">
-                  과정명·기간·운영 상태·기수
-                </p>
+                <p className="text-fg-subtle text-xs">과정명·기간·운영 상태</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-3 px-5 py-4">
@@ -405,41 +350,10 @@ export default function CourseConfigPage() {
                   {config?.status === 'ended' ? '종료' : '운영 중'}
                 </p>
               </div>
-              <div className="w-full">
-                <p className="text-fg-subtle text-[11px] font-medium">
-                  기수 {config?.cohorts.length ?? 0}개
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-2">
-                  {(config?.cohorts ?? []).map((co) => (
-                    <span
-                      key={co.id}
-                      className="border-border text-fg-muted inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs"
-                    >
-                      <span className="text-fg font-semibold">{co.grade}</span>
-                      <span className="tabular-nums">
-                        {co.startDate} ~ {co.endDate}
-                      </span>
-                      <span
-                        className={cn(
-                          'rounded px-1 py-px text-[10px] font-bold',
-                          co.status === 'ended'
-                            ? 'bg-surface-muted text-fg-subtle'
-                            : 'bg-success-bg text-success',
-                        )}
-                      >
-                        {co.status === 'ended' ? '종료' : '운영'}
-                      </span>
-                    </span>
-                  ))}
-                  {(config?.cohorts ?? []).length === 0 && (
-                    <span className="text-fg-subtle text-xs">기수 없음</span>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* 기능 토글 */}
+          {/* 기수별 기능 토글 */}
           <div className="border-border bg-surface rounded-xl border">
             <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
               <div className="bg-accent-bg text-accent-strong flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
@@ -447,83 +361,59 @@ export default function CourseConfigPage() {
               </div>
               <div>
                 <p className="text-fg text-sm font-bold">
-                  기능 토글 {config?.featureToggles.length ?? 0}
+                  기수별 기능 토글 · {cohorts.length}개 기수
                 </p>
                 <p className="text-fg-subtle text-xs">
-                  수강생/매니저 사이드바 탭 노출 제어 · 끌 경우 신규 사용 차단
+                  기수별 마일리지·PLAY 노출 제어 · 끌 경우 수강생 메뉴에서 숨김
                 </p>
               </div>
             </div>
             <div>
-              {(config?.featureToggles ?? []).map((t) => (
-                <ToggleRow
-                  key={t.key}
-                  toggle={{ ...t, enabled: effectiveEnabled('feature', t) }}
-                  changed={isChanged('feature', t.key)}
-                  onChange={() => toggleChange('feature', t.key)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 학습 정책 */}
-          <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
-              <div className="bg-warning-bg text-warning flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                <ClipboardList className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-fg text-sm font-bold">학습 정책</p>
-                <p className="text-fg-subtle text-xs">
-                  출결·퀴즈·과제 정책 — 마트 재계산 영향
-                </p>
-              </div>
-            </div>
-            <div>
-              {(config?.learningPolicies ?? []).map((p, i) => (
+              {cohorts.map((c) => (
                 <div
-                  key={p.key}
-                  className={cn(
-                    'border-divider px-5 py-3.5',
-                    i > 0 && 'border-t',
-                  )}
+                  key={c.id}
+                  className="border-divider flex flex-wrap items-center justify-between gap-4 border-t px-5 py-3.5 first:border-t-0"
                 >
-                  <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
-                    {p.label}
-                    {isChanged('policy', p.key) && (
-                      <span className="bg-warning-bg text-warning rounded px-1 py-px text-[10px] font-bold">
-                        변경됨
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-fg-muted text-xs">{p.description}</p>
+                  <div className="min-w-0">
+                    <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
+                      {c.cohortNo}기
+                      <StatusBadge
+                        label={c.status === 'operating' ? '운영' : '종료'}
+                        tone={c.status === 'operating' ? 'success' : 'neutral'}
+                      />
+                      {(isChanged(c.id, 'mileage') ||
+                        isChanged(c.id, 'play')) && (
+                        <span className="bg-warning-bg text-warning rounded px-1 py-px text-[10px] font-bold">
+                          변경됨
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-fg-subtle text-xs tabular-nums">
+                      {c.startDate} ~ {c.endDate}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-5">
+                    {TOGGLES.map(({ key, label, Icon }) => (
+                      <div key={key} className="flex items-center gap-2">
+                        <Icon className="text-fg-muted h-4 w-4" />
+                        <span className="text-fg-muted text-xs font-medium">
+                          {label}
+                        </span>
+                        <Switch
+                          checked={effective(c, key)}
+                          label={`${c.cohortNo}기 ${label}`}
+                          onChange={() => toggle(c.id, key)}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* 공개 정책 */}
-          <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
-              <div className="bg-success-bg text-success flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                <Eye className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-fg text-sm font-bold">공개 정책</p>
-                <p className="text-fg-subtle text-xs">
-                  수강생 메뉴 노출 여부 · 증명서 반영 여부
+              {cohorts.length === 0 && (
+                <p className="text-fg-subtle px-5 py-8 text-center text-sm">
+                  기수가 없어요
                 </p>
-              </div>
-            </div>
-            <div>
-              {(config?.publicToggles ?? []).map((t) => (
-                <ToggleRow
-                  key={t.key}
-                  toggle={{ ...t, enabled: effectiveEnabled('public', t) }}
-                  changed={isChanged('public', t.key)}
-                  onChange={() => toggleChange('public', t.key)}
-                />
-              ))}
+              )}
             </div>
           </div>
         </div>

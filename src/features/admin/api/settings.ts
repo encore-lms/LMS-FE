@@ -190,20 +190,23 @@ export function useCourseConfig(courseId: string | null) {
   })
 }
 
-export interface CourseSettingsUpdateInput {
+export interface CohortSettingsUpdateInput {
   courseId: string
-  toggles: { key: string; enabled: boolean }[]
+  cohortId: string
+  mileageEnabled: boolean
+  playEnabled: boolean
 }
 
-// 기능/공개 토글 저장(변경분만). 응답(최신 상세)을 캐시에 반영.
-export function useUpdateCourseSettings() {
+// 기수 기능 토글(mileage·play) 저장. 응답(최신 과정 상세)을 캐시에 반영.
+export function useUpdateCohortSettings() {
   const queryClient = useQueryClient()
-  return useMutation<CourseConfigDetail, Error, CourseSettingsUpdateInput>({
-    mutationFn: ({ courseId, toggles }) =>
+  return useMutation<CourseConfigDetail, Error, CohortSettingsUpdateInput>({
+    mutationFn: ({ courseId, cohortId, mileageEnabled, playEnabled }) =>
       apiClient
-        .put<CourseConfigDetail>(`/admin/courses/${courseId}/settings`, {
-          toggles,
-        })
+        .put<CourseConfigDetail>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/settings`,
+          { mileageEnabled, playEnabled },
+        )
         .then((r) => r.data),
     onSuccess: (data, { courseId }) => {
       queryClient.setQueryData(adminKeys.settingsCourseConfig(courseId), data)

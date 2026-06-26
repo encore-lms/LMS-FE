@@ -9,19 +9,15 @@ export const studentMenu: MenuItem[] = [
   // 나의 과정 = 강의홈·자료실·과제(/student/course/*) + 퀴즈(/student/quizzes)
   { label: '나의 과정', to: '/student/course', match: ['/student/quizzes'] },
   { label: '출결/태도', to: '/student/attendance' },
-  // 과정 기능 토글로 노출 제어되는 항목(교육 과정 설정 → course-features)
-  { label: '기록실', to: '/student/records', featureKey: 'records' },
-  {
-    label: '수강 역량 증명서',
-    to: '/student/certificate',
-    featureKey: 'certificate',
-  },
+  { label: '기록실', to: '/student/records' },
+  { label: '수강 역량 증명서', to: '/student/certificate' },
   { label: '이력서 관리', to: '/student/resume' },
   { label: '프로젝트', to: '/student/projects' },
   { label: '트러블슈팅', to: '/student/troubleshooting' },
   // QnA 게시판 — FE 선반영(기수 게시판 폐기 2026-05-21 이후 재도입 프로토타입). 정식화 시 재합의 필요.
   { label: 'QnA 게시판', to: '/student/qna' },
   { label: '멘토링', to: '/student/mentoring' },
+  // 과정 기능 토글(정본 CohortFeatureConfig: mileage·play)로 노출 제어.
   { label: '마일리지', to: '/student/mileage', featureKey: 'mileage' },
   { label: 'PLAY', to: '/student/play', featureKey: 'play' },
 ]

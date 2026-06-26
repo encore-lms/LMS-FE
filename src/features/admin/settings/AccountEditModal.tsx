@@ -134,8 +134,8 @@ export function AccountEditModal({
           <div className="bg-info-bg flex items-start gap-2 rounded-lg p-3">
             <Info className="text-info mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-fg-muted text-xs">
-              담당 범위는 표의 담당 범위 셀에서 변경합니다. 저장 시
-              role_assignment_updated 감사 로그가 기록됩니다.
+              담당 범위는 표의 담당 범위 셀에서 변경합니다. 저장 시 변경 내역이
+              감사 로그에 기록됩니다.
             </p>
           </div>
         </div>

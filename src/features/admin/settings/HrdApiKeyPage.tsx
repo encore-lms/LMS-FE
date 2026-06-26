@@ -112,7 +112,7 @@ export default function HrdApiKeyPage() {
           value: `${ACTION_LABEL[h.action]} · ${h.ok ? '성공' : `실패 (${h.response ?? '-'})`}`,
         },
         { label: '보안 정책', value: '키 값은 저장 후 재표시하지 않음' },
-        { label: '감사 로그', value: 'hrd_key_rotated 기록' },
+        { label: '감사 로그', value: '키 교체 이력 기록' },
       ],
       confirmLabel: '확인',
     })

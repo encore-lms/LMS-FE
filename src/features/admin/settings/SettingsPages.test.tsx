@@ -20,6 +20,8 @@ import {
   useCourseList,
   useCourseConfig,
   useHrdCourseSearch,
+  useRegisterCourse,
+  useDeleteCourseRegistration,
 } from '../api/settings'
 import type {
   SettingsHubData,
@@ -237,6 +239,8 @@ const hrdSearch: HrdCourseSearchData = {
       title: 'SK네트웍스 Family AI 캠프',
       grade: '22기',
       period: '2026-03-02 ~ 2026-08-29',
+      startDate: '2026-03-02',
+      endDate: '2026-08-29',
       capacity: 240,
       applied: 238,
       hrdUrl: 'https://www.hrd.go.kr/',
@@ -247,6 +251,8 @@ const hrdSearch: HrdCourseSearchData = {
       title: '프론트엔드 실무 과정',
       grade: '4기',
       period: '2025-01-10 ~ 2025-06-30',
+      startDate: '2025-01-10',
+      endDate: '2025-06-30',
       capacity: 180,
       applied: 176,
       hrdUrl: 'https://www.hrd.go.kr/',
@@ -257,6 +263,9 @@ const hrdSearch: HrdCourseSearchData = {
 function ok(data: unknown) {
   return { data, isPending: false, isError: false }
 }
+
+// 등록 mutation 호출 검증용 스파이(서버 상태 기반이라 stub은 토글하지 않음).
+const registerMutate = vi.fn()
 
 function mockAll() {
   vi.mocked(useSettingsHub).mockReturnValue(
@@ -296,6 +305,15 @@ function mockAll() {
   vi.mocked(useHrdCourseSearch).mockReturnValue(
     ok(hrdSearch) as unknown as ReturnType<typeof useHrdCourseSearch>,
   )
+  registerMutate.mockClear()
+  vi.mocked(useRegisterCourse).mockReturnValue({
+    mutate: registerMutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useRegisterCourse>)
+  vi.mocked(useDeleteCourseRegistration).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useDeleteCourseRegistration>)
 }
 
 function renderWith(ui: React.ReactElement) {
@@ -430,14 +448,17 @@ describe('CourseAddPage', () => {
     expect(screen.getByText('종료된 과정')).toBeInTheDocument()
   })
 
-  it('시스템 등록은 확인 모달을 거쳐 등록됨으로 토글된다', async () => {
+  it('시스템 등록은 확인 모달을 거쳐 등록 API를 호출한다', async () => {
     const user = userEvent.setup()
     renderWith(<CourseAddPage />)
     await user.click(screen.getByRole('button', { name: /시스템 등록/ }))
     expect(screen.getByText('HRD 과정 등록 확인')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '등록' }))
-    expect(
-      screen.getByRole('button', { name: '시스템 등록 제거' }),
-    ).toBeInTheDocument()
+    // 서버 상태 기반 — 확인 시 등록 mutation 호출 + 모달 닫힘.
+    expect(registerMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ trprId: 'AIG2026-0001', grade: '22기' }),
+      expect.anything(),
+    )
+    expect(screen.queryByText('HRD 과정 등록 확인')).not.toBeInTheDocument()
   })
 })

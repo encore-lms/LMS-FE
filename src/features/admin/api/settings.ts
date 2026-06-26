@@ -190,15 +190,84 @@ export function useCourseConfig(courseId: string | null) {
   })
 }
 
-export function useHrdCourseSearch(page: number) {
+// ── 교육 과정 추가 (learning-service /admin/courses) ──
+// HRD-Net 검색은 현재 BE fixture 스텁, 등록/제거는 in-memory MVP. proxy로 :8082 도달.
+
+export interface HrdCourseSearchParams {
+  organ?: string
+  title?: string
+  from?: string
+  to?: string
+  page?: number
+  size?: number
+}
+
+export function useHrdCourseSearch(params: HrdCourseSearchParams = {}) {
   return useQuery({
-    queryKey: adminKeys.settingsHrdSearch(page),
-    // 페이지 전환 시 이전 결과를 유지해 깜빡임(전체 로딩) 방지.
+    queryKey: adminKeys.settingsHrdSearch(params),
+    // 페이지·검색 전환 시 이전 결과를 유지해 깜빡임(전체 로딩) 방지.
     placeholderData: keepPreviousData,
     queryFn: () =>
       apiClient
-        .get<HrdCourseSearchData>('/admin/settings/hrd-courses', { page })
+        .get<HrdCourseSearchData>('/admin/courses/hrd-search', {
+          page: params.page ?? 1,
+          size: params.size ?? 12,
+          ...(params.organ ? { organ: params.organ } : {}),
+          ...(params.title ? { title: params.title } : {}),
+          ...(params.from ? { from: params.from } : {}),
+          ...(params.to ? { to: params.to } : {}),
+        })
         .then((r) => r.data),
+  })
+}
+
+export interface CourseRegisterInput {
+  trprId: string
+  title: string
+  grade: string
+  startDate: string
+  endDate: string
+}
+
+export interface CourseRegistration {
+  id: string
+  trprId: string
+  title: string
+  grade: string
+  startDate: string
+  endDate: string
+  createdBy: string
+  createdAt: string
+}
+
+export function useRegisterCourse() {
+  const queryClient = useQueryClient()
+  return useMutation<CourseRegistration, Error, CourseRegisterInput>({
+    mutationFn: (input) =>
+      apiClient
+        .post<CourseRegistration>('/admin/courses', input)
+        .then((r) => r.data),
+    // 등록 후 검색 결과의 상태(미등록→등록됨)·요약을 갱신.
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: adminKeys.settingsHrdSearch(),
+      }),
+  })
+}
+
+export function useDeleteCourseRegistration() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, { trprId: string; grade: string }>({
+    mutationFn: ({ trprId, grade }) =>
+      apiClient
+        .delete<void>(
+          `/admin/courses?trprId=${encodeURIComponent(trprId)}&grade=${encodeURIComponent(grade)}`,
+        )
+        .then(() => undefined),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: adminKeys.settingsHrdSearch(),
+      }),
   })
 }
 

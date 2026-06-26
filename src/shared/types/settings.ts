@@ -175,6 +175,8 @@ export interface HrdCourseResult {
   title: string
   grade: string // '22기'
   period: string // '2026-03-02 ~ 2026-08-29'
+  startDate: string // 'YYYY-MM-DD' — 등록 시 BE로 전송
+  endDate: string // 'YYYY-MM-DD'
   capacity: number
   applied: number
   hrdUrl: string

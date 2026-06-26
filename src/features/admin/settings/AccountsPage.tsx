@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowRight,
@@ -63,6 +64,7 @@ export default function AccountsPage() {
   // 설정 변경 감사 로그(설정 탭 하단) — 설정 허브에서 이전된 '최근 감사 로그' 섹션용.
   const { data: hub } = useSettingsHub()
   const toast = useToast()
+  const navigate = useNavigate()
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
@@ -588,9 +590,7 @@ export default function AccountsPage() {
             </div>
             <button
               type="button"
-              onClick={() =>
-                toast.info('감사 로그 전체 페이지는 후속 화면 (mock)')
-              }
+              onClick={() => navigate('/admin/settings/audit')}
               className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
             >
               전체 로그 <ArrowRight className="h-3 w-3" />

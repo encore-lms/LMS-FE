@@ -57,6 +57,7 @@ export const adminKeys = {
     [...adminKeys.all, 'settings', 'courses', courseId] as const,
   settingsHrdSearch: (page: number) =>
     [...adminKeys.all, 'settings', 'hrd-search', { page }] as const,
+  settingsAudit: () => [...adminKeys.all, 'settings', 'audit'] as const,
 } as const
 
 // 강사(instructor) 서버 상태 캐시 키.

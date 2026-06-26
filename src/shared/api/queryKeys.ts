@@ -51,7 +51,22 @@ export const adminKeys = {
     [...adminKeys.all, 'students', 'attendance-forms'] as const,
   settingsHub: () => [...adminKeys.all, 'settings', 'hub'] as const,
   settingsAccounts: () => [...adminKeys.all, 'settings', 'accounts'] as const,
+  // base prefix — 무효화는 이 키로(하위 list/summary/history가 모두 prefix 매칭됨).
   settingsHrdKeys: () => [...adminKeys.all, 'settings', 'hrd-keys'] as const,
+  settingsHrdKeyList: (params: {
+    page?: number
+    size?: number
+    query?: string
+    active?: boolean
+    sort?: string
+  }) => [...adminKeys.all, 'settings', 'hrd-keys', 'list', params] as const,
+  settingsHrdKeySummary: () =>
+    [...adminKeys.all, 'settings', 'hrd-keys', 'summary'] as const,
+  settingsHrdKeyHistory: (params: {
+    page?: number
+    size?: number
+    action?: string
+  }) => [...adminKeys.all, 'settings', 'hrd-keys', 'history', params] as const,
   settingsCourses: () => [...adminKeys.all, 'settings', 'courses'] as const,
   settingsCourseConfig: (courseId: string) =>
     [...adminKeys.all, 'settings', 'courses', courseId] as const,

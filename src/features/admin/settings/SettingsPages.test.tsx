@@ -10,7 +10,13 @@ import CourseAddPage from './CourseAddPage'
 import {
   useSettingsHub,
   useOpsAccounts,
-  useHrdKeys,
+  useHrdKeyList,
+  useHrdKeySummary,
+  useHrdKeyHistory,
+  useCreateHrdKey,
+  useUpdateHrdKey,
+  useDeleteHrdKey,
+  useTestHrdKey,
   useCourseList,
   useCourseConfig,
   useHrdCourseSearch,
@@ -18,7 +24,9 @@ import {
 import type {
   SettingsHubData,
   OpsAccountsData,
-  HrdKeyData,
+  HrdKeyListData,
+  HrdKeyHistoryData,
+  HrdKeySummary,
   CourseListItem,
   CourseConfigDetail,
   HrdCourseSearchData,
@@ -87,55 +95,79 @@ const accounts: OpsAccountsData = {
   ],
 }
 
-const hrdKeys: HrdKeyData = {
-  summary: {
-    activeKeys: 1,
-    activeKeysHint: '기본 + 보조 1개',
-    lastTest: { ok: true, at: '05-20 10:22', latency: '220ms' },
-    expiring: 1,
-    expiringHint: 'D-14 알림 대상',
-    recentFail: 0,
-  },
-  keys: [
+const hrdList: HrdKeyListData = {
+  items: [
     {
       id: 'key-1',
       name: 'HRD 운영키 2026',
-      isPrimary: true,
-      maskedKey: 'APIPO****9K2A',
-      createdAt: '2026-05-01',
-      lastUsedAt: '오늘 10:22',
-      status: 'active',
+      maskedKey: '****9K2A',
+      description: '운영 출결 조회용',
+      active: true,
+      createdBy: 'user-1',
+      updatedBy: 'user-1',
+      createdAt: '2026-05-01T10:00:00Z',
+      updatedAt: '2026-05-01T10:00:00Z',
     },
     {
-      id: 'key-3',
+      id: 'key-2',
       name: '구 키 2025',
-      isPrimary: false,
-      maskedKey: 'APIPO****OLD',
-      createdAt: '2025-12-01',
-      lastUsedAt: '04-01 14:20',
-      status: 'revoked',
+      maskedKey: '****OLDX',
+      description: null,
+      active: false,
+      createdBy: 'user-1',
+      updatedBy: 'user-1',
+      createdAt: '2025-12-01T09:00:00Z',
+      updatedAt: '2025-12-01T09:00:00Z',
     },
   ],
-  history: [
+  page: 0,
+  size: 6,
+  totalElements: 2,
+  totalPages: 1,
+  hasNext: false,
+  hasPrevious: false,
+  sort: 'latest',
+}
+
+const hrdSummary: HrdKeySummary = {
+  activeKeys: 1,
+  lastTest: {
+    ok: true,
+    latencyMs: 220,
+    at: '2026-05-20T10:22:00Z',
+    error: null,
+  },
+  expiring: 0,
+  recentFail: 0,
+}
+
+const hrdHistory: HrdKeyHistoryData = {
+  items: [
     {
       id: 'hist-1',
-      at: '05-20 10:22',
+      at: '2026-05-20T10:22:00Z',
       action: 'test',
       actor: '이정훈',
       ok: true,
-      response: '220ms',
-      targetKey: 'APIPO****9K2A',
+      responseMs: 220,
+      targetKeyMasked: '****9K2A',
     },
     {
-      id: 'hist-3',
-      at: '05-12 14:21',
-      action: 'rotate',
+      id: 'hist-2',
+      at: '2026-05-12T14:21:00Z',
+      action: 'create',
       actor: '김매니저',
       ok: true,
-      response: null,
-      targetKey: 'APIPO****9K2A ← OLD',
+      responseMs: null,
+      targetKeyMasked: '****77QA',
     },
   ],
+  page: 0,
+  size: 8,
+  totalElements: 2,
+  totalPages: 1,
+  hasNext: false,
+  hasPrevious: false,
 }
 
 const courses: CourseListItem[] = [
@@ -233,8 +265,27 @@ function mockAll() {
   vi.mocked(useOpsAccounts).mockReturnValue(
     ok(accounts) as unknown as ReturnType<typeof useOpsAccounts>,
   )
-  vi.mocked(useHrdKeys).mockReturnValue(
-    ok(hrdKeys) as unknown as ReturnType<typeof useHrdKeys>,
+  vi.mocked(useHrdKeyList).mockReturnValue(
+    ok(hrdList) as unknown as ReturnType<typeof useHrdKeyList>,
+  )
+  vi.mocked(useHrdKeySummary).mockReturnValue(
+    ok(hrdSummary) as unknown as ReturnType<typeof useHrdKeySummary>,
+  )
+  vi.mocked(useHrdKeyHistory).mockReturnValue(
+    ok(hrdHistory) as unknown as ReturnType<typeof useHrdKeyHistory>,
+  )
+  const mutationStub = { mutate: vi.fn(), isPending: false }
+  vi.mocked(useCreateHrdKey).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useCreateHrdKey>,
+  )
+  vi.mocked(useUpdateHrdKey).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useUpdateHrdKey>,
+  )
+  vi.mocked(useDeleteHrdKey).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useDeleteHrdKey>,
+  )
+  vi.mocked(useTestHrdKey).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useTestHrdKey>,
   )
   vi.mocked(useCourseList).mockReturnValue(
     ok(courses) as unknown as ReturnType<typeof useCourseList>,
@@ -302,12 +353,20 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
 })
 
 describe('HrdApiKeyPage', () => {
-  it('키 테이블과 폐기 키 삭제 버튼을 렌더한다', () => {
+  it('키 테이블과 활성/비활성 상태·삭제 버튼을 렌더한다', () => {
     renderWith(<HrdApiKeyPage />)
     expect(screen.getByText('HRD 운영키 2026')).toBeInTheDocument()
-    expect(screen.getAllByText('APIPO****9K2A').length).toBeGreaterThan(0)
-    expect(screen.getByText('폐기됨')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '삭제' })).toBeInTheDocument()
+    expect(screen.getAllByText('****9K2A').length).toBeGreaterThan(0)
+    // active 토글 모델 — 활성/비활성 상태 배지
+    expect(screen.getByText('활성')).toBeInTheDocument()
+    expect(screen.getByText('비활성')).toBeInTheDocument()
+    // 행별 토글: 활성 키 → '비활성화', 비활성 키 → '활성화' (이력 필터와 라벨이 겹치지 않음)
+    expect(screen.getByRole('button', { name: '비활성화' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '활성화' })).toBeInTheDocument()
+    // 삭제 버튼은 키 행 2개 + 이력 필터 1개
+    expect(
+      screen.getAllByRole('button', { name: '삭제' }).length,
+    ).toBeGreaterThanOrEqual(2)
   })
 
   it('빈 폼 등록 제출은 검증 에러를 보여준다', async () => {
@@ -330,9 +389,8 @@ describe('HrdApiKeyPage', () => {
     renderWith(<HrdApiKeyPage />)
     await user.click(screen.getAllByRole('button', { name: /상세/ })[0])
     expect(screen.getByText('API Key 이력 상세')).toBeInTheDocument()
-    expect(
-      screen.getByText('키 값은 저장 후 재표시하지 않음'),
-    ).toBeInTheDocument()
+    // '보안 정책' 행 제거됨 → 모달 본문의 '작업/결과' 행으로 모달 렌더 확인
+    expect(screen.getByText('작업/결과')).toBeInTheDocument()
   })
 })
 

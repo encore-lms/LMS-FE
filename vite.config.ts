@@ -41,6 +41,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 수강생 자료실(GET)도 learning-service 실연동. POST/DELETE(공유)는 MSW mock이라 미프록시.
+      '/api/student/course/materials': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 실로그인(VITE_REAL_AUTH=true)일 때만 MSW가 /api/auth/login을 bypass → 이 프록시로 도달.
       // mock 로그인(기본)에서는 MSW가 가로채므로 이 프록시는 사용되지 않는다.
       '/api/auth': {

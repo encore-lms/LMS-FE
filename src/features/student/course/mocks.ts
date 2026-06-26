@@ -454,9 +454,15 @@ function buildMaterials(): CourseMaterials {
 
 export const handlers = [
   http.get('/api/student/course', () => ok<CourseHome>(mockCourseHome)),
-  http.get('/api/student/course/materials', () =>
-    ok<CourseMaterials>(buildMaterials()),
-  ),
+  // 자료실 조회는 learning-service CohortMaterial 실연동 — VITE_REAL_AUTH=true면 mock 미등록 → proxy.
+  // 학생 공유(POST)·삭제(DELETE)는 CohortMaterial 범위 밖이라 mock 유지.
+  ...(import.meta.env.VITE_REAL_AUTH === 'true'
+    ? []
+    : [
+        http.get('/api/student/course/materials', () =>
+          ok<CourseMaterials>(buildMaterials()),
+        ),
+      ]),
   // 학생 자료 공유 — 새 항목을 맨 앞에 추가(본인 소유로 표시). 목록 invalidate 시 반영된다.
   http.post('/api/student/course/materials', async ({ request }) => {
     const body = (await request.json()) as ShareMaterialInput

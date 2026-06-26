@@ -70,6 +70,16 @@ export const adminKeys = {
   settingsCourses: () => [...adminKeys.all, 'settings', 'courses'] as const,
   settingsCourseConfig: (courseId: string) =>
     [...adminKeys.all, 'settings', 'courses', courseId] as const,
+  settingsCohortMaterials: (courseId: string, cohortId: string) =>
+    [
+      ...adminKeys.all,
+      'settings',
+      'courses',
+      courseId,
+      'cohorts',
+      cohortId,
+      'materials',
+    ] as const,
   // 교육 과정 추가 HRD-Net 검색 — base prefix로 무효화(등록·제거 후 상태 갱신).
   settingsHrdSearch: (params?: {
     keyId?: string

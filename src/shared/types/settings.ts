@@ -154,6 +154,15 @@ export interface CourseCohort {
   playEnabled: boolean
 }
 
+// 기수 자료 1건(자료실 — 관리자/강사 관리). 링크/문서형.
+export interface CohortMaterialItem {
+  id: string
+  title: string
+  materialType: string // 'link' | 'document'
+  url: string | null
+  createdAt: string
+}
+
 // 과정 상세(기본 정보 + 기수). 기능 토글(mileage·play)은 기수별로 가진다.
 export interface CourseConfigDetail {
   courseId: string

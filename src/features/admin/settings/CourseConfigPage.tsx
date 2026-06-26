@@ -23,7 +23,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import type { CourseFeatureToggle } from '@/shared/types'
+import type { CourseFeatureToggle, CourseLearningPolicy } from '@/shared/types'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { SettingsTabs } from './SettingsTabs'
@@ -117,8 +117,72 @@ function ToggleRow({
   )
 }
 
-// 교육 과정 설정 (/admin/settings/course-config) — 과정별 기능 토글·학습/공개 정책. (Figma 1284:9243)
-// 저장/취소는 운영 액션 모달 v2(1306:8574·8643)로 확인 — 저장 후 감사 로그 자동 기록.
+// 기능 토글·학습/공개 정책 기본값 — 후속 단위에서 BE 영속화 예정(현재 과정 공통 기본값).
+const DEFAULT_FEATURE_TOGGLES: CourseFeatureToggle[] = [
+  {
+    key: 'mileage',
+    label: '마일리지',
+    description: '수강생 마일리지 적립·사용 메뉴 노출',
+    enabled: true,
+  },
+  {
+    key: 'play',
+    label: 'PLAY',
+    description: 'PLAY 게임(타자 등) 노출 — 마일리지와 연동',
+    enabled: true,
+  },
+  {
+    key: 'records',
+    label: '학습 기록',
+    description: '수강생 학습 기록 메뉴 노출',
+    enabled: true,
+  },
+  {
+    key: 'blog',
+    label: '블로그',
+    description: '수강생 블로그 작성·공개',
+    enabled: false,
+  },
+  {
+    key: 'library',
+    label: '자료실',
+    description: '과정 자료실 메뉴 노출',
+    enabled: true,
+  },
+]
+const DEFAULT_PUBLIC_TOGGLES: CourseFeatureToggle[] = [
+  {
+    key: 'studentMenu',
+    label: '수강생 메뉴 노출',
+    description: '수강생 사이드바에 본 과정 메뉴 노출',
+    enabled: true,
+  },
+  {
+    key: 'certificate',
+    label: '증명서 반영',
+    description: '수료·증명서에 본 과정 반영',
+    enabled: true,
+  },
+]
+const DEFAULT_LEARNING_POLICIES: CourseLearningPolicy[] = [
+  {
+    key: 'attendance',
+    label: '출결 기준',
+    description: 'HRD-Net 입실/퇴실 기준 · 폼 승인 정책 연동',
+  },
+  { key: 'quiz', label: '퀴즈 정책', description: '퀴즈 응시·재응시 기준' },
+  {
+    key: 'assignment',
+    label: '과제 정책',
+    description: '과제 제출·재제출 기준',
+  },
+]
+
+const periodLabel = (start: string | null, end: string | null) =>
+  start && end ? `${start} ~ ${end}` : '-'
+
+// 교육 과정 설정 (/admin/settings/course-config) — 등록된 과정의 기본 정보 + 기능 토글·정책. (Figma 1284:9243)
+// 과정 목록·기본 정보는 learning-service 실 데이터. 토글/정책은 현재 기본값(후속 단위에서 BE 영속화).
 export default function CourseConfigPage() {
   const navigate = useNavigate()
   const toast = useToast()
@@ -134,16 +198,14 @@ export default function CourseConfigPage() {
   >(null)
   usePageHeader('운영 설정 · 교육 과정 설정')
 
-  const courseId = selectedId ?? courses?.[0]?.id ?? null
+  const courseId = selectedId ?? courses?.[0]?.courseId ?? null
   const { data: config } = useCourseConfig(courseId)
 
   const filteredCourses = useMemo(() => {
     const items = courses ?? []
     const needle = courseQuery.trim().toLowerCase()
     if (!needle) return items
-    return items.filter((c) =>
-      `${c.name} ${c.code} ${c.campus}`.toLowerCase().includes(needle),
-    )
+    return items.filter((c) => c.title.toLowerCase().includes(needle))
   }, [courses, courseQuery])
 
   if (isPending) {
@@ -154,8 +216,22 @@ export default function CourseConfigPage() {
       <Empty
         icon={<AlertTriangle className="h-6 w-6" />}
         title="과정 목록을 불러오지 못했어요"
-        description="잠시 후 다시 시도해 주세요."
+        description="교육 과정 설정은 실 BE 전용입니다. ADMIN/MANAGER로 로그인했는지 확인한 뒤 다시 시도해 주세요."
         action={<Button onClick={() => refetch()}>다시 시도</Button>}
+      />
+    )
+  }
+  if (courses.length === 0) {
+    return (
+      <Empty
+        icon={<FolderOpen className="h-6 w-6" />}
+        title="등록된 과정이 없어요"
+        description="'교육 과정 추가'에서 HRD 과정을 시스템 등록하면 여기서 설정할 수 있어요."
+        action={
+          <Button onClick={() => navigate('/admin/settings/courses/new')}>
+            교육 과정 추가로 이동
+          </Button>
+        }
       />
     )
   }
@@ -178,7 +254,7 @@ export default function CourseConfigPage() {
       subtitle: '기능 토글과 공개 정책 변경을 저장합니다.',
       rows: [
         { label: '변경 건수', value: `${changedCount}건` },
-        { label: '대상 과정', value: config?.name ?? '-' },
+        { label: '대상 과정', value: config?.title ?? '-' },
         { label: '영향', value: '수강생 메뉴 노출 재계산' },
         { label: '감사 로그', value: '정책 변경 이력 기록' },
       ],
@@ -212,8 +288,8 @@ export default function CourseConfigPage() {
             }
           }
         }
-        persist('feature', config?.featureToggles ?? [])
-        persist('public', config?.publicToggles ?? [])
+        persist('feature', DEFAULT_FEATURE_TOGGLES)
+        persist('public', DEFAULT_PUBLIC_TOGGLES)
         return next
       })
       // 저장 피드백은 토스트로 요약 — 변경 적용 후 dirty 초기화.
@@ -241,7 +317,7 @@ export default function CourseConfigPage() {
           <p className="mt-1 text-xl font-bold">교육 과정 설정</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1">
-              <FileText className="h-3 w-3" /> {config?.name ?? '-'} 선택
+              <FileText className="h-3 w-3" /> {config?.title ?? '-'} 선택
             </span>
             <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1">
               {config?.status === 'ended' ? (
@@ -305,30 +381,30 @@ export default function CourseConfigPage() {
           </div>
           {filteredCourses.map((c) => (
             <button
-              key={c.id}
+              key={c.courseId}
               type="button"
               onClick={() => {
-                setSelectedId(c.id)
+                setSelectedId(c.courseId)
                 setChanges({})
               }}
               className={cn(
                 'border-divider flex w-full items-center justify-between border-t px-4 py-3 text-left',
-                c.id === courseId
+                c.courseId === courseId
                   ? 'bg-accent-bg/50'
                   : 'hover:bg-surface-muted',
               )}
             >
-              <div>
+              <div className="min-w-0">
                 <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
-                  {c.name}
-                  {c.id === courseId && changedCount > 0 && (
+                  {c.title}
+                  {c.courseId === courseId && changedCount > 0 && (
                     <span className="bg-warning-bg text-warning rounded px-1 py-px text-[10px] font-bold">
                       {changedCount}
                     </span>
                   )}
                 </p>
                 <p className="text-fg-subtle text-xs">
-                  {c.code} · {c.campus}
+                  기수 {c.cohortCount}개 · {periodLabel(c.startDate, c.endDate)}
                 </p>
               </div>
               <StatusBadge
@@ -350,7 +426,7 @@ export default function CourseConfigPage() {
               <div>
                 <p className="text-fg text-sm font-bold">기본 정보</p>
                 <p className="text-fg-subtle text-xs">
-                  과정명·설명·교육장·운영 상태
+                  과정명·기간·운영 상태·기수
                 </p>
               </div>
             </div>
@@ -358,13 +434,16 @@ export default function CourseConfigPage() {
               <div>
                 <p className="text-fg-subtle text-[11px] font-medium">과정명</p>
                 <p className="text-fg mt-0.5 text-sm font-medium">
-                  {config?.name ?? '-'}
+                  {config?.title ?? '-'}
                 </p>
               </div>
               <div>
-                <p className="text-fg-subtle text-[11px] font-medium">교육장</p>
-                <p className="text-fg mt-0.5 text-sm font-medium">
-                  {config?.campus ?? '-'}
+                <p className="text-fg-subtle text-[11px] font-medium">기간</p>
+                <p className="text-fg mt-0.5 text-sm font-medium tabular-nums">
+                  {periodLabel(
+                    config?.startDate ?? null,
+                    config?.endDate ?? null,
+                  )}
                 </p>
               </div>
               <div>
@@ -381,10 +460,35 @@ export default function CourseConfigPage() {
                 </p>
               </div>
               <div className="w-full">
-                <p className="text-fg-subtle text-[11px] font-medium">설명</p>
-                <p className="text-fg-muted bg-surface-muted mt-1 rounded-lg px-3 py-2 text-sm">
-                  {config?.description ?? '-'}
+                <p className="text-fg-subtle text-[11px] font-medium">
+                  기수 {config?.cohorts.length ?? 0}개
                 </p>
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  {(config?.cohorts ?? []).map((co) => (
+                    <span
+                      key={co.id}
+                      className="border-border text-fg-muted inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs"
+                    >
+                      <span className="text-fg font-semibold">{co.grade}</span>
+                      <span className="tabular-nums">
+                        {co.startDate} ~ {co.endDate}
+                      </span>
+                      <span
+                        className={cn(
+                          'rounded px-1 py-px text-[10px] font-bold',
+                          co.status === 'ended'
+                            ? 'bg-surface-muted text-fg-subtle'
+                            : 'bg-success-bg text-success',
+                        )}
+                      >
+                        {co.status === 'ended' ? '종료' : '운영'}
+                      </span>
+                    </span>
+                  ))}
+                  {(config?.cohorts ?? []).length === 0 && (
+                    <span className="text-fg-subtle text-xs">기수 없음</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -397,7 +501,7 @@ export default function CourseConfigPage() {
               </div>
               <div>
                 <p className="text-fg text-sm font-bold">
-                  기능 토글 {config?.featureToggles.length ?? 0}
+                  기능 토글 {DEFAULT_FEATURE_TOGGLES.length}
                 </p>
                 <p className="text-fg-subtle text-xs">
                   수강생/매니저 사이드바 탭 노출 제어 · 끌 경우 신규 사용 차단
@@ -405,7 +509,7 @@ export default function CourseConfigPage() {
               </div>
             </div>
             <div>
-              {(config?.featureToggles ?? []).map((t) => (
+              {DEFAULT_FEATURE_TOGGLES.map((t) => (
                 <ToggleRow
                   key={t.key}
                   toggle={{ ...t, enabled: effectiveEnabled('feature', t) }}
@@ -430,7 +534,7 @@ export default function CourseConfigPage() {
               </div>
             </div>
             <div>
-              {(config?.learningPolicies ?? []).map((p, i) => (
+              {DEFAULT_LEARNING_POLICIES.map((p, i) => (
                 <div
                   key={p.key}
                   className={cn(
@@ -466,7 +570,7 @@ export default function CourseConfigPage() {
               </div>
             </div>
             <div>
-              {(config?.publicToggles ?? []).map((t) => (
+              {DEFAULT_PUBLIC_TOGGLES.map((t) => (
                 <ToggleRow
                   key={t.key}
                   toggle={{ ...t, enabled: effectiveEnabled('public', t) }}

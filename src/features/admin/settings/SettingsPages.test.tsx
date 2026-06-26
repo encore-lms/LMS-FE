@@ -174,57 +174,49 @@ const hrdHistory: HrdKeyHistoryData = {
 
 const courses: CourseListItem[] = [
   {
-    id: 'course-ai22',
-    name: 'AI 캠프 22기',
-    code: 'AI22',
-    campus: '강남캠퍼스',
+    courseId: 'course-sk',
+    title: 'SK네트웍스 Family AI 캠프',
+    cohortCount: 2,
     status: 'operating',
+    startDate: '2026-06-16',
+    endDate: '2027-01-29',
+    updatedAt: '2026-06-26T10:00:00Z',
   },
   {
-    id: 'course-ai20',
-    name: 'AI 캠프 20기',
-    code: 'AI20',
-    campus: '강남캠퍼스',
+    courseId: 'course-fe',
+    title: '프론트엔드 실무 과정',
+    cohortCount: 1,
     status: 'ended',
+    startDate: '2025-01-10',
+    endDate: '2025-06-30',
+    updatedAt: '2025-07-01T10:00:00Z',
   },
 ]
 
 const courseConfig: CourseConfigDetail = {
-  courseId: 'course-ai22',
-  name: 'AI 캠프 22기',
-  campus: '강남캠퍼스',
+  courseId: 'course-sk',
+  title: 'SK네트웍스 Family AI 캠프',
   status: 'operating',
-  description: 'AI/ML 풀스택 기반 22주 과정',
-  featureToggles: [
+  startDate: '2026-06-16',
+  endDate: '2027-01-29',
+  cohorts: [
     {
-      key: 'mileage',
-      label: '마일리지',
-      description: '수강생 마일리지 적립·사용 메뉴 노출',
-      enabled: true,
+      id: 'cohort-36',
+      trprId: 'AIG20240000459068',
+      grade: '36기',
+      startDate: '2026-08-06',
+      endDate: '2027-01-29',
+      status: 'operating',
     },
     {
-      key: 'play',
-      label: 'PLAY',
-      description: 'PLAY 게임(타자 등) 노출 — 마일리지와 연동',
-      enabled: true,
-    },
-  ],
-  learningPolicies: [
-    {
-      key: 'attendance',
-      label: '출결 기준',
-      description: 'HRD-Net 입실/퇴실 기준 · 폼 승인 정책 연동',
+      id: 'cohort-35',
+      trprId: 'AIG20240000459068',
+      grade: '35기',
+      startDate: '2026-06-16',
+      endDate: '2026-12-08',
+      status: 'operating',
     },
   ],
-  publicToggles: [
-    {
-      key: 'studentMenu',
-      label: '수강생 메뉴 노출',
-      description: '수강생 사이드바에 본 과정 메뉴 노출',
-      enabled: true,
-    },
-  ],
-  impacts: ['PLAY 토글 OFF → 수강생 사이드바의 PLAY 메뉴 즉시 숨김'],
 }
 
 const hrdSearch: HrdCourseSearchData = {

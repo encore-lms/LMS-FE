@@ -178,7 +178,7 @@ export function useCourseList() {
   })
 }
 
-// 등록 과정 상세(기본 정보 + 기수) — learning-service.
+// 등록 과정 상세(기본 정보 + 기수 + 토글/정책) — learning-service.
 export function useCourseConfig(courseId: string | null) {
   return useQuery({
     queryKey: adminKeys.settingsCourseConfig(courseId ?? ''),
@@ -187,6 +187,27 @@ export function useCourseConfig(courseId: string | null) {
       apiClient
         .get<CourseConfigDetail>(`/admin/courses/${courseId}`)
         .then((r) => r.data),
+  })
+}
+
+export interface CourseSettingsUpdateInput {
+  courseId: string
+  toggles: { key: string; enabled: boolean }[]
+}
+
+// 기능/공개 토글 저장(변경분만). 응답(최신 상세)을 캐시에 반영.
+export function useUpdateCourseSettings() {
+  const queryClient = useQueryClient()
+  return useMutation<CourseConfigDetail, Error, CourseSettingsUpdateInput>({
+    mutationFn: ({ courseId, toggles }) =>
+      apiClient
+        .put<CourseConfigDetail>(`/admin/courses/${courseId}/settings`, {
+          toggles,
+        })
+        .then((r) => r.data),
+    onSuccess: (data, { courseId }) => {
+      queryClient.setQueryData(adminKeys.settingsCourseConfig(courseId), data)
+    },
   })
 }
 

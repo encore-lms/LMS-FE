@@ -166,7 +166,7 @@ export interface CourseLearningPolicy {
   description: string
 }
 
-// 과정 상세(기본 정보 + 기수). 토글/정책은 후속 단위에서 BE 영속화 예정 — 현재 FE 기본값.
+// 과정 상세(기본 정보 + 기수 + 토글/정책). 토글 enabled는 과정별 저장값(없으면 카탈로그 기본값).
 export interface CourseConfigDetail {
   courseId: string
   title: string
@@ -174,6 +174,9 @@ export interface CourseConfigDetail {
   startDate: string | null
   endDate: string | null
   cohorts: CourseCohort[]
+  featureToggles: CourseFeatureToggle[]
+  publicToggles: CourseFeatureToggle[]
+  learningPolicies: CourseLearningPolicy[]
 }
 
 // ── 교육 과정 추가 (Figma 1284:9435) ──

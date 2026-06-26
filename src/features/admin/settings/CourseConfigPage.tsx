@@ -23,8 +23,12 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import type { CourseFeatureToggle, CourseLearningPolicy } from '@/shared/types'
-import { useCourseConfig, useCourseList } from '../api/settings'
+import type { CourseFeatureToggle } from '@/shared/types'
+import {
+  useCourseConfig,
+  useCourseList,
+  useUpdateCourseSettings,
+} from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { SettingsTabs } from './SettingsTabs'
 
@@ -117,67 +121,6 @@ function ToggleRow({
   )
 }
 
-// 기능 토글·학습/공개 정책 기본값 — 후속 단위에서 BE 영속화 예정(현재 과정 공통 기본값).
-const DEFAULT_FEATURE_TOGGLES: CourseFeatureToggle[] = [
-  {
-    key: 'mileage',
-    label: '마일리지',
-    description: '수강생 마일리지 적립·사용 메뉴 노출',
-    enabled: true,
-  },
-  {
-    key: 'play',
-    label: 'PLAY',
-    description: 'PLAY 게임(타자 등) 노출 — 마일리지와 연동',
-    enabled: true,
-  },
-  {
-    key: 'records',
-    label: '학습 기록',
-    description: '수강생 학습 기록 메뉴 노출',
-    enabled: true,
-  },
-  {
-    key: 'blog',
-    label: '블로그',
-    description: '수강생 블로그 작성·공개',
-    enabled: false,
-  },
-  {
-    key: 'library',
-    label: '자료실',
-    description: '과정 자료실 메뉴 노출',
-    enabled: true,
-  },
-]
-const DEFAULT_PUBLIC_TOGGLES: CourseFeatureToggle[] = [
-  {
-    key: 'studentMenu',
-    label: '수강생 메뉴 노출',
-    description: '수강생 사이드바에 본 과정 메뉴 노출',
-    enabled: true,
-  },
-  {
-    key: 'certificate',
-    label: '증명서 반영',
-    description: '수료·증명서에 본 과정 반영',
-    enabled: true,
-  },
-]
-const DEFAULT_LEARNING_POLICIES: CourseLearningPolicy[] = [
-  {
-    key: 'attendance',
-    label: '출결 기준',
-    description: 'HRD-Net 입실/퇴실 기준 · 폼 승인 정책 연동',
-  },
-  { key: 'quiz', label: '퀴즈 정책', description: '퀴즈 응시·재응시 기준' },
-  {
-    key: 'assignment',
-    label: '과제 정책',
-    description: '과제 제출·재제출 기준',
-  },
-]
-
 const periodLabel = (start: string | null, end: string | null) =>
   start && end ? `${start} ~ ${end}` : '-'
 
@@ -189,13 +132,12 @@ export default function CourseConfigPage() {
   const { data: courses, isPending, isError, refetch } = useCourseList()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [courseQuery, setCourseQuery] = useState('')
-  // 토글 변경 dirty 셋 — '{group}:{key}' 단위로 켜짐/꺼짐 추적(mock, 저장 시 초기화).
+  // 토글 변경 dirty 셋 — '{group}:{key}' 단위로 켜짐/꺼짐 추적(저장 시 초기화).
   const [changes, setChanges] = useState<Record<string, boolean>>({})
-  // 저장된 토글 값 영속(세션) — key: `${courseId}:${group}:${key}`. 저장 시 변경값 반영.
-  const [applied, setApplied] = useState<Record<string, boolean>>({})
   const [modal, setModal] = useState<
     (ActionModalSpec & { kind: 'save' | 'cancel' }) | null
   >(null)
+  const updateSettings = useUpdateCourseSettings()
   usePageHeader('운영 설정 · 교육 과정 설정')
 
   const courseId = selectedId ?? courses?.[0]?.courseId ?? null
@@ -240,12 +182,9 @@ export default function CourseConfigPage() {
   const toggleChange = (group: string, key: string) =>
     setChanges((p) => ({ ...p, [`${group}:${key}`]: !p[`${group}:${key}`] }))
   const isChanged = (group: string, key: string) => !!changes[`${group}:${key}`]
-  // 저장된 값(applied) 우선, 없으면 과정 기본값. 저장은 세션 동안 유지(mock).
-  const baseEnabled = (group: string, t: CourseFeatureToggle) =>
-    applied[`${courseId}:${group}:${t.key}`] ?? t.enabled
-  // 변경 dirty면 시각적으로 토글 상태 반전 — 저장 전 미리보기.
+  // base는 BE 저장값(config.toggle.enabled). 변경 dirty면 반전해 저장 전 미리보기.
   const effectiveEnabled = (group: string, t: CourseFeatureToggle) =>
-    isChanged(group, t.key) ? !baseEnabled(group, t) : baseEnabled(group, t)
+    isChanged(group, t.key) ? !t.enabled : t.enabled
 
   const openSave = () =>
     setModal({
@@ -275,35 +214,42 @@ export default function CourseConfigPage() {
       confirmLabel: '버리기',
     })
 
-  const onConfirm = (memo: string) => {
+  const onConfirm = () => {
     if (!modal) return
-    if (modal.kind === 'save') {
-      // 변경된 토글의 미리보기 값을 applied에 영속 — 저장 후에도 상태 유지(세션, mock).
-      setApplied((prev) => {
-        const next = { ...prev }
-        const persist = (group: string, toggles: CourseFeatureToggle[]) => {
-          for (const t of toggles) {
-            if (isChanged(group, t.key)) {
-              next[`${courseId}:${group}:${t.key}`] = effectiveEnabled(group, t)
-            }
-          }
-        }
-        persist('feature', DEFAULT_FEATURE_TOGGLES)
-        persist('public', DEFAULT_PUBLIC_TOGGLES)
-        return next
-      })
-      // 저장 피드백은 토스트로 요약 — 변경 적용 후 dirty 초기화.
-      toast.success(
-        `교육 과정 설정 저장 — 변경 ${changedCount}건 · 감사 로그에 기록됨`,
-      )
-      if (memo.trim()) toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
-      setChanges({})
-      setModal(null)
-    } else {
+    if (modal.kind === 'cancel') {
       setChanges({})
       setModal(null)
       navigate('/admin/settings')
+      return
     }
+    if (!courseId) return
+    // 변경된(dirty) 토글만 모아 저장 — 새 값은 base의 반전.
+    const toggles: { key: string; enabled: boolean }[] = []
+    const collect = (group: string, list: CourseFeatureToggle[]) => {
+      for (const t of list) {
+        if (isChanged(group, t.key))
+          toggles.push({ key: t.key, enabled: !t.enabled })
+      }
+    }
+    collect('feature', config?.featureToggles ?? [])
+    collect('public', config?.publicToggles ?? [])
+    if (toggles.length === 0) {
+      setModal(null)
+      return
+    }
+    updateSettings.mutate(
+      { courseId, toggles },
+      {
+        onSuccess: () => {
+          toast.success(
+            `교육 과정 설정 저장 — 변경 ${toggles.length}건 · 감사 로그에 기록됨`,
+          )
+          setChanges({})
+          setModal(null)
+        },
+        onError: () => toast.danger('교육 과정 설정 저장에 실패했어요'),
+      },
+    )
   }
 
   return (
@@ -501,7 +447,7 @@ export default function CourseConfigPage() {
               </div>
               <div>
                 <p className="text-fg text-sm font-bold">
-                  기능 토글 {DEFAULT_FEATURE_TOGGLES.length}
+                  기능 토글 {config?.featureToggles.length ?? 0}
                 </p>
                 <p className="text-fg-subtle text-xs">
                   수강생/매니저 사이드바 탭 노출 제어 · 끌 경우 신규 사용 차단
@@ -509,7 +455,7 @@ export default function CourseConfigPage() {
               </div>
             </div>
             <div>
-              {DEFAULT_FEATURE_TOGGLES.map((t) => (
+              {(config?.featureToggles ?? []).map((t) => (
                 <ToggleRow
                   key={t.key}
                   toggle={{ ...t, enabled: effectiveEnabled('feature', t) }}
@@ -534,7 +480,7 @@ export default function CourseConfigPage() {
               </div>
             </div>
             <div>
-              {DEFAULT_LEARNING_POLICIES.map((p, i) => (
+              {(config?.learningPolicies ?? []).map((p, i) => (
                 <div
                   key={p.key}
                   className={cn(
@@ -570,7 +516,7 @@ export default function CourseConfigPage() {
               </div>
             </div>
             <div>
-              {DEFAULT_PUBLIC_TOGGLES.map((t) => (
+              {(config?.publicToggles ?? []).map((t) => (
                 <ToggleRow
                   key={t.key}
                   toggle={{ ...t, enabled: effectiveEnabled('public', t) }}

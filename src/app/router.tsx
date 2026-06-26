@@ -1,5 +1,5 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom'
-import { AppShell } from '@/components/layout'
+import { AppShellWithMenu } from './AppShellWithMenu'
 import { AuthGuard } from '@/features/auth/AuthGuard'
 import { RequireRole } from '@/features/auth/RequireRole'
 import { RoleEntry } from '@/features/auth/RoleEntry'
@@ -17,7 +17,6 @@ import {
   externalPublicRoutes,
 } from '@/features/external/routes'
 import type { Role } from '@/shared/types'
-import { MENUS } from './menus'
 
 // 역할 가드로 감싼 라우트 그룹 — 가드는 여기(취합층)서 중앙 적용해 역할 routes.tsx는 순수하게 둔다.
 function guarded(allow: Role[], routes: RouteObject[]): RouteObject {
@@ -37,7 +36,7 @@ export const router = createBrowserRouter([
       // 전체화면(쉘 없음) — 퀴즈 응시 집중 모드. AppShell 밖에서 STUDENT 가드만 적용.
       guarded(['STUDENT'], studentFullscreenRoutes),
       {
-        element: <AppShell menus={MENUS} />,
+        element: <AppShellWithMenu />,
         children: [
           { index: true, element: <RoleEntry /> },
           guarded(['STUDENT'], studentRoutes),

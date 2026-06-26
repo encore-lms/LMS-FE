@@ -900,8 +900,30 @@ const loginMockHandler = http.post('/api/auth/login', async ({ request }) => {
   })
 })
 
+// 수강생 과정 기능 플래그 mock — VITE_REAL_AUTH=true면 bypass → 실 learning-service(/student/course-features).
+// mock 모드에선 전부 노출(메뉴 풀). 관리자가 저장한 실제 토글 반영은 실 모드에서 동작.
+const courseFeaturesMockHandler = http.get('/api/student/course-features', () =>
+  HttpResponse.json({
+    data: {
+      courseId: null,
+      courseTitle: null,
+      features: {
+        mileage: true,
+        play: true,
+        records: true,
+        blog: true,
+        library: true,
+        studentMenu: true,
+        certificate: true,
+      },
+    },
+  }),
+)
+
 export const handlers = [
-  ...(import.meta.env.VITE_REAL_AUTH === 'true' ? [] : [loginMockHandler]),
+  ...(import.meta.env.VITE_REAL_AUTH === 'true'
+    ? []
+    : [loginMockHandler, courseFeaturesMockHandler]),
   ...quizHandlers,
   ...adminHandlers,
   ...featureHandlers,

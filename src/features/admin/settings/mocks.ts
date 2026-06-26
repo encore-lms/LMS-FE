@@ -812,6 +812,22 @@ export const handlers = [
   }),
   http.get('/api/admin/settings/hrd-courses', ({ request }) => {
     const page = Number(new URL(request.url).searchParams.get('page') ?? '1')
-    return ok<HrdCourseSearchData>({ ...hrdSearch, page })
+    const { results: templates, pageSize, summary } = hrdSearch
+    const start = (page - 1) * pageSize
+    const count = Math.max(0, Math.min(pageSize, summary.total - start))
+    // 페이지마다 다른 카드를 보여주도록 12개 템플릿을 변형해 슬라이스(시연용).
+    const results =
+      page <= 1
+        ? templates
+        : Array.from({ length: count }, (_, i) => {
+            const base = templates[i % templates.length]
+            const globalIdx = start + i + 1
+            return {
+              ...base,
+              trprId: `${base.trprId.split('-')[0]}-${String(globalIdx).padStart(4, '0')}`,
+              title: `${base.title} (${globalIdx}회차)`,
+            }
+          })
+    return ok<HrdCourseSearchData>({ ...hrdSearch, page, results })
   }),
 ]

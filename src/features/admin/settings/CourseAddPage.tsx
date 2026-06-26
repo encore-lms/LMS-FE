@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
+import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
@@ -365,29 +366,15 @@ export default function CourseAddPage() {
         </p>
       )}
 
-      {/* 페이지네이션 */}
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-fg-subtle text-xs">
-          {data.summary.total}건 · {data.pageSize}개씩 {data.totalPages}페이지 ·
-          현재 페이지 {data.page}
-        </p>
-        <div className="flex gap-1">
-          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPage(p)}
-              className={cn(
-                'h-8 min-w-8 rounded-md px-2 text-xs font-medium',
-                p === data.page
-                  ? 'bg-brand-deep text-white'
-                  : 'text-fg-muted hover:bg-surface-muted',
-              )}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+      {/* 페이지네이션 — 공통 Pagination. mock이 page별 다른 결과 반환(a안) + placeholderData로 깜빡임 제거. */}
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          pageCount={data.totalPages}
+          totalCount={data.summary.total}
+          shownCount={results.length}
+          onPage={setPage}
+        />
       </div>
 
       <ActionModal

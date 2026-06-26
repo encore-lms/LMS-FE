@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient, adminKeys } from '@/shared/api'
 import type {
   SettingsHubData,
@@ -62,11 +62,11 @@ export function useCourseConfig(courseId: string | null) {
 export function useHrdCourseSearch(page: number) {
   return useQuery({
     queryKey: adminKeys.settingsHrdSearch(page),
+    // 페이지 전환 시 이전 결과를 유지해 깜빡임(전체 로딩) 방지.
+    placeholderData: keepPreviousData,
     queryFn: () =>
       apiClient
-        .get<HrdCourseSearchData>('/admin/settings/hrd-courses', {
-          params: { page },
-        })
+        .get<HrdCourseSearchData>('/admin/settings/hrd-courses', { page })
         .then((r) => r.data),
   })
 }

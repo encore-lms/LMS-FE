@@ -141,9 +141,7 @@ export default function CourseAddPage() {
       subtitle: '선택한 HRD 과정을 LMS 과정으로 등록합니다.',
       rows: [
         { label: '과정', value: `${c.title} ${c.grade}` },
-        { label: 'HRD 식별자', value: `trprId ${c.trprId}` },
         { label: '기간', value: c.period },
-        { label: '중복 검증', value: '동일 (trprId + 기수) 등록 차단' },
       ],
       confirmLabel: '등록',
     })

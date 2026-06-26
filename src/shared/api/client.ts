@@ -4,7 +4,9 @@ import { useAuthStore } from '@/shared/store'
 
 // axios instance — 요청에 토큰 자동 첨부, 401 응답 시 세션 초기화(가드가 로그인으로 보냄).
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
+  // 빈 문자열(.env의 VITE_API_BASE_URL=)도 '/api'로 폴백해야 하므로 ?? 가 아닌 || 사용.
+  // (?? 는 ''를 통과시켜 baseURL이 비어 /api 없이 요청 → 404. .env.example "비우면 /api 폴백" 계약 준수.)
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
 })
 

@@ -876,28 +876,32 @@ const adminHandlers = [
   ),
 ]
 
-export const handlers = [
-  http.post('/api/auth/login', async ({ request }) => {
-    const body = (await request.json()) as {
-      userId?: string
-      email?: string
-      password: string
-    }
-    // BE 계약: 로그인 ID 필드는 userId(운영=이메일, 수강생=studentUuid). 구 email도 fallback.
-    const loginId = body.userId ?? body.email ?? ''
-    return HttpResponse.json({
-      data: {
-        token: 'mock-token',
-        user: {
-          id: 'mock-1',
-          email: loginId,
-          name: '테스트 사용자',
-          role: roleFromEmail(loginId),
-          trainingType: trainingTypeFromEmail(loginId),
-        },
+// 로그인 mock — VITE_REAL_AUTH=true면 등록하지 않아 bypass → vite proxy → 실 auth-service(:8081).
+// (learning-service가 수용하는 진짜 JWT를 발급받기 위함. 기본은 mock 유지해 dev 흐름 보존.)
+const loginMockHandler = http.post('/api/auth/login', async ({ request }) => {
+  const body = (await request.json()) as {
+    userId?: string
+    email?: string
+    password: string
+  }
+  // BE 계약: 로그인 ID 필드는 userId(운영=이메일, 수강생=studentUuid). 구 email도 fallback.
+  const loginId = body.userId ?? body.email ?? ''
+  return HttpResponse.json({
+    data: {
+      token: 'mock-token',
+      user: {
+        id: 'mock-1',
+        email: loginId,
+        name: '테스트 사용자',
+        role: roleFromEmail(loginId),
+        trainingType: trainingTypeFromEmail(loginId),
       },
-    })
-  }),
+    },
+  })
+})
+
+export const handlers = [
+  ...(import.meta.env.VITE_REAL_AUTH === 'true' ? [] : [loginMockHandler]),
   ...quizHandlers,
   ...adminHandlers,
   ...featureHandlers,

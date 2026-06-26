@@ -63,45 +63,70 @@ export interface OpsAccountsData {
   items: OpsAccount[]
 }
 
-// ── HRD API Key (Figma 1284:8960) ──
-export type HrdKeyStatus = 'active' | 'revoked' // 활성 / 폐기
-
+// ── HRD API Key (learning-service /admin/hrd-keys) ──
+// BE 계약(HrdKeyResponse)에 맞춘 모델. 키 원문은 마스킹(****+뒤4)·암호화 저장·재조회 불가.
 export interface HrdApiKey {
-  id: string
-  name: string // 'HRD 운영키 2026'
-  isPrimary: boolean // '기본' 칩
-  maskedKey: string // 'APIPO****9K2A' — 원문 재조회 불가
-  createdAt: string // 'YYYY-MM-DD'
-  lastUsedAt: string // '오늘 10:22'
-  status: HrdKeyStatus
+  id: string // UUID
+  name: string
+  maskedKey: string // '****3456' — 원문 재조회 불가
+  description: string | null
+  active: boolean // true=사용 중, false=보관/폐기
+  createdBy: string // UUID
+  updatedBy: string // UUID
+  createdAt: string // ISO-8601 Instant
+  updatedAt: string // ISO-8601 Instant
 }
 
-export type HrdKeyHistoryAction = 'register' | 'rotate' | 'revoke' | 'test'
+// 목록 페이지네이션 응답 (GET /admin/hrd-keys)
+export interface HrdKeyListData {
+  items: HrdApiKey[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  hasNext: boolean
+  hasPrevious: boolean
+  sort: string
+}
+
+// BE history action 값 그대로 사용 (등록=create / 수정=update / 삭제=delete / 연결테스트=test)
+export type HrdKeyHistoryAction = 'create' | 'update' | 'delete' | 'test'
 
 export interface HrdKeyHistoryRow {
   id: string
-  at: string // '05-20 10:22'
+  at: string // ISO-8601 Instant
   action: HrdKeyHistoryAction
-  actor: string
+  actor: string // 수행자 표시명
   ok: boolean
-  /** 응답 표기 — '220ms' | 'timeout' (없으면 '-') */
-  response: string | null
-  targetKey: string // masked 표기, 교체는 'APIPO****9K2A ← OLD'
+  responseMs: number | null // test 지연(ms), 그 외 null
+  targetKeyMasked: string // 대상 키 마스킹 표기
 }
 
+// 이력 페이지네이션 응답 (GET /admin/hrd-keys/history)
+export interface HrdKeyHistoryData {
+  items: HrdKeyHistoryRow[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  hasNext: boolean
+  hasPrevious: boolean
+}
+
+// 연결 테스트 결과 (POST /admin/hrd-keys/{id}/test)
+export interface HrdKeyTestResult {
+  ok: boolean
+  latencyMs: number
+  at: string // ISO-8601 Instant
+  error: string | null // 실패 사유 (성공이면 null)
+}
+
+// KPI 요약 (GET /admin/hrd-keys/summary)
 export interface HrdKeySummary {
   activeKeys: number
-  activeKeysHint: string // '기본 + 보조 1개'
-  lastTest: { ok: boolean; at: string; latency: string } // '05-20 10:22' · '220ms'
-  expiring: number
-  expiringHint: string // 'D-14 알림 대상'
-  recentFail: number // 24시간 기준
-}
-
-export interface HrdKeyData {
-  summary: HrdKeySummary
-  keys: HrdApiKey[]
-  history: HrdKeyHistoryRow[]
+  lastTest: HrdKeyTestResult | null // 첫 테스트 전 null
+  expiring: number // BE 미지원 → 항상 0
+  recentFail: number // 최근 24시간 연결 테스트 실패 수
 }
 
 // ── 교육 과정 설정 (Figma 1284:9243) ──

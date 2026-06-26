@@ -8,6 +8,7 @@ import type {
   CourseConfigDetail,
   HrdCourseSearchData,
 } from '@/shared/types'
+import type { SettingsAuditData } from '../settings/settingsAudit.types'
 
 // 운영 설정 Flow 10 (/admin/settings/*) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
 export function useSettingsHub() {
@@ -67,6 +68,16 @@ export function useHrdCourseSearch(page: number) {
     queryFn: () =>
       apiClient
         .get<HrdCourseSearchData>('/admin/settings/hrd-courses', { page })
+        .then((r) => r.data),
+  })
+}
+
+export function useSettingsAudit() {
+  return useQuery({
+    queryKey: adminKeys.settingsAudit(),
+    queryFn: () =>
+      apiClient
+        .get<SettingsAuditData>('/admin/settings/audit')
         .then((r) => r.data),
   })
 }

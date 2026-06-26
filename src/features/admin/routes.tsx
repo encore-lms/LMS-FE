@@ -60,6 +60,8 @@ const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
 const CourseConfigPage = lazy(() => import('./settings/CourseConfigPage'))
 const CourseAddPage = lazy(() => import('./settings/CourseAddPage'))
+// 설정 감사 로그 전체 페이지 (계정 관리 '전체 로그'에서 진입, Figma 5190:11189)
+const SettingsAuditPage = lazy(() => import('./settings/SettingsAuditPage'))
 // 퀴즈 운영 (강사 컴포넌트 재사용, P0)
 const QuizListPage = lazy(
   () => import('@/features/instructor/quizzes/QuizListPage'),
@@ -157,6 +159,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'settings/hrd-api-key', element: <HrdApiKeyPage /> },
       { path: 'settings/course-config', element: <CourseConfigPage /> },
       { path: 'settings/courses/new', element: <CourseAddPage /> },
+      { path: 'settings/audit', element: <SettingsAuditPage /> },
       // 퀴즈 운영 (강사 컴포넌트 재사용, 경로 패턴도 강사와 동일) — /admin/quizzes* 라우트
       { path: 'quizzes', element: <QuizListPage /> },
       { path: 'quizzes/new', element: <QuizFormPage /> },

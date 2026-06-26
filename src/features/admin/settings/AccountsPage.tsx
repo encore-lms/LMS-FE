@@ -173,22 +173,12 @@ export default function AccountsPage() {
 
   const summary = derivedSummary ?? data.summary
 
-  // 수정 권한: 담당 매니저만 같은 과정·기수의 강사/멘토를 수정 (매니저↔매니저 불가).
+  // 수정 권한(RBAC canManageOperatorAccount, 2026-05-13 결정): ADMIN 또는 모든 MANAGER가
+  // scope 무관하게 매니저·강사·멘토 계정을 수정한다. 단 본인 계정은 권한 회수 방지를 위해
+  // 수정 대상에서 제외(P0-ADM-SET-005, 비활성화 가드와 동일 기준).
   const currentUser = data.items.find((a) => a.isSelf) ?? null
-  const scopeOverlap = (managerScope: string, targetScope: string) => {
-    if (/전체|모든\s*과정/.test(managerScope)) return true
-    if (!targetScope || /없음/.test(targetScope)) return false
-    return managerScope
-      .split('·')
-      .map((t) => t.trim())
-      .filter(Boolean)
-      .some((t) => targetScope.includes(t))
-  }
-  const canEdit = (a: OpsAccount) =>
-    !!currentUser &&
-    roleOf(currentUser) === 'MANAGER' &&
-    (roleOf(a) === 'INSTRUCTOR' || roleOf(a) === 'MENTOR') &&
-    scopeOverlap(scopeOf(currentUser), scopeOf(a))
+  const canManageOperator = !!currentUser && roleOf(currentUser) === 'MANAGER'
+  const canEdit = (a: OpsAccount) => canManageOperator && !a.isSelf
 
   const onConfirm = (memo: string) => {
     const target = modal?.deactivate

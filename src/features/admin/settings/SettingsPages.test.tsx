@@ -285,9 +285,9 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
     expect(screen.getByText('사용자 정보')).toBeInTheDocument()
   })
 
-  it('매니저 행은 수정 불가 — 담당 매니저만 강사/멘토 수정', () => {
+  it('본인 계정은 수정 불가 — 권한 회수 방지(다른 운영 계정은 수정 가능)', () => {
     renderWith(<AccountsPage />)
-    // 이정훈(매니저)은 수정 불가, 박강사(강사)만 수정 버튼
+    // 이정훈(본인)은 수정 불가, 박강사(타 계정)는 수정 버튼
     expect(screen.getAllByText('수정 불가').length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: '수정' })).toHaveLength(1)
   })

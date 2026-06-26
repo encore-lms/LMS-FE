@@ -8,7 +8,10 @@ import {
   useStudentAccounts,
   useStudentAttendance,
   useStudentAttendanceForms,
+  useSyncStudents,
+  useResetStudentPassword,
 } from '../api/students'
+import { useCourseList, useCourseConfig } from '../api/settings'
 import type {
   StudentAccountQueue,
   StudentAttendanceData,
@@ -16,6 +19,7 @@ import type {
 } from '@/shared/types'
 
 vi.mock('../api/students')
+vi.mock('../api/settings')
 
 const accounts: StudentAccountQueue = {
   cohortLabel: 'AI 캠프 22기',
@@ -103,6 +107,23 @@ function renderPage() {
   )
   vi.mocked(useStudentAttendanceForms).mockReturnValue(
     ok(forms) as unknown as ReturnType<typeof useStudentAttendanceForms>,
+  )
+  vi.mocked(useCourseList).mockReturnValue(
+    ok([]) as unknown as ReturnType<typeof useCourseList>,
+  )
+  vi.mocked(useCourseConfig).mockReturnValue(
+    ok(undefined) as unknown as ReturnType<typeof useCourseConfig>,
+  )
+  const mutationStub = {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }
+  vi.mocked(useSyncStudents).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useSyncStudents>,
+  )
+  vi.mocked(useResetStudentPassword).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useResetStudentPassword>,
   )
   return render(
     <ToastProvider>

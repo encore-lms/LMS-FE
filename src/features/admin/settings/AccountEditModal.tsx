@@ -8,8 +8,9 @@ export interface AccountEditValues {
   status: OpsAccountStatus
 }
 
-// 담당 매니저는 강사/멘토만 수정 — 매니저 권한 부여 기능이 아니므로 매니저 옵션 제외.
+// 운영 계정 CRUD(RBAC canManageOperatorAccount) — 매니저 포함 모든 운영 역할을 수정/부여할 수 있다.
 const ROLE_OPTIONS: { value: OpsRole; label: string }[] = [
+  { value: 'MANAGER', label: '매니저' },
   { value: 'INSTRUCTOR', label: '강사' },
   { value: 'MENTOR', label: '멘토' },
 ]
@@ -28,8 +29,8 @@ interface AccountEditModalProps {
   onSave: (account: OpsAccount, values: AccountEditValues) => void
 }
 
-// 운영 계정 수정 모달 — 담당 매니저가 같은 과정·기수의 강사/멘토 역할·상태를 변경(낙관).
-// 진입 권한 게이트(담당 매니저·과정·기수)는 호출부(AccountsPage.canEdit)에서 판정한다.
+// 운영 계정 수정 모달 — 매니저/ADMIN이 운영 계정의 역할·상태를 변경(낙관).
+// 진입 권한 게이트(본인 제외)는 호출부(AccountsPage.canEdit)에서 판정한다.
 export function AccountEditModal({
   account,
   role,

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Input } from '@/components/ui/Input'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { Pagination } from '@/components/data/Pagination'
 import { KpiCard } from '@/components/data/KpiCard'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
@@ -54,12 +55,21 @@ export default function HrdApiKeyPage() {
   const { data, isPending, isError, refetch } = useHrdKeys()
   const toast = useToast()
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all')
+  const [historyPage, setHistoryPage] = useState(1)
   const [activateNow, setActivateNow] = useState(true)
   const [modal, setModal] = useState<ActionModalSpec | null>(null)
   // 폐기/등록 낙관 반영 — mock(새로고침 리셋).
   const [revokedIds, setRevokedIds] = useState<Record<string, boolean>>({})
   const [addedKeys, setAddedKeys] = useState<HrdApiKey[]>([])
   const [addedHistory, setAddedHistory] = useState<HrdKeyHistoryRow[]>([])
+  // 연결 테스트 진행 대상(키 식별자) — non-null이면 테스트 중. 실제 검증은 BE 프록시 필요.
+  const [testingTarget, setTestingTarget] = useState<string | null>(null)
+  // 활성(기본) 키 override — 새 키를 '즉시 사용'으로 등록하면 그 키가 기본이 됨(교체). null=데이터 기본값.
+  const [primaryKeyId, setPrimaryKeyId] = useState<string | null>(null)
+  // 폐기된 키 삭제(목록에서 제거) — mock.
+  const [deletedIds, setDeletedIds] = useState<Record<string, boolean>>({})
+  // 등록된 키 테이블 페이지네이션.
+  const [keyPage, setKeyPage] = useState(1)
   usePageHeader('운영 설정 · HRD API Key')
 
   const {
@@ -67,6 +77,7 @@ export default function HrdApiKeyPage() {
     handleSubmit,
     reset,
     setFocus,
+    watch,
     formState: { errors },
   } = useForm<HrdKeyInput>({ resolver: zodResolver(hrdKeySchema) })
   const formRef = useRef<HTMLFormElement>(null)
@@ -92,8 +103,36 @@ export default function HrdApiKeyPage() {
   }
 
   const { summary } = data
-  const keys = [...addedKeys, ...data.keys]
+  const keys = [...addedKeys, ...data.keys].filter((k) => !deletedIds[k.id])
   const statusOf = (k: HrdApiKey) => (revokedIds[k.id] ? 'revoked' : k.status)
+  const isPrimaryOf = (k: HrdApiKey) =>
+    primaryKeyId ? k.id === primaryKeyId : k.isPrimary
+  const isTesting = testingTarget !== null
+  // 활성 키(기본 1 + 보조 1, 최대 2) 실시간 카운트 — 등록·교체·폐기 즉시 반영.
+  const activeCount = keys.filter((k) => statusOf(k) === 'active').length
+  // 연결 테스트는 '활성 키 있음'이 조건(04_운영 §5) — 활성 기본 키가 없으면 테스트 불가.
+  const activePrimary =
+    keys.find((k) => isPrimaryOf(k) && statusOf(k) === 'active') ?? null
+  const keyInput = watch('key')
+  // 이력 페이지네이션 — 오래 쌓여도 표가 길어지지 않도록.
+  const HISTORY_PAGE_SIZE = 8
+  const historyPageCount = Math.max(
+    1,
+    Math.ceil(filteredHistory.length / HISTORY_PAGE_SIZE),
+  )
+  const historySafePage = Math.min(historyPage, historyPageCount)
+  const pagedHistory = filteredHistory.slice(
+    (historySafePage - 1) * HISTORY_PAGE_SIZE,
+    historySafePage * HISTORY_PAGE_SIZE,
+  )
+  // 등록된 키 페이지네이션 — 폐기 키가 쌓여도 표가 길어지지 않도록.
+  const KEY_PAGE_SIZE = 6
+  const keyPageCount = Math.max(1, Math.ceil(keys.length / KEY_PAGE_SIZE))
+  const keySafePage = Math.min(keyPage, keyPageCount)
+  const pagedKeys = keys.slice(
+    (keySafePage - 1) * KEY_PAGE_SIZE,
+    keySafePage * KEY_PAGE_SIZE,
+  )
   // 'MM-DD HH:MM' 스탬프 (mock 이력용).
   const stamp = () => {
     const d = new Date()
@@ -122,30 +161,53 @@ export default function HrdApiKeyPage() {
     const masked = `${input.key.slice(0, 4).toUpperCase()}****${input.key
       .slice(-4)
       .toUpperCase()}`
+    const newId = `key-new-${Date.now()}`
     const key: HrdApiKey = {
-      id: `key-new-${Date.now()}`,
+      id: newId,
       name: input.name,
-      isPrimary: false,
+      isPrimary: activateNow,
       maskedKey: masked,
       createdAt: new Date().toISOString().slice(0, 10),
       lastUsedAt: '미사용',
       status: 'active',
     }
+    // 활성 키는 기본 1 + 보조 1 (최대 2)만. 같은 슬롯(기본/보조)의 기존 활성 키는 자동 폐기.
+    const replaced = keys.find(
+      (k) => statusOf(k) === 'active' && isPrimaryOf(k) === activateNow,
+    )
     setAddedKeys((p) => [key, ...p])
-    setAddedHistory((p) => [
-      {
-        id: `hist-reg-${Date.now()}`,
+    if (replaced) setRevokedIds((p) => ({ ...p, [replaced.id]: true }))
+    if (activateNow) setPrimaryKeyId(newId)
+    const rows: HrdKeyHistoryRow[] = []
+    if (replaced) {
+      rows.push({
+        id: `hist-rev-${Date.now()}`,
         at: stamp(),
-        action: 'register',
+        action: 'revoke',
         actor: '나',
         ok: true,
         response: null,
-        targetKey: masked,
-      },
-      ...p,
-    ])
+        targetKey: replaced.maskedKey,
+      })
+    }
+    rows.push({
+      id: `hist-reg-${Date.now()}`,
+      at: stamp(),
+      action: activateNow ? 'rotate' : 'register',
+      actor: '나',
+      ok: true,
+      response: null,
+      targetKey: replaced ? `${masked} ← ${replaced.maskedKey}` : masked,
+    })
+    setAddedHistory((p) => [...rows, ...p])
     toast.success(
-      `${input.name} 등록 — ${activateNow ? '즉시 사용' : '보조키 보관'}`,
+      activateNow
+        ? replaced
+          ? `${input.name} 활성화 — 기존 기본 키 폐기·교체`
+          : `${input.name} 기본 키로 활성화`
+        : replaced
+          ? `${input.name} 보조키 등록 — 기존 보조키 폐기`
+          : `${input.name} 보조키로 등록`,
     )
     reset()
   })
@@ -167,6 +229,12 @@ export default function HrdApiKeyPage() {
     toast.success(`${k.name} 폐기 — 감사 로그 기록`)
   }
 
+  // 폐기된 키 삭제 — 목록에서 제거(mock). 폐기 이력은 그대로 남는다.
+  const deleteKey = (k: HrdApiKey) => {
+    setDeletedIds((p) => ({ ...p, [k.id]: true }))
+    toast.success(`${k.name} 삭제 — 목록에서 제거`)
+  }
+
   // 교체 — 등록 폼으로 스크롤·포커스(새 키 등록이 곧 교체).
   const rotate = (name?: string) => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -176,21 +244,28 @@ export default function HrdApiKeyPage() {
     )
   }
 
-  // 연결 테스트 — mock 성공 + 이력 1행 추가.
+  // 연결 테스트 — 실제 HRD-Net 검증은 BE 프록시(서버가 활성 키 사용)가 필요.
+  // FE는 진행 상태·지연·결과 UX만 시뮬레이션한다(키 원문은 다루지 않음).
   const testConnection = (name: string, targetKey: string) => {
-    setAddedHistory((p) => [
-      {
-        id: `hist-test-${Date.now()}`,
-        at: stamp(),
-        action: 'test',
-        actor: '나',
-        ok: true,
-        response: '220ms',
-        targetKey,
-      },
-      ...p,
-    ])
-    toast.success(`${name} 연결 테스트 성공 · 220ms`)
+    if (testingTarget) return
+    setTestingTarget(targetKey)
+    const latency = `${180 + Math.floor(Math.random() * 140)}ms`
+    window.setTimeout(() => {
+      setAddedHistory((p) => [
+        {
+          id: `hist-test-${Date.now()}`,
+          at: stamp(),
+          action: 'test',
+          actor: '나',
+          ok: true,
+          response: latency,
+          targetKey,
+        },
+        ...p,
+      ])
+      toast.success(`${name} 연결 테스트 성공 · ${latency}`)
+      setTestingTarget(null)
+    }, 600)
   }
 
   const keyColumns: Column<HrdApiKey>[] = [
@@ -200,7 +275,7 @@ export default function HrdApiKeyPage() {
       cell: (k) => (
         <div>
           <p className="text-fg text-sm font-medium">{k.name}</p>
-          {k.isPrimary && (
+          {isPrimaryOf(k) && (
             <span className="bg-accent-bg text-accent-strong mt-0.5 inline-block rounded px-1 py-px text-[10px] font-bold">
               기본
             </span>
@@ -249,15 +324,25 @@ export default function HrdApiKeyPage() {
       align: 'right',
       cell: (k) =>
         statusOf(k) === 'revoked' ? (
-          <span className="text-fg-subtle text-xs">폐기됨 — 작업 불가</span>
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-fg-subtle text-xs">폐기됨</span>
+            <button
+              type="button"
+              onClick={() => deleteKey(k)}
+              className="border-border text-fg-muted hover:bg-danger-bg hover:text-danger rounded-md border px-2 py-1 text-xs font-medium"
+            >
+              삭제
+            </button>
+          </div>
         ) : (
           <div className="flex justify-end gap-1.5">
             <button
               type="button"
               onClick={() => testConnection(k.name, k.maskedKey)}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+              disabled={isTesting}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
             >
-              연결 테스트
+              {testingTarget === k.maskedKey ? '테스트 중…' : '연결 테스트'}
             </button>
             <button
               type="button"
@@ -329,7 +414,7 @@ export default function HrdApiKeyPage() {
       key: 'detail',
       header: '',
       align: 'right',
-      className: 'w-20',
+      className: 'w-24',
       cell: (h) => (
         <button
           type="button"
@@ -337,9 +422,9 @@ export default function HrdApiKeyPage() {
             e.stopPropagation()
             openHistoryDetail(h)
           }}
-          className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium"
+          className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium whitespace-nowrap"
         >
-          상세 <ArrowRight className="h-3 w-3" />
+          상세 <ArrowRight className="h-3.5 w-3.5" />
         </button>
       ),
     },
@@ -368,10 +453,17 @@ export default function HrdApiKeyPage() {
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => testConnection('활성 키', '활성 키')}
-            className="flex items-center gap-1.5 rounded-lg border border-white px-3.5 py-2 text-xs font-semibold"
+            onClick={() =>
+              activePrimary &&
+              testConnection(activePrimary.name, activePrimary.maskedKey)
+            }
+            disabled={isTesting || !activePrimary}
+            className="flex items-center gap-1.5 rounded-lg border border-white px-3.5 py-2 text-xs font-semibold disabled:opacity-50"
           >
-            <PlugZap className="h-3.5 w-3.5" /> 연결 테스트
+            <PlugZap className="h-3.5 w-3.5" />{' '}
+            {activePrimary && testingTarget === activePrimary.maskedKey
+              ? '테스트 중…'
+              : '연결 테스트'}
           </button>
           <button
             type="button"
@@ -396,7 +488,7 @@ export default function HrdApiKeyPage() {
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="활성 키"
-          value={summary.activeKeys}
+          value={activeCount}
           hint={summary.activeKeysHint}
         />
         <KpiCard
@@ -433,10 +525,21 @@ export default function HrdApiKeyPage() {
           </div>
           <DataTable
             columns={keyColumns}
-            rows={keys}
+            rows={pagedKeys}
             rowKey={(k) => k.id}
             empty="등록된 키가 없어요"
           />
+          {keys.length > 0 && (
+            <div className="mt-3">
+              <Pagination
+                page={keySafePage}
+                pageCount={keyPageCount}
+                totalCount={keys.length}
+                shownCount={pagedKeys.length}
+                onPage={setKeyPage}
+              />
+            </div>
+          )}
         </div>
 
         <form
@@ -502,9 +605,10 @@ export default function HrdApiKeyPage() {
               type="button"
               variant="secondary"
               className="h-10 flex-1 text-sm"
+              disabled={isTesting || !keyInput?.trim()}
               onClick={() => testConnection('새 키', '—')}
             >
-              연결 테스트
+              {testingTarget === '—' ? '테스트 중…' : '연결 테스트'}
             </Button>
             <Button type="submit" className="h-10 flex-1 text-sm">
               등록
@@ -531,7 +635,10 @@ export default function HrdApiKeyPage() {
               <button
                 key={f.key}
                 type="button"
-                onClick={() => setHistoryFilter(f.key)}
+                onClick={() => {
+                  setHistoryFilter(f.key)
+                  setHistoryPage(1)
+                }}
                 className={cn(
                   'rounded-md px-2.5 py-1 text-xs font-medium',
                   historyFilter === f.key
@@ -546,11 +653,22 @@ export default function HrdApiKeyPage() {
         </div>
         <DataTable
           columns={historyColumns}
-          rows={filteredHistory}
+          rows={pagedHistory}
           rowKey={(h) => h.id}
           onRowClick={openHistoryDetail}
           empty="이력이 없어요"
         />
+        {filteredHistory.length > 0 && (
+          <div className="mt-3">
+            <Pagination
+              page={historySafePage}
+              pageCount={historyPageCount}
+              totalCount={filteredHistory.length}
+              shownCount={pagedHistory.length}
+              onPage={setHistoryPage}
+            />
+          </div>
+        )}
       </div>
 
       <ActionModal

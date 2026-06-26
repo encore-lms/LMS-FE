@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -65,6 +66,7 @@ export default function AccountsPage() {
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
+  const [page, setPage] = useState(1)
   // 비활성화·담당 범위 변경 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
   const [statusOverride, setStatusOverride] = useState<
     Record<string, OpsAccount['status']>
@@ -172,6 +174,17 @@ export default function AccountsPage() {
   }
 
   const summary = derivedSummary ?? data.summary
+  // 사용자 표 페이지네이션 — 사용자가 많아져도 표가 길어지지 않도록.
+  const ACCOUNTS_PAGE_SIZE = 10
+  const accountsPageCount = Math.max(
+    1,
+    Math.ceil(filtered.length / ACCOUNTS_PAGE_SIZE),
+  )
+  const accountsSafePage = Math.min(page, accountsPageCount)
+  const pagedAccounts = filtered.slice(
+    (accountsSafePage - 1) * ACCOUNTS_PAGE_SIZE,
+    accountsSafePage * ACCOUNTS_PAGE_SIZE,
+  )
 
   // 수정 권한(RBAC canManageOperatorAccount, 2026-05-13 결정): ADMIN 또는 모든 MANAGER가
   // scope 무관하게 매니저·강사·멘토 계정을 수정한다. 단 본인 계정은 권한 회수 방지를 위해
@@ -494,7 +507,10 @@ export default function AccountsPage() {
           <span className="text-fg-subtle">역할</span>
           <select
             value={role}
-            onChange={(e) => setRole(e.target.value as RoleFilter)}
+            onChange={(e) => {
+              setRole(e.target.value as RoleFilter)
+              setPage(1)
+            }}
             aria-label="역할 필터"
             className="text-fg bg-transparent text-sm font-medium outline-none"
           >
@@ -509,7 +525,10 @@ export default function AccountsPage() {
           <span className="text-fg-subtle">상태</span>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
+            onChange={(e) => {
+              setStatus(e.target.value as StatusFilter)
+              setPage(1)
+            }}
             aria-label="상태 필터"
             className="text-fg bg-transparent text-sm font-medium outline-none"
           >
@@ -522,7 +541,10 @@ export default function AccountsPage() {
         </label>
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            setQ(e.target.value)
+            setPage(1)
+          }}
           placeholder="이메일, 이름, 담당 과정 검색"
           aria-label="운영 계정 검색"
           className="border-border text-fg placeholder:text-fg-subtle focus:border-brand ml-auto h-9 w-72 rounded-lg border bg-white px-3 text-sm outline-none"
@@ -532,11 +554,22 @@ export default function AccountsPage() {
       <div className="mt-3">
         <DataTable
           columns={columns}
-          rows={filtered}
+          rows={pagedAccounts}
           rowKey={(a) => a.id}
           onRowClick={(a) => setDetailTarget(a)}
           empty="조건에 맞는 계정이 없어요"
         />
+        {filtered.length > 0 && (
+          <div className="mt-3">
+            <Pagination
+              page={accountsSafePage}
+              pageCount={accountsPageCount}
+              totalCount={filtered.length}
+              shownCount={pagedAccounts.length}
+              onPage={setPage}
+            />
+          </div>
+        )}
       </div>
       <div className="text-fg-subtle mt-3 text-xs">
         총 {summary.total}건 · 매니저 {summary.managers} · 강사{' '}

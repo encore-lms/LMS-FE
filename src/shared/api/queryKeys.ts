@@ -70,8 +70,14 @@ export const adminKeys = {
   settingsCourses: () => [...adminKeys.all, 'settings', 'courses'] as const,
   settingsCourseConfig: (courseId: string) =>
     [...adminKeys.all, 'settings', 'courses', courseId] as const,
-  settingsHrdSearch: (page: number) =>
-    [...adminKeys.all, 'settings', 'hrd-search', { page }] as const,
+  // 교육 과정 추가 HRD-Net 검색 — base prefix로 무효화(등록·제거 후 상태 갱신).
+  settingsHrdSearch: (params?: {
+    organ?: string
+    title?: string
+    from?: string
+    to?: string
+    page?: number
+  }) => [...adminKeys.all, 'settings', 'hrd-search', params ?? {}] as const,
   settingsAudit: () => [...adminKeys.all, 'settings', 'audit'] as const,
 } as const
 

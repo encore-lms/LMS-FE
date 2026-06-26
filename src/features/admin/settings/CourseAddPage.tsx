@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { isAxiosError } from 'axios'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -20,7 +21,11 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { HrdCourseResult, HrdCourseStatus } from '@/shared/types'
-import { useHrdCourseSearch } from '../api/settings'
+import {
+  useHrdCourseSearch,
+  useRegisterCourse,
+  useDeleteCourseRegistration,
+} from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { SettingsTabs } from './SettingsTabs'
 
@@ -30,7 +35,7 @@ const STATUS_TONE: Record<HrdCourseStatus, BadgeTone> = {
   ended: 'neutral',
 }
 
-// 검색 폼 기본값 — 이전 LMS CourseAddView와 동일 구성(인증키·와일드카드 like 검색).
+// 검색 폼 기본값 — 이전 LMS CourseAddView와 동일 구성(인증키·과정명·기관명 like 검색).
 const SEARCH_DEFAULTS = {
   org: '플레이데이터',
   title: 'AI 캠프',
@@ -38,47 +43,74 @@ const SEARCH_DEFAULTS = {
   to: '2026-12-31',
 }
 
+// axios 에러 메시지(BE ErrorResponse.message) 추출.
+function errMsg(e: unknown, fallback: string) {
+  if (isAxiosError(e)) {
+    const msg = (e.response?.data as { message?: string } | undefined)?.message
+    if (msg) return msg
+  }
+  return fallback
+}
+
 // 교육 과정 추가 (/admin/settings/courses/new) — HRD-Net 검색·등록. (Figma 1284:9435)
-// 등록은 운영 액션 모달 v2(1306:8293) 확인 후 실행 — (trprId + 기수) 1:1 중복 차단.
+// learning-service 실연동(검색은 현재 fixture 스텁). (trprId + 기수) 1:1 중복 차단.
 export default function CourseAddPage() {
   const toast = useToast()
   const [page, setPage] = useState(1)
-  const { data, isPending, isError, refetch } = useHrdCourseSearch(page)
+  // 폼은 편집 상태, applied는 '조회' 시 적용된 검색 조건(서버 필터).
   const [form, setForm] = useState(SEARCH_DEFAULTS)
-  // 조회 시 적용된 과정명 필터(클라이언트). 빈 값이면 전체.
-  const [appliedQuery, setAppliedQuery] = useState('')
+  const [applied, setApplied] = useState(SEARCH_DEFAULTS)
   const [modal, setModal] = useState<ActionModalSpec | null>(null)
-  // 등록/제거 낙관적 토글 — mock이라 영속 없음(새로고침 초기화).
-  const [registeredOverride, setRegisteredOverride] = useState<
-    Record<string, boolean>
-  >({})
   const [pendingCourse, setPendingCourse] = useState<HrdCourseResult | null>(
     null,
   )
   usePageHeader('운영 설정 · 교육 과정 추가')
 
+  const { data, isPending, isError, error, refetch } = useHrdCourseSearch({
+    organ: applied.org,
+    title: applied.title,
+    from: applied.from,
+    to: applied.to,
+    page,
+  })
+  const registerCourse = useRegisterCourse()
+  const removeCourse = useDeleteCourseRegistration()
+
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
   }
   if (isError || !data) {
+    // 교육 과정 추가도 실 BE(learning-service) 전용. mock 모드에선 mock 토큰이라 401.
+    const status = isAxiosError(error) ? error.response?.status : undefined
+    const realAuth = import.meta.env.VITE_REAL_AUTH === 'true'
+    const { title, description } = !realAuth
+      ? {
+          title: '교육 과정 추가는 실 BE 전용이에요',
+          description:
+            'mock 모드에선 사용할 수 없습니다. VITE_REAL_AUTH=true 로 dev를 실행하고 ADMIN/MANAGER 실계정으로 로그인해 주세요.',
+        }
+      : status === 401 || status === 403
+        ? {
+            title: '인증이 필요해요',
+            description:
+              '로그인이 만료됐거나 권한이 없습니다. ADMIN/MANAGER로 다시 로그인해 주세요(토큰 TTL 30분).',
+          }
+        : {
+            title: 'HRD-Net 검색 결과를 불러오지 못했어요',
+            description:
+              'learning-service 연결을 확인한 뒤 다시 시도해 주세요.',
+          }
     return (
       <Empty
         icon={<AlertTriangle className="h-6 w-6" />}
-        title="HRD-Net 검색 결과를 불러오지 못했어요"
-        description="잠시 후 다시 시도해 주세요."
+        title={title}
+        description={description}
         action={<Button onClick={() => refetch()}>다시 시도</Button>}
       />
     )
   }
 
-  const results = appliedQuery
-    ? data.results.filter(
-        (r) => r.title.includes(appliedQuery) || r.grade.includes(appliedQuery),
-      )
-    : data.results
-
-  const isRegistered = (c: HrdCourseResult) =>
-    registeredOverride[c.trprId] ?? c.status === 'registered'
+  const results = data.results
 
   const openRegister = (c: HrdCourseResult) => {
     setPendingCourse(c)
@@ -88,28 +120,52 @@ export default function CourseAddPage() {
       rows: [
         { label: '과정', value: `${c.title} ${c.grade}` },
         { label: 'HRD 식별자', value: `trprId ${c.trprId}` },
+        { label: '기간', value: c.period },
         { label: '중복 검증', value: '동일 (trprId + 기수) 등록 차단' },
-        { label: '등록 후 작업', value: '강사·퀴즈·멘토 매핑 필요' },
       ],
       confirmLabel: '등록',
     })
   }
 
   const onConfirmRegister = (memo: string) => {
-    if (pendingCourse) {
-      setRegisteredOverride((p) => ({ ...p, [pendingCourse.trprId]: true }))
-      toast.success(
-        `${pendingCourse.title} ${pendingCourse.grade} 등록 — 감사 로그에 기록됨`,
-      )
-      if (memo.trim()) toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
-    }
+    const c = pendingCourse
     setPendingCourse(null)
     setModal(null)
+    if (!c) return
+    registerCourse.mutate(
+      {
+        trprId: c.trprId,
+        title: c.title,
+        grade: c.grade,
+        startDate: c.startDate,
+        endDate: c.endDate,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`${c.title} ${c.grade} 등록 — 감사 로그에 기록됨`)
+          if (memo.trim())
+            toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
+        },
+        onError: (e) => toast.danger(errMsg(e, '과정 등록에 실패했어요')),
+      },
+    )
   }
 
   const removeRegistration = (c: HrdCourseResult) => {
-    setRegisteredOverride((p) => ({ ...p, [c.trprId]: false }))
-    toast.success(`${c.title} ${c.grade} 시스템 등록 제거`)
+    removeCourse.mutate(
+      { trprId: c.trprId, grade: c.grade },
+      {
+        onSuccess: () =>
+          toast.success(`${c.title} ${c.grade} 시스템 등록 제거`),
+        onError: (e) => toast.danger(errMsg(e, '등록 제거에 실패했어요')),
+      },
+    )
+  }
+
+  const onSearch = () => {
+    setPage(1)
+    setApplied({ ...form })
+    toast.info('HRD-Net 조회 중…')
   }
 
   return (
@@ -213,7 +269,8 @@ export default function CourseAddPage() {
               type="button"
               onClick={() => {
                 setForm(SEARCH_DEFAULTS)
-                setAppliedQuery('')
+                setApplied(SEARCH_DEFAULTS)
+                setPage(1)
               }}
               className="border-border text-fg-muted hover:bg-surface-muted flex h-10 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium"
             >
@@ -221,17 +278,7 @@ export default function CourseAddPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                const q = form.title.trim()
-                setPage(1)
-                setAppliedQuery(q)
-                const n = q
-                  ? data.results.filter(
-                      (r) => r.title.includes(q) || r.grade.includes(q),
-                    ).length
-                  : data.results.length
-                toast.success(`HRD-Net 조회 — ${n}건`)
-              }}
+              onClick={onSearch}
               className="bg-brand-deep flex h-10 items-center gap-1.5 rounded-lg px-4 text-xs font-bold text-white"
             >
               <Search className="h-3.5 w-3.5" /> 조회
@@ -285,7 +332,7 @@ export default function CourseAddPage() {
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {results.map((c) => {
-          const registered = isRegistered(c)
+          const registered = c.status === 'registered'
           const ended = c.status === 'ended'
           return (
             <div
@@ -341,7 +388,8 @@ export default function CourseAddPage() {
                   <button
                     type="button"
                     onClick={() => removeRegistration(c)}
-                    className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2.5 py-1.5 text-xs font-medium"
+                    disabled={removeCourse.isPending}
+                    className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2.5 py-1.5 text-xs font-medium disabled:opacity-50"
                   >
                     시스템 등록 제거
                   </button>
@@ -349,7 +397,8 @@ export default function CourseAddPage() {
                   <button
                     type="button"
                     onClick={() => openRegister(c)}
-                    className="bg-brand-deep flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold text-white"
+                    disabled={registerCourse.isPending}
+                    className="bg-brand-deep flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold text-white disabled:opacity-50"
                   >
                     <PlusCircle className="h-3 w-3" /> 시스템 등록
                   </button>
@@ -366,7 +415,7 @@ export default function CourseAddPage() {
         </p>
       )}
 
-      {/* 페이지네이션 — 공통 Pagination. mock이 page별 다른 결과 반환(a안) + placeholderData로 깜빡임 제거. */}
+      {/* 페이지네이션 — 공통 Pagination. 서버 페이지네이션 + placeholderData로 깜빡임 제거. */}
       <div className="mt-4">
         <Pagination
           page={page}

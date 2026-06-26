@@ -4,7 +4,6 @@ import type {
   OpsAccountsData,
   CourseListItem,
   CourseConfigDetail,
-  HrdCourseSearchData,
 } from '@/shared/types'
 import type { SettingsAuditData } from './settingsAudit.types'
 
@@ -464,136 +463,6 @@ const courseConfigs: Record<string, CourseConfigDetail> = Object.fromEntries(
   ]),
 )
 
-// ── 교육 과정 추가 (Figma 1284:9435) — HRD 검색 결과 페이지 1 ──
-const hrdSearch: HrdCourseSearchData = {
-  summary: { total: 128, registrable: 94, registered: 18, ended: 16 },
-  page: 1,
-  pageSize: 12,
-  totalPages: 11,
-  results: [
-    {
-      trprId: 'AIG2026-0001',
-      status: 'unregistered',
-      title: 'SK네트웍스 Family AI 캠프',
-      grade: '22기',
-      period: '2026-03-02 ~ 2026-08-29',
-      capacity: 240,
-      applied: 238,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0017',
-      status: 'registered',
-      title: '클라우드 엔지니어 부트캠프',
-      grade: '7기',
-      period: '2026-04-01 ~ 2026-09-30',
-      capacity: 200,
-      applied: 181,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0011',
-      status: 'unregistered',
-      title: '데이터 엔지니어링 22기',
-      grade: '22기',
-      period: '2026-04-15 ~ 2026-10-15',
-      capacity: 180,
-      applied: 94,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0034',
-      status: 'unregistered',
-      title: '풀스택 부트캠프 14기',
-      grade: '14기',
-      period: '2026-05-12 ~ 2026-11-12',
-      capacity: 160,
-      applied: 112,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0019',
-      status: 'registered',
-      title: 'AI 서비스 기획자 과정',
-      grade: '3기',
-      period: '2026-04-22 ~ 2026-09-22',
-      capacity: 60,
-      applied: 58,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0042',
-      status: 'unregistered',
-      title: '백엔드 개발자 부트캠프 9기',
-      grade: '9기',
-      period: '2026-06-01 ~ 2026-11-30',
-      capacity: 120,
-      applied: 40,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2025-0008',
-      status: 'ended',
-      title: '프론트엔드 실무 과정',
-      grade: '4기',
-      period: '2025-01-10 ~ 2025-06-30',
-      capacity: 180,
-      applied: 176,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0023',
-      status: 'registered',
-      title: 'DA 데이터 분석가 5기',
-      grade: '5기',
-      period: '2026-03-15 ~ 2026-09-15',
-      capacity: 180,
-      applied: 178,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0028',
-      status: 'unregistered',
-      title: 'PM 부트캠프 2기',
-      grade: '2기',
-      period: '2026-05-05 ~ 2026-10-05',
-      capacity: 40,
-      applied: 39,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0051',
-      status: 'unregistered',
-      title: 'AI 응용 LLM 부트캠프',
-      grade: '1기',
-      period: '2026-06-15 ~ 2026-12-15',
-      capacity: 80,
-      applied: 21,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2025-0044',
-      status: 'ended',
-      title: '안드로이드 앱 개발 부트캠프',
-      grade: '6기',
-      period: '2025-09-01 ~ 2026-03-31',
-      capacity: 100,
-      applied: 92,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-    {
-      trprId: 'AIG2026-0060',
-      status: 'unregistered',
-      title: 'MLOps 엔지니어 과정',
-      grade: '2기',
-      period: '2026-07-01 ~ 2026-12-30',
-      capacity: 90,
-      applied: 12,
-      hrdUrl: 'https://www.hrd.go.kr/',
-    },
-  ],
-}
-
 // ── 설정 감사 로그 (Figma 5190:11189) ──
 const settingsAudit: SettingsAuditData = {
   summary: {
@@ -786,24 +655,5 @@ export const handlers = [
       ? ok<CourseConfigDetail>(config)
       : HttpResponse.json({ message: 'not found' }, { status: 404 })
   }),
-  http.get('/api/admin/settings/hrd-courses', ({ request }) => {
-    const page = Number(new URL(request.url).searchParams.get('page') ?? '1')
-    const { results: templates, pageSize, summary } = hrdSearch
-    const start = (page - 1) * pageSize
-    const count = Math.max(0, Math.min(pageSize, summary.total - start))
-    // 페이지마다 다른 카드를 보여주도록 12개 템플릿을 변형해 슬라이스(시연용).
-    const results =
-      page <= 1
-        ? templates
-        : Array.from({ length: count }, (_, i) => {
-            const base = templates[i % templates.length]
-            const globalIdx = start + i + 1
-            return {
-              ...base,
-              trprId: `${base.trprId.split('-')[0]}-${String(globalIdx).padStart(4, '0')}`,
-              title: `${base.title} (${globalIdx}회차)`,
-            }
-          })
-    return ok<HrdCourseSearchData>({ ...hrdSearch, page, results })
-  }),
+  // 교육 과정 추가(HRD-Net 검색·등록)는 learning-service(:8082) 실연동 — dev proxy가 처리(mock 제거).
 ]

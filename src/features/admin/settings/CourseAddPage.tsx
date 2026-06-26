@@ -2,18 +2,14 @@ import { useState } from 'react'
 import { isAxiosError } from 'axios'
 import {
   AlertTriangle,
-  CheckCircle2,
   ExternalLink,
-  FileText,
   Info,
   PlusCircle,
   RotateCcw,
   Search,
-  XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
-import { KpiCard } from '@/components/data/KpiCard'
 import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
@@ -22,6 +18,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { HrdCourseResult, HrdCourseStatus } from '@/shared/types'
 import {
+  useHrdKeyList,
   useHrdCourseSearch,
   useRegisterCourse,
   useDeleteCourseRegistration,
@@ -35,12 +32,23 @@ const STATUS_TONE: Record<HrdCourseStatus, BadgeTone> = {
   ended: 'neutral',
 }
 
-// 검색 폼 기본값 — 이전 LMS CourseAddView와 동일 구성(인증키·과정명·기관명 like 검색).
-const SEARCH_DEFAULTS = {
-  org: '플레이데이터',
-  title: 'AI 캠프',
-  from: '2025-02-07',
-  to: '2026-12-31',
+// Date → 'YYYY-MM-DD'
+function isoDate(d: Date) {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+// 검색 폼 기본값 — 훈련과정명은 비움, 조회기간은 오늘 기준(종료=오늘, 시작=오늘−6개월).
+function makeSearchDefaults() {
+  const today = new Date()
+  const from = new Date(today)
+  from.setMonth(from.getMonth() - 6)
+  return {
+    org: '플레이데이터',
+    title: '',
+    from: isoDate(from),
+    to: isoDate(today),
+  }
 }
 
 // axios 에러 메시지(BE ErrorResponse.message) 추출.
@@ -52,38 +60,52 @@ function errMsg(e: unknown, fallback: string) {
   return fallback
 }
 
-// 교육 과정 추가 (/admin/settings/courses/new) — HRD-Net 검색·등록. (Figma 1284:9435)
-// learning-service 실연동(검색은 현재 fixture 스텁). (trprId + 기수) 1:1 중복 차단.
+// 교육 과정 추가 (/admin/settings/courses/new) — HRD-Net 실 검색·등록. (Figma 1284:9435)
+// 선택한 HRD Key를 authKey로 work24 호출. (trprId + 기수) 1:1 중복 차단.
 export default function CourseAddPage() {
   const toast = useToast()
   const [page, setPage] = useState(1)
   // 폼은 편집 상태, applied는 '조회' 시 적용된 검색 조건(서버 필터).
-  const [form, setForm] = useState(SEARCH_DEFAULTS)
-  const [applied, setApplied] = useState(SEARCH_DEFAULTS)
+  const [form, setForm] = useState(makeSearchDefaults)
+  const [applied, setApplied] = useState(makeSearchDefaults)
+  const [selectedKeyId, setSelectedKeyId] = useState('')
+  // 조회 버튼을 눌렀는지 — 누르기 전엔 검색하지 않는다.
+  const [searched, setSearched] = useState(false)
   const [modal, setModal] = useState<ActionModalSpec | null>(null)
   const [pendingCourse, setPendingCourse] = useState<HrdCourseResult | null>(
     null,
   )
   usePageHeader('운영 설정 · 교육 과정 추가')
 
-  const { data, isPending, isError, error, refetch } = useHrdCourseSearch({
-    organ: applied.org,
-    title: applied.title,
-    from: applied.from,
-    to: applied.to,
-    page,
-  })
+  // 실제 등록된 활성 HRD Key 목록 — 인증키 select에 채운다.
+  const { data: keyList } = useHrdKeyList({ active: true, size: 100 })
+  const activeKeys = keyList?.items ?? []
+  // 선택 없으면 첫 활성 키를 기본 사용(BE도 미지정 시 활성 키 폴백).
+  const effectiveKeyId = selectedKeyId || activeKeys[0]?.id || ''
+
+  // '조회'(searched) 전에는 호출하지 않는다.
+  const { data, isPending, isError, error, refetch } = useHrdCourseSearch(
+    {
+      keyId: effectiveKeyId || undefined,
+      organ: applied.org,
+      title: applied.title,
+      from: applied.from,
+      to: applied.to,
+      page,
+    },
+    searched,
+  )
   const registerCourse = useRegisterCourse()
   const removeCourse = useDeleteCourseRegistration()
 
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !data) {
+  const results = data?.results ?? []
+
+  // 조회 후 실패 시 결과 영역에 표시할 에러 안내.
+  const errorView = () => {
     // 교육 과정 추가도 실 BE(learning-service) 전용. mock 모드에선 mock 토큰이라 401.
     const status = isAxiosError(error) ? error.response?.status : undefined
     const realAuth = import.meta.env.VITE_REAL_AUTH === 'true'
-    const { title, description } = !realAuth
+    const view = !realAuth
       ? {
           title: '교육 과정 추가는 실 BE 전용이에요',
           description:
@@ -97,20 +119,20 @@ export default function CourseAddPage() {
           }
         : {
             title: 'HRD-Net 검색 결과를 불러오지 못했어요',
-            description:
+            description: errMsg(
+              error,
               'learning-service 연결을 확인한 뒤 다시 시도해 주세요.',
+            ),
           }
     return (
       <Empty
         icon={<AlertTriangle className="h-6 w-6" />}
-        title={title}
-        description={description}
+        title={view.title}
+        description={view.description}
         action={<Button onClick={() => refetch()}>다시 시도</Button>}
       />
     )
   }
-
-  const results = data.results
 
   const openRegister = (c: HrdCourseResult) => {
     setPendingCourse(c)
@@ -165,7 +187,7 @@ export default function CourseAddPage() {
   const onSearch = () => {
     setPage(1)
     setApplied({ ...form })
-    toast.info('HRD-Net 조회 중…')
+    setSearched(true)
   }
 
   return (
@@ -177,24 +199,12 @@ export default function CourseAddPage() {
             COURSE ADD · HRD-Net 과정 등록
           </p>
           <p className="mt-1 text-xl font-bold">교육 과정 추가</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full bg-white/15 px-2.5 py-1 font-mono">
-              APIPO0101T.do
-            </span>
-            <span className="rounded-full bg-white/15 px-2.5 py-1">
-              12 카드 / 페이지
-            </span>
-            <span className="rounded-full bg-white/15 px-2.5 py-1">
-              (trprId + 기수) 1:1 중복 차단
-            </span>
-          </div>
         </div>
         <div className="shrink-0 text-right">
           <p className="text-[10px] font-medium tracking-wide">
             이번 검색 결과
           </p>
-          <p className="text-2xl font-bold">{data.summary.total}</p>
-          <p className="text-[11px]">scn_cnt 기준 · {data.totalPages} 페이지</p>
+          <p className="text-2xl font-bold">{data?.summary.total ?? '-'}</p>
         </div>
       </div>
 
@@ -218,11 +228,23 @@ export default function CourseAddPage() {
             </span>
             <select
               aria-label="인증키"
-              defaultValue="prod"
-              className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+              value={effectiveKeyId}
+              onChange={(e) => {
+                setSelectedKeyId(e.target.value)
+                setPage(1)
+              }}
+              disabled={activeKeys.length === 0}
+              className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none disabled:opacity-60"
             >
-              <option value="prod">HRD 운영키 2026 (APIPO****9K2A)</option>
-              <option value="sub">HRD 보조키 (APIPO****77QA)</option>
+              {activeKeys.length === 0 ? (
+                <option value="">활성 키 없음 — HRD API Key 등록 필요</option>
+              ) : (
+                activeKeys.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.name} ({k.maskedKey})
+                  </option>
+                ))
+              )}
             </select>
           </label>
           <label className="flex flex-col gap-1">
@@ -242,7 +264,8 @@ export default function CourseAddPage() {
                 setForm((f) => ({ ...f, title: e.target.value }))
               }
               aria-label="훈련과정명"
-              className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+              placeholder="예: AI 캠프 (비워두면 전체)"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
             />
           </label>
           {/* 공통 DateTimePicker(date 모드) — 조회기간 범위. 시작≤종료 자동 제약. */}
@@ -268,8 +291,10 @@ export default function CourseAddPage() {
             <button
               type="button"
               onClick={() => {
-                setForm(SEARCH_DEFAULTS)
-                setApplied(SEARCH_DEFAULTS)
+                const d = makeSearchDefaults()
+                setForm(d)
+                setApplied(d)
+                setSearched(false)
                 setPage(1)
               }}
               className="border-border text-fg-muted hover:bg-surface-muted flex h-10 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium"
@@ -287,144 +312,134 @@ export default function CourseAddPage() {
         </div>
       </div>
 
-      {/* KPI 4 */}
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="검색 결과"
-          value={data.summary.total}
-          hint="scn_cnt 기준"
-          icon={<FileText className="h-4 w-4" />}
+      {!searched ? (
+        <Empty
+          icon={<Search className="h-6 w-6" />}
+          title="검색 조건을 설정하고 조회하세요"
+          description="인증키·훈련기관명·훈련과정명·조회기간을 설정한 뒤 '조회'를 누르면 HRD-Net 과정이 표시됩니다."
         />
-        <KpiCard
-          label="등록 가능"
-          value={data.summary.registrable}
-          tone="info"
-          hint="종료 제외 미등록"
-          icon={<PlusCircle className="h-4 w-4" />}
-        />
-        <KpiCard
-          label="이미 등록"
-          value={data.summary.registered}
-          tone="success"
-          hint="(trprId + 기수) 매칭"
-          icon={<CheckCircle2 className="h-4 w-4" />}
-        />
-        <KpiCard
-          label="종료 과정"
-          value={data.summary.ended}
-          hint="endDate < today 비활성"
-          icon={<XCircle className="h-4 w-4" />}
-        />
-      </div>
-
-      {/* 결과 카드 그리드 */}
-      <div className="mt-5 flex items-end justify-between">
-        <div>
-          <p className="text-fg text-sm font-bold">
-            검색 결과 · 페이지 {data.page}
-          </p>
-          <p className="text-fg-subtle text-xs">
-            LMS 저장 필드: title · trprId · 기수 · 기간 / 정원·신청·링크는
-            미저장 (검색 시점만 표시)
-          </p>
-        </div>
-        <span className="text-fg-subtle text-xs">정렬: 시작일 DESC</span>
-      </div>
-      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {results.map((c) => {
-          const registered = c.status === 'registered'
-          const ended = c.status === 'ended'
-          return (
-            <div
-              key={c.trprId}
-              className={cn(
-                'border-border bg-surface flex flex-col gap-2.5 rounded-xl border p-4',
-                ended && 'opacity-60',
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 font-mono text-[11px]">
-                  {c.trprId}
-                </span>
-                <StatusBadge
-                  label={ended ? '종료' : registered ? '등록됨' : '미등록'}
-                  tone={
-                    ended
-                      ? STATUS_TONE.ended
-                      : registered
-                        ? STATUS_TONE.registered
-                        : STATUS_TONE.unregistered
-                  }
-                />
-              </div>
-              <div>
-                <p className="text-fg text-sm font-bold">{c.title}</p>
-                <p className="text-fg-subtle text-xs">{c.grade}</p>
-              </div>
-              <div className="bg-surface-muted flex flex-col gap-1 rounded-lg px-3 py-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-fg-subtle">기간</span>
-                  <span className="text-fg font-medium">{c.period}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-fg-subtle">정원 / 신청</span>
-                  <span className="text-fg font-medium">
-                    {c.capacity} / {c.applied}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-auto flex items-center justify-between">
-                <a
-                  href={c.hrdUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-info flex items-center gap-1 text-xs font-medium hover:underline"
-                >
-                  HRD-Net 신청 페이지 <ExternalLink className="h-3 w-3" />
-                </a>
-                {ended ? (
-                  <span className="text-fg-subtle text-xs">종료된 과정</span>
-                ) : registered ? (
-                  <button
-                    type="button"
-                    onClick={() => removeRegistration(c)}
-                    disabled={removeCourse.isPending}
-                    className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2.5 py-1.5 text-xs font-medium disabled:opacity-50"
-                  >
-                    시스템 등록 제거
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => openRegister(c)}
-                    disabled={registerCourse.isPending}
-                    className="bg-brand-deep flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold text-white disabled:opacity-50"
-                  >
-                    <PlusCircle className="h-3 w-3" /> 시스템 등록
-                  </button>
-                )}
-              </div>
+      ) : isPending ? (
+        <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
+      ) : isError || !data ? (
+        errorView()
+      ) : (
+        <>
+          {/* 결과 카드 그리드 */}
+          <div className="mt-5 flex items-end justify-between">
+            <div>
+              <p className="text-fg text-sm font-bold">
+                검색 결과 · 페이지 {data.page}
+              </p>
+              <p className="text-fg-subtle text-xs">
+                LMS 저장 필드: title · trprId · 기수 · 기간 / 정원·신청·링크는
+                미저장 (검색 시점만 표시)
+              </p>
             </div>
-          )
-        })}
-      </div>
+            <span className="text-fg-subtle text-xs">정렬: 시작일 DESC</span>
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {results.map((c) => {
+              const registered = c.status === 'registered'
+              const ended = c.status === 'ended'
+              return (
+                <div
+                  key={c.trprId}
+                  className={cn(
+                    'border-border bg-surface flex flex-col gap-3 rounded-xl border p-4 transition-colors',
+                    ended
+                      ? 'opacity-80'
+                      : 'hover:border-brand/40 hover:shadow-sm',
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="bg-surface-muted text-fg-muted rounded px-2 py-0.5 font-mono text-[11px] font-medium tracking-tight">
+                      {c.trprId}
+                    </span>
+                    <StatusBadge
+                      label={ended ? '종료' : registered ? '등록됨' : '미등록'}
+                      tone={
+                        ended
+                          ? STATUS_TONE.ended
+                          : registered
+                            ? STATUS_TONE.registered
+                            : STATUS_TONE.unregistered
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="text-fg text-base leading-snug font-bold">
+                      {c.title}
+                    </p>
+                    <span className="bg-accent-bg text-accent-strong inline-block rounded px-1.5 py-0.5 text-[11px] font-bold">
+                      {c.grade}
+                    </span>
+                  </div>
+                  <dl className="border-divider grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 border-t pt-3 text-xs">
+                    <dt className="text-fg-muted">기간</dt>
+                    <dd className="text-fg text-right font-semibold tabular-nums">
+                      {c.period}
+                    </dd>
+                    <dt className="text-fg-muted">정원 / 신청</dt>
+                    <dd className="text-fg text-right font-semibold tabular-nums">
+                      {c.capacity} / {c.applied}
+                    </dd>
+                  </dl>
+                  <div className="border-divider mt-auto flex items-center justify-between border-t pt-3">
+                    <a
+                      href={c.hrdUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-info flex items-center gap-1 text-xs font-medium hover:underline"
+                    >
+                      HRD-Net 신청 페이지 <ExternalLink className="h-3 w-3" />
+                    </a>
+                    {ended ? (
+                      <span className="text-fg-subtle text-xs font-medium">
+                        종료된 과정
+                      </span>
+                    ) : registered ? (
+                      <button
+                        type="button"
+                        onClick={() => removeRegistration(c)}
+                        disabled={removeCourse.isPending}
+                        className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2.5 py-1.5 text-xs font-medium disabled:opacity-50"
+                      >
+                        시스템 등록 제거
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openRegister(c)}
+                        disabled={registerCourse.isPending}
+                        className="bg-brand-deep flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                      >
+                        <PlusCircle className="h-3 w-3" /> 시스템 등록
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
-      {results.length === 0 && (
-        <p className="text-fg-subtle py-10 text-center text-sm">
-          조건에 맞는 과정이 없어요
-        </p>
+          {results.length === 0 && (
+            <p className="text-fg-subtle py-10 text-center text-sm">
+              조건에 맞는 과정이 없어요
+            </p>
+          )}
+
+          {/* 페이지네이션 — 공통 Pagination. 서버 페이지네이션 + placeholderData로 깜빡임 제거. */}
+          <div className="mt-4">
+            <Pagination
+              page={page}
+              pageCount={data.totalPages}
+              totalCount={data.summary.total}
+              shownCount={results.length}
+              onPage={setPage}
+            />
+          </div>
+        </>
       )}
-
-      {/* 페이지네이션 — 공통 Pagination. 서버 페이지네이션 + placeholderData로 깜빡임 제거. */}
-      <div className="mt-4">
-        <Pagination
-          page={page}
-          pageCount={data.totalPages}
-          totalCount={data.summary.total}
-          shownCount={results.length}
-          onPage={setPage}
-        />
-      </div>
 
       <ActionModal
         spec={modal}

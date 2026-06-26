@@ -194,6 +194,7 @@ export function useCourseConfig(courseId: string | null) {
 // HRD-Net 검색은 현재 BE fixture 스텁, 등록/제거는 in-memory MVP. proxy로 :8082 도달.
 
 export interface HrdCourseSearchParams {
+  keyId?: string
   organ?: string
   title?: string
   from?: string
@@ -202,9 +203,14 @@ export interface HrdCourseSearchParams {
   size?: number
 }
 
-export function useHrdCourseSearch(params: HrdCourseSearchParams = {}) {
+export function useHrdCourseSearch(
+  params: HrdCourseSearchParams = {},
+  enabled = true,
+) {
   return useQuery({
     queryKey: adminKeys.settingsHrdSearch(params),
+    // '조회' 전에는 호출하지 않는다(enabled=false). keyId 미지정 시 BE가 활성 키로 폴백.
+    enabled,
     // 페이지·검색 전환 시 이전 결과를 유지해 깜빡임(전체 로딩) 방지.
     placeholderData: keepPreviousData,
     queryFn: () =>
@@ -212,6 +218,7 @@ export function useHrdCourseSearch(params: HrdCourseSearchParams = {}) {
         .get<HrdCourseSearchData>('/admin/courses/hrd-search', {
           page: params.page ?? 1,
           size: params.size ?? 12,
+          ...(params.keyId ? { keyId: params.keyId } : {}),
           ...(params.organ ? { organ: params.organ } : {}),
           ...(params.title ? { title: params.title } : {}),
           ...(params.from ? { from: params.from } : {}),

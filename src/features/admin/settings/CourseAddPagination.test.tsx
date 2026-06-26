@@ -10,7 +10,35 @@ import CourseAddPage from './CourseAddPage'
 // → 페이지 번호 클릭 시 setPage → 재조회 → 데이터 교체가 실제로 일어나는지 검증.
 vi.mock('@/shared/api', () => ({
   apiClient: {
-    get: vi.fn((_url: string, params?: { page?: number }) => {
+    get: vi.fn((url: string, params?: { page?: number }) => {
+      // 인증키 select용 활성 HRD Key 목록.
+      if (url.includes('/admin/hrd-keys')) {
+        return Promise.resolve({
+          data: {
+            items: [
+              {
+                id: 'key-1',
+                name: '운영키',
+                maskedKey: '****AAAA',
+                description: null,
+                active: true,
+                createdBy: 'u',
+                updatedBy: 'u',
+                createdAt: '2026-01-01T00:00:00Z',
+                updatedAt: '2026-01-01T00:00:00Z',
+              },
+            ],
+            page: 0,
+            size: 100,
+            totalElements: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false,
+            sort: 'latest',
+          },
+        })
+      }
+      // 과정 검색(page별 다른 데이터).
       const page = params?.page ?? 1
       const results = Array.from({ length: 12 }, (_, i) => ({
         trprId: `T-${page}-${i + 1}`,
@@ -18,6 +46,8 @@ vi.mock('@/shared/api', () => ({
         title: `${page}페이지 과정 ${i + 1}`,
         grade: `${i + 1}기`,
         period: '2026-01-01 ~ 2026-06-30',
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
         capacity: 100,
         applied: 50,
         hrdUrl: 'https://www.hrd.go.kr/',
@@ -34,8 +64,10 @@ vi.mock('@/shared/api', () => ({
     }),
   },
   adminKeys: {
-    settingsHrdSearch: (page: number) =>
-      ['admin', 'settings', 'hrd-search', { page }] as const,
+    settingsHrdSearch: (params: unknown) =>
+      ['admin', 'settings', 'hrd-search', params ?? {}] as const,
+    settingsHrdKeyList: (params: unknown) =>
+      ['admin', 'settings', 'hrd-keys', 'list', params ?? {}] as const,
   },
 }))
 
@@ -56,6 +88,9 @@ describe('CourseAddPage 페이지네이션', () => {
   it('페이지 번호를 누르면 해당 페이지 데이터로 카드가 바뀐다', async () => {
     const user = userEvent.setup()
     renderPage()
+
+    // 조회 후에만 검색된다.
+    await user.click(screen.getByRole('button', { name: '조회' }))
 
     // 1페이지 데이터
     expect(await screen.findByText('1페이지 과정 1')).toBeInTheDocument()

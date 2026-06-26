@@ -440,17 +440,28 @@ describe('CourseConfigPage', () => {
 })
 
 describe('CourseAddPage', () => {
-  it('HRD 검색 폼·KPI·결과 카드를 렌더한다', () => {
+  it('검색 폼은 항상 보이고, 조회 후 결과 카드가 렌더된다', async () => {
+    const user = userEvent.setup()
     renderWith(<CourseAddPage />)
+    // 폼은 조회 전에도 보인다.
     expect(screen.getByText('HRD-Net 과정 검색')).toBeInTheDocument()
-    expect(screen.getByText('SK네트웍스 Family AI 캠프')).toBeInTheDocument()
-    // 종료 과정은 등록 불가
+    // 조회 전에는 결과 카드가 없다.
+    expect(
+      screen.queryByText('SK네트웍스 Family AI 캠프'),
+    ).not.toBeInTheDocument()
+    // 조회 후 결과 카드 + 종료 과정 표시.
+    await user.click(screen.getByRole('button', { name: '조회' }))
+    expect(
+      await screen.findByText('SK네트웍스 Family AI 캠프'),
+    ).toBeInTheDocument()
     expect(screen.getByText('종료된 과정')).toBeInTheDocument()
   })
 
   it('시스템 등록은 확인 모달을 거쳐 등록 API를 호출한다', async () => {
     const user = userEvent.setup()
     renderWith(<CourseAddPage />)
+    await user.click(screen.getByRole('button', { name: '조회' }))
+    await screen.findByText('SK네트웍스 Family AI 캠프')
     await user.click(screen.getByRole('button', { name: /시스템 등록/ }))
     expect(screen.getByText('HRD 과정 등록 확인')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '등록' }))

@@ -34,6 +34,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 수강생 과정 기능 플래그(메뉴 토글 반영)도 learning-service(:8082) 실연동.
+      // 그 외 /api/student/* 는 MSW mock 유지(이 경로만 핸들러 없어 bypass → 프록시).
+      '/api/student/course-features': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 실로그인(VITE_REAL_AUTH=true)일 때만 MSW가 /api/auth/login을 bypass → 이 프록시로 도달.
       // mock 로그인(기본)에서는 MSW가 가로채므로 이 프록시는 사용되지 않는다.
       '/api/auth': {

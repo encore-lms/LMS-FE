@@ -4,12 +4,16 @@ import {
   AlertTriangle,
   CheckCircle2,
   Coins,
+  ExternalLink,
   FileText,
   FolderOpen,
   Gamepad2,
   Info,
+  Link2,
+  Plus,
   Save,
   SlidersHorizontal,
+  Trash2,
   XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -20,8 +24,11 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { CourseCohort } from '@/shared/types'
 import {
+  useCohortMaterials,
   useCourseConfig,
   useCourseList,
+  useCreateCohortMaterial,
+  useDeleteCohortMaterial,
   useUpdateCohortSettings,
 } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
@@ -83,10 +90,18 @@ export default function CourseConfigPage() {
     (ActionModalSpec & { kind: 'save' | 'cancel' }) | null
   >(null)
   const updateCohort = useUpdateCohortSettings()
+  const createMaterial = useCreateCohortMaterial()
+  const deleteMaterial = useDeleteCohortMaterial()
+  // 자료실 — 선택 기수 + 신규 자료 입력.
+  const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
+  const [materialTitle, setMaterialTitle] = useState('')
+  const [materialUrl, setMaterialUrl] = useState('')
   usePageHeader('운영 설정 · 교육 과정 설정')
 
   const courseId = selectedId ?? courses?.[0]?.courseId ?? null
   const { data: config } = useCourseConfig(courseId)
+  const materialCohortId = selectedCohortId ?? config?.cohorts?.[0]?.id ?? null
+  const { data: materials } = useCohortMaterials(courseId, materialCohortId)
 
   const filteredCourses = useMemo(() => {
     const items = courses ?? []
@@ -205,6 +220,44 @@ export default function CourseConfigPage() {
     }
   }
 
+  const onAddMaterial = () => {
+    if (!courseId || !materialCohortId) return
+    const title = materialTitle.trim()
+    const url = materialUrl.trim()
+    if (!title || !url) {
+      toast.danger('자료 제목과 링크를 입력해 주세요')
+      return
+    }
+    createMaterial.mutate(
+      {
+        courseId,
+        cohortId: materialCohortId,
+        title,
+        materialType: 'link',
+        url,
+      },
+      {
+        onSuccess: () => {
+          setMaterialTitle('')
+          setMaterialUrl('')
+          toast.success('자료를 등록했어요')
+        },
+        onError: () => toast.danger('자료 등록에 실패했어요'),
+      },
+    )
+  }
+
+  const onDeleteMaterial = (materialId: string) => {
+    if (!courseId || !materialCohortId) return
+    deleteMaterial.mutate(
+      { courseId, cohortId: materialCohortId, materialId },
+      {
+        onSuccess: () => toast.success('자료를 삭제했어요'),
+        onError: () => toast.danger('자료 삭제에 실패했어요'),
+      },
+    )
+  }
+
   return (
     <div className="p-8">
       {/* 히어로 */}
@@ -285,6 +338,7 @@ export default function CourseConfigPage() {
               type="button"
               onClick={() => {
                 setSelectedId(c.courseId)
+                setSelectedCohortId(null)
                 setChanges({})
               }}
               className={cn(
@@ -412,6 +466,105 @@ export default function CourseConfigPage() {
               {cohorts.length === 0 && (
                 <p className="text-fg-subtle px-5 py-8 text-center text-sm">
                   기수가 없어요
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* 기수별 자료실 (CohortMaterial — 링크/문서) */}
+          <div className="border-border bg-surface rounded-xl border">
+            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+              <div className="bg-success-bg text-success flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                <FolderOpen className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-fg text-sm font-bold">기수별 자료실</p>
+                <p className="text-fg-subtle text-xs">
+                  기수에 강의 자료 링크를 등록 — 수강생 자료실에 노출
+                </p>
+              </div>
+            </div>
+            {/* 기수 선택 */}
+            <div className="border-divider flex flex-wrap gap-2 border-b px-5 py-3">
+              {cohorts.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedCohortId(c.id)}
+                  className={cn(
+                    'rounded-lg border px-3 py-1.5 text-xs font-medium',
+                    c.id === materialCohortId
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-fg-muted hover:bg-surface-muted',
+                  )}
+                >
+                  {c.cohortNo}기
+                </button>
+              ))}
+            </div>
+            {/* 자료 추가 */}
+            <div className="border-divider flex flex-wrap items-center gap-2 border-b px-5 py-3">
+              <input
+                value={materialTitle}
+                onChange={(e) => setMaterialTitle(e.target.value)}
+                placeholder="자료 제목"
+                aria-label="자료 제목"
+                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[160px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
+              />
+              <input
+                value={materialUrl}
+                onChange={(e) => setMaterialUrl(e.target.value)}
+                placeholder="https://링크"
+                aria-label="자료 링크"
+                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[200px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
+              />
+              <button
+                type="button"
+                onClick={onAddMaterial}
+                disabled={createMaterial.isPending || !materialCohortId}
+                className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" /> 추가
+              </button>
+            </div>
+            {/* 자료 목록 */}
+            <div>
+              {(materials ?? []).map((m) => (
+                <div
+                  key={m.id}
+                  className="border-divider flex items-center justify-between gap-3 border-t px-5 py-3 first:border-t-0"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Link2 className="text-fg-muted h-4 w-4 shrink-0" />
+                    <span className="text-fg truncate text-sm font-medium">
+                      {m.title}
+                    </span>
+                    {m.url && (
+                      <a
+                        href={m.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-info shrink-0"
+                        aria-label="링크 열기"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteMaterial(m.id)}
+                    disabled={deleteMaterial.isPending}
+                    className="text-danger hover:bg-danger-bg rounded-md p-1.5 disabled:opacity-50"
+                    aria-label="자료 삭제"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              {(materials ?? []).length === 0 && (
+                <p className="text-fg-subtle px-5 py-8 text-center text-sm">
+                  등록된 자료가 없어요
                 </p>
               )}
             </div>

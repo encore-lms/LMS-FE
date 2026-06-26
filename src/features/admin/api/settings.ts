@@ -16,6 +16,7 @@ import type {
   HrdKeyTestResult,
   CourseListItem,
   CourseConfigDetail,
+  CohortMaterialItem,
   HrdCourseSearchData,
 } from '@/shared/types'
 import type { SettingsAuditData } from '../settings/settingsAudit.types'
@@ -211,6 +212,70 @@ export function useUpdateCohortSettings() {
     onSuccess: (data, { courseId }) => {
       queryClient.setQueryData(adminKeys.settingsCourseConfig(courseId), data)
     },
+  })
+}
+
+// ── 기수 자료실(CohortMaterial) ── learning-service 실연동.
+export function useCohortMaterials(
+  courseId: string | null,
+  cohortId: string | null,
+) {
+  return useQuery({
+    queryKey: adminKeys.settingsCohortMaterials(courseId ?? '', cohortId ?? ''),
+    enabled: !!courseId && !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<
+          CohortMaterialItem[]
+        >(`/admin/courses/${courseId}/cohorts/${cohortId}/materials`)
+        .then((r) => r.data),
+  })
+}
+
+export interface CreateCohortMaterialInput {
+  courseId: string
+  cohortId: string
+  title: string
+  materialType: string
+  url: string
+}
+
+export function useCreateCohortMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation<CohortMaterialItem, Error, CreateCohortMaterialInput>({
+    mutationFn: ({ courseId, cohortId, title, materialType, url }) =>
+      apiClient
+        .post<CohortMaterialItem>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/materials`,
+          { title, materialType, url },
+        )
+        .then((r) => r.data),
+    onSuccess: (_data, { courseId, cohortId }) =>
+      queryClient.invalidateQueries({
+        queryKey: adminKeys.settingsCohortMaterials(courseId, cohortId),
+      }),
+  })
+}
+
+export interface DeleteCohortMaterialInput {
+  courseId: string
+  cohortId: string
+  materialId: string
+}
+
+export function useDeleteCohortMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, DeleteCohortMaterialInput>({
+    mutationFn: ({ courseId, cohortId, materialId }) =>
+      apiClient
+        .delete<void>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/materials/${materialId}`,
+        )
+        .then(() => undefined),
+    onSuccess: (_data, { courseId, cohortId }) =>
+      queryClient.invalidateQueries({
+        queryKey: adminKeys.settingsCohortMaterials(courseId, cohortId),
+      }),
   })
 }
 

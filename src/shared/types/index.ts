@@ -188,6 +188,7 @@ export type {
   CourseOperationStatus,
   CourseListItem,
   CourseCohort,
+  CohortMaterialItem,
   CourseConfigDetail,
   HrdCourseStatus,
   HrdCourseResult,

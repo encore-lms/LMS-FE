@@ -20,6 +20,9 @@ import {
   useCourseList,
   useCourseConfig,
   useUpdateCohortSettings,
+  useCohortMaterials,
+  useCreateCohortMaterial,
+  useDeleteCohortMaterial,
   useHrdCourseSearch,
   useRegisterCourse,
   useDeleteCourseRegistration,
@@ -317,6 +320,20 @@ function mockAll() {
     mutateAsync: updateSettingsMutate,
     isPending: false,
   } as unknown as ReturnType<typeof useUpdateCohortSettings>)
+  vi.mocked(useCohortMaterials).mockReturnValue(
+    ok([]) as unknown as ReturnType<typeof useCohortMaterials>,
+  )
+  const materialMutationStub = { mutate: vi.fn(), isPending: false }
+  vi.mocked(useCreateCohortMaterial).mockReturnValue(
+    materialMutationStub as unknown as ReturnType<
+      typeof useCreateCohortMaterial
+    >,
+  )
+  vi.mocked(useDeleteCohortMaterial).mockReturnValue(
+    materialMutationStub as unknown as ReturnType<
+      typeof useDeleteCohortMaterial
+    >,
+  )
 }
 
 function renderWith(ui: React.ReactElement) {

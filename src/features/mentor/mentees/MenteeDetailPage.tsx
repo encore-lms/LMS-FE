@@ -273,9 +273,6 @@ export default function MenteeDetailPage() {
                 </span>
               )}
             </div>
-            <span className="text-fg-subtle text-[11px]">
-              §6 정본 — 멘토가 {student.name} 님에게 부여한 5축 점수와 코멘트
-            </span>
           </div>
           {evaluation && (
             <div className="flex flex-col items-end">
@@ -389,11 +386,6 @@ export default function MenteeDetailPage() {
                 {recommendation.reason}
               </p>
             </div>
-            <span className="text-fg-subtle flex items-center gap-1.5 text-[11px] font-medium">
-              <Info className="h-3 w-3 shrink-0" />
-              §7 정본: 원문 평가는 수강생에게 비공개 · 외부 공개는 증명서 전체
-              공개 토글 + 인증 완료 + 최신화 스냅샷 기준
-            </span>
           </div>
         </section>
       )}
@@ -403,9 +395,6 @@ export default function MenteeDetailPage() {
         <header className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5 pb-3.5">
           <div className="flex flex-col gap-1">
             <h3 className="text-fg text-base font-bold">멘토링 참석 이력</h3>
-            <span className="text-fg-subtle text-[11px]">
-              §5 일지 — 멘토가 작성한 일지의 참석 멘티 정보에서 추출
-            </span>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-fg-subtle text-[10px] tracking-[0.6px]">
@@ -421,7 +410,7 @@ export default function MenteeDetailPage() {
             </span>
           </div>
         </header>
-        <div className="px-6 pb-3">
+        <div className="px-6 pb-5">
           <DataTable
             columns={attendanceColumns}
             rows={attendance.history}
@@ -429,10 +418,6 @@ export default function MenteeDetailPage() {
             empty="참석 이력이 없습니다"
           />
         </div>
-        <p className="text-fg-subtle flex items-center gap-1.5 px-6 pb-5 text-[11px]">
-          <Info className="h-3 w-3 shrink-0" />
-          일지 본문은 팀 단위 공통 일지이며 학생별 개별 코멘트는 없음 (§5 정책)
-        </p>
       </section>
 
       {/* 하단 액션 바 — 평가/추천 라우트는 M5 평가·추천 PR 에서 구현(canonical 경로 선연결) */}

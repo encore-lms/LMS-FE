@@ -19,6 +19,7 @@ import {
   useTestHrdKey,
   useCourseList,
   useCourseConfig,
+  useUpdateCourseSettings,
   useHrdCourseSearch,
   useRegisterCourse,
   useDeleteCourseRegistration,
@@ -217,6 +218,35 @@ const courseConfig: CourseConfigDetail = {
       status: 'operating',
     },
   ],
+  featureToggles: [
+    {
+      key: 'mileage',
+      label: '마일리지',
+      description: '수강생 마일리지 적립·사용 메뉴 노출',
+      enabled: true,
+    },
+    {
+      key: 'play',
+      label: 'PLAY',
+      description: 'PLAY 게임(타자 등) 노출 — 마일리지와 연동',
+      enabled: true,
+    },
+  ],
+  publicToggles: [
+    {
+      key: 'studentMenu',
+      label: '수강생 메뉴 노출',
+      description: '수강생 사이드바에 본 과정 메뉴 노출',
+      enabled: true,
+    },
+  ],
+  learningPolicies: [
+    {
+      key: 'attendance',
+      label: '출결 기준',
+      description: 'HRD-Net 입실/퇴실 기준 · 폼 승인 정책 연동',
+    },
+  ],
 }
 
 const hrdSearch: HrdCourseSearchData = {
@@ -258,6 +288,8 @@ function ok(data: unknown) {
 
 // 등록 mutation 호출 검증용 스파이(서버 상태 기반이라 stub은 토글하지 않음).
 const registerMutate = vi.fn()
+// 과정 설정 저장 mutation 호출 검증용 스파이.
+const updateSettingsMutate = vi.fn()
 
 function mockAll() {
   vi.mocked(useSettingsHub).mockReturnValue(
@@ -306,6 +338,11 @@ function mockAll() {
     mutate: vi.fn(),
     isPending: false,
   } as unknown as ReturnType<typeof useDeleteCourseRegistration>)
+  updateSettingsMutate.mockClear()
+  vi.mocked(useUpdateCourseSettings).mockReturnValue({
+    mutate: updateSettingsMutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useUpdateCourseSettings>)
 }
 
 function renderWith(ui: React.ReactElement) {
@@ -412,7 +449,7 @@ describe('CourseConfigPage', () => {
     expect(screen.getByText('변경 사항 없음')).toBeInTheDocument()
   })
 
-  it('토글 변경 후 정책 저장은 저장 확인 모달을 연다', async () => {
+  it('토글 변경 후 정책 저장은 확인 모달을 거쳐 저장 API를 호출한다', async () => {
     const user = userEvent.setup()
     renderWith(<CourseConfigPage />)
     await user.click(screen.getByRole('switch', { name: 'PLAY' }))
@@ -420,6 +457,15 @@ describe('CourseConfigPage', () => {
     await user.click(screen.getByRole('button', { name: /정책 저장/ }))
     expect(screen.getByText('교육 과정 설정 저장 확인')).toBeInTheDocument()
     expect(screen.getByText('정책 변경 이력 기록')).toBeInTheDocument()
+    // 저장 확인 → 변경된 토글(PLAY: true→false)만 전송.
+    await user.click(screen.getByRole('button', { name: '저장' }))
+    expect(updateSettingsMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        courseId: 'course-sk',
+        toggles: [{ key: 'play', enabled: false }],
+      }),
+      expect.anything(),
+    )
   })
 
   it('취소는 버리기 확인 모달을 연다', async () => {

@@ -98,7 +98,7 @@ export default function CourseAddPage() {
     if (pendingCourse) {
       setRegisteredOverride((p) => ({ ...p, [pendingCourse.trprId]: true }))
       toast.success(
-        `${pendingCourse.title} ${pendingCourse.grade} 등록 — 감사 로그 기록 (mock)`,
+        `${pendingCourse.title} ${pendingCourse.grade} 등록 — 감사 로그에 기록됨`,
       )
       if (memo.trim()) toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
     }
@@ -108,7 +108,7 @@ export default function CourseAddPage() {
 
   const removeRegistration = (c: HrdCourseResult) => {
     setRegisteredOverride((p) => ({ ...p, [c.trprId]: false }))
-    toast.success(`${c.title} ${c.grade} 시스템 등록 제거 (mock)`)
+    toast.success(`${c.title} ${c.grade} 시스템 등록 제거`)
   }
 
   return (
@@ -145,7 +145,7 @@ export default function CourseAddPage() {
         right={
           <>
             <Info className="h-3 w-3" /> 검색 → 카드 선택 → 시스템 등록 →
-            §3·§6에서 후속
+            담당자·기능 설정은 별도 탭
           </>
         }
       />
@@ -153,9 +153,7 @@ export default function CourseAddPage() {
       {/* HRD 검색 폼 */}
       <div className="border-border bg-surface mt-4 rounded-xl border p-5">
         <p className="text-fg text-sm font-bold">HRD-Net 과정 검색</p>
-        <p className="text-fg-subtle text-xs">
-          이전 LMS CourseAddView 동일 · 인증키 · 와일드카드 like 검색
-        </p>
+        <p className="text-fg-subtle text-xs">인증키 · 과정명·기관명 검색</p>
         <div className="mt-3 grid items-end gap-3 lg:grid-cols-[200px_1fr_1fr_150px_150px_auto]">
           <label className="flex flex-col gap-1">
             <span className="text-fg text-xs font-bold">

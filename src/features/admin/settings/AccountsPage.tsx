@@ -220,9 +220,7 @@ export default function AccountsPage() {
       isSelf: false,
     }
     setAddedAccounts((p) => [acc, ...p])
-    toast.success(
-      `${acc.name} · 계정 초대 발송 — account_created 감사 로그 기록`,
-    )
+    toast.success(`${acc.name} · 계정 초대 발송 — 감사 로그에 기록됨`)
     setCreateOpen(false)
   }
 
@@ -230,7 +228,7 @@ export default function AccountsPage() {
   const onEditSave = (account: OpsAccount, values: AccountEditValues) => {
     setRoleOverride((p) => ({ ...p, [account.id]: values.role }))
     setStatusOverride((p) => ({ ...p, [account.id]: values.status }))
-    toast.success(`${account.name} · 계정 수정 — role_assignment_updated 기록`)
+    toast.success(`${account.name} · 계정 수정 — 감사 로그에 기록됨`)
     setEditTarget(null)
   }
 
@@ -360,7 +358,7 @@ export default function AccountsPage() {
                       { label: '계정', value: `${a.name} · ${a.role}` },
                       { label: '담당 범위', value: a.scope },
                       { label: '처리', value: '상태 = 비활성 · 로그인 차단' },
-                      { label: '감사 로그', value: 'account_deactivated 기록' },
+                      { label: '감사 로그', value: '비활성화 이력 기록' },
                     ],
                     confirmLabel: '비활성화',
                   },

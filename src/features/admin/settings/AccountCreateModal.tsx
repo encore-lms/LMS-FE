@@ -144,8 +144,8 @@ export function AccountCreateModal({
         <div className="bg-info-bg flex items-start gap-2 rounded-lg p-3">
           <Info className="text-info mt-0.5 h-4 w-4 shrink-0" />
           <p className="text-fg-muted text-xs">
-            담당 범위는 생성 후 표의 담당 범위 컬럼에서 배정합니다. 생성 시
-            account_created 감사 로그가 기록됩니다.
+            담당 범위는 생성 후 표의 담당 범위 컬럼에서 배정합니다. 생성 시 감사
+            로그가 기록됩니다.
           </p>
         </div>
       </div>

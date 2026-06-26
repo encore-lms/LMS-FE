@@ -174,7 +174,7 @@ export default function CourseConfigPage() {
         { label: '변경 건수', value: `${changedCount}건` },
         { label: '대상 과정', value: config?.name ?? '-' },
         { label: '영향', value: '수강생 메뉴 노출 재계산' },
-        { label: '감사 로그', value: 'course_policy_updated 기록' },
+        { label: '감사 로그', value: '정책 변경 이력 기록' },
       ],
       confirmLabel: '저장',
     })
@@ -198,7 +198,7 @@ export default function CourseConfigPage() {
     if (modal.kind === 'save') {
       // 저장 피드백(1306:8610)은 토스트로 요약 — 변경 적용 후 dirty 초기화.
       toast.success(
-        `교육 과정 설정 저장 — 변경 ${changedCount}건 · course_policy_updated 기록 (mock)`,
+        `교육 과정 설정 저장 — 변경 ${changedCount}건 · 감사 로그에 기록됨`,
       )
       if (memo.trim()) toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
       setChanges({})

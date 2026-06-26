@@ -274,7 +274,7 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
     // 새 편집 모달 — 저장 버튼 + 감사 로그 안내(모달 고유)
     expect(screen.getByRole('button', { name: '저장' })).toBeInTheDocument()
     expect(
-      screen.getByText(/role_assignment_updated 감사 로그가 기록됩니다/),
+      screen.getByText(/변경 내역이 감사 로그에 기록됩니다/),
     ).toBeInTheDocument()
   })
 
@@ -350,7 +350,7 @@ describe('CourseConfigPage', () => {
     expect(screen.getByText(/변경 사항 미저장 — 1건/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /정책 저장/ }))
     expect(screen.getByText('교육 과정 설정 저장 확인')).toBeInTheDocument()
-    expect(screen.getByText('course_policy_updated 기록')).toBeInTheDocument()
+    expect(screen.getByText('정책 변경 이력 기록')).toBeInTheDocument()
   })
 
   it('취소는 버리기 확인 모달을 연다', async () => {

@@ -3,9 +3,12 @@ import { Outlet } from 'react-router-dom'
 import {
   AlertTriangle,
   Calendar,
+  Check,
+  CheckCircle2,
   ChevronDown,
   Info,
   Search,
+  Timer,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -136,25 +139,29 @@ export default function RequestsPage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      {/* KPI 4 — 우상단 장식 아이콘은 공통 KpiCard 계약(슬롯 없음)에 맞춰 생략(M1 선례) */}
+      {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(멘토링 예약 2553:3820) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="요청 대기"
+          icon={<Timer className="text-warning h-4 w-4" />}
           value={<KpiCount count={kpis.requested} />}
           hint="처리 필요 · D-0 ~ D+1"
         />
         <KpiCard
           label="조정 제안"
+          icon={<Calendar className="text-accent-strong h-4 w-4" />}
           value={<KpiCount count={kpis.counterProposed} />}
           hint="수강생 응답 대기"
         />
         <KpiCard
           label="확정"
+          icon={<Check className="text-brand h-4 w-4" />}
           value={<KpiCount count={kpis.confirmed} />}
           hint="예정된 멘토링"
         />
         <KpiCard
           label="완료"
+          icon={<CheckCircle2 className="text-success h-4 w-4" />}
           value={<KpiCount count={kpis.completed} />}
           hint="최근 30일 진행"
         />

@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
+  Calendar,
   ChevronDown,
   Download,
   Info,
   Search,
   Send,
+  Star,
+  Timer,
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -247,15 +250,17 @@ export default function TeamsPage() {
         </label>
       </section>
 
-      {/* KPI 4 — 우상단 장식 아이콘은 공통 KpiCard 계약(슬롯 없음)에 맞춰 생략 */}
+      {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(내 배정 팀 2553:3554) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="진행 중"
+          icon={<Timer className="text-brand h-4 w-4" />}
           value={<KpiValue count={data.kpis.inProgress} />}
           hint="N시간 미완료 일반 진행"
         />
         <KpiCard
           label="예약 대기"
+          icon={<Calendar className="text-info h-4 w-4" />}
           value={
             <KpiValue
               count={data.kpis.reservationWaiting}
@@ -270,6 +275,7 @@ export default function TeamsPage() {
         />
         <KpiCard
           label="평가 필요"
+          icon={<Star className="text-warning h-4 w-4" />}
           value={
             <KpiValue
               count={data.kpis.evaluationNeeded}
@@ -280,6 +286,7 @@ export default function TeamsPage() {
         />
         <KpiCard
           label="수정 요청"
+          icon={<AlertTriangle className="text-danger h-4 w-4" />}
           value={
             <KpiValue
               count={data.kpis.changeRequested}

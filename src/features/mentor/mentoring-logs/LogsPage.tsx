@@ -7,7 +7,9 @@ import {
   Calendar,
   Check,
   ChevronDown,
+  FileText,
   Info,
+  Pencil,
   Search,
   Send,
 } from 'lucide-react'
@@ -375,26 +377,30 @@ export default function LogsPage() {
         </Link>
       </div>
 
-      {/* KPI 4 — 우상단 장식 아이콘은 공통 KpiCard 계약(슬롯 없음)에 맞춰 생략(M1 선례) */}
+      {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(멘토링 일지 2553:4040) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="총 일지"
+          icon={<FileText className="text-brand h-4 w-4" />}
           value={<KpiCount count={kpis.total} />}
           hint={PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? '전체'}
         />
         <KpiCard
           label="유효 / 자동 유효"
+          icon={<Check className="text-success h-4 w-4" />}
           value={<KpiCount count={kpis.valid} />}
           hint="운영자 별도 조치 없음"
         />
         <KpiCard
           label="수정 요청"
+          icon={<AlertTriangle className="text-danger h-4 w-4" />}
           value={<KpiCount count={kpis.changeRequested} />}
           hint="멘토가 전체 수정 후 재제출 필요"
           tone={kpis.changeRequested > 0 ? 'danger' : 'default'}
         />
         <KpiCard
           label="작성 중·임시"
+          icon={<Pencil className="text-warning h-4 w-4" />}
           value={<KpiCount count={kpis.draft} />}
           hint="제출 전 임시 저장"
           tone={kpis.draft > 0 ? 'warning' : 'default'}

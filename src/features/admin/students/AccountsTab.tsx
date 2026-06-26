@@ -8,7 +8,13 @@ import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import type { StudentAccount } from '@/shared/types'
-import { useStudentAccounts } from '../api/students'
+import {
+  fetchHrdTrainees,
+  useResetStudentPassword,
+  useStudentAccounts,
+  useSyncStudents,
+} from '../api/students'
+import { useCourseConfig, useCourseList } from '../api/settings'
 import { StudentDetailModal } from './StudentDetailModal'
 
 type StatusFilter = 'all' | 'normal' | 'blocked'
@@ -37,6 +43,20 @@ export function AccountsTab() {
   const [blockedOverride, setBlockedOverride] = useState<
     Record<string, boolean>
   >({})
+  // HRD 동기화 — 과정/기수 선택 + 마지막 동기화 결과.
+  const { data: courses } = useCourseList()
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
+  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const { data: courseConfig } = useCourseConfig(courseId)
+  const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
+  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const syncStudents = useSyncStudents()
+  const resetPw = useResetStudentPassword()
+  const [syncResult, setSyncResult] = useState<{
+    created: number
+    updated: number
+    total: number
+  } | null>(null)
 
   const isBlocked = (a: StudentAccount) =>
     blockedOverride[a.id] ?? a.loginBlocked
@@ -79,12 +99,47 @@ export function AccountsTab() {
       setBlockedOverride((p) => ({ ...p, [account.id]: !isBlocked(account) }))
       toast.success(`${account.name} · ${action} 적용 — 감사 로그 기록`)
     } else if (action === '비밀번호 초기화') {
-      toast.success(`${account.name} · 임시 비밀번호 발급 (1회 표시 · 30초)`)
+      resetPw.mutate(account.id, {
+        onSuccess: (r) =>
+          toast.success(
+            `${account.name} · 임시 비밀번호 ${r.temporaryPassword} (1회 표시)`,
+          ),
+        onError: () => toast.danger('비밀번호 초기화에 실패했어요'),
+      })
     } else {
       toast.success(`${account.name} · 변경 저장 — 감사 로그 기록`)
     }
     if (memo.trim()) toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
     setModal(null)
+  }
+
+  // 계정 갱신 — 선택 회차의 HRD 훈련생 명단을 가져와 계정에 동기화.
+  const onRefresh = async () => {
+    if (!courseId || !cohortId) {
+      toast.danger('과정과 기수를 먼저 선택해 주세요')
+      return
+    }
+    try {
+      const trainees = await fetchHrdTrainees(courseId, cohortId)
+      if (trainees.length === 0) {
+        toast.info('해당 회차의 HRD 훈련생 명단이 비어 있어요')
+        return
+      }
+      const result = await syncStudents.mutateAsync({
+        cohortId,
+        students: trainees.map((t) => ({
+          studentUuid: t.studentUuid,
+          name: t.name,
+          birth: t.birth,
+        })),
+      })
+      setSyncResult(result)
+      toast.success(
+        `HRD 동기화 완료 — 생성 ${result.created} / 갱신 ${result.updated} / 총 ${result.total}`,
+      )
+    } catch {
+      toast.danger('HRD 동기화에 실패했어요 (기관 소유 회차인지 확인)')
+    }
   }
 
   const statusTabs: { key: StatusFilter; label: string; count: number }[] = [
@@ -197,19 +252,36 @@ export function AccountsTab() {
           <div className="mt-3 flex flex-wrap gap-2">
             <select
               aria-label="과정 선택"
-              defaultValue="ai-camp"
+              value={courseId ?? ''}
+              onChange={(e) => {
+                setSelectedCourseId(e.target.value)
+                setSelectedCohortId(null)
+              }}
               className="text-fg h-9 rounded-lg bg-white px-3 text-sm outline-none"
             >
-              <option value="ai-camp">과정 · AI 캠프</option>
-              <option value="da">과정 · 데이터 분석</option>
+              {(courses ?? []).map((c) => (
+                <option key={c.courseId} value={c.courseId}>
+                  과정 · {c.title}
+                </option>
+              ))}
+              {(courses ?? []).length === 0 && (
+                <option value="">등록 과정 없음</option>
+              )}
             </select>
             <select
               aria-label="기수 선택"
-              defaultValue="22"
+              value={cohortId ?? ''}
+              onChange={(e) => setSelectedCohortId(e.target.value)}
               className="text-fg h-9 rounded-lg bg-white px-3 text-sm outline-none"
             >
-              <option value="22">기수 · 22기</option>
-              <option value="21">기수 · 21기</option>
+              {(courseConfig?.cohorts ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  기수 · {c.cohortNo}기
+                </option>
+              ))}
+              {(courseConfig?.cohorts ?? []).length === 0 && (
+                <option value="">기수 없음</option>
+              )}
             </select>
           </div>
         </div>
@@ -224,9 +296,8 @@ export function AccountsTab() {
           </Button>
           <Button
             variant="secondary"
-            onClick={() =>
-              toast.success('HRD 동기화 완료 — 생성 5 / 기존 116 / 총 121')
-            }
+            onClick={onRefresh}
+            disabled={syncStudents.isPending}
           >
             <RefreshCw className="h-4 w-4" /> 계정 갱신 — HRD 동기화
           </Button>
@@ -235,8 +306,9 @@ export function AccountsTab() {
 
       <div className="text-fg-subtle mt-2 flex items-center justify-end gap-1 text-xs">
         <RefreshCw className="text-success h-3 w-3" />
-        마지막 동기화 {summary.lastSyncAt} · 생성 {summary.syncCreated} / 기존{' '}
-        {summary.syncExisting} / 총 {summary.total}
+        {syncResult
+          ? `방금 HRD 동기화 · 생성 ${syncResult.created} / 갱신 ${syncResult.updated} / 총 ${syncResult.total}`
+          : `총 ${summary.total}명 · 계정 갱신으로 HRD 명단 동기화`}
       </div>
 
       {/* 상태 필터 + 검색 */}

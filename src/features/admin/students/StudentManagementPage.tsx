@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { AccountsTab } from './AccountsTab'
@@ -25,13 +24,7 @@ export default function StudentManagementPage() {
 
   return (
     <div className="p-8">
-      {/* 제목은 공유 헤더로 이동 — 권한·경로 배지만 본문 우측에 유지 */}
-      <div className="flex justify-end gap-2">
-        <StatusBadge label="MANAGER 전용" tone="accent" />
-        <StatusBadge label="/admin/students" tone="neutral" />
-      </div>
-
-      <div className="border-divider mt-5 flex gap-1 border-b">
+      <div className="border-divider flex gap-1 border-b">
         {TABS.map((t) => (
           <button
             key={t.key}

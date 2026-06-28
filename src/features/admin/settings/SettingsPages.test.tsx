@@ -368,8 +368,8 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
     renderWith(<AccountsPage />)
     expect(screen.getAllByText('MANAGER').length).toBeGreaterThan(0)
     expect(screen.getByText('이정훈')).toBeInTheDocument()
-    // 본인 계정은 비활성화 불가
-    expect(screen.getByText('비활성화 불가')).toBeInTheDocument()
+    // 본인 계정은 상태 변경 불가
+    expect(screen.getByText('상태 변경 불가')).toBeInTheDocument()
   })
 
   it('수정 기능 제거 — 수정 버튼이 없고 비번 초기화·비활성화만 제공한다', () => {

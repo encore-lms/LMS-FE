@@ -139,13 +139,19 @@ export default function AccountsPage() {
   const onConfirm = (memo: string) => {
     const target = modal?.deactivate
     if (target) {
-      // 비활성 상태 전이 — 즉시 낙관 반영 후 실 BE(PATCH status) 호출.
-      setStatusOverride((p) => ({ ...p, [target.id]: 'inactive' }))
+      // 현재 상태 기준 토글: 활성→비활성, 비활성→활성. 낙관 반영 후 실 BE(PATCH status).
+      const toActive = statusOf(target) !== 'active'
+      const next: 'ACTIVE' | 'INACTIVE' = toActive ? 'ACTIVE' : 'INACTIVE'
+      const label = toActive ? '활성화' : '비활성화'
+      setStatusOverride((p) => ({
+        ...p,
+        [target.id]: toActive ? 'active' : 'inactive',
+      }))
       updateStatus.mutate(
-        { userId: target.id, status: 'INACTIVE', reason: memo || undefined },
+        { userId: target.id, status: next, reason: memo || undefined },
         {
-          onSuccess: () => toast.success(`${target.name} · 비활성화 완료`),
-          onError: () => toast.danger(`${target.name} · 비활성화에 실패했어요`),
+          onSuccess: () => toast.success(`${target.name} · ${label} 완료`),
+          onError: () => toast.danger(`${target.name} · ${label}에 실패했어요`),
         },
       )
     } else {
@@ -245,31 +251,49 @@ export default function AccountsPage() {
           </button>
           {a.isSelf ? (
             <span className="text-fg-subtle px-2 py-1 text-xs">
-              비활성화 불가
+              상태 변경 불가
             </span>
           ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setModal({
-                  spec: {
-                    title: '운영 계정 비활성화',
-                    subtitle: `${a.name} 계정을 비활성화합니다. 로그인이 차단됩니다.`,
-                    rows: [
-                      { label: '계정', value: `${a.name} · ${a.role}` },
-                      { label: '처리', value: '상태 = 비활성 · 로그인 차단' },
-                      { label: '감사 로그', value: '비활성화 이력 기록' },
-                    ],
-                    confirmLabel: '비활성화',
-                  },
-                  deactivate: a,
-                })
-              }}
-              className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
-            >
-              비활성화
-            </button>
+            (() => {
+              // 상태 토글: 활성이면 비활성화, 비활성이면 활성화.
+              const isActive = statusOf(a) === 'active'
+              const label = isActive ? '비활성화' : '활성화'
+              return (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setModal({
+                      spec: {
+                        title: `운영 계정 ${label}`,
+                        subtitle: isActive
+                          ? `${a.name} 계정을 비활성화합니다. 로그인이 차단됩니다.`
+                          : `${a.name} 계정을 활성화합니다. 로그인이 다시 허용됩니다.`,
+                        rows: [
+                          { label: '계정', value: `${a.name} · ${a.role}` },
+                          {
+                            label: '처리',
+                            value: isActive
+                              ? '상태 = 비활성 · 로그인 차단'
+                              : '상태 = 활성 · 로그인 허용',
+                          },
+                          { label: '감사 로그', value: `${label} 이력 기록` },
+                        ],
+                        confirmLabel: label,
+                      },
+                      deactivate: a,
+                    })
+                  }}
+                  className={
+                    isActive
+                      ? 'border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium'
+                      : 'border-success/40 text-success hover:bg-success-bg rounded-md border px-2 py-1 text-xs font-medium'
+                  }
+                >
+                  {label}
+                </button>
+              )
+            })()
           )}
         </div>
       ),

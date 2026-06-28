@@ -1,13 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  AlertTriangle,
-  ArrowRight,
-  ChevronDown,
-  Clock,
-  Info,
-  UserPlus,
-} from 'lucide-react'
+import { AlertTriangle, ArrowRight, Clock, Info, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
@@ -16,7 +9,7 @@ import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import type { OpsAccount, OpsAccountsSummary, OpsRole } from '@/shared/types'
+import type { OpsAccount, OpsRole } from '@/shared/types'
 import {
   useCreateOpsAccount,
   useOpsAccounts,
@@ -28,9 +21,7 @@ import {
   type AccountCreateValues,
 } from './AccountCreateModal'
 import { AccountDetailModal } from './AccountDetailModal'
-import { AccountEditModal, type AccountEditValues } from './AccountEditModal'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
-import { ScopeModal } from './ScopeModal'
 import { SettingsTabs } from './SettingsTabs'
 import { TempPasswordModal } from './TempPasswordModal'
 
@@ -86,98 +77,37 @@ export default function AccountsPage() {
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
-  // 비활성화·담당 범위 변경 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
+  // 비활성화 낙관적 반영 — 즉시 배지 갱신(실 BE 호출 후 invalidate로 확정).
   const [statusOverride, setStatusOverride] = useState<
     Record<string, OpsAccount['status']>
   >({})
-  const [scopeOverride, setScopeOverride] = useState<Record<string, string>>({})
   const [modal, setModal] = useState<{
     spec: ActionModalSpec
     deactivate?: OpsAccount
   } | null>(null)
-  // 담당 범위 모달 대상 계정 — non-null이면 ScopeModal이 열린다.
-  const [scopeTarget, setScopeTarget] = useState<OpsAccount | null>(null)
   // 비밀번호 초기화 모달 대상 계정 — non-null이면 TempPasswordModal이 열린다.
   const [pwTarget, setPwTarget] = useState<OpsAccount | null>(null)
-  // 새 계정 추가 모달 개폐 + 추가된 계정(낙관, 새로고침 리셋). 표 상단에 노출.
+  // 새 계정 추가 모달 개폐.
   const [createOpen, setCreateOpen] = useState(false)
-  // 생성은 실 BE 갱신(invalidate)으로 반영 — 낙관 추가 목록은 비움.
-  const [addedAccounts] = useState<OpsAccount[]>([])
-  // 사용자 정보 상세 모달 대상 — 표 행 클릭 시 열린다(수정은 별도 '수정' 버튼).
+  // 사용자 정보 상세 모달 대상 — 표 행 클릭 시 열린다(읽기 전용).
   const [detailTarget, setDetailTarget] = useState<OpsAccount | null>(null)
-  // 수정 모달 대상 + 역할 변경 낙관 반영(상태는 statusOverride 공유).
-  const [editTarget, setEditTarget] = useState<OpsAccount | null>(null)
-  const [roleOverride, setRoleOverride] = useState<Record<string, OpsRole>>({})
   usePageHeader('운영 설정 · 계정 관리')
   const statusOf = (a: OpsAccount) => statusOverride[a.id] ?? a.status
-  const scopeOf = (a: OpsAccount) => scopeOverride[a.id] ?? a.scope
-  const roleOf = (a: OpsAccount) => roleOverride[a.id] ?? a.role
-
-  // 추가된 계정 + API 샘플 목록 병합 (추가분은 맨 위).
-  const allItems = useMemo(
-    () => [...addedAccounts, ...(data?.items ?? [])],
-    [addedAccounts, data],
-  )
-
-  // 요약(KPI)은 items가 전체의 샘플이라 재계산이 아닌 'API 집계 + 액션 델타'로 반영.
-  // 추가/수정(역할·상태)·비활성화 모두 델타로 보정.
-  const derivedSummary = useMemo<OpsAccountsSummary | undefined>(() => {
-    const base = data?.summary
-    if (!base) return undefined
-    const s = { ...base }
-    const apply = (role: OpsRole, st: OpsAccount['status'], sign: number) => {
-      if (role === 'MANAGER') {
-        s.managers += sign
-        if (st === 'active') s.managersActive += sign
-        if (st === 'inactive') s.managersInactive += sign
-      } else if (role === 'INSTRUCTOR') {
-        s.instructors += sign
-      } else if (role === 'MENTOR') {
-        s.mentors += sign
-      }
-      if (st === 'inactive') s.inactive += sign
-    }
-    // 추가된 계정: 순증
-    for (const a of addedAccounts) {
-      const role = roleOverride[a.id] ?? a.role
-      const st = statusOverride[a.id] ?? a.status
-      s.total += 1
-      apply(role, st, +1)
-      if (role === 'INSTRUCTOR' && (!a.scope || a.scope === '담당 범위 없음'))
-        s.instructorNoScope += 1
-      if (
-        role === 'MENTOR' &&
-        (a.scope === '팀 배정 없음' || a.scope === '담당 범위 없음')
-      )
-        s.mentorNoTeam += 1
-    }
-    // 기존(샘플) 계정의 역할/상태 변경분만 보정
-    for (const a of data?.items ?? []) {
-      const effR = roleOverride[a.id] ?? a.role
-      const effS = statusOverride[a.id] ?? a.status
-      if (effR !== a.role || effS !== a.status) {
-        apply(a.role, a.status, -1)
-        apply(effR, effS, +1)
-      }
-    }
-    return s
-  }, [data, addedAccounts, roleOverride, statusOverride])
 
   const filtered = useMemo(() => {
-    const items = allItems
+    const items = data?.items ?? []
     const needle = q.trim().toLowerCase()
     return items.filter((a) => {
-      if (role !== 'all' && (roleOverride[a.id] ?? a.role) !== role)
-        return false
+      if (role !== 'all' && a.role !== role) return false
       if (status !== 'all' && (statusOverride[a.id] ?? a.status) !== status)
         return false
       if (needle) {
-        const hay = `${a.name} ${a.email} ${a.scope}`.toLowerCase()
+        const hay = `${a.name} ${a.email}`.toLowerCase()
         if (!hay.includes(needle)) return false
       }
       return true
     })
-  }, [allItems, role, status, q, statusOverride, roleOverride])
+  }, [data, role, status, q, statusOverride])
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -193,7 +123,7 @@ export default function AccountsPage() {
     )
   }
 
-  const summary = derivedSummary ?? data.summary
+  const summary = data.summary
   // 사용자 표 페이지네이션 — 사용자가 많아져도 표가 길어지지 않도록.
   const ACCOUNTS_PAGE_SIZE = 10
   const accountsPageCount = Math.max(
@@ -205,13 +135,6 @@ export default function AccountsPage() {
     (accountsSafePage - 1) * ACCOUNTS_PAGE_SIZE,
     accountsSafePage * ACCOUNTS_PAGE_SIZE,
   )
-
-  // 수정 권한(RBAC canManageOperatorAccount, 2026-05-13 결정): ADMIN 또는 모든 MANAGER가
-  // scope 무관하게 매니저·강사·멘토 계정을 수정한다. 단 본인 계정은 권한 회수 방지를 위해
-  // 수정 대상에서 제외(P0-ADM-SET-005, 비활성화 가드와 동일 기준).
-  const currentUser = data.items.find((a) => a.isSelf) ?? null
-  const canManageOperator = !!currentUser && roleOf(currentUser) === 'MANAGER'
-  const canEdit = (a: OpsAccount) => canManageOperator && !a.isSelf
 
   const onConfirm = (memo: string) => {
     const target = modal?.deactivate
@@ -230,18 +153,6 @@ export default function AccountsPage() {
     }
     if (memo.trim()) toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
     setModal(null)
-  }
-
-  // 담당 범위 저장 — 표의 담당 범위 셀에 즉시 반영(낙관). 빈 선택은 '담당 범위 없음'.
-  const onScopeSave = (account: OpsAccount, scope: string[]) => {
-    setScopeOverride((p) => ({
-      ...p,
-      [account.id]: scope.length ? scope.join(' · ') : '담당 범위 없음',
-    }))
-    toast.success(
-      `${account.name} · 담당 범위 ${scope.length}건 저장 — 감사 로그 기록`,
-    )
-    setScopeTarget(null)
   }
 
   // 새 계정 추가 — 실 BE(POST /auth/accounts). BE가 비밀번호를 요구하므로 임시 비밀번호를 생성해 함께 전송.
@@ -266,14 +177,6 @@ export default function AccountsPage() {
       },
     )
     setCreateOpen(false)
-  }
-
-  // 계정 수정 저장 — 역할·상태 낙관 반영. 담당 범위는 ScopeModal에서 별도.
-  const onEditSave = (account: OpsAccount, values: AccountEditValues) => {
-    setRoleOverride((p) => ({ ...p, [account.id]: values.role }))
-    setStatusOverride((p) => ({ ...p, [account.id]: values.status }))
-    toast.success(`${account.name} · 계정 수정 — 감사 로그에 기록됨`)
-    setEditTarget(null)
   }
 
   const columns: Column<OpsAccount>[] = [
@@ -301,40 +204,9 @@ export default function AccountsPage() {
       key: 'role',
       header: '역할',
       className: 'w-28',
-      cell: (a) => {
-        const ro = roleOf(a)
-        return <StatusBadge label={ROLE_LABEL[ro]} tone={ROLE_TONE[ro]} />
-      },
-    },
-    {
-      key: 'scope',
-      header: '담당 범위',
-      className: 'w-72',
-      // 담당 범위는 이 컬럼에서 계정별로 직접 선택한다 — 셀을 누르면 과정·기수 선택 모달.
-      cell: (a) => {
-        const edited = scopeOverride[a.id]
-        return (
-          <div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setScopeTarget(a)
-              }}
-              className="border-border hover:border-brand hover:bg-surface-muted text-fg-muted flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-sm"
-            >
-              <span className="truncate">{edited ?? a.scope}</span>
-              <ChevronDown className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
-            </button>
-            {/* 담당 범위를 편집하면 '범위 없음' 경고는 해소된 것으로 본다. */}
-            {!edited && a.scopeWarning && (
-              <p className="text-warning mt-1 flex items-center gap-1 text-xs">
-                <Info className="h-3 w-3" /> {a.scopeWarning}
-              </p>
-            )}
-          </div>
-        )
-      },
+      cell: (a) => (
+        <StatusBadge label={ROLE_LABEL[a.role]} tone={ROLE_TONE[a.role]} />
+      ),
     },
     {
       key: 'status',
@@ -361,20 +233,6 @@ export default function AccountsPage() {
       className: 'w-72',
       cell: (a) => (
         <div className="flex flex-wrap gap-1.5">
-          {canEdit(a) ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setEditTarget(a)
-              }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-            >
-              수정
-            </button>
-          ) : (
-            <span className="text-fg-subtle px-2 py-1 text-xs">수정 불가</span>
-          )}
           <button
             type="button"
             onClick={(e) => {
@@ -400,7 +258,6 @@ export default function AccountsPage() {
                     subtitle: `${a.name} 계정을 비활성화합니다. 로그인이 차단됩니다.`,
                     rows: [
                       { label: '계정', value: `${a.name} · ${a.role}` },
-                      { label: '담당 범위', value: a.scope },
                       { label: '처리', value: '상태 = 비활성 · 로그인 차단' },
                       { label: '감사 로그', value: '비활성화 이력 기록' },
                     ],
@@ -653,12 +510,6 @@ export default function AccountsPage() {
         onConfirm={onConfirm}
       />
 
-      <ScopeModal
-        account={scopeTarget}
-        onClose={() => setScopeTarget(null)}
-        onSave={onScopeSave}
-      />
-
       <TempPasswordModal account={pwTarget} onClose={() => setPwTarget(null)} />
 
       <AccountCreateModal
@@ -669,24 +520,12 @@ export default function AccountsPage() {
 
       <AccountDetailModal
         account={detailTarget}
-        role={detailTarget ? roleOf(detailTarget) : 'MANAGER'}
-        scope={detailTarget ? scopeOf(detailTarget) : ''}
+        role={detailTarget ? detailTarget.role : 'MANAGER'}
+        scope={detailTarget ? detailTarget.scope : ''}
         status={detailTarget ? statusOf(detailTarget) : 'active'}
-        canEdit={detailTarget ? canEdit(detailTarget) : false}
+        canEdit={false}
         onClose={() => setDetailTarget(null)}
-        onEdit={() => {
-          const a = detailTarget
-          setDetailTarget(null)
-          if (a) setEditTarget(a)
-        }}
-      />
-
-      <AccountEditModal
-        account={editTarget}
-        role={editTarget ? roleOf(editTarget) : 'MANAGER'}
-        status={editTarget ? statusOf(editTarget) : 'active'}
-        onClose={() => setEditTarget(null)}
-        onSave={onEditSave}
+        onEdit={() => {}}
       />
     </div>
   )

@@ -8,21 +8,43 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
-import { DataTable, type Column } from '@/components/data/DataTable'
-import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import ResumePage from '../resume/ResumePage'
+import RecordReviewQueuePage from '../records/RecordReviewQueuePage'
 import { useCourseConfig, useCourseList } from '../api/settings'
-import { useCourseDetail, useEducationOverview } from './api'
-import type { EducationModuleRow } from './types'
+import { useCourseDetail } from './api'
 
-type TabKey = 'description' | 'modules'
+// 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
+// 이력서·기록실은 검토·심사에서 흡수(ResumePage·RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
+type TabKey =
+  | 'materials'
+  | 'assignments'
+  | 'quizzes'
+  | 'resume'
+  | 'records'
+  | 'settings'
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'description', label: '설명' },
-  { key: 'modules', label: '교과목/모듈' },
+  { key: 'materials', label: '자료실' },
+  { key: 'assignments', label: '과제' },
+  { key: 'quizzes', label: '퀴즈' },
+  { key: 'resume', label: '이력서' },
+  { key: 'records', label: '기록실' },
+  { key: 'settings', label: '설정' },
 ]
+
+// 아직 별도 흡수 대상이 없는 탭(자료실/과제/퀴즈) — 준비 중 안내.
+function PlaceholderPane({ label }: { label: string }) {
+  return (
+    <Empty
+      icon={<FolderOpen className="h-6 w-6" />}
+      title={`${label} 설정 준비 중`}
+      description="이 탭은 과정·기수별 설정 화면으로 곧 연결됩니다."
+    />
+  )
+}
 
 // 설명 탭 — HRD-Net 과정 상세 카드(이전 LMS CohortDetailsCard 재현).
 function DescriptionPane({
@@ -107,116 +129,9 @@ function DescriptionPane({
   )
 }
 
-// 교과목/모듈 탭 — 기존 통합 관리(mock). 별도 BE 계약 확정 후 확장.
-function ModulesPane() {
-  const { data, isPending, isError, refetch } = useEducationOverview()
-  const toast = useToast()
-
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="교과목/모듈 정보를 불러오지 못했어요"
-        description="잠시 후 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-
-  const { summary, rows } = data
-  const columns: Column<EducationModuleRow>[] = [
-    {
-      key: 'cohort',
-      header: '과정/기수',
-      cell: (r) => (
-        <span className="text-fg text-[13px] font-medium">{r.cohortLabel}</span>
-      ),
-    },
-    {
-      key: 'module',
-      header: '교과목/모듈',
-      cell: (r) => <span className="text-fg text-[13px]">{r.moduleName}</span>,
-    },
-    {
-      key: 'unit',
-      header: '기간',
-      className: 'w-28',
-      cell: (r) => <span className="text-fg text-[13px]">{r.unit}</span>,
-    },
-    {
-      key: 'owner',
-      header: '담당자',
-      className: 'w-32',
-      cell: (r) => <span className="text-fg text-[13px]">{r.owner}</span>,
-    },
-    {
-      key: 'linked',
-      header: '연결 기능',
-      cell: (r) => (
-        <span className="text-fg-muted text-[13px]">{r.linkedFeatures}</span>
-      ),
-    },
-    {
-      key: 'action',
-      header: '액션',
-      className: 'w-20',
-      cell: (r) => (
-        <button
-          type="button"
-          onClick={() =>
-            toast.info(`${r.moduleName} 수정 화면은 준비 중입니다.`)
-          }
-          className="text-brand text-[13px] font-semibold hover:underline"
-        >
-          수정
-        </button>
-      ),
-    },
-  ]
-
-  return (
-    <>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="과정"
-          value={summary.courses}
-          hint={`HRD 연동 ${summary.coursesHrdLinked}`}
-        />
-        <KpiCard
-          label="기수"
-          value={summary.cohorts}
-          hint={`운영중 ${summary.cohortsActive}`}
-        />
-        <KpiCard
-          label="교과목/모듈"
-          value={summary.modules}
-          hint="신규 설계 영역"
-        />
-        <KpiCard
-          label="주차 기준"
-          value={summary.weeks}
-          hint="기록실/퀴즈 연결"
-        />
-      </div>
-      <div className="mt-6">
-        <DataTable
-          columns={columns}
-          rows={rows}
-          rowKey={(r) => r.id}
-          empty="등록된 교과목/모듈이 없어요"
-        />
-        <div className="text-fg-subtle mt-3 text-xs">총 {rows.length}건</div>
-      </div>
-    </>
-  )
-}
-
-// 과정·기수·교과목 통합 관리 (/admin/education). 과정/기수 선택 + 설명·교과목 탭.
+// 과정·기수·교과목 (/admin/education). 과정/기수 선택 + 6탭(자료실/과제/퀴즈/이력서/기록실/설정).
 export default function EducationPage() {
-  usePageHeader('과정·기수·교과목', '과정/기수 선택 → 설명·교과목 관리')
+  usePageHeader('과정·기수·교과목', '자료실·과제·퀴즈·이력서·기록실·설정')
 
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
@@ -225,7 +140,7 @@ export default function EducationPage() {
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
 
-  const [tab, setTab] = useState<TabKey>('description')
+  const [tab, setTab] = useState<TabKey>('materials')
 
   return (
     <div className="p-8">
@@ -286,16 +201,26 @@ export default function EducationPage() {
       </div>
 
       <div className="mt-6">
-        {!courseId || !cohortId ? (
-          <Empty
-            icon={<FolderOpen className="h-6 w-6" />}
-            title="조회할 과정·기수를 선택하세요"
-            description="등록된 과정이 없으면 ‘교육 과정 추가’에서 먼저 등록해 주세요."
-          />
-        ) : tab === 'description' ? (
-          <DescriptionPane courseId={courseId} cohortId={cohortId} />
+        {tab === 'resume' ? (
+          // 검토·심사 '이력서 관리' 흡수.
+          <ResumePage embedded />
+        ) : tab === 'records' ? (
+          // 검토·심사 '학습 기록 검토' 흡수.
+          <RecordReviewQueuePage embedded />
+        ) : tab === 'settings' ? (
+          !courseId || !cohortId ? (
+            <Empty
+              icon={<FolderOpen className="h-6 w-6" />}
+              title="조회할 과정·기수를 선택하세요"
+              description="등록된 과정이 없으면 ‘교육 과정 추가’에서 먼저 등록해 주세요."
+            />
+          ) : (
+            <DescriptionPane courseId={courseId} cohortId={cohortId} />
+          )
         ) : (
-          <ModulesPane />
+          <PlaceholderPane
+            label={TABS.find((t) => t.key === tab)?.label ?? ''}
+          />
         )}
       </div>
     </div>

@@ -27,19 +27,13 @@ export const adminMenu: MenuNode[] = [
   {
     label: '검토·심사',
     children: [
-      {
-        label: '학습 기록 검토',
-        to: '/admin/records/review',
-        // 검토 상세 3종(/admin/records/{blog|study|certificates}/:id) 진입 시에도 활성 유지
-        match: ['/admin/records'],
-      },
+      // 학습 기록 검토·이력서 관리는 과정·기수·교과목 탭(기록실·이력서)으로 흡수(메뉴 제거).
       {
         label: '인증 검토',
         to: '/admin/certificates/reviews',
         // 검토 상세(reviews/:id)·스냅샷(:id/snapshot)·감사 로그(:id/audit) 진입 시에도 활성 유지
         match: ['/admin/certificates'],
       },
-      { label: '이력서 관리', to: '/admin/resume' },
       { label: '평판 관리', to: '/admin/reputation' },
     ],
   },

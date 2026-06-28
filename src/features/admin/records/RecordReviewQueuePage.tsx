@@ -32,9 +32,14 @@ type StatusFilter = 'all' | RecordReviewStatus
 // 학습 기록 검토 큐 (/admin/records/review) — 운영(MANAGER) 1차 검토.
 // 블로그·스터디·자격증 제출을 [좌]테이블 + [우]인라인 미리보기로 triage,
 // 승인·반려·보완 요청을 한 화면에서 닫는다. (Figma "운영 — 학습 기록 검토 큐" 1507:10816)
-export default function RecordReviewQueuePage() {
+// embedded=true면 과정·기수·교과목 '기록실' 탭에 임베드(자체 헤더·패딩 생략).
+export default function RecordReviewQueuePage({
+  embedded = false,
+}: {
+  embedded?: boolean
+}) {
   const { data, isPending, isError, refetch } = useRecordReviewQueue()
-  usePageHeader('학습 기록 검토 큐', '운영 › 학습 기록 검토')
+  usePageHeader('학습 기록 검토 큐', '운영 › 학습 기록 검토', !embedded)
   const navigate = useNavigate()
   const [tab, setTab] = useState<CategoryTab>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -72,7 +77,7 @@ export default function RecordReviewQueuePage() {
   }
   if (isError || !data) {
     return (
-      <div className="p-8">
+      <div className={embedded ? '' : 'p-8'}>
         <Empty
           icon={<AlertTriangle />}
           title="검토 큐를 불러오지 못했어요"
@@ -228,7 +233,7 @@ export default function RecordReviewQueuePage() {
   ]
 
   return (
-    <div className="p-8">
+    <div className={embedded ? '' : 'p-8'}>
       <div className="bg-brand flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
         <div>
           <p className="font-bold">

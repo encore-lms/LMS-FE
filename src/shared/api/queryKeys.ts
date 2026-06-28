@@ -45,8 +45,11 @@ export const adminKeys = {
     [...adminKeys.all, 'quizzes', quizId, 'grading', submissionId] as const,
   studentAccounts: (filter?: { status?: string; cohortId?: string }) =>
     [...adminKeys.all, 'students', { filter: filter ?? {} }] as const,
-  studentAttendance: () =>
-    [...adminKeys.all, 'students', 'attendance'] as const,
+  studentAttendance: (filter?: {
+    courseId?: string
+    cohortId?: string
+    month?: string
+  }) => [...adminKeys.all, 'students', 'attendance', filter ?? {}] as const,
   studentAttendanceForms: () =>
     [...adminKeys.all, 'students', 'attendance-forms'] as const,
   settingsHub: () => [...adminKeys.all, 'settings', 'hub'] as const,

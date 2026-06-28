@@ -1,171 +1,8 @@
 import { http, HttpResponse } from 'msw'
-import type {
-  StudentAccountQueue,
-  StudentAttendanceData,
-  AttendanceFormData,
-} from '@/shared/types'
+import type { AttendanceFormData } from '@/shared/types'
 
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
 const ok = <T>(data: T) => HttpResponse.json({ data })
-
-// ── 계정 탭 (Figma 1457:10648) ──
-const accounts: StudentAccountQueue = {
-  cohortLabel: 'AI 캠프 22기',
-  summary: {
-    total: 121,
-    normal: 118,
-    loginBlocked: 3,
-    lastSyncAt: '09:42',
-    syncCreated: 5,
-    syncExisting: 116,
-  },
-  items: [
-    {
-      id: 'stu-0027',
-      name: '김민준',
-      studentUuid: '2024-AIB3-0027',
-      birthDate: '1998-03-12',
-      joinedAt: '05-01',
-      lastLoginAt: '오늘 09:18',
-      trainingStatus: 'active',
-      loginBlocked: false,
-    },
-    {
-      id: 'stu-0028',
-      name: '이서연',
-      studentUuid: '2024-AIB3-0028',
-      birthDate: '1997-11-02',
-      joinedAt: '05-01',
-      lastLoginAt: '어제 18:30',
-      trainingStatus: 'active',
-      loginBlocked: false,
-    },
-    {
-      id: 'stu-0029',
-      name: '박지훈',
-      studentUuid: '2024-AIB3-0029',
-      birthDate: '1999-01-18',
-      joinedAt: '05-02',
-      lastLoginAt: '7일 전',
-      trainingStatus: 'dropout',
-      loginBlocked: true,
-    },
-    {
-      id: 'stu-0030',
-      name: '최유진',
-      studentUuid: '2024-AIB3-0030',
-      birthDate: '1998-08-21',
-      joinedAt: '05-04',
-      lastLoginAt: '오늘 08:42',
-      trainingStatus: 'active',
-      loginBlocked: false,
-    },
-    {
-      id: 'stu-0031',
-      name: '정하늘',
-      studentUuid: '2024-AIB3-0031',
-      birthDate: '1996-05-14',
-      joinedAt: '05-04',
-      lastLoginAt: '05-12 16:08',
-      trainingStatus: 'active',
-      loginBlocked: true,
-    },
-    {
-      id: 'stu-0032',
-      name: '한지호',
-      studentUuid: '2024-AIB3-0032',
-      birthDate: '1999-09-30',
-      joinedAt: '05-05',
-      lastLoginAt: '오늘 07:55',
-      trainingStatus: 'active',
-      loginBlocked: false,
-    },
-  ],
-}
-
-// ── 출결 탭 (Figma 1457:10799) ──
-const attendance: StudentAttendanceData = {
-  cohortLabel: 'AI 백엔드 3기',
-  summary: {
-    present: 92,
-    late: 8,
-    earlyLeaveOuting: 5,
-    absent: 4,
-    hrdMismatch: 3,
-  },
-  rows: [
-    {
-      id: 'att-1',
-      studentName: '김민준',
-      checkIn: '09:04',
-      checkOut: '18:02',
-      hrdStatus: 'normal',
-      formLink: 'none',
-      verify: {
-        mismatchType: '없음',
-        recommendedAction: 'HRD 원본 정상 — 조치 불필요',
-        evidenceNeeded: '-',
-        assignee: '운영 매니저',
-      },
-    },
-    {
-      id: 'att-2',
-      studentName: '이서연',
-      checkIn: '09:31',
-      checkOut: '18:01',
-      hrdStatus: 'late',
-      formLink: 'submitted',
-      verify: {
-        mismatchType: '지각 (사유 폼 제출됨)',
-        recommendedAction: '출결 폼 검토 후 정상 처리',
-        evidenceNeeded: '교통 지연 캡처',
-        assignee: '운영 매니저',
-      },
-    },
-    {
-      id: 'att-3',
-      studentName: '박지훈',
-      checkIn: null,
-      checkOut: null,
-      hrdStatus: 'absent',
-      formLink: 'not_submitted',
-      verify: {
-        mismatchType: '결석 (사유 폼 미제출)',
-        recommendedAction: '학생에게 출결 폼 작성 요청',
-        evidenceNeeded: '결석 사유 증빙',
-        assignee: '운영 매니저',
-      },
-    },
-    {
-      id: 'att-4',
-      studentName: '최유진',
-      checkIn: '09:00',
-      checkOut: '15:20',
-      hrdStatus: 'early_leave',
-      formLink: 'pending',
-      verify: {
-        mismatchType: '조퇴 (승인 대기)',
-        recommendedAction: '증빙 확인 후 승인',
-        evidenceNeeded: '병원 확인서',
-        assignee: '운영 매니저',
-      },
-    },
-    {
-      id: 'att-5',
-      studentName: '한지원',
-      checkIn: '09:06',
-      checkOut: null,
-      hrdStatus: 'leave_missing',
-      formLink: 'none',
-      verify: {
-        mismatchType: '퇴실 누락',
-        recommendedAction: '재동기화 후 수동 확인',
-        evidenceNeeded: '강의장 출입 로그',
-        assignee: '운영 매니저',
-      },
-    },
-  ],
-}
 
 // ── 출결 폼 탭 (Figma 1457:10955) ──
 const attendanceForms: AttendanceFormData = {
@@ -225,11 +62,9 @@ const attendanceForms: AttendanceFormData = {
   ],
 }
 
+// 계정 목록(/users/students)·출결(/admin/courses/.../attendance)은 실 BE로 이동(mock 제거).
+// 출결 폼 검토 탭은 아직 mock 유지.
 export const handlers = [
-  http.get('/api/admin/students', () => ok<StudentAccountQueue>(accounts)),
-  http.get('/api/admin/students/attendance', () =>
-    ok<StudentAttendanceData>(attendance),
-  ),
   http.get('/api/admin/students/attendance-forms', () =>
     ok<AttendanceFormData>(attendanceForms),
   ),

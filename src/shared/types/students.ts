@@ -30,34 +30,24 @@ export interface StudentAccountQueue {
   items: StudentAccount[]
 }
 
-// ── 출결 탭 ──
+// ── 출결 탭 (HRD-Net 월별 출결 — learning-service) ──
 export type HrdAttendanceStatus =
   | 'normal'
   | 'late'
   | 'absent'
   | 'early_leave'
   | 'leave_missing' // 퇴실 누락
-export type AttendanceFormLink =
-  | 'none'
-  | 'submitted'
-  | 'not_submitted'
-  | 'pending'
 
-export interface AttendanceVerify {
-  mismatchType: string // '퇴실 누락'
-  recommendedAction: string // '재동기화 후 수동 확인'
-  evidenceNeeded: string // '강의장 출입 로그'
-  assignee: string // '운영 매니저'
-}
-
+// HRD 출결 1행 = 학생·일자 단위(월별 조회). 출결 폼 대조(formLink/verify)는 후속 단위.
 export interface StudentAttendanceRow {
   id: string
   studentName: string
-  checkIn: string | null // '09:04'
-  checkOut: string | null // '18:02'
+  studentUuid: string
+  date: string // YYYY-MM-DD
+  checkIn: string | null // '08:36'
+  checkOut: string | null // '17:51'
   hrdStatus: HrdAttendanceStatus
-  formLink: AttendanceFormLink
-  verify: AttendanceVerify
+  hrdStatusLabel: string // HRD 원본 상태명('출석'·'지각'…)
 }
 
 export interface AttendanceSummary {
@@ -70,6 +60,7 @@ export interface AttendanceSummary {
 
 export interface StudentAttendanceData {
   cohortLabel: string
+  month: string // YYYY-MM
   summary: AttendanceSummary
   rows: StudentAttendanceRow[]
 }

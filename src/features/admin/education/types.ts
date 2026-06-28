@@ -37,6 +37,16 @@ export interface EducationOverview {
   rows: EducationModuleRow[]
 }
 
+// 과제(Assignment, learning-service /assignments). 정본 §20.
+export interface AssignmentItem {
+  id: string
+  title: string
+  description: string | null
+  dueAt: string | null
+  createdByUserId: string
+  createdAt: string
+}
+
 // 설명 탭 — HRD-Net 과정 상세(learning-service /detail).
 export interface CourseDetail {
   title: string

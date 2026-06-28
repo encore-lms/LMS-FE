@@ -17,6 +17,7 @@ import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { useCourseDetail } from './api'
 import { MaterialsPane } from './MaterialsPane'
+import { AssignmentsPane } from './AssignmentsPane'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
 // 이력서·기록실은 검토·심사에서 흡수(ResumePage·RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
@@ -228,6 +229,12 @@ export default function EducationPage() {
             <NeedCourse />
           ) : (
             <MaterialsPane courseId={courseId} cohortId={cohortId} />
+          )
+        ) : tab === 'assignments' ? (
+          !courseId || !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <AssignmentsPane courseId={courseId} cohortId={cohortId} />
           )
         ) : tab === 'settings' ? (
           !courseId || !cohortId ? (

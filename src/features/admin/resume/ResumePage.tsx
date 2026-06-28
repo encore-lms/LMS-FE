@@ -163,8 +163,8 @@ function CompletionCell({ pct }: { pct: number | null }) {
 const STATUS_FILTERS = ['전체', '작성 완료', '작성 중', '미작성'] as const
 type StatusFilter = (typeof STATUS_FILTERS)[number]
 
-/** 이력서 현황 — 수강생 작성 현황 로스터. */
-function RosterView() {
+/** 이력서 현황 — 수강생 작성 현황 로스터. embedded=true면 KPI 카드 숨김. */
+function RosterView({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
@@ -256,32 +256,34 @@ function RosterView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard
-          icon={<Users />}
-          iconClass="bg-accent-bg text-accent-strong"
-          value={`${kpis.total}명`}
-          label="전체 수강생"
-        />
-        <StatCard
-          icon={<CheckCircle2 />}
-          iconClass="bg-success-bg text-success"
-          value={`${kpis.done}명`}
-          label="작성 완료"
-        />
-        <StatCard
-          icon={<SquarePen />}
-          iconClass="bg-warning-bg text-warning"
-          value={`${kpis.writing}명`}
-          label="작성 중"
-        />
-        <StatCard
-          icon={<AlertCircle />}
-          iconClass="bg-danger-bg text-danger"
-          value={`${kpis.none}명`}
-          label="미작성"
-        />
-      </div>
+      {!embedded && (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatCard
+            icon={<Users />}
+            iconClass="bg-accent-bg text-accent-strong"
+            value={`${kpis.total}명`}
+            label="전체 수강생"
+          />
+          <StatCard
+            icon={<CheckCircle2 />}
+            iconClass="bg-success-bg text-success"
+            value={`${kpis.done}명`}
+            label="작성 완료"
+          />
+          <StatCard
+            icon={<SquarePen />}
+            iconClass="bg-warning-bg text-warning"
+            value={`${kpis.writing}명`}
+            label="작성 중"
+          />
+          <StatCard
+            icon={<AlertCircle />}
+            iconClass="bg-danger-bg text-danger"
+            value={`${kpis.none}명`}
+            label="미작성"
+          />
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchBox
@@ -469,40 +471,43 @@ export default function ResumePage({
         })}
       </div>
 
-      {/* 프로그램 선택 */}
-      <button
-        type="button"
-        className="text-fg flex items-center gap-2 text-2xl font-bold"
-      >
-        {PROGRAM}
-        <ChevronDown className="text-fg-muted h-5 w-5" />
-      </button>
+      {/* 프로그램 선택·기수 탭 — 임베드(과정·기수·교과목 탭) 시엔 상위 과정/기수 선택을 쓰므로 숨김 */}
+      {!embedded && (
+        <>
+          <button
+            type="button"
+            className="text-fg flex items-center gap-2 text-2xl font-bold"
+          >
+            {PROGRAM}
+            <ChevronDown className="text-fg-muted h-5 w-5" />
+          </button>
 
-      {/* 기수 탭 */}
-      <div className="border-divider flex items-center gap-1 overflow-x-auto border-b">
-        {COHORTS.map((c) => {
-          const on = c === cohort
-          return (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCohort(c)}
-              aria-current={on ? 'page' : undefined}
-              className={cn(
-                'relative shrink-0 px-3 py-2.5 text-[14px] font-semibold',
-                on ? 'text-fg' : 'text-fg-subtle hover:text-fg-muted',
-              )}
-            >
-              {c}
-              {on && (
-                <span className="bg-fg absolute inset-x-3 -bottom-px h-0.5 rounded-full" />
-              )}
-            </button>
-          )
-        })}
-      </div>
+          <div className="border-divider flex items-center gap-1 overflow-x-auto border-b">
+            {COHORTS.map((c) => {
+              const on = c === cohort
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCohort(c)}
+                  aria-current={on ? 'page' : undefined}
+                  className={cn(
+                    'relative shrink-0 px-3 py-2.5 text-[14px] font-semibold',
+                    on ? 'text-fg' : 'text-fg-subtle hover:text-fg-muted',
+                  )}
+                >
+                  {c}
+                  {on && (
+                    <span className="bg-fg absolute inset-x-3 -bottom-px h-0.5 rounded-full" />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
 
-      {tab === 'roster' ? <RosterView /> : <FeedbackView />}
+      {tab === 'roster' ? <RosterView embedded={embedded} /> : <FeedbackView />}
     </div>
   )
 }

@@ -40,7 +40,7 @@ export const adminMenu: MenuNode[] = [
   {
     label: '학습·보상',
     children: [
-      { label: '퀴즈 운영', to: '/admin/quizzes' },
+      // 퀴즈 운영은 과정·기수·교과목 '퀴즈' 탭으로 흡수(메뉴 제거).
       { label: 'PLAY 관리', to: '/admin/play/typing-texts' },
       { label: '마일리지', to: '/admin/mileage' },
       { label: '증명서 템플릿', to: '/admin/certificate-template' },

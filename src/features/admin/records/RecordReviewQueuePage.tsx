@@ -260,31 +260,33 @@ export default function RecordReviewQueuePage({
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="검토 대기"
-          value={data.pendingTotal}
-          hint={`미배정 ${data.unassigned} · 24h 초과 ${data.over24h}`}
-        />
-        <KpiCard
-          label="보완 요청 중"
-          value={data.changesRequested}
-          tone="warning"
-          hint="재제출 대기"
-        />
-        <KpiCard
-          label="오늘 승인"
-          value={data.approvedToday}
-          tone="success"
-          hint={`지급 후보 ${data.payoutCandidates}건`}
-        />
-        <KpiCard
-          label="이번 주 반려"
-          value={data.rejectedThisWeek}
-          tone="danger"
-          hint="사유 코멘트 첨부"
-        />
-      </div>
+      {!embedded && (
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            label="검토 대기"
+            value={data.pendingTotal}
+            hint={`미배정 ${data.unassigned} · 24h 초과 ${data.over24h}`}
+          />
+          <KpiCard
+            label="보완 요청 중"
+            value={data.changesRequested}
+            tone="warning"
+            hint="재제출 대기"
+          />
+          <KpiCard
+            label="오늘 승인"
+            value={data.approvedToday}
+            tone="success"
+            hint={`지급 후보 ${data.payoutCandidates}건`}
+          />
+          <KpiCard
+            label="이번 주 반려"
+            value={data.rejectedThisWeek}
+            tone="danger"
+            hint="사유 코멘트 첨부"
+          />
+        </div>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1">

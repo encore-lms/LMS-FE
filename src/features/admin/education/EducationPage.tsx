@@ -13,8 +13,10 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import ResumePage from '../resume/ResumePage'
 import RecordReviewQueuePage from '../records/RecordReviewQueuePage'
+import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { useCourseDetail } from './api'
+import { MaterialsPane } from './MaterialsPane'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
 // 이력서·기록실은 검토·심사에서 흡수(ResumePage·RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
@@ -35,7 +37,18 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'settings', label: '설정' },
 ]
 
-// 아직 별도 흡수 대상이 없는 탭(자료실/과제/퀴즈) — 준비 중 안내.
+// 과정/기수 미선택 안내(자료실·설정 탭 공용).
+function NeedCourse() {
+  return (
+    <Empty
+      icon={<FolderOpen className="h-6 w-6" />}
+      title="조회할 과정·기수를 선택하세요"
+      description="등록된 과정이 없으면 ‘교육 과정 추가’에서 먼저 등록해 주세요."
+    />
+  )
+}
+
+// 아직 별도 흡수 대상이 없는 탭(과제) — 준비 중 안내.
 function PlaceholderPane({ label }: { label: string }) {
   return (
     <Empty
@@ -207,13 +220,18 @@ export default function EducationPage() {
         ) : tab === 'records' ? (
           // 검토·심사 '학습 기록 검토' 흡수.
           <RecordReviewQueuePage embedded />
+        ) : tab === 'quizzes' ? (
+          // 학습·보상 '퀴즈 운영' 흡수.
+          <QuizListPage embedded />
+        ) : tab === 'materials' ? (
+          !courseId || !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <MaterialsPane courseId={courseId} cohortId={cohortId} />
+          )
         ) : tab === 'settings' ? (
           !courseId || !cohortId ? (
-            <Empty
-              icon={<FolderOpen className="h-6 w-6" />}
-              title="조회할 과정·기수를 선택하세요"
-              description="등록된 과정이 없으면 ‘교육 과정 추가’에서 먼저 등록해 주세요."
-            />
+            <NeedCourse />
           ) : (
             <DescriptionPane courseId={courseId} cohortId={cohortId} />
           )

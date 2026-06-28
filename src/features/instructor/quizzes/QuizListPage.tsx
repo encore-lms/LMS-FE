@@ -24,7 +24,12 @@ const COHORTS = ['전체', 'DA 4기', 'FE 7기'] as const
 
 // 퀴즈 관리 목록 (/instructor/quizzes) — §5. (Figma 1337:9753)
 // 제출 있는 퀴즈는 삭제 비활성, 임시저장은 제출 현황 비활성.
-export default function QuizListPage() {
+// embedded=true면 과정·기수·교과목 '퀴즈' 탭에 임베드(자체 헤더·패딩 생략).
+export default function QuizListPage({
+  embedded = false,
+}: {
+  embedded?: boolean
+}) {
   const navigate = useNavigate()
   const base = useQuizBasePath()
   const toast = useToast()
@@ -36,6 +41,7 @@ export default function QuizListPage() {
   usePageHeader(
     '퀴즈 관리',
     '담당 기수 퀴즈 출제·수정·채점 관제 — 정답/배점 변경 시 자동 재채점',
+    !embedded,
   )
 
   const filtered = useMemo(() => {
@@ -58,7 +64,7 @@ export default function QuizListPage() {
   }
   if (isError || !data) {
     return (
-      <div className="p-8">
+      <div className={embedded ? '' : 'p-8'}>
         <Empty
           icon={<AlertTriangle />}
           title="퀴즈 목록을 불러오지 못했어요"
@@ -225,7 +231,7 @@ export default function QuizListPage() {
   ]
 
   return (
-    <div className="p-8">
+    <div className={embedded ? '' : 'p-8'}>
       {/* 필터 바 */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">

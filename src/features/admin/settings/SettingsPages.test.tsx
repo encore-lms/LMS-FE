@@ -364,25 +364,25 @@ function renderWith(ui: React.ReactElement) {
 }
 
 describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
-  it('KPI·계정 테이블·담당 범위 경고를 렌더한다', () => {
+  it('KPI·계정 테이블을 렌더한다', () => {
     renderWith(<AccountsPage />)
     expect(screen.getAllByText('MANAGER').length).toBeGreaterThan(0)
     expect(screen.getByText('이정훈')).toBeInTheDocument()
-    expect(screen.getByText('강사는 최소 1개 이상 권장')).toBeInTheDocument()
     // 본인 계정은 비활성화 불가
     expect(screen.getByText('비활성화 불가')).toBeInTheDocument()
   })
 
-  it('수정 액션은 운영 계정 수정 모달(역할·상태 편집)을 연다', async () => {
-    const user = userEvent.setup()
+  it('수정 기능 제거 — 수정 버튼이 없고 비번 초기화·비활성화만 제공한다', () => {
     renderWith(<AccountsPage />)
-    await user.click(screen.getAllByRole('button', { name: '수정' })[0])
-    expect(screen.getByText('운영 계정 수정')).toBeInTheDocument()
-    // 새 편집 모달 — 저장 버튼 + 감사 로그 안내(모달 고유)
-    expect(screen.getByRole('button', { name: '저장' })).toBeInTheDocument()
     expect(
-      screen.getByText(/변경 내역이 감사 로그에 기록됩니다/),
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: '수정' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getAllByRole('button', { name: '비번 초기화' }).length,
+    ).toBeGreaterThan(0)
+    expect(
+      screen.getAllByRole('button', { name: '비활성화' }).length,
+    ).toBeGreaterThan(0)
   })
 
   it('행 클릭은 사용자 정보 상세 모달을 연다', async () => {
@@ -390,13 +390,6 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
     renderWith(<AccountsPage />)
     await user.click(screen.getByText('instructor.park@playdata.io'))
     expect(screen.getByText('사용자 정보')).toBeInTheDocument()
-  })
-
-  it('본인 계정은 수정 불가 — 권한 회수 방지(다른 운영 계정은 수정 가능)', () => {
-    renderWith(<AccountsPage />)
-    // 이정훈(본인)은 수정 불가, 박강사(타 계정)는 수정 버튼
-    expect(screen.getAllByText('수정 불가').length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: '수정' })).toHaveLength(1)
   })
 
   it('역할 필터는 해당 역할만 남긴다', async () => {

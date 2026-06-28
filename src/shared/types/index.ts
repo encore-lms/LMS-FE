@@ -77,8 +77,6 @@ export type {
   StudentAccountsSummary,
   StudentAccountQueue,
   HrdAttendanceStatus,
-  AttendanceFormLink,
-  AttendanceVerify,
   StudentAttendanceRow,
   AttendanceSummary,
   StudentAttendanceData,

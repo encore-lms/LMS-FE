@@ -56,7 +56,8 @@ const accounts: StudentAccountQueue = {
 }
 
 const attendance: StudentAttendanceData = {
-  cohortLabel: 'AI 백엔드 3기',
+  cohortLabel: 'SK네트웍스 Family AI 캠프 34기',
+  month: '2026-06',
   summary: {
     present: 92,
     late: 8,
@@ -66,18 +67,14 @@ const attendance: StudentAttendanceData = {
   },
   rows: [
     {
-      id: 'att-1',
-      studentName: '김민준',
-      checkIn: '09:04',
-      checkOut: '18:02',
+      id: '100062059655|20260626',
+      studentName: '김건우',
+      studentUuid: '100062059655',
+      date: '2026-06-26',
+      checkIn: '08:36',
+      checkOut: '17:51',
       hrdStatus: 'normal',
-      formLink: 'none',
-      verify: {
-        mismatchType: '없음',
-        recommendedAction: '조치 불필요',
-        evidenceNeeded: '-',
-        assignee: '운영 매니저',
-      },
+      hrdStatusLabel: '출석',
     },
   ],
 }
@@ -109,10 +106,37 @@ function renderPage() {
     ok(forms) as unknown as ReturnType<typeof useStudentAttendanceForms>,
   )
   vi.mocked(useCourseList).mockReturnValue(
-    ok([]) as unknown as ReturnType<typeof useCourseList>,
+    ok([
+      {
+        courseId: 'course-sk',
+        title: 'SK네트웍스 Family AI 캠프',
+        cohortCount: 1,
+        status: 'operating',
+        startDate: '2026-06-16',
+        endDate: '2026-12-08',
+      },
+    ]) as unknown as ReturnType<typeof useCourseList>,
   )
   vi.mocked(useCourseConfig).mockReturnValue(
-    ok(undefined) as unknown as ReturnType<typeof useCourseConfig>,
+    ok({
+      courseId: 'course-sk',
+      title: 'SK네트웍스 Family AI 캠프',
+      status: 'operating',
+      startDate: '2026-06-16',
+      endDate: '2026-12-08',
+      cohorts: [
+        {
+          id: 'cohort-34',
+          cohortNo: '34',
+          hrdTrprId: 'AIG20240000459068',
+          startDate: '2026-06-16',
+          endDate: '2026-12-08',
+          status: 'operating',
+          mileageEnabled: true,
+          playEnabled: true,
+        },
+      ],
+    }) as unknown as ReturnType<typeof useCourseConfig>,
   )
   const mutationStub = {
     mutate: vi.fn(),
@@ -163,13 +187,14 @@ describe('StudentManagementPage', () => {
     expect(screen.getByText(/로그인 차단 적용/)).toBeInTheDocument()
   })
 
-  it('출결 탭으로 전환하면 KPI와 검증 패널 안내가 보인다', async () => {
+  it('출결 탭으로 전환하면 HRD 월별 출결 KPI와 행이 보인다', async () => {
     const user = userEvent.setup()
     renderPage()
     await user.click(screen.getByRole('button', { name: '출결' }))
-    expect(screen.getByText('출석')).toBeInTheDocument()
+    expect(screen.getByText('출석(정상)')).toBeInTheDocument()
     expect(screen.getByText('92')).toBeInTheDocument()
-    // 행이 있으면 첫 행이 자동 선택돼 검증 패널이 표시된다
-    expect(screen.getByText('출결 검증 패널')).toBeInTheDocument()
+    // HRD 월별 출결 행(학생·일자) 표시
+    expect(screen.getByText('김건우')).toBeInTheDocument()
+    expect(screen.getByText('2026-06-26')).toBeInTheDocument()
   })
 })

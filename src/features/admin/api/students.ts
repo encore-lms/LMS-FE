@@ -126,12 +126,25 @@ export function useResetStudentPassword() {
   })
 }
 
-export function useStudentAttendance() {
+// 관리자 출결 조회 — learning-service HRD 월별 출결(과정/기수/월). 셋 다 있어야 조회.
+export function useStudentAttendance(
+  courseId?: string | null,
+  cohortId?: string | null,
+  month?: string,
+) {
   return useQuery({
-    queryKey: adminKeys.studentAttendance(),
+    queryKey: adminKeys.studentAttendance({
+      courseId: courseId ?? undefined,
+      cohortId: cohortId ?? undefined,
+      month,
+    }),
+    enabled: !!courseId && !!cohortId,
     queryFn: () =>
       apiClient
-        .get<StudentAttendanceData>('/admin/students/attendance')
+        .get<StudentAttendanceData>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/attendance`,
+          month ? { month } : {},
+        )
         .then((r) => r.data),
   })
 }

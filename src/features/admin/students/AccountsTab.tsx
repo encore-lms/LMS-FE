@@ -372,22 +372,6 @@ export function AccountsTab() {
         </>
       )}
 
-      {/* 정책 카드 */}
-      <div className="border-border bg-info-bg mt-6 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">
-          학생 계정 정책 · §4 완료 기준
-        </p>
-        <div className="text-fg-muted mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs lg:grid-cols-3">
-          <span>• 권한: MANAGER 전용 · INSTRUCTOR 미노출</span>
-          <span>• 동기화: HRD-Net UUID 기준 중복 차단</span>
-          <span>• 입사 비번: 1회 표시 · 30초 자동 삭제</span>
-          <span>
-            • Excel: 수강생_계정정보_{'{'}기수{'}'}기.xls
-          </span>
-          <span>• 차단 판정: accountStatus + trainingStatus</span>
-        </div>
-      </div>
-
       <StudentDetailModal
         account={modal?.account ?? null}
         actionLabel={modal?.action}

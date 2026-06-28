@@ -39,12 +39,16 @@ function toAccount(s: RawStudent): StudentAccount {
 }
 
 // 수강생 계정 목록 — /users/students 실연동(StudentAccountQueue로 매핑해 기존 화면 유지).
-export function useStudentAccounts() {
+// cohortId가 있으면 해당 기수 배정 학생만 조회(선택 즉시 목록 갱신).
+export function useStudentAccounts(cohortId?: string | null) {
   return useQuery({
-    queryKey: adminKeys.studentAccounts(),
+    queryKey: adminKeys.studentAccounts({ cohortId: cohortId ?? undefined }),
     queryFn: () =>
       apiClient
-        .get<RawStudentPage>('/users/students', { size: 100 })
+        .get<RawStudentPage>('/users/students', {
+          size: 100,
+          ...(cohortId ? { cohortId } : {}),
+        })
         .then((r) => {
           const items = (r.data.content ?? []).map(toAccount)
           const queue: StudentAccountQueue = {
@@ -101,7 +105,10 @@ export function useSyncStudents() {
         })
         .then((r) => r.data),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: adminKeys.studentAccounts() }),
+      // prefix(...,'students')로 무효화 — 기수별 캐시 모두 갱신.
+      queryClient.invalidateQueries({
+        queryKey: [...adminKeys.all, 'students'],
+      }),
   })
 }
 

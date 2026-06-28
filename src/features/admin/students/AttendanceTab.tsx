@@ -165,7 +165,7 @@ export function AttendanceTab() {
           setSelectedCohortId(null)
           setSelectedDate(null)
         }}
-        className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+        className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
       >
         {(courses ?? []).map((c) => (
           <option key={c.courseId} value={c.courseId}>
@@ -183,7 +183,7 @@ export function AttendanceTab() {
           setSelectedCohortId(e.target.value)
           setSelectedDate(null)
         }}
-        className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+        className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
       >
         {(courseConfig?.cohorts ?? []).map((c) => (
           <option key={c.id} value={c.id}>
@@ -194,14 +194,17 @@ export function AttendanceTab() {
           <option value="">기수 없음</option>
         )}
       </select>
-      <DateTimePicker
-        mode="date"
-        value={date}
-        onChange={(v) => v && setSelectedDate(v)}
-        ariaLabel="조회 일자 선택"
-        min={selectedCohort?.startDate ?? undefined}
-        max={maxDate(selectedCohort?.endDate ?? null)}
-      />
+      {/* DateTimePicker 루트가 w-full이라 폭 고정 래퍼로 한 줄 유지(좁아지면 wrap). */}
+      <div className="w-40">
+        <DateTimePicker
+          mode="date"
+          value={date}
+          onChange={(v) => v && setSelectedDate(v)}
+          ariaLabel="조회 일자 선택"
+          min={selectedCohort?.startDate ?? undefined}
+          max={maxDate(selectedCohort?.endDate ?? null)}
+        />
+      </div>
     </div>
   )
 

@@ -10,6 +10,9 @@ import CourseAddPage from './CourseAddPage'
 import {
   useSettingsHub,
   useOpsAccounts,
+  useCreateOpsAccount,
+  useUpdateOpsAccountStatus,
+  useResetOpsPassword,
   useHrdKeyList,
   useHrdKeySummary,
   useHrdKeyHistory,
@@ -274,6 +277,21 @@ function mockAll() {
   vi.mocked(useOpsAccounts).mockReturnValue(
     ok(accounts) as unknown as ReturnType<typeof useOpsAccounts>,
   )
+  vi.mocked(useCreateOpsAccount).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useCreateOpsAccount>)
+  vi.mocked(useUpdateOpsAccountStatus).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useUpdateOpsAccountStatus>)
+  vi.mocked(useResetOpsPassword).mockReturnValue({
+    mutate: vi.fn(),
+    mutateAsync: vi
+      .fn()
+      .mockResolvedValue({ temporaryPassword: 'Temp1234!abc' }),
+    isPending: false,
+  } as unknown as ReturnType<typeof useResetOpsPassword>)
   vi.mocked(useHrdKeyList).mockReturnValue(
     ok(hrdList) as unknown as ReturnType<typeof useHrdKeyList>,
   )

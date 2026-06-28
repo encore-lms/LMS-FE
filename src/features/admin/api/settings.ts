@@ -5,8 +5,10 @@ import {
   keepPreviousData,
 } from '@tanstack/react-query'
 import { apiClient, adminKeys } from '@/shared/api'
+import { useAuthStore } from '@/shared/store/auth'
 import type {
   SettingsHubData,
+  OpsAccount,
   OpsAccountsData,
   HrdApiKey,
   HrdKeyListData,
@@ -30,12 +32,114 @@ export function useSettingsHub() {
   })
 }
 
+// ── 운영 계정(auth-user-service /auth/accounts) — 매니저·강사·멘토 실연동 ──
+// 실 BE 전용(mock 모드에선 mock 토큰이라 401). /api/auth proxy로 :8081 도달.
+interface RawOpsUser {
+  userId: string
+  email: string | null
+  name: string
+  primaryRole: 'MANAGER' | 'INSTRUCTOR' | 'MENTOR' | string
+  status: string // ACTIVE | INACTIVE | BLOCKED
+  lastLoginAt: string | null
+}
+interface RawOpsPage {
+  content: RawOpsUser[]
+  totalElements: number
+}
+
+function toOpsAccount(u: RawOpsUser, selfId: string | null): OpsAccount {
+  return {
+    id: u.userId,
+    name: u.name,
+    email: u.email ?? '-',
+    role: (u.primaryRole as 'MANAGER' | 'INSTRUCTOR' | 'MENTOR') ?? 'MANAGER',
+    scope: '담당 범위 정보 없음', // auth-service에 운영 범위 모델 없음(후속)
+    // BE status는 소문자(active/inactive/blocked). active만 활성, 그 외 비활성.
+    status: u.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
+    lastLoginAt: u.lastLoginAt ? u.lastLoginAt.slice(0, 10) : null,
+    isSelf: !!selfId && u.userId === selfId,
+  }
+}
+
 export function useOpsAccounts() {
+  const selfId = useAuthStore.getState().user?.id ?? null
   return useQuery({
     queryKey: adminKeys.settingsAccounts(),
     queryFn: () =>
+      apiClient.get<RawOpsPage>('/auth/accounts', { size: 100 }).then((r) => {
+        const items = (r.data.content ?? []).map((u) => toOpsAccount(u, selfId))
+        const by = (role: string) => items.filter((a) => a.role === role)
+        const managers = by('MANAGER')
+        const data: OpsAccountsData = {
+          items,
+          summary: {
+            managers: managers.length,
+            managersActive: managers.filter((a) => a.status === 'active')
+              .length,
+            managersInactive: managers.filter((a) => a.status === 'inactive')
+              .length,
+            instructors: by('INSTRUCTOR').length,
+            instructorNoScope: 0,
+            mentors: by('MENTOR').length,
+            mentorNoTeam: 0,
+            inactive: items.filter((a) => a.status === 'inactive').length,
+            inactiveRevoked30d: 0,
+            total: r.data.totalElements ?? items.length,
+          },
+        }
+        return data
+      }),
+  })
+}
+
+export interface CreateOpsAccountInput {
+  name: string
+  email: string
+  role: 'MANAGER' | 'INSTRUCTOR' | 'MENTOR'
+  password: string
+}
+// 운영 계정 생성(POST /auth/accounts). 성공 시 목록 무효화.
+export function useCreateOpsAccount() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateOpsAccountInput) =>
+      apiClient.post('/auth/accounts', input).then((r) => r.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminKeys.settingsAccounts() }),
+  })
+}
+
+// 운영 계정 상태 변경(PATCH /auth/accounts/{userId}/status). ACTIVE|INACTIVE.
+export function useUpdateOpsAccountStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      userId,
+      status,
+      reason,
+    }: {
+      userId: string
+      status: 'ACTIVE' | 'INACTIVE'
+      reason?: string
+    }) =>
       apiClient
-        .get<OpsAccountsData>('/admin/settings/accounts')
+        .patch(`/auth/accounts/${userId}/status`, { status, reason })
+        .then((r) => r.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminKeys.settingsAccounts() }),
+  })
+}
+
+export interface OpsPasswordResetResult {
+  userId: string
+  temporaryPassword: string
+}
+// 운영 계정 임시 비밀번호 재발급(POST /auth/accounts/{userId}/password/reset).
+export function useResetOpsPassword() {
+  return useMutation<OpsPasswordResetResult, Error, string>({
+    mutationFn: (userId) =>
+      apiClient
+        .post<OpsPasswordResetResult>(`/auth/accounts/${userId}/password/reset`)
         .then((r) => r.data),
   })
 }

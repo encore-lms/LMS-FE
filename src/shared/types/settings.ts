@@ -39,6 +39,8 @@ export interface OpsAccount {
   scope: string
   /** 담당 범위 경고 보조문구 — '강사는 최소 1개 이상 권장' 등 (없으면 미노출) */
   scopeWarning?: string
+  /** 담당 기수 ID 목록(운영자 담당 범위, 실 BE) */
+  cohortIds?: string[]
   status: OpsAccountStatus
   lastLoginAt: string | null // '오늘 09:18' (null = 미접속 '-')
   /** 본인 계정 여부 — 본인 매니저 권한 회수(비활성화) 방지 */

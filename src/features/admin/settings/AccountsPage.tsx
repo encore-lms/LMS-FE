@@ -14,8 +14,10 @@ import {
   useCreateOpsAccount,
   useOpsAccounts,
   useSettingsHub,
+  useUpdateOperatorCohorts,
   useUpdateOpsAccountStatus,
 } from '../api/settings'
+import { ScopeModal } from './ScopeModal'
 import {
   AccountCreateModal,
   type AccountCreateValues,
@@ -72,6 +74,7 @@ export default function AccountsPage() {
   const toast = useToast()
   const createAccount = useCreateOpsAccount()
   const updateStatus = useUpdateOpsAccountStatus()
+  const updateScope = useUpdateOperatorCohorts()
   const navigate = useNavigate()
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -87,6 +90,8 @@ export default function AccountsPage() {
   } | null>(null)
   // 비밀번호 초기화 모달 대상 계정 — non-null이면 TempPasswordModal이 열린다.
   const [pwTarget, setPwTarget] = useState<OpsAccount | null>(null)
+  // 담당 과정·기수 설정 모달 대상 — non-null이면 ScopeModal이 열린다.
+  const [scopeTarget, setScopeTarget] = useState<OpsAccount | null>(null)
   // 새 계정 추가 모달 개폐.
   const [createOpen, setCreateOpen] = useState(false)
   // 사용자 정보 상세 모달 대상 — 표 행 클릭 시 열린다(읽기 전용).
@@ -161,6 +166,21 @@ export default function AccountsPage() {
     setModal(null)
   }
 
+  // 담당 과정·기수 저장 — 실 BE(PUT /auth/accounts/{userId}/cohorts).
+  const onScopeSave = (account: OpsAccount, cohortIds: string[]) => {
+    updateScope.mutate(
+      { userId: account.id, cohortIds },
+      {
+        onSuccess: () =>
+          toast.success(
+            `${account.name} · 담당 기수 ${cohortIds.length}개 저장`,
+          ),
+        onError: () => toast.danger(`${account.name} · 담당 기수 저장 실패`),
+      },
+    )
+    setScopeTarget(null)
+  }
+
   // 새 계정 추가 — 실 BE(POST /auth/accounts). BE가 비밀번호를 요구하므로 임시 비밀번호를 생성해 함께 전송.
   const onCreate = (values: AccountCreateValues) => {
     const tempPw = genInitialPassword()
@@ -212,6 +232,26 @@ export default function AccountsPage() {
       className: 'w-28',
       cell: (a) => (
         <StatusBadge label={ROLE_LABEL[a.role]} tone={ROLE_TONE[a.role]} />
+      ),
+    },
+    {
+      key: 'scope',
+      header: '담당 과정·기수',
+      className: 'w-44',
+      // 셀 클릭 → 과정/기수 다중 선택 모달(실 BE 저장).
+      cell: (a) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setScopeTarget(a)
+          }}
+          className="border-border hover:border-brand hover:bg-surface-muted text-fg-muted w-full truncate rounded-md border px-2.5 py-1.5 text-left text-sm"
+        >
+          {(a.cohortIds?.length ?? 0) > 0
+            ? `${a.cohortIds!.length}개 기수 담당`
+            : '담당 기수 설정'}
+        </button>
       ),
     },
     {
@@ -535,6 +575,13 @@ export default function AccountsPage() {
       />
 
       <TempPasswordModal account={pwTarget} onClose={() => setPwTarget(null)} />
+
+      <ScopeModal
+        account={scopeTarget}
+        onSave={onScopeSave}
+        onClose={() => setScopeTarget(null)}
+        saving={updateScope.isPending}
+      />
 
       <AccountCreateModal
         open={createOpen}

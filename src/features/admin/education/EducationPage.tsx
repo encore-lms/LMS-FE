@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { AlertTriangle, FolderOpen, Lock } from 'lucide-react'
+import {
+  AlertTriangle,
+  BookOpen,
+  FolderOpen,
+  ListChecks,
+  Lock,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -30,6 +36,7 @@ function DescriptionPane({
     courseId,
     cohortId,
   )
+  const toast = useToast()
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -76,6 +83,26 @@ function DescriptionPane({
           </div>
         ))}
       </dl>
+
+      {/* 하단 설정 버튼 — 단위 기간/커리큘럼(이전 LMS '단위 기간 설정' 재현 + 커리큘럼 신규) */}
+      <div className="border-divider mt-6 flex flex-wrap gap-2 border-t pt-5">
+        <button
+          type="button"
+          // TODO: 단위 기간 설정 모달(BE 단위기간 계약 확정 후)
+          onClick={() => toast.info('단위 기간 설정 화면은 준비 중입니다.')}
+          className="bg-brand hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold text-white transition-colors"
+        >
+          <ListChecks className="h-4 w-4" /> 단위 기간 설정
+        </button>
+        <button
+          type="button"
+          // TODO: 커리큘럼 설정 화면(BE 커리큘럼/교과목 계약 확정 후)
+          onClick={() => toast.info('커리큘럼 설정 화면은 준비 중입니다.')}
+          className="bg-info-bg text-info border-border hover:bg-info-bg/70 inline-flex h-9 items-center gap-1.5 rounded-md border px-4 text-[13px] font-semibold transition-colors"
+        >
+          <BookOpen className="h-4 w-4" /> 커리큘럼 설정
+        </button>
+      </div>
     </div>
   )
 }

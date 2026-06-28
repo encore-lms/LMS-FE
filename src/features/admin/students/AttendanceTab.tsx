@@ -10,6 +10,9 @@ import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
 import { useStudentAttendance } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
 
+// 출결 필터(이전 LMS 기준). 미입실=입실 없음, 미퇴실=퇴실 없음.
+type AttendanceFilter = 'all' | 'late' | 'absent' | 'no_checkin' | 'no_checkout'
+
 const HRD_META: Record<HrdAttendanceStatus, { label: string; cls: string }> = {
   normal: { label: '정상', cls: 'text-success' },
   late: { label: '지각', cls: 'text-warning' },
@@ -73,21 +76,48 @@ export function AttendanceTab() {
     date,
   )
 
-  const [onlyIssues, setOnlyIssues] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<AttendanceFilter>('all')
   const [q, setQ] = useState('')
 
+  // 이전 LMS 기준: 지각·결석은 상태, 미입실=입실(checkIn) 없음, 미퇴실=퇴실(checkOut) 없음.
+  const matchFilter = (r: StudentAttendanceRow, f: AttendanceFilter) => {
+    switch (f) {
+      case 'late':
+        return r.hrdStatus === 'late'
+      case 'absent':
+        return r.hrdStatus === 'absent'
+      case 'no_checkin':
+        return r.checkIn === null
+      case 'no_checkout':
+        return r.checkOut === null
+      default:
+        return true
+    }
+  }
+
+  const rows = data?.rows ?? []
   const filtered = useMemo(() => {
-    const rows = data?.rows ?? []
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
-      if (onlyIssues && r.hrdStatus === 'normal') return false
+      if (!matchFilter(r, statusFilter)) return false
       if (needle) {
         const hay = `${r.studentName} ${r.hrdStatusLabel}`.toLowerCase()
         if (!hay.includes(needle)) return false
       }
       return true
     })
-  }, [data, onlyIssues, q])
+  }, [rows, statusFilter, q])
+
+  // 필터 탭 + 건수(전체/지각/결석/미입실/미퇴실).
+  const filterTabs: { key: AttendanceFilter; label: string }[] = [
+    { key: 'all', label: '전체' },
+    { key: 'late', label: '지각' },
+    { key: 'absent', label: '결석' },
+    { key: 'no_checkin', label: '미입실' },
+    { key: 'no_checkout', label: '미퇴실' },
+  ]
+  const filterCount = (f: AttendanceFilter) =>
+    f === 'all' ? rows.length : rows.filter((r) => matchFilter(r, f)).length
 
   const columns: Column<StudentAttendanceRow>[] = [
     {
@@ -230,33 +260,22 @@ export function AttendanceTab() {
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-1">
-              <span className="bg-accent-bg text-accent-strong rounded-md px-3 py-1.5 text-sm font-medium">
-                {data.cohortLabel} · {data.date}
-              </span>
-              <button
-                type="button"
-                onClick={() => setOnlyIssues(false)}
-                className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium',
-                  !onlyIssues
-                    ? 'bg-surface-muted text-fg'
-                    : 'text-fg-muted hover:bg-surface-muted',
-                )}
-              >
-                전체
-              </button>
-              <button
-                type="button"
-                onClick={() => setOnlyIssues(true)}
-                className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium',
-                  onlyIssues
-                    ? 'bg-surface-muted text-fg'
-                    : 'text-fg-muted hover:bg-surface-muted',
-                )}
-              >
-                이상만
-              </button>
+              {filterTabs.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setStatusFilter(t.key)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-sm font-medium',
+                    statusFilter === t.key
+                      ? 'bg-accent-bg text-accent-strong'
+                      : 'text-fg-muted hover:bg-surface-muted',
+                  )}
+                >
+                  {t.label}{' '}
+                  <span className="text-fg-subtle">{filterCount(t.key)}</span>
+                </button>
+              ))}
             </div>
             <input
               value={q}

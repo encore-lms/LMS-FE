@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { adminEducationKeys } from './queryKeys'
-import type { CourseDetail, EducationOverview } from './types'
+import type { AssignmentItem, CourseDetail, EducationOverview } from './types'
 
 // 과정·기수·교과목 통합 조회 훅 — 엔드포인트가 /admin/* 라 admin feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
@@ -27,5 +27,66 @@ export function useCourseDetail(
           `/admin/courses/${courseId}/cohorts/${cohortId}/detail`,
         )
         .then((r) => r.data),
+  })
+}
+
+// ── 과제(Assignment, learning-service) — 조회·상세·추가·삭제 ──
+export function useAssignments(
+  courseId?: string | null,
+  cohortId?: string | null,
+) {
+  return useQuery({
+    queryKey: adminEducationKeys.assignments(courseId ?? '', cohortId ?? ''),
+    enabled: !!courseId && !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<
+          AssignmentItem[]
+        >(`/admin/courses/${courseId}/cohorts/${cohortId}/assignments`)
+        .then((r) => r.data),
+  })
+}
+
+export interface CreateAssignmentInput {
+  courseId: string
+  cohortId: string
+  title: string
+  description?: string
+  dueAt?: string
+}
+export function useCreateAssignment() {
+  const queryClient = useQueryClient()
+  return useMutation<AssignmentItem, Error, CreateAssignmentInput>({
+    mutationFn: ({ courseId, cohortId, title, description, dueAt }) =>
+      apiClient
+        .post<AssignmentItem>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/assignments`,
+          { title, description, dueAt },
+        )
+        .then((r) => r.data),
+    onSuccess: (_d, { courseId, cohortId }) =>
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.assignments(courseId, cohortId),
+      }),
+  })
+}
+
+export function useDeleteAssignment() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    void,
+    Error,
+    { courseId: string; cohortId: string; assignmentId: string }
+  >({
+    mutationFn: ({ courseId, cohortId, assignmentId }) =>
+      apiClient
+        .delete<void>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/assignments/${assignmentId}`,
+        )
+        .then(() => undefined),
+    onSuccess: (_d, { courseId, cohortId }) =>
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.assignments(courseId, cohortId),
+      }),
   })
 }

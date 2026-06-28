@@ -41,6 +41,7 @@ interface RawOpsUser {
   primaryRole: 'MANAGER' | 'INSTRUCTOR' | 'MENTOR' | string
   status: string // ACTIVE | INACTIVE | BLOCKED
   lastLoginAt: string | null
+  cohortIds: string[] | null
 }
 interface RawOpsPage {
   content: RawOpsUser[]
@@ -53,7 +54,12 @@ function toOpsAccount(u: RawOpsUser, selfId: string | null): OpsAccount {
     name: u.name,
     email: u.email ?? '-',
     role: (u.primaryRole as 'MANAGER' | 'INSTRUCTOR' | 'MENTOR') ?? 'MANAGER',
-    scope: '담당 범위 정보 없음', // auth-service에 운영 범위 모델 없음(후속)
+    cohortIds: u.cohortIds ?? [],
+    // scope 표기는 화면에서 cohortIds를 과정/기수 라벨로 해석(여기선 임시값).
+    scope:
+      (u.cohortIds?.length ?? 0) > 0
+        ? `${u.cohortIds!.length}개 기수 담당`
+        : '담당 기수 없음',
     // BE status는 소문자(active/inactive/blocked). active만 활성, 그 외 비활성.
     status: u.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
     lastLoginAt: u.lastLoginAt ? u.lastLoginAt.slice(0, 10) : null,
@@ -141,6 +147,19 @@ export function useResetOpsPassword() {
       apiClient
         .post<OpsPasswordResetResult>(`/auth/accounts/${userId}/password/reset`)
         .then((r) => r.data),
+  })
+}
+
+// 운영자 담당 기수 일괄 설정(PUT /auth/accounts/{userId}/cohorts). 성공 시 목록 무효화.
+export function useUpdateOperatorCohorts() {
+  const queryClient = useQueryClient()
+  return useMutation<string[], Error, { userId: string; cohortIds: string[] }>({
+    mutationFn: ({ userId, cohortIds }) =>
+      apiClient
+        .put<string[]>(`/auth/accounts/${userId}/cohorts`, { cohortIds })
+        .then((r) => r.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminKeys.settingsAccounts() }),
   })
 }
 

@@ -12,6 +12,7 @@ import {
   useOpsAccounts,
   useCreateOpsAccount,
   useUpdateOpsAccountStatus,
+  useUpdateOperatorCohorts,
   useResetOpsPassword,
   useHrdKeyList,
   useHrdKeySummary,
@@ -285,6 +286,10 @@ function mockAll() {
     mutate: vi.fn(),
     isPending: false,
   } as unknown as ReturnType<typeof useUpdateOpsAccountStatus>)
+  vi.mocked(useUpdateOperatorCohorts).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useUpdateOperatorCohorts>)
   vi.mocked(useResetOpsPassword).mockReturnValue({
     mutate: vi.fn(),
     mutateAsync: vi

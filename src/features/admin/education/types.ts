@@ -36,3 +36,16 @@ export interface EducationOverview {
   summary: EducationSummary
   rows: EducationModuleRow[]
 }
+
+// 설명 탭 — HRD-Net 과정 상세(learning-service /detail).
+export interface CourseDetail {
+  title: string
+  trainingType: string // 훈련과정 구분
+  ncsName: string // NCS 분류
+  institution: string // 훈련기관
+  address: string // 소재지
+  supportAmount: string // 지원 금액
+  manager: string // 담당자
+  trainingDays: string // 훈련 일수
+  trainingHours: string // 훈련 시간
+}

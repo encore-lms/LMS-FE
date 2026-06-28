@@ -1,43 +1,105 @@
-import { AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, FolderOpen, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { useEducationOverview } from './api'
+import { useCourseConfig, useCourseList } from '../api/settings'
+import { useCourseDetail, useEducationOverview } from './api'
 import type { EducationModuleRow } from './types'
 
-// 과정·기수·교과목 통합 관리 (/admin/education) — 운영(MANAGER/ADMIN) 신규.
-// Figma 1543:11011. 단위기간·주차 기반 교과목/모듈을 기수 하위로 묶어 관리한다.
-// 교과목 추가·주차 자동 생성·교과목 수정 흐름은 별도 시안 미설계 → 토스트 안내 + TODO.
-export default function EducationPage() {
-  usePageHeader('과정·기수·교과목', '단위기간·주차 기반 교과목/모듈 통합 관리')
+type TabKey = 'description' | 'modules'
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'description', label: '설명' },
+  { key: 'modules', label: '교과목/모듈' },
+]
+
+// 설명 탭 — HRD-Net 과정 상세 카드(이전 LMS CohortDetailsCard 재현).
+function DescriptionPane({
+  courseId,
+  cohortId,
+}: {
+  courseId: string | null
+  cohortId: string | null
+}) {
+  const { data, isPending, isError, refetch } = useCourseDetail(
+    courseId,
+    cohortId,
+  )
+
+  if (isPending) {
+    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
+  }
+  if (isError || !data) {
+    return (
+      <Empty
+        icon={<AlertTriangle className="h-6 w-6" />}
+        title="과정 설명을 불러오지 못했어요"
+        description="HRD 훈련과정ID가 없는 기수이거나 HRD-Net 연결을 확인해 주세요."
+        action={<Button onClick={() => refetch()}>다시 시도</Button>}
+      />
+    )
+  }
+
+  const rows: { label: string; value: string }[] = [
+    { label: '훈련과정 구분', value: data.trainingType },
+    { label: 'NCS 분류', value: data.ncsName },
+    { label: '훈련기관', value: data.institution },
+    { label: '소재지', value: data.address },
+    { label: '지원 금액', value: data.supportAmount },
+    { label: '담당자', value: data.manager },
+    {
+      label: '훈련기간',
+      value: `~ (총 ${data.trainingDays}일 / ${data.trainingHours}시간)`,
+    },
+  ]
+
+  return (
+    <div className="border-border bg-surface rounded-xl border p-6">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-fg text-lg font-bold">{data.title}</h3>
+        <span className="text-info flex items-center gap-1 text-xs font-medium">
+          <Lock className="h-3 w-3" /> HRD-Net 원본
+        </span>
+      </div>
+      <dl className="mt-5 flex flex-col gap-3">
+        {rows.map((r) => (
+          <div key={r.label} className="flex gap-4 text-sm">
+            <dt className="text-fg-muted w-24 shrink-0 font-medium">
+              {r.label}
+            </dt>
+            <dd className="text-fg">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
+
+// 교과목/모듈 탭 — 기존 통합 관리(mock). 별도 BE 계약 확정 후 확장.
+function ModulesPane() {
   const { data, isPending, isError, refetch } = useEducationOverview()
   const toast = useToast()
 
   if (isPending) {
-    return (
-      <div className="text-fg-muted p-8">
-        과정·기수·교과목 정보를 불러오는 중…
-      </div>
-    )
+    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
   }
   if (isError || !data) {
     return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="과정·기수·교과목 정보를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
+      <Empty
+        icon={<AlertTriangle className="h-6 w-6" />}
+        title="교과목/모듈 정보를 불러오지 못했어요"
+        description="잠시 후 다시 시도해 주세요."
+        action={<Button onClick={() => refetch()}>다시 시도</Button>}
+      />
     )
   }
 
   const { summary, rows } = data
-
   const columns: Column<EducationModuleRow>[] = [
     {
       key: 'cohort',
@@ -77,7 +139,6 @@ export default function EducationPage() {
       cell: (r) => (
         <button
           type="button"
-          // TODO: 교과목 수정 모달(P0_22 BE 계약 확정 후)
           onClick={() =>
             toast.info(`${r.moduleName} 수정 화면은 준비 중입니다.`)
           }
@@ -90,20 +151,8 @@ export default function EducationPage() {
   ]
 
   return (
-    <div className="p-8">
-      {/* 본문 인트로 — 통합 관리 취지 */}
-      <div>
-        <h2 className="text-fg text-xl font-bold">
-          과정·기수·교과목 통합 관리
-        </h2>
-        <p className="text-fg-muted mt-1.5 text-[13px]">
-          이전 LMS에는 교과목 엔티티가 없으므로 신규 LMS에서는 단위기간과 주차를
-          바탕으로 교과목/모듈을 확장합니다.
-        </p>
-      </div>
-
-      {/* KPI 4종 — 과정 · 기수 · 교과목/모듈 · 주차 기준 */}
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="과정"
           value={summary.courses}
@@ -125,8 +174,6 @@ export default function EducationPage() {
           hint="기록실/퀴즈 연결"
         />
       </div>
-
-      {/* 모듈 표 */}
       <div className="mt-6">
         <DataTable
           columns={columns}
@@ -134,43 +181,95 @@ export default function EducationPage() {
           rowKey={(r) => r.id}
           empty="등록된 교과목/모듈이 없어요"
         />
-        <div className="text-fg-subtle mt-3 flex items-center justify-between text-xs">
-          <span>총 {rows.length}건</span>
-          <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 font-bold">
-            1 / 1
-          </span>
-        </div>
+        <div className="text-fg-subtle mt-3 text-xs">총 {rows.length}건</div>
+      </div>
+    </>
+  )
+}
+
+// 과정·기수·교과목 통합 관리 (/admin/education). 과정/기수 선택 + 설명·교과목 탭.
+export default function EducationPage() {
+  usePageHeader('과정·기수·교과목', '과정/기수 선택 → 설명·교과목 관리')
+
+  const { data: courses } = useCourseList()
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
+  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const { data: courseConfig } = useCourseConfig(courseId)
+  const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
+  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+
+  const [tab, setTab] = useState<TabKey>('description')
+
+  return (
+    <div className="p-8">
+      {/* 과정/기수 선택 */}
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          aria-label="과정 선택"
+          value={courseId ?? ''}
+          onChange={(e) => {
+            setSelectedCourseId(e.target.value)
+            setSelectedCohortId(null)
+          }}
+          className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
+        >
+          {(courses ?? []).map((c) => (
+            <option key={c.courseId} value={c.courseId}>
+              {c.title}
+            </option>
+          ))}
+          {(courses ?? []).length === 0 && (
+            <option value="">등록 과정 없음</option>
+          )}
+        </select>
+        <select
+          aria-label="기수 선택"
+          value={cohortId ?? ''}
+          onChange={(e) => setSelectedCohortId(e.target.value)}
+          className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
+        >
+          {(courseConfig?.cohorts ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cohortNo}기
+            </option>
+          ))}
+          {(courseConfig?.cohorts ?? []).length === 0 && (
+            <option value="">기수 없음</option>
+          )}
+        </select>
       </div>
 
-      {/* 교과목 설계 반영 기준 — 안내 콜아웃 */}
-      <div className="border-success/30 bg-success-bg mt-6 rounded-xl border p-5">
-        <p className="text-success text-[17px] font-bold">
-          교과목 설계 반영 기준
-        </p>
-        <p className="text-success/90 mt-2 text-[13px] leading-relaxed">
-          이전 LMS는 Education/Cohort만 영속화하고 교과목은 별도 CRUD가
-          없었습니다. 신규 LMS에서는 교과목을 기수 하위 모듈로 두고,
-          단위기간·주차·담당 강사/멘토·퀴즈·기록실 제출 기준을 연결하는 방식이
-          적합합니다.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+      {/* 탭 */}
+      <div className="border-divider mt-5 flex gap-1 border-b">
+        {TABS.map((t) => (
           <button
+            key={t.key}
             type="button"
-            // TODO: 교과목 추가 모달(P0_22 BE 계약 확정 후)
-            onClick={() => toast.info('교과목 추가 화면은 준비 중입니다.')}
-            className="bg-brand hover:bg-brand/90 h-9 rounded-md px-4 text-[13px] font-semibold text-white transition-colors"
+            onClick={() => setTab(t.key)}
+            className={cn(
+              'px-4 py-2 text-sm font-medium',
+              tab === t.key
+                ? 'text-brand border-brand border-b-2'
+                : 'text-fg-muted hover:text-fg',
+            )}
           >
-            교과목 추가
+            {t.label}
           </button>
-          <button
-            type="button"
-            // TODO: 주차 자동 생성(단위기간 → 주차 펼침, BE 계약 확정 후)
-            onClick={() => toast.info('주차 자동 생성은 준비 중입니다.')}
-            className="bg-info-bg text-info border-border hover:bg-info-bg/70 h-9 rounded-md border px-4 text-[13px] font-semibold transition-colors"
-          >
-            주차 자동 생성
-          </button>
-        </div>
+        ))}
+      </div>
+
+      <div className="mt-6">
+        {!courseId || !cohortId ? (
+          <Empty
+            icon={<FolderOpen className="h-6 w-6" />}
+            title="조회할 과정·기수를 선택하세요"
+            description="등록된 과정이 없으면 ‘교육 과정 추가’에서 먼저 등록해 주세요."
+          />
+        ) : tab === 'description' ? (
+          <DescriptionPane courseId={courseId} cohortId={cohortId} />
+        ) : (
+          <ModulesPane />
+        )}
       </div>
     </div>
   )

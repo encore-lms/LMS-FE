@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { cn } from '@/shared/lib/cn'
 import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
 import { useStudentAttendance } from '../api/students'
@@ -17,18 +18,24 @@ const HRD_META: Record<HrdAttendanceStatus, { label: string; cls: string }> = {
   leave_missing: { label: '퇴실 누락', cls: 'text-accent-strong' },
 }
 
-// 오늘(YYYY-MM-DD).
+// 오늘(YYYY-MM-DD) — 로컬 기준.
 function today() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// 기수 기간으로 기본 조회 일자 결정 — 오늘이 기간 안이면 오늘, 종료 후면 종료일, 시작 전이면 시작일.
+// 선택 가능한 최대 일자 — 오늘. 단 기수가 이미 종료됐으면 종료일.
+function maxDate(end: string | null): string {
+  const t = today()
+  return end && end < t ? end : t
+}
+
+// 기본 조회 일자 — 개강일~max(오늘/종료일) 안으로 오늘을 clamp.
 function defaultDate(start: string | null, end: string | null): string {
   const t = today()
-  if (start && t < start) return start
-  if (end && t > end) return end
-  return t
+  const max = maxDate(end)
+  if (start && t < start) return start // 미개강 기수: 개강일(조회 데이터는 없을 수 있음)
+  return t > max ? max : t
 }
 
 // 출결 탭 — HRD-Net 일별 출결 관제. 과정/기수/날짜 선택 → 학생별 입퇴실·상태. (Figma 1457:10799)
@@ -38,7 +45,14 @@ export function AttendanceTab() {
   const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
-  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  // 기본 기수 = 오늘이 기간에 포함된 운영 기수(없으면 첫 기수). 시작일 DESC라 [0]은 최신(미개강일 수 있음).
+  const defaultCohortId = useMemo(() => {
+    const cohorts = courseConfig?.cohorts ?? []
+    const t = today()
+    const operating = cohorts.find((c) => c.startDate <= t && t <= c.endDate)
+    return operating?.id ?? cohorts[0]?.id ?? null
+  }, [courseConfig?.cohorts])
+  const cohortId = selectedCohortId ?? defaultCohortId
 
   const selectedCohort = courseConfig?.cohorts?.find((c) => c.id === cohortId)
   // 기수 기간 기준 기본 일자(기수 바뀌면 자동 갱신).
@@ -150,14 +164,13 @@ export function AttendanceTab() {
           <option value="">기수 없음</option>
         )}
       </select>
-      <input
-        type="date"
-        aria-label="조회 일자 선택"
+      <DateTimePicker
+        mode="date"
         value={date}
+        onChange={(v) => v && setSelectedDate(v)}
+        ariaLabel="조회 일자 선택"
         min={selectedCohort?.startDate ?? undefined}
-        max={selectedCohort?.endDate ?? undefined}
-        onChange={(e) => setSelectedDate(e.target.value)}
-        className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+        max={maxDate(selectedCohort?.endDate ?? null)}
       />
     </div>
   )

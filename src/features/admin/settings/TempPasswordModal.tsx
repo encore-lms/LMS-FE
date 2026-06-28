@@ -4,16 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import type { OpsAccount } from '@/shared/types'
-
-// 임시 비밀번호 생성 (mock) — 혼동되는 문자(O/0/I/l/1)는 제외.
-const PW_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
-function genTempPassword(): string {
-  let s = ''
-  for (let i = 0; i < 12; i += 1) {
-    s += PW_CHARS[Math.floor(Math.random() * PW_CHARS.length)]
-  }
-  return s
-}
+import { useResetOpsPassword } from '../api/settings'
 
 interface TempPasswordModalProps {
   /** non-null이면 해당 계정 기준으로 모달이 열린다. */
@@ -21,22 +12,45 @@ interface TempPasswordModalProps {
   onClose: () => void
 }
 
-// 비밀번호 초기화 모달 — 임시 비밀번호를 발급한다.
-// '새로 발급'을 누를 때마다 비밀번호가 새로 생성되고 직전 값은 무효가 된다(1회 표시).
+// 비밀번호 초기화 모달 — 서버(POST /auth/accounts/{userId}/password/reset)에서 임시 비밀번호를 발급한다.
+// '새로 발급'을 누를 때마다 서버 비밀번호가 재설정되고 직전 값은 즉시 무효가 된다(1회 표시).
 export function TempPasswordModal({
   account,
   onClose,
 }: TempPasswordModalProps) {
   const toast = useToast()
   const [pw, setPw] = useState('')
+  const resetPw = useResetOpsPassword()
 
-  // 계정이 바뀌어 모달이 열릴 때마다 새 임시 비밀번호를 생성.
+  // 계정이 바뀌어 모달이 열릴 때마다 서버에서 임시 비밀번호를 발급.
   useEffect(() => {
-    if (!account) return
-    setPw(genTempPassword())
+    if (!account) {
+      setPw('')
+      return
+    }
+    let cancelled = false
+    setPw('')
+    resetPw
+      .mutateAsync(account.id)
+      .then((r) => {
+        if (!cancelled) setPw(r.temporaryPassword)
+      })
+      .catch(() => {
+        if (!cancelled) toast.danger('임시 비밀번호 발급에 실패했어요')
+      })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account])
 
-  const reissue = () => setPw(genTempPassword())
+  const reissue = () => {
+    if (!account) return
+    resetPw
+      .mutateAsync(account.id)
+      .then((r) => setPw(r.temporaryPassword))
+      .catch(() => toast.danger('임시 비밀번호 발급에 실패했어요'))
+  }
 
   const copy = async () => {
     try {
@@ -73,7 +87,7 @@ export function TempPasswordModal({
         <p className="text-fg-subtle text-xs font-medium">임시 비밀번호</p>
         <div className="mt-2 flex items-center gap-2">
           <code className="bg-surface-muted text-fg flex-1 rounded-lg px-3 py-2.5 font-mono text-lg tracking-wider select-all">
-            {pw}
+            {pw || (resetPw.isPending ? '발급 중…' : '—')}
           </code>
           <button
             type="button"

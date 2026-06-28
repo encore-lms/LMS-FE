@@ -17,7 +17,12 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import type { OpsAccount, OpsAccountsSummary, OpsRole } from '@/shared/types'
-import { useOpsAccounts, useSettingsHub } from '../api/settings'
+import {
+  useCreateOpsAccount,
+  useOpsAccounts,
+  useSettingsHub,
+  useUpdateOpsAccountStatus,
+} from '../api/settings'
 import {
   AccountCreateModal,
   type AccountCreateValues,
@@ -57,6 +62,16 @@ const STATUS_TONE: Record<OpsAccount['status'], BadgeTone> = {
   inactive: 'neutral',
 }
 
+// 생성 시 초기 비밀번호(BE 필수, 8~72자). 혼동 문자 제외 + 특수문자 1개 포함.
+const PW_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+function genInitialPassword(): string {
+  let s = ''
+  for (let i = 0; i < 11; i += 1) {
+    s += PW_CHARS[Math.floor(Math.random() * PW_CHARS.length)]
+  }
+  return s + '!'
+}
+
 // 운영 계정 관리 (/admin/settings/accounts) — 매니저·강사·멘토 계정/권한 관제. (Figma 1284:8597)
 // 수정·담당 범위·비번 초기화·비활성화는 운영 액션 모달 v2(1306:8221)로 확인 후 실행.
 export default function AccountsPage() {
@@ -64,6 +79,8 @@ export default function AccountsPage() {
   // 설정 변경 감사 로그(설정 탭 하단) — 설정 허브에서 이전된 '최근 감사 로그' 섹션용.
   const { data: hub } = useSettingsHub()
   const toast = useToast()
+  const createAccount = useCreateOpsAccount()
+  const updateStatus = useUpdateOpsAccountStatus()
   const navigate = useNavigate()
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -84,7 +101,8 @@ export default function AccountsPage() {
   const [pwTarget, setPwTarget] = useState<OpsAccount | null>(null)
   // 새 계정 추가 모달 개폐 + 추가된 계정(낙관, 새로고침 리셋). 표 상단에 노출.
   const [createOpen, setCreateOpen] = useState(false)
-  const [addedAccounts, setAddedAccounts] = useState<OpsAccount[]>([])
+  // 생성은 실 BE 갱신(invalidate)으로 반영 — 낙관 추가 목록은 비움.
+  const [addedAccounts] = useState<OpsAccount[]>([])
   // 사용자 정보 상세 모달 대상 — 표 행 클릭 시 열린다(수정은 별도 '수정' 버튼).
   const [detailTarget, setDetailTarget] = useState<OpsAccount | null>(null)
   // 수정 모달 대상 + 역할 변경 낙관 반영(상태는 statusOverride 공유).
@@ -198,9 +216,15 @@ export default function AccountsPage() {
   const onConfirm = (memo: string) => {
     const target = modal?.deactivate
     if (target) {
-      // 비활성 상태 전이 — 목록 배지·상태 필터·KPI 즉시 반영(낙관).
+      // 비활성 상태 전이 — 즉시 낙관 반영 후 실 BE(PATCH status) 호출.
       setStatusOverride((p) => ({ ...p, [target.id]: 'inactive' }))
-      toast.success(`${target.name} · 비활성화 — 감사 로그 기록`)
+      updateStatus.mutate(
+        { userId: target.id, status: 'INACTIVE', reason: memo || undefined },
+        {
+          onSuccess: () => toast.success(`${target.name} · 비활성화 완료`),
+          onError: () => toast.danger(`${target.name} · 비활성화에 실패했어요`),
+        },
+      )
     } else {
       toast.success('변경 저장 — 감사 로그 기록')
     }
@@ -220,22 +244,27 @@ export default function AccountsPage() {
     setScopeTarget(null)
   }
 
-  // 새 계정 추가 — 목록 상단에 낙관적 추가(상태=초대 전). KPI는 derivedSummary가 반영.
+  // 새 계정 추가 — 실 BE(POST /auth/accounts). BE가 비밀번호를 요구하므로 임시 비밀번호를 생성해 함께 전송.
   const onCreate = (values: AccountCreateValues) => {
-    const acc: OpsAccount = {
-      id: `new-${Date.now()}`,
-      name: values.name,
-      email: values.email,
-      role: values.role,
-      scope: '담당 범위 없음',
-      scopeWarning:
-        values.role === 'INSTRUCTOR' ? '강사는 최소 1개 이상 권장' : undefined,
-      status: 'invited',
-      lastLoginAt: null,
-      isSelf: false,
-    }
-    setAddedAccounts((p) => [acc, ...p])
-    toast.success(`${acc.name} · 계정 초대 발송 — 감사 로그에 기록됨`)
+    const tempPw = genInitialPassword()
+    createAccount.mutate(
+      {
+        name: values.name,
+        email: values.email,
+        role: values.role,
+        password: tempPw,
+      },
+      {
+        onSuccess: () =>
+          toast.success(
+            `${values.name} 계정 생성 — 임시 비밀번호 ${tempPw} (1회 안내)`,
+          ),
+        onError: () =>
+          toast.danger(
+            `${values.name} 계정 생성에 실패했어요 (이메일 중복 등)`,
+          ),
+      },
+    )
     setCreateOpen(false)
   }
 

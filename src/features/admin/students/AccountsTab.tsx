@@ -31,7 +31,6 @@ function accountBadge(
 
 // 계정 탭 — HRD 동기화 + 계정 관제 테이블 + 학생 계정 상세 모달. (Figma 1457:10648)
 export function AccountsTab() {
-  const { data, isPending, isError, refetch } = useStudentAccounts()
   const toast = useToast()
   const [status, setStatus] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
@@ -50,6 +49,8 @@ export function AccountsTab() {
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  // 선택 기수의 배정 학생만 조회 — 기수 변경 시 목록 자동 갱신.
+  const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
   const syncStudents = useSyncStudents()
   const resetPw = useResetStudentPassword()
   const [syncResult, setSyncResult] = useState<{
@@ -261,7 +262,7 @@ export function AccountsTab() {
             >
               {(courses ?? []).map((c) => (
                 <option key={c.courseId} value={c.courseId}>
-                  과정 · {c.title}
+                  {c.title}
                 </option>
               ))}
               {(courses ?? []).length === 0 && (
@@ -276,7 +277,7 @@ export function AccountsTab() {
             >
               {(courseConfig?.cohorts ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
-                  기수 · {c.cohortNo}기
+                  {c.cohortNo}기
                 </option>
               ))}
               {(courseConfig?.cohorts ?? []).length === 0 && (

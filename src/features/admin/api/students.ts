@@ -149,12 +149,22 @@ export function useStudentAttendance(
   })
 }
 
-export function useStudentAttendanceForms() {
+// 관리자 출결 폼 조회(조회 전용) — learning-service. 과정/기수 둘 다 있어야 조회.
+export function useStudentAttendanceForms(
+  courseId?: string | null,
+  cohortId?: string | null,
+) {
   return useQuery({
-    queryKey: adminKeys.studentAttendanceForms(),
+    queryKey: adminKeys.studentAttendanceForms({
+      courseId: courseId ?? undefined,
+      cohortId: cohortId ?? undefined,
+    }),
+    enabled: !!courseId && !!cohortId,
     queryFn: () =>
       apiClient
-        .get<AttendanceFormData>('/admin/students/attendance-forms')
+        .get<AttendanceFormData>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/attendance-forms`,
+        )
         .then((r) => r.data),
   })
 }

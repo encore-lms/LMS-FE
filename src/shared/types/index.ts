@@ -81,7 +81,6 @@ export type {
   AttendanceSummary,
   StudentAttendanceData,
   AttendanceFormType,
-  AttendanceFormReviewStatus,
   AttendanceFormRow,
   AttendanceFormSummary,
   AttendanceFormData,

@@ -50,8 +50,8 @@ export const adminKeys = {
     cohortId?: string
     date?: string
   }) => [...adminKeys.all, 'students', 'attendance', filter ?? {}] as const,
-  studentAttendanceForms: () =>
-    [...adminKeys.all, 'students', 'attendance-forms'] as const,
+  studentAttendanceForms: (filter?: { courseId?: string; cohortId?: string }) =>
+    [...adminKeys.all, 'students', 'attendance-forms', filter ?? {}] as const,
   settingsHub: () => [...adminKeys.all, 'settings', 'hub'] as const,
   settingsAccounts: () => [...adminKeys.all, 'settings', 'accounts'] as const,
   // base prefix — 무효화는 이 키로(하위 list/summary/history가 모두 prefix 매칭됨).

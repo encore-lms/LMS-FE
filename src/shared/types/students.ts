@@ -65,24 +65,17 @@ export interface StudentAttendanceData {
   rows: StudentAttendanceRow[]
 }
 
-// ── 출결 폼 탭 ──
+// ── 출결 폼 탭 (조회 전용 — learning-service) ──
 export type AttendanceFormType = 'late' | 'early_leave' | 'absent' | 'outing'
-export type AttendanceFormReviewStatus =
-  | 'pending'
-  | 'approval_pending'
-  | 'confirmed'
-  | 'changes' // 보완 요청
 
 export interface AttendanceFormRow {
   id: string
-  submitter: string
-  targetDate: string // '2026-05-19' (테이블은 MM-DD 슬라이스)
+  submitter: string // 제출 수강생(현재 userId)
+  targetDate: string // '2026-05-19'
   type: AttendanceFormType
   officialLeaveUsed: boolean // 공가 사용 여부
-  evidence: string // '교통 지연 캡처'
-  status: AttendanceFormReviewStatus
-  reason: string // 신청 사유 (우측 검토 패널 상세)
-  evidenceFiles: number // 증빙 파일 수
+  reason: string // 신청 사유(세부 시간·공가 합성)
+  submittedAt: string // 제출 시각(ISO)
 }
 
 export interface AttendanceFormSummary {

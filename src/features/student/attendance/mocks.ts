@@ -239,75 +239,83 @@ const toAttachments = (names: string[] = []): AttendanceAttachment[] =>
 
 let submissionSeq = 0
 
+// 출결 폼(me — 메타/제출/증빙)은 VITE_REAL_AUTH=true면 learning-service 실연동(이 mock 미등록 → proxy).
+// overview(누적 요약·HRD 캘린더)는 아직 mock 유지.
+const realAttendanceForm = import.meta.env.VITE_REAL_AUTH === 'true'
+
 // 자동 수집 규약: features/**/mocks.ts 는 `handlers`를 내보낸다(mocks/handlers.ts가 glob으로 등록).
 export const handlers = [
   http.get('/api/student/attendance/overview', () =>
     ok<AttendanceOverview>(mockAttendanceOverview),
   ),
 
-  http.get('/api/student/attendance-forms/:cohortId', () =>
-    ok<AttendanceFormMeta>(mockAttendanceFormMeta),
-  ),
+  ...(realAttendanceForm
+    ? []
+    : [
+        http.get('/api/student/attendance-forms/:cohortId', () =>
+          ok<AttendanceFormMeta>(mockAttendanceFormMeta),
+        ),
 
-  // 출결 폼 제출 — 제출 이력(같은 대상일자 1건 덮어쓰기)과 HRD 캘린더에 실제 반영한다.
-  http.post(
-    '/api/student/attendance-forms/:cohortId/submissions',
-    async ({ request, params }) => {
-      const body = (await request.json()) as AttendanceFormPayload
-      const targetDate = mockAttendanceFormMeta.targetDate
-      const submission: AttendanceFormSubmission = {
-        id: `af-new-${submissionSeq++}`,
-        studentId: 'mock-1',
-        cohortId: String(params.cohortId),
-        targetDate,
-        submittedAt: `${targetDate}T09:00:00Z`,
-        attendanceType: body.attendanceType,
-        expectedArrivalTime: body.expectedArrivalTime ?? null,
-        expectedLeaveTime: body.expectedLeaveTime ?? null,
-        outingStartTime: body.outingStartTime ?? null,
-        outingEndTime: body.outingEndTime ?? null,
-        officialLeaveUsed: body.officialLeaveUsed,
-        officialLeaveType: body.officialLeaveType ?? null,
-        officialLeaveOtherReason: body.officialLeaveOtherReason ?? null,
-        note: body.note ?? null,
-        attachments: toAttachments(body.attachmentNames),
-      }
-      // 제출 이력: 같은 대상일자 기존 1건은 덮어쓰고 최신을 맨 앞에 둔다.
-      const prevIdx = mockAttendanceSubmissions.findIndex(
-        (s) => s.targetDate === targetDate,
-      )
-      if (prevIdx >= 0) mockAttendanceSubmissions.splice(prevIdx, 1)
-      mockAttendanceSubmissions.unshift(submission)
-      // 캘린더: 대상일자 상태를 출결 유형으로 표시(있으면 갱신, 없으면 추가).
-      const status: HrdAttendanceStatus = body.attendanceType
-      const day = mockCalendarDays.find((d) => d.date === targetDate)
-      if (day) day.status = status
-      else mockCalendarDays.push({ date: targetDate, status })
-      // 폼 메타의 최근 제출도 갱신(다음 진입 시 덮어쓰기 경고에 반영).
-      mockAttendanceFormMeta.latestSubmission = {
-        attendanceType: submission.attendanceType,
-        submittedAt: submission.submittedAt,
-      }
-      return ok<AttendanceFormSubmission>(submission)
-    },
-  ),
+        // 출결 폼 제출 — 제출 이력(같은 대상일자 1건 덮어쓰기)과 HRD 캘린더에 실제 반영한다.
+        http.post(
+          '/api/student/attendance-forms/:cohortId/submissions',
+          async ({ request, params }) => {
+            const body = (await request.json()) as AttendanceFormPayload
+            const targetDate = mockAttendanceFormMeta.targetDate
+            const submission: AttendanceFormSubmission = {
+              id: `af-new-${submissionSeq++}`,
+              studentId: 'mock-1',
+              cohortId: String(params.cohortId),
+              targetDate,
+              submittedAt: `${targetDate}T09:00:00Z`,
+              attendanceType: body.attendanceType,
+              expectedArrivalTime: body.expectedArrivalTime ?? null,
+              expectedLeaveTime: body.expectedLeaveTime ?? null,
+              outingStartTime: body.outingStartTime ?? null,
+              outingEndTime: body.outingEndTime ?? null,
+              officialLeaveUsed: body.officialLeaveUsed,
+              officialLeaveType: body.officialLeaveType ?? null,
+              officialLeaveOtherReason: body.officialLeaveOtherReason ?? null,
+              note: body.note ?? null,
+              attachments: toAttachments(body.attachmentNames),
+            }
+            // 제출 이력: 같은 대상일자 기존 1건은 덮어쓰고 최신을 맨 앞에 둔다.
+            const prevIdx = mockAttendanceSubmissions.findIndex(
+              (s) => s.targetDate === targetDate,
+            )
+            if (prevIdx >= 0) mockAttendanceSubmissions.splice(prevIdx, 1)
+            mockAttendanceSubmissions.unshift(submission)
+            // 캘린더: 대상일자 상태를 출결 유형으로 표시(있으면 갱신, 없으면 추가).
+            const status: HrdAttendanceStatus = body.attendanceType
+            const day = mockCalendarDays.find((d) => d.date === targetDate)
+            if (day) day.status = status
+            else mockCalendarDays.push({ date: targetDate, status })
+            // 폼 메타의 최근 제출도 갱신(다음 진입 시 덮어쓰기 경고에 반영).
+            mockAttendanceFormMeta.latestSubmission = {
+              attendanceType: submission.attendanceType,
+              submittedAt: submission.submittedAt,
+            }
+            return ok<AttendanceFormSubmission>(submission)
+          },
+        ),
 
-  // 증빙 첨부만 따로 수정 — 제출 이력에서 사후 증빙 추가/교체(다른 항목은 불변).
-  http.patch(
-    '/api/student/attendance-forms/:cohortId/submissions/:id/attachments',
-    async ({ request, params }) => {
-      const body = (await request.json()) as { attachmentNames: string[] }
-      const target = mockAttendanceSubmissions.find(
-        (s) => s.id === String(params.id),
-      )
-      if (!target) {
-        return HttpResponse.json(
-          { message: '제출 이력을 찾을 수 없습니다.' },
-          { status: 404 },
-        )
-      }
-      target.attachments = toAttachments(body.attachmentNames)
-      return ok<AttendanceFormSubmission>(target)
-    },
-  ),
+        // 증빙 첨부만 따로 수정 — 제출 이력에서 사후 증빙 추가/교체(다른 항목은 불변).
+        http.patch(
+          '/api/student/attendance-forms/:cohortId/submissions/:id/attachments',
+          async ({ request, params }) => {
+            const body = (await request.json()) as { attachmentNames: string[] }
+            const target = mockAttendanceSubmissions.find(
+              (s) => s.id === String(params.id),
+            )
+            if (!target) {
+              return HttpResponse.json(
+                { message: '제출 이력을 찾을 수 없습니다.' },
+                { status: 404 },
+              )
+            }
+            target.attachments = toAttachments(body.attachmentNames)
+            return ok<AttendanceFormSubmission>(target)
+          },
+        ),
+      ]),
 ]

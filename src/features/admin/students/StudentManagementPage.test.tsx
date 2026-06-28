@@ -57,7 +57,7 @@ const accounts: StudentAccountQueue = {
 
 const attendance: StudentAttendanceData = {
   cohortLabel: 'SK네트웍스 Family AI 캠프 34기',
-  month: '2026-06',
+  date: '2026-06-26',
   summary: {
     present: 92,
     late: 8,
@@ -187,14 +187,14 @@ describe('StudentManagementPage', () => {
     expect(screen.getByText(/로그인 차단 적용/)).toBeInTheDocument()
   })
 
-  it('출결 탭으로 전환하면 HRD 월별 출결 KPI와 행이 보인다', async () => {
+  it('출결 탭으로 전환하면 HRD 일별 출결 KPI와 행이 보인다', async () => {
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: '출결' }))
+    await user.click(screen.getByRole('button', { name: /^출결$/ }))
     expect(screen.getByText('출석(정상)')).toBeInTheDocument()
     expect(screen.getByText('92')).toBeInTheDocument()
-    // HRD 월별 출결 행(학생·일자) 표시
+    // HRD 일별 출결 — 학생 행 + 선택 일자(상단 라벨)
     expect(screen.getByText('김건우')).toBeInTheDocument()
-    expect(screen.getByText('2026-06-26')).toBeInTheDocument()
+    expect(screen.getByText(/2026-06-26/)).toBeInTheDocument()
   })
 })

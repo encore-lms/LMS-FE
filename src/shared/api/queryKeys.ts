@@ -48,7 +48,7 @@ export const adminKeys = {
   studentAttendance: (filter?: {
     courseId?: string
     cohortId?: string
-    month?: string
+    date?: string
   }) => [...adminKeys.all, 'students', 'attendance', filter ?? {}] as const,
   studentAttendanceForms: () =>
     [...adminKeys.all, 'students', 'attendance-forms'] as const,

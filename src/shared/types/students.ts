@@ -60,7 +60,7 @@ export interface AttendanceSummary {
 
 export interface StudentAttendanceData {
   cohortLabel: string
-  month: string // YYYY-MM
+  date: string // YYYY-MM-DD (선택 일자)
   summary: AttendanceSummary
   rows: StudentAttendanceRow[]
 }

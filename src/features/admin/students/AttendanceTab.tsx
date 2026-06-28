@@ -17,29 +17,21 @@ const HRD_META: Record<HrdAttendanceStatus, { label: string; cls: string }> = {
   leave_missing: { label: '퇴실 누락', cls: 'text-accent-strong' },
 }
 
-// 이번 달(YYYY-MM) — month select 기본값.
-function thisMonth() {
+// 오늘(YYYY-MM-DD).
+function today() {
   const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// 과정 기간 안의 월 목록(YYYY-MM) 생성 — 최대 24개.
-function monthsBetween(start: string | null, end: string | null): string[] {
-  if (!start || !end) return [thisMonth()]
-  const s = new Date(start + 'T00:00:00')
-  const e = new Date(end + 'T00:00:00')
-  const out: string[] = []
-  const cur = new Date(s.getFullYear(), s.getMonth(), 1)
-  while (cur <= e && out.length < 24) {
-    out.push(
-      `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`,
-    )
-    cur.setMonth(cur.getMonth() + 1)
-  }
-  return out.length ? out : [thisMonth()]
+// 기수 기간으로 기본 조회 일자 결정 — 오늘이 기간 안이면 오늘, 종료 후면 종료일, 시작 전이면 시작일.
+function defaultDate(start: string | null, end: string | null): string {
+  const t = today()
+  if (start && t < start) return start
+  if (end && t > end) return end
+  return t
 }
 
-// 출결 탭 — HRD-Net 월별 출결 관제. 과정/기수/월 선택 → 일자별 입퇴실·상태. (Figma 1457:10799)
+// 출결 탭 — HRD-Net 일별 출결 관제. 과정/기수/날짜 선택 → 학생별 입퇴실·상태. (Figma 1457:10799)
 export function AttendanceTab() {
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
@@ -49,21 +41,22 @@ export function AttendanceTab() {
   const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
 
   const selectedCohort = courseConfig?.cohorts?.find((c) => c.id === cohortId)
-  const monthOptions = useMemo(
+  // 기수 기간 기준 기본 일자(기수 바뀌면 자동 갱신).
+  const fallbackDate = useMemo(
     () =>
-      monthsBetween(
+      defaultDate(
         selectedCohort?.startDate ?? null,
         selectedCohort?.endDate ?? null,
       ),
     [selectedCohort?.startDate, selectedCohort?.endDate],
   )
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
-  const month = selectedMonth ?? monthOptions[monthOptions.length - 1]
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const date = selectedDate ?? fallbackDate
 
   const { data, isPending, isError, refetch } = useStudentAttendance(
     courseId,
     cohortId,
-    month,
+    date,
   )
 
   const [onlyIssues, setOnlyIssues] = useState(false)
@@ -88,12 +81,6 @@ export function AttendanceTab() {
       header: '수강생',
       className: 'w-32',
       cell: (r) => <span className="text-fg font-medium">{r.studentName}</span>,
-    },
-    {
-      key: 'date',
-      header: '일자',
-      className: 'w-28',
-      cell: (r) => <span className="text-fg-muted tabular-nums">{r.date}</span>,
     },
     {
       key: 'in',
@@ -132,7 +119,7 @@ export function AttendanceTab() {
         onChange={(e) => {
           setSelectedCourseId(e.target.value)
           setSelectedCohortId(null)
-          setSelectedMonth(null)
+          setSelectedDate(null)
         }}
         className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
       >
@@ -150,7 +137,7 @@ export function AttendanceTab() {
         value={cohortId ?? ''}
         onChange={(e) => {
           setSelectedCohortId(e.target.value)
-          setSelectedMonth(null)
+          setSelectedDate(null)
         }}
         className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
       >
@@ -163,18 +150,15 @@ export function AttendanceTab() {
           <option value="">기수 없음</option>
         )}
       </select>
-      <select
-        aria-label="조회 월 선택"
-        value={month}
-        onChange={(e) => setSelectedMonth(e.target.value)}
+      <input
+        type="date"
+        aria-label="조회 일자 선택"
+        value={date}
+        min={selectedCohort?.startDate ?? undefined}
+        max={selectedCohort?.endDate ?? undefined}
+        onChange={(e) => setSelectedDate(e.target.value)}
         className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-      >
-        {monthOptions.map((m) => (
-          <option key={m} value={m}>
-            {m}
-          </option>
-        ))}
-      </select>
+      />
     </div>
   )
 
@@ -234,7 +218,7 @@ export function AttendanceTab() {
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-1">
               <span className="bg-accent-bg text-accent-strong rounded-md px-3 py-1.5 text-sm font-medium">
-                {data.cohortLabel} · {data.month}
+                {data.cohortLabel} · {data.date}
               </span>
               <button
                 type="button"

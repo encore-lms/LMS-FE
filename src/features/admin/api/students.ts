@@ -126,24 +126,24 @@ export function useResetStudentPassword() {
   })
 }
 
-// 관리자 출결 조회 — learning-service HRD 월별 출결(과정/기수/월). 셋 다 있어야 조회.
+// 관리자 출결 조회 — learning-service HRD 일별 출결(과정/기수/일자). 셋 다 있어야 조회.
 export function useStudentAttendance(
   courseId?: string | null,
   cohortId?: string | null,
-  month?: string,
+  date?: string,
 ) {
   return useQuery({
     queryKey: adminKeys.studentAttendance({
       courseId: courseId ?? undefined,
       cohortId: cohortId ?? undefined,
-      month,
+      date,
     }),
-    enabled: !!courseId && !!cohortId,
+    enabled: !!courseId && !!cohortId && !!date,
     queryFn: () =>
       apiClient
         .get<StudentAttendanceData>(
           `/admin/courses/${courseId}/cohorts/${cohortId}/attendance`,
-          month ? { month } : {},
+          date ? { date } : {},
         )
         .then((r) => r.data),
   })

@@ -428,13 +428,24 @@ type TabKey = (typeof TABS)[number]['key']
  * 상위 탭: 이력서 현황(작성 현황 로스터) · 피드백 관리(피드백 목록).
  * 공통: 프로그램 선택 + 기수 탭. 데이터는 ./mocks(목업), BE 연동은 후속.
  */
-export default function ResumePage() {
+// embedded=true면 과정·기수·교과목 탭 안에 임베드된 상태(자체 헤더·패딩 생략).
+export default function ResumePage({
+  embedded = false,
+}: {
+  embedded?: boolean
+}) {
   const [tab, setTab] = useState<TabKey>('roster')
   const [cohort, setCohort] = useState(ACTIVE_COHORT)
-  usePageHeader('이력서 관리', '수강생 이력서 현황과 피드백을 관리합니다')
+  usePageHeader(
+    '이력서 관리',
+    '수강생 이력서 현황과 피드백을 관리합니다',
+    !embedded,
+  )
 
   return (
-    <div className="flex flex-col gap-5 p-8">
+    <div
+      className={embedded ? 'flex flex-col gap-5' : 'flex flex-col gap-5 p-8'}
+    >
       {/* 상위 탭 */}
       <div className="border-divider flex items-center gap-6 border-b">
         {TABS.map((t) => {

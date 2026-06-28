@@ -17,6 +17,12 @@ vi.mock('../resume/ResumePage', () => ({
 vi.mock('../records/RecordReviewQueuePage', () => ({
   default: () => <div>기록실 임베드</div>,
 }))
+vi.mock('@/features/instructor/quizzes/QuizListPage', () => ({
+  default: () => <div>퀴즈 임베드</div>,
+}))
+vi.mock('./MaterialsPane', () => ({
+  MaterialsPane: () => <div>자료실 패널</div>,
+}))
 
 // 과정·기수·교과목 — 6탭(자료실/과제/퀴즈/이력서/기록실/설정) + 흡수.
 

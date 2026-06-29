@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
-import { useStudentQuizzes } from '../api/quiz'
-import { useQuizQuestions } from '../api/quiz'
+import type { AnswerPayload } from '@/shared/types'
+import { useStudentQuizzes, useQuizQuestions, useSubmitQuiz } from '../api/quiz'
 import { QuestionNavRail } from './take/QuestionNavRail'
 import { QuestionCard } from './take/QuestionCard'
 import { ExamIntro, ExamRelockOverlay } from './take/ExamOverlays'
@@ -42,6 +43,8 @@ export default function QuizTakePage() {
     isError,
     refetch,
   } = useQuizQuestions(quizId)
+  const submitQuiz = useSubmitQuiz(quizId)
+  const toast = useToast()
 
   const quiz = list?.find((it) => it.quiz.id === quizId)?.quiz
   const [idx, setIdx] = useState(0)
@@ -105,9 +108,42 @@ export default function QuizTakePage() {
     navigate(`/student/quizzes/${quizId}/result`)
   }
 
+  // 답안(Record<string,string>) → 유형별 AnswerPayload. 빈칸은 줄바꿈으로 칸 구분.
+  const buildResponses = (): {
+    questionId: string
+    payload: AnswerPayload
+  }[] =>
+    (questions ?? []).map((q) => {
+      const v = answers[q.id] ?? ''
+      let payload: AnswerPayload
+      if (q.type === 'multiple_choice')
+        payload = { kind: 'multiple_choice', selectedChoiceId: v }
+      else if (q.type === 'short_answer')
+        payload = { kind: 'short_answer', text: v }
+      else
+        payload = {
+          kind: 'fill_blank',
+          answers: v.split('\n').map((s) => s.trim()),
+        }
+      return { questionId: q.id, payload }
+    })
+
+  // 실제 제출 — 자동채점 후 결과로. 실패 시 응시 화면 유지.
+  const finalize = () => {
+    if (submitQuiz.isPending) return
+    submitQuiz.mutate(
+      { responses: buildResponses() },
+      {
+        onSuccess: () => leaveToResult(),
+        onError: () =>
+          toast.danger('제출에 실패했어요. 잠시 후 다시 시도해 주세요'),
+      },
+    )
+  }
+
   const submit = () => {
     if (!allAnswered) return
-    leaveToResult()
+    finalize()
   }
 
   const isLast = total > 0 && idx === total - 1
@@ -124,7 +160,7 @@ export default function QuizTakePage() {
 
   // 시간 초과 시 자동 제출(미답 포함). 응시 중일 때만 1회 동작.
   useEffect(() => {
-    if (remain === 0 && lock.phase === 'active') leaveToResult()
+    if (remain === 0 && lock.phase === 'active') finalize()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remain, lock.phase])
 

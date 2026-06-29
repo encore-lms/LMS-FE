@@ -108,6 +108,9 @@ export interface MaterialItem {
   isExternalLink?: boolean // LINK면 '다운로드' 대신 '링크 열기'
   fileUrl?: string // 파일 URL(다운로드/미리보기) 또는 외부 링크 주소. 없으면 버튼 비활성
   ownedByMe?: boolean // 본인이 올린 학생 공유 자료(수정·삭제 가능). 공식 자료는 false/미설정.
+  body?: string | null // 게시글 본문(자료 설명)
+  hasFile?: boolean // 업로드 파일 첨부 — 다운로드 엔드포인트로 받음
+  fileName?: string | null // 첨부 파일 원본명
 }
 
 /** 자료 공유 입력 — 학생이 올리는 '학생 공유' 자료(POST /student/course/materials) */

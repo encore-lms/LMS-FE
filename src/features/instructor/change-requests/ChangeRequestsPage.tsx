@@ -9,8 +9,12 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { InstructorChangeRequestRow } from '@/shared/types'
-import { useChangeRequests } from '../api/changeRequests'
+import {
+  useChangeRequests,
+  useResolveChangeRequest,
+} from '../api/changeRequests'
 import { ChangeDiffCard } from './ChangeDiffCard'
+import { ReasonModal } from './ReasonModal'
 import {
   CHANGE_REQUEST_STATUS_META,
   TARGET_TYPE_META,
@@ -25,9 +29,13 @@ export default function ChangeRequestsPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useChangeRequests()
+  const resolveMutation = useResolveChangeRequest()
   const [filter, setFilter] = useState<TypeFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  // 승인/반려 처리분 — 백엔드 연동 전 로컬 마킹(mock).
+  // 반려 사유 입력 대상 — 모달 열림 상태.
+  const [rejectTarget, setRejectTarget] =
+    useState<InstructorChangeRequestRow | null>(null)
+  // 승인/반려 처리분 — 서버 무효화와 별개로 즉시 큐에서 제거(낙관적 업데이트).
   const [resolved, setResolved] = useState<Record<string, '승인' | '반려'>>({})
   usePageHeader(
     '변경 제안 통합 검토',
@@ -61,13 +69,38 @@ export default function ChangeRequestsPage() {
     )
   }
 
-  const resolve = (
+  // 승인/반려 공통 종결 — 낙관적으로 큐에서 제거 후 mutation 호출.
+  const resolve = async (
     row: InstructorChangeRequestRow,
     verdict: '승인' | '반려',
+    reason?: string,
   ) => {
     setResolved((prev) => ({ ...prev, [row.id]: verdict }))
     setSelectedId(null)
-    toast.success(`${row.target} 변경 제안 ${verdict} (mock)`)
+    try {
+      await resolveMutation.mutateAsync({
+        id: row.id,
+        action: verdict === '승인' ? 'approved' : 'rejected',
+        reason,
+      })
+      toast.success(`${row.target} 변경 제안 ${verdict}`)
+    } catch {
+      // 실패 시 낙관적 제거 롤백.
+      setResolved((prev) => {
+        const next = { ...prev }
+        delete next[row.id]
+        return next
+      })
+      toast.danger(`${row.target} 변경 제안 처리에 실패했어요`)
+    }
+  }
+
+  const approve = (row: InstructorChangeRequestRow) => resolve(row, '승인')
+  const confirmReject = (reason: string) => {
+    if (!rejectTarget) return
+    const target = rejectTarget
+    setRejectTarget(null)
+    resolve(target, '반려', reason)
   }
 
   const columns: Column<InstructorChangeRequestRow>[] = [
@@ -206,19 +239,32 @@ export default function ChangeRequestsPage() {
             <Button
               variant="secondary"
               className="h-10 text-sm"
-              onClick={() => resolve(selected, '반려')}
+              disabled={resolveMutation.isPending}
+              onClick={() => setRejectTarget(selected)}
             >
               반려
             </Button>
             <Button
               className="h-10 text-sm"
-              onClick={() => resolve(selected, '승인')}
+              disabled={resolveMutation.isPending}
+              onClick={() => approve(selected)}
             >
               승인
             </Button>
           </div>
         </section>
       )}
+
+      <ReasonModal
+        open={rejectTarget !== null}
+        title="변경 제안을 반려할까요?"
+        description="반려 사유는 요청자에게 전달되며, 사유 작성은 필수입니다."
+        confirmLabel="반려"
+        placeholder="예: 변경 근거가 부족합니다. 측정 방법을 함께 첨부해 주세요."
+        pending={resolveMutation.isPending}
+        onClose={() => setRejectTarget(null)}
+        onConfirm={confirmReject}
+      />
     </div>
   )
 }

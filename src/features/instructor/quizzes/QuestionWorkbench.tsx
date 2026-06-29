@@ -33,6 +33,17 @@ export interface QuestionWorkbenchProps {
   saveToastMessage: string
   /** 우측 메타 카드 항목 — 화면별 구성(응답·평균 vs 사용·파생) */
   metaItems: (draft: InstructorQuestion) => string[]
+  // ── 액션 콜백(선택) — 미지정 시 기존 mock 토스트 동작 유지(§7 퀴즈는 미지정). ──
+  /** 새 문항 추가 — mock 변형 후 목록 갱신 */
+  onAddQuestion?: () => void
+  /** 현재 편집 중 draft 저장 — 신규/수정 모두 draft로 전달 */
+  onSaveQuestion?: (draft: InstructorQuestion) => void
+  /** 문항 삭제 */
+  onDeleteQuestion?: (id: string) => void
+  /** 문항 복제 */
+  onCopyQuestion?: (id: string) => void
+  /** 미리보기 진입 */
+  onPreview?: () => void
 }
 
 // 문항 편집 워크벤치 — §7 문제 관리(1341:9831)와 §10 템플릿 문항(3547:2247) 공용 3-column.
@@ -54,6 +65,11 @@ export function QuestionWorkbench({
   manualHint,
   saveToastMessage,
   metaItems,
+  onAddQuestion,
+  onSaveQuestion,
+  onDeleteQuestion,
+  onCopyQuestion,
+  onPreview,
 }: QuestionWorkbenchProps) {
   const toast = useToast()
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -70,6 +86,30 @@ export function QuestionWorkbench({
   }, [active])
 
   const pointsOk = totalPoints === targetPoints
+
+  // 콜백 미지정 시 = 기존 mock 토스트(§7 퀴즈는 실 BE라 콜백을 넘기지 않음).
+  const handleAdd = () =>
+    onAddQuestion
+      ? onAddQuestion()
+      : toast.success(`새 ${itemNoun} 추가 (mock)`)
+  const handleCopy = () =>
+    active
+      ? onCopyQuestion
+        ? onCopyQuestion(active.id)
+        : toast.success(`${itemNoun} ${active.order} 복제 (mock)`)
+      : undefined
+  const handleDelete = () =>
+    active
+      ? onDeleteQuestion
+        ? onDeleteQuestion(active.id)
+        : toast.success(`${itemNoun} ${active.order} 삭제 (mock)`)
+      : undefined
+  const handleSave = () =>
+    draft && onSaveQuestion
+      ? onSaveQuestion(draft)
+      : toast.success(saveToastMessage)
+  const handlePreview = () =>
+    onPreview ? onPreview() : toast.info(`${previewLabel} — 후속 화면 (mock)`)
 
   return (
     <div className="p-8">
@@ -113,7 +153,7 @@ export function QuestionWorkbench({
           </button>
           <button
             type="button"
-            onClick={() => toast.info(`${previewLabel} — 후속 화면 (mock)`)}
+            onClick={handlePreview}
             className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium"
           >
             <Eye className="h-3.5 w-3.5" /> 미리보기
@@ -128,7 +168,7 @@ export function QuestionWorkbench({
             <p className="text-fg text-sm font-bold">{listTitle}</p>
             <button
               type="button"
-              onClick={() => toast.success(`새 ${itemNoun} 추가 (mock)`)}
+              onClick={handleAdd}
               className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-0.5 rounded-md border px-2 py-1 text-xs font-medium"
             >
               <Plus className="h-3 w-3" /> 추가
@@ -180,18 +220,14 @@ export function QuestionWorkbench({
             <div className="flex gap-1.5">
               <button
                 type="button"
-                onClick={() =>
-                  toast.success(`${itemNoun} ${active?.order} 복제 (mock)`)
-                }
+                onClick={handleCopy}
                 className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium"
               >
                 <Copy className="h-3 w-3" /> 복제
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  toast.success(`${itemNoun} ${active?.order} 삭제 (mock)`)
-                }
+                onClick={handleDelete}
                 className="border-danger/40 text-danger hover:bg-danger-bg flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium"
               >
                 <Trash2 className="h-3 w-3" /> 삭제
@@ -393,15 +429,11 @@ export function QuestionWorkbench({
             type="button"
             variant="secondary"
             className="h-10 text-sm"
-            onClick={() => toast.info(`${previewLabel} — 후속 화면 (mock)`)}
+            onClick={handlePreview}
           >
             <Eye className="h-4 w-4" /> {previewLabel}
           </Button>
-          <Button
-            type="button"
-            className="h-10 text-sm"
-            onClick={() => toast.success(saveToastMessage)}
-          >
+          <Button type="button" className="h-10 text-sm" onClick={handleSave}>
             저장
           </Button>
         </div>

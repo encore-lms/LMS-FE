@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   Endorsement,
@@ -39,5 +39,61 @@ export function useEndorsement(endorsementId: string) {
         .get<Endorsement>(`/instructor/endorsements/${endorsementId}`)
         .then((r) => r.data),
     enabled: Boolean(endorsementId),
+  })
+}
+
+// ── 작성/수정/삭제 (mutations) — mock 백엔드. 실 BE 계약 확정 시 페어가 shared PR로 교체. ──
+export interface SubmitEndorsementInput {
+  studentId: string
+  comment: string
+}
+// 신규 추천서 제출 — 작성 대기에서 빠지고 최근/전체 보기 큐에 추가된다.
+export function useSubmitEndorsement() {
+  const qc = useQueryClient()
+  return useMutation<Endorsement, Error, SubmitEndorsementInput>({
+    mutationFn: (input) =>
+      apiClient
+        .post<Endorsement>('/instructor/endorsements', input)
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: instructorKeys.endorsements() })
+      qc.invalidateQueries({ queryKey: instructorKeys.endorsementHistory() })
+    },
+  })
+}
+
+export interface UpdateEndorsementInput {
+  comment: string
+}
+// 24h 수정 창 안에서 기존 추천서 코멘트 수정.
+export function useUpdateEndorsement(endorsementId: string) {
+  const qc = useQueryClient()
+  return useMutation<Endorsement, Error, UpdateEndorsementInput>({
+    mutationFn: (input) =>
+      apiClient
+        .patch<Endorsement>(`/instructor/endorsements/${endorsementId}`, input)
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: instructorKeys.endorsementDetail(endorsementId),
+      })
+      qc.invalidateQueries({ queryKey: instructorKeys.endorsements() })
+      qc.invalidateQueries({ queryKey: instructorKeys.endorsementHistory() })
+    },
+  })
+}
+
+// 추천서 삭제.
+export function useDeleteEndorsement() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (endorsementId) =>
+      apiClient
+        .delete<void>(`/instructor/endorsements/${endorsementId}`)
+        .then(() => undefined),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: instructorKeys.endorsements() })
+      qc.invalidateQueries({ queryKey: instructorKeys.endorsementHistory() })
+    },
   })
 }

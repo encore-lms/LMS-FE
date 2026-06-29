@@ -10,6 +10,10 @@ import {
   useQuizTemplates,
   useQuizTemplateDetail,
   useTemplateQuestions,
+  useSaveQuizTemplate,
+  useDeleteQuizTemplate,
+  useSaveTemplateQuestion,
+  useDeleteTemplateQuestion,
 } from '../api/quizTemplates'
 import type {
   QuizTemplateListData,
@@ -124,6 +128,18 @@ function mockAll() {
   vi.mocked(useTemplateQuestions).mockReturnValue(
     ok(questions) as unknown as ReturnType<typeof useTemplateQuestions>,
   )
+  // 뮤테이션 훅 기본 스텁 — onSuccess 콜백을 즉시 호출해 토스트/로컬 갱신을 검증 가능하게.
+  const mut = () =>
+    ({
+      mutate: (_vars: unknown, opts?: { onSuccess?: (d: unknown) => void }) =>
+        opts?.onSuccess?.(detail),
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      isPending: false,
+    }) as unknown as never
+  vi.mocked(useSaveQuizTemplate).mockReturnValue(mut())
+  vi.mocked(useDeleteQuizTemplate).mockReturnValue(mut())
+  vi.mocked(useSaveTemplateQuestion).mockReturnValue(mut())
+  vi.mocked(useDeleteTemplateQuestion).mockReturnValue(mut())
 }
 
 function renderAt(path: string, overrideMocks?: () => void) {

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
@@ -22,6 +23,7 @@ export default function EndorsementHistoryPage() {
   const { data, isPending, isError, refetch } = useEndorsementHistory()
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [q, setQ] = useState('')
+  const [page, setPage] = useState(1)
   usePageHeader(
     '강사 추천서 전체 보기',
     '담당 기수 누적 추천서 큐 — 기수·기간·스냅샷 반영 상태로 필터링',
@@ -37,6 +39,11 @@ export default function EndorsementHistoryPage() {
       return true
     })
   }, [items, filter, q])
+
+  // 필터·검색이 바뀌면 첫 페이지로.
+  useEffect(() => {
+    setPage(1)
+  }, [filter, q])
 
   if (isPending) {
     return <div className="text-fg-muted p-8">전체 추천서를 불러오는 중…</div>
@@ -58,12 +65,23 @@ export default function EndorsementHistoryPage() {
   const countBy = (s: EndorsementSnapshotStatus) =>
     items.filter((e) => e.snapshotStatus === s).length
 
+  // 클라이언트 페이지네이션 — 큐가 길어져도 10건씩.
+  const PAGE_SIZE = 10
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const current = Math.min(page, pageCount)
+  const paged = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
+
   const filters: { key: StatusFilter; label: string; count: number }[] = [
     { key: 'all', label: '전체', count: items.length },
     {
       key: 'snapshot_applied',
       label: SNAPSHOT_META.snapshot_applied.label,
       count: countBy('snapshot_applied'),
+    },
+    {
+      key: 'pending_certification',
+      label: SNAPSHOT_META.pending_certification.label,
+      count: countBy('pending_certification'),
     },
     {
       key: 'pending_refresh',
@@ -194,15 +212,19 @@ export default function EndorsementHistoryPage() {
       <div className="mt-3">
         <DataTable
           columns={columns}
-          rows={filtered}
+          rows={paged}
           rowKey={(e) => e.id}
           onRowClick={(e) => navigate(`/instructor/endorsements/${e.id}`)}
           empty="조건에 맞는 추천서가 없어요"
         />
-        <div className="text-fg-subtle mt-3 flex items-center justify-between text-xs">
-          <span>총 {items.length}건</span>
-          <span>1 / {Math.max(1, Math.ceil(items.length / 10))}</span>
-        </div>
+        <Pagination
+          className="mt-3"
+          page={current}
+          pageCount={pageCount}
+          totalCount={filtered.length}
+          shownCount={paged.length}
+          onPage={setPage}
+        />
       </div>
     </div>
   )

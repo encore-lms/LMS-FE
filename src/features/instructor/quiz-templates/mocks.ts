@@ -1,15 +1,20 @@
 import { http, HttpResponse } from 'msw'
 import type {
-  QuizTemplateListData,
+  GradingMode,
+  InstructorQuestion,
   QuizTemplateDetail,
+  QuizTemplateListData,
+  ResultRevealPolicy,
   TemplateQuestionsData,
 } from '@/shared/types'
 
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
+// 모듈 레벨 가변 상태 — POST/PUT/DELETE가 직접 변형하고 GET이 읽는다.
+// (새로고침 시 초기화되는 데모 — endorsements mocks 패턴과 동일)
 const ok = <T>(data: T) => HttpResponse.json({ data })
 
 // ── §10 템플릿 목록 (Figma 1354:9948) ──
-const templates: QuizTemplateListData = {
+let templates: QuizTemplateListData = {
   total: 5,
   totalUseCount: 10,
   items: [
@@ -73,6 +78,7 @@ const templates: QuizTemplateListData = {
 
 // ── §10 템플릿 생성/편집 (Figma 1392:10014) ──
 const templateDetails: Record<string, QuizTemplateDetail> = {
+  // 가변 — 생성 시 신규 키 추가, 수정 시 기존 키 갱신.
   'tpl-algo': {
     id: 'tpl-algo',
     name: '알고리즘 기초 — 재귀·DP·그리디',
@@ -109,6 +115,7 @@ const templateDetails: Record<string, QuizTemplateDetail> = {
 }
 
 // ── §10 템플릿 문항 관리 (Figma 3547:2247) — 퀴즈 §7과 동일 문제 풀 ──
+// 가변 — 문항 추가/수정/삭제가 이 객체의 questions/totalPoints를 변형한다.
 const templateQuestions: TemplateQuestionsData = {
   templateName: '알고리즘 기초 템플릿',
   gradingMode: 'MANUAL',
@@ -208,6 +215,45 @@ const templateQuestions: TemplateQuestionsData = {
   ],
 }
 
+// 문항 풀 합계·요약 등 파생 값 재계산 후 같은 객체에 반영.
+function recalcQuestions() {
+  templateQuestions.questions = templateQuestions.questions
+    .map((q, i) => ({ ...q, order: i + 1 }))
+    .sort((a, b) => a.order - b.order)
+  templateQuestions.totalPoints = templateQuestions.questions.reduce(
+    (sum, q) => sum + q.points,
+    0,
+  )
+}
+
+// 본문 첫 줄을 좌측 목록 요약(summary)으로 축약.
+function summarize(body: string): string {
+  const firstLine = body.trim().split('\n')[0] ?? ''
+  return firstLine.length > 24 ? `${firstLine.slice(0, 24)}…` : firstLine
+}
+
+interface SaveTemplateBody {
+  name: string
+  category: string
+  description?: string
+  gradingMode: GradingMode
+  resultReveal: ResultRevealPolicy
+  shuffleQuestions: boolean
+  shuffleChoices: boolean
+  totalPoints: number
+  defaultTimeLimitMin: number
+}
+
+interface SaveQuestionBody {
+  type: InstructorQuestion['type']
+  points: number
+  body: string
+  modelAnswer: string
+  explanation: string
+  category: string
+  difficulty: InstructorQuestion['difficulty']
+}
+
 export const handlers = [
   http.get('/api/instructor/quiz-templates', () =>
     ok<QuizTemplateListData>(templates),
@@ -221,4 +267,169 @@ export const handlers = [
       templateDetails[String(params.templateId)] ?? templateDetails['tpl-algo']
     return ok<QuizTemplateDetail>(detail)
   }),
+
+  // 템플릿 생성 — 목록·상세 store에 신규 항목 추가. (새로고침 시 초기화)
+  http.post('/api/instructor/quiz-templates', async ({ request }) => {
+    const body = (await request.json()) as SaveTemplateBody
+    const today = new Date().toISOString().slice(0, 10)
+    const id = `tpl-${Date.now()}`
+    const detail: QuizTemplateDetail = {
+      id,
+      name: body.name,
+      category: body.category,
+      description: body.description ?? '',
+      gradingMode: body.gradingMode,
+      resultReveal: body.resultReveal,
+      shuffleQuestions: body.shuffleQuestions,
+      shuffleChoices: body.shuffleChoices,
+      totalPoints: body.totalPoints,
+      questionCount: 0,
+      defaultTimeLimitMin: body.defaultTimeLimitMin,
+      createdAt: today,
+      lastUsedAt: null,
+      derivedActiveCount: 0,
+    }
+    templateDetails[id] = detail
+    templates = {
+      ...templates,
+      total: templates.total + 1,
+      items: [
+        {
+          id,
+          name: body.name,
+          description: body.description ?? '',
+          isNew: true,
+          category: body.category,
+          questionCount: 0,
+          totalPoints: body.totalPoints,
+          lastUsedAt: null,
+          useCount: 0,
+        },
+        ...templates.items,
+      ],
+    }
+    return ok<QuizTemplateDetail>(detail)
+  }),
+
+  // 템플릿 수정 — 상세·목록 동기화.
+  http.put(
+    '/api/instructor/quiz-templates/:templateId',
+    async ({ params, request }) => {
+      const id = String(params.templateId)
+      const body = (await request.json()) as SaveTemplateBody
+      const prev = templateDetails[id] ?? templateDetails['tpl-algo']
+      const detail: QuizTemplateDetail = {
+        ...prev,
+        id,
+        name: body.name,
+        category: body.category,
+        description: body.description ?? '',
+        gradingMode: body.gradingMode,
+        resultReveal: body.resultReveal,
+        shuffleQuestions: body.shuffleQuestions,
+        shuffleChoices: body.shuffleChoices,
+        totalPoints: body.totalPoints,
+        defaultTimeLimitMin: body.defaultTimeLimitMin,
+      }
+      templateDetails[id] = detail
+      templates = {
+        ...templates,
+        items: templates.items.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                name: body.name,
+                description: body.description ?? '',
+                category: body.category,
+                totalPoints: body.totalPoints,
+              }
+            : t,
+        ),
+      }
+      return ok<QuizTemplateDetail>(detail)
+    },
+  ),
+
+  // 템플릿 삭제 — 목록·상세 store에서 제거.
+  http.delete('/api/instructor/quiz-templates/:templateId', ({ params }) => {
+    const id = String(params.templateId)
+    const existed = templates.items.some((t) => t.id === id)
+    templates = {
+      ...templates,
+      total: existed ? Math.max(0, templates.total - 1) : templates.total,
+      items: templates.items.filter((t) => t.id !== id),
+    }
+    delete templateDetails[id]
+    return HttpResponse.json({ data: null })
+  }),
+
+  // 템플릿 문항 추가 — 문항 풀 끝에 추가하고 합계 재계산.
+  http.post(
+    '/api/instructor/quiz-templates/:templateId/questions',
+    async ({ request }) => {
+      const body = (await request.json()) as SaveQuestionBody
+      const today = new Date().toISOString().slice(0, 10)
+      const created: InstructorQuestion = {
+        id: `tq-${Date.now()}`,
+        order: templateQuestions.questions.length + 1,
+        type: body.type,
+        points: body.points,
+        summary: summarize(body.body) || '새 문항',
+        body: body.body,
+        modelAnswer: body.modelAnswer,
+        explanation: body.explanation,
+        category: body.category,
+        difficulty: body.difficulty,
+        createdAt: today,
+        updatedAt: today,
+        respondedCount: 0,
+        totalCount: 0,
+        avgScore: null,
+      }
+      templateQuestions.questions = [...templateQuestions.questions, created]
+      recalcQuestions()
+      return ok<TemplateQuestionsData>(templateQuestions)
+    },
+  ),
+
+  // 템플릿 문항 수정 — 해당 문항 필드 갱신 후 합계 재계산.
+  http.put(
+    '/api/instructor/quiz-templates/:templateId/questions/:questionId',
+    async ({ params, request }) => {
+      const questionId = String(params.questionId)
+      const body = (await request.json()) as SaveQuestionBody
+      const today = new Date().toISOString().slice(0, 10)
+      templateQuestions.questions = templateQuestions.questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              type: body.type,
+              points: body.points,
+              summary: summarize(body.body) || q.summary,
+              body: body.body,
+              modelAnswer: body.modelAnswer,
+              explanation: body.explanation,
+              category: body.category,
+              difficulty: body.difficulty,
+              updatedAt: today,
+            }
+          : q,
+      )
+      recalcQuestions()
+      return ok<TemplateQuestionsData>(templateQuestions)
+    },
+  ),
+
+  // 템플릿 문항 삭제 — 문항 풀에서 제거하고 순번·합계 재계산.
+  http.delete(
+    '/api/instructor/quiz-templates/:templateId/questions/:questionId',
+    ({ params }) => {
+      const questionId = String(params.questionId)
+      templateQuestions.questions = templateQuestions.questions.filter(
+        (q) => q.id !== questionId,
+      )
+      recalcQuestions()
+      return ok<TemplateQuestionsData>(templateQuestions)
+    },
+  ),
 ]

@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import type {
+  ChangeRequestAction,
   InstructorChangeRequestsData,
+  RecertificationAction,
   RecertificationsData,
 } from '@/shared/types'
 
@@ -30,6 +32,8 @@ const curationChanges = [
 ]
 
 // ── 변경 제안 통합 검토 (Figma 2750:2070) ──
+// 모듈 레벨 가변 상태 — PATCH 핸들러가 in-memory로 갱신하고 GET이 그 상태를 읽는다.
+// (새로고침 시 모듈 재평가로 초기화되는 데모 mock — 추천서 mock과 동일 패턴.)
 const changeRequests: InstructorChangeRequestsData = {
   items: [
     {
@@ -117,5 +121,59 @@ export const handlers = [
   ),
   http.get('/api/instructor/recertifications', () =>
     ok<RecertificationsData>(recertifications),
+  ),
+
+  // 변경 제안 승인/반려 — 종결 상태(approved/rejected)로 갱신. (반려는 reason 필수)
+  http.patch(
+    '/api/instructor/change-requests/:id',
+    async ({ params, request }) => {
+      const id = String(params.id)
+      const { action, reason } = (await request.json()) as {
+        action: ChangeRequestAction
+        reason?: string
+      }
+      if (action === 'rejected' && !reason?.trim()) {
+        return HttpResponse.json(
+          { message: '반려 사유는 필수입니다.' },
+          { status: 400 },
+        )
+      }
+      const row = changeRequests.items.find((r) => r.id === id)
+      if (!row) {
+        return HttpResponse.json(
+          { message: '변경 제안을 찾을 수 없습니다.' },
+          { status: 404 },
+        )
+      }
+      row.status = action
+      return ok(row)
+    },
+  ),
+
+  // 재인증 승인/보완요청 — 큐에서 종결 처리(제거). (보완요청은 reason 필수)
+  http.patch(
+    '/api/instructor/recertifications/:id',
+    async ({ params, request }) => {
+      const id = String(params.id)
+      const { action, reason } = (await request.json()) as {
+        action: RecertificationAction
+        reason?: string
+      }
+      if (action === 'changes_requested' && !reason?.trim()) {
+        return HttpResponse.json(
+          { message: '보완요청 사유는 필수입니다.' },
+          { status: 400 },
+        )
+      }
+      const row = recertifications.items.find((r) => r.id === id)
+      if (!row) {
+        return HttpResponse.json(
+          { message: '재인증 요청을 찾을 수 없습니다.' },
+          { status: 404 },
+        )
+      }
+      recertifications.items = recertifications.items.filter((r) => r.id !== id)
+      return ok(row)
+    },
   ),
 ]

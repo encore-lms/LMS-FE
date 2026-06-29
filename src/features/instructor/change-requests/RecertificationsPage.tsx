@@ -8,8 +8,12 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { RecertificationRow } from '@/shared/types'
-import { useRecertifications } from '../api/changeRequests'
+import {
+  useRecertifications,
+  useResolveRecertification,
+} from '../api/changeRequests'
 import { ChangeDiffCard } from './ChangeDiffCard'
+import { ReasonModal } from './ReasonModal'
 import { TARGET_TYPE_META, TYPE_FILTERS, type TypeFilter } from './meta'
 
 // 재인증 통합 검토 (/instructor/recertifications) — P0 29. (Figma 2750:2202)
@@ -19,9 +23,13 @@ export default function RecertificationsPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useRecertifications()
+  const resolveMutation = useResolveRecertification()
   const [filter, setFilter] = useState<TypeFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  // 승인/보완요청 처리분 — 백엔드 연동 전 로컬 마킹(mock).
+  // 보완요청 사유 입력 대상 — 모달 열림 상태.
+  const [supplementTarget, setSupplementTarget] =
+    useState<RecertificationRow | null>(null)
+  // 승인/보완요청 처리분 — 서버 무효화와 별개로 즉시 큐에서 제거(낙관적 업데이트).
   const [resolved, setResolved] = useState<Record<string, string>>({})
   usePageHeader(
     '재인증 통합 검토',
@@ -56,10 +64,37 @@ export default function RecertificationsPage() {
     )
   }
 
-  const resolve = (row: RecertificationRow, verdict: string) => {
+  // 재인증 승인/보완요청 공통 종결 — 낙관적으로 큐에서 제거 후 mutation 호출.
+  const resolve = async (
+    row: RecertificationRow,
+    verdict: '재인증 승인' | '보완요청',
+    reason?: string,
+  ) => {
     setResolved((prev) => ({ ...prev, [row.id]: verdict }))
     setSelectedId(null)
-    toast.success(`${row.target} ${verdict} (mock)`)
+    try {
+      await resolveMutation.mutateAsync({
+        id: row.id,
+        action: verdict === '재인증 승인' ? 'approved' : 'changes_requested',
+        reason,
+      })
+      toast.success(`${row.target} ${verdict}`)
+    } catch {
+      setResolved((prev) => {
+        const next = { ...prev }
+        delete next[row.id]
+        return next
+      })
+      toast.danger(`${row.target} 처리에 실패했어요`)
+    }
+  }
+
+  const approve = (row: RecertificationRow) => resolve(row, '재인증 승인')
+  const confirmSupplement = (reason: string) => {
+    if (!supplementTarget) return
+    const target = supplementTarget
+    setSupplementTarget(null)
+    resolve(target, '보완요청', reason)
   }
 
   return (
@@ -144,13 +179,15 @@ export default function RecertificationsPage() {
               <Button
                 variant="secondary"
                 className="h-10 text-sm"
-                onClick={() => resolve(selected, '보완요청')}
+                disabled={resolveMutation.isPending}
+                onClick={() => setSupplementTarget(selected)}
               >
                 보완요청
               </Button>
               <Button
                 className="h-10 text-sm"
-                onClick={() => resolve(selected, '재인증 승인')}
+                disabled={resolveMutation.isPending}
+                onClick={() => approve(selected)}
               >
                 재인증 승인
               </Button>
@@ -158,6 +195,17 @@ export default function RecertificationsPage() {
           </>
         )}
       </section>
+
+      <ReasonModal
+        open={supplementTarget !== null}
+        title="보완요청을 보낼까요?"
+        description="보완요청 사유는 요청자에게 전달되며, 사유 작성은 필수입니다."
+        confirmLabel="보완요청"
+        placeholder="예: 변경된 산출물의 검증 근거를 함께 첨부해 주세요."
+        pending={resolveMutation.isPending}
+        onClose={() => setSupplementTarget(null)}
+        onConfirm={confirmSupplement}
+      />
     </div>
   )
 }

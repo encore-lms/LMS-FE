@@ -10,6 +10,10 @@ import {
   useRecordReviews,
   useProjectReviews,
   useTsReviews,
+  useCertifyProject,
+  useRequestProjectChanges,
+  useCertifyTroubleshooting,
+  useRequestTsChanges,
 } from '../api/reviews'
 import type {
   InstructorRecordReviewData,
@@ -119,6 +123,15 @@ function ok(data: unknown) {
   return { data, isPending: false, isError: false }
 }
 
+// 자동 모킹(vi.mock)된 신규 mutation 훅에 기본 반환값 제공 — 미제공 시 undefined라
+// 페이지의 certify.isPending / .mutate 접근에서 터진다(테스트는 query만 모킹).
+const mutationStub = () =>
+  ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+    isPending: false,
+  }) as unknown as ReturnType<typeof useCertifyProject>
+
 function renderWith(ui: React.ReactElement) {
   vi.mocked(useRecordReviews).mockReturnValue(
     ok(records) as unknown as ReturnType<typeof useRecordReviews>,
@@ -128,6 +141,16 @@ function renderWith(ui: React.ReactElement) {
   )
   vi.mocked(useTsReviews).mockReturnValue(
     ok(ts) as unknown as ReturnType<typeof useTsReviews>,
+  )
+  vi.mocked(useCertifyProject).mockReturnValue(mutationStub())
+  vi.mocked(useRequestProjectChanges).mockReturnValue(
+    mutationStub() as unknown as ReturnType<typeof useRequestProjectChanges>,
+  )
+  vi.mocked(useCertifyTroubleshooting).mockReturnValue(
+    mutationStub() as unknown as ReturnType<typeof useCertifyTroubleshooting>,
+  )
+  vi.mocked(useRequestTsChanges).mockReturnValue(
+    mutationStub() as unknown as ReturnType<typeof useRequestTsChanges>,
   )
   return render(
     <ToastProvider>

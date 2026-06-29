@@ -10,7 +10,10 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { GradingMode, ResultRevealPolicy } from '@/shared/types'
-import { useQuizTemplateDetail } from '../api/quizTemplates'
+import {
+  useQuizTemplateDetail,
+  useSaveQuizTemplate,
+} from '../api/quizTemplates'
 import { GRADING_MODE_META } from '../quizzes/meta'
 import { templateSchema, type TemplateInput } from './template.schema'
 
@@ -78,6 +81,7 @@ export default function TemplateFormPage() {
   const { data, isPending, isError, refetch } = useQuizTemplateDetail(
     templateId ?? null,
   )
+  const saveTemplate = useSaveQuizTemplate(templateId)
   const [gradingMode, setGradingMode] = useState<GradingMode>('AUTO')
   const [resultReveal, setResultReveal] =
     useState<ResultRevealPolicy>('after_grading')
@@ -131,16 +135,33 @@ export default function TemplateFormPage() {
   }
 
   const save = (input: TemplateInput, thenQuestions: boolean) => {
-    toast.success(`${input.name} 저장 (mock)`)
-    if (isEdit && (data?.derivedActiveCount ?? 0) > 0)
-      toast.info(
-        '변경은 기존 파생 퀴즈에 전파되지 않고 다음 복제부터 반영됩니다',
-      )
-    if (thenQuestions)
-      navigate(
-        `/instructor/quiz-templates/${templateId ?? 'tpl-new'}/questions`,
-      )
-    else navigate('/instructor/quiz-templates')
+    saveTemplate.mutate(
+      {
+        name: input.name,
+        category: input.category,
+        description: input.description,
+        gradingMode,
+        resultReveal,
+        shuffleQuestions,
+        shuffleChoices,
+        totalPoints: input.totalPoints,
+        defaultTimeLimitMin: input.defaultTimeLimitMin,
+      },
+      {
+        onSuccess: (detail) => {
+          toast.success(`${input.name} 저장됨`)
+          if (isEdit && (data?.derivedActiveCount ?? 0) > 0)
+            toast.info(
+              '변경은 기존 파생 퀴즈에 전파되지 않고 다음 복제부터 반영됩니다',
+            )
+          if (thenQuestions)
+            navigate(`/instructor/quiz-templates/${detail.id}/questions`)
+          else navigate('/instructor/quiz-templates')
+        },
+        onError: () =>
+          toast.danger('템플릿 저장에 실패했어요. 다시 시도해 주세요.'),
+      },
+    )
   }
 
   return (

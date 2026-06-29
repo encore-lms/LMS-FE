@@ -10,7 +10,11 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useEndorsement } from '../api/endorsements'
+import {
+  useDeleteEndorsement,
+  useEndorsement,
+  useUpdateEndorsement,
+} from '../api/endorsements'
 import { SNAPSHOT_META, formatRemaining } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
 
@@ -24,6 +28,8 @@ export default function EndorsementDetailPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useEndorsement(endorsementId)
+  const update = useUpdateEndorsement(endorsementId)
+  const del = useDeleteEndorsement()
   const [confirmDelete, setConfirmDelete] = useState(false)
   usePageHeader('강사 추천서 상세/수정', '강사 › 강사 추천서 › 상세/수정')
 
@@ -63,18 +69,27 @@ export default function EndorsementDetailPage() {
   const remaining = formatRemaining(data.editableUntilMinutes)
   const editable = remaining !== null
 
-  const onSubmit = (input: EndorsementInput) => {
-    toast.success(
-      `수정 저장 — ${data.student.name} · 다음 증명서 최신화 작업 후 공개 반영`,
-    )
-    navigate(LIST)
-    void input
+  const onSubmit = async (input: EndorsementInput) => {
+    try {
+      await update.mutateAsync({ comment: input.comment })
+      toast.success(
+        `수정 저장 — ${data.student.name} · 다음 증명서 최신화 작업 후 공개 반영`,
+      )
+      navigate(LIST)
+    } catch {
+      toast.danger('수정 저장에 실패했어요. 잠시 후 다시 시도해주세요.')
+    }
   }
 
-  const onDelete = () => {
+  const onDelete = async () => {
     setConfirmDelete(false)
-    toast.danger(`삭제 — ${data.student.name}의 추천서가 삭제되었습니다`)
-    navigate(LIST)
+    try {
+      await del.mutateAsync(endorsementId)
+      toast.danger(`삭제 — ${data.student.name}의 추천서가 삭제되었습니다`)
+      navigate(LIST)
+    } catch {
+      toast.danger('삭제에 실패했어요. 잠시 후 다시 시도해주세요.')
+    }
   }
 
   return (

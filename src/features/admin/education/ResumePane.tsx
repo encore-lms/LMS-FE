@@ -1,18 +1,13 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, MessageSquarePlus } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
-import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
-import { useToast } from '@/components/ui/use-toast'
 import { useStudentAccounts } from '../api/students'
 import type { ResumeRow } from './types'
-import { useAddResumeFeedback, useResume, useResumes } from './api'
-import {
-  ResumeDocView,
-  type ResumeDocData,
-} from '@/features/student/resume/ResumeDocView'
+import { useResumes } from './api'
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
@@ -21,136 +16,7 @@ const STATUS_LABEL: Record<string, string> = {
 const fmt = (iso: string | null) =>
   iso ? iso.slice(0, 16).replace('T', ' ') : '-'
 
-// 운영 이력서 content(JSON 문자열)를 문서 뷰 데이터로 파싱(깨지면 빈 객체).
-function parseResumeContent(content: string | null): Partial<ResumeDocData> {
-  if (!content) return {}
-  try {
-    return JSON.parse(content) as Partial<ResumeDocData>
-  } catch {
-    return {}
-  }
-}
-
-// 이력서 상세 팝업 — content + 피드백 목록 + 피드백 작성(실 BE).
-function ResumeDetailModal({
-  courseId,
-  cohortId,
-  resumeId,
-  studentName,
-  onClose,
-}: {
-  courseId: string
-  cohortId: string
-  resumeId: string
-  studentName: string
-  onClose: () => void
-}) {
-  const { data, isPending } = useResume(courseId, cohortId, resumeId)
-  const addFeedback = useAddResumeFeedback()
-  const toast = useToast()
-  const [body, setBody] = useState('')
-
-  const onSubmit = () => {
-    if (!body.trim()) {
-      toast.danger('피드백 내용을 입력해 주세요')
-      return
-    }
-    addFeedback.mutate(
-      { courseId, cohortId, resumeId, body: body.trim() },
-      {
-        onSuccess: () => {
-          toast.success('피드백을 등록했어요')
-          setBody('')
-        },
-        onError: () => toast.danger('피드백 등록에 실패했어요'),
-      },
-    )
-  }
-
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      title={`이력서 상세 — ${studentName}`}
-      footer={
-        <Button variant="secondary" onClick={onClose}>
-          닫기
-        </Button>
-      }
-    >
-      {isPending || !data ? (
-        <div className="text-fg-muted py-8 text-center">불러오는 중…</div>
-      ) : (
-        <div className="flex flex-col gap-4 text-sm">
-          <dl className="flex flex-col gap-3">
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">제목</dt>
-              <dd className="text-fg font-medium">{data.title}</dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">상태</dt>
-              <dd>
-                <StatusBadge
-                  label={STATUS_LABEL[data.status] ?? data.status}
-                  tone={data.status === 'COMPLETED' ? 'success' : 'warning'}
-                />
-              </dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">수정일</dt>
-              <dd className="text-fg-muted tabular-nums">
-                {fmt(data.updatedAt)}
-              </dd>
-            </div>
-          </dl>
-
-          {/* 이력서 본문 — content(JSON)를 학생 문서 뷰와 동일하게 렌더 */}
-          <ResumeDocView data={parseResumeContent(data.content)} />
-
-          {/* 피드백 */}
-          <div className="border-divider border-t pt-4">
-            <p className="text-fg mb-2 text-[13px] font-semibold">
-              피드백 {data.feedbacks.length}건
-            </p>
-            <div className="mb-3 flex flex-col gap-2">
-              {data.feedbacks.length === 0 ? (
-                <p className="text-fg-subtle text-xs">아직 피드백이 없어요.</p>
-              ) : (
-                data.feedbacks.map((f) => (
-                  <div
-                    key={f.id}
-                    className="bg-surface-muted rounded-lg px-3 py-2"
-                  >
-                    <p className="text-fg text-[13px] whitespace-pre-wrap">
-                      {f.body}
-                    </p>
-                    <p className="text-fg-subtle mt-1 text-[11px] tabular-nums">
-                      {fmt(f.createdAt)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="flex items-start gap-2">
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="피드백을 입력하세요"
-                rows={2}
-                className="border-border focus:border-brand text-fg flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none"
-              />
-              <Button onClick={onSubmit} disabled={addFeedback.isPending}>
-                <MessageSquarePlus className="h-4 w-4" /> 등록
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </Modal>
-  )
-}
-
-// 이력서 탭 — 기수 이력서 현황(학생명 join) + 상세/피드백(실 BE). 정본 §32 lean.
+// 이력서 탭 — 기수 이력서 현황(학생명 join) + 검색 + 상세(페이지 전환). 정본 §32 lean.
 export function ResumePane({
   courseId,
   cohortId,
@@ -160,13 +26,20 @@ export function ResumePane({
 }) {
   const { data, isPending, isError, refetch } = useResumes(courseId, cohortId)
   const { data: students } = useStudentAccounts(cohortId)
-  const [openRow, setOpenRow] = useState<ResumeRow | null>(null)
+  const navigate = useNavigate()
+  const [q, setQ] = useState('')
 
   const nameOf = useMemo(() => {
     const map = new Map<string, string>()
     for (const s of students?.items ?? []) map.set(s.id, s.name)
     return (userId: string) => map.get(userId) ?? '(이름 미확인)'
   }, [students])
+
+  // 상세는 페이지 전환 — courseId/cohortId는 쿼리로 넘긴다.
+  const openDetail = (resumeId: string) =>
+    navigate(
+      `/admin/education/resume/${resumeId}?courseId=${courseId}&cohortId=${cohortId}`,
+    )
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -236,7 +109,7 @@ export function ResumePane({
           type="button"
           onClick={(e) => {
             e.stopPropagation()
-            setOpenRow(r)
+            openDetail(r.id)
           }}
           className="bg-info-bg text-info hover:bg-info-bg/70 rounded-md px-2 py-1 text-xs font-medium"
         >
@@ -246,25 +119,42 @@ export function ResumePane({
     },
   ]
 
+  // 이름 또는 이력서 제목으로 검색(클라이언트 필터).
+  const needle = q.trim().toLowerCase()
+  const rows = needle
+    ? data.filter(
+        (r) =>
+          nameOf(r.studentUserId).toLowerCase().includes(needle) ||
+          r.title.toLowerCase().includes(needle),
+      )
+    : data
+
   return (
     <div>
-      <p className="text-fg-muted mb-3 text-sm">총 {data.length}개 이력서</p>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-fg-muted text-sm">
+          총 {rows.length}개 이력서
+          {needle && (
+            <span className="text-fg-subtle"> · 전체 {data.length}</span>
+          )}
+        </p>
+        <div className="relative w-72">
+          <Search className="text-fg-subtle absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="이름 또는 이력서 제목 검색"
+            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 w-full rounded-lg border bg-white pr-3 pl-9 text-sm outline-none"
+          />
+        </div>
+      </div>
       <DataTable
         columns={columns}
-        rows={data}
+        rows={rows}
         rowKey={(r) => r.id}
-        onRowClick={(r) => setOpenRow(r)}
-        empty="등록된 이력서가 없어요"
+        onRowClick={(r) => openDetail(r.id)}
+        empty={needle ? '검색 결과가 없어요' : '등록된 이력서가 없어요'}
       />
-      {openRow && (
-        <ResumeDetailModal
-          courseId={courseId}
-          cohortId={cohortId}
-          resumeId={openRow.id}
-          studentName={nameOf(openRow.studentUserId)}
-          onClose={() => setOpenRow(null)}
-        />
-      )}
     </div>
   )
 }

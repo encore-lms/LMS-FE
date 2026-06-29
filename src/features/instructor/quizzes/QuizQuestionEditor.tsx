@@ -96,8 +96,9 @@ function distributeBlankScores(points: number, blanks: number): number[] {
   )
 }
 
-const FIELD =
-  'border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none'
+const FIELD_BASE =
+  'border-border focus:border-brand text-fg placeholder:text-fg-subtle rounded-lg border bg-white px-3 py-2 text-sm outline-none'
+const FIELD = `${FIELD_BASE} w-full`
 
 // 인라인 문항 폼 — 추가/편집 공용.
 function QuestionForm({
@@ -347,7 +348,7 @@ function QuestionForm({
                         })
                       }
                       placeholder={`빈칸 ${i + 1} 정답`}
-                      className={FIELD}
+                      className={`${FIELD_BASE} min-w-0 flex-1`}
                     />
                     <input
                       type="number"
@@ -361,7 +362,7 @@ function QuestionForm({
                           ),
                         })
                       }
-                      className={`${FIELD} w-20 shrink-0`}
+                      className={`${FIELD_BASE} w-20 shrink-0 text-center`}
                     />
                   </div>
                 ))}

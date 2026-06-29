@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
@@ -230,7 +230,7 @@ export default function QuizFormPage() {
 
   const hasSubmissions = isEdit && (data?.submittedCount ?? 0) > 0
 
-  const save = (input: QuizInput, vis: QuizVisibility) => {
+  const save = (input: QuizInput, vis: QuizVisibility, openAdd = false) => {
     saveQuiz.mutate(
       {
         cohortId: input.cohortId,
@@ -251,7 +251,47 @@ export default function QuizFormPage() {
         onSuccess: (saved) => {
           toast.success(`${input.title} 저장 — ${VISIBILITY_META[vis].label}`)
           // 생성 직후엔 같은 폼의 수정 화면으로 — 문항 섹션이 인라인으로 함께 보인다.
-          if (!isEdit) navigate(`${base}/${saved.id}/edit`)
+          // openAdd면 문항 추가 폼을 바로 펼친다(임시저장 따로 누를 필요 없음).
+          if (!isEdit)
+            navigate(`${base}/${saved.id}/edit${openAdd ? '?add=1' : ''}`)
+        },
+        onError: () => toast.danger('저장에 실패했어요'),
+      },
+    )
+  }
+
+  // 생성 모드 — 임시저장 버튼 없이 바로 문항 추가. 제목·기수만 있으면 임시저장 생성 후 편집(문항 폼 펼침).
+  // 시작/종료/제한시간은 미입력이어도 허용(공개 전까지 보완 가능).
+  const onQuickAddQuestion = () => {
+    const v = getValues()
+    if (!v.title?.trim()) {
+      toast.danger('제목을 입력해 주세요')
+      return
+    }
+    if (!v.cohortId) {
+      toast.danger('대상 과정/기수를 선택해 주세요')
+      return
+    }
+    saveQuiz.mutate(
+      {
+        cohortId: v.cohortId,
+        title: v.title.trim(),
+        description: v.description,
+        gradingMode,
+        resultReveal,
+        timeLimitMin: Number(v.timeLimitMin) || undefined,
+        allowRetake,
+        shuffleQuestions,
+        shuffleChoices,
+        totalPoints: Number(v.totalPoints) || 0,
+        visibility,
+        startAt: v.startAt || undefined,
+        endAt: v.endAt || undefined,
+      },
+      {
+        onSuccess: (saved) => {
+          toast.success('임시저장했어요 — 문항을 추가하세요')
+          navigate(`${base}/${saved.id}/edit?add=1`)
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },
@@ -259,7 +299,7 @@ export default function QuizFormPage() {
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="mx-auto max-w-4xl space-y-4 p-6">
       {hasSubmissions && (
         <div className="bg-warning-bg flex max-w-4xl items-start gap-2.5 rounded-lg p-3">
           <AlertTriangle className="text-warning mt-0.5 h-4 w-4 shrink-0" />
@@ -456,11 +496,25 @@ export default function QuizFormPage() {
       <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
         <p className="text-fg mb-3 text-sm font-bold">문항</p>
         {isEdit && quizId ? (
-          <QuizQuestionEditor quizId={quizId} />
+          <QuizQuestionEditor
+            quizId={quizId}
+            defaultAdding={searchParams.get('add') === '1'}
+          />
         ) : (
-          <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
-            기본 정보를 저장하면 같은 화면에서 문항을 추가할 수 있어요.
-          </p>
+          <div className="bg-surface-muted flex flex-col items-center gap-3 rounded-lg px-4 py-6 text-center">
+            <p className="text-fg-subtle text-sm">
+              ‘문제 추가’를 누르면 자동 임시저장 후 바로 문항을 추가할 수
+              있어요.
+            </p>
+            <Button
+              type="button"
+              className="h-9 text-sm"
+              disabled={saveQuiz.isPending}
+              onClick={onQuickAddQuestion}
+            >
+              <Plus className="h-4 w-4" /> 문제 추가
+            </Button>
+          </div>
         )}
       </section>
 

@@ -387,11 +387,18 @@ function QuestionForm({
 }
 
 // 문항 에디터 — 목록 카드 + "+ 문제 추가" + 인라인 폼(이전 LMS 방식).
-export function QuizQuestionEditor({ quizId }: { quizId: string }) {
+export function QuizQuestionEditor({
+  quizId,
+  defaultAdding = false,
+}: {
+  quizId: string
+  /** 생성 직후 진입 시 문항 추가 폼을 바로 펼침 */
+  defaultAdding?: boolean
+}) {
   const { data, isPending, isError, refetch } = useQuizQuestions(quizId)
   const deleteQ = useDeleteQuizQuestion(quizId)
   const toast = useToast()
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState(defaultAdding)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   if (isPending) {

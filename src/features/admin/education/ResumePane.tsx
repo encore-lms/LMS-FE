@@ -9,6 +9,10 @@ import { useToast } from '@/components/ui/use-toast'
 import { useStudentAccounts } from '../api/students'
 import type { ResumeRow } from './types'
 import { useAddResumeFeedback, useResume, useResumes } from './api'
+import {
+  ResumeDocView,
+  type ResumeDocData,
+} from '@/features/student/resume/ResumeDocView'
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
@@ -16,6 +20,16 @@ const STATUS_LABEL: Record<string, string> = {
 }
 const fmt = (iso: string | null) =>
   iso ? iso.slice(0, 16).replace('T', ' ') : '-'
+
+// 운영 이력서 content(JSON 문자열)를 문서 뷰 데이터로 파싱(깨지면 빈 객체).
+function parseResumeContent(content: string | null): Partial<ResumeDocData> {
+  if (!content) return {}
+  try {
+    return JSON.parse(content) as Partial<ResumeDocData>
+  } catch {
+    return {}
+  }
+}
 
 // 이력서 상세 팝업 — content + 피드백 목록 + 피드백 작성(실 BE).
 function ResumeDetailModal({
@@ -83,18 +97,15 @@ function ResumeDetailModal({
               </dd>
             </div>
             <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">내용</dt>
-              <dd className="text-fg min-w-0 flex-1 break-words whitespace-pre-wrap">
-                {data.content || '-'}
-              </dd>
-            </div>
-            <div className="flex gap-3">
               <dt className="text-fg-muted w-16 shrink-0">수정일</dt>
               <dd className="text-fg-muted tabular-nums">
                 {fmt(data.updatedAt)}
               </dd>
             </div>
           </dl>
+
+          {/* 이력서 본문 — content(JSON)를 학생 문서 뷰와 동일하게 렌더 */}
+          <ResumeDocView data={parseResumeContent(data.content)} />
 
           {/* 피드백 */}
           <div className="border-divider border-t pt-4">

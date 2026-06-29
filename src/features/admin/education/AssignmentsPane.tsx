@@ -1,18 +1,189 @@
-import { useState } from 'react'
-import { AlertTriangle, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { AlertTriangle, Plus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
+import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
-import type { AssignmentItem } from './types'
-import { useAssignments, useCreateAssignment, useDeleteAssignment } from './api'
-import { ArticleView } from './ArticleView'
+import { useStudentAccounts } from '../api/students'
+import type { InstructorAssignmentRow, AssignmentSubmissionRow } from './types'
+import {
+  useAssignmentSubmissions,
+  useChangeSubmissionStatus,
+  useCohortAssignments,
+  useCreateInstructorAssignment,
+  useDeleteInstructorAssignment,
+} from './api'
 
-const fmt = (iso: string | null) =>
-  iso ? iso.slice(0, 16).replace('T', ' ') : '-'
+const SUB_STATUS: Record<string, { label: string; tone: BadgeTone }> = {
+  submitted: { label: '제출', tone: 'info' },
+  supplement_requested: { label: '보완 요청', tone: 'warning' },
+  review_done: { label: '검토 완료', tone: 'success' },
+  not_submitted: { label: '미제출', tone: 'neutral' },
+}
 
-// 과제 탭 — 기수 과제(Assignment) 조회·추가·삭제 + 상세 팝업(실 BE).
+// 제출 현황 검토 모달 — 학생별 제출(본문·URL·상태) + 상태 변경(보완요청/검토완료) + 피드백.
+function SubmissionsModal({
+  assignmentId,
+  title,
+  nameOf,
+  onClose,
+}: {
+  assignmentId: string
+  title: string
+  nameOf: (userId: string) => string
+  onClose: () => void
+}) {
+  const { data, isPending } = useAssignmentSubmissions(assignmentId)
+  const changeStatus = useChangeSubmissionStatus(assignmentId)
+  const toast = useToast()
+  const [openRow, setOpenRow] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState('')
+
+  const act = (submissionId: string, status: string) => {
+    changeStatus.mutate(
+      { submissionId, status, feedback: feedback.trim() || undefined },
+      {
+        onSuccess: () => {
+          toast.success(
+            status === 'review_done'
+              ? '검토 완료 처리했어요'
+              : '보완 요청했어요',
+          )
+          setFeedback('')
+        },
+        onError: () => toast.danger('처리에 실패했어요'),
+      },
+    )
+  }
+
+  return (
+    <Modal open onClose={onClose} size="lg" footer={null}>
+      <div className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-fg text-lg font-bold">{title}</h2>
+          <p className="text-fg-muted mt-1 text-sm">
+            제출 {data?.counts.submitted ?? 0} · 보완{' '}
+            {data?.counts.supplementRequested ?? 0} · 검토완료{' '}
+            {data?.counts.reviewDone ?? 0}
+          </p>
+        </div>
+
+        {isPending ? (
+          <div className="text-fg-muted py-8 text-center">불러오는 중…</div>
+        ) : !data || data.rows.length === 0 ? (
+          <Empty
+            icon={<Users className="h-6 w-6" />}
+            title="제출이 없어요"
+            description="수강생이 제출하면 여기에서 검토할 수 있어요."
+          />
+        ) : (
+          <div className="flex flex-col gap-2">
+            {data.rows.map((r: AssignmentSubmissionRow) => {
+              const open = openRow === r.id
+              const st = SUB_STATUS[r.status] ?? SUB_STATUS.submitted
+              return (
+                <div
+                  key={r.id}
+                  className="border-border overflow-hidden rounded-xl border"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenRow(open ? null : r.id)}
+                    className="hover:bg-surface-muted flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-fg text-sm font-semibold">
+                        {nameOf(r.studentUserId)}
+                      </span>
+                      <StatusBadge label={st.label} tone={st.tone} />
+                    </span>
+                    <span className="text-fg-subtle text-xs tabular-nums">
+                      {r.submittedAtLabel ?? '-'}
+                    </span>
+                  </button>
+
+                  {open && (
+                    <div className="border-divider flex flex-col gap-3 border-t px-4 py-3">
+                      {r.bodyText && (
+                        <p className="text-fg text-[14px] leading-6 whitespace-pre-wrap">
+                          {r.bodyText}
+                        </p>
+                      )}
+                      {r.url && (
+                        <a
+                          href={r.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-info text-[13px] break-all hover:underline"
+                        >
+                          {r.url}
+                        </a>
+                      )}
+
+                      {r.feedbacks.length > 0 && (
+                        <div className="flex flex-col gap-1.5">
+                          {r.feedbacks.map((f, i) => (
+                            <div
+                              key={i}
+                              className="bg-surface-muted rounded-lg px-3 py-2"
+                            >
+                              <p className="text-fg text-[13px] whitespace-pre-wrap">
+                                {f.text}
+                              </p>
+                              <p className="text-fg-subtle mt-0.5 text-[11px]">
+                                {f.byStudent ? '수강생' : '운영/강사'} ·{' '}
+                                {f.timeLabel}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 검토 액션 */}
+                      <textarea
+                        value={openRow === r.id ? feedback : ''}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="피드백(선택) 입력 후 상태 변경"
+                        rows={2}
+                        className="border-border focus:border-brand text-fg rounded-lg border bg-white px-3 py-2 text-sm outline-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          onClick={() => act(r.id, 'supplement_requested')}
+                          disabled={changeStatus.isPending}
+                        >
+                          보완 요청
+                        </Button>
+                        <Button
+                          onClick={() => act(r.id, 'review_done')}
+                          disabled={changeStatus.isPending}
+                        >
+                          검토 완료
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <Button variant="secondary" onClick={onClose}>
+            닫기
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// 과제 탭 — 강사식 과제 관리(실 BE). 선택 기수 스코프: 목록·생성·제출 현황·검토.
 export function AssignmentsPane({
   courseId,
   cohortId,
@@ -20,19 +191,32 @@ export function AssignmentsPane({
   courseId: string
   cohortId: string
 }) {
-  const { data, isPending, isError, refetch } = useAssignments(
-    courseId,
-    cohortId,
-  )
-  const createA = useCreateAssignment()
-  const deleteA = useDeleteAssignment()
+  void courseId
+  const { data, isPending, isError, refetch } = useCohortAssignments(cohortId)
+  const { data: students } = useStudentAccounts(cohortId)
+  const createA = useCreateInstructorAssignment()
+  const deleteA = useDeleteInstructorAssignment(cohortId)
   const toast = useToast()
 
-  const [detail, setDetail] = useState<AssignmentItem | null>(null)
+  const nameOf = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const s of students?.items ?? []) map.set(s.id, s.name)
+    return (userId: string) => map.get(userId) ?? '수강생'
+  }, [students])
+
   const [addOpen, setAddOpen] = useState(false)
+  const [subject, setSubject] = useState('')
   const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [description, setDescription] = useState('')
-  const [dueAt, setDueAt] = useState('') // YYYY-MM-DD
+  const [subView, setSubView] = useState<InstructorAssignmentRow | null>(null)
+
+  const resetForm = () => {
+    setSubject('')
+    setTitle('')
+    setDueDate('')
+    setDescription('')
+  }
 
   const onAdd = () => {
     if (!title.trim()) {
@@ -41,34 +225,28 @@ export function AssignmentsPane({
     }
     createA.mutate(
       {
-        courseId,
         cohortId,
+        subject: subject.trim() || undefined,
         title: title.trim(),
+        dueAt: dueDate ? `${dueDate} 23:59` : undefined,
         description: description.trim() || undefined,
-        // 마감일(날짜) → ISO. 시각은 18:00 기본.
-        dueAt: dueAt ? `${dueAt}T18:00:00Z` : undefined,
       },
       {
         onSuccess: () => {
-          toast.success(`과제 추가 — ${title.trim()}`)
+          toast.success(`과제 등록 — ${title.trim()}`)
           setAddOpen(false)
-          setTitle('')
-          setDescription('')
-          setDueAt('')
+          resetForm()
         },
-        onError: () => toast.danger('과제 추가에 실패했어요'),
+        onError: () => toast.danger('과제 등록에 실패했어요'),
       },
     )
   }
 
-  const onDelete = (a: AssignmentItem) =>
-    deleteA.mutate(
-      { courseId, cohortId, assignmentId: a.id },
-      {
-        onSuccess: () => toast.success(`삭제 — ${a.title}`),
-        onError: () => toast.danger('삭제에 실패했어요'),
-      },
-    )
+  const onDelete = (r: InstructorAssignmentRow) =>
+    deleteA.mutate(r.id, {
+      onSuccess: () => toast.success(`삭제 — ${r.title}`),
+      onError: () => toast.danger('삭제에 실패했어요'),
+    })
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -84,29 +262,39 @@ export function AssignmentsPane({
     )
   }
 
-  const columns: Column<AssignmentItem>[] = [
+  const columns: Column<InstructorAssignmentRow>[] = [
     {
       key: 'title',
-      header: '제목',
-      cell: (a) => <span className="text-fg font-medium">{a.title}</span>,
+      header: '과제',
+      cell: (r) => (
+        <div className="flex flex-col">
+          <span className="text-fg font-medium">{r.title}</span>
+          {r.subject && (
+            <span className="text-fg-subtle text-xs">{r.subject}</span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'due',
       header: '마감',
-      className: 'w-40',
-      cell: (a) => (
-        <span className="text-fg-muted text-xs tabular-nums">
-          {fmt(a.dueAt)}
+      className: 'w-28',
+      cell: (r) => (
+        <span
+          className={r.closed ? 'text-danger text-xs' : 'text-fg-muted text-xs'}
+        >
+          {r.dueLabel}
         </span>
       ),
     },
     {
-      key: 'created',
-      header: '등록일',
-      className: 'w-32',
-      cell: (a) => (
-        <span className="text-fg-subtle text-xs tabular-nums">
-          {a.createdAt?.slice(0, 10) ?? '-'}
+      key: 'counts',
+      header: '제출 현황',
+      className: 'w-44',
+      cell: (r) => (
+        <span className="text-fg-muted text-[13px]">
+          제출 {r.counts.submitted} · 보완 {r.counts.supplementRequested} · 검토{' '}
+          {r.counts.reviewDone}
         </span>
       ),
     },
@@ -114,24 +302,24 @@ export function AssignmentsPane({
       key: 'action',
       header: '액션',
       align: 'right',
-      className: 'w-32',
-      cell: (a) => (
+      className: 'w-40',
+      cell: (r) => (
         <div className="flex justify-end gap-1.5">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              setDetail(a)
+              setSubView(r)
             }}
             className="bg-info-bg text-info hover:bg-info-bg/70 rounded-md px-2 py-1 text-xs font-medium"
           >
-            상세
+            제출 현황
           </button>
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              onDelete(a)
+              onDelete(r)
             }}
             className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -144,63 +332,81 @@ export function AssignmentsPane({
 
   return (
     <div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <KpiCard label="과제" value={data.total} />
+        <KpiCard label="제출" value={data.kpi.submitted} />
+        <KpiCard
+          label="보완 요청"
+          value={data.kpi.supplementRequested}
+          tone="warning"
+        />
+        <KpiCard label="검토 완료" value={data.kpi.reviewDone} tone="success" />
+      </div>
+
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-fg-muted text-sm">총 {data.length}개 과제</p>
+        <p className="text-fg-muted text-sm">총 {data.total}개 과제</p>
         <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" /> 과제 추가
+          <Plus className="h-4 w-4" /> 과제 등록
         </Button>
       </div>
 
       <DataTable
         columns={columns}
-        rows={data}
-        rowKey={(a) => a.id}
-        onRowClick={(a) => setDetail(a)}
+        rows={data.items}
+        rowKey={(r) => r.id}
+        onRowClick={(r) => setSubView(r)}
         empty="등록된 과제가 없어요"
       />
 
-      {/* 상세 팝업 — 블로그 포스트형 */}
-      <Modal
-        open={!!detail}
-        onClose={() => setDetail(null)}
-        size="lg"
-        footer={
-          <Button variant="secondary" onClick={() => setDetail(null)}>
-            닫기
-          </Button>
-        }
-      >
-        {detail && (
-          <ArticleView
-            badges={[{ label: '과제', className: 'bg-brand/10 text-brand' }]}
-            title={detail.title}
-            metaItems={[
-              `마감 ${fmt(detail.dueAt)}`,
-              `등록 ${detail.createdAt?.slice(0, 10) ?? '-'}`,
-            ]}
-            body={detail.description}
-            bodyEmptyText="과제 설명이 없습니다."
-          />
-        )}
-      </Modal>
+      {/* 제출 현황 검토 */}
+      {subView && (
+        <SubmissionsModal
+          assignmentId={subView.id}
+          title={subView.title}
+          nameOf={nameOf}
+          onClose={() => setSubView(null)}
+        />
+      )}
 
-      {/* 추가 모달 */}
+      {/* 과제 등록 모달 — 강사식 필드(과목/회차·제목·마감·설명) */}
       <Modal
         open={addOpen}
-        onClose={() => setAddOpen(false)}
-        title="과제 추가"
+        onClose={() => {
+          setAddOpen(false)
+          resetForm()
+        }}
+        title="과제 등록"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setAddOpen(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setAddOpen(false)
+                resetForm()
+              }}
+            >
               취소
             </Button>
             <Button onClick={onAdd} disabled={createA.isPending}>
-              추가
+              등록
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-3">
+          <label
+            className="text-fg-subtle text-xs font-medium"
+            htmlFor="as-subject"
+          >
+            과목/회차
+          </label>
+          <input
+            id="as-subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="예: 백엔드 5회차"
+            className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+          />
           <label
             className="text-fg-subtle text-xs font-medium"
             htmlFor="as-title"
@@ -211,7 +417,7 @@ export function AssignmentsPane({
             id="as-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="예: 1주차 미니프로젝트"
+            placeholder="예: JPA 연관관계 매핑 실습"
             className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
           />
           <label
@@ -224,7 +430,7 @@ export function AssignmentsPane({
             id="as-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="과제 안내·제출 조건"
+            placeholder="과제 안내·제출 조건(최대 5,000자)"
             rows={4}
             className="border-border focus:border-brand text-fg rounded-lg border bg-white px-3 py-2 text-sm outline-none"
           />
@@ -237,8 +443,8 @@ export function AssignmentsPane({
           <input
             id="as-due"
             type="date"
-            value={dueAt}
-            onChange={(e) => setDueAt(e.target.value)}
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
             className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
           />
         </div>

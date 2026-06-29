@@ -7,6 +7,11 @@ export const adminEducationKeys = {
     [...adminEducationKeys.all, 'detail', courseId, cohortId] as const,
   assignments: (courseId: string, cohortId: string) =>
     [...adminEducationKeys.all, 'assignments', courseId, cohortId] as const,
+  // 강사/운영 공용 과제(/instructor/assignments) — 기수 스코프
+  cohortAssignments: (cohortId: string) =>
+    [...adminEducationKeys.all, 'ia', cohortId] as const,
+  assignmentSubmissions: (assignmentId: string) =>
+    [...adminEducationKeys.all, 'ia-sub', assignmentId] as const,
   resumes: (courseId: string, cohortId: string) =>
     [...adminEducationKeys.all, 'resumes', courseId, cohortId] as const,
   resumeDetail: (courseId: string, cohortId: string, resumeId: string) =>

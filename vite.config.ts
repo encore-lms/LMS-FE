@@ -34,6 +34,18 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 과제 탭 — 운영 과제 관리(/admin/assignments) learning-service 실연동.
+      '/api/admin/assignments': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // 수강생 과제 목록·상세·제출 learning-service 실연동.
+      '/api/student/course/assignments': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 과정 기능 플래그(메뉴 토글 반영)도 learning-service(:8082) 실연동.
       // 그 외 /api/student/* 는 MSW mock 유지(이 경로만 핸들러 없어 bypass → 프록시).
       '/api/student/course-features': {

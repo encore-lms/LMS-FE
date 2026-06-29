@@ -2,9 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { adminEducationKeys } from './queryKeys'
 import type {
+  AssignmentFormDetail,
   AssignmentItem,
+  AssignmentSubmissionsData,
   CourseDetail,
   EducationOverview,
+  InstructorAssignmentList,
   ResumeDetail,
   ResumeRow,
 } from './types'
@@ -93,6 +96,93 @@ export function useDeleteAssignment() {
     onSuccess: (_d, { courseId, cohortId }) =>
       queryClient.invalidateQueries({
         queryKey: adminEducationKeys.assignments(courseId, cohortId),
+      }),
+  })
+}
+
+// ── 강사/운영 공용 과제(/instructor/assignments) — 과제 탭(선택 기수 스코프) ──
+export function useCohortAssignments(cohortId?: string | null) {
+  return useQuery({
+    queryKey: adminEducationKeys.cohortAssignments(cohortId ?? ''),
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<InstructorAssignmentList>('/admin/assignments', {
+          cohortId: cohortId ?? undefined,
+        })
+        .then((r) => r.data),
+  })
+}
+
+export interface SaveInstructorAssignmentInput {
+  cohortId: string
+  subject?: string
+  title: string
+  dueAt?: string // "yyyy-MM-dd HH:mm"
+  description?: string
+}
+export function useCreateInstructorAssignment() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    AssignmentFormDetail,
+    Error,
+    SaveInstructorAssignmentInput
+  >({
+    mutationFn: (input) =>
+      apiClient
+        .post<AssignmentFormDetail>('/admin/assignments', input)
+        .then((r) => r.data),
+    onSuccess: (_d, { cohortId }) =>
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.cohortAssignments(cohortId),
+      }),
+  })
+}
+
+export function useDeleteInstructorAssignment(cohortId: string) {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (assignmentId) =>
+      apiClient
+        .delete<void>(`/admin/assignments/${assignmentId}`)
+        .then(() => undefined),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.cohortAssignments(cohortId),
+      }),
+  })
+}
+
+export function useAssignmentSubmissions(assignmentId: string | null) {
+  return useQuery({
+    queryKey: adminEducationKeys.assignmentSubmissions(assignmentId ?? ''),
+    enabled: !!assignmentId,
+    queryFn: () =>
+      apiClient
+        .get<AssignmentSubmissionsData>(
+          `/admin/assignments/${assignmentId}/submissions`,
+        )
+        .then((r) => r.data),
+  })
+}
+
+export function useChangeSubmissionStatus(assignmentId: string) {
+  const queryClient = useQueryClient()
+  return useMutation<
+    void,
+    Error,
+    { submissionId: string; status: string; feedback?: string }
+  >({
+    mutationFn: ({ submissionId, status, feedback }) =>
+      apiClient
+        .patch<void>(
+          `/admin/assignments/${assignmentId}/submissions/${submissionId}`,
+          { status, feedback },
+        )
+        .then(() => undefined),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.assignmentSubmissions(assignmentId),
       }),
   })
 }

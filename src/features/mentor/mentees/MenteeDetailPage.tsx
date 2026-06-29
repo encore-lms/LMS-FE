@@ -258,6 +258,10 @@ export default function MenteeDetailPage() {
             일지의 참석 이력만 표시. HRD-Net 출결·학생 개인 마이 프로필·다른
             멘토 평가는 노출되지 않습니다.
           </p>
+          <p className="text-fg-muted text-xs leading-[18px]">
+            원문 평가는 수강생에게 비공개이며, 외부(증명서) 공개는 증명서 전체
+            공개 토글 + 인증 완료 + 최신화 스냅샷 기준을 따릅니다.
+          </p>
         </div>
       </section>
 

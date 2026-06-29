@@ -1,6 +1,46 @@
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import { cn } from '@/shared/lib/cn'
 import type { QuestionType, QuizQuestion } from '@/shared/types'
+
+// 빈칸 채우기 인라인 입력 — 본문의 ___ 를 입력칸으로 치환. 빈칸별 값은 부모에 \n 으로 보관.
+function FillBlankInline({
+  prompt,
+  value,
+  onChange,
+}: {
+  prompt: string
+  value: string | undefined
+  onChange: (value: string) => void
+}) {
+  const parts = prompt.split('___')
+  const blanks = Math.max(0, parts.length - 1)
+  const vals = (value ?? '').split('\n')
+  const setBlank = (i: number, v: string) => {
+    const next = Array.from({ length: blanks }, (_, j) =>
+      j === i ? v : (vals[j] ?? ''),
+    )
+    onChange(next.join('\n'))
+  }
+  return (
+    <p className="text-fg text-[18px] leading-[44px]">
+      {parts.map((part, i) => (
+        <Fragment key={i}>
+          {part}
+          {i < blanks && (
+            <input
+              type="text"
+              aria-label={`빈칸 ${i + 1}`}
+              value={vals[i] ?? ''}
+              onChange={(e) => setBlank(i, e.target.value)}
+              placeholder={`(${i + 1})`}
+              className="border-brand/50 focus:border-brand text-fg bg-brand/5 mx-1.5 inline-block w-32 rounded-md border-b-2 px-2 py-1 text-center text-[15px] outline-none"
+            />
+          )}
+        </Fragment>
+      ))}
+    </p>
+  )
+}
 
 // 퀴즈 응시 본문 문제 카드 — 칩(번호/배점/유형/난이도) + 발문 + 보기(객관식) 또는 입력(단답/서술).
 const TYPE_LABEL: Record<QuestionType, string> = {
@@ -70,53 +110,65 @@ export function QuestionCard({
         )}
       </div>
 
-      <p className="text-fg text-[18px] leading-[30px]">{question.prompt}</p>
-
-      {isMultiple && question.choices ? (
-        <div className="flex flex-col gap-3">
-          {question.choices.map((choice, i) => {
-            const selected = value === choice.id
-            return (
-              <button
-                key={choice.id}
-                type="button"
-                onClick={() => onChange(choice.id)}
-                className={cn(
-                  'flex items-center gap-3.5 rounded-xl border-2 px-5 py-4 text-left',
-                  selected
-                    ? 'border-brand bg-brand/10'
-                    : 'border-border bg-surface',
-                )}
-              >
-                <span
-                  className={cn(
-                    'flex size-5 shrink-0 items-center justify-center rounded-[10px] border-2',
-                    selected ? 'border-brand bg-brand' : 'border-fg-subtle',
-                  )}
-                >
-                  {selected && <span className="size-2 rounded bg-white" />}
-                </span>
-                <span
-                  className={cn(
-                    'text-[14px] font-semibold',
-                    selected ? 'text-brand' : 'text-fg-muted',
-                  )}
-                >
-                  {i + 1}.
-                </span>
-                <span className="text-fg text-[15px]">{choice.label}</span>
-              </button>
-            )
-          })}
-        </div>
-      ) : (
-        <textarea
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value)}
-          rows={question.type === 'short_answer' ? 2 : 6}
-          placeholder="답안을 입력하세요"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-xl border px-4 py-3 text-[15px] outline-none"
+      {question.type === 'fill_blank' ? (
+        // 빈칸 채우기 — 본문의 ___ 를 인라인 입력칸으로(이전 LMS 방식). 빈칸별 값은 \n 으로 보관.
+        <FillBlankInline
+          prompt={question.prompt}
+          value={value}
+          onChange={onChange}
         />
+      ) : (
+        <>
+          <p className="text-fg text-[18px] leading-[30px]">
+            {question.prompt}
+          </p>
+          {isMultiple && question.choices ? (
+            <div className="flex flex-col gap-3">
+              {question.choices.map((choice, i) => {
+                const selected = value === choice.id
+                return (
+                  <button
+                    key={choice.id}
+                    type="button"
+                    onClick={() => onChange(choice.id)}
+                    className={cn(
+                      'flex items-center gap-3.5 rounded-xl border-2 px-5 py-4 text-left',
+                      selected
+                        ? 'border-brand bg-brand/10'
+                        : 'border-border bg-surface',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'flex size-5 shrink-0 items-center justify-center rounded-[10px] border-2',
+                        selected ? 'border-brand bg-brand' : 'border-fg-subtle',
+                      )}
+                    >
+                      {selected && <span className="size-2 rounded bg-white" />}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-[14px] font-semibold',
+                        selected ? 'text-brand' : 'text-fg-muted',
+                      )}
+                    >
+                      {i + 1}.
+                    </span>
+                    <span className="text-fg text-[15px]">{choice.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <textarea
+              value={value ?? ''}
+              onChange={(e) => onChange(e.target.value)}
+              rows={2}
+              placeholder="답안을 입력하세요"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-xl border px-4 py-3 text-[15px] outline-none"
+            />
+          )}
+        </>
       )}
 
       {isMultiple && question.choices && (

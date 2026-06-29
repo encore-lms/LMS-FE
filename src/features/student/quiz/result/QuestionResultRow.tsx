@@ -57,30 +57,63 @@ export function QuestionResultRow({
           <p className="text-fg text-[14px] leading-[22px] font-semibold">
             {answer.prompt}
           </p>
-          <div className="mt-1 flex gap-3">
-            <span className="text-fg-subtle w-12 shrink-0 text-[11px] font-medium">
-              내 답안
-            </span>
-            <span
-              className={cn(
-                'text-[13px]',
-                answer.pending
-                  ? 'text-fg-muted'
-                  : answer.isCorrect
-                    ? 'text-fg'
-                    : 'text-danger',
-              )}
-            >
-              {answerText(answer.answer)}
-            </span>
-          </div>
-          {correctKey && (
-            <div className="flex gap-3">
-              <span className="text-fg-subtle w-12 shrink-0 text-[11px] font-medium">
-                정답
-              </span>
-              <span className="text-brand text-[13px]">{correctKey}</span>
+          {answer.answer.kind === 'fill_blank' ? (
+            // 빈칸별 내 답안/정답 격자(이전 LMS 방식)
+            <div className="mt-1 flex flex-col gap-1.5">
+              {answer.answer.answers.map((mine, i) => {
+                const correctArr = Array.isArray(answer.correctAnswerKey)
+                  ? answer.correctAnswerKey
+                  : []
+                const correct = correctArr[i] ?? ''
+                const okBlank =
+                  mine.trim().toLowerCase() === correct.trim().toLowerCase() &&
+                  correct !== ''
+                return (
+                  <div key={i} className="flex items-center gap-2 text-[13px]">
+                    <span className="text-fg-subtle w-12 shrink-0 text-[11px] font-medium">
+                      빈칸 {i + 1}
+                    </span>
+                    <span className={okBlank ? 'text-fg' : 'text-danger'}>
+                      {mine.trim() || '미입력'}
+                    </span>
+                    {correct !== '' && (
+                      <>
+                        <span className="text-fg-subtle">→</span>
+                        <span className="text-brand">{correct}</span>
+                      </>
+                    )}
+                  </div>
+                )
+              })}
             </div>
+          ) : (
+            <>
+              <div className="mt-1 flex gap-3">
+                <span className="text-fg-subtle w-12 shrink-0 text-[11px] font-medium">
+                  내 답안
+                </span>
+                <span
+                  className={cn(
+                    'text-[13px]',
+                    answer.pending
+                      ? 'text-fg-muted'
+                      : answer.isCorrect
+                        ? 'text-fg'
+                        : 'text-danger',
+                  )}
+                >
+                  {answerText(answer.answer) || '미입력'}
+                </span>
+              </div>
+              {correctKey && (
+                <div className="flex gap-3">
+                  <span className="text-fg-subtle w-12 shrink-0 text-[11px] font-medium">
+                    정답
+                  </span>
+                  <span className="text-brand text-[13px]">{correctKey}</span>
+                </div>
+              )}
+            </>
           )}
           {answer.feedback && (
             <div className="bg-accent-bg mt-2 flex items-start gap-4 rounded-[10px] px-3.5 py-2.5">

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   InstructorQuizListData,
@@ -8,14 +8,61 @@ import type {
   GradingDetail,
 } from '@/shared/types'
 
-// 강사 퀴즈 Main Flow (/instructor/quizzes*) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
-export function useInstructorQuizzes() {
+// 강사/운영 퀴즈 Main Flow (/instructor/quizzes*) — 실 BE. cohortId 지정 시 해당 기수만.
+export function useInstructorQuizzes(cohortId?: string | null) {
   return useQuery({
-    queryKey: instructorKeys.quizzes(),
+    queryKey: [...instructorKeys.quizzes(), cohortId ?? 'all'],
     queryFn: () =>
       apiClient
-        .get<InstructorQuizListData>('/instructor/quizzes')
+        .get<InstructorQuizListData>('/instructor/quizzes', {
+          cohortId: cohortId ?? undefined,
+        })
         .then((r) => r.data),
+  })
+}
+
+export interface SaveQuizInput {
+  cohortId: string
+  title: string
+  description?: string
+  category?: string
+  gradingMode: string
+  resultReveal: string
+  timeLimitMin?: number
+  allowRetake: boolean
+  shuffleQuestions: boolean
+  shuffleChoices: boolean
+  totalPoints: number
+  visibility: string
+  startAt?: string
+  endAt?: string
+}
+// 생성(POST) 또는 수정(PATCH, quizId 지정)
+export function useSaveQuiz(quizId?: string) {
+  const qc = useQueryClient()
+  return useMutation<QuizFormDetail, Error, SaveQuizInput>({
+    mutationFn: (input) =>
+      (quizId
+        ? apiClient.patch<QuizFormDetail>(
+            `/instructor/quizzes/${quizId}`,
+            input,
+          )
+        : apiClient.post<QuizFormDetail>('/instructor/quizzes', input)
+      ).then((r) => r.data),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: instructorKeys.quizzes() }),
+  })
+}
+
+export function useDeleteQuiz() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (quizId) =>
+      apiClient
+        .delete<void>(`/instructor/quizzes/${quizId}`)
+        .then(() => undefined),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: instructorKeys.quizzes() }),
   })
 }
 

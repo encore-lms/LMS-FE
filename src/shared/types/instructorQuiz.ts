@@ -31,8 +31,10 @@ export type ResultRevealPolicy = 'after_grading' | 'immediate' | 'after_close'
 
 export interface QuizFormDetail {
   id: string
+  /** 실 기수 ID — 폼 선택값(생성/수정 payload). */
+  cohortId: string
   title: string
-  cohortOption: string // 'DA 4기 · 알고리즘'
+  cohortOption: string // 기수 라벨
   description: string
   startAt: string // 'YYYY-MM-DD HH:mm'
   endAt: string

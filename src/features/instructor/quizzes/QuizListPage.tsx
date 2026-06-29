@@ -15,7 +15,7 @@ import type {
   InstructorQuizRow,
   QuizVisibility,
 } from '@/shared/types'
-import { useInstructorQuizzes } from '../api/quizzes'
+import { useDeleteQuiz, useInstructorQuizzes } from '../api/quizzes'
 import { useQuizTemplates } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 
@@ -29,13 +29,17 @@ const COHORTS = ['전체', 'DA 4기', 'FE 7기'] as const
 // embedded=true면 과정·기수·교과목 '퀴즈' 탭에 임베드(자체 헤더·패딩 생략).
 export default function QuizListPage({
   embedded = false,
+  cohortId = null,
 }: {
   embedded?: boolean
+  /** 임베드(과정·기수·교과목 탭) 시 선택 기수로 목록 스코프 */
+  cohortId?: string | null
 }) {
   const navigate = useNavigate()
   const base = useQuizBasePath()
   const toast = useToast()
-  const { data, isPending, isError, refetch } = useInstructorQuizzes()
+  const { data, isPending, isError, refetch } = useInstructorQuizzes(cohortId)
+  const deleteQuiz = useDeleteQuiz()
   const [q, setQ] = useState('')
   const [cohort, setCohort] = useState<(typeof COHORTS)[number]>('전체')
   const [mode, setMode] = useState<ModeFilter>('all')
@@ -190,7 +194,10 @@ export default function QuizListPage({
               }
               onClick={(e) => {
                 e.stopPropagation()
-                toast.success(`${r.title} 삭제 (mock)`)
+                deleteQuiz.mutate(r.id, {
+                  onSuccess: () => toast.success(`${r.title} 삭제`),
+                  onError: () => toast.danger('삭제에 실패했어요'),
+                })
               }}
               className={cn(
                 'rounded-md border px-2 py-1 text-xs font-medium',

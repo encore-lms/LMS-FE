@@ -14,8 +14,11 @@ import {
   useQuizQuestions,
   useQuizSubmissions,
   useGradingDetail,
+  useSaveQuiz,
+  useDeleteQuiz,
 } from '../api/quizzes'
 import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
+import { useAssignmentCohortOptions } from '../api/assignments'
 import type {
   InstructorQuizListData,
   QuizFormDetail,
@@ -26,6 +29,7 @@ import type {
 
 vi.mock('../api/quizzes')
 vi.mock('../api/quizTemplates')
+vi.mock('../api/assignments')
 
 const quizList: InstructorQuizListData = {
   total: 14,
@@ -62,6 +66,7 @@ const quizList: InstructorQuizListData = {
 
 const quizDetail: QuizFormDetail = {
   id: 'quiz-algo-3',
+  cohortId: 'c1',
   title: '알고리즘 기초 #3',
   cohortOption: 'DA 4기 · 알고리즘',
   description: '재귀·동적 계획법·그리디 기본 개념 확인.',
@@ -240,6 +245,14 @@ function mockAll() {
   vi.mocked(useQuizTemplateDetail).mockReturnValue(
     ok(undefined) as unknown as ReturnType<typeof useQuizTemplateDetail>,
   )
+  vi.mocked(useAssignmentCohortOptions).mockReturnValue(
+    ok([{ cohortId: 'c1', label: 'DA 4기' }]) as unknown as ReturnType<
+      typeof useAssignmentCohortOptions
+    >,
+  )
+  const mut = () => ({ mutate: vi.fn(), isPending: false }) as unknown as never
+  vi.mocked(useSaveQuiz).mockReturnValue(mut())
+  vi.mocked(useDeleteQuiz).mockReturnValue(mut())
 }
 
 function renderAt(path: string, overrideMocks?: () => void) {

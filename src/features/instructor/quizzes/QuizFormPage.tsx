@@ -16,18 +16,11 @@ import type {
   QuizVisibility,
   ResultRevealPolicy,
 } from '@/shared/types'
-import { useInstructorQuizDetail } from '../api/quizzes'
+import { useInstructorQuizDetail, useSaveQuiz } from '../api/quizzes'
+import { useAssignmentCohortOptions } from '../api/assignments'
 import { useQuizTemplateDetail } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { quizSchema, type QuizInput } from './quiz.schema'
-
-const COHORT_OPTIONS = [
-  'DA 4기 · 알고리즘',
-  'DA 4기 · 데이터분석',
-  'DA 4기 · SQL',
-  'FE 7기 · JavaScript',
-  'FE 7기 · React',
-]
 
 const REVEAL_OPTIONS: { value: ResultRevealPolicy; label: string }[] = [
   { value: 'after_grading', label: '강사 채점 완료 후 학생에게 공개' },
@@ -158,16 +151,21 @@ export default function QuizFormPage() {
     '기본 정보 · 응시 정책 · 채점 정책 · 문제 정책 · 공개 설정',
   )
 
+  const { data: cohortOptions } = useAssignmentCohortOptions()
+  const saveQuiz = useSaveQuiz(quizId)
+
   const {
     register,
     control,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<QuizInput>({
     resolver: zodResolver(quizSchema),
     // startAt/endAt 은 Controller(DateTimePicker)라 빈 문자열로 초기화 → 미입력 시 min(1) 메시지 노출
-    defaultValues: { cohortOption: COHORT_OPTIONS[0], startAt: '', endAt: '' },
+    defaultValues: { cohortId: '', startAt: '', endAt: '' },
   })
 
   // 수정 모드 — 상세 도착 시 폼·라디오·토글 동기화.
@@ -175,7 +173,7 @@ export default function QuizFormPage() {
     if (!data) return
     reset({
       title: data.title,
-      cohortOption: data.cohortOption,
+      cohortId: data.cohortId,
       description: data.description,
       startAt: data.startAt,
       endAt: data.endAt,
@@ -190,22 +188,24 @@ export default function QuizFormPage() {
     setVisibility(data.visibility)
   }, [data, reset])
 
-  // 생성 모드 — 템플릿 프리필. 제목·설명·배점·시간·채점/문제 정책을 템플릿 값으로 채운다.
-  // 템플릿당 1회만(toast 중복·사용자 수정 덮어쓰기 방지).
+  // 생성 모드 — 기수 옵션 로드되면 첫 기수 기본 선택(미선택 시).
+  useEffect(() => {
+    if (!isEdit && cohortOptions && cohortOptions.length > 0) {
+      if (!getValues('cohortId'))
+        setValue('cohortId', cohortOptions[0].cohortId)
+    }
+  }, [isEdit, cohortOptions, getValues, setValue])
+
+  // 생성 모드 — 템플릿 프리필(제목·설명·배점·시간·정책). cohortId는 보존(setValue로 개별 적용).
   const prefilledRef = useRef<string | null>(null)
   useEffect(() => {
     if (isEdit || !template) return
     if (prefilledRef.current === template.id) return
     prefilledRef.current = template.id
-    reset({
-      title: template.name,
-      cohortOption: COHORT_OPTIONS[0],
-      description: template.description,
-      startAt: '',
-      endAt: '',
-      timeLimitMin: template.defaultTimeLimitMin,
-      totalPoints: template.totalPoints,
-    })
+    setValue('title', template.name)
+    setValue('description', template.description)
+    setValue('timeLimitMin', template.defaultTimeLimitMin)
+    setValue('totalPoints', template.totalPoints)
     setGradingMode(template.gradingMode)
     setResultReveal(template.resultReveal)
     setShuffleQuestions(template.shuffleQuestions)
@@ -213,7 +213,7 @@ export default function QuizFormPage() {
     toast.info(
       `'${template.name}' 템플릿을 불러왔어요 (문항 ${template.questionCount} · 만점 ${template.totalPoints})`,
     )
-  }, [isEdit, template, reset, toast])
+  }, [isEdit, template, setValue, toast])
 
   if (isEdit && isPending) {
     return <div className="text-fg-muted p-8">퀴즈 정보를 불러오는 중…</div>
@@ -233,14 +233,36 @@ export default function QuizFormPage() {
 
   const hasSubmissions = isEdit && (data?.submittedCount ?? 0) > 0
 
-  const save = (input: QuizInput, thenQuestions: boolean) => {
-    toast.success(
-      `${input.title} 저장 — ${VISIBILITY_META[visibility].label} (mock)`,
+  const save = (
+    input: QuizInput,
+    thenQuestions: boolean,
+    vis: QuizVisibility,
+  ) => {
+    saveQuiz.mutate(
+      {
+        cohortId: input.cohortId,
+        title: input.title,
+        description: input.description,
+        gradingMode,
+        resultReveal,
+        timeLimitMin: input.timeLimitMin,
+        allowRetake,
+        shuffleQuestions,
+        shuffleChoices,
+        totalPoints: input.totalPoints,
+        visibility: vis,
+        startAt: input.startAt,
+        endAt: input.endAt,
+      },
+      {
+        onSuccess: (saved) => {
+          toast.success(`${input.title} 저장 — ${VISIBILITY_META[vis].label}`)
+          if (thenQuestions) navigate(`${base}/${quizId ?? saved.id}/questions`)
+          else navigate(base)
+        },
+        onError: () => toast.danger('저장에 실패했어요'),
+      },
     )
-    if (hasSubmissions)
-      toast.info('정답/배점 변경 시 자동 재채점이 트리거됩니다')
-    if (thenQuestions) navigate(`${base}/${quizId ?? 'quiz-new'}/questions`)
-    else navigate(base)
   }
 
   return (
@@ -280,13 +302,16 @@ export default function QuizFormPage() {
             <select
               aria-label="대상 과정/기수"
               className="border-border focus:border-brand text-fg h-[52px] rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none"
-              {...register('cohortOption')}
+              {...register('cohortId')}
             >
-              {COHORT_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {(cohortOptions ?? []).map((c) => (
+                <option key={c.cohortId} value={c.cohortId}>
+                  {c.label}
                 </option>
               ))}
+              {(cohortOptions ?? []).length === 0 && (
+                <option value="">기수 없음</option>
+              )}
             </select>
           </label>
         </div>
@@ -475,7 +500,7 @@ export default function QuizFormPage() {
             className="h-10 text-sm"
             onClick={handleSubmit((input) => {
               setVisibility('draft')
-              save(input, false)
+              save(input, false, 'draft')
             })}
           >
             임시저장으로 저장
@@ -483,7 +508,8 @@ export default function QuizFormPage() {
           <Button
             type="button"
             className="h-10 text-sm"
-            onClick={handleSubmit((input) => save(input, true))}
+            disabled={saveQuiz.isPending}
+            onClick={handleSubmit((input) => save(input, true, visibility))}
           >
             저장 + 문제 관리 →
           </Button>

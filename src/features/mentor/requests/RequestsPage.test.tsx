@@ -40,7 +40,7 @@ beforeEach(() => {
 })
 
 describe('RequestsPage', () => {
-  it('KPI·필터 탭·진행 중 요청 카드·정책 배너를 렌더한다', () => {
+  it('KPI·필터 탭·진행 중 요청 카드를 렌더한다', () => {
     mockList({
       data: buildMentoringRequestsData(),
       isPending: false,
@@ -68,11 +68,6 @@ describe('RequestsPage', () => {
       'href',
       '/mentor/mentoring-requests/req_rec_6?mode=reject',
     )
-    // 예약 정책 요약 — Figma 5열 원문
-    expect(screen.getByText('예약 정책 요약')).toBeInTheDocument()
-    expect(screen.getByText('팀 단위만 (개인 ✕)')).toBeInTheDocument()
-    expect(screen.getByText('팀당 진행 중 1건')).toBeInTheDocument()
-    expect(screen.getByText('예약 시간 반영 ✕ (일지 기준)')).toBeInTheDocument()
   })
 
   it('상태 탭·검색으로 목록을 거른다', async () => {

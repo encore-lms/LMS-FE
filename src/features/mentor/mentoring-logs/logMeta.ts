@@ -41,18 +41,6 @@ export const LOG_SUBMITTED_TOAST =
 export const LOG_DRAFT_SAVED_TOAST =
   '임시 저장했어요. 작성 중 일지는 인정 시간에 반영되지 않습니다.'
 
-// 일지 정책 요약 배너 — Figma 5열 원문(2553:4040). 비용·정산 표현 금지 경계 그대로.
-export const LOG_POLICY_ITEMS = [
-  { label: '작성', value: '멘토만 작성 · 팀 단위' },
-  { label: '수강생 노출', value: '완료 여부·일정/장소 요약만' },
-  { label: '시간 차감', value: '실제 진행 시간 기준' },
-  { label: '초과 처리', value: '잔여 시간까지만 인정' },
-  {
-    label: '유효',
-    value: '제출 즉시 자동 유효 · 수정 요청 시 전체 수정 후 재제출',
-  },
-] as const
-
 // 액션바 정책 캡션 — Figma 원문은 '제출 즉시 제출 즉시 자동 유효'로 중복(카피 버그 추정,
 // openQuestion) — 중복 제거본을 사용한다.
 export const LOG_SUBMIT_POLICY_CAPTION =

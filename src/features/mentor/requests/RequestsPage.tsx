@@ -6,7 +6,6 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  Info,
   Search,
   Timer,
 } from 'lucide-react'
@@ -29,16 +28,6 @@ import {
   matchRequestTab,
   type MentoringRequestTab,
 } from './requestMeta'
-
-// 예약 정책 요약 배너 — Figma 5열 원문(2553:3820). 비용·정산 표현 금지, '활동 인정 요건' 경계
-// 그대로: 누적/인정 시간에 예약 시간 미반영(일지 기준).
-const POLICY_ITEMS = [
-  { label: '요청 단위', value: '팀 단위만 (개인 ✕)' },
-  { label: '중복 요청', value: '팀당 진행 중 1건' },
-  { label: '수강생 취소', value: '확정 전까지 가능' },
-  { label: '확정 후 변경', value: '멘토만 가능' },
-  { label: '누적 / 인정 시간', value: '예약 시간 반영 ✕ (일지 기준)' },
-]
 
 const PERIOD_OPTIONS = [
   { value: '7', label: '최근 7일' },
@@ -249,27 +238,6 @@ export default function RequestsPage() {
         />
       ))}
       {visible.length === 0 && <Empty title="조건에 맞는 요청이 없어요" />}
-
-      {/* 예약 정책 요약 — info 틴트(#e0edfc→info-bg) 배너, 5열 + 세로 구분선 */}
-      <section className="bg-info-bg border-info rounded-2xl border p-5">
-        <div className="flex items-center gap-2">
-          <Info className="text-info h-4 w-4" />
-          <h3 className="text-fg text-sm font-bold">예약 정책 요약</h3>
-        </div>
-        <dl className="divide-info/30 mt-3.5 flex flex-col gap-3 sm:flex-row sm:gap-0 sm:divide-x">
-          {POLICY_ITEMS.map((item) => (
-            <div
-              key={item.label}
-              className="flex flex-1 flex-col gap-1 sm:px-4 sm:first:pl-0 sm:last:pr-0"
-            >
-              <dt className="text-fg-subtle text-[10px] font-medium tracking-[0.6px]">
-                {item.label}
-              </dt>
-              <dd className="text-fg text-xs font-bold">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
 
       {/* /:requestId 응답 모달 — 목록 상태(탭·검색) 유지한 채 오버레이 */}
       <Suspense fallback={null}>

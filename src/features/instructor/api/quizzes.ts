@@ -78,7 +78,7 @@ export function useInstructorQuizDetail(quizId: string | null) {
 }
 
 export interface SaveQuizQuestionInput {
-  type: 'multiple_choice' | 'short_answer' | 'fill_blank'
+  type: 'multiple_choice' | 'short_answer' | 'fill_blank' | 'essay'
   prompt: string
   choices?: string[]
   answerIndex?: number
@@ -134,6 +134,34 @@ export function useQuizSubmissions(quizId: string) {
       apiClient
         .get<QuizSubmissionsData>(`/instructor/quizzes/${quizId}/submissions`)
         .then((r) => r.data),
+  })
+}
+
+export interface SaveGradingInput {
+  items: {
+    questionId: string
+    score: number | null
+    feedback: string
+    feedbackVisible: boolean
+  }[]
+}
+/** 수동 채점 저장(PATCH) — 점수/피드백 반영 후 갱신된 채점 상세 반환. */
+export function useSaveGrading(quizId: string, submissionId: string) {
+  const qc = useQueryClient()
+  return useMutation<GradingDetail, Error, SaveGradingInput>({
+    mutationFn: (input) =>
+      apiClient
+        .patch<GradingDetail>(
+          `/instructor/quizzes/${quizId}/submissions/${submissionId}/grade`,
+          input,
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: instructorKeys.quizGrading(quizId, submissionId),
+      })
+      qc.invalidateQueries({ queryKey: instructorKeys.quizSubmissions(quizId) })
+    },
   })
 }
 

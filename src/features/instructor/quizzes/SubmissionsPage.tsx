@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { QuizSubmissionRow } from '@/shared/types'
+import { useStudentAccounts } from '@/features/admin/api/students'
 import { useQuizSubmissions } from '../api/quizzes'
 
 type StatusFilter = 'all' | 'manual_pending' | 'not_submitted' | 'done'
@@ -32,6 +33,13 @@ export default function SubmissionsPage() {
   )
 
   const rows = useMemo(() => data?.rows ?? [], [data])
+  const { data: students } = useStudentAccounts()
+  // 제출자 userId → 이름(학생 계정 join). BE는 studentUserId만 주고 이름은 FE에서 결합.
+  const nameOf = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const s of students?.items ?? []) map.set(s.id, s.name)
+    return (userId: string) => map.get(userId) ?? '수강생'
+  }, [students])
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -44,10 +52,11 @@ export default function SubmissionsPage() {
         !(r.gradingState === 'done' || r.gradingState === 'auto_done')
       )
         return false
-      if (needle && !r.studentName.toLowerCase().includes(needle)) return false
+      if (needle && !nameOf(r.studentUserId).toLowerCase().includes(needle))
+        return false
       return true
     })
-  }, [rows, q, filter])
+  }, [rows, q, filter, nameOf])
 
   if (isPending) {
     return <div className="text-fg-muted p-8">제출 현황을 불러오는 중…</div>
@@ -83,7 +92,9 @@ export default function SubmissionsPage() {
       header: '수강생',
       cell: (r) => (
         <div>
-          <p className="text-fg text-sm font-medium">{r.studentName}</p>
+          <p className="text-fg text-sm font-medium">
+            {nameOf(r.studentUserId)}
+          </p>
           <p className="text-fg-subtle text-xs">{r.cohortLabel}</p>
         </div>
       ),

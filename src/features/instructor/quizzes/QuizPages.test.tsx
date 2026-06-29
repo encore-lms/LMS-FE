@@ -14,11 +14,13 @@ import {
   useQuizQuestions,
   useQuizSubmissions,
   useGradingDetail,
+  useSaveGrading,
   useSaveQuiz,
   useDeleteQuiz,
 } from '../api/quizzes'
 import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
 import { useAssignmentCohortOptions } from '../api/assignments'
+import { useStudentAccounts } from '@/features/admin/api/students'
 import type {
   InstructorQuizListData,
   QuizFormDetail,
@@ -30,6 +32,7 @@ import type {
 vi.mock('../api/quizzes')
 vi.mock('../api/quizTemplates')
 vi.mock('../api/assignments')
+vi.mock('@/features/admin/api/students')
 
 const quizList: InstructorQuizListData = {
   total: 14,
@@ -140,6 +143,7 @@ const submissions: QuizSubmissionsData = {
   rows: [
     {
       id: 'sub-1',
+      studentUserId: 'u-1',
       studentName: '박지훈',
       cohortLabel: 'FE 7기',
       submitted: true,
@@ -152,6 +156,7 @@ const submissions: QuizSubmissionsData = {
     },
     {
       id: 'sub-4',
+      studentUserId: 'u-4',
       studentName: '김민준',
       cohortLabel: 'DA 4기',
       submitted: true,
@@ -164,6 +169,7 @@ const submissions: QuizSubmissionsData = {
     },
     {
       id: 'sub-6',
+      studentUserId: 'u-6',
       studentName: '송하늘',
       cohortLabel: 'DA 4기',
       submitted: false,
@@ -179,6 +185,7 @@ const submissions: QuizSubmissionsData = {
 
 const grading: GradingDetail = {
   submissionId: 'sub-1',
+  studentUserId: 'u-1',
   studentName: '박지훈',
   cohortLabel: 'FE 7기',
   quizTitle: '알고리즘 기초 #3',
@@ -253,6 +260,17 @@ function mockAll() {
   const mut = () => ({ mutate: vi.fn(), isPending: false }) as unknown as never
   vi.mocked(useSaveQuiz).mockReturnValue(mut())
   vi.mocked(useDeleteQuiz).mockReturnValue(mut())
+  vi.mocked(useSaveGrading).mockReturnValue(mut())
+  vi.mocked(useStudentAccounts).mockReturnValue(
+    ok({
+      items: [
+        { id: 'u-1', name: '박지훈', studentUuid: 'u-1' },
+        { id: 'u-4', name: '김민준', studentUuid: 'u-4' },
+        { id: 'u-6', name: '송하늘', studentUuid: 'u-6' },
+      ],
+      total: 3,
+    }) as unknown as ReturnType<typeof useStudentAccounts>,
+  )
 }
 
 function renderAt(path: string, overrideMocks?: () => void) {

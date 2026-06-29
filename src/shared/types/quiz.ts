@@ -5,7 +5,11 @@
 import type { Role } from './user'
 
 export type GradingMode = 'AUTO' | 'MANUAL' | 'MIXED'
-export type QuestionType = 'multiple_choice' | 'short_answer' | 'fill_blank'
+export type QuestionType =
+  | 'multiple_choice'
+  | 'short_answer'
+  | 'fill_blank'
+  | 'essay'
 export type GradingType = 'AUTO' | 'MANUAL'
 export type AttemptStatus =
   | 'in_progress'

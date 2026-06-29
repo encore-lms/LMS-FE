@@ -118,7 +118,7 @@ export default function QuizTakePage() {
       let payload: AnswerPayload
       if (q.type === 'multiple_choice')
         payload = { kind: 'multiple_choice', selectedChoiceId: v }
-      else if (q.type === 'short_answer')
+      else if (q.type === 'short_answer' || q.type === 'essay')
         payload = { kind: 'short_answer', text: v }
       else
         payload = {

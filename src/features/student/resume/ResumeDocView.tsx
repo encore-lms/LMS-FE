@@ -117,7 +117,14 @@ function DocItemSection({
   )
 }
 
-export function ResumeDocView({ data }: { data: Partial<ResumeDocData> }) {
+export function ResumeDocView({
+  data,
+  bordered = true,
+}: {
+  data: Partial<ResumeDocData>
+  /** 문서 카드 외곽선 — 운영 상세 페이지처럼 자체 여백이 있으면 false로 끈다 */
+  bordered?: boolean
+}) {
   const b = data.basicInfo ?? EMPTY_BASIC
   const skills = data.skills ?? []
   const educations = data.educations ?? []
@@ -154,7 +161,12 @@ export function ResumeDocView({ data }: { data: Partial<ResumeDocData> }) {
   )
 
   return (
-    <div className="resume-print border-border flex flex-col gap-8 rounded-2xl border bg-white p-10">
+    <div
+      className={
+        'resume-print flex flex-col gap-8 rounded-2xl bg-white p-10' +
+        (bordered ? ' border-border border' : '')
+      }
+    >
       <div className="flex flex-col gap-3">
         <h2 className="text-fg text-2xl font-bold">
           {b.name || '(이름 미입력)'}

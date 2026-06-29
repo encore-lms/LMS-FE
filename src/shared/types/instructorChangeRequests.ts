@@ -3,8 +3,18 @@
 
 export type CertReviewTargetType = 'project' | 'troubleshooting'
 
-/** 변경 제안 상태 — 요청 대기 / 검토중 */
-export type ChangeRequestStatus = 'requested' | 'reviewing'
+/** 변경 제안 상태 — 요청 대기 / 검토중 / 승인(종결) / 반려(종결) */
+export type ChangeRequestStatus =
+  | 'requested'
+  | 'reviewing'
+  | 'approved'
+  | 'rejected'
+
+/** 변경 제안 검토 결과 — 승인(사유 없음) / 반려(사유 필수) */
+export type ChangeRequestAction = 'approved' | 'rejected'
+
+/** 재인증 검토 결과 — 재인증 승인(사유 없음) / 보완요청(사유 필수) */
+export type RecertificationAction = 'approved' | 'changes_requested'
 
 /** 변경된 내역 1건 — 접힘 카드에서 이전/변경 값 비교 */
 export interface ChangeDiffItem {

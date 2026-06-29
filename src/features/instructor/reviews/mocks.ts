@@ -82,7 +82,8 @@ const recordReviews: InstructorRecordReviewData = {
 }
 
 // ── §14 프로젝트 검토 (Figma 1422:10276) ──
-const projectReviews: ProjectReviewData = {
+// 모듈 레벨 가변 상태 — 인증/보완 핸들러가 in-memory로 갱신, GET이 읽는다. (새로고침 시 초기화)
+let projectReviews: ProjectReviewData = {
   stats: [
     { label: '인증 요청 대기', value: '7', unit: '건' },
     { label: '보완 중', value: '4', unit: '건' },
@@ -149,7 +150,7 @@ const projectReviews: ProjectReviewData = {
 }
 
 // ── §15 트러블슈팅 검토 (Figma 1422:10543) ──
-const tsReviews: TsReviewData = {
+let tsReviews: TsReviewData = {
   stats: [
     { label: '검토 대기', value: '5', unit: '건' },
     { label: '독립해결 비율', value: '68', unit: '%' },
@@ -227,6 +228,33 @@ const tsReviews: TsReviewData = {
   ],
 }
 
+// 인증/보완 액션 본문 — certify(사유 없음) / requestChanges(사유 필수).
+type ReviewAction =
+  | { action: 'certify' }
+  | { action: 'requestChanges'; reason: string }
+
+// 프로젝트 카운트 재계산 — requested/supplementing/certified 분포.
+function recountProjects(
+  rows: ProjectReviewData['rows'],
+): ProjectReviewData['counts'] {
+  return {
+    all: rows.length,
+    requested: rows.filter((r) => r.status === 'requested').length,
+    supplementing: rows.filter((r) => r.status === 'supplementing').length,
+    certified: rows.filter((r) => r.status === 'certified').length,
+  }
+}
+
+// 트러블슈팅 카운트 재계산 — pending/supplementing/certified 분포.
+function recountTs(rows: TsReviewData['rows']): TsReviewData['counts'] {
+  return {
+    all: rows.length,
+    pending: rows.filter((r) => r.status === 'pending').length,
+    supplementing: rows.filter((r) => r.status === 'supplementing').length,
+    certified: rows.filter((r) => r.status === 'certified').length,
+  }
+}
+
 export const handlers = [
   http.get('/api/instructor/records/review', () =>
     ok<InstructorRecordReviewData>(recordReviews),
@@ -236,5 +264,47 @@ export const handlers = [
   ),
   http.get('/api/instructor/troubleshooting/review', () =>
     ok<TsReviewData>(tsReviews),
+  ),
+
+  // §14 프로젝트 인증/보완 — certify: requested→certified / requestChanges: →supplementing(보완 중).
+  http.patch(
+    '/api/instructor/projects/review/:id',
+    async ({ params, request }) => {
+      const id = String(params.id)
+      const body = (await request.json()) as ReviewAction
+      const next: ProjectReviewData['rows'] = projectReviews.rows.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              status: body.action === 'certify' ? 'certified' : 'supplementing',
+            }
+          : r,
+      )
+      projectReviews = {
+        ...projectReviews,
+        rows: next,
+        counts: recountProjects(next),
+      }
+      return HttpResponse.json({ data: null })
+    },
+  ),
+
+  // §15 트러블슈팅 인증/보완 — certify: pending→certified / requestChanges: →supplementing(보완 중).
+  http.patch(
+    '/api/instructor/troubleshooting/review/:id',
+    async ({ params, request }) => {
+      const id = String(params.id)
+      const body = (await request.json()) as ReviewAction
+      const next: TsReviewData['rows'] = tsReviews.rows.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              status: body.action === 'certify' ? 'certified' : 'supplementing',
+            }
+          : r,
+      )
+      tsReviews = { ...tsReviews, rows: next, counts: recountTs(next) }
+      return HttpResponse.json({ data: null })
+    },
   ),
 ]

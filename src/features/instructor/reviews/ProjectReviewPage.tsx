@@ -7,7 +7,12 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import type { ProjectCertReviewStatus, ProjectReviewRow } from '@/shared/types'
-import { useProjectReviews } from '../api/reviews'
+import {
+  useCertifyProject,
+  useProjectReviews,
+  useRequestProjectChanges,
+} from '../api/reviews'
+import { SupplementRequestModal } from '../assignments/SupplementRequestModal'
 import { QueueFilterBar, QueueStats } from './QueueShell'
 
 type StatusFilter = 'all' | ProjectCertReviewStatus
@@ -26,15 +31,26 @@ const STATUS_META: Record<
 export default function ProjectReviewPage() {
   const toast = useToast()
   const { data, isPending, isError, refetch } = useProjectReviews()
+  const certify = useCertifyProject()
+  const requestChanges = useRequestProjectChanges()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
+  // 보완 요청 모달 대상(사유 필수). 단위 테스트의 모킹 쿼리는 refetch가 없어
+  // mutation 성공 시 낙관적 로컬 패치로 상태를 즉시 반영한다.
+  const [supplementTarget, setSupplementTarget] =
+    useState<ProjectReviewRow | null>(null)
+  const [localStatus, setLocalStatus] = useState<
+    Record<string, ProjectCertReviewStatus>
+  >({})
   usePageHeader(
     '프로젝트 검토',
     '발표 후 인증 큐 — 인증 후 변경은 변경 제안 흐름으로만 가능',
   )
 
   const filtered = useMemo(() => {
-    const rows = data?.rows ?? []
+    const rows = (data?.rows ?? []).map((r) =>
+      localStatus[r.id] ? { ...r, status: localStatus[r.id] } : r,
+    )
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
       if (status !== 'all' && r.status !== status) return false
@@ -44,7 +60,33 @@ export default function ProjectReviewPage() {
       }
       return true
     })
-  }, [data, q, status])
+  }, [data, q, status, localStatus])
+
+  const onCertify = (row: ProjectReviewRow) => {
+    certify.mutate(
+      { id: row.id },
+      {
+        onSuccess: () => {
+          setLocalStatus((m) => ({ ...m, [row.id]: 'certified' }))
+          toast.success(`${row.name} 인증 — ProjectCertification 생성`)
+        },
+        onError: () => toast.danger('인증 처리에 실패했어요'),
+      },
+    )
+  }
+
+  const onRequestChanges = (row: ProjectReviewRow, reason: string) => {
+    requestChanges.mutate(
+      { id: row.id, reason },
+      {
+        onSuccess: () => {
+          setLocalStatus((m) => ({ ...m, [row.id]: 'supplementing' }))
+          toast.success(`${row.name} 보완 요청을 보냈어요`)
+        },
+        onError: () => toast.danger('보완 요청에 실패했어요'),
+      },
+    )
+  }
 
   if (isPending) {
     return <div className="text-fg-muted p-8">인증 큐를 불러오는 중…</div>
@@ -113,30 +155,48 @@ export default function ProjectReviewPage() {
     {
       key: 'actions',
       header: '액션',
-      className: 'w-32',
+      className: 'w-40',
       cell: (r) => (
         <div className="flex gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (r.status === 'requested')
-                toast.success(
-                  `${r.name} 인증 — ProjectCertification 생성 (mock)`,
-                )
-              else
+          {r.status === 'requested' ? (
+            <>
+              <button
+                type="button"
+                disabled={certify.isPending}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCertify(r)
+                }}
+                className="bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white disabled:opacity-60"
+              >
+                인증
+              </button>
+              <button
+                type="button"
+                disabled={requestChanges.isPending}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSupplementTarget(r)
+                }}
+                className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-60"
+              >
+                보완 요청
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
                 toast.info(
                   `${r.name} ${STATUS_META[r.status].action} — 후속 화면 (mock)`,
                 )
-            }}
-            className={
-              r.status === 'requested'
-                ? 'bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white'
-                : 'border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium'
-            }
-          >
-            {STATUS_META[r.status].action}
-          </button>
+              }}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
+            >
+              {STATUS_META[r.status].action}
+            </button>
+          )}
           {!(r.status === 'certified' && r.artifacts === null) && (
             <button
               type="button"
@@ -194,6 +254,17 @@ export default function ProjectReviewPage() {
         인증 시 ProjectCertification 기록이 생성되며, 인증 후 학생 직접 수정은
         차단됩니다 (§11 변경 제안 흐름)
       </p>
+
+      <SupplementRequestModal
+        open={supplementTarget !== null}
+        studentName={supplementTarget?.name ?? ''}
+        onClose={() => setSupplementTarget(null)}
+        onConfirm={(reason) => {
+          const target = supplementTarget
+          setSupplementTarget(null)
+          if (target) onRequestChanges(target, reason)
+        }}
+      />
     </div>
   )
 }

@@ -10,9 +10,12 @@ import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import type { EndorsementPending } from '@/shared/types'
-import { useEndorsementQueue } from '../api/endorsements'
+import { useEndorsementQueue, useSubmitEndorsement } from '../api/endorsements'
 import { SNAPSHOT_META } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
+
+// 임시 저장 초안 — 학생별 localStorage 키. 제출 성공 시 제거(BE 연동 시 draft API로 대체).
+const draftKey = (studentId: string) => `endorsement-draft:${studentId}`
 
 // 강사 추천서 (/instructor/endorsements) — 긍정 추천서 작성 화면.
 // 작성 대기 카드 → 학생 선택 → 코멘트 작성 → 제출. 하단에 최근 작성 + 전체 보기.
@@ -21,6 +24,7 @@ export default function EndorsementsPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useEndorsementQueue()
+  const submit = useSubmitEndorsement()
   usePageHeader(
     '강사 추천서',
     '담당 학생을 위한 추천서를 작성하고 증명서 5번 탭(성장·평판)에 공급합니다',
@@ -44,9 +48,13 @@ export default function EndorsementsPage() {
     if (!studentId && pending.length > 0) setStudentId(pending[0].student.id)
   }, [pending, studentId])
 
-  // 학생이 바뀌면 입력 중이던 코멘트를 비운다(다른 학생에게 새어 들어가지 않게).
+  // 학생이 바뀌면 그 학생의 임시 저장 초안을 복원(없으면 비움 — 다른 학생에게 새어 들어가지 않게).
   useEffect(() => {
-    reset({ comment: '' })
+    if (!studentId) {
+      reset({ comment: '' })
+      return
+    }
+    reset({ comment: localStorage.getItem(draftKey(studentId)) ?? '' })
   }, [studentId, reset])
 
   if (isPending) {
@@ -68,20 +76,28 @@ export default function EndorsementsPage() {
   const selected =
     pending.find((p) => p.student.id === studentId) ?? pending[0] ?? null
 
-  const onSubmit = (input: EndorsementInput) => {
+  const onSubmit = async (input: EndorsementInput) => {
     if (!selected) return
-    toast.success(
-      `추천서 제출 — ${selected.student.name} · 24h 내 수정 가능 · 인증 완료 후 최신화 시 공개 스냅샷 반영`,
-    )
-    reset({ comment: '' })
-    void input
+    const { id, name } = selected.student
+    try {
+      await submit.mutateAsync({ studentId: id, comment: input.comment })
+      localStorage.removeItem(draftKey(id))
+      toast.success(
+        `추천서 제출 — ${name} · 24h 내 수정 가능 · 인증 완료 후 최신화 시 공개 스냅샷 반영`,
+      )
+      reset({ comment: '' })
+      // 제출한 학생은 작성 대기에서 빠지므로 선택 해제 → 다음 대기 학생 자동 선택.
+      setStudentId(null)
+    } catch {
+      toast.danger('추천서 제출에 실패했어요. 잠시 후 다시 시도해주세요.')
+    }
   }
 
   const onDraft = handleSubmit(
     (input) => {
       if (!selected) return
+      localStorage.setItem(draftKey(selected.student.id), input.comment)
       toast.info(`임시 저장 — ${selected.student.name}`)
-      void input
     },
     () => toast.warning('임시 저장하려면 코멘트를 입력해주세요'),
   )

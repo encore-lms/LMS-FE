@@ -5,13 +5,27 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import ChangeRequestsPage from './ChangeRequestsPage'
 import RecertificationsPage from './RecertificationsPage'
-import { useChangeRequests, useRecertifications } from '../api/changeRequests'
+import {
+  useChangeRequests,
+  useRecertifications,
+  useResolveChangeRequest,
+  useResolveRecertification,
+} from '../api/changeRequests'
 import type {
   InstructorChangeRequestsData,
   RecertificationsData,
 } from '@/shared/types'
 
 vi.mock('../api/changeRequests')
+
+// 신규 mutation 훅은 auto-mock 시 undefined → .mutateAsync 호출이 터진다.
+// 검토 화면은 낙관적 로컬 제거(resolved set)로 행을 즉시 숨기므로, mutateAsync는
+// 무해한 resolve stub만 제공하면 충분하다. (실 동작은 mocks.ts MSW가 담당)
+const mutationStub = {
+  mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined),
+  isPending: false,
+}
 
 const changeRequests: InstructorChangeRequestsData = {
   items: [
@@ -95,6 +109,12 @@ function renderAt(path: string) {
   )
   vi.mocked(useRecertifications).mockReturnValue(
     ok(recertifications) as unknown as ReturnType<typeof useRecertifications>,
+  )
+  vi.mocked(useResolveChangeRequest).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useResolveChangeRequest>,
+  )
+  vi.mocked(useResolveRecertification).mockReturnValue(
+    mutationStub as unknown as ReturnType<typeof useResolveRecertification>,
   )
   return render(
     <ToastProvider>

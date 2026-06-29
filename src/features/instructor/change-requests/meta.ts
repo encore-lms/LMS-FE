@@ -16,6 +16,8 @@ export const CHANGE_REQUEST_STATUS_META: Record<
 > = {
   requested: { label: '요청 대기', tone: 'warning' },
   reviewing: { label: '검토중', tone: 'neutral' },
+  approved: { label: '승인', tone: 'success' },
+  rejected: { label: '반려', tone: 'danger' },
 }
 
 /** 유형 필터 탭 순서 — Figma chip 순서(전체/프로젝트/트러블슈팅) 그대로. */

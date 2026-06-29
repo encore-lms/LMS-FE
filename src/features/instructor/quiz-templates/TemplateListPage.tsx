@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { QuizTemplateRow } from '@/shared/types'
-import { useQuizTemplates } from '../api/quizTemplates'
+import { useDeleteQuizTemplate, useQuizTemplates } from '../api/quizTemplates'
 
 const CATEGORIES = [
   '전체',
@@ -27,6 +27,9 @@ export default function TemplateListPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useQuizTemplates()
+  const deleteTemplate = useDeleteQuizTemplate()
+  // mock 환경 — invalidate 후 refetch가 즉시 반영되지 않아 로컬에서도 즉시 제거.
+  const [removedIds, setRemovedIds] = useState<string[]>([])
   const [q, setQ] = useState('')
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('전체')
   const [sort, setSort] = useState<SortKey>('recent')
@@ -39,6 +42,7 @@ export default function TemplateListPage() {
     const items = data?.items ?? []
     const needle = q.trim().toLowerCase()
     const result = items.filter((t) => {
+      if (removedIds.includes(t.id)) return false
       if (category !== '전체' && t.category !== category) return false
       if (needle) {
         const hay = `${t.name} ${t.category}`.toLowerCase()
@@ -51,7 +55,7 @@ export default function TemplateListPage() {
       if (sort === 'name') return a.name.localeCompare(b.name)
       return (b.lastUsedAt ?? '').localeCompare(a.lastUsedAt ?? '')
     })
-  }, [data, q, category, sort])
+  }, [data, q, category, sort, removedIds])
 
   if (isPending) {
     return <div className="text-fg-muted p-8">템플릿 목록을 불러오는 중…</div>
@@ -155,7 +159,17 @@ export default function TemplateListPage() {
               }
               onClick={(e) => {
                 e.stopPropagation()
-                toast.success(`${t.name} 삭제 (mock)`)
+                if (inUse) return
+                deleteTemplate.mutate(t.id, {
+                  onSuccess: () => {
+                    setRemovedIds((prev) => [...prev, t.id])
+                    toast.success(`${t.name} 삭제됨`)
+                  },
+                  onError: () =>
+                    toast.danger(
+                      '템플릿 삭제에 실패했어요. 다시 시도해 주세요.',
+                    ),
+                })
               }}
               className={cn(
                 'rounded-md border px-2.5 py-1 text-xs font-medium',

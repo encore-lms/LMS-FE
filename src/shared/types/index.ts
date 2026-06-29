@@ -137,6 +137,8 @@ export type {
 export type {
   CertReviewTargetType,
   ChangeRequestStatus,
+  ChangeRequestAction,
+  RecertificationAction,
   ChangeDiffItem,
   InstructorChangeRequestRow,
   InstructorChangeRequestsData,

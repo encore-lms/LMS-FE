@@ -7,7 +7,12 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import type { TsReviewRow, TsReviewStatus } from '@/shared/types'
-import { useTsReviews } from '../api/reviews'
+import {
+  useCertifyTroubleshooting,
+  useRequestTsChanges,
+  useTsReviews,
+} from '../api/reviews'
+import { SupplementRequestModal } from '../assignments/SupplementRequestModal'
 import { QueueFilterBar, QueueStats } from './QueueShell'
 
 type StatusFilter = 'all' | TsReviewStatus
@@ -26,22 +31,60 @@ const STATUS_META: Record<
 export default function TsReviewPage() {
   const toast = useToast()
   const { data, isPending, isError, refetch } = useTsReviews()
+  const certify = useCertifyTroubleshooting()
+  const requestChanges = useRequestTsChanges()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
+  // 보완 요청 모달 대상(사유 필수). 모킹 쿼리는 refetch가 없어 mutation 성공 시
+  // 낙관적 로컬 패치로 상태를 즉시 반영한다.
+  const [supplementTarget, setSupplementTarget] = useState<TsReviewRow | null>(
+    null,
+  )
+  const [localStatus, setLocalStatus] = useState<
+    Record<string, TsReviewStatus>
+  >({})
   usePageHeader(
     '트러블슈팅 검토',
     'STAR 사례 인증 큐 — 독립해결·소요일수 근거 확인 후 인증',
   )
 
   const filtered = useMemo(() => {
-    const rows = data?.rows ?? []
+    const rows = (data?.rows ?? []).map((r) =>
+      localStatus[r.id] ? { ...r, status: localStatus[r.id] } : r,
+    )
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
       if (status !== 'all' && r.status !== status) return false
       if (needle && !r.studentName.toLowerCase().includes(needle)) return false
       return true
     })
-  }, [data, q, status])
+  }, [data, q, status, localStatus])
+
+  const onCertify = (row: TsReviewRow) => {
+    certify.mutate(
+      { id: row.id },
+      {
+        onSuccess: () => {
+          setLocalStatus((m) => ({ ...m, [row.id]: 'certified' }))
+          toast.success(`${row.title} 인증 — TroubleshootingCertification 생성`)
+        },
+        onError: () => toast.danger('인증 처리에 실패했어요'),
+      },
+    )
+  }
+
+  const onRequestChanges = (row: TsReviewRow, reason: string) => {
+    requestChanges.mutate(
+      { id: row.id, reason },
+      {
+        onSuccess: () => {
+          setLocalStatus((m) => ({ ...m, [row.id]: 'supplementing' }))
+          toast.success(`${row.title} 보완 요청을 보냈어요`)
+        },
+        onError: () => toast.danger('보완 요청에 실패했어요'),
+      },
+    )
+  }
 
   if (isPending) {
     return <div className="text-fg-muted p-8">사례 큐를 불러오는 중…</div>
@@ -121,30 +164,48 @@ export default function TsReviewPage() {
     {
       key: 'actions',
       header: '액션',
-      className: 'w-32',
+      className: 'w-40',
       cell: (r) => (
         <div className="flex gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (r.status === 'pending')
-                toast.success(
-                  `${r.title} 인증 — TroubleshootingCertification 생성 (mock)`,
-                )
-              else
+          {r.status === 'pending' ? (
+            <>
+              <button
+                type="button"
+                disabled={certify.isPending}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCertify(r)
+                }}
+                className="bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white disabled:opacity-60"
+              >
+                인증
+              </button>
+              <button
+                type="button"
+                disabled={requestChanges.isPending}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSupplementTarget(r)
+                }}
+                className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-60"
+              >
+                보완 요청
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
                 toast.info(
                   `${r.title} ${STATUS_META[r.status].action} — 후속 화면 (mock)`,
                 )
-            }}
-            className={
-              r.status === 'pending'
-                ? 'bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white'
-                : 'border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium'
-            }
-          >
-            {STATUS_META[r.status].action}
-          </button>
+              }}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
+            >
+              {STATUS_META[r.status].action}
+            </button>
+          )}
           {!(r.status === 'certified' && r.solvedBy === null) && (
             <button
               type="button"
@@ -202,6 +263,17 @@ export default function TsReviewPage() {
         인증 시 TroubleshootingCertification 기록이 생성되며, 인증 후 학생 직접
         수정은 차단됩니다 (§12 변경 제안 흐름)
       </p>
+
+      <SupplementRequestModal
+        open={supplementTarget !== null}
+        studentName={supplementTarget?.studentName ?? ''}
+        onClose={() => setSupplementTarget(null)}
+        onConfirm={(reason) => {
+          const target = supplementTarget
+          setSupplementTarget(null)
+          if (target) onRequestChanges(target, reason)
+        }}
+      />
     </div>
   )
 }

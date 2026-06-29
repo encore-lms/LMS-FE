@@ -77,6 +77,10 @@ export interface InstructorQuestion {
   respondedCount: number
   totalCount: number
   avgScore: number | null
+  /** 객관식 보기(실 BE). 주관식·빈칸은 빈 배열 */
+  choices?: string[]
+  /** 정답 — 객관식: 보기 index, 주관식: 정답 텍스트, 빈칸: 정답 JSON */
+  answerKey?: string
 }
 
 export interface QuizQuestionsData {

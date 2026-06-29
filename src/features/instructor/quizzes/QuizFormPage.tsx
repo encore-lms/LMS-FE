@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
-import { Input } from '@/components/ui/Input'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -16,107 +15,75 @@ import type {
   QuizVisibility,
   ResultRevealPolicy,
 } from '@/shared/types'
-import { useInstructorQuizDetail, useSaveQuiz } from '../api/quizzes'
+import {
+  useInstructorQuizDetail,
+  useQuizQuestions,
+  useSaveQuiz,
+} from '../api/quizzes'
 import { useAssignmentCohortOptions } from '../api/assignments'
 import { useQuizTemplateDetail } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
+import { QuestionWorkbench } from './QuestionWorkbench'
 import { quizSchema, type QuizInput } from './quiz.schema'
 
 const REVEAL_OPTIONS: { value: ResultRevealPolicy; label: string }[] = [
-  { value: 'after_grading', label: '강사 채점 완료 후 학생에게 공개' },
-  { value: 'immediate', label: '제출 즉시 자동 채점 결과 공개' },
-  { value: 'after_close', label: '응시 기간 종료 후 일괄 공개' },
+  { value: 'after_grading', label: '강사 채점 완료 후 공개' },
+  { value: 'immediate', label: '제출 즉시 공개' },
+  { value: 'after_close', label: '응시 기간 종료 후 공개' },
 ]
 
-function ToggleRow({
-  label,
-  description,
-  checked,
-  onChange,
+// 공통 컴팩트 입력 스타일 — 페이지 전역 Input(h-[52px])보다 작게.
+const FIELD =
+  'border-border focus:border-brand text-fg placeholder:text-fg-subtle h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none'
+
+function FieldLabel({
+  children,
+  required,
 }: {
-  label: string
-  description: string
-  checked: boolean
-  onChange: () => void
+  children: React.ReactNode
+  required?: boolean
 }) {
   return (
-    <div className="border-border flex items-center justify-between rounded-xl border px-4 py-3">
-      <div>
-        <p className="text-fg text-sm font-medium">{label}</p>
-        <p className="text-fg-subtle text-xs">{description}</p>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        onClick={onChange}
-        className={cn(
-          'h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors',
-          checked ? 'bg-brand' : 'bg-border',
-        )}
-      >
-        <span
-          className={cn(
-            'block h-5 w-5 rounded-full bg-white transition-transform',
-            checked && 'translate-x-5',
-          )}
-        />
-      </button>
-    </div>
+    <span className="text-fg-muted mb-1 block text-xs font-semibold">
+      {children}
+      {required && <span className="text-danger"> *</span>}
+    </span>
   )
 }
 
-// 라디오 카드 3종 — 채점 정책·공개 설정 공용.
-function RadioCards<T extends string>({
+// 컴팩트 세그먼트 — 라디오 카드 대체(채점 모드·공개 상태).
+function Segmented<T extends string>({
   options,
   value,
   onChange,
-  disabledNote,
-  isDisabled,
+  disabled,
 }: {
-  options: { value: T; title: string; description: string }[]
+  options: { value: T; label: string; hint?: string }[]
   value: T
   onChange: (v: T) => void
-  /** 카드 비활성 시 보조 설명 (채점 모드 변경 차단) */
-  disabledNote?: string
-  isDisabled?: boolean
+  disabled?: (v: T) => boolean
 }) {
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
+    <div className="bg-surface-muted flex w-full gap-1 rounded-lg p-1">
       {options.map((o) => {
-        const selected = o.value === value
+        const on = o.value === value
+        const off = disabled?.(o.value) ?? false
         return (
           <button
             key={o.value}
             type="button"
-            disabled={isDisabled && !selected}
-            title={isDisabled && !selected ? disabledNote : undefined}
+            disabled={off}
+            title={o.hint}
             onClick={() => onChange(o.value)}
             className={cn(
-              'flex items-start gap-3 rounded-xl border p-3.5 text-left',
-              selected
-                ? 'border-accent-strong bg-accent-bg/40'
-                : 'border-border hover:bg-surface-muted',
-              isDisabled && !selected && 'cursor-not-allowed opacity-50',
+              'flex-1 rounded-md px-2 py-1.5 text-[13px] font-semibold transition-colors',
+              on
+                ? 'bg-surface text-fg shadow-sm'
+                : 'text-fg-muted hover:text-fg',
+              off && 'cursor-not-allowed opacity-40',
             )}
           >
-            <span
-              className={cn(
-                'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2',
-                selected ? 'border-accent-strong' : 'border-border',
-              )}
-            >
-              {selected && (
-                <span className="bg-accent-strong h-2 w-2 rounded-full" />
-              )}
-            </span>
-            <span>
-              <span className="text-fg block text-sm font-bold">{o.title}</span>
-              <span className="text-fg-muted mt-0.5 block text-xs">
-                {o.description}
-              </span>
-            </span>
+            {o.label}
           </button>
         )
       })}
@@ -124,8 +91,89 @@ function RadioCards<T extends string>({
   )
 }
 
-// 퀴즈 생성/수정 (/instructor/quizzes/new · /:quizId/edit) — §6. (Figma 1338:9792)
-// 이미 제출된 퀴즈는 amber 경고 + 채점 모드 변경 차단. 정답/배점 변경은 자동 재채점 트리거.
+// 컴팩트 토글 한 줄.
+function CompactToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      className="border-border hover:bg-surface-muted flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left"
+    >
+      <span className="text-fg text-[13px] font-medium">{label}</span>
+      <span
+        className={cn(
+          'h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors',
+          checked ? 'bg-brand' : 'bg-border',
+        )}
+      >
+        <span
+          className={cn(
+            'block h-4 w-4 rounded-full bg-white transition-transform',
+            checked && 'translate-x-4',
+          )}
+        />
+      </span>
+    </button>
+  )
+}
+
+// 수정 모드 — 같은 페이지 하단에 문항 워크벤치 인라인(별도 페이지 없이 한 화면).
+function QuizQuestionsSection({ quizId }: { quizId: string }) {
+  const { data, isPending, isError, refetch } = useQuizQuestions(quizId)
+  if (isPending) {
+    return (
+      <div className="text-fg-muted py-8 text-center text-sm">
+        문항 불러오는 중…
+      </div>
+    )
+  }
+  if (isError || !data) {
+    return (
+      <Empty
+        icon={<AlertTriangle className="h-6 w-6" />}
+        title="문항을 불러오지 못했어요"
+        action={<Button onClick={() => refetch()}>다시 시도</Button>}
+      />
+    )
+  }
+  return (
+    <QuestionWorkbench
+      subjectLabel="퀴즈"
+      subjectName={data.quizTitle}
+      gradingMode={data.gradingMode}
+      totalPoints={data.totalPoints}
+      targetPoints={data.targetPoints}
+      questions={data.questions}
+      listTitle="문항"
+      itemNoun="문항"
+      back={{ label: '↑ 맨 위로', onClick: () => window.scrollTo({ top: 0 }) }}
+      previewLabel="학생 미리보기"
+      bodyHint="학생에게 그대로 노출 — 마크다운 지원"
+      modelAnswerHint="강사 채점 시 참고용 — 학생에게 비공개"
+      explanationHint="결과 화면에서 학생에게 노출"
+      manualHint="주관식은 수동으로 자동 연결됨"
+      saveToastMessage="문항 저장 — 정답/배점 변경 시 자동 재채점 (mock)"
+      metaItems={(draft) => [
+        `응답 수: ${draft.respondedCount} / ${draft.totalCount}`,
+        `평균 점수: ${draft.avgScore !== null ? `${draft.avgScore} / ${draft.points}` : '-'}`,
+      ]}
+    />
+  )
+}
+
+// 퀴즈 생성/수정 (/instructor/quizzes/new · /:quizId/edit) — §6~§7 통합 1페이지(컴팩트).
+// 기본 정보 + 출제 설정 한 화면, 수정 모드에선 문항까지 인라인. 제출된 퀴즈는 채점 모드 변경 차단.
 export default function QuizFormPage() {
   const { quizId } = useParams()
   const isEdit = !!quizId
@@ -133,7 +181,6 @@ export default function QuizFormPage() {
   const base = useQuizBasePath()
   const toast = useToast()
   const [searchParams] = useSearchParams()
-  // 생성 모드에서 '템플릿 열기'로 진입하면 ?templateId= 로 폼을 프리필.
   const templateId = isEdit ? null : searchParams.get('templateId')
   const { data, isPending, isError, refetch } = useInstructorQuizDetail(
     quizId ?? null,
@@ -148,7 +195,7 @@ export default function QuizFormPage() {
   const [visibility, setVisibility] = useState<QuizVisibility>('draft')
   usePageHeader(
     isEdit ? '퀴즈 수정' : '퀴즈 생성',
-    '기본 정보 · 응시 정책 · 채점 정책 · 문제 정책 · 공개 설정',
+    '기본 정보와 출제 설정을 한 화면에서 관리합니다',
   )
 
   const { data: cohortOptions } = useAssignmentCohortOptions()
@@ -164,7 +211,6 @@ export default function QuizFormPage() {
     formState: { errors },
   } = useForm<QuizInput>({
     resolver: zodResolver(quizSchema),
-    // startAt/endAt 은 Controller(DateTimePicker)라 빈 문자열로 초기화 → 미입력 시 min(1) 메시지 노출
     defaultValues: { cohortId: '', startAt: '', endAt: '' },
   })
 
@@ -196,7 +242,7 @@ export default function QuizFormPage() {
     }
   }, [isEdit, cohortOptions, getValues, setValue])
 
-  // 생성 모드 — 템플릿 프리필(제목·설명·배점·시간·정책). cohortId는 보존(setValue로 개별 적용).
+  // 생성 모드 — 템플릿 프리필(cohortId 보존).
   const prefilledRef = useRef<string | null>(null)
   useEffect(() => {
     if (isEdit || !template) return
@@ -224,7 +270,6 @@ export default function QuizFormPage() {
         <Empty
           icon={<AlertTriangle />}
           title="퀴즈 정보를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
           action={<Button onClick={() => refetch()}>다시 시도</Button>}
         />
       </div>
@@ -233,11 +278,7 @@ export default function QuizFormPage() {
 
   const hasSubmissions = isEdit && (data?.submittedCount ?? 0) > 0
 
-  const save = (
-    input: QuizInput,
-    thenQuestions: boolean,
-    vis: QuizVisibility,
-  ) => {
+  const save = (input: QuizInput, vis: QuizVisibility) => {
     saveQuiz.mutate(
       {
         cohortId: input.cohortId,
@@ -257,8 +298,8 @@ export default function QuizFormPage() {
       {
         onSuccess: (saved) => {
           toast.success(`${input.title} 저장 — ${VISIBILITY_META[vis].label}`)
-          if (thenQuestions) navigate(`${base}/${quizId ?? saved.id}/questions`)
-          else navigate(base)
+          // 생성 직후엔 같은 폼의 수정 화면으로 — 문항 섹션이 인라인으로 함께 보인다.
+          if (!isEdit) navigate(`${base}/${saved.id}/edit`)
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },
@@ -266,42 +307,39 @@ export default function QuizFormPage() {
   }
 
   return (
-    <div className="p-8">
-      {/* 이미 제출 경고 */}
+    <div className="space-y-4 p-6">
       {hasSubmissions && (
-        <div className="bg-warning-bg mb-5 flex items-start gap-3 rounded-xl p-4">
+        <div className="bg-warning-bg flex max-w-4xl items-start gap-2.5 rounded-lg p-3">
           <AlertTriangle className="text-warning mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <p className="text-fg text-sm font-bold">
-              이미 제출된 퀴즈입니다 — {data?.submittedCount}명 응시 중
-            </p>
-            <p className="text-fg-muted text-xs">
-              정답/배점 변경 시 자동 재채점이 트리거되고, 기간/제한 시간 변경은
-              응시 중인 학생에게 즉시 적용됩니다. 채점 모드 변경은 차단됩니다.
-            </p>
-          </div>
+          <p className="text-fg-muted text-xs">
+            이미 {data?.submittedCount}명 응시 중 — 정답/배점 변경 시 자동
+            재채점, 채점 모드 변경은 차단됩니다.
+          </p>
         </div>
       )}
 
       {/* 기본 정보 */}
-      <section className="border-border bg-surface rounded-xl border p-6">
-        <p className="text-fg text-base font-bold">기본 정보</p>
-        <p className="text-fg-subtle text-xs">제목·설명·대상 과정/기수</p>
-        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_360px]">
-          <Input
-            label="제목"
-            required
-            placeholder="알고리즘 기초 #3"
-            error={errors.title?.message}
-            {...register('title')}
-          />
-          <label className="flex w-full flex-col gap-[6px]">
-            <span className="text-fg text-[13px] font-bold">
-              대상 과정/기수 <span className="text-danger">*</span>
-            </span>
+      <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
+        <p className="text-fg mb-3 text-sm font-bold">기본 정보</p>
+        <div className="grid gap-3 sm:grid-cols-[1fr_240px]">
+          <div>
+            <FieldLabel required>제목</FieldLabel>
+            <input
+              className={FIELD}
+              placeholder="알고리즘 기초 #3"
+              {...register('title')}
+            />
+            {errors.title && (
+              <span className="text-danger mt-1 block text-xs">
+                {errors.title.message}
+              </span>
+            )}
+          </div>
+          <div>
+            <FieldLabel required>대상 과정/기수</FieldLabel>
             <select
+              className={FIELD}
               aria-label="대상 과정/기수"
-              className="border-border focus:border-brand text-fg h-[52px] rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none"
               {...register('cohortId')}
             >
               {(cohortOptions ?? []).map((c) => (
@@ -313,166 +351,148 @@ export default function QuizFormPage() {
                 <option value="">기수 없음</option>
               )}
             </select>
-          </label>
+          </div>
         </div>
-        <label className="mt-4 flex w-full flex-col gap-[6px]">
-          <span className="text-fg text-[13px] font-bold">설명</span>
+        <div className="mt-3">
+          <FieldLabel>설명</FieldLabel>
           <textarea
             rows={2}
-            placeholder="재귀·동적 계획법·그리디 기본 개념 확인."
-            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none"
+            placeholder="퀴즈 안내·범위(선택)"
+            className={`${FIELD} h-auto py-2`}
             {...register('description')}
           />
-        </label>
+        </div>
       </section>
 
-      {/* 응시 정책 */}
-      <section className="border-border bg-surface mt-5 rounded-xl border p-6">
-        <p className="text-fg text-base font-bold">응시 정책</p>
-        <p className="text-fg-subtle text-xs">
-          시작일·종료일·제한 시간·재응시 허용 (변경 시 응시 중인 학생에게 즉시
-          적용)
-        </p>
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          {/* 시작·종료 일시 — 공용 DateTimePicker(datetime). 저장값은 "YYYY-MM-DD HH:mm"(공백)이라 경계에서 'T'와 변환 */}
-          <Controller
-            control={control}
-            name="startAt"
-            render={({ field }) => (
-              <DateTimePicker
-                mode="datetime"
-                label="시작일"
-                required
-                placeholder="2026-05-12 09:00"
-                error={errors.startAt?.message}
-                value={field.value ? field.value.replace(' ', 'T') : ''}
-                onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
-              />
+      {/* 출제 설정 — 응시·채점·문제·공개 통합(컴팩트) */}
+      <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
+        <p className="text-fg mb-3 text-sm font-bold">출제 설정</p>
+
+        {/* 기간·제한 */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <FieldLabel required>시작일시</FieldLabel>
+            <Controller
+              control={control}
+              name="startAt"
+              render={({ field }) => (
+                <DateTimePicker
+                  mode="datetime"
+                  label=""
+                  placeholder="2026-05-12 09:00"
+                  error={errors.startAt?.message}
+                  value={field.value ? field.value.replace(' ', 'T') : ''}
+                  onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
+                />
+              )}
+            />
+          </div>
+          <div>
+            <FieldLabel required>종료일시</FieldLabel>
+            <Controller
+              control={control}
+              name="endAt"
+              render={({ field }) => (
+                <DateTimePicker
+                  mode="datetime"
+                  label=""
+                  placeholder="2026-05-18 23:59"
+                  error={errors.endAt?.message}
+                  value={field.value ? field.value.replace(' ', 'T') : ''}
+                  onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
+                />
+              )}
+            />
+          </div>
+          <div>
+            <FieldLabel required>제한 시간(분)</FieldLabel>
+            <input
+              type="number"
+              className={FIELD}
+              placeholder="90"
+              {...register('timeLimitMin')}
+            />
+            {errors.timeLimitMin && (
+              <span className="text-danger mt-1 block text-xs">
+                {errors.timeLimitMin.message}
+              </span>
             )}
-          />
-          <Controller
-            control={control}
-            name="endAt"
-            render={({ field }) => (
-              <DateTimePicker
-                mode="datetime"
-                label="종료일"
-                required
-                placeholder="2026-05-18 23:59"
-                error={errors.endAt?.message}
-                value={field.value ? field.value.replace(' ', 'T') : ''}
-                onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
-              />
-            )}
-          />
-          <Input
-            label="제한 시간 (분)"
-            required
-            placeholder="90"
-            error={errors.timeLimitMin?.message}
-            {...register('timeLimitMin')}
-          />
+          </div>
         </div>
-        <div className="mt-4">
-          <ToggleRow
+
+        {/* 채점 모드 · 결과 공개 · 총점 */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div>
+            <FieldLabel>채점 모드</FieldLabel>
+            <Segmented
+              options={(['AUTO', 'MANUAL', 'MIXED'] as const).map((m) => ({
+                value: m,
+                label: GRADING_MODE_META[m].label,
+              }))}
+              value={gradingMode}
+              onChange={setGradingMode}
+              disabled={(v) => hasSubmissions && v !== gradingMode}
+            />
+          </div>
+          <div>
+            <FieldLabel>결과 공개</FieldLabel>
+            <select
+              className={FIELD}
+              aria-label="결과 공개 시점"
+              value={resultReveal}
+              onChange={(e) =>
+                setResultReveal(e.target.value as ResultRevealPolicy)
+              }
+            >
+              {REVEAL_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>총점</FieldLabel>
+            <input
+              type="number"
+              className={FIELD}
+              placeholder="100"
+              {...register('totalPoints')}
+            />
+            {errors.totalPoints && (
+              <span className="text-danger mt-1 block text-xs">
+                {errors.totalPoints.message}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 정책 토글 */}
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <CompactToggle
             label="재응시 허용"
-            description="학생이 제출 후 점수 확인 → 재시작 가능 · 점수는 최고 점수만 기록"
             checked={allowRetake}
             onChange={() => setAllowRetake((v) => !v)}
           />
-        </div>
-      </section>
-
-      {/* 채점 정책 */}
-      <section className="border-border bg-surface mt-5 rounded-xl border p-6">
-        <p className="text-fg text-base font-bold">채점 정책</p>
-        <p className="text-fg-subtle text-xs">
-          AUTO·MANUAL·MIXED 중 선택 · 문제별 채점 방식과 일치해야 함 (이미
-          제출된 퀴즈는 변경 차단)
-        </p>
-        <div className="mt-4">
-          <RadioCards
-            options={(['AUTO', 'MANUAL', 'MIXED'] as const).map((m) => ({
-              value: m,
-              title: GRADING_MODE_META[m].label,
-              description: GRADING_MODE_META[m].description,
-            }))}
-            value={gradingMode}
-            onChange={setGradingMode}
-            isDisabled={hasSubmissions}
-            disabledNote="이미 제출된 퀴즈는 채점 모드를 변경할 수 없어요"
-          />
-        </div>
-        <label className="mt-4 flex w-full flex-col gap-[6px] lg:w-[420px]">
-          <span className="text-fg text-[13px] font-bold">결과 공개 시점</span>
-          <select
-            value={resultReveal}
-            onChange={(e) =>
-              setResultReveal(e.target.value as ResultRevealPolicy)
-            }
-            aria-label="결과 공개 시점"
-            className="border-border focus:border-brand text-fg h-[44px] rounded-[10px] border-2 bg-white px-4 text-sm font-medium outline-none"
-          >
-            {REVEAL_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </section>
-
-      {/* 문제 정책 */}
-      <section className="border-border bg-surface mt-5 rounded-xl border p-6">
-        <p className="text-fg text-base font-bold">문제 정책</p>
-        <p className="text-fg-subtle text-xs">문제 셔플·보기 셔플·총점</p>
-        <div className="mt-4 flex flex-col gap-3">
-          <ToggleRow
+          <CompactToggle
             label="문제 셔플"
-            description="학생마다 다른 순서로 문제 노출 (난이도 분포는 유지)"
             checked={shuffleQuestions}
             onChange={() => setShuffleQuestions((v) => !v)}
           />
-          <ToggleRow
+          <CompactToggle
             label="보기 셔플"
-            description="객관식 보기 순서를 학생마다 다르게 (정답 위치 노출 방지)"
             checked={shuffleChoices}
             onChange={() => setShuffleChoices((v) => !v)}
           />
         </div>
-        <div className="mt-4 flex items-end gap-3">
-          <div className="w-40">
-            <Input
-              label="총점"
-              placeholder="100"
-              error={errors.totalPoints?.message}
-              {...register('totalPoints')}
-            />
-          </div>
-          {isEdit && data && (
-            <span className="text-fg-subtle pb-4 text-xs">
-              · 문제 {data.questionCount}개 · 평균 배점{' '}
-              {data.questionCount > 0
-                ? Math.round(data.totalPoints / data.questionCount)
-                : 0}
-              점
-            </span>
-          )}
-        </div>
-      </section>
 
-      {/* 공개 설정 */}
-      <section className="border-border bg-surface mt-5 rounded-xl border p-6">
-        <p className="text-fg text-base font-bold">공개 설정</p>
-        <p className="text-fg-subtle text-xs">
-          학생에게 노출 여부 · 임시저장은 강사·운영자만 조회
-        </p>
-        <div className="mt-4">
-          <RadioCards
+        {/* 공개 상태 */}
+        <div className="mt-4 sm:w-[420px]">
+          <FieldLabel>공개 상태</FieldLabel>
+          <Segmented
             options={(['draft', 'published', 'closed'] as const).map((v) => ({
               value: v,
-              title: VISIBILITY_META[v].label,
-              description: VISIBILITY_META[v].description,
+              label: VISIBILITY_META[v].label,
             }))}
             value={visibility}
             onChange={setVisibility}
@@ -480,16 +500,25 @@ export default function QuizFormPage() {
         </div>
       </section>
 
+      {/* 문항 — 수정 모드는 인라인, 생성 모드는 저장 후 안내 */}
+      <section className="border-border bg-surface rounded-xl border p-5">
+        <p className="text-fg mb-3 text-sm font-bold">문항</p>
+        {isEdit && quizId ? (
+          <QuizQuestionsSection quizId={quizId} />
+        ) : (
+          <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
+            기본 정보를 저장하면 같은 화면에서 문항을 추가할 수 있어요.
+          </p>
+        )}
+      </section>
+
       {/* 푸터 */}
-      <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border px-5 py-4">
-        <p className="text-fg-subtle text-xs">
-          저장 후 [문제 관리]로 진입해 문제를 편집할 수 있습니다.
-        </p>
+      <div className="border-border bg-surface flex max-w-4xl items-center gap-2 rounded-xl border px-4 py-3">
         <div className="ml-auto flex gap-2">
           <Button
             type="button"
             variant="secondary"
-            className="h-10 text-sm"
+            className="h-9 text-sm"
             onClick={() => navigate(base)}
           >
             취소
@@ -497,21 +526,22 @@ export default function QuizFormPage() {
           <Button
             type="button"
             variant="secondary"
-            className="h-10 text-sm"
+            className="h-9 text-sm"
+            disabled={saveQuiz.isPending}
             onClick={handleSubmit((input) => {
               setVisibility('draft')
-              save(input, false, 'draft')
+              save(input, 'draft')
             })}
           >
-            임시저장으로 저장
+            임시저장
           </Button>
           <Button
             type="button"
-            className="h-10 text-sm"
+            className="h-9 text-sm"
             disabled={saveQuiz.isPending}
-            onClick={handleSubmit((input) => save(input, true, visibility))}
+            onClick={handleSubmit((input) => save(input, visibility))}
           >
-            저장 + 문제 관리 →
+            저장
           </Button>
         </div>
       </div>

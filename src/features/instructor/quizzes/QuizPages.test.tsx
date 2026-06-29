@@ -311,10 +311,8 @@ describe('QuizListPage (§5)', () => {
 describe('QuizFormPage (§6)', () => {
   it('수정 모드에서 제출 경고와 채점 모드 변경 차단을 렌더한다', () => {
     renderAt('/instructor/quizzes/quiz-algo-3/edit')
-    expect(
-      screen.getByText(/이미 제출된 퀴즈입니다 — 18명 응시 중/),
-    ).toBeInTheDocument()
-    // MANUAL이 선택돼 있고 다른 모드는 비활성
+    expect(screen.getByText(/18명 응시 중/)).toBeInTheDocument()
+    // MANUAL이 선택돼 있고 다른 모드는 비활성(세그먼트)
     expect(screen.getByRole('button', { name: /AUTO/ })).toBeDisabled()
     expect(screen.getByRole('button', { name: /MIXED/ })).toBeDisabled()
   })
@@ -327,7 +325,7 @@ describe('QuizFormPage (§6)', () => {
         ok(undefined) as unknown as ReturnType<typeof useInstructorQuizDetail>,
       )
     })
-    await user.click(screen.getByRole('button', { name: /저장 \+ 문제 관리/ }))
+    await user.click(screen.getByRole('button', { name: '저장', exact: true }))
     expect(await screen.findByText('제목을 입력해주세요')).toBeInTheDocument()
     expect(screen.getByText('시작일을 입력해주세요')).toBeInTheDocument()
   })

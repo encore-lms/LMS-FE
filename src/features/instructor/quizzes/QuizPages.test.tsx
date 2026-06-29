@@ -326,8 +326,8 @@ describe('QuizFormPage (§6)', () => {
       )
     })
     await user.click(screen.getByRole('button', { name: /^저장$/ }))
+    // 시작/종료/제한시간은 생성 시 기본값(현재·다음날·60분)이라 제목만 검증 에러.
     expect(await screen.findByText('제목을 입력해주세요')).toBeInTheDocument()
-    expect(screen.getByText('시작일을 입력해주세요')).toBeInTheDocument()
   })
 })
 

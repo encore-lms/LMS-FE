@@ -74,6 +74,68 @@ export interface ResumeDetail {
   feedbacks: ResumeFeedbackItem[]
 }
 
+// 강사/운영 공용 과제(/instructor/assignments) — 실 BE. 과제 탭이 선택 기수로 스코프.
+export interface AssignmentCounts {
+  submitted: number
+  notSubmitted: number
+  supplementRequested: number
+  reviewDone: number
+}
+export interface InstructorAssignmentRow {
+  id: string
+  title: string
+  subject: string | null
+  cohortLabel: string
+  dueLabel: string
+  closed: boolean
+  createdByUserId: string
+  counts: AssignmentCounts
+  badgeStatus: string
+  badgeCount: number | null
+}
+export interface InstructorAssignmentList {
+  total: number
+  kpi: AssignmentCounts
+  items: InstructorAssignmentRow[]
+}
+export interface AssignmentFormDetail {
+  id: string
+  cohortId: string
+  cohortLabel: string
+  subject: string | null
+  title: string
+  dueAt: string // "yyyy-MM-dd HH:mm"
+  description: string | null
+  urls: string[]
+  files: string[]
+  submittedCount: number
+}
+export interface AssignmentSubmissionFeedback {
+  authorUserId: string
+  byStudent: boolean
+  text: string
+  timeLabel: string
+}
+export interface AssignmentSubmissionRow {
+  id: string
+  studentUserId: string
+  status: string // submitted | supplement_requested | review_done
+  submittedAtLabel: string | null
+  bodyText: string | null
+  url: string | null
+  files: string[]
+  feedbacks: AssignmentSubmissionFeedback[]
+  history: string[]
+}
+export interface AssignmentSubmissionsData {
+  assignmentId: string
+  assignmentTitle: string
+  dueLabel: string
+  closed: boolean
+  counts: AssignmentCounts
+  rows: AssignmentSubmissionRow[]
+}
+
 // 설명 탭 — HRD-Net 과정 상세(learning-service /detail).
 export interface CourseDetail {
   title: string

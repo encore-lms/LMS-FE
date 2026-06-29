@@ -160,8 +160,13 @@ export interface CourseCohort {
 export interface CohortMaterialItem {
   id: string
   title: string
-  materialType: string // 'link' | 'document'
+  body: string | null
+  materialType: string // 'link' | 'document' | 'file'
   url: string | null
+  hasFile: boolean
+  fileName: string | null
+  fileSize: number | null
+  uploadedByUserId: string
   createdAt: string
 }
 

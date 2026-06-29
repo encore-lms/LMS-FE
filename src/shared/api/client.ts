@@ -30,10 +30,14 @@ instance.interceptors.response.use(
 export interface ApiClient {
   get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>>
   post<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
+  // multipart/form-data 전송(파일 업로드). Content-Type을 비워 axios가 boundary를 자동 설정.
+  postForm<T>(url: string, form: FormData): Promise<ApiResponse<T>>
   put<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
   // PATCH — 부분 갱신(운영 수동 채점 grade 계약). 기존 메서드 시그니처는 불변(추가만).
   patch<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
   delete<T>(url: string): Promise<ApiResponse<T>>
+  // 바이너리 다운로드(자료실 파일). Blob을 그대로 반환(언래핑 없음).
+  getBlob(url: string): Promise<Blob>
 }
 
 export const apiClient: ApiClient = {
@@ -43,6 +47,13 @@ export const apiClient: ApiClient = {
   },
   async post<T>(url: string, body?: unknown) {
     const res = await instance.post<ApiResponse<T>>(url, body)
+    return res.data
+  },
+  async postForm<T>(url: string, form: FormData) {
+    // Content-Type을 undefined로 두면 브라우저/axios가 boundary 포함 multipart 헤더를 채운다.
+    const res = await instance.post<ApiResponse<T>>(url, form, {
+      headers: { 'Content-Type': undefined },
+    })
     return res.data
   },
   async put<T>(url: string, body?: unknown) {
@@ -55,6 +66,10 @@ export const apiClient: ApiClient = {
   },
   async delete<T>(url: string) {
     const res = await instance.delete<ApiResponse<T>>(url)
+    return res.data
+  },
+  async getBlob(url: string) {
+    const res = await instance.get<Blob>(url, { responseType: 'blob' })
     return res.data
   },
 }

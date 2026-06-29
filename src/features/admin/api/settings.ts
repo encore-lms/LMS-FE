@@ -359,25 +359,63 @@ export interface CreateCohortMaterialInput {
   courseId: string
   cohortId: string
   title: string
-  materialType: string
-  url: string
+  materialType: string // 'link' | 'document' | 'file'
+  body?: string
+  url?: string // link/document
+  file?: File // file형
 }
 
+// 자료 생성 — multipart. link/document면 url, file이면 file 첨부. body(본문)는 공통 선택.
 export function useCreateCohortMaterial() {
   const queryClient = useQueryClient()
   return useMutation<CohortMaterialItem, Error, CreateCohortMaterialInput>({
-    mutationFn: ({ courseId, cohortId, title, materialType, url }) =>
-      apiClient
-        .post<CohortMaterialItem>(
+    mutationFn: ({
+      courseId,
+      cohortId,
+      title,
+      materialType,
+      body,
+      url,
+      file,
+    }) => {
+      const form = new FormData()
+      form.append('title', title)
+      form.append('materialType', materialType)
+      if (body) form.append('body', body)
+      if (url) form.append('url', url)
+      if (file) form.append('file', file)
+      return apiClient
+        .postForm<CohortMaterialItem>(
           `/admin/courses/${courseId}/cohorts/${cohortId}/materials`,
-          { title, materialType, url },
+          form,
         )
-        .then((r) => r.data),
+        .then((r) => r.data)
+    },
     onSuccess: (_data, { courseId, cohortId }) =>
       queryClient.invalidateQueries({
         queryKey: adminKeys.settingsCohortMaterials(courseId, cohortId),
       }),
   })
+}
+
+// 자료 파일 다운로드 — Blob 받아 브라우저 저장 트리거.
+export async function downloadCohortMaterialFile(
+  courseId: string,
+  cohortId: string,
+  materialId: string,
+  fileName: string,
+) {
+  const blob = await apiClient.getBlob(
+    `/admin/courses/${courseId}/cohorts/${cohortId}/materials/${materialId}/file`,
+  )
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = fileName || 'download'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(objectUrl)
 }
 
 export interface DeleteCohortMaterialInput {

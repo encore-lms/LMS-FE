@@ -3,22 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   AlertCircle,
   ArrowLeft,
-  Award,
-  Briefcase,
   Calendar,
   Check,
   Code2,
   FileText,
-  FolderGit2,
   Globe,
-  GraduationCap,
   Mail,
   Pencil,
   Phone,
   Plus,
   Save,
   Send,
-  Star,
   Trash2,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
@@ -26,6 +21,7 @@ import { usePageHeader } from '@/shared/store'
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateResume, useResume, useUpdateResume } from '../api/resume'
 import { PeriodField } from './PeriodField'
+import { ResumeDocView } from './ResumeDocView'
 import {
   INTRO_QUESTIONS,
   SECTIONS,
@@ -246,194 +242,6 @@ function ItemSectionEditor({
         </button>
       </div>
     </Section>
-  )
-}
-
-/** Doc 미리보기 — 현재 편집 중인 폼을 문서로 렌더(라이브 미리보기). */
-function DocEntry({
-  icon,
-  title,
-  meta,
-}: {
-  icon: ReactNode
-  title: string
-  meta?: string
-}) {
-  return (
-    <div className="flex items-center gap-3.5">
-      <span className="bg-surface-muted text-fg-muted flex size-9 shrink-0 items-center justify-center rounded-lg [&>svg]:h-4 [&>svg]:w-4">
-        {icon}
-      </span>
-      <div className="flex flex-col gap-0.5">
-        <span className="text-fg text-[14px] font-semibold">{title}</span>
-        {meta && <span className="text-fg-subtle text-[12px]">{meta}</span>}
-      </div>
-    </div>
-  )
-}
-
-function itemMeta(it: ResumeItem) {
-  return [it.subtitle, it.period, it.description].filter(Boolean).join(' · ')
-}
-
-/** Doc — ResumeItem[] 섹션. 항목이 없으면 렌더하지 않음(작성된 섹션만 문서에 등장). */
-function DocItemSection({
-  title,
-  icon,
-  items,
-}: {
-  title: string
-  icon: ReactNode
-  items: ResumeItem[]
-}) {
-  if (items.length === 0) return null
-  return (
-    <Section title={title}>
-      <div className="flex flex-col gap-4">
-        {items.map((it, i) => (
-          <DocEntry
-            key={`${it.title}-${i}`}
-            icon={icon}
-            title={it.title || '(제목 미입력)'}
-            meta={itemMeta(it)}
-          />
-        ))}
-      </div>
-    </Section>
-  )
-}
-
-/**
- * Doc 미리보기 — 현재 편집 중인 폼을 문서로 렌더(Edit과 라이브 연동).
- * 내용이 채워진 섹션만 표시한다 — Edit에서 작성해 '작성됨'이 되면 그 섹션이 문서에 나타난다.
- */
-function DocView({ form, skills }: { form: ResumeForm; skills: string[] }) {
-  const b = form.basicInfo
-  const intros = form.coverLetters.filter((c) => c.content.trim())
-  const contacts = [
-    { icon: <Phone />, value: b.phone },
-    { icon: <Mail />, value: b.email },
-    { icon: <Calendar />, value: b.birth },
-    { icon: <Code2 />, value: b.githubUrl },
-    { icon: <Globe />, value: b.blogUrl },
-  ].filter((c) => c.value.trim())
-
-  const hasAny = Boolean(
-    b.name.trim() ||
-    contacts.length ||
-    form.strength.trim() ||
-    skills.length ||
-    form.careers.length ||
-    form.educations.length ||
-    form.certificates.length ||
-    form.awards.length ||
-    form.trainings.length ||
-    form.activities.length ||
-    form.projects.length ||
-    intros.length,
-  )
-
-  return (
-    <div className="resume-print border-border flex flex-col gap-8 rounded-2xl border bg-white p-10">
-      <div className="flex flex-col gap-3">
-        {/* 이력서 문서 내용의 이름 — 페이지 h1은 공유 헤더가 소유하므로 h2로 유지 */}
-        <h2 className="text-fg text-2xl font-bold">
-          {b.name || '(이름 미입력)'}
-        </h2>
-        {contacts.length > 0 && (
-          <div className="text-fg-muted flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[13px]">
-            {contacts.map((c, i) => (
-              <span
-                key={i}
-                className="[&>svg]:text-fg-subtle inline-flex items-center gap-1.5 [&>svg]:h-3.5 [&>svg]:w-3.5"
-              >
-                {c.icon}
-                {c.value}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {form.strength.trim() && (
-        <Section title="핵심역량/강점">
-          <p className="text-fg-muted text-[14px] leading-relaxed whitespace-pre-line">
-            {form.strength}
-          </p>
-        </Section>
-      )}
-
-      <DocItemSection
-        title="학력사항"
-        icon={<GraduationCap />}
-        items={form.educations}
-      />
-      <DocItemSection
-        title="경력사항"
-        icon={<Briefcase />}
-        items={form.careers}
-      />
-      <DocItemSection
-        title="자격사항"
-        icon={<Award />}
-        items={form.certificates}
-      />
-      <DocItemSection title="수상내역" icon={<Star />} items={form.awards} />
-      <DocItemSection
-        title="교육경험"
-        icon={<GraduationCap />}
-        items={form.trainings}
-      />
-      <DocItemSection
-        title="기타활동"
-        icon={<FileText />}
-        items={form.activities}
-      />
-
-      {skills.length > 0 && (
-        <Section title="기술스택">
-          <div className="flex flex-wrap gap-2">
-            {skills.map((s, i) => (
-              <span
-                key={`${s}-${i}`}
-                className="bg-accent-bg text-accent-strong rounded-full px-2.5 py-1 text-[12px] font-semibold"
-              >
-                {s}
-              </span>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      <DocItemSection
-        title="프로젝트 경험"
-        icon={<FolderGit2 />}
-        items={form.projects}
-      />
-
-      {intros.length > 0 && (
-        <Section title="자기소개서">
-          <div className="flex flex-col gap-5">
-            {intros.map((it, i) => (
-              <div key={`${it.question}-${i}`} className="flex flex-col gap-2">
-                <span className="text-accent-strong text-[14px] font-bold">
-                  {it.question}
-                </span>
-                <p className="text-fg-muted text-[13px] leading-relaxed whitespace-pre-line">
-                  {it.content}
-                </p>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {!hasAny && (
-        <span className="text-fg-subtle text-[13px]">
-          아직 작성된 내용이 없어요. Edit 탭에서 작성하면 여기에 표시됩니다.
-        </span>
-      )}
-    </div>
   )
 }
 
@@ -674,7 +482,7 @@ export default function ResumeEditorPage() {
         {!form ? (
           <div className="text-fg-muted p-8">이력서를 불러오는 중…</div>
         ) : mode === 'doc' ? (
-          <DocView form={form} skills={skills} />
+          <ResumeDocView data={{ ...form, skills }} />
         ) : (
           <div className="border-border flex flex-col gap-8 rounded-2xl border bg-white p-10">
             <div className="flex items-center gap-3">

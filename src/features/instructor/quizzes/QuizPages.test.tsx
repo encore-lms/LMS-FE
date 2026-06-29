@@ -325,7 +325,7 @@ describe('QuizFormPage (§6)', () => {
         ok(undefined) as unknown as ReturnType<typeof useInstructorQuizDetail>,
       )
     })
-    await user.click(screen.getByRole('button', { name: '저장', exact: true }))
+    await user.click(screen.getByRole('button', { name: /^저장$/ }))
     expect(await screen.findByText('제목을 입력해주세요')).toBeInTheDocument()
     expect(screen.getByText('시작일을 입력해주세요')).toBeInTheDocument()
   })

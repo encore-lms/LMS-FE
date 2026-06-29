@@ -1,6 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, quizKeys } from '@/shared/api'
-import type { QuizListItem, QuizQuestion, QuizResult } from '@/shared/types'
+import type {
+  AnswerPayload,
+  QuizListItem,
+  QuizQuestion,
+  QuizResult,
+} from '@/shared/types'
 
 // 수강생 전용 퀴즈 훅 — 엔드포인트가 /student/* 라 학생 feature 소유.
 // queryFn에서 .then(r => r.data)로 언래핑(apiClient는 ApiResponse<T>={data:T} 반환).
@@ -26,6 +31,25 @@ export function useQuizQuestions(quizId: string) {
         .get<QuizQuestion[]>(`/student/quizzes/${quizId}/questions`)
         .then((r) => r.data),
     enabled: !!quizId,
+  })
+}
+
+export interface SubmitQuizInput {
+  startedAt?: string
+  responses: { questionId: string; payload: AnswerPayload }[]
+}
+/** 응시 제출 — 자동채점 결과(QuizResult) 반환. 결과 캐시 무효화. */
+export function useSubmitQuiz(quizId: string) {
+  const qc = useQueryClient()
+  return useMutation<QuizResult, Error, SubmitQuizInput>({
+    mutationFn: (input) =>
+      apiClient
+        .post<QuizResult>(`/student/quizzes/${quizId}/submit`, input)
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: quizKeys.result(quizId) })
+      qc.invalidateQueries({ queryKey: quizKeys.lists() })
+    },
   })
 }
 

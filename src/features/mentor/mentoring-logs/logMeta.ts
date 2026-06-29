@@ -1,9 +1,9 @@
 import {
   AlertTriangle,
   Check,
+  Home,
   Info,
   Link2,
-  MapPin,
   Pencil,
   type LucideIcon,
 } from 'lucide-react'
@@ -27,10 +27,10 @@ export const LOG_STATUS_META: Record<MentoringLogStatus, LogStatusMeta> = {
   draft: { label: '작성 중', icon: Pencil, chip: 'bg-warning-bg text-warning' },
 }
 
-/** 장소 유형 아이콘 — 온라인 link / 오프라인 핀 / 기타 info(Figma 패턴). */
+/** 장소 유형 아이콘 — 온라인 link / 오프라인 집(home) / 기타 info(Figma house-door-fill 정합). */
 export const PLACE_TYPE_ICON: Record<MentoringPlaceType, LucideIcon> = {
   online: Link2,
-  offline: MapPin,
+  offline: Home,
   etc: Info,
 }
 

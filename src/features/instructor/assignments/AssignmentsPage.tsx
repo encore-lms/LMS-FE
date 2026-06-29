@@ -10,13 +10,14 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { InstructorAssignmentRow } from '@/shared/types'
-import { useInstructorAssignments } from '../api/assignments'
+import {
+  useDeleteAssignment,
+  useInstructorAssignments,
+} from '../api/assignments'
 import { DeleteAssignmentModal } from './DeleteAssignmentModal'
 import { SUBMISSION_STATUS_META } from './meta'
 
 type StatusFilter = 'all' | 'open' | 'closed'
-
-const COHORTS = ['전체', 'DA 3기'] as const
 
 // 과제·실습 관리 (/instructor/assignments) — P0 30. (Figma 2236:10561)
 // 점수 없음 — 제출/미제출/보완요청/검토완료 상태 관제만. 마감일 가까운 순 기본 정렬.
@@ -24,11 +25,17 @@ export default function AssignmentsPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useInstructorAssignments()
+  const deleteAssignment = useDeleteAssignment()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
-  const [cohort, setCohort] = useState<(typeof COHORTS)[number]>('전체')
+  const [cohort, setCohort] = useState<string>('전체')
   const [deleteTarget, setDeleteTarget] =
     useState<InstructorAssignmentRow | null>(null)
+  // 기수 필터 옵션 — 데이터에서 파생(실 기수 라벨).
+  const cohortOpts = useMemo(
+    () => ['전체', ...new Set((data?.items ?? []).map((i) => i.cohortLabel))],
+    [data],
+  )
   usePageHeader(
     '과제·실습 관리',
     '담당 기수 과제·실습을 생성하고 제출 상태를 관리합니다',
@@ -42,7 +49,7 @@ export default function AssignmentsPage() {
       if (status === 'closed' && !r.closed) return false
       if (cohort !== '전체' && r.cohortLabel !== cohort) return false
       if (needle) {
-        const hay = `${r.title} ${r.subject}`.toLowerCase()
+        const hay = `${r.title} ${r.subject ?? ''}`.toLowerCase()
         if (!hay.includes(needle)) return false
       }
       return true
@@ -82,7 +89,9 @@ export default function AssignmentsPage() {
       key: 'subject',
       header: '과목/회차',
       className: 'w-32',
-      cell: (r) => <span className="text-fg-muted text-sm">{r.subject}</span>,
+      cell: (r) => (
+        <span className="text-fg-muted text-sm">{r.subject ?? '-'}</span>
+      ),
     },
     {
       key: 'due',
@@ -100,12 +109,6 @@ export default function AssignmentsPage() {
       ),
     },
     {
-      key: 'creator',
-      header: '생성자',
-      className: 'w-28',
-      cell: (r) => <span className="text-fg-muted text-sm">{r.creator}</span>,
-    },
-    {
       key: 'summary',
       header: '제출 현황',
       className: 'w-52',
@@ -118,11 +121,11 @@ export default function AssignmentsPage() {
           <div className="mt-1.5">
             <StatusBadge
               label={
-                r.badge.count === null
-                  ? SUBMISSION_STATUS_META[r.badge.status].label
-                  : `${SUBMISSION_STATUS_META[r.badge.status].label} ${r.badge.count}`
+                r.badgeCount === null
+                  ? SUBMISSION_STATUS_META[r.badgeStatus].label
+                  : `${SUBMISSION_STATUS_META[r.badgeStatus].label} ${r.badgeCount}`
               }
-              tone={SUBMISSION_STATUS_META[r.badge.status].tone}
+              tone={SUBMISSION_STATUS_META[r.badgeStatus].tone}
             />
           </div>
         </div>
@@ -232,13 +235,11 @@ export default function AssignmentsPage() {
           <span className="text-fg-subtle">기수</span>
           <select
             value={cohort}
-            onChange={(e) =>
-              setCohort(e.target.value as (typeof COHORTS)[number])
-            }
+            onChange={(e) => setCohort(e.target.value)}
             aria-label="기수 필터"
             className="text-fg bg-transparent text-sm font-medium outline-none"
           >
-            {COHORTS.map((c) => (
+            {cohortOpts.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -274,7 +275,10 @@ export default function AssignmentsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={(a) => {
           setDeleteTarget(null)
-          toast.success(`${a.title} 삭제 — 제출 기록 포함 (mock)`)
+          deleteAssignment.mutate(a.id, {
+            onSuccess: () => toast.success(`${a.title} 삭제 — 제출 기록 포함`),
+            onError: () => toast.danger('삭제에 실패했어요'),
+          })
         }}
       />
     </div>

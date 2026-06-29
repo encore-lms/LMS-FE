@@ -9,7 +9,8 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { useGradingDetail } from '../api/quizzes'
+import { useGradingDetail, useSaveGrading } from '../api/quizzes'
+import { useStudentAccounts } from '@/features/admin/api/students'
 import { QUESTION_TYPE_LABEL } from './meta'
 
 interface DraftEntry {
@@ -30,6 +31,8 @@ export default function GradingPage() {
     submissionId,
   )
   const [drafts, setDrafts] = useState<Record<string, DraftEntry>>({})
+  const saveGrading = useSaveGrading(quizId, submissionId)
+  const { data: students } = useStudentAccounts()
   usePageHeader('수동 채점', '문항별 점수·피드백 입력 — 완료 시 점수 확정')
 
   // 채점 데이터 도착 시 기존 입력값으로 초기화.
@@ -54,6 +57,35 @@ export default function GradingPage() {
     [drafts],
   )
 
+  // 드래프트 → 저장 payload(items). 점수 빈 값은 null(미확정).
+  const buildItems = () =>
+    (data?.items ?? []).map((it) => {
+      const d = drafts[it.questionId] ?? {
+        score: '',
+        feedback: '',
+        visible: true,
+      }
+      return {
+        questionId: it.questionId,
+        score: d.score.trim() === '' ? null : Number(d.score),
+        feedback: d.feedback,
+        feedbackVisible: d.visible,
+      }
+    })
+  const handleSave = (done: boolean) => {
+    if (saveGrading.isPending) return
+    saveGrading.mutate(
+      { items: buildItems() },
+      {
+        onSuccess: () => {
+          toast.success(done ? '채점을 완료했어요' : '임시 저장했어요')
+          if (done) navigate(`${base}/${quizId}/submissions`)
+        },
+        onError: () => toast.danger('저장에 실패했어요'),
+      },
+    )
+  }
+
   if (isPending) {
     return <div className="text-fg-muted p-8">채점 정보를 불러오는 중…</div>
   }
@@ -73,6 +105,11 @@ export default function GradingPage() {
   const total = data.totalManualCount
   const allEntered = gradedCount >= total
   const pct = total > 0 ? Math.round((gradedCount / total) * 100) : 0
+  // 학생명 — BE는 studentUserId만 주므로 계정 join(없으면 BE studentName/대체).
+  const studentName =
+    (students?.items ?? []).find((s) => s.id === data.studentUserId)?.name ||
+    data.studentName ||
+    '수강생'
   // 임시 점수 = 자동 채점분 + 입력된 수동 점수 합 (입력값 우선 반영).
   const manualSum = data.items.reduce((acc, it) => {
     const raw = drafts[it.questionId]?.score ?? ''
@@ -96,10 +133,10 @@ export default function GradingPage() {
       <div className="border-border bg-surface rounded-xl border px-5 py-4">
         <div className="flex flex-wrap items-center gap-5">
           <div className="flex items-center gap-3">
-            <Avatar name={data.studentName} size={44} />
+            <Avatar name={studentName} size={44} />
             <div>
               <p className="text-fg text-base font-bold">
-                {data.studentName} · {data.cohortLabel}
+                {studentName} · {data.cohortLabel}
               </p>
               <p className="text-fg-subtle text-xs">
                 {data.quizTitle} · 제출 {data.submittedAt}
@@ -158,9 +195,7 @@ export default function GradingPage() {
             className="border-border bg-surface mt-4 rounded-xl border"
           >
             <div className="border-divider flex items-center gap-3 border-b px-5 py-3.5">
-              <p className="text-fg text-sm font-bold">
-                문제 {it.index} / {total}
-              </p>
+              <p className="text-fg text-sm font-bold">문제 {it.index}</p>
               <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-px text-[10px] font-bold">
                 {QUESTION_TYPE_LABEL[it.type]}
               </span>
@@ -298,22 +333,16 @@ export default function GradingPage() {
             type="button"
             variant="secondary"
             className="h-10 text-sm"
-            onClick={() =>
-              toast.success(`임시 저장 — ${gradedCount}/${total} 문항 (mock)`)
-            }
+            disabled={saveGrading.isPending}
+            onClick={() => handleSave(false)}
           >
             임시 저장
           </Button>
           <Button
             type="button"
-            disabled={!allEntered}
+            disabled={!allEntered || saveGrading.isPending}
             className="h-10 text-sm"
-            onClick={() => {
-              toast.success(
-                `채점 완료 — ${data.studentName} ${provisional}/${data.totalScore} 확정 (mock)`,
-              )
-              navigate(`${base}/${quizId}/submissions`)
-            }}
+            onClick={() => handleSave(true)}
           >
             채점 완료
           </Button>

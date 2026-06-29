@@ -103,7 +103,7 @@ export default function QuizListPage({
         <div>
           <p className="text-fg text-sm font-medium">{r.title}</p>
           <p className="text-fg-subtle text-xs">
-            {r.cohortLabel} · {r.subject}
+            {[r.cohortLabel, r.subject].filter(Boolean).join(' · ')}
           </p>
         </div>
       ),
@@ -123,12 +123,15 @@ export default function QuizListPage({
       key: 'period',
       header: '기간',
       className: 'w-36',
-      cell: (r) => (
-        <div className="text-fg-muted text-xs">
-          <p>{r.startAt}</p>
-          <p>~ {r.endAt}</p>
-        </div>
-      ),
+      cell: (r) =>
+        r.startAt || r.endAt ? (
+          <div className="text-fg-muted text-xs">
+            <p>{r.startAt || '—'}</p>
+            <p>~ {r.endAt || '—'}</p>
+          </div>
+        ) : (
+          <span className="text-fg-subtle text-xs">기간 미설정</span>
+        ),
     },
     {
       key: 'submitRate',

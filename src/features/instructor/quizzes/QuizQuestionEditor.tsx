@@ -17,11 +17,13 @@ const TYPES: { value: SaveQuizQuestionInput['type']; label: string }[] = [
   { value: 'multiple_choice', label: '객관식' },
   { value: 'short_answer', label: '주관식' },
   { value: 'fill_blank', label: '빈칸 채우기' },
+  { value: 'essay', label: '서술형' },
 ]
 const TYPE_LABEL: Record<string, string> = {
   multiple_choice: '객관식',
   short_answer: '주관식',
   fill_blank: '빈칸',
+  essay: '서술형',
 }
 
 interface DraftState {
@@ -54,7 +56,8 @@ function toDraft(q: InstructorQuestion): DraftState {
     prompt: q.body ?? '',
     choices: q.choices && q.choices.length >= 2 ? q.choices : ['', ''],
     answerIndex: type === 'multiple_choice' ? Number(q.answerKey ?? 0) || 0 : 0,
-    answerText: type === 'short_answer' ? (q.answerKey ?? '') : '',
+    answerText:
+      type === 'short_answer' || type === 'essay' ? (q.answerKey ?? '') : '',
     answers: fb ? fb.answers : [],
     blankScores: fb ? fb.scores : [],
     points: q.points ?? 10,
@@ -144,6 +147,9 @@ function QuestionForm({
       payload.choices = d.choices
       payload.answerIndex = d.answerIndex
     } else if (d.type === 'short_answer') {
+      payload.answerText = d.answerText
+    } else if (d.type === 'essay') {
+      // 서술형 — 수동 채점. 채점 기준(선택)만 보관.
       payload.answerText = d.answerText
     } else {
       if (blanks === 0) {
@@ -282,6 +288,25 @@ function QuestionForm({
             placeholder="정답 텍스트"
             className={FIELD}
           />
+        </div>
+      )}
+
+      {d.type === 'essay' && (
+        <div>
+          <span className="text-fg-muted mb-1 block text-xs font-semibold">
+            채점 기준 / 모범답안 (선택) — 학생에게 비공개
+          </span>
+          <textarea
+            rows={3}
+            value={d.answerText}
+            onChange={(e) => set({ answerText: e.target.value })}
+            placeholder="강사 채점 시 참고할 기준이나 모범답안을 적어두세요"
+            className={`${FIELD} h-auto py-2`}
+          />
+          <p className="text-fg-subtle mt-1 text-xs">
+            서술형은 자동 채점되지 않고, 제출 후 수동 채점 화면에서 점수를
+            매깁니다.
+          </p>
         </div>
       )}
 

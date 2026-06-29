@@ -37,6 +37,7 @@ const TYPE_LABEL: Record<QuestionType, string> = {
   multiple_choice: '객관식',
   short_answer: '단답형',
   fill_blank: '빈칸',
+  essay: '서술형',
 }
 
 // 영향 범위 4종 — Figma 패널 원문(영향 계산 전 정적 안내, 계산 후엔 응답 값).

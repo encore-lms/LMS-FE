@@ -96,6 +96,7 @@ export type SubmissionGradingState = 'manual_pending' | 'auto_done' | 'done'
 
 export interface QuizSubmissionRow {
   id: string
+  studentUserId: string
   studentName: string
   cohortLabel: string
   submitted: boolean
@@ -139,6 +140,7 @@ export interface GradingItem {
 
 export interface GradingDetail {
   submissionId: string
+  studentUserId: string
   studentName: string
   cohortLabel: string
   quizTitle: string

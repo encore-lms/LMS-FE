@@ -47,6 +47,7 @@ const TYPE_LABEL: Record<QuestionType, string> = {
   multiple_choice: '객관식',
   short_answer: '단답',
   fill_blank: '빈칸',
+  essay: '서술형',
 }
 
 const DIFFICULTY_LABEL: Record<

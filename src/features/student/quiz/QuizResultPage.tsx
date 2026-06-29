@@ -223,13 +223,15 @@ export default function QuizResultPage() {
           퀴즈 목록으로
         </button>
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(`/student/quizzes/${quizId}/take`)}
-            className="border-accent-strong text-accent-strong rounded-[10px] border px-4 py-3 text-[13px] font-semibold"
-          >
-            재응시 ({reattemptsLeft}회 남음)
-          </button>
+          {reattemptsLeft > 0 && (
+            <button
+              type="button"
+              onClick={() => navigate(`/student/quizzes/${quizId}/take`)}
+              className="border-accent-strong text-accent-strong rounded-[10px] border px-4 py-3 text-[13px] font-semibold"
+            >
+              재응시 ({reattemptsLeft}회 남음)
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate('/student/quizzes')}

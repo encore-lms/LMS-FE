@@ -130,6 +130,11 @@ export interface AssignmentSubmissionRow {
 export interface AssignmentSubmissionsData {
   assignmentId: string
   assignmentTitle: string
+  subject: string | null
+  description: string | null
+  createdByUserId: string
+  createdAtLabel: string
+  dueAtLabel: string
   dueLabel: string
   closed: boolean
   counts: AssignmentCounts

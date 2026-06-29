@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { useStudentAccounts } from '../api/students'
+import { useOpsAccounts } from '../api/settings'
 import type { InstructorAssignmentRow, AssignmentSubmissionRow } from './types'
 import {
   useAssignmentSubmissions,
@@ -37,10 +38,17 @@ function SubmissionsModal({
   onClose: () => void
 }) {
   const { data, isPending } = useAssignmentSubmissions(assignmentId)
+  const { data: ops } = useOpsAccounts()
   const changeStatus = useChangeSubmissionStatus(assignmentId)
   const toast = useToast()
   const [openRow, setOpenRow] = useState<string | null>(null)
   const [feedback, setFeedback] = useState('')
+
+  const authorName = useMemo(() => {
+    if (!data) return '운영자'
+    const o = (ops?.items ?? []).find((x) => x.id === data.createdByUserId)
+    return o?.name ?? '운영자'
+  }, [ops, data])
 
   const act = (submissionId: string, status: string) => {
     changeStatus.mutate(
@@ -62,13 +70,47 @@ function SubmissionsModal({
   return (
     <Modal open onClose={onClose} size="lg" footer={null}>
       <div className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-fg text-lg font-bold">{title}</h2>
-          <p className="text-fg-muted mt-1 text-sm">
-            제출 {data?.counts.submitted ?? 0} · 보완{' '}
-            {data?.counts.supplementRequested ?? 0} · 검토완료{' '}
-            {data?.counts.reviewDone ?? 0}
-          </p>
+        {/* 과제 상세 — 제목·작성자 / 작성일·마감일 / 내용 */}
+        <article>
+          <h2 className="text-fg text-[22px] leading-snug font-bold">
+            {data?.assignmentTitle ?? title}
+          </h2>
+          <div className="text-fg-muted mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+            <span>작성자 {authorName}</span>
+            {data?.subject && (
+              <>
+                <span className="bg-border h-3 w-px" />
+                <span>{data.subject}</span>
+              </>
+            )}
+          </div>
+          <div className="text-fg-muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+            <span>작성일 {data?.createdAtLabel || '-'}</span>
+            <span className="bg-border h-3 w-px" />
+            <span className={data?.closed ? 'text-danger' : undefined}>
+              마감일 {data?.dueAtLabel || '없음'}
+              {data?.dueLabel ? ` (${data.dueLabel})` : ''}
+            </span>
+          </div>
+          <div className="text-fg mt-4 text-[15px] leading-7 break-words whitespace-pre-wrap">
+            {data?.description?.trim() ? (
+              data.description
+            ) : (
+              <span className="text-fg-subtle italic">내용이 없습니다.</span>
+            )}
+          </div>
+        </article>
+
+        {/* 구분선 + 제출 현황 */}
+        <div className="border-divider border-t pt-4">
+          <div className="mb-2 flex items-baseline justify-between">
+            <h3 className="text-fg text-[15px] font-bold">제출 현황</h3>
+            <p className="text-fg-muted text-xs">
+              제출 {data?.counts.submitted ?? 0} · 보완{' '}
+              {data?.counts.supplementRequested ?? 0} · 검토완료{' '}
+              {data?.counts.reviewDone ?? 0}
+            </p>
+          </div>
         </div>
 
         {isPending ? (

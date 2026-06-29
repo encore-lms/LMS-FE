@@ -84,6 +84,7 @@ export interface SaveQuizQuestionInput {
   answerIndex?: number
   answerText?: string
   answers?: string[]
+  blankScores?: number[]
   explanation?: string
   points: number
 }

@@ -10,10 +10,7 @@ import type { CourseDetail } from './types'
 
 vi.mock('./api')
 vi.mock('../api/settings')
-// 흡수된 이력서·기록실 페이지는 자체 데이터/훅이 많아 탭 임베드 검증에선 스텁으로 대체.
-vi.mock('../resume/ResumePage', () => ({
-  default: () => <div>이력서 임베드</div>,
-}))
+// 각 패널은 자체 데이터/훅이 많아 탭 분기 검증에선 스텁으로 대체.
 vi.mock('../records/RecordReviewQueuePage', () => ({
   default: () => <div>기록실 임베드</div>,
 }))
@@ -22,6 +19,9 @@ vi.mock('@/features/instructor/quizzes/QuizListPage', () => ({
 }))
 vi.mock('./MaterialsPane', () => ({
   MaterialsPane: () => <div>자료실 패널</div>,
+}))
+vi.mock('./ResumePane', () => ({
+  ResumePane: () => <div>이력서 패널</div>,
 }))
 
 // 과정·기수·교과목 — 6탭(자료실/과제/퀴즈/이력서/기록실/설정) + 흡수.
@@ -81,11 +81,11 @@ describe('EducationPage (과정·기수·교과목)', () => {
     }
   })
 
-  it('이력서 탭 = 이력서 관리 흡수(임베드)', async () => {
+  it('이력서 탭 = 실 BE 이력서 패널(현황·상세·피드백)', async () => {
     const user = userEvent.setup()
     renderPage()
     await user.click(screen.getByRole('button', { name: '이력서' }))
-    expect(screen.getByText('이력서 임베드')).toBeInTheDocument()
+    expect(screen.getByText('이력서 패널')).toBeInTheDocument()
   })
 
   it('기록실 탭 = 학습 기록 검토 흡수(임베드)', async () => {

@@ -11,16 +11,16 @@ import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import ResumePage from '../resume/ResumePage'
 import RecordReviewQueuePage from '../records/RecordReviewQueuePage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { useCourseDetail } from './api'
 import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
+import { ResumePane } from './ResumePane'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
-// 이력서·기록실은 검토·심사에서 흡수(ResumePage·RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
+// 이력서=실 BE(ResumePane), 기록실=검토·심사 흡수(RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
 type TabKey =
   | 'materials'
   | 'assignments'
@@ -216,8 +216,12 @@ export default function EducationPage() {
 
       <div className="mt-6">
         {tab === 'resume' ? (
-          // 검토·심사 '이력서 관리' 흡수.
-          <ResumePage embedded />
+          // 이력서 현황·상세·피드백(실 BE, 정본 §32).
+          !courseId || !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <ResumePane courseId={courseId} cohortId={cohortId} />
+          )
         ) : tab === 'records' ? (
           // 검토·심사 '학습 기록 검토' 흡수.
           <RecordReviewQueuePage embedded />

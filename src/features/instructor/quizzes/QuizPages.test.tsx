@@ -15,7 +15,7 @@ import {
   useQuizSubmissions,
   useGradingDetail,
 } from '../api/quizzes'
-import { useQuizTemplates } from '../api/quizTemplates'
+import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
 import type {
   InstructorQuizListData,
   QuizFormDetail,
@@ -235,6 +235,10 @@ function mockAll() {
     ok({ total: 0, totalUseCount: 0, items: [] }) as unknown as ReturnType<
       typeof useQuizTemplates
     >,
+  )
+  // 템플릿 프리필 — 기본은 미선택(데이터 없음)
+  vi.mocked(useQuizTemplateDetail).mockReturnValue(
+    ok(undefined) as unknown as ReturnType<typeof useQuizTemplateDetail>,
   )
 }
 

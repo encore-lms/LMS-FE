@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,6 +17,7 @@ import type {
   ResultRevealPolicy,
 } from '@/shared/types'
 import { useInstructorQuizDetail } from '../api/quizzes'
+import { useQuizTemplateDetail } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { quizSchema, type QuizInput } from './quiz.schema'
 
@@ -138,9 +139,13 @@ export default function QuizFormPage() {
   const navigate = useNavigate()
   const base = useQuizBasePath()
   const toast = useToast()
+  const [searchParams] = useSearchParams()
+  // 생성 모드에서 '템플릿 열기'로 진입하면 ?templateId= 로 폼을 프리필.
+  const templateId = isEdit ? null : searchParams.get('templateId')
   const { data, isPending, isError, refetch } = useInstructorQuizDetail(
     quizId ?? null,
   )
+  const { data: template } = useQuizTemplateDetail(templateId)
   const [gradingMode, setGradingMode] = useState<GradingMode>('AUTO')
   const [resultReveal, setResultReveal] =
     useState<ResultRevealPolicy>('after_grading')
@@ -184,6 +189,31 @@ export default function QuizFormPage() {
     setShuffleChoices(data.shuffleChoices)
     setVisibility(data.visibility)
   }, [data, reset])
+
+  // 생성 모드 — 템플릿 프리필. 제목·설명·배점·시간·채점/문제 정책을 템플릿 값으로 채운다.
+  // 템플릿당 1회만(toast 중복·사용자 수정 덮어쓰기 방지).
+  const prefilledRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (isEdit || !template) return
+    if (prefilledRef.current === template.id) return
+    prefilledRef.current = template.id
+    reset({
+      title: template.name,
+      cohortOption: COHORT_OPTIONS[0],
+      description: template.description,
+      startAt: '',
+      endAt: '',
+      timeLimitMin: template.defaultTimeLimitMin,
+      totalPoints: template.totalPoints,
+    })
+    setGradingMode(template.gradingMode)
+    setResultReveal(template.resultReveal)
+    setShuffleQuestions(template.shuffleQuestions)
+    setShuffleChoices(template.shuffleChoices)
+    toast.info(
+      `'${template.name}' 템플릿을 불러왔어요 (문항 ${template.questionCount} · 만점 ${template.totalPoints})`,
+    )
+  }, [isEdit, template, reset, toast])
 
   if (isEdit && isPending) {
     return <div className="text-fg-muted p-8">퀴즈 정보를 불러오는 중…</div>

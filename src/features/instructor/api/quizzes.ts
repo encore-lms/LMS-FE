@@ -77,6 +77,45 @@ export function useInstructorQuizDetail(quizId: string | null) {
   })
 }
 
+export interface SaveQuizQuestionInput {
+  type: 'multiple_choice' | 'short_answer' | 'fill_blank'
+  prompt: string
+  choices?: string[]
+  answerIndex?: number
+  answerText?: string
+  answers?: string[]
+  explanation?: string
+  points: number
+}
+// 문항 추가(POST) 또는 수정(PATCH, questionId 지정)
+export function useSaveQuizQuestion(quizId: string, questionId?: string) {
+  const qc = useQueryClient()
+  return useMutation<unknown, Error, SaveQuizQuestionInput>({
+    mutationFn: (input) =>
+      (questionId
+        ? apiClient.patch(
+            `/instructor/quizzes/${quizId}/questions/${questionId}`,
+            input,
+          )
+        : apiClient.post(`/instructor/quizzes/${quizId}/questions`, input)
+      ).then((r) => r.data),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: instructorKeys.quizQuestions(quizId) }),
+  })
+}
+
+export function useDeleteQuizQuestion(quizId: string) {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (questionId) =>
+      apiClient
+        .delete<void>(`/instructor/quizzes/${quizId}/questions/${questionId}`)
+        .then(() => undefined),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: instructorKeys.quizQuestions(quizId) }),
+  })
+}
+
 export function useQuizQuestions(quizId: string) {
   return useQuery({
     queryKey: instructorKeys.quizQuestions(quizId),

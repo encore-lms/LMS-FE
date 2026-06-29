@@ -15,15 +15,11 @@ import type {
   QuizVisibility,
   ResultRevealPolicy,
 } from '@/shared/types'
-import {
-  useInstructorQuizDetail,
-  useQuizQuestions,
-  useSaveQuiz,
-} from '../api/quizzes'
+import { useInstructorQuizDetail, useSaveQuiz } from '../api/quizzes'
 import { useAssignmentCohortOptions } from '../api/assignments'
 import { useQuizTemplateDetail } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
-import { QuestionWorkbench } from './QuestionWorkbench'
+import { QuizQuestionEditor } from './QuizQuestionEditor'
 import { quizSchema, type QuizInput } from './quiz.schema'
 
 const REVEAL_OPTIONS: { value: ResultRevealPolicy; label: string }[] = [
@@ -125,50 +121,6 @@ function CompactToggle({
         />
       </span>
     </button>
-  )
-}
-
-// 수정 모드 — 같은 페이지 하단에 문항 워크벤치 인라인(별도 페이지 없이 한 화면).
-function QuizQuestionsSection({ quizId }: { quizId: string }) {
-  const { data, isPending, isError, refetch } = useQuizQuestions(quizId)
-  if (isPending) {
-    return (
-      <div className="text-fg-muted py-8 text-center text-sm">
-        문항 불러오는 중…
-      </div>
-    )
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="문항을 불러오지 못했어요"
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-  return (
-    <QuestionWorkbench
-      subjectLabel="퀴즈"
-      subjectName={data.quizTitle}
-      gradingMode={data.gradingMode}
-      totalPoints={data.totalPoints}
-      targetPoints={data.targetPoints}
-      questions={data.questions}
-      listTitle="문항"
-      itemNoun="문항"
-      back={{ label: '↑ 맨 위로', onClick: () => window.scrollTo({ top: 0 }) }}
-      previewLabel="학생 미리보기"
-      bodyHint="학생에게 그대로 노출 — 마크다운 지원"
-      modelAnswerHint="강사 채점 시 참고용 — 학생에게 비공개"
-      explanationHint="결과 화면에서 학생에게 노출"
-      manualHint="주관식은 수동으로 자동 연결됨"
-      saveToastMessage="문항 저장 — 정답/배점 변경 시 자동 재채점 (mock)"
-      metaItems={(draft) => [
-        `응답 수: ${draft.respondedCount} / ${draft.totalCount}`,
-        `평균 점수: ${draft.avgScore !== null ? `${draft.avgScore} / ${draft.points}` : '-'}`,
-      ]}
-    />
   )
 }
 
@@ -504,7 +456,7 @@ export default function QuizFormPage() {
       <section className="border-border bg-surface rounded-xl border p-5">
         <p className="text-fg mb-3 text-sm font-bold">문항</p>
         {isEdit && quizId ? (
-          <QuizQuestionsSection quizId={quizId} />
+          <QuizQuestionEditor quizId={quizId} />
         ) : (
           <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
             기본 정보를 저장하면 같은 화면에서 문항을 추가할 수 있어요.

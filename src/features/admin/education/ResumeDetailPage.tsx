@@ -110,8 +110,8 @@ export default function ResumeDetailPage() {
         </div>
       </div>
 
-      {/* 이력서 본문 — 학생 문서 뷰와 동일 렌더 */}
-      <ResumeDocView data={parseResumeContent(data.content)} />
+      {/* 이력서 본문 — 학생 문서 뷰와 동일 렌더(상세 페이지는 외곽선 없이) */}
+      <ResumeDocView data={parseResumeContent(data.content)} bordered={false} />
 
       {/* 피드백 */}
       <section className="border-border bg-surface rounded-xl border p-5">

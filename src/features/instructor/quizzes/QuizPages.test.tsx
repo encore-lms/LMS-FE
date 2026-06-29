@@ -15,6 +15,7 @@ import {
   useQuizSubmissions,
   useGradingDetail,
 } from '../api/quizzes'
+import { useQuizTemplates } from '../api/quizTemplates'
 import type {
   InstructorQuizListData,
   QuizFormDetail,
@@ -24,6 +25,7 @@ import type {
 } from '@/shared/types'
 
 vi.mock('../api/quizzes')
+vi.mock('../api/quizTemplates')
 
 const quizList: InstructorQuizListData = {
   total: 14,
@@ -228,6 +230,11 @@ function mockAll() {
   )
   vi.mocked(useGradingDetail).mockReturnValue(
     ok(grading) as unknown as ReturnType<typeof useGradingDetail>,
+  )
+  vi.mocked(useQuizTemplates).mockReturnValue(
+    ok({ total: 0, totalUseCount: 0, items: [] }) as unknown as ReturnType<
+      typeof useQuizTemplates
+    >,
   )
 }
 

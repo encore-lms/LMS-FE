@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { AlertTriangle, ExternalLink, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { AlertTriangle, Download, ExternalLink, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
@@ -7,12 +7,26 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
 import type { CohortMaterialItem } from '@/shared/types'
 import {
+  downloadCohortMaterialFile,
   useCohortMaterials,
   useCreateCohortMaterial,
   useDeleteCohortMaterial,
+  useOpsAccounts,
 } from '../api/settings'
 
-// 자료실 탭 — 기수 자료(CohortMaterial) 조회·추가·삭제 + 상세 팝업(실 BE).
+const TYPE_LABEL: Record<string, string> = {
+  link: '링크',
+  document: '문서',
+  file: '파일',
+}
+const fmtSize = (n: number | null) => {
+  if (!n) return ''
+  if (n < 1024) return `${n}B`
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)}KB`
+  return `${(n / (1024 * 1024)).toFixed(1)}MB`
+}
+
+// 자료실 탭 — 게시글형 기수 자료(본문·링크/파일·작성자) 조회·등록·삭제 + 상세 팝업(실 BE).
 export function MaterialsPane({
   courseId,
   cohortId,
@@ -24,18 +38,44 @@ export function MaterialsPane({
     courseId,
     cohortId,
   )
+  const { data: ops } = useOpsAccounts()
   const createMaterial = useCreateCohortMaterial()
   const deleteMaterial = useDeleteCohortMaterial()
   const toast = useToast()
 
+  const nameOf = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const o of ops?.items ?? []) map.set(o.id, o.name)
+    return (userId: string) => map.get(userId) ?? '운영자'
+  }, [ops])
+
   const [detail, setDetail] = useState<CohortMaterialItem | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+  const [kind, setKind] = useState<'link' | 'file'>('link')
   const [url, setUrl] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+
+  const resetForm = () => {
+    setTitle('')
+    setBody('')
+    setKind('link')
+    setUrl('')
+    setFile(null)
+  }
 
   const onAdd = () => {
-    if (!title.trim() || !url.trim()) {
-      toast.danger('제목과 링크(URL)를 입력해 주세요')
+    if (!title.trim()) {
+      toast.danger('제목을 입력해 주세요')
+      return
+    }
+    if (kind === 'link' && !url.trim()) {
+      toast.danger('링크(URL)를 입력해 주세요')
+      return
+    }
+    if (kind === 'file' && !file) {
+      toast.danger('업로드할 파일을 선택해 주세요')
       return
     }
     createMaterial.mutate(
@@ -43,22 +83,36 @@ export function MaterialsPane({
         courseId,
         cohortId,
         title: title.trim(),
-        materialType: 'link',
-        url: url.trim(),
+        body: body.trim() || undefined,
+        materialType: kind === 'file' ? 'file' : 'link',
+        url: kind === 'link' ? url.trim() : undefined,
+        file: kind === 'file' ? (file ?? undefined) : undefined,
       },
       {
         onSuccess: () => {
-          toast.success(`자료 추가 — ${title.trim()}`)
+          toast.success(`자료 등록 — ${title.trim()}`)
           setAddOpen(false)
-          setTitle('')
-          setUrl('')
+          resetForm()
         },
-        onError: () => toast.danger('자료 추가에 실패했어요'),
+        onError: () => toast.danger('자료 등록에 실패했어요'),
       },
     )
   }
 
-  const onDelete = (m: CohortMaterialItem) => {
+  const onDownload = async (m: CohortMaterialItem) => {
+    try {
+      await downloadCohortMaterialFile(
+        courseId,
+        cohortId,
+        m.id,
+        m.fileName ?? 'download',
+      )
+    } catch {
+      toast.danger('파일 다운로드에 실패했어요')
+    }
+  }
+
+  const onDelete = (m: CohortMaterialItem) =>
     deleteMaterial.mutate(
       { courseId, cohortId, materialId: m.id },
       {
@@ -66,7 +120,6 @@ export function MaterialsPane({
         onError: () => toast.danger('삭제에 실패했어요'),
       },
     )
-  }
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -86,20 +139,42 @@ export function MaterialsPane({
     {
       key: 'title',
       header: '제목',
-      cell: (m) => <span className="text-fg font-medium">{m.title}</span>,
+      cell: (m) => (
+        <div className="flex flex-col">
+          <span className="text-fg font-medium">{m.title}</span>
+          {m.body && (
+            <span className="text-fg-subtle line-clamp-1 text-xs">
+              {m.body}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'type',
       header: '유형',
-      className: 'w-24',
+      className: 'w-28',
       cell: (m) => (
-        <span className="text-fg-muted text-xs">{m.materialType}</span>
+        <span className="text-fg-muted text-xs">
+          {TYPE_LABEL[m.materialType] ?? m.materialType}
+          {m.hasFile && m.fileSize ? ` · ${fmtSize(m.fileSize)}` : ''}
+        </span>
+      ),
+    },
+    {
+      key: 'author',
+      header: '작성자',
+      className: 'w-28',
+      cell: (m) => (
+        <span className="text-fg-muted text-[13px]">
+          {nameOf(m.uploadedByUserId)}
+        </span>
       ),
     },
     {
       key: 'createdAt',
       header: '등록일',
-      className: 'w-32',
+      className: 'w-28',
       cell: (m) => (
         <span className="text-fg-subtle text-xs tabular-nums">
           {m.createdAt?.slice(0, 10) ?? '-'}
@@ -143,7 +218,7 @@ export function MaterialsPane({
       <div className="mb-3 flex items-center justify-between">
         <p className="text-fg-muted text-sm">총 {data.length}개 자료</p>
         <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" /> 자료 추가
+          <Plus className="h-4 w-4" /> 자료 등록
         </Button>
       </div>
 
@@ -155,7 +230,7 @@ export function MaterialsPane({
         empty="등록된 자료가 없어요"
       />
 
-      {/* 상세 팝업 — 별도 상세 페이지가 없어 모달로 표시 */}
+      {/* 상세 팝업 */}
       <Modal
         open={!!detail}
         onClose={() => setDetail(null)}
@@ -173,13 +248,32 @@ export function MaterialsPane({
               <dd className="text-fg font-medium">{detail.title}</dd>
             </div>
             <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">유형</dt>
-              <dd className="text-fg">{detail.materialType}</dd>
+              <dt className="text-fg-muted w-16 shrink-0">작성자</dt>
+              <dd className="text-fg">{nameOf(detail.uploadedByUserId)}</dd>
             </div>
+            {detail.body && (
+              <div className="flex gap-3">
+                <dt className="text-fg-muted w-16 shrink-0">본문</dt>
+                <dd className="text-fg min-w-0 flex-1 break-words whitespace-pre-wrap">
+                  {detail.body}
+                </dd>
+              </div>
+            )}
             <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">링크</dt>
+              <dt className="text-fg-muted w-16 shrink-0">
+                {detail.hasFile ? '파일' : '링크'}
+              </dt>
               <dd className="min-w-0 flex-1">
-                {detail.url ? (
+                {detail.hasFile ? (
+                  <button
+                    type="button"
+                    onClick={() => onDownload(detail)}
+                    className="text-info inline-flex items-center gap-1 font-medium hover:underline"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    {detail.fileName} ({fmtSize(detail.fileSize)})
+                  </button>
+                ) : detail.url ? (
                   <a
                     href={detail.url}
                     target="_blank"
@@ -204,18 +298,27 @@ export function MaterialsPane({
         )}
       </Modal>
 
-      {/* 추가 모달 */}
+      {/* 등록 모달 */}
       <Modal
         open={addOpen}
-        onClose={() => setAddOpen(false)}
-        title="자료 추가"
+        onClose={() => {
+          setAddOpen(false)
+          resetForm()
+        }}
+        title="자료 등록"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setAddOpen(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setAddOpen(false)
+                resetForm()
+              }}
+            >
               취소
             </Button>
             <Button onClick={onAdd} disabled={createMaterial.isPending}>
-              추가
+              등록
             </Button>
           </>
         }
@@ -234,19 +337,57 @@ export function MaterialsPane({
             placeholder="예: 1주차 강의자료"
             className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
           />
+
           <label
             className="text-fg-subtle text-xs font-medium"
-            htmlFor="mat-url"
+            htmlFor="mat-body"
           >
-            링크(URL)
+            본문
           </label>
-          <input
-            id="mat-url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://..."
-            className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+          <textarea
+            id="mat-body"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="자료 안내·설명을 입력하세요"
+            rows={4}
+            className="border-border focus:border-brand text-fg rounded-lg border bg-white px-3 py-2 text-sm outline-none"
           />
+
+          {/* 유형 토글 */}
+          <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
+            {(['link', 'file'] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setKind(k)}
+                className={
+                  'flex-1 rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors ' +
+                  (kind === k
+                    ? 'bg-surface text-fg shadow-sm'
+                    : 'text-fg-muted hover:text-fg')
+                }
+              >
+                {k === 'link' ? '링크' : '파일'}
+              </button>
+            ))}
+          </div>
+
+          {kind === 'link' ? (
+            <input
+              aria-label="링크 URL"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+            />
+          ) : (
+            <input
+              aria-label="파일 선택"
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="text-fg-muted file:border-border file:bg-surface-muted file:text-fg text-sm file:mr-3 file:rounded-md file:border file:px-3 file:py-1.5 file:text-[13px]"
+            />
+          )}
         </div>
       </Modal>
     </div>

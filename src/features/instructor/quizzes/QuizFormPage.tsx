@@ -28,6 +28,12 @@ const REVEAL_OPTIONS: { value: ResultRevealPolicy; label: string }[] = [
   { value: 'after_close', label: '응시 기간 종료 후 공개' },
 ]
 
+// 폼 일시 포맷 "YYYY-MM-DD HH:mm" (DateTimePicker 저장값).
+function fmtDateTime(d: Date) {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
 // 공통 컴팩트 입력 스타일 — 페이지 전역 Input(h-[52px])보다 작게.
 const FIELD =
   'border-border focus:border-brand text-fg placeholder:text-fg-subtle h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none'
@@ -193,6 +199,18 @@ export default function QuizFormPage() {
         setValue('cohortId', cohortOptions[0].cohortId)
     }
   }, [isEdit, cohortOptions, getValues, setValue])
+
+  // 생성 모드 — 일시/제한시간 기본값(시작=현재, 종료=다음날, 제한 60분). 1회.
+  const initDefaultsRef = useRef(false)
+  useEffect(() => {
+    if (isEdit || initDefaultsRef.current) return
+    initDefaultsRef.current = true
+    const now = new Date()
+    const next = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+    setValue('startAt', fmtDateTime(now))
+    setValue('endAt', fmtDateTime(next))
+    setValue('timeLimitMin', 60)
+  }, [isEdit, setValue])
 
   // 생성 모드 — 템플릿 프리필(cohortId 보존).
   const prefilledRef = useRef<string | null>(null)

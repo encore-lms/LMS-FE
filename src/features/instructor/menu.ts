@@ -5,7 +5,13 @@ import type { MenuItem } from '@/components/layout'
 // Figma(05-19)에서 누락됐던 평가 관리(/instructor/quizzes, 퀴즈 출제·채점 P0 27)를 복원.
 export const instructorMenu: MenuItem[] = [
   { label: '대시보드', to: '/instructor' },
-  { label: '교육 과정', to: '/instructor/cohorts' },
+  // 교육 과정 = 담당 과정/기수 + 하위 수강생 목록·상세. 수강생 상세는 /instructor/students/* 라
+  // /instructor/cohorts prefix로 안 잡혀 활성 탭이 풀린다 → match로 묶어 활성 유지.
+  {
+    label: '교육 과정',
+    to: '/instructor/cohorts',
+    match: ['/instructor/students'],
+  },
   // 과제·실습은 별도 메뉴 없이 평가 관리 하위(Figma 2236:10561 sidebar active=평가 관리).
   {
     label: '평가 관리',

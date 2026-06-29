@@ -5,7 +5,7 @@ import { z } from 'zod'
 export const quizSchema = z
   .object({
     title: z.string().trim().min(1, '제목을 입력해주세요'),
-    cohortOption: z.string().min(1, '대상 과정/기수를 선택해주세요'),
+    cohortId: z.string().min(1, '대상 과정/기수를 선택해주세요'),
     description: z.string().trim().optional(),
     startAt: z.string().trim().min(1, '시작일을 입력해주세요'),
     endAt: z.string().trim().min(1, '종료일을 입력해주세요'),

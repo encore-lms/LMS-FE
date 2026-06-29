@@ -46,6 +46,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 강사/운영 퀴즈(/instructor/quizzes) learning-service 실연동(mock 제거).
+      '/api/instructor/quizzes': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 과제 목록·상세·제출 learning-service 실연동.
       '/api/student/course/assignments': {
         target: HRD_API_TARGET,

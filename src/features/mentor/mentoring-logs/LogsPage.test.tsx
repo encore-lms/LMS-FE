@@ -32,7 +32,7 @@ beforeEach(() => {
 })
 
 describe('LogsPage', () => {
-  it('필터·KPI·8컬럼 테이블·정책 배너를 렌더한다', () => {
+  it('필터·KPI·8컬럼 테이블·페이지네이션을 렌더한다', () => {
     mockList({
       data: buildMentoringLogsData(),
       isPending: false,
@@ -54,8 +54,8 @@ describe('LogsPage', () => {
     expect(screen.getByText('수정 요청 — 일지 보강 필요')).toBeInTheDocument()
     // 상태 필터 옵션 + 행 칩 양쪽에 존재
     expect(screen.getAllByText('작성 중').length).toBeGreaterThan(1)
-    // 초과 멘토링 보조 라벨(상태 아님)
-    expect(screen.getByText('초과 멘토링 1.5h')).toBeInTheDocument()
+    // 페이지네이션 — 페이지당 8건(공통 Pagination), 전체 건수 대비 표시 건수 안내
+    expect(screen.getByText(/건 중 8건 표시/)).toBeInTheDocument()
     // 상태 연동 액션 — 열기(상세 모달) / 수정·이어 작성(작성 화면 딥링크)
     expect(
       screen.getAllByRole('link', { name: /열기/ }).length,
@@ -72,15 +72,6 @@ describe('LogsPage', () => {
       'href',
       '/mentor/mentoring-logs/new',
     )
-    // 일지 정책 요약 — Figma 5열 원문
-    expect(screen.getByText('일지 정책 요약')).toBeInTheDocument()
-    expect(screen.getByText('멘토만 작성 · 팀 단위')).toBeInTheDocument()
-    expect(screen.getByText('실제 진행 시간 기준')).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        '제출 즉시 자동 유효 · 수정 요청 시 전체 수정 후 재제출',
-      ),
-    ).toBeInTheDocument()
   })
 
   it('상태·팀 필터와 검색으로 목록을 거른다', async () => {

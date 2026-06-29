@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
+import { Pagination } from '@/components/data/Pagination'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -27,7 +28,6 @@ import type { MentoringLogListItem, MentoringLogStatus } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { LogStateChip } from './LogChips'
 import {
-  LOG_POLICY_ITEMS,
   LOG_STATUS_META,
   LOG_SUBMITTED_TOAST,
   PLACE_TYPE_ICON,
@@ -116,6 +116,9 @@ function exportCsv(rows: MentoringLogListItem[]) {
 // 멘토링 일지 (/mentor/mentoring-logs) — Figma 2553:4040.
 // 필터(팀/상태/기간/검색) · KPI 4 · 8컬럼 테이블 · CSV · 일지 정책 요약 배너.
 // :logId 상세 모달은 중첩 라우트(Outlet) 오버레이 — 목록 필터 상태 유지.
+// 목록 페이지당 일지 수 — 표가 길어지지 않게 페이지네이션(공통 Pagination).
+const LOG_PAGE_SIZE = 8
+
 export default function LogsPage() {
   usePageHeader('멘토링 일지', MENTOR_FLOW_CAPTION)
   const { data, isPending, isError, refetch } = useMentoringLogs()
@@ -186,6 +189,15 @@ export default function LogsPage() {
       return true
     })
   }, [periodFiltered, teamId, status, q])
+
+  // 페이지네이션 — 필터(팀/상태/기간/검색) 변경 시 1페이지로 리셋. 건수 칩·CSV는 전체 기준.
+  const [page, setPage] = useState(1)
+  const pageCount = Math.max(1, Math.ceil(visible.length / LOG_PAGE_SIZE))
+  useEffect(() => setPage(1), [teamId, status, period, q])
+  const paged = useMemo(
+    () => visible.slice((page - 1) * LOG_PAGE_SIZE, page * LOG_PAGE_SIZE),
+    [visible, page],
+  )
 
   if (isPending) {
     return <div className="text-fg-muted p-8">멘토링 일지를 불러오는 중…</div>
@@ -428,31 +440,19 @@ export default function LogsPage() {
       {/* 일지 테이블 — 8컬럼 고정폭(Figma) */}
       <DataTable
         columns={columns}
-        rows={visible}
+        rows={paged}
         rowKey={(l) => l.logId}
         empty="조건에 맞는 일지가 없습니다"
       />
-
-      {/* 일지 정책 요약 — info 틴트(#e0edfc→info-bg) 배너, 5열 + 세로 구분선 */}
-      <section className="bg-info-bg border-info rounded-2xl border p-5">
-        <div className="flex items-center gap-2">
-          <Info className="text-info h-4 w-4" />
-          <h3 className="text-fg text-sm font-bold">일지 정책 요약</h3>
-        </div>
-        <dl className="divide-info/30 mt-3.5 flex flex-col gap-3 sm:flex-row sm:gap-0 sm:divide-x">
-          {LOG_POLICY_ITEMS.map((item) => (
-            <div
-              key={item.label}
-              className="flex flex-1 flex-col gap-1 sm:px-4 sm:first:pl-0 sm:last:pr-0"
-            >
-              <dt className="text-fg-subtle text-[10px] font-medium tracking-[0.6px]">
-                {item.label}
-              </dt>
-              <dd className="text-fg text-xs font-bold">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      {visible.length > 0 && (
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          totalCount={visible.length}
+          shownCount={paged.length}
+          onPage={setPage}
+        />
+      )}
 
       {/* /:logId 상세 모달 — 목록 필터 상태 유지한 채 오버레이 */}
       <Suspense fallback={null}>

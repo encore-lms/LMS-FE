@@ -6,7 +6,7 @@ export interface ArticleBadge {
   className: string
 }
 
-// 블로그 포스트형 상세 뷰 — 모달 대신 본문을 넓게 읽도록. 자료실·과제 상세 공용.
+// 블로그 포스트형 상세 뷰 — 자료실·과제 상세 공용. 모달 내부(onBack 없음)/인라인(onBack 있음) 겸용.
 export function ArticleView({
   onBack,
   badges,
@@ -16,7 +16,8 @@ export function ArticleView({
   bodyEmptyText = '본문이 없습니다.',
   footer,
 }: {
-  onBack: () => void
+  /** 인라인 모드에서 '목록으로' 버튼. 모달 내부에선 생략(모달 닫기 사용). */
+  onBack?: () => void
   badges?: ArticleBadge[]
   title: string
   /** 작성자 · 날짜 등 헤더 메타(점으로 구분) */
@@ -27,14 +28,16 @@ export function ArticleView({
   footer?: ReactNode
 }) {
   return (
-    <article className="mx-auto max-w-3xl">
-      <button
-        type="button"
-        onClick={onBack}
-        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1 text-sm font-medium"
-      >
-        <ChevronLeft className="h-4 w-4" /> 목록으로
-      </button>
+    <article className={onBack ? 'mx-auto max-w-3xl' : 'w-full'}>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1 text-sm font-medium"
+        >
+          <ChevronLeft className="h-4 w-4" /> 목록으로
+        </button>
+      )}
 
       <header className="border-divider border-b pb-5">
         {badges && badges.length > 0 && (

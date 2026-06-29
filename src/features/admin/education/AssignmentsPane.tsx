@@ -142,23 +142,6 @@ export function AssignmentsPane({
     },
   ]
 
-  // 상세 — 블로그 포스트형 인라인 뷰(목록 대신 렌더)
-  if (detail) {
-    return (
-      <ArticleView
-        onBack={() => setDetail(null)}
-        badges={[{ label: '과제', className: 'bg-brand/10 text-brand' }]}
-        title={detail.title}
-        metaItems={[
-          `마감 ${fmt(detail.dueAt)}`,
-          `등록 ${detail.createdAt?.slice(0, 10) ?? '-'}`,
-        ]}
-        body={detail.description}
-        bodyEmptyText="과제 설명이 없습니다."
-      />
-    )
-  }
-
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
@@ -175,6 +158,31 @@ export function AssignmentsPane({
         onRowClick={(a) => setDetail(a)}
         empty="등록된 과제가 없어요"
       />
+
+      {/* 상세 팝업 — 블로그 포스트형 */}
+      <Modal
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        size="lg"
+        footer={
+          <Button variant="secondary" onClick={() => setDetail(null)}>
+            닫기
+          </Button>
+        }
+      >
+        {detail && (
+          <ArticleView
+            badges={[{ label: '과제', className: 'bg-brand/10 text-brand' }]}
+            title={detail.title}
+            metaItems={[
+              `마감 ${fmt(detail.dueAt)}`,
+              `등록 ${detail.createdAt?.slice(0, 10) ?? '-'}`,
+            ]}
+            body={detail.description}
+            bodyEmptyText="과제 설명이 없습니다."
+          />
+        )}
+      </Modal>
 
       {/* 추가 모달 */}
       <Modal

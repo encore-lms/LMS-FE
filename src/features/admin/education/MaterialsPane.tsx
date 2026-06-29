@@ -214,64 +214,6 @@ export function MaterialsPane({
     },
   ]
 
-  // 상세 — 블로그 포스트형 인라인 뷰(목록 대신 렌더)
-  if (detail) {
-    return (
-      <ArticleView
-        onBack={() => setDetail(null)}
-        badges={[
-          {
-            label: TYPE_LABEL[detail.materialType] ?? detail.materialType,
-            className: 'bg-info-bg text-info',
-          },
-        ]}
-        title={detail.title}
-        metaItems={[
-          nameOf(detail.uploadedByUserId),
-          detail.createdAt?.slice(0, 10) ?? '-',
-        ]}
-        body={detail.body}
-        bodyEmptyText="본문 없이 등록된 자료입니다."
-        footer={
-          detail.hasFile ? (
-            <button
-              type="button"
-              onClick={() => onDownload(detail)}
-              className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
-            >
-              <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
-                <Download className="h-5 w-5" />
-              </span>
-              <span className="flex min-w-0 flex-col">
-                <span className="text-fg truncate text-sm font-semibold">
-                  {detail.fileName}
-                </span>
-                <span className="text-fg-subtle text-xs">
-                  {fmtSize(detail.fileSize)} · 클릭하여 다운로드
-                </span>
-              </span>
-            </button>
-          ) : detail.url ? (
-            <a
-              href={detail.url}
-              target="_blank"
-              rel="noreferrer"
-              className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
-            >
-              <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
-                <ExternalLink className="h-5 w-5" />
-              </span>
-              <span className="flex min-w-0 flex-col">
-                <span className="text-fg text-sm font-semibold">링크 열기</span>
-                <span className="text-info truncate text-xs">{detail.url}</span>
-              </span>
-            </a>
-          ) : null
-        }
-      />
-    )
-  }
-
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
@@ -288,6 +230,76 @@ export function MaterialsPane({
         onRowClick={(m) => setDetail(m)}
         empty="등록된 자료가 없어요"
       />
+
+      {/* 상세 팝업 — 블로그 포스트형 */}
+      <Modal
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        size="lg"
+        footer={
+          <Button variant="secondary" onClick={() => setDetail(null)}>
+            닫기
+          </Button>
+        }
+      >
+        {detail && (
+          <ArticleView
+            badges={[
+              {
+                label: TYPE_LABEL[detail.materialType] ?? detail.materialType,
+                className: 'bg-info-bg text-info',
+              },
+            ]}
+            title={detail.title}
+            metaItems={[
+              nameOf(detail.uploadedByUserId),
+              detail.createdAt?.slice(0, 10) ?? '-',
+            ]}
+            body={detail.body}
+            bodyEmptyText="본문 없이 등록된 자료입니다."
+            footer={
+              detail.hasFile ? (
+                <button
+                  type="button"
+                  onClick={() => onDownload(detail)}
+                  className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
+                >
+                  <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
+                    <Download className="h-5 w-5" />
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-fg truncate text-sm font-semibold">
+                      {detail.fileName}
+                    </span>
+                    <span className="text-fg-subtle text-xs">
+                      {fmtSize(detail.fileSize)} · 클릭하여 다운로드
+                    </span>
+                  </span>
+                </button>
+              ) : detail.url ? (
+                <a
+                  href={detail.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
+                >
+                  <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
+                    <ExternalLink className="h-5 w-5" />
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-fg text-sm font-semibold">
+                      링크 열기
+                    </span>
+                    <span className="text-info truncate text-xs">
+                      {detail.url}
+                    </span>
+                  </span>
+                </a>
+              ) : null
+            }
+          />
+        )}
+      </Modal>
 
       {/* 등록 모달 */}
       <Modal

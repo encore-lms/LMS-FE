@@ -47,6 +47,33 @@ export interface AssignmentItem {
   createdAt: string
 }
 
+// 이력서(Resume, learning-service /resumes). 정본 §32 lean.
+export type ResumeStatusCode = 'DRAFT' | 'COMPLETED'
+export interface ResumeRow {
+  id: string
+  studentUserId: string
+  title: string
+  status: ResumeStatusCode
+  feedbackCount: number
+  updatedAt: string
+}
+export interface ResumeFeedbackItem {
+  id: string
+  authorUserId: string
+  body: string
+  createdAt: string
+}
+export interface ResumeDetail {
+  id: string
+  studentUserId: string
+  title: string
+  status: ResumeStatusCode
+  content: string | null
+  createdAt: string
+  updatedAt: string
+  feedbacks: ResumeFeedbackItem[]
+}
+
 // 설명 탭 — HRD-Net 과정 상세(learning-service /detail).
 export interface CourseDetail {
   title: string

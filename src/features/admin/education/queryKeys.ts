@@ -7,4 +7,14 @@ export const adminEducationKeys = {
     [...adminEducationKeys.all, 'detail', courseId, cohortId] as const,
   assignments: (courseId: string, cohortId: string) =>
     [...adminEducationKeys.all, 'assignments', courseId, cohortId] as const,
+  resumes: (courseId: string, cohortId: string) =>
+    [...adminEducationKeys.all, 'resumes', courseId, cohortId] as const,
+  resumeDetail: (courseId: string, cohortId: string, resumeId: string) =>
+    [
+      ...adminEducationKeys.all,
+      'resume',
+      courseId,
+      cohortId,
+      resumeId,
+    ] as const,
 } as const

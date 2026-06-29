@@ -145,9 +145,22 @@ function QuestionForm({
       points: d.points,
     }
     if (d.type === 'multiple_choice') {
+      const valid = d.choices.filter((c) => c.trim() !== '')
+      if (valid.length < 2) {
+        toast.danger('보기를 2개 이상 입력해 주세요')
+        return
+      }
+      if (!d.choices[d.answerIndex]?.trim()) {
+        toast.danger('정답으로 선택한 보기의 내용을 입력해 주세요')
+        return
+      }
       payload.choices = d.choices
       payload.answerIndex = d.answerIndex
     } else if (d.type === 'short_answer') {
+      if (!d.answerText.trim()) {
+        toast.danger('정답을 입력해 주세요')
+        return
+      }
       payload.answerText = d.answerText
     } else if (d.type === 'essay') {
       // 서술형 — 수동 채점. 채점 기준(선택)만 보관.
@@ -155,6 +168,11 @@ function QuestionForm({
     } else {
       if (blanks === 0) {
         toast.danger('문항 내용에 빈칸(___)을 넣어 주세요')
+        return
+      }
+      const emptyIdx = answers.findIndex((a) => a.trim() === '')
+      if (emptyIdx >= 0) {
+        toast.danger(`빈칸 ${emptyIdx + 1} 정답을 입력해 주세요`)
         return
       }
       if (scoreSum !== d.points) {
@@ -169,7 +187,12 @@ function QuestionForm({
         toast.success(questionId ? '문항을 수정했어요' : '문항을 추가했어요')
         onClose()
       },
-      onError: () => toast.danger('저장에 실패했어요'),
+      // BE 검증 메시지가 있으면 그대로 노출, 없으면 일반 메시지.
+      onError: (e) => {
+        const msg = (e as { response?: { data?: { message?: string } } })
+          ?.response?.data?.message
+        toast.danger(msg || '저장에 실패했어요')
+      },
     })
   }
 

@@ -1,4 +1,6 @@
 import { cn } from '@/shared/lib/cn'
+import { useToast } from '@/components/ui/use-toast'
+import { downloadCourseMaterialFile } from '@/features/student/api/course'
 import type {
   MaterialCategory,
   MaterialFileType,
@@ -80,13 +82,26 @@ export function MaterialRow({
   /** 본인이 올린 학생 공유 자료에만 삭제 노출(없으면 버튼 숨김) */
   onDelete?: (item: MaterialItem) => void
 }) {
+  const toast = useToast()
   const cat = CATEGORY_PILL[item.category]
-  const hasFile = !!item.fileUrl
+  // 업로드 파일(hasFile)은 다운로드 엔드포인트로, 외부 링크/public 파일은 fileUrl로 동작.
+  const hasFile = !!item.hasFile || !!item.fileUrl
 
   const handlePreview = () => {
     if (item.fileUrl) openInNewTab(item.fileUrl)
   }
-  const handleDownloadOrOpen = () => {
+  const handleDownloadOrOpen = async () => {
+    if (item.hasFile) {
+      try {
+        await downloadCourseMaterialFile(
+          item.id,
+          item.fileName ?? `${item.title}.${FILE_EXT[item.fileType] || 'dat'}`,
+        )
+      } catch {
+        toast.danger('파일 다운로드에 실패했어요')
+      }
+      return
+    }
     if (!item.fileUrl) return
     if (item.isExternalLink) {
       openInNewTab(item.fileUrl)
@@ -121,6 +136,11 @@ export function MaterialRow({
             {cat.label}
           </span>
         </div>
+        {item.body && (
+          <p className="text-fg-muted text-[12px] leading-relaxed whitespace-pre-wrap">
+            {item.body}
+          </p>
+        )}
         <div className="text-fg-subtle flex items-center gap-3 text-[11px]">
           <span className="text-fg-muted font-medium">{item.author}</span>
           <Sep />

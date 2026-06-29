@@ -45,6 +45,19 @@ export function useCourseMaterials() {
   })
 }
 
+/** 자료 파일 다운로드 — 운영 중 기수의 파일형 자료(Blob 받아 저장 트리거). */
+export async function downloadCourseMaterialFile(id: string, fileName: string) {
+  const blob = await apiClient.getBlob(`/student/course/materials/${id}/file`)
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = fileName || 'download'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(objectUrl)
+}
+
 /** 자료 공유 — 학생 공유 자료 등록 후 목록 갱신(invalidate) */
 export function useShareMaterial() {
   const qc = useQueryClient()

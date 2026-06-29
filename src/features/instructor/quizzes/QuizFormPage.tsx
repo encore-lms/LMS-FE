@@ -453,7 +453,7 @@ export default function QuizFormPage() {
       </section>
 
       {/* 문항 — 수정 모드는 인라인, 생성 모드는 저장 후 안내 */}
-      <section className="border-border bg-surface rounded-xl border p-5">
+      <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
         <p className="text-fg mb-3 text-sm font-bold">문항</p>
         {isEdit && quizId ? (
           <QuizQuestionEditor quizId={quizId} />

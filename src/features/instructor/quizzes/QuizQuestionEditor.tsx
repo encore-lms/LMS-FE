@@ -31,6 +31,7 @@ interface DraftState {
   answerIndex: number
   answerText: string
   answers: string[]
+  blankScores: number[]
   points: number
 }
 
@@ -41,34 +42,55 @@ const EMPTY_DRAFT: DraftState = {
   answerIndex: 0,
   answerText: '',
   answers: [],
+  blankScores: [],
   points: 10,
 }
 
 function toDraft(q: InstructorQuestion): DraftState {
   const type = (q.type as SaveQuizQuestionInput['type']) ?? 'multiple_choice'
+  const fb = type === 'fill_blank' ? parseFillBlank(q.answerKey) : null
   return {
     type,
     prompt: q.body ?? '',
     choices: q.choices && q.choices.length >= 2 ? q.choices : ['', ''],
     answerIndex: type === 'multiple_choice' ? Number(q.answerKey ?? 0) || 0 : 0,
     answerText: type === 'short_answer' ? (q.answerKey ?? '') : '',
-    answers: type === 'fill_blank' ? safeList(q.answerKey) : [],
+    answers: fb ? fb.answers : [],
+    blankScores: fb ? fb.scores : [],
     points: q.points ?? 10,
   }
 }
-function safeList(json?: string): string[] {
-  if (!json) return []
+// fill_blank answerKey = {"answers":[...],"scores":[...]} (구버전 배열도 허용)
+function parseFillBlank(json?: string): {
+  answers: string[]
+  scores: number[]
+} {
+  if (!json) return { answers: [], scores: [] }
   try {
     const v = JSON.parse(json)
-    return Array.isArray(v) ? v.map(String) : []
+    if (Array.isArray(v)) return { answers: v.map(String), scores: [] }
+    return {
+      answers: (v.answers ?? []).map(String),
+      scores: (v.scores ?? []).map(Number),
+    }
   } catch {
-    return []
+    return { answers: [], scores: [] }
   }
 }
 // 빈칸 내용의 ___ 개수만큼 정답 칸 동기화.
 function countBlanks(prompt: string) {
   const m = prompt.match(/___/g)
   return m ? m.length : 0
+}
+// 배점 자동 분배(이전 LMS): 균등 + 나머지는 뒤 칸에 +1. (10,3)→[3,3,4]
+function distributeBlankScores(points: number, blanks: number): number[] {
+  if (blanks <= 0) return []
+  if (points < blanks) return Array.from({ length: blanks }, () => 1)
+  const base = Math.floor(points / blanks)
+  const rem = points - base * blanks
+  return Array.from({ length: blanks }, (_, i) =>
+    i >= blanks - rem ? base + 1 : base,
+  )
 }
 
 const FIELD =
@@ -98,6 +120,15 @@ function QuestionForm({
     a.length = blanks
     return Array.from({ length: blanks }, (_, i) => a[i] ?? '')
   }, [blanks, d.answers])
+  // 빈칸 수가 바뀌면 배점 자동 분배, 사용자가 직접 고친 값은 유지
+  const scores = useMemo(
+    () =>
+      d.blankScores.length === blanks
+        ? d.blankScores
+        : distributeBlankScores(d.points, blanks),
+    [blanks, d.blankScores, d.points],
+  )
+  const scoreSum = scores.reduce((s, v) => s + (v || 0), 0)
 
   const submit = () => {
     if (!d.prompt.trim()) {
@@ -115,7 +146,16 @@ function QuestionForm({
     } else if (d.type === 'short_answer') {
       payload.answerText = d.answerText
     } else {
+      if (blanks === 0) {
+        toast.danger('문항 내용에 빈칸(___)을 넣어 주세요')
+        return
+      }
+      if (scoreSum !== d.points) {
+        toast.danger(`빈칸 배점 합(${scoreSum})이 배점(${d.points})과 달라요`)
+        return
+      }
       payload.answers = answers
+      payload.blankScores = scores
     }
     save.mutate(payload, {
       onSuccess: () => {
@@ -247,31 +287,70 @@ function QuestionForm({
 
       {d.type === 'fill_blank' && (
         <div>
-          <span className="text-fg-muted mb-1 block text-xs font-semibold">
-            빈칸 정답 ({blanks}개)
-          </span>
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-fg-muted text-xs font-semibold">
+              빈칸 정답·배점 ({blanks}개)
+            </span>
+            {blanks > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  set({ blankScores: distributeBlankScores(d.points, blanks) })
+                }
+                className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-2.5 py-1 text-xs font-semibold"
+              >
+                배점 자동 분배
+              </button>
+            )}
+          </div>
           {blanks === 0 ? (
             <p className="text-fg-subtle text-xs">
               문항 내용에 ___ 를 넣으면 빈칸 정답 칸이 생겨요.
             </p>
           ) : (
-            <div className="flex flex-col gap-1.5">
-              {answers.map((a, i) => (
-                <input
-                  key={i}
-                  value={a}
-                  onChange={(e) =>
-                    set({
-                      answers: answers.map((x, j) =>
-                        j === i ? e.target.value : x,
-                      ),
-                    })
-                  }
-                  placeholder={`빈칸 ${i + 1} 정답`}
-                  className={FIELD}
-                />
-              ))}
-            </div>
+            <>
+              <div className="flex flex-col gap-1.5">
+                {answers.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={a}
+                      onChange={(e) =>
+                        set({
+                          answers: answers.map((x, j) =>
+                            j === i ? e.target.value : x,
+                          ),
+                        })
+                      }
+                      placeholder={`빈칸 ${i + 1} 정답`}
+                      className={FIELD}
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      aria-label={`빈칸 ${i + 1} 배점`}
+                      value={scores[i] ?? 0}
+                      onChange={(e) =>
+                        set({
+                          blankScores: scores.map((x, j) =>
+                            j === i ? Number(e.target.value) : x,
+                          ),
+                        })
+                      }
+                      className={`${FIELD} w-20 shrink-0`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p
+                className={cn(
+                  'mt-1 text-xs',
+                  scoreSum === d.points ? 'text-fg-subtle' : 'text-warning',
+                )}
+              >
+                배점 합 {scoreSum} / {d.points}
+                {scoreSum !== d.points && ' · 배점과 일치해야 저장돼요'}
+              </p>
+            </>
           )}
         </div>
       )}

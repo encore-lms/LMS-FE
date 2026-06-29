@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/Input'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useAssignmentDetail } from '../api/assignments'
+import {
+  useAssignmentCohortOptions,
+  useAssignmentDetail,
+  useSaveAssignment,
+} from '../api/assignments'
 import { assignmentSchema, type AssignmentInput } from './assignment.schema'
-
-const COHORT_OPTIONS = ['DA 3기']
 
 const MAX_URLS = 5
 const MAX_FILES = 5
@@ -35,6 +37,8 @@ export default function AssignmentFormPage() {
   const { data, isPending, isError, refetch } = useAssignmentDetail(
     assignmentId ?? null,
   )
+  const { data: cohortOptions } = useAssignmentCohortOptions()
+  const saveAssignment = useSaveAssignment(assignmentId)
   const [urls, setUrls] = useState<string[]>([])
   const [files, setFiles] = useState<string[]>([])
   usePageHeader(
@@ -47,22 +51,32 @@ export default function AssignmentFormPage() {
     control,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<AssignmentInput>({
     resolver: zodResolver(assignmentSchema),
     // dueAt 은 Controller(DateTimePicker)라 빈 문자열로 초기화 → 미입력 시 min(1) 메시지 노출
-    defaultValues: { cohortLabel: COHORT_OPTIONS[0], dueAt: '' },
+    defaultValues: { cohortId: '', dueAt: '' },
   })
+
+  // 생성 모드 — 기수 옵션 로드되면 첫 기수 기본 선택(미선택 시).
+  useEffect(() => {
+    if (!isEdit && cohortOptions && cohortOptions.length > 0) {
+      if (!getValues('cohortId'))
+        setValue('cohortId', cohortOptions[0].cohortId)
+    }
+  }, [isEdit, cohortOptions, getValues, setValue])
 
   // 수정 모드 — 상세 도착 시 폼·첨부 자료 동기화.
   useEffect(() => {
     if (!data) return
     reset({
-      cohortLabel: data.cohortLabel,
-      subject: data.subject,
+      cohortId: data.cohortId,
+      subject: data.subject ?? '',
       title: data.title,
       dueAt: data.dueAt,
-      description: data.description,
+      description: data.description ?? '',
     })
     setUrls(data.urls)
     setFiles(data.files)
@@ -85,9 +99,23 @@ export default function AssignmentFormPage() {
   }
 
   const onSave = handleSubmit((input) => {
-    toast.success(`${input.title} 저장 — 생성 즉시 공개 (mock)`)
-    // 생성 정책: 생성/수정 후 상세 화면 이동.
-    navigate(`/instructor/assignments/${assignmentId ?? 'assign-jpa-mapping'}`)
+    saveAssignment.mutate(
+      {
+        cohortId: input.cohortId,
+        subject: input.subject,
+        title: input.title,
+        dueAt: input.dueAt,
+        description: input.description,
+      },
+      {
+        onSuccess: (saved) => {
+          toast.success(`${input.title} 저장 — 생성 즉시 공개`)
+          // 생성 정책: 생성/수정 후 상세 화면 이동.
+          navigate(`/instructor/assignments/${assignmentId ?? saved.id}`)
+        },
+        onError: () => toast.danger('저장에 실패했어요'),
+      },
+    )
   })
 
   return (
@@ -106,13 +134,16 @@ export default function AssignmentFormPage() {
               <select
                 aria-label="기수"
                 className="border-border focus:border-brand text-fg h-[52px] rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none"
-                {...register('cohortLabel')}
+                {...register('cohortId')}
               >
-                {COHORT_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                {(cohortOptions ?? []).map((c) => (
+                  <option key={c.cohortId} value={c.cohortId}>
+                    {c.label}
                   </option>
                 ))}
+                {(cohortOptions ?? []).length === 0 && (
+                  <option value="">기수 없음</option>
+                )}
               </select>
             </label>
             <Input

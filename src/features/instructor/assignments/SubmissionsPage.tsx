@@ -7,11 +7,12 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import type {
-  AssignmentSubmissionRow,
-  AssignmentSubmissionStatus,
-} from '@/shared/types'
-import { useAssignmentSubmissions } from '../api/assignments'
+import type { AssignmentSubmissionRow } from '@/shared/types'
+import {
+  useAssignmentSubmissions,
+  useChangeSubmissionStatus,
+} from '../api/assignments'
+import { useStudentAccounts } from '@/features/admin/api/students'
 import { ReviewCompleteModal } from './ReviewCompleteModal'
 import { SupplementRequestModal } from './SupplementRequestModal'
 import {
@@ -19,13 +20,6 @@ import {
   SUBMISSION_STATUS_META,
   type SubmissionFilter,
 } from './meta'
-
-// 행 상태·이력의 로컬 전이(mock) — 백엔드 연동 전 보완요청/검토완료 반영용.
-interface RowOverride {
-  status: AssignmentSubmissionStatus
-  history: string[]
-  feedbackAppend?: string
-}
 
 // 과제 제출 현황·피드백 (/instructor/assignments/:assignmentId/submissions) — P0 30. (Figma 2236:10651)
 // 좌 학생별 제출 큐 + 우 제출물 검토 패널. 점수 입력 없음 — 보완요청/검토완료 상태 전이만.
@@ -35,9 +29,10 @@ export default function SubmissionsPage() {
   const toast = useToast()
   const { data, isPending, isError, refetch } =
     useAssignmentSubmissions(assignmentId)
+  const { data: students } = useStudentAccounts()
+  const changeStatus = useChangeSubmissionStatus(assignmentId)
   const [filter, setFilter] = useState<SubmissionFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [overrides, setOverrides] = useState<Record<string, RowOverride>>({})
   const [supplementOpen, setSupplementOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   usePageHeader(
@@ -45,29 +40,16 @@ export default function SubmissionsPage() {
     '제출 내용을 확인하고 보완요청 또는 검토완료 상태를 처리합니다',
   )
 
-  const rows = useMemo(() => {
-    const base = data?.rows ?? []
-    return base.map((r) => {
-      const o = overrides[r.id]
-      if (!o) return r
-      return {
-        ...r,
-        status: o.status,
-        history: [...o.history, ...r.history],
-        feedbacks: o.feedbackAppend
-          ? [
-              {
-                author: '나 (강사)',
-                timeLabel: '방금 전',
-                text: o.feedbackAppend,
-                byStudent: false,
-              },
-              ...r.feedbacks,
-            ]
-          : r.feedbacks,
-      }
-    })
-  }, [data, overrides])
+  // 제출자 사용자 ID → 이름/코드(학생 계정 join).
+  const student = useMemo(() => {
+    const map = new Map<string, { name: string; code: string }>()
+    for (const s of students?.items ?? [])
+      map.set(s.id, { name: s.name, code: s.studentUuid })
+    return (userId: string) =>
+      map.get(userId) ?? { name: '수강생', code: userId.slice(0, 8) }
+  }, [students])
+
+  const rows = data?.rows ?? []
 
   const filtered = useMemo(
     () => rows.filter((r) => filter === 'all' || r.status === filter),
@@ -99,25 +81,21 @@ export default function SubmissionsPage() {
   const { counts } = data
 
   const applyTransition = (
-    to: Extract<
-      AssignmentSubmissionStatus,
-      'supplement_requested' | 'review_done'
-    >,
+    to: 'supplement_requested' | 'review_done',
     feedback: string,
   ) => {
     if (!selected) return
-    const label = SUBMISSION_STATUS_META[to].label
-    setOverrides((prev) => ({
-      ...prev,
-      [selected.id]: {
+    changeStatus.mutate(
+      {
+        submissionId: selected.id,
         status: to,
-        history: [
-          `${label} · 나 (강사) · 방금 전 · ${feedback || '코멘트 없음'}`,
-        ],
-        feedbackAppend: feedback || undefined,
+        feedback: feedback || undefined,
       },
-    }))
-    toast.success('상태와 피드백이 저장되었습니다.')
+      {
+        onSuccess: () => toast.success('상태와 피드백이 저장되었습니다.'),
+        onError: () => toast.danger('처리에 실패했어요'),
+      },
+    )
   }
 
   const headerBadges: {
@@ -187,7 +165,7 @@ export default function SubmissionsPage() {
                   )}
                 >
                   <span className="text-fg w-20 shrink-0 text-[15px] font-semibold">
-                    {r.studentName}
+                    {student(r.studentUserId).name}
                   </span>
                   <StatusBadge
                     label={SUBMISSION_STATUS_META[r.status].label}
@@ -216,8 +194,8 @@ export default function SubmissionsPage() {
             <>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <p className="text-fg-muted text-sm">
-                  {selected.studentName} · {selected.studentCode} ·{' '}
-                  {selected.cohortLabel}
+                  {student(selected.studentUserId).name} ·{' '}
+                  {student(selected.studentUserId).code}
                 </p>
                 <div className="ml-auto">
                   <StatusBadge
@@ -284,7 +262,9 @@ export default function SubmissionsPage() {
                           )}
                         >
                           <p className="text-fg-muted text-xs font-semibold">
-                            {fb.author}
+                            {fb.byStudent
+                              ? student(selected.studentUserId).name
+                              : '운영/강사'}
                             {fb.timeLabel && ` · ${fb.timeLabel}`}
                           </p>
                           <p className="text-fg mt-1.5 text-[13px]">
@@ -334,7 +314,7 @@ export default function SubmissionsPage() {
 
       <SupplementRequestModal
         open={supplementOpen}
-        studentName={selected?.studentName ?? ''}
+        studentName={selected ? student(selected.studentUserId).name : ''}
         onClose={() => setSupplementOpen(false)}
         onConfirm={(reason) => {
           setSupplementOpen(false)
@@ -343,7 +323,7 @@ export default function SubmissionsPage() {
       />
       <ReviewCompleteModal
         open={reviewOpen}
-        studentName={selected?.studentName ?? ''}
+        studentName={selected ? student(selected.studentUserId).name : ''}
         onClose={() => setReviewOpen(false)}
         onConfirm={(feedback) => {
           setReviewOpen(false)

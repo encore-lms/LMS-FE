@@ -130,6 +130,8 @@ export const instructorKeys = {
   changeRequests: () => [...instructorKeys.all, 'change-requests'] as const,
   recertifications: () => [...instructorKeys.all, 'recertifications'] as const,
   assignments: () => [...instructorKeys.all, 'assignments'] as const,
+  assignmentCohortOptions: () =>
+    [...instructorKeys.all, 'assignment-cohort-options'] as const,
   assignmentDetail: (assignmentId: string) =>
     [...instructorKeys.all, 'assignments', assignmentId] as const,
   assignmentSubmissions: (assignmentId: string) =>

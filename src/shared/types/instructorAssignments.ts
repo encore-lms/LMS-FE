@@ -20,15 +20,17 @@ export interface InstructorAssignmentRow {
   id: string
   title: string
   /** 과목/회차 — 예: '백엔드 5회차' */
-  subject: string
+  subject: string | null
   cohortLabel: string
   /** 'D-2' 등 — closed면 '마감됨'으로 표기 */
   dueLabel: string
   closed: boolean
-  creator: string
+  /** 작성자 사용자 ID — FE에서 운영 계정명으로 join */
+  createdByUserId: string
   counts: AssignmentCounts
-  /** 행 대표 배지 — 지배 상태 1개 + 건수 (Figma 제출완료 21 / 보완요청 2 등) */
-  badge: { status: AssignmentSubmissionStatus; count: number | null }
+  /** 행 대표 배지 — 지배 상태 + 건수(null이면 라벨만) */
+  badgeStatus: AssignmentSubmissionStatus
+  badgeCount: number | null
 }
 
 export interface InstructorAssignmentListData {
@@ -40,19 +42,20 @@ export interface InstructorAssignmentListData {
 /** 생성/수정 폼 상세 (/instructor/assignments/:assignmentId) */
 export interface AssignmentFormDetail {
   id: string
+  cohortId: string
   cohortLabel: string
-  subject: string
+  subject: string | null
   title: string
   dueAt: string
-  description: string
+  description: string | null
   urls: string[]
   files: string[]
   submittedCount: number
 }
 
 export interface AssignmentFeedbackItem {
-  /** '박준석 강사' / '수강생 댓글' */
-  author: string
+  /** 작성자 사용자 ID — FE에서 이름 join */
+  authorUserId: string
   timeLabel: string
   text: string
   byStudent: boolean
@@ -60,23 +63,26 @@ export interface AssignmentFeedbackItem {
 
 export interface AssignmentSubmissionRow {
   id: string
-  studentName: string
-  studentCode: string
-  cohortLabel: string
+  /** 제출자 사용자 ID — FE에서 이름/코드 join */
+  studentUserId: string
   status: AssignmentSubmissionStatus
-  /** 제출 시각 또는 '재제출 대기' — 미제출은 null */
+  /** 제출 시각 — 미제출은 null */
   submittedAtLabel: string | null
   bodyText: string | null
   url: string | null
   files: string[]
   feedbacks: AssignmentFeedbackItem[]
-  /** 상태 변경 이력 — '제출완료 · 박준석 강사 · 2026-05-22 10:12 · 확인 완료' */
   history: string[]
 }
 
 export interface AssignmentSubmissionsData {
   assignmentId: string
   assignmentTitle: string
+  subject: string | null
+  description: string | null
+  createdByUserId: string
+  createdAtLabel: string
+  dueAtLabel: string
   dueLabel: string
   closed: boolean
   counts: AssignmentCounts

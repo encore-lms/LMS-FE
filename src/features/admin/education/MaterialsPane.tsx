@@ -13,6 +13,7 @@ import {
   useDeleteCohortMaterial,
   useOpsAccounts,
 } from '../api/settings'
+import { ArticleView } from './ArticleView'
 
 const TYPE_LABEL: Record<string, string> = {
   link: '링크',
@@ -213,6 +214,64 @@ export function MaterialsPane({
     },
   ]
 
+  // 상세 — 블로그 포스트형 인라인 뷰(목록 대신 렌더)
+  if (detail) {
+    return (
+      <ArticleView
+        onBack={() => setDetail(null)}
+        badges={[
+          {
+            label: TYPE_LABEL[detail.materialType] ?? detail.materialType,
+            className: 'bg-info-bg text-info',
+          },
+        ]}
+        title={detail.title}
+        metaItems={[
+          nameOf(detail.uploadedByUserId),
+          detail.createdAt?.slice(0, 10) ?? '-',
+        ]}
+        body={detail.body}
+        bodyEmptyText="본문 없이 등록된 자료입니다."
+        footer={
+          detail.hasFile ? (
+            <button
+              type="button"
+              onClick={() => onDownload(detail)}
+              className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
+            >
+              <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <Download className="h-5 w-5" />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-fg truncate text-sm font-semibold">
+                  {detail.fileName}
+                </span>
+                <span className="text-fg-subtle text-xs">
+                  {fmtSize(detail.fileSize)} · 클릭하여 다운로드
+                </span>
+              </span>
+            </button>
+          ) : detail.url ? (
+            <a
+              href={detail.url}
+              target="_blank"
+              rel="noreferrer"
+              className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
+            >
+              <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <ExternalLink className="h-5 w-5" />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-fg text-sm font-semibold">링크 열기</span>
+                <span className="text-info truncate text-xs">{detail.url}</span>
+              </span>
+            </a>
+          ) : null
+        }
+      />
+    )
+  }
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
@@ -229,74 +288,6 @@ export function MaterialsPane({
         onRowClick={(m) => setDetail(m)}
         empty="등록된 자료가 없어요"
       />
-
-      {/* 상세 팝업 */}
-      <Modal
-        open={!!detail}
-        onClose={() => setDetail(null)}
-        title="자료 상세"
-        footer={
-          <Button variant="secondary" onClick={() => setDetail(null)}>
-            닫기
-          </Button>
-        }
-      >
-        {detail && (
-          <dl className="flex flex-col gap-3 text-sm">
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">제목</dt>
-              <dd className="text-fg font-medium">{detail.title}</dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">작성자</dt>
-              <dd className="text-fg">{nameOf(detail.uploadedByUserId)}</dd>
-            </div>
-            {detail.body && (
-              <div className="flex gap-3">
-                <dt className="text-fg-muted w-16 shrink-0">본문</dt>
-                <dd className="text-fg min-w-0 flex-1 break-words whitespace-pre-wrap">
-                  {detail.body}
-                </dd>
-              </div>
-            )}
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">
-                {detail.hasFile ? '파일' : '링크'}
-              </dt>
-              <dd className="min-w-0 flex-1">
-                {detail.hasFile ? (
-                  <button
-                    type="button"
-                    onClick={() => onDownload(detail)}
-                    className="text-info inline-flex items-center gap-1 font-medium hover:underline"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    {detail.fileName} ({fmtSize(detail.fileSize)})
-                  </button>
-                ) : detail.url ? (
-                  <a
-                    href={detail.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-info inline-flex items-center gap-1 break-all hover:underline"
-                  >
-                    {detail.url}{' '}
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                  </a>
-                ) : (
-                  '-'
-                )}
-              </dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">등록일</dt>
-              <dd className="text-fg-muted tabular-nums">
-                {detail.createdAt?.slice(0, 10) ?? '-'}
-              </dd>
-            </div>
-          </dl>
-        )}
-      </Modal>
 
       {/* 등록 모달 */}
       <Modal

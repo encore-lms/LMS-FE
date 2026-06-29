@@ -7,6 +7,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
 import type { AssignmentItem } from './types'
 import { useAssignments, useCreateAssignment, useDeleteAssignment } from './api'
+import { ArticleView } from './ArticleView'
 
 const fmt = (iso: string | null) =>
   iso ? iso.slice(0, 16).replace('T', ' ') : '-'
@@ -141,6 +142,23 @@ export function AssignmentsPane({
     },
   ]
 
+  // 상세 — 블로그 포스트형 인라인 뷰(목록 대신 렌더)
+  if (detail) {
+    return (
+      <ArticleView
+        onBack={() => setDetail(null)}
+        badges={[{ label: '과제', className: 'bg-brand/10 text-brand' }]}
+        title={detail.title}
+        metaItems={[
+          `마감 ${fmt(detail.dueAt)}`,
+          `등록 ${detail.createdAt?.slice(0, 10) ?? '-'}`,
+        ]}
+        body={detail.description}
+        bodyEmptyText="과제 설명이 없습니다."
+      />
+    )
+  }
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
@@ -157,43 +175,6 @@ export function AssignmentsPane({
         onRowClick={(a) => setDetail(a)}
         empty="등록된 과제가 없어요"
       />
-
-      {/* 상세 팝업 */}
-      <Modal
-        open={!!detail}
-        onClose={() => setDetail(null)}
-        title="과제 상세"
-        footer={
-          <Button variant="secondary" onClick={() => setDetail(null)}>
-            닫기
-          </Button>
-        }
-      >
-        {detail && (
-          <dl className="flex flex-col gap-3 text-sm">
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">제목</dt>
-              <dd className="text-fg font-medium">{detail.title}</dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">마감</dt>
-              <dd className="text-fg tabular-nums">{fmt(detail.dueAt)}</dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">설명</dt>
-              <dd className="text-fg whitespace-pre-wrap">
-                {detail.description || '-'}
-              </dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="text-fg-muted w-16 shrink-0">등록일</dt>
-              <dd className="text-fg-muted tabular-nums">
-                {detail.createdAt?.slice(0, 10) ?? '-'}
-              </dd>
-            </div>
-          </dl>
-        )}
-      </Modal>
 
       {/* 추가 모달 */}
       <Modal

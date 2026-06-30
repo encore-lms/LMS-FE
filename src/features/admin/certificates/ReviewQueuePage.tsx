@@ -257,7 +257,7 @@ export default function ReviewQueuePage() {
       </div>
 
       <div className="border-border bg-info-bg mt-8 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">큐 운영 원칙 · §8 완료 기준</p>
+        <p className="text-fg text-sm font-bold">큐 운영 원칙 · 완료 기준</p>
         <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
           <li>
             • 기본 노출: certification_requested · reviewing · changes_requested

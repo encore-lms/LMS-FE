@@ -37,7 +37,7 @@ const POLICY_ROWS: { key: string; desc: string }[] = [
   { key: 'N시간', desc: '팀 배정 단위로 설정' },
   {
     key: '일지 템플릿',
-    desc: '배정 시 기본 템플릿 선택 (§31 일지 템플릿에서 관리)',
+    desc: '배정 시 기본 템플릿 선택 (일지 템플릿에서 관리)',
   },
   {
     key: '조기 종료',
@@ -410,7 +410,7 @@ export default function AssignmentsPage() {
       {/* 배정 제약 · §29 정책 */}
       <div className="border-border bg-surface mt-8 rounded-xl border">
         <div className="px-5 pt-5 pb-3">
-          <p className="text-fg text-sm font-bold">배정 제약 · §29 정책</p>
+          <p className="text-fg text-sm font-bold">배정 제약 정책</p>
           <p className="text-fg-subtle mt-1 text-xs">
             저장 전 자동 검증 — 같은 반 중복 배정·미배정 팀·템플릿 미선택 차단
           </p>

@@ -357,7 +357,7 @@ export default function DirectPayPage() {
 
           {/* 한도 규칙 §18 */}
           <div className="border-border bg-surface mt-4 rounded-xl border p-4">
-            <p className="text-fg text-[13px] font-bold">한도 규칙 · §18</p>
+            <p className="text-fg text-[13px] font-bold">한도 규칙</p>
             <ul className="mt-2.5 flex flex-col gap-2.5">
               <RuleRow
                 tone="warning"

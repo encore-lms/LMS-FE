@@ -109,7 +109,9 @@ describe('LogTemplatesPage (§31)', () => {
     renderPage()
     expect(screen.getByText('총 3 템플릿 · 기본 1')).toBeInTheDocument()
     expect(
-      screen.getByText('기존 팀에는 자동 반영 안 됨 — §32에서 직접 수정'),
+      screen.getByText(
+        '기존 팀에는 자동 반영 안 됨 — 팀별 일지 항목 설정에서 직접 수정',
+      ),
     ).toBeInTheDocument()
     expect(screen.getByText('레거시 v1.0 (보관)')).toBeInTheDocument()
     expect(screen.getByText('비활성')).toBeInTheDocument()

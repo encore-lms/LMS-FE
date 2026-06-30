@@ -41,7 +41,7 @@ const TEMPLATE_NOTICE =
 export default function LogTemplatesPage() {
   usePageHeader(
     '멘토링 일지 템플릿',
-    '짧은/긴 텍스트 항목 · 신규 배정 팀에만 기본 적용 · 기존 팀은 §32에서 직접 수정',
+    '짧은/긴 텍스트 항목 · 신규 배정 팀에만 기본 적용 · 기존 팀은 팀별 일지 항목 설정에서 직접 수정',
   )
   const toast = useToast()
   const { data, isPending, isError, refetch } = useLogTemplates()
@@ -186,7 +186,7 @@ export default function LogTemplatesPage() {
             </span>
             <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
               <Info className="h-3 w-3" />
-              기존 팀에는 자동 반영 안 됨 — §32에서 직접 수정
+              기존 팀에는 자동 반영 안 됨 — 팀별 일지 항목 설정에서 직접 수정
             </span>
           </div>
         </div>
@@ -497,7 +497,7 @@ export default function LogTemplatesPage() {
               <div className="bg-info-bg border-info/30 rounded-xl border p-4">
                 <p className="text-fg flex items-center gap-1.5 text-[13px] font-bold">
                   <Info className="text-info h-3.5 w-3.5" />
-                  항목 타입 안내 · §31
+                  항목 타입 안내
                 </p>
                 <p className="text-fg-muted mt-1.5 text-xs">
                   짧은 텍스트 — 주제·장소 보조 정보 / 긴 텍스트 — 진행 내용·다음
@@ -511,7 +511,7 @@ export default function LogTemplatesPage() {
 
       {/* 반영 정책 · §31 — 기존 일지 스냅샷 보존·새 일지부터 적용 */}
       <div className="bg-warning-bg border-warning/40 mt-6 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">반영 정책 · §31</p>
+        <p className="text-fg text-sm font-bold">반영 정책</p>
         <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
           <li>• 템플릿 수정은 기존 팀에 자동 반영되지 않습니다</li>
           <li>• 새로 배정되는 팀에만 최신 템플릿이 기본 적용됩니다</li>
@@ -520,7 +520,7 @@ export default function LogTemplatesPage() {
             보존하고, 변경은 새 일지부터 적용됩니다
           </li>
           <li>
-            • 기존 팀에 반영하려면 §32 팀별 일지 항목 설정에서 직접 수정합니다
+            • 기존 팀에 반영하려면 팀별 일지 항목 설정에서 직접 수정합니다
           </li>
         </ul>
       </div>

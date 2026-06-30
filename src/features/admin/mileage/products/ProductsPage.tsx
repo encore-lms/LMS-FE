@@ -180,9 +180,6 @@ export default function ProductsPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-fg text-sm font-bold">상품 타입별 가격 방식</p>
-            <p className="text-fg-muted mt-0.5 text-xs">
-              §20 정본 — 타입별 입력 방식과 처리 분기
-            </p>
           </div>
           <span className="text-fg-subtle inline-flex items-center gap-1 text-xs">
             <Info className="h-3.5 w-3.5" />
@@ -207,7 +204,7 @@ export default function ProductsPage() {
       <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
         <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
           <Info className="h-4 w-4" />
-          상품 등록/관리 정책 · §20 완료 기준
+          상품 등록/관리 정책 · 완료 기준
         </p>
         <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
           <li>

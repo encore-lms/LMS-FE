@@ -205,9 +205,6 @@ export default function AdminDashboard() {
             <h2 className="text-fg font-bold">긴급 검토 대상</h2>
             <StatusBadge label={`P0 ${queueSummary.p0}`} tone="danger" />
           </div>
-          <p className="text-fg-subtle mt-0.5 text-xs">
-            §1 정본 — P0 작업부터 처리하도록 큐를 묶었습니다
-          </p>
           <div className="mt-3">
             <DataTable
               columns={columns}
@@ -257,9 +254,6 @@ export default function AdminDashboard() {
 
           <section className="border-border bg-surface rounded-xl border p-5">
             <h2 className="text-fg font-bold">바로가기</h2>
-            <p className="text-fg-subtle mt-0.5 text-xs">
-              §1 정본 — 인증 검토 큐 · 사용자·권한 · CSV 매핑
-            </p>
             <ul className="mt-2 flex flex-col">
               {shortcuts.map((s) => (
                 <ShortcutRow

@@ -257,8 +257,8 @@ export default function TemplateListPage() {
       </div>
       <p className="text-fg-subtle mt-3 flex items-center gap-1.5 text-xs">
         <Info className="h-3 w-3" />
-        [새 퀴즈로 복제] → §6 퀴즈 생성 폼으로 이동 · 사용 중인 템플릿(복제된
-        퀴즈 존재)은 삭제 비활성
+        [새 퀴즈로 복제] → 퀴즈 생성 폼으로 이동 · 사용 중인 템플릿(복제된 퀴즈
+        존재)은 삭제 비활성
       </p>
     </div>
   )

@@ -61,6 +61,7 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
 - 버전 표기: 머지 시점이 아닌 **다음 release 버전 기준** (예: 1주차 작업 → `v0.2`). Release PR(`chore(release):`)에서 한 번에 확정 권장.
 - 디자이너가 시안을 수정해야 할 때는 Section 밖으로 다시 이동해서 작업, 완료 후 재이동.
 - **정합성 점검(Release 전)**: 주차 Release PR 전 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 스킬을 실행해 ① 전 페이지 비-Pretendard 0(Icons 예외), ② 색 census `rawSolids` 0(`Color/*` 미바인딩 fill 없음, Icons 예외)을 확인하고, Release PR 본문 체크리스트에 `□ figma-consistency-checks 통과(폰트 비-Pretendard 0 · 색 미바인딩 0, Icons 예외)` 1줄을 남긴다.
+- **개발메타 표기 제거 (코드 + Figma)**: 문서 섹션 참조 마커(`§N 정본`·`§N 정책`·`§N 완료 기준` 등)는 개발/스펙용 메타 표기이므로 **제품 UI 텍스트(코드·Figma 양쪽)에서 제거**한다. `§N` 토큰만 떼고 정책 카피는 보존하며(`검토 정책 · 완료 기준`), `정본` 부제처럼 마커 전용 줄은 통째 삭제한다. **예외(보존)**: 설계 전용 주석 보드·프레임 라벨(화면이 아닌 문서성 아트보드, 예: `공통` 페이지 첨부정책 보드)과 코드 주석(`//`). Figma census는 `get_metadata`/`findAllWithCriteria(['TEXT'])` + `characters.includes('§')`로 점검. (개정 배경: LMS-DOCS [`황설현_보고서/2026-06-30 §N·정본 개발메타 표기 전수 제거`](../LMS-DOCS/황설현_보고서/) — 구 "Figma는 dev참조 유지" 방침을 supersede)
 
 ## 병렬 작업 규칙 (2인 결합 해소)
 

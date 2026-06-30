@@ -193,12 +193,12 @@ export default function MileagePage() {
       <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
         <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
           <Info className="h-4 w-4" />
-          마일리지 운영 정책 · §16 완료 기준
+          마일리지 운영 정책 · 완료 기준
         </p>
         <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
           <li>
-            마일리지 기능 사용 과정에서만 매니저 사이드바 탭이 노출됩니다 (§6
-            교육 과정 설정 토글)
+            마일리지 기능 사용 과정에서만 매니저 사이드바 탭이 노출됩니다 (교육
+            과정 설정 토글)
           </li>
           <li>5개 탭은 URL에 반영됩니다 — 새로고침 후에도 동일 탭 유지</li>
           <li>

@@ -558,7 +558,6 @@ export const mockWorkspace: WorkspaceData = {
       avatarTone: 'accent',
     },
     {
-      memberId: 'pm-1',
       name: '박지호',
       role: '풀스택 · 팀원',
       kind: '팀원',
@@ -566,7 +565,6 @@ export const mockWorkspace: WorkspaceData = {
       avatarTone: 'warning',
     },
     {
-      memberId: 'pm-2',
       name: '최유나',
       role: '백엔드 · 팀원',
       kind: '팀원',
@@ -844,7 +842,6 @@ export const mockWorkspaceP2: WorkspaceData = {
   ],
   members: [
     {
-      memberId: 'pm-3',
       name: '예칼',
       role: 'PM · 백엔드',
       kind: 'PM',
@@ -859,7 +856,6 @@ export const mockWorkspaceP2: WorkspaceData = {
       avatarTone: 'info',
     },
     {
-      memberId: 'pm-4',
       name: '오세훈',
       role: '인프라 · Nginx',
       kind: '팀원',
@@ -1156,7 +1152,6 @@ export const mockWorkspaceP3: WorkspaceData = {
   ],
   members: [
     {
-      memberId: 'pm-3',
       name: '예칼',
       role: '백엔드 (개인)',
       kind: 'PM',

@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
+import { apiClient } from '@/shared/api'
 import { cn } from '@/shared/lib/cn'
+import type { RecordEvidenceImage } from '@/shared/types'
 import { usePageHeader } from '@/shared/store'
 import type {
   RecordCategory,
@@ -470,6 +472,7 @@ function ReviewModal({
                   <p className="text-fg text-sm whitespace-pre-wrap">
                     {data.activityNote || '활동 내용이 없습니다.'}
                   </p>
+                  <EvidenceGallery images={data.evidenceImages} />
                 </div>
               ) : (
                 <div className="space-y-2 p-5 text-sm">
@@ -479,6 +482,7 @@ function ReviewModal({
                   {data.policyNote && (
                     <p className="text-fg-muted">{data.policyNote}</p>
                   )}
+                  <EvidenceGallery images={data.evidenceImages} />
                 </div>
               )}
             </div>
@@ -525,6 +529,61 @@ function ReviewModal({
           </>
         )}
       </aside>
+    </div>
+  )
+}
+
+// 증빙 이미지 — 다운로드가 인증 필요(/admin/records/files/:id)라 blob fetch 후 objectURL로 표시.
+function EvidenceImg({ url }: { url: string }) {
+  const [src, setSrc] = useState('')
+  const [err, setErr] = useState(false)
+  useEffect(() => {
+    let active = true
+    let obj = ''
+    apiClient
+      .getBlob(url)
+      .then((blob) => {
+        if (!active) return
+        obj = URL.createObjectURL(blob)
+        setSrc(obj)
+      })
+      .catch(() => active && setErr(true))
+    return () => {
+      active = false
+      if (obj) URL.revokeObjectURL(obj)
+    }
+  }, [url])
+  if (err)
+    return (
+      <div className="border-border text-fg-subtle flex h-28 items-center justify-center rounded-lg border text-xs">
+        불러오기 실패
+      </div>
+    )
+  if (!src)
+    return <div className="bg-surface-muted h-28 animate-pulse rounded-lg" />
+  return (
+    <a href={src} target="_blank" rel="noreferrer">
+      <img
+        src={src}
+        alt="증빙"
+        className="border-border h-28 w-full rounded-lg border object-cover"
+      />
+    </a>
+  )
+}
+
+function EvidenceGallery({ images }: { images?: RecordEvidenceImage[] }) {
+  if (!images || images.length === 0) return null
+  return (
+    <div>
+      <p className="text-fg-muted mb-2 text-xs font-semibold">
+        증빙 이미지 {images.length}장
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {images.map((img) => (
+          <EvidenceImg key={img.id} url={img.url} />
+        ))}
+      </div>
     </div>
   )
 }

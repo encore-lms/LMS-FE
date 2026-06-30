@@ -73,6 +73,7 @@ export type {
   RecordGridWeek,
   RecordGridRow,
   RecordGrid,
+  AdminCertItem,
 } from './records'
 export type {
   StudentTrainingStatus,

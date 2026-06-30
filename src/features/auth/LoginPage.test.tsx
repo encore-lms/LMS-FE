@@ -115,17 +115,28 @@ describe('LoginPage', () => {
     })
   })
 
-  it('데모 빠른 로그인 버튼을 누르면 해당 역할 ID/PW가 폼에 채워진다(제출 안 함)', async () => {
+  it('데모 빠른 로그인 버튼을 누르면 해당 실제 계정으로 즉시 로그인한다', async () => {
     const user = userEvent.setup()
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        token: 'tok',
+        user: {
+          id: '1',
+          email: 'instructor1@playdata.io',
+          name: '박강사',
+          role: 'INSTRUCTOR',
+        },
+      },
+    })
     renderLogin()
     await user.click(screen.getByRole('button', { name: '강사' }))
-    expect(screen.getByPlaceholderText('이메일 또는 수강생 코드')).toHaveValue(
-      'instructor@playdata.io',
-    )
-    expect(screen.getByPlaceholderText('••••••••••')).toHaveValue(
-      'playdata123!',
-    )
-    expect(apiClient.post).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+        userId: 'instructor1@playdata.io',
+        password: 'password123!',
+      })
+    })
+    expect(useAuthStore.getState().user?.role).toBe('INSTRUCTOR')
   })
 
   it('스타일 가이드로 이동 링크가 /_styleguide를 가리킨다', () => {

@@ -1,6 +1,6 @@
-// 데모 배포(MSW mock)용 빠른 로그인 프리셋.
-// mock(mocks/handlers.ts roleFromEmail)은 이메일 prefix로만 역할을 판별하고 비밀번호는 무시한다.
-//   admin@…→매니저(MANAGER) / instructor@…→강사 / mentor@…→멘토 / 그 외→수강생
+// 데모 빠른 로그인 프리셋 — 실제 BE 계정(auth-user-service)으로 연결.
+// 버튼 클릭 시 해당 계정으로 즉시 로그인하고 역할 홈으로 이동한다.
+// 실로그인 모드(VITE_REAL_AUTH=true, dev 기본)에서 실제 인증된다. 비밀번호는 부트스트랩 기본값(password123!).
 export interface DemoAccount {
   label: string
   email: string
@@ -8,14 +8,12 @@ export interface DemoAccount {
 }
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
-  { label: '매니저', email: 'admin@playdata.io', password: 'playdata123!' },
-  { label: '강사', email: 'instructor@playdata.io', password: 'playdata123!' },
-  // 담당 기수 없음 안내(Figma 2750:1974) 시연 — 강사 대시보드 mock이 기수 0으로 분기.
+  { label: '수강생', email: 'student1@playdata.io', password: 'password123!' },
+  { label: '멘토', email: 'mentor1@playdata.io', password: 'password123!' },
+  { label: '강사', email: 'instructor1@playdata.io', password: 'password123!' },
   {
-    label: '강사 (배정 전)',
-    email: 'instructor-new@playdata.io',
-    password: 'playdata123!',
+    label: '운영(관리자)',
+    email: 'admin@playdata.io',
+    password: 'password123!',
   },
-  { label: '멘토', email: 'mentor@playdata.io', password: 'playdata123!' },
-  { label: '수강생', email: 'student@playdata.io', password: 'playdata123!' },
 ]

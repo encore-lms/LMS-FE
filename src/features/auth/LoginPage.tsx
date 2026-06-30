@@ -30,13 +30,14 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
-  // 데모 빠른 로그인: 선택한 역할 계정으로 폼만 채운다(제출은 사용자가 직접).
-  function applyPreset(acc: DemoAccount) {
+  // 데모 빠른 로그인: 선택한 실제 계정으로 폼을 채우고 즉시 로그인 → 역할 홈으로 이동.
+  async function quickLogin(acc: DemoAccount) {
     setValue('email', acc.email, { shouldValidate: true, shouldDirty: true })
     setValue('password', acc.password, {
       shouldValidate: true,
       shouldDirty: true,
     })
+    await onSubmit({ email: acc.email, password: acc.password })
   }
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout brandSlot={<DemoQuickLogin onPick={applyPreset} />}>
+    <AuthLayout brandSlot={<DemoQuickLogin onPick={quickLogin} />}>
       <form
         noValidate
         onSubmit={handleSubmit(onSubmit)}

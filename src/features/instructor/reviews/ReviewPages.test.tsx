@@ -41,6 +41,15 @@ const records: InstructorRecordReviewData = {
       submittedAt: '05-17 21:14',
       status: 'pending',
       attachments: 1,
+      url: 'https://blog.example.com/park-jh/usememo',
+      body: 'useMemo 남용 사례와 의존성 배열 점검을 정리했습니다.',
+      managerComment: null,
+      attachmentFiles: [
+        {
+          name: 'usememo-benchmark.png',
+          url: 'https://files.example.com/rr-1/usememo-benchmark.png',
+        },
+      ],
     },
     {
       id: 'rr-3',
@@ -51,6 +60,15 @@ const records: InstructorRecordReviewData = {
       submittedAt: '05-16 14:30',
       status: 'changes_requested',
       attachments: 1,
+      url: 'https://license.example.com/verify/eng-info',
+      body: '정보처리기사 필기 합격 증빙 캡처.',
+      managerComment: '합격증 원본(PDF)을 추가 제출해 주세요.',
+      attachmentFiles: [
+        {
+          name: 'eng-info-written-pass.png',
+          url: 'https://files.example.com/rr-3/eng-info-written-pass.png',
+        },
+      ],
     },
   ],
 }
@@ -169,11 +187,19 @@ describe('RecordReviewPage (§13)', () => {
     ).toBeInTheDocument()
   })
 
-  it('상태별 액션 분기 — 대기 [상세], 보완 요청 [확인][상세]', () => {
+  it('행 클릭 시 상세 슬라이드 패널이 열린다 (조회 전용)', async () => {
+    const user = userEvent.setup()
     renderWith(<RecordReviewPage />)
-    expect(screen.getByRole('button', { name: '확인' })).toBeInTheDocument()
-    // 대기 행은 단일 [상세], 보완 행은 [확인]+[상세] → 상세 총 2개
-    expect(screen.getAllByRole('button', { name: '상세' }).length).toBe(2)
+    await user.click(screen.getByText('리액트 useMemo 실전 최적화'))
+    expect(
+      screen.getByRole('dialog', { name: '학습 기록 상세' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/useMemo 남용 사례/)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '조회 전용 — 승인·반려·보완 요청은 운영 매니저가 처리합니다.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('카테고리 탭은 해당 카테고리만 남긴다', async () => {

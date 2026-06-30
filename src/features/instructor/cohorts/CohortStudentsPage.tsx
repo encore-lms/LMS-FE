@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -22,11 +23,12 @@ export default function CohortStudentsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useCohortStudents(cohortId)
   // 선택 기수 — 대시보드와 공유하는 공용 컨텍스트로 필터(전체/DA 4기/FE 7기).
-  const { cohortId: ctxCohortId } = useCohortContext()
+  const { cohortId: ctxCohortId, setCohortId } = useCohortContext()
   const cohortLabel = COHORT_ID_TO_LABEL[ctxCohortId] ?? '전체'
   const [q, setQ] = useState('')
   const [cert, setCert] = useState<CertFilter>('all')
   const [risk, setRisk] = useState<RiskFilter>('all')
+  const [page, setPage] = useState(1)
   usePageHeader(
     `수강생 목록 — ${cohortLabel}`,
     '담당 기수 수강생 조회 · 위험/보완 플래그가 있는 학생 빠르게 식별',
@@ -48,6 +50,17 @@ export default function CohortStudentsPage() {
     // 기본 정렬 = 위험 플래그 많은 순.
     return [...result].sort((a, b) => b.riskFlags.length - a.riskFlags.length)
   }, [data, q, cert, risk, cohortLabel])
+
+  // 필터/검색/기수 변경 시 첫 페이지로.
+  useEffect(() => {
+    setPage(1)
+  }, [q, cert, risk, cohortLabel])
+
+  // 클라이언트 페이지네이션 — 8명/페이지.
+  const PAGE_SIZE = 8
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const current = Math.min(page, pageCount)
+  const paged = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
 
   if (isPending) {
     return <div className="text-fg-muted p-8">수강생 목록을 불러오는 중…</div>
@@ -164,13 +177,21 @@ export default function CohortStudentsPage() {
             className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
           />
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/instructor/cohorts')}
-          className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-xs font-medium"
-        >
-          기수: {cohortLabel}
-        </button>
+        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+          <span className="text-fg-subtle">기수</span>
+          <select
+            value={ctxCohortId}
+            onChange={(e) => setCohortId(e.target.value)}
+            aria-label="기수 필터"
+            className="text-fg bg-transparent text-sm font-medium outline-none"
+          >
+            {Object.entries(COHORT_ID_TO_LABEL).map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
           <span className="text-fg-subtle">증명서</span>
           <select
@@ -207,34 +228,23 @@ export default function CohortStudentsPage() {
       <div className="mt-4">
         <DataTable
           columns={columns}
-          rows={filtered}
+          rows={paged}
           rowKey={(r) => r.id}
           onRowClick={(r) => navigate(`/instructor/students/${r.id}`)}
           empty="조건에 맞는 수강생이 없어요"
         />
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-col gap-2">
+        <Pagination
+          page={current}
+          pageCount={pageCount}
+          totalCount={filtered.length}
+          shownCount={paged.length}
+          onPage={setPage}
+        />
         <p className="text-fg-subtle text-xs">
-          {cohortLabel} · 표시 {filtered.length}명 — 담당 기수 밖 학생은
-          노출되지 않습니다
+          {cohortLabel} · 담당 기수 밖 학생은 노출되지 않습니다
         </p>
-        {/* 페이지네이션 — mock은 1페이지 데이터만, 표시는 Figma(1~5) 정합 */}
-        <div className="ml-auto flex gap-1">
-          {['‹', '1', '2', '3', '4', '5', '›'].map((p) => (
-            <button
-              key={p}
-              type="button"
-              className={cn(
-                'h-7 min-w-7 rounded-md px-2 text-xs font-medium',
-                p === '1'
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted hover:bg-surface-muted border',
-              )}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   )

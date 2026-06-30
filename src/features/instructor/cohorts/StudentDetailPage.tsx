@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { StudentDetailTabKey } from '@/shared/types'
-import { useStudentDetail } from '../api/console'
+import { useSaveReviewComment, useStudentDetail } from '../api/console'
 import { CERT_STATUS_META } from './meta'
 
 const TABS: { key: StudentDetailTabKey; label: string }[] = [
@@ -33,6 +33,7 @@ export default function StudentDetailPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useStudentDetail(studentId)
+  const saveComment = useSaveReviewComment(studentId)
   const [tab, setTab] = useState<StudentDetailTabKey>('quiz')
   const [comment, setComment] = useState('')
   usePageHeader(
@@ -253,10 +254,15 @@ export default function StudentDetailPage() {
               </button>
               <button
                 type="button"
+                disabled={saveComment.isPending}
                 onClick={() =>
-                  toast.success('검토 코멘트 저장 — 운영자/강사만 조회 (mock)')
+                  saveComment.mutate(comment, {
+                    onSuccess: () =>
+                      toast.success('검토 코멘트 저장 — 운영자/강사만 조회'),
+                    onError: () => toast.danger('저장에 실패했어요'),
+                  })
                 }
-                className="bg-brand-deep rounded-lg px-3 py-1.5 text-xs font-bold text-white"
+                className="bg-brand-deep rounded-lg px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60"
               >
                 저장
               </button>

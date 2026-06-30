@@ -1,4 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   InstructorDashboardData,
@@ -50,5 +55,20 @@ export function useCohortStudents(cohortId: string) {
       apiClient
         .get<CohortStudentsData>(`/instructor/cohorts/${cohortId}/students`)
         .then((r) => r.data),
+  })
+}
+
+// 검토 코멘트 저장(학생 비공개) — mock PATCH. 실 BE 계약 확정 시 페어가 교체.
+export function useSaveReviewComment(studentId: string) {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (reviewComment) =>
+      apiClient
+        .patch<void>(`/instructor/students/${studentId}`, { reviewComment })
+        .then(() => undefined),
+    onSuccess: () =>
+      qc.invalidateQueries({
+        queryKey: instructorKeys.studentDetail(studentId),
+      }),
   })
 }

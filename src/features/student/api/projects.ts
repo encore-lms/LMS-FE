@@ -90,3 +90,81 @@ export function useDeleteProject() {
     },
   })
 }
+
+// ── 워크스페이스 쓰기(BE #75) — 성공 시 워크스페이스 캐시 무효화 ──
+function useWsMutation<TVars>(
+  fn: (id: string, vars: TVars) => Promise<unknown>,
+  projectId: string,
+) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (vars: TVars) => fn(projectId, vars),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: projectKeys.workspace(projectId) }),
+  })
+}
+
+export function useAddTask(projectId: string) {
+  return useWsMutation<{
+    title: string
+    description?: string
+    status?: string
+    dueAt?: string
+  }>((id, v) => apiClient.post(`/student/projects/${id}/tasks`, v), projectId)
+}
+export function useUpdateTaskStatus(projectId: string) {
+  return useWsMutation<{ taskId: string; status: string }>(
+    (id, v) =>
+      apiClient.put(`/student/projects/${id}/tasks/${v.taskId}/status`, {
+        status: v.status,
+      }),
+    projectId,
+  )
+}
+export function useAddMeeting(projectId: string) {
+  return useWsMutation<{ title: string; body?: string; heldAt?: string }>(
+    (id, v) => apiClient.post(`/student/projects/${id}/meetings`, v),
+    projectId,
+  )
+}
+export function useAddArtifact(projectId: string) {
+  return useWsMutation<{ artifactType: string; title: string; url?: string }>(
+    (id, v) => apiClient.post(`/student/projects/${id}/artifacts`, v),
+    projectId,
+  )
+}
+export function useAddIssue(projectId: string) {
+  return useWsMutation<{ title: string; description?: string }>(
+    (id, v) => apiClient.post(`/student/projects/${id}/issues`, v),
+    projectId,
+  )
+}
+export function useUpdateIssueStatus(projectId: string) {
+  return useWsMutation<{ issueId: string; status: string }>(
+    (id, v) =>
+      apiClient.put(`/student/projects/${id}/issues/${v.issueId}/status`, {
+        status: v.status,
+      }),
+    projectId,
+  )
+}
+export function useSubmitPeerEval(projectId: string) {
+  return useWsMutation<{
+    targetMemberId: string
+    collaboration: number
+    communication: number
+    responsibility: number
+    problemSolving: number
+    technicalContribution: number
+    comment?: string
+  }>(
+    (id, v) => apiClient.post(`/student/projects/${id}/peer-evaluations`, v),
+    projectId,
+  )
+}
+export function useRequestCertification(projectId: string) {
+  return useWsMutation<void>(
+    (id) => apiClient.post(`/student/projects/${id}/certification`),
+    projectId,
+  )
+}

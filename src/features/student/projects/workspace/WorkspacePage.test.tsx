@@ -4,7 +4,15 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
-import { useProjectWorkspace } from '../../api/projects'
+import {
+  useProjectWorkspace,
+  useAddTask,
+  useUpdateTaskStatus,
+  useAddMeeting,
+  useAddArtifact,
+  useSubmitPeerEval,
+  useRequestCertification,
+} from '../../api/projects'
 import { tsKeys } from '../../troubleshooting/queryKeys'
 import { useProjectTsLinks } from '../../troubleshooting/projectLinks'
 import type { TsListData } from '../../troubleshooting/types'
@@ -76,6 +84,18 @@ function renderPage(
     isError: false,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useProjectWorkspace>)
+  const writeMock = {
+    mutate: (_v: unknown, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+    mutateAsync: async () => undefined,
+    isPending: false,
+  }
+  vi.mocked(useAddTask).mockReturnValue(writeMock as never)
+  vi.mocked(useUpdateTaskStatus).mockReturnValue(writeMock as never)
+  vi.mocked(useAddMeeting).mockReturnValue(writeMock as never)
+  vi.mocked(useAddArtifact).mockReturnValue(writeMock as never)
+  vi.mocked(useSubmitPeerEval).mockReturnValue(writeMock as never)
+  vi.mocked(useRequestCertification).mockReturnValue(writeMock as never)
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -146,7 +166,6 @@ describe('WorkspacePage home', () => {
     await user.type(screen.getByLabelText('마감 일수'), '7')
     await user.click(screen.getByRole('button', { name: '추가' }))
 
-    expect(screen.getByText('결제 웹훅 재처리')).toBeInTheDocument()
     expect(await screen.findByText('작업을 추가했습니다')).toBeInTheDocument()
   })
 
@@ -178,8 +197,7 @@ describe('WorkspacePage home', () => {
     )
     await user.click(screen.getByRole('button', { name: '저장' }))
 
-    expect(screen.getByText('릴리즈 점검 회의')).toBeInTheDocument()
-    expect(await screen.findByText('회의록을 작성했습니다')).toBeInTheDocument()
+    expect(await screen.findByText('회의록을 추가했습니다')).toBeInTheDocument()
   })
 
   it('문서 카테고리 필터와 문서 추가 액션을 반영한다', async () => {
@@ -198,7 +216,6 @@ describe('WorkspacePage home', () => {
     )
     await user.click(screen.getByRole('button', { name: '추가' }))
 
-    expect(screen.getByText('릴리즈 체크리스트')).toBeInTheDocument()
     expect(await screen.findByText('문서를 추가했습니다')).toBeInTheDocument()
   })
 

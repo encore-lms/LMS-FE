@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
@@ -46,14 +46,24 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
     y: today.getFullYear(),
     m: today.getMonth(),
   })
-  const [events, setEvents] = useState<CalItem[]>(() =>
-    d.calEvents.map((e) => ({
+  const [events, setEvents] = useState<CalItem[]>(() => [
+    ...d.calEvents.map((e) => ({
       date: `${CAL_BASE}-${pad2(e.day)}`,
       label: e.label,
       tone: e.tone,
       type: TONE_TYPE[e.tone],
     })),
-  )
+    // 보드 작업(시작일 기준)을 캘린더에 함께 표시.
+    ...d.columns
+      .flatMap((col) => col.tasks)
+      .filter((t) => t.startDate)
+      .map((t) => ({
+        date: t.startDate as string,
+        label: t.title,
+        tone: 'brand' as const,
+        type: '작업',
+      })),
+  ])
   // null = 닫힘, 그 외 = 해당 날짜(YYYY-MM-DD)로 일정 추가 모달 열림.
   const [addDate, setAddDate] = useState<string | null>(null)
 
@@ -256,15 +266,18 @@ function AddScheduleModal({
       }
     >
       <div className="flex flex-col gap-3">
-        {/* 선택한 일자를 한눈에 — 달력 셀 클릭 또는 아래 선택기로 변경 */}
-        <div className="bg-brand/5 border-brand/20 flex items-center gap-2 rounded-xl border px-4 py-3">
-          <Calendar className="text-brand size-4 shrink-0" />
-          <span className="text-fg text-[15px] font-bold">
-            {formatKoreanDate(date)}
-          </span>
-        </div>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">내용</span>
+          <input
+            autoFocus
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="내용"
+            className={field}
+          />
+        </label>
         <div className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">일자 변경</span>
+          <span className="text-fg text-[12px] font-bold">날짜</span>
           <DateTimePicker
             mode="date"
             value={date}
@@ -272,19 +285,14 @@ function AddScheduleModal({
             ariaLabel="일정 날짜"
             placeholder="날짜 선택"
           />
+          {date && (
+            <span className="text-fg-subtle text-[11px]">
+              {formatKoreanDate(date)}
+            </span>
+          )}
         </div>
         <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">일정명</span>
-          <input
-            autoFocus
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            placeholder="일정명"
-            className={field}
-          />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">유형</span>
+          <span className="text-fg text-[12px] font-bold">이슈</span>
           <select
             value={typeKey}
             onChange={(e) => setTypeKey(e.target.value)}

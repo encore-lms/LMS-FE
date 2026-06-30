@@ -156,6 +156,8 @@ export interface WsTask {
   title: string
   assignee: string
   due: string // "D-1"
+  startDate?: string | null // YYYY-MM-DD(캘린더 반영)
+  endDate?: string | null
   tags: Badge[]
 }
 export interface WsColumn {

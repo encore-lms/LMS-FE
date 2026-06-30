@@ -88,9 +88,14 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
           columns={columns}
           initialCol={addCol}
           onClose={() => setAddCol(null)}
-          onAdd={(colIdx, task, dueAt) => {
+          onAdd={(colIdx, task, startAt, endAt) => {
             addTaskM.mutate(
-              { title: task.title, status: columns[colIdx].key, dueAt },
+              {
+                title: task.title,
+                status: columns[colIdx].key,
+                startAt,
+                dueAt: endAt,
+              },
               {
                 onSuccess: () => {
                   toast.success('작업을 추가했습니다')
@@ -116,24 +121,33 @@ function AddTaskModal({
   columns: WsColumn[]
   initialCol: number
   onClose: () => void
-  onAdd: (colIdx: number, task: WsTask, dueAt?: string) => void
+  onAdd: (colIdx: number, task: WsTask, startAt: string, endAt: string) => void
 }) {
   const [colIdx, setColIdx] = useState(initialCol)
   const [title, setTitle] = useState('')
   const [assignee, setAssignee] = useState('')
-  // 마감은 'D-' 고정 + 숫자만(마감 지난 D+는 없음). 빈값이면 '-'.
-  const [dueDays, setDueDays] = useState('')
+  // 시작일 기본=오늘, 종료일 기본=시작일 다음날.
+  const today = todayISO()
+  const [startAt, setStartAt] = useState(today)
+  const [endAt, setEndAt] = useState(nextDayISO(today))
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
 
   const submit = () => {
     if (!title.trim()) return
-    onAdd(colIdx, {
-      title: title.trim(),
-      assignee: assignee.trim() || '미지정',
-      due: dueDays ? `D-${dueDays}` : '-',
-      tags: [],
-    })
+    onAdd(
+      colIdx,
+      {
+        title: title.trim(),
+        assignee: assignee.trim() || '미지정',
+        due: endAt,
+        startDate: startAt,
+        endDate: endAt,
+        tags: [],
+      },
+      startAt,
+      endAt,
+    )
   }
 
   return (
@@ -196,24 +210,46 @@ function AddTaskModal({
               className={field}
             />
           </label>
+        </div>
+        <div className="flex gap-3">
           <label className="flex flex-1 flex-col gap-1.5">
-            <span className="text-fg text-[12px] font-bold">마감</span>
-            <div className="border-border focus-within:border-brand flex h-10 items-center rounded-lg border px-3">
-              <span className="text-fg-muted text-[13px] font-semibold">
-                D-
-              </span>
-              <input
-                value={dueDays}
-                onChange={(e) => setDueDays(e.target.value.replace(/\D/g, ''))}
-                inputMode="numeric"
-                placeholder="3"
-                aria-label="마감 일수"
-                className="text-fg placeholder:text-fg-subtle ml-1 w-full bg-transparent text-[13px] outline-none"
-              />
-            </div>
+            <span className="text-fg text-[12px] font-bold">시작일</span>
+            <input
+              type="date"
+              value={startAt}
+              onChange={(e) => {
+                const v = e.target.value
+                setStartAt(v)
+                // 종료일이 시작일보다 빠르면 시작일 다음날로 보정
+                if (v && (!endAt || endAt <= v)) setEndAt(nextDayISO(v))
+              }}
+              className={field}
+            />
+          </label>
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="text-fg text-[12px] font-bold">종료일</span>
+            <input
+              type="date"
+              value={endAt}
+              min={startAt}
+              onChange={(e) => setEndAt(e.target.value)}
+              className={field}
+            />
           </label>
         </div>
       </div>
     </Modal>
   )
+}
+
+// 오늘(YYYY-MM-DD, 로컬)
+function todayISO(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+// 다음날(YYYY-MM-DD)
+function nextDayISO(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const nx = new Date(y, m - 1, d + 1)
+  return `${nx.getFullYear()}-${String(nx.getMonth() + 1).padStart(2, '0')}-${String(nx.getDate()).padStart(2, '0')}`
 }

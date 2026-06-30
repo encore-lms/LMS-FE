@@ -277,4 +277,5 @@ export interface WorkspaceData {
   certRecentChange: { label: string; status: Badge; date: string }
   /** 인증 요청 진행 정보(검토 중일 때) — 홈 인증 상태 카드. 없으면 최근 변경 제안으로 폴백. */
   certInfo?: { requestedAt: string; reviewer: string; eta: string }
+  troubleshootingCaseIds?: string[] // §52 BE 연결 사례 id
 }

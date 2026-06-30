@@ -7,11 +7,15 @@ import type { WorkspaceData, WsMember } from '../../types'
 import { Avatar, Chip, SectionHead, StatBox } from '../components/ws-shared'
 import { SOLID, card } from '../components/ws-style'
 import { useMemberNames } from '../components/useMemberNames'
+import { useInviteMember, useRemoveMember } from '../../../api/projects'
+import { usePeers } from '../../../api/peers'
 
 export function TeamTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
   // 표시 이름만 실명(/users/peers + 본인)으로 — 렌더 시점 매핑(peers 비동기 로드 반영).
   const nameOf = useMemberNames()
+  const inviteM = useInviteMember(d.id)
+  const removeM = useRemoveMember(d.id)
   const [members, setMembers] = useState(d.members)
   const [inviting, setInviting] = useState(false)
   const [openMember, setOpenMember] = useState<WsMember | null>(null)
@@ -159,12 +163,21 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
               <button
                 type="button"
                 onClick={() => {
-                  const name = members[removing].name
-                  setMembers((prev) =>
-                    prev.filter((_, idx) => idx !== removing),
+                  const target = members[removing]
+                  const name = nameOf(target.userId, target.name)
+                  removeM.mutate(
+                    { memberId: target.memberId ?? '' },
+                    {
+                      onSuccess: () => {
+                        setMembers((prev) =>
+                          prev.filter((_, idx) => idx !== removing),
+                        )
+                        setRemoving(null)
+                        toast.success(`${name} 님을 팀에서 삭제했습니다`)
+                      },
+                      onError: () => toast.danger('팀원 삭제에 실패했어요.'),
+                    },
                   )
-                  setRemoving(null)
-                  toast.success(`${name} 님을 팀에서 삭제했습니다`)
                 }}
                 className="bg-danger rounded-lg px-4 py-2 text-[13px] font-bold text-white"
               >
@@ -182,11 +195,24 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
       )}
       {inviting && (
         <InviteMemberModal
+          existingUserIds={
+            members.map((m) => m.userId).filter(Boolean) as string[]
+          }
           onClose={() => setInviting(false)}
-          onAdd={(member) => {
-            setMembers((prev) => [...prev, member])
-            setInviting(false)
-            toast.success('팀원을 초대했습니다')
+          onInvite={(userId, role, label) => {
+            inviteM.mutate(
+              { userId, role },
+              {
+                onSuccess: () => {
+                  setInviting(false)
+                  toast.success(`${label} 님을 초대했습니다`)
+                },
+                onError: (e) =>
+                  toast.danger(
+                    (e as Error)?.message ?? '팀원 초대에 실패했어요.',
+                  ),
+              },
+            )
           }}
         />
       )}
@@ -247,25 +273,25 @@ function RoleSelect({
 }
 
 function InviteMemberModal({
+  existingUserIds,
   onClose,
-  onAdd,
+  onInvite,
 }: {
+  existingUserIds: string[]
   onClose: () => void
-  onAdd: (member: WsMember) => void
+  onInvite: (userId: string, role: string, label: string) => void
 }) {
-  const [name, setName] = useState('')
+  const { data } = usePeers()
+  const [userId, setUserId] = useState('')
   const [role, setRole] = useState('백엔드')
-  const field =
-    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  // 같은 기수 동료 중 이미 팀에 있는 사람 제외
+  const candidates = (data?.items ?? []).filter(
+    (p) => !existingUserIds.includes(p.userId),
+  )
+  const picked = candidates.find((c) => c.userId === userId)
   const submit = () => {
-    if (!name.trim() || !role.trim()) return
-    onAdd({
-      name: name.trim(),
-      role: role.trim(),
-      kind: '팀원',
-      contrib: 0,
-      avatarTone: 'info',
-    })
+    if (!userId || !role.trim()) return
+    onInvite(userId, role.trim(), picked?.name ?? '팀원')
   }
 
   return (
@@ -285,7 +311,7 @@ function InviteMemberModal({
           <button
             type="button"
             onClick={submit}
-            disabled={!name.trim() || !role.trim()}
+            disabled={!userId || !role.trim()}
             className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
           >
             초대
@@ -294,16 +320,31 @@ function InviteMemberModal({
       }
     >
       <div className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">이름</span>
-          <input
-            autoFocus
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="팀원 이름"
-            className={field}
-          />
-        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">
+            팀원 선택{' '}
+            <span className="text-fg-subtle font-normal">(같은 기수 동료)</span>
+          </span>
+          {candidates.length === 0 ? (
+            <span className="text-fg-subtle text-[12px]">
+              초대 가능한 동료가 없어요.
+            </span>
+          ) : (
+            <select
+              autoFocus
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              className="border-border focus:border-brand h-10 w-full rounded-lg border bg-white px-3 text-[13px] outline-none"
+            >
+              <option value="">동료를 선택하세요</option>
+              {candidates.map((c) => (
+                <option key={c.userId} value={c.userId}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">역할</span>
           <RoleSelect value={role} onChange={setRole} />

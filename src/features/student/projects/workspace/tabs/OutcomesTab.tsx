@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
+import { useAddMetric } from '../../../api/projects'
 import type { WorkspaceData } from '../../types'
 import { SectionHead } from '../components/ws-shared'
 import { card } from '../components/ws-style'
 
 export function OutcomesTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
-  const [metrics, setMetrics] = useState(d.metrics)
+  const metrics = d.metrics
   const [adding, setAdding] = useState(false)
+  const addMetricM = useAddMetric(d.id)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -65,9 +67,22 @@ export function OutcomesTab({ d }: { d: WorkspaceData }) {
         <AddMetricModal
           onClose={() => setAdding(false)}
           onAdd={(metric) => {
-            setMetrics((prev) => [...prev, metric])
-            setAdding(false)
-            toast.success('지표를 추가했습니다')
+            addMetricM.mutate(
+              {
+                label: metric.label,
+                beforeValue: metric.before,
+                afterValue: metric.after,
+                changeLabel: metric.delta,
+                changeDirection: metric.good ? 'IMPROVED' : 'DEGRADED',
+              },
+              {
+                onSuccess: () => {
+                  toast.success('지표를 추가했습니다')
+                  setAdding(false)
+                },
+                onError: () => toast.danger('지표 추가에 실패했어요.'),
+              },
+            )
           }}
         />
       )}

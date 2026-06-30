@@ -238,19 +238,22 @@ function AddTaskModal({
             <span className="text-fg-subtle text-[12px]">팀원이 없어요.</span>
           ) : (
             <div className="flex flex-wrap gap-1.5">
-              {members.map((m) => {
+              {members.map((m, i) => {
                 const mid = m.memberId ?? ''
                 const on = assigneeIds.includes(mid)
                 return (
                   <button
-                    key={mid}
+                    key={mid || `m-${i}`}
                     type="button"
+                    disabled={!mid}
                     onClick={() => mid && toggleAssignee(mid)}
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors',
                       on
                         ? 'border-brand bg-brand/10 text-brand'
                         : 'border-border text-fg-muted hover:border-brand/50',
+                      !mid &&
+                        'hover:border-border cursor-not-allowed opacity-40',
                     )}
                   >
                     {on && '✓ '}

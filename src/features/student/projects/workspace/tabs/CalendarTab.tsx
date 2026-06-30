@@ -4,6 +4,7 @@ import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
+import { useAddSchedule } from '../../../api/projects'
 import type { Tone, WorkspaceData } from '../../types'
 import { Chip, SectionHead } from '../components/ws-shared'
 import { card, dateStr, formatKoreanDate, pad2 } from '../components/ws-style'
@@ -66,6 +67,7 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
   ])
   // null = 닫힘, 그 외 = 해당 날짜(YYYY-MM-DD)로 일정 추가 모달 열림.
   const [addDate, setAddDate] = useState<string | null>(null)
+  const addScheduleM = useAddSchedule(d.id)
 
   const offset = (new Date(cursor.y, cursor.m, 1).getDay() + 6) % 7
   const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate()
@@ -200,14 +202,21 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
           initialDate={addDate}
           onClose={() => setAddDate(null)}
           onAdd={(item) => {
-            setEvents((prev) => [...prev, item])
-            // 추가한 일정의 달로 이동해 바로 보이게.
-            setCursor({
-              y: Number(item.date.slice(0, 4)),
-              m: Number(item.date.slice(5, 7)) - 1,
-            })
-            setAddDate(null)
-            toast.success('일정을 추가했습니다')
+            addScheduleM.mutate(
+              { title: item.label, date: item.date },
+              {
+                onSuccess: () => {
+                  setEvents((prev) => [...prev, item])
+                  setCursor({
+                    y: Number(item.date.slice(0, 4)),
+                    m: Number(item.date.slice(5, 7)) - 1,
+                  })
+                  setAddDate(null)
+                  toast.success('일정을 추가했습니다')
+                },
+                onError: () => toast.danger('일정 추가에 실패했어요.'),
+              },
+            )
           }}
         />
       )}

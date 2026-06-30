@@ -6,7 +6,10 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { useTsList } from '../../../api/troubleshooting'
 import { TsCaseCard } from '../../../troubleshooting/components/TsCaseCard'
-import { useProjectTsLinks } from '../../../troubleshooting/projectLinks'
+import {
+  useLinkTroubleshooting,
+  useUnlinkTroubleshooting,
+} from '../../../api/projects'
 import type { TsCase } from '../../../troubleshooting/types'
 import type { WorkspaceData } from '../../types'
 import { SectionHead } from '../components/ws-shared'
@@ -18,9 +21,8 @@ export function IssuesTab({ d }: { d: WorkspaceData }) {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending } = useTsList()
-  // 명시적 연결이 없는 프로젝트는 기본 연결을 사용 — 모든 프로젝트의 이슈 탭이 동일하게 보인다.
-  const linkedIds = useProjectTsLinks((s) => s.linksFor(d.id))
-  const unlink = useProjectTsLinks((s) => s.unlink)
+  const linkedIds = d.troubleshootingCaseIds ?? []
+  const unlinkM = useUnlinkTroubleshooting(d.id)
   const [picking, setPicking] = useState(false)
 
   const cases = data?.cases ?? []
@@ -60,8 +62,16 @@ export function IssuesTab({ d }: { d: WorkspaceData }) {
                 navigate(`/student/troubleshooting/${t.id}?view=1`)
               }
               onRemove={() => {
-                unlink(d.id, c.id)
-                toast.info('프로젝트 연결을 해제했어요 (사례는 그대로예요)')
+                unlinkM.mutate(
+                  { caseId: c.id },
+                  {
+                    onSuccess: () =>
+                      toast.info(
+                        '프로젝트 연결을 해제했어요 (사례는 그대로예요)',
+                      ),
+                    onError: () => toast.danger('연결 해제에 실패했어요.'),
+                  },
+                )
               }}
             />
           ))}
@@ -92,16 +102,20 @@ function TsLinkPickerModal({
   onClose: () => void
 }) {
   const toast = useToast()
-  const link = useProjectTsLinks((s) => s.link)
-  const unlink = useProjectTsLinks((s) => s.unlink)
+  const linkM = useLinkTroubleshooting(projectId)
+  const unlinkM = useUnlinkTroubleshooting(projectId)
   const certified = cases.filter((c) => c.status === 'certified')
   const toggle = (c: TsCase) => {
     if (linkedIds.includes(c.id)) {
-      unlink(projectId, c.id)
-      toast.info('연결을 해제했어요')
+      unlinkM.mutate(
+        { caseId: c.id },
+        { onSuccess: () => toast.info('연결을 해제했어요') },
+      )
     } else {
-      link(projectId, c.id)
-      toast.success('트러블슈팅을 연결했어요')
+      linkM.mutate(
+        { troubleshootingCaseId: c.id },
+        { onSuccess: () => toast.success('트러블슈팅을 연결했어요') },
+      )
     }
   }
   return (

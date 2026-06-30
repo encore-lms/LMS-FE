@@ -16,8 +16,16 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { useToast } from '@/components/ui/use-toast'
+import { useUpdateTaskStatus } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
-import type { Tone, WorkspaceData, WsActivity, WsTab } from '../../types'
+import type {
+  Tone,
+  WorkspaceData,
+  WsActivity,
+  WsTab,
+  WsTask,
+} from '../../types'
 import { Avatar, Chip } from '../components/ws-shared'
 import { CHIP, SOLID, TEXT, card, phaseCertBadge } from '../components/ws-style'
 
@@ -92,20 +100,28 @@ export function HomeTab({
   onTab: (t: WsTab) => void
 }) {
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
-  // 완료 표시된 할 일은 처음부터 체크 상태로 시작(Figma의 마지막 항목).
-  const [doneTasks, setDoneTasks] = useState<Set<string>>(
-    () =>
-      new Set(
-        d.myTasks.filter((t) => t.due.includes('완료')).map((t) => t.title),
-      ),
-  )
-  const toggleDone = (title: string) =>
-    setDoneTasks((prev) => {
-      const next = new Set(prev)
-      if (next.has(title)) next.delete(title)
-      else next.add(title)
-      return next
-    })
+  const toast = useToast()
+  const updateStatusM = useUpdateTaskStatus(d.id)
+  // 체크하면 실 BE에 작업을 완료(DONE) 처리 — 완료된 작업은 다음 조회 시 내 작업에서 빠진다.
+  const [doneTasks, setDoneTasks] = useState<Set<string>>(() => new Set())
+  const completeTask = (t: WsTask) => {
+    if (!t.id || doneTasks.has(t.title)) return
+    setDoneTasks((prev) => new Set(prev).add(t.title)) // 낙관적 체크
+    updateStatusM.mutate(
+      { taskId: t.id, status: 'DONE' },
+      {
+        onSuccess: () => toast.success('작업을 완료 처리했습니다'),
+        onError: () => {
+          setDoneTasks((prev) => {
+            const n = new Set(prev)
+            n.delete(t.title)
+            return n
+          })
+          toast.danger('완료 처리에 실패했어요.')
+        },
+      },
+    )
+  }
   // 마감 임박 = 미완료 + 마감(D-n) 표기가 있는 할 일.
   const dueSoonCount = d.myTasks.filter(
     (t) => /D-\d/.test(t.due) && !doneTasks.has(t.title),
@@ -228,8 +244,8 @@ export function HomeTab({
                 >
                   <button
                     type="button"
-                    onClick={() => toggleDone(t.title)}
-                    aria-label={`${t.title} 완료 전환`}
+                    onClick={() => completeTask(t)}
+                    aria-label={`${t.title} 완료 처리`}
                     className={cn(
                       'flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold transition-colors',
                       done

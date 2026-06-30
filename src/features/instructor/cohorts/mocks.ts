@@ -703,6 +703,39 @@ const studentDetail: StudentDetailData = {
   },
 }
 
+// §4 per-student 상세 — students.rows 기준으로 base 템플릿에서 파생.
+// 이름·이메일·기수·증명서 상태·경고 플래그·퀴즈 평균·검토 코멘트는 학생별 개별화,
+// 6축·보완 이력·하위 탭은 mock 공통 템플릿 재사용(실 BE 전환 시 학생별 응답으로 교체).
+const studentDetailById: Record<string, StudentDetailData> = Object.fromEntries(
+  students.rows.map((r): [string, StudentDetailData] => {
+    const has = (flag: string) => r.riskFlags.includes(flag)
+    return [
+      r.id,
+      {
+        ...studentDetail,
+        id: r.id,
+        name: r.name,
+        uuidEmail: r.emailUuid,
+        cohortLabel: r.cohortLabel,
+        certStatus: r.certStatus,
+        kpis: studentDetail.kpis.map((k) =>
+          k.label === '퀴즈 평균'
+            ? {
+                ...k,
+                value: r.quizAvg.replace('평균 ', ''),
+                hint: `/100 · ${r.quizDetail}`,
+              }
+            : k,
+        ),
+        warningLine1: `결측 ${has('결측') ? 1 : 0} · 점수 재검토 ${has('점수 재검토') ? 1 : 0}`,
+        warningLine2: `개인정보 위험 ${has('개인정보') ? 1 : 0} · 미승인 ${has('미승인 산출물') ? 1 : 0}`,
+        reviewComment:
+          r.id === studentDetail.id ? studentDetail.reviewComment : '',
+      },
+    ]
+  }),
+)
+
 // 담당 기수 없음 시연용 변형 (Figma 2750:1974) — instructor-new@* 계정으로 로그인 시 반환.
 const dashboardNoCohort: InstructorDashboardData = {
   ...dashboardByCohort['da-4'],
@@ -737,13 +770,20 @@ export const handlers = [
   http.get('/api/instructor/cohorts/:cohortId/students', () =>
     ok<CohortStudentsData>(students),
   ),
-  http.get('/api/instructor/students/:studentId', () =>
-    ok<StudentDetailData>(studentDetail),
+  http.get('/api/instructor/students/:studentId', ({ params }) =>
+    ok<StudentDetailData>(
+      studentDetailById[String(params.studentId)] ?? studentDetail,
+    ),
   ),
-  // 검토 코멘트 저장 — studentDetail.reviewComment in-memory 갱신(새로고침 시 초기화).
-  http.patch('/api/instructor/students/:studentId', async ({ request }) => {
-    const body = (await request.json()) as { reviewComment: string }
-    studentDetail.reviewComment = body.reviewComment
-    return HttpResponse.json({ data: null })
-  }),
+  // 검토 코멘트 저장 — 학생별 reviewComment in-memory 갱신(새로고침 시 초기화).
+  http.patch(
+    '/api/instructor/students/:studentId',
+    async ({ request, params }) => {
+      const body = (await request.json()) as { reviewComment: string }
+      const target =
+        studentDetailById[String(params.studentId)] ?? studentDetail
+      target.reviewComment = body.reviewComment
+      return HttpResponse.json({ data: null })
+    },
+  ),
 ]

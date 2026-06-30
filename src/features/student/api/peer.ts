@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { peerKeys } from '../peer/queryKeys'
 import type { PeerHubData, PeerRepData, PeerTagData } from '../peer/types'
@@ -25,5 +25,38 @@ export function usePeerReputation() {
       apiClient
         .get<PeerRepData>('/student/peer/reputation')
         .then((r) => r.data),
+  })
+}
+
+// 태그 부여(POST /student/peer/tag) — 성공 시 태그보드·허브 갱신
+export function useAssignPeerTags() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { targetUserId: string; tags: string[] }) =>
+      apiClient.post('/student/peer/tag', input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: peerKeys.tag() })
+      void qc.invalidateQueries({ queryKey: peerKeys.hub() })
+    },
+  })
+}
+// 평판 제출(POST /student/peer/reputation) — 성공 시 평판보드·허브 갱신
+export function useSubmitPeerReputation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      targetUserId: string
+      technical: number
+      responsibility: number
+      communication: number
+      growth: number
+      teamwork: number
+      recommendation: string
+      comment: string
+    }) => apiClient.post('/student/peer/reputation', input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: peerKeys.reputation() })
+      void qc.invalidateQueries({ queryKey: peerKeys.hub() })
+    },
   })
 }

@@ -4,7 +4,8 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
-import { usePeerTag } from '../api/peer'
+import { useToast } from '@/components/ui/use-toast'
+import { useAssignPeerTags, usePeerTag } from '../api/peer'
 import { PEER_TAGS, type PeerMemberStatus, type Tone } from './types'
 
 // PeerTag 부여 (/student/peer-tag) — Figma 402:1644.
@@ -26,14 +27,11 @@ const AVA: Record<Tone, string> = {
 
 export default function PeerTagPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const { data, isPending, isError, refetch } = usePeerTag()
-  const [selectedId, setSelectedId] = useState('m1')
-  const [tags, setTags] = useState<string[]>([
-    '#분위기메이커',
-    '#꼼꼼한기록',
-    '#끝까지간다',
-    '#문서화장인',
-  ])
+  const assign = useAssignPeerTags()
+  const [selectedId, setSelectedId] = useState('')
+  const [tags, setTags] = useState<string[]>([])
   usePageHeader(
     'PeerTag 부여',
     '동기·동료에게 어울리는 협업 태그를 익명으로 부여합니다.',
@@ -194,8 +192,23 @@ export default function PeerTagPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/student/peer-evaluations')}
-            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold"
+            disabled={!target || tags.length === 0 || assign.isPending}
+            onClick={() => {
+              if (!target) return
+              assign.mutate(
+                { targetUserId: target.id, tags },
+                {
+                  onSuccess: () => {
+                    toast.success(
+                      `${target.name} 님에게 ${tags.length}개 태그를 부여했습니다.`,
+                    )
+                    setTags([])
+                  },
+                  onError: () => toast.danger('태그 부여에 실패했어요.'),
+                },
+              )
+            }}
+            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold disabled:opacity-40"
           >
             태그 저장 ({tags.length}개) →
           </button>

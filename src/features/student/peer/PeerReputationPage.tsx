@@ -4,7 +4,8 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
-import { usePeerReputation } from '../api/peer'
+import { useToast } from '@/components/ui/use-toast'
+import { usePeerReputation, useSubmitPeerReputation } from '../api/peer'
 import { RECOMMEND_OPTIONS, type Tone } from './types'
 
 // PeerReputation 5축 평가 (/student/peer-reputation) — Figma 404:1719.
@@ -32,6 +33,8 @@ const AXIS_TONE: Tone[] = ['success', 'success', 'info', 'accent', 'warning']
 export default function PeerReputationPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = usePeerReputation()
+  const toast = useToast()
+  const submit = useSubmitPeerReputation()
   const [scores, setScores] = useState<number[]>([])
   const [recommend, setRecommend] = useState('')
   const [comment, setComment] = useState('')
@@ -246,8 +249,39 @@ export default function PeerReputationPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/student/peer-evaluations')}
-            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold"
+            disabled={
+              !data?.target ||
+              scores.length < 5 ||
+              scores.some((v) => !v) ||
+              !recommend ||
+              submit.isPending
+            }
+            onClick={() => {
+              const t = data?.target
+              if (!t) return
+              submit.mutate(
+                {
+                  targetUserId: t.id,
+                  technical: scores[0] ?? 0,
+                  responsibility: scores[1] ?? 0,
+                  communication: scores[2] ?? 0,
+                  growth: scores[3] ?? 0,
+                  teamwork: scores[4] ?? 0,
+                  recommendation: recommend,
+                  comment,
+                },
+                {
+                  onSuccess: () => {
+                    toast.success(`${t.name} 님 평가를 저장했습니다.`)
+                    setScores([])
+                    setRecommend('')
+                    setComment('')
+                  },
+                  onError: () => toast.danger('평가 저장에 실패했어요.'),
+                },
+              )
+            }}
+            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold disabled:opacity-40"
           >
             평가 저장 후 다음 동료 →
           </button>

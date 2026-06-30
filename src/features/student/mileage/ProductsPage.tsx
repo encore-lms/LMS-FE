@@ -1,17 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Book, Coffee, Gift, Send, Video, type LucideIcon } from 'lucide-react'
+import {
+  Book,
+  Coffee,
+  Gift,
+  ShoppingCart,
+  Video,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageProducts } from '../api/mileage'
-import { useToast } from '@/components/ui/use-toast'
 import { parseMoney } from './store'
-import { ProductApplyModal } from './components/ProductApplyModal'
+import { useCartStore, cartCount, cartTotal } from './cartStore'
 import type { MileageProduct, Tone } from './types'
 
-// 마일리지 상품 신청 (/student/mileage/products) — Figma 418:1961.
+// 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const CHIP: Record<Tone, string> = {
@@ -30,42 +36,69 @@ const DOT: Record<Tone, string> = {
   accent: 'bg-accent-strong',
   success: 'bg-success',
 }
-// 카드 좌상단 아이콘(Figma book-fill/camera-video-fill/cup-hot-fill/gift-fill)
 const PRODUCT_ICON: Record<'book' | 'video' | 'cup' | 'gift', LucideIcon> = {
   book: Book,
   video: Video,
   cup: Coffee,
   gift: Gift,
 }
-const input =
-  'border-border bg-surface text-fg focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
 
-// 직접 신청 — 상품 링크는 http/https URL만 허용
-function isValidUrl(s: string): boolean {
-  const v = s.trim()
-  if (!v) return false
-  try {
-    const u = new URL(v)
-    return u.protocol === 'http:' || u.protocol === 'https:'
-  } catch {
-    return false
-  }
+interface FlyingItem {
+  id: number
+  startX: number
+  startY: number
+  endX: number
+  endY: number
+  icon: MileageProduct['icon']
+  tone: Tone
+}
+
+// 담기 시 상품 아이콘이 장바구니 버튼으로 날아가는 연출(이전 LMS flyToCart).
+function FlyingIcon({ item }: { item: FlyingItem }) {
+  const [flown, setFlown] = useState(false)
+  useEffect(() => {
+    const raf = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setFlown(true)),
+    )
+    return () => cancelAnimationFrame(raf)
+  }, [])
+  const Icon = PRODUCT_ICON[item.icon]
+  return (
+    <div
+      className={cn(
+        'pointer-events-none fixed z-[200] flex size-10 items-center justify-center rounded-[10px]',
+        CHIP[item.tone],
+      )}
+      style={{
+        left: item.startX,
+        top: item.startY,
+        transform: flown
+          ? `translate(${item.endX - item.startX}px, ${item.endY - item.startY}px) scale(0.35)`
+          : 'translate(0,0) scale(1)',
+        opacity: flown ? 0.15 : 1,
+        transition:
+          'transform 0.9s cubic-bezier(0.5,-0.2,0.7,1.2), opacity 0.9s ease-in',
+      }}
+    >
+      <Icon className="size-[21px]" />
+    </div>
+  )
 }
 
 export default function ProductsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useMileageProducts()
-  // 잔액은 실 BE 값(products.balance). store.submit은 구매 시뮬(BE 구매 후속) 전용.
   const balance = data ? parseMoney(data.balance) : 0
-  const toast = useToast()
   const [active, setActive] = useState('all')
-  const [link, setLink] = useState('')
-  const [price, setPrice] = useState('')
-  const [memo, setMemo] = useState('')
-  const [applyProduct, setApplyProduct] = useState<MileageProduct | null>(null)
+  const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([])
+  const [bump, setBump] = useState(false)
+  const cartBtnRef = useRef<HTMLButtonElement>(null)
+  const flyId = useRef(0)
+  const items = useCartStore((s) => s.items)
+  const add = useCartStore((s) => s.add)
   usePageHeader(
     '마일리지 상품 신청',
-    '상품 타입별 잔여 한도를 확인하고 구매 요청을 제출합니다.',
+    '상품을 장바구니에 담고 한 번에 결제하세요.',
   )
 
   if (isPending)
@@ -82,39 +115,70 @@ export default function ProductsPage() {
     )
   }
 
-  // 카테고리 필터 + 직접 신청 제출(링크·가격 필수)
   const visible = data.products.filter(
     (p) => active === 'all' || p.categoryKey === active,
   )
-  const urlOk = isValidUrl(link)
-  const directAmount = Number(price || 0)
-  const directOver = directAmount > balance
-  const canSubmit =
-    urlOk && price.trim() !== '' && directAmount > 0 && !directOver
-  // 직접 입력 신청은 정본 §39 productId(상품 FK)가 필수라 실 BE 미지원 — 목록 상품 이용 안내.
-  const submitDirect = () => {
-    toast.info(
-      '직접 입력 상품 신청은 준비 중입니다. 아래 목록 상품을 이용해 주세요.',
-    )
+  const count = cartCount(items)
+  const total = cartTotal(items)
+
+  // 담기 → 아이콘이 장바구니로 날아가고 store에 추가
+  const handleAdd = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    p: MileageProduct,
+  ) => {
+    const cardEl = e.currentTarget.closest('[data-product-card]')
+    const iconEl = cardEl?.querySelector('[data-cart-img]')
+    const cartBtn = cartBtnRef.current
+    add({
+      productId: p.id,
+      name: p.name,
+      price: parseMoney(p.price),
+      icon: p.icon,
+      tone: p.tone,
+    })
+    if (iconEl && cartBtn) {
+      const r = iconEl.getBoundingClientRect()
+      const c = cartBtn.getBoundingClientRect()
+      const id = ++flyId.current
+      setFlyingItems((prev) => [
+        ...prev,
+        {
+          id,
+          startX: r.left,
+          startY: r.top,
+          endX: c.left + c.width / 2 - 20,
+          endY: c.top + c.height / 2 - 20,
+          icon: p.icon,
+          tone: p.tone,
+        },
+      ])
+      window.setTimeout(() => {
+        setFlyingItems((prev) => prev.filter((f) => f.id !== id))
+        setBump(true)
+        window.setTimeout(() => setBump(false), 300)
+      }, 900)
+    }
   }
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      <div className="bg-brand flex items-center justify-between rounded-2xl p-5">
-        <div className="flex items-center gap-6">
+    <div className="flex flex-col gap-5 p-8 pb-28">
+      {/* 잔액 배너 */}
+      <div className="from-brand to-brand-deep flex items-center justify-between rounded-2xl bg-gradient-to-br p-5">
+        <div className="flex items-center gap-8">
           <div className="flex flex-col">
             <span className="text-[11px] font-bold tracking-wider text-white/70">
-              BALANCE · 보유
+              BALANCE · 사용 가능
             </span>
-            <span className="text-[22px] font-bold text-white">
-              {balance.toLocaleString()}M
+            <span className="text-[24px] font-bold text-white">
+              {balance.toLocaleString()}
+              <span className="ml-0.5 text-[15px]">M</span>
             </span>
           </div>
           <div className="flex flex-col">
             <span className="text-[11px] font-bold tracking-wider text-white/70">
               진행 중 요청
             </span>
-            <span className="text-[22px] font-bold text-white">
+            <span className="text-[24px] font-bold text-white">
               {data.inProgress}건
             </span>
           </div>
@@ -136,9 +200,10 @@ export default function ProductsPage() {
           </span>
         </div>
         <span className="text-fg-subtle text-[12px]">
-          운영자 등록 상품 + 직접 신청 가능
+          담은 뒤 장바구니에서 한 번에 결제합니다
         </span>
       </div>
+
       <div className="flex flex-wrap items-center gap-2">
         {data.filters.map((f) => {
           const on = f.key === active
@@ -171,12 +236,18 @@ export default function ProductsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((p) => {
           const Icon = PRODUCT_ICON[p.icon]
-          // 고정가 상품은 잔액으로 살 수 있을 때만 신청 가능, 직접 입력은 항상 가능(금액은 모달에서 확인)
-          const affordable = p.price == null || parseMoney(p.price) <= balance
+          const unit = parseMoney(p.price)
+          const affordable = unit <= balance
+          const inCart = items.some((i) => i.productId === p.id)
           return (
-            <section key={p.id} className={cn(card, 'flex flex-col gap-2.5')}>
+            <section
+              key={p.id}
+              data-product-card
+              className={cn(card, 'flex flex-col gap-2.5')}
+            >
               <div className="flex items-start justify-between gap-2">
                 <span
+                  data-cart-img
                   className={cn(
                     'flex size-10 shrink-0 items-center justify-center rounded-[10px]',
                     CHIP[p.tone],
@@ -200,7 +271,7 @@ export default function ProductsPage() {
               </div>
               <span className="text-fg text-[15px] font-bold">{p.name}</span>
               <span className="text-brand text-[13px] font-bold">
-                {p.price ?? p.priceType}
+                {p.price}
               </span>
               <span className="text-fg-muted min-h-[32px] text-[12px] leading-5">
                 {p.desc}
@@ -219,126 +290,55 @@ export default function ProductsPage() {
               </div>
               <button
                 type="button"
-                onClick={() => affordable && setApplyProduct(p)}
+                onClick={(e) => affordable && handleAdd(e, p)}
                 disabled={!affordable}
                 className={cn(
-                  'mt-1 rounded-lg py-2.5 text-[13px] font-bold',
-                  affordable
-                    ? 'bg-brand text-white'
-                    : 'bg-surface-muted text-fg-subtle cursor-not-allowed',
+                  'mt-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[13px] font-bold transition-colors',
+                  !affordable
+                    ? 'bg-surface-muted text-fg-subtle cursor-not-allowed'
+                    : inCart
+                      ? 'bg-brand/10 text-brand'
+                      : 'bg-brand text-white',
                 )}
               >
-                {affordable ? '신청하기 →' : '잔액 부족 · 신청 불가'}
+                <ShoppingCart className="size-4" />
+                {!affordable ? '잔액 부족' : inCart ? '담김 · 더 담기' : '담기'}
               </button>
             </section>
           )
         })}
       </div>
 
-      <section className={cn(card, 'flex flex-col gap-3')}>
-        <div className="flex items-center gap-2">
-          <span className="text-fg text-[15px] font-bold">직접 신청</span>
-          <span className="bg-accent-bg text-accent-strong rounded px-1.5 py-0.5 text-[10px] font-bold">
-            가격 직접 입력
-          </span>
-          <span className="text-fg-subtle text-[11px]">
-            매니저 검토 1영업일
-          </span>
-        </div>
-        <span className="text-fg-subtle text-[11px]">
-          등록 상품에 없는 항목은 링크 + 가격을 입력해 직접 신청합니다
-        </span>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <span className="text-fg text-[12px] font-bold">
-              상품 링크 <span className="text-danger">*</span>
-            </span>
-            <input
-              className={cn(
-                input,
-                link.trim() !== '' &&
-                  !urlOk &&
-                  'border-danger focus:border-danger',
-              )}
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://..."
-            />
-            <span
-              className={cn(
-                'text-[11px]',
-                link.trim() !== '' && !urlOk ? 'text-danger' : 'text-fg-subtle',
-              )}
-            >
-              http:// 또는 https:// 로 시작하는 올바른 URL을 입력하세요.
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-fg text-[12px] font-bold">
-              신청 가격 <span className="text-danger">*</span>
-            </span>
-            <div className="border-border bg-surface focus-within:border-brand flex w-full items-center rounded-[10px] border px-4 text-[14px]">
-              <input
-                inputMode="numeric"
-                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent py-3 outline-none"
-                value={price ? Number(price).toLocaleString() : ''}
-                onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ''))}
-                placeholder="가격만 입력"
-              />
-              <span className="text-fg-muted ml-1 font-semibold">M</span>
-            </div>
-            <span className="text-fg-subtle text-[11px]">
-              숫자만 입력하면 단위 M이 자동으로 붙습니다.
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_200px]">
-          <div className="flex flex-col gap-2">
-            <span className="text-fg text-[12px] font-bold">
-              매니저에게 남길 메모
-            </span>
-            <textarea
-              className={cn(input, 'min-h-[96px] resize-none leading-6')}
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              placeholder="구매 목적이나 확인이 필요한 내용을 적어주세요."
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-[12px] font-bold text-transparent select-none">
-              제출
-            </span>
-            <button
-              type="button"
-              onClick={submitDirect}
-              disabled={!canSubmit}
-              className="bg-brand flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[10px] py-4 text-white disabled:opacity-50"
-            >
-              <Send className="size-5" />
-              <span className="text-[13px] font-bold">요청 제출</span>
-            </button>
-          </div>
-        </div>
-        {directOver ? (
-          <div className="border-danger/40 bg-danger-bg/50 text-danger rounded-xl border p-3 text-[11px] font-semibold">
-            ⓘ 신청 금액이 보유 마일리지({balance.toLocaleString()}M)를{' '}
-            {(directAmount - balance).toLocaleString()}M 초과했습니다 · 신청
-            불가
-          </div>
-        ) : (
-          <div className="bg-info-bg/60 text-fg-muted rounded-xl p-3 text-[11px]">
-            ⓘ 직접 신청은 매니저 검토 후 마일리지가 차감됩니다. 승인되지 않으면
-            마일리지는 그대로 보존됩니다.
-          </div>
-        )}
-      </section>
+      {/* 날아가는 아이콘 */}
+      {flyingItems.map((f) => (
+        <FlyingIcon key={f.id} item={f} />
+      ))}
 
-      <ProductApplyModal
-        product={applyProduct}
-        balance={balance}
-        onClose={() => setApplyProduct(null)}
-        onSubmitted={() => setApplyProduct(null)}
-      />
+      {/* Floating 장바구니 버튼 */}
+      <button
+        ref={cartBtnRef}
+        type="button"
+        onClick={() => navigate('/student/mileage/cart')}
+        className={cn(
+          'bg-brand-deep fixed right-8 bottom-8 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)] transition-transform',
+          bump && 'scale-110',
+        )}
+      >
+        <div className="relative">
+          <ShoppingCart className="size-6" />
+          {count > 0 && (
+            <span className="bg-accent-strong absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full text-[11px] font-bold text-white">
+              {count}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col items-start leading-tight">
+          <span className="text-[11px] text-white/70">장바구니</span>
+          <span className="text-[14px] font-bold">
+            {total.toLocaleString()}M
+          </span>
+        </div>
+      </button>
     </div>
   )
 }

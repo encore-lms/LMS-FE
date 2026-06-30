@@ -64,11 +64,12 @@ export function useCreateMileageOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: {
-      productId: string
+      productId?: string
       quantity?: number
       requestedPrice?: number
       link?: string
       memo?: string
+      items?: { productId: string; quantity: number; requestedPrice?: number }[]
     }) => apiClient.post('/student/mileage/orders', input),
     onSuccess: () => invalidateMileage(qc),
   })

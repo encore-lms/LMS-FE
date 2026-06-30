@@ -62,6 +62,7 @@ const PlayQuizPage = lazy(() => import('./play/PlayQuizPage'))
 const PlayQuizResultPage = lazy(() => import('./play/PlayQuizResultPage'))
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
 const MileageProductsPage = lazy(() => import('./mileage/ProductsPage'))
+const MileageCartPage = lazy(() => import('./mileage/CartPage'))
 const MileageHistoryPage = lazy(() => import('./mileage/HistoryPage'))
 const PeerHubPage = lazy(() => import('./peer/PeerHubPage'))
 const PeerTagPage = lazy(() => import('./peer/PeerTagPage'))
@@ -136,6 +137,7 @@ export const studentRoutes: RouteObject[] = [
       // 마일리지(내 마일리지·상품 신청·사용 내역). 구매 요청 내역은 사용 내역에 병합됨.
       { path: 'mileage', element: <MileagePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },
+      { path: 'mileage/cart', element: <MileageCartPage /> },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
       // 동료 평가 — 기수 단위 PeerTag와 PeerReputation 입력.
       { path: 'peer-evaluations', element: <PeerHubPage /> },

@@ -3,13 +3,17 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
-import { useMileageHistory } from '../api/mileage'
-import { useMileageStore, type MileageRequest } from './store'
-import { RequestStatusModal } from './components/RequestStatusModal'
+import {
+  useMileageHistory,
+  useMileageOrders,
+  useCancelMileageOrder,
+  type MileageOrderRow,
+} from '../api/mileage'
+import { useToast } from '@/components/ui/use-toast'
 import type { HistoryRow, Tone } from './types'
 
-// 표시 행 — 구매 요청에서 온 행은 원본 요청을 실어 클릭 시 상태/반려 모달을 연다.
-type Row = HistoryRow & { request?: MileageRequest }
+// 표시 행 — 구매 요청(주문)에서 온 행은 주문을 실어 취소(pending) 버튼을 노출한다.
+type Row = HistoryRow & { order?: MileageOrderRow }
 
 // 마일리지 사용 내역 (/student/mileage/history) — Figma 418:2066.
 // 필터 키 → 행 매칭(구분 또는 처리 상태 기준)
@@ -30,37 +34,42 @@ function matchFilter(r: HistoryRow, key: string): boolean {
   }
 }
 
-// 스토어 구매 요청 → 사용 내역 행. 승인=사용/완료, 대기=구매 요청/대기, 반려=구매 요청/반려.
-function requestToRow(r: MileageRequest): HistoryRow {
-  const amount = `-${r.amount.toLocaleString()}M`
-  if (r.status === 'approved')
-    return {
-      date: r.date,
-      kind: { label: '사용', tone: 'accent' },
-      content: r.product,
-      amount,
-      positive: false,
-      status: { label: '완료', tone: 'success' },
-      memo: r.memo ?? '승인 완료',
-    }
-  if (r.status === 'rejected')
-    return {
-      date: r.date,
-      kind: { label: '구매 요청', tone: 'info' },
-      content: r.product,
-      amount,
-      positive: false,
-      status: { label: '반려', tone: 'danger' },
-      memo: r.reason ?? '반려',
-    }
-  return {
-    date: r.date,
-    kind: { label: '구매 요청', tone: 'info' },
-    content: r.product,
+// 실 BE 주문 → 사용 내역 행. pending=구매요청/대기, approved=사용/완료, canceled=구매요청/취소됨, rejected=반려.
+function orderToRow(o: MileageOrderRow): Row {
+  const amount = `-${o.amount.toLocaleString()}M`
+  const base = {
+    date: o.date,
+    content: o.product,
     amount,
     positive: false,
+    order: o,
+  }
+  if (o.status === 'approved')
+    return {
+      ...base,
+      kind: { label: '사용', tone: 'accent' },
+      status: { label: '완료', tone: 'success' },
+      memo: '완료',
+    }
+  if (o.status === 'canceled')
+    return {
+      ...base,
+      kind: { label: '구매 요청', tone: 'info' },
+      status: { label: '취소됨', tone: 'info' },
+      memo: '취소 환불됨',
+    }
+  if (o.status === 'rejected')
+    return {
+      ...base,
+      kind: { label: '구매 요청', tone: 'info' },
+      status: { label: '반려', tone: 'danger' },
+      memo: '반려',
+    }
+  return {
+    ...base,
+    kind: { label: '구매 요청', tone: 'info' },
     status: { label: '대기', tone: 'warning' },
-    memo: r.memo ?? '매니저 검토 중',
+    memo: '검토 대기',
   }
 }
 const card =
@@ -92,12 +101,13 @@ const PAGE_SIZE = 5
 
 export default function HistoryPage() {
   const { data, isPending, isError, refetch } = useMileageHistory()
-  const requests = useMileageStore((s) => s.requests)
+  const { data: ordersData } = useMileageOrders()
+  const cancel = useCancelMileageOrder()
+  const toast = useToast()
   const [active, setActive] = useState('all')
   const [query, setQuery] = useState('')
   const [period, setPeriod] = useState('all')
   const [page, setPage] = useState(1)
-  const [selected, setSelected] = useState<MileageRequest | null>(null)
   usePageHeader('마일리지 사용 내역', '적립·사용·구매 요청 내역과 처리 상태')
 
   if (isPending)
@@ -117,7 +127,7 @@ export default function HistoryPage() {
   // mock 적립 내역 + 스토어 구매 요청(제출/승인/반려)을 한 목록으로 병합.
   // 구매 요청은 스토어가 단일 출처라 mock의 구매/사용 행은 제외(중복 방지), 적립만 가져온다.
   const mergedRows: Row[] = [
-    ...requests.map((r) => ({ ...requestToRow(r), request: r })),
+    ...(ordersData?.orders ?? []).map((o) => orderToRow(o)),
     ...data.rows.filter((r) => r.kind.label === '적립'),
   ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
 
@@ -243,13 +253,7 @@ export default function HistoryPage() {
         {pageRows.map((r, i) => (
           <div
             key={i}
-            onClick={() => r.request && setSelected(r.request)}
-            role={r.request ? 'button' : undefined}
-            className={cn(
-              'border-divider grid grid-cols-[100px_88px_1fr_120px_72px_140px] items-center gap-3 border-t px-5 py-3.5 text-[12px]',
-              r.request &&
-                'hover:bg-surface-muted cursor-pointer transition-colors',
-            )}
+            className="border-divider grid grid-cols-[100px_88px_1fr_120px_72px_140px] items-center gap-3 border-t px-5 py-3.5 text-[12px]"
           >
             <span className="text-fg-subtle">{r.date}</span>
             <span>
@@ -281,7 +285,26 @@ export default function HistoryPage() {
                 {r.status.label}
               </span>
             </span>
-            <span className="text-fg-subtle">{r.memo}</span>
+            {r.order?.status === 'pending' ? (
+              <button
+                type="button"
+                disabled={cancel.isPending}
+                onClick={() =>
+                  cancel.mutate(r.order!.id, {
+                    onSuccess: () =>
+                      toast.success(
+                        '구매를 취소했어요. 마일리지가 복원됩니다.',
+                      ),
+                    onError: () => toast.danger('취소에 실패했어요.'),
+                  })
+                }
+                className="border-danger/40 text-danger justify-self-start rounded-md border px-2.5 py-1 text-[11px] font-semibold disabled:opacity-50"
+              >
+                구매 취소
+              </button>
+            ) : (
+              <span className="text-fg-subtle">{r.memo}</span>
+            )}
           </div>
         ))}
       </section>
@@ -329,11 +352,6 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
-
-      <RequestStatusModal
-        request={selected}
-        onClose={() => setSelected(null)}
-      />
     </div>
   )
 }

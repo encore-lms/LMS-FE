@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageOverview, useMileageProducts } from '../api/mileage'
-import { parseMoney, type MileageRequest } from './store'
+import { parseMoney } from './store'
 import { ProductApplyModal } from './components/ProductApplyModal'
-import { RequestStatusModal } from './components/RequestStatusModal'
 import type { MileageProduct, Tone } from './types'
 
 // 내 마일리지 (/student/mileage) — Figma 418:1850.
@@ -51,9 +50,6 @@ export default function MileagePage() {
 
   // 구매 가능 상품 "신청" → 신청 폼(모달) → 제출 결과 모달
   const [applyProduct, setApplyProduct] = useState<MileageProduct | null>(null)
-  const [resultRequest, setResultRequest] = useState<MileageRequest | null>(
-    null,
-  )
   // 실제 보유 잔액으로 살 수 있는 상품만 노출(고정가는 가격≤잔액, 직접 입력은 항상 노출)
   const affordable = (productsData?.products ?? []).filter(
     (p) => p.price == null || parseMoney(p.price) <= balance,
@@ -323,15 +319,9 @@ export default function MileagePage() {
 
       <ProductApplyModal
         product={applyProduct}
+        balance={balance}
         onClose={() => setApplyProduct(null)}
-        onSubmitted={(req) => {
-          setApplyProduct(null)
-          setResultRequest(req)
-        }}
-      />
-      <RequestStatusModal
-        request={resultRequest}
-        onClose={() => setResultRequest(null)}
+        onSubmitted={() => setApplyProduct(null)}
       />
     </div>
   )

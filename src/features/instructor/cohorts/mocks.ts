@@ -9,96 +9,205 @@ import type {
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
 const ok = <T>(data: T) => HttpResponse.json({ data })
 
-// ── §1 강사 대시보드 (Figma 1268:7456) ──
-const dashboard: InstructorDashboardData = {
-  instructorName: '박준석',
-  cohortCount: 2,
-  cohorts: [
-    { id: 'da-4', label: 'DA 4기 · 진행 중' },
-    { id: 'fe-7', label: 'FE 7기 · 진행 중' },
-  ],
-  kpiGrading: {
-    value: 14,
-    hint: '수동 채점 9 · 자동 재검토 5',
-    badge: '오늘 +3',
+// ── §1 강사 대시보드 (Figma 1268:7456) — 기수별 데이터(칩 선택 시 해당 기수만) ──
+const dashboardCohorts = [
+  { id: 'da-4', label: 'DA 4기 · 진행 중' },
+  { id: 'fe-7', label: 'FE 7기 · 진행 중' },
+]
+
+const dashboardByCohort: Record<string, InstructorDashboardData> = {
+  // 통합(전체) — 담당 전 기수 합산. 칩 '전체' 선택 시(기본).
+  all: {
+    instructorName: '박준석',
+    cohortCount: 2,
+    cohorts: dashboardCohorts,
+    kpiGrading: {
+      value: 14,
+      hint: '수동 채점 9 · 자동 재검토 5',
+      badge: '오늘 +3',
+    },
+    kpiRecords: { value: 7, hint: '블로그 4 · 스터디 2 · 자격증 1' },
+    kpiProjects: { value: 3, hint: 'PM 인증 요청 · D+2 1건' },
+    kpiSupplements: {
+      value: 2,
+      hint: '학생 응답 대기 · D+5 1건',
+      badge: '긴급',
+    },
+    priorities: [
+      {
+        id: 'pri-1',
+        type: 'supplement',
+        title: '점수 재검토 보완 응답',
+        subtitle: '박지훈 · FE 7기',
+        dday: 'D+5',
+        urgent: true,
+        actionLabel: '확인',
+        to: '/instructor/cohorts/fe-7/students',
+      },
+      {
+        id: 'pri-2',
+        type: 'manual_grading',
+        title: '알고리즘 기초 퀴즈 #3 · 5문항 채점 대기',
+        subtitle: '김민준 · DA 4기',
+        dday: 'D+1',
+        urgent: false,
+        actionLabel: '채점 시작',
+        to: '/instructor/quizzes/quiz-algo-3/submissions',
+      },
+      {
+        id: 'pri-3',
+        type: 'project_cert',
+        title: '추천 영상 큐레이션 PM 인증 요청',
+        subtitle: 'DA 4팀 (3명)',
+        dday: 'D+2',
+        urgent: false,
+        actionLabel: '검토',
+        to: '/instructor/records/review',
+      },
+      {
+        id: 'pri-4',
+        type: 'blog_review',
+        title: '회고 블로그 #12 · 강사 승인 대기',
+        subtitle: '한소율 · FE 7기',
+        dday: 'D+2',
+        urgent: false,
+        actionLabel: '검토',
+        to: '/instructor/records/review',
+      },
+      {
+        id: 'pri-5',
+        type: 'ts_review',
+        title: 'OOM 원인 분석 사례 · 강사 승인 대기',
+        subtitle: '박지훈 · FE 7기',
+        dday: 'D+1',
+        urgent: false,
+        actionLabel: '검토',
+        to: '/instructor/records/review',
+      },
+      {
+        id: 'pri-6',
+        type: 'manual_grading',
+        title: '데이터 분석 퀴즈 #2 · 3문항 채점 대기',
+        subtitle: '정도윤 · DA 4기',
+        dday: 'D+1',
+        urgent: false,
+        actionLabel: '채점 시작',
+        to: '/instructor/quizzes/quiz-algo-3/submissions',
+      },
+    ],
+    shortcuts: {
+      quizzes: { badge: 14, hint: '/instructor/quizzes · 채점 대기 14' },
+      students: { hint: '/instructor/cohorts · DA 4기 · FE 7기 통합' },
+      reviews: {
+        badge: 12,
+        hint: '/instructor/records/review · 기록 7 + 프로젝트 3 + 트러블슈팅 2',
+      },
+    },
   },
-  kpiRecords: { value: 7, hint: '블로그 4 · 스터디 2 · 자격증 1' },
-  kpiProjects: { value: 3, hint: 'PM 인증 요청 · D+2 1건' },
-  kpiSupplements: {
-    value: 2,
-    hint: '학생 응답 대기 · D+5 1건',
-    badge: '긴급',
+  'da-4': {
+    instructorName: '박준석',
+    cohortCount: 2,
+    cohorts: dashboardCohorts,
+    kpiGrading: {
+      value: 9,
+      hint: '수동 채점 6 · 자동 재검토 3',
+      badge: '오늘 +3',
+    },
+    kpiRecords: { value: 4, hint: '블로그 2 · 스터디 1 · 자격증 1' },
+    kpiProjects: { value: 2, hint: 'PM 인증 요청 · D+2 1건' },
+    kpiSupplements: { value: 1, hint: '학생 응답 대기 1건' },
+    priorities: [
+      {
+        id: 'pri-2',
+        type: 'manual_grading',
+        title: '알고리즘 기초 퀴즈 #3 · 5문항 채점 대기',
+        subtitle: '김민준 · DA 4기',
+        dday: 'D+1',
+        urgent: false,
+        actionLabel: '채점 시작',
+        to: '/instructor/quizzes/quiz-algo-3/submissions',
+      },
+      {
+        id: 'pri-3',
+        type: 'project_cert',
+        title: '추천 영상 큐레이션 PM 인증 요청',
+        subtitle: 'DA 4팀 (3명)',
+        dday: 'D+2',
+        urgent: false,
+        actionLabel: '검토',
+        to: '/instructor/records/review',
+      },
+      {
+        id: 'pri-6',
+        type: 'manual_grading',
+        title: '데이터 분석 퀴즈 #2 · 3문항 채점 대기',
+        subtitle: '정도윤 · DA 4기',
+        dday: 'D+1',
+        urgent: false,
+        actionLabel: '채점 시작',
+        to: '/instructor/quizzes/quiz-algo-3/submissions',
+      },
+    ],
+    shortcuts: {
+      quizzes: { badge: 9, hint: '/instructor/quizzes · 채점 대기 9' },
+      students: { hint: '/instructor/cohorts/da-4/students · DA 4기 24명' },
+      reviews: {
+        badge: 7,
+        hint: '/instructor/records/review · 기록 4 + 프로젝트 2 + 트러블슈팅 1',
+      },
+    },
   },
-  priorities: [
-    {
-      id: 'pri-1',
-      type: 'supplement',
-      title: '점수 재검토 보완 응답',
-      subtitle: '박지훈 · FE 7기',
-      dday: 'D+5',
-      urgent: true,
-      actionLabel: '확인',
-      to: '/instructor/cohorts/fe-7/students',
+  'fe-7': {
+    instructorName: '박준석',
+    cohortCount: 2,
+    cohorts: dashboardCohorts,
+    kpiGrading: { value: 5, hint: '수동 채점 3 · 자동 재검토 2' },
+    kpiRecords: { value: 3, hint: '블로그 2 · 스터디 1' },
+    kpiProjects: { value: 1, hint: 'PM 인증 요청 1건' },
+    kpiSupplements: {
+      value: 1,
+      hint: '학생 응답 대기 · D+5 1건',
+      badge: '긴급',
     },
-    {
-      id: 'pri-2',
-      type: 'manual_grading',
-      title: '알고리즘 기초 퀴즈 #3 · 5문항 채점 대기',
-      subtitle: '김민준 · DA 4기',
-      dday: 'D+1',
-      urgent: false,
-      actionLabel: '채점 시작',
-      to: '/instructor/quizzes/quiz-algo-3/submissions',
-    },
-    {
-      id: 'pri-3',
-      type: 'project_cert',
-      title: '추천 영상 큐레이션 PM 인증 요청',
-      subtitle: 'DA 4팀 (3명)',
-      dday: 'D+2',
-      urgent: false,
-      actionLabel: '검토',
-      to: '/instructor/records/review',
-    },
-    {
-      id: 'pri-4',
-      type: 'blog_review',
-      title: '회고 블로그 #12 · 강사 승인 대기',
-      subtitle: '한소율 · FE 7기',
-      dday: 'D+2',
-      urgent: false,
-      actionLabel: '검토',
-      to: '/instructor/records/review',
-    },
-    {
-      id: 'pri-5',
-      type: 'ts_review',
-      title: 'OOM 원인 분석 사례 · 강사 승인 대기',
-      subtitle: '박지훈 · FE 7기',
-      dday: 'D+1',
-      urgent: false,
-      actionLabel: '검토',
-      to: '/instructor/records/review',
-    },
-    {
-      id: 'pri-6',
-      type: 'manual_grading',
-      title: '데이터 분석 퀴즈 #2 · 3문항 채점 대기',
-      subtitle: '정도윤 · DA 4기',
-      dday: 'D+1',
-      urgent: false,
-      actionLabel: '채점 시작',
-      to: '/instructor/quizzes/quiz-algo-3/submissions',
-    },
-  ],
-  shortcuts: {
-    quizzes: { badge: 14, hint: '/instructor/quizzes · 채점 대기 14' },
-    students: {
-      hint: '/instructor/cohorts/:id/students · DA 4기 · FE 7기',
-    },
-    reviews: {
-      badge: 12,
-      hint: '/instructor/records/review · 기록 7 + 프로젝트 3 + 트러블슈팅 2',
+    priorities: [
+      {
+        id: 'pri-1',
+        type: 'supplement',
+        title: '점수 재검토 보완 응답',
+        subtitle: '박지훈 · FE 7기',
+        dday: 'D+5',
+        urgent: true,
+        actionLabel: '확인',
+        to: '/instructor/cohorts/fe-7/students',
+      },
+      {
+        id: 'pri-4',
+        type: 'blog_review',
+        title: '회고 블로그 #12 · 강사 승인 대기',
+        subtitle: '한소율 · FE 7기',
+        dday: 'D+2',
+        urgent: false,
+        actionLabel: '검토',
+        to: '/instructor/records/review',
+      },
+      {
+        id: 'pri-5',
+        type: 'ts_review',
+        title: 'OOM 원인 분석 사례 · 강사 승인 대기',
+        subtitle: '박지훈 · FE 7기',
+        dday: 'D+1',
+        urgent: false,
+        actionLabel: '검토',
+        to: '/instructor/records/review',
+      },
+    ],
+    shortcuts: {
+      quizzes: { badge: 5, hint: '/instructor/quizzes · 채점 대기 5' },
+      students: { hint: '/instructor/cohorts/fe-7/students · FE 7기 18명' },
+      reviews: {
+        badge: 5,
+        hint: '/instructor/records/review · 기록 3 + 프로젝트 1 + 트러블슈팅 1',
+      },
     },
   },
 }
@@ -492,7 +601,7 @@ const studentDetail: StudentDetailData = {
 
 // 담당 기수 없음 시연용 변형 (Figma 2750:1974) — instructor-new@* 계정으로 로그인 시 반환.
 const dashboardNoCohort: InstructorDashboardData = {
-  ...dashboard,
+  ...dashboardByCohort['da-4'],
   instructorName: '신규',
   cohortCount: 0,
   cohorts: [],
@@ -513,11 +622,13 @@ function isNewInstructor() {
 }
 
 export const handlers = [
-  http.get('/api/instructor/dashboard', () =>
-    ok<InstructorDashboardData>(
-      isNewInstructor() ? dashboardNoCohort : dashboard,
-    ),
-  ),
+  http.get('/api/instructor/dashboard', ({ request }) => {
+    if (isNewInstructor()) return ok<InstructorDashboardData>(dashboardNoCohort)
+    const cohortId = new URL(request.url).searchParams.get('cohortId')
+    return ok<InstructorDashboardData>(
+      (cohortId && dashboardByCohort[cohortId]) || dashboardByCohort['all'],
+    )
+  }),
   http.get('/api/instructor/cohorts', () => ok<InstructorCohortsData>(cohorts)),
   http.get('/api/instructor/cohorts/:cohortId/students', () =>
     ok<CohortStudentsData>(students),

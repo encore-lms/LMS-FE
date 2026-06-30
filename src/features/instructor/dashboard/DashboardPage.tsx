@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
@@ -13,6 +14,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { DashboardKpi, PriorityType } from '@/shared/types'
 import { useInstructorDashboard } from '../api/console'
+import { useCohortContext } from '../cohortContext'
 import { NoCohortNotice } from './NoCohortNotice'
 
 const PRIORITY_META: Record<PriorityType, { label: string; tone: BadgeTone }> =
@@ -57,7 +59,11 @@ function KpiTile({
 // 담당 과정/기수 selector + KPI 4 + 우선 처리 목록 6 + 바로가기 3. 기록실 승인 액션 없음(검토 화면에서).
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const { data, isPending, isError, refetch } = useInstructorDashboard()
+  // 선택 기수 컨텍스트 — 칩으로 전환(§2). null이면 첫 담당 기수(기본).
+  // 선택 기수 — 공용 컨텍스트(화면 이동에도 유지). 검토 화면과 공유.
+  const { cohortId, setCohortId } = useCohortContext()
+  const [sort, setSort] = useState<'urgent' | 'dday'>('urgent')
+  const { data, isPending, isError, refetch } = useInstructorDashboard(cohortId)
   usePageHeader(
     '강사 대시보드',
     '담당 기수의 채점 대기·검토·인증·보완 요청을 한곳에서',
@@ -84,6 +90,23 @@ export default function DashboardPage() {
     return <NoCohortNotice />
   }
 
+  // 선택 기수 — KPI·우선처리목록·바로가기 모두 이 기수 기준. 'all'=전체(통합), 기본 전체.
+  const COHORT_ALL = 'all'
+  const cohortTabs = [{ id: COHORT_ALL, label: '전체' }, ...data.cohorts]
+  const activeCohortId = cohortId
+  const activeCohortLabel =
+    cohortTabs.find((c) => c.id === activeCohortId)?.label.split(' · ')[0] ?? ''
+
+  // 우선 처리 목록 정렬 — 긴급도순(긴급 먼저 + 지연 큰 순) / 마감일순(D-day 작은 순).
+  const ddayNum = (d: string) => parseInt(d.replace(/[^0-9+-]/g, ''), 10) || 0
+  const sortedPriorities = [...data.priorities].sort((a, b) => {
+    if (sort === 'urgent') {
+      if (a.urgent !== b.urgent) return a.urgent ? -1 : 1
+      return ddayNum(b.dday) - ddayNum(a.dday)
+    }
+    return ddayNum(a.dday) - ddayNum(b.dday)
+  })
+
   // 아이콘 박스는 Figma처럼 기능별 틴트 배경 (노랑·파랑·보라)
   const shortcuts = [
     {
@@ -102,7 +125,8 @@ export default function DashboardPage() {
       title: '수강생 목록',
       badge: 0,
       hint: data.shortcuts.students.hint,
-      to: `/instructor/cohorts/${data.cohorts[0]?.id ?? ''}/students`,
+      // 수강생 목록은 공용 선택 기수(컨텍스트)로 필터되므로 라우트 기수는 고정.
+      to: '/instructor/cohorts/all/students',
     },
     {
       key: 'reviews',
@@ -111,7 +135,7 @@ export default function DashboardPage() {
       title: '검토 화면',
       badge: data.shortcuts.reviews.badge,
       hint: data.shortcuts.reviews.hint,
-      to: '/instructor/records',
+      to: '/instructor/records/review',
     },
   ]
 
@@ -126,15 +150,16 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="ml-auto flex gap-2">
-          {/* 첫 칩 = 현재 선택 기수 (Figma: 검정 채움) */}
-          {data.cohorts.map((c, i) => (
+          {/* 담당 기수 셀렉터 — 전체(통합) + 기수별. 선택 기수 = 검정 채움. */}
+          {cohortTabs.map((c) => (
             <button
               key={c.id}
               type="button"
-              onClick={() => navigate('/instructor/cohorts')}
+              onClick={() => setCohortId(c.id)}
+              aria-pressed={c.id === activeCohortId}
               className={cn(
                 'rounded-lg px-3 py-1.5 text-sm font-medium',
-                i === 0
+                c.id === activeCohortId
                   ? 'bg-brand-deep font-bold text-white'
                   : 'border-border text-fg-muted hover:bg-surface-muted border',
               )}
@@ -159,16 +184,20 @@ export default function DashboardPage() {
           <div>
             <p className="text-fg text-sm font-bold">우선 처리 목록</p>
             <p className="text-fg-subtle text-xs">
-              긴급도 + 마감 임박 순 ·{' '}
-              {data.cohorts.map((c) => c.label.split(' · ')[0]).join('·')} 통합
-              · 상위 {data.priorities.length}건
+              {activeCohortLabel} · 상위 {data.priorities.length}건
             </p>
           </div>
-          <span className="border-border text-fg-muted rounded-md border px-2.5 py-1 text-xs">
-            정렬: 긴급도
-          </span>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as 'urgent' | 'dday')}
+            aria-label="우선 처리 목록 정렬"
+            className="border-border text-fg-muted rounded-md border bg-white px-2.5 py-1 text-xs outline-none"
+          >
+            <option value="urgent">정렬: 긴급도</option>
+            <option value="dday">정렬: 마감일</option>
+          </select>
         </div>
-        {data.priorities.map((p) => {
+        {sortedPriorities.map((p) => {
           const meta = PRIORITY_META[p.type]
           return (
             <div

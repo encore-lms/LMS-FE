@@ -13,6 +13,12 @@ import {
   useRequestProjectChanges,
 } from '../api/reviews'
 import { SupplementRequestModal } from '../assignments/SupplementRequestModal'
+import { COHORT_ALL, cohortOptions } from './cohort'
+import {
+  useCohortContext,
+  COHORT_ID_TO_LABEL,
+  COHORT_LABEL_TO_ID,
+} from '../cohortContext'
 import { QueueFilterBar, QueueStats } from './QueueShell'
 
 type StatusFilter = 'all' | ProjectCertReviewStatus
@@ -35,6 +41,8 @@ export default function ProjectReviewPage() {
   const requestChanges = useRequestProjectChanges()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
+  // 선택 기수 — 대시보드와 공유하는 공용 컨텍스트(화면 이동에도 유지).
+  const { cohortId, setCohortId } = useCohortContext()
   // 보완 요청 모달 대상(사유 필수). 단위 테스트의 모킹 쿼리는 refetch가 없어
   // mutation 성공 시 낙관적 로컬 패치로 상태를 즉시 반영한다.
   const [supplementTarget, setSupplementTarget] =
@@ -47,12 +55,21 @@ export default function ProjectReviewPage() {
     '발표 후 인증 큐 — 인증 후 변경은 변경 제안 흐름으로만 가능',
   )
 
+  const cohortTabs = useMemo(
+    () => cohortOptions(data?.rows ?? []),
+    [data?.rows],
+  )
+  // 공용 컨텍스트 선택 기수를 이 화면 옵션에 매핑(옵션에 없으면 전체).
+  const ctxLabel = COHORT_ID_TO_LABEL[cohortId] ?? COHORT_ALL
+  const cohort = cohortTabs.includes(ctxLabel) ? ctxLabel : COHORT_ALL
+
   const filtered = useMemo(() => {
     const rows = (data?.rows ?? []).map((r) =>
       localStatus[r.id] ? { ...r, status: localStatus[r.id] } : r,
     )
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
+      if (cohort !== COHORT_ALL && r.cohortLabel !== cohort) return false
       if (status !== 'all' && r.status !== status) return false
       if (needle) {
         const hay = `${r.name} ${r.team}`.toLowerCase()
@@ -60,7 +77,7 @@ export default function ProjectReviewPage() {
       }
       return true
     })
-  }, [data, q, status, localStatus])
+  }, [data, q, status, cohort, localStatus])
 
   const onCertify = (row: ProjectReviewRow) => {
     certify.mutate(
@@ -241,6 +258,9 @@ export default function ProjectReviewPage() {
         ]}
         active={status}
         onTab={setStatus}
+        cohortTabs={cohortTabs}
+        activeCohort={cohort}
+        onCohort={(c) => setCohortId(COHORT_LABEL_TO_ID[c] ?? 'all')}
       />
       <div className="mt-3">
         <DataTable

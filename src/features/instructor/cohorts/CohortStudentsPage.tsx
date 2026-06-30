@@ -9,6 +9,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { CohortStudentRow, StudentCertStatus } from '@/shared/types'
 import { useCohortStudents } from '../api/console'
+import { useCohortContext, COHORT_ID_TO_LABEL } from '../cohortContext'
 import { CERT_STATUS_META } from './meta'
 
 type CertFilter = 'all' | StudentCertStatus
@@ -20,11 +21,14 @@ export default function CohortStudentsPage() {
   const { cohortId = '' } = useParams()
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useCohortStudents(cohortId)
+  // 선택 기수 — 대시보드와 공유하는 공용 컨텍스트로 필터(전체/DA 4기/FE 7기).
+  const { cohortId: ctxCohortId } = useCohortContext()
+  const cohortLabel = COHORT_ID_TO_LABEL[ctxCohortId] ?? '전체'
   const [q, setQ] = useState('')
   const [cert, setCert] = useState<CertFilter>('all')
   const [risk, setRisk] = useState<RiskFilter>('all')
   usePageHeader(
-    data ? `수강생 목록 — ${data.cohortLabel}` : '수강생 목록',
+    `수강생 목록 — ${cohortLabel}`,
     '담당 기수 수강생 조회 · 위험/보완 플래그가 있는 학생 빠르게 식별',
   )
 
@@ -32,6 +36,7 @@ export default function CohortStudentsPage() {
     const items = data?.rows ?? []
     const needle = q.trim().toLowerCase()
     const result = items.filter((r) => {
+      if (cohortLabel !== '전체' && r.cohortLabel !== cohortLabel) return false
       if (cert !== 'all' && r.certStatus !== cert) return false
       if (risk === 'risky' && r.riskFlags.length === 0) return false
       if (needle) {
@@ -42,7 +47,7 @@ export default function CohortStudentsPage() {
     })
     // 기본 정렬 = 위험 플래그 많은 순.
     return [...result].sort((a, b) => b.riskFlags.length - a.riskFlags.length)
-  }, [data, q, cert, risk])
+  }, [data, q, cert, risk, cohortLabel])
 
   if (isPending) {
     return <div className="text-fg-muted p-8">수강생 목록을 불러오는 중…</div>
@@ -164,7 +169,7 @@ export default function CohortStudentsPage() {
           onClick={() => navigate('/instructor/cohorts')}
           className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-xs font-medium"
         >
-          기수: {data.cohortLabel}
+          기수: {cohortLabel}
         </button>
         <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
           <span className="text-fg-subtle">증명서</span>
@@ -195,7 +200,7 @@ export default function CohortStudentsPage() {
           위험: {risk === 'risky' ? '플래그 있음' : '전체'}
         </button>
         <span className="text-fg-subtle ml-auto text-xs">
-          정렬: 위험 많은 순 · {data.cohortLabel} {data.total}명
+          정렬: 위험 많은 순 · {cohortLabel} {filtered.length}명
         </span>
       </div>
 
@@ -210,8 +215,8 @@ export default function CohortStudentsPage() {
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <p className="text-fg-subtle text-xs">
-          {data.cohortLabel} {data.total}명 · 표시 {filtered.length}명 · 위험
-          플래그 {data.riskTotal}건 — 담당 기수 밖 학생은 노출되지 않습니다
+          {cohortLabel} · 표시 {filtered.length}명 — 담당 기수 밖 학생은
+          노출되지 않습니다
         </p>
         {/* 페이지네이션 — mock은 1페이지 데이터만, 표시는 Figma(1~5) 정합 */}
         <div className="ml-auto flex gap-1">

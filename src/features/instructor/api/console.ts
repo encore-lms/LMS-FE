@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   InstructorDashboardData,
@@ -8,12 +8,17 @@ import type {
 } from '@/shared/types'
 
 // 강사 콘솔 골격 (대시보드·담당 과정/기수·수강생 목록) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
-export function useInstructorDashboard() {
+// cohortId 지정 시 해당 기수 대시보드(KPI·우선처리·바로가기), 미지정이면 기본(첫 기수).
+export function useInstructorDashboard(cohortId?: string | null) {
   return useQuery({
-    queryKey: instructorKeys.dashboard(),
+    queryKey: [...instructorKeys.dashboard(), cohortId ?? 'default'],
+    // 기수 전환 시 이전 데이터를 유지해 로딩 깜빡임 방지.
+    placeholderData: keepPreviousData,
     queryFn: () =>
       apiClient
-        .get<InstructorDashboardData>('/instructor/dashboard')
+        .get<InstructorDashboardData>('/instructor/dashboard', {
+          cohortId: cohortId ?? undefined,
+        })
         .then((r) => r.data),
   })
 }

@@ -279,7 +279,7 @@ export default function HistoryPage() {
       <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
         <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
           <Info className="h-4 w-4" />
-          원장 정책 · §17 완료 기준
+          원장 정책 · 완료 기준
         </p>
         <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
           <li>기수 선택 전에는 빈 상태로 안내 — 잘못된 전체 조회 방지</li>

@@ -272,7 +272,7 @@ export default function ProjectReviewPage() {
       </div>
       <p className="text-fg-subtle mt-3 text-xs">
         인증 시 ProjectCertification 기록이 생성되며, 인증 후 학생 직접 수정은
-        차단됩니다 (§11 변경 제안 흐름)
+        차단됩니다 (변경 제안 흐름)
       </p>
 
       <SupplementRequestModal

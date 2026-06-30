@@ -345,7 +345,7 @@ export default function PurchaseRequestsPage() {
             to="/admin/mileage/type-limits"
             className="text-brand font-semibold"
           >
-            §21 타입 한도 설정에서 관리
+            타입 한도 설정에서 관리
           </Link>
         </p>
         <ul className="mt-3 flex flex-col">
@@ -365,7 +365,7 @@ export default function PurchaseRequestsPage() {
       <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
         <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
           <Info className="h-4 w-4" />
-          처리 정책 · §19 완료 기준
+          처리 정책 · 완료 기준
         </p>
         <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
           <li>상태/타입/기간 필터 가능 · 키워드 검색 지원</li>

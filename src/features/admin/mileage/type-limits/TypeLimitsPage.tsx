@@ -241,7 +241,7 @@ export default function TypeLimitsPage() {
       <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
         <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
           <Info className="h-4 w-4" />
-          타입 한도 정책 · §21 완료 기준
+          타입 한도 정책 · 완료 기준
         </p>
         <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
           <li>현재 한도와 변경값을 카드 안에서 구분 (변경됨 AMBER 배지)</li>
@@ -250,7 +250,7 @@ export default function TypeLimitsPage() {
             /api/admin/mileage/product-type-limits)
           </li>
           <li>
-            구매 요청 승인 시 타입별 누적 사용 한도 검증 — §19 한도 초과 시 자동
+            구매 요청 승인 시 타입별 누적 사용 한도 검증 — 한도 초과 시 자동
             차단
           </li>
         </ul>

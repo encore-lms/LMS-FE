@@ -144,7 +144,7 @@ export function FieldFormModal({
         <ul className="text-fg-subtle flex flex-col gap-1 text-xs">
           <li>
             • 타입은 짧은/긴 텍스트만 — 선택형·점수형·체크리스트는 이번 범위
-            제외 (§31)
+            제외
           </li>
           <li>• {notice}</li>
         </ul>

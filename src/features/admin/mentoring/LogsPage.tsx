@@ -289,9 +289,7 @@ export default function LogsPage() {
 
       {/* 일지 관리 정책 · §30 완료 기준 — 05-31 확정(반려 제거) 반영 */}
       <div className="bg-info-bg border-info/30 mt-8 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">
-          일지 관리 정책 · §30 완료 기준
-        </p>
+        <p className="text-fg text-sm font-bold">일지 관리 정책 · 완료 기준</p>
         <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
           <li>
             • 운영자는 일지를 직접 수정하지 않음 — 수정 요청만 가능 (폐기·반려

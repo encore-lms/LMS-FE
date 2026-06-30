@@ -517,7 +517,7 @@ export default function TeamLogFieldsPage() {
       {/* 수정 가능 항목 · §32 정본 */}
       <div className="border-border bg-surface mt-6 rounded-xl border">
         <div className="px-5 pt-5 pb-3">
-          <p className="text-fg text-sm font-bold">수정 가능 항목 · §32 정본</p>
+          <p className="text-fg text-sm font-bold">수정 가능 항목</p>
           <p className="text-fg-subtle mt-1 text-xs">
             이 팀에 한해 적용 — 다음 일지부터 반영, 작성된 일지는 보존
           </p>
@@ -544,7 +544,7 @@ export default function TeamLogFieldsPage() {
 
       {/* 데이터 보존 정책 · §32 */}
       <div className="bg-info-bg border-info/30 mt-4 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">데이터 보존 정책 · §32</p>
+        <p className="text-fg text-sm font-bold">데이터 보존 정책</p>
         <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
           <li>
             • 이미 작성된 일지는 작성 당시 항목 구조와 답변을 그대로 보존합니다

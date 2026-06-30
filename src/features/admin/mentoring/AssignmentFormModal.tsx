@@ -245,7 +245,7 @@ export function AssignmentFormModal({
             ))}
           </select>
           <p className="text-fg-subtle text-xs">
-            배정 시 기본 템플릿 선택 (§31 일지 템플릿에서 관리)
+            배정 시 기본 템플릿 선택 (일지 템플릿에서 관리)
           </p>
           {errors.logTemplateId && (
             <p className={ERROR_CLASS}>{errors.logTemplateId.message}</p>

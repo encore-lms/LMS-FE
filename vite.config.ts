@@ -70,6 +70,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 운영 학습 기록 검토(/admin/records) learning-service 실연동(mock 제거).
+      '/api/admin/records': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 과제 목록·상세·제출 learning-service 실연동.
       '/api/student/course/assignments': {
         target: HRD_API_TARGET,

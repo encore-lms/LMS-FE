@@ -3,6 +3,7 @@ import { apiClient, adminKeys } from '@/shared/api'
 import type {
   RecordCategory,
   RecordDecision,
+  RecordGrid,
   RecordReviewActionRequest,
   RecordReviewQueue,
 } from '@/shared/types'
@@ -89,5 +90,20 @@ export function useRecordReviewAction() {
         ),
       })
     },
+  })
+}
+
+// 운영 기록실 주차 제출 그리드 — GET /admin/records/grid?category=&cohortId=
+export function useRecordsGrid(category: string, cohortId?: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'records', 'grid', category, cohortId ?? ''],
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<RecordGrid>('/admin/records/grid', {
+          category,
+          ...(cohortId ? { cohortId } : {}),
+        })
+        .then((r) => r.data),
   })
 }

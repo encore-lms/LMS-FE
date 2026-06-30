@@ -11,7 +11,7 @@ import type { CourseDetail } from './types'
 vi.mock('./api')
 vi.mock('../api/settings')
 // 각 패널은 자체 데이터/훅이 많아 탭 분기 검증에선 스텁으로 대체.
-vi.mock('../records/RecordReviewQueuePage', () => ({
+vi.mock('../records/RecordsGridPage', () => ({
   default: () => <div>기록실 임베드</div>,
 }))
 vi.mock('@/features/instructor/quizzes/QuizListPage', () => ({

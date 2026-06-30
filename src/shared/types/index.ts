@@ -70,6 +70,9 @@ export type {
   CertificateSubmissionDetail,
   RecordSubmissionDetail,
   RecordReviewActionRequest,
+  RecordGridWeek,
+  RecordGridRow,
+  RecordGrid,
 } from './records'
 export type {
   StudentTrainingStatus,

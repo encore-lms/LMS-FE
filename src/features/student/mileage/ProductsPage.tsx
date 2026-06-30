@@ -92,7 +92,7 @@ export default function ProductsPage() {
   const [active, setActive] = useState('all')
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([])
   const [bump, setBump] = useState(false)
-  const cartBtnRef = useRef<HTMLButtonElement>(null)
+  const cartBtnRef = useRef<HTMLDivElement>(null)
   const flyId = useRef(0)
   const items = useCartStore((s) => s.items)
   const add = useCartStore((s) => s.add)
@@ -314,31 +314,93 @@ export default function ProductsPage() {
         <FlyingIcon key={f.id} item={f} />
       ))}
 
-      {/* Floating 장바구니 버튼 */}
-      <button
-        ref={cartBtnRef}
-        type="button"
-        onClick={() => navigate('/student/mileage/cart')}
-        className={cn(
-          'bg-brand-deep fixed right-8 bottom-8 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)] transition-transform',
-          bump && 'scale-110',
-        )}
-      >
-        <div className="relative">
-          <ShoppingCart className="size-6" />
-          {count > 0 && (
-            <span className="bg-accent-strong absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full text-[11px] font-bold text-white">
-              {count}
-            </span>
+      {/* Floating 장바구니 + 호버 미리보기 */}
+      <div ref={cartBtnRef} className="group fixed right-8 bottom-8 z-50">
+        {/* 호버 시 담긴 상품 미리보기(이전 LMS cart-hover-popup) */}
+        <div className="bg-surface invisible absolute right-0 bottom-[calc(100%+12px)] w-72 translate-y-2 rounded-2xl p-3 opacity-0 shadow-[0px_12px_32px_0px_rgba(18,23,38,0.18)] transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="mb-2 flex items-center justify-between px-1">
+            <span className="text-fg text-[13px] font-bold">장바구니</span>
+            <span className="text-fg-subtle text-[11px]">{count}개</span>
+          </div>
+          {items.length === 0 ? (
+            <p className="text-fg-subtle py-6 text-center text-[12px]">
+              장바구니가 비어 있습니다.
+            </p>
+          ) : (
+            <>
+              <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
+                {items.map((i) => {
+                  const Icon = PRODUCT_ICON[i.icon]
+                  return (
+                    <div
+                      key={i.productId}
+                      className="flex items-center gap-2.5 rounded-lg px-1 py-1.5"
+                    >
+                      <span
+                        className={cn(
+                          'flex size-8 shrink-0 items-center justify-center rounded-lg',
+                          CHIP[i.tone],
+                        )}
+                      >
+                        <Icon className="size-[17px]" />
+                      </span>
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-fg truncate text-[12px] font-semibold">
+                          {i.name}
+                        </span>
+                        <span className="text-brand text-[11px] font-bold">
+                          {(i.price * i.quantity).toLocaleString()}M
+                        </span>
+                      </div>
+                      <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 text-[10px] font-bold">
+                        ×{i.quantity}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="border-divider mt-2 flex items-center justify-between border-t px-1 pt-2">
+                <span className="text-fg-subtle text-[11px]">합계</span>
+                <span className="text-fg text-[14px] font-bold">
+                  {total.toLocaleString()}M
+                </span>
+              </div>
+            </>
           )}
+          <button
+            type="button"
+            onClick={() => navigate('/student/mileage/cart')}
+            disabled={count === 0}
+            className="bg-brand mt-2 w-full rounded-lg py-2 text-[12px] font-bold text-white disabled:opacity-50"
+          >
+            장바구니로 이동 →
+          </button>
         </div>
-        <div className="flex flex-col items-start leading-tight">
-          <span className="text-[11px] text-white/70">장바구니</span>
-          <span className="text-[14px] font-bold">
-            {total.toLocaleString()}M
-          </span>
-        </div>
-      </button>
+        {/* 버튼 */}
+        <button
+          type="button"
+          onClick={() => navigate('/student/mileage/cart')}
+          className={cn(
+            'bg-brand-deep flex items-center gap-3 rounded-2xl px-5 py-3.5 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)] transition-transform',
+            bump && 'scale-110',
+          )}
+        >
+          <div className="relative">
+            <ShoppingCart className="size-6" />
+            {count > 0 && (
+              <span className="bg-accent-strong absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full text-[11px] font-bold text-white">
+                {count}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col items-start leading-tight">
+            <span className="text-[11px] text-white/70">장바구니</span>
+            <span className="text-[14px] font-bold">
+              {total.toLocaleString()}M
+            </span>
+          </div>
+        </button>
+      </div>
     </div>
   )
 }

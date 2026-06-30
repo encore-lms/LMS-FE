@@ -4,27 +4,31 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import ProductsPage from './ProductsPage'
-import { useDeleteProduct, useMileageProducts, useUpsertProduct } from './api'
+import {
+  useDeleteProduct,
+  useMileageProducts,
+  useUpsertProduct,
+  useUploadProductImage,
+} from './api'
 import type { ProductsData } from './types'
 
 vi.mock('./api')
 
-// 마일리지 상품 관리 — 카드 그리드·가격 방식·참조 중 삭제 제한·정책 렌더 + 타입 필터.
-
+// 마일리지 상품 관리 — 카드 그리드·가격·참조 중 삭제 제한·정책 렌더 + 타입 필터 + 등록.
 const overview: ProductsData = {
   course: 'AI 캠프',
   cohortLabel: '22기',
   total: 18,
   typeCounts: [
     { type: 'all', label: '전체', count: 18 },
-    { type: 'GIFTICON', label: '기프티콘', count: 9 },
-    { type: 'BOOK', label: '도서', count: 6 },
+    { type: 'COUPON', label: '쿠폰', count: 9 },
+    { type: 'GOODS', label: '굿즈', count: 6 },
   ],
   products: [
     {
       id: 'pd-1',
       emoji: '🎁',
-      type: 'GIFTICON',
+      type: 'COUPON',
       name: '문화상품권 5만원권',
       priceMode: 'fixed',
       price: '50,000',
@@ -34,11 +38,11 @@ const overview: ProductsData = {
     },
     {
       id: 'pd-4',
-      emoji: '📘',
-      type: 'BOOK',
-      name: '클린 코드',
-      priceMode: 'flexible',
-      price: null,
+      emoji: '👕',
+      type: 'GOODS',
+      name: 'PLAYDATA 후드 집업',
+      priceMode: 'fixed',
+      price: '30,000',
       order: 4,
       salesCount: 24,
       active: true,
@@ -46,7 +50,7 @@ const overview: ProductsData = {
     {
       id: 'pd-8',
       emoji: '🎟️',
-      type: 'GIFTICON',
+      type: 'COUPON',
       name: '기프티콘 5천원 — 폐기 예정',
       priceMode: 'fixed',
       price: '5,000',
@@ -57,16 +61,8 @@ const overview: ProductsData = {
     },
   ],
   typePricing: [
-    {
-      type: 'GIFTICON',
-      mode: '고정가',
-      note: '상품 가격 필수 — 등록 시 매니저가 입력',
-    },
-    {
-      type: 'BOOK',
-      mode: '유연가',
-      note: '수강생이 구매 시 가격 입력 — 매니저는 가격 입력 안 함',
-    },
+    { type: 'COUPON', mode: '고정가', note: '결제 시 마일리지 차감' },
+    { type: 'GOODS', mode: '고정가', note: '결제 시 마일리지 차감' },
   ],
 }
 
@@ -79,12 +75,17 @@ function renderPage() {
   const mutateMock = {
     mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
       opts?.onSuccess?.(),
+    mutateAsync: async () => 'pd-new',
+    isPending: false,
   }
   vi.mocked(useUpsertProduct).mockReturnValue(
     mutateMock as unknown as ReturnType<typeof useUpsertProduct>,
   )
   vi.mocked(useDeleteProduct).mockReturnValue(
     mutateMock as unknown as ReturnType<typeof useDeleteProduct>,
+  )
+  vi.mocked(useUploadProductImage).mockReturnValue(
+    mutateMock as unknown as ReturnType<typeof useUploadProductImage>,
   )
   return render(
     <ToastProvider>
@@ -96,25 +97,21 @@ function renderPage() {
 }
 
 describe('ProductsPage (마일리지 상품 관리)', () => {
-  it('상품 카드·가격 방식·참조 중 삭제 제한·정책을 렌더한다', () => {
+  it('상품 카드·가격·참조 중 삭제 제한·정책을 렌더한다', () => {
     renderPage()
     expect(screen.getByText('문화상품권 5만원권')).toBeInTheDocument()
     expect(screen.getByText('50,000 M')).toBeInTheDocument()
-    // 유연가 상품(BOOK)은 가격 대신 '유연가'(카드 + 타입 안내 양쪽 등장)
-    expect(screen.getByText('클린 코드')).toBeInTheDocument()
-    expect(screen.getAllByText('유연가').length).toBeGreaterThan(0)
+    expect(screen.getByText('PLAYDATA 후드 집업')).toBeInTheDocument()
+    expect(screen.getByText('30,000 M')).toBeInTheDocument()
     // 참조 중 상품 = 삭제 불가
     expect(screen.getByText('참조 중 — 삭제 불가')).toBeInTheDocument()
-    expect(
-      screen.getByText(/참조 중 상품\(구매 요청 이력 존재\)은 삭제 제한/),
-    ).toBeInTheDocument()
   })
 
-  it('타입 필터(도서) — 기프티콘 상품이 사라진다', async () => {
+  it('타입 필터(굿즈) — 쿠폰 상품이 사라진다', async () => {
     renderPage()
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: /도서/ }))
-    expect(screen.getByText('클린 코드')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /굿즈/ }))
+    expect(screen.getByText('PLAYDATA 후드 집업')).toBeInTheDocument()
     expect(screen.queryByText('문화상품권 5만원권')).toBeNull()
   })
 
@@ -127,7 +124,7 @@ describe('ProductsPage (마일리지 상품 관리)', () => {
     // 빈 제출 → 검증 에러
     await user.click(within(dialog).getByRole('button', { name: '등록' }))
     expect(screen.getByText('상품명을 입력해주세요')).toBeInTheDocument()
-    // 입력 후 제출 (기본 타입 GIFTICON=고정가 → 가격 필요)
+    // 입력 후 제출
     await user.type(
       screen.getByPlaceholderText('상품명을 입력하세요'),
       '신규 상품',

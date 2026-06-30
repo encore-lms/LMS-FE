@@ -13,17 +13,16 @@ import {
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
 import { ProductFormModal } from './ProductFormModal'
-import { useDeleteProduct, useMileageProducts, useUpsertProduct } from './api'
+import {
+  useDeleteProduct,
+  useMileageProducts,
+  useUpsertProduct,
+  useUploadProductImage,
+} from './api'
+import { ProductImage } from './ProductImage'
 import type { Product, ProductType } from './types'
 
 const PRICE_MODE_LABEL = { fixed: '고정가', flexible: '수강생 입력' } as const
-
-// 신규 등록 시 타입별 기본 대표 이미지(이모지 mock).
-const EMOJI_BY_TYPE: Record<ProductType, string> = {
-  GIFTICON: '🎁',
-  BOOK: '📚',
-  LECTURE: '🎬',
-}
 
 type TypeFilter = 'all' | ProductType
 
@@ -37,6 +36,7 @@ export default function ProductsPage() {
   )
   const { data, isPending, isError, refetch } = useMileageProducts()
   const upsert = useUpsertProduct()
+  const uploadImage = useUploadProductImage()
   const remove = useDeleteProduct()
   const toast = useToast()
   const [type, setType] = useState<TypeFilter>('all')
@@ -227,36 +227,25 @@ export default function ProductsPage() {
         open={formOpen}
         product={formProduct}
         onClose={() => setFormOpen(false)}
-        onSubmit={(mode, values) => {
-          const next: Product = {
-            id: formProduct?.id ?? crypto.randomUUID(),
-            emoji: formProduct?.emoji ?? EMOJI_BY_TYPE[values.type],
-            type: values.type,
-            name: values.name,
-            priceMode: values.type === 'GIFTICON' ? 'fixed' : 'flexible',
-            price:
-              values.type === 'GIFTICON' && values.price
-                ? Number(values.price).toLocaleString()
-                : null,
-            order: values.order,
-            salesCount: formProduct?.salesCount ?? 0,
-            active: values.active,
-            referenced: formProduct?.referenced ?? false,
+        pending={upsert.isPending || uploadImage.isPending}
+        onSubmit={async (mode, values, file) => {
+          try {
+            const id = await upsert.mutateAsync({
+              mode,
+              id: formProduct?.id,
+              name: values.name,
+              productType: values.type,
+              price: Number(values.price.replace(/[^\d]/g, '')) || 0,
+              status: values.active ? 'ACTIVE' : 'INACTIVE',
+            })
+            if (file) await uploadImage.mutateAsync({ id, file })
+            toast.success(
+              mode === 'edit' ? '상품을 수정했습니다.' : '상품을 등록했습니다.',
+            )
+            setFormOpen(false)
+          } catch {
+            toast.danger('상품 저장에 실패했어요. 잠시 후 다시 시도해 주세요.')
           }
-          upsert.mutate(next, {
-            onSuccess: () => {
-              toast.success(
-                mode === 'edit'
-                  ? '상품을 수정했습니다.'
-                  : '상품을 등록했습니다.',
-              )
-              setFormOpen(false)
-            },
-            onError: () =>
-              toast.danger(
-                '상품 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
-              ),
-          })
         }}
       />
 
@@ -297,8 +286,12 @@ function ProductCard({
 }) {
   return (
     <div className="border-border bg-surface flex flex-col overflow-hidden rounded-xl border">
-      <div className="bg-surface-muted flex h-24 items-center justify-center text-4xl">
-        {p.emoji}
+      <div className="bg-surface-muted flex h-24 items-center justify-center overflow-hidden text-4xl">
+        <ProductImage
+          url={p.imageUrl}
+          className="size-full object-cover"
+          fallback={<span>{p.emoji}</span>}
+        />
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center gap-1.5">

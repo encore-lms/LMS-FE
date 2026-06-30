@@ -1,73 +1,138 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { mileageProductsKeys } from './queryKeys'
-import type { Product, ProductsData } from './types'
+import type { Product, ProductsData, ProductType } from './types'
 
-// 마일리지 상품 목록 조회 훅 — 엔드포인트가 /admin/* 라 admin feature 소유.
-// baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
+// BE 운영 상품 응답(AdminMileageProductDtos.ListResponse, LMS-BE #71)
+interface BeItem {
+  id: string
+  name: string
+  productType: ProductType
+  price: number
+  status: string
+  hasImage: boolean
+  imageUrl: string | null
+}
+interface BeListResponse {
+  items: BeItem[]
+  total: number
+}
+
+const EMOJI: Record<ProductType, string> = {
+  COUPON: '🎁',
+  GOODS: '👕',
+  ETC: '🎫',
+}
+const LABEL: Record<ProductType, string> = {
+  COUPON: '쿠폰',
+  GOODS: '굿즈',
+  ETC: '기타',
+}
+const TYPES: ProductType[] = ['COUPON', 'GOODS', 'ETC']
+
+// BE 응답 → 운영 화면 ProductsData(부가 필드는 매핑 기본값)
+function toProductsData(be: BeListResponse): ProductsData {
+  const products: Product[] = be.items.map((it, idx) => ({
+    id: it.id,
+    emoji: EMOJI[it.productType] ?? '🎁',
+    type: it.productType,
+    name: it.name,
+    priceMode: 'fixed',
+    price: it.price ? it.price.toLocaleString() : null,
+    order: idx,
+    salesCount: 0,
+    active: it.status === 'ACTIVE',
+    referenced: false,
+    imageUrl: it.imageUrl,
+  }))
+  return {
+    course: '',
+    cohortLabel: '',
+    total: be.total,
+    typeCounts: [
+      { type: 'all', label: '전체', count: products.length },
+      ...TYPES.map((t) => ({
+        type: t,
+        label: LABEL[t],
+        count: products.filter((p) => p.type === t).length,
+      })),
+    ],
+    products,
+    typePricing: TYPES.map((t) => ({
+      type: t,
+      mode: '고정가',
+      note: '결제 시 마일리지 차감',
+    })),
+  }
+}
+
 export function useMileageProducts() {
   return useQuery({
     queryKey: mileageProductsKeys.list(),
     queryFn: () =>
       apiClient
-        .get<ProductsData>('/admin/mileage/products')
-        .then((r) => r.data),
+        .get<BeListResponse>('/admin/mileage/products')
+        .then((r) => toProductsData(r.data)),
   })
 }
 
-// 등록/수정/삭제 후 총계·타입 카운트를 재계산한다(목록 갱신).
-function recount(products: Product[], prev: ProductsData): ProductsData {
-  return {
-    ...prev,
-    products,
-    total: products.length,
-    typeCounts: prev.typeCounts.map((tc) =>
-      tc.type === 'all'
-        ? { ...tc, count: products.length }
-        : { ...tc, count: products.filter((p) => p.type === tc.type).length },
-    ),
-  }
+export interface UpsertInput {
+  mode: 'create' | 'edit'
+  id?: string
+  name: string
+  productType: ProductType
+  price: number
+  status: string
 }
 
-// 상품 등록·수정 훅 — 성공 시 목록 캐시에 추가(신규) 또는 교체(수정) + 총계 재계산.
-// BE 계약(P0_16 MileageProduct) 미확정 → 네트워크 없이 클라이언트 낙관 반영으로 시뮬레이션한다.
-// 계약 확정 시 mutationFn 을 apiClient.post/patch('/admin/mileage/products', ...) 로 교체한다.
+// 등록(POST)/수정(PUT) — 생성 시 BE가 새 id 반환. 성공 시 목록 무효화.
 export function useUpsertProduct() {
-  const queryClient = useQueryClient()
-  return useMutation<void, Error, Product>({
-    mutationFn: async () => {},
-    onSuccess: (_result, product) => {
-      queryClient.setQueryData<ProductsData>(
-        mileageProductsKeys.list(),
-        (prev) => {
-          if (!prev) return prev
-          const exists = prev.products.some((p) => p.id === product.id)
-          const products = exists
-            ? prev.products.map((p) => (p.id === product.id ? product : p))
-            : [product, ...prev.products]
-          return recount(products, prev)
-        },
-      )
+  const qc = useQueryClient()
+  return useMutation<string, Error, UpsertInput>({
+    mutationFn: async (input) => {
+      const body = {
+        name: input.name,
+        productType: input.productType,
+        price: input.price,
+        status: input.status,
+      }
+      if (input.mode === 'edit' && input.id) {
+        await apiClient.put(`/admin/mileage/products/${input.id}`, body)
+        return input.id
+      }
+      const res = await apiClient.post<string>('/admin/mileage/products', body)
+      return res.data
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: mileageProductsKeys.list() })
     },
   })
 }
 
-// 상품 삭제 훅 — 성공 시 목록 캐시에서 제거 + 총계 재계산(참조 중 상품은 화면에서 사전 차단).
+// 이미지 업로드(multipart) — 성공 시 목록·학생 상품 무효화
+export function useUploadProductImage() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, { id: string; file: File }>({
+    mutationFn: async ({ id, file }) => {
+      const fd = new FormData()
+      fd.append('file', file)
+      await apiClient.postForm(`/admin/mileage/products/${id}/image`, fd)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: mileageProductsKeys.list() })
+    },
+  })
+}
+
+// 삭제(비활성) — DELETE. 성공 시 목록 무효화.
 export function useDeleteProduct() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation<void, Error, string>({
-    mutationFn: async () => {},
-    onSuccess: (_result, id) => {
-      queryClient.setQueryData<ProductsData>(
-        mileageProductsKeys.list(),
-        (prev) =>
-          prev
-            ? recount(
-                prev.products.filter((p) => p.id !== id),
-                prev,
-              )
-            : prev,
-      )
+    mutationFn: async (id) => {
+      await apiClient.delete(`/admin/mileage/products/${id}`)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: mileageProductsKeys.list() })
     },
   })
 }

@@ -203,7 +203,6 @@ export interface WsMember {
   name: string
   role: string // "백엔드·인프라"
   kind: 'PM' | '팀원'
-  contrib: number // 40
   avatarTone: Tone
 }
 export interface WsMetric {

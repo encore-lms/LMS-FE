@@ -6,9 +6,12 @@ import { useToast } from '@/components/ui/use-toast'
 import type { WorkspaceData, WsMember } from '../../types'
 import { Avatar, Chip, SectionHead, StatBox } from '../components/ws-shared'
 import { SOLID, card } from '../components/ws-style'
+import { useMemberNames } from '../components/useMemberNames'
 
 export function TeamTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
+  // 표시 이름만 실명(/users/peers + 본인)으로 — 렌더 시점 매핑(peers 비동기 로드 반영).
+  const nameOf = useMemberNames()
   const [members, setMembers] = useState(d.members)
   const [inviting, setInviting] = useState(false)
   const [openMember, setOpenMember] = useState<WsMember | null>(null)
@@ -33,11 +36,11 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
                 i > 0 && 'border-divider border-t',
               )}
             >
-              <Avatar name={m.name} tone={m.avatarTone} />
+              <Avatar name={nameOf(m.userId, m.name)} tone={m.avatarTone} />
               <div className="flex w-40 flex-col gap-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-fg text-[13px] font-bold">
-                    {m.name}
+                    {nameOf(m.userId, m.name)}
                   </span>
                   <span
                     className={cn(

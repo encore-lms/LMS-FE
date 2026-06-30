@@ -7,9 +7,11 @@ import { statusToPhase, useProjectFlow } from '../useProjectFlow'
 import type { WorkspaceData } from '../../types'
 import { Chip } from '../components/ws-shared'
 import { card } from '../components/ws-style'
+import { useMemberNames } from '../components/useMemberNames'
 
 export function PeerTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
+  const nameOf = useMemberNames()
   const [submitted, setSubmitted] = useState(false)
   const [scores, setScores] = useState<Record<string, number>>(() =>
     Object.fromEntries(
@@ -109,7 +111,9 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
       {d.peerTargets.map((t) => (
         <section key={t.name} className={cn(card, 'flex flex-col gap-3')}>
           <div className="flex items-center gap-2">
-            <span className="text-fg text-[14px] font-bold">{t.name}</span>
+            <span className="text-fg text-[14px] font-bold">
+              {nameOf(t.memberId, t.name)}
+            </span>
             <span className="text-fg-subtle text-[11px]">{t.role}</span>
             <span className="text-fg-subtle ml-auto text-[11px]">
               5개 축은 모두 필수, 코멘트는 선택입니다.

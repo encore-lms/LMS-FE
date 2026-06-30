@@ -4,17 +4,17 @@ import { PATHS } from '@/shared/constants/routes'
 import { DEMO_ACCOUNTS, type DemoAccount } from './demoAccounts'
 
 interface DemoQuickLoginProps {
-  /** 역할 버튼 클릭 시 해당 데모 계정으로 폼을 채운다(제출은 하지 않음). */
+  /** 역할 버튼 클릭 시 해당 실제 계정으로 즉시 로그인하고 역할 홈으로 이동한다. */
   onPick: (account: DemoAccount) => void
 }
 
 // BrandPanel(어두운 그라데이션 배경)에 들어가는 데모 빠른 로그인 그룹.
-// 소개 문구 3줄을 대체하며, 버튼은 ID/PW만 채우고 스타일 가이드 이동 링크를 함께 제공한다.
+// 소개 문구 3줄을 대체하며, 버튼 클릭 시 실제 계정으로 즉시 로그인하고 스타일 가이드 이동 링크를 함께 제공한다.
 export function DemoQuickLogin({ onPick }: DemoQuickLoginProps) {
   return (
     <div className="flex flex-col gap-[14px]">
       <span className="text-[13px] font-medium text-white/85">
-        데모 빠른 로그인 · 비밀번호 자동 입력
+        데모 빠른 로그인 · 클릭하면 바로 입장
       </span>
 
       <div className="flex flex-wrap gap-2">

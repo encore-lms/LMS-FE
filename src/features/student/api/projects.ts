@@ -168,3 +168,21 @@ export function useRequestCertification(projectId: string) {
     projectId,
   )
 }
+
+// 산출물 파일 업로드(multipart, BE #78) — 성공 시 워크스페이스 무효화
+export function useUploadArtifactFile(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { title?: string; file: File }) => {
+      const fd = new FormData()
+      if (input.title) fd.append('title', input.title)
+      fd.append('file', input.file)
+      return apiClient.postForm(
+        `/student/projects/${projectId}/artifacts/file`,
+        fd,
+      )
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: projectKeys.workspace(projectId) }),
+  })
+}

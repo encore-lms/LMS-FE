@@ -15,6 +15,7 @@ import { usePageHeader } from '@/shared/store'
 import { useMileageProducts } from '../api/mileage'
 import { parseMoney } from './store'
 import { useCartStore, cartCount, cartTotal } from './cartStore'
+import { ProductImage } from './components/ProductImage'
 import type { MileageProduct, Tone } from './types'
 
 // 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
@@ -135,6 +136,7 @@ export default function ProductsPage() {
       price: parseMoney(p.price),
       icon: p.icon,
       tone: p.tone,
+      imageUrl: p.imageUrl,
     })
     if (iconEl && cartBtn) {
       const r = iconEl.getBoundingClientRect()
@@ -249,11 +251,15 @@ export default function ProductsPage() {
                 <span
                   data-cart-img
                   className={cn(
-                    'flex size-10 shrink-0 items-center justify-center rounded-[10px]',
-                    CHIP[p.tone],
+                    'flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[10px]',
+                    !p.imageUrl && CHIP[p.tone],
                   )}
                 >
-                  <Icon className="size-[21px]" />
+                  <ProductImage
+                    url={p.imageUrl}
+                    className="size-full object-cover"
+                    fallback={<Icon className="size-[21px]" />}
+                  />
                 </span>
                 <div className="flex flex-wrap justify-end gap-1.5">
                   {p.badges.map((b, i) => (
@@ -338,11 +344,15 @@ export default function ProductsPage() {
                     >
                       <span
                         className={cn(
-                          'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                          CHIP[i.tone],
+                          'flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg',
+                          !i.imageUrl && CHIP[i.tone],
                         )}
                       >
-                        <Icon className="size-[17px]" />
+                        <ProductImage
+                          url={i.imageUrl}
+                          className="size-full object-cover"
+                          fallback={<Icon className="size-[17px]" />}
+                        />
                       </span>
                       <div className="flex min-w-0 flex-1 flex-col">
                         <span className="text-fg truncate text-[12px] font-semibold">

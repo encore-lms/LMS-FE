@@ -7,6 +7,7 @@ export interface CartItem {
   price: number // 단가(M)
   icon: 'book' | 'video' | 'cup' | 'gift'
   tone: Tone
+  imageUrl?: string | null
   quantity: number
 }
 

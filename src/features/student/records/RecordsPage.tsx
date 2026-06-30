@@ -5,9 +5,8 @@ import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
-import { TestModeFab } from '@/components/dev/TestModeFab'
 import { usePageHeader } from '@/shared/store'
-import { useRecordsOverview, useSimulateReview } from '../api/records'
+import { useRecordsOverview, useDeleteRecord } from '../api/records'
 import { RecordStatCards } from './components/RecordStatCards'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
@@ -33,12 +32,6 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 const PAGE_SIZE = 4
 // 카테고리 탭 유지 키 — 기록 보고 돌아와도 마지막 탭이 고정되게 sessionStorage에 보존.
 const RECORDS_TAB_KEY = 'lms:records-tab'
-// 검토 시뮬레이션 목록의 카테고리 라벨.
-const CATEGORY_LABEL: Record<string, string> = {
-  blog: '블로그',
-  study: '스터디',
-  cert: '자격증',
-}
 
 /**
  * 기록실 (/student/records) — Figma 246:27.
@@ -71,23 +64,7 @@ export default function RecordsPage() {
 function RecordsView({ data }: { data: RecordsOverview }) {
   const navigate = useNavigate()
   const toast = useToast()
-  const reviewSim = useSimulateReview()
-
-  // (테스트 UI) 운영자 검토 시뮬레이션 — 지정 기록을 승인/반려.
-  const simReview = (id: string, action: 'approve' | 'reject') =>
-    reviewSim.mutate(
-      { id, action },
-      {
-        onSuccess: (res) => {
-          if (!res.record) return
-          if (action === 'approve') {
-            toast.success(`'${res.record.title}' 승인 처리(시뮬레이션)`)
-          } else {
-            toast.warning(`'${res.record.title}' 반려 처리(시뮬레이션)`)
-          }
-        },
-      },
-    )
+  const deleteRecord = useDeleteRecord()
   const [params, setParams] = useSearchParams()
   const [activeTab, setActiveTabState] = useState(() => {
     try {
@@ -109,14 +86,10 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   // 삭제는 로컬 deletedIds로만 가린다(새로고침하면 mock 그대로 복원).
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
   const records = data.records.filter((r) => !deletedIds.has(r.id))
-  // 검토 시뮬레이션 대상 — 검토 중 기록(신규 포함).
-  const reviewing = records.filter((r) => r.status === 'reviewing')
   const [sort, setSort] = useState<SortKey>('latest')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  // 검토 시뮬레이션 — 동작(승인/반려)을 먼저 고르고 대상 기록을 클릭한다.
-  const [simAction, setSimAction] = useState<'approve' | 'reject' | null>(null)
 
   const modalParam = params.get('modal') === 'delete-blog'
 
@@ -221,8 +194,12 @@ function RecordsView({ data }: { data: RecordsOverview }) {
 
   const confirmDelete = () => {
     if (deleteTarget) {
-      setDeletedIds((prev) => new Set(prev).add(deleteTarget.id))
-      toast.success(`'${deleteTarget.title}' 기록이 삭제되었습니다.`)
+      const t = deleteTarget
+      deleteRecord.mutate(t.id, {
+        onSuccess: () => toast.success(`'${t.title}' 기록이 삭제되었습니다.`),
+        onError: () => toast.danger('삭제에 실패했어요'),
+      })
+      setDeletedIds((prev) => new Set(prev).add(t.id)) // 낙관적 가림
     }
     closeModal()
   }
@@ -240,12 +217,6 @@ function RecordsView({ data }: { data: RecordsOverview }) {
     const suffix = rec?.status === 'draft' ? '?from=draft' : ''
     navigate(`/student/records/${base}/${id}/edit${suffix}`)
   }
-
-  // 검토 시뮬레이션 대상 — 현재 탭 카테고리의 '검토 중' 기록만(전체 탭이면 모두). 승인·임시저장 제외.
-  const simList =
-    activeTab === 'all'
-      ? reviewing
-      : reviewing.filter((r) => r.category === activeTab)
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -407,81 +378,6 @@ function RecordsView({ data }: { data: RecordsOverview }) {
           onConfirm={confirmDelete}
         />
       )}
-
-      <TestModeFab note="운영자 검토 시뮬레이션 — 동작을 고른 뒤 '검토 중' 기록을 클릭하세요(현재 탭 기준).">
-        {simAction === null ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setSimAction('approve')}
-              className="bg-success rounded-md px-3 py-1.5 text-[12px] font-bold text-white"
-            >
-              ✓ 승인
-            </button>
-            <button
-              type="button"
-              onClick={() => setSimAction('reject')}
-              className="bg-danger rounded-md px-3 py-1.5 text-[12px] font-bold text-white"
-            >
-              ✕ 반려
-            </button>
-          </>
-        ) : (
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span
-                className={cn(
-                  'text-[12px] font-bold',
-                  simAction === 'approve' ? 'text-success' : 'text-danger',
-                )}
-              >
-                {simAction === 'approve' ? '승인' : '반려'}할 기록 선택
-              </span>
-              <button
-                type="button"
-                onClick={() => setSimAction(null)}
-                className="text-fg-subtle hover:text-fg text-[11px] font-semibold"
-              >
-                ← 뒤로
-              </button>
-            </div>
-            {simList.length === 0 ? (
-              <span className="text-fg-muted text-[12px]">
-                검토 중인 기록이 없어요.
-              </span>
-            ) : (
-              <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto">
-                {simList.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => simReview(r.id, simAction)}
-                    disabled={reviewSim.isPending}
-                    className="border-border bg-surface hover:bg-surface-muted flex items-center gap-2 rounded-lg border p-2 text-left disabled:opacity-50"
-                  >
-                    <span className="text-fg-subtle shrink-0 text-[10px]">
-                      {CATEGORY_LABEL[r.category] ?? r.category}
-                    </span>
-                    <span className="text-fg flex-1 truncate text-[12px] font-semibold">
-                      {r.title}
-                    </span>
-                    <span
-                      className={cn(
-                        'shrink-0 text-[11px] font-bold',
-                        simAction === 'approve'
-                          ? 'text-success'
-                          : 'text-danger',
-                      )}
-                    >
-                      {simAction === 'approve' ? '승인' : '반려'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </TestModeFab>
     </div>
   )
 }

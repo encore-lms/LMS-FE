@@ -301,6 +301,7 @@ export default function ProjectWizardPage() {
           stacks,
           domain,
           deliverables,
+          memberUserIds: invited,
         },
         {
           onSuccess: () => {

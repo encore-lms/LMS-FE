@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
+import { useAuth } from '@/shared/store/auth'
 import { projectKeys } from '../projects/queryKeys'
 import type {
   ProjectListData,
@@ -17,6 +18,7 @@ export interface CreateProjectInput {
   stacks: string[]
   domain: string
   deliverables: string[]
+  memberUserIds?: string[]
 }
 
 // 프로젝트 훅 — 엔드포인트가 /student/* 라 학생 feature 소유. baseURL /api 라 경로 앞 /api 생략.
@@ -29,12 +31,29 @@ export function useProjectList() {
 }
 
 export function useProjectWizard() {
+  const { user } = useAuth()
   return useQuery({
     queryKey: projectKeys.wizard(),
-    queryFn: () =>
-      apiClient
-        .get<ProjectWizardData>('/student/projects/wizard')
-        .then((r) => r.data),
+    queryFn: async () => {
+      // 같은 기수 동료(/users/peers)를 팀원 후보로, 본인을 PM으로 합성(실 BE join).
+      const res = await apiClient.get<{
+        items: { userId: string; name: string }[]
+      }>('/users/peers')
+      const candidates = (res.data.items ?? []).map((p, i) => ({
+        id: p.userId,
+        name: p.name,
+        meta: '같은 기수 동료',
+        avatarTone: (
+          ['brand', 'info', 'warning', 'danger', 'accent', 'success'] as const
+        )[i % 6],
+      }))
+      return {
+        cohortLabel: '같은 기수',
+        pmName: user?.name ?? '나',
+        pmMeta: 'PM · 본인',
+        candidates,
+      } satisfies ProjectWizardData
+    },
   })
 }
 
@@ -51,7 +70,7 @@ export function useCreateProject() {
         start: input.start,
         end: input.end,
         stacks: input.stacks,
-        // 팀원(memberUserIds)은 같은 기수 후보 실 BE 후속 — 현재는 본인 OWNER만
+        memberUserIds: input.memberUserIds ?? [],
       }
       const res = await apiClient.post<ProjectSummary>(
         '/student/projects',

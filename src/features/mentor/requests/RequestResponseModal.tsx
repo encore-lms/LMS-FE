@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import {
 import { Modal } from '@/components/ui/Modal'
 import { Avatar } from '@/components/ui/Avatar'
 import { Empty } from '@/components/ui/Empty'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import {
@@ -26,7 +27,12 @@ import type { MentoringRequestSlot } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { RequestStatusChip, RoleBadge, SlotLabelChip } from './RequestChips'
 import { RESPONSE_SAVED_TOAST } from './requestMeta'
-import { proposalSchema, type ProposalInput } from './proposalSchema'
+import {
+  composeScheduleLabel,
+  parseScheduleLabel,
+  proposalSchema,
+  type ProposalInput,
+} from './proposalSchema'
 
 type ResponseMode = 'confirm' | 'counter' | 'reject'
 
@@ -116,6 +122,7 @@ function ProposalForm({
 }) {
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,
@@ -141,21 +148,54 @@ function ProposalForm({
           전송됩니다
         </span>
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="proposal-datetime" className={FIELD_LABEL}>
-          새 일정
-        </label>
-        <input
-          id="proposal-datetime"
-          {...register('dateTimeLabel')}
-          placeholder="6/3(화) 19:00 ~ 21:00"
-          className={INPUT_CLASS}
+      <div className="flex flex-col gap-1.5">
+        <span className={FIELD_LABEL}>새 일정</span>
+        {/* 날짜는 전용 줄(달력), 시작·종료 시각은 한 줄에 나란히 — 공용 DateTimePicker */}
+        <Controller
+          control={control}
+          name="date"
+          render={({ field }) => (
+            <DateTimePicker
+              mode="date"
+              value={field.value}
+              onChange={field.onChange}
+              placeholder="날짜 선택"
+              ariaLabel="새 일정 날짜"
+              error={errors.date?.message}
+            />
+          )}
         />
-        {errors.dateTimeLabel && (
-          <p className="text-danger text-[11px]">
-            {errors.dateTimeLabel.message}
-          </p>
-        )}
+        <div className="flex items-center gap-2">
+          <Controller
+            control={control}
+            name="startTime"
+            render={({ field }) => (
+              <DateTimePicker
+                mode="time"
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="시작 시각"
+                ariaLabel="시작 시각"
+                error={errors.startTime?.message}
+              />
+            )}
+          />
+          <span className="text-fg-subtle text-[13px]">~</span>
+          <Controller
+            control={control}
+            name="endTime"
+            render={({ field }) => (
+              <DateTimePicker
+                mode="time"
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="종료 시각"
+                ariaLabel="종료 시각"
+                error={errors.endTime?.message}
+              />
+            )}
+          />
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
@@ -307,8 +347,11 @@ export default function RequestResponseModal() {
     : proposalEditable
       ? (data.proposal ?? data.desired)
       : data.desired
+  const baseSchedule = parseScheduleLabel(baseSlot.dateTimeLabel)
   const formDefaults: ProposalInput = {
-    dateTimeLabel: baseSlot.dateTimeLabel,
+    date: baseSchedule.date,
+    startTime: baseSchedule.startTime,
+    endTime: baseSchedule.endTime,
     placeType: baseSlot.placeType,
     expectedMinutes: baseSlot.expectedMinutes,
     placeDetail: baseSlot.placeDetail,
@@ -320,7 +363,7 @@ export default function RequestResponseModal() {
 
   const submitProposal = (values: ProposalInput) => {
     const payload = {
-      dateTimeLabel: values.dateTimeLabel,
+      dateTimeLabel: composeScheduleLabel(values),
       placeType: values.placeType,
       placeDetail: values.placeDetail,
       expectedMinutes: values.expectedMinutes,

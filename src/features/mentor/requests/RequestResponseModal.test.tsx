@@ -94,15 +94,15 @@ describe('RequestResponseModal', () => {
     expect(screen.getByText('요청 목록')).toBeInTheDocument()
   })
 
-  it('조정 제안 모드 — 희망 일정 프리필 폼을 제출하면 counter-propose 를 호출한다', async () => {
+  it('조정 제안 모드 — 희망 일정이 공용 날짜·시각 피커에 프리필되고 제출 시 라벨로 합성된다', async () => {
     mockDetail('req_rec_6')
     const user = userEvent.setup()
     renderModal('/mentor/mentoring-requests/req_rec_6?mode=counter')
 
-    const datetime = screen.getByLabelText('새 일정')
-    expect(datetime).toHaveValue('5/29(목) 14:00 ~ 16:00')
-    await user.clear(datetime)
-    await user.type(datetime, '6/3(화) 19:00 ~ 21:00')
+    // 자유 텍스트 input 대신 공용 DateTimePicker — 희망 일정('5/29 14:00~16:00')이 분해 프리필.
+    expect(screen.getByLabelText('새 일정 날짜')).toHaveTextContent(
+      '2026-05-29',
+    )
     const minutes = screen.getByLabelText('예상 시간 (분)')
     await user.clear(minutes)
     await user.type(minutes, '90')
@@ -113,12 +113,13 @@ describe('RequestResponseModal', () => {
     await user.click(screen.getByRole('button', { name: /선택한 응답 저장/ }))
 
     await waitFor(() => expect(actionMutate).toHaveBeenCalled())
+    // 제출 시 분해값을 'M/D(요일) HH:mm ~ HH:mm' 로 합성 — 요일은 실제 날짜에서 계산(2026-05-29=금).
     expect(actionMutate).toHaveBeenCalledWith(
       {
         requestId: 'req_rec_6',
         action: 'counter-propose',
         payload: {
-          dateTimeLabel: '6/3(화) 19:00 ~ 21:00',
+          dateTimeLabel: '5/29(금) 14:00 ~ 16:00',
           placeType: 'online',
           placeDetail: 'Zoom',
           expectedMinutes: 90,
@@ -129,15 +130,21 @@ describe('RequestResponseModal', () => {
     )
   })
 
-  it('조정 제안 모드 — 새 일정 비우면 검증 에러로 제출이 차단된다', async () => {
+  it('조정 제안 모드 — 종료 시각이 시작보다 이르면 검증 에러로 제출이 차단된다', async () => {
     mockDetail('req_rec_6')
     const user = userEvent.setup()
     renderModal('/mentor/mentoring-requests/req_rec_6?mode=counter')
 
-    await user.clear(screen.getByLabelText('새 일정'))
+    // 종료 시각 피커를 시작(14:00)보다 이른 오전 10:00 으로 변경 → refine 위반.
+    await user.click(screen.getByLabelText('종료 시각'))
+    await user.click(screen.getByRole('button', { name: '오전' }))
+    await user.click(screen.getByRole('button', { name: '10시' }))
+    await user.click(screen.getByRole('button', { name: '00분' }))
+    await user.click(screen.getByRole('button', { name: '적용' }))
+
     await user.click(screen.getByRole('button', { name: /선택한 응답 저장/ }))
     expect(
-      await screen.findByText('새 일정을 입력해주세요'),
+      await screen.findByText('종료 시각은 시작 시각보다 늦어야 합니다'),
     ).toBeInTheDocument()
     expect(actionMutate).not.toHaveBeenCalled()
   })
@@ -169,14 +176,19 @@ describe('RequestResponseModal', () => {
 
     // 응답 모드 라디오 없음(확정·거절은 수강생 몫) — 제안 폼만
     expect(screen.queryByText('희망 일정 그대로')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('새 일정')).toHaveValue(
-      '6/3(화) 19:00 ~ 21:00',
+    // 기존 제안('6/3 19:00~21:00')이 공용 피커에 분해 프리필
+    expect(screen.getByLabelText('새 일정 날짜')).toHaveTextContent(
+      '2026-06-03',
     )
     await user.click(screen.getByRole('button', { name: /선택한 응답 저장/ }))
     await waitFor(() => expect(actionMutate).toHaveBeenCalled())
     expect(actionMutate.mock.calls[0][0]).toMatchObject({
       requestId: 'req_dm_6',
       action: 'counter-propose',
+      // 요일은 실제 날짜 기준 재계산(2026-06-03=수)
+      payload: expect.objectContaining({
+        dateTimeLabel: '6/3(수) 19:00 ~ 21:00',
+      }),
     })
   })
 

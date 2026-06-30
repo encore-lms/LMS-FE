@@ -163,7 +163,7 @@ describe('WorkspacePage home', () => {
       '결제 웹훅 재처리',
     )
     await user.type(screen.getByPlaceholderText('이름'), '김수강')
-    await user.type(screen.getByLabelText('마감 일수'), '7')
+    // 시작일/종료일은 오늘·다음날 기본값이 채워져 있어 제목만 입력하면 제출 가능
     await user.click(screen.getByRole('button', { name: '추가' }))
 
     expect(await screen.findByText('작업을 추가했습니다')).toBeInTheDocument()
@@ -175,7 +175,7 @@ describe('WorkspacePage home', () => {
 
     // 헤더 '일정 추가' → 오늘 날짜로 모달이 열린다(현재 월 기준).
     await user.click(screen.getByRole('button', { name: '일정 추가' }))
-    await user.type(screen.getByPlaceholderText('일정명'), '최종 리허설')
+    await user.type(screen.getByPlaceholderText('내용'), '최종 리허설')
     await user.click(screen.getByRole('button', { name: '추가' }))
 
     expect(screen.getAllByText('최종 리허설').length).toBeGreaterThan(0)

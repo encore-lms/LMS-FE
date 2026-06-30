@@ -128,6 +128,7 @@ export function useAddTask(projectId: string) {
     title: string
     description?: string
     status?: string
+    startAt?: string
     dueAt?: string
   }>((id, v) => apiClient.post(`/student/projects/${id}/tasks`, v), projectId)
 }

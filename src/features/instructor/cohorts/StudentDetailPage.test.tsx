@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import StudentDetailPage from './StudentDetailPage'
-import { useStudentDetail } from '../api/console'
+import { useSaveReviewComment, useStudentDetail } from '../api/console'
 import type { StudentDetailData } from '@/shared/types'
 
 vi.mock('../api/console')
@@ -125,6 +125,10 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useStudentDetail>)
+  vi.mocked(useSaveReviewComment).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useSaveReviewComment>)
   return render(
     <ToastProvider>
       <MemoryRouter initialEntries={['/instructor/students/stu-2']}>

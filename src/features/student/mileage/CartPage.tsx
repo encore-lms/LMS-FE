@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useCreateMileageOrder, useMileageOverview } from '../api/mileage'
 import { parseMoney } from './store'
 import { useCartStore, cartTotal, type CartItem } from './cartStore'
+import { ProductImage } from './components/ProductImage'
 import type { Tone } from './types'
 
 // 마일리지 장바구니/결제 (/student/mileage/cart) — 이전 LMS MileageCart 흐름.
@@ -150,11 +151,15 @@ export default function CartPage() {
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
-                    'flex size-10 shrink-0 items-center justify-center rounded-[10px]',
-                    CHIP[i.tone],
+                    'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px]',
+                    !i.imageUrl && CHIP[i.tone],
                   )}
                 >
-                  <Icon className="size-[20px]" />
+                  <ProductImage
+                    url={i.imageUrl}
+                    className="size-full object-cover"
+                    fallback={<Icon className="size-[20px]" />}
+                  />
                 </span>
                 <span className="text-fg text-[14px] font-semibold">
                   {i.name}

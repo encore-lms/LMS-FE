@@ -70,6 +70,7 @@ export interface MileageProduct {
   icon: 'book' | 'video' | 'cup' | 'gift' // 카드 좌상단 아이콘(Figma 418:1961)
   categoryKey: 'book' | 'course' | 'gift' // 필터 키(도서/온라인 강의/기프티콘)
   barPct?: number // 잔여 한도 트랙바
+  imageUrl?: string | null // 상품 이미지(blob 경로, 운영 업로드)
 }
 export interface MileageProductsData {
   balance: string

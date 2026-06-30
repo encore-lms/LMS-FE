@@ -158,6 +158,7 @@ export interface WsTask {
   due: string // "D-1"
   startDate?: string | null // YYYY-MM-DD(캘린더 반영)
   endDate?: string | null
+  assigneeMemberIds?: string[] // 담당자(멀티) ProjectMember.id
   tags: Badge[]
 }
 export interface WsColumn {
@@ -197,6 +198,7 @@ export interface WsIssue {
   status: Badge
 }
 export interface WsMember {
+  memberId?: string // ProjectMember.id(담당자 지정용)
   userId?: string
   name: string
   role: string // "백엔드·인프라"

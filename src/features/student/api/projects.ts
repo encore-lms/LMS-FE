@@ -207,3 +207,53 @@ export function useUploadArtifactFile(projectId: string) {
       qc.invalidateQueries({ queryKey: projectKeys.workspace(projectId) }),
   })
 }
+
+// 일정 추가(§48)
+export function useAddSchedule(projectId: string) {
+  return useWsMutation<{ title: string; date: string }>(
+    (id, v) => apiClient.post(`/student/projects/${id}/schedules`, v),
+    projectId,
+  )
+}
+// 성과지표 추가(§46)
+export function useAddMetric(projectId: string) {
+  return useWsMutation<{
+    label: string
+    description?: string
+    beforeValue?: string
+    afterValue?: string
+    changeLabel?: string
+    changeDirection?: string
+  }>((id, v) => apiClient.post(`/student/projects/${id}/metrics`, v), projectId)
+}
+// 트러블슈팅 연결/해제(§52)
+export function useLinkTroubleshooting(projectId: string) {
+  return useWsMutation<{ troubleshootingCaseId: string }>(
+    (id, v) =>
+      apiClient.post(`/student/projects/${id}/troubleshooting-links`, v),
+    projectId,
+  )
+}
+export function useUnlinkTroubleshooting(projectId: string) {
+  return useWsMutation<{ caseId: string }>(
+    (id, v) =>
+      apiClient.delete(
+        `/student/projects/${id}/troubleshooting-links/${v.caseId}`,
+      ),
+    projectId,
+  )
+}
+// 팀원 초대/삭제(§43)
+export function useInviteMember(projectId: string) {
+  return useWsMutation<{ userId: string; role?: string }>(
+    (id, v) => apiClient.post(`/student/projects/${id}/members`, v),
+    projectId,
+  )
+}
+export function useRemoveMember(projectId: string) {
+  return useWsMutation<{ memberId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/members/${v.memberId}`),
+    projectId,
+  )
+}

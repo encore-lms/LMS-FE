@@ -75,8 +75,6 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
                 onError: () => toast.danger('회의록 추가에 실패했어요.'),
               },
             )
-            return
-            toast.success('회의록을 작성했습니다')
           }}
         />
       )}

@@ -12,9 +12,16 @@ import {
   useAddArtifact,
   useSubmitPeerEval,
   useRequestCertification,
+  useAddSchedule,
+  useAddMetric,
+  useLinkTroubleshooting,
+  useUnlinkTroubleshooting,
+  useInviteMember,
+  useRemoveMember,
 } from '../../api/projects'
 import { tsKeys } from '../../troubleshooting/queryKeys'
 import { useProjectTsLinks } from '../../troubleshooting/projectLinks'
+import { usePeers } from '../../api/peers'
 import type { TsListData } from '../../troubleshooting/types'
 import { mockWorkspace, mockWorkspaceP3 } from '../mocks'
 import type { WorkspaceData } from '../types'
@@ -22,6 +29,7 @@ import WorkspacePage from './WorkspacePage'
 import { useProjectFlow, type ProjectPhase } from './useProjectFlow'
 
 vi.mock('../../api/projects')
+vi.mock('../../api/peers')
 
 // 이슈 탭이 useTsList로 읽는 트러블슈팅 목록 시드 — 인증 완료(ts1) + 작성 중(ts3).
 const tsListSeed: TsListData = {
@@ -96,6 +104,15 @@ function renderPage(
   vi.mocked(useAddArtifact).mockReturnValue(writeMock as never)
   vi.mocked(useSubmitPeerEval).mockReturnValue(writeMock as never)
   vi.mocked(useRequestCertification).mockReturnValue(writeMock as never)
+  vi.mocked(useAddSchedule).mockReturnValue(writeMock as never)
+  vi.mocked(useAddMetric).mockReturnValue(writeMock as never)
+  vi.mocked(useLinkTroubleshooting).mockReturnValue(writeMock as never)
+  vi.mocked(useUnlinkTroubleshooting).mockReturnValue(writeMock as never)
+  vi.mocked(useInviteMember).mockReturnValue(writeMock as never)
+  vi.mocked(useRemoveMember).mockReturnValue(writeMock as never)
+  vi.mocked(usePeers).mockReturnValue({
+    data: { items: [{ userId: 'u-os', name: '오세훈' }] },
+  } as unknown as ReturnType<typeof usePeers>)
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -141,16 +158,18 @@ describe('WorkspacePage home', () => {
     ).toBeInTheDocument()
   })
 
-  it('내 할 일 체크박스 상태를 토글한다', async () => {
+  it('내 할 일 체크 시 작업을 완료 처리한다', async () => {
     const user = userEvent.setup()
     renderPage()
 
     const checkbox = screen.getByRole('button', {
-      name: '주문 도메인 트랜잭션 격리 수준 PR 리뷰 완료 전환',
+      name: /PR 리뷰 완료 처리$/,
     })
     await user.click(checkbox)
 
-    expect(checkbox).toHaveTextContent('✓')
+    expect(
+      await screen.findByText('작업을 완료 처리했습니다'),
+    ).toBeInTheDocument()
   })
 
   it('보드 작업 추가 모달로 새 작업을 목록에 추가한다', async () => {
@@ -163,7 +182,9 @@ describe('WorkspacePage home', () => {
       '결제 웹훅 재처리',
     )
     // 담당자는 팀원 칩에서 선택(복수 가능). 시작/종료일은 기본값(오늘·다음날).
-    await user.click(screen.getByRole('button', { name: /박지호/ }))
+    const assigneeChip = screen.getByRole('button', { name: /박지호/ })
+    await user.click(assigneeChip)
+    expect(assigneeChip).toHaveTextContent('✓') // 선택 표시 반영 확인
     await user.click(screen.getByRole('button', { name: '추가' }))
 
     expect(await screen.findByText('작업을 추가했습니다')).toBeInTheDocument()
@@ -178,7 +199,6 @@ describe('WorkspacePage home', () => {
     await user.type(screen.getByPlaceholderText('내용'), '최종 리허설')
     await user.click(screen.getByRole('button', { name: '추가' }))
 
-    expect(screen.getAllByText('최종 리허설').length).toBeGreaterThan(0)
     expect(await screen.findByText('일정을 추가했습니다')).toBeInTheDocument()
   })
 
@@ -246,10 +266,6 @@ describe('WorkspacePage home', () => {
       await screen.findByText('트러블슈팅을 연결했어요'),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '완료' }))
-
-    expect(
-      screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
-    ).toBeInTheDocument()
   })
 
   it('팀원 초대 모달로 새 팀원을 추가한다', async () => {
@@ -257,14 +273,13 @@ describe('WorkspacePage home', () => {
     renderPage('/student/projects/p1?tab=team')
 
     await user.click(screen.getByRole('button', { name: '팀원 초대' }))
-    await user.type(screen.getByPlaceholderText('팀원 이름'), '오세훈')
-    // 역할은 객관식 — '기타' 선택 후 직접 입력.
-    await user.selectOptions(screen.getByLabelText('역할 선택'), '기타')
-    await user.type(screen.getByLabelText('역할 직접 입력'), '문서')
+    // 같은 기수 동료 후보(usePeers mock) 중 선택 — 동료 선택 콤보박스(첫 번째)
+    await user.selectOptions(screen.getAllByRole('combobox')[0], 'u-os')
     await user.click(screen.getByRole('button', { name: '초대' }))
 
-    expect(screen.getByText('오세훈')).toBeInTheDocument()
-    expect(await screen.findByText('팀원을 초대했습니다')).toBeInTheDocument()
+    expect(
+      await screen.findByText('오세훈 님을 초대했습니다'),
+    ).toBeInTheDocument()
   })
 
   it('성과 지표 추가 모달로 새 지표를 추가한다', async () => {
@@ -278,7 +293,6 @@ describe('WorkspacePage home', () => {
     await user.type(screen.getByPlaceholderText('+12%'), '-75%')
     await user.click(screen.getByRole('button', { name: '추가' }))
 
-    expect(screen.getByText('에러율')).toBeInTheDocument()
     expect(await screen.findByText('지표를 추가했습니다')).toBeInTheDocument()
   })
 

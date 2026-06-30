@@ -1245,83 +1245,7 @@ for (const p of mockList.projects) {
   })
 }
 
-// 프로젝트 목록은 세션 동안 가변 — 생성/삭제가 실제로 반영되도록 스토어로 관리.
-let projectStore: ProjectSummary[] = [...mockList.projects]
-let createdSeq = 0
-
-interface CreateProjectBody {
-  name: string
-  desc: string
-  start: string
-  end: string
-  teamSize: number
-  stacks: string[]
-  domain: string
-  deliverables: string[]
-}
-
 // 생성 입력 → 목록 카드. 신규는 항상 '작성 중' 상태로 시작.
-function toSummary(input: CreateProjectBody): ProjectSummary {
-  const kind: ProjectKind = input.teamSize > 1 ? 'team' : 'personal'
-  createdSeq += 1
-  return {
-    id: `new-${createdSeq}`,
-    kind,
-    kindLabel: kind === 'team' ? '팀' : '개인',
-    status: 'draft',
-    statusLabel: '작성 중',
-    representative: false,
-    accentTone: 'accent',
-    title: input.name,
-    pm: '김수강 PM',
-    teamLabel: kind === 'team' ? `팀 ${input.teamSize}명` : '개인 프로젝트',
-    period: `${input.start} ~ ${input.end} · 작성 중`,
-    tags: input.stacks,
-    outcomes: [input.domain, ...input.deliverables],
-    actionLabel: '워크스페이스 열기',
-  }
-}
-
-// 현재 스토어로 목록 응답을 재구성 — 통계/필터 카운트를 실시간 반영.
-function buildListResponse(): ProjectListData {
-  const projects = projectStore
-  const countBy = (pred: (p: ProjectSummary) => boolean) =>
-    projects.filter(pred).length
-  const team = countBy((p) => p.kind === 'team')
-  const personal = countBy((p) => p.kind === 'personal')
-  const certified = countBy((p) => p.status === 'certified')
-  const reviewing = countBy((p) => p.status === 'reviewing')
-  const draft = countBy((p) => p.status === 'draft')
-  const representative = countBy((p) => p.representative)
-  const statOverride: Record<string, { value: string; sub?: string }> = {
-    joined: {
-      value: String(projects.length),
-      sub: `팀 ${team}건 · 개인 ${personal}건`,
-    },
-    certified: { value: String(certified) },
-    reviewing: { value: String(reviewing) },
-    draft: { value: String(draft) },
-  }
-  return {
-    ...mockList,
-    stats: mockList.stats.map((s) => {
-      const o = statOverride[s.key]
-      return o ? { ...s, value: o.value, sub: o.sub ?? s.sub } : s
-    }),
-    filters: [
-      { key: 'all', label: '전체', count: projects.length },
-      { key: 'certified', label: '인증 완료', count: certified },
-      { key: 'reviewing', label: '검토 중', count: reviewing },
-      { key: 'draft', label: '작성 중', count: draft },
-      { key: 'representative', label: '대표 후보', count: representative },
-    ],
-    projects,
-    shownLabel: `${projects.length}건 모두 표시 · 인증 완료 ${certified} / 검토 중 ${reviewing} / 작성 중 ${draft}`,
-  }
-}
-
-// 신규·미등록 프로젝트의 빈 초안 워크스페이스 — 완료 배너·상호평가·인증 화면이 뜨지 않도록
-// p1 복사가 아니라 '작성 중' 기본값으로 생성한다.
 function buildDraftWorkspace(opts: {
   id: string
   title?: string
@@ -1443,32 +1367,10 @@ function buildDraftWorkspace(opts: {
   }
 }
 
+// 생성/목록/삭제는 실 BE(/student/projects, learning-service)로 전환 — MSW 미처리 → proxy bypass.
+// 워크스페이스 상세(/:projectId)·생성 마법사 카탈로그(/wizard)만 mock 유지(정본 §44~52 후속).
 export const handlers = [
-  http.get('/api/student/projects', () => ok(buildListResponse())),
   http.get('/api/student/projects/wizard', () => ok(mockWizard)),
-  http.post('/api/student/projects', async ({ request }) => {
-    const body = (await request.json()) as CreateProjectBody
-    const created = toSummary(body)
-    projectStore = [created, ...projectStore]
-    // 새 프로젝트는 '작성 중' 빈 워크스페이스로 등록 — 완료/인증 화면이 뜨지 않게.
-    workspaces[created.id] = buildDraftWorkspace({
-      id: created.id,
-      title: created.title,
-      meta:
-        created.kind === 'team'
-          ? `팀 프로젝트 · ${body.teamSize}명 · ${body.start} ~ ${body.end} · PM 김수강`
-          : `개인 프로젝트 · 1명 · ${body.start} ~ ${body.end} · PM 김수강`,
-      stack: body.stacks,
-      kind: created.kind,
-    })
-    return ok(created)
-  }),
-  http.delete('/api/student/projects/:projectId', ({ params }) => {
-    const id = String(params.projectId)
-    projectStore = projectStore.filter((p) => p.id !== id)
-    delete workspaces[id]
-    return ok({ id })
-  }),
   http.get('/api/student/projects/:projectId', ({ params }) => {
     const id = String(params.projectId)
     return ok(workspaces[id] ?? buildDraftWorkspace({ id }))

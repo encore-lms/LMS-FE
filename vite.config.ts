@@ -70,6 +70,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 수강생 프로젝트(/student/projects) 생성·목록·삭제 learning-service 실연동.
+      // 워크스페이스 상세(/:id)·생성 마법사(/wizard)는 MSW mock이 가로채 유지(핸들러 우선).
+      '/api/student/projects': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 운영 학습 기록 검토(/admin/records) learning-service 실연동(mock 제거).
       '/api/admin/records': {
         target: HRD_API_TARGET,

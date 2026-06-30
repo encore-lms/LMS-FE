@@ -90,6 +90,11 @@ export function useRecordReviewAction() {
           vars.recordId,
         ),
       })
+      // 운영 기록실 그리드(블로그·스터디)·자격증 목록도 갱신 — 처리 즉시 상태 반영
+      queryClient.invalidateQueries({ queryKey: ['admin', 'records', 'grid'] })
+      queryClient.invalidateQueries({
+        queryKey: ['admin', 'records', 'certificates'],
+      })
     },
   })
 }

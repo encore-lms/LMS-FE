@@ -36,6 +36,9 @@ export function QueueFilterBar<K extends string>({
   tabs,
   active,
   onTab,
+  cohortTabs,
+  activeCohort,
+  onCohort,
 }: {
   q: string
   onSearch: (v: string) => void
@@ -43,34 +46,63 @@ export function QueueFilterBar<K extends string>({
   tabs: QueueTab<K>[]
   active: K
   onTab: (k: K) => void
+  // 선택형 기수 필터 — 제공 시 카테고리/상태 탭 위에 기수 칩 줄을 우측 정렬로 렌더. (대시보드 기수 칩과 동일 맥락)
+  cohortTabs?: string[]
+  activeCohort?: string
+  onCohort?: (c: string) => void
 }) {
+  const showCohort = cohortTabs && cohortTabs.length > 0 && onCohort
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2">
-      <div className="border-border flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
-        <Search className="text-fg-subtle h-4 w-4" />
-        <input
-          value={q}
-          onChange={(e) => onSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label={searchPlaceholder}
-          className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
-        />
+    <>
+      {showCohort && (
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          <span className="text-fg-subtle mr-1 text-xs font-medium">기수</span>
+          {cohortTabs.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => onCohort(c)}
+              aria-pressed={activeCohort === c}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm font-medium',
+                activeCohort === c
+                  ? 'bg-accent-bg text-accent-strong'
+                  : 'text-fg-muted hover:bg-surface-muted',
+              )}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="border-border flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
+          <Search className="text-fg-subtle h-4 w-4" />
+          <input
+            value={q}
+            onChange={(e) => onSearch(e.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+          />
+        </div>
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => onTab(t.key)}
+            className={cn(
+              'rounded-md px-3 py-1.5 text-sm font-medium',
+              active === t.key
+                ? 'bg-accent-bg text-accent-strong'
+                : 'text-fg-muted hover:bg-surface-muted',
+            )}
+          >
+            {t.label}{' '}
+            <span className="text-fg-subtle text-xs">({t.count})</span>
+          </button>
+        ))}
       </div>
-      {tabs.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          onClick={() => onTab(t.key)}
-          className={cn(
-            'rounded-md px-3 py-1.5 text-sm font-medium',
-            active === t.key
-              ? 'bg-accent-bg text-accent-strong'
-              : 'text-fg-muted hover:bg-surface-muted',
-          )}
-        >
-          {t.label} <span className="text-fg-subtle text-xs">({t.count})</span>
-        </button>
-      ))}
-    </div>
+    </>
   )
 }

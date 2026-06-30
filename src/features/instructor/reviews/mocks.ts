@@ -78,6 +78,26 @@ const recordReviews: InstructorRecordReviewData = {
       status: 'rejected',
       attachments: null,
     },
+    {
+      id: 'rr-7',
+      studentName: '한소율',
+      cohortLabel: 'FE 7기',
+      category: 'blog',
+      title: 'Next.js 서버 컴포넌트 전환 회고',
+      submittedAt: '05-17 09:40',
+      status: 'pending',
+      attachments: 1,
+    },
+    {
+      id: 'rr-8',
+      studentName: '윤재호',
+      cohortLabel: 'FE 7기',
+      category: 'study',
+      title: '주차 6 — Tailwind 디자인 토큰 스터디',
+      submittedAt: '05-16 20:15',
+      status: 'approved',
+      attachments: 2,
+    },
   ],
 }
 

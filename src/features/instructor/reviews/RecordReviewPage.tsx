@@ -12,6 +12,12 @@ import type {
   InstructorRecordStatus,
 } from '@/shared/types'
 import { useRecordReviews } from '../api/reviews'
+import { COHORT_ALL, cohortOptions } from './cohort'
+import {
+  useCohortContext,
+  COHORT_ID_TO_LABEL,
+  COHORT_LABEL_TO_ID,
+} from '../cohortContext'
 import { QueueFilterBar, QueueStats } from './QueueShell'
 
 type CategoryFilter = 'all' | InstructorRecordCategory
@@ -39,20 +45,31 @@ export default function RecordReviewPage() {
   const { data, isPending, isError, refetch } = useRecordReviews()
   const [q, setQ] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
+  // 선택 기수 — 대시보드와 공유하는 공용 컨텍스트(화면 이동에도 유지).
+  const { cohortId, setCohortId } = useCohortContext()
   usePageHeader(
     '학습 기록 조회',
     '담당 기수 기록 제출·검토 현황 조회 — 승인·반려는 운영 매니저가 처리',
   )
 
+  const cohortTabs = useMemo(
+    () => cohortOptions(data?.rows ?? []),
+    [data?.rows],
+  )
+  // 공용 컨텍스트 선택 기수를 이 화면 옵션에 매핑(옵션에 없으면 전체).
+  const ctxLabel = COHORT_ID_TO_LABEL[cohortId] ?? COHORT_ALL
+  const cohort = cohortTabs.includes(ctxLabel) ? ctxLabel : COHORT_ALL
+
   const filtered = useMemo(() => {
     const rows = data?.rows ?? []
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
+      if (cohort !== COHORT_ALL && r.cohortLabel !== cohort) return false
       if (category !== 'all' && r.category !== category) return false
       if (needle && !r.studentName.toLowerCase().includes(needle)) return false
       return true
     })
-  }, [data, q, category])
+  }, [data, q, category, cohort])
 
   if (isPending) {
     return <div className="text-fg-muted p-8">기록 현황을 불러오는 중…</div>
@@ -193,6 +210,9 @@ export default function RecordReviewPage() {
         ]}
         active={category}
         onTab={setCategory}
+        cohortTabs={cohortTabs}
+        activeCohort={cohort}
+        onCohort={(c) => setCohortId(COHORT_LABEL_TO_ID[c] ?? 'all')}
       />
       <div className="mt-3">
         <DataTable

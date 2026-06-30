@@ -1,0 +1,549 @@
+import { useState } from 'react'
+import { ListChecks, TriangleAlert } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/use-toast'
+import type { WorkspaceData, WsMember } from '../../types'
+import { Avatar, Chip, SectionHead, StatBox } from '../components/ws-shared'
+import { SOLID, card } from '../components/ws-style'
+
+export function TeamTab({ d }: { d: WorkspaceData }) {
+  const toast = useToast()
+  const [members, setMembers] = useState(d.members)
+  const [inviting, setInviting] = useState(false)
+  const [openMember, setOpenMember] = useState<WsMember | null>(null)
+  const [editing, setEditing] = useState<number | null>(null)
+  const [removing, setRemoving] = useState<number | null>(null)
+  // 본인 = 첫 멤버(작성자·PM, PM 위임해도 목록 인덱스 0 유지). 본인 기여도는 수정 불가.
+  const SELF_INDEX = 0
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionHead
+        title="팀원 관리"
+        action="팀원 초대"
+        onAction={() => setInviting(true)}
+      />
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <section className={cn(card, 'flex flex-1 flex-col py-2')}>
+          {members.map((m, i) => (
+            <div
+              key={m.name}
+              className={cn(
+                'flex items-center gap-4 py-5',
+                i > 0 && 'border-divider border-t',
+              )}
+            >
+              <Avatar name={m.name} tone={m.avatarTone} />
+              <div className="flex w-40 flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-fg text-[13px] font-bold">
+                    {m.name}
+                  </span>
+                  <span
+                    className={cn(
+                      'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                      m.kind === 'PM'
+                        ? 'bg-accent-bg text-accent-strong'
+                        : 'bg-surface-muted text-fg-muted',
+                    )}
+                  >
+                    {m.kind}
+                  </span>
+                  {i === SELF_INDEX && (
+                    <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
+                      본인
+                    </span>
+                  )}
+                </div>
+                <span className="text-fg-subtle text-[11px]">
+                  기여도 {m.contrib}%
+                </span>
+                <span className="text-fg-subtle text-[11px]">{m.role}</span>
+              </div>
+              <div className="bg-surface-muted h-2 flex-1 overflow-hidden rounded-full">
+                <div
+                  className="bg-brand h-full rounded-full"
+                  style={{ width: `${m.contrib}%` }}
+                />
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenMember(m)}
+                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+                >
+                  상세
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(i)}
+                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+                >
+                  수정
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRemoving(i)}
+                  disabled={m.kind === 'PM'}
+                  title={
+                    m.kind === 'PM'
+                      ? 'PM은 삭제할 수 없어요. 다른 팀원에게 PM을 위임한 뒤 삭제하세요.'
+                      : undefined
+                  }
+                  className="border-border text-danger hover:bg-danger-bg rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+        <section className={cn(card, 'flex flex-col gap-4 lg:w-[300px]')}>
+          <span className="text-fg text-[14px] font-bold">역할 정책</span>
+          {d.rolePolicy.map((r, i) => (
+            <span key={i} className="text-fg-muted text-[12px] leading-5">
+              {i + 1}. {r}
+            </span>
+          ))}
+        </section>
+      </div>
+      {openMember && (
+        <MemberProfileModal
+          member={openMember}
+          d={d}
+          onClose={() => setOpenMember(null)}
+        />
+      )}
+      {editing !== null && members[editing] && (
+        <EditMemberModal
+          member={members[editing]}
+          isSelf={editing === SELF_INDEX}
+          othersTotal={members.reduce(
+            (acc, mm, idx) => (idx === editing ? acc : acc + mm.contrib),
+            0,
+          )}
+          onClose={() => setEditing(null)}
+          onSave={(patch) => {
+            setMembers((prev) =>
+              prev.map((mm, idx) => {
+                if (idx === editing) return { ...mm, ...patch }
+                // PM 위임 — 다른 멤버를 PM으로 지정하면 기존 PM은 팀원으로 강등.
+                if (patch.kind === 'PM' && mm.kind === 'PM')
+                  return { ...mm, kind: '팀원' }
+                return mm
+              }),
+            )
+            setEditing(null)
+            toast.success('팀원 정보를 수정했습니다')
+          }}
+        />
+      )}
+      {removing !== null && members[removing] && (
+        <Modal
+          open
+          onClose={() => setRemoving(null)}
+          title="팀원 삭제"
+          size="sm"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setRemoving(null)}
+                className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const name = members[removing].name
+                  setMembers((prev) =>
+                    prev.filter((_, idx) => idx !== removing),
+                  )
+                  setRemoving(null)
+                  toast.success(`${name} 님을 팀에서 삭제했습니다`)
+                }}
+                className="bg-danger rounded-lg px-4 py-2 text-[13px] font-bold text-white"
+              >
+                삭제
+              </button>
+            </>
+          }
+        >
+          <p className="text-fg-muted text-[13px] leading-6">
+            <span className="text-fg font-bold">{members[removing].name}</span>{' '}
+            ({members[removing].role}) 님을 팀에서 삭제할까요? 삭제하면 기여도
+            막대와 상호평가 대상에서 제외됩니다.
+          </p>
+        </Modal>
+      )}
+      {inviting && (
+        <InviteMemberModal
+          onClose={() => setInviting(false)}
+          onAdd={(member) => {
+            setMembers((prev) => [...prev, member])
+            setInviting(false)
+            toast.success('팀원을 초대했습니다')
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// 역할 객관식 — 프리셋 선택 + '기타' 직접 입력. value가 프리셋이 아니면 기타로 간주.
+const ROLE_PRESETS = [
+  '프론트엔드',
+  '백엔드',
+  '풀스택',
+  'PM',
+  '데브옵스',
+  '기획',
+  '디자인',
+]
+const fieldCls =
+  'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+
+function RoleSelect({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}) {
+  const isPreset = ROLE_PRESETS.includes(value)
+  const selectValue = isPreset ? value : '기타'
+  return (
+    <div className="flex flex-col gap-2">
+      <select
+        value={selectValue}
+        onChange={(e) =>
+          onChange(e.target.value === '기타' ? '' : e.target.value)
+        }
+        aria-label="역할 선택"
+        className={fieldCls}
+      >
+        {ROLE_PRESETS.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+        <option value="기타">기타 (직접 입력)</option>
+      </select>
+      {selectValue === '기타' && (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="역할을 직접 입력하세요"
+          aria-label="역할 직접 입력"
+          className={fieldCls}
+        />
+      )}
+    </div>
+  )
+}
+
+function InviteMemberModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void
+  onAdd: (member: WsMember) => void
+}) {
+  const [name, setName] = useState('')
+  const [role, setRole] = useState('백엔드')
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const submit = () => {
+    if (!name.trim() || !role.trim()) return
+    onAdd({
+      name: name.trim(),
+      role: role.trim(),
+      kind: '팀원',
+      contrib: 0,
+      avatarTone: 'info',
+    })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="팀원 초대"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!name.trim() || !role.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            초대
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">이름</span>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="팀원 이름"
+            className={field}
+          />
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">역할</span>
+          <RoleSelect value={role} onChange={setRole} />
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// 팀원 정보 수정 — 역할·구분(PM 위임)·기여도. 기여도 합 100% 원칙(문서 §기여도)을
+// 팀 합계로 라이브 표시해 초과 시 경고한다.
+function EditMemberModal({
+  member,
+  othersTotal,
+  isSelf,
+  onClose,
+  onSave,
+}: {
+  member: WsMember
+  othersTotal: number
+  /** 본인 여부 — 본인 기여도는 수정 불가(슬라이더 잠금). */
+  isSelf: boolean
+  onClose: () => void
+  onSave: (patch: {
+    role: string
+    contrib: number
+    kind: WsMember['kind']
+  }) => void
+}) {
+  // 기존 역할이 '백엔드 · 팀원'처럼 결합형이면 앞 전문분야만 취해 객관식과 맞춘다.
+  const [role, setRole] = useState(member.role.split(' · ')[0])
+  // 기여도는 0~100% 슬라이더로 조정(숫자 입력 대체). 본인은 잠금이라 항상 원래 값 유지.
+  const [contrib, setContrib] = useState(member.contrib)
+  const [kind, setKind] = useState<WsMember['kind']>(member.kind)
+  const field =
+    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const teamTotal = othersTotal + contrib
+  const over = teamTotal > 100
+  const submit = () => {
+    if (!role.trim()) return
+    onSave({ role: role.trim(), contrib, kind })
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="팀원 정보 수정"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!role.trim()}
+            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          >
+            저장
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <div className="bg-surface-muted flex items-center gap-3 rounded-xl p-3">
+          <Avatar name={member.name} tone={member.avatarTone} />
+          <span className="text-fg text-[14px] font-bold">{member.name}</span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">역할</span>
+          <RoleSelect value={role} onChange={setRole} />
+        </div>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">구분</span>
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as WsMember['kind'])}
+            className={field}
+          >
+            <option value="팀원">팀원</option>
+            <option value="PM">PM (위임 시 기존 PM은 팀원으로 변경)</option>
+          </select>
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-fg text-[12px] font-bold">기여도</span>
+            <span
+              className={cn(
+                'text-[13px] font-bold',
+                isSelf ? 'text-fg-subtle' : 'text-brand',
+              )}
+            >
+              {contrib}%
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={contrib}
+            onChange={(e) => setContrib(Number(e.target.value))}
+            disabled={isSelf}
+            aria-label="기여도"
+            className="accent-brand h-2 w-full cursor-pointer rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          {isSelf && (
+            <span className="text-fg-subtle text-[11px]">
+              본인 기여도는 수정할 수 없어요 · 기여도는 팀원이 평가합니다.
+            </span>
+          )}
+        </div>
+        <div
+          className={cn(
+            'rounded-lg px-3 py-2 text-[12px] font-semibold',
+            over
+              ? 'bg-danger-bg text-danger'
+              : 'bg-surface-muted text-fg-muted',
+          )}
+        >
+          팀 기여도 합계 {teamTotal}%{' '}
+          {over ? '· 100%를 초과합니다 (합 100% 권장)' : '/ 100%'}
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// 팀원 프로필 — 기여도 + 워크스페이스 데이터에서 담당 작업·이슈 집계, 상호평가 협업 태그.
+function MemberProfileModal({
+  member,
+  d,
+  onClose,
+}: {
+  member: WsMember
+  d: WorkspaceData
+  onClose: () => void
+}) {
+  // 본인(PM)은 보드/내 할 일에서 '나'로 기재되므로 별칭으로 함께 집계.
+  const aliases =
+    member.kind === 'PM' ? new Set([member.name, '나']) : new Set([member.name])
+  const boardTasks = d.columns.reduce(
+    (acc, col) => acc + col.tasks.filter((t) => aliases.has(t.assignee)).length,
+    0,
+  )
+  const myTaskCount =
+    member.kind === 'PM'
+      ? d.myTasks.filter((t) => aliases.has(t.assignee)).length
+      : 0
+  const taskCount = boardTasks + myTaskCount
+  const issueCount = d.issues.filter((it) =>
+    it.meta.includes(member.name),
+  ).length
+  const peer = d.peerTargets.find((p) => p.name === member.name)
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="팀원 프로필"
+      footer={
+        <button
+          type="button"
+          onClick={onClose}
+          className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+        >
+          닫기
+        </button>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <span
+            className={cn(
+              'flex size-16 shrink-0 items-center justify-center rounded-full text-[24px] font-bold text-white',
+              SOLID[member.avatarTone],
+            )}
+          >
+            {member.name.slice(0, 1)}
+          </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-fg text-[18px] font-bold">
+                {member.name}
+              </span>
+              <span
+                className={cn(
+                  'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                  member.kind === 'PM'
+                    ? 'bg-accent-bg text-accent-strong'
+                    : 'bg-surface-muted text-fg-muted',
+                )}
+              >
+                {member.kind}
+              </span>
+            </div>
+            <span className="text-fg-muted text-[12px]">{member.role}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-[12px]">
+            <span className="text-fg-muted">기여도</span>
+            <span className="text-fg font-bold">{member.contrib}%</span>
+          </div>
+          <div className="bg-surface-muted h-2 overflow-hidden rounded-full">
+            <div
+              className="bg-brand h-full rounded-full"
+              style={{ width: `${member.contrib}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <StatBox
+            icon={ListChecks}
+            label="담당 작업"
+            value={`${taskCount}건`}
+          />
+          <StatBox
+            icon={TriangleAlert}
+            label="담당 이슈"
+            value={`${issueCount}건`}
+          />
+        </div>
+
+        {peer && peer.tags.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className="text-fg-subtle text-[11px] font-semibold">
+              상호평가 협업 태그
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {peer.tags.map((tg, i) => (
+                <Chip key={i} badge={tg} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  )
+}

@@ -13,6 +13,9 @@ const SEED: Record<string, string[]> = {
   p2: ['ts11', 'ts8'], // 실시간 채팅 서버 — WebSocket 재연결·배포 캐시 무효화
   p3: ['ts10', 'ts12'], // 포트폴리오 REST API — CORS 프리플라이트·타임존 집계
 }
+// SEED/links에 없는 프로젝트의 빈 목록은 항상 같은 참조를 반환해야 한다.
+// (매번 새 [] 리터럴 반환 시 zustand selector가 무한 리렌더를 일으킴.)
+const EMPTY: readonly string[] = []
 
 interface ProjectTsLinksState {
   /** projectId → 연결된 사례 id[]. 키가 없으면 SEED(또는 빈 목록)로 간주. */
@@ -31,7 +34,8 @@ interface ProjectTsLinksState {
 
 export const useProjectTsLinks = create<ProjectTsLinksState>((set, get) => ({
   links: {},
-  linksFor: (projectId) => get().links[projectId] ?? SEED[projectId] ?? [],
+  linksFor: (projectId) =>
+    get().links[projectId] ?? SEED[projectId] ?? (EMPTY as string[]),
   projectIdFor: (caseId) => {
     const s = get()
     const pids = new Set([...Object.keys(SEED), ...Object.keys(s.links)])

@@ -3,9 +3,10 @@ import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { useAddTask, useUpdateTaskStatus } from '../../../api/projects'
-import type { WorkspaceData, WsColumn, WsTask } from '../../types'
+import type { WorkspaceData, WsColumn, WsMember, WsTask } from '../../types'
 import { SectionHead, TaskCard } from '../components/ws-shared'
 import { card } from '../components/ws-style'
+import { useMemberNames } from '../components/useMemberNames'
 
 export function BoardTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
@@ -14,6 +15,7 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
   const drag = useRef<{ col: number; task: number } | null>(null)
   const addTaskM = useAddTask(d.id)
   const updateStatusM = useUpdateTaskStatus(d.id)
+  const nameOf = useMemberNames()
 
   const drop = (toCol: number) => {
     const from = drag.current
@@ -87,14 +89,17 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
         <AddTaskModal
           columns={columns}
           initialCol={addCol}
+          members={d.members}
+          nameOf={nameOf}
           onClose={() => setAddCol(null)}
-          onAdd={(colIdx, task, startAt, endAt) => {
+          onAdd={(colIdx, task, startAt, endAt, assigneeMemberIds) => {
             addTaskM.mutate(
               {
                 title: task.title,
                 status: columns[colIdx].key,
                 startAt,
                 dueAt: endAt,
+                assigneeMemberIds,
               },
               {
                 onSuccess: () => {
@@ -115,17 +120,32 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
 function AddTaskModal({
   columns,
   initialCol,
+  members,
+  nameOf,
   onClose,
   onAdd,
 }: {
   columns: WsColumn[]
   initialCol: number
+  members: WsMember[]
+  nameOf: (userId: string | undefined, fallback: string) => string
   onClose: () => void
-  onAdd: (colIdx: number, task: WsTask, startAt: string, endAt: string) => void
+  onAdd: (
+    colIdx: number,
+    task: WsTask,
+    startAt: string,
+    endAt: string,
+    assigneeMemberIds: string[],
+  ) => void
 }) {
   const [colIdx, setColIdx] = useState(initialCol)
   const [title, setTitle] = useState('')
-  const [assignee, setAssignee] = useState('')
+  // 담당자(멀티) — 현재 프로젝트 팀원 중 선택(ProjectMember.id 집합)
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([])
+  const toggleAssignee = (id: string) =>
+    setAssigneeIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
   // 시작일 기본=오늘, 종료일 기본=시작일 다음날.
   const today = todayISO()
   const [startAt, setStartAt] = useState(today)
@@ -135,18 +155,25 @@ function AddTaskModal({
 
   const submit = () => {
     if (!title.trim()) return
+    // assigneeIds = ProjectMember.id 목록. 표시 이름은 멤버의 userId로 실명 매핑.
+    const names = assigneeIds.map((mid) => {
+      const m = members.find((mm) => mm.memberId === mid)
+      return nameOf(m?.userId, m?.name ?? '팀원')
+    })
     onAdd(
       colIdx,
       {
         title: title.trim(),
-        assignee: assignee.trim() || '미지정',
+        assignee: names.length ? names.join(', ') : '미지정',
         due: endAt,
         startDate: startAt,
         endDate: endAt,
+        assigneeMemberIds: assigneeIds,
         tags: [],
       },
       startAt,
       endAt,
+      assigneeIds,
     )
   }
 
@@ -200,16 +227,39 @@ function AddTaskModal({
             className={field}
           />
         </label>
-        <div className="flex gap-3">
-          <label className="flex flex-1 flex-col gap-1.5">
-            <span className="text-fg text-[12px] font-bold">담당자</span>
-            <input
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="이름"
-              className={field}
-            />
-          </label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">
+            담당자{' '}
+            <span className="text-fg-subtle font-normal">
+              (팀원 중 선택 · 복수 가능)
+            </span>
+          </span>
+          {members.length === 0 ? (
+            <span className="text-fg-subtle text-[12px]">팀원이 없어요.</span>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {members.map((m) => {
+                const mid = m.memberId ?? ''
+                const on = assigneeIds.includes(mid)
+                return (
+                  <button
+                    key={mid}
+                    type="button"
+                    onClick={() => mid && toggleAssignee(mid)}
+                    className={cn(
+                      'rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors',
+                      on
+                        ? 'border-brand bg-brand/10 text-brand'
+                        : 'border-border text-fg-muted hover:border-brand/50',
+                    )}
+                  >
+                    {on && '✓ '}
+                    {nameOf(m.userId, m.name)}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
           <label className="flex flex-1 flex-col gap-1.5">

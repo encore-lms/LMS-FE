@@ -162,8 +162,8 @@ describe('WorkspacePage home', () => {
       screen.getByPlaceholderText('작업 제목'),
       '결제 웹훅 재처리',
     )
-    await user.type(screen.getByPlaceholderText('이름'), '김수강')
-    // 시작일/종료일은 오늘·다음날 기본값이 채워져 있어 제목만 입력하면 제출 가능
+    // 담당자는 팀원 칩에서 선택(복수 가능). 시작/종료일은 기본값(오늘·다음날).
+    await user.click(screen.getByRole('button', { name: /박지호/ }))
     await user.click(screen.getByRole('button', { name: '추가' }))
 
     expect(await screen.findByText('작업을 추가했습니다')).toBeInTheDocument()

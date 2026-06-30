@@ -3,7 +3,8 @@ import { Download, FileText, Files } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddArtifact } from '../../../api/projects'
+import { apiClient } from '@/shared/api'
+import { useAddArtifact, useUploadArtifactFile } from '../../../api/projects'
 import type { WorkspaceData, WsDoc } from '../../types'
 import { Chip, DetailRow, SectionHead } from '../components/ws-shared'
 import { card, parseDocMeta } from '../components/ws-style'
@@ -14,6 +15,7 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
   const docs = d.docs
   const [adding, setAdding] = useState(false)
   const addArtifactM = useAddArtifact(d.id)
+  const uploadFileM = useUploadArtifactFile(d.id)
   const [openDoc, setOpenDoc] = useState<WsDoc | null>(null)
   const visibleDocs =
     activeCategory === '전체'
@@ -70,7 +72,20 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
         <AddDocModal
           categories={d.docCategories.filter((category) => category !== '전체')}
           onClose={() => setAdding(false)}
-          onAdd={(doc, artifactType, url) => {
+          onAdd={(doc, artifactType, url, file) => {
+            if (file) {
+              uploadFileM.mutate(
+                { title: doc.title, file },
+                {
+                  onSuccess: () => {
+                    toast.success('파일을 첨부했습니다')
+                    setAdding(false)
+                  },
+                  onError: () => toast.danger('파일 첨부에 실패했어요.'),
+                },
+              )
+              return
+            }
             addArtifactM.mutate(
               { artifactType, title: doc.title, url },
               {
@@ -103,24 +118,31 @@ function AddDocModal({
 }: {
   categories: string[]
   onClose: () => void
-  onAdd: (doc: WsDoc, artifactType: string, url: string) => void
+  onAdd: (
+    doc: WsDoc,
+    artifactType: string,
+    url: string,
+    file: File | null,
+  ) => void
 }) {
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState(categories[0] ?? '위키')
   const [url, setUrl] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
   const submit = () => {
-    if (!title.trim()) return
+    if (!title.trim() && !file) return
     onAdd(
       {
-        title: title.trim(),
+        title: (title.trim() || file?.name) ?? '',
         meta: `${category} · 방금`,
         status: { label: '초안', tone: 'info' },
         category,
       },
-      CATEGORY_TO_TYPE[category] ?? 'LINK',
+      file ? 'FILE' : (CATEGORY_TO_TYPE[category] ?? 'LINK'),
       url.trim(),
+      file,
     )
   }
 
@@ -141,7 +163,7 @@ function AddDocModal({
           <button
             type="button"
             onClick={submit}
-            disabled={!title.trim()}
+            disabled={!title.trim() && !file}
             className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
           >
             추가
@@ -181,7 +203,23 @@ function AddDocModal({
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://github.com/... (선택)"
             className={field}
+            disabled={!!file}
           />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">
+            파일 첨부 (선택)
+          </span>
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="text-fg-muted text-[12px]"
+          />
+          {file && (
+            <span className="text-fg-subtle text-[11px]">
+              {file.name} · 파일 첨부 시 링크는 무시됩니다
+            </span>
+          )}
         </label>
       </div>
     </Modal>
@@ -193,7 +231,26 @@ function AddDocModal({
 function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
   const toast = useToast()
   const { type, detail } = parseDocMeta(doc.meta)
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    // 파일 산출물(downloadUrl)이면 실제 업로드 파일을 blob으로 내려받는다.
+    if (doc.downloadUrl) {
+      try {
+        const blob = await apiClient.getBlob(doc.downloadUrl)
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = doc.title
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+        toast.success(`${doc.title} 다운로드를 시작했어요`)
+        onClose()
+      } catch {
+        toast.danger('파일을 내려받지 못했어요.')
+      }
+      return
+    }
     const content =
       `# ${doc.title}\n\n` +
       `카테고리: ${doc.category}\n` +

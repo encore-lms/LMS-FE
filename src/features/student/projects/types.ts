@@ -184,6 +184,8 @@ export interface WsDoc {
   meta: string
   status: Badge
   category: string // docCategories('API 명세'·'설계 문서'·'발표 자료'·'첨부 파일'·'위키') 중 하나
+  url?: string | null
+  downloadUrl?: string | null // 파일 산출물 다운로드 경로(blob)
 }
 export interface WsIssue {
   id?: string

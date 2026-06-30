@@ -42,11 +42,11 @@ export function QuestionPreviewModal({
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/40 p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="border-border bg-surface my-8 w-full max-w-3xl rounded-xl border"
+        className="border-border bg-surface max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-xl border"
       >
         {/* 헤더 */}
         <div className="border-divider bg-surface sticky top-0 z-10 flex items-center justify-between rounded-t-xl border-b px-6 py-4">

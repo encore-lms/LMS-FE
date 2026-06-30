@@ -530,7 +530,6 @@ export const mockWorkspace: WorkspaceData = {
       name: '김수강',
       role: '백엔드 · PM',
       kind: 'PM',
-      contrib: 40,
       avatarTone: 'accent',
     },
     {
@@ -538,7 +537,6 @@ export const mockWorkspace: WorkspaceData = {
       name: '박지호',
       role: '풀스택 · 팀원',
       kind: '팀원',
-      contrib: 25,
       avatarTone: 'warning',
     },
     {
@@ -546,7 +544,6 @@ export const mockWorkspace: WorkspaceData = {
       name: '최유나',
       role: '백엔드 · 팀원',
       kind: '팀원',
-      contrib: 20,
       avatarTone: 'info',
     },
     {
@@ -554,7 +551,6 @@ export const mockWorkspace: WorkspaceData = {
       name: '한지우',
       role: '백엔드 · 팀원',
       kind: '팀원',
-      contrib: 15,
       avatarTone: 'success',
     },
   ],
@@ -826,7 +822,6 @@ export const mockWorkspaceP2: WorkspaceData = {
       name: '예칼',
       role: 'PM · 백엔드',
       kind: 'PM',
-      contrib: 45,
       avatarTone: 'accent',
     },
     {
@@ -834,7 +829,6 @@ export const mockWorkspaceP2: WorkspaceData = {
       name: '정해린',
       role: 'WebSocket · Redis',
       kind: '팀원',
-      contrib: 30,
       avatarTone: 'info',
     },
     {
@@ -842,7 +836,6 @@ export const mockWorkspaceP2: WorkspaceData = {
       name: '오세훈',
       role: '인프라 · Nginx',
       kind: '팀원',
-      contrib: 25,
       avatarTone: 'warning',
     },
   ],
@@ -1140,7 +1133,6 @@ export const mockWorkspaceP3: WorkspaceData = {
       name: '예칼',
       role: '백엔드 (개인)',
       kind: 'PM',
-      contrib: 100,
       avatarTone: 'accent',
     },
   ],
@@ -1308,7 +1300,6 @@ function buildDraftWorkspace(opts: {
         name: '김수강',
         role: kind === 'team' ? '백엔드 · PM' : '백엔드 (개인)',
         kind: 'PM',
-        contrib: 100,
         avatarTone: 'accent',
       },
     ],

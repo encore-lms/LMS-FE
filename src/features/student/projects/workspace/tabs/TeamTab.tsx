@@ -21,7 +21,7 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
   const [openMember, setOpenMember] = useState<WsMember | null>(null)
   const [editing, setEditing] = useState<number | null>(null)
   const [removing, setRemoving] = useState<number | null>(null)
-  // 본인 = 첫 멤버(작성자·PM, PM 위임해도 목록 인덱스 0 유지). 본인 기여도는 수정 불가.
+  // 본인 = 첫 멤버(작성자·PM, PM 위임해도 목록 인덱스 0 유지).
   const SELF_INDEX = 0
   return (
     <div className="flex flex-col gap-4">
@@ -62,17 +62,9 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
                     </span>
                   )}
                 </div>
-                <span className="text-fg-subtle text-[11px]">
-                  기여도 {m.contrib}%
-                </span>
                 <span className="text-fg-subtle text-[11px]">{m.role}</span>
               </div>
-              <div className="bg-surface-muted h-2 flex-1 overflow-hidden rounded-full">
-                <div
-                  className="bg-brand h-full rounded-full"
-                  style={{ width: `${m.contrib}%` }}
-                />
-              </div>
+              <div className="flex-1" />
               <div className="flex shrink-0 items-center gap-2">
                 <button
                   type="button"
@@ -124,11 +116,6 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
       {editing !== null && members[editing] && (
         <EditMemberModal
           member={members[editing]}
-          isSelf={editing === SELF_INDEX}
-          othersTotal={members.reduce(
-            (acc, mm, idx) => (idx === editing ? acc : acc + mm.contrib),
-            0,
-          )}
           onClose={() => setEditing(null)}
           onSave={(patch) => {
             setMembers((prev) =>
@@ -188,8 +175,8 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
         >
           <p className="text-fg-muted text-[13px] leading-6">
             <span className="text-fg font-bold">{members[removing].name}</span>{' '}
-            ({members[removing].role}) 님을 팀에서 삭제할까요? 삭제하면 기여도
-            막대와 상호평가 대상에서 제외됩니다.
+            ({members[removing].role}) 님을 팀에서 삭제할까요? 삭제하면 상호평가
+            대상에서 제외됩니다.
           </p>
         </Modal>
       )}
@@ -354,38 +341,24 @@ function InviteMemberModal({
   )
 }
 
-// 팀원 정보 수정 — 역할·구분(PM 위임)·기여도. 기여도 합 100% 원칙(문서 §기여도)을
-// 팀 합계로 라이브 표시해 초과 시 경고한다.
+// 팀원 정보 수정 — 역할·구분(PM 위임).
 function EditMemberModal({
   member,
-  othersTotal,
-  isSelf,
   onClose,
   onSave,
 }: {
   member: WsMember
-  othersTotal: number
-  /** 본인 여부 — 본인 기여도는 수정 불가(슬라이더 잠금). */
-  isSelf: boolean
   onClose: () => void
-  onSave: (patch: {
-    role: string
-    contrib: number
-    kind: WsMember['kind']
-  }) => void
+  onSave: (patch: { role: string; kind: WsMember['kind'] }) => void
 }) {
   // 기존 역할이 '백엔드 · 팀원'처럼 결합형이면 앞 전문분야만 취해 객관식과 맞춘다.
   const [role, setRole] = useState(member.role.split(' · ')[0])
-  // 기여도는 0~100% 슬라이더로 조정(숫자 입력 대체). 본인은 잠금이라 항상 원래 값 유지.
-  const [contrib, setContrib] = useState(member.contrib)
   const [kind, setKind] = useState<WsMember['kind']>(member.kind)
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
-  const teamTotal = othersTotal + contrib
-  const over = teamTotal > 100
   const submit = () => {
     if (!role.trim()) return
-    onSave({ role: role.trim(), contrib, kind })
+    onSave({ role: role.trim(), kind })
   }
 
   return (
@@ -433,52 +406,12 @@ function EditMemberModal({
             <option value="PM">PM (위임 시 기존 PM은 팀원으로 변경)</option>
           </select>
         </label>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-fg text-[12px] font-bold">기여도</span>
-            <span
-              className={cn(
-                'text-[13px] font-bold',
-                isSelf ? 'text-fg-subtle' : 'text-brand',
-              )}
-            >
-              {contrib}%
-            </span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={contrib}
-            onChange={(e) => setContrib(Number(e.target.value))}
-            disabled={isSelf}
-            aria-label="기여도"
-            className="accent-brand h-2 w-full cursor-pointer rounded-full disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          {isSelf && (
-            <span className="text-fg-subtle text-[11px]">
-              본인 기여도는 수정할 수 없어요 · 기여도는 팀원이 평가합니다.
-            </span>
-          )}
-        </div>
-        <div
-          className={cn(
-            'rounded-lg px-3 py-2 text-[12px] font-semibold',
-            over
-              ? 'bg-danger-bg text-danger'
-              : 'bg-surface-muted text-fg-muted',
-          )}
-        >
-          팀 기여도 합계 {teamTotal}%{' '}
-          {over ? '· 100%를 초과합니다 (합 100% 권장)' : '/ 100%'}
-        </div>
       </div>
     </Modal>
   )
 }
 
-// 팀원 프로필 — 기여도 + 워크스페이스 데이터에서 담당 작업·이슈 집계, 상호평가 협업 태그.
+// 팀원 프로필 — 워크스페이스 데이터에서 담당 작업·이슈 집계, 상호평가 협업 태그.
 function MemberProfileModal({
   member,
   d,
@@ -546,19 +479,6 @@ function MemberProfileModal({
               </span>
             </div>
             <span className="text-fg-muted text-[12px]">{member.role}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-[12px]">
-            <span className="text-fg-muted">기여도</span>
-            <span className="text-fg font-bold">{member.contrib}%</span>
-          </div>
-          <div className="bg-surface-muted h-2 overflow-hidden rounded-full">
-            <div
-              className="bg-brand h-full rounded-full"
-              style={{ width: `${member.contrib}%` }}
-            />
           </div>
         </div>
 

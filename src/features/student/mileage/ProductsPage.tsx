@@ -55,7 +55,8 @@ function isValidUrl(s: string): boolean {
 export default function ProductsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useMileageProducts()
-  const balance = useMileageStore((s) => s.balance)
+  // 잔액은 실 BE 값(products.balance). store.submit은 구매 시뮬(BE 구매 후속) 전용.
+  const balance = data ? parseMoney(data.balance) : 0
   const submit = useMileageStore((s) => s.submit)
   const [active, setActive] = useState('all')
   const [link, setLink] = useState('')

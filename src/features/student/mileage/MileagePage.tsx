@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageOverview, useMileageProducts } from '../api/mileage'
-import { useMileageStore, parseMoney, type MileageRequest } from './store'
+import { parseMoney, type MileageRequest } from './store'
 import { ProductApplyModal } from './components/ProductApplyModal'
 import { RequestStatusModal } from './components/RequestStatusModal'
 import type { MileageProduct, Tone } from './types'
@@ -45,7 +45,8 @@ export default function MileagePage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useMileageOverview()
   const { data: productsData } = useMileageProducts()
-  const balance = useMileageStore((s) => s.balance)
+  // 잔액은 실 BE 값(overview.balance)을 표시. store.balance는 구매 시뮬(BE 구매 후속) 전용.
+  const balance = data ? parseMoney(data.balance) : 0
   usePageHeader('내 마일리지', '적립·사용 현황과 구매 요청 상태를 확인합니다.')
 
   // 구매 가능 상품 "신청" → 신청 폼(모달) → 제출 결과 모달

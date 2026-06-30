@@ -17,6 +17,7 @@ import { useCourseConfig, useCourseList } from '../api/settings'
 import { useCourseDetail } from './api'
 import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
+import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
@@ -25,6 +26,7 @@ type TabKey =
   | 'materials'
   | 'assignments'
   | 'quizzes'
+  | 'projects'
   | 'resume'
   | 'records'
   | 'settings'
@@ -33,6 +35,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'materials', label: '자료실' },
   { key: 'assignments', label: '과제' },
   { key: 'quizzes', label: '퀴즈' },
+  { key: 'projects', label: '프로젝트' },
   { key: 'resume', label: '이력서' },
   { key: 'records', label: '기록실' },
   { key: 'settings', label: '설정' },
@@ -145,7 +148,10 @@ function DescriptionPane({
 
 // 과정·기수·교과목 (/admin/education). 과정/기수 선택 + 6탭(자료실/과제/퀴즈/이력서/기록실/설정).
 export default function EducationPage() {
-  usePageHeader('과정·기수·교과목', '자료실·과제·퀴즈·이력서·기록실·설정')
+  usePageHeader(
+    '과정·기수·교과목',
+    '자료실·과제·퀴즈·프로젝트·이력서·기록실·설정',
+  )
 
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
@@ -228,6 +234,13 @@ export default function EducationPage() {
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />
+        ) : tab === 'projects' ? (
+          // 기수 프로젝트 목록(실 BE, 정본 §42·§43).
+          !courseId || !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <ProjectsPane courseId={courseId} cohortId={cohortId} />
+          )
         ) : tab === 'materials' ? (
           !courseId || !cohortId ? (
             <NeedCourse />

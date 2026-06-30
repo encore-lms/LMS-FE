@@ -82,10 +82,12 @@ export interface RecordAutoCheck {
 /** 상세 공통부 — id = 라우트 :submissionId(큐 RecordReviewItem.id와 동일 키) */
 export interface RecordSubmissionBase {
   id: string
+  studentUserId: string // 이름 join 키(BE 제공, student.name은 빈 문자열일 수 있음)
   student: { name: string; cohort: string } // '김민준' · 'DA 4기'
   submissionLabel: string // 제출물 종류 — '5주차 회고' / '코테 스터디 3회' / 'PCCP Lv.2'
   submittedAt: string // '2026-05-19 09:42'
-  status: RecordReviewStatus // 프레임은 '대기'(스터디는 보완) 상태만 디자인됨
+  // 상세는 검토 후 상태(승인·반려)까지 올 수 있어 큐 상태보다 넓다
+  status: RecordReviewStatus | 'approved' | 'rejected'
   reviewNote: string // 검토 메모(빈 문자열 = 미입력)
   mileageCandidate?: string // '후보 +2,000' / '+15,000' — RecordReviewItem.mileageCandidate와 동일 표시형
 }

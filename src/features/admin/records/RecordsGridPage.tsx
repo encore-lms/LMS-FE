@@ -218,6 +218,7 @@ export default function RecordsGridPage({
         <ReviewModal
           category={category}
           recordId={reviewId}
+          nameOf={nameOf}
           onClose={() => setReviewId(null)}
         />
       )}
@@ -325,6 +326,7 @@ function CertList({
         <ReviewModal
           category="certificate"
           recordId={reviewId}
+          nameOf={nameOf}
           onClose={() => setReviewId(null)}
         />
       )}
@@ -333,13 +335,21 @@ function CertList({
 }
 
 // 셀 클릭 검토 — 상세 + 승인/보완/반려(BE 폐루프 재활용).
+const REVIEW_STATUS: Record<string, { label: string; cls: string }> = {
+  approved: { label: '승인', cls: 'bg-success-bg text-success' },
+  pending: { label: '검토 중', cls: 'bg-warning-bg text-warning' },
+  changes_requested: { label: '보완 요청', cls: 'bg-warning-bg text-warning' },
+  rejected: { label: '반려', cls: 'bg-danger-bg text-danger' },
+}
 function ReviewModal({
   category,
   recordId,
+  nameOf,
   onClose,
 }: {
   category: RecordCategory
   recordId: string
+  nameOf: (id: string) => string
   onClose: () => void
 }) {
   const { data, isPending } = useRecordSubmissionDetail(category, recordId)
@@ -373,94 +383,148 @@ function ReviewModal({
   }
   const reasonRequired = !reason.trim()
 
+  const st = data ? (REVIEW_STATUS[data.status] ?? REVIEW_STATUS.pending) : null
+
+  // 이전 LMS BlogReviewPanel — 우측 슬라이드 패널 + 블로그 iframe 미리보기.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+    <div className="fixed inset-0 z-50 flex" onClick={onClose}>
+      <div className="flex-1 bg-black/40" />
+      <aside
+        className="flex h-full w-[760px] max-w-[92vw] flex-col bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {isPending || !data ? (
-          <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
+        {isPending || !data || !st ? (
+          <div className="text-fg-muted flex flex-1 items-center justify-center">
+            불러오는 중…
+          </div>
         ) : (
           <>
-            <div className="mb-1 flex items-center justify-between">
-              <h3 className="text-fg text-lg font-bold">
-                {data.submissionLabel}
-              </h3>
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-fg-subtle hover:text-fg text-sm"
-              >
-                닫기
-              </button>
+            {/* 헤더 — 학생명·라벨·상태·새 탭·닫기 */}
+            <div className="border-border flex items-center justify-between gap-3 border-b px-5 py-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-fg text-base font-bold">
+                    {nameOf(data.studentUserId)}
+                  </span>
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-xs font-bold',
+                      st.cls,
+                    )}
+                  >
+                    {st.label}
+                  </span>
+                </div>
+                <p className="text-fg-subtle mt-0.5 truncate text-xs">
+                  {data.submissionLabel} · {data.submittedAt}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                {data.category === 'blog' && data.externalUrl && (
+                  <a
+                    href={data.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-semibold"
+                  >
+                    새 탭 ↗
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="text-fg-subtle hover:bg-surface-muted hover:text-fg rounded-md px-2 py-1 text-sm"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <p className="text-fg-subtle mb-4 text-sm">
-              {data.student.cohort} · {data.submittedAt}
-            </p>
 
-            {data.category === 'blog' && (
-              <a
-                href={data.externalUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-brand block truncate text-sm underline"
-              >
-                {data.externalUrl}
-              </a>
-            )}
-            {data.category === 'study' && (
-              <p className="text-fg text-sm whitespace-pre-wrap">
-                {data.activityNote}
-              </p>
-            )}
-            {data.category === 'certificate' && (
-              <p className="text-fg text-sm">{data.submissionLabel}</p>
+            {/* URL 바(블로그) */}
+            {data.category === 'blog' && data.externalUrl && (
+              <div className="border-border bg-surface-muted text-fg-subtle flex items-center gap-2 border-b px-5 py-2 text-xs">
+                <span className="truncate">{data.externalUrl}</span>
+              </div>
             )}
 
-            <label className="text-fg-muted mt-5 mb-1 block text-xs font-semibold">
-              검토 메모 (보완·반려 시 필수, 수강생에게 노출)
-            </label>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              placeholder="예) URL이 비공개 상태입니다. 공개로 전환해 재제출해 주세요."
-              className="border-border focus:border-brand w-full resize-none rounded-lg border bg-white px-3 py-2 text-sm outline-none"
-            />
+            {/* 본문 — 블로그는 iframe 미리보기, 그 외는 내용 */}
+            <div className="flex-1 overflow-auto">
+              {data.category === 'blog' ? (
+                <div className="relative h-full min-h-[420px]">
+                  <iframe
+                    src={data.externalUrl}
+                    title="블로그 미리보기"
+                    className="h-full w-full"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  />
+                  <p className="text-fg-subtle bg-surface/90 pointer-events-none absolute right-2 bottom-2 rounded px-2 py-1 text-[11px]">
+                    미리보기가 보이지 않으면 우측 상단 “새 탭 ↗”으로 확인
+                  </p>
+                </div>
+              ) : data.category === 'study' ? (
+                <div className="space-y-3 p-5">
+                  <div className="text-fg-subtle text-xs">
+                    활동 시간 {data.activityHours ?? 0}시간 · 연속{' '}
+                    {data.streakCount ?? 0}회
+                  </div>
+                  <p className="text-fg text-sm whitespace-pre-wrap">
+                    {data.activityNote || '활동 내용이 없습니다.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2 p-5 text-sm">
+                  <p className="text-fg font-semibold">
+                    {data.submissionLabel}
+                  </p>
+                  {data.policyNote && (
+                    <p className="text-fg-muted">{data.policyNote}</p>
+                  )}
+                </div>
+              )}
+            </div>
 
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                disabled={reasonRequired || action.isPending}
-                onClick={() => decide('reject')}
-                className="bg-danger-bg text-danger rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40"
-              >
-                반려
-              </button>
-              <button
-                type="button"
-                disabled={reasonRequired || action.isPending}
-                onClick={() => decide('changes')}
-                className="bg-warning-bg text-warning rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40"
-              >
-                보완 요청
-              </button>
-              <button
-                type="button"
-                disabled={action.isPending}
-                onClick={() => decide('approve')}
-                className="bg-success rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
-              >
-                승인
-              </button>
+            {/* 푸터 — 메모 + 승인/보완/반려 */}
+            <div className="border-border border-t p-4">
+              <label className="text-fg-muted mb-1 block text-xs font-semibold">
+                검토 메모 (보완·반려 시 필수, 수강생에게 노출)
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={2}
+                placeholder="예) URL이 비공개 상태입니다. 공개로 전환해 재제출해 주세요."
+                className="border-border focus:border-brand w-full resize-none rounded-lg border bg-white px-3 py-2 text-sm outline-none"
+              />
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  disabled={reasonRequired || action.isPending}
+                  onClick={() => decide('reject')}
+                  className="bg-danger-bg text-danger rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40"
+                >
+                  반려
+                </button>
+                <button
+                  type="button"
+                  disabled={reasonRequired || action.isPending}
+                  onClick={() => decide('changes')}
+                  className="bg-warning-bg text-warning rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40"
+                >
+                  보완 요청
+                </button>
+                <button
+                  type="button"
+                  disabled={action.isPending}
+                  onClick={() => decide('approve')}
+                  className="bg-success rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
+                >
+                  승인
+                </button>
+              </div>
             </div>
           </>
         )}
-      </div>
+      </aside>
     </div>
   )
 }

@@ -11,7 +11,7 @@ import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import RecordReviewQueuePage from '../records/RecordReviewQueuePage'
+import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { useCourseDetail } from './api'
@@ -224,7 +224,7 @@ export default function EducationPage() {
           )
         ) : tab === 'records' ? (
           // 검토·심사 '학습 기록 검토' 흡수.
-          <RecordReviewQueuePage embedded />
+          <RecordsGridPage embedded cohortId={cohortId} />
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />

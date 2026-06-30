@@ -6,9 +6,7 @@ const AdminDashboard = lazy(() => import('./AdminDashboard'))
 const ReviewQueuePage = lazy(() => import('./certificates/ReviewQueuePage'))
 const ReviewDetailPage = lazy(() => import('./certificates/ReviewDetailPage'))
 const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
-const RecordReviewQueuePage = lazy(
-  () => import('./records/RecordReviewQueuePage'),
-)
+const RecordsGridPage = lazy(() => import('./records/RecordsGridPage'))
 const RecordReviewDetailPage = lazy(
   () => import('./records/RecordReviewDetailPage'),
 )
@@ -132,7 +130,7 @@ export const adminRoutes: RouteObject[] = [
         path: 'certificates/:certificateId/audit',
         element: <AuditLogPage />,
       },
-      { path: 'records/review', element: <RecordReviewQueuePage /> },
+      { path: 'records/review', element: <RecordsGridPage /> },
       // 검토 상세 3종 — 정적 records/review 뒤. URL 세그먼트 certificates(복수)는
       // 페이지에서 RecordCategory certificate(단수)로 매핑(detailMeta.ts).
       {

@@ -26,6 +26,7 @@ export interface RecordAttachmentRef {
 // 큐 행 + 미리보기 공용. category별로 미리보기 본문이 적응한다.
 export interface RecordReviewItem {
   id: string
+  studentUserId: string // 이름 join 키(useStudentAccounts.items[].id)
   student: { name: string; cohort: string } // cohort = "22기"
   category: RecordCategory
   title: string
@@ -42,6 +43,7 @@ export interface RecordReviewItem {
 
 // 검토 큐 요약 + 행 목록. (Figma "운영 — 학습 기록 검토 큐" 1507:10816)
 export interface RecordReviewQueue {
+  cohortId: string // 학생명 join용(useStudentAccounts)
   cohort: string // "AI 캠프 22기"
   instructor: string // 담당 강사 "김지훈"
   pendingTotal: number // 처리 대기 28
@@ -144,4 +146,22 @@ export interface RecordReviewActionRequest {
   reasonCode?: string
   studentVisibleComment: string // 수강생 기록실에 노출되는 검토 메모
   internalComment?: string // 운영 내부 메모(수강생 비노출)
+}
+
+// ── 운영 기록실 주차 제출 그리드(이전 LMS RecordsGridView) ──
+export interface RecordGridWeek {
+  no: number
+  label: string // "6월 3주차"
+}
+export interface RecordGridRow {
+  studentUserId: string
+  cells: Record<string, string> // weekNo → 'approved' | 'pending' | 'rejected'
+  recordIds: Record<string, string> // weekNo → recordId(셀 클릭 검토 진입)
+  approved: number
+  total: number
+}
+export interface RecordGrid {
+  cohortId: string
+  weeks: RecordGridWeek[]
+  rows: RecordGridRow[]
 }

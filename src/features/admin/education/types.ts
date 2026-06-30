@@ -153,3 +153,18 @@ export interface CourseDetail {
   trainingDays: string // 훈련 일수
   trainingHours: string // 훈련 시간
 }
+
+// 기수 프로젝트(정본 §42 Project·§43 ProjectMember) — 운영 조회
+export interface CohortProjectMember {
+  userId: string
+  role: string // OWNER | MEMBER
+}
+export interface CohortProject {
+  id: string
+  title: string
+  status: string // PLANNED | IN_PROGRESS | COMPLETED
+  statusLabel: string // 예정 | 진행 중 | 완료
+  createdAt: string
+  memberCount: number
+  members: CohortProjectMember[]
+}

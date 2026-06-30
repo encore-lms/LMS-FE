@@ -10,6 +10,7 @@ import type {
   InstructorAssignmentList,
   ResumeDetail,
   ResumeRow,
+  CohortProject,
 } from './types'
 
 // 과정·기수·교과목 통합 조회 훅 — 엔드포인트가 /admin/* 라 admin feature 소유.
@@ -244,5 +245,22 @@ export function useAddResumeFeedback() {
         queryKey: adminEducationKeys.resumes(courseId, cohortId),
       })
     },
+  })
+}
+
+// 기수 프로젝트 목록(정본 §42·§43) — 운영 조회
+export function useCohortProjects(
+  courseId?: string | null,
+  cohortId?: string | null,
+) {
+  return useQuery({
+    queryKey: adminEducationKeys.projects(courseId ?? '', cohortId ?? ''),
+    enabled: !!courseId && !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<
+          CohortProject[]
+        >(`/admin/courses/${courseId}/cohorts/${cohortId}/projects`)
+        .then((r) => r.data),
   })
 }

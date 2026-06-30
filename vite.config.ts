@@ -64,6 +64,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 수강생 기록실(/student/records) learning-service 실연동(mock 제거).
+      '/api/student/records': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 과제 목록·상세·제출 learning-service 실연동.
       '/api/student/course/assignments': {
         target: HRD_API_TARGET,

@@ -127,23 +127,12 @@ export function useUpdateStudyRecord(recordId: string) {
   })
 }
 
-/** (테스트 UI 전용) 운영자 검토 시뮬레이션 — 지정 기록 1건 승인/반려 후 기록실 갱신 */
-export function useSimulateReview() {
+/** 기록 삭제(실 BE) — 삭제 후 기록실 갱신 */
+export function useDeleteRecord() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      action,
-    }: {
-      id: string
-      action: 'approve' | 'reject'
-    }) =>
-      apiClient
-        .post<{ record: BlogRecord | null }>('/student/records/sim/review', {
-          id,
-          action,
-        })
-        .then((r) => r.data),
+    mutationFn: (recordId: string) =>
+      apiClient.delete(`/student/records/${recordId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: recordKeys.overview() }),
   })
 }

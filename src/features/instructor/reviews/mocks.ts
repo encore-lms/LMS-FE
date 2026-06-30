@@ -27,6 +27,15 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: '05-17 21:14',
       status: 'pending',
       attachments: 1,
+      url: 'https://blog.example.com/park-jh/usememo',
+      body: 'useMemo 남용 사례와 의존성 배열 점검 체크리스트, 렌더 카운트 측정 결과를 정리했습니다.',
+      managerComment: null,
+      attachmentFiles: [
+        {
+          name: 'usememo-benchmark.png',
+          url: 'https://files.example.com/rr-1/usememo-benchmark.png',
+        },
+      ],
     },
     {
       id: 'rr-2',
@@ -37,6 +46,19 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: '05-17 18:02',
       status: 'pending',
       attachments: 2,
+      url: null,
+      body: 'ROW_NUMBER·RANK·LAG/LEAD 실습과 파티션 기준 비교, 스터디원 3명 풀이 공유.',
+      managerComment: null,
+      attachmentFiles: [
+        {
+          name: 'sql-window-notes.pdf',
+          url: 'https://files.example.com/rr-2/sql-window-notes.pdf',
+        },
+        {
+          name: 'study-room.jpg',
+          url: 'https://files.example.com/rr-2/study-room.jpg',
+        },
+      ],
     },
     {
       id: 'rr-3',
@@ -47,6 +69,16 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: '05-16 14:30',
       status: 'changes_requested',
       attachments: 1,
+      url: 'https://license.example.com/verify/eng-info',
+      body: '정보처리기사 필기 합격 증빙 캡처와 수험번호 첨부.',
+      managerComment:
+        '합격증 원본(PDF)과 발급 기관에서 조회 가능한 링크를 추가로 제출해 주세요.',
+      attachmentFiles: [
+        {
+          name: 'eng-info-written-pass.png',
+          url: 'https://files.example.com/rr-3/eng-info-written-pass.png',
+        },
+      ],
     },
     {
       id: 'rr-4',
@@ -57,6 +89,9 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: '05-15 23:45',
       status: 'pending',
       attachments: null,
+      url: 'https://blog.example.com/choi-yj/pca',
+      body: 'PCA 주성분 수에 따른 분산 보존율과 시각화, 한계를 정리했습니다.',
+      managerComment: null,
     },
     {
       id: 'rr-5',
@@ -67,6 +102,15 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: '05-15 11:20',
       status: 'approved',
       attachments: 1,
+      url: null,
+      body: '협업 필터링 vs 콘텐츠 기반 비교, MovieLens 실습 결과 정리.',
+      managerComment: '핵심 개념 정리가 충실합니다. 승인합니다.',
+      attachmentFiles: [
+        {
+          name: 'recsys-summary.pdf',
+          url: 'https://files.example.com/rr-5/recsys-summary.pdf',
+        },
+      ],
     },
     {
       id: 'rr-6',
@@ -77,6 +121,10 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: null,
       status: 'rejected',
       attachments: null,
+      url: null,
+      body: 'SQLD 취득 증빙(캡처 1장) 제출.',
+      managerComment:
+        '제출한 캡처로는 본인·발급일 확인이 어렵습니다. 공식 증빙으로 재제출이 필요해 반려했습니다.',
     },
     {
       id: 'rr-7',
@@ -87,6 +135,15 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: '05-17 09:40',
       status: 'pending',
       attachments: 1,
+      url: 'https://blog.example.com/han-sy/rsc',
+      body: 'RSC 도입 시 데이터 패칭·번들 변화와 클라이언트 경계 설계를 회고했습니다.',
+      managerComment: null,
+      attachmentFiles: [
+        {
+          name: 'rsc-bundle-graph.png',
+          url: 'https://files.example.com/rr-7/rsc-bundle-graph.png',
+        },
+      ],
     },
     {
       id: 'rr-8',
@@ -97,6 +154,19 @@ const recordReviews: InstructorRecordReviewData = {
       submittedAt: '05-16 20:15',
       status: 'approved',
       attachments: 2,
+      url: null,
+      body: '@theme 토큰 설계와 다크모드 대응, 팀 컨벤션 제안 정리.',
+      managerComment: '토큰 설계 근거가 명확합니다. 승인합니다.',
+      attachmentFiles: [
+        {
+          name: 'theme-tokens.md',
+          url: 'https://files.example.com/rr-8/theme-tokens.md',
+        },
+        {
+          name: 'darkmode-demo.png',
+          url: 'https://files.example.com/rr-8/darkmode-demo.png',
+        },
+      ],
     },
   ],
 }

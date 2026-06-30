@@ -25,6 +25,10 @@ export interface InstructorRecordRow {
   submittedAt: string | null // '05-17 21:14'
   status: InstructorRecordStatus
   attachments: number | null // 📎 N (null = '-')
+  url: string | null // 제출 링크(블로그·자격증 등) · 스터디 등은 null
+  body: string // 본문 미리보기
+  managerComment: string | null // 매니저 코멘트(승인/반려/보완) · 대기는 null
+  attachmentFiles?: { name: string; url: string }[] // 첨부 파일(클릭 시 열람) · 없으면 생략
 }
 
 export interface InstructorRecordReviewData {

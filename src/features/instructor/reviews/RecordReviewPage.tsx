@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import type {
   InstructorRecordCategory,
@@ -19,6 +18,7 @@ import {
   COHORT_LABEL_TO_ID,
 } from '../cohortContext'
 import { QueueFilterBar, QueueStats } from './QueueShell'
+import { RecordDetailPanel } from './RecordDetailPanel'
 
 type CategoryFilter = 'all' | InstructorRecordCategory
 
@@ -41,8 +41,8 @@ const STATUS_META: Record<
 // 학습 기록 조회 (/instructor/records/review) — §13. (Figma 1422:10009)
 // 조회 전용 큐 — 승인·반려·보완요청은 /admin/records/review 매니저 단독.
 export default function RecordReviewPage() {
-  const toast = useToast()
   const { data, isPending, isError, refetch } = useRecordReviews()
+  const [selected, setSelected] = useState<InstructorRecordRow | null>(null)
   const [q, setQ] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   // 선택 기수 — 대시보드와 공유하는 공용 컨텍스트(화면 이동에도 유지).
@@ -144,39 +144,6 @@ export default function RecordReviewPage() {
           </span>
         ),
     },
-    {
-      key: 'actions',
-      header: '보기',
-      className: 'w-32',
-      cell: (r) => (
-        <div className="flex gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              toast.info(
-                `${r.title} ${STATUS_META[r.status].action} — 후속 화면 (mock)`,
-              )
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
-          >
-            {STATUS_META[r.status].action}
-          </button>
-          {r.status !== 'pending' && r.status !== 'rejected' && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                toast.info(`${r.title} 상세 — 후속 화면 (mock)`)
-              }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
-            >
-              상세
-            </button>
-          )}
-        </div>
-      ),
-    },
   ]
 
   return (
@@ -219,6 +186,7 @@ export default function RecordReviewPage() {
           columns={columns}
           rows={filtered}
           rowKey={(r) => r.id}
+          onRowClick={(r) => setSelected(r)}
           empty="조건에 맞는 기록이 없어요"
         />
       </div>
@@ -226,6 +194,7 @@ export default function RecordReviewPage() {
         조회 전용 — 승인·반려·보완 요청 처리는 운영
         매니저(/admin/records/review) 단독 권한입니다
       </p>
+      <RecordDetailPanel row={selected} onClose={() => setSelected(null)} />
     </div>
   )
 }

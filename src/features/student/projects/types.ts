@@ -152,6 +152,7 @@ export interface Badge {
   tone: Tone
 }
 export interface WsTask {
+  id?: string
   title: string
   assignee: string
   due: string // "D-1"
@@ -185,6 +186,7 @@ export interface WsDoc {
   category: string // docCategories('API 명세'·'설계 문서'·'발표 자료'·'첨부 파일'·'위키') 중 하나
 }
 export interface WsIssue {
+  id?: string
   title: string
   meta: string
   priority: Badge
@@ -205,6 +207,7 @@ export interface WsMetric {
   good: boolean
 }
 export interface WsPeerTarget {
+  memberId?: string
   name: string
   role: string
   axes: { key: string; score: number }[]

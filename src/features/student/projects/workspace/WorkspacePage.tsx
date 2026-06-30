@@ -25,7 +25,15 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
-import { useProjectWorkspace } from '../../api/projects'
+import {
+  useProjectWorkspace,
+  useAddTask,
+  useUpdateTaskStatus,
+  useAddMeeting,
+  useAddArtifact,
+  useSubmitPeerEval,
+  useRequestCertification,
+} from '../../api/projects'
 import { useTsList } from '../../api/troubleshooting'
 import { TsCaseCard } from '../../troubleshooting/components/TsCaseCard'
 import { useProjectTsLinks } from '../../troubleshooting/projectLinks'
@@ -755,28 +763,29 @@ function HomeTab({
 /* ── 보드 ── */
 function BoardTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
-  const [columns, setColumns] = useState(d.columns)
+  const columns = d.columns
   const [addCol, setAddCol] = useState<number | null>(null)
   const drag = useRef<{ col: number; task: number } | null>(null)
+  const addTaskM = useAddTask(d.id)
+  const updateStatusM = useUpdateTaskStatus(d.id)
 
   const drop = (toCol: number) => {
     const from = drag.current
     drag.current = null
     if (!from || from.col === toCol) return
-    setColumns((cols) => {
-      const next = cols.map((c) => ({ ...c, tasks: [...c.tasks] }))
-      const [moved] = next[from.col].tasks.splice(from.task, 1)
-      if (moved) next[toCol].tasks.push(moved)
-      return next
-    })
-    toast.info('작업 상태를 변경했습니다')
-  }
-  const addTask = (colIdx: number, task: WsTask) =>
-    setColumns((cols) =>
-      cols.map((c, i) =>
-        i === colIdx ? { ...c, tasks: [...c.tasks, task] } : c,
-      ),
+    const moved = columns[from.col]?.tasks[from.task]
+    if (!moved?.id) {
+      toast.danger('상태를 변경할 수 없는 작업이에요.')
+      return
+    }
+    updateStatusM.mutate(
+      { taskId: moved.id, status: columns[toCol].key },
+      {
+        onSuccess: () => toast.info('작업 상태를 변경했습니다'),
+        onError: () => toast.danger('상태 변경에 실패했어요.'),
+      },
     )
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -810,7 +819,7 @@ function BoardTab({ d }: { d: WorkspaceData }) {
             </div>
             {col.tasks.map((t, ti) => (
               <div
-                key={ti}
+                key={t.id ?? ti}
                 draggable
                 onDragStart={() => {
                   drag.current = { col: ci, task: ti }
@@ -833,10 +842,17 @@ function BoardTab({ d }: { d: WorkspaceData }) {
           columns={columns}
           initialCol={addCol}
           onClose={() => setAddCol(null)}
-          onAdd={(colIdx, task) => {
-            addTask(colIdx, task)
-            setAddCol(null)
-            toast.success('작업을 추가했습니다')
+          onAdd={(colIdx, task, dueAt) => {
+            addTaskM.mutate(
+              { title: task.title, status: columns[colIdx].key, dueAt },
+              {
+                onSuccess: () => {
+                  toast.success('작업을 추가했습니다')
+                  setAddCol(null)
+                },
+                onError: () => toast.danger('작업 추가에 실패했어요.'),
+              },
+            )
           }}
         />
       )}
@@ -854,7 +870,7 @@ function AddTaskModal({
   columns: WsColumn[]
   initialCol: number
   onClose: () => void
-  onAdd: (colIdx: number, task: WsTask) => void
+  onAdd: (colIdx: number, task: WsTask, dueAt?: string) => void
 }) {
   const [colIdx, setColIdx] = useState(initialCol)
   const [title, setTitle] = useState('')
@@ -1276,9 +1292,10 @@ function AddScheduleModal({
 /* ── 회의록 ── */
 function MeetingsTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
-  const [meetings, setMeetings] = useState(d.meetings)
+  const meetings = d.meetings
   const [adding, setAdding] = useState(false)
   const [openMeeting, setOpenMeeting] = useState<WsMeeting | null>(null)
+  const addMeetingM = useAddMeeting(d.id)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -1323,9 +1340,18 @@ function MeetingsTab({ d }: { d: WorkspaceData }) {
       {adding && (
         <AddMeetingModal
           onClose={() => setAdding(false)}
-          onAdd={(meeting) => {
-            setMeetings((prev) => [meeting, ...prev])
-            setAdding(false)
+          onAdd={(meeting, body, heldAt) => {
+            addMeetingM.mutate(
+              { title: meeting.title, body, heldAt },
+              {
+                onSuccess: () => {
+                  toast.success('회의록을 추가했습니다')
+                  setAdding(false)
+                },
+                onError: () => toast.danger('회의록 추가에 실패했어요.'),
+              },
+            )
+            return
             toast.success('회의록을 작성했습니다')
           }}
         />
@@ -1339,7 +1365,7 @@ function AddMeetingModal({
   onAdd,
 }: {
   onClose: () => void
-  onAdd: (meeting: WsMeeting) => void
+  onAdd: (meeting: WsMeeting, body: string, heldAt: string) => void
 }) {
   const [title, setTitle] = useState('')
   const now = new Date()
@@ -1351,12 +1377,16 @@ function AddMeetingModal({
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
   const submit = () => {
     if (!title.trim() || !summary.trim()) return
-    onAdd({
-      title: title.trim(),
-      meta: `${date} · 참석 4명`,
-      summary: summary.trim(),
-      status: { label: '진행', tone: 'warning' },
-    })
+    onAdd(
+      {
+        title: title.trim(),
+        meta: `${date} · 참석 4명`,
+        summary: summary.trim(),
+        status: { label: '진행', tone: 'warning' },
+      },
+      summary.trim(),
+      date,
+    )
   }
 
   return (
@@ -1516,8 +1546,9 @@ function MeetingDetailModal({
 function DocsTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
   const [activeCategory, setActiveCategory] = useState('전체')
-  const [docs, setDocs] = useState(d.docs)
+  const docs = d.docs
   const [adding, setAdding] = useState(false)
+  const addArtifactM = useAddArtifact(d.id)
   const [openDoc, setOpenDoc] = useState<WsDoc | null>(null)
   const visibleDocs =
     activeCategory === '전체'
@@ -1574,10 +1605,17 @@ function DocsTab({ d }: { d: WorkspaceData }) {
         <AddDocModal
           categories={d.docCategories.filter((category) => category !== '전체')}
           onClose={() => setAdding(false)}
-          onAdd={(doc) => {
-            setDocs((prev) => [doc, ...prev])
-            setAdding(false)
-            toast.success('문서를 추가했습니다')
+          onAdd={(doc, artifactType, url) => {
+            addArtifactM.mutate(
+              { artifactType, title: doc.title, url },
+              {
+                onSuccess: () => {
+                  toast.success('문서를 추가했습니다')
+                  setAdding(false)
+                },
+                onError: () => toast.danger('문서 추가에 실패했어요.'),
+              },
+            )
           }}
         />
       )}
@@ -1585,6 +1623,14 @@ function DocsTab({ d }: { d: WorkspaceData }) {
   )
 }
 
+// 화면 카테고리 → BE artifactType(§50)
+const CATEGORY_TO_TYPE: Record<string, string> = {
+  'API 명세': 'GITHUB',
+  '설계 문서': 'DOCUMENT',
+  '발표 자료': 'PRESENTATION',
+  '첨부 파일': 'FILE',
+  위키: 'LINK',
+}
 function AddDocModal({
   categories,
   onClose,
@@ -1592,20 +1638,25 @@ function AddDocModal({
 }: {
   categories: string[]
   onClose: () => void
-  onAdd: (doc: WsDoc) => void
+  onAdd: (doc: WsDoc, artifactType: string, url: string) => void
 }) {
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState(categories[0] ?? '위키')
+  const [url, setUrl] = useState('')
   const field =
     'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
   const submit = () => {
     if (!title.trim()) return
-    onAdd({
-      title: title.trim(),
-      meta: `${category} · 방금`,
-      status: { label: '초안', tone: 'info' },
-      category,
-    })
+    onAdd(
+      {
+        title: title.trim(),
+        meta: `${category} · 방금`,
+        status: { label: '초안', tone: 'info' },
+        category,
+      },
+      CATEGORY_TO_TYPE[category] ?? 'LINK',
+      url.trim(),
+    )
   }
 
   return (
@@ -1657,6 +1708,15 @@ function AddDocModal({
               </option>
             ))}
           </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-fg text-[12px] font-bold">링크 URL</span>
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://github.com/... (선택)"
+            className={field}
+          />
         </label>
       </div>
     </Modal>
@@ -2623,6 +2683,35 @@ function PeerTab({ d }: { d: WorkspaceData }) {
   )
   const [comments, setComments] = useState<Record<string, string>>({})
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
+  const submitPeerM = useSubmitPeerEval(d.id)
+  // 축 라벨(BE 한글 key) → 제출 필드 매핑
+  const AXIS_KEYS = ['협업', '소통', '책임감', '문제해결', '기술기여']
+  const submitAll = () => {
+    const targets = d.peerTargets.filter((t) => t.memberId)
+    if (targets.length === 0) {
+      toast.danger('평가할 팀원이 없어요.')
+      return
+    }
+    Promise.all(
+      targets.map((t) =>
+        submitPeerM.mutateAsync({
+          targetMemberId: t.memberId!,
+          collaboration: scores[`${t.name}:협업`] ?? 0,
+          communication: scores[`${t.name}:소통`] ?? 0,
+          responsibility: scores[`${t.name}:책임감`] ?? 0,
+          problemSolving: scores[`${t.name}:문제해결`] ?? 0,
+          technicalContribution: scores[`${t.name}:기술기여`] ?? 0,
+          comment: comments[t.name] ?? '',
+        }),
+      ),
+    )
+      .then(() => {
+        setSubmitted(true)
+        toast.success('상호평가를 제출했습니다')
+      })
+      .catch(() => toast.danger('상호평가 제출에 실패했어요.'))
+  }
+  void AXIS_KEYS
   const setScore = (name: string, key: string, score: number) =>
     setScores((prev) => ({ ...prev, [`${name}:${key}`]: score }))
 
@@ -2746,13 +2835,11 @@ function PeerTab({ d }: { d: WorkspaceData }) {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setSubmitted(true)
-              toast.success('상호평가를 제출했습니다')
-            }}
-            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
+            onClick={submitAll}
+            disabled={submitPeerM.isPending}
+            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:opacity-50"
           >
-            제출
+            {submitPeerM.isPending ? '제출 중…' : '제출'}
           </button>
         </div>
       </div>
@@ -2768,6 +2855,7 @@ function CertTab({ d }: { d: WorkspaceData }) {
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const setPhase = useProjectFlow((s) => s.setPhase)
   const editRequest = useProjectFlow((s) => s.editRequests[d.id])
+  const requestCertM = useRequestCertification(d.id)
   // 만료된 승인은 잠금으로 표시(자동 잠금 정리는 변경 제안 화면에서 수행).
   const editStatus = isEditWindowExpired(editRequest)
     ? 'none'
@@ -2778,8 +2866,13 @@ function CertTab({ d }: { d: WorkspaceData }) {
       toast.warning('요청 전 체크리스트를 모두 완료해 주세요')
       return
     }
-    setPhase(d.id, 'reviewing')
-    toast.success('인증 요청을 제출했습니다')
+    requestCertM.mutate(undefined, {
+      onSuccess: () => {
+        setPhase(d.id, 'reviewing')
+        toast.success('인증 요청을 제출했습니다')
+      },
+      onError: () => toast.danger('인증 요청에 실패했어요.'),
+    })
   }
   return (
     <div className="flex flex-col gap-4">

@@ -43,13 +43,23 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: async (input: CreateProjectInput) => {
+      // BE(/student/projects, §42/§48/§45) 계약으로 변환 — name→title, 기간·스택 저장.
+      const body = {
+        title: input.name,
+        kind: input.teamSize > 1 ? 'team' : 'personal',
+        teamSize: input.teamSize,
+        start: input.start,
+        end: input.end,
+        stacks: input.stacks,
+        // 팀원(memberUserIds)은 같은 기수 후보 실 BE 후속 — 현재는 본인 OWNER만
+      }
       const res = await apiClient.post<ProjectSummary>(
         '/student/projects',
-        input,
+        body,
       )
       return res.data
     },
-    // 생성 후 목록을 다시 불러와 서버(mock)가 영속화한 새 프로젝트를 반영.
+    // 생성 후 목록을 다시 불러와 새 프로젝트를 반영.
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
     },

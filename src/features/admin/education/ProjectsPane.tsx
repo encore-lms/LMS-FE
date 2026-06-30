@@ -81,7 +81,25 @@ export function ProjectsPane({
                 <span>대표 {owner ? nameOf(owner.userId) : '미지정'}</span>
                 <span className="text-fg-subtle">·</span>
                 <span>멤버 {p.memberCount}명</span>
+                {p.period && (
+                  <>
+                    <span className="text-fg-subtle">·</span>
+                    <span>{p.period}</span>
+                  </>
+                )}
               </div>
+              {p.tags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {p.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="bg-surface-muted text-fg-muted rounded-md px-2 py-0.5 text-xs"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {p.members.map((m) => (
                   <span

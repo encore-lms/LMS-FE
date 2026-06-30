@@ -4,7 +4,6 @@ import type {
   CourseMaterials,
   MaterialCategory,
   MaterialItem,
-  ShareMaterialInput,
 } from './types'
 
 // "나의 과정" mock — 기능 로컬. 자동 수집 규약: `export const handlers`
@@ -170,7 +169,7 @@ const mockCourseHome: CourseHome = {
 
 // 학생 공유 자료가 쌓이도록 가변 배열로 둔다(공유 POST가 맨 앞에 prepend).
 // 카테고리 칩 카운트·페이지 수는 항목 개수에서 파생(buildMaterials)되어 자료가 늘면 자동 반영된다.
-let materialItems: MaterialItem[] = [
+const materialItems: MaterialItem[] = [
   {
     id: 'm1',
     fileType: 'PDF',
@@ -432,8 +431,6 @@ let materialItems: MaterialItem[] = [
   },
 ]
 
-let nextSharedId = 1
-
 // 카테고리 칩 카운트는 항목에서 파생 — 자료가 늘면 칩 숫자·페이지 수가 자동 반영(불일치 방지).
 function buildMaterials(): CourseMaterials {
   const count = (k: MaterialCategory) =>
@@ -463,39 +460,5 @@ export const handlers = [
           ok<CourseMaterials>(buildMaterials()),
         ),
       ]),
-  // 학생 자료 공유 — 새 항목을 맨 앞에 추가(본인 소유로 표시). 목록 invalidate 시 반영된다.
-  http.post('/api/student/course/materials', async ({ request }) => {
-    const body = (await request.json()) as ShareMaterialInput
-    const isLink = body.fileType === 'LINK'
-    const item: MaterialItem = {
-      id: `m-shared-${nextSharedId++}`,
-      fileType: body.fileType,
-      category: 'shared',
-      title: body.title,
-      author: '테스트 사용자',
-      timeAgo: '방금 전',
-      downloadCount: isLink ? undefined : 0,
-      sizeLabel: body.sizeLabel,
-      favorited: false,
-      canPreview: body.fileType === 'PDF' || body.fileType === 'IMG',
-      isExternalLink: isLink || undefined,
-      fileUrl: body.fileUrl,
-      ownedByMe: true,
-    }
-    materialItems = [item, ...materialItems]
-    return ok<MaterialItem>(item)
-  }),
   // 학생 공유 자료 삭제 — 본인 소유(ownedByMe)만 허용. 공식 자료는 403으로 막는다.
-  http.delete('/api/student/course/materials/:id', ({ params }) => {
-    const id = String(params.id)
-    const target = materialItems.find((it) => it.id === id)
-    if (!target?.ownedByMe) {
-      return HttpResponse.json(
-        { message: '본인이 올린 자료만 삭제할 수 있습니다.' },
-        { status: 403 },
-      )
-    }
-    materialItems = materialItems.filter((it) => it.id !== id)
-    return ok<{ id: string }>({ id })
-  }),
 ]

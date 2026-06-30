@@ -193,6 +193,7 @@ export interface WsIssue {
   status: Badge
 }
 export interface WsMember {
+  userId?: string
   name: string
   role: string // "백엔드·인프라"
   kind: 'PM' | '팀원'

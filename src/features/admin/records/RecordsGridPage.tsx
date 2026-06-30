@@ -11,6 +11,7 @@ import type {
   RecordGridRow,
 } from '@/shared/types'
 import {
+  useAdminCertificates,
   useRecordReviewAction,
   useRecordSubmissionDetail,
   useRecordsGrid,
@@ -67,6 +68,12 @@ export default function RecordsGridPage({
   }, [grid])
 
   const weeks = grid?.weeks ?? []
+
+  const nameOf = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const s of students?.items ?? []) m.set(s.id, s.name)
+    return (id: string) => m.get(id) || '(이름 미확인)'
+  }, [students])
 
   const rows = useMemo(() => {
     const needle = q.trim()
@@ -128,19 +135,15 @@ export default function RecordsGridPage({
         </div>
       </div>
 
-      {isPending ? (
+      {category === 'certificate' ? (
+        <CertList cohortId={cohortId} nameOf={nameOf} q={q} />
+      ) : isPending ? (
         <div className="text-fg-muted py-16 text-center">불러오는 중…</div>
       ) : isError ? (
         <Empty
           icon={<AlertTriangle />}
           title="제출 현황을 불러오지 못했어요"
           action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      ) : category !== 'blog' ? (
-        <Empty
-          icon={<AlertTriangle />}
-          title={`${CATEGORY_TABS.find((t) => t.key === category)?.label} 그리드는 준비 중이에요`}
-          description="블로그 주차 제출 현황을 먼저 제공합니다."
         />
       ) : rows.length === 0 ? (
         <Empty
@@ -219,6 +222,113 @@ export default function RecordsGridPage({
         />
       )}
     </div>
+  )
+}
+
+// 자격증 탭 — 주차 무관, 수강생별 자격증 제출 목록 + 검토(이전 LMS CertificateReviewView).
+const CERT_STATUS: Record<string, { label: string; cls: string }> = {
+  approved: { label: '승인', cls: 'bg-success-bg text-success' },
+  pending: { label: '검토 중', cls: 'bg-warning-bg text-warning' },
+  rejected: { label: '반려·보완', cls: 'bg-danger-bg text-danger' },
+}
+function CertList({
+  cohortId,
+  nameOf,
+  q,
+}: {
+  cohortId: string
+  nameOf: (id: string) => string
+  q: string
+}) {
+  const { data, isPending, isError, refetch } = useAdminCertificates(cohortId)
+  const [reviewId, setReviewId] = useState<string | null>(null)
+  const needle = q.trim()
+  const items = (data ?? []).filter(
+    (c) => !needle || nameOf(c.studentUserId).includes(needle),
+  )
+
+  if (isPending) {
+    return <div className="text-fg-muted py-16 text-center">불러오는 중…</div>
+  }
+  if (isError) {
+    return (
+      <Empty
+        icon={<AlertTriangle />}
+        title="자격증 제출을 불러오지 못했어요"
+        action={<Button onClick={() => refetch()}>다시 시도</Button>}
+      />
+    )
+  }
+  if (items.length === 0) {
+    return (
+      <Empty
+        icon={<AlertTriangle />}
+        title="자격증 제출이 없어요"
+        description="수강생이 자격증을 제출하면 여기에서 검토합니다."
+      />
+    )
+  }
+
+  return (
+    <>
+      <div className="border-border overflow-hidden rounded-xl border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-surface-muted text-fg-subtle">
+              <th className="px-4 py-3 text-left font-semibold">수강생</th>
+              <th className="px-4 py-3 text-left font-semibold">자격증</th>
+              <th className="px-4 py-3 text-left font-semibold">취득일</th>
+              <th className="px-4 py-3 text-left font-semibold">제출</th>
+              <th className="px-4 py-3 text-center font-semibold">상태</th>
+              <th className="px-4 py-3 text-right font-semibold">검토</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((c) => {
+              const st = CERT_STATUS[c.status] ?? CERT_STATUS.pending
+              return (
+                <tr key={c.recordId} className="border-border border-t">
+                  <td className="text-fg px-4 py-2.5 font-medium">
+                    {nameOf(c.studentUserId)}
+                  </td>
+                  <td className="text-fg px-4 py-2.5">{c.certificateName}</td>
+                  <td className="text-fg-muted px-4 py-2.5">{c.acquiredAt}</td>
+                  <td className="text-fg-muted px-4 py-2.5 text-xs">
+                    {c.submittedAt}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    <span
+                      className={cn(
+                        'inline-block rounded-full px-2.5 py-1 text-xs font-bold',
+                        st.cls,
+                      )}
+                    >
+                      {st.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setReviewId(c.recordId)}
+                      className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-1 text-xs font-semibold"
+                    >
+                      검토
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {reviewId && (
+        <ReviewModal
+          category="certificate"
+          recordId={reviewId}
+          onClose={() => setReviewId(null)}
+        />
+      )}
+    </>
   )
 }
 

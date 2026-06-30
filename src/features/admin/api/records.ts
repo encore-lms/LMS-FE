@@ -4,6 +4,7 @@ import type {
   RecordCategory,
   RecordDecision,
   RecordGrid,
+  AdminCertItem,
   RecordReviewActionRequest,
   RecordReviewQueue,
 } from '@/shared/types'
@@ -97,11 +98,26 @@ export function useRecordReviewAction() {
 export function useRecordsGrid(category: string, cohortId?: string | null) {
   return useQuery({
     queryKey: ['admin', 'records', 'grid', category, cohortId ?? ''],
-    enabled: !!cohortId,
+    enabled: !!cohortId && category !== 'certificate', // 자격증은 그리드 아닌 목록
+
     queryFn: () =>
       apiClient
         .get<RecordGrid>('/admin/records/grid', {
           category,
+          ...(cohortId ? { cohortId } : {}),
+        })
+        .then((r) => r.data),
+  })
+}
+
+// 운영 자격증 목록 — GET /admin/records/certificates?cohortId=
+export function useAdminCertificates(cohortId?: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'records', 'certificates', cohortId ?? ''],
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<AdminCertItem[]>('/admin/records/certificates', {
           ...(cohortId ? { cohortId } : {}),
         })
         .then((r) => r.data),

@@ -165,3 +165,13 @@ export interface RecordGrid {
   weeks: RecordGridWeek[]
   rows: RecordGridRow[]
 }
+
+// 운영 자격증 목록 항목(주차 무관 — 수강생별 자격증 제출 + 검토)
+export interface AdminCertItem {
+  recordId: string
+  studentUserId: string
+  certificateName: string
+  acquiredAt: string
+  submittedAt: string
+  status: string // 'approved' | 'pending' | 'rejected'
+}

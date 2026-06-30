@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageProducts } from '../api/mileage'
-import { useMileageStore, parseMoney, type MileageRequest } from './store'
+import { useToast } from '@/components/ui/use-toast'
+import { parseMoney } from './store'
 import { ProductApplyModal } from './components/ProductApplyModal'
-import { RequestStatusModal } from './components/RequestStatusModal'
 import type { MileageProduct, Tone } from './types'
 
 // 마일리지 상품 신청 (/student/mileage/products) — Figma 418:1961.
@@ -57,15 +57,12 @@ export default function ProductsPage() {
   const { data, isPending, isError, refetch } = useMileageProducts()
   // 잔액은 실 BE 값(products.balance). store.submit은 구매 시뮬(BE 구매 후속) 전용.
   const balance = data ? parseMoney(data.balance) : 0
-  const submit = useMileageStore((s) => s.submit)
+  const toast = useToast()
   const [active, setActive] = useState('all')
   const [link, setLink] = useState('')
   const [price, setPrice] = useState('')
   const [memo, setMemo] = useState('')
   const [applyProduct, setApplyProduct] = useState<MileageProduct | null>(null)
-  const [resultRequest, setResultRequest] = useState<MileageRequest | null>(
-    null,
-  )
   usePageHeader(
     '마일리지 상품 신청',
     '상품 타입별 잔여 한도를 확인하고 구매 요청을 제출합니다.',
@@ -94,20 +91,11 @@ export default function ProductsPage() {
   const directOver = directAmount > balance
   const canSubmit =
     urlOk && price.trim() !== '' && directAmount > 0 && !directOver
+  // 직접 입력 신청은 정본 §39 productId(상품 FK)가 필수라 실 BE 미지원 — 목록 상품 이용 안내.
   const submitDirect = () => {
-    if (!canSubmit) return
-    // 직접 신청은 매니저 검토 대상(자동 승인 아님) → PENDING, 승인 전 차감 없음
-    const req = submit({
-      product: '직접 신청 상품',
-      amount: directAmount,
-      autoApprove: false,
-      link: link.trim(),
-      memo: memo.trim() || undefined,
-    })
-    setLink('')
-    setPrice('')
-    setMemo('')
-    setResultRequest(req)
+    toast.info(
+      '직접 입력 상품 신청은 준비 중입니다. 아래 목록 상품을 이용해 주세요.',
+    )
   }
 
   return (
@@ -347,15 +335,9 @@ export default function ProductsPage() {
 
       <ProductApplyModal
         product={applyProduct}
+        balance={balance}
         onClose={() => setApplyProduct(null)}
-        onSubmitted={(req) => {
-          setApplyProduct(null)
-          setResultRequest(req)
-        }}
-      />
-      <RequestStatusModal
-        request={resultRequest}
-        onClose={() => setResultRequest(null)}
+        onSubmitted={() => setApplyProduct(null)}
       />
     </div>
   )

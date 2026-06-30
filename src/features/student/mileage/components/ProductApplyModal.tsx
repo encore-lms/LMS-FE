@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { Book, Coffee, Gift, Send, Video, type LucideIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
-import { useMileageStore, parseMoney, type MileageRequest } from '../store'
+import { useToast } from '@/components/ui/use-toast'
+import { useCreateMileageOrder } from '../../api/mileage'
+import { parseMoney } from '../store'
 import type { MileageProduct, Tone } from '../types'
 
 const CHIP: Record<Tone, string> = {
@@ -52,15 +54,17 @@ const TYPE_LABEL: Record<MileageProduct['categoryKey'], string> = {
  */
 export function ProductApplyModal({
   product,
+  balance,
   onClose,
   onSubmitted,
 }: {
   product: MileageProduct | null
+  balance: number
   onClose: () => void
-  onSubmitted: (req: MileageRequest) => void
+  onSubmitted: () => void
 }) {
-  const submit = useMileageStore((s) => s.submit)
-  const balance = useMileageStore((s) => s.balance)
+  const toast = useToast()
+  const create = useCreateMileageOrder()
   const [link, setLink] = useState('')
   const [price, setPrice] = useState('')
   const [memo, setMemo] = useState('')
@@ -92,14 +96,25 @@ export function ProductApplyModal({
 
   const submitApply = () => {
     if (!product || !canSubmit) return
-    const req = submit({
-      product: product.name,
-      amount,
-      autoApprove,
-      memo: memo.trim() || undefined,
-      link: isFixed ? undefined : link.trim(),
-    })
-    onSubmitted(req)
+    create.mutate(
+      {
+        productId: product.id,
+        quantity: 1,
+        requestedPrice: isFixed ? undefined : amount,
+        link: isFixed ? undefined : link.trim(),
+        memo: memo.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            `${product.name} 구매를 요청했습니다. (${amount.toLocaleString()}M 차감)`,
+          )
+          onSubmitted()
+          onClose()
+        },
+        onError: () => toast.danger('구매 요청에 실패했어요.'),
+      },
+    )
   }
 
   return (

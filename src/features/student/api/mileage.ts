@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { mileageKeys } from '../mileage/queryKeys'
 import type {
@@ -34,4 +34,57 @@ export function useMileageHistory() {
         .get<MileageHistoryData>('/student/mileage/history')
         .then((r) => r.data),
   })
+}
+
+export interface MileageOrderRow {
+  id: string
+  product: string
+  amount: number
+  status: 'pending' | 'approved' | 'rejected' | 'canceled'
+  statusLabel: string
+  date: string
+}
+export interface MileageOrdersData {
+  balance: string
+  orders: MileageOrderRow[]
+}
+
+// 구매 요청 목록(실 BE §38/§39)
+export function useMileageOrders() {
+  return useQuery({
+    queryKey: [...mileageKeys.all, 'orders'],
+    queryFn: () =>
+      apiClient
+        .get<MileageOrdersData>('/student/mileage/orders')
+        .then((r) => r.data),
+  })
+}
+// 구매 요청(POST) — 성공 시 잔액·내역·주문 갱신
+export function useCreateMileageOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      productId: string
+      quantity?: number
+      requestedPrice?: number
+      link?: string
+      memo?: string
+    }) => apiClient.post('/student/mileage/orders', input),
+    onSuccess: () => invalidateMileage(qc),
+  })
+}
+// 구매 취소(POST) — 성공 시 잔액·내역·주문 갱신(환불 복원)
+export function useCancelMileageOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (orderId: string) =>
+      apiClient.post(`/student/mileage/orders/${orderId}/cancel`),
+    onSuccess: () => invalidateMileage(qc),
+  })
+}
+function invalidateMileage(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: [...mileageKeys.all, 'orders'] })
+  void qc.invalidateQueries({ queryKey: mileageKeys.overview() })
+  void qc.invalidateQueries({ queryKey: mileageKeys.history() })
+  void qc.invalidateQueries({ queryKey: mileageKeys.products() })
 }

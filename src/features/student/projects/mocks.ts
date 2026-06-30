@@ -1,15 +1,12 @@
-import { http, HttpResponse } from 'msw'
 import type {
   ProjectKind,
   ProjectListData,
   ProjectSummary,
-  ProjectWizardData,
   WorkspaceData,
 } from './types'
 
 // 프로젝트 mock — 기능 로컬. 자동 수집 규약: `export const handlers`.
 // Figma 프로젝트 목록(337:930)·생성 마법사(340:981 외) 시안 재현.
-const ok = <T>(data: T) => HttpResponse.json({ data })
 
 const mockList: ProjectListData = {
   headerTitle: '프로젝트 — 백엔드 부트캠프 · 3기',
@@ -206,29 +203,6 @@ mockList.projects = [
     }
   }),
 ]
-
-const mockWizard: ProjectWizardData = {
-  cohortLabel: '백엔드 부트캠프 3기',
-  pmName: '김수강',
-  pmMeta: '백엔드 부트캠프 · 3기 · 프로젝트 작성자는 PM 역할이 자동 부여됩니다',
-  candidates: [
-    { id: 'c1', name: '이서연', meta: '백엔드 · 3팀', avatarTone: 'success' },
-    { id: 'c2', name: '박지호', meta: '풀스택 · 1팀', avatarTone: 'warning' },
-    { id: 'c3', name: '최유나', meta: '백엔드 · 2팀', avatarTone: 'info' },
-    { id: 'c4', name: '한지우', meta: '백엔드 · 3팀', avatarTone: 'success' },
-    { id: 'c5', name: '정민준', meta: '프론트엔드 · 1팀', avatarTone: 'brand' },
-    { id: 'c6', name: '강서윤', meta: '백엔드 · 2팀', avatarTone: 'info' },
-    { id: 'c7', name: '윤도현', meta: '데브옵스 · 4팀', avatarTone: 'accent' },
-    { id: 'c8', name: '임하준', meta: '풀스택 · 3팀', avatarTone: 'warning' },
-    { id: 'c9', name: '송지아', meta: '백엔드 · 1팀', avatarTone: 'danger' },
-    {
-      id: 'c10',
-      name: '오태양',
-      meta: '프론트엔드 · 4팀',
-      avatarTone: 'brand',
-    },
-  ],
-}
 
 export const mockWorkspace: WorkspaceData = {
   id: 'p1',
@@ -1373,6 +1347,3 @@ function buildDraftWorkspace(opts: {
 
 // 생성/목록/삭제는 실 BE(/student/projects, learning-service)로 전환 — MSW 미처리 → proxy bypass.
 // 워크스페이스 상세(/:projectId)·생성 마법사 카탈로그(/wizard)만 mock 유지(정본 §44~52 후속).
-export const handlers = [
-  http.get('/api/student/projects/wizard', () => ok(mockWizard)),
-]

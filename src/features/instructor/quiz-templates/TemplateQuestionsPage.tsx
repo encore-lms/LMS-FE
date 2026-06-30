@@ -12,6 +12,7 @@ import {
   useTemplateQuestions,
 } from '../api/quizTemplates'
 import { QuestionWorkbench } from '../quizzes/QuestionWorkbench'
+import { QuestionPreviewModal } from './QuestionPreviewModal'
 
 // 본문 첫 줄을 좌측 목록 요약(summary)으로 축약 — mocks.ts와 동일 규칙.
 function summarize(body: string): string {
@@ -28,6 +29,7 @@ export default function TemplateQuestionsPage() {
   const { data, isPending, isError, refetch } = useTemplateQuestions(templateId)
   const saveQuestion = useSaveTemplateQuestion(templateId)
   const deleteQuestion = useDeleteTemplateQuestion(templateId)
+  const [previewOpen, setPreviewOpen] = useState(false)
   // mock 환경 — invalidate 후 refetch가 즉시 반영되지 않아 로컬에서도 즉시 갱신.
   const [questions, setQuestions] = useState<InstructorQuestion[]>([])
   useEffect(() => {
@@ -165,36 +167,48 @@ export default function TemplateQuestionsPage() {
   }
 
   return (
-    <QuestionWorkbench
-      subjectLabel="템플릿"
-      subjectName={data.templateName}
-      gradingMode={data.gradingMode}
-      totalPoints={totalPoints}
-      targetPoints={data.targetPoints}
-      questions={questions}
-      listTitle="템플릿 문항 목록"
-      itemNoun="문항"
-      back={{
-        label: '← 템플릿 설정으로',
-        onClick: () =>
-          navigate(`/instructor/quiz-templates/${templateId}/edit`),
-      }}
-      previewLabel="템플릿 미리보기"
-      bodyHint="복제된 퀴즈에서 학생에게 노출 — 마크다운 지원"
-      modelAnswerHint="수동 채점 기준 — 학생에게 비공개"
-      explanationHint="복제된 퀴즈 결과 화면에서 노출"
-      manualHint="복제된 퀴즈에서 수동 채점으로 연결"
-      saveToastMessage="템플릿 문항 저장 — 다음 복제부터 반영 (mock)"
-      onAddQuestion={handleAdd}
-      onSaveQuestion={handleSave}
-      onDeleteQuestion={handleDelete}
-      onCopyQuestion={handleCopy}
-      metaItems={(draft) => [
-        `작성일: ${draft.createdAt}`,
-        `최근 수정: ${draft.updatedAt}`,
-        `사용 횟수: ${data.useCount}회`,
-        `파생 활성 퀴즈: ${data.derivedActiveCount}건`,
-      ]}
-    />
+    <>
+      <QuestionWorkbench
+        subjectLabel="템플릿"
+        subjectName={data.templateName}
+        gradingMode={data.gradingMode}
+        totalPoints={totalPoints}
+        targetPoints={data.targetPoints}
+        questions={questions}
+        listTitle="템플릿 문항 목록"
+        itemNoun="문항"
+        back={{
+          label: '← 템플릿 설정으로',
+          onClick: () =>
+            navigate(`/instructor/quiz-templates/${templateId}/edit`),
+        }}
+        previewLabel="템플릿 미리보기"
+        bodyHint="복제된 퀴즈에서 학생에게 노출 — 마크다운 지원"
+        modelAnswerHint="수동 채점 기준 — 학생에게 비공개"
+        explanationHint="복제된 퀴즈 결과 화면에서 노출"
+        manualHint="복제된 퀴즈에서 수동 채점으로 연결"
+        saveToastMessage="템플릿 문항 저장 — 다음 복제부터 반영 (mock)"
+        onAddQuestion={handleAdd}
+        onSaveQuestion={handleSave}
+        onDeleteQuestion={handleDelete}
+        onCopyQuestion={handleCopy}
+        onPreview={() => setPreviewOpen(true)}
+        metaItems={(draft) => [
+          `작성일: ${draft.createdAt}`,
+          `최근 수정: ${draft.updatedAt}`,
+          `사용 횟수: ${data.useCount}회`,
+          `파생 활성 퀴즈: ${data.derivedActiveCount}건`,
+        ]}
+      />
+      <QuestionPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title="템플릿 미리보기"
+        subjectName={data.templateName}
+        gradingMode={data.gradingMode}
+        totalPoints={totalPoints}
+        questions={questions}
+      />
+    </>
   )
 }

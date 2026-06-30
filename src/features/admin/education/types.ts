@@ -165,6 +165,8 @@ export interface CohortProject {
   status: string // PLANNED | IN_PROGRESS | COMPLETED
   statusLabel: string // 예정 | 진행 중 | 완료
   createdAt: string
+  period: string // "2026.09.01 ~ 2026.10.31"(일정 없으면 빈 문자열)
+  tags: string[] // 기술 스택
   memberCount: number
   members: CohortProjectMember[]
 }

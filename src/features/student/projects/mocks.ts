@@ -1371,8 +1371,4 @@ function buildDraftWorkspace(opts: {
 // 워크스페이스 상세(/:projectId)·생성 마법사 카탈로그(/wizard)만 mock 유지(정본 §44~52 후속).
 export const handlers = [
   http.get('/api/student/projects/wizard', () => ok(mockWizard)),
-  http.get('/api/student/projects/:projectId', ({ params }) => {
-    const id = String(params.projectId)
-    return ok(workspaces[id] ?? buildDraftWorkspace({ id }))
-  }),
 ]

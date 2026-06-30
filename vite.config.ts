@@ -127,6 +127,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 수강생 멘토링(/student/mentoring)도 auth-user-service(:8081) 실연동(mock 제거).
+      '/api/student/mentoring': {
+        target: AUTH_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 계정(HRD 동기화 등록·목록)도 auth-user-service(:8081) 실연동.
       '/api/users': {
         target: AUTH_API_TARGET,

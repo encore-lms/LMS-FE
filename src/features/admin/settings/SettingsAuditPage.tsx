@@ -1,14 +1,7 @@
 import { useMemo, useState } from 'react'
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Clock,
-  Download,
-  ShieldCheck,
-} from 'lucide-react'
+import { ArrowLeft, Clock, Download, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -58,23 +51,6 @@ export default function SettingsAuditPage() {
     [events, active],
   )
 
-  if (isPending) {
-    return <div className="text-fg-muted p-8">감사 로그를 불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="감사 로그를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { summary } = data
   // 페이지네이션 — 감사 로그는 많이 쌓이므로 표가 길어지지 않도록.
   const AUDIT_PAGE_SIZE = 10
   const pageCount = Math.max(1, Math.ceil(filtered.length / AUDIT_PAGE_SIZE))
@@ -170,24 +146,26 @@ export default function SettingsAuditPage() {
 
   return (
     <div className="p-8">
-      {/* 히어로 — 설정 화면 공통 톤(brand 배너) */}
-      <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
-        <p className="text-[11px] font-semibold tracking-wider text-white/60">
-          SETTINGS AUDIT · 설정 감사 로그
-        </p>
-        <h2 className="mt-1 text-xl font-bold">설정 변경 감사 로그</h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
-            총 변경 {summary.total}
-          </span>
-          <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
-            최근 30일
-          </span>
-          <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs">
-            <ShieldCheck className="h-3 w-3" /> 불변 로그
-          </span>
+      {/* 히어로 — 요약 수치가 응답에 의존하므로 데이터가 있을 때만 렌더(뒤로/필터 툴바는 항상 유지). */}
+      {data && (
+        <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
+          <p className="text-[11px] font-semibold tracking-wider text-white/60">
+            SETTINGS AUDIT · 설정 감사 로그
+          </p>
+          <h2 className="mt-1 text-xl font-bold">설정 변경 감사 로그</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+              총 변경 {data.summary.total}
+            </span>
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+              최근 30일
+            </span>
+            <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs">
+              <ShieldCheck className="h-3 w-3" /> 불변 로그
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 뒤로 + 분류 필터 + CSV */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -226,56 +204,68 @@ export default function SettingsAuditPage() {
         </button>
       </div>
 
-      {/* KPI 5종 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard
-          label="총 변경"
-          value={summary.total}
-          hint={summary.totalHint}
-        />
-        <KpiCard
-          label="계정·권한"
-          value={summary.accounts}
-          hint={summary.accountsHint}
-        />
-        <KpiCard
-          label="HRD Key"
-          value={summary.hrdKey}
-          hint={summary.hrdKeyHint}
-        />
-        <KpiCard
-          label="과정 설정"
-          value={summary.courseConfig}
-          hint={summary.courseConfigHint}
-        />
-        <KpiCard
-          label="보안 이벤트"
-          value={summary.security}
-          tone={summary.security > 0 ? 'warning' : 'default'}
-          hint={summary.securityHint}
-        />
-      </div>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        errorTitle="감사 로그를 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {data && (
+          <>
+            {/* KPI 5종 */}
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <KpiCard
+                label="총 변경"
+                value={data.summary.total}
+                hint={data.summary.totalHint}
+              />
+              <KpiCard
+                label="계정·권한"
+                value={data.summary.accounts}
+                hint={data.summary.accountsHint}
+              />
+              <KpiCard
+                label="HRD Key"
+                value={data.summary.hrdKey}
+                hint={data.summary.hrdKeyHint}
+              />
+              <KpiCard
+                label="과정 설정"
+                value={data.summary.courseConfig}
+                hint={data.summary.courseConfigHint}
+              />
+              <KpiCard
+                label="보안 이벤트"
+                value={data.summary.security}
+                tone={data.summary.security > 0 ? 'warning' : 'default'}
+                hint={data.summary.securityHint}
+              />
+            </div>
 
-      {/* 감사 로그 표 */}
-      <div className="mt-5">
-        <DataTable
-          columns={columns}
-          rows={paged}
-          rowKey={(e) => e.id}
-          empty="조건에 맞는 이벤트가 없어요"
-        />
-        {filtered.length > 0 && (
-          <div className="mt-3">
-            <Pagination
-              page={safePage}
-              pageCount={pageCount}
-              totalCount={filtered.length}
-              shownCount={paged.length}
-              onPage={setPage}
-            />
-          </div>
+            {/* 감사 로그 표 */}
+            <div className="mt-5">
+              <DataTable
+                columns={columns}
+                rows={paged}
+                rowKey={(e) => e.id}
+                empty="조건에 맞는 이벤트가 없어요"
+              />
+              {filtered.length > 0 && (
+                <div className="mt-3">
+                  <Pagination
+                    page={safePage}
+                    pageCount={pageCount}
+                    totalCount={filtered.length}
+                    shownCount={paged.length}
+                    onPage={setPage}
+                  />
+                </div>
+              )}
+            </div>
+          </>
         )}
-      </div>
+      </DataBoundary>
 
       {/* 보존 기준 안내 */}
       <div className="border-border bg-surface-muted/50 mt-6 rounded-xl border p-5">

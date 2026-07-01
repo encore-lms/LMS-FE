@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  AlertTriangle,
   CheckCircle2,
   Coins,
   ExternalLink,
@@ -17,6 +16,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
@@ -109,34 +109,6 @@ export default function CourseConfigPage() {
     if (!needle) return items
     return items.filter((c) => c.title.toLowerCase().includes(needle))
   }, [courses, courseQuery])
-
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !courses) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="과정 목록을 불러오지 못했어요"
-        description="교육 과정 설정은 실 BE 전용입니다. ADMIN/MANAGER로 로그인했는지 확인한 뒤 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-  if (courses.length === 0) {
-    return (
-      <Empty
-        icon={<FolderOpen className="h-6 w-6" />}
-        title="등록된 과정이 없어요"
-        description="'교육 과정 추가'에서 HRD 과정을 시스템 등록하면 여기서 설정할 수 있어요."
-        action={
-          <Button onClick={() => navigate('/admin/settings/courses/new')}>
-            교육 과정 추가로 이동
-          </Button>
-        }
-      />
-    )
-  }
 
   const cohorts = config?.cohorts ?? []
   const dirtyKey = (cohortId: string, key: ToggleKey) => `${cohortId}:${key}`
@@ -319,258 +291,291 @@ export default function CourseConfigPage() {
         }
       />
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[320px_1fr]">
-        {/* 과정 목록 */}
-        <div className="border-border bg-surface h-fit rounded-xl border">
-          <div className="px-4 pt-4 pb-3">
-            <p className="text-fg text-sm font-bold">과정 목록</p>
-            <input
-              value={courseQuery}
-              onChange={(e) => setCourseQuery(e.target.value)}
-              placeholder="과정명 검색"
-              aria-label="과정명 검색"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm outline-none"
-            />
-          </div>
-          {filteredCourses.map((c) => (
-            <button
-              key={c.courseId}
-              type="button"
-              onClick={() => {
-                setSelectedId(c.courseId)
-                setSelectedCohortId(null)
-                setChanges({})
-              }}
-              className={cn(
-                'border-divider flex w-full items-center justify-between border-t px-4 py-3 text-left',
-                c.courseId === courseId
-                  ? 'bg-accent-bg/50'
-                  : 'hover:bg-surface-muted',
-              )}
-            >
-              <div className="min-w-0">
-                <p className="text-fg text-sm font-medium">{c.title}</p>
-                <p className="text-fg-subtle text-xs">
-                  기수 {c.cohortCount}개 · {periodLabel(c.startDate, c.endDate)}
-                </p>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !courses}
+        onRetry={refetch}
+        errorTitle="과정 목록을 불러오지 못했어요"
+        errorDescription="교육 과정 설정은 실 BE 전용입니다. ADMIN/MANAGER로 로그인했는지 확인한 뒤 다시 시도해 주세요."
+      >
+        {courses && courses.length === 0 ? (
+          <Empty
+            icon={<FolderOpen className="h-6 w-6" />}
+            title="등록된 과정이 없어요"
+            description="'교육 과정 추가'에서 HRD 과정을 시스템 등록하면 여기서 설정할 수 있어요."
+            action={
+              <Button onClick={() => navigate('/admin/settings/courses/new')}>
+                교육 과정 추가로 이동
+              </Button>
+            }
+          />
+        ) : (
+          courses && (
+            <div className="mt-4 grid gap-4 xl:grid-cols-[320px_1fr]">
+              {/* 과정 목록 */}
+              <div className="border-border bg-surface h-fit rounded-xl border">
+                <div className="px-4 pt-4 pb-3">
+                  <p className="text-fg text-sm font-bold">과정 목록</p>
+                  <input
+                    value={courseQuery}
+                    onChange={(e) => setCourseQuery(e.target.value)}
+                    placeholder="과정명 검색"
+                    aria-label="과정명 검색"
+                    className="border-border text-fg placeholder:text-fg-subtle focus:border-brand mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm outline-none"
+                  />
+                </div>
+                {filteredCourses.map((c) => (
+                  <button
+                    key={c.courseId}
+                    type="button"
+                    onClick={() => {
+                      setSelectedId(c.courseId)
+                      setSelectedCohortId(null)
+                      setChanges({})
+                    }}
+                    className={cn(
+                      'border-divider flex w-full items-center justify-between border-t px-4 py-3 text-left',
+                      c.courseId === courseId
+                        ? 'bg-accent-bg/50'
+                        : 'hover:bg-surface-muted',
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-fg text-sm font-medium">{c.title}</p>
+                      <p className="text-fg-subtle text-xs">
+                        기수 {c.cohortCount}개 ·{' '}
+                        {periodLabel(c.startDate, c.endDate)}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      label={c.status === 'operating' ? '운영 중' : '종료'}
+                      tone={c.status === 'operating' ? 'success' : 'neutral'}
+                    />
+                  </button>
+                ))}
               </div>
-              <StatusBadge
-                label={c.status === 'operating' ? '운영 중' : '종료'}
-                tone={c.status === 'operating' ? 'success' : 'neutral'}
-              />
-            </button>
-          ))}
-        </div>
 
-        {/* 설정 패널 */}
-        <div className="flex flex-col gap-4">
-          {/* 기본 정보 */}
-          <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
-              <div className="bg-info-bg text-info flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                <FileText className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-fg text-sm font-bold">기본 정보</p>
-                <p className="text-fg-subtle text-xs">과정명·기간·운영 상태</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-x-8 gap-y-3 px-5 py-4">
-              <div>
-                <p className="text-fg-subtle text-[11px] font-medium">과정명</p>
-                <p className="text-fg mt-0.5 text-sm font-medium">
-                  {config?.title ?? '-'}
-                </p>
-              </div>
-              <div>
-                <p className="text-fg-subtle text-[11px] font-medium">기간</p>
-                <p className="text-fg mt-0.5 text-sm font-medium tabular-nums">
-                  {periodLabel(
-                    config?.startDate ?? null,
-                    config?.endDate ?? null,
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-fg-subtle text-[11px] font-medium">
-                  운영 상태
-                </p>
-                <p className="text-fg mt-0.5 flex items-center gap-1 text-sm font-medium">
-                  {config?.status === 'ended' ? (
-                    <XCircle className="text-fg-subtle h-3.5 w-3.5" />
-                  ) : (
-                    <CheckCircle2 className="text-success h-3.5 w-3.5" />
-                  )}
-                  {config?.status === 'ended' ? '종료' : '운영 중'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 기수별 기능 토글 */}
-          <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
-              <div className="bg-accent-bg text-accent-strong flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                <SlidersHorizontal className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-fg text-sm font-bold">
-                  기수별 기능 토글 · {cohorts.length}개 기수
-                </p>
-                <p className="text-fg-subtle text-xs">
-                  기수별 마일리지·PLAY 노출 제어 · 끌 경우 수강생 메뉴에서 숨김
-                </p>
-              </div>
-            </div>
-            <div>
-              {cohorts.map((c) => (
-                <div
-                  key={c.id}
-                  className="border-divider flex flex-wrap items-center justify-between gap-4 border-t px-5 py-3.5 first:border-t-0"
-                >
-                  <div className="min-w-0">
-                    <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
-                      {c.cohortNo}기
-                      <StatusBadge
-                        label={c.status === 'operating' ? '운영' : '종료'}
-                        tone={c.status === 'operating' ? 'success' : 'neutral'}
-                      />
-                      {(isChanged(c.id, 'mileage') ||
-                        isChanged(c.id, 'play')) && (
-                        <span className="bg-warning-bg text-warning rounded px-1 py-px text-[10px] font-bold">
-                          변경됨
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-fg-subtle text-xs tabular-nums">
-                      {c.startDate} ~ {c.endDate}
-                    </p>
+              {/* 설정 패널 */}
+              <div className="flex flex-col gap-4">
+                {/* 기본 정보 */}
+                <div className="border-border bg-surface rounded-xl border">
+                  <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+                    <div className="bg-info-bg text-info flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-fg text-sm font-bold">기본 정보</p>
+                      <p className="text-fg-subtle text-xs">
+                        과정명·기간·운영 상태
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-5">
-                    {TOGGLES.map(({ key, label, Icon }) => (
-                      <div key={key} className="flex items-center gap-2">
-                        <Icon className="text-fg-muted h-4 w-4" />
-                        <span className="text-fg-muted text-xs font-medium">
-                          {label}
-                        </span>
-                        <Switch
-                          checked={effective(c, key)}
-                          label={`${c.cohortNo}기 ${label}`}
-                          onChange={() => toggle(c.id, key)}
-                        />
+                  <div className="flex flex-wrap gap-x-8 gap-y-3 px-5 py-4">
+                    <div>
+                      <p className="text-fg-subtle text-[11px] font-medium">
+                        과정명
+                      </p>
+                      <p className="text-fg mt-0.5 text-sm font-medium">
+                        {config?.title ?? '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-fg-subtle text-[11px] font-medium">
+                        기간
+                      </p>
+                      <p className="text-fg mt-0.5 text-sm font-medium tabular-nums">
+                        {periodLabel(
+                          config?.startDate ?? null,
+                          config?.endDate ?? null,
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-fg-subtle text-[11px] font-medium">
+                        운영 상태
+                      </p>
+                      <p className="text-fg mt-0.5 flex items-center gap-1 text-sm font-medium">
+                        {config?.status === 'ended' ? (
+                          <XCircle className="text-fg-subtle h-3.5 w-3.5" />
+                        ) : (
+                          <CheckCircle2 className="text-success h-3.5 w-3.5" />
+                        )}
+                        {config?.status === 'ended' ? '종료' : '운영 중'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 기수별 기능 토글 */}
+                <div className="border-border bg-surface rounded-xl border">
+                  <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+                    <div className="bg-accent-bg text-accent-strong flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                      <SlidersHorizontal className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-fg text-sm font-bold">
+                        기수별 기능 토글 · {cohorts.length}개 기수
+                      </p>
+                      <p className="text-fg-subtle text-xs">
+                        기수별 마일리지·PLAY 노출 제어 · 끌 경우 수강생 메뉴에서
+                        숨김
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    {cohorts.map((c) => (
+                      <div
+                        key={c.id}
+                        className="border-divider flex flex-wrap items-center justify-between gap-4 border-t px-5 py-3.5 first:border-t-0"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-fg flex items-center gap-1.5 text-sm font-medium">
+                            {c.cohortNo}기
+                            <StatusBadge
+                              label={c.status === 'operating' ? '운영' : '종료'}
+                              tone={
+                                c.status === 'operating' ? 'success' : 'neutral'
+                              }
+                            />
+                            {(isChanged(c.id, 'mileage') ||
+                              isChanged(c.id, 'play')) && (
+                              <span className="bg-warning-bg text-warning rounded px-1 py-px text-[10px] font-bold">
+                                변경됨
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-fg-subtle text-xs tabular-nums">
+                            {c.startDate} ~ {c.endDate}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-5">
+                          {TOGGLES.map(({ key, label, Icon }) => (
+                            <div key={key} className="flex items-center gap-2">
+                              <Icon className="text-fg-muted h-4 w-4" />
+                              <span className="text-fg-muted text-xs font-medium">
+                                {label}
+                              </span>
+                              <Switch
+                                checked={effective(c, key)}
+                                label={`${c.cohortNo}기 ${label}`}
+                                onChange={() => toggle(c.id, key)}
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-              ))}
-              {cohorts.length === 0 && (
-                <p className="text-fg-subtle px-5 py-8 text-center text-sm">
-                  기수가 없어요
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* 기수별 자료실 (CohortMaterial — 링크/문서) */}
-          <div className="border-border bg-surface rounded-xl border">
-            <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
-              <div className="bg-success-bg text-success flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                <FolderOpen className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-fg text-sm font-bold">기수별 자료실</p>
-                <p className="text-fg-subtle text-xs">
-                  기수에 강의 자료 링크를 등록 — 수강생 자료실에 노출
-                </p>
-              </div>
-            </div>
-            {/* 기수 선택 */}
-            <div className="border-divider flex flex-wrap gap-2 border-b px-5 py-3">
-              {cohorts.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setSelectedCohortId(c.id)}
-                  className={cn(
-                    'rounded-lg border px-3 py-1.5 text-xs font-medium',
-                    c.id === materialCohortId
-                      ? 'border-brand bg-brand/10 text-brand'
-                      : 'border-border text-fg-muted hover:bg-surface-muted',
-                  )}
-                >
-                  {c.cohortNo}기
-                </button>
-              ))}
-            </div>
-            {/* 자료 추가 */}
-            <div className="border-divider flex flex-wrap items-center gap-2 border-b px-5 py-3">
-              <input
-                value={materialTitle}
-                onChange={(e) => setMaterialTitle(e.target.value)}
-                placeholder="자료 제목"
-                aria-label="자료 제목"
-                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[160px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
-              />
-              <input
-                value={materialUrl}
-                onChange={(e) => setMaterialUrl(e.target.value)}
-                placeholder="https://링크"
-                aria-label="자료 링크"
-                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[200px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
-              />
-              <button
-                type="button"
-                onClick={onAddMaterial}
-                disabled={createMaterial.isPending || !materialCohortId}
-                className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-50"
-              >
-                <Plus className="h-3.5 w-3.5" /> 추가
-              </button>
-            </div>
-            {/* 자료 목록 */}
-            <div>
-              {(materials ?? []).map((m) => (
-                <div
-                  key={m.id}
-                  className="border-divider flex items-center justify-between gap-3 border-t px-5 py-3 first:border-t-0"
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Link2 className="text-fg-muted h-4 w-4 shrink-0" />
-                    <span className="text-fg truncate text-sm font-medium">
-                      {m.title}
-                    </span>
-                    {m.url && (
-                      <a
-                        href={m.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-info shrink-0"
-                        aria-label="링크 열기"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
+                    {cohorts.length === 0 && (
+                      <p className="text-fg-subtle px-5 py-8 text-center text-sm">
+                        기수가 없어요
+                      </p>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteMaterial(m.id)}
-                    disabled={deleteMaterial.isPending}
-                    className="text-danger hover:bg-danger-bg rounded-md p-1.5 disabled:opacity-50"
-                    aria-label="자료 삭제"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
                 </div>
-              ))}
-              {(materials ?? []).length === 0 && (
-                <p className="text-fg-subtle px-5 py-8 text-center text-sm">
-                  등록된 자료가 없어요
-                </p>
-              )}
+
+                {/* 기수별 자료실 (CohortMaterial — 링크/문서) */}
+                <div className="border-border bg-surface rounded-xl border">
+                  <div className="border-divider flex items-center gap-3 border-b px-5 py-4">
+                    <div className="bg-success-bg text-success flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                      <FolderOpen className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-fg text-sm font-bold">기수별 자료실</p>
+                      <p className="text-fg-subtle text-xs">
+                        기수에 강의 자료 링크를 등록 — 수강생 자료실에 노출
+                      </p>
+                    </div>
+                  </div>
+                  {/* 기수 선택 */}
+                  <div className="border-divider flex flex-wrap gap-2 border-b px-5 py-3">
+                    {cohorts.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedCohortId(c.id)}
+                        className={cn(
+                          'rounded-lg border px-3 py-1.5 text-xs font-medium',
+                          c.id === materialCohortId
+                            ? 'border-brand bg-brand/10 text-brand'
+                            : 'border-border text-fg-muted hover:bg-surface-muted',
+                        )}
+                      >
+                        {c.cohortNo}기
+                      </button>
+                    ))}
+                  </div>
+                  {/* 자료 추가 */}
+                  <div className="border-divider flex flex-wrap items-center gap-2 border-b px-5 py-3">
+                    <input
+                      value={materialTitle}
+                      onChange={(e) => setMaterialTitle(e.target.value)}
+                      placeholder="자료 제목"
+                      aria-label="자료 제목"
+                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[160px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
+                    />
+                    <input
+                      value={materialUrl}
+                      onChange={(e) => setMaterialUrl(e.target.value)}
+                      placeholder="https://링크"
+                      aria-label="자료 링크"
+                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[200px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={onAddMaterial}
+                      disabled={createMaterial.isPending || !materialCohortId}
+                      className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-50"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> 추가
+                    </button>
+                  </div>
+                  {/* 자료 목록 */}
+                  <div>
+                    {(materials ?? []).map((m) => (
+                      <div
+                        key={m.id}
+                        className="border-divider flex items-center justify-between gap-3 border-t px-5 py-3 first:border-t-0"
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Link2 className="text-fg-muted h-4 w-4 shrink-0" />
+                          <span className="text-fg truncate text-sm font-medium">
+                            {m.title}
+                          </span>
+                          {m.url && (
+                            <a
+                              href={m.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-info shrink-0"
+                              aria-label="링크 열기"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteMaterial(m.id)}
+                          disabled={deleteMaterial.isPending}
+                          className="text-danger hover:bg-danger-bg rounded-md p-1.5 disabled:opacity-50"
+                          aria-label="자료 삭제"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {(materials ?? []).length === 0 && (
+                      <p className="text-fg-subtle px-5 py-8 text-center text-sm">
+                        등록된 자료가 없어요
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          )
+        )}
+      </DataBoundary>
 
       <ActionModal
         spec={modal}

@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, Clock, Info, UserPlus } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { ArrowRight, Clock, Info, UserPlus } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -114,21 +113,6 @@ export default function AccountsPage() {
     })
   }, [data, role, status, q, statusOverride])
 
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="운영 계정을 불러오지 못했어요"
-        description="잠시 후 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-
-  const summary = data.summary
   // 사용자 표 페이지네이션 — 사용자가 많아져도 표가 길어지지 않도록.
   const ACCOUNTS_PAGE_SIZE = 10
   const accountsPageCount = Math.max(
@@ -355,42 +339,44 @@ export default function AccountsPage() {
 
   return (
     <div className="p-8">
-      {/* 히어로 — 운영 대시보드 히어로와 같은 높이감(라벨 + 제목 + 요약 칩). */}
-      <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold tracking-wider text-white/60">
-              MANAGER ACCOUNTS · 운영 계정·권한
-            </p>
-            <h2 className="mt-1 text-xl font-bold">
-              운영진 계정과 기본 권한 범위 관리
-            </h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
-                매니저 {summary.managers}
-              </span>
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
-                강사 {summary.instructors}
-              </span>
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
-                멘토 {summary.mentors}
-              </span>
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
-                비활성 {summary.inactive}
-              </span>
+      {/* 히어로 — 요약 수치가 응답에 의존하므로 데이터가 있을 때만 렌더(셸 탭은 아래에서 항상 유지). */}
+      {data && (
+        <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold tracking-wider text-white/60">
+                MANAGER ACCOUNTS · 운영 계정·권한
+              </p>
+              <h2 className="mt-1 text-xl font-bold">
+                운영진 계정과 기본 권한 범위 관리
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                  매니저 {data.summary.managers}
+                </span>
+                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                  강사 {data.summary.instructors}
+                </span>
+                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                  멘토 {data.summary.mentors}
+                </span>
+                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                  비활성 {data.summary.inactive}
+                </span>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
+              >
+                <UserPlus className="h-3.5 w-3.5" /> 새 계정 추가
+              </button>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setCreateOpen(true)}
-              className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
-            >
-              <UserPlus className="h-3.5 w-3.5" /> 새 계정 추가
-            </button>
-          </div>
         </div>
-      </div>
+      )}
 
       <SettingsTabs
         right={
@@ -400,173 +386,195 @@ export default function AccountsPage() {
         }
       />
 
-      {/* KPI 4 */}
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="border-border bg-surface rounded-xl border p-4">
-          <p className="text-fg-subtle text-xs font-semibold tracking-wide">
-            MANAGER
-          </p>
-          <p className="text-fg text-2xl font-bold">
-            {summary.managers}{' '}
-            <span className="text-fg-subtle text-xs font-medium">계정</span>
-          </p>
-          <p className="text-fg-subtle text-xs">
-            활성 {summary.managersActive} · 비활성 {summary.managersInactive}
-          </p>
-        </div>
-        <div className="border-border bg-surface rounded-xl border p-4">
-          <p className="text-fg-subtle text-xs font-semibold tracking-wide">
-            INSTRUCTOR
-          </p>
-          <p className="text-fg text-2xl font-bold">
-            {summary.instructors}{' '}
-            <span className="text-fg-subtle text-xs font-medium">계정</span>
-          </p>
-          <p className="text-warning flex items-center gap-1 text-xs">
-            <Info className="h-3 w-3" /> 담당 범위 없음{' '}
-            {summary.instructorNoScope}명
-          </p>
-        </div>
-        <div className="border-border bg-surface rounded-xl border p-4">
-          <p className="text-fg-subtle text-xs font-semibold tracking-wide">
-            MENTOR
-          </p>
-          <p className="text-fg text-2xl font-bold">
-            {summary.mentors}{' '}
-            <span className="text-fg-subtle text-xs font-medium">계정</span>
-          </p>
-          <p className="text-warning flex items-center gap-1 text-xs">
-            <Info className="h-3 w-3" /> 팀 배정 없음 {summary.mentorNoTeam}명
-          </p>
-        </div>
-        <div className="border-border bg-surface rounded-xl border p-4">
-          <p className="text-fg-subtle text-xs font-semibold tracking-wide">
-            비활성
-          </p>
-          <p className="text-fg text-2xl font-bold">
-            {summary.inactive}{' '}
-            <span className="text-fg-subtle text-xs font-medium">계정</span>
-          </p>
-          <p className="text-fg-subtle text-xs">
-            최근 30일 회수 {summary.inactiveRevoked30d}건
-          </p>
-        </div>
-      </div>
-
-      {/* 필터 + 검색 */}
-      <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-3">
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-          <span className="text-fg-subtle">역할</span>
-          <select
-            value={role}
-            onChange={(e) => {
-              setRole(e.target.value as RoleFilter)
-              setPage(1)
-            }}
-            aria-label="역할 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            {roleFilters.map((f) => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-          <span className="text-fg-subtle">상태</span>
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as StatusFilter)
-              setPage(1)
-            }}
-            aria-label="상태 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            {statusFilters.map((f) => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <input
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value)
-            setPage(1)
-          }}
-          placeholder="이메일, 이름, 담당 과정 검색"
-          aria-label="운영 계정 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand ml-auto h-9 w-72 rounded-lg border bg-white px-3 text-sm outline-none"
-        />
-      </div>
-
-      <div className="mt-3">
-        <DataTable
-          columns={columns}
-          rows={pagedAccounts}
-          rowKey={(a) => a.id}
-          onRowClick={(a) => setDetailTarget(a)}
-          empty="조건에 맞는 계정이 없어요"
-        />
-        {filtered.length > 0 && (
-          <div className="mt-3">
-            <Pagination
-              page={accountsSafePage}
-              pageCount={accountsPageCount}
-              totalCount={filtered.length}
-              shownCount={pagedAccounts.length}
-              onPage={setPage}
-            />
-          </div>
-        )}
-      </div>
-      <div className="text-fg-subtle mt-3 text-xs">
-        총 {summary.total}건 · 매니저 {summary.managers} · 강사{' '}
-        {summary.instructors} · 멘토 {summary.mentors}
-      </div>
-
-      {/* 최근 감사 로그 — 설정 허브에서 이전(설정 탭에 유지). */}
-      {hub && (
-        <div className="border-border bg-surface mt-6 rounded-2xl border shadow-sm">
-          <div className="flex items-center justify-between px-5 pt-4 pb-3">
-            <div>
-              <p className="text-fg text-sm font-bold">최근 감사 로그</p>
-              <p className="text-fg-subtle text-[11px]">
-                설정 변경 7일 이력 요약 · 전체는 감사 로그 페이지에서
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/admin/settings/audit')}
-              className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
-            >
-              전체 로그 <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-          {hub.auditLogs.map((log) => (
-            <div
-              key={log.id}
-              className="border-divider flex items-center gap-4 border-t px-5 py-3"
-            >
-              <div className="w-24 shrink-0">
-                <p className="text-fg text-xs font-bold">{log.at}</p>
-                <p className="text-fg-subtle text-[11px]">{log.actor}</p>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        errorTitle="운영 계정을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {data && (
+          <>
+            {/* KPI 4 */}
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="border-border bg-surface rounded-xl border p-4">
+                <p className="text-fg-subtle text-xs font-semibold tracking-wide">
+                  MANAGER
+                </p>
+                <p className="text-fg text-2xl font-bold">
+                  {data.summary.managers}{' '}
+                  <span className="text-fg-subtle text-xs font-medium">
+                    계정
+                  </span>
+                </p>
+                <p className="text-fg-subtle text-xs">
+                  활성 {data.summary.managersActive} · 비활성{' '}
+                  {data.summary.managersInactive}
+                </p>
               </div>
-              <span className="bg-surface-muted text-fg-muted shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold">
-                {log.origin}
-              </span>
-              <p className="text-xs">
-                <span className="text-fg font-bold">{log.action}</span>
-                <span className="text-fg-subtle"> · </span>
-                <span className="text-fg-muted">{log.detail}</span>
-              </p>
+              <div className="border-border bg-surface rounded-xl border p-4">
+                <p className="text-fg-subtle text-xs font-semibold tracking-wide">
+                  INSTRUCTOR
+                </p>
+                <p className="text-fg text-2xl font-bold">
+                  {data.summary.instructors}{' '}
+                  <span className="text-fg-subtle text-xs font-medium">
+                    계정
+                  </span>
+                </p>
+                <p className="text-warning flex items-center gap-1 text-xs">
+                  <Info className="h-3 w-3" /> 담당 범위 없음{' '}
+                  {data.summary.instructorNoScope}명
+                </p>
+              </div>
+              <div className="border-border bg-surface rounded-xl border p-4">
+                <p className="text-fg-subtle text-xs font-semibold tracking-wide">
+                  MENTOR
+                </p>
+                <p className="text-fg text-2xl font-bold">
+                  {data.summary.mentors}{' '}
+                  <span className="text-fg-subtle text-xs font-medium">
+                    계정
+                  </span>
+                </p>
+                <p className="text-warning flex items-center gap-1 text-xs">
+                  <Info className="h-3 w-3" /> 팀 배정 없음{' '}
+                  {data.summary.mentorNoTeam}명
+                </p>
+              </div>
+              <div className="border-border bg-surface rounded-xl border p-4">
+                <p className="text-fg-subtle text-xs font-semibold tracking-wide">
+                  비활성
+                </p>
+                <p className="text-fg text-2xl font-bold">
+                  {data.summary.inactive}{' '}
+                  <span className="text-fg-subtle text-xs font-medium">
+                    계정
+                  </span>
+                </p>
+                <p className="text-fg-subtle text-xs">
+                  최근 30일 회수 {data.summary.inactiveRevoked30d}건
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            {/* 필터 + 검색 */}
+            <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-3">
+              <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+                <span className="text-fg-subtle">역할</span>
+                <select
+                  value={role}
+                  onChange={(e) => {
+                    setRole(e.target.value as RoleFilter)
+                    setPage(1)
+                  }}
+                  aria-label="역할 필터"
+                  className="text-fg bg-transparent text-sm font-medium outline-none"
+                >
+                  {roleFilters.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+                <span className="text-fg-subtle">상태</span>
+                <select
+                  value={status}
+                  onChange={(e) => {
+                    setStatus(e.target.value as StatusFilter)
+                    setPage(1)
+                  }}
+                  aria-label="상태 필터"
+                  className="text-fg bg-transparent text-sm font-medium outline-none"
+                >
+                  {statusFilters.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <input
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value)
+                  setPage(1)
+                }}
+                placeholder="이메일, 이름, 담당 과정 검색"
+                aria-label="운영 계정 검색"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand ml-auto h-9 w-72 rounded-lg border bg-white px-3 text-sm outline-none"
+              />
+            </div>
+
+            <div className="mt-3">
+              <DataTable
+                columns={columns}
+                rows={pagedAccounts}
+                rowKey={(a) => a.id}
+                onRowClick={(a) => setDetailTarget(a)}
+                empty="조건에 맞는 계정이 없어요"
+              />
+              {filtered.length > 0 && (
+                <div className="mt-3">
+                  <Pagination
+                    page={accountsSafePage}
+                    pageCount={accountsPageCount}
+                    totalCount={filtered.length}
+                    shownCount={pagedAccounts.length}
+                    onPage={setPage}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="text-fg-subtle mt-3 text-xs">
+              총 {data.summary.total}건 · 매니저 {data.summary.managers} · 강사{' '}
+              {data.summary.instructors} · 멘토 {data.summary.mentors}
+            </div>
+
+            {/* 최근 감사 로그 — 설정 허브에서 이전(설정 탭에 유지). */}
+            {hub && (
+              <div className="border-border bg-surface mt-6 rounded-2xl border shadow-sm">
+                <div className="flex items-center justify-between px-5 pt-4 pb-3">
+                  <div>
+                    <p className="text-fg text-sm font-bold">최근 감사 로그</p>
+                    <p className="text-fg-subtle text-[11px]">
+                      설정 변경 7일 이력 요약 · 전체는 감사 로그 페이지에서
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/admin/settings/audit')}
+                    className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
+                  >
+                    전체 로그 <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
+                {hub.auditLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="border-divider flex items-center gap-4 border-t px-5 py-3"
+                  >
+                    <div className="w-24 shrink-0">
+                      <p className="text-fg text-xs font-bold">{log.at}</p>
+                      <p className="text-fg-subtle text-[11px]">{log.actor}</p>
+                    </div>
+                    <span className="bg-surface-muted text-fg-muted shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                      {log.origin}
+                    </span>
+                    <p className="text-xs">
+                      <span className="text-fg font-bold">{log.action}</span>
+                      <span className="text-fg-subtle"> · </span>
+                      <span className="text-fg-muted">{log.detail}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </DataBoundary>
 
       <ActionModal
         spec={modal?.spec ?? null}

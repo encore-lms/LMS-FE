@@ -5,10 +5,12 @@ import type { AssignmentDraft } from '../types'
 // 과제 제출 폼 — 본문(textarea)·제출 URL(input)·첨부 자산(파일 업로드·링크 추가) + 목록으로/제출 저장.
 export function SubmissionForm({
   draft,
+  isSaving,
   onSave,
   onBack,
 }: {
   draft: AssignmentDraft | null
+  isSaving?: boolean
   onSave: (draft: AssignmentDraft) => void
   onBack: () => void
 }) {
@@ -39,6 +41,8 @@ export function SubmissionForm({
   }
   const removeAsset = (a: string) =>
     setAssets((prev) => prev.filter((x) => x !== a))
+  const canSubmit =
+    body.trim().length > 0 || url.trim().length > 0 || assets.length > 0
 
   return (
     <section className="border-border bg-surface flex flex-col gap-5 rounded-lg border p-6">
@@ -131,6 +135,7 @@ export function SubmissionForm({
         <button
           type="button"
           onClick={onBack}
+          disabled={isSaving}
           className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
         >
           목록으로
@@ -138,9 +143,10 @@ export function SubmissionForm({
         <button
           type="button"
           onClick={() => onSave({ body, url, assets })}
-          className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+          disabled={!canSubmit || isSaving}
+          className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          제출 저장
+          {isSaving ? '저장 중…' : '제출 저장'}
         </button>
       </div>
     </section>

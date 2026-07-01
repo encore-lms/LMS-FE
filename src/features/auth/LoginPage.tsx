@@ -15,6 +15,12 @@ import { DemoQuickLogin } from './DemoQuickLogin'
 import type { DemoAccount } from './demoAccounts'
 import { loginSchema, type LoginInput } from './login.schema'
 
+interface LoginResponse {
+  token: string
+  user: User
+  nextRoute?: string
+}
+
 export function LoginPage() {
   const navigate = useNavigate()
   const { setSession } = useAuthActions()
@@ -56,12 +62,14 @@ export function LoginPage() {
   async function onSubmit({ email, password }: LoginInput) {
     setSubmitError(null)
     try {
-      const res = await apiClient.post<{ token: string; user: User }>(
-        '/auth/login',
-        { userId: email, password }, // BE 계약: 로그인 ID 필드명은 userId
-      )
+      const res = await apiClient.post<LoginResponse>('/auth/login', {
+        userId: email,
+        password,
+      })
       setSession(res.data.token, res.data.user)
-      navigate(ROLE_HOME[res.data.user.role], { replace: true })
+      navigate(res.data.nextRoute ?? ROLE_HOME[res.data.user.role], {
+        replace: true,
+      })
     } catch {
       setSubmitError('이메일 또는 비밀번호를 확인해주세요.')
     }

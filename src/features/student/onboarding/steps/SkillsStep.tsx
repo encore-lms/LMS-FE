@@ -1,14 +1,16 @@
 import { cn } from '@/shared/lib/cn'
-import { SKILL_OPTIONS, SKILL_MAX } from '../types'
+import { SKILL_MAX, type StudentSkillOption } from '../types'
 import { StepHead } from '../components/StepHead'
 
 // 온보딩 Step 2 스킬 선택 — 관심 스킬 다중 선택(최대 6). Figma 2197:14961.
 export function SkillsStep({
+  options,
   selected,
   onToggle,
 }: {
+  options: StudentSkillOption[]
   selected: string[]
-  onToggle: (skill: string) => void
+  onToggle: (skillId: string) => void
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -25,15 +27,15 @@ export function SkillsStep({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {SKILL_OPTIONS.map((s) => {
-            const on = selected.includes(s)
+          {options.map((skill) => {
+            const on = selected.includes(skill.skillId)
             const full = !on && selected.length >= SKILL_MAX
             return (
               <button
-                key={s}
+                key={skill.skillId}
                 type="button"
                 disabled={full}
-                onClick={() => onToggle(s)}
+                onClick={() => onToggle(skill.skillId)}
                 className={cn(
                   'flex items-center gap-1 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition-colors',
                   on
@@ -42,7 +44,7 @@ export function SkillsStep({
                 )}
               >
                 {on && <span className="text-[11px]">✓</span>}
-                {s}
+                {skill.name}
               </button>
             )
           })}

@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/shared/store'
-import { isOnboarded } from './completed'
+import { useStudentOnboarding } from '../api/onboarding'
 
 /**
  * 온보딩 게이트 — studentRoutes 상위에만 적용(공유 라우터 미터치).
@@ -10,7 +10,37 @@ import { isOnboarded } from './completed'
  */
 export function OnboardingGate() {
   const { user } = useAuth()
-  if (user && !isOnboarded(user.id)) {
+  const shouldCheck = user?.role === 'STUDENT'
+  const onboarding = useStudentOnboarding(shouldCheck)
+
+  if (!shouldCheck) {
+    return <Outlet />
+  }
+
+  if (onboarding.isLoading) {
+    return (
+      <div className="text-fg-muted flex min-h-[320px] items-center justify-center text-sm">
+        온보딩 상태를 확인하는 중입니다.
+      </div>
+    )
+  }
+
+  if (onboarding.isError) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-sm">
+        <p className="text-danger">온보딩 상태를 확인하지 못했습니다.</p>
+        <button
+          type="button"
+          onClick={() => void onboarding.refetch()}
+          className="border-border text-fg hover:bg-surface-muted rounded-[8px] border px-4 py-2 text-[13px] font-semibold"
+        >
+          다시 시도
+        </button>
+      </div>
+    )
+  }
+
+  if (!onboarding.data?.completed) {
     return <Navigate to="/student/onboarding" replace />
   }
   return <Outlet />

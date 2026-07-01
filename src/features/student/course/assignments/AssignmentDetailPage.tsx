@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useAssignment } from '../../api/course'
+import { useAssignment, useSubmitAssignment } from '../../api/course'
 import { AssignmentSummary, STATUS_BADGE } from './components/AssignmentSummary'
 import { SubmissionForm } from './components/SubmissionForm'
 import { SubmissionState } from './components/SubmissionState'
@@ -23,6 +23,7 @@ export default function AssignmentDetailPage() {
   const { assignmentId = '' } = useParams()
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAssignment(assignmentId)
+  const submitAssignment = useSubmitAssignment(assignmentId)
   const toast = useToast()
   usePageHeader(
     '과제 상세·제출',
@@ -79,13 +80,20 @@ export default function AssignmentDetailPage() {
     setPending(null)
     toast.success(msg)
   }
+  const submit = (draft: AssignmentDraft, successMessage: string) => {
+    submitAssignment.mutate(draft, {
+      onSuccess: () => commit(draft, successMessage),
+      onError: () =>
+        toast.danger('과제 제출에 실패했습니다. 잠시 후 다시 시도해주세요.'),
+    })
+  }
   const handleSave = (draft: AssignmentDraft) => {
     // 기존 제출본이 있으면 덮어쓰기 확인 모달, 첫 제출이면 바로 완료
     if (hasHistory) {
       setPending(draft)
       setModalOpen(true)
     } else {
-      commit(draft, '과제 제출이 완료되었습니다.')
+      submit(draft, '과제 제출이 완료되었습니다.')
     }
   }
 
@@ -116,16 +124,22 @@ export default function AssignmentDetailPage() {
         />
       ) : (
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_376px]">
-          <SubmissionForm draft={submitted} onSave={handleSave} onBack={back} />
+          <SubmissionForm
+            draft={submitted}
+            isSaving={submitAssignment.isPending}
+            onSave={handleSave}
+            onBack={back}
+          />
           <SubmissionState detail={data} />
         </div>
       )}
 
       <ConfirmResubmitModal
         open={modalOpen}
+        isSaving={submitAssignment.isPending}
         onCancel={() => setModalOpen(false)}
         onConfirm={() =>
-          pending && commit(pending, '과제 제출이 완료되었습니다.')
+          pending && submit(pending, '과제 제출이 완료되었습니다.')
         }
       />
     </div>

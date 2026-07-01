@@ -30,6 +30,8 @@ instance.interceptors.response.use(
 export interface ApiClient {
   get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>>
   post<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
+  // 응답 body가 없는 POST(201 Created/204 No Content). ApiResponse 래퍼를 기대하지 않는다.
+  postNoContent(url: string, body?: unknown): Promise<void>
   // multipart/form-data 전송(파일 업로드). Content-Type을 비워 axios가 boundary를 자동 설정.
   postForm<T>(url: string, form: FormData): Promise<ApiResponse<T>>
   put<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
@@ -48,6 +50,9 @@ export const apiClient: ApiClient = {
   async post<T>(url: string, body?: unknown) {
     const res = await instance.post<ApiResponse<T>>(url, body)
     return res.data
+  },
+  async postNoContent(url: string, body?: unknown) {
+    await instance.post(url, body)
   },
   async postForm<T>(url: string, form: FormData) {
     // Content-Type을 undefined로 두면 브라우저/axios가 boundary 포함 multipart 헤더를 채운다.

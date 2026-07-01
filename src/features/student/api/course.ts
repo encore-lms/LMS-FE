@@ -10,6 +10,7 @@ import type {
 import type {
   AssignmentDetail,
   AssignmentListItem,
+  AssignmentSubmitInput,
 } from '../course/assignments/types'
 import type { OnlineCourse } from '../course/online/types'
 
@@ -102,5 +103,24 @@ export function useAssignment(id: string) {
         .get<AssignmentDetail>(`/student/course/assignments/${id}`)
         .then((r) => r.data),
     enabled: !!id,
+  })
+}
+
+/** 과제 제출/재제출 — 성공 후 상세·목록·홈 캐시를 다시 불러온다. */
+export function useSubmitAssignment(assignmentId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: AssignmentSubmitInput) =>
+      apiClient.postNoContent(
+        `/student/course/assignments/${assignmentId}/submission`,
+        input,
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({
+        queryKey: courseKeys.assignment(assignmentId),
+      })
+      void qc.invalidateQueries({ queryKey: courseKeys.assignments() })
+      void qc.invalidateQueries({ queryKey: courseKeys.home() })
+    },
   })
 }

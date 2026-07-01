@@ -25,6 +25,9 @@ export interface AssignmentDraft {
   assets: string[]
 }
 
+/** 과제 제출 요청 — POST /student/course/assignments/{assignmentId}/submission */
+export type AssignmentSubmitInput = AssignmentDraft
+
 /** 과제 상세·제출(/…/:id) */
 export interface AssignmentDetail {
   id: string

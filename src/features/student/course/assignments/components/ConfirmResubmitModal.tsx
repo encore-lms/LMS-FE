@@ -3,10 +3,12 @@ import { Modal } from '@/components/ui/Modal'
 // 과제 수정 제출 확인 모달 (Figma 2236:10522) — 공용 Modal 사용. 덮어쓰기 안내 + 재제출 주의 + 계속 편집/수정 제출.
 export function ConfirmResubmitModal({
   open,
+  isSaving,
   onCancel,
   onConfirm,
 }: {
   open: boolean
+  isSaving?: boolean
   onCancel: () => void
   onConfirm: () => void
 }) {
@@ -21,16 +23,18 @@ export function ConfirmResubmitModal({
           <button
             type="button"
             onClick={onCancel}
-            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+            disabled={isSaving}
+            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
           >
             계속 편집
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+            disabled={isSaving}
+            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            수정 제출
+            {isSaving ? '저장 중…' : '수정 제출'}
           </button>
         </>
       }

@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Info, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -33,6 +34,7 @@ export default function TemplateListPage() {
   const [q, setQ] = useState('')
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('전체')
   const [sort, setSort] = useState<SortKey>('recent')
+  const [page, setPage] = useState(1)
   usePageHeader(
     '퀴즈 템플릿',
     '재사용 문제 풀 관리 — 변경은 기존 파생 퀴즈에 소급 반영되지 않음',
@@ -56,6 +58,17 @@ export default function TemplateListPage() {
       return (b.lastUsedAt ?? '').localeCompare(a.lastUsedAt ?? '')
     })
   }, [data, q, category, sort, removedIds])
+
+  // 필터·검색·정렬 변경 시 첫 페이지로.
+  useEffect(() => {
+    setPage(1)
+  }, [q, category, sort])
+
+  // 템플릿이 쌓여도 표가 길어지지 않도록 10건씩 페이지네이션.
+  const PAGE_SIZE = 10
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   if (isPending) {
     return <div className="text-fg-muted p-8">템플릿 목록을 불러오는 중…</div>
@@ -247,13 +260,23 @@ export default function TemplateListPage() {
       <div className="mt-4">
         <DataTable
           columns={columns}
-          rows={filtered}
+          rows={paged}
           rowKey={(t) => t.id}
           onRowClick={(t) =>
             navigate(`/instructor/quiz-templates/${t.id}/edit`)
           }
           empty="조건에 맞는 템플릿이 없어요"
         />
+        {filtered.length > 0 && (
+          <Pagination
+            className="mt-3"
+            page={safePage}
+            pageCount={pageCount}
+            totalCount={filtered.length}
+            shownCount={paged.length}
+            onPage={setPage}
+          />
+        )}
       </div>
       <p className="text-fg-subtle mt-3 flex items-center gap-1.5 text-xs">
         <Info className="h-3 w-3" />

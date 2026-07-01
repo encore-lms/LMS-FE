@@ -94,6 +94,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/api/admin/mileage/purchase-requests': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       '/api/admin/mileage/products': {
         target: HRD_API_TARGET,
         changeOrigin: true,

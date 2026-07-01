@@ -22,8 +22,6 @@ import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 type ModeFilter = 'all' | GradingMode
 type VisibilityFilter = 'all' | QuizVisibility
 
-const COHORTS = ['전체', 'DA 4기', 'FE 7기'] as const
-
 // 퀴즈 관리 목록 (/instructor/quizzes) — §5. (Figma 1337:9753)
 // 제출 있는 퀴즈는 삭제 비활성, 임시저장은 제출 현황 비활성.
 // embedded=true면 과정·기수·교과목 '퀴즈' 탭에 임베드(자체 헤더·패딩 생략).
@@ -41,7 +39,7 @@ export default function QuizListPage({
   const { data, isPending, isError, refetch } = useInstructorQuizzes(cohortId)
   const deleteQuiz = useDeleteQuiz()
   const [q, setQ] = useState('')
-  const [cohort, setCohort] = useState<(typeof COHORTS)[number]>('전체')
+  const [cohort, setCohort] = useState<string>('전체')
   const [mode, setMode] = useState<ModeFilter>('all')
   const [visibility, setVisibility] = useState<VisibilityFilter>('all')
   const [templateOpen, setTemplateOpen] = useState(false)
@@ -50,6 +48,12 @@ export default function QuizListPage({
     '퀴즈 관리',
     '담당 기수 퀴즈 출제·수정·채점 관제 — 정답/배점 변경 시 자동 재채점',
     !embedded,
+  )
+
+  // 기수 필터 옵션 — 데이터에서 파생(실 기수 라벨). AssignmentsPage와 동일 패턴.
+  const cohortOpts = useMemo(
+    () => ['전체', ...new Set((data?.items ?? []).map((i) => i.cohortLabel))],
+    [data],
   )
 
   const filtered = useMemo(() => {
@@ -254,13 +258,11 @@ export default function QuizListPage({
             <span className="text-fg-subtle">기수</span>
             <select
               value={cohort}
-              onChange={(e) =>
-                setCohort(e.target.value as (typeof COHORTS)[number])
-              }
+              onChange={(e) => setCohort(e.target.value)}
               aria-label="기수 필터"
               className="text-fg bg-transparent text-sm font-medium outline-none"
             >
-              {COHORTS.map((c) => (
+              {cohortOpts.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>

@@ -15,42 +15,16 @@ export function useDirectPayRoster() {
   })
 }
 
-// 일괄 지급/차감 실행 훅 — 성공 시 명단 캐시에 보유/사용/누적을 즉시 반영(상태 전이·목록 갱신).
-// BE 계약(P0_16 MileageTransaction) 미확정 → 네트워크 없이 클라이언트 낙관 반영으로 시뮬레이션한다.
-// 계약 확정 시 mutationFn 을 apiClient.post('/admin/mileage/direct-pay', input) 로 교체한다.
+// 일괄 지급/차감 실행 훅 — POST /admin/mileage/direct-pay (EARN/SPEND). 성공 시 명단 재조회.
 export function useDirectPaySubmit() {
   const queryClient = useQueryClient()
   return useMutation<DirectPayResult, Error, DirectPayInput>({
-    mutationFn: async (input) => ({
-      count: input.ids.length,
-      total: input.ids.length * input.amount,
-    }),
-    onSuccess: (_result, input) => {
-      const target = new Set(input.ids)
-      queryClient.setQueryData<DirectPayData>(
-        mileageDirectPayKeys.roster(),
-        (prev) =>
-          prev
-            ? {
-                ...prev,
-                students: prev.students.map((s) =>
-                  target.has(s.id)
-                    ? input.kind === 'grant'
-                      ? {
-                          ...s,
-                          held: s.held + input.amount,
-                          accrued: s.accrued + input.amount,
-                        }
-                      : {
-                          ...s,
-                          held: Math.max(0, s.held - input.amount),
-                          used: s.used + input.amount,
-                        }
-                    : s,
-                ),
-              }
-            : prev,
-      )
+    mutationFn: (input) =>
+      apiClient
+        .post<DirectPayResult>('/admin/mileage/direct-pay', input)
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mileageDirectPayKeys.roster() })
     },
   })
 }

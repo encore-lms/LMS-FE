@@ -37,6 +37,7 @@ export default function EndorsementsPage() {
     register,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<EndorsementInput>({
     resolver: zodResolver(endorsementSchema),
@@ -93,14 +94,18 @@ export default function EndorsementsPage() {
     }
   }
 
-  const onDraft = handleSubmit(
-    (input) => {
-      if (!selected) return
-      localStorage.setItem(draftKey(selected.student.id), input.comment)
-      toast.info(`임시 저장 — ${selected.student.name}`)
-    },
-    () => toast.warning('임시 저장하려면 코멘트를 입력해주세요'),
-  )
+  // 임시 저장은 20자 제한을 적용하지 않는다(작성 중 저장). 비어있을 때만 막고,
+  // 20자 이상 검증은 제출(onSubmit)에서만 수행한다.
+  const onDraft = () => {
+    if (!selected) return
+    const comment = getValues('comment')
+    if (!comment.trim()) {
+      toast.warning('임시 저장하려면 코멘트를 입력해주세요')
+      return
+    }
+    localStorage.setItem(draftKey(selected.student.id), comment)
+    toast.info(`임시 저장 — ${selected.student.name}`)
+  }
 
   return (
     <div className="p-8">
@@ -233,7 +238,7 @@ export default function EndorsementsPage() {
                 type="button"
                 variant="secondary"
                 className="h-10"
-                onClick={() => void onDraft()}
+                onClick={onDraft}
               >
                 임시 저장
               </Button>

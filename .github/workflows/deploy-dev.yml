@@ -34,9 +34,14 @@ jobs:
 
       - name: Build
         # 1주차 dev 배포 — BE가 없어 MSW mock으로 로그인·전체 흐름을 시연한다. BE 합류 시 이 env 제거.
+        # VITE_REAL_AUTH: 배포는 시크릿(true)으로 실 auth 사용. 로컬은 미설정 → 기본 false(mock 로그인).
         run: pnpm build
         env:
           VITE_ENABLE_MOCK: 'true'
+          VITE_REAL_AUTH: ${{ secrets.VITE_REAL_AUTH }}
+          # BE HTTPS 엔드포인트(API용 CloudFront → ALB). 공개 URL이라 시크릿 불필요.
+          # 실 auth(VITE_REAL_AUTH=true) 호출이 이 도메인으로 감(cross-origin → BE CORS 필요).
+          VITE_API_BASE_URL: 'https://d3eylh4fl880qc.cloudfront.net'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

@@ -29,6 +29,11 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // 교육 과정 추가(HRD-Net 검색·등록)도 learning-service(:8082) 실연동.
+      '/api/admin/education': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       '/api/admin/courses': {
         target: HRD_API_TARGET,
         changeOrigin: true,

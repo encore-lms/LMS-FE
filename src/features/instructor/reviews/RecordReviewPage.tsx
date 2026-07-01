@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Paperclip } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { usePageHeader } from '@/shared/store'
 import type {
@@ -45,6 +46,7 @@ export default function RecordReviewPage() {
   const [selected, setSelected] = useState<InstructorRecordRow | null>(null)
   const [q, setQ] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
+  const [page, setPage] = useState(1)
   // 선택 기수 — 대시보드와 공유하는 공용 컨텍스트(화면 이동에도 유지).
   const { cohortId, setCohortId } = useCohortContext()
   usePageHeader(
@@ -70,6 +72,17 @@ export default function RecordReviewPage() {
       return true
     })
   }, [data, q, category, cohort])
+
+  // 필터·검색·기수 변경 시 첫 페이지로.
+  useEffect(() => {
+    setPage(1)
+  }, [q, category, cohort])
+
+  // 기록이 많아도 표가 길어지지 않도록 10건씩 페이지네이션.
+  const PAGE_SIZE = 10
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   if (isPending) {
     return <div className="text-fg-muted p-8">기록 현황을 불러오는 중…</div>
@@ -184,11 +197,21 @@ export default function RecordReviewPage() {
       <div className="mt-3">
         <DataTable
           columns={columns}
-          rows={filtered}
+          rows={paged}
           rowKey={(r) => r.id}
           onRowClick={(r) => setSelected(r)}
           empty="조건에 맞는 기록이 없어요"
         />
+        {filtered.length > 0 && (
+          <Pagination
+            className="mt-3"
+            page={safePage}
+            pageCount={pageCount}
+            totalCount={filtered.length}
+            shownCount={paged.length}
+            onPage={setPage}
+          />
+        )}
       </div>
       <p className="text-fg-subtle mt-3 text-xs">
         조회 전용 — 승인·반려·보완 요청 처리는 운영

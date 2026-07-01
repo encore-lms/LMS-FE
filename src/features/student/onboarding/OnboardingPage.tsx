@@ -1,59 +1,87 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
-import { useAuth } from '@/shared/store'
-import { mergeProfileOverlay } from '../profile/overlay'
-import { markOnboarded } from './completed'
+import {
+  useSaveStudentOnboarding,
+  useStudentOnboarding,
+} from '../api/onboarding'
 import { OnboardingShell } from './components/OnboardingShell'
 import { PledgeStep } from './steps/PledgeStep'
 import { SkillsStep } from './steps/SkillsStep'
 import { LinksStep } from './steps/LinksStep'
-import { SKILL_MAX, isValidUrl, type OnboardingStep } from './types'
+import {
+  SKILL_MAX,
+  isValidUrl,
+  type OnboardingStep,
+  type StudentSkillOption,
+} from './types'
+
+const EMPTY_SKILL_OPTIONS: StudentSkillOption[] = []
 
 /**
  * 수강생 온보딩 (/student/onboarding) — Figma 225:27 외. 풀스크린 3스텝 마법사.
  * ?step=skills|links 로 단계 전환(없으면 다짐). 다짐(필수) 통과 후 진행.
  * step2(스킬)만 건너뛰기(→step3) 허용, step3은 시작하기로만 완료 → 대시보드.
- * 완료 시 스킬·외부 URL 을 프로필 오버레이에 저장 → 마이 프로필에 실제 반영.
+ * 완료 시 스킬·외부 URL 을 서버에 저장하고 온보딩 완료 상태를 확정한다.
  */
 export default function OnboardingPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [params, setParams] = useSearchParams()
+  const onboarding = useStudentOnboarding()
+  const saveOnboarding = useSaveStudentOnboarding()
   const raw = params.get('step')
   const step: OnboardingStep =
     raw === 'skills' ? 'skills' : raw === 'links' ? 'links' : 'pledge'
 
   const [pledge, setPledge] = useState('')
-  const [skills, setSkills] = useState<string[]>([
-    'Java',
-    'Spring',
-    'SQL',
-    'Git',
-  ])
+  const [skills, setSkills] = useState<string[]>([])
   const [blogUrl, setBlogUrl] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    if (!onboarding.data || hydrated) return
+    const profile = onboarding.data.profile
+    setPledge(profile.promise)
+    setSkills(profile.selectedSkillIds)
+    setBlogUrl(profile.blogUrl ?? '')
+    setGithubUrl(profile.githubUrl ?? '')
+    setHydrated(true)
+  }, [hydrated, onboarding.data])
 
   const go = (s: OnboardingStep) =>
     setParams(s === 'pledge' ? {} : { step: s }, { replace: true })
-  // 시작하기 시 입력값을 프로필 오버레이에 저장 → 마이 프로필 반영 + 온보딩 완료 표시.
+
+  const skillOptions = onboarding.data?.skillOptions ?? EMPTY_SKILL_OPTIONS
+  const selectedSkillNames = useMemo(() => {
+    const namesById = new Map(
+      skillOptions.map((skill) => [skill.skillId, skill.name]),
+    )
+    return skills.map((skillId) => namesById.get(skillId) ?? skillId)
+  }, [skillOptions, skills])
+
+  // 시작하기 시 입력값을 서버에 저장하고 완료 후 수강생 홈으로 이동한다.
   const finish = () => {
-    mergeProfileOverlay({
-      skills,
-      blogUrl: blogUrl.trim(),
-      githubUrl: githubUrl.trim(),
-    })
-    if (user) markOnboarded(user.id)
-    navigate('/student')
+    saveOnboarding.mutate(
+      {
+        promise: pledge.trim(),
+        skillIds: skills,
+        blogUrl: blogUrl.trim() || null,
+        githubUrl: githubUrl.trim() || null,
+      },
+      {
+        onSuccess: () => navigate('/student', { replace: true }),
+      },
+    )
   }
 
-  const toggleSkill = (skill: string) =>
+  const toggleSkill = (skillId: string) =>
     setSkills((prev) =>
-      prev.includes(skill)
-        ? prev.filter((s) => s !== skill)
+      prev.includes(skillId)
+        ? prev.filter((s) => s !== skillId)
         : prev.length >= SKILL_MAX
           ? prev
-          : [...prev, skill],
+          : [...prev, skillId],
     )
 
   const isFirst = step === 'pledge'
@@ -70,10 +98,33 @@ export default function OnboardingPage() {
         ? blogOk && githubOk
         : true
 
+  if (onboarding.isLoading) {
+    return (
+      <div className="bg-surface text-fg-muted flex min-h-screen items-center justify-center text-sm">
+        온보딩 정보를 불러오는 중입니다.
+      </div>
+    )
+  }
+
+  if (onboarding.isError) {
+    return (
+      <div className="bg-surface flex min-h-screen flex-col items-center justify-center gap-3 text-sm">
+        <p className="text-danger">온보딩 정보를 불러오지 못했습니다.</p>
+        <button
+          type="button"
+          onClick={() => void onboarding.refetch()}
+          className="border-border text-fg hover:bg-surface-muted rounded-[8px] border px-4 py-2 text-[13px] font-semibold"
+        >
+          다시 시도
+        </button>
+      </div>
+    )
+  }
+
   return (
     <OnboardingShell
       step={step}
-      skills={skills}
+      skills={selectedSkillNames}
       blogUrl={blogUrl}
       githubUrl={githubUrl}
       onBlog={setBlogUrl}
@@ -81,7 +132,11 @@ export default function OnboardingPage() {
     >
       {step === 'pledge' && <PledgeStep value={pledge} onChange={setPledge} />}
       {step === 'skills' && (
-        <SkillsStep selected={skills} onToggle={toggleSkill} />
+        <SkillsStep
+          options={skillOptions}
+          selected={skills}
+          onToggle={toggleSkill}
+        />
       )}
       {step === 'links' && (
         <LinksStep
@@ -94,6 +149,11 @@ export default function OnboardingPage() {
 
       {/* 하단 액션바 — 건너뛰기는 스킬(step2)에서만, step3로 이동. step1·step3은 불가 */}
       <div className="border-divider mt-5 flex items-center justify-between border-t pt-5">
+        {saveOnboarding.isError && (
+          <p role="alert" className="text-danger mr-auto text-[12px]">
+            온보딩 저장에 실패했습니다. 잠시 후 다시 시도해주세요.
+          </p>
+        )}
         {step === 'skills' ? (
           <button
             type="button"
@@ -121,7 +181,7 @@ export default function OnboardingPage() {
           </button>
           <button
             type="button"
-            disabled={!canAdvance}
+            disabled={!canAdvance || saveOnboarding.isPending}
             onClick={() =>
               isLast ? finish() : go(step === 'pledge' ? 'skills' : 'links')
             }
@@ -132,7 +192,11 @@ export default function OnboardingPage() {
                 : 'bg-brand/40 cursor-not-allowed',
             )}
           >
-            {isLast ? '시작하기' : '다음 →'}
+            {isLast
+              ? saveOnboarding.isPending
+                ? '저장 중…'
+                : '시작하기'
+              : '다음 →'}
           </button>
         </div>
       </div>

@@ -4,8 +4,17 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 import { router } from '@/app/router'
 import { queryClient } from '@/app/queryClient'
+import { reloadForStaleChunk } from '@/app/staleChunk'
 import { ToastProvider } from '@/components/ui/Toast'
 import '@/index.css'
+
+// 재배포로 옛 코드 스플리팅 청크가 사라지면 lazy import(preload)가 실패한다.
+// Vite가 쏘는 preload 실패 이벤트를 조기에 받아 최신 빌드로 1회 자동 새로고침한다.
+// (렌더 단계까지 새어도 RouteErrorBoundary가 같은 유틸로 백스톱 처리한다.)
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault()
+  reloadForStaleChunk()
+})
 
 // MSW mock 활성화 조건: 로컬 dev(항상) 또는 VITE_ENABLE_MOCK=true(BE 없는 배포 환경, 1주차 한정).
 // BE 합류 시 배포 빌드의 VITE_ENABLE_MOCK 플래그를 제거하면 실제 API로 전환된다.

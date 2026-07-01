@@ -1,5 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom'
 import { AppShellWithMenu } from './AppShellWithMenu'
+import { RouteErrorBoundary } from './RouteErrorBoundary'
 import { AuthGuard } from '@/features/auth/AuthGuard'
 import { RequireRole } from '@/features/auth/RequireRole'
 import { RoleEntry } from '@/features/auth/RoleEntry'
@@ -32,18 +33,27 @@ export const router = createBrowserRouter([
   ...externalPublicRoutes,
   {
     element: <AuthGuard />,
+    // 셸 밖(전체화면 페이지)·셸 자체 렌더 실패 등 하위에서 못 잡은 오류의 최종 폴백.
+    errorElement: <RouteErrorBoundary />,
     children: [
       // 전체화면(쉘 없음) — 퀴즈 응시 집중 모드. AppShell 밖에서 STUDENT 가드만 적용.
       guarded(['STUDENT'], studentFullscreenRoutes),
       {
         element: <AppShellWithMenu />,
         children: [
-          { index: true, element: <RoleEntry /> },
-          guarded(['STUDENT'], studentRoutes),
-          guarded(['INSTRUCTOR'], instructorRoutes),
-          guarded(['MENTOR'], mentorRoutes),
-          guarded(['MANAGER', 'ADMIN'], adminRoutes),
-          ...externalRoutes,
+          {
+            // pathless 래퍼 — 하위 페이지가 throw해도 셸(사이드바·헤더)은 유지하고
+            // 본문(Outlet) 영역만 폴백으로 대체한다. 흰 화면 원천 차단.
+            errorElement: <RouteErrorBoundary />,
+            children: [
+              { index: true, element: <RoleEntry /> },
+              guarded(['STUDENT'], studentRoutes),
+              guarded(['INSTRUCTOR'], instructorRoutes),
+              guarded(['MENTOR'], mentorRoutes),
+              guarded(['MANAGER', 'ADMIN'], adminRoutes),
+              ...externalRoutes,
+            ],
+          },
         ],
       },
     ],

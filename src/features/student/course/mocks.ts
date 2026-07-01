@@ -1,171 +1,10 @@
 import { http, HttpResponse } from 'msw'
-import type {
-  CourseHome,
-  CourseMaterials,
-  MaterialCategory,
-  MaterialItem,
-} from './types'
+import type { CourseMaterials, MaterialCategory, MaterialItem } from './types'
 
 // "나의 과정" mock — 기능 로컬. 자동 수집 규약: `export const handlers`
 // (mocks/handlers.ts 가 import.meta.glob 으로 자동 등록 → handlers.ts 안 건드림).
 // 데이터는 Figma 강의 홈(165:27)·자료실(168:27) 시안을 재현.
 const ok = <T>(data: T) => HttpResponse.json({ data })
-
-const mockCourseHome: CourseHome = {
-  hero: {
-    trackLabel: 'BACKEND BOOTCAMP',
-    courseName: '백엔드 부트캠프',
-    cohortName: '3기',
-    periodStart: '2026.03.04',
-    periodEnd: '2026.09.12',
-    currentWeek: 10,
-    totalWeeks: 24,
-    progressPct: 38,
-    progressLabel: '주차별 진행 · 10주차 학습 중',
-    progressSubLabel: '28주 강의 중 9주 완료 · 1주 진행 중',
-  },
-  kpis: [
-    {
-      key: 'quiz',
-      label: '다가올 퀴즈',
-      value: 2,
-      unit: '건',
-      tone: 'warning',
-      barPct: 50,
-      badge: 'D-1',
-      caption: '오늘 마감 1건 · D-3 1건',
-    },
-    {
-      key: 'assignment',
-      label: '마감 임박 과제',
-      value: 1,
-      unit: '건',
-      tone: 'danger',
-      barPct: 30,
-      caption: 'D-2 게시판 CRUD 과제',
-    },
-    {
-      key: 'material',
-      label: '새 자료',
-      value: 3,
-      unit: '건',
-      tone: 'info',
-      barPct: 60,
-      badge: 'NEW',
-      caption: 'JPA 트랜잭션 추가',
-    },
-    {
-      key: 'attendance',
-      label: '출결 대기 요청',
-      value: 1,
-      unit: '건',
-      tone: 'accent',
-      barPct: 20,
-      caption: '블로그 제출 1건 검토 대기',
-    },
-  ],
-  weeksTitle: '주차별 학습',
-  weeksSubtitle: '이번 주 10주차 — JPA 영속성 컨텍스트 · 트랜잭션 관리',
-  weeks: [
-    {
-      weekNo: 8,
-      title: 'Spring Data JPA 기초',
-      periodStart: '2026-04-22',
-      periodEnd: '2026-04-28',
-      status: 'done',
-    },
-    {
-      weekNo: 9,
-      title: 'JPA 연관관계 매핑',
-      periodStart: '2026-04-29',
-      periodEnd: '2026-05-05',
-      status: 'done',
-    },
-    {
-      weekNo: 10,
-      title: 'JPA 영속성 컨텍스트 · 트랜잭션',
-      periodStart: '2026-05-13',
-      periodEnd: '2026-05-19',
-      status: 'learning',
-    },
-    {
-      weekNo: 11,
-      title: 'Querydsl · 동적 쿼리',
-      periodStart: '2026-05-20',
-      periodEnd: '2026-05-26',
-      status: 'upcoming',
-    },
-  ],
-  sideCards: [
-    {
-      key: 'quiz',
-      title: '미응시 퀴즈',
-      count: 2,
-      tone: 'warning',
-      action: '퀴즈 →',
-      rows: [
-        {
-          id: 'q-w10',
-          title: '10주차 영속성 컨텍스트',
-          meta: '3가지 챕터 100문항 1발',
-          badge: '응시 →',
-        },
-        { id: 'q-w9', title: '9주차 연관관계 매핑', meta: '5/13' },
-      ],
-    },
-    {
-      key: 'assignment',
-      title: '마감 임박 과제',
-      count: 1,
-      tone: 'danger',
-      action: '전체 →',
-      rows: [
-        {
-          id: 'a-board',
-          title: '게시판 CRUD 과제',
-          meta: 'Spring Boot REST API + JPA 기능 게시판 구현',
-          badge: 'D-2',
-        },
-      ],
-    },
-    {
-      key: 'material',
-      title: '새 자료',
-      count: 3,
-      tone: 'info',
-      action: '자료실 →',
-      rows: [
-        { id: 'm1', title: 'JPA 영속성 컨텍스트 슬라이드', meta: '5/13' },
-        { id: 'm2', title: '트랜잭션 매니저 설명', meta: '5/13' },
-        { id: 'm3', title: '9주차 실습 정답 코드', meta: '5/8' },
-      ],
-    },
-  ],
-  notices: [
-    {
-      id: 'n1',
-      tone: 'urgent',
-      tagLabel: '긴급',
-      title: '오전 시험 일정 안내 — 6/3 14:00',
-      timeAgo: '1시간 전',
-    },
-    {
-      id: 'n2',
-      tone: 'notice',
-      tagLabel: '공지',
-      title: '10주차 기록 주기적 일정으로 JPA 영속성 컨텍스트',
-      timeAgo: '어제',
-    },
-    {
-      id: 'n3',
-      tone: 'normal',
-      tagLabel: '일반',
-      title: '실습실 사용 시간 변경 — 평일 19:00까지',
-      timeAgo: '3일 전',
-    },
-  ],
-  tabCounts: { quizzes: 2, materials: 24, assignments: 1 },
-}
 
 // 학생 공유 자료가 쌓이도록 가변 배열로 둔다(공유 POST가 맨 앞에 prepend).
 // 카테고리 칩 카운트·페이지 수는 항목 개수에서 파생(buildMaterials)되어 자료가 늘면 자동 반영된다.
@@ -450,7 +289,7 @@ function buildMaterials(): CourseMaterials {
 }
 
 export const handlers = [
-  http.get('/api/student/course', () => ok<CourseHome>(mockCourseHome)),
+  // 나의 과정 홈(/student/course)은 learning-service 실연동 — mock 제거(mocks.ts glob 미등록 → proxy).
   // 자료실 조회는 learning-service CohortMaterial 실연동 — VITE_REAL_AUTH=true면 mock 미등록 → proxy.
   // 학생 공유(POST)·삭제(DELETE)는 CohortMaterial 범위 밖이라 mock 유지.
   ...(import.meta.env.VITE_REAL_AUTH === 'true'

@@ -118,6 +118,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 수강생 나의 과정 홈(/student/course)도 learning-service 실연동. (온라인교육 등 하위는 MSW mock이 우선 처리)
+      '/api/student/course': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 출결 폼(me — 메타/제출/증빙)도 learning-service 실연동.
       '/api/student/attendance-forms/me': {
         target: HRD_API_TARGET,

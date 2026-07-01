@@ -124,6 +124,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 수강생 출결/태도 조회(누적·HRD 캘린더)도 learning-service 실연동.
+      '/api/student/attendance/overview': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 실로그인(VITE_REAL_AUTH=true)일 때만 MSW가 /api/auth/login을 bypass → 이 프록시로 도달.
       // mock 로그인(기본)에서는 MSW가 가로채므로 이 프록시는 사용되지 않는다.
       '/api/auth': {

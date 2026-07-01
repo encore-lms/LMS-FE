@@ -240,18 +240,17 @@ const toAttachments = (names: string[] = []): AttendanceAttachment[] =>
 let submissionSeq = 0
 
 // 출결 폼(me — 메타/제출/증빙)은 VITE_REAL_AUTH=true면 learning-service 실연동(이 mock 미등록 → proxy).
-// overview(누적 요약·HRD 캘린더)는 아직 mock 유지.
+// 출결 전체(overview·폼)는 VITE_REAL_AUTH=true면 learning-service 실연동(mock 미등록 → proxy).
 const realAttendanceForm = import.meta.env.VITE_REAL_AUTH === 'true'
 
 // 자동 수집 규약: features/**/mocks.ts 는 `handlers`를 내보낸다(mocks/handlers.ts가 glob으로 등록).
 export const handlers = [
-  http.get('/api/student/attendance/overview', () =>
-    ok<AttendanceOverview>(mockAttendanceOverview),
-  ),
-
   ...(realAttendanceForm
     ? []
     : [
+        http.get('/api/student/attendance/overview', () =>
+          ok<AttendanceOverview>(mockAttendanceOverview),
+        ),
         http.get('/api/student/attendance-forms/:cohortId', () =>
           ok<AttendanceFormMeta>(mockAttendanceFormMeta),
         ),

@@ -1,10 +1,10 @@
-import { useState, type MouseEvent } from 'react'
-import { AlertTriangle, Link2 } from 'lucide-react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { AlertTriangle, ExternalLink, Link2, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import type { BlogRecord, RecordStatus } from '../types'
 
-// 블로그 기록 카드 — 상태별 표시 + 수정/삭제. 반려 사유는 "자세히"로 모달, 스터디는 카드 클릭 시 상세 모달.
+// 블로그 기록 카드 — 상태별 표시 + 수정/삭제. 블로그 상세는 우측 iframe 패널, 스터디/자격증은 상세 모달.
 const STATUS: Record<RecordStatus, { cls: string }> = {
   draft: { cls: 'bg-surface-muted text-fg-muted' },
   approved: { cls: 'bg-success-bg text-success' },
@@ -26,7 +26,8 @@ export function BlogRecordCard({
 
   // URL은 블로그 기록에만 의미가 있다(스터디·자격증은 증빙 파일 기반).
   const showUrl = record.category === 'blog' && !!record.url
-  // 모든 기록은 카드를 누르면 상세 모달을 연다(블로그·스터디·자격증).
+  const isBlog = record.category === 'blog'
+  // 모든 기록은 카드를 눌러 상세를 확인한다. 블로그만 모달 대신 우측 iframe 패널로 연다.
   const clickable = true
   const categoryLabel =
     record.category === 'blog'
@@ -40,6 +41,13 @@ export function BlogRecordCard({
     e.stopPropagation()
     fn()
   }
+  const openDetail = () => {
+    if (isBlog) {
+      setDetailOpen(true)
+      return
+    }
+    setDetailOpen(true)
+  }
 
   return (
     <>
@@ -48,15 +56,16 @@ export function BlogRecordCard({
           'border-border bg-surface flex flex-col gap-3 rounded-2xl border p-5',
           clickable && 'hover:border-brand/40 cursor-pointer transition-colors',
         )}
-        onClick={clickable ? () => setDetailOpen(true) : undefined}
+        onClick={clickable ? openDetail : undefined}
         role={clickable ? 'button' : undefined}
         tabIndex={clickable ? 0 : undefined}
+        aria-expanded={isBlog ? detailOpen : undefined}
         onKeyDown={
           clickable
             ? (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
-                  setDetailOpen(true)
+                  openDetail()
                 }
               }
             : undefined
@@ -158,6 +167,13 @@ export function BlogRecordCard({
         </div>
       </section>
 
+      {isBlog && detailOpen && (
+        <BlogPreviewPanel
+          record={record}
+          onClose={() => setDetailOpen(false)}
+        />
+      )}
+
       {/* 반려 사유 모달 — "자세히"로 진입 */}
       <Modal
         open={rejectOpen}
@@ -178,9 +194,9 @@ export function BlogRecordCard({
         )}
       </Modal>
 
-      {/* 기록 상세 모달 — 카드 클릭으로 진입(블로그·스터디·자격증) */}
+      {/* 스터디·자격증 상세 모달 — 블로그는 매니저 화면처럼 우측 iframe 패널로 진입 */}
       <Modal
-        open={detailOpen}
+        open={!isBlog && detailOpen}
         onClose={() => setDetailOpen(false)}
         size="md"
         title={`${categoryLabel} 상세`}
@@ -240,5 +256,177 @@ export function BlogRecordCard({
         </div>
       </Modal>
     </>
+  )
+}
+
+function BlogPreviewPanel({
+  record,
+  onClose,
+}: {
+  record: BlogRecord
+  onClose: () => void
+}) {
+  const status = STATUS[record.status]
+  const panelRef = useRef<HTMLElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  const [previewState, setPreviewState] = useState<
+    'empty' | 'loading' | 'ready' | 'delayed' | 'blocked'
+  >(record.url ? 'loading' : 'empty')
+
+  onCloseRef.current = onClose
+
+  // 우측 패널이 열려 있는 동안 배경 스크롤을 잠그고 ESC 닫기/포커스 복귀를 처리한다.
+  useEffect(() => {
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current()
+    }
+    const prevOverflow = document.body.style.overflow
+
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKey)
+    panelRef.current?.focus({ preventScroll: true })
+
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.removeEventListener('keydown', onKey)
+      previousFocusRef.current?.focus({ preventScroll: true })
+    }
+  }, [])
+
+  // 일부 블로그는 X-Frame-Options/CSP로 iframe 표시가 막힌다. 지연 시 새 탭 안내를 명확히 보여준다.
+  useEffect(() => {
+    if (!record.url) {
+      setPreviewState('empty')
+      return
+    }
+
+    setPreviewState('loading')
+    const timer = window.setTimeout(() => {
+      setPreviewState((current) =>
+        current === 'loading' ? 'delayed' : current,
+      )
+    }, 2500)
+
+    return () => window.clearTimeout(timer)
+  }, [record.url])
+
+  return (
+    <div className="fixed inset-0 z-50 flex" onClick={onClose}>
+      <div className="flex-1 bg-black/40" />
+      <aside
+        ref={panelRef}
+        tabIndex={-1}
+        aria-label="블로그 상세 미리보기"
+        className="bg-surface flex h-full w-[760px] max-w-[92vw] flex-col shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="border-border flex items-center justify-between gap-3 border-b px-5 py-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-fg truncate text-base font-bold">
+                {record.title}
+              </span>
+              <span
+                className={cn(
+                  'shrink-0 rounded-full px-2 py-0.5 text-xs font-bold',
+                  status.cls,
+                )}
+              >
+                {record.statusLabel}
+              </span>
+            </div>
+            <p className="text-fg-subtle mt-0.5 truncate text-xs">
+              {record.weekLabel} · {record.dateRange} · {record.submittedAt}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {record.url && (
+              <a
+                href={record.url}
+                target="_blank"
+                rel="noreferrer"
+                className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold"
+              >
+                새 탭
+                <ExternalLink className="size-3" />
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="블로그 상세 닫기"
+              className="text-fg-subtle hover:bg-surface-muted hover:text-fg rounded-md p-1"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+
+        {record.url && (
+          <div className="border-border bg-surface-muted text-fg-subtle flex items-center gap-2 border-b px-5 py-2 text-xs">
+            <Link2 className="size-3.5 shrink-0" />
+            <span className="truncate">{record.url}</span>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-auto">
+          {record.url ? (
+            <div className="relative h-full min-h-[420px]">
+              <iframe
+                src={record.url}
+                title={`${record.title} 블로그 미리보기`}
+                className="h-full w-full bg-white"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                onLoad={() => setPreviewState('ready')}
+                onError={() => setPreviewState('blocked')}
+              />
+              {previewState === 'loading' && (
+                <div className="border-border bg-surface/95 text-fg-muted absolute top-4 left-4 rounded-lg border px-3 py-2 text-xs shadow-sm">
+                  블로그 미리보기를 불러오는 중입니다.
+                </div>
+              )}
+              {(previewState === 'delayed' || previewState === 'blocked') && (
+                <div
+                  aria-live="polite"
+                  className="border-warning/40 bg-warning-bg/95 absolute right-4 bottom-4 max-w-[360px] rounded-lg border p-3 shadow-lg"
+                >
+                  <p className="text-fg text-xs font-bold">
+                    미리보기가 제한될 수 있습니다.
+                  </p>
+                  <p className="text-fg-muted mt-1 text-xs leading-5">
+                    블로그 보안 정책 때문에 화면이 비어 보이면 새 탭에서 확인해
+                    주세요.
+                  </p>
+                  <a
+                    href={record.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-brand mt-2 inline-flex items-center gap-1 text-xs font-bold"
+                  >
+                    새 탭으로 보기
+                    <ExternalLink className="size-3" />
+                  </a>
+                </div>
+              )}
+              {previewState === 'ready' && (
+                <p className="text-fg-subtle bg-surface/90 pointer-events-none absolute right-2 bottom-2 rounded px-2 py-1 text-[11px]">
+                  미리보기가 보이지 않으면 우측 상단 “새 탭”으로 확인
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="text-fg-muted flex h-full min-h-[420px] items-center justify-center text-sm">
+              등록된 블로그 URL이 없습니다.
+            </div>
+          )}
+        </div>
+      </aside>
+    </div>
   )
 }

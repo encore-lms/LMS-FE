@@ -10,7 +10,12 @@ import { useRecordsOverview, useDeleteRecord } from '../api/records'
 import { RecordStatCards } from './components/RecordStatCards'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
-import type { BlogRecord, RecordStatus, RecordsOverview } from './types'
+import type {
+  BlogRecord,
+  RecordCategory,
+  RecordStatus,
+  RecordsOverview,
+} from './types'
 
 const UPDATED_MSG = '블로그 기록이 수정되었습니다.'
 
@@ -32,6 +37,10 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 const PAGE_SIZE = 4
 // 카테고리 탭 유지 키 — 기록 보고 돌아와도 마지막 탭이 고정되게 sessionStorage에 보존.
 const RECORDS_TAB_KEY = 'lms:records-tab'
+
+function isRecordCategory(value: string | null): value is RecordCategory {
+  return value === 'blog' || value === 'study' || value === 'cert'
+}
 
 /**
  * 기록실 (/student/records) — Figma 246:27.
@@ -66,15 +75,17 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   const toast = useToast()
   const deleteRecord = useDeleteRecord()
   const [params, setParams] = useSearchParams()
-  const [activeTab, setActiveTabState] = useState(() => {
+  const [activeTab, setActiveTabState] = useState<RecordCategory>(() => {
     try {
-      return sessionStorage.getItem(RECORDS_TAB_KEY) ?? 'blog'
+      const stored = sessionStorage.getItem(RECORDS_TAB_KEY)
+      return isRecordCategory(stored) ? stored : 'blog'
     } catch {
       return 'blog'
     }
   })
+  const categoryTabs = data.tabs.filter((tab) => isRecordCategory(tab.key))
   // 탭 변경을 보존 — 기록 보고 돌아와도 마지막 카테고리 탭이 유지된다.
-  const setActiveTab = (key: string) => {
+  const setActiveTab = (key: RecordCategory) => {
     setActiveTabState(key)
     try {
       sessionStorage.setItem(RECORDS_TAB_KEY, key)
@@ -128,10 +139,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   // 탭(카테고리) + 상태 필터 + 정렬(주차 번호 기준).
   const weekNo = (r: BlogRecord) => parseInt(r.weekLabel, 10) || 0
   const visible = useMemo(() => {
-    let list =
-      activeTab === 'all'
-        ? records
-        : records.filter((r) => r.category === activeTab)
+    let list = records.filter((r) => r.category === activeTab)
     if (statusFilter !== 'all')
       list = list.filter((r) => r.status === statusFilter)
     return [...list].sort((a, b) =>
@@ -154,9 +162,8 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   }, [page, totalPages])
 
   // 활성 탭 기준 목록 제목·총 건수.
-  const activeTabInfo = data.tabs.find((t) => t.key === activeTab)
-  const listTitle =
-    activeTab === 'all' ? '전체 기록' : `${activeTabInfo?.label ?? ''} 기록`
+  const activeTabInfo = categoryTabs.find((t) => t.key === activeTab)
+  const listTitle = `${activeTabInfo?.label ?? ''} 기록`
   const totalCount = activeTabInfo?.count ?? visible.length
 
   // 제출 배너 — 활성 탭에 맞는 등록 폼으로 연결(블로그/스터디/자격증).
@@ -222,13 +229,13 @@ function RecordsView({ data }: { data: RecordsOverview }) {
     <div className="flex flex-col gap-5 p-8">
       {/* 필터 탭 */}
       <div className="flex flex-wrap items-center gap-2">
-        {data.tabs.map((t) => {
+        {categoryTabs.map((t) => {
           const on = t.key === activeTab
           return (
             <button
               key={t.key}
               type="button"
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => setActiveTab(t.key as RecordCategory)}
               className={cn(
                 'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
                 on

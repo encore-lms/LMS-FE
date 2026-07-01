@@ -170,6 +170,18 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 운영 멘토링(/admin/mentoring: 템플릿·일지·통계)도 auth-user-service(:8081) 실연동.
+      '/api/admin/mentoring': {
+        target: AUTH_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // 운영 멘토 배정(/admin/mentors/assignments)도 auth-user-service(:8081) 실연동.
+      '/api/admin/mentors': {
+        target: AUTH_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 멘토링(/student/mentoring)도 auth-user-service(:8081) 실연동(mock 제거).
       '/api/student/mentoring': {
         target: AUTH_API_TARGET,

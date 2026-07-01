@@ -46,9 +46,14 @@ function keepMockAlive() {
   })
 
   // 워커 내부 프로토콜: 현재 클라이언트를 워커의 활성 목록에 다시 등록시킨다.
+  // controller가 있으면 바로 전송하고, controller가 없으면(재등록 누락의 주원인 —
+  // 제어 유실·claim 전 등) ready된 등록 워커에 직접 보내 재활성화가 조용히 실패하지 않게 한다.
   const reactivate = () => {
-    if (document.visibilityState === 'visible') {
-      sw.controller?.postMessage('MOCK_ACTIVATE')
+    if (document.visibilityState !== 'visible') return
+    if (sw.controller) {
+      sw.controller.postMessage('MOCK_ACTIVATE')
+    } else {
+      void sw.ready.then((reg) => reg.active?.postMessage('MOCK_ACTIVATE'))
     }
   }
   document.addEventListener('visibilitychange', reactivate)

@@ -26,7 +26,7 @@ import {
 import type { MentoringRequestSlot } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { RequestStatusChip, RoleBadge, SlotLabelChip } from './RequestChips'
-import { RESPONSE_SAVED_TOAST } from './requestMeta'
+import type { RequestRespondedState } from './RequestRespondedPage'
 import {
   composeScheduleLabel,
   parseScheduleLabel,
@@ -306,10 +306,8 @@ export default function RequestResponseModal() {
     [navigate],
   )
   const saving = actionMutation.isPending || detailsMutation.isPending
-  const onSaved = () => {
-    toast.success(RESPONSE_SAVED_TOAST)
-    close()
-  }
+  const goResponded = (state: RequestRespondedState) =>
+    navigate('/mentor/mentoring-requests/submitted', { state })
   const onFailed = () =>
     toast.danger('응답 저장에 실패했어요. 잠시 후 다시 시도해 주세요.')
 
@@ -369,26 +367,68 @@ export default function RequestResponseModal() {
       expectedMinutes: values.expectedMinutes,
       mentorResponseNote: values.mentorResponseNote || undefined,
     }
+    const onSuccess = () =>
+      goResponded({
+        outcome: confirmedEditable ? 'updated' : 'counter',
+        submittedAtLabel: '방금',
+        teamLabel: `${data.cohortLabel} · ${data.teamName}`,
+        waitingForStudent: !confirmedEditable,
+        rows: [
+          {
+            label: confirmedEditable ? '확정 일정' : '제안 일정',
+            value: payload.dateTimeLabel,
+          },
+          {
+            label: '장소',
+            value: `${MENTORING_PLACE_TYPE_LABEL[payload.placeType]} · ${payload.placeDetail}`,
+          },
+          { label: '예상 시간', value: `${payload.expectedMinutes}분` },
+          ...(payload.mentorResponseNote
+            ? [{ label: '메모', value: payload.mentorResponseNote }]
+            : []),
+        ],
+      })
     if (confirmedEditable) {
       detailsMutation.mutate(
         { requestId, payload },
-        { onSuccess: onSaved, onError: onFailed },
+        { onSuccess, onError: onFailed },
       )
     } else {
       actionMutation.mutate(
         { requestId, action: 'counter-propose', payload },
-        { onSuccess: onSaved, onError: onFailed },
+        { onSuccess, onError: onFailed },
       )
     }
   }
 
   const directSave = () => {
     if (!respondable) return
+    const teamLabel = `${data.cohortLabel} · ${data.teamName}`
     if (mode === 'confirm') {
       // 확정 = 희망 일정 그대로(서버가 요청 슬롯으로 확정 — ReservationActionRequest 공용 필드)
       actionMutation.mutate(
         { requestId, action: 'confirm' },
-        { onSuccess: onSaved, onError: onFailed },
+        {
+          onSuccess: () =>
+            goResponded({
+              outcome: 'confirmed',
+              submittedAtLabel: '방금',
+              teamLabel,
+              waitingForStudent: false,
+              rows: [
+                { label: '확정 일정', value: data.desired.dateTimeLabel },
+                {
+                  label: '장소',
+                  value: `${MENTORING_PLACE_TYPE_LABEL[data.desired.placeType]} · ${data.desired.placeDetail}`,
+                },
+                {
+                  label: '예상 시간',
+                  value: `${data.desired.expectedMinutes}분`,
+                },
+              ],
+            }),
+          onError: onFailed,
+        },
       )
     } else if (mode === 'reject') {
       actionMutation.mutate(
@@ -397,7 +437,23 @@ export default function RequestResponseModal() {
           action: 'reject',
           payload: { mentorResponseNote: rejectNote.trim() || undefined },
         },
-        { onSuccess: onSaved, onError: onFailed },
+        {
+          onSuccess: () =>
+            goResponded({
+              outcome: 'rejected',
+              submittedAtLabel: '방금',
+              teamLabel,
+              waitingForStudent: false,
+              rows: [
+                { label: '요청자', value: data.requester.name },
+                {
+                  label: '거절 사유',
+                  value: rejectNote.trim() || '사유 미기재',
+                },
+              ],
+            }),
+          onError: onFailed,
+        },
       )
     }
   }

@@ -49,6 +49,7 @@ import {
   durationLabel,
   minutesBetween,
 } from './logMeta'
+import type { LogSubmittedState } from './LogSubmittedPage'
 
 const round1 = (n: number) => Math.round(n * 10) / 10
 
@@ -276,7 +277,7 @@ function LogComposeForm({
     )
   }
 
-  // 제출·재제출 — 성공 시 목록 복귀 + 제출 완료 토스트(?toast=submitted, 2582:6348)
+  // 제출·재제출 — 성공 시 제출 완료 요약 페이지로 이동(요약은 navigate state 로 전달, 2582:6348)
   const onSubmit = handleSubmit(
     async (values) => {
       const payload = toPayload(values)
@@ -296,7 +297,42 @@ function LogComposeForm({
             payload,
           })
         }
-        navigate('/mentor/mentoring-logs?toast=submitted')
+        const summaryRows = [
+          {
+            label: '대상 팀',
+            value: target
+              ? `${target.cohortLabel} · ${target.teamName} · ${round}회차`
+              : '-',
+          },
+          {
+            label: '진행 일시',
+            value:
+              (dateWithDow(values.sessionDate ?? '') || '-') +
+              (values.startTime && values.endTime
+                ? ` · ${values.startTime}~${values.endTime}`
+                : ''),
+          },
+          {
+            label: '장소',
+            value: `${MENTORING_PLACE_TYPE_LABEL[values.placeType]}${
+              values.placeDetail ? ` · ${values.placeDetail}` : ''
+            }`,
+          },
+          {
+            label: '실제 진행 시간',
+            value: actualMinutes > 0 ? durationLabel(actualMinutes) : '-',
+          },
+          { label: '인정 시간', value: `${recognizedPreview}h` },
+          { label: '참석 멘티', value: `${values.attendedIds.length}명` },
+          { label: '상태', value: '제출 즉시 자동 유효' },
+        ]
+        navigate('/mentor/mentoring-logs/submitted', {
+          state: {
+            submittedAtLabel: '방금',
+            resubmit: mode === 'resubmit',
+            rows: summaryRows,
+          } satisfies LogSubmittedState,
+        })
       } catch {
         toast.danger(
           mode === 'resubmit'

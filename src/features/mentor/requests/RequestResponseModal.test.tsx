@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import RequestResponseModal from './RequestResponseModal'
+import RequestRespondedPage from './RequestRespondedPage'
 import {
   useMentoringRequestAction,
   useMentoringRequestDetail,
@@ -36,6 +37,10 @@ function renderModal(initialEntry: string) {
             element={<div>요청 목록</div>}
           />
           <Route
+            path="/mentor/mentoring-requests/submitted"
+            element={<RequestRespondedPage />}
+          />
+          <Route
             path="/mentor/mentoring-requests/:requestId"
             element={<RequestResponseModal />}
           />
@@ -60,7 +65,7 @@ beforeEach(() => {
 describe('RequestResponseModal', () => {
   it('요청 대기 — 요청 정보·응답 모드 3종을 렌더하고, 확정 저장 시 confirm 을 호출한다', async () => {
     mockDetail('req_rec_6')
-    // 성공 시 토스트 + 목록 복귀(목록 잔류) 흐름 재현
+    // 성공 시 예약 응답 완료 요약 페이지 이동 흐름 재현
     actionMutate.mockImplementation((_vars, opts) => opts?.onSuccess?.())
     const user = userEvent.setup()
     renderModal('/mentor/mentoring-requests/req_rec_6?mode=confirm')
@@ -85,13 +90,8 @@ describe('RequestResponseModal', () => {
       { requestId: 'req_rec_6', action: 'confirm' },
       expect.anything(),
     )
-    // 저장 완료 — 공통 토스트 원문 + 목록 복귀
-    expect(
-      screen.getByText(
-        '예약 응답이 저장되었습니다. 선택한 상태가 요청 목록에 반영됩니다.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('요청 목록')).toBeInTheDocument()
+    // 저장 완료 — 예약 응답 완료 요약 페이지로 이동(확정)
+    expect(await screen.findByText('예약을 확정했습니다')).toBeInTheDocument()
   })
 
   it('조정 제안 모드 — 희망 일정이 공용 날짜·시각 피커에 프리필되고 제출 시 라벨로 합성된다', async () => {

@@ -15,6 +15,10 @@ const RequestResponseModal = lazy(
 const LogsPage = lazy(() => import('./mentoring-logs/LogsPage'))
 const LogDetailModal = lazy(() => import('./mentoring-logs/LogDetailModal'))
 const LogComposePage = lazy(() => import('./mentoring-logs/LogComposePage'))
+const LogSubmittedPage = lazy(() => import('./mentoring-logs/LogSubmittedPage'))
+const RequestRespondedPage = lazy(
+  () => import('./requests/RequestRespondedPage'),
+)
 const MenteeDetailPage = lazy(() => import('./mentees/MenteeDetailPage'))
 const EvaluationPage = lazy(() => import('./evaluation/EvaluationPage'))
 const EvaluationsSubmittedPage = lazy(
@@ -40,6 +44,11 @@ export const mentorRoutes: RouteObject[] = [
       // 추천 활성)는 화면에서 잠금 안내, mock 이 422 로 이중 차단.
       { path: 'teams/:teamId/evaluation', element: <EvaluationPage /> },
       { path: 'teams/:teamId/recommendation', element: <RecommendationPage /> },
+      // 예약 응답 완료 요약 페이지 — 정적 경로를 동적 :requestId 보다 앞에
+      {
+        path: 'mentoring-requests/submitted',
+        element: <RequestRespondedPage />,
+      },
       {
         path: 'mentoring-requests',
         element: <RequestsPage />,
@@ -48,6 +57,8 @@ export const mentorRoutes: RouteObject[] = [
       },
       // 일지 작성/수정 — 정적 'new' 를 동적 :logId 보다 앞에(admin routes 주석 컨벤션)
       { path: 'mentoring-logs/new', element: <LogComposePage /> },
+      // 제출 완료 요약 페이지 — 정적 경로를 동적 :logId 보다 앞에
+      { path: 'mentoring-logs/submitted', element: <LogSubmittedPage /> },
       {
         path: 'mentoring-logs',
         element: <LogsPage />,

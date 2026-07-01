@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import LogComposePage from './LogComposePage'
+import LogSubmittedPage from './LogSubmittedPage'
 import {
   useLogFieldSnapshot,
   useMentoringLogDetail,
@@ -42,6 +43,10 @@ function renderPage(entry = '/mentor/mentoring-logs/new') {
           <Route
             path="/mentor/mentoring-logs"
             element={<div>일지 목록 화면</div>}
+          />
+          <Route
+            path="/mentor/mentoring-logs/submitted"
+            element={<LogSubmittedPage />}
           />
         </Routes>
       </ToastProvider>
@@ -172,8 +177,8 @@ describe('LogComposePage', () => {
         }),
       }),
     )
-    // 제출 완료 — 목록 복귀(?toast=submitted)
-    expect(await screen.findByText('일지 목록 화면')).toBeInTheDocument()
+    // 제출 완료 — 요약 페이지로 이동(state 로 요약 전달)
+    expect(await screen.findByText('일지가 제출되었습니다')).toBeInTheDocument()
   })
 
   it('임시 저장 — 검증 없이 부분 입력 그대로 보관한다', async () => {
@@ -228,7 +233,9 @@ describe('LogComposePage', () => {
       ),
     )
     expect(draftMutateAsync).not.toHaveBeenCalled()
-    expect(await screen.findByText('일지 목록 화면')).toBeInTheDocument()
+    expect(
+      await screen.findByText('일지가 재제출되었습니다'),
+    ).toBeInTheDocument()
   })
 
   it('유효 일지 진입 차단 — 제출 후 임의 수정 불가(05-31 확정)', () => {

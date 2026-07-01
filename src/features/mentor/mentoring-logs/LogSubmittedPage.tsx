@@ -1,0 +1,67 @@
+import { useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useToast } from '@/components/ui/use-toast'
+import { usePageHeader } from '@/shared/store'
+import {
+  InfoNotice,
+  NextStepBar,
+  SubmitSummaryCard,
+  SuccessHero,
+} from '../components/submitted'
+import { MENTOR_FLOW_CAPTION } from '../constants'
+import { LOG_SUBMITTED_TOAST } from './logMeta'
+
+/** 일지 제출 완료 요약 — 작성 폼이 navigate state 로 전달(제출 직후 값). */
+export interface LogSubmittedState {
+  submittedAtLabel: string
+  resubmit: boolean
+  rows: { label: string; value: string }[]
+}
+
+// 멘토링 일지 제출 완료 (/mentor/mentoring-logs/submitted) — Figma 2582:6348.
+// 제출 직후 요약 페이지(평가/추천 제출 완료와 동일한 submitted.tsx 공통 골격 재사용).
+// state 부재(직접 진입·새로고침 등)면 목록으로 복귀.
+export default function LogSubmittedPage() {
+  usePageHeader('멘토링 일지', MENTOR_FLOW_CAPTION)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const toast = useToast()
+  const state = location.state as LogSubmittedState | null
+
+  const toastShownRef = useRef(false)
+  useEffect(() => {
+    if (!state) {
+      navigate('/mentor/mentoring-logs', { replace: true })
+      return
+    }
+    if (toastShownRef.current) return
+    toastShownRef.current = true
+    toast.success(LOG_SUBMITTED_TOAST)
+  }, [state, navigate, toast])
+
+  if (!state) return null
+
+  return (
+    <div className="flex flex-col gap-5 p-8">
+      <SuccessHero
+        eyebrow="MENTORING LOG · 제출 완료"
+        title={
+          state.resubmit ? '일지가 재제출되었습니다' : '일지가 제출되었습니다'
+        }
+        description="제출 즉시 자동 유효 기준으로 저장되었습니다. 실제 진행 시간이 인정 시간에 반영됩니다."
+      />
+      <SubmitSummaryCard
+        submittedAtLabel={state.submittedAtLabel}
+        rows={state.rows}
+      />
+      <NextStepBar
+        secondary={{ label: '일지 목록', to: '/mentor/mentoring-logs' }}
+        primary={{ label: '새 일지 작성', to: '/mentor/mentoring-logs/new' }}
+      />
+      <InfoNotice>
+        제출한 일지는 즉시 자동 유효로 저장됩니다. 수정이 필요하면 매니저의 수정
+        요청 후 전체 수정하여 재제출할 수 있습니다.
+      </InfoNotice>
+    </div>
+  )
+}

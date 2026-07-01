@@ -22,31 +22,16 @@ export interface PurchaseProcessInput {
   memo?: string
 }
 
-// 구매 요청 처리 훅 — 성공 시 큐 캐시에서 해당 요청 상태를 전이하고 KPI·대기 건수를 재계산(목록 갱신).
-// BE 계약(P0_16 MileageOrder) 미확정 → 네트워크 없이 클라이언트 낙관 반영으로 시뮬레이션한다.
-// 계약 확정 시 mutationFn 을 apiClient.patch('/admin/mileage/purchase-requests/:id', ...) 로 교체한다.
+// 구매 요청 처리 훅 — PATCH /admin/mileage/purchase-requests/:id (승인·수정요청·반려). 성공 시 큐 재조회.
 export function usePurchaseProcess() {
   const queryClient = useQueryClient()
   return useMutation<void, Error, PurchaseProcessInput>({
-    mutationFn: async () => {},
-    onSuccess: (_result, { id, next }) => {
-      queryClient.setQueryData<PurchaseData>(
-        mileagePurchaseKeys.queue(),
-        (prev) => {
-          if (!prev) return prev
-          const requests = prev.requests.map((r) =>
-            r.id === id ? { ...r, status: next } : r,
-          )
-          const countBy = (s: PurchaseStatus) =>
-            requests.filter((r) => r.status === s).length
-          return {
-            ...prev,
-            requests,
-            kpis: prev.kpis.map((k) => ({ ...k, count: countBy(k.status) })),
-            pendingCount: countBy('pending'),
-          }
-        },
-      )
+    mutationFn: ({ id, next, memo }) =>
+      apiClient
+        .patch(`/admin/mileage/purchase-requests/${id}`, { next, memo })
+        .then(() => undefined),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mileagePurchaseKeys.queue() })
     },
   })
 }

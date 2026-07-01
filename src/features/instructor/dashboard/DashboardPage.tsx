@@ -160,7 +160,7 @@ export default function DashboardPage() {
               className={cn(
                 'rounded-lg px-3 py-1.5 text-sm font-medium',
                 c.id === activeCohortId
-                  ? 'bg-brand-deep font-bold text-white'
+                  ? 'bg-accent-bg text-accent-strong font-bold'
                   : 'border-border text-fg-muted hover:bg-surface-muted border',
               )}
             >

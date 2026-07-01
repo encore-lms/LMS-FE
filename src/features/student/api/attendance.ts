@@ -14,13 +14,15 @@ import type {
 // cohort는 로그인한 본인 기준으로 자동 매칭 → 경로 세그먼트로 'me' 사용(§5 1과정 1:1).
 
 /** 출결/태도 조회 — 요약·HRD 캘린더·제출 이력 묶음 (조회 화면) */
-export function useAttendanceOverview() {
+export function useAttendanceOverview(year?: number, month?: number) {
+  const qs = year && month ? `?year=${year}&month=${month}` : ''
   return useQuery({
-    queryKey: attendanceKeys.overview('me'),
+    queryKey: attendanceKeys.overview('me', year, month),
     queryFn: () =>
       apiClient
-        .get<AttendanceOverview>('/student/attendance/overview')
+        .get<AttendanceOverview>(`/student/attendance/overview${qs}`)
         .then((r) => r.data),
+    placeholderData: (prev) => prev, // 월 이동 시 이전 데이터 유지(깜빡임 방지)
   })
 }
 

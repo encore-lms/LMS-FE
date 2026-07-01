@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
@@ -14,7 +15,11 @@ import { SubmissionHistory } from './components/history/SubmissionHistory'
  */
 export default function AttendanceView() {
   const navigate = useNavigate()
-  const { data, isPending, isError, refetch } = useAttendanceOverview()
+  const [view, setView] = useState<{ year: number; month: number } | null>(null)
+  const { data, isPending, isError, refetch } = useAttendanceOverview(
+    view?.year,
+    view?.month,
+  )
   usePageHeader('출결 / 태도')
 
   if (isPending) {
@@ -39,7 +44,10 @@ export default function AttendanceView() {
   return (
     <div className="flex flex-col gap-6 p-8">
       <AttendanceSummary summary={data.summary} />
-      <HrdAttendanceCalendar calendar={data.calendar} />
+      <HrdAttendanceCalendar
+        calendar={data.calendar}
+        onMove={(year, month) => setView({ year, month })}
+      />
       <SubmissionHistory
         submissions={data.submissions}
         onWriteForm={() => navigate('/student/attendance/form')}

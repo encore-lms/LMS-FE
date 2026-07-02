@@ -42,6 +42,29 @@ const COPY = {
   },
 }
 
+// 스터디 등록 기본값 — 오늘 날짜 / 현재 시각(5분 슬롯에 맞춰 floor) / 시작+1시간.
+// DateTimePicker 포맷: date='YYYY-MM-DD', time='HH:mm'(24시간제).
+const pad2 = (n: number) => String(n).padStart(2, '0')
+const toDateValue = (d: Date) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+const toTimeValue = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+// 현재 시각을 5분 단위로 내림(피커 슬롯과 일치, 미래로 튀지 않게 floor).
+function floored5Now() {
+  const d = new Date()
+  d.setMinutes(Math.floor(d.getMinutes() / 5) * 5, 0, 0)
+  return d
+}
+// datetime 값('YYYY-MM-DDTHH:mm') — 시작=오늘 현재(5분 floor), 종료=시작+1시간(자정 넘기면 날짜도 이동).
+const defaultStudyStartAt = () => {
+  const d = floored5Now()
+  return `${toDateValue(d)}T${toTimeValue(d)}`
+}
+const defaultStudyEndAt = () => {
+  const d = floored5Now()
+  d.setHours(d.getHours() + 1)
+  return `${toDateValue(d)}T${toTimeValue(d)}`
+}
+
 export function StudyForm({
   mode,
   initial,
@@ -59,21 +82,33 @@ export function StudyForm({
   const createMutation = useCreateStudyRecord()
   const updateMutation = useUpdateStudyRecord(recordId ?? '')
   const [title, setTitle] = useState(initial?.title ?? '')
-  const [date, setDate] = useState(initial?.date ?? '')
-  const [startTime, setStartTime] = useState(initial?.startTime ?? '')
-  const [endTime, setEndTime] = useState(initial?.endTime ?? '')
+  // 시작·종료를 각각 날짜+시간(datetime)으로 관리. create 모드는 오늘 현재(+1h) 기본값, edit 모드는 기존 값.
+  const [startAt, setStartAt] = useState(() =>
+    initial?.date && initial?.startTime
+      ? `${initial.date}T${initial.startTime}`
+      : defaultStudyStartAt(),
+  )
+  const [endAt, setEndAt] = useState(() =>
+    initial?.date && initial?.endTime
+      ? `${initial.date}T${initial.endTime}`
+      : defaultStudyEndAt(),
+  )
+  // 제출 페이로드(date/startTime/endTime)는 startAt/endAt에서 파생. date는 시작 일자 기준.
+  const date = startAt.slice(0, 10)
+  const startTime = startAt.slice(11, 16)
+  const endTime = endAt.slice(11, 16)
   const [body, setBody] = useState(initial?.body ?? '')
   const { files, add, remove } = useFileUpload(initial?.files ?? [])
   const [touched, setTouched] = useState(false)
   usePageHeader(c.title, c.sub)
 
-  const timeError = !!startTime && !!endTime && endTime <= startTime
+  // 전체 일시로 비교 → 자정을 넘겨도 정확(예: 22:00~다음날 01:00은 정상).
+  const timeError = !!startAt && !!endAt && endAt <= startAt
   // 증빙 파일 외 핵심 입력 — 임시저장 기준. 제출은 여기에 증빙 1개 이상이 더 필요.
   const baseValid = !!(
     title.trim() &&
-    date &&
-    startTime &&
-    endTime &&
+    startAt &&
+    endAt &&
     body.trim() &&
     !timeError
   )
@@ -158,30 +193,23 @@ export function StudyForm({
 
       {/* 일정 — 날짜·시작·종료 객관식 선택 */}
       <div className="flex flex-col gap-2">
-        <FieldLabel required hint="날짜와 시작·종료 시각을 선택">
+        <FieldLabel required hint="시작·종료 일시(월/일 시각)를 선택">
           일정
         </FieldLabel>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <DateTimePicker
-            mode="date"
-            value={date}
-            onChange={setDate}
-            placeholder="날짜 선택"
-            ariaLabel="스터디 날짜"
+            mode="datetime"
+            value={startAt}
+            onChange={setStartAt}
+            placeholder="시작 (월/일 시각)"
+            ariaLabel="스터디 시작 일시"
           />
           <DateTimePicker
-            mode="time"
-            value={startTime}
-            onChange={setStartTime}
-            placeholder="시작 시각"
-            ariaLabel="시작 시각"
-          />
-          <DateTimePicker
-            mode="time"
-            value={endTime}
-            onChange={setEndTime}
-            placeholder="종료 시각"
-            ariaLabel="종료 시각"
+            mode="datetime"
+            value={endAt}
+            onChange={setEndAt}
+            placeholder="종료 (월/일 시각)"
+            ariaLabel="스터디 종료 일시"
           />
         </div>
         {touched && timeError && (

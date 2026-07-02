@@ -167,8 +167,9 @@ export function BlogRecordCard({
         </div>
       </section>
 
-      {isBlog && detailOpen && (
+      {isBlog && (
         <BlogPreviewPanel
+          open={detailOpen}
           record={record}
           onClose={() => setDetailOpen(false)}
         />
@@ -260,9 +261,11 @@ export function BlogRecordCard({
 }
 
 function BlogPreviewPanel({
+  open,
   record,
   onClose,
 }: {
+  open: boolean
   record: BlogRecord
   onClose: () => void
 }) {
@@ -273,11 +276,27 @@ function BlogPreviewPanel({
   const [previewState, setPreviewState] = useState<
     'empty' | 'loading' | 'ready' | 'delayed' | 'blocked'
   >(record.url ? 'loading' : 'empty')
+  // 슬라이드 인/아웃 애니메이션: mounted=DOM 유지, entered=열린 위치(translate-x-0) 적용
+  const [mounted, setMounted] = useState(false)
+  const [entered, setEntered] = useState(false)
 
   onCloseRef.current = onClose
 
-  // 우측 패널이 열려 있는 동안 배경 스크롤을 잠그고 ESC 닫기/포커스 복귀를 처리한다.
+  // open 토글 → 마운트 직후 다음 프레임에 슬라이드 인, 닫힐 때 슬라이드 아웃 후 300ms에 언마운트
   useEffect(() => {
+    if (open) {
+      setMounted(true)
+      const raf = requestAnimationFrame(() => setEntered(true))
+      return () => cancelAnimationFrame(raf)
+    }
+    setEntered(false)
+    const timer = window.setTimeout(() => setMounted(false), 300)
+    return () => window.clearTimeout(timer)
+  }, [open])
+
+  // 우측 패널이 떠 있는 동안 배경 스크롤을 잠그고 ESC 닫기/포커스 복귀를 처리한다.
+  useEffect(() => {
+    if (!mounted) return
     previousFocusRef.current =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
@@ -297,10 +316,11 @@ function BlogPreviewPanel({
       document.removeEventListener('keydown', onKey)
       previousFocusRef.current?.focus({ preventScroll: true })
     }
-  }, [])
+  }, [mounted])
 
   // 일부 블로그는 X-Frame-Options/CSP로 iframe 표시가 막힌다. 지연 시 새 탭 안내를 명확히 보여준다.
   useEffect(() => {
+    if (!open) return
     if (!record.url) {
       setPreviewState('empty')
       return
@@ -314,17 +334,27 @@ function BlogPreviewPanel({
     }, 2500)
 
     return () => window.clearTimeout(timer)
-  }, [record.url])
+  }, [open, record.url])
+
+  if (!mounted) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex" onClick={onClose}>
-      <div className="flex-1 bg-black/40" />
+    <div className="fixed inset-0 z-50 flex">
+      <div
+        onClick={onClose}
+        className={cn(
+          'flex-1 bg-black/40 transition-opacity duration-300 ease-out',
+          entered ? 'opacity-100' : 'opacity-0',
+        )}
+      />
       <aside
         ref={panelRef}
         tabIndex={-1}
         aria-label="블로그 상세 미리보기"
-        className="bg-surface flex h-full w-[760px] max-w-[92vw] flex-col shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          'bg-surface flex h-full w-[760px] max-w-[92vw] flex-col shadow-2xl transition-transform duration-300 ease-out will-change-transform',
+          entered ? 'translate-x-0' : 'translate-x-full',
+        )}
       >
         <div className="border-border flex items-center justify-between gap-3 border-b px-5 py-4">
           <div className="min-w-0">

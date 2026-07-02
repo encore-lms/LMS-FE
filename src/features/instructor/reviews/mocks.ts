@@ -1,280 +1,436 @@
 import { http, HttpResponse } from 'msw'
 import type {
+  BlogGridRow,
+  BlogRecordDetail,
+  CertGridRow,
+  CertRecordDetail,
+  CertType,
   InstructorRecordReviewData,
   ProjectReviewData,
+  RecordCellStatus,
+  RecordCohortTab,
+  RecordCourseTab,
+  RecordWeek,
+  StudyGridRow,
+  StudyRecordDetail,
   TsReviewData,
 } from '@/shared/types'
 
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
 const ok = <T>(data: T) => HttpResponse.json({ data })
 
-// ── §13 학습 기록 조회 (Figma 1422:10009) ──
-const recordReviews: InstructorRecordReviewData = {
-  stats: [
-    { label: '제출 현황', value: '14', unit: '건' },
-    { label: '보완 요청 중', value: '3', unit: '건' },
-    { label: '최근 승인', value: '8', unit: '건' },
-    { label: '최근 반려', value: '2', unit: '건' },
-  ],
-  counts: { all: 32, blog: 12, study: 14, cert: 6 },
-  rows: [
-    {
-      id: 'rr-1',
-      studentName: '박지훈',
-      cohortLabel: 'DA 4기',
-      category: 'blog',
-      title: '리액트 useMemo 실전 최적화',
-      submittedAt: '05-17 21:14',
-      status: 'pending',
-      attachments: 1,
-      url: 'https://blog.example.com/park-jh/usememo',
-      body: 'useMemo 남용 사례와 의존성 배열 점검 체크리스트, 렌더 카운트 측정 결과를 정리했습니다.',
-      managerComment: null,
-      attachmentFiles: [
-        {
-          name: 'usememo-benchmark.png',
-          url: 'https://files.example.com/rr-1/usememo-benchmark.png',
-        },
-      ],
-    },
-    {
-      id: 'rr-2',
-      studentName: '김서연',
-      cohortLabel: 'DA 4기',
-      category: 'study',
-      title: '주차 5 — SQL 윈도우 함수 스터디',
-      submittedAt: '05-17 18:02',
-      status: 'pending',
-      attachments: 2,
-      url: null,
-      body: 'ROW_NUMBER·RANK·LAG/LEAD 실습과 파티션 기준 비교, 스터디원 3명 풀이 공유.',
-      managerComment: null,
-      attachmentFiles: [
-        {
-          name: 'sql-window-notes.pdf',
-          url: 'https://files.example.com/rr-2/sql-window-notes.pdf',
-        },
-        {
-          name: 'study-room.jpg',
-          url: 'https://files.example.com/rr-2/study-room.jpg',
-        },
-      ],
-    },
-    {
-      id: 'rr-3',
-      studentName: '이준영',
-      cohortLabel: 'DA 4기',
-      category: 'cert',
-      title: '정보처리기사 필기 합격증',
-      submittedAt: '05-16 14:30',
-      status: 'changes_requested',
-      attachments: 1,
-      url: 'https://license.example.com/verify/eng-info',
-      body: '정보처리기사 필기 합격 증빙 캡처와 수험번호 첨부.',
-      managerComment:
-        '합격증 원본(PDF)과 발급 기관에서 조회 가능한 링크를 추가로 제출해 주세요.',
-      attachmentFiles: [
-        {
-          name: 'eng-info-written-pass.png',
-          url: 'https://files.example.com/rr-3/eng-info-written-pass.png',
-        },
-      ],
-    },
-    {
-      id: 'rr-4',
-      studentName: '최유진',
-      cohortLabel: 'DA 4기',
-      category: 'blog',
-      title: 'PCA로 차원 축소 실험 회고',
-      submittedAt: '05-15 23:45',
-      status: 'pending',
-      attachments: null,
-      url: 'https://blog.example.com/choi-yj/pca',
-      body: 'PCA 주성분 수에 따른 분산 보존율과 시각화, 한계를 정리했습니다.',
-      managerComment: null,
-    },
-    {
-      id: 'rr-5',
-      studentName: '정민호',
-      cohortLabel: 'DA 4기',
-      category: 'study',
-      title: '주차 4 — 추천 시스템 알고리즘',
-      submittedAt: '05-15 11:20',
-      status: 'approved',
-      attachments: 1,
-      url: null,
-      body: '협업 필터링 vs 콘텐츠 기반 비교, MovieLens 실습 결과 정리.',
-      managerComment: '핵심 개념 정리가 충실합니다. 승인합니다.',
-      attachmentFiles: [
-        {
-          name: 'recsys-summary.pdf',
-          url: 'https://files.example.com/rr-5/recsys-summary.pdf',
-        },
-      ],
-    },
-    {
-      id: 'rr-6',
-      studentName: '한지원',
-      cohortLabel: 'DA 4기',
-      category: 'cert',
-      title: 'SQLD 자격 취득 증빙',
-      submittedAt: null,
-      status: 'rejected',
-      attachments: null,
-      url: null,
-      body: 'SQLD 취득 증빙(캡처 1장) 제출.',
-      managerComment:
-        '제출한 캡처로는 본인·발급일 확인이 어렵습니다. 공식 증빙으로 재제출이 필요해 반려했습니다.',
-    },
-    {
-      id: 'rr-7',
-      studentName: '한소율',
-      cohortLabel: 'FE 7기',
-      category: 'blog',
-      title: 'Next.js 서버 컴포넌트 전환 회고',
-      submittedAt: '05-17 09:40',
-      status: 'pending',
-      attachments: 1,
-      url: 'https://blog.example.com/han-sy/rsc',
-      body: 'RSC 도입 시 데이터 패칭·번들 변화와 클라이언트 경계 설계를 회고했습니다.',
-      managerComment: null,
-      attachmentFiles: [
-        {
-          name: 'rsc-bundle-graph.png',
-          url: 'https://files.example.com/rr-7/rsc-bundle-graph.png',
-        },
-      ],
-    },
-    {
-      id: 'rr-8',
-      studentName: '윤재호',
-      cohortLabel: 'FE 7기',
-      category: 'study',
-      title: '주차 6 — Tailwind 디자인 토큰 스터디',
-      submittedAt: '05-16 20:15',
-      status: 'approved',
-      attachments: 2,
-      url: null,
-      body: '@theme 토큰 설계와 다크모드 대응, 팀 컨벤션 제안 정리.',
-      managerComment: '토큰 설계 근거가 명확합니다. 승인합니다.',
-      attachmentFiles: [
-        {
-          name: 'theme-tokens.md',
-          url: 'https://files.example.com/rr-8/theme-tokens.md',
-        },
-        {
-          name: 'darkmode-demo.png',
-          url: 'https://files.example.com/rr-8/darkmode-demo.png',
-        },
-      ],
-    },
-    {
-      id: 'rr-9',
-      studentName: '오세훈',
-      cohortLabel: 'FE 7기',
-      category: 'study',
-      title: '주차 6 — TypeScript 제네릭 스터디',
-      submittedAt: '05-16 20:10',
-      status: 'pending',
-      attachments: 1,
-      url: null,
-      body: '제네릭 제약·조건부 타입 실습과 유틸리티 타입 정리.',
-      managerComment: null,
-    },
-    {
-      id: 'rr-10',
-      studentName: '배수지',
-      cohortLabel: 'FE 7기',
-      category: 'blog',
-      title: 'CSS 컨테이너 쿼리 도입기',
-      submittedAt: '05-16 13:05',
-      status: 'approved',
-      attachments: 1,
-      url: 'https://blog.example.com/bae-sj/container-query',
-      body: '반응형을 미디어 쿼리에서 컨테이너 쿼리로 전환한 경험 정리.',
-      managerComment: '실무 적용 근거가 좋습니다. 승인합니다.',
-    },
-    {
-      id: 'rr-11',
-      studentName: '신동욱',
-      cohortLabel: 'DA 4기',
-      category: 'cert',
-      title: '빅데이터분석기사 실기 합격',
-      submittedAt: '05-15 09:30',
-      status: 'pending',
-      attachments: 2,
-      url: 'https://license.example.com/verify/bigdata',
-      body: '빅데이터분석기사 실기 합격증과 수험표 첨부.',
-      managerComment: null,
-    },
-    {
-      id: 'rr-12',
-      studentName: '문가영',
-      cohortLabel: 'DA 4기',
-      category: 'study',
-      title: '주차 5 — 시계열 예측 스터디',
-      submittedAt: '05-14 22:40',
-      status: 'changes_requested',
-      attachments: null,
-      url: null,
-      body: 'ARIMA·Prophet 비교 실습. 결과 그래프 보완 예정.',
-      managerComment:
-        '실습 결과 캡처가 누락됐습니다. 첨부 보완 후 다시 제출해 주세요.',
-    },
-    {
-      id: 'rr-13',
-      studentName: '조현우',
-      cohortLabel: 'FE 7기',
-      category: 'blog',
-      title: '웹 접근성(a11y) 점검 회고',
-      submittedAt: '05-14 17:22',
-      status: 'pending',
-      attachments: 1,
-      url: 'https://blog.example.com/jo-hw/a11y',
-      body: 'ARIA·키보드 내비게이션·명도 대비 점검 체크리스트 정리.',
-      managerComment: null,
-    },
-    {
-      id: 'rr-14',
-      studentName: '임해나',
-      cohortLabel: 'DA 4기',
-      category: 'study',
-      title: '주차 3 — 통계 기초 스터디',
-      submittedAt: '05-13 19:15',
-      status: 'approved',
-      attachments: 1,
-      url: null,
-      body: '가설검정·신뢰구간 실습과 파이썬 코드 공유.',
-      managerComment: '개념 정리가 탄탄합니다. 승인합니다.',
-    },
-    {
-      id: 'rr-15',
-      studentName: '강태오',
-      cohortLabel: 'FE 7기',
-      category: 'cert',
-      title: '리눅스마스터 2급 합격증',
-      submittedAt: '05-13 10:05',
-      status: 'rejected',
-      attachments: null,
-      url: null,
-      body: '리눅스마스터 2급 합격 캡처 제출.',
-      managerComment:
-        '캡처만으로는 본인 확인이 어렵습니다. 공식 증빙으로 재제출이 필요해 반려했습니다.',
-    },
-    {
-      id: 'rr-16',
-      studentName: '류지안',
-      cohortLabel: 'DA 4기',
-      category: 'blog',
-      title: 'XGBoost 하이퍼파라미터 튜닝 회고',
-      submittedAt: '05-12 21:50',
-      status: 'pending',
-      attachments: 1,
-      url: 'https://blog.example.com/ryu-ja/xgboost',
-      body: 'GridSearch vs Optuna 비교와 과적합 방지 전략 정리.',
-      managerComment: null,
-    },
-  ],
+// ── §13 학습 기록 조회 (강사 조회 전용) — 수강생×주차 그리드 + 자격증 매트릭스 ──
+// 사진(구 playdata-lms SKN 29기 화면) 기준 mock. 강사는 조회만: 매니저 결정을 표시.
+// 실제 BE 연동 시 페어가 shared PR로 교체(카테고리·기수별 조회 API).
+
+// 과정·기수 — SKN 29기만 데이터 채움, 나머지는 빈 그리드(데모).
+const toCohorts = (ids: string[]): RecordCohortTab[] =>
+  ids.map((id) => ({ id, label: id }))
+
+const RECORD_COURSES: RecordCourseTab[] = [
+  {
+    id: 'skn',
+    label: 'SK네트웍스 Family AI 캠프',
+    cohorts: toCohorts([
+      '29기',
+      '34기',
+      '21기',
+      '22기',
+      '23기',
+      '24기',
+      '25기',
+      '26기',
+      '27기',
+      '28기',
+      '31기',
+    ]),
+  },
+  {
+    id: 'da',
+    label: '데이터 분석 부트캠프',
+    cohorts: toCohorts(['4기', '5기', '6기']),
+  },
+]
+
+// 그리드 열(주차) — 3월 1주차 ~ 8월 1주차(6월은 5주차까지) = 22주.
+const RECORD_WEEKS: RecordWeek[] = (() => {
+  const months: { m: string; weeks: number }[] = [
+    { m: '3월', weeks: 4 },
+    { m: '4월', weeks: 4 },
+    { m: '5월', weeks: 4 },
+    { m: '6월', weeks: 5 },
+    { m: '7월', weeks: 4 },
+    { m: '8월', weeks: 1 },
+  ]
+  const out: RecordWeek[] = []
+  let no = 1
+  for (const mm of months)
+    for (let w = 1; w <= mm.weeks; w++)
+      out.push({ no: no++, label: `${mm.m} ${w}주차` })
+  return out
+})()
+
+// 수강생별 시드 — 사진 수치(완주·연속·자격증·마일리지)를 그대로 반영.
+interface RecordSeed {
+  name: string
+  birth: string
+  atRisk?: boolean
+  blog: number // 완주(승인) 수
+  studyWeeks: number // 스터디 연속 주(0 = 없음)
+  studyPaid: boolean // 스터디 마일리지 지급
+  certs: Partial<Record<CertType, RecordCellStatus>>
+  mileage: number // 자격증 마일리지 합계(P)
+  paid: boolean // 자격증 지급 완료
+}
+
+const SKN29: RecordSeed[] = [
+  {
+    name: '김은진',
+    birth: '1995-09-08',
+    blog: 15,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCE: 'approved' },
+    mileage: 25000,
+    paid: true,
+  },
+  {
+    name: '김재홍',
+    birth: '1992-10-25',
+    blog: 9,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCE: 'approved' },
+    mileage: 25000,
+    paid: true,
+  },
+  {
+    name: '김정민',
+    birth: '2003-11-05',
+    blog: 16,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCE: 'approved' },
+    mileage: 25000,
+    paid: true,
+  },
+  {
+    name: '김지훈',
+    birth: '1998-01-05',
+    blog: 1,
+    studyWeeks: 0,
+    studyPaid: false,
+    certs: {},
+    mileage: 0,
+    paid: false,
+  },
+  {
+    name: '김진욱',
+    birth: '1999-07-29',
+    blog: 0,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCP: 'approved', PCSQL: 'approved' },
+    mileage: 50000,
+    paid: true,
+  },
+  {
+    name: '박상현',
+    birth: '1996-08-21',
+    atRisk: true,
+    blog: 0,
+    studyWeeks: 0,
+    studyPaid: false,
+    certs: {},
+    mileage: 0,
+    paid: false,
+  },
+  {
+    name: '박준희',
+    birth: '1995-03-18',
+    blog: 0,
+    studyWeeks: 6,
+    studyPaid: true,
+    certs: { PCCP: 'approved' },
+    mileage: 50000,
+    paid: true,
+  },
+  {
+    name: '성주연',
+    birth: '2004-01-28',
+    blog: 16,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCE: 'approved' },
+    mileage: 25000,
+    paid: true,
+  },
+  {
+    name: '송민지',
+    birth: '1999-05-31',
+    blog: 0,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCE: 'approved' },
+    mileage: 25000,
+    paid: true,
+  },
+  {
+    name: '양정현',
+    birth: '2001-05-16',
+    blog: 15,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: {},
+    mileage: 0,
+    paid: false,
+  },
+  {
+    name: '우석현',
+    birth: '1997-09-07',
+    blog: 9,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCE: 'approved' },
+    mileage: 25000,
+    paid: true,
+  },
+  {
+    name: '윤대성',
+    birth: '2001-05-09',
+    blog: 0,
+    studyWeeks: 7,
+    studyPaid: true,
+    certs: { PCCE: 'approved' },
+    mileage: 25000,
+    paid: true,
+  },
+  {
+    name: '윤승혁',
+    birth: '1999-09-10',
+    blog: 2,
+    studyWeeks: 6,
+    studyPaid: true,
+    certs: { PCCP: 'approved' },
+    mileage: 50000,
+    paid: true,
+  },
+]
+
+// 주차 → 제출일(2026-03-02 월요일 기준 주 단위) 문자열.
+function weekDate(no: number): string {
+  const d = new Date(2026, 2, 2 + (no - 1) * 7)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `2026-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+// 매니저 코멘트 — 승인/반려만 코멘트, 검토중은 없음.
+function managerComment(status: RecordCellStatus): string | null {
+  if (status === 'approved') return '핵심 정리가 충실합니다. 승인 처리했습니다.'
+  if (status === 'rejected')
+    return '증빙 확인이 어려워 반려했습니다. 공식 자료로 재제출해 주세요.'
+  return null
+}
+
+function makeBlogDetail(
+  studentName: string,
+  no: number,
+  status: RecordCellStatus,
+): BlogRecordDetail {
+  return {
+    studentName,
+    weekLabel: RECORD_WEEKS[no - 1].label,
+    status,
+    url: `https://blog.naver.com/skn29/${224330000000 + no}`,
+    submittedAt: weekDate(no),
+    managerComment: managerComment(status),
+  }
+}
+
+function makeStudyDetail(
+  studentName: string,
+  session: number,
+  status: RecordCellStatus,
+  no: number,
+): StudyRecordDetail {
+  return {
+    studentName,
+    title: `skn29기 예복습 스터디 ${session}회차`,
+    status,
+    submittedAt: weekDate(no),
+    timeRange: '18:00 ~ 19:00',
+    attachmentCount: 1,
+    evidenceImageUrl: null,
+    managerComment: managerComment(status),
+  }
+}
+
+// 자격증 상세 — 취득일·등급·파일명·증빙(열람 가능 여부는 운영·수강생 정합 확인 필요).
+const CERT_ACQUIRED: Record<CertType, string> = {
+  PCCE: '2026-04-18',
+  PCCP: '2026-05-12',
+  PCSQL: '2026-05-27',
+}
+const CERT_GRADE: Record<CertType, string> = {
+  PCCE: 'Lv.1',
+  PCCP: 'Lv.2',
+  PCSQL: 'Lv.3',
+}
+// 자격증 종류별 마일리지 — 마일리지는 최고 등급 1건만 지급(중복 미지급).
+const CERT_MILEAGE: Record<CertType, number> = {
+  PCCE: 25000,
+  PCCP: 50000,
+  PCSQL: 25000,
+}
+function makeCertDetail(
+  studentName: string,
+  certType: CertType,
+  status: RecordCellStatus,
+  mileage: number,
+  paid: boolean,
+  mileageBreakdown: string,
+): CertRecordDetail {
+  return {
+    studentName,
+    certType,
+    grade: CERT_GRADE[certType],
+    status,
+    holderName: studentName,
+    acquiredAt: CERT_ACQUIRED[certType],
+    submittedAt: CERT_ACQUIRED[certType],
+    fileName: `${certType}.png`,
+    url: `https://cert.playdata.io/verify/${certType.toLowerCase()}-skn29`,
+    evidenceImageUrl: null,
+    mileage,
+    mileageBreakdown,
+    paid,
+    managerComment: managerComment(status),
+  }
+}
+
+// 과정·기수 데이터 조립 — SKN 29기만 채우고 그 외는 빈 그리드.
+function buildRecordData(
+  courseId: string,
+  cohortId: string,
+): InstructorRecordReviewData {
+  const base = {
+    courses: RECORD_COURSES,
+    activeCourseId: courseId,
+    activeCohortId: cohortId,
+    weeks: RECORD_WEEKS,
+  }
+  if (courseId !== 'skn' || cohortId !== '29기') {
+    return {
+      ...base,
+      blog: [],
+      study: [],
+      cert: [],
+      blogDetails: {},
+      studyDetails: {},
+      certDetails: {},
+    }
+  }
+
+  const blog: BlogGridRow[] = []
+  const study: StudyGridRow[] = []
+  const cert: CertGridRow[] = []
+  const blogDetails: Record<string, BlogRecordDetail> = {}
+  const studyDetails: Record<string, StudyRecordDetail> = {}
+  const certDetails: Record<string, CertRecordDetail> = {}
+  const maxWeek = RECORD_WEEKS.length
+
+  SKN29.forEach((s, i) => {
+    const student = {
+      id: `skn29-${i + 1}`,
+      name: s.name,
+      birth: s.birth,
+      atRisk: s.atRisk,
+    }
+
+    // 블로그 — 1주차부터 완주 수만큼 승인.
+    const bCells: Record<number, RecordCellStatus> = {}
+    const bIds: Record<number, string> = {}
+    for (let k = 0; k < s.blog && k < maxWeek; k++) {
+      const no = k + 1
+      const id = `29-blog-${student.id}-w${no}`
+      bCells[no] = 'approved'
+      bIds[no] = id
+      blogDetails[id] = makeBlogDetail(s.name, no, 'approved')
+    }
+    blog.push({
+      student,
+      cells: bCells,
+      submissionIds: bIds,
+      completed: s.blog,
+      total: 26,
+    })
+
+    // 스터디 — 3주차부터 연속 승인. 윤승혁은 첫 주 검토중(주황) 데모.
+    const stCells: Record<number, RecordCellStatus> = {}
+    const stIds: Record<number, string> = {}
+    let runStart = 3
+    let session = 1
+    if (s.name === '윤승혁' && s.studyWeeks > 0) {
+      const p = 3
+      const pid = `29-study-${student.id}-w${p}`
+      stCells[p] = 'pending'
+      stIds[p] = pid
+      studyDetails[pid] = makeStudyDetail(s.name, session++, 'pending', p)
+      runStart = 4
+    }
+    for (let k = 0; k < s.studyWeeks && runStart + k <= maxWeek; k++) {
+      const no = runStart + k
+      const id = `29-study-${student.id}-w${no}`
+      stCells[no] = 'approved'
+      stIds[no] = id
+      studyDetails[id] = makeStudyDetail(s.name, session++, 'approved', no)
+    }
+    study.push({
+      student,
+      cells: stCells,
+      submissionIds: stIds,
+      streakWeeks: s.studyWeeks,
+      mileagePaid: s.studyPaid,
+    })
+
+    // 자격증 — 종류별 상태 매트릭스 + 제출 있는 종류는 상세 패널 연결.
+    const certs: Record<CertType, RecordCellStatus> = {
+      PCCE: s.certs.PCCE ?? 'none',
+      PCCP: s.certs.PCCP ?? 'none',
+      PCSQL: s.certs.PCSQL ?? 'none',
+    }
+    // 지급 근거 자격증 = 승인된 것 중 마일리지 최고 1건.
+    const earning = (Object.keys(certs) as CertType[])
+      .filter((t) => certs[t] === 'approved')
+      .sort((a, b) => CERT_MILEAGE[b] - CERT_MILEAGE[a])[0]
+    const breakdown =
+      earning && s.mileage > 0
+        ? `${earning} ${CERT_MILEAGE[earning].toLocaleString()}P`
+        : ''
+    const certIds: Partial<Record<CertType, string>> = {}
+    ;(Object.keys(certs) as CertType[]).forEach((t) => {
+      if (certs[t] === 'none') return
+      const id = `29-cert-${student.id}-${t}`
+      certIds[t] = id
+      certDetails[id] = makeCertDetail(
+        s.name,
+        t,
+        certs[t],
+        s.mileage,
+        s.paid,
+        breakdown,
+      )
+    })
+    cert.push({
+      student,
+      certs,
+      submissionIds: certIds,
+      mileage: s.mileage,
+      paid: s.paid,
+    })
+  })
+
+  return { ...base, blog, study, cert, blogDetails, studyDetails, certDetails }
 }
 
 // ── §14 프로젝트 검토 (Figma 1422:10276) ──
@@ -452,9 +608,12 @@ function recountTs(rows: TsReviewData['rows']): TsReviewData['counts'] {
 }
 
 export const handlers = [
-  http.get('/api/instructor/records/review', () =>
-    ok<InstructorRecordReviewData>(recordReviews),
-  ),
+  http.get('/api/instructor/records/review', ({ request }) => {
+    const sp = new URL(request.url).searchParams
+    const courseId = sp.get('courseId') || 'skn'
+    const cohortId = sp.get('cohortId') || '29기'
+    return ok<InstructorRecordReviewData>(buildRecordData(courseId, cohortId))
+  }),
   http.get('/api/instructor/projects/review', () =>
     ok<ProjectReviewData>(projectReviews),
   ),

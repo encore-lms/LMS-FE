@@ -46,6 +46,8 @@ export const instructorRoutes: RouteObject[] = [
     path: 'instructor',
     children: [
       { index: true, element: <DashboardPage /> },
+      // 실 auth 로그인 nextRoute(/instructor/dashboard) 별칭 — index와 같은 화면 (멘토 라우트 패턴)
+      { path: 'dashboard', element: <DashboardPage /> },
       // 강사 콘솔 골격 (§2·§3) — 기수 컨텍스트는 후속 화면에 유지.
       { path: 'cohorts', element: <CohortsPage /> },
       { path: 'cohorts/:cohortId/students', element: <CohortStudentsPage /> },

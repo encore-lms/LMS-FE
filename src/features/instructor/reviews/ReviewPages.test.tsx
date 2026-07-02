@@ -23,54 +23,99 @@ import type {
 
 vi.mock('../api/reviews')
 
+const student = { id: 's1', name: '김은진', birth: '1995-09-08' }
 const records: InstructorRecordReviewData = {
-  stats: [
-    { label: '제출 현황', value: '14', unit: '건' },
-    { label: '보완 요청 중', value: '3', unit: '건' },
-    { label: '최근 승인', value: '8', unit: '건' },
-    { label: '최근 반려', value: '2', unit: '건' },
-  ],
-  counts: { all: 32, blog: 12, study: 14, cert: 6 },
-  rows: [
+  courses: [
     {
-      id: 'rr-1',
-      studentName: '박지훈',
-      cohortLabel: 'DA 4기',
-      category: 'blog',
-      title: '리액트 useMemo 실전 최적화',
-      submittedAt: '05-17 21:14',
-      status: 'pending',
-      attachments: 1,
-      url: 'https://blog.example.com/park-jh/usememo',
-      body: 'useMemo 남용 사례와 의존성 배열 점검을 정리했습니다.',
-      managerComment: null,
-      attachmentFiles: [
-        {
-          name: 'usememo-benchmark.png',
-          url: 'https://files.example.com/rr-1/usememo-benchmark.png',
-        },
-      ],
-    },
-    {
-      id: 'rr-3',
-      studentName: '이준영',
-      cohortLabel: 'DA 4기',
-      category: 'cert',
-      title: '정보처리기사 필기 합격증',
-      submittedAt: '05-16 14:30',
-      status: 'changes_requested',
-      attachments: 1,
-      url: 'https://license.example.com/verify/eng-info',
-      body: '정보처리기사 필기 합격 증빙 캡처.',
-      managerComment: '합격증 원본(PDF)을 추가 제출해 주세요.',
-      attachmentFiles: [
-        {
-          name: 'eng-info-written-pass.png',
-          url: 'https://files.example.com/rr-3/eng-info-written-pass.png',
-        },
+      id: 'skn',
+      label: 'SK네트웍스 Family AI 캠프',
+      cohorts: [
+        { id: '29기', label: '29기' },
+        { id: '28기', label: '28기' },
       ],
     },
   ],
+  activeCourseId: 'skn',
+  activeCohortId: '29기',
+  weeks: [
+    { no: 1, label: '3월 1주차' },
+    { no: 2, label: '3월 2주차' },
+  ],
+  blog: [
+    {
+      student,
+      cells: { 1: 'approved', 2: 'approved' },
+      submissionIds: { 1: 'b1', 2: 'b2' },
+      completed: 2,
+      total: 26,
+    },
+  ],
+  study: [
+    {
+      student,
+      cells: { 1: 'approved' },
+      submissionIds: { 1: 'st1' },
+      streakWeeks: 7,
+      mileagePaid: true,
+    },
+  ],
+  cert: [
+    {
+      student,
+      certs: { PCCE: 'approved', PCCP: 'none', PCSQL: 'none' },
+      submissionIds: { PCCE: 'c1' },
+      mileage: 25000,
+      paid: true,
+    },
+  ],
+  blogDetails: {
+    b1: {
+      studentName: '김은진',
+      weekLabel: '3월 1주차',
+      status: 'approved',
+      url: 'https://blog.naver.com/skn29/1',
+      submittedAt: '2026-03-02',
+      managerComment: '승인 처리했습니다.',
+    },
+    b2: {
+      studentName: '김은진',
+      weekLabel: '3월 2주차',
+      status: 'approved',
+      url: 'https://blog.naver.com/skn29/2',
+      submittedAt: '2026-03-09',
+      managerComment: '승인 처리했습니다.',
+    },
+  },
+  studyDetails: {
+    st1: {
+      studentName: '김은진',
+      title: 'skn29기 예복습 스터디 1회차',
+      status: 'approved',
+      submittedAt: '2026-03-02',
+      timeRange: '18:00 ~ 19:00',
+      attachmentCount: 1,
+      evidenceImageUrl: null,
+      managerComment: '승인 처리했습니다.',
+    },
+  },
+  certDetails: {
+    c1: {
+      studentName: '김은진',
+      certType: 'PCCE',
+      grade: 'Lv.1',
+      status: 'approved',
+      holderName: '김은진',
+      acquiredAt: '2026-04-18',
+      submittedAt: '2026-04-18',
+      fileName: 'PCCE.png',
+      url: 'https://cert.playdata.io/verify/pcce-skn29',
+      evidenceImageUrl: null,
+      mileage: 25000,
+      mileageBreakdown: 'PCCE 25,000P',
+      paid: true,
+      managerComment: '승인 처리했습니다.',
+    },
+  },
 }
 
 const projects: ProjectReviewData = {
@@ -178,38 +223,35 @@ function renderWith(ui: React.ReactElement) {
 }
 
 describe('RecordReviewPage (§13)', () => {
-  it('KPI·카테고리 탭·조회 전용 안내를 렌더한다', () => {
+  it('과정 선택·기수 탭·수강생·조회 전용 안내를 렌더한다', () => {
     renderWith(<RecordReviewPage />)
-    expect(screen.getByText('제출 현황')).toBeInTheDocument()
-    expect(screen.getByText('리액트 useMemo 실전 최적화')).toBeInTheDocument()
     expect(
-      screen.getByText(/승인·반려·보완 요청 처리는 운영 매니저/),
+      screen.getByRole('button', { name: /SK네트웍스 Family AI 캠프/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '29기' })).toBeInTheDocument()
+    expect(screen.getByText('김은진')).toBeInTheDocument()
+    expect(
+      screen.getByText(/승인·반려·보완 요청은 운영 매니저/),
     ).toBeInTheDocument()
   })
 
-  it('행 클릭 시 상세 슬라이드 패널이 열린다 (조회 전용)', async () => {
+  it('블로그 셀 클릭 시 조회 전용 상세 패널이 열린다', async () => {
     const user = userEvent.setup()
     renderWith(<RecordReviewPage />)
-    await user.click(screen.getByText('리액트 useMemo 실전 최적화'))
+    await user.click(screen.getAllByTitle('승인')[0])
     expect(
       screen.getByRole('dialog', { name: '학습 기록 상세' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/useMemo 남용 사례/)).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        '조회 전용 — 승인·반려·보완 요청은 운영 매니저가 처리합니다.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('운영 매니저 결정')).toBeInTheDocument()
+    expect(screen.getByText(/강사는 조회만 가능/)).toBeInTheDocument()
   })
 
-  it('카테고리 탭은 해당 카테고리만 남긴다', async () => {
+  it('자격증 탭은 자격증 매트릭스를 보여준다', async () => {
     const user = userEvent.setup()
     renderWith(<RecordReviewPage />)
-    await user.click(screen.getByRole('button', { name: /자격증 \(6\)/ }))
-    expect(screen.getByText('정보처리기사 필기 합격증')).toBeInTheDocument()
-    expect(
-      screen.queryByText('리액트 useMemo 실전 최적화'),
-    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '자격증' }))
+    expect(screen.getByText('PCCE')).toBeInTheDocument()
+    expect(screen.getByText('지급 완료')).toBeInTheDocument()
   })
 })
 

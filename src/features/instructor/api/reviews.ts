@@ -7,12 +7,15 @@ import type {
 } from '@/shared/types'
 
 // 강사 검토 3종 (§13~§15) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
-export function useRecordReviews() {
+// §13은 조회 전용 그리드 — 과정(courseId)·기수(cohortId)별 조회.
+export function useRecordReviews(courseId: string, cohortId: string) {
   return useQuery({
-    queryKey: instructorKeys.recordReviews(),
+    queryKey: instructorKeys.recordReviews(courseId, cohortId),
     queryFn: () =>
       apiClient
-        .get<InstructorRecordReviewData>('/instructor/records/review')
+        .get<InstructorRecordReviewData>(
+          `/instructor/records/review?courseId=${encodeURIComponent(courseId)}&cohortId=${encodeURIComponent(cohortId)}`,
+        )
         .then((r) => r.data),
   })
 }

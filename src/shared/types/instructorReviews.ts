@@ -8,33 +8,123 @@ export interface ReviewStat {
   unit: string
 }
 
-// ── §13 학습 기록 조회 (Figma 1422:10009) — 조회 전용, 승인·반려는 매니저 단독 ──
+// ── §13 학습 기록 조회 (Figma 1422:10009) — 강사 조회 전용 그리드 ──
+// 강사는 조회만: 운영(매니저)가 내린 승인/반려/검토중 결정과 마일리지·지급 상태를
+// 확인만 한다. 승인·반려 액션 없음(canReviewRecord=false — 02_강사.md §13).
+// 블로그·스터디는 수강생×주차 히트맵 + 셀 클릭 모달, 자격증은 PCCE/PCCP/PCSQL 매트릭스.
 export type InstructorRecordCategory = 'blog' | 'study' | 'cert'
-export type InstructorRecordStatus =
-  | 'pending' // 대기
-  | 'changes_requested' // 보완 요청
-  | 'approved' // 승인
-  | 'rejected' // 반려
 
-export interface InstructorRecordRow {
+// 매니저 결정 = 셀 색: 승인(초록)·검토중(주황)·반려(빨강)·미제출(회색)
+export type RecordCellStatus = 'approved' | 'pending' | 'rejected' | 'none'
+
+// 상단 기수 탭 (예: '29기')
+export interface RecordCohortTab {
   id: string
-  studentName: string
-  cohortLabel: string
-  category: InstructorRecordCategory
-  title: string
-  submittedAt: string | null // '05-17 21:14'
-  status: InstructorRecordStatus
-  attachments: number | null // 📎 N (null = '-')
-  url: string | null // 제출 링크(블로그·자격증 등) · 스터디 등은 null
-  body: string // 본문 미리보기
-  managerComment: string | null // 매니저 코멘트(승인/반려/보완) · 대기는 null
-  attachmentFiles?: { name: string; url: string }[] // 첨부 파일(클릭 시 열람) · 없으면 생략
+  label: string
 }
 
+// 과정 선택 — 과정마다 소속 기수 목록을 함께 가진다(과정 전환 시 기수 갱신).
+export interface RecordCourseTab {
+  id: string
+  label: string // 'SK네트웍스 Family AI 캠프'
+  cohorts: RecordCohortTab[]
+}
+
+// 그리드 열 = 주차 (예: {no:1, label:'3월 1주차'})
+export interface RecordWeek {
+  no: number
+  label: string
+}
+
+export interface RecordGridStudent {
+  id: string
+  name: string // '김은진'
+  birth: string // '1995-09-08'
+  atRisk?: boolean // 위험 강조 행(핑크 배경) — 미제출/이탈 우려
+}
+
+// 블로그 탭 행 — 주차별 제출 현황 + 완주 수
+export interface BlogGridRow {
+  student: RecordGridStudent
+  cells: Record<number, RecordCellStatus> // weekNo → 상태
+  submissionIds: Record<number, string> // weekNo → 모달 열기용 제출 id
+  completed: number // 완주(승인) 수
+  total: number // 목표 회차 (예: 26)
+}
+
+// 스터디 탭 행 — 주차별 현황 + 연속 주차 + 마일리지 지급
+export interface StudyGridRow {
+  student: RecordGridStudent
+  cells: Record<number, RecordCellStatus>
+  submissionIds: Record<number, string>
+  streakWeeks: number // 연속 N주
+  mileagePaid: boolean // 마일리지 지급 완료 여부
+}
+
+// 자격증 탭 — 주차 무관, 자격증 종류별 검토 상태 매트릭스
+export type CertType = 'PCCE' | 'PCCP' | 'PCSQL'
+
+export interface CertGridRow {
+  student: RecordGridStudent
+  certs: Record<CertType, RecordCellStatus> // 종류별 매니저 결정 상태
+  submissionIds: Partial<Record<CertType, string>> // 제출 있는 종류 → 상세 패널 id
+  mileage: number // 지급/후보 마일리지 합계(P) · 0 = 없음
+  paid: boolean // 지급 완료 여부
+}
+
+// 블로그 모달 상세 (읽기 전용 + 매니저 결정)
+export interface BlogRecordDetail {
+  studentName: string
+  weekLabel: string // '6월 4주차'
+  status: RecordCellStatus // 매니저 결정
+  url: string
+  submittedAt: string // '2026-06-29'
+  managerComment: string | null
+}
+
+// 스터디 모달 상세 (읽기 전용 + 매니저 결정)
+export interface StudyRecordDetail {
+  studentName: string
+  title: string // 'skn29기 예복습 스터디 7회차'
+  status: RecordCellStatus
+  submittedAt: string // '2026-05-08'
+  timeRange: string // '18:00 ~ 19:00'
+  attachmentCount: number
+  evidenceImageUrl: string | null // 증빙 사진(없으면 플레이스홀더)
+  managerComment: string | null
+}
+
+// 자격증 모달 상세 (읽기 전용 + 매니저 결정)
+// ⚠️ 증빙 링크·이미지 열람 가능 여부는 운영·수강생 화면과 정합 확인 필요(BE 계약 대기).
+export interface CertRecordDetail {
+  studentName: string
+  certType: CertType // 'PCSQL'
+  grade: string // 'Lv.3' — 등급(합격 표기용)
+  status: RecordCellStatus // 매니저 결정
+  holderName: string // 응시자명(OCR 후보)
+  acquiredAt: string // 취득일 '2026-05-27'
+  submittedAt: string // 제출일
+  fileName: string // 증빙 파일명 'PCSQL.png'
+  url: string | null // 증빙 링크(있으면)
+  evidenceImageUrl: string | null // 증빙 이미지(없으면 플레이스홀더)
+  mileage: number // 이 수강생 자격증 마일리지 총액(P)
+  mileageBreakdown: string // 지급 근거 자격증 표기 'PCCP 50,000P' · 없으면 ''
+  paid: boolean // 지급 완료 여부
+  managerComment: string | null
+}
+
+// 강사 학습 기록 조회 — 한 (과정·기수) 전체 데이터
 export interface InstructorRecordReviewData {
-  stats: ReviewStat[] // 제출 현황·보완 요청 중·최근 승인·최근 반려
-  counts: { all: number; blog: number; study: number; cert: number }
-  rows: InstructorRecordRow[]
+  courses: RecordCourseTab[] // 상단 과정 선택 목록(각 과정이 기수 목록 보유)
+  activeCourseId: string // 응답 기준 과정
+  activeCohortId: string // 응답 기준 기수
+  weeks: RecordWeek[] // 그리드 열(블로그·스터디 공용)
+  blog: BlogGridRow[]
+  study: StudyGridRow[]
+  cert: CertGridRow[]
+  blogDetails: Record<string, BlogRecordDetail> // submissionId → 상세
+  studyDetails: Record<string, StudyRecordDetail> // submissionId → 상세
+  certDetails: Record<string, CertRecordDetail> // submissionId → 상세
 }
 
 // ── §14 프로젝트 검토 (Figma 1422:10276) — 발표 후 인증 큐 ──

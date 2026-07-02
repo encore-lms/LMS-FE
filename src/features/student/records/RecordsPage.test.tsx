@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -156,9 +156,12 @@ describe('RecordsPage', () => {
 
     await user.keyboard('{Escape}')
 
-    expect(
-      screen.queryByRole('button', { name: '블로그 상세 닫기' }),
-    ).not.toBeInTheDocument()
+    // 슬라이드 아웃 애니메이션(300ms) 동안 DOM이 유지되므로 언마운트를 기다린다
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: '블로그 상세 닫기' }),
+      ).not.toBeInTheDocument(),
+    )
     expect(document.body.style.overflow).toBe('')
   })
 })

@@ -76,6 +76,8 @@ export const studentRoutes: RouteObject[] = [
     children: [
       // 사이드바 '대시보드' → /student (index). 수강생 랜딩 = 대시보드.
       { index: true, element: <DashboardPage /> },
+      // 실 auth 로그인 nextRoute(/student/dashboard) 별칭 — index와 같은 화면 (멘토 라우트 패턴)
+      { path: 'dashboard', element: <DashboardPage /> },
       // 사이드바 '나의 과정' → /student/course (강의 홈). 자료실은 하위 탭.
       { path: 'course', element: <CourseHomePage /> },
       { path: 'course/materials', element: <MaterialsPage /> },

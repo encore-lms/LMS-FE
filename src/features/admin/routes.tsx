@@ -98,6 +98,8 @@ export const adminRoutes: RouteObject[] = [
     path: 'admin',
     children: [
       { index: true, element: <AdminDashboard /> },
+      // 실 auth 로그인 nextRoute(/admin/dashboard) 별칭 — index(/admin)와 같은 화면 (멘토 라우트 패턴)
+      { path: 'dashboard', element: <AdminDashboard /> },
       { path: 'education', element: <EducationPage /> },
       {
         path: 'education/resume/:resumeId',

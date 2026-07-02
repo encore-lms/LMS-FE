@@ -66,9 +66,23 @@ export function DataTable<T>({
               <tr
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
+                // 행 클릭이 유일한 진입점인 화면이 있어 키보드 동작(Enter/Space)을 보장한다.
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (e) => {
+                        if (e.target !== e.currentTarget) return
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onRowClick(row)
+                        }
+                      }
+                    : undefined
+                }
                 className={cn(
                   'border-divider border-b last:border-b-0',
-                  onRowClick && 'hover:bg-surface-muted cursor-pointer',
+                  onRowClick &&
+                    'hover:bg-surface-muted focus-visible:ring-brand cursor-pointer focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
                   rowClassName?.(row),
                 )}
               >

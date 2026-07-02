@@ -509,6 +509,7 @@ export default function IngestionQueuePage() {
         spec={retrySpec}
         onClose={() => setRetryTarget(null)}
         onConfirm={(memo) => handleRetry(memo)}
+        pending={sessionAction.isPending}
       />
 
       {/* 결정적 폐기 확인 모달 */}
@@ -516,6 +517,7 @@ export default function IngestionQueuePage() {
         spec={discardSpec}
         onClose={() => setDiscardTarget(null)}
         onConfirm={(memo) => handleDiscard(memo)}
+        pending={sessionAction.isPending}
       />
     </div>
   )

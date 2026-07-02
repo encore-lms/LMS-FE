@@ -34,6 +34,7 @@ import {
   useDeleteHrdKey,
   useTestHrdKey,
 } from '../api/settings'
+import { formatDate, formatDateTime } from '@/shared/lib/date'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { SettingsTabs } from './SettingsTabs'
 import { hrdKeySchema, type HrdKeyInput } from './hrdKey.schema'
@@ -59,20 +60,14 @@ const HISTORY_FILTERS: { key: HistoryFilter; label: string }[] = [
 const KEY_PAGE_SIZE = 6
 const HISTORY_PAGE_SIZE = 8
 
-// ISO-8601 Instant → 'YYYY-MM-DD'
+// ISO-8601 Instant → 'YYYY-MM-DD' (공용 Intl 유틸 — KST 고정)
 function fmtDate(iso: string) {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '-'
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+  return formatDate(iso) || '-'
 }
 
-// ISO-8601 Instant → 'MM-DD HH:MM'
+// ISO-8601 Instant → 'YYYY-MM-DD HH:mm' — 연도 생략 시 해가 바뀐 이력이 모호해져 연도 포함.
 function fmtDateTime(iso: string) {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '-'
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+  return formatDateTime(iso) || '-'
 }
 
 // axios 에러에서 BE 메시지(ErrorResponse.message) 추출, 없으면 fallback.

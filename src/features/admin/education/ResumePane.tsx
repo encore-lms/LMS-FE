@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { formatDateTime } from '@/shared/lib/date'
 import { useStudentAccounts } from '../api/students'
 import type { ResumeRow } from './types'
 import { useResumes } from './api'
@@ -13,8 +14,7 @@ const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
   COMPLETED: '작성 완료',
 }
-const fmt = (iso: string | null) =>
-  iso ? iso.slice(0, 16).replace('T', ' ') : '-'
+const fmt = (iso: string | null) => (iso ? formatDateTime(iso) : '-')
 
 // 이력서 탭 — 기수 이력서 현황(학생명 join) + 검색 + 상세(페이지 전환). 정본 §32 lean.
 export function ResumePane({

@@ -404,6 +404,7 @@ export default function ReputationPage() {
             },
           )
         }}
+        pending={push.isPending}
       />
 
       {/* 평판 상세 모달 (Figma 평판 상세 1306:8078) — 행 데이터 기반 읽기 전용 */}

@@ -6,6 +6,7 @@ import { Empty } from '@/components/ui/Empty'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
+import { formatDateTime } from '@/shared/lib/date'
 import { useStudentAccounts } from '../api/students'
 import {
   ResumeDocView,
@@ -17,8 +18,7 @@ const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
   COMPLETED: '작성 완료',
 }
-const fmt = (iso: string | null) =>
-  iso ? iso.slice(0, 16).replace('T', ' ') : '-'
+const fmt = (iso: string | null) => (iso ? formatDateTime(iso) : '-')
 
 function parseResumeContent(content: string | null): Partial<ResumeDocData> {
   if (!content) return {}

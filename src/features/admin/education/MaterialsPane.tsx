@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
 import type { CohortMaterialItem } from '@/shared/types'
+import { formatDate } from '@/shared/lib/date'
 import {
   downloadCohortMaterialFile,
   useCohortMaterials,
@@ -178,7 +179,7 @@ export function MaterialsPane({
       className: 'w-28',
       cell: (m) => (
         <span className="text-fg-subtle text-xs tabular-nums">
-          {m.createdAt?.slice(0, 10) ?? '-'}
+          {formatDate(m.createdAt) || '-'}
         </span>
       ),
     },
@@ -253,7 +254,7 @@ export function MaterialsPane({
             title={detail.title}
             metaItems={[
               nameOf(detail.uploadedByUserId),
-              detail.createdAt?.slice(0, 10) ?? '-',
+              formatDate(detail.createdAt) || '-',
             ]}
             body={detail.body}
             bodyEmptyText="본문 없이 등록된 자료입니다."

@@ -46,6 +46,31 @@ body {
   font-family: var(--font-sans);
 }
 
+/* 폼 컨트롤 공통 키보드 포커스 링 — 화면 곳곳의 `outline-none` + border 색 변화만으로는
+   포커스 위치 파악이 어려워, base 레이어에서 box-shadow 링을 일괄 보장한다.
+   (utility의 focus:ring/shadow가 있으면 그쪽이 우선 적용됨) */
+@layer base {
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    box-shadow:
+      0 0 0 2px var(--color-surface),
+      0 0 0 4px var(--color-brand);
+  }
+}
+
+/* 모션 감쇠 선호 시 전환·애니메이션·스무스 스크롤을 일괄 최소화 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* 마크다운 본문(.markdown-body) — QnA 질문·답변·댓글 렌더. LMS 토큰 기반 최소 규칙.
    (@tailwindcss/typography 미도입 — 수동.) 코드 하이라이트 테마는 Markdown.tsx에서 import. */
 .markdown-body {

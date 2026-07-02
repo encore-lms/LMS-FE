@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { cn } from '@/shared/lib/cn'
+import { formatDate } from '@/shared/lib/date'
 import { useCohortProjects } from './api'
 import { useStudentAccounts } from '../api/students'
 
@@ -117,7 +118,7 @@ export function ProjectsPane({
                 ))}
               </div>
               <div className="text-fg-subtle mt-2 text-xs">
-                생성 {p.createdAt}
+                생성 {formatDate(p.createdAt) || p.createdAt}
               </div>
             </div>
           )

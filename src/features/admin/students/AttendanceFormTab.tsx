@@ -7,6 +7,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { cn } from '@/shared/lib/cn'
+import { formatDateTime } from '@/shared/lib/date'
 import type { AttendanceFormRow, AttendanceFormType } from '@/shared/types'
 import { useStudentAccounts, useStudentAttendanceForms } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
@@ -143,7 +144,7 @@ export function AttendanceFormTab() {
       className: 'w-32',
       cell: (r) => (
         <span className="text-fg-subtle text-xs tabular-nums">
-          {r.submittedAt.slice(0, 16).replace('T', ' ')}
+          {formatDateTime(r.submittedAt)}
         </span>
       ),
     },

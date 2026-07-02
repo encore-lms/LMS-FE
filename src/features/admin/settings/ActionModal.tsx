@@ -14,22 +14,31 @@ interface ActionModalProps {
   onClose: () => void
   // memo 인자는 하위 호환용(현재 입력란 없음 → 항상 빈 문자열).
   onConfirm: (memo: string) => void
+  /** 확정 요청 진행 중 — 확인/취소를 잠가 이중 제출을 막는다 */
+  pending?: boolean
 }
 
 // 운영 액션 모달 v2 공통 — 처리 요약 확인.
 // 계정 수정·키 이력 상세·과정 등록·과정 설정 저장/취소가 같은 골격을 공유한다.
-export function ActionModal({ spec, onClose, onConfirm }: ActionModalProps) {
+export function ActionModal({
+  spec,
+  onClose,
+  onConfirm,
+  pending = false,
+}: ActionModalProps) {
   return (
     <Modal
       open={!!spec}
-      onClose={onClose}
+      onClose={pending ? () => {} : onClose}
       title={spec?.title}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} disabled={pending}>
             취소
           </Button>
-          <Button onClick={() => onConfirm('')}>{spec?.confirmLabel}</Button>
+          <Button onClick={() => onConfirm('')} disabled={pending}>
+            {pending ? '처리 중…' : spec?.confirmLabel}
+          </Button>
         </>
       }
     >

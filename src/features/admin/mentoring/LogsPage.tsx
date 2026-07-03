@@ -7,15 +7,14 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { useAdminMentoringLogDetail, useAdminMentoringLogs } from './api'
 import { LOG_STATUS_META, logDisplayStatus } from './statusMeta'
 import { LogDetailPanel } from './LogDetailPanel'
 import { ChangeRequestModal } from './ChangeRequestModal'
 import { MentoringTabs } from './MentoringTabs'
-import type { AdminMentoringLogRow, AdminMentoringLogStatus } from './types'
-
-type StatusFilter = 'all' | AdminMentoringLogStatus
+import type { AdminMentoringLogRow } from './types'
 
 // 멘토링 일지 관리 (/admin/mentoring/logs) — 운영(MANAGER/ADMIN) 조회·수정 요청 전용.
 // 직접 수정·폐기·반려 없음(05-31 확정 — Figma 2745:7815 의 반려 KPI·버튼은 정책 확정 전
@@ -26,10 +25,10 @@ export default function LogsPage() {
     '운영자 조회·수정 요청 · 직접 수정 불가 · 최종 유효본 기준 인정 시간 계산',
   )
   const { data, isPending, isError, refetch } = useAdminMentoringLogs()
-  const [team, setTeam] = useState('all')
-  const [mentor, setMentor] = useState('all')
-  const [status, setStatus] = useState<StatusFilter>('all')
-  const [q, setQ] = useState('')
+  const [team, setTeam] = useSearchParamState('team', 'all')
+  const [mentor, setMentor] = useSearchParamState('mentor', 'all')
+  const [status, setStatus] = useSearchParamState('status', 'all')
+  const [q, setQ] = useSearchParamState('q')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [changeRequestOpen, setChangeRequestOpen] = useState(false)
 
@@ -233,7 +232,7 @@ export default function LogsPage() {
           </select>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
+            onChange={(e) => setStatus(e.target.value)}
             aria-label="상태 필터"
             className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
           >

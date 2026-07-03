@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, ChevronLeft, Download, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -9,6 +9,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
@@ -36,11 +37,11 @@ export default function HistoryPage() {
     '마일리지 지급 내역',
     '지급·차감 원장 조회 · 기수 선택 전 빈 상태 안내 · 직접 지급/구매 승인 즉시 반영',
   )
-  const [cohortId, setCohortId] = useState('')
+  const [cohortId, setCohortId] = useSearchParamState('cohortId')
   const { data, isPending, isError, refetch } = useMileageHistory(cohortId)
   const toast = useToast()
-  const [txType, setTxType] = useState<'all' | TxType>('all')
-  const [q, setQ] = useState('')
+  const [txType, setTxType] = useSearchParamState('txType', 'all')
+  const [q, setQ] = useSearchParamState('q')
 
   const rows = useMemo(() => data?.rows ?? [], [data])
   const filtered = useMemo(() => {
@@ -214,7 +215,7 @@ export default function HistoryPage() {
       <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
         <select
           value={txType}
-          onChange={(e) => setTxType(e.target.value as 'all' | TxType)}
+          onChange={(e) => setTxType(e.target.value)}
           aria-label="구분 필터"
           className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
         >

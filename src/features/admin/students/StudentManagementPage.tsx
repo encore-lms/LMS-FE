@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { AccountsTab } from './AccountsTab'
 import { AttendanceTab } from './AttendanceTab'
@@ -16,7 +16,7 @@ const TABS: { key: TabKey; label: string }[] = [
 // 운영 학생 관리 (/admin/students) — 계정·출결·출결 폼 3탭. (Figma Main Flow 09)
 // MANAGER 전용: HRD-Net 명단 동기화·계정 관제 + 출결/출결 폼 검토를 한 화면에 묶는다.
 export default function StudentManagementPage() {
-  const [tab, setTab] = useState<TabKey>('accounts')
+  const [tab, setTab] = useSearchParamState('tab', 'accounts')
   usePageHeader(
     '학생 관리',
     'MANAGER 전용 · HRD-Net 동기화 · 계정·출결·출결 폼 관제',

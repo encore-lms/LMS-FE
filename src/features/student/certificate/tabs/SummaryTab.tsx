@@ -5,7 +5,8 @@ import { SkillRadar } from '../components/SkillRadar'
 import { CERT_V2 } from '../config'
 import { DomainDonut } from '../v2/DomainDonut'
 import { OntologyMap } from '../v2/OntologyMap'
-import { getAiAnalysis, getAiDerived } from '../ai'
+import { useQuery } from '@tanstack/react-query'
+import { getAiAnalysis, fetchAiDerived } from '../ai'
 
 // 증명서 탭1 종합 요약.
 // 상단: 핵심 지표 — 종합 점수 카드 + 핵심 지표 2×2 (Figma 미리보기 metrics-row).
@@ -28,8 +29,12 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
   const ai = getAiAnalysis('stu-001')
   // 6축 '자동 산정' = 결정 함수(derive) 계산값으로 연결. 점수만 대체하고
   // 동료(peer)·강사(confirmed·note) 표시 메타는 mock 유지. (동료 peerAgg 정합은 후속)
-  const derived = getAiDerived('stu-001')
-  const sixAxisScore = derived.sixAxis as Record<string, number>
+  // 6축 자동 산정 = LMS-AI 엔진 서버에서 fetch(없으면 mock). 로딩 중엔 s.skillAxes 기존값 유지.
+  const { data: derived } = useQuery({
+    queryKey: ['aiDerived', 'stu-001'],
+    queryFn: () => fetchAiDerived('stu-001'),
+  })
+  const sixAxisScore = (derived?.sixAxis ?? {}) as Record<string, number>
   const skillAxes = s.skillAxes.map((a) => ({
     ...a,
     score: sixAxisScore[a.key] ?? a.score,

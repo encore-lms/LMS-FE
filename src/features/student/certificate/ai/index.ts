@@ -15,11 +15,27 @@ export function getAiAnalysis(studentId: string): AiAnalysis {
 }
 
 /**
- * 학생별 파생값(6축·집계·추세) — 결정 함수 계산 산출(LMS-AI 엔진 담당).
- * 현재 mock 반환. TODO(서버 연동): LMS-AI 계산 결과 fetch로 교체 — 호출부 불변.
+ * 학생별 파생값(6축·집계·추세) — 동기 mock. 동기 접근이 필요한 곳용.
  */
 export function getAiDerived(studentId: string): StudentDerived {
   return DERIVED_STUBS[studentId] ?? DERIVED_STUBS['stu-001']
+}
+
+// LMS-AI 엔진 서버 주소. 설정 시 실제 계산값 fetch, 없으면 mock.
+// 로컬 확인: .env.local 에 VITE_AI_API_URL=http://localhost:5177
+const AI_API = import.meta.env.VITE_AI_API_URL as string | undefined
+
+/**
+ * 파생값을 LMS-AI 엔진 서버에서 가져온다(결정 함수 계산 결과).
+ * 서버 미설정이면 mock 반환 → 커밋/배포본은 그대로 동작.
+ */
+export async function fetchAiDerived(
+  studentId: string,
+): Promise<StudentDerived> {
+  if (!AI_API) return DERIVED_STUBS[studentId] ?? DERIVED_STUBS['stu-001']
+  const res = await fetch(`${AI_API}/derived/${encodeURIComponent(studentId)}`)
+  if (!res.ok) throw new Error(`LMS-AI 서버 오류: ${res.status}`)
+  return (await res.json()) as StudentDerived
 }
 
 export type {

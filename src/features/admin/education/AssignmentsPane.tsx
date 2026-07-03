@@ -9,6 +9,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { useStudentAccounts } from '../api/students'
 import { useOpsAccounts } from '../api/settings'
+import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import type { InstructorAssignmentRow, AssignmentSubmissionRow } from './types'
 import {
   useAssignmentSubmissions,
@@ -252,6 +253,9 @@ export function AssignmentsPane({
   const [dueDate, setDueDate] = useState('')
   const [description, setDescription] = useState('')
   const [subView, setSubView] = useState<InstructorAssignmentRow | null>(null)
+  // 삭제 확인 대상 — 파괴적 액션은 ActionModal 확인을 거친다.
+  const [deleteTarget, setDeleteTarget] =
+    useState<InstructorAssignmentRow | null>(null)
 
   const resetForm = () => {
     setSubject('')
@@ -284,11 +288,30 @@ export function AssignmentsPane({
     )
   }
 
-  const onDelete = (r: InstructorAssignmentRow) =>
+  const deleteSpec: ActionModalSpec | null = deleteTarget
+    ? {
+        title: '과제 삭제',
+        subtitle: '삭제한 과제는 복구할 수 없습니다.',
+        rows: [
+          { label: '과제', value: deleteTarget.title },
+          {
+            label: '제출 현황',
+            value: `제출 ${deleteTarget.counts.submitted} · 보완 ${deleteTarget.counts.supplementRequested} · 검토 ${deleteTarget.counts.reviewDone}`,
+          },
+          { label: '처리', value: '과제·제출 이력 영구 삭제' },
+        ],
+        confirmLabel: '삭제',
+      }
+    : null
+  const onDelete = () => {
+    if (!deleteTarget) return
+    const r = deleteTarget
     deleteA.mutate(r.id, {
       onSuccess: () => toast.success(`삭제 — ${r.title}`),
       onError: () => toast.danger('삭제에 실패했어요'),
+      onSettled: () => setDeleteTarget(null),
     })
+  }
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -361,7 +384,7 @@ export function AssignmentsPane({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              onDelete(r)
+              setDeleteTarget(r)
             }}
             className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -398,6 +421,14 @@ export function AssignmentsPane({
         rowKey={(r) => r.id}
         onRowClick={(r) => setSubView(r)}
         empty="등록된 과제가 없어요"
+      />
+
+      {/* 과제 삭제 확인 — 복구 불가 액션 */}
+      <ActionModal
+        spec={deleteSpec}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={onDelete}
+        pending={deleteA.isPending}
       />
 
       {/* 제출 현황 검토 */}

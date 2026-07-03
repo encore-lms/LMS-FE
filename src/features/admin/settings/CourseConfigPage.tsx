@@ -87,7 +87,11 @@ export default function CourseConfigPage() {
   // 토글 변경 dirty 셋 — '{cohortId}:{toggleKey}' 단위로 추적(저장 시 초기화).
   const [changes, setChanges] = useState<Record<string, boolean>>({})
   const [modal, setModal] = useState<
-    (ActionModalSpec & { kind: 'save' | 'cancel' }) | null
+    | (ActionModalSpec & {
+        kind: 'save' | 'cancel' | 'deleteMaterial'
+        materialId?: string
+      })
+    | null
   >(null)
   const updateCohort = useUpdateCohortSettings()
   const createMaterial = useCreateCohortMaterial()
@@ -162,6 +166,25 @@ export default function CourseConfigPage() {
 
   const onConfirm = async () => {
     if (!modal) return
+    if (modal.kind === 'deleteMaterial') {
+      if (!courseId || !materialCohortId || !modal.materialId) {
+        setModal(null)
+        return
+      }
+      deleteMaterial.mutate(
+        {
+          courseId,
+          cohortId: materialCohortId,
+          materialId: modal.materialId,
+        },
+        {
+          onSuccess: () => toast.success('자료를 삭제했어요'),
+          onError: () => toast.danger('자료 삭제에 실패했어요'),
+          onSettled: () => setModal(null),
+        },
+      )
+      return
+    }
     if (modal.kind === 'cancel') {
       setChanges({})
       setModal(null)
@@ -219,15 +242,20 @@ export default function CourseConfigPage() {
     )
   }
 
-  const onDeleteMaterial = (materialId: string) => {
+  // 자료 삭제 — 파괴적 액션이라 ActionModal 확인을 거친다(저장/취소와 동일 골격).
+  const onDeleteMaterial = (m: { id: string; title: string }) => {
     if (!courseId || !materialCohortId) return
-    deleteMaterial.mutate(
-      { courseId, cohortId: materialCohortId, materialId },
-      {
-        onSuccess: () => toast.success('자료를 삭제했어요'),
-        onError: () => toast.danger('자료 삭제에 실패했어요'),
-      },
-    )
+    setModal({
+      kind: 'deleteMaterial',
+      materialId: m.id,
+      title: '자료 삭제',
+      subtitle: '삭제한 자료는 복구할 수 없습니다.',
+      rows: [
+        { label: '자료', value: m.title },
+        { label: '처리', value: '영구 삭제' },
+      ],
+      confirmLabel: '삭제',
+    })
   }
 
   return (
@@ -555,7 +583,7 @@ export default function CourseConfigPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => onDeleteMaterial(m.id)}
+                          onClick={() => onDeleteMaterial(m)}
                           disabled={deleteMaterial.isPending}
                           className="text-danger hover:bg-danger-bg rounded-md p-1.5 disabled:opacity-50"
                           aria-label="자료 삭제"
@@ -581,6 +609,7 @@ export default function CourseConfigPage() {
         spec={modal}
         onClose={() => setModal(null)}
         onConfirm={onConfirm}
+        pending={deleteMaterial.isPending || updateCohort.isPending}
       />
     </div>
   )

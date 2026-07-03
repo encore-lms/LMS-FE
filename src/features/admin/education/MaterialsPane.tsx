@@ -14,6 +14,7 @@ import {
   useDeleteCohortMaterial,
   useOpsAccounts,
 } from '../api/settings'
+import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { ArticleView } from './ArticleView'
 
 const TYPE_LABEL: Record<string, string> = {
@@ -52,6 +53,10 @@ export function MaterialsPane({
   }, [ops])
 
   const [detail, setDetail] = useState<CohortMaterialItem | null>(null)
+  // 삭제 확인 대상 — 파괴적 액션은 ActionModal 확인을 거친다.
+  const [deleteTarget, setDeleteTarget] = useState<CohortMaterialItem | null>(
+    null,
+  )
   const [addOpen, setAddOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -114,14 +119,35 @@ export function MaterialsPane({
     }
   }
 
-  const onDelete = (m: CohortMaterialItem) =>
+  const deleteSpec: ActionModalSpec | null = deleteTarget
+    ? {
+        title: '자료 삭제',
+        subtitle: '삭제한 자료는 복구할 수 없습니다.',
+        rows: [
+          { label: '자료', value: deleteTarget.title },
+          {
+            label: '유형',
+            value:
+              TYPE_LABEL[deleteTarget.materialType] ??
+              deleteTarget.materialType,
+          },
+          { label: '처리', value: '게시글·첨부 영구 삭제' },
+        ],
+        confirmLabel: '삭제',
+      }
+    : null
+  const onDelete = () => {
+    if (!deleteTarget) return
+    const m = deleteTarget
     deleteMaterial.mutate(
       { courseId, cohortId, materialId: m.id },
       {
         onSuccess: () => toast.success(`삭제 — ${m.title}`),
         onError: () => toast.danger('삭제에 실패했어요'),
+        onSettled: () => setDeleteTarget(null),
       },
     )
+  }
 
   if (isPending) {
     return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
@@ -204,7 +230,7 @@ export function MaterialsPane({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              onDelete(m)
+              setDeleteTarget(m)
             }}
             className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -230,6 +256,14 @@ export function MaterialsPane({
         rowKey={(m) => m.id}
         onRowClick={(m) => setDetail(m)}
         empty="등록된 자료가 없어요"
+      />
+
+      {/* 자료 삭제 확인 — 복구 불가 액션 */}
+      <ActionModal
+        spec={deleteSpec}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={onDelete}
+        pending={deleteMaterial.isPending}
       />
 
       {/* 상세 팝업 — 블로그 포스트형 */}

@@ -7,6 +7,7 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { StudentAccount } from '@/shared/types'
 import {
   fetchHrdTrainees,
@@ -32,8 +33,8 @@ function accountBadge(
 // 계정 탭 — HRD 동기화 + 계정 관제 테이블 + 학생 계정 상세 모달. (Figma 1457:10648)
 export function AccountsTab() {
   const toast = useToast()
-  const [status, setStatus] = useState<StatusFilter>('all')
-  const [q, setQ] = useState('')
+  const [status, setStatus] = useSearchParamState('status', 'all')
+  const [q, setQ] = useSearchParamState('q')
   const [modal, setModal] = useState<{
     account: StudentAccount
     action?: string

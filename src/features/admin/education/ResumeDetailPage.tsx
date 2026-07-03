@@ -54,7 +54,13 @@ export default function ResumeDetailPage() {
 
   usePageHeader('이력서 상세', '수강생 이력서 본문 확인 · 피드백 작성')
 
-  const goList = () => navigate('/admin/education')
+  // 진입 시 과정·기수 컨텍스트를 유지해 이력서 탭으로 복귀(EducationPage가 URL로 상태 복원).
+  const goList = () => {
+    const back = new URLSearchParams({ tab: 'resume' })
+    if (courseId) back.set('course', courseId)
+    if (cohortId) back.set('cohort', cohortId)
+    navigate(`/admin/education?${back.toString()}`)
+  }
 
   const onSubmit = () => {
     if (!body.trim()) {

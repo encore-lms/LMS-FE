@@ -6,6 +6,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { cn } from '@/shared/lib/cn'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
 import { useStudentAttendance } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
@@ -76,8 +77,11 @@ export function AttendanceTab() {
     date,
   )
 
-  const [statusFilter, setStatusFilter] = useState<AttendanceFilter>('all')
-  const [q, setQ] = useState('')
+  const [statusFilter, setStatusFilter] = useSearchParamState(
+    'statusfilter',
+    'all',
+  )
+  const [q, setQ] = useSearchParamState('q')
 
   // 이전 LMS 기준: 지각·결석은 상태, 미입실=입실(checkIn) 없음, 미퇴실=퇴실(checkOut) 없음.
   const matchFilter = (r: StudentAttendanceRow, f: AttendanceFilter) => {
@@ -99,7 +103,7 @@ export function AttendanceTab() {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
-      if (!matchFilter(r, statusFilter)) return false
+      if (!matchFilter(r, statusFilter as AttendanceFilter)) return false
       if (needle) {
         const hay = `${r.studentName} ${r.hrdStatusLabel}`.toLowerCase()
         if (!hay.includes(needle)) return false

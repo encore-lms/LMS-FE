@@ -9,6 +9,7 @@ import { Pagination } from '@/components/data/Pagination'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamArrayState } from '@/shared/hooks/useSearchParamState'
 import { useSettingsAudit } from '../api/settings'
 import type {
   SettingsAuditCategory,
@@ -39,7 +40,7 @@ export default function SettingsAuditPage() {
   const toast = useToast()
   usePageHeader('운영 설정 · 감사 로그')
   const { data, isPending, isError, refetch } = useSettingsAudit()
-  const [active, setActive] = useState<SettingsAuditCategory[]>([])
+  const [active, setActive] = useSearchParamArrayState('cat')
   const [page, setPage] = useState(1)
 
   const events = useMemo(() => data?.events ?? [], [data])
@@ -62,8 +63,8 @@ export default function SettingsAuditPage() {
 
   const toggle = (key: SettingsAuditCategory) => {
     setPage(1)
-    setActive((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    setActive(
+      active.includes(key) ? active.filter((k) => k !== key) : [...active, key],
     )
   }
 

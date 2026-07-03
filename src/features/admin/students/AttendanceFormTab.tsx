@@ -8,6 +8,7 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { cn } from '@/shared/lib/cn'
 import { formatDateTime } from '@/shared/lib/date'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { AttendanceFormRow, AttendanceFormType } from '@/shared/types'
 import { useStudentAccounts, useStudentAttendanceForms } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
@@ -56,9 +57,9 @@ export function AttendanceFormTab() {
     return m
   }, [students])
 
-  const [dateFilter, setDateFilter] = useState<DateFilter>('all')
-  const [pickedDate, setPickedDate] = useState<string>(today())
-  const [q, setQ] = useState('')
+  const [dateFilter, setDateFilter] = useSearchParamState('datefilter', 'all')
+  const [pickedDate, setPickedDate] = useSearchParamState('pickeddate', today())
+  const [q, setQ] = useSearchParamState('q')
 
   const filtered: FormRowView[] = useMemo(() => {
     const rows = data?.rows ?? []

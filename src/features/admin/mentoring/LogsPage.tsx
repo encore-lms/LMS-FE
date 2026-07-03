@@ -208,7 +208,7 @@ export default function LogsPage() {
             value={team}
             onChange={(e) => setTeam(e.target.value)}
             aria-label="팀 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">팀 전체</option>
             {teams.map((t) => (
@@ -221,7 +221,7 @@ export default function LogsPage() {
             value={mentor}
             onChange={(e) => setMentor(e.target.value)}
             aria-label="멘토 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">멘토 전체</option>
             {mentors.map((m) => (
@@ -234,7 +234,7 @@ export default function LogsPage() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             aria-label="상태 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">상태 전체</option>
             <option value="valid">유효</option>
@@ -247,7 +247,7 @@ export default function LogsPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="팀·멘토 검색"
           aria-label="팀·멘토 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-56 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
         />
       </div>
 

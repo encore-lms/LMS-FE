@@ -94,7 +94,7 @@ export default function SnapshotPage() {
         </div>
       </div>
 
-      <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand text-on-color mt-4 rounded-xl px-6 py-5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Avatar name={s.student.name} size={56} />
@@ -102,7 +102,7 @@ export default function SnapshotPage() {
               <StatusBadge label="certified" tone="success" />
               <div className="mt-1 flex items-center gap-2">
                 <span className="text-xl font-bold">{s.student.name}</span>
-                <span className="text-sm text-white/70">
+                <span className="text-on-color/70 text-sm">
                   {s.student.certId} · {s.student.cohort}
                 </span>
               </div>
@@ -122,24 +122,24 @@ export default function SnapshotPage() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="rounded-lg bg-white/10 px-3 py-2">
-            <p className="text-xs text-white/60">생성 시각</p>
+          <div className="bg-surface/10 rounded-lg px-3 py-2">
+            <p className="text-on-color/60 text-xs">생성 시각</p>
             <p className="mt-0.5 text-sm font-medium">{s.issuedAt}</p>
           </div>
-          <div className="rounded-lg bg-white/10 px-3 py-2">
-            <p className="text-xs text-white/60">certificateId</p>
+          <div className="bg-surface/10 rounded-lg px-3 py-2">
+            <p className="text-on-color/60 text-xs">certificateId</p>
             <p className="mt-0.5 truncate font-mono text-sm">
               {s.certificateId}
             </p>
           </div>
-          <div className="rounded-lg bg-white/10 px-3 py-2">
-            <p className="text-xs text-white/60">snapshotHash</p>
+          <div className="bg-surface/10 rounded-lg px-3 py-2">
+            <p className="text-on-color/60 text-xs">snapshotHash</p>
             <p className="mt-0.5 truncate font-mono text-sm">
               {s.verify.snapshotHash}
             </p>
           </div>
-          <div className="rounded-lg bg-white/10 px-3 py-2">
-            <p className="text-xs text-white/60">publicToken</p>
+          <div className="bg-surface/10 rounded-lg px-3 py-2">
+            <p className="text-on-color/60 text-xs">publicToken</p>
             <p className="mt-0.5 truncate font-mono text-sm">{s.publicToken}</p>
           </div>
         </div>
@@ -308,7 +308,7 @@ export default function SnapshotPage() {
         </div>
       </section>
 
-      <div className="bg-brand-deep mt-6 flex items-center justify-between gap-4 rounded-xl px-6 py-4 text-white">
+      <div className="bg-brand-deep text-on-color mt-6 flex items-center justify-between gap-4 rounded-xl px-6 py-4">
         <p className="text-xs">
           스냅샷은 동결돼 있어요 — 데이터 변경 시 새 스냅샷이 생성됩니다.
         </p>

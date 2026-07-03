@@ -231,12 +231,12 @@ export default function ReputationPage() {
       </div>
 
       {/* 히어로 — 수집 현황 + 일괄 푸시 */}
-      <div className="bg-brand flex flex-col gap-4 rounded-xl p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-brand text-on-color flex flex-col gap-4 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-[17px] font-bold">
             수강생별 평판 수집 현황과 요청 푸시 추적
           </p>
-          <p className="mt-2 text-[13px] text-white/75">
+          <p className="text-on-color/75 mt-2 text-[13px]">
             {summary.cohortLabel} · {summary.students}명
             <span className="ml-2 inline-flex items-center gap-1">
               <Info className="h-3.5 w-3.5" />
@@ -263,7 +263,7 @@ export default function ReputationPage() {
               payload: { kind: 'bulk' },
             })
           }
-          className="bg-surface text-brand inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90"
+          className="bg-surface text-brand hover:bg-surface/90 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
         >
           <Send className="h-4 w-4" />
           일괄 요청 푸시 — 누락 {summary.missingStudents}명
@@ -303,7 +303,7 @@ export default function ReputationPage() {
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           aria-label="상태 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">상태 전체</option>
           <option value="missing">누락 있음</option>
@@ -314,7 +314,7 @@ export default function ReputationPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="수강생 검색"
           aria-label="수강생 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-52 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
         />
       </div>
 

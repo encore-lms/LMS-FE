@@ -156,7 +156,7 @@ export default function TypeLimitsPage() {
               <label className="text-fg mt-3 text-[13px] font-semibold">
                 새 maxPerUser <span className="text-danger">*</span>
               </label>
-              <div className="border-border focus-within:border-brand mt-1.5 flex items-center rounded-lg border bg-white px-3">
+              <div className="border-border focus-within:border-brand bg-surface mt-1.5 flex items-center rounded-lg border px-3">
                 <input
                   value={nv.toLocaleString()}
                   onChange={(e) =>
@@ -189,13 +189,13 @@ export default function TypeLimitsPage() {
       </div>
 
       {/* 저장 바 */}
-      <div className="bg-brand-deep mt-4 flex flex-col gap-3 rounded-xl p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-brand-deep text-on-color mt-4 flex flex-col gap-3 rounded-xl p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="inline-flex items-center gap-1.5 text-sm font-bold">
             <Info className="h-4 w-4" />
             변경 {changeCount}건 — 저장 대기
           </p>
-          <p className="mt-1 text-xs text-white/70">
+          <p className="text-on-color/70 mt-1 text-xs">
             저장 시 PATCH 요청으로 일괄 반영 · 변경된 타입만 갱신
           </p>
         </div>
@@ -203,7 +203,7 @@ export default function TypeLimitsPage() {
           <button
             type="button"
             onClick={reset}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-white/15 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-white/25"
+            className="bg-surface/15 text-on-color hover:bg-surface/25 inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
           >
             <RotateCcw className="h-4 w-4" />
             초기화 — 기본값 복원
@@ -212,7 +212,7 @@ export default function TypeLimitsPage() {
             type="button"
             disabled={changeCount === 0}
             onClick={openSave}
-            className="bg-surface text-brand-deep inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-surface text-brand-deep hover:bg-surface/90 inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             한도 저장 — 변경 {changeCount}건
           </button>

@@ -196,7 +196,7 @@ export function LogDetailPanel({
           type="button"
           onClick={onRequestChange}
           disabled={requestDisabled}
-          className="border-info text-info hover:bg-info-bg w-full rounded-lg border bg-white px-3 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-info text-info hover:bg-info-bg bg-surface w-full rounded-lg border px-3 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
         >
           수정 요청 — 사유 코드 + 상세 메모 필수
         </button>

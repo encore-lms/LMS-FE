@@ -165,7 +165,7 @@ export function AttendanceTab() {
           setSelectedCohortId(null)
           setSelectedDate(null)
         }}
-        className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
+        className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
       >
         {(courses ?? []).map((c) => (
           <option key={c.courseId} value={c.courseId}>
@@ -183,7 +183,7 @@ export function AttendanceTab() {
           setSelectedCohortId(e.target.value)
           setSelectedDate(null)
         }}
-        className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
+        className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
       >
         {(courseConfig?.cohorts ?? []).map((c) => (
           <option key={c.id} value={c.id}>
@@ -285,7 +285,7 @@ export function AttendanceTab() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="이름·출결 상태 검색"
               aria-label="출결 검색"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-56 rounded-lg border bg-white px-3 text-sm outline-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
             />
           </div>
 

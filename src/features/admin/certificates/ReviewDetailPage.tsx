@@ -374,14 +374,14 @@ export default function ReviewDetailPage() {
         </SectionCard>
       </div>
 
-      <div className="bg-brand-deep mt-6 flex items-center justify-between gap-4 rounded-xl px-6 py-4 text-white">
+      <div className="bg-brand-deep text-on-color mt-6 flex items-center justify-between gap-4 rounded-xl px-6 py-4">
         <div className="text-xs">
           <p className="font-bold">
             {allPass
               ? '승인 조건 충족'
               : '승인 조건 미충족 — 마트 미갱신·결측 보완 권장'}
           </p>
-          <p className="mt-0.5 text-white/70">
+          <p className="text-on-color/70 mt-0.5">
             승인 시 CertificateSnapshot 자동 생성 · 보완 요청 시 reviewing →
             changes_requested 전이
           </p>

@@ -263,12 +263,12 @@ export default function IngestionQueuePage() {
   return (
     <div className="p-8">
       {/* 히어로 배너 — 목적 + 핵심 액션 */}
-      <div className="bg-brand flex flex-col gap-4 rounded-xl p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-brand text-on-color flex flex-col gap-4 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-[17px] font-bold">
             CSV 대량 인입의 실패 행을 추적·수정·재시도합니다
           </p>
-          <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-white/75">
+          <p className="text-on-color/75 mt-2 inline-flex items-center gap-1.5 text-[13px]">
             <Info className="h-4 w-4" />
             출시 전 과거 수료생 백필 1순위
           </p>
@@ -278,7 +278,7 @@ export default function IngestionQueuePage() {
             type="button"
             // TODO: 실패 행 일괄 CSV 추출(P0_20)
             onClick={() => toast.info('실패 행 일괄 다운로드는 준비 중입니다.')}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-white/15 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-white/25"
+            className="bg-surface/15 text-on-color hover:bg-surface/25 inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
           >
             <Download className="h-4 w-4" />
             실패 행 일괄 다운로드
@@ -287,7 +287,7 @@ export default function IngestionQueuePage() {
             type="button"
             // 새 CSV 인입 — CSV 매핑·업로드 화면으로 이동
             onClick={() => navigate('/admin/csv-mapping')}
-            className="bg-surface text-brand inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors hover:bg-white/90"
+            className="bg-surface text-brand hover:bg-surface/90 inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
           >
             <Upload className="h-4 w-4" />새 CSV 인입
           </button>
@@ -327,7 +327,7 @@ export default function IngestionQueuePage() {
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
           aria-label="도메인 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">도메인 전체</option>
           {domains.map((d) => (
@@ -340,7 +340,7 @@ export default function IngestionQueuePage() {
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           aria-label="상태 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">상태 전체</option>
           {(Object.keys(STATUS_META) as SessionStatus[]).map((key) => (
@@ -353,7 +353,7 @@ export default function IngestionQueuePage() {
           value={sort}
           onChange={(e) => setSort(e.target.value)}
           aria-label="정렬"
-          className="border-border text-fg-muted focus:border-brand ml-auto h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface ml-auto h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="failed">실패 많은 순</option>
           <option value="recent">최신 순</option>

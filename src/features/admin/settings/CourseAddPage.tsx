@@ -191,9 +191,9 @@ export default function CourseAddPage() {
   return (
     <div className="p-8">
       {/* 히어로 */}
-      <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand text-on-color mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5">
         <div>
-          <p className="text-[11px] font-semibold tracking-wider text-white/60">
+          <p className="text-on-color/60 text-[11px] font-semibold tracking-wider">
             COURSE ADD · HRD-Net 과정 등록
           </p>
           <p className="mt-1 text-xl font-bold">교육 과정 추가</p>
@@ -232,7 +232,7 @@ export default function CourseAddPage() {
                 setPage(1)
               }}
               disabled={activeKeys.length === 0}
-              className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none disabled:opacity-60"
+              className="border-border text-fg focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none disabled:opacity-60"
             >
               {activeKeys.length === 0 ? (
                 <option value="">활성 키 없음 — HRD API Key 등록 필요</option>
@@ -251,7 +251,7 @@ export default function CourseAddPage() {
               value={form.org}
               onChange={(e) => setForm((f) => ({ ...f, org: e.target.value }))}
               aria-label="훈련기관명"
-              className="border-border text-fg focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+              className="border-border text-fg focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -263,7 +263,7 @@ export default function CourseAddPage() {
               }
               aria-label="훈련과정명"
               placeholder="예: AI 캠프 (비워두면 전체)"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
             />
           </label>
           {/* 공통 DateTimePicker(date 모드) — 조회기간 범위. 시작≤종료 자동 제약. */}
@@ -302,7 +302,7 @@ export default function CourseAddPage() {
             <button
               type="button"
               onClick={onSearch}
-              className="bg-brand-deep flex h-10 items-center gap-1.5 rounded-lg px-4 text-xs font-bold text-white"
+              className="bg-brand-deep text-on-color flex h-10 items-center gap-1.5 rounded-lg px-4 text-xs font-bold"
             >
               <Search className="h-3.5 w-3.5" /> 조회
             </button>
@@ -409,7 +409,7 @@ export default function CourseAddPage() {
                         type="button"
                         onClick={() => openRegister(c)}
                         disabled={registerCourse.isPending}
-                        className="bg-brand-deep flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                        className="bg-brand-deep text-on-color flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold disabled:opacity-50"
                       >
                         <PlusCircle className="h-3 w-3" /> 시스템 등록
                       </button>

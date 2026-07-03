@@ -161,24 +161,24 @@ export default function ReviewQueuePage() {
 
   return (
     <div className="p-8">
-      <div className="bg-brand flex items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand text-on-color flex items-center justify-between gap-4 rounded-xl px-6 py-5">
         <div>
           <p className="font-bold">정식 인증 요청을 분류·배정·검토합니다</p>
-          <p className="mt-1 text-sm text-white/80">
+          <p className="text-on-color/80 mt-1 text-sm">
             위험 플래그 {riskFlagged}건 · 내 담당 {myAssigned}건 · 미배정{' '}
             {unassigned}건
           </p>
         </div>
         <div className="flex shrink-0 gap-6 text-right">
           <div>
-            <p className="text-xs text-white/70">처리 대기</p>
+            <p className="text-on-color/70 text-xs">처리 대기</p>
             <p className="text-2xl font-bold">{pending}</p>
-            <p className="text-[11px] text-white/60">요청+검토+보완</p>
+            <p className="text-on-color/60 text-[11px]">요청+검토+보완</p>
           </div>
           <div>
-            <p className="text-xs text-white/70">이번 달 완료</p>
+            <p className="text-on-color/70 text-xs">이번 달 완료</p>
             <p className="text-2xl font-bold">{byStatus.certified}</p>
-            <p className="text-[11px] text-white/60">평균 {avgHours}시간</p>
+            <p className="text-on-color/60 text-[11px]">평균 {avgHours}시간</p>
           </div>
         </div>
       </div>
@@ -232,7 +232,7 @@ export default function ReviewQueuePage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="이름·UUID·과정 검색"
           aria-label="검토 큐 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
         />
       </div>
 

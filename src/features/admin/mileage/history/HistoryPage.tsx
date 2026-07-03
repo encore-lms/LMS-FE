@@ -217,7 +217,7 @@ export default function HistoryPage() {
           value={txType}
           onChange={(e) => setTxType(e.target.value)}
           aria-label="구분 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">구분 전체</option>
           {(Object.keys(TX_META) as TxType[]).map((key) => (
@@ -231,7 +231,7 @@ export default function HistoryPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="수강생 이름·사유 검색"
           aria-label="수강생 이름·사유 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-56 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
         />
         <button
           type="button"

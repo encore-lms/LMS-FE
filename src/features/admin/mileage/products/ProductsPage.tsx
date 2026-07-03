@@ -115,7 +115,7 @@ export default function ProductsPage() {
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors',
                 type === t.type
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-on-color'
                   : 'border-border text-fg-muted hover:bg-surface-muted border',
               )}
             >
@@ -123,7 +123,7 @@ export default function ProductsPage() {
               <span
                 className={cn(
                   'rounded px-1 text-[11px]',
-                  type === t.type ? 'bg-white/20' : 'bg-surface-muted',
+                  type === t.type ? 'bg-surface/20' : 'bg-surface-muted',
                 )}
               >
                 {t.count}
@@ -137,7 +137,7 @@ export default function ProductsPage() {
             setFormProduct(null)
             setFormOpen(true)
           }}
-          className="bg-brand hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
+          className="bg-brand hover:bg-brand/90 text-on-color inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold transition-colors"
         >
           <Plus className="h-4 w-4" />
           상품 등록

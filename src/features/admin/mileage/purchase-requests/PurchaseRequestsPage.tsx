@@ -289,7 +289,7 @@ export default function PurchaseRequestsPage() {
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           aria-label="상태 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">상태 전체</option>
           {(Object.keys(STATUS_META) as PurchaseStatus[]).map((key) => (
@@ -303,7 +303,7 @@ export default function PurchaseRequestsPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="수강생·상품명·키워드 검색"
           aria-label="수강생·상품명·키워드 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
         />
       </div>
 

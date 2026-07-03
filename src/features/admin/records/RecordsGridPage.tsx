@@ -116,7 +116,7 @@ export default function RecordsGridPage({
           onChange={(e) => setQ(e.target.value)}
           placeholder="이름으로 검색"
           aria-label="수강생 이름 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-72 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-72 rounded-lg border px-3 text-sm outline-none"
         />
         <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
           {CATEGORY_TABS.map((t) => (
@@ -127,7 +127,7 @@ export default function RecordsGridPage({
               className={cn(
                 'rounded-md px-4 py-1.5 text-sm font-semibold',
                 category === t.key
-                  ? 'text-fg bg-white shadow-sm'
+                  ? 'text-fg bg-surface shadow-sm'
                   : 'text-fg-muted hover:text-fg',
               )}
             >
@@ -177,7 +177,7 @@ export default function RecordsGridPage({
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-border border-t">
-                  <td className="sticky left-0 z-10 min-w-40 bg-white px-4 py-2.5">
+                  <td className="bg-surface sticky left-0 z-10 min-w-40 px-4 py-2.5">
                     <div className="text-fg font-medium">{r.name}</div>
                     {r.birth && r.birth !== '-' && (
                       <div className="text-fg-subtle text-xs">{r.birth}</div>
@@ -392,7 +392,7 @@ function ReviewModal({
     <div className="fixed inset-0 z-50 flex" onClick={onClose}>
       <div className="flex-1 bg-black/40" />
       <aside
-        className="flex h-full w-[760px] max-w-[92vw] flex-col bg-white shadow-2xl"
+        className="bg-surface flex h-full w-[760px] max-w-[92vw] flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {isPending || !data || !st ? (
@@ -497,7 +497,7 @@ function ReviewModal({
                 onChange={(e) => setReason(e.target.value)}
                 rows={2}
                 placeholder="예) URL이 비공개 상태입니다. 공개로 전환해 재제출해 주세요."
-                className="border-border focus:border-brand w-full resize-none rounded-lg border bg-white px-3 py-2 text-sm outline-none"
+                className="border-border focus:border-brand bg-surface w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none"
               />
               <div className="mt-3 flex justify-end gap-2">
                 <button
@@ -520,7 +520,7 @@ function ReviewModal({
                   type="button"
                   disabled={action.isPending}
                   onClick={() => decide('approve')}
-                  className="bg-success rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
+                  className="bg-success text-on-color rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40"
                 >
                   승인
                 </button>

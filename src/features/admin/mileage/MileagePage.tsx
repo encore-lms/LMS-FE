@@ -84,11 +84,11 @@ export default function MileagePage() {
       </div>
 
       {/* 히어로 — 과정/기수 + 발행·사용·잔액 */}
-      <div className="bg-brand rounded-xl p-6 text-white">
+      <div className="bg-brand text-on-color rounded-xl p-6">
         <p className="text-[17px] font-bold">
           마일리지 지급·차감·구매·상품·한도를 한 곳에서 운영합니다
         </p>
-        <p className="mt-2 text-[13px] text-white/75">
+        <p className="text-on-color/75 mt-2 text-[13px]">
           {hero.course} · {hero.cohortLabel}
         </p>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -222,12 +222,12 @@ function HeroStat({
   hint: string
 }) {
   return (
-    <div className="rounded-xl bg-white/10 p-4">
-      <p className="text-[12px] text-white/70">{label}</p>
+    <div className="bg-surface/10 rounded-xl p-4">
+      <p className="text-on-color/70 text-[12px]">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums">
         {value.toLocaleString()}
       </p>
-      <p className="text-[11px] text-white/60">M · {hint}</p>
+      <p className="text-on-color/60 text-[11px]">M · {hint}</p>
     </div>
   )
 }

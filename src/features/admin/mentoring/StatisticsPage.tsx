@@ -193,7 +193,7 @@ export default function StatisticsPage() {
             value={course}
             onChange={(e) => setCourse(e.target.value)}
             aria-label="과정/기수 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">과정 전체</option>
             {courses.map((c) => (
@@ -206,7 +206,7 @@ export default function StatisticsPage() {
             value={mentor}
             onChange={(e) => setMentor(e.target.value)}
             aria-label="멘토 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">멘토 전체</option>
             {mentors.map((m) => (
@@ -219,7 +219,7 @@ export default function StatisticsPage() {
             value={teamStatus}
             onChange={(e) => setTeamStatus(e.target.value)}
             aria-label="팀 상태 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">팀 상태 전체</option>
             {STAT_TEAM_STATUS_KEYS.map((key) => (
@@ -232,7 +232,7 @@ export default function StatisticsPage() {
             value={evalState}
             onChange={(e) => setEvalState(e.target.value)}
             aria-label="평가 상태 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">평가 상태 전체</option>
             {(Object.keys(EVAL_FILTER_LABEL) as StatEvaluationState[]).map(
@@ -247,7 +247,7 @@ export default function StatisticsPage() {
             value={recommendState}
             onChange={(e) => setRecommendState(e.target.value)}
             aria-label="추천 상태 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">추천 상태 전체</option>
             {(
@@ -264,7 +264,7 @@ export default function StatisticsPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="팀/멘토 검색"
           aria-label="팀/멘토 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-52 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
         />
       </div>
 

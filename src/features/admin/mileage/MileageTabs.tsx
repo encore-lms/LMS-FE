@@ -23,7 +23,7 @@ export function MileageTabs() {
               cn(
                 'rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
                 isActive
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-on-color'
                   : 'text-fg-muted hover:text-fg',
               )
             }

@@ -48,7 +48,7 @@ function ResumeAvatar({ name, muted }: { name: string; muted?: boolean }) {
         'inline-flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold',
         muted
           ? 'bg-accent/15 text-accent-strong/60'
-          : 'bg-accent-strong text-white',
+          : 'bg-accent-strong text-on-color',
       )}
     >
       {name.trim().charAt(0)}

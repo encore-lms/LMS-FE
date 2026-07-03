@@ -148,19 +148,19 @@ export default function SettingsAuditPage() {
     <div className="p-8">
       {/* 히어로 — 요약 수치가 응답에 의존하므로 데이터가 있을 때만 렌더(뒤로/필터 툴바는 항상 유지). */}
       {data && (
-        <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
-          <p className="text-[11px] font-semibold tracking-wider text-white/60">
+        <div className="bg-brand text-on-color mt-4 rounded-xl px-6 py-5">
+          <p className="text-on-color/60 text-[11px] font-semibold tracking-wider">
             SETTINGS AUDIT · 설정 감사 로그
           </p>
           <h2 className="mt-1 text-xl font-bold">설정 변경 감사 로그</h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+            <span className="bg-surface/15 rounded-full px-2.5 py-1 text-xs">
               총 변경 {data.summary.total}
             </span>
-            <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+            <span className="bg-surface/15 rounded-full px-2.5 py-1 text-xs">
               최근 30일
             </span>
-            <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs">
+            <span className="bg-surface/15 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs">
               <ShieldCheck className="h-3 w-3" /> 불변 로그
             </span>
           </div>
@@ -186,7 +186,7 @@ export default function SettingsAuditPage() {
               className={cn(
                 'rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors',
                 active.includes(c.key)
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-on-color'
                   : 'border-border text-fg-muted hover:bg-surface-muted border',
               )}
             >

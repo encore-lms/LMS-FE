@@ -210,7 +210,7 @@ export default function BulkUploadPage() {
               `검증 완료 — 정상 ${summary.normalRows.toLocaleString()}행 · 오류 ${summary.errorRows}행`,
             )
           }}
-          className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
+          className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
         >
           {validated ? '재검증' : '검증 실행'}
         </button>

@@ -65,7 +65,7 @@ export function ProjectsPane({
           return (
             <div
               key={p.id}
-              className="border-border rounded-xl border bg-white p-4"
+              className="border-border bg-surface rounded-xl border p-4"
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <h3 className="text-fg font-bold">{p.title}</h3>

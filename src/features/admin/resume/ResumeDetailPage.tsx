@@ -89,7 +89,7 @@ export default function ResumeDetailPage() {
       {/* 이력서 헤더 */}
       <div className="border-border bg-surface flex items-center justify-between gap-4 rounded-xl border p-5">
         <div className="flex items-center gap-3.5">
-          <span className="bg-accent-strong flex size-12 items-center justify-center rounded-full text-[16px] font-bold text-white">
+          <span className="bg-accent-strong text-on-color flex size-12 items-center justify-center rounded-full text-[16px] font-bold">
             {d.studentName.charAt(0)}
           </span>
           <div className="flex flex-col gap-0.5">
@@ -296,7 +296,7 @@ export default function ResumeDetailPage() {
           피드백 이력 ({FEEDBACK.length}건)
         </h2>
         <div className="flex flex-wrap gap-2">
-          <span className="bg-accent-strong rounded-full px-3 py-1.5 text-[12px] font-semibold text-white">
+          <span className="bg-accent-strong text-on-color rounded-full px-3 py-1.5 text-[12px] font-semibold">
             전체 {FEEDBACK.length}
           </span>
           {FEEDBACK.map((f) => (

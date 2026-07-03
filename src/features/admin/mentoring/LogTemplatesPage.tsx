@@ -314,7 +314,7 @@ export default function LogTemplatesPage() {
                 'rounded-md border px-2.5 py-1.5 text-[11px] font-bold',
                 includeInactive
                   ? 'border-brand text-brand bg-brand/10'
-                  : 'border-border text-fg-muted hover:bg-surface-muted bg-white',
+                  : 'border-border text-fg-muted hover:bg-surface-muted bg-surface',
               )}
             >
               비활성 포함
@@ -359,7 +359,7 @@ export default function LogTemplatesPage() {
                       type="button"
                       onClick={() => duplicate(selected)}
                       disabled={duplicateTemplate.isPending}
-                      className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                      className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-50"
                     >
                       <Copy className="h-3 w-3" />
                       복제
@@ -369,7 +369,7 @@ export default function LogTemplatesPage() {
                         type="button"
                         onClick={() => toggleActive(selected)}
                         disabled={setStatus.isPending}
-                        className="border-danger text-danger hover:bg-danger/10 inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                        className="border-danger text-danger hover:bg-danger/10 bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-50"
                       >
                         <XCircle className="h-3 w-3" />
                         비활성화
@@ -379,7 +379,7 @@ export default function LogTemplatesPage() {
                         type="button"
                         onClick={() => toggleActive(selected)}
                         disabled={setStatus.isPending}
-                        className="border-info text-info hover:bg-info/10 inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                        className="border-info text-info hover:bg-info/10 bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-50"
                       >
                         <RotateCcw className="h-3 w-3" />
                         복원
@@ -477,7 +477,7 @@ export default function LogTemplatesPage() {
                             onClick={() => moveField(field, -1)}
                             disabled={index === 0 || updateFields.isPending}
                             aria-label={`${field.name} 위로 이동`}
-                            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <ArrowUp className="h-3 w-3" />
                           </button>
@@ -489,7 +489,7 @@ export default function LogTemplatesPage() {
                               updateFields.isPending
                             }
                             aria-label={`${field.name} 아래로 이동`}
-                            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <ArrowDown className="h-3 w-3" />
                           </button>
@@ -498,7 +498,7 @@ export default function LogTemplatesPage() {
                             onClick={() =>
                               setFieldModal({ mode: 'edit', field })
                             }
-                            className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+                            className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
                           >
                             <Pencil className="h-3 w-3" />
                             수정
@@ -508,7 +508,7 @@ export default function LogTemplatesPage() {
                             onClick={() => setDeleteField(field)}
                             disabled={updateFields.isPending}
                             aria-label={`${field.name} 삭제`}
-                            className="border-danger text-danger hover:bg-danger/10 rounded-md border bg-white p-1.5 disabled:opacity-50"
+                            className="border-danger text-danger hover:bg-danger/10 bg-surface rounded-md border p-1.5 disabled:opacity-50"
                           >
                             <XCircle className="h-3 w-3" />
                           </button>

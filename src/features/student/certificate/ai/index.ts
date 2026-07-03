@@ -27,26 +27,40 @@ const AI_API = import.meta.env.VITE_AI_API_URL as string | undefined
 
 /**
  * 파생값을 LMS-AI 엔진 서버에서 가져온다(결정 함수 계산 결과).
- * 서버 미설정이면 mock 반환 → 커밋/배포본은 그대로 동작.
+ * 서버 미설정·오류·다운 시 mock 반환 → 화면 blank 방지, 커밋/배포본 그대로 동작.
  */
 export async function fetchAiDerived(
   studentId: string,
 ): Promise<StudentDerived> {
-  if (!AI_API) return DERIVED_STUBS[studentId] ?? DERIVED_STUBS['stu-001']
-  const res = await fetch(`${AI_API}/derived/${encodeURIComponent(studentId)}`)
-  if (!res.ok) throw new Error(`LMS-AI 서버 오류: ${res.status}`)
-  return (await res.json()) as StudentDerived
+  const mock = DERIVED_STUBS[studentId] ?? DERIVED_STUBS['stu-001']
+  if (!AI_API) return mock
+  try {
+    const res = await fetch(
+      `${AI_API}/derived/${encodeURIComponent(studentId)}`,
+    )
+    if (!res.ok) return mock
+    return (await res.json()) as StudentDerived
+  } catch {
+    return mock // 서버 다운/네트워크 오류 → mock
+  }
 }
 
 /**
  * AI 분석(블록1~6 + 온톨로지)을 LMS-AI 엔진 서버에서 가져온다.
- * 서버 미설정이면 mock 반환 → 커밋/배포본은 그대로 동작.
+ * 서버 미설정·오류·다운 시 mock 반환 → 화면 blank 방지, 커밋/배포본 그대로 동작.
  */
 export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
-  if (!AI_API) return ANALYSIS_STUBS[studentId] ?? ANALYSIS_STUBS['stu-001']
-  const res = await fetch(`${AI_API}/analysis/${encodeURIComponent(studentId)}`)
-  if (!res.ok) throw new Error(`LMS-AI 서버 오류: ${res.status}`)
-  return (await res.json()) as AiAnalysis
+  const mock = ANALYSIS_STUBS[studentId] ?? ANALYSIS_STUBS['stu-001']
+  if (!AI_API) return mock
+  try {
+    const res = await fetch(
+      `${AI_API}/analysis/${encodeURIComponent(studentId)}`,
+    )
+    if (!res.ok) return mock
+    return (await res.json()) as AiAnalysis
+  } catch {
+    return mock // 서버 다운/네트워크 오류 → mock
+  }
 }
 
 export type {

@@ -256,7 +256,7 @@ export default function AssignmentsPage() {
     <div className="p-8">
       <MentoringTabs />
       {/* Hero — 정책 칩 + 미배정 경고 칩 + CTA */}
-      <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
+      <div className="bg-brand shadow-hero flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
         <div className="flex flex-col gap-3">
           <p className="text-on-color text-lg font-bold">
             반/기수별 팀 배정 · N시간 · 일지 템플릿 관리

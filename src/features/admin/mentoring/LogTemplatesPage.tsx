@@ -201,7 +201,7 @@ export default function LogTemplatesPage() {
     <div className="p-8">
       <MentoringTabs />
       {/* Hero — 총계 칩 + 반영 정책 경고 칩 + 복제/생성 CTA */}
-      <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
+      <div className="bg-brand shadow-hero flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
         <div className="flex flex-col gap-3">
           <p className="text-on-color text-lg font-bold">
             멘토링 일지 항목 템플릿 · 신규 배정 팀에 기본 적용

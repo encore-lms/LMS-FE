@@ -38,6 +38,17 @@ export async function fetchAiDerived(
   return (await res.json()) as StudentDerived
 }
 
+/**
+ * AI 분석(블록1~6 + 온톨로지)을 LMS-AI 엔진 서버에서 가져온다.
+ * 서버 미설정이면 mock 반환 → 커밋/배포본은 그대로 동작.
+ */
+export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
+  if (!AI_API) return ANALYSIS_STUBS[studentId] ?? ANALYSIS_STUBS['stu-001']
+  const res = await fetch(`${AI_API}/analysis/${encodeURIComponent(studentId)}`)
+  if (!res.ok) throw new Error(`LMS-AI 서버 오류: ${res.status}`)
+  return (await res.json()) as AiAnalysis
+}
+
 export type {
   AiAnalysis,
   AiVerdict,

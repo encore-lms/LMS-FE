@@ -1,5 +1,6 @@
 import { cn } from '@/shared/lib/cn'
-import type { CertAiProfile, CertPersona } from '../types'
+import type { CertAiProfile } from '../types'
+import type { AiPersona } from '../ai'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
 // 증명서 v2 — AI 역량 프로파일링(유형 분류 + 한줄 요약 + 강점/성장) + 페르소나 TOP 3.
@@ -9,7 +10,7 @@ export function AiProfile({
   className,
 }: {
   profile: CertAiProfile
-  personas: CertPersona[]
+  personas: AiPersona[]
   className?: string
 }) {
   return (
@@ -81,6 +82,17 @@ export function AiProfile({
                   )}
                 >
                   {p.title}
+                </span>
+                {/* 부연: 아이콘 호버 시 실제 활동 근거(계산 설명 아님) */}
+                <span
+                  className={cn(
+                    'ml-auto shrink-0 cursor-help text-[13px]',
+                    p.rank === 1 ? 'text-white/80' : 'text-fg-subtle',
+                  )}
+                  title={p.subtitle}
+                  aria-label="추천 근거"
+                >
+                  ⓘ
                 </span>
               </div>
             ))}

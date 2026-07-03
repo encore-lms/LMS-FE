@@ -5,7 +5,7 @@ import { SkillRadar } from '../components/SkillRadar'
 import { CERT_V2 } from '../config'
 import { DomainDonut } from '../v2/DomainDonut'
 import { OntologyMap } from '../v2/OntologyMap'
-import { getAiAnalysis } from '../ai'
+import { getAiAnalysis, getAiDerived } from '../ai'
 
 // 증명서 탭1 종합 요약.
 // 상단: 핵심 지표 — 종합 점수 카드 + 핵심 지표 2×2 (Figma 미리보기 metrics-row).
@@ -26,10 +26,18 @@ const card =
 export function SummaryTab({ s }: { s: CertSummaryTab }) {
   // 온톨로지는 ai 모듈에서 단일 소스로. TODO(BE 연동): studentId 실제 연결(지금 mock).
   const ai = getAiAnalysis('stu-001')
+  // 6축 '자동 산정' = 결정 함수(derive) 계산값으로 연결. 점수만 대체하고
+  // 동료(peer)·강사(confirmed·note) 표시 메타는 mock 유지. (동료 peerAgg 정합은 후속)
+  const derived = getAiDerived('stu-001')
+  const sixAxisScore = derived.sixAxis as Record<string, number>
+  const skillAxes = s.skillAxes.map((a) => ({
+    ...a,
+    score: sixAxisScore[a.key] ?? a.score,
+  }))
   const skillAvg = Math.round(
-    s.skillAxes.reduce((sum, a) => sum + a.score, 0) / s.skillAxes.length,
+    skillAxes.reduce((sum, a) => sum + a.score, 0) / skillAxes.length,
   )
-  const skillHighlight = [...s.skillAxes]
+  const skillHighlight = [...skillAxes]
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
     .map((a) => `${a.key} ${a.score}`)
@@ -166,7 +174,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
               StudentSkillAxisMart · confirmed only · 0–100
             </span>
           </div>
-          <SkillRadar axes={s.skillAxes} />
+          <SkillRadar axes={skillAxes} />
         </section>
 
         <section className={cn(card, 'flex flex-1 flex-col gap-2')}>
@@ -189,7 +197,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
             <span className="text-fg-subtle pb-2 text-right text-[11px] font-semibold">
               강사
             </span>
-            {s.skillAxes.map((a) => (
+            {skillAxes.map((a) => (
               <Fragment key={a.key}>
                 <span className="border-divider text-fg border-t py-2.5 text-[12px] font-bold">
                   {a.key}

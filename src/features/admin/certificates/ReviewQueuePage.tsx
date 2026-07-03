@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { AlertTriangle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
@@ -29,8 +30,8 @@ type TabKey = 'all' | CertReviewStatus
 export default function ReviewQueuePage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useReviewQueue()
-  const [tab, setTab] = useState<TabKey>('all')
-  const [q, setQ] = useState('')
+  const [tab, setTab] = useSearchParamState('tab', 'all')
+  const [q, setQ] = useSearchParamState('q')
   usePageHeader('인증 검토 큐', '운영 › 인증 검토')
 
   const filtered = useMemo(() => {

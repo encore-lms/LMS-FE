@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { AlertTriangle, ArrowRight, Check, Info, Send } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -48,8 +49,6 @@ const PUSH_LABEL: Record<PushTarget, string> = {
   peer: '동료 푸시',
 }
 
-type StatusFilter = 'all' | 'missing' | 'complete'
-
 // 평판 관리 (/admin/reputation) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1193:6267. 수강생별 평판 수집 현황(강사 추천서·멘토 평가·동료 5축) + 요청 푸시.
 // 내부 사용자 전용 — 외부 토큰 미사용. 푸시·일괄 푸시·상세는 별도 시안 미설계 → 토스트 + TODO.
@@ -61,8 +60,8 @@ export default function ReputationPage() {
   const { data, isPending, isError, refetch } = useReputation()
   const push = useReputationPush()
   const toast = useToast()
-  const [status, setStatus] = useState<StatusFilter>('all')
-  const [q, setQ] = useState('')
+  const [status, setStatus] = useSearchParamState('status', 'all')
+  const [q, setQ] = useSearchParamState('q')
   // 푸시 확인 모달(단건·일괄 공용) + 평판 상세 모달.
   const [pushAction, setPushAction] = useState<{
     spec: ActionModalSpec
@@ -302,7 +301,7 @@ export default function ReputationPage() {
       <div className="border-border bg-surface mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as StatusFilter)}
+          onChange={(e) => setStatus(e.target.value)}
           aria-label="상태 필터"
           className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
         >

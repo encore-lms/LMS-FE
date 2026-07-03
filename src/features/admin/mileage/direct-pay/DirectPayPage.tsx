@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 // 운영 액션 모달 v2 공통 — 처리 요약 + 메모 + 권한 확인(설정 화면과 동일 골격, 재사용).
 import {
@@ -31,7 +32,7 @@ export default function DirectPayPage() {
     '마일리지 직접 지급',
     '다중 수강생 일괄 지급/차감 · 누적 상한·보유액·부분 지급 자동 검증',
   )
-  const [cohortId, setCohortId] = useState('')
+  const [cohortId, setCohortId] = useSearchParamState('cohortId')
   const { data, isPending, isError, refetch } = useDirectPayRoster(cohortId)
   const submit = useDirectPaySubmit()
   const navigate = useNavigate()

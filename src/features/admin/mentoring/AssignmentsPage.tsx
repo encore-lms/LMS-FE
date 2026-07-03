@@ -15,6 +15,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { useMentorAssignments } from './api'
 import {
@@ -27,8 +28,6 @@ import { AssignmentManageModal } from './AssignmentManageModal'
 import { EarlyEndModal } from './EarlyEndModal'
 import { MentoringTabs } from './MentoringTabs'
 import type { MentorAssignmentRow } from './types'
-
-type StatusFilter = 'with_unassigned' | 'active_only' | 'unassigned_only'
 
 // 배정 제약 · §29 정책 — Figma 2744:7725 원문.
 const POLICY_ROWS: { key: string; desc: string }[] = [
@@ -75,10 +74,10 @@ export default function AssignmentsPage() {
     '반/기수별 멘토 팀 배정 · 배정 시간 N · 일지 템플릿 · 한 반에 한 팀만',
   )
   const { data, isPending, isError, refetch } = useMentorAssignments()
-  const [course, setCourse] = useState('all')
-  const [mentorFilter, setMentorFilter] = useState('all')
-  const [status, setStatus] = useState<StatusFilter>('with_unassigned')
-  const [q, setQ] = useState('')
+  const [course, setCourse] = useSearchParamState('course', 'all')
+  const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
+  const [status, setStatus] = useSearchParamState('status', 'with_unassigned')
+  const [q, setQ] = useSearchParamState('q')
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [manageRow, setManageRow] = useState<MentorAssignmentRow | null>(null)
@@ -367,7 +366,7 @@ export default function AssignmentsPage() {
           </select>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
+            onChange={(e) => setStatus(e.target.value)}
             aria-label="배정 상태 필터"
             className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
           >

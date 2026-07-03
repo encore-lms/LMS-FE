@@ -8,6 +8,7 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard, type KpiTone } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 // 운영 액션 모달 v2 공통 — 처리 요약 + 메모 + 권한 확인(재사용).
 import {
@@ -30,8 +31,6 @@ const STATUS_META: Record<
   canceled: { label: 'CANCELED', tone: 'neutral', kpi: 'default' },
 }
 
-type StatusFilter = 'all' | PurchaseStatus
-
 // 마일리지 구매 요청 (/admin/mileage/purchase-requests) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1235:6815 + 처리 모달(1306:8329). 수강생 구매 요청 승인·수정 요청·반려 큐.
 // 처리 결과(원장 차감·상태 변경)는 BE 계약(P0_16) 미확정 → mock 흐름 + TODO.
@@ -40,12 +39,12 @@ export default function PurchaseRequestsPage() {
     '마일리지 구매 요청',
     '수강생 상품 구매 요청 승인·수정 요청·반려 · 타입 한도 자동 검증',
   )
-  const [cohortId, setCohortId] = useState('')
+  const [cohortId, setCohortId] = useSearchParamState('cohortId')
   const { data, isPending, isError, refetch } = usePurchaseQueue(cohortId)
   const processReq = usePurchaseProcess()
   const toast = useToast()
-  const [status, setStatus] = useState<StatusFilter>('pending')
-  const [q, setQ] = useState('')
+  const [status, setStatus] = useSearchParamState('status', 'pending')
+  const [q, setQ] = useSearchParamState('q')
   const [process, setProcess] = useState<{
     spec: ActionModalSpec
     id: string
@@ -288,7 +287,7 @@ export default function PurchaseRequestsPage() {
       <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as StatusFilter)}
+          onChange={(e) => setStatus(e.target.value)}
           aria-label="상태 필터"
           className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
         >

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { AlertTriangle, Info, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { useMentoringStatistics } from './api'
 import {
@@ -16,14 +17,9 @@ import {
 import { MentoringTabs } from './MentoringTabs'
 import type {
   MentorTeamStatRow,
-  MentoringTeamStatKey,
   StatEvaluationState,
   StatRecommendationState,
 } from './types'
-
-type TeamStatusFilter = 'all' | MentoringTeamStatKey
-type EvalFilter = 'all' | StatEvaluationState
-type RecommendFilter = 'all' | StatRecommendationState
 
 const EVAL_FILTER_LABEL: Record<StatEvaluationState, string> = {
   submitted: '평가 완료',
@@ -47,12 +43,15 @@ export default function StatisticsPage() {
     '멘토/팀별 N시간 · 일지 · 평가·추천 · 증명서 반영 상태 조회',
   )
   const { data, isPending, isError, refetch } = useMentoringStatistics()
-  const [course, setCourse] = useState('all')
-  const [mentor, setMentor] = useState('all')
-  const [teamStatus, setTeamStatus] = useState<TeamStatusFilter>('all')
-  const [evalState, setEvalState] = useState<EvalFilter>('all')
-  const [recommendState, setRecommendState] = useState<RecommendFilter>('all')
-  const [q, setQ] = useState('')
+  const [course, setCourse] = useSearchParamState('course', 'all')
+  const [mentor, setMentor] = useSearchParamState('mentor', 'all')
+  const [teamStatus, setTeamStatus] = useSearchParamState('teamStatus', 'all')
+  const [evalState, setEvalState] = useSearchParamState('evalState', 'all')
+  const [recommendState, setRecommendState] = useSearchParamState(
+    'recommendState',
+    'all',
+  )
+  const [q, setQ] = useSearchParamState('q')
 
   const rows = useMemo(() => data?.rows ?? [], [data])
   const courses = useMemo(
@@ -218,7 +217,7 @@ export default function StatisticsPage() {
           </select>
           <select
             value={teamStatus}
-            onChange={(e) => setTeamStatus(e.target.value as TeamStatusFilter)}
+            onChange={(e) => setTeamStatus(e.target.value)}
             aria-label="팀 상태 필터"
             className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
           >
@@ -231,7 +230,7 @@ export default function StatisticsPage() {
           </select>
           <select
             value={evalState}
-            onChange={(e) => setEvalState(e.target.value as EvalFilter)}
+            onChange={(e) => setEvalState(e.target.value)}
             aria-label="평가 상태 필터"
             className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
           >
@@ -246,9 +245,7 @@ export default function StatisticsPage() {
           </select>
           <select
             value={recommendState}
-            onChange={(e) =>
-              setRecommendState(e.target.value as RecommendFilter)
-            }
+            onChange={(e) => setRecommendState(e.target.value)}
             aria-label="추천 상태 필터"
             className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
           >

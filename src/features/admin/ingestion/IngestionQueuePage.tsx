@@ -16,6 +16,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { useIngestionAction, useIngestionQueue } from './api'
 import type { IngestionSession, SessionStatus } from './types'
@@ -26,9 +27,6 @@ const STATUS_META: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
   success: { label: '성공', tone: 'success' },
   discarded: { label: '폐기됨', tone: 'neutral' },
 }
-
-type StatusFilter = 'all' | SessionStatus
-type Sort = 'failed' | 'recent'
 
 // 인입 격리 큐 (/admin/ingestion/quarantine) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1185:6029. CSV 대량 인입 실패 행을 세션 단위로 추적·수정·재시도·폐기.
@@ -41,9 +39,9 @@ export default function IngestionQueuePage() {
   const toast = useToast()
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [domain, setDomain] = useState<string>('all')
-  const [status, setStatus] = useState<StatusFilter>('all')
-  const [sort, setSort] = useState<Sort>('failed')
+  const [domain, setDomain] = useSearchParamState('domain', 'all')
+  const [status, setStatus] = useSearchParamState('status', 'all')
+  const [sort, setSort] = useSearchParamState('sort', 'failed')
   const [retryTarget, setRetryTarget] = useState<IngestionSession | null>(null)
   const [discardTarget, setDiscardTarget] = useState<IngestionSession | null>(
     null,
@@ -340,7 +338,7 @@ export default function IngestionQueuePage() {
         </select>
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as StatusFilter)}
+          onChange={(e) => setStatus(e.target.value)}
           aria-label="상태 필터"
           className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
         >
@@ -353,7 +351,7 @@ export default function IngestionQueuePage() {
         </select>
         <select
           value={sort}
-          onChange={(e) => setSort(e.target.value as Sort)}
+          onChange={(e) => setSort(e.target.value)}
           aria-label="정렬"
           className="border-border text-fg-muted focus:border-brand ml-auto h-9 rounded-lg border bg-white px-3 text-sm outline-none"
         >

@@ -83,16 +83,25 @@ export function AiProfile({
                 >
                   {p.title}
                 </span>
-                {/* 부연: 아이콘 호버 시 실제 활동 근거(계산 설명 아님) */}
-                <span
-                  className={cn(
-                    'ml-auto shrink-0 cursor-help text-[13px]',
-                    p.rank === 1 ? 'text-white/80' : 'text-fg-subtle',
-                  )}
-                  title={p.subtitle}
-                  aria-label="추천 근거"
-                >
-                  ⓘ
+                {/* 부연: 아이콘 호버/포커스 시 실제 활동 근거 툴팁(계산 설명 아님) */}
+                <span className="group relative ml-auto shrink-0">
+                  <span
+                    className={cn(
+                      'cursor-help text-[13px]',
+                      p.rank === 1 ? 'text-white/80' : 'text-fg-subtle',
+                    )}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="추천 근거 보기"
+                  >
+                    ⓘ
+                  </span>
+                  <span
+                    role="tooltip"
+                    className="border-border bg-surface text-fg-muted pointer-events-none absolute top-full right-0 z-10 mt-1.5 hidden w-56 rounded-lg border p-2.5 text-[11px] leading-4 font-normal shadow-lg group-focus-within:block group-hover:block"
+                  >
+                    {p.subtitle}
+                  </span>
                 </span>
               </div>
             ))}

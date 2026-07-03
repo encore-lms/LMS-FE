@@ -20,6 +20,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type {
   HrdApiKey,
   HrdKeyHistoryAction,
@@ -86,7 +87,10 @@ export default function HrdApiKeyPage() {
   const toast = useToast()
 
   const [keyPage, setKeyPage] = useState(1)
-  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all')
+  const [historyFilter, setHistoryFilter] = useSearchParamState(
+    'historyfilter',
+    'all',
+  )
   const [historyPage, setHistoryPage] = useState(1)
   const [activateNow, setActivateNow] = useState(true)
   const [modal, setModal] = useState<ActionModalSpec | null>(null)
@@ -101,7 +105,7 @@ export default function HrdApiKeyPage() {
   const historyQuery = useHrdKeyHistory({
     page: historyPage - 1,
     size: HISTORY_PAGE_SIZE,
-    action: historyFilter,
+    action: historyFilter as HistoryFilter,
   })
 
   const createKey = useCreateHrdKey()

@@ -7,6 +7,7 @@ import { apiClient } from '@/shared/api'
 import { cn } from '@/shared/lib/cn'
 import type { RecordEvidenceImage } from '@/shared/types'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type {
   RecordCategory,
   RecordDecision,
@@ -51,8 +52,8 @@ export default function RecordsGridPage({
   cohortId?: string | null
 }) {
   usePageHeader('학습 기록', '운영 › 학습 기록 검토', !embedded)
-  const [category, setCategory] = useState<RecordCategory>('blog')
-  const [q, setQ] = useState('')
+  const [category, setCategory] = useSearchParamState('category', 'blog')
+  const [q, setQ] = useSearchParamState('q')
   const [reviewId, setReviewId] = useState<string | null>(null)
 
   const {
@@ -218,7 +219,7 @@ export default function RecordsGridPage({
 
       {reviewId && (
         <ReviewModal
-          category={category}
+          category={category as RecordCategory}
           recordId={reviewId}
           nameOf={nameOf}
           onClose={() => setReviewId(null)}

@@ -22,6 +22,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { CourseCohort } from '@/shared/types'
 import {
   useCohortMaterials,
@@ -83,7 +84,7 @@ export default function CourseConfigPage() {
   const toast = useToast()
   const { data: courses, isPending, isError, refetch } = useCourseList()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [courseQuery, setCourseQuery] = useState('')
+  const [courseQuery, setCourseQuery] = useSearchParamState('q')
   // 토글 변경 dirty 셋 — '{cohortId}:{toggleKey}' 단위로 추적(저장 시 초기화).
   const [changes, setChanges] = useState<Record<string, boolean>>({})
   const [modal, setModal] = useState<

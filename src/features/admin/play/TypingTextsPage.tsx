@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePlayTypingTexts, useUpsertPassage } from './api'
 import { PassageFormModal } from './PassageFormModal'
 import { downloadTypingSampleCsv } from './sampleCsv'
@@ -45,9 +46,9 @@ export default function TypingTextsPage() {
   const upsert = useUpsertPassage()
   const toast = useToast()
   const navigate = useNavigate()
-  const [language, setLanguage] = useState('all')
-  const [level, setLevel] = useState('all')
-  const [status, setStatus] = useState<'all' | PassageStatus>('all')
+  const [language, setLanguage] = useSearchParamState('language', 'all')
+  const [level, setLevel] = useSearchParamState('level', 'all')
+  const [status, setStatus] = useSearchParamState('status', 'all')
   // 제시문 추가·수정 폼 모달(formPassage=null → 추가).
   const [formOpen, setFormOpen] = useState(false)
   const [formPassage, setFormPassage] = useState<TypingPassage | null>(null)
@@ -301,7 +302,7 @@ export default function TypingTextsPage() {
         </select>
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as 'all' | PassageStatus)}
+          onChange={(e) => setStatus(e.target.value)}
           aria-label="활성 상태 필터"
           className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >

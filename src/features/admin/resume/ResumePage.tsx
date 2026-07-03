@@ -15,6 +15,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import {
   ACTIVE_COHORT,
   COHORTS,
@@ -166,8 +167,11 @@ type StatusFilter = (typeof STATUS_FILTERS)[number]
 /** 이력서 현황 — 수강생 작성 현황 로스터. embedded=true면 KPI 카드 숨김. */
 function RosterView({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
+  const [search, setSearch] = useSearchParamState('q')
+  const [statusFilter, setStatusFilter] = useSearchParamState(
+    'statusfilter',
+    '전체',
+  )
 
   const kpis = useMemo(() => {
     const by = (s: ResumeStatus) => ROSTER.filter((r) => r.status === s).length
@@ -293,7 +297,7 @@ function RosterView({ embedded = false }: { embedded?: boolean }) {
         />
         <FilterPills
           options={STATUS_FILTERS}
-          value={statusFilter}
+          value={statusFilter as StatusFilter}
           onChange={setStatusFilter}
         />
       </div>
@@ -344,8 +348,8 @@ function FeedbackCard({ item }: { item: FeedbackItem }) {
 
 /** 피드백 관리 — 학생 이력서에 남긴 피드백 목록. */
 function FeedbackView() {
-  const [search, setSearch] = useState('')
-  const [readFilter, setReadFilter] = useState<ReadFilter>('전체')
+  const [search, setSearch] = useSearchParamState('q')
+  const [readFilter, setReadFilter] = useSearchParamState('readfilter', '전체')
 
   const kpis = useMemo(
     () => ({
@@ -399,7 +403,7 @@ function FeedbackView() {
         />
         <FilterPills
           options={READ_FILTERS}
-          value={readFilter}
+          value={readFilter as ReadFilter}
           onChange={setReadFilter}
         />
       </div>
@@ -423,7 +427,6 @@ const TABS = [
   { key: 'roster', label: '이력서 현황' },
   { key: 'feedback', label: '피드백 관리' },
 ] as const
-type TabKey = (typeof TABS)[number]['key']
 
 /**
  * 이력서 관리 (/admin/resume) — 운영 콘솔. 학생 관리 하위.
@@ -436,7 +439,7 @@ export default function ResumePage({
 }: {
   embedded?: boolean
 }) {
-  const [tab, setTab] = useState<TabKey>('roster')
+  const [tab, setTab] = useSearchParamState('tab', 'roster')
   const [cohort, setCohort] = useState(ACTIVE_COHORT)
   usePageHeader(
     '이력서 관리',

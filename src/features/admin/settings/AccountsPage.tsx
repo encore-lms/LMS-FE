@@ -8,6 +8,7 @@ import { Pagination } from '@/components/data/Pagination'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { OpsAccount, OpsRole } from '@/shared/types'
 import {
   useCreateOpsAccount,
@@ -75,9 +76,9 @@ export default function AccountsPage() {
   const updateStatus = useUpdateOpsAccountStatus()
   const updateScope = useUpdateOperatorCohorts()
   const navigate = useNavigate()
-  const [role, setRole] = useState<RoleFilter>('all')
-  const [status, setStatus] = useState<StatusFilter>('all')
-  const [q, setQ] = useState('')
+  const [role, setRole] = useSearchParamState('role', 'all')
+  const [status, setStatus] = useSearchParamState('status', 'all')
+  const [q, setQ] = useSearchParamState('q')
   const [page, setPage] = useState(1)
   // 비활성화 낙관적 반영 — 즉시 배지 갱신(실 BE 호출 후 invalidate로 확정).
   const [statusOverride, setStatusOverride] = useState<
@@ -465,7 +466,7 @@ export default function AccountsPage() {
                 <select
                   value={role}
                   onChange={(e) => {
-                    setRole(e.target.value as RoleFilter)
+                    setRole(e.target.value)
                     setPage(1)
                   }}
                   aria-label="역할 필터"
@@ -483,7 +484,7 @@ export default function AccountsPage() {
                 <select
                   value={status}
                   onChange={(e) => {
-                    setStatus(e.target.value as StatusFilter)
+                    setStatus(e.target.value)
                     setPage(1)
                   }}
                   aria-label="상태 필터"

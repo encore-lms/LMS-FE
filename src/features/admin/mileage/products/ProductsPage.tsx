@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import {
   ActionModal,
   type ActionModalSpec,
@@ -20,11 +21,9 @@ import {
   useUploadProductImage,
 } from './api'
 import { ProductImage } from './ProductImage'
-import type { Product, ProductType } from './types'
+import type { Product } from './types'
 
 const PRICE_MODE_LABEL = { fixed: '고정가', flexible: '수강생 입력' } as const
-
-type TypeFilter = 'all' | ProductType
 
 // 마일리지 상품 관리 (/admin/mileage/products) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1246:7113. 상품 카드 그리드 + 타입별 가격 방식(고정가/유연가) + 참조 중 삭제 제한.
@@ -39,7 +38,7 @@ export default function ProductsPage() {
   const uploadImage = useUploadProductImage()
   const remove = useDeleteProduct()
   const toast = useToast()
-  const [type, setType] = useState<TypeFilter>('all')
+  const [type, setType] = useSearchParamState('type', 'all')
   // 상품 등록·수정 폼 모달(formProduct=null → 등록).
   const [formOpen, setFormOpen] = useState(false)
   const [formProduct, setFormProduct] = useState<Product | null>(null)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import {
   AlertTriangle,
   BookOpen,
@@ -154,13 +154,14 @@ export default function EducationPage() {
   )
 
   const { data: courses } = useCourseList()
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  // 과정·기수·탭을 URL에 반영 — 새로고침·이력서 상세 왕복에서 컨텍스트 유지(딥링크).
+  const [courseParam, setCourseParam] = useSearchParamState('course')
+  const courseId = courseParam || courses?.[0]?.courseId || null
   const { data: courseConfig } = useCourseConfig(courseId)
-  const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
-  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const [cohortParam, setCohortParam] = useSearchParamState('cohort')
+  const cohortId = cohortParam || courseConfig?.cohorts?.[0]?.id || null
 
-  const [tab, setTab] = useState<TabKey>('materials')
+  const [tab, setTab] = useSearchParamState('tab', 'materials')
 
   return (
     <div className="p-8">
@@ -170,8 +171,8 @@ export default function EducationPage() {
           aria-label="과정 선택"
           value={courseId ?? ''}
           onChange={(e) => {
-            setSelectedCourseId(e.target.value)
-            setSelectedCohortId(null)
+            setCourseParam(e.target.value)
+            setCohortParam('')
           }}
           className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
         >
@@ -187,7 +188,7 @@ export default function EducationPage() {
         <select
           aria-label="기수 선택"
           value={cohortId ?? ''}
-          onChange={(e) => setSelectedCohortId(e.target.value)}
+          onChange={(e) => setCohortParam(e.target.value)}
           className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
         >
           {(courseConfig?.cohorts ?? []).map((c) => (

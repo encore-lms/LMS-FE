@@ -21,6 +21,29 @@ export type SixAxisKey =
   | '문제해결'
 export type SixAxis = Record<SixAxisKey, number> // 0~100
 
+// ── 원천 입력 (계산 함수 입력 — 서버가 CSV/BE에서 조립. 순수 데이터) ──
+export interface PeerEval {
+  collaboration: number // 협업
+  communication: number // 소통
+  responsibility: number // 책임감
+  problemSolving: number // 문제해결
+  techContribution: number // 기술기여
+}
+export interface ExamScore {
+  at: string // 응시일(시간순 정렬)
+  score: number // 0~100
+}
+export interface StudentRaw {
+  studentId: string
+  achievement: number // 성취도 총점 0~100
+  cs: number // CS 0~100
+  codingTest: number // 코테 0~100 (현재 mock)
+  exams: ExamScore[] // 시험 시계열(성장 추세)
+  peerEvals: PeerEval[] // 프로젝트 상호평가(여러 평가자)
+  attendanceRate: number // 출석률 0~100
+  certifiedTsCount: number // 강사 인증 트슈 건수
+}
+
 export interface StudentDerived {
   studentId: string
   sixAxis: SixAxis

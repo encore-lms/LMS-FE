@@ -122,7 +122,7 @@ describe('LoginPage', () => {
         token: 'tok',
         user: {
           id: '1',
-          email: 'instructor1@playdata.io',
+          email: 'rkdtk123@naver.com',
           name: '박강사',
           role: 'INSTRUCTOR',
         },
@@ -132,8 +132,8 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: '강사' }))
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
-        userId: 'instructor1@playdata.io',
-        password: 'password123!',
+        userId: 'rkdtk123@naver.com',
+        password: 'Lms@DupVrqdtQR56',
       })
     })
     expect(useAuthStore.getState().user?.role).toBe('INSTRUCTOR')

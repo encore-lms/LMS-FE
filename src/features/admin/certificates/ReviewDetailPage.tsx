@@ -175,13 +175,17 @@ export default function ReviewDetailPage() {
                 <KpiCard
                   label="출석률"
                   value={`${(d.metrics.attendance * 100).toFixed(1)}%`}
-                  tone="success"
-                  hint="정상"
+                  tone={d.metrics.attendance >= 0.8 ? 'success' : 'warning'}
+                  hint={
+                    d.metrics.attendance >= 0.8
+                      ? '수료 기준(80%) 충족'
+                      : '수료 기준(80%) 미달'
+                  }
                 />
                 <KpiCard
                   label="시험 평균"
                   value={d.metrics.quizAvg}
-                  hint="평균 이상"
+                  hint="100점 만점"
                 />
                 <KpiCard
                   label="제출률"

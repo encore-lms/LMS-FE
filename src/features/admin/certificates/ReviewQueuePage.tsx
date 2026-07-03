@@ -248,12 +248,9 @@ export default function ReviewQueuePage() {
         />
       </div>
 
-      <div className="text-fg-subtle mt-3 flex items-center justify-between text-xs">
-        <span>
-          총 {total}건 · 요청 {byStatus.requested} · 검토 {byStatus.reviewing} ·
-          보완 {byStatus.changes_requested} · 완료 {byStatus.certified}
-        </span>
-        <span>1 / {Math.max(1, Math.ceil(total / 30))}</span>
+      <div className="text-fg-subtle mt-3 text-xs">
+        총 {total}건 · 요청 {byStatus.requested} · 검토 {byStatus.reviewing} ·
+        보완 {byStatus.changes_requested} · 완료 {byStatus.certified}
       </div>
 
       <div className="border-border bg-info-bg mt-8 rounded-xl border p-5">

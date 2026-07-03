@@ -52,8 +52,6 @@ export default function TypeLimitsPage() {
     )
   }
 
-  const { course, cohortLabel } = data
-
   const setValue = (type: LimitType, v: number) =>
     setDraft((prev) => ({ ...prev, [type]: v }))
 
@@ -98,25 +96,9 @@ export default function TypeLimitsPage() {
         <span className="text-fg-subtle">› 타입 한도</span>
       </Link>
 
-      {/* 클러스터 탭 + 과정/기수 */}
+      {/* 클러스터 탭 — 타입별 구매 한도는 전체 과정 공용(기수 무관) */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
-        <div className="flex items-center gap-2">
-          <select
-            aria-label="과정"
-            defaultValue="ai"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="ai">{course}</option>
-          </select>
-          <select
-            aria-label="기수"
-            defaultValue="22"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="22">{cohortLabel}</option>
-          </select>
-        </div>
       </div>
 
       {/* 안내 — maxPerUser */}

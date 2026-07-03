@@ -8,6 +8,9 @@ import { useDirectPayRoster, useDirectPaySubmit } from './api'
 import type { DirectPayData } from './types'
 
 vi.mock('./api')
+vi.mock('../CohortScope', () => ({
+  CohortScopeSelect: () => null,
+}))
 
 // 마일리지 직접 지급 — 폼/합계 렌더 + 지급 실행 → 확인 모달 → 결과 모달 흐름.
 
@@ -73,20 +76,28 @@ function renderPage() {
 }
 
 describe('DirectPayPage (마일리지 직접 지급)', () => {
-  it('수강생 목록·지급 폼·합계(선택 4명 · +200,000M)를 렌더한다', () => {
+  it('빈 선택으로 시작하고, 전체 선택+사유 입력 시 합계(+200,000M · 4명)를 낸다', async () => {
     renderPage()
+    const user = userEvent.setup()
     expect(screen.getByText('수강생 목록 · 다중 선택')).toBeInTheDocument()
     expect(screen.getByText('김민준')).toBeInTheDocument()
     expect(screen.getByText('상한 근접')).toBeInTheDocument()
-    // 합계 + 실행 버튼(총 200,000M / 4명)
+    // 사전 선택 없음 — 실행 버튼은 0명 상태로 비활성
+    const payButton = screen.getByRole('button', { name: /지급 실행/ })
+    expect(payButton).toBeDisabled()
+    // 전체 선택(헤더 체크박스) + 사유 입력 → 합계 갱신·활성
+    await user.click(screen.getAllByRole('checkbox')[0])
+    await user.type(screen.getByLabelText('사유'), '중간 발표 우수상')
     expect(
       screen.getByRole('button', { name: /지급 실행 — \+200,000M \/ 4명/ }),
-    ).toBeInTheDocument()
+    ).toBeEnabled()
   })
 
-  it('지급 실행 → 확인 모달 → 실행 → 결과 모달 흐름', async () => {
+  it('전체 선택 → 실행 → 확인 모달 → 실행 → 결과 모달 흐름', async () => {
     renderPage()
     const user = userEvent.setup()
+    await user.click(screen.getAllByRole('checkbox')[0])
+    await user.type(screen.getByLabelText('사유'), '중간 발표 우수상')
     await user.click(
       screen.getByRole('button', { name: /지급 실행 — \+200,000M \/ 4명/ }),
     )

@@ -271,15 +271,8 @@ export default function TypingTextsPage() {
         />
       </div>
 
-      {/* 필터 */}
+      {/* 필터 — 타자 제시문은 언어·난이도 기준 전역 카탈로그(기수 무관) */}
       <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
-        <select
-          aria-label="과정/기수 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          defaultValue="be3"
-        >
-          <option value="be3">백엔드 부트캠프 3기</option>
-        </select>
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}

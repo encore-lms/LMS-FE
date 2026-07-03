@@ -8,6 +8,9 @@ import { usePurchaseProcess, usePurchaseQueue } from './api'
 import type { PurchaseData } from './types'
 
 vi.mock('./api')
+vi.mock('../CohortScope', () => ({
+  CohortScopeSelect: () => null,
+}))
 
 // 마일리지 구매 요청 — KPI·처리 큐·정책 렌더 + 상태 필터 + 승인 → 처리 모달 → 토스트.
 

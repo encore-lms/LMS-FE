@@ -396,14 +396,9 @@ export default function AssignmentsPage() {
           }
           empty="조건에 맞는 팀이 없어요"
         />
-        <div className="text-fg-subtle mt-3 flex items-center justify-between text-xs">
-          <span>
-            총 {data.summary.total} · 활성 {data.summary.active} · 미배정{' '}
-            {data.summary.unassigned}
-          </span>
-          <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 font-bold">
-            1 / 1
-          </span>
+        <div className="text-fg-subtle mt-3 text-xs">
+          총 {data.summary.total} · 활성 {data.summary.active} · 미배정{' '}
+          {data.summary.unassigned}
         </div>
       </div>
 

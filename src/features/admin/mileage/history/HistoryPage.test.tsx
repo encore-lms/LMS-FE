@@ -8,6 +8,10 @@ import { useMileageHistory } from './api'
 import type { MileageHistoryData } from './types'
 
 vi.mock('./api')
+// 기수 필터 드롭다운은 자체 useQuery(useMileageCohorts)를 쓰므로 테스트에선 no-op 스텁.
+vi.mock('../CohortScope', () => ({
+  CohortScopeSelect: () => null,
+}))
 
 // 마일리지 지급 내역 — KPI·원장 표·구분 배지·정책 렌더 + 구분 필터 + CSV 토스트.
 

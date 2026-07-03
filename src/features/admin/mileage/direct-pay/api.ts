@@ -5,12 +5,15 @@ import type { DirectPayData, DirectPayInput, DirectPayResult } from './types'
 
 // 마일리지 직접 지급 대상 명단 조회 훅 — 엔드포인트가 /admin/* 라 admin feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
-export function useDirectPayRoster() {
+export function useDirectPayRoster(cohortId = '') {
   return useQuery({
-    queryKey: mileageDirectPayKeys.roster(),
+    queryKey: mileageDirectPayKeys.roster(cohortId),
     queryFn: () =>
       apiClient
-        .get<DirectPayData>('/admin/mileage/direct-pay')
+        .get<DirectPayData>(
+          '/admin/mileage/direct-pay',
+          cohortId ? { cohortId } : undefined,
+        )
         .then((r) => r.data),
   })
 }
@@ -24,7 +27,7 @@ export function useDirectPaySubmit() {
         .post<DirectPayResult>('/admin/mileage/direct-pay', input)
         .then((r) => r.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mileageDirectPayKeys.roster() })
+      queryClient.invalidateQueries({ queryKey: mileageDirectPayKeys.all })
     },
   })
 }

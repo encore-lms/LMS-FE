@@ -15,6 +15,7 @@ import {
   type ActionModalSpec,
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
+import { CohortScopeSelect } from '../CohortScope'
 import { usePurchaseProcess, usePurchaseQueue } from './api'
 import type { PurchaseRequest, PurchaseStatus } from './types'
 
@@ -39,7 +40,8 @@ export default function PurchaseRequestsPage() {
     '마일리지 구매 요청',
     '수강생 상품 구매 요청 승인·수정 요청·반려 · 타입 한도 자동 검증',
   )
-  const { data, isPending, isError, refetch } = usePurchaseQueue()
+  const [cohortId, setCohortId] = useState('')
+  const { data, isPending, isError, refetch } = usePurchaseQueue(cohortId)
   const processReq = usePurchaseProcess()
   const toast = useToast()
   const [status, setStatus] = useState<StatusFilter>('pending')
@@ -263,25 +265,10 @@ export default function PurchaseRequestsPage() {
         <span className="text-fg-subtle">› 구매 요청</span>
       </Link>
 
-      {/* 클러스터 탭 + 과정/기수 */}
+      {/* 클러스터 탭 + 기수 필터(실 BE) */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
-        <div className="flex items-center gap-2">
-          <select
-            aria-label="과정"
-            defaultValue="ai"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="ai">{course}</option>
-          </select>
-          <select
-            aria-label="기수"
-            defaultValue="22"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="22">{cohortLabel}</option>
-          </select>
-        </div>
+        <CohortScopeSelect value={cohortId} onChange={setCohortId} />
       </div>
 
       {/* 상태 KPI 5종 */}

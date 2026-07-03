@@ -327,13 +327,8 @@ export default function ReputationPage() {
           rowKey={(s) => s.id}
           empty="조건에 맞는 수강생이 없어요"
         />
-        <div className="text-fg-subtle mt-3 flex items-center justify-between text-xs">
-          <span>
-            총 {summary.students}명 · 누락 있음 {summary.missingStudents}명
-          </span>
-          <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 font-bold">
-            1 / 7
-          </span>
+        <div className="text-fg-subtle mt-3 text-xs">
+          총 {summary.students}명 · 누락 있음 {summary.missingStudents}명
         </div>
       </div>
 

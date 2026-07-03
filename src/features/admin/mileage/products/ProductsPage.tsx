@@ -68,7 +68,7 @@ export default function ProductsPage() {
     )
   }
 
-  const { course, cohortLabel, total, typeCounts, typePricing } = data
+  const { total, typeCounts, typePricing } = data
 
   const deleteSpec: ActionModalSpec | null = deleteTarget
     ? {
@@ -98,25 +98,9 @@ export default function ProductsPage() {
         <span className="text-fg-subtle">› 상품 관리</span>
       </Link>
 
-      {/* 클러스터 탭 + 과정/기수 */}
+      {/* 클러스터 탭 — 상품 카탈로그는 전체 과정 공용(기수 무관) */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
-        <div className="flex items-center gap-2">
-          <select
-            aria-label="과정"
-            defaultValue="ai"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="ai">{course}</option>
-          </select>
-          <select
-            aria-label="기수"
-            defaultValue="22"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="22">{cohortLabel}</option>
-          </select>
-        </div>
       </div>
 
       {/* 타입 필터 칩 + 상품 등록 */}

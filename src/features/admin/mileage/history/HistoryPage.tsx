@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { MileageTabs } from '../MileageTabs'
+import { CohortScopeSelect } from '../CohortScope'
 import { useMileageHistory } from './api'
 import type { AmountSign, MileageTxRow, TxType } from './types'
 
@@ -35,7 +36,8 @@ export default function HistoryPage() {
     '마일리지 지급 내역',
     '지급·차감 원장 조회 · 기수 선택 전 빈 상태 안내 · 직접 지급/구매 승인 즉시 반영',
   )
-  const { data, isPending, isError, refetch } = useMileageHistory()
+  const [cohortId, setCohortId] = useState('')
+  const { data, isPending, isError, refetch } = useMileageHistory(cohortId)
   const toast = useToast()
   const [txType, setTxType] = useState<'all' | TxType>('all')
   const [q, setQ] = useState('')
@@ -69,7 +71,7 @@ export default function HistoryPage() {
     )
   }
 
-  const { course, cohortLabel, summary, footer } = data
+  const { summary, footer } = data
 
   const columns: Column<MileageTxRow>[] = [
     {
@@ -175,25 +177,10 @@ export default function HistoryPage() {
         <span className="text-fg-subtle">› 지급 내역</span>
       </Link>
 
-      {/* 클러스터 탭 + 과정/기수 */}
+      {/* 클러스터 탭 + 기수 필터(실 BE) */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
-        <div className="flex items-center gap-2">
-          <select
-            aria-label="과정"
-            defaultValue="ai"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="ai">{course}</option>
-          </select>
-          <select
-            aria-label="기수"
-            defaultValue="22"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="22">{cohortLabel}</option>
-          </select>
-        </div>
+        <CohortScopeSelect value={cohortId} onChange={setCohortId} />
       </div>
 
       {/* KPI 4종 */}
@@ -264,14 +251,9 @@ export default function HistoryPage() {
           rowKey={(r) => r.id}
           empty="조건에 맞는 거래가 없어요"
         />
-        <div className="text-fg-subtle mt-3 flex items-center justify-between text-xs">
-          <span>
-            총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
-            부분 {footer.partial} · 실패 {footer.failed}
-          </span>
-          <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 font-bold">
-            1 / 25
-          </span>
+        <div className="text-fg-subtle mt-3 text-xs">
+          총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
+          부분 {footer.partial} · 실패 {footer.failed}
         </div>
       </div>
 

@@ -17,6 +17,7 @@ import {
   type ActionModalSpec,
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
+import { CohortScopeSelect } from '../CohortScope'
 import { useDirectPayRoster, useDirectPaySubmit } from './api'
 import type { MileageStudent, PayKind } from './types'
 
@@ -30,17 +31,17 @@ export default function DirectPayPage() {
     '마일리지 직접 지급',
     '다중 수강생 일괄 지급/차감 · 누적 상한·보유액·부분 지급 자동 검증',
   )
-  const { data, isPending, isError, refetch } = useDirectPayRoster()
+  const [cohortId, setCohortId] = useState('')
+  const { data, isPending, isError, refetch } = useDirectPayRoster(cohortId)
   const submit = useDirectPaySubmit()
   const navigate = useNavigate()
   const toast = useToast()
 
-  const [selected, setSelected] = useState<Set<string>>(
-    new Set(['stu-1', 'stu-2', 'stu-3', 'stu-4']),
-  )
+  // 금전성 화면 — 사전 선택 없이 빈 상태로 시작(오지급 방지).
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   const [kind, setKind] = useState<PayKind>('grant')
   const [amount, setAmount] = useState(50000)
-  const [reason, setReason] = useState('중간 발표 우수상 — 선택 4명에게 지급')
+  const [reason, setReason] = useState('')
   const [confirm, setConfirm] = useState<ActionModalSpec | null>(null)
   const [result, setResult] = useState<{ count: number; total: number } | null>(
     null,
@@ -95,10 +96,6 @@ export default function DirectPayPage() {
           value: `1인 ${amount.toLocaleString()}M · 총 ${total.toLocaleString()}M`,
         },
         { label: '사유', value: reason },
-        {
-          label: '검증',
-          value: `누적 한도 초과 0건 · 보유액 검증 완료`,
-        },
       ],
       confirmLabel: '실행',
     })
@@ -199,25 +196,16 @@ export default function DirectPayPage() {
         <span className="text-fg-subtle">› 직접 지급</span>
       </Link>
 
-      {/* 클러스터 탭 + 과정/기수 */}
+      {/* 클러스터 탭 + 기수 필터(실 BE) — 기수 전환 시 선택 초기화(오지급 방지) */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
-        <div className="flex items-center gap-2">
-          <select
-            aria-label="과정"
-            defaultValue="ai"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="ai">{course}</option>
-          </select>
-          <select
-            aria-label="기수"
-            defaultValue="22"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
-          >
-            <option value="22">{cohortLabel}</option>
-          </select>
-        </div>
+        <CohortScopeSelect
+          value={cohortId}
+          onChange={(next) => {
+            setCohortId(next)
+            setSelected(new Set())
+          }}
+        />
       </div>
 
       {/* 2단 — 수강생 다중 선택(좌) + 지급 폼(우) */}

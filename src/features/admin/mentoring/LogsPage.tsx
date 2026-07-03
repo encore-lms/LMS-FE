@@ -268,15 +268,10 @@ export default function LogsPage() {
             }
             empty="조건에 맞는 일지가 없어요"
           />
-          <div className="text-fg-subtle mt-3 flex items-center justify-between text-xs">
-            <span>
-              총 {rows.length} · 유효 {data.kpis.valid} · 수정 요청{' '}
-              {data.kpis.changeRequested} · 초안 {data.kpis.draft} · 재제출{' '}
-              {data.kpis.resubmitted}
-            </span>
-            <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 font-bold">
-              1 / 1
-            </span>
+          <div className="text-fg-subtle mt-3 text-xs">
+            총 {rows.length} · 유효 {data.kpis.valid} · 수정 요청{' '}
+            {data.kpis.changeRequested} · 초안 {data.kpis.draft} · 재제출{' '}
+            {data.kpis.resubmitted}
           </div>
         </div>
 

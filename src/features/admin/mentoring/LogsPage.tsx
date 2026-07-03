@@ -151,7 +151,7 @@ export default function LogsPage() {
     <div className="p-8">
       <MentoringTabs />
       {/* Hero — CTA 없음. 잠금 안내 + 제출·처리 대기 칩 */}
-      <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
+      <div className="bg-brand shadow-hero flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
         <div className="flex flex-col gap-3">
           <p className="text-on-color text-lg font-bold">
             멘토링 일지 조회 · 수정 요청 · 최종 유효본 기준 인정 시간 계산

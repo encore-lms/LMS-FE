@@ -411,7 +411,7 @@ export default function TeamLogFieldsPage() {
       </div>
 
       {/* Hero — 팀 컨텍스트 + 되돌리기/저장 CTA */}
-      <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
+      <div className="bg-brand shadow-hero flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
         <div className="flex flex-col gap-2.5">
           <span className="bg-surface text-fg w-fit rounded px-2 py-0.5 text-[10px] font-bold">
             {data.cohortName}

@@ -33,6 +33,9 @@
 
   --color-surface: #ffffff;
   --color-on-color: #ffffff; /* 컬러/딥 배경 위 전경(텍스트·아이콘) 흰색. 배경엔 surface 사용 */
+
+  /* 운영 히어로 카드 공통 그림자 — 여러 화면에 중복되던 rgba 그림자를 토큰화(shadow-hero). */
+  --shadow-hero: 0 8px 22px rgba(18, 23, 38, 0.18);
 }
 
 :root {

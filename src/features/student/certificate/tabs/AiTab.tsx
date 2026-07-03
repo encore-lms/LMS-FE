@@ -1,10 +1,11 @@
+import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/shared/lib/cn'
 import type { Tone } from '../types'
 import { AiBanner } from './TechTab'
 import { AiAnalysisPanel } from '../v2/AiAnalysisPanel'
 import { AiProfile } from '../v2/AiProfile'
 import { SentimentBubbles } from '../v2/SentimentBubbles'
-import { getAiAnalysis } from '../ai'
+import { fetchAiAnalysis } from '../ai'
 
 // 증명서 v2 — AI 분석 통합 탭. AI 해석은 ai 모듈(getAiAnalysis)에서 단일 소스로 가져온다.
 // 지금은 mock. 나중에 getAiAnalysis 내부만 서버 API로 교체하면 됨(호출부 불변).
@@ -19,8 +20,12 @@ const SOLID: Record<Tone, string> = {
 
 // TODO(BE 연동): studentId를 실제 학생 식별자로 연결. 지금은 mock 고정.
 export function AiTab({ studentId = 'stu-001' }: { studentId?: string }) {
-  const { verdict, profile, personas, projects, problem, sentiment } =
-    getAiAnalysis(studentId)
+  const { data } = useQuery({
+    queryKey: ['aiAnalysis', studentId],
+    queryFn: () => fetchAiAnalysis(studentId),
+  })
+  if (!data) return null
+  const { verdict, profile, personas, projects, problem, sentiment } = data
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2.5">

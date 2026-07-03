@@ -5,6 +5,7 @@ import { SkillRadar } from '../components/SkillRadar'
 import { CERT_V2 } from '../config'
 import { DomainDonut } from '../v2/DomainDonut'
 import { OntologyMap } from '../v2/OntologyMap'
+import { getAiAnalysis } from '../ai'
 
 // 증명서 탭1 종합 요약.
 // 상단: 핵심 지표 — 종합 점수 카드 + 핵심 지표 2×2 (Figma 미리보기 metrics-row).
@@ -23,6 +24,8 @@ const card =
   'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 
 export function SummaryTab({ s }: { s: CertSummaryTab }) {
+  // 온톨로지는 ai 모듈에서 단일 소스로. TODO(BE 연동): studentId 실제 연결(지금 mock).
+  const ai = getAiAnalysis('stu-001')
   const skillAvg = Math.round(
     s.skillAxes.reduce((sum, a) => sum + a.score, 0) / s.skillAxes.length,
   )
@@ -219,7 +222,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
 
       {/* ── v2 (CERT_V2): 온톨로지 역량 맵 ── */}
       {/* Figma '탭1 종합요약 상세'엔 없지만 화면엔 의도적으로 유지(제거 금지). */}
-      {CERT_V2 && s.ontology && <OntologyMap ontology={s.ontology} />}
+      {CERT_V2 && <OntologyMap ontology={ai.ontology} />}
     </div>
   )
 }

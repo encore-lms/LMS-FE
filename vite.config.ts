@@ -183,6 +183,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 운영 평판 관리(/admin/reputation) — 동료평가(§67) 실데이터 집계. auth-user-service(:8081).
+      // 요청 푸시는 클라이언트 낙관(알림 계약 미확정)이라 프록시 미사용.
+      '/api/admin/reputation': {
+        target: AUTH_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 운영 멘토 배정(/admin/mentors/assignments)도 auth-user-service(:8081) 실연동.
       '/api/admin/mentors': {
         target: AUTH_API_TARGET,

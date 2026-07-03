@@ -129,7 +129,7 @@ function DescriptionPane({
           type="button"
           // TODO: 단위 기간 설정 모달(BE 단위기간 계약 확정 후)
           onClick={() => toast.info('단위 기간 설정 화면은 준비 중입니다.')}
-          className="bg-brand hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold text-white transition-colors"
+          className="bg-brand hover:bg-brand/90 text-on-color inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
         >
           <ListChecks className="h-4 w-4" /> 단위 기간 설정
         </button>
@@ -173,7 +173,7 @@ export default function EducationPage() {
             setSelectedCourseId(e.target.value)
             setSelectedCohortId(null)
           }}
-          className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
         >
           {(courses ?? []).map((c) => (
             <option key={c.courseId} value={c.courseId}>
@@ -188,7 +188,7 @@ export default function EducationPage() {
           aria-label="기수 선택"
           value={cohortId ?? ''}
           onChange={(e) => setSelectedCohortId(e.target.value)}
-          className="border-border focus:border-brand text-fg h-11 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
         >
           {(courseConfig?.cohorts ?? []).map((c) => (
             <option key={c.id} value={c.id}>

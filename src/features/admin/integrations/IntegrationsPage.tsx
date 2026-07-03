@@ -189,7 +189,7 @@ export default function IntegrationsPage() {
               className={cn(
                 'rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors',
                 filter === f.key
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-on-color'
                   : 'border-border text-fg-muted hover:bg-surface-muted border',
               )}
             >
@@ -204,7 +204,7 @@ export default function IntegrationsPage() {
             refetch()
             toast.success('연동 상태를 새로고침했습니다.')
           }}
-          className="bg-brand hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
+          className="bg-brand hover:bg-brand/90 text-on-color inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold transition-colors"
         >
           <RefreshCw className="h-4 w-4" />
           연동 상태 새로고침

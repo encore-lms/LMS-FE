@@ -191,7 +191,7 @@ function SubmissionsModal({
                         onChange={(e) => setFeedback(e.target.value)}
                         placeholder="피드백(선택) 입력 후 상태 변경"
                         rows={2}
-                        className="border-border focus:border-brand text-fg rounded-lg border bg-white px-3 py-2 text-sm outline-none"
+                        className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
                       />
                       <div className="flex justify-end gap-2">
                         <Button
@@ -478,7 +478,7 @@ export function AssignmentsPane({
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="예: 백엔드 5회차"
-            className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
           />
           <label
             className="text-fg-subtle text-xs font-medium"
@@ -491,7 +491,7 @@ export function AssignmentsPane({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="예: JPA 연관관계 매핑 실습"
-            className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
           />
           <label
             className="text-fg-subtle text-xs font-medium"
@@ -505,7 +505,7 @@ export function AssignmentsPane({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="과제 안내·제출 조건(최대 5,000자)"
             rows={4}
-            className="border-border focus:border-brand text-fg rounded-lg border bg-white px-3 py-2 text-sm outline-none"
+            className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
           />
           <label
             className="text-fg-subtle text-xs font-medium"
@@ -518,7 +518,7 @@ export function AssignmentsPane({
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
           />
         </div>
       </Modal>

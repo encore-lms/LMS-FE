@@ -145,7 +145,7 @@ export default function AuditLogPage() {
               className={cn(
                 'rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors',
                 active.includes(c.key)
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-on-color'
                   : 'border-border text-fg-muted hover:bg-surface-muted border',
               )}
             >

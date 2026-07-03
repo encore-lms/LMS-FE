@@ -91,7 +91,7 @@ export function StudentDetailModal({
         rows={3}
         aria-label="매니저 메모"
         placeholder="매니저 메모 (선택) — 처리 사유를 남기면 감사 로그에 함께 기록됩니다"
-        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle mt-4 w-full rounded-lg border bg-white p-3 text-sm outline-none"
+        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface mt-4 w-full rounded-lg border p-3 text-sm outline-none"
       />
 
       <div className="bg-info-bg mt-4 flex items-start gap-2 rounded-lg p-3">

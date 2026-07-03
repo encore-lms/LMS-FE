@@ -148,7 +148,7 @@ export function ProductFormModal({
             value={type}
             onChange={(e) => setType(e.target.value as ProductType)}
             className={cn(
-              'border-border text-fg focus:border-brand h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none',
+              'border-border text-fg focus:border-brand bg-surface h-11 w-full rounded-lg border px-3 text-sm outline-none',
             )}
           >
             {TYPES.map((t) => (

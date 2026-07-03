@@ -200,7 +200,7 @@ export default function CsvMappingPage() {
               className={cn(
                 'rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
                 source === s.key
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-on-color'
                   : 'text-fg-muted hover:text-fg',
               )}
             >
@@ -221,7 +221,7 @@ export default function CsvMappingPage() {
             type="button"
             // TODO: 업로드 시작(정상 행 인입·오류 행 격리 큐 이동, P0_20)
             onClick={() => toast.info('업로드 시작은 준비 중입니다.')}
-            className="bg-brand hover:bg-brand/90 h-9 rounded-md px-4 text-[13px] font-semibold text-white transition-colors"
+            className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-md px-4 text-[13px] font-semibold transition-colors"
           >
             업로드 시작
           </button>

@@ -215,7 +215,7 @@ export function AssignmentManageModal({
                 type="button"
                 onClick={createReplacement}
                 disabled={createAssignment.isPending}
-                className="border-warning text-warning hover:bg-warning/10 self-start rounded-lg border bg-white px-3 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                className="border-warning text-warning hover:bg-warning/10 bg-surface self-start rounded-lg border px-3 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 기존 배정 보존 · 새 배정 생성
               </button>

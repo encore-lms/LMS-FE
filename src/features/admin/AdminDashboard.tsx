@@ -189,9 +189,9 @@ function HeroMetrics({
   onAttendanceClick: () => void
 }) {
   return (
-    <section className="bg-brand-deep relative overflow-hidden rounded-2xl p-6 text-white shadow-[0_18px_48px_-24px_rgba(18,23,38,0.6)]">
+    <section className="bg-brand-deep text-on-color relative overflow-hidden rounded-2xl p-6 shadow-[0_18px_48px_-24px_rgba(18,23,38,0.6)]">
       <div className="bg-brand/20 pointer-events-none absolute -top-24 -right-16 size-64 rounded-full blur-3xl" />
-      <div className="relative flex items-center gap-2 text-[12px] font-semibold text-white/70">
+      <div className="text-on-color/70 relative flex items-center gap-2 text-[12px] font-semibold">
         <Bell className="size-3.5 text-amber-300" />
         오늘 인사이트
       </div>
@@ -205,11 +205,11 @@ function HeroMetrics({
             trend.length >= 2 ? (
               <Sparkline
                 points={trend}
-                stroke="#34d399"
+                stroke="var(--color-success)"
                 todayIndex={trend.length - 1}
               />
             ) : (
-              <span className="text-[11px] text-white/45">
+              <span className="text-on-color/45 text-[11px]">
                 HRD 키 등록 시 표시
               </span>
             )
@@ -257,24 +257,26 @@ function MetricTile({
     <Tag
       {...(onClick ? { type: 'button' as const, onClick } : {})}
       className={cn(
-        'flex min-h-[7rem] flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-left transition-colors',
-        onClick && 'cursor-pointer hover:bg-white/[0.12]',
+        'bg-surface/[0.06] flex min-h-[7rem] flex-col justify-between rounded-2xl border border-white/10 p-4 text-left transition-colors',
+        onClick && 'hover:bg-surface/[0.12] cursor-pointer',
       )}
     >
-      <span className="text-[12px] font-medium text-white/60">{label}</span>
+      <span className="text-on-color/60 text-[12px] font-medium">{label}</span>
       <div>
         <span className="text-[28px] leading-none font-extrabold tabular-nums">
           {numeric ? shown : value}
         </span>
         {suffix && (
-          <span className="ml-0.5 text-[14px] font-bold text-white/70">
+          <span className="text-on-color/70 ml-0.5 text-[14px] font-bold">
             {suffix}
           </span>
         )}
       </div>
       <div className="min-h-[16px]">
         {footer ??
-          (hint && <span className="text-[11px] text-white/45">{hint}</span>)}
+          (hint && (
+            <span className="text-on-color/45 text-[11px]">{hint}</span>
+          ))}
       </div>
     </Tag>
   )
@@ -381,7 +383,7 @@ function AbsenteeCard({ cohorts }: { cohorts: DashboardCohort[] }) {
                       )
                     }
                     className={cn(
-                      'flex items-center gap-1 rounded-lg px-3 py-2 text-[12px] font-bold text-white transition-colors',
+                      'text-on-color flex items-center gap-1 rounded-lg px-3 py-2 text-[12px] font-bold transition-colors',
                       copied === `${c.cohortId}-msg`
                         ? 'bg-success'
                         : 'bg-brand-deep',

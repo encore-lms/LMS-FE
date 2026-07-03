@@ -87,7 +87,7 @@ export function ScopeModal({
         id="scope-course"
         value={activeCourseId ?? ''}
         onChange={(e) => setCourseId(e.target.value)}
-        className="border-border focus:border-brand text-fg mt-1 mb-4 h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none"
+        className="border-border focus:border-brand text-fg bg-surface mt-1 mb-4 h-10 w-full rounded-lg border px-3 text-sm outline-none"
       >
         {(courses ?? []).map((c) => (
           <option key={c.courseId} value={c.courseId}>

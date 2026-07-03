@@ -341,26 +341,26 @@ export default function AccountsPage() {
     <div className="p-8">
       {/* 히어로 — 요약 수치가 응답에 의존하므로 데이터가 있을 때만 렌더(셸 탭은 아래에서 항상 유지). */}
       {data && (
-        <div className="bg-brand mt-4 rounded-xl px-6 py-5 text-white">
+        <div className="bg-brand text-on-color mt-4 rounded-xl px-6 py-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold tracking-wider text-white/60">
+              <p className="text-on-color/60 text-[11px] font-semibold tracking-wider">
                 MANAGER ACCOUNTS · 운영 계정·권한
               </p>
               <h2 className="mt-1 text-xl font-bold">
                 운영진 계정과 기본 권한 범위 관리
               </h2>
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                <span className="bg-surface/15 rounded-full px-2.5 py-1 text-xs">
                   매니저 {data.summary.managers}
                 </span>
-                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                <span className="bg-surface/15 rounded-full px-2.5 py-1 text-xs">
                   강사 {data.summary.instructors}
                 </span>
-                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                <span className="bg-surface/15 rounded-full px-2.5 py-1 text-xs">
                   멘토 {data.summary.mentors}
                 </span>
-                <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs">
+                <span className="bg-surface/15 rounded-full px-2.5 py-1 text-xs">
                   비활성 {data.summary.inactive}
                 </span>
               </div>
@@ -369,7 +369,7 @@ export default function AccountsPage() {
               <button
                 type="button"
                 onClick={() => setCreateOpen(true)}
-                className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold"
+                className="text-fg bg-surface flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold"
               >
                 <UserPlus className="h-3.5 w-3.5" /> 새 계정 추가
               </button>
@@ -504,7 +504,7 @@ export default function AccountsPage() {
                 }}
                 placeholder="이메일, 이름, 담당 과정 검색"
                 aria-label="운영 계정 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand ml-auto h-9 w-72 rounded-lg border bg-white px-3 text-sm outline-none"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface ml-auto h-9 w-72 rounded-lg border px-3 text-sm outline-none"
               />
             </div>
 

@@ -16,7 +16,7 @@ function ChipGroup({
   options,
   value,
   onChange,
-  activeClass = 'bg-fg text-white',
+  activeClass = 'bg-fg text-on-color',
 }: {
   options: string[]
   value: string
@@ -124,7 +124,7 @@ export function ChangesRequestModal({
             options={REASON_CODES}
             value={reason}
             onChange={setReason}
-            activeClass="bg-danger text-white"
+            activeClass="bg-danger text-on-color"
           />
         </div>
         <div>
@@ -154,7 +154,7 @@ export function ChangesRequestModal({
             rows={4}
             onChange={(e) => setComment(e.target.value)}
             placeholder="보완이 필요한 항목과 조치 방법을 구체적으로 적어주세요."
-            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-lg border bg-white p-3 text-sm outline-none"
+            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface w-full rounded-lg border p-3 text-sm outline-none"
           />
         </div>
         <div>

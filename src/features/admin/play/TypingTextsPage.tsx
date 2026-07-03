@@ -237,7 +237,7 @@ export default function TypingTextsPage() {
           type="button"
           // CSV/Excel 일괄 업로드 — 검증 미리보기 화면으로 이동
           onClick={() => navigate('/admin/play/typing-texts/bulk')}
-          className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
+          className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
         >
           일괄 업로드
         </button>
@@ -247,7 +247,7 @@ export default function TypingTextsPage() {
             setFormPassage(null)
             setFormOpen(true)
           }}
-          className="bg-accent-strong h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors hover:opacity-90"
+          className="bg-accent-strong text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors hover:opacity-90"
         >
           제시문 추가
         </button>
@@ -277,7 +277,7 @@ export default function TypingTextsPage() {
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
           aria-label="언어 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">언어 전체</option>
           {LANGUAGES.map((l) => (
@@ -290,7 +290,7 @@ export default function TypingTextsPage() {
           value={level}
           onChange={(e) => setLevel(e.target.value)}
           aria-label="난이도 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">난이도 전체</option>
           {LEVELS.map((l) => (
@@ -303,7 +303,7 @@ export default function TypingTextsPage() {
           value={status}
           onChange={(e) => setStatus(e.target.value as 'all' | PassageStatus)}
           aria-label="활성 상태 필터"
-          className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
         >
           <option value="all">활성 상태 전체</option>
           {(Object.keys(STATUS_META) as PassageStatus[]).map((key) => (
@@ -402,7 +402,7 @@ export default function TypingTextsPage() {
               type="button"
               // TODO: 정상 행만 저장(오류 행 제외 인입, P0_15)
               onClick={() => toast.info('정상 행만 저장은 준비 중입니다.')}
-              className="bg-brand hover:bg-brand/90 h-9 rounded-lg px-4 text-[13px] font-semibold text-white transition-colors"
+              className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
             >
               정상 행만 저장
             </button>

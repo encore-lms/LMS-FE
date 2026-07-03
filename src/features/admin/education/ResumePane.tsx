@@ -144,7 +144,7 @@ export function ResumePane({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="이름 또는 이력서 제목 검색"
-            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 w-full rounded-lg border bg-white pr-3 pl-9 text-sm outline-none"
+            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 w-full rounded-lg border pr-3 pl-9 text-sm outline-none"
           />
         </div>
       </div>

@@ -226,14 +226,14 @@ export default function AssignmentsPage() {
             <button
               type="button"
               onClick={() => setManageRow(r)}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
             >
               수정
             </button>
             {/* 팀별 일지 항목(§32) 진입 — 해당 화면 브레드크럼이 '멘토 배정 관리'로 복귀 */}
             <Link
               to={`/admin/mentoring/teams/${r.teamId}/log-fields`}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
             >
               일지 항목
             </Link>
@@ -241,7 +241,7 @@ export default function AssignmentsPage() {
               <button
                 type="button"
                 onClick={() => setEarlyEndRow(r)}
-                className="border-warning text-warning hover:bg-warning/10 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+                className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
               >
                 조기 종료
               </button>
@@ -342,7 +342,7 @@ export default function AssignmentsPage() {
             value={course}
             onChange={(e) => setCourse(e.target.value)}
             aria-label="과정 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">과정 전체</option>
             {courses.map((c) => (
@@ -355,7 +355,7 @@ export default function AssignmentsPage() {
             value={mentorFilter}
             onChange={(e) => setMentorFilter(e.target.value)}
             aria-label="멘토 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">멘토 전체</option>
             {data.mentors.map((m) => (
@@ -368,7 +368,7 @@ export default function AssignmentsPage() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             aria-label="배정 상태 필터"
-            className="border-border text-fg-muted focus:border-brand h-9 rounded-lg border bg-white px-3 text-sm outline-none"
+            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="with_unassigned">미배정 포함</option>
             <option value="active_only">배정만</option>
@@ -380,7 +380,7 @@ export default function AssignmentsPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="팀명·멘토명 검색"
           aria-label="팀명·멘토명 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-60 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-60 rounded-lg border px-3 text-sm outline-none"
         />
       </div>
 

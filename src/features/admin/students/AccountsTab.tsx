@@ -245,7 +245,7 @@ export function AccountsTab() {
   return (
     <>
       {/* HRD 동기화 hero */}
-      <div className="bg-brand flex flex-wrap items-center justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand text-on-color flex flex-wrap items-center justify-between gap-4 rounded-xl px-6 py-5">
         <div>
           <p className="text-lg font-bold">
             HRD-Net 명단 동기화로 학생 계정을 일괄 관리합니다
@@ -258,7 +258,7 @@ export function AccountsTab() {
                 setSelectedCourseId(e.target.value)
                 setSelectedCohortId(null)
               }}
-              className="text-fg h-9 rounded-lg bg-white px-3 text-sm outline-none"
+              className="text-fg bg-surface h-9 rounded-lg px-3 text-sm outline-none"
             >
               {(courses ?? []).map((c) => (
                 <option key={c.courseId} value={c.courseId}>
@@ -273,7 +273,7 @@ export function AccountsTab() {
               aria-label="기수 선택"
               value={cohortId ?? ''}
               onChange={(e) => setSelectedCohortId(e.target.value)}
-              className="text-fg h-9 rounded-lg bg-white px-3 text-sm outline-none"
+              className="text-fg bg-surface h-9 rounded-lg px-3 text-sm outline-none"
             >
               {(courseConfig?.cohorts ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
@@ -352,7 +352,7 @@ export function AccountsTab() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="이름·UUID·생년월일 검색"
               aria-label="학생 계정 검색"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
             />
           </div>
 

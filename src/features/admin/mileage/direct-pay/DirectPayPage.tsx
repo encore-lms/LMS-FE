@@ -260,8 +260,8 @@ export default function DirectPayPage() {
                     'inline-flex items-center justify-center gap-1 rounded-md py-2 text-[13px] font-semibold transition-colors',
                     kind === k
                       ? k === 'grant'
-                        ? 'bg-brand text-white'
-                        : 'bg-fg text-white'
+                        ? 'bg-brand text-on-color'
+                        : 'bg-fg text-on-color'
                       : 'text-fg-muted',
                   )}
                 >
@@ -275,7 +275,7 @@ export default function DirectPayPage() {
             <p className="text-fg mt-4 text-[13px] font-semibold">
               금액 (1인당) <span className="text-danger">*</span>
             </p>
-            <div className="border-border focus-within:border-brand mt-1.5 flex items-center rounded-lg border bg-white px-3">
+            <div className="border-border focus-within:border-brand bg-surface mt-1.5 flex items-center rounded-lg border px-3">
               <input
                 value={amount.toLocaleString()}
                 onChange={(e) =>
@@ -309,7 +309,7 @@ export default function DirectPayPage() {
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               aria-label="사유"
-              className="border-border focus:border-brand text-fg placeholder:text-fg-subtle mt-1.5 w-full rounded-lg border bg-white p-3 text-sm outline-none"
+              className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface mt-1.5 w-full rounded-lg border p-3 text-sm outline-none"
             />
 
             {/* 합계 요약 */}
@@ -337,7 +337,7 @@ export default function DirectPayPage() {
               type="button"
               disabled={!canSubmit}
               onClick={openConfirm}
-              className="bg-brand-deep hover:bg-brand-deep/90 mt-4 h-11 w-full rounded-lg text-[14px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-brand-deep hover:bg-brand-deep/90 text-on-color mt-4 h-11 w-full rounded-lg text-[14px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {word} 실행 — {kind === 'grant' ? '+' : '-'}
               {total.toLocaleString()}M / {selectedCount}명

@@ -29,7 +29,7 @@ export function SettingsTabs({ right }: { right?: React.ReactNode }) {
             className={cn(
               'flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm',
               active
-                ? 'bg-brand-deep font-bold text-white'
+                ? 'bg-brand-deep text-on-color font-bold'
                 : 'text-fg-muted hover:bg-surface-muted font-medium',
             )}
           >

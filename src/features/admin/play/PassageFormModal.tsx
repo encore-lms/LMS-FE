@@ -73,7 +73,7 @@ export function PassageFormModal({
   }
 
   const selectClass =
-    'border-border text-fg focus:border-brand h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none'
+    'border-border text-fg focus:border-brand h-11 w-full rounded-lg border bg-surface px-3 text-sm outline-none'
 
   return (
     <Modal
@@ -114,7 +114,7 @@ export function PassageFormModal({
             rows={5}
             placeholder="타자 입력 대상 원문"
             aria-invalid={errors.content ? true : undefined}
-            className={`border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-lg border-2 bg-white p-3 text-sm outline-none ${
+            className={`border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface w-full rounded-lg border-2 p-3 text-sm outline-none ${
               errors.content ? 'border-danger' : ''
             }`}
           />

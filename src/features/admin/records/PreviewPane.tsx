@@ -165,7 +165,7 @@ export function PreviewPane({
           rows={3}
           aria-label="결정 사유"
           placeholder="승인 시 코멘트 선택 / 반려·보완 요청 시 필수 — 학생에게 알림 발송"
-          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle mt-2 w-full rounded-lg border bg-white p-2.5 text-xs outline-none"
+          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface mt-2 w-full rounded-lg border p-2.5 text-xs outline-none"
         />
         <div className="mt-3 flex gap-2">
           <button
@@ -189,7 +189,7 @@ export function PreviewPane({
           <button
             type="button"
             onClick={() => onDecide('approve')}
-            className="bg-success hover:bg-success/90 flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-sm font-bold text-white"
+            className="bg-success hover:bg-success/90 text-on-color flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-sm font-bold"
           >
             <Check className="h-4 w-4" />
             승인

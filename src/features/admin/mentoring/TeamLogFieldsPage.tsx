@@ -339,7 +339,7 @@ export default function TeamLogFieldsPage() {
             <button
               type="button"
               onClick={() => setFieldModal({ mode: 'edit', field: f })}
-              className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
             >
               <Pencil className="h-3 w-3" />
               수정
@@ -349,7 +349,7 @@ export default function TeamLogFieldsPage() {
               onClick={() => moveField(f, -1)}
               disabled={index === 0}
               aria-label={`${f.name} 위로 이동`}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ArrowUp className="h-3 w-3" />
             </button>
@@ -358,7 +358,7 @@ export default function TeamLogFieldsPage() {
               onClick={() => moveField(f, 1)}
               disabled={index === fields.length - 1}
               aria-label={`${f.name} 아래로 이동`}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border bg-white p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ArrowDown className="h-3 w-3" />
             </button>
@@ -366,7 +366,7 @@ export default function TeamLogFieldsPage() {
               <button
                 type="button"
                 onClick={() => deactivateField(f)}
-                className="border-danger text-danger hover:bg-danger/10 inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+                className="border-danger text-danger hover:bg-danger/10 bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
               >
                 <XCircle className="h-3 w-3" />
                 비활성화
@@ -375,7 +375,7 @@ export default function TeamLogFieldsPage() {
               <button
                 type="button"
                 onClick={() => restoreField(f)}
-                className="border-info text-info hover:bg-info/10 inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-[11px] font-bold"
+                className="border-info text-info hover:bg-info/10 bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
               >
                 <RotateCcw className="h-3 w-3" />
                 템플릿 값 복원
@@ -394,7 +394,7 @@ export default function TeamLogFieldsPage() {
         <div className="flex items-center gap-2">
           <Link
             to="/admin/mentors/assignments"
-            className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1.5 text-xs font-bold"
+            className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-bold"
           >
             <ArrowLeft className="h-3 w-3" />
             멘토 배정 관리

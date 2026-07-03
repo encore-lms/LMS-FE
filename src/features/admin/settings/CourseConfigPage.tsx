@@ -68,7 +68,7 @@ function Switch({
     >
       <span
         className={cn(
-          'block h-5 w-5 rounded-full bg-white transition-transform',
+          'bg-surface block h-5 w-5 rounded-full transition-transform',
           checked && 'translate-x-5',
         )}
       />
@@ -261,17 +261,17 @@ export default function CourseConfigPage() {
   return (
     <div className="p-8">
       {/* 히어로 */}
-      <div className="bg-brand mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5 text-white">
+      <div className="bg-brand text-on-color mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5">
         <div>
-          <p className="text-[11px] font-semibold tracking-wider text-white/60">
+          <p className="text-on-color/60 text-[11px] font-semibold tracking-wider">
             COURSE CONFIG · 과정별 기능
           </p>
           <p className="mt-1 text-xl font-bold">교육 과정 설정</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1">
+            <span className="bg-surface/15 flex items-center gap-1.5 rounded-full px-2.5 py-1">
               <FileText className="h-3 w-3" /> {config?.title ?? '-'} 선택
             </span>
-            <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1">
+            <span className="bg-surface/15 flex items-center gap-1.5 rounded-full px-2.5 py-1">
               {config?.status === 'ended' ? (
                 <XCircle className="h-3 w-3" />
               ) : (
@@ -298,7 +298,7 @@ export default function CourseConfigPage() {
             type="button"
             onClick={openSave}
             disabled={changedCount === 0}
-            className="text-fg flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-xs font-bold disabled:opacity-50"
+            className="text-fg bg-surface flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" /> 정책 저장
           </button>
@@ -349,7 +349,7 @@ export default function CourseConfigPage() {
                     onChange={(e) => setCourseQuery(e.target.value)}
                     placeholder="과정명 검색"
                     aria-label="과정명 검색"
-                    className="border-border text-fg placeholder:text-fg-subtle focus:border-brand mt-2 h-9 w-full rounded-lg border bg-white px-3 text-sm outline-none"
+                    className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface mt-2 h-9 w-full rounded-lg border px-3 text-sm outline-none"
                   />
                 </div>
                 {filteredCourses.map((c) => (
@@ -539,20 +539,20 @@ export default function CourseConfigPage() {
                       onChange={(e) => setMaterialTitle(e.target.value)}
                       placeholder="자료 제목"
                       aria-label="자료 제목"
-                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[160px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
+                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 min-w-[160px] flex-1 rounded-lg border px-3 text-sm outline-none"
                     />
                     <input
                       value={materialUrl}
                       onChange={(e) => setMaterialUrl(e.target.value)}
                       placeholder="https://링크"
                       aria-label="자료 링크"
-                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-9 min-w-[200px] flex-1 rounded-lg border bg-white px-3 text-sm outline-none"
+                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 min-w-[200px] flex-1 rounded-lg border px-3 text-sm outline-none"
                     />
                     <button
                       type="button"
                       onClick={onAddMaterial}
                       disabled={createMaterial.isPending || !materialCohortId}
-                      className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white disabled:opacity-50"
+                      className="bg-brand-deep text-on-color flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-bold disabled:opacity-50"
                     >
                       <Plus className="h-3.5 w-3.5" /> 추가
                     </button>

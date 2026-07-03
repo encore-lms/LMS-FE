@@ -10,6 +10,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { AdminGradingItem, AdminGradingQuestionType } from '@/shared/types'
 import { useAdminGradingDetail, useSaveGrading } from '../api/quizzes'
+import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 
 // 유형 라벨 — admin 로컬 상수(운영 작업은 instructor/quizzes/meta.ts 무접촉).
 // essay는 Figma 운영 frame 원문 '서술형'(강사 meta '주관식'과 표기가 다름 — 운영 화면 기준).
@@ -52,6 +53,8 @@ export default function GradingPage() {
   const save = useSaveGrading(quizId, submissionId)
 
   const [drafts, setDrafts] = useState<Record<string, DraftEntry>>({})
+  // 채점 완료 확인 — 점수 확정 + 학생 공개는 비가역이라 ActionModal 확인을 거친다.
+  const [finalizeOpen, setFinalizeOpen] = useState(false)
   // 자동 저장 invalidate 재조회가 입력 중 드래프트를 덮지 않게 — 제출 건이 바뀔 때만 초기화.
   const initializedFor = useRef<string | null>(null)
   useEffect(() => {
@@ -153,6 +156,21 @@ export default function GradingPage() {
     )
   }
 
+  const finalizeSpec: ActionModalSpec | null = finalizeOpen
+    ? {
+        title: '채점 완료 확인',
+        subtitle:
+          '점수를 확정하고 학생 결과 화면에 공개합니다. 완료 후에는 되돌릴 수 없습니다.',
+        rows: [
+          { label: '학생', value: data?.student.name ?? '-' },
+          { label: '확정 점수', value: `${provisional}점` },
+          { label: '피드백', value: '공개 설정에 따라 함께 공개' },
+          { label: '처리', value: '확정 즉시 학생에게 노출' },
+        ],
+        confirmLabel: '채점 완료',
+      }
+    : null
+
   const finalize = () => {
     // 드래프트 일괄 플러시 + finalize — 전 수동 문항 점수 입력 시에만 도달(disabled 게이트).
     save.mutate(
@@ -170,13 +188,16 @@ export default function GradingPage() {
       },
       {
         onSuccess: () => {
+          setFinalizeOpen(false)
           toast.success(
             `채점 완료 — ${data.student.name} ${provisional}점 확정 · 학생 결과 화면에 공개`,
           )
           navigate(`/admin/quizzes/${quizId}/submissions`)
         },
-        onError: () =>
-          toast.danger('채점 완료에 실패했어요 — 잠시 후 다시 시도해 주세요.'),
+        onError: () => {
+          setFinalizeOpen(false)
+          toast.danger('채점 완료에 실패했어요 — 잠시 후 다시 시도해 주세요.')
+        },
       },
     )
   }
@@ -218,7 +239,7 @@ export default function GradingPage() {
           <button
             type="button"
             disabled={!allEntered || finalized || save.isPending}
-            onClick={finalize}
+            onClick={() => setFinalizeOpen(true)}
             className={cn(
               pill,
               'bg-brand text-on-color hover:bg-brand/90 px-4',
@@ -396,6 +417,14 @@ export default function GradingPage() {
           공개됩니다.
         </p>
       </div>
+
+      {/* 채점 완료 확인 — 확정+학생 공개(비가역) */}
+      <ActionModal
+        spec={finalizeSpec}
+        onClose={() => setFinalizeOpen(false)}
+        onConfirm={finalize}
+        pending={save.isPending}
+      />
     </div>
   )
 }

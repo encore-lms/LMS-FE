@@ -29,6 +29,7 @@ import { newFieldId } from './fieldDiff'
 import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
 import { TemplateFormModal } from './TemplateFormModal'
 import { MentoringTabs } from './MentoringTabs'
+import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import type { AdminLogTemplate, AdminTemplateField } from './types'
 
 /** §31 보존 정책 — 항목 폼 모달 하단 안내(작업 요구 고정 문구). */
@@ -53,6 +54,10 @@ export default function LogTemplatesPage() {
   // Figma 스냅샷 기준 기본 ON — OFF 시 비활성 템플릿을 목록에서 제외.
   const [includeInactive, setIncludeInactive] = useState(true)
   const [templateFormOpen, setTemplateFormOpen] = useState(false)
+  // 항목 삭제 확인 대상 — 파괴적 액션은 ActionModal 확인을 거친다.
+  const [deleteField, setDeleteField] = useState<AdminTemplateField | null>(
+    null,
+  )
   const [fieldModal, setFieldModal] = useState<{
     mode: 'add' | 'edit'
     field?: AdminTemplateField
@@ -152,12 +157,33 @@ export default function LogTemplatesPage() {
     )
   }
 
-  const removeField = (field: AdminTemplateField) => {
-    if (!selected) return
-    patchFields(
-      selected,
-      selected.fields.filter((f) => f.fieldId !== field.fieldId),
-      `항목 삭제 — ${field.name}`,
+  const deleteFieldSpec: ActionModalSpec | null = deleteField
+    ? {
+        title: '템플릿 항목 삭제',
+        subtitle:
+          '이 템플릿에서 항목을 제거합니다. 기존 일지 스냅샷은 보존되고 새 일지부터 적용됩니다.',
+        rows: [
+          { label: '항목', value: deleteField.name },
+          { label: '템플릿', value: selected?.name ?? '-' },
+          { label: '처리', value: '항목 제거 — 새 일지부터 적용' },
+        ],
+        confirmLabel: '삭제',
+      }
+    : null
+  const removeField = () => {
+    if (!selected || !deleteField) return
+    const field = deleteField
+    updateFields.mutate(
+      {
+        templateId: selected.templateId,
+        fields: selected.fields.filter((f) => f.fieldId !== field.fieldId),
+      },
+      {
+        onSuccess: () =>
+          toast.success(`항목 삭제 — ${field.name} · 새 일지부터 적용`),
+        onError: (error) => mutationError(error, '항목 저장에 실패했어요.'),
+        onSettled: () => setDeleteField(null),
+      },
     )
   }
 
@@ -479,7 +505,7 @@ export default function LogTemplatesPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => removeField(field)}
+                            onClick={() => setDeleteField(field)}
                             disabled={updateFields.isPending}
                             aria-label={`${field.name} 삭제`}
                             className="border-danger text-danger hover:bg-danger/10 rounded-md border bg-white p-1.5 disabled:opacity-50"
@@ -532,6 +558,13 @@ export default function LogTemplatesPage() {
           onCreated={setSelectedId}
         />
       )}
+      {/* 항목 삭제 확인 — 새 일지부터 적용(스냅샷 보존) */}
+      <ActionModal
+        spec={deleteFieldSpec}
+        onClose={() => setDeleteField(null)}
+        onConfirm={removeField}
+        pending={updateFields.isPending}
+      />
       {fieldModal && selected && (
         <FieldFormModal
           open

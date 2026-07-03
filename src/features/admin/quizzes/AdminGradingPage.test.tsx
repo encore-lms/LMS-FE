@@ -228,6 +228,9 @@ describe('AdminGradingPage', () => {
     await user.type(screen.getByLabelText('문항 5 점수'), '8')
     expect(done).toBeEnabled()
     await user.click(done)
+    // 확정+학생 공개는 비가역이라 ActionModal 확인을 거친다
+    expect(screen.getByText('채점 완료 확인')).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '채점 완료' })[1])
     // finalize PATCH — 드래프트 일괄 플러시 + gradingStatus 확정
     const payload = mutate.mock.calls.at(-1)?.[0]
     expect(payload.finalize).toBe(true)

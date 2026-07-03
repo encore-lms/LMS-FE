@@ -90,6 +90,8 @@ export default function HrdApiKeyPage() {
   const [historyPage, setHistoryPage] = useState(1)
   const [activateNow, setActivateNow] = useState(true)
   const [modal, setModal] = useState<ActionModalSpec | null>(null)
+  // 삭제 확인 대상 — 파괴적 액션은 ActionModal 확인을 거친다.
+  const [deleteTarget, setDeleteTarget] = useState<HrdApiKey | null>(null)
   // 연결 테스트 진행 대상(키 id) — non-null이면 테스트 중.
   const [testingId, setTestingId] = useState<string | null>(null)
 
@@ -198,10 +200,31 @@ export default function HrdApiKeyPage() {
     )
   }
 
-  const removeKey = (k: HrdApiKey) => {
+  // 삭제 확인 모달 스펙 — 복구 불가 액션임을 요약에 명시.
+  const deleteSpec: ActionModalSpec | null = deleteTarget
+    ? {
+        title: 'API Key 삭제',
+        subtitle:
+          '삭제한 키는 복구할 수 없습니다. 연동 호출이 즉시 중단됩니다.',
+        rows: [
+          { label: '대상 키', value: deleteTarget.name },
+          { label: 'Masked Key', value: deleteTarget.maskedKey },
+          {
+            label: '상태',
+            value: deleteTarget.active ? '활성 (사용 중일 수 있음)' : '비활성',
+          },
+          { label: '처리', value: '영구 삭제 — 감사 로그 기록' },
+        ],
+        confirmLabel: '삭제',
+      }
+    : null
+  const removeKey = () => {
+    if (!deleteTarget) return
+    const k = deleteTarget
     deleteKey.mutate(k.id, {
       onSuccess: () => toast.success(`${k.name} 삭제 — 감사 로그 기록`),
       onError: (e) => toast.danger(errMsg(e, '삭제에 실패했어요')),
+      onSettled: () => setDeleteTarget(null),
     })
   }
 
@@ -286,7 +309,7 @@ export default function HrdApiKeyPage() {
           </button>
           <button
             type="button"
-            onClick={() => removeKey(k)}
+            onClick={() => setDeleteTarget(k)}
             disabled={deleteKey.isPending}
             className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
           >
@@ -619,6 +642,14 @@ export default function HrdApiKeyPage() {
         spec={modal}
         onClose={() => setModal(null)}
         onConfirm={() => setModal(null)}
+      />
+
+      {/* 키 삭제 확인 — 복구 불가 액션 */}
+      <ActionModal
+        spec={deleteSpec}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={removeKey}
+        pending={deleteKey.isPending}
       />
     </div>
   )

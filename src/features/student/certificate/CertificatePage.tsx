@@ -52,7 +52,7 @@ export default function CertificatePage() {
             {tab === 'projects' && <ProjectsTab p={data.projects} />}
             {tab === 'problem-solving' && <ProblemTab p={data.problem} />}
             {tab === 'growth-reputation' && <GrowthTab g={data.growth} />}
-            {tab === 'ai-analysis' && CERT_V2 && <AiTab data={data} />}
+            {tab === 'ai-analysis' && CERT_V2 && <AiTab />}
           </>
         )}
       </DataBoundary>

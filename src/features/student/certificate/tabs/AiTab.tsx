@@ -68,9 +68,28 @@ export function AiTab({ studentId = 'stu-001' }: { studentId?: string }) {
           </div>
         </AiAnalysisPanel>
         <AiAnalysisPanel title="AI 프로젝트 분석" className="flex-1">
-          <span className="text-fg-muted text-[12px] leading-5">
-            {projects.summary}
-          </span>
+          <div className="flex flex-col gap-3">
+            <span className="text-fg-muted text-[12px] leading-5">
+              {projects.summary}
+            </span>
+            {projects.groups.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {projects.groups.map((g) => (
+                  <div
+                    key={g.label}
+                    className="bg-surface flex flex-col gap-1 rounded-xl p-3"
+                  >
+                    <span className="text-accent-strong text-[11px] font-bold">
+                      {g.label}
+                    </span>
+                    <span className="text-fg-muted text-[11px] leading-4">
+                      {g.summary}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </AiAnalysisPanel>
       </div>
 

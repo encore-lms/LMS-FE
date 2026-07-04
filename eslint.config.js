@@ -12,6 +12,8 @@ export default tseslint.config(
       'coverage',
       'node_modules',
       'public/mockServiceWorker.js',
+      // 자동 생성(LMS-AI 계약 복사본) — 타입체크(tsc)로만 검증, 린트 제외
+      'src/features/student/certificate/ai/contract.gen.ts',
     ],
   },
   {

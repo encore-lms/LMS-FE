@@ -3,3 +3,6 @@ coverage
 node_modules
 pnpm-lock.yaml
 public
+
+# 자동 생성(LMS-AI 계약 복사본) — 원본과 byte 동일 유지(포맷터가 건드리지 않게)
+src/features/student/certificate/ai/contract.gen.ts

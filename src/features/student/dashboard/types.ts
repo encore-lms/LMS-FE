@@ -156,7 +156,7 @@ export interface StudentDashboardSummary {
   todos: DashboardTodo[]
   deadlineQuizzes: DashboardDeadlineQuiz[]
   mentoring: DashboardMentoring
-  attendance: DashboardAttendance
+  attendance?: DashboardAttendance | null
   notices: DashboardNotice[]
   notifications: DashboardNotification[]
   projects: DashboardProject[]

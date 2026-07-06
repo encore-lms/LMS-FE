@@ -14,6 +14,36 @@ import { NotificationList } from './components/NotificationList'
 import { ProjectList } from './components/ProjectList'
 import { TroubleshootingList } from './components/TroubleshootingList'
 import { SkeletonDashboard } from '@/components/ui/Skeleton'
+import type { DashboardAttendance } from './types'
+
+const pad = (value: number) => String(value).padStart(2, '0')
+
+function createEmptyAttendance(): DashboardAttendance {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth() + 1
+  const todayLabel = `${year}-${pad(month)}-${pad(today.getDate())}`
+
+  return {
+    calendar: {
+      year,
+      month,
+      today: todayLabel,
+      days: [],
+    },
+    summary: {
+      presentDays: 0,
+      totalDays: 0,
+      attendanceRate: 0,
+      streakDays: 0,
+      lateCount: 0,
+      absentCount: 0,
+      earlyLeaveCount: 0,
+      outingCount: 0,
+    },
+    trend: [],
+  }
+}
 
 /**
  * 수강생 대시보드 (/student 인덱스) — 오늘 할 일·평가·출결·알림·프로젝트를 한 화면에 요약.
@@ -39,6 +69,8 @@ export default function DashboardPage() {
     )
   }
 
+  const attendance = data.attendance ?? createEmptyAttendance()
+
   return (
     <div className="flex flex-col gap-6 p-8">
       <HeroBanner hero={data.hero} />
@@ -49,8 +81,8 @@ export default function DashboardPage() {
       </div>
       <MentoringSummary mentoring={data.mentoring} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <AttendanceCalendar attendance={data.attendance} />
-        <AttendanceSummary attendance={data.attendance} />
+        <AttendanceCalendar attendance={attendance} />
+        <AttendanceSummary attendance={attendance} />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <NoticeList notices={data.notices} />

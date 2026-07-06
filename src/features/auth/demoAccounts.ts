@@ -8,7 +8,8 @@ export interface DemoAccount {
 }
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
-  { label: '수강생', email: 'student1@playdata.io', password: 'password123!' },
+  // 수강생은 이메일 대신 수강생 코드(uuid)로 로그인 — SK네트웍스 Family AI캠프 32기 박수진
+  { label: '수강생', email: '100058794696', password: 'Lms@B5Btu9DfnGDE' },
   { label: '멘토', email: 'apsxh123@naver.com', password: 'Lms@MXKi7uBGfh76' },
   { label: '강사', email: 'rkdtk123@naver.com', password: 'Lms@RAmGcDJBCqw9' },
   {

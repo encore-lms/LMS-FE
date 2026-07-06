@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
+import { useAuthStore } from '@/shared/store'
 
 // 앱 전역 단일 QueryClient. 모듈 싱글톤이라 StrictMode 이중 마운트에도 인스턴스가 유지된다.
 // (싱글톤이므로 StrictMode의 이중 마운트 부수효과 검증 대상에서 제외됨 — 내부 로직 변경 시 수동 확인 필요)
@@ -17,4 +18,11 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
+})
+
+// 세션 종료(로그아웃·401 만료) 시 서버 상태 캐시 전체 정리 —
+// 같은 브라우저에서 다른 사용자로 재로그인할 때 이전 사용자 데이터(알림 등)가
+// staleTime 안에서 캐시 히트로 그대로 노출되는 것을 방지(SPA 라우팅이라 리로드 없음).
+useAuthStore.subscribe((state, prev) => {
+  if (prev.token && !state.token) queryClient.clear()
 })

@@ -14,7 +14,7 @@ import {
   useQnaDetail,
 } from '../api/qna'
 import { MarkdownEditor } from './components/MarkdownEditor'
-import { addLocalNotification } from '../components/localNotifications'
+import { addLocalNotification } from '@/features/notifications/localNotifications'
 import { QNA_MOCK_PARTICIPANTS, type QnaAnswer, type Tone } from './types'
 
 const card = 'border-border bg-surface rounded-2xl border p-6'

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bell } from 'lucide-react'
-import { useStudentNotifications } from '../api/notifications'
+import { useRoleNotifications } from './api'
 import { useLocalNotificationStore } from './localNotifications'
 
-// 헤더 알림 벨 — 대시보드 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기(로컬 반영).
+// 헤더 알림 벨 — 전 역할 공통. 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기(로컬 반영).
 // 읽음 처리 mutation은 BE 계약 확정 후 — 현재는 로컬 readIds 로 미확인 점을 끈다.
 // 멘션 등 FE 발생 알림(localNotifications)을 서버 알림 위에 합성한다.
 export function NotificationBell() {
-  const { data } = useStudentNotifications()
+  const { data } = useRoleNotifications()
   const localItems = useLocalNotificationStore((s) => s.items)
   const [open, setOpen] = useState(false)
   const [readIds, setReadIds] = useState<Set<string>>(new Set())

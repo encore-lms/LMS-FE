@@ -1,6 +1,7 @@
 // 수강생 대시보드 도메인 계약 — 기능 로컬(공유 파일 미오염). BE 합류 시 페어가 정합.
 // 대시보드는 여러 도메인 요약을 한 endpoint로 합쳐 받는다(StudentDashboardSummary).
 // 정책(§2): 증명서 위젯·6축 역량·강의 진도율·채점 대기·랭킹·커뮤니티 피드는 대시보드에 노출 안 함.
+import type { AppNotification } from '@/shared/types'
 
 /** 시맨틱 색조 — 칩/배지/점/막대의 @theme 토큰 매핑 키(components/tone.ts) */
 export type Tone =
@@ -123,14 +124,8 @@ export interface DashboardNotice {
   relativeTime: string // "1시간 전"
 }
 
-/** 시스템 알림 1건 (본인 관련 이벤트) */
-export interface DashboardNotification {
-  id: string
-  title: string
-  source: string // 운영자 박지수 / 평판 시스템 / 강사 이정훈
-  relativeTime: string // "1시간 전"
-  unread: boolean
-}
+/** 시스템 알림 1건 (본인 관련 이벤트) — 헤더 알림 벨과 공용 계약(shared/types) 단일 타입 */
+export type DashboardNotification = AppNotification
 
 /** 진행 중 프로젝트 1건 */
 export interface DashboardProject {

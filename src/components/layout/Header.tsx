@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, LogOut, Search, User } from 'lucide-react'
+import { LogOut, Search, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, useAuthActions, usePageHeaderStore } from '@/shared/store'
-import { NotificationBell } from '@/features/student/components/NotificationBell'
+import { NotificationBell } from '@/features/notifications/NotificationBell'
 
 // 헤더 — 콘텐츠 영역 상단 바. 좌측: 페이지 제목·설명(usePageHeader로 각 페이지가 등록),
 // 우측 클러스터: 검색 · 알림 · 프로필. 구분선 없이 본문과 이어지는 통합형(Figma 기준).
@@ -59,18 +59,8 @@ export function Header() {
           />
         </div>
 
-        {/* 알림 — 수강생은 대시보드 알림 드롭다운 활성, 그 외 역할은 후속(BE 연동) */}
-        {role === 'STUDENT' ? (
-          <NotificationBell />
-        ) : (
-          <button
-            type="button"
-            aria-label="알림"
-            className="text-fg-muted hover:text-fg"
-          >
-            <Bell className="h-5 w-5" />
-          </button>
-        )}
+        {/* 알림 — 전 역할 공통 드롭다운(서버 알림은 역할별로 useRoleNotifications가 분기) */}
+        <NotificationBell />
 
         {/* 프로필 */}
         <div className="relative" ref={menuRef}>

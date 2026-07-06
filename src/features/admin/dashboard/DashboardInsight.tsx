@@ -51,6 +51,8 @@ interface PopoverItem {
   key: string
   label: string
   value: ReactNode
+  /** 값이 길어 라벨 우측에 못 들어가는 경우(미출석 명단 등) 라벨 아래 전체 폭으로 줄바꿈. */
+  stacked?: boolean
 }
 
 /** 오늘 주목 포인트 문장 — 시급한 것부터 최대 3개. */
@@ -345,7 +347,7 @@ function MetricTile({
 }) {
   return (
     <div
-      className="group relative flex min-h-[7rem] min-w-0 flex-col gap-1.5 rounded-2xl border border-white/[0.08] bg-white/[0.045] p-[0.95rem] transition-all outline-none hover:-translate-y-px hover:border-white/20 hover:bg-white/[0.075] focus-visible:border-white/20 focus-visible:bg-white/[0.075]"
+      className="group relative z-0 flex min-h-[7rem] min-w-0 flex-col gap-1.5 rounded-2xl border border-white/[0.08] bg-white/[0.045] p-[0.95rem] transition-all outline-none hover:z-30 hover:-translate-y-px hover:border-white/20 hover:bg-white/[0.075] focus-visible:z-30 focus-visible:border-white/20 focus-visible:bg-white/[0.075]"
       tabIndex={0}
     >
       <span className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wide whitespace-nowrap text-white/55">
@@ -364,7 +366,7 @@ function MetricTile({
       <div
         role="tooltip"
         className={cn(
-          'invisible absolute top-[calc(100%+0.625rem)] z-[10002] w-max max-w-[26rem] min-w-[17rem] scale-[0.98] rounded-[14px] bg-white p-4 text-[#181A20] opacity-0 shadow-[0_12px_32px_rgba(0,0,0,0.18)] transition-all group-focus-within:visible group-focus-within:scale-100 group-focus-within:opacity-100 group-hover:visible group-hover:scale-100 group-hover:opacity-100',
+          'invisible absolute top-[calc(100%+0.625rem)] z-[10002] w-max max-w-[26rem] min-w-[17rem] scale-[0.98] rounded-[14px] bg-white p-4 text-[#181A20] opacity-0 shadow-[0_12px_32px_rgba(0,0,0,0.18)] transition-all group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-visible:visible group-focus-visible:scale-100 group-focus-visible:opacity-100',
           alignRight ? 'right-0' : 'left-0',
         )}
       >
@@ -375,19 +377,34 @@ function MetricTile({
           <span className="text-[13px] text-black/55">{emptyText}</span>
         ) : (
           <ul className="flex flex-col gap-2.5">
-            {items.map((it) => (
-              <li
-                key={it.key}
-                className="flex items-center justify-between gap-4 text-[13px] leading-tight"
-              >
-                <span className="min-w-0 flex-1 font-semibold break-keep text-black/[0.78]">
-                  {it.label}
-                </span>
-                <span className="shrink-0 text-right font-bold text-[#181A20] tabular-nums">
-                  {it.value}
-                </span>
-              </li>
-            ))}
+            {items.map((it) =>
+              it.stacked ? (
+                // 긴 값(미출석 명단) — 라벨 위, 값은 아래 전체 폭으로 줄바꿈.
+                <li
+                  key={it.key}
+                  className="flex flex-col gap-1 text-[13px] leading-snug"
+                >
+                  <span className="font-semibold break-keep text-black/[0.78]">
+                    {it.label}
+                  </span>
+                  <span className="text-left [overflow-wrap:anywhere] break-keep text-black/[0.65]">
+                    {it.value}
+                  </span>
+                </li>
+              ) : (
+                <li
+                  key={it.key}
+                  className="flex items-center justify-between gap-4 text-[13px] leading-tight"
+                >
+                  <span className="min-w-0 flex-1 font-semibold break-keep text-black/[0.78]">
+                    {it.label}
+                  </span>
+                  <span className="shrink-0 text-right font-bold text-[#181A20] tabular-nums">
+                    {it.value}
+                  </span>
+                </li>
+              ),
+            )}
           </ul>
         )}
       </div>
@@ -405,9 +422,20 @@ function scheduleTone(cat: string) {
   return SCHEDULE_TONE[cat] ?? 'bg-white/[0.07] text-white/70'
 }
 
-/** 하단 초점 밴드 — 성취도 스냅샷 · 위클리 체크 · 수료 임박. (일정은 아래 별도 행) */
+/** 출석률에 따른 게이지 색 — 이전 LMS 신호등 규칙(초록/노랑/빨강). */
+function gaugeColor(rate: number) {
+  if (rate >= 90) return '#40C057'
+  if (rate >= 80) return '#FAB005'
+  return '#FF6B6B'
+}
+
+/** 하단 초점 밴드 — 기수별 출석률 게이지 · 성취도 · 위클리 · 수료 임박. */
 function FocusBand({ boards }: { boards: CohortBoard[] }) {
   const active = boards.filter((b) => b.status === 'operating')
+  // 기수별 출석률 게이지 — 데이터 있는 기수(평균 출석률) 도형화.
+  const gaugeCards = boards
+    .filter((b) => b.attendance?.avgRate != null)
+    .map((b) => ({ label: b.cohortLabel, rate: b.attendance!.avgRate! }))
   const assessmentCards = active
     .filter((b) => b.assessment?.latestRound != null)
     .map((b) => ({ label: b.cohortLabel, a: b.assessment! }))
@@ -420,6 +448,7 @@ function FocusBand({ boards }: { boards: CohortBoard[] }) {
     .sort((a, b) => a.daysLeft - b.daysLeft)
 
   if (
+    gaugeCards.length === 0 &&
     assessmentCards.length === 0 &&
     weeklyCards.length === 0 &&
     ending.length === 0
@@ -428,6 +457,39 @@ function FocusBand({ boards }: { boards: CohortBoard[] }) {
 
   return (
     <div className="relative z-[1] grid grid-cols-1 gap-3 border-t border-white/10 pt-5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* 기수별 출석률 게이지 — 도형 시각화 */}
+      {gaugeCards.length > 0 && (
+        <div className="rounded-2xl bg-white/[0.05] p-4">
+          <p className="text-[11px] font-semibold tracking-wide text-white/55">
+            기수별 출석률
+          </p>
+          <ul className="mt-2.5 flex flex-col gap-2.5">
+            {gaugeCards.map(({ label, rate }) => (
+              <li key={label} className="flex items-center gap-2.5">
+                <span className="w-10 shrink-0 text-[12px] font-bold text-white">
+                  {label}
+                </span>
+                <span className="h-2 flex-1 overflow-hidden rounded-full bg-white/15">
+                  <span
+                    className="block h-full rounded-full transition-[width] duration-500"
+                    style={{
+                      width: `${Math.min(100, rate)}%`,
+                      background: gaugeColor(rate),
+                    }}
+                  />
+                </span>
+                <span
+                  className="w-11 shrink-0 text-right text-[12px] font-extrabold tabular-nums"
+                  style={{ color: gaugeColor(rate) }}
+                >
+                  {rate}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* 성취도 스냅샷 */}
       {assessmentCards.length > 0 && (
         <div className="rounded-2xl bg-white/[0.05] p-4">
@@ -672,11 +734,8 @@ export function DashboardInsight({
     .map((b) => ({
       key: b.cohortId,
       label: `${b.cohortLabel} (${b.attendance!.todayAbsentees.length}명)`,
-      value: (
-        <span className="block text-left font-medium break-keep text-black/65">
-          {b.attendance!.todayAbsentees.map((a) => a.name).join(', ')}
-        </span>
-      ),
+      stacked: true,
+      value: b.attendance!.todayAbsentees.map((a) => a.name).join(', '),
     }))
   const pendingItems: PopoverItem[] = boards
     .map((b) => {
@@ -832,6 +891,7 @@ export function DashboardInsight({
             popoverTitle="기수별 반복 이상 출결"
             items={riskItems}
             emptyText="진행 중 기수 위험군이 없습니다."
+            alignRight
           />
           <MetricTile
             label="오늘 미출석"

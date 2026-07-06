@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 // 출석률 추이 스파크라인(SVG, 라이브러리 없이). 이전 매니저 대시보드의 Sparkline 포팅.
 // points: 0~100 값 배열. todayIndex 점은 링으로 강조.
 export function Sparkline({
@@ -13,6 +15,8 @@ export function Sparkline({
   stroke?: string
   todayIndex?: number
 }) {
+  // 한 화면에 여러 스파크라인이 있어 gradient id가 겹치면 렌더가 깨진다 → 인스턴스별 고유 id.
+  const gradientId = useId()
   if (points.length < 2) return null
   const pad = 4
   const innerH = height - pad * 2
@@ -38,12 +42,12 @@ export function Sparkline({
       aria-hidden
     >
       <defs>
-        <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
           <stop offset="100%" stopColor={stroke} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill="url(#spark-fill)" />
+      <path d={area} fill={`url(#${gradientId})`} />
       <path
         d={line}
         fill="none"

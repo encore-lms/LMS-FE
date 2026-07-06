@@ -1,11 +1,19 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, CalendarClock, Inbox, Users } from 'lucide-react'
+import {
+  AlertTriangle,
+  CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Users,
+} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Empty } from '@/components/ui/Empty'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
+import { Modal } from '@/components/ui/Modal'
 import {
   Skeleton,
   SkeletonKpiRow,
@@ -52,7 +60,8 @@ export default function AdminDashboard() {
   const myCohorts = useMyCohorts()
   const dashboard = useOperatorDashboard(myCohorts.data)
   const hrdLive = useHrdLiveSummaries(myCohorts.data, dashboard.data?.cohorts)
-  const [selected, setSelected] = useState<'all' | string>('all')
+  // 상세 모달로 띄울 기수 id. null이면 전체 비교 화면.
+  const [selected, setSelected] = useState<string | null>(null)
 
   // 소스 우선순위 — 인입큐(staging) 데이터가 있으면 staging, 없으면 HRD-Net 라이브 집계로 채운다.
   const boards = useMemo<CohortBoard[]>(() => {
@@ -81,11 +90,10 @@ export default function AdminDashboard() {
     })
   }, [dashboard.data, hrdLive.data])
   const single = boards.length === 1
-  const current = single
-    ? boards[0]
-    : selected === 'all'
-      ? null
-      : (boards.find((b) => b.cohortId === selected) ?? null)
+  // 담당 1개면 딥다이브를 그대로 노출, 여러 개면 전체 비교 + 기수 클릭 시 상세 모달.
+  const modalBoard = single
+    ? null
+    : (boards.find((b) => b.cohortId === selected) ?? null)
 
   if (myCohorts.isPending || (myCohorts.data?.length && dashboard.isPending)) {
     return <DashboardSkeleton />
@@ -127,36 +135,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-8">
-      {/* 상단 — 날짜 + 기수 스위처 */}
+      {/* 상단 — 날짜 + 기수 바로가기(상세 모달) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-fg-muted text-[13px]">
           {dashboard.data.today} · 담당 {boards.length}개 기수
         </p>
         {!single && (
           <div className="border-border bg-surface inline-flex gap-1 rounded-lg border p-1">
-            <button
-              type="button"
-              onClick={() => setSelected('all')}
-              className={cn(
-                'rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                selected === 'all'
-                  ? 'bg-brand text-on-color'
-                  : 'text-fg-muted hover:text-fg',
-              )}
-            >
-              전체
-            </button>
             {boards.map((b) => (
               <button
                 key={b.cohortId}
                 type="button"
                 onClick={() => setSelected(b.cohortId)}
-                className={cn(
-                  'rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                  selected === b.cohortId
-                    ? 'bg-brand text-on-color'
-                    : 'text-fg-muted hover:text-fg',
-                )}
+                className="text-fg-muted hover:text-fg hover:bg-surface-muted rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
               >
                 {b.cohortLabel}
               </button>
@@ -166,9 +157,9 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-5">
-        {current ? (
+        {single ? (
           <CohortDeepDive
-            board={current}
+            board={boards[0]}
             hrdPending={hrdLive.isPending && hrdLive.isFetching}
           />
         ) : (
@@ -181,6 +172,26 @@ export default function AdminDashboard() {
           />
         )}
       </div>
+
+      {/* 기수 상세 모달 — 비교 표/칩에서 기수 클릭 시 */}
+      <Modal
+        open={!!modalBoard}
+        onClose={() => setSelected(null)}
+        size="lg"
+        title={
+          modalBoard
+            ? `${modalBoard.courseName} ${modalBoard.cohortLabel}`
+            : undefined
+        }
+      >
+        {modalBoard && (
+          <CohortDeepDive
+            board={modalBoard}
+            hrdPending={hrdLive.isPending && hrdLive.isFetching}
+            hideHeader
+          />
+        )}
+      </Modal>
     </div>
   )
 }
@@ -475,18 +486,23 @@ function AllCohortsView({
 function CohortDeepDive({
   board,
   hrdPending,
+  hideHeader,
 }: {
   board: CohortBoard
   hrdPending?: boolean
+  /** 모달에서 제목이 이미 있을 때 내부 헤더를 숨긴다. 소스·기간 배지는 유지. */
+  hideHeader?: boolean
 }) {
   const meta = STATUS_META[board.status]
 
   return (
     <>
       <div className="flex flex-wrap items-center gap-2.5">
-        <p className="text-fg text-[15px] font-bold">
-          {board.courseName} {board.cohortLabel}
-        </p>
+        {!hideHeader && (
+          <p className="text-fg text-[15px] font-bold">
+            {board.courseName} {board.cohortLabel}
+          </p>
+        )}
         <StatusBadge label={meta.label} tone={meta.tone} />
         {board.source === 'hrd-live' && (
           <StatusBadge label="HRD-Net 라이브" tone="info" />
@@ -772,22 +788,67 @@ function BarRow({
   )
 }
 
+const ISSUE_PAGE_SIZE = 5
+
+// 관리 필요/결석자 목록 — 한 번에 최대 5명, 좌우 화살표로 페이지 이동.
 function IssueList({
   rows,
 }: {
   rows: { key: string; name: string; desc: string }[]
 }) {
+  const [page, setPage] = useState(0)
+  const pageCount = Math.ceil(rows.length / ISSUE_PAGE_SIZE)
+  // rows가 줄어 현재 페이지가 범위를 벗어나면 보정.
+  const safePage = Math.min(page, Math.max(0, pageCount - 1))
+  const start = safePage * ISSUE_PAGE_SIZE
+  const visible = rows.slice(start, start + ISSUE_PAGE_SIZE)
+
   return (
-    <ul className="divide-border divide-y">
-      {rows.map((row) => (
-        <li
-          key={row.key}
-          className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
-        >
-          <span className="text-fg text-[13px] font-semibold">{row.name}</span>
-          <span className="text-fg-muted text-[12px]">{row.desc}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col">
+      <ul className="divide-border divide-y">
+        {visible.map((row) => (
+          <li
+            key={row.key}
+            className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
+          >
+            <span className="text-fg text-[13px] font-semibold">
+              {row.name}
+            </span>
+            <span className="text-fg-muted text-[12px]">{row.desc}</span>
+          </li>
+        ))}
+      </ul>
+      {pageCount > 1 && (
+        <div className="border-border mt-2 flex items-center justify-between border-t pt-2">
+          <span className="text-fg-subtle text-[11px] tabular-nums">
+            {start + 1}–{Math.min(start + ISSUE_PAGE_SIZE, rows.length)} / 총{' '}
+            {rows.length}명
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="이전 수강생"
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage === 0}
+              className="border-border text-fg-muted hover:bg-surface-muted flex size-6 items-center justify-center rounded-md border disabled:opacity-40"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-fg-subtle text-[11px] tabular-nums">
+              {safePage + 1}/{pageCount}
+            </span>
+            <button
+              type="button"
+              aria-label="다음 수강생"
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage >= pageCount - 1}
+              className="border-border text-fg-muted hover:bg-surface-muted flex size-6 items-center justify-center rounded-md border disabled:opacity-40"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

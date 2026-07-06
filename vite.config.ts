@@ -73,6 +73,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 강사 퀴즈 템플릿(/instructor/quiz-templates) learning-service 실연동(mock 제거).
+      '/api/instructor/quiz-templates': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 운영 퀴즈 정답 관리(/admin/quizzes/:id/answers·impact·changes) learning-service 실연동.
       // 수동 채점(.../submissions/:id/grade)은 아직 MSW mock이 가로채므로 프록시로 안 감(핸들러 우선).
       '/api/admin/quizzes': {

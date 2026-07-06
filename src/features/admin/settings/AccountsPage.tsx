@@ -583,7 +583,16 @@ export default function AccountsPage() {
         onConfirm={onConfirm}
       />
 
-      <TempPasswordModal account={pwTarget} onClose={() => setPwTarget(null)} />
+      <TempPasswordModal
+        target={
+          pwTarget && {
+            userId: pwTarget.id,
+            name: pwTarget.name,
+            detail: pwTarget.email,
+          }
+        }
+        onClose={() => setPwTarget(null)}
+      />
 
       <ScopeModal
         account={scopeTarget}

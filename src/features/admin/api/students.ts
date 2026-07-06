@@ -112,20 +112,6 @@ export function useSyncStudents() {
   })
 }
 
-export interface PasswordResetResult {
-  userId: string
-  temporaryPassword: string
-}
-// 임시 비밀번호 재발급(1회 표시).
-export function useResetStudentPassword() {
-  return useMutation<PasswordResetResult, Error, string>({
-    mutationFn: (userId) =>
-      apiClient
-        .post<PasswordResetResult>(`/auth/accounts/${userId}/password/reset`)
-        .then((r) => r.data),
-  })
-}
-
 // 관리자 출결 조회 — learning-service HRD 일별 출결(과정/기수/일자). 셋 다 있어야 조회.
 export function useStudentAttendance(
   courseId?: string | null,

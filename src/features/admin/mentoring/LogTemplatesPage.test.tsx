@@ -105,7 +105,7 @@ function renderPage() {
 describe('LogTemplatesPage (§31)', () => {
   beforeEach(() => setStatusMutate.mockClear())
 
-  it('목록·요약·반영 정책 — 총계 칩과 비활성 배지, 스냅샷 보존 안내를 렌더한다', () => {
+  it('목록·요약 — 총계 칩과 비활성 배지, 돌아가기 링크를 렌더한다', () => {
     renderPage()
     expect(screen.getByText('총 3 템플릿 · 기본 1')).toBeInTheDocument()
     expect(
@@ -118,8 +118,9 @@ describe('LogTemplatesPage (§31)', () => {
     // 첫 활성 템플릿 자동 선택 — 메타 카드 '기본 템플릿' 배지 + 항목 편집
     expect(screen.getByText('기본 템플릿')).toBeInTheDocument()
     expect(screen.getByText('항목 편집 — 2항목')).toBeInTheDocument()
+    // 탭 제거 후 배정 관리로 돌아가는 링크 노출
     expect(
-      screen.getByText(/기존 제출 일지·작성 중 초안은 작성 당시 항목 구조와/),
+      screen.getByRole('link', { name: /멘토 배정 관리로 돌아가기/ }),
     ).toBeInTheDocument()
   })
 

@@ -1,7 +1,171 @@
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import {
+  AlignLeft,
+  Check,
+  ChevronDown,
+  Image as ImageIcon,
+  ImagePlus,
+  Minus,
+  type LucideIcon,
+} from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Checkbox } from '@/components/ui/Checkbox'
+import { cn } from '@/shared/lib/cn'
 import type { AdminTemplateFieldType } from './types'
+
+/** 항목 타입 선택지 — 아이콘 + 라벨 + 한줄 설명. */
+const TYPE_OPTIONS: {
+  value: AdminTemplateFieldType
+  label: string
+  icon: LucideIcon
+  hint: string
+}[] = [
+  {
+    value: 'long_text',
+    label: '긴 텍스트',
+    icon: AlignLeft,
+    hint: '여러 줄 서술',
+  },
+  {
+    value: 'short_text',
+    label: '짧은 텍스트',
+    icon: Minus,
+    hint: '한 줄 입력',
+  },
+  { value: 'image', label: '이미지', icon: ImageIcon, hint: '사진·캡처 첨부' },
+  {
+    value: 'text_image',
+    label: '텍스트 + 이미지',
+    icon: ImagePlus,
+    hint: '서술 + 사진 첨부',
+  },
+]
+
+/**
+ * 항목 타입 커스텀 드롭다운 — 아이콘 앞·라벨 뒤.
+ * 목록은 포털(fixed)로 띄워 모달 본문 overflow에 잘리지 않게 한다.
+ */
+function TypePicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: AdminTemplateFieldType
+  onChange: (v: AdminTemplateFieldType) => void
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const selected =
+    TYPE_OPTIONS.find((o) => o.value === value) ?? TYPE_OPTIONS[0]
+  const SelIcon = selected.icon
+
+  // 열릴 때 트리거 위치 기준으로 목록을 배치(아래 공간 부족하면 위로).
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return
+    const r = triggerRef.current.getBoundingClientRect()
+    const estHeight = 4 + TYPE_OPTIONS.length * 52
+    const below = window.innerHeight - r.bottom
+    const openUp = below < estHeight + 12 && r.top > below
+    setPos({
+      top: openUp ? r.top - estHeight - 6 : r.bottom + 6,
+      left: r.left,
+      width: r.width,
+    })
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (!triggerRef.current?.contains(t) && !listRef.current?.contains(t)) {
+        setOpen(false)
+      }
+    }
+    const onScrollOrResize = () => setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    // 캡처 단계로 모달 본문 스크롤도 감지해 닫는다.
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      window.removeEventListener('scroll', onScrollOrResize, true)
+      window.removeEventListener('resize', onScrollOrResize)
+    }
+  }, [open])
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="border-border bg-surface text-fg focus:border-brand flex h-10 w-52 items-center justify-between gap-2 rounded-lg border px-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span className="flex items-center gap-2">
+          <SelIcon className="text-fg-muted h-4 w-4" />
+          <span className="font-medium">{selected.label}</span>
+        </span>
+        <ChevronDown className="text-fg-subtle h-4 w-4" />
+      </button>
+      {open &&
+        !disabled &&
+        pos &&
+        createPortal(
+          <ul
+            ref={listRef}
+            role="listbox"
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
+            className="border-border fixed z-[10050] overflow-hidden rounded-lg border bg-white p-1 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+          >
+            {TYPE_OPTIONS.map((o) => {
+              const Icon = o.icon
+              const isSel = o.value === value
+              return (
+                <li key={o.value}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(o.value)
+                      setOpen(false)
+                    }}
+                    className={cn(
+                      'hover:bg-surface-muted flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left',
+                      isSel && 'bg-brand/5',
+                    )}
+                  >
+                    <span className="bg-surface-muted text-fg-muted inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="text-fg block text-[13px] font-semibold">
+                        {o.label}
+                      </span>
+                      <span className="text-fg-subtle block text-[11px]">
+                        {o.hint}
+                      </span>
+                    </span>
+                    {isSel && <Check className="text-brand h-4 w-4 shrink-0" />}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>,
+          document.body,
+        )}
+    </>
+  )
+}
 
 export interface FieldFormValues {
   name: string
@@ -112,28 +276,16 @@ export function FieldFormModal({
             className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
           />
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-start gap-6">
           <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="field-form-type"
-              className="text-fg-muted text-xs font-bold"
-            >
-              타입
-            </label>
-            <select
-              id="field-form-type"
+            <span className="text-fg-muted text-xs font-bold">타입</span>
+            <TypePicker
               value={type}
-              onChange={(e) =>
-                setType(e.target.value as AdminTemplateFieldType)
-              }
+              onChange={setType}
               disabled={!typeEditable}
-              className="border-border bg-surface text-fg focus:border-brand h-10 rounded-lg border px-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <option value="long_text">긴 텍스트</option>
-              <option value="short_text">짧은 텍스트</option>
-            </select>
+            />
           </div>
-          <div className="mt-5">
+          <div className="mt-6">
             <Checkbox
               checked={required}
               onChange={setRequired}
@@ -143,8 +295,8 @@ export function FieldFormModal({
         </div>
         <ul className="text-fg-subtle flex flex-col gap-1 text-xs">
           <li>
-            • 타입은 짧은/긴 텍스트만 — 선택형·점수형·체크리스트는 이번 범위
-            제외
+            • 타입: 텍스트(짧은/긴) · 이미지 · 텍스트+이미지 — 선택형·점수형은
+            범위 제외
           </li>
           <li>• {notice}</li>
         </ul>

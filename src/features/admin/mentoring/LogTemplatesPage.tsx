@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   Copy,
   Info,
@@ -28,7 +30,6 @@ import { FIELD_TYPE_META } from './statusMeta'
 import { newFieldId } from './fieldDiff'
 import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
 import { TemplateFormModal } from './TemplateFormModal'
-import { MentoringTabs } from './MentoringTabs'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import type { AdminLogTemplate, AdminTemplateField } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -55,6 +56,10 @@ export default function LogTemplatesPage() {
   // Figma 스냅샷 기준 기본 ON — OFF 시 비활성 템플릿을 목록에서 제외.
   const [includeInactive, setIncludeInactive] = useState(true)
   const [templateFormOpen, setTemplateFormOpen] = useState(false)
+  // 템플릿 이름·설명 수정 대상(null이면 닫힘).
+  const [renameTemplate, setRenameTemplate] = useState<AdminLogTemplate | null>(
+    null,
+  )
   // 항목 삭제 확인 대상 — 파괴적 액션은 ActionModal 확인을 거친다.
   const [deleteField, setDeleteField] = useState<AdminTemplateField | null>(
     null,
@@ -200,7 +205,14 @@ export default function LogTemplatesPage() {
 
   return (
     <div className="p-8">
-      <MentoringTabs />
+      {/* 돌아가기 — 멘토 배정 관리로 */}
+      <Link
+        to="/admin/mentors/assignments"
+        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        멘토 배정 관리로 돌아가기
+      </Link>
       {/* Hero — 총계 칩 + 반영 정책 경고 칩 + 복제/생성 CTA */}
       <div className="bg-brand shadow-hero flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
         <div className="flex flex-col gap-3">
@@ -356,6 +368,14 @@ export default function LogTemplatesPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setRenameTemplate(selected)}
+                      className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      이름 수정
+                    </button>
                     <button
                       type="button"
                       onClick={() => duplicate(selected)}
@@ -536,27 +556,23 @@ export default function LogTemplatesPage() {
         </div>
       </div>
 
-      {/* 반영 정책 · §31 — 기존 일지 스냅샷 보존·새 일지부터 적용 */}
-      <div className="bg-warning-bg border-warning/40 mt-6 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">반영 정책</p>
-        <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
-          <li>• 템플릿 수정은 기존 팀에 자동 반영되지 않습니다</li>
-          <li>• 새로 배정되는 팀에만 최신 템플릿이 기본 적용됩니다</li>
-          <li>
-            • 기존 제출 일지·작성 중 초안은 작성 당시 항목 구조와 답변 스냅샷을
-            보존하고, 변경은 새 일지부터 적용됩니다
-          </li>
-          <li>
-            • 기존 팀에 반영하려면 팀별 일지 항목 설정에서 직접 수정합니다
-          </li>
-        </ul>
-      </div>
-
       {templateFormOpen && (
         <TemplateFormModal
           open
           onClose={() => setTemplateFormOpen(false)}
           onCreated={setSelectedId}
+        />
+      )}
+      {renameTemplate && (
+        <TemplateFormModal
+          open
+          onClose={() => setRenameTemplate(null)}
+          onCreated={setSelectedId}
+          editTemplate={{
+            templateId: renameTemplate.templateId,
+            name: renameTemplate.name,
+            description: renameTemplate.description ?? '',
+          }}
         />
       )}
       {/* 항목 삭제 확인 — 새 일지부터 적용(스냅샷 보존) */}

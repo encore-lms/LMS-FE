@@ -28,7 +28,11 @@ export const MENTOR_TEAM_STATUS_LABEL: Record<MentorTeamStatus, string> = {
 }
 
 /** 일지 상태 — 초안/유효/수정 요청(폐기·반려 없음, 05-31 확정). 재제출 시 즉시 valid 복귀. */
-export type MentoringLogStatus = 'draft' | 'valid' | 'change_requested'
+export type MentoringLogStatus =
+  | 'draft'
+  | 'submitted'
+  | 'valid'
+  | 'change_requested'
 
 /** 멘토-팀 배정 + 시간 집계 read model — 대시보드·내 배정 팀 공용 행. */
 export interface MentorTeamAssignment {

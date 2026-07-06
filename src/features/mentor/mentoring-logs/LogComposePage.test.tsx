@@ -99,11 +99,11 @@ describe('LogComposePage', () => {
       screen.getByText('파일·문서를 끌어 놓거나 클릭해 업로드'),
     ).toBeInTheDocument()
     expect(screen.getByText('사진 추가')).toBeInTheDocument()
-    // 시간 차감 자동 산정 배너 + 정책 캡션(중복 카피 제거본)
+    // 시간 차감 자동 산정 배너 + 정책 캡션(승인 단계 도입 반영)
     expect(screen.getByText('시간 차감 자동 산정')).toBeInTheDocument()
     expect(
       screen.getByText(
-        '제출 즉시 자동 유효 · 수정 요청 시 전체 수정 후 재제출',
+        '제출 시 승인 대기 · 매니저 승인 후 인정 · 수정 요청 시 전체 수정 후 재제출',
       ),
     ).toBeInTheDocument()
     // 참석 멘티 — 기본 전원 선택(추천시스템 팀 5명)
@@ -162,11 +162,10 @@ describe('LogComposePage', () => {
     await user.click(screen.getByRole('button', { name: /일지 제출/ }))
 
     await waitFor(() => expect(submitMutateAsync).toHaveBeenCalled())
-    // 신규 작성 — 초안 생성(PUT draft) 후 해당 logId 로 submit
-    expect(draftMutateAsync).toHaveBeenCalledTimes(1)
+    // 신규 작성 — 제출=생성(초안 선저장 없음, logId 없이 바로 create). 승인 단계 도입.
+    expect(draftMutateAsync).not.toHaveBeenCalled()
     expect(submitMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({
-        logId: 'log_draft_t1',
         mode: 'submit',
         payload: expect.objectContaining({
           teamId: 'team_rec',
@@ -177,28 +176,17 @@ describe('LogComposePage', () => {
         }),
       }),
     )
+    expect(submitMutateAsync.mock.calls[0][0].logId).toBeUndefined()
     // 제출 완료 — 요약 페이지로 이동(state 로 요약 전달)
     expect(await screen.findByText('일지가 제출되었습니다')).toBeInTheDocument()
   })
 
-  it('임시 저장 — 검증 없이 부분 입력 그대로 보관한다', async () => {
-    const user = userEvent.setup()
+  it('신규 작성 — 임시 저장 버튼 없음(승인 단계 도입, 초안 제거)', async () => {
     renderPage()
-    await user.type(screen.getByLabelText('주요 아젠다'), '작성 중 메모')
-    await user.click(screen.getByRole('button', { name: '임시 저장' }))
-    expect(draftMutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        logId: undefined,
-        payload: expect.objectContaining({
-          teamId: 'team_rec',
-          answers: expect.arrayContaining([
-            { fieldSnapshotId: 'fld_agenda', value: '작성 중 메모' },
-          ]),
-        }),
-      }),
-      expect.anything(),
-    )
-    expect(submitMutateAsync).not.toHaveBeenCalled()
+    expect(
+      screen.queryByRole('button', { name: '임시 저장' }),
+    ).not.toBeInTheDocument()
+    expect(draftMutate).not.toHaveBeenCalled()
   })
 
   it('수정 요청 재제출 — 사유 배너 + 일지 재제출(임시 저장 없음)', async () => {

@@ -5,6 +5,7 @@ import {
   apiErrorOf,
   useChangeAssignmentMentor,
   useCreateMentorAssignment,
+  useRenameTeam,
   useUpdateAllocatedHours,
 } from './api'
 import type { MentorAssignmentRow, MentorAssignmentsData } from './types'
@@ -37,6 +38,8 @@ export function AssignmentManageModal({
   const updateHours = useUpdateAllocatedHours()
   const changeMentor = useChangeAssignmentMentor()
   const createAssignment = useCreateMentorAssignment()
+  const renameTeam = useRenameTeam()
+  const [teamName, setTeamName] = useState(row.teamName)
   const [hoursInput, setHoursInput] = useState(String(row.allocatedHours ?? ''))
   const [mentorId, setMentorId] = useState(row.mentor?.mentorId ?? '')
   // 409 MENTOR_ASSIGNMENT_HAS_LOGS 수신 후 새 배정 생성 안내 노출
@@ -44,6 +47,24 @@ export function AssignmentManageModal({
 
   if (!row.assignmentId) return null
   const assignmentId = row.assignmentId
+
+  const saveTeamName = () => {
+    const name = teamName.trim()
+    if (!name) {
+      toast.danger('팀명을 입력해 주세요.')
+      return
+    }
+    if (name === row.teamName) return
+    renameTeam.mutate(
+      { teamId: row.teamId, name },
+      {
+        onSuccess: (updated) =>
+          toast.success(`팀명 수정 — ${updated.teamName}`),
+        onError: (error) =>
+          toast.danger(apiErrorOf(error).message ?? '팀명 수정에 실패했어요.'),
+      },
+    )
+  }
 
   const saveHours = () => {
     const allocatedHours = Number(hoursInput)
@@ -138,9 +159,33 @@ export function AssignmentManageModal({
     >
       <div className="flex flex-col gap-5">
         <p className="text-fg-subtle text-xs">
-          {row.cohortLabel} · {row.courseName} · 팀원 {row.memberCount}명 · 누적
-          인정 {row.recognizedHours ?? 0}h
+          팀원 {row.memberCount}명 · 누적 인정 {row.recognizedHours ?? 0}h
         </p>
+
+        <section className="flex flex-col gap-1.5">
+          <label htmlFor="manage-name" className={FIELD_LABEL}>
+            팀명 수정
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="manage-name"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder="팀명"
+              className={INPUT_CLASS}
+            />
+            <button
+              type="button"
+              onClick={saveTeamName}
+              disabled={
+                renameTeam.isPending || teamName.trim() === row.teamName
+              }
+              className={SECTION_BTN}
+            >
+              저장
+            </button>
+          </div>
+        </section>
 
         <section className="flex flex-col gap-1.5">
           <label htmlFor="manage-hours" className={FIELD_LABEL}>

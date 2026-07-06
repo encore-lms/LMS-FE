@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ChevronDown, Search } from 'lucide-react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
+import {
+  Check,
+  ChevronDown,
+  FileText,
+  FileWarning,
+  Plus,
+  Search,
+} from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -8,7 +17,7 @@ import {
   useCohortStudents,
   useCreateMentorAssignmentFromStudents,
 } from './api'
-import type { AdminMentorLoadOption } from './types'
+import type { AdminLogTemplateOption, AdminMentorLoadOption } from './types'
 
 const FIELD_LABEL = 'text-fg-muted text-xs font-bold'
 const INPUT_CLASS =
@@ -30,6 +39,130 @@ function pctColor(pct: number | null) {
   if (pct >= 80) return '#40C057'
   if (pct >= 50) return '#FAB005'
   return '#FF6B6B'
+}
+
+/** 기본 일지 템플릿 커스텀 드롭다운 — 모달 하단이라 포털(fixed)로 띄워 잘림 방지. */
+function TemplatePicker({
+  templates,
+  value,
+  onChange,
+}: {
+  templates: AdminLogTemplateOption[]
+  value: string
+  onChange: (templateId: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const selected = templates.find((t) => t.templateId === value) ?? null
+
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return
+    const r = triggerRef.current.getBoundingClientRect()
+    const estHeight = 8 + Math.min(templates.length, 6) * 42
+    const below = window.innerHeight - r.bottom
+    const openUp = below < estHeight + 12 && r.top > below
+    setPos({
+      top: openUp ? r.top - estHeight - 6 : r.bottom + 6,
+      left: r.left,
+      width: r.width,
+    })
+  }, [open, templates.length])
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (!triggerRef.current?.contains(t) && !listRef.current?.contains(t))
+        setOpen(false)
+    }
+    const close = () => setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [open])
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={cn(
+          INPUT_CLASS,
+          'flex items-center justify-between text-left',
+        )}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <FileText className="text-fg-muted h-4 w-4 shrink-0" />
+          {selected ? (
+            <span className="text-fg truncate">
+              {selected.name}
+              {selected.isDefault && (
+                <span className="text-fg-subtle"> (기본)</span>
+              )}
+            </span>
+          ) : (
+            <span className="text-fg-subtle">템플릿 선택</span>
+          )}
+        </span>
+        <ChevronDown className="text-fg-subtle h-4 w-4 shrink-0" />
+      </button>
+      {open &&
+        pos &&
+        createPortal(
+          <ul
+            ref={listRef}
+            role="listbox"
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
+            className="border-border fixed z-[10050] max-h-64 overflow-y-auto rounded-lg border bg-white p-1 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+          >
+            {templates.map((t) => {
+              const isSel = t.templateId === value
+              return (
+                <li key={t.templateId}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(t.templateId)
+                      setOpen(false)
+                    }}
+                    className={cn(
+                      'hover:bg-surface-muted flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left',
+                      isSel && 'bg-brand/5',
+                    )}
+                  >
+                    <FileText className="text-fg-muted h-4 w-4 shrink-0" />
+                    <span className="text-fg min-w-0 flex-1 truncate text-[13px] font-semibold">
+                      {t.name}
+                    </span>
+                    {t.isDefault && (
+                      <span className="bg-accent-bg text-accent-strong shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                        기본
+                      </span>
+                    )}
+                    {isSel && <Check className="text-brand h-4 w-4 shrink-0" />}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>,
+          document.body,
+        )}
+    </>
+  )
 }
 
 /** 멘토 커스텀 드롭다운 — 이름 + 담당 개수·평균 진행률, 펼치면 담당 멘토링 목록. */
@@ -131,10 +264,6 @@ function MentorPicker({
                         >
                           <span className="text-fg-muted min-w-0 flex-1 truncate">
                             {mt.teamName}
-                            <span className="text-fg-subtle">
-                              {' '}
-                              · {mt.cohortLabel}
-                            </span>
                           </span>
                           <span className="bg-surface-muted h-1.5 w-16 shrink-0 overflow-hidden rounded-full">
                             <span
@@ -375,28 +504,28 @@ export function AssignmentCreateModal({
 
         {/* 기본 일지 템플릿 */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="create-template" className={FIELD_LABEL}>
-            기본 일지 템플릿 *
-          </label>
-          <select
-            id="create-template"
-            className={INPUT_CLASS}
-            value={templateId}
-            onChange={(e) => setTemplateId(e.target.value)}
-          >
-            <option value="">템플릿 선택</option>
-            {templates.map((t) => (
-              <option key={t.templateId} value={t.templateId}>
-                {t.name}
-                {t.isDefault ? ' (기본)' : ''}
-              </option>
-            ))}
-          </select>
-          {!options.isPending && templates.length === 0 && (
-            <p className="text-fg-subtle text-xs">
-              이 기수에 활성 일지 템플릿이 없어요 — 일지 템플릿에서 먼저 추가해
-              주세요.
-            </p>
+          <span className={FIELD_LABEL}>기본 일지 템플릿 *</span>
+          {!options.isPending && templates.length === 0 ? (
+            // 활성 템플릿이 없으면 선택 대신 생성 안내 + 바로가기.
+            <div className="border-border bg-surface-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed px-3 py-3">
+              <span className="text-fg-subtle inline-flex items-center gap-1.5 text-xs">
+                <FileWarning className="h-4 w-4" />이 기수에 사용할 수 있는 일지
+                템플릿이 없습니다.
+              </span>
+              <Link
+                to="/admin/mentoring/log-templates"
+                className="bg-brand-deep text-on-color hover:bg-brand-deep/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] font-bold"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                템플릿 생성하러 가기
+              </Link>
+            </div>
+          ) : (
+            <TemplatePicker
+              templates={templates}
+              value={templateId}
+              onChange={setTemplateId}
+            />
           )}
         </div>
 

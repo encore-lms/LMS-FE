@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, Plus, UserPlus } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { AlertTriangle, FileText, Plus, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
@@ -19,7 +19,6 @@ import {
 } from './statusMeta'
 import { AssignmentFormModal } from './AssignmentFormModal'
 import { AssignmentCreateModal } from './AssignmentCreateModal'
-import { AssignmentManageModal } from './AssignmentManageModal'
 import { EarlyEndModal } from './EarlyEndModal'
 import type { MentorAssignmentRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -30,16 +29,15 @@ function MentoringCard({
   logStat,
   logsPending,
   onAssign,
-  onManage,
   onEarlyEnd,
 }: {
   team: MentorAssignmentRow
   logStat?: { total: number; uncertified: number }
   logsPending: boolean
   onAssign: () => void
-  onManage: () => void
   onEarlyEnd: () => void
 }) {
+  const navigate = useNavigate()
   const meta = ASSIGNMENT_STATUS_META[assignmentDisplayStatus(team)]
   const displayStatus = assignmentDisplayStatus(team)
   const progress = team.recognizedHours ?? 0
@@ -50,11 +48,21 @@ function MentoringCard({
   const pct = team.recognizedPct
   const total = logStat?.total ?? 0
   const uncertified = logStat?.uncertified ?? 0
+  const openDetail = () => navigate(`/admin/mentoring/teams/${team.teamId}`)
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={openDetail}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          openDetail()
+        }
+      }}
       className={cn(
-        'border-border bg-surface flex flex-col gap-3 rounded-xl border p-4',
+        'border-border bg-surface hover:border-brand/50 focus-visible:border-brand flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition-colors outline-none',
         !team.assignmentId && 'border-l-danger border-l-4',
       )}
     >
@@ -151,44 +159,32 @@ function MentoringCard({
         </div>
       </div>
 
-      {/* 액션 */}
-      <div className="border-border flex flex-wrap items-center gap-1.5 border-t pt-3">
-        {!team.assignmentId ? (
-          <button
-            type="button"
-            onClick={onAssign}
-            className="bg-danger text-on-color hover:bg-danger/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
-          >
-            <UserPlus className="h-3 w-3" />
-            멘토 배정
-          </button>
-        ) : (
-          <>
+      {/* 액션 — 카드 클릭(상세 이동)과 분리(전파 차단). 수정·일지 항목은 상세 페이지로 이동. */}
+      {(!team.assignmentId || displayStatus === 'in_progress') && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="border-border flex flex-wrap items-center gap-1.5 border-t pt-3"
+        >
+          {!team.assignmentId ? (
             <button
               type="button"
-              onClick={onManage}
-              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+              onClick={onAssign}
+              className="bg-danger text-on-color hover:bg-danger/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
             >
-              수정
+              <UserPlus className="h-3 w-3" />
+              멘토 배정
             </button>
-            <Link
-              to={`/admin/mentoring/teams/${team.teamId}/log-fields`}
-              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+          ) : (
+            <button
+              type="button"
+              onClick={onEarlyEnd}
+              className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
             >
-              일지 항목
-            </Link>
-            {displayStatus === 'in_progress' && (
-              <button
-                type="button"
-                onClick={onEarlyEnd}
-                className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
-              >
-                조기 종료
-              </button>
-            )}
-          </>
-        )}
-      </div>
+              조기 종료
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -265,7 +261,6 @@ export default function AssignmentsPage() {
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
-  const [manageRow, setManageRow] = useState<MentorAssignmentRow | null>(null)
   const [earlyEndRow, setEarlyEndRow] = useState<MentorAssignmentRow | null>(
     null,
   )
@@ -392,31 +387,27 @@ export default function AssignmentsPage() {
         </select>
       </div>
 
-      {/* Hero — 정책 칩 + 미배정 경고 칩 + CTA */}
+      {/* Hero — 타이틀 + CTA */}
       <div className="bg-brand shadow-hero mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
-        <div className="flex flex-col gap-3">
-          <p className="text-on-color text-lg font-bold">
-            반/기수별 팀 배정 · N시간 · 일지 템플릿 관리
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-surface text-fg rounded-md px-2.5 py-1 text-[11px] font-bold">
-              한 반에 한 팀만 배정
-            </span>
-            {data.kpis.unassignedTeams > 0 && (
-              <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
-                <AlertTriangle className="h-3 w-3" />
-                멘토 미배정 팀 {data.kpis.unassignedTeams}건
-              </span>
-            )}
-          </div>
+        <p className="text-on-color text-lg font-bold">
+          반/기수별 팀 배정 · N시간 · 일지 템플릿 관리
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={openStudentCreate}
+            className="bg-surface text-fg hover:bg-surface/90 inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-bold"
+          >
+            <Plus className="h-4 w-4" />새 배정 추가
+          </button>
+          <Link
+            to="/admin/mentoring/log-templates"
+            className="text-on-color inline-flex items-center gap-1.5 rounded-lg border border-white/40 px-4 py-2.5 text-[13px] font-bold hover:bg-white/10"
+          >
+            <FileText className="h-4 w-4" />
+            템플릿 관리
+          </Link>
         </div>
-        <button
-          type="button"
-          onClick={openStudentCreate}
-          className="bg-surface text-fg hover:bg-surface/90 inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-bold"
-        >
-          <Plus className="h-4 w-4" />새 배정 추가
-        </button>
       </div>
 
       {/* 필터 바 */}
@@ -512,7 +503,6 @@ export default function AssignmentsPage() {
                       logStat={logStats.get(team.teamId)}
                       logsPending={logs.isPending}
                       onAssign={() => openCreate(team.teamId)}
-                      onManage={() => setManageRow(team)}
                       onEarlyEnd={() => setEarlyEndRow(team)}
                     />
                   ))}
@@ -546,14 +536,6 @@ export default function AssignmentsPage() {
           }}
           data={data}
           presetTeamId={formTeamId}
-        />
-      )}
-      {manageRow && (
-        <AssignmentManageModal
-          open
-          onClose={() => setManageRow(null)}
-          row={manageRow}
-          data={data}
         />
       )}
       {earlyEndRow && (

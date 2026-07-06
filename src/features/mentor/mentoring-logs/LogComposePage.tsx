@@ -30,7 +30,6 @@ import {
   useLogFieldSnapshot,
   useMentoringLogDetail,
   useMentoringLogTargets,
-  useSaveLogDraft,
   useSubmitMentoringLog,
 } from '../api/logs'
 import { MENTOR_FLOW_CAPTION } from '../constants'
@@ -44,7 +43,6 @@ import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { CharCounter, RequiredChip } from './LogChips'
 import { buildLogFormSchema, type LogFormInput } from './logFormSchema'
 import {
-  LOG_DRAFT_SAVED_TOAST,
   LOG_SUBMIT_POLICY_CAPTION,
   durationLabel,
   minutesBetween,
@@ -105,7 +103,7 @@ export default function LogComposePage() {
         <Empty
           icon={<Lock />}
           title="제출된 일지는 수정할 수 없어요"
-          description="제출 즉시 자동 유효로 확정됩니다. 운영자 수정 요청이 있을 때만 전체 수정 후 재제출할 수 있어요."
+          description="제출하면 매니저 승인 대기 상태가 됩니다. 운영자 수정 요청이 있을 때만 전체 수정 후 재제출할 수 있어요."
           action={
             <Link
               to="/mentor/mentoring-logs"
@@ -139,7 +137,6 @@ function LogComposeForm({
 }) {
   const navigate = useNavigate()
   const toast = useToast()
-  const draftMutation = useSaveLogDraft()
   const submitMutation = useSubmitMentoringLog()
 
   const mode: ComposeMode = detail
@@ -231,19 +228,12 @@ function LogComposeForm({
 
   const round = detail?.round ?? target?.nextRound ?? 1
 
-  // 초안 보관 logId — 신규 작성도 첫 임시 저장 후 같은 초안을 갱신한다
-  const [draftId, setDraftId] = useState(
-    detail && detail.status === 'draft' ? detail.logId : '',
-  )
-  const [savedLabel, setSavedLabel] = useState<string | null>(
-    detail && detail.status === 'draft' ? '초안 보관 중' : null,
-  )
   const [showTemplate, setShowTemplate] = useState(false)
   // 첨부·사진 — 업로드 계약 미확정(DB 스키마 갭 openQuestion)이라 파일명 표시 전용(payload 미포함)
   const [artifactNames, setArtifactNames] = useState<string[]>([])
   const [photoNames, setPhotoNames] = useState<string[]>([])
 
-  const saving = draftMutation.isPending || submitMutation.isPending
+  const saving = submitMutation.isPending
 
   const toPayload = (v: LogFormInput): MentoringLogDraftPayload => ({
     teamId: v.teamId,
@@ -261,22 +251,6 @@ function LogComposeForm({
       })),
   })
 
-  // 임시 저장 — 검증 없이 부분 입력 그대로 보관(DRAFT 자유 수정·인정 시간 미반영)
-  const onSaveDraft = () => {
-    draftMutation.mutate(
-      { logId: draftId || undefined, payload: toPayload(getValues()) },
-      {
-        onSuccess: (log) => {
-          setDraftId(log.logId)
-          setSavedLabel('방금')
-          toast.success(LOG_DRAFT_SAVED_TOAST)
-        },
-        onError: () =>
-          toast.danger('임시 저장에 실패했어요. 잠시 후 다시 시도해 주세요.'),
-      },
-    )
-  }
-
   // 제출·재제출 — 성공 시 제출 완료 요약 페이지로 이동(요약은 navigate state 로 전달, 2582:6348)
   const onSubmit = handleSubmit(
     async (values) => {
@@ -289,13 +263,8 @@ function LogComposeForm({
             payload,
           })
         } else {
-          const id =
-            draftId || (await draftMutation.mutateAsync({ payload })).logId
-          await submitMutation.mutateAsync({
-            logId: id,
-            mode: 'submit',
-            payload,
-          })
+          // 제출 = 신규 생성(승인 대기). 초안은 클라이언트 전용이라 선저장 없이 바로 생성.
+          await submitMutation.mutateAsync({ mode: 'submit', payload })
         }
         const summaryRows = [
           {
@@ -324,7 +293,7 @@ function LogComposeForm({
           },
           { label: '인정 시간', value: `${recognizedPreview}h` },
           { label: '참석 멘티', value: `${values.attendedIds.length}명` },
-          { label: '상태', value: '제출 즉시 자동 유효' },
+          { label: '상태', value: '제출 시 승인 대기' },
         ]
         navigate('/mentor/mentoring-logs/submitted', {
           state: {
@@ -395,9 +364,7 @@ function LogComposeForm({
         </span>
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
-          {savedLabel
-            ? `임시 저장 · ${savedLabel}`
-            : '저장 전 — 임시 저장 가능'}
+          제출 시 매니저 승인 대기
         </span>
       </div>
 
@@ -673,7 +640,7 @@ function LogComposeForm({
             </span>
             <span className="text-fg-subtle text-[11px]">
               요청 {detail.changeRequest.requestedAtLabel} · 전체 수정 후 재제출
-              시 즉시 자동 유효 · 재제출 전까지 기존 유효본 인정 유지
+              시 승인 대기 · 재제출 전까지 기존 유효본 인정 유지
             </span>
           </div>
         </section>
@@ -937,16 +904,6 @@ function LogComposeForm({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {mode !== 'resubmit' && (
-            <button
-              type="button"
-              onClick={onSaveDraft}
-              disabled={saving}
-              className="border-on-color/70 text-on-color hover:bg-on-color/10 rounded-[10px] border px-4 py-2.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              임시 저장
-            </button>
-          )}
           <button
             type="submit"
             disabled={saving}

@@ -40,8 +40,8 @@ describe('LogDetailModal', () => {
     renderModal('log_rec_4')
     expect(screen.getByText('멘토링 일지 상세')).toBeInTheDocument()
     expect(screen.getByText('4회차')).toBeInTheDocument()
-    expect(screen.getByText('자동 유효')).toBeInTheDocument()
-    expect(screen.getByText('자동 유효 · 운영자 확인 가능')).toBeInTheDocument()
+    expect(screen.getByText('유효')).toBeInTheDocument()
+    expect(screen.getByText('유효 · 매니저 승인 완료')).toBeInTheDocument()
     // 기본 정보 — 누적/배정/잔여 + 시간 차감 자동 산정
     expect(
       screen.getByText('4회차 멘토링 · 누적 8h / 배정 N시간 12h · 잔여 4h'),

@@ -19,6 +19,11 @@ export interface LogStatusMeta {
 
 export const LOG_STATUS_META: Record<MentoringLogStatus, LogStatusMeta> = {
   valid: { label: '유효', icon: Check, chip: 'bg-success-bg text-success' },
+  submitted: {
+    label: '승인 대기',
+    icon: Info,
+    chip: 'bg-warning-bg text-warning',
+  },
   change_requested: {
     label: '수정 요청',
     icon: AlertTriangle,
@@ -34,17 +39,16 @@ export const PLACE_TYPE_ICON: Record<MentoringPlaceType, LucideIcon> = {
   etc: Info,
 }
 
-// 제출 완료 토스트 — Figma 2582:6348 원문. 재제출도 동일 정책(즉시 자동 유효)이라 공용.
+// 제출 완료 토스트 — 승인 단계 도입: 제출 시 '승인 대기', 매니저 승인 후 인정. 재제출도 공용.
 export const LOG_SUBMITTED_TOAST =
-  '멘토링 일지가 제출되었습니다. 자동 유효 기준으로 저장됩니다.'
+  '멘토링 일지가 제출되었습니다. 매니저 승인 후 인정 시간에 반영됩니다.'
 
 export const LOG_DRAFT_SAVED_TOAST =
   '임시 저장했어요. 작성 중 일지는 인정 시간에 반영되지 않습니다.'
 
-// 액션바 정책 캡션 — Figma 원문은 '제출 즉시 제출 즉시 자동 유효'로 중복(카피 버그 추정,
-// openQuestion) — 중복 제거본을 사용한다.
+// 액션바 정책 캡션 — 승인 단계 도입 반영.
 export const LOG_SUBMIT_POLICY_CAPTION =
-  '제출 즉시 자동 유효 · 수정 요청 시 전체 수정 후 재제출'
+  '제출 시 승인 대기 · 매니저 승인 후 인정 · 수정 요청 시 전체 수정 후 재제출'
 
 /** 90 → '1.5시간 (90분)' / 118 → '2시간 (118분)' — 시간 표기 반올림은 0.1h 단위. */
 export function durationLabel(minutes: number) {

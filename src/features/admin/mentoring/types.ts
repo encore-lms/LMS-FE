@@ -86,6 +86,33 @@ export interface AdminMentoringStudentOption {
   name: string
 }
 
+/** 팀 상세 일지 요약. */
+export interface AdminTeamLogBrief {
+  logId: string
+  roundLabel: string
+  performedAtLabel: string
+  status: AdminMentoringLogStatus
+  recognizedHours: number | null
+  resubmitted: boolean
+}
+
+/** 멘토링 팀 상세 — 카드 클릭 → 상세 페이지. */
+export interface AdminMentoringTeamDetail {
+  teamId: string
+  teamName: string
+  cohortId: string
+  cohortLabel: string
+  mentor: AdminMentorOption | null
+  members: AdminMentoringStudentOption[]
+  allocatedHours: number | null
+  recognizedHours: number | null
+  recognizedPct: number | null
+  status: MentorAssignmentStatus | null
+  nHoursDone: boolean
+  assignmentId: string | null
+  logs: AdminTeamLogBrief[]
+}
+
 /** 멘토가 담당 중인 멘토링 한 건 요약. */
 export interface AdminMentoringBrief {
   teamName: string
@@ -125,7 +152,11 @@ export interface MentorAssignmentFromStudentsRequest {
 // ───────────────────────── 멘토링 일지 관리 (§30) ─────────────────────────
 
 /** 일지 상태 — 폐기·반려 없음(05-31 확정). '재제출 후 유효'는 valid + resubmitted 보조 라벨. */
-export type AdminMentoringLogStatus = 'draft' | 'valid' | 'change_requested'
+export type AdminMentoringLogStatus =
+  | 'draft'
+  | 'submitted'
+  | 'valid'
+  | 'change_requested'
 
 /** 수정 요청 사유 코드 6종(05-31 확정) — 멘토 콘솔 types 와 동일 값(기능 로컬 복제, BE 확정 시 단일 소유 승격). */
 export type MentoringLogChangeReasonCode =
@@ -239,8 +270,15 @@ export interface MentoringLogChangeRequestPayload {
 
 // ───────────────────────── 일지 템플릿 (§31) ─────────────────────────
 
-/** 항목 타입 — short_text/long_text 만(선택형·점수형·체크리스트 금지, 422). */
-export type AdminTemplateFieldType = 'short_text' | 'long_text'
+/**
+ * 항목 타입 — 텍스트(짧은/긴) · 이미지 · 텍스트+이미지.
+ * (선택형·점수형·체크리스트는 범위 제외, 422)
+ */
+export type AdminTemplateFieldType =
+  | 'short_text'
+  | 'long_text'
+  | 'image'
+  | 'text_image'
 
 /** 일지 항목 = 항목명·설명/도움말·필수 여부·표시 순서·타입(§31 도메인 모델). */
 export interface AdminTemplateField {

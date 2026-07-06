@@ -1,25 +1,19 @@
 import { http, HttpResponse } from 'msw'
 import {
-  buildEvaluationsData,
   buildMenteeDetail,
   buildMentoringRequestDetail,
   buildMentoringRequestsData,
   buildRecommendationsData,
-  buildTeamEvaluationSheet,
   buildTeamRecommendationSheet,
   respondToMentoringRequest,
-  saveEvaluationDraft,
   saveRecommendationDraft,
-  submitEvaluation,
   submitRecommendation,
   updateConfirmedDetails,
-  type MentorEvaluationMutationResult,
   type MentorRecommendationMutationResult,
   type MentoringRequestMockAction,
   type MentoringRequestMutationResult,
 } from './mockDb'
 import type {
-  MentorEvaluationDraftPayload,
   MentorRecommendationDraftPayload,
   MentoringRequestActionPayload,
 } from './types'
@@ -33,15 +27,6 @@ const ok = <T>(data: T) => HttpResponse.json({ data })
 const respond = (result: MentoringRequestMutationResult) =>
   result.ok
     ? ok(result.request)
-    : HttpResponse.json(
-        { code: result.code, message: result.message },
-        { status: result.status },
-      )
-
-/** 평가 mutation 결과 → HTTP 응답 — respond 와 동일 규약(401 금지). */
-const respondEvaluation = (result: MentorEvaluationMutationResult) =>
-  result.ok
-    ? ok(result.sheet)
     : HttpResponse.json(
         { code: result.code, message: result.message },
         { status: result.status },
@@ -122,40 +107,8 @@ export const handlers = [
     return ok(detail)
   }),
 
-  // ── 평가 · 추천 (M4) — GET/PUT(draft)/POST(submit) /teams/{teamId}/{evaluation|recommendation}* ──
-  http.get('/api/mentor/v1/teams/:teamId/evaluation', ({ params }) => {
-    const sheet = buildTeamEvaluationSheet(String(params.teamId))
-    if (!sheet) {
-      return HttpResponse.json(
-        {
-          code: 'MENTOR_SCOPE_FORBIDDEN',
-          message: '본인에게 배정된 팀이 아닙니다.',
-        },
-        { status: 403 },
-      )
-    }
-    return ok(sheet)
-  }),
-  http.put(
-    '/api/mentor/v1/teams/:teamId/evaluation/draft',
-    async ({ params, request }) => {
-      const payload = (await request.json().catch(() => undefined)) as
-        | MentorEvaluationDraftPayload
-        | undefined
-      return respondEvaluation(
-        saveEvaluationDraft(String(params.teamId), payload ?? { entries: [] }),
-      )
-    },
-  ),
-  http.post(
-    '/api/mentor/v1/teams/:teamId/evaluation/submit',
-    async ({ params, request }) => {
-      const payload = (await request.json().catch(() => undefined)) as
-        | MentorEvaluationDraftPayload
-        | undefined
-      return respondEvaluation(submitEvaluation(String(params.teamId), payload))
-    },
-  ),
+  // ── 평가(M4)는 실 BE(auth-user-service /mentor/v1/teams/{id}/evaluation*) 연동 — mock 제거.
+  //    추천(recommendation)은 아직 mock — 실 BE 구축 후 제거 예정.
   http.get('/api/mentor/v1/teams/:teamId/recommendation', ({ params }) => {
     const sheet = buildTeamRecommendationSheet(String(params.teamId))
     if (!sheet) {
@@ -194,8 +147,7 @@ export const handlers = [
       )
     },
   ),
-  // 제출 완료 페이지 요약 — 명세 P0_35 는 팀 단위 endpoint 만 정의(목록은 mock 보강 read model).
-  http.get('/api/mentor/v1/evaluations', () => ok(buildEvaluationsData())),
+  // 추천 제출 완료 요약 — 평가(/evaluations)는 실 BE 연동, 추천 목록만 mock 잔존.
   http.get('/api/mentor/v1/recommendations', () =>
     ok(buildRecommendationsData()),
   ),

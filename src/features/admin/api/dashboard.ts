@@ -65,6 +65,61 @@ export function useMyCohorts() {
   })
 }
 
+/** 담당 기수 스켈레톤 보드(hasData=false) — HRD 라이브 병합 경로로 채워진다. */
+function emptyBoard(r: MyCohortRef, today: string): CohortBoard {
+  const status =
+    today < r.startDate ? 'upcoming' : today > r.endDate ? 'ended' : 'operating'
+  const daysLeft = Math.round(
+    (new Date(`${r.endDate}T00:00:00`).getTime() -
+      new Date(`${today}T00:00:00`).getTime()) /
+      86_400_000,
+  )
+  return {
+    cohortId: r.cohortId,
+    courseName: r.courseName,
+    cohortLabel: `${r.cohortNo}기`,
+    startDate: r.startDate,
+    endDate: r.endDate,
+    status,
+    daysLeft,
+    hasData: false,
+    students: null,
+    attendance: null,
+    assessment: null,
+    weeklyCheck: null,
+    issues: [],
+    pending: null,
+  }
+}
+
+// 배포 환경에서 /admin/dashboard 가 레거시(learning-service) 응답으로 라우팅될 수 있다
+// (ops-service 미배포 시 ALB /admin/* → learning). ops 계약(hasData boolean)이 아니면
+// 담당 기수 스켈레톤으로 정규화해 HRD 라이브 병합으로 구동한다(TypeError 크래시 방지).
+function normalizeDashboard(
+  data: OperatorDashboard,
+  refs: MyCohortRef[],
+): OperatorDashboard {
+  const cohorts = data?.cohorts ?? []
+  const isOpsShape = cohorts.every(
+    (c) => typeof (c as { hasData?: unknown }).hasData === 'boolean',
+  )
+  const today = data?.today ?? new Date().toISOString().slice(0, 10)
+  if (isOpsShape) {
+    return {
+      today,
+      cohorts,
+      quarantineCount: data?.quarantineCount ?? 0,
+      upcoming: data?.upcoming ?? [],
+    }
+  }
+  return {
+    today,
+    cohorts: refs.map((r) => emptyBoard(r, today)),
+    quarantineCount: 0,
+    upcoming: [],
+  }
+}
+
 // 담당 기수 스코프 대시보드 집계 — operations-service(staging 원본 집계) 실연동.
 // axios 기본 배열 직렬화(cohort[]=)가 Spring과 맞지 않아 쿼리스트링을 직접 구성한다.
 export function useOperatorDashboard(refs: MyCohortRef[] | undefined) {
@@ -85,7 +140,7 @@ export function useOperatorDashboard(refs: MyCohortRef[] | undefined) {
     queryFn: () =>
       apiClient
         .get<OperatorDashboard>(`/admin/dashboard?${query}`)
-        .then((r) => r.data),
+        .then((r) => normalizeDashboard(r.data, refs ?? [])),
   })
 }
 

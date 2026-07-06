@@ -235,7 +235,7 @@ function AllCohortsView({
     (s, b) => s + (b.attendance?.todayTotal ?? 0),
     0,
   )
-  const issueCount = boards.reduce((s, b) => s + b.issues.length, 0)
+  const issueCount = boards.reduce((s, b) => s + (b.issues?.length ?? 0), 0)
   const pendingCount = boards.reduce(
     (s, b) =>
       s + (b.pending ? b.pending.certificates + b.pending.troubleshooting : 0),

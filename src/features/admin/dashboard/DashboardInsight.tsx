@@ -82,7 +82,7 @@ function buildInsights(
     0,
   )
   const todayAbsent = live.reduce(
-    (s, b) => s + (b.attendance?.todayAbsentees.length ?? 0),
+    (s, b) => s + (b.attendance?.todayAbsentees?.length ?? 0),
     0,
   )
   const attendanceRate =
@@ -215,7 +215,7 @@ function buildActions(
   const absentByCohort = active
     .map((b) => ({
       label: b.cohortLabel,
-      n: b.attendance?.todayAbsentees.length ?? 0,
+      n: b.attendance?.todayAbsentees?.length ?? 0,
     }))
     .filter((c) => c.n > 0)
     .sort((a, b) => b.n - a.n)
@@ -676,9 +676,9 @@ export function DashboardInsight({
   )
   const attendanceRate =
     todayTotal > 0 ? Math.round((todayPresent / todayTotal) * 100) : 0
-  const riskCount = active.reduce((s, b) => s + b.issues.length, 0)
+  const riskCount = active.reduce((s, b) => s + (b.issues?.length ?? 0), 0)
   const absentCount = live.reduce(
-    (s, b) => s + (b.attendance?.todayAbsentees.length ?? 0),
+    (s, b) => s + (b.attendance?.todayAbsentees?.length ?? 0),
     0,
   )
   const pendingCount =
@@ -730,7 +730,7 @@ export function DashboardInsight({
       ),
     }))
   const absentItems: PopoverItem[] = live
-    .filter((b) => (b.attendance?.todayAbsentees.length ?? 0) > 0)
+    .filter((b) => (b.attendance?.todayAbsentees?.length ?? 0) > 0)
     .map((b) => ({
       key: b.cohortId,
       label: `${b.cohortLabel} (${b.attendance!.todayAbsentees.length}명)`,

@@ -1,68 +1,131 @@
-// 운영 대시보드 응답 타입 — BE GET /admin/dashboard (AdminOperatorDashboard) 계약과 일치.
-// 이전 LMS 매니저 대시보드 IA를 현재 데이터에 맞춰 포팅.
+// 운영 대시보드(관제탑형) 타입 — BE operations-service GET /admin/dashboard 계약과 일치.
+// 담당 기수 스코프: auth 배정(cohortId) + learning 기수 메타를 합친 서술자(MyCohortRef)로 요청한다.
 
-export interface AdminOperatorDashboard {
-  today: string // yyyy-MM-dd (KST)
-  hrdAvailable: boolean // 활성 HRD-Net 키 존재 여부 — false면 출석 지표가 비어있음
-  cohorts: DashboardCohort[]
-  repeatedIssues: RepeatedIssue[]
-  pending: PendingApprovals
-  upcoming: Upcoming
+/** 담당 기수 서술자 — useMyCohorts()가 auth+learning을 합쳐 만든다. */
+export interface MyCohortRef {
+  cohortId: string
+  courseId: string
+  courseName: string
+  cohortNo: string
+  startDate: string // yyyy-MM-dd
+  endDate: string // yyyy-MM-dd
 }
 
-export interface DashboardCohort {
+export type CohortStatus = 'upcoming' | 'operating' | 'ended'
+
+export interface OperatorDashboard {
+  today: string // yyyy-MM-dd (KST)
+  cohorts: CohortBoard[]
+  /** 인입 격리 큐 전체 건수(기수 무관 공통 지표) */
+  quarantineCount: number
+  /** 다가오는 일정/마일스톤(오늘 이후 가까운 순, 최대 6건) */
+  upcoming: ScheduleItem[]
+}
+
+/** 일정/마일스톤 1건. */
+export interface ScheduleItem {
+  cohortLabel: string
+  date: string
+  endDate: string
+  category: string
+  title: string
+  daysUntil: number
+}
+
+/** 기수 1개의 집계 묶음. hasData=false면 CSV 미인입 기수(지표 null). */
+export interface CohortBoard {
+  /** 클라이언트 병합 시 표기용 데이터 원천 — staging(인입큐) | hrd-live(HRD-Net 실시간) */
+  source?: 'staging' | 'hrd-live'
   cohortId: string
-  name: string // "{과정명} N기"
-  totalStudents: number | null // HRD 미가용 시 null
-  checkedInToday: number | null // HRD 미가용 시 null
-  absentToday: Absentee[] // HRD 미가용 시 []
-  weeklyAttendanceRate: number[] // 최근 영업일 출석률(0~100), 없으면 []
+  courseName: string
+  cohortLabel: string // "24기"
+  startDate: string
+  endDate: string
+  status: CohortStatus
+  /** 종료까지 남은 일수(오늘 기준). 종료 후 음수. */
+  daysLeft: number
+  hasData: boolean
+  students: CohortStudents | null
+  attendance: CohortAttendance | null
+  assessment: CohortAssessment | null
+  weeklyCheck: CohortWeeklyCheck | null
+  issues: IssueStudent[]
+  pending: CohortPending | null
+}
+
+export interface CohortStudents {
+  total: number
+  active: number
+  dropout: number
+}
+
+export interface CohortAttendance {
+  todayPresent: number | null
+  todayTotal: number | null
+  avgRate: number | null
+  weekly: DailyRate[]
+  todayAbsentees: Absentee[]
+}
+
+export interface DailyRate {
+  date: string
+  rate: number
 }
 
 export interface Absentee {
-  id: string
+  studentUuid: string
   name: string
+  detail: string
 }
 
-export interface RepeatedIssue {
-  studentId: string
+export interface CohortAssessment {
+  avg: number | null
+  rounds: RoundAvg[]
+  latestRound: number | null
+  latestAvg: number | null
+  /** 최신 회차 - 직전 회차 평균(회차 1개면 null) */
+  delta: number | null
+  /** 최신 회차 60점 미만 응시자 수 */
+  lowPerformers: number
+  /** 최신 회차 미응시자 수 */
+  nonTakers: number
+}
+
+export interface RoundAvg {
+  round: number
+  avg: number
+}
+
+/** 지각 3회 이상 또는 결석 2회 이상 반복자. */
+export interface IssueStudent {
+  studentUuid: string
   name: string
-  cohortName: string
   lateCount: number
-  absenceCount: number
+  absentCount: number
 }
 
-export interface PendingApprovals {
-  mileage: number
-  blog: number
-  study: number
-  certificate: number
-  recordsTotal: number
-  topCohort: {
-    mileage: string | null
-    blog: string | null
-    study: string | null
-    certificate: string | null
-  }
+export interface CohortPending {
+  certificates: number
+  troubleshooting: number
 }
 
-export interface Upcoming {
-  quizzes: UpcomingQuiz[]
-  cohortEndings: CohortEnding[]
+/** learning-service 기수 출결 요약(HRD-Net 라이브) — CSV 미인입 기수 병합용. */
+export interface CohortHrdSummary {
+  cohortLabel: string
+  date: string
+  students: CohortStudents
+  todayPresent: number | null
+  todayTotal: number | null
+  todayAbsentees: Absentee[]
+  avgRate: number | null
+  weekly: DailyRate[]
+  issues: IssueStudent[]
 }
 
-export interface UpcomingQuiz {
-  id: string
-  title: string
-  cohortName: string
-  endAt: string // ISO datetime
-  questionCount: number
-  totalScore: number
-}
-
-export interface CohortEnding {
-  cohortId: string
-  name: string
-  endDate: string // yyyy-MM-dd
-  daysLeft: number
+/** 위클리 체크 조기경보 — 각 학생의 가장 최근 응답 기준. 데이터 없으면 null. */
+export interface CohortWeeklyCheck {
+  respondents: number
+  lowCondition: number
+  counselRequests: number
+  flagged: { studentUuid: string; name: string; reason: string }[]
 }

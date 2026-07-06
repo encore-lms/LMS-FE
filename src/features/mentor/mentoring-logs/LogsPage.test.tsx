@@ -137,7 +137,7 @@ describe('LogsPage', () => {
   it('로딩·에러 상태를 표시한다', () => {
     mockList({ isPending: true })
     const { unmount } = renderPage()
-    expect(screen.getByText(/불러오는 중/)).toBeInTheDocument()
+    expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument()
     unmount()
     mockList({ isPending: false, isError: true, refetch: vi.fn() })
     renderPage()

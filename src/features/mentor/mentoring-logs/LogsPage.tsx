@@ -27,6 +27,7 @@ import { CohortChip } from '../components/chips'
 import type { MentoringLogListItem, MentoringLogStatus } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { LogStateChip } from './LogChips'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import {
   LOG_STATUS_META,
   LOG_SUBMITTED_TOAST,
@@ -200,7 +201,7 @@ export default function LogsPage() {
   )
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">멘토링 일지를 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={5} />
   }
   if (isError || !data) {
     return (

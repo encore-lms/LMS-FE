@@ -22,6 +22,7 @@ import {
 import { MENTOR_FLOW_CAPTION } from '../constants'
 import type { MentoringRequestItem } from '../types'
 import { RequestCard } from './RequestCard'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import {
   REQUEST_TABS,
   RESPONSE_SAVED_TOAST,
@@ -90,7 +91,7 @@ export default function RequestsPage() {
   const visible = searched.filter((r) => matchRequestTab(r, tab))
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">예약 요청을 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={5} />
   }
   if (isError || !data) {
     return (

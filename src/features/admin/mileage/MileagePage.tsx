@@ -17,6 +17,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useMileageOverview } from './api'
 import type { MileageAlertTone, MileageTabCard } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const ALERT_TONE: Record<MileageAlertTone, BadgeTone> = {
   warning: 'warning',
@@ -50,7 +51,7 @@ export default function MileagePage() {
   const navigate = useNavigate()
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">마일리지 현황을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={5} />
   }
   if (isError || !data) {
     return (

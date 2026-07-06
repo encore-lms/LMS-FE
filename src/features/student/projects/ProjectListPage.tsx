@@ -11,6 +11,7 @@ import { useDeleteProject, useProjectList } from '../api/projects'
 import { ProjectStatCards } from './components/ProjectStatCards'
 import { ProjectCard } from './components/ProjectCard'
 import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
+import { SkeletonCards } from '@/components/ui/Skeleton'
 import type {
   ProjectFilter,
   ProjectKind,
@@ -184,8 +185,7 @@ export default function ProjectListPage() {
 
   const shownLabel = `${filteredProjects.length}건 표시 · 작성 중 ${byPhase('active')} / 작성 완료 ${byPhase('completed')} / 검토 중 ${byPhase('reviewing')} / 인증 완료 ${byPhase('certified')}`
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">프로젝트를 불러오는 중…</div>
+  if (isPending) return <SkeletonCards count={6} className="p-8" />
   if (isError || !data) {
     return (
       <div className="p-8">

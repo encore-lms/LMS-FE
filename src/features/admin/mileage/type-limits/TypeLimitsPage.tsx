@@ -14,6 +14,7 @@ import {
 import { MileageTabs } from '../MileageTabs'
 import { useTypeLimits } from './api'
 import type { LimitType, TypeLimit } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 // 마일리지 타입 한도 설정 (/admin/mileage/type-limits) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1252:7320 + 저장 확인·결과 모달. 타입별 1인 누적 사용 한도(maxPerUser) 관리.
@@ -37,7 +38,7 @@ export default function TypeLimitsPage() {
   const changeCount = changed.length
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">타입 한도를 불러오는 중…</div>
+    return <SkeletonListPage columns={4} />
   }
   if (isError || !data) {
     return (

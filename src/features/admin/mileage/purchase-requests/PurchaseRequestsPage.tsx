@@ -19,6 +19,7 @@ import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
 import { usePurchaseProcess, usePurchaseQueue } from './api'
 import type { PurchaseRequest, PurchaseStatus } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const STATUS_META: Record<
   PurchaseStatus,
@@ -65,7 +66,7 @@ export default function PurchaseRequestsPage() {
   }, [requests, status, q])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">구매 요청을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={6} />
   }
   if (isError || !data) {
     return (

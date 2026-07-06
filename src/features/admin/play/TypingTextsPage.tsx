@@ -13,6 +13,7 @@ import { usePlayTypingTexts, useUpsertPassage } from './api'
 import { PassageFormModal } from './PassageFormModal'
 import { downloadTypingSampleCsv } from './sampleCsv'
 import type { PassageStatus, TypingPassage, UploadValidationRow } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const STATUS_META: Record<PassageStatus, { label: string; tone: BadgeTone }> = {
   active: { label: '활성', tone: 'success' },
@@ -66,7 +67,7 @@ export default function TypingTextsPage() {
   )
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">PLAY 제시문을 불러오는 중…</div>
+    return <SkeletonListPage columns={4} />
   }
   if (isError || !data) {
     return (

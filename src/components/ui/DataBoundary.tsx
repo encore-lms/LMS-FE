@@ -12,6 +12,8 @@ interface DataBoundaryProps {
   /** 재시도 핸들러 (useQuery의 refetch). 없으면 재시도 버튼을 숨긴다. */
   onRetry?: () => void
   loadingText?: string
+  /** 로딩 시 텍스트 대신 렌더할 스켈레톤 골격. 지정하면 loadingText보다 우선한다. */
+  skeleton?: ReactNode
   errorTitle?: string
   errorDescription?: ReactNode
   /** 로딩/에러 상태 컨테이너에 덧붙일 클래스 (여백 등 조정용) */
@@ -39,12 +41,16 @@ export function DataBoundary({
   isError,
   onRetry,
   loadingText = '불러오는 중…',
+  skeleton,
   errorTitle = '데이터를 불러오지 못했어요',
   errorDescription = '잠시 후 다시 시도해 주세요.',
   className,
   children,
 }: DataBoundaryProps) {
   if (isPending) {
+    if (skeleton) {
+      return <div className={className}>{skeleton}</div>
+    }
     return (
       <div
         className={cn(

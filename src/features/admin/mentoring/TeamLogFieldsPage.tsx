@@ -42,6 +42,7 @@ import {
 } from './fieldDiff'
 import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
 import type { AdminTeamLogField, TeamLogFieldDiffStatus } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 /** §32 보존 정책 — 항목 폼 모달 하단 안내. */
 const TEAM_NOTICE =
@@ -108,7 +109,7 @@ export default function TeamLogFieldsPage() {
     assignmentsQuery.isPending ||
     (teamRow?.assignmentId && fieldsQuery.isPending)
   ) {
-    return <div className="text-fg-muted p-8">팀 일지 항목을 불러오는 중…</div>
+    return <SkeletonListPage columns={4} />
   }
   if (assignmentsQuery.isError || (teamRow && fieldsQuery.isError)) {
     return (

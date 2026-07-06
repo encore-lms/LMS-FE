@@ -15,6 +15,7 @@ import {
 } from '../api/changeRequests'
 import { ChangeDiffCard } from './ChangeDiffCard'
 import { ReasonModal } from './ReasonModal'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import {
   CHANGE_REQUEST_STATUS_META,
   TARGET_TYPE_META,
@@ -54,7 +55,7 @@ export default function ChangeRequestsPage() {
     rows.find((r) => r.id === selectedId) ?? null
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">변경 제안을 불러오는 중…</div>
+    return <SkeletonListPage columns={5} />
   }
   if (isError || !data) {
     return (

@@ -16,6 +16,7 @@ import type { DashboardKpi, PriorityType } from '@/shared/types'
 import { useInstructorDashboard } from '../api/console'
 import { useCohortContext } from '../cohortContext'
 import { NoCohortNotice } from './NoCohortNotice'
+import { SkeletonDashboard } from '@/components/ui/Skeleton'
 
 const PRIORITY_META: Record<PriorityType, { label: string; tone: BadgeTone }> =
   {
@@ -70,7 +71,7 @@ export default function DashboardPage() {
   )
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">대시보드를 불러오는 중…</div>
+    return <SkeletonDashboard kpis={4} panels={4} />
   }
   if (isError || !data) {
     return (

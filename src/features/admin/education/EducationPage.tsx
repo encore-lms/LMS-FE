@@ -19,6 +19,7 @@ import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
+import { SkeletonText } from '@/components/ui/Skeleton'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
 // 이력서=실 BE(ResumePane), 기록실=검토·심사 흡수(RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
@@ -78,7 +79,11 @@ function DescriptionPane({
   const toast = useToast()
 
   if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
+    return (
+      <div className="py-6">
+        <SkeletonText lines={8} />
+      </div>
+    )
   }
   if (isError || !data) {
     return (

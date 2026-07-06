@@ -19,9 +19,9 @@ export function AppShell({ menus }: { menus: Record<Role, MenuNode[]> }) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
         <main className="flex-1 overflow-auto">
-          <Suspense
-            fallback={<div className="text-fg-muted p-8">불러오는 중…</div>}
-          >
+          {/* 라우트 청크 로딩 fallback — 각 페이지가 마운트 직후 자체 스켈레톤을 띄우므로
+              여기서는 텍스트 대신 빈 화면을 둬서 '불러오는 중' 텍스트 깜빡임을 없앤다. */}
+          <Suspense fallback={null}>
             <Outlet />
           </Suspense>
         </main>

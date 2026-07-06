@@ -14,6 +14,7 @@ import { usePageHeader } from '@/shared/store'
 import { useQnaList } from '../api/qna'
 import { QnaQuestionCard } from './components/QnaQuestionCard'
 import type { QnaQuestion, Tone } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 // 통계 카드 우상단 아이콘 — 키별 매핑.
 const STAT_ICON: Record<string, LucideIcon> = {
@@ -57,8 +58,7 @@ export default function QnaListPage() {
     '강의·과제·환경설정·진로 궁금증을 동료·멘토·강사와 함께 풀어요.',
   )
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">QnA를 불러오는 중…</div>
+  if (isPending) return <SkeletonListPage columns={4} />
   if (isError || !data) {
     return (
       <div className="p-8">

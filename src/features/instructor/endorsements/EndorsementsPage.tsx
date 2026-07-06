@@ -13,6 +13,7 @@ import type { EndorsementPending } from '@/shared/types'
 import { useEndorsementQueue, useSubmitEndorsement } from '../api/endorsements'
 import { SNAPSHOT_META } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 // 임시 저장 초안 — 학생별 localStorage 키. 제출 성공 시 제거(BE 연동 시 draft API로 대체).
 const draftKey = (studentId: string) => `endorsement-draft:${studentId}`
@@ -59,7 +60,7 @@ export default function EndorsementsPage() {
   }, [studentId, reset])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">추천서 화면을 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={5} />
   }
   if (isError || !data) {
     return (

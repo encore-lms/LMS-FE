@@ -13,6 +13,7 @@ import { usePageHeader } from '@/shared/store'
 import type { Endorsement, EndorsementSnapshotStatus } from '@/shared/types'
 import { useEndorsementHistory } from '../api/endorsements'
 import { SNAPSHOT_META } from './meta'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 type StatusFilter = 'all' | EndorsementSnapshotStatus
 
@@ -46,7 +47,7 @@ export default function EndorsementHistoryPage() {
   }, [filter, q])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">전체 추천서를 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={5} />
   }
   if (isError || !data) {
     return (

@@ -16,6 +16,7 @@ import {
 } from '../api/assignments'
 import { DeleteAssignmentModal } from './DeleteAssignmentModal'
 import { SUBMISSION_STATUS_META } from './meta'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 type StatusFilter = 'all' | 'open' | 'closed'
 
@@ -57,7 +58,7 @@ export default function AssignmentsPage() {
   }, [data, q, status, cohort])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">과제 목록을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={5} />
   }
   if (isError || !data) {
     return (

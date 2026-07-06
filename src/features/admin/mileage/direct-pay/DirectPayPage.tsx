@@ -21,6 +21,7 @@ import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
 import { useDirectPayRoster, useDirectPaySubmit } from './api'
 import type { MileageStudent, PayKind } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const QUICK_ADD = [1000, 5000, 10000, 50000]
 
@@ -55,7 +56,7 @@ export default function DirectPayPage() {
   const canSubmit = selectedCount > 0 && amount > 0 && reason.trim().length > 0
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">대상 명단을 불러오는 중…</div>
+    return <SkeletonListPage columns={5} />
   }
   if (isError || !data) {
     return (

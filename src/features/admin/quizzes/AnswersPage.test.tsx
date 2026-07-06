@@ -262,7 +262,7 @@ describe('AnswersPage', () => {
       isPending: true,
     } as unknown as AnswersHook)
     const { unmount } = renderPage()
-    expect(screen.getByText(/불러오는 중/)).toBeInTheDocument()
+    expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument()
     unmount()
     vi.mocked(useQuizAnswers).mockReturnValue({
       isPending: false,

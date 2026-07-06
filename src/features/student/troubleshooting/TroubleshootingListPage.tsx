@@ -19,6 +19,7 @@ import { tsKeys } from './queryKeys'
 import { useProjectTsLinks } from './projectLinks'
 import { TsCaseCard } from './components/TsCaseCard'
 import { RejectNoticeModal } from './components/RejectNoticeModal'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import {
   TS_LINKABLE_PROJECTS,
   type Tone,
@@ -86,8 +87,7 @@ export default function TroubleshootingListPage() {
     '겪어 해결한 사례를 상황·해결·결과로 기록하고 팀별 인증을 준비하세요.',
   )
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">트러블슈팅을 불러오는 중…</div>
+  if (isPending) return <SkeletonListPage columns={4} />
   if (isError || !data) {
     return (
       <div className="p-8">

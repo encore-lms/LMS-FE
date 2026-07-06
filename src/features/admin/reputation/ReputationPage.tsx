@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import {
   useReputation,
   useReputationPush,
@@ -87,7 +88,7 @@ export default function ReputationPage() {
   }, [students, status, q])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">평판 현황을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={6} />
   }
   if (isError || !data) {
     return (

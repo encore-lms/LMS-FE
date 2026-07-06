@@ -22,6 +22,7 @@ import {
 } from './api'
 import { ProductImage } from './ProductImage'
 import type { Product } from './types'
+import { SkeletonCards } from '@/components/ui/Skeleton'
 
 const PRICE_MODE_LABEL = { fixed: '고정가', flexible: '수강생 입력' } as const
 
@@ -52,7 +53,7 @@ export default function ProductsPage() {
   )
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">상품을 불러오는 중…</div>
+    return <SkeletonCards count={6} className="p-8" />
   }
   if (isError || !data) {
     return (

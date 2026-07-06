@@ -24,7 +24,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import {
   apiErrorOf,
-  useMentorAssignments,
+  useMentoringTeamDetail,
   useResetTeamLogFields,
   useSaveTeamLogFields,
   useTeamLogFields,
@@ -76,9 +76,10 @@ export default function TeamLogFieldsPage() {
   )
   const { teamId } = useParams<{ teamId: string }>()
   const toast = useToast()
-  const assignmentsQuery = useMentorAssignments()
-  const teamRow = assignmentsQuery.data?.rows.find((r) => r.teamId === teamId)
-  const fieldsQuery = useTeamLogFields(teamRow?.assignmentId ?? null)
+  // 팀 상세로 assignmentId를 해소한다 — 배정 보드는 단일 기수로 해석돼 다른 기수 팀을 못 찾음.
+  const teamDetail = useMentoringTeamDetail(teamId ?? null)
+  const assignmentId = teamDetail.data?.assignmentId ?? null
+  const fieldsQuery = useTeamLogFields(assignmentId)
   const saveFields = useSaveTeamLogFields()
   const resetFields = useResetTeamLogFields()
 
@@ -105,13 +106,10 @@ export default function TeamLogFieldsPage() {
   )
   const differs = counts.changed > 0 || counts.inactive > 0
 
-  if (
-    assignmentsQuery.isPending ||
-    (teamRow?.assignmentId && fieldsQuery.isPending)
-  ) {
+  if (teamDetail.isPending || (assignmentId && fieldsQuery.isPending)) {
     return <SkeletonListPage columns={4} />
   }
-  if (assignmentsQuery.isError || (teamRow && fieldsQuery.isError)) {
+  if (teamDetail.isError || (assignmentId && fieldsQuery.isError)) {
     return (
       <div className="p-8">
         <Empty
@@ -121,8 +119,8 @@ export default function TeamLogFieldsPage() {
           action={
             <Button
               onClick={() =>
-                assignmentsQuery.isError
-                  ? assignmentsQuery.refetch()
+                teamDetail.isError
+                  ? teamDetail.refetch()
                   : fieldsQuery.refetch()
               }
             >
@@ -133,7 +131,7 @@ export default function TeamLogFieldsPage() {
       </div>
     )
   }
-  if (!teamRow) {
+  if (!teamDetail.data) {
     return (
       <div className="p-8">
         <Empty
@@ -152,7 +150,7 @@ export default function TeamLogFieldsPage() {
       </div>
     )
   }
-  if (!teamRow.assignmentId || !data) {
+  if (!assignmentId || !data) {
     return (
       <div className="p-8">
         <Empty
@@ -340,7 +338,7 @@ export default function TeamLogFieldsPage() {
             <button
               type="button"
               onClick={() => setFieldModal({ mode: 'edit', field: f })}
-              className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex shrink-0 items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold whitespace-nowrap"
             >
               <Pencil className="h-3 w-3" />
               수정
@@ -350,7 +348,7 @@ export default function TeamLogFieldsPage() {
               onClick={() => moveField(f, -1)}
               disabled={index === 0}
               aria-label={`${f.name} 위로 이동`}
-              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface shrink-0 rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ArrowUp className="h-3 w-3" />
             </button>
@@ -359,7 +357,7 @@ export default function TeamLogFieldsPage() {
               onClick={() => moveField(f, 1)}
               disabled={index === fields.length - 1}
               aria-label={`${f.name} 아래로 이동`}
-              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface shrink-0 rounded-md border p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ArrowDown className="h-3 w-3" />
             </button>
@@ -367,7 +365,7 @@ export default function TeamLogFieldsPage() {
               <button
                 type="button"
                 onClick={() => deactivateField(f)}
-                className="border-danger text-danger hover:bg-danger/10 bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+                className="border-danger text-danger hover:bg-danger/10 bg-surface inline-flex shrink-0 items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold whitespace-nowrap"
               >
                 <XCircle className="h-3 w-3" />
                 비활성화
@@ -376,10 +374,11 @@ export default function TeamLogFieldsPage() {
               <button
                 type="button"
                 onClick={() => restoreField(f)}
-                className="border-info text-info hover:bg-info/10 bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+                title="템플릿 값으로 복원"
+                className="border-info text-info hover:bg-info/10 bg-surface inline-flex shrink-0 items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold whitespace-nowrap"
               >
                 <RotateCcw className="h-3 w-3" />
-                템플릿 값 복원
+                복원
               </button>
             )}
           </div>

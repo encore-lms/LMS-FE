@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Clock, Lock } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { AlertTriangle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
@@ -9,11 +10,9 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
-import { useAdminMentoringLogDetail, useAdminMentoringLogs } from './api'
+import { useAdminMentoringLogs } from './api'
 import { LOG_STATUS_META, logDisplayStatus } from './statusMeta'
-import { LogDetailPanel } from './LogDetailPanel'
-import { ChangeRequestModal } from './ChangeRequestModal'
-import { MentoringTabs } from './MentoringTabs'
+import { LogReviewModal } from './LogReviewModal'
 import type { AdminMentoringLogRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
@@ -26,25 +25,15 @@ export default function LogsPage() {
     '운영자 조회·수정 요청 · 직접 수정 불가 · 최종 유효본 기준 인정 시간 계산',
   )
   const { data, isPending, isError, refetch } = useAdminMentoringLogs()
-  const [team, setTeam] = useSearchParamState('team', 'all')
-  const [mentor, setMentor] = useSearchParamState('mentor', 'all')
   const [status, setStatus] = useSearchParamState('status', 'all')
   const [q, setQ] = useSearchParamState('q')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [changeRequestOpen, setChangeRequestOpen] = useState(false)
+  const [reviewId, setReviewId] = useState<string | null>(null)
 
   const rows = useMemo(() => data?.rows ?? [], [data])
-  const teams = useMemo(() => [...new Set(rows.map((r) => r.teamName))], [rows])
-  const mentors = useMemo(
-    () => [...new Set(rows.map((r) => r.mentorName))],
-    [rows],
-  )
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
-      if (team !== 'all' && r.teamName !== team) return false
-      if (mentor !== 'all' && r.mentorName !== mentor) return false
       if (status !== 'all' && r.status !== status) return false
       if (needle) {
         const hay = `${r.teamName} ${r.mentorName}`.toLowerCase()
@@ -52,11 +41,7 @@ export default function LogsPage() {
       }
       return true
     })
-  }, [rows, team, mentor, status, q])
-
-  const selected =
-    filtered.find((r) => r.logId === selectedId) ?? filtered[0] ?? null
-  const detailQuery = useAdminMentoringLogDetail(selected?.logId ?? null)
+  }, [rows, status, q])
 
   if (isPending) {
     return <SkeletonListPage kpis={4} columns={6} />
@@ -150,30 +135,14 @@ export default function LogsPage() {
 
   return (
     <div className="p-8">
-      <MentoringTabs />
-      {/* Hero — CTA 없음. 잠금 안내 + 제출·처리 대기 칩 */}
-      <div className="bg-brand shadow-hero flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
-        <div className="flex flex-col gap-3">
-          <p className="text-on-color text-lg font-bold">
-            멘토링 일지 조회 · 수정 요청 · 최종 유효본 기준 인정 시간 계산
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-surface text-fg rounded-md px-2.5 py-1 text-[11px] font-bold">
-              이번 달 제출 {data.monthlySubmitted}
-            </span>
-            {data.pendingCount > 0 && (
-              <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
-                <Clock className="h-3 w-3" />
-                처리 대기 {data.pendingCount}건
-              </span>
-            )}
-          </div>
-        </div>
-        <span className="bg-surface/15 text-on-color inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold">
-          <Lock className="h-3 w-3" />
-          운영자 직접 수정 불가 · 수정 요청만
-        </span>
-      </div>
+      {/* 돌아가기 — 멘토 배정 관리로 */}
+      <Link
+        to="/admin/mentors/assignments"
+        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        멘토 배정 관리로 돌아가기
+      </Link>
 
       {/* KPI 4 — 반려 없음(05-31) — 유효·수정 요청·초안·재제출 후 유효 */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -206,38 +175,13 @@ export default function LogsPage() {
       <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
         <div className="flex flex-wrap items-center gap-2">
           <select
-            value={team}
-            onChange={(e) => setTeam(e.target.value)}
-            aria-label="팀 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">팀 전체</option>
-            {teams.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <select
-            value={mentor}
-            onChange={(e) => setMentor(e.target.value)}
-            aria-label="멘토 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">멘토 전체</option>
-            {mentors.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-          <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             aria-label="상태 필터"
             className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
           >
             <option value="all">상태 전체</option>
+            <option value="submitted">승인 대기</option>
             <option value="valid">유효</option>
             <option value="change_requested">수정 요청</option>
             <option value="draft">초안</option>
@@ -252,59 +196,33 @@ export default function LogsPage() {
         />
       </div>
 
-      {/* 2단 — 좌 테이블 + 우 상세 패널 */}
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div>
-          <DataTable
-            columns={columns}
-            rows={filtered}
-            rowKey={(r) => r.logId}
-            onRowClick={(r) => setSelectedId(r.logId)}
-            rowClassName={(r) =>
-              cn(
-                r.logId === selected?.logId &&
-                  'border-l-4 border-l-brand bg-brand/10',
-              )
-            }
-            empty="조건에 맞는 일지가 없어요"
-          />
-          <div className="text-fg-subtle mt-3 text-xs">
-            총 {rows.length} · 유효 {data.kpis.valid} · 수정 요청{' '}
-            {data.kpis.changeRequested} · 초안 {data.kpis.draft} · 재제출{' '}
-            {data.kpis.resubmitted}
-          </div>
-        </div>
-
-        <LogDetailPanel
-          detail={detailQuery.data ?? null}
-          isPending={!!selected && detailQuery.isPending}
-          onRequestChange={() => setChangeRequestOpen(true)}
+      {/* 일지 테이블 — 행 클릭 시 검토 모달(상세·승인·수정요청) */}
+      <div className="mt-4">
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          rowKey={(r) => r.logId}
+          onRowClick={(r) => setReviewId(r.logId)}
+          rowClassName={(r) =>
+            cn(
+              'cursor-pointer',
+              r.logId === reviewId && 'border-l-brand border-l-4 bg-brand/10',
+            )
+          }
+          empty="조건에 맞는 일지가 없어요"
         />
+        <div className="text-fg-subtle mt-3 text-xs">
+          총 {rows.length} · 유효 {data.kpis.valid} · 수정 요청{' '}
+          {data.kpis.changeRequested} · 초안 {data.kpis.draft} · 재제출{' '}
+          {data.kpis.resubmitted}
+        </div>
       </div>
 
-      {/* 일지 관리 정책 · §30 완료 기준 — 05-31 확정(반려 제거) 반영 */}
-      <div className="bg-info-bg border-info/30 mt-8 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">일지 관리 정책 · 완료 기준</p>
-        <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
-          <li>
-            • 운영자는 일지를 직접 수정하지 않음 — 수정 요청만 가능 (폐기·반려
-            없음)
-          </li>
-          <li>
-            • 수정 요청 시 사유 코멘트 필수 — 이력에 보존되며 멘토에게 알림 발송
-          </li>
-          <li>
-            • 최종 유효본(status = 유효) 기준으로 인정 시간이 계산됨 · 수정 요청
-            중에는 기존 유효본 인정 유지
-          </li>
-        </ul>
-      </div>
-
-      {changeRequestOpen && detailQuery.data && (
-        <ChangeRequestModal
+      {reviewId && (
+        <LogReviewModal
           open
-          onClose={() => setChangeRequestOpen(false)}
-          detail={detailQuery.data}
+          onClose={() => setReviewId(null)}
+          logId={reviewId}
         />
       )}
     </div>

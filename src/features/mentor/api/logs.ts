@@ -88,16 +88,19 @@ export function useSaveLogDraft() {
 }
 
 export interface SubmitLogVariables {
-  logId: string
-  /** 재제출 = 수정 요청 일지 전체 수정 후(즉시 자동 유효, 폐기·반려 없음) */
+  /** 재제출일 때만 필요(수정 요청 일지 id). 제출(신규)은 생성이므로 불필요. */
+  logId?: string
+  /** submit = 신규 생성(POST .../mentoring-logs), resubmit = 재제출(POST .../{id}/resubmit) */
   mode: 'submit' | 'resubmit'
-  /** 제출 직전 폼 값 반영(전체 수정) — mock 이 필수 항목 검증(422) */
+  /** 제출 폼 값 전체 */
   payload?: MentoringLogDraftPayload
 }
 
 /**
- * 제출·재제출 — POST /mentor/v1/mentoring-logs/{logId}/{submit|resubmit}.
- * 제출 즉시 자동 유효 — 인정 시간 재계산이 팀 누적·팀 상태·완료 예약 파생에 즉시 반영된다.
+ * 제출(생성)·재제출 — 승인 단계 도입.
+ * - submit: POST /mentor/v1/mentoring-logs (신규 생성, status=submitted 승인 대기)
+ * - resubmit: POST /mentor/v1/mentoring-logs/{logId}/resubmit (change_requested → submitted)
+ * 인정 시간은 매니저 승인 시 산입된다.
  */
 export function useSubmitMentoringLog() {
   const queryClient = useQueryClient()
@@ -105,7 +108,9 @@ export function useSubmitMentoringLog() {
     mutationFn: ({ logId, mode, payload }: SubmitLogVariables) =>
       apiClient
         .post<MentoringLogDetailData>(
-          `/mentor/v1/mentoring-logs/${logId}/${mode}`,
+          mode === 'resubmit'
+            ? `/mentor/v1/mentoring-logs/${logId}/resubmit`
+            : '/mentor/v1/mentoring-logs',
           payload,
         )
         .then((r) => r.data),

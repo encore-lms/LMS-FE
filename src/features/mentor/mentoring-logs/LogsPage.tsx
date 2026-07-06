@@ -7,9 +7,9 @@ import {
   Calendar,
   Check,
   ChevronDown,
+  Clock3,
   FileText,
   Info,
-  Pencil,
   Search,
   Send,
 } from 'lucide-react'
@@ -43,15 +43,15 @@ const PERIOD_OPTIONS = [
 
 const STATUS_OPTIONS: { value: MentoringLogStatus | 'all'; label: string }[] = [
   { value: 'all', label: '전체' },
+  { value: 'submitted', label: '승인 대기' },
   { value: 'valid', label: '유효' },
   { value: 'change_requested', label: '수정 요청' },
-  { value: 'draft', label: '작성 중' },
 ]
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-// 행별 액션 — 상태 연동 변형(Figma): 유효=열기(상세 모달) / 수정 요청=수정(재제출 폼) /
-// 작성 중=이어 작성(초안 폼). 수정·이어 작성은 작성 화면 ?logId= 딥링크.
+// 행별 액션 — 상태 연동 변형: 승인 대기·유효=열기(상세 모달) / 수정 요청=수정(재제출 폼).
+// 수정은 작성 화면 ?logId= 딥링크.
 function rowAction(log: MentoringLogListItem) {
   switch (log.status) {
     case 'change_requested':
@@ -59,12 +59,6 @@ function rowAction(log: MentoringLogListItem) {
         label: '수정',
         to: `/mentor/mentoring-logs/new?logId=${log.logId}`,
         className: 'bg-danger text-on-color hover:bg-danger/90 font-bold',
-      }
-    case 'draft':
-      return {
-        label: '이어 작성',
-        to: `/mentor/mentoring-logs/new?logId=${log.logId}`,
-        className: 'bg-warning text-on-color hover:bg-warning/90 font-bold',
       }
     default:
       return {
@@ -220,6 +214,7 @@ export default function LogsPage() {
   const kpis = {
     total: periodFiltered.length,
     valid: periodFiltered.filter((l) => l.status === 'valid').length,
+    submitted: periodFiltered.filter((l) => l.status === 'submitted').length,
     changeRequested: periodFiltered.filter(
       (l) => l.status === 'change_requested',
     ).length,
@@ -399,10 +394,17 @@ export default function LogsPage() {
           hint={PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? '전체'}
         />
         <KpiCard
-          label="유효 / 자동 유효"
+          label="유효"
           icon={<Check className="text-success h-4 w-4" />}
           value={<KpiCount count={kpis.valid} />}
-          hint="운영자 별도 조치 없음"
+          hint="매니저 승인 완료 · 인정 시간 산입"
+        />
+        <KpiCard
+          label="승인 대기"
+          icon={<Clock3 className="text-warning h-4 w-4" />}
+          value={<KpiCount count={kpis.submitted} />}
+          hint="매니저 승인 후 인정"
+          tone={kpis.submitted > 0 ? 'warning' : 'default'}
         />
         <KpiCard
           label="수정 요청"
@@ -410,13 +412,6 @@ export default function LogsPage() {
           value={<KpiCount count={kpis.changeRequested} />}
           hint="멘토가 전체 수정 후 재제출 필요"
           tone={kpis.changeRequested > 0 ? 'danger' : 'default'}
-        />
-        <KpiCard
-          label="작성 중·임시"
-          icon={<Pencil className="text-warning h-4 w-4" />}
-          value={<KpiCount count={kpis.draft} />}
-          hint="제출 전 임시 저장"
-          tone={kpis.draft > 0 ? 'warning' : 'default'}
         />
       </div>
 

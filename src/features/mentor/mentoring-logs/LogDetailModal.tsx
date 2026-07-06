@@ -90,7 +90,7 @@ export default function LogDetailModal() {
             <LogStateChip
               status={data.status}
               note={data.statusNote}
-              validLabel="자동 유효"
+              validLabel="유효"
             />
           </span>
           <span className="text-fg-muted text-xs font-medium">
@@ -109,8 +109,8 @@ export default function LogDetailModal() {
                 : ''}
             </span>
             <span className="text-fg-subtle text-[11px]">
-              운영자가 수정 요청 시 멘토가 전체 수정 후 재제출 · 자동 유효
-              기준으로 인정 시간 반영
+              운영자가 수정 요청 시 멘토가 전체 수정 후 재제출 · 매니저 승인 후
+              인정 시간 반영
             </span>
           </span>
           <button
@@ -254,16 +254,29 @@ export default function LogDetailModal() {
           </div>
         </section>
 
-        {/* 상태 배너 — 자동 유효 / 수정 요청 사유 / 작성 중 */}
-        {data.status === 'valid' && (
+        {/* 상태 배너 — 승인 대기 / 유효 / 수정 요청 사유 / 작성 중 */}
+        {data.status === 'submitted' && (
           <div className="bg-warning-bg border-warning flex items-start gap-2.5 rounded-xl border p-3.5">
             <Clock className="text-warning mt-0.5 h-4 w-4 shrink-0" />
             <div className="flex flex-col gap-0.5">
               <span className="text-fg text-[13px] font-bold">
-                자동 유효 · 운영자 확인 가능
+                승인 대기 · 매니저 검토 중
               </span>
               <span className="text-fg-muted text-[11px]">
-                자동 유효 정책으로 인정 시간이 즉시 반영됩니다
+                매니저 승인 후 인정 시간이 반영됩니다
+              </span>
+            </div>
+          </div>
+        )}
+        {data.status === 'valid' && (
+          <div className="bg-success-bg border-success flex items-start gap-2.5 rounded-xl border p-3.5">
+            <Check className="text-success mt-0.5 h-4 w-4 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-fg text-[13px] font-bold">
+                유효 · 매니저 승인 완료
+              </span>
+              <span className="text-fg-muted text-[11px]">
+                매니저 승인으로 인정 시간이 반영되었습니다
               </span>
             </div>
           </div>
@@ -280,7 +293,7 @@ export default function LogDetailModal() {
               </span>
               <span className="text-fg-subtle text-[11px]">
                 요청 {data.changeRequest.requestedAtLabel} · 전체 수정 후 재제출
-                시 즉시 자동 유효
+                시 승인 대기
               </span>
             </div>
           </div>
@@ -365,10 +378,10 @@ export default function LogDetailModal() {
           </section>
         ))}
 
-        {/* 메타 행 — '24h 후 자동 유효' 표기는 제출 즉시 자동 유효 정책으로 대체(결정 기록) */}
+        {/* 메타 행 — 승인 단계 도입: 제출 시 승인 대기, 매니저 승인 후 인정 */}
         <div className="bg-surface-muted flex flex-wrap items-center gap-x-6 gap-y-2 rounded-[10px] p-3.5">
           <MetaItem label="제출" value={data.submittedAtLabel ?? '제출 전'} />
-          <MetaItem label="유효 처리" value="제출 즉시 자동 유효" />
+          <MetaItem label="유효 처리" value="매니저 승인 후 인정" />
           <MetaItem label="수정" value="수정 요청 시 전체 수정 후 재제출" />
           <span className="ml-auto">
             <MetaItem label="기록 ID" value={data.logId} />

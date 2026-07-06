@@ -212,6 +212,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 멘토 멘토링 일지(/mentor/v1/mentoring-logs)도 auth-user-service(:8081) 실연동(mock 제거).
+      '/api/mentor/v1': {
+        target: AUTH_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 멘토링(/student/mentoring)도 auth-user-service(:8081) 실연동(mock 제거).
       '/api/student/mentoring': {
         target: AUTH_API_TARGET,

@@ -3,6 +3,7 @@ import { apiClient } from '@/shared/api'
 import { adminMentoringKeys } from './queryKeys'
 import type {
   AdminCohortAssignmentOptions,
+  AdminMentoringTeamDetail,
   AdminLogTemplate,
   AdminLogTemplatesData,
   AdminMentoringLogDetail,
@@ -60,6 +61,20 @@ export function useCreateMentorAssignment() {
   })
 }
 
+/** GET /admin/mentors/assignments/teams/{teamId} — 팀 상세(개요·멘티 명단·일지). */
+export function useMentoringTeamDetail(teamId: string | null) {
+  return useQuery({
+    queryKey: [...adminMentoringKeys.assignments(), 'team', teamId ?? ''],
+    enabled: !!teamId,
+    queryFn: () =>
+      apiClient
+        .get<AdminMentoringTeamDetail>(
+          `/admin/mentors/assignments/teams/${teamId}`,
+        )
+        .then((r) => r.data),
+  })
+}
+
 /**
  * GET /admin/mentors/assignments/cohorts/{cohortId}/students
  * — 기수 수강생 + 활성 템플릿 + 멘토(부하 포함). 수강생 기반 배정 폼 선택지.
@@ -89,6 +104,50 @@ export function useCreateMentorAssignmentFromStudents() {
         .post<MentorAssignmentRow>(
           '/admin/mentors/assignments/from-students',
           payload,
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
+/** POST /admin/mentors/assignments/teams/{teamId}/members — 멘티(팀원) 추가. */
+export function useAddTeamMembers() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      teamId,
+      studentUserIds,
+    }: {
+      teamId: string
+      studentUserIds: string[]
+    }) =>
+      apiClient
+        .post<AdminMentoringTeamDetail>(
+          `/admin/mentors/assignments/teams/${teamId}/members`,
+          { studentUserIds },
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
+/** PATCH /admin/mentors/assignments/teams/{teamId}/name — 팀명 수정. */
+export function useRenameTeam() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ teamId, name }: { teamId: string; name: string }) =>
+      apiClient
+        .patch<MentorAssignmentRow>(
+          `/admin/mentors/assignments/teams/${teamId}/name`,
+          { name },
         )
         .then((r) => r.data),
     onSuccess: () => {
@@ -225,6 +284,37 @@ export function useCreateLogChangeRequest() {
       queryClient.invalidateQueries({
         queryKey: adminMentoringKeys.logDetail(vars.logId),
       })
+      // 팀 상세 일지 타임라인(assignments 접두사 키)도 갱신.
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
+/**
+ * POST /admin/mentoring/logs/{logId}/approve — 매니저 승인.
+ * 제출됨(승인 대기) → 유효 + 인정 시간 산입. 성공 시 목록 + 상세 + 팀 상세 무효화.
+ */
+export function useApproveLog() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (logId: string) =>
+      apiClient
+        .post<AdminMentoringLogDetail>(
+          `/admin/mentoring/logs/${logId}/approve`,
+          {},
+        )
+        .then((r) => r.data),
+    onSuccess: (_data, logId) => {
+      queryClient.invalidateQueries({ queryKey: adminMentoringKeys.logs() })
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.logDetail(logId),
+      })
+      // 팀 상세 일지 타임라인(assignments 접두사 키)도 갱신 — 승인 즉시 반영.
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
     },
   })
 }
@@ -297,6 +387,29 @@ export function useUpdateTemplateFields() {
         .patch<AdminLogTemplate>(
           `/admin/mentoring/log-templates/${templateId}`,
           { fields },
+        )
+        .then((r) => r.data),
+    onSuccess: invalidate,
+  })
+}
+
+/** PATCH /admin/mentoring/log-templates/{id}/meta — 템플릿 이름·설명 수정. */
+export function useUpdateTemplateMeta() {
+  const invalidate = useInvalidateTemplates()
+  return useMutation({
+    mutationFn: ({
+      templateId,
+      name,
+      description,
+    }: {
+      templateId: string
+      name: string
+      description?: string
+    }) =>
+      apiClient
+        .patch<AdminLogTemplate>(
+          `/admin/mentoring/log-templates/${templateId}/meta`,
+          { name, description: description ?? '' },
         )
         .then((r) => r.data),
     onSuccess: invalidate,

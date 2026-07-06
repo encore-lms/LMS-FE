@@ -48,7 +48,7 @@ export default function LogSubmittedPage() {
         title={
           state.resubmit ? '일지가 재제출되었습니다' : '일지가 제출되었습니다'
         }
-        description="제출 즉시 자동 유효 기준으로 저장되었습니다. 실제 진행 시간이 인정 시간에 반영됩니다."
+        description="승인 대기 상태로 접수되었습니다. 매니저 승인 후 실제 진행 시간이 인정 시간에 반영됩니다."
       />
       <SubmitSummaryCard
         submittedAtLabel={state.submittedAtLabel}
@@ -59,8 +59,8 @@ export default function LogSubmittedPage() {
         primary={{ label: '새 일지 작성', to: '/mentor/mentoring-logs/new' }}
       />
       <InfoNotice>
-        제출한 일지는 즉시 자동 유효로 저장됩니다. 수정이 필요하면 매니저의 수정
-        요청 후 전체 수정하여 재제출할 수 있습니다.
+        제출한 일지는 매니저 승인 대기 상태가 됩니다. 승인되면 인정 시간에
+        반영되고, 매니저의 수정 요청이 있으면 전체 수정 후 재제출할 수 있습니다.
       </InfoNotice>
     </div>
   )

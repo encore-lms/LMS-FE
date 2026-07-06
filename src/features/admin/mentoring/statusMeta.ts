@@ -38,6 +38,7 @@ export function assignmentDisplayStatus(
 
 export type LogDisplayStatus =
   | 'draft'
+  | 'submitted'
   | 'valid'
   | 'change_requested'
   | 'resubmitted_valid'
@@ -47,6 +48,7 @@ export const LOG_STATUS_META: Record<
   { label: string; tone: BadgeTone }
 > = {
   draft: { label: '초안', tone: 'neutral' },
+  submitted: { label: '승인 대기', tone: 'warning' },
   valid: { label: '유효', tone: 'success' },
   change_requested: { label: '수정 요청', tone: 'info' },
   resubmitted_valid: { label: '재제출 후 유효', tone: 'accent' },
@@ -68,13 +70,15 @@ export function progressFillClass(pct: number) {
 
 // ───────────────────────── 일지 항목·템플릿 (§31~32) ─────────────────────────
 
-/** 항목 타입 배지 — 긴 텍스트=info 틴트 · 짧은 텍스트=success 틴트(Figma ④). */
+/** 항목 타입 배지 — 텍스트=info/success 틴트 · 이미지=warning · 텍스트+이미지=accent. */
 export const FIELD_TYPE_META: Record<
   AdminTemplateFieldType,
   { label: string; tone: BadgeTone }
 > = {
   long_text: { label: '긴 텍스트', tone: 'info' },
   short_text: { label: '짧은 텍스트', tone: 'success' },
+  image: { label: '이미지', tone: 'warning' },
+  text_image: { label: '텍스트+이미지', tone: 'accent' },
 }
 
 /**

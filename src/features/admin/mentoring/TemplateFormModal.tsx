@@ -1,32 +1,59 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import { apiErrorOf, useCreateLogTemplate } from './api'
+import { apiErrorOf, useCreateLogTemplate, useUpdateTemplateMeta } from './api'
 
 interface TemplateFormModalProps {
   open: boolean
   onClose: () => void
   /** 생성 직후 우측 편집 영역에 선택 — 항목은 빈 상태에서 '항목 추가'로 시작 */
   onCreated: (templateId: string) => void
+  /** 전달 시 편집(이름·설명 수정) 모드. 미전달이면 생성 모드. */
+  editTemplate?: { templateId: string; name: string; description: string }
 }
 
 /**
- * 새 템플릿 생성 모달 — 이름 필수·설명 선택(Figma 폼 frame 미존재 openQuestion, 최소 폼).
- * 항목 편집은 생성 후 우측 '항목 편집' 카드에서 진행한다. 기본 여부는 1개 고정이라
- * 생성 시 항상 OFF(기본 템플릿 변경 UI 는 frame 미존재 — BE·디자인 확정 후 TODO).
+ * 템플릿 생성/이름·설명 수정 모달 — 이름 필수·설명 선택.
+ * editTemplate 이 있으면 이름 수정(PATCH .../meta), 없으면 새 템플릿 생성.
  */
 export function TemplateFormModal({
   open,
   onClose,
   onCreated,
+  editTemplate,
 }: TemplateFormModalProps) {
   const toast = useToast()
   const createTemplate = useCreateLogTemplate()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const updateMeta = useUpdateTemplateMeta()
+  const isEdit = !!editTemplate
+  const [name, setName] = useState(editTemplate?.name ?? '')
+  const [description, setDescription] = useState(
+    editTemplate?.description ?? '',
+  )
+  const pending = createTemplate.isPending || updateMeta.isPending
 
   const submit = () => {
     if (!name.trim()) return
+    if (isEdit) {
+      updateMeta.mutate(
+        {
+          templateId: editTemplate.templateId,
+          name: name.trim(),
+          description: description.trim(),
+        },
+        {
+          onSuccess: (updated) => {
+            toast.success(`템플릿 이름을 '${updated.name}'(으)로 수정했어요.`)
+            onClose()
+          },
+          onError: (error) =>
+            toast.danger(
+              apiErrorOf(error).message ?? '템플릿 수정에 실패했어요.',
+            ),
+        },
+      )
+      return
+    }
     createTemplate.mutate(
       { name: name.trim(), description: description.trim() },
       {
@@ -49,7 +76,7 @@ export function TemplateFormModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="새 템플릿"
+      title={isEdit ? '템플릿 이름 수정' : '새 템플릿'}
       closeOnBackdrop={false}
       footer={
         <>
@@ -63,10 +90,16 @@ export function TemplateFormModal({
           <button
             type="button"
             onClick={submit}
-            disabled={!name.trim() || createTemplate.isPending}
+            disabled={!name.trim() || pending}
             className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {createTemplate.isPending ? '생성 중…' : '템플릿 생성'}
+            {pending
+              ? isEdit
+                ? '수정 중…'
+                : '생성 중…'
+              : isEdit
+                ? '수정 저장'
+                : '템플릿 생성'}
           </button>
         </>
       }
@@ -103,8 +136,16 @@ export function TemplateFormModal({
           />
         </div>
         <ul className="text-fg-subtle flex flex-col gap-1 text-xs">
-          <li>• 신규 배정 팀에만 기본 적용 — 기존 팀에는 자동 반영 안 됨</li>
-          <li>• 생성 후 항목 편집 카드에서 항목을 추가합니다</li>
+          {isEdit ? (
+            <li>• 이름·설명 수정은 기존 배정 팀에 자동 반영되지 않습니다</li>
+          ) : (
+            <>
+              <li>
+                • 신규 배정 팀에만 기본 적용 — 기존 팀에는 자동 반영 안 됨
+              </li>
+              <li>• 생성 후 항목 편집 카드에서 항목을 추가합니다</li>
+            </>
+          )}
         </ul>
       </div>
     </Modal>

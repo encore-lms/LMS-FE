@@ -1,4 +1,4 @@
-import { AlertTriangle, Check } from 'lucide-react'
+import { AlertTriangle, Check, Clock } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type {
   MentorTeamAssignment,
@@ -95,6 +95,14 @@ export function LogStatusChip({
       <span className="bg-danger-bg text-danger inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap">
         <AlertTriangle className="h-[11px] w-[11px]" />
         수정 요청{note ? ` — ${note}` : ''}
+      </span>
+    )
+  }
+  if (status === 'submitted') {
+    return (
+      <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap">
+        <Clock className="h-[11px] w-[11px]" />
+        승인 대기
       </span>
     )
   }

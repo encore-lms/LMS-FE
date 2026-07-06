@@ -86,6 +86,9 @@ const MentoringLogsPage = lazy(() => import('./mentoring/LogsPage'))
 const MentoringLogTemplatesPage = lazy(
   () => import('./mentoring/LogTemplatesPage'),
 )
+const MentoringTeamDetailPage = lazy(
+  () => import('./mentoring/MentoringTeamDetailPage'),
+)
 const MentoringTeamLogFieldsPage = lazy(
   () => import('./mentoring/TeamLogFieldsPage'),
 )
@@ -141,6 +144,10 @@ export const adminRoutes: RouteObject[] = [
         element: <MentoringLogTemplatesPage />,
       },
       { path: 'mentoring/statistics', element: <MentoringStatisticsPage /> },
+      {
+        path: 'mentoring/teams/:teamId',
+        element: <MentoringTeamDetailPage />,
+      },
       {
         path: 'mentoring/teams/:teamId/log-fields',
         element: <MentoringTeamLogFieldsPage />,

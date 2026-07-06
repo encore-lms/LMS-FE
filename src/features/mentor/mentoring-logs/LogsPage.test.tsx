@@ -40,33 +40,29 @@ describe('LogsPage', () => {
     })
     renderPage()
     expect(usePageHeaderStore.getState().title).toBe('멘토링 일지')
-    // KPI 캡션 원문
-    expect(screen.getByText('운영자 별도 조치 없음')).toBeInTheDocument()
+    // KPI 캡션(승인 단계 도입 반영)
+    expect(
+      screen.getByText('매니저 승인 완료 · 인정 시간 산입'),
+    ).toBeInTheDocument()
     expect(
       screen.getByText('멘토가 전체 수정 후 재제출 필요'),
     ).toBeInTheDocument()
-    expect(screen.getByText('제출 전 임시 저장')).toBeInTheDocument()
-    // 테이블 행 — 팀명·요지·상태 칩(유효/수정 요청/작성 중)
+    expect(screen.getByText('매니저 승인 후 인정')).toBeInTheDocument()
+    // 테이블 행 — 팀명·요지·상태 칩
     expect(screen.getAllByText('추천시스템 팀').length).toBeGreaterThan(0)
     expect(
       screen.getByText('추천 모델 v2 평가 지표 검토 + 다음 액션 정리'),
     ).toBeInTheDocument()
     expect(screen.getByText('수정 요청 — 일지 보강 필요')).toBeInTheDocument()
-    // 상태 필터 옵션 + 행 칩 양쪽에 존재
-    expect(screen.getAllByText('작성 중').length).toBeGreaterThan(1)
     // 페이지네이션 — 페이지당 8건(공통 Pagination), 전체 건수 대비 표시 건수 안내
     expect(screen.getByText(/건 중 8건 표시/)).toBeInTheDocument()
-    // 상태 연동 액션 — 열기(상세 모달) / 수정·이어 작성(작성 화면 딥링크)
+    // 상태 연동 액션 — 열기(상세 모달) / 수정(재제출 폼 딥링크)
     expect(
       screen.getAllByRole('link', { name: /열기/ }).length,
     ).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /^수정/ })).toHaveAttribute(
       'href',
       '/mentor/mentoring-logs/new?logId=log_ts_3',
-    )
-    expect(screen.getByRole('link', { name: /이어 작성/ })).toHaveAttribute(
-      'href',
-      '/mentor/mentoring-logs/new?logId=log_rec_5d',
     )
     expect(screen.getByRole('link', { name: /새 일지 작성/ })).toHaveAttribute(
       'href',
@@ -82,11 +78,12 @@ describe('LogsPage', () => {
     })
     const user = userEvent.setup()
     renderPage()
-    // 상태=작성 중 → 초안 행만
-    await user.selectOptions(screen.getByLabelText('상태 필터'), 'draft')
-    expect(
-      screen.getByText('콜드 스타트 사용자 처리 로직 자문'),
-    ).toBeInTheDocument()
+    // 상태=수정 요청 → 수정 요청 행만
+    await user.selectOptions(
+      screen.getByLabelText('상태 필터'),
+      'change_requested',
+    )
+    expect(screen.getByText('수정 요청 — 일지 보강 필요')).toBeInTheDocument()
     expect(
       screen.queryByText('추천 모델 v2 평가 지표 검토 + 다음 액션 정리'),
     ).not.toBeInTheDocument()

@@ -133,7 +133,7 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
         userId: 'rkdtk123@naver.com',
-        password: 'Lms@DupVrqdtQR56',
+        password: 'Lms@RAmGcDJBCqw9',
       })
     })
     expect(useAuthStore.getState().user?.role).toBe('INSTRUCTOR')

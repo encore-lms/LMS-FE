@@ -9,8 +9,8 @@ export interface DemoAccount {
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   { label: '수강생', email: 'student1@playdata.io', password: 'password123!' },
-  { label: '멘토', email: 'apsxh123@naver.com', password: 'Lms@S6rGZrNARXNh' },
-  { label: '강사', email: 'rkdtk123@naver.com', password: 'Lms@DupVrqdtQR56' },
+  { label: '멘토', email: 'apsxh123@naver.com', password: 'Lms@MXKi7uBGfh76' },
+  { label: '강사', email: 'rkdtk123@naver.com', password: 'Lms@RAmGcDJBCqw9' },
   {
     label: '운영(관리자)',
     email: 'admin@playdata.io',

@@ -3,6 +3,7 @@ import type { RouteObject } from 'react-router-dom'
 
 // 운영(매니저/ADMIN) 라우트 — features/admin 소유자만 편집.
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
+const ProfilePage = lazy(() => import('./profile/ProfilePage'))
 const ReviewQueuePage = lazy(() => import('./certificates/ReviewQueuePage'))
 const ReviewDetailPage = lazy(() => import('./certificates/ReviewDetailPage'))
 const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
@@ -100,6 +101,7 @@ export const adminRoutes: RouteObject[] = [
       { index: true, element: <AdminDashboard /> },
       // 실 auth 로그인 nextRoute(/admin/dashboard) 별칭 — index(/admin)와 같은 화면 (멘토 라우트 패턴)
       { path: 'dashboard', element: <AdminDashboard /> },
+      { path: 'profile', element: <ProfilePage /> },
       { path: 'education', element: <EducationPage /> },
       {
         path: 'education/resume/:resumeId',

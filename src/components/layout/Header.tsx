@@ -96,12 +96,18 @@ export function Header() {
                 )}
               </div>
               <div className="bg-divider my-1 h-px w-full" />
-              {role === 'STUDENT' && (
+              {(role === 'STUDENT' ||
+                role === 'MANAGER' ||
+                role === 'ADMIN') && (
                 <button
                   type="button"
                   onClick={() => {
                     setOpen(false)
-                    navigate('/student/profile')
+                    navigate(
+                      role === 'STUDENT'
+                        ? '/student/profile'
+                        : '/admin/profile',
+                    )
                   }}
                   className="text-fg hover:bg-surface-muted flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium"
                 >

@@ -10,7 +10,8 @@ import type { MenuNode } from '@/components/layout'
 // '외부 연동'은 Figma 사이드바에 없던 화면이라 진입점 확보를 위해 추가(2026-06-15) — URL 직접 입력 제거.
 // 학생 이력서 피드백은 '이력서 관리' 화면의 '피드백 관리' 탭으로 통합 — 별도 메뉴/페이지 없음.
 export const adminMenu: MenuNode[] = [
-  { label: '대시보드', to: '/admin' },
+  // 로그인 nextRoute가 /admin/dashboard라 to=/admin(정확 일치)만으론 활성이 풀린다 → match로 묶는다.
+  { label: '대시보드', to: '/admin', match: ['/admin/dashboard'] },
   {
     label: '기수 설계·운영',
     children: [

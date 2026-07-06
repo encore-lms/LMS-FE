@@ -1,67 +1,193 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import {
-  AlertTriangle,
-  Clock,
-  FileText,
-  Plus,
-  Star,
-  UserPlus,
-} from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { AlertTriangle, Plus, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { KpiCard } from '@/components/data/KpiCard'
-import { DataTable, type Column } from '@/components/data/DataTable'
+import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
-import { useMentorAssignments } from './api'
+import { useCourseConfig, useCourseList } from '../api/settings'
+import { useMyCohorts } from '../api/dashboard'
+import { useAdminMentoringLogs, useMentorAssignments } from './api'
 import {
   ASSIGNMENT_STATUS_META,
   assignmentDisplayStatus,
   progressFillClass,
 } from './statusMeta'
 import { AssignmentFormModal } from './AssignmentFormModal'
+import { AssignmentCreateModal } from './AssignmentCreateModal'
 import { AssignmentManageModal } from './AssignmentManageModal'
 import { EarlyEndModal } from './EarlyEndModal'
-import { MentoringTabs } from './MentoringTabs'
 import type { MentorAssignmentRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
-// 배정 제약 · §29 정책 — Figma 2744:7725 원문.
-const POLICY_ROWS: { key: string; desc: string }[] = [
-  { key: '반별 배정', desc: '한 반에 한 팀만 배정 가능' },
-  { key: '멘토별 배정', desc: '여러 반에 각각 한 팀씩 배정 가능' },
-  { key: 'N시간', desc: '팀 배정 단위로 설정' },
-  {
-    key: '일지 템플릿',
-    desc: '배정 시 기본 템플릿 선택 (일지 템플릿에서 관리)',
-  },
-  {
-    key: '조기 종료',
-    desc: '운영자가 팀을 조기 종료 처리하면 평가 가능 상태로 전환',
-  },
-]
+/** 멘토링 카드 — 멘토·멘티·진행/잔여 시간·일지(총·미인증). 기수 그룹 안에 팀 단위로 노출. */
+function MentoringCard({
+  team,
+  logStat,
+  logsPending,
+  onAssign,
+  onManage,
+  onEarlyEnd,
+}: {
+  team: MentorAssignmentRow
+  logStat?: { total: number; uncertified: number }
+  logsPending: boolean
+  onAssign: () => void
+  onManage: () => void
+  onEarlyEnd: () => void
+}) {
+  const meta = ASSIGNMENT_STATUS_META[assignmentDisplayStatus(team)]
+  const displayStatus = assignmentDisplayStatus(team)
+  const progress = team.recognizedHours ?? 0
+  const remaining =
+    team.allocatedHours !== null
+      ? Math.max(0, team.allocatedHours - progress)
+      : null
+  const pct = team.recognizedPct
+  const total = logStat?.total ?? 0
+  const uncertified = logStat?.uncertified ?? 0
 
-/** 누적 인정 셀 — 'Xh NN%' + 진행바(트랙 surface-muted, fill 상태색). */
-function RecognizedCell({ row }: { row: MentorAssignmentRow }) {
-  if (row.recognizedHours === null || row.recognizedPct === null) {
-    return <span className="text-fg-subtle font-medium">-</span>
-  }
-  const pct = row.recognizedPct
   return (
-    <div className="flex w-28 flex-col gap-1.5">
-      <span className="text-fg text-xs font-bold">
-        {row.recognizedHours}h{' '}
-        <span className="text-fg-muted font-medium">{pct}%</span>
-      </span>
-      <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
+    <div
+      className={cn(
+        'border-border bg-surface flex flex-col gap-3 rounded-xl border p-4',
+        !team.assignmentId && 'border-l-danger border-l-4',
+      )}
+    >
+      {/* 헤더 — 팀명 + 상태 */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-fg truncate text-[14px] font-bold">
+            {team.teamName}
+          </p>
+          <p className="text-fg-subtle text-[11px]">
+            멘티 {team.memberCount}명
+          </p>
+        </div>
+        <StatusBadge label={meta.label} tone={meta.tone} />
+      </div>
+
+      {/* 멘토 */}
+      <div className="border-border flex items-center gap-2 border-t pt-3">
+        {team.mentor ? (
+          <>
+            <Avatar name={team.mentor.name} size={30} />
+            <div className="min-w-0">
+              <p className="text-fg-subtle text-[10.5px]">멘토</p>
+              <p className="text-fg truncate text-[13px] font-bold">
+                {team.mentor.name}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="bg-fg-subtle text-on-color inline-flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full text-xs font-bold">
+              ?
+            </span>
+            <span className="text-fg-subtle text-[13px] font-medium">
+              멘토 미배정
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* 진행/잔여 시간 + 진행바 */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between text-[12px]">
+          <span className="text-fg-muted">
+            진행{' '}
+            <b className="text-fg tabular-nums">
+              {team.recognizedHours !== null ? `${progress}h` : '-'}
+            </b>
+            {remaining !== null && (
+              <>
+                {' · '}잔여 <b className="text-fg tabular-nums">{remaining}h</b>
+              </>
+            )}
+          </span>
+          {team.allocatedHours !== null && (
+            <span className="text-fg-subtle tabular-nums">
+              배정 {team.allocatedHours}h{pct !== null && ` · ${pct}%`}
+            </span>
+          )}
+        </div>
+        {pct !== null && (
+          <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
+            <div
+              className={cn('h-full rounded-full', progressFillClass(pct))}
+              style={{ width: `${Math.min(pct, 100)}%` }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 일지 — 총 / 미인증 */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-surface-muted/50 rounded-lg px-3 py-2">
+          <p className="text-fg-subtle text-[10.5px]">총 일지</p>
+          <p className="text-fg text-[15px] font-bold tabular-nums">
+            {logsPending ? '…' : `${total}건`}
+          </p>
+        </div>
         <div
-          className={cn('h-full rounded-full', progressFillClass(pct))}
-          style={{ width: `${Math.min(pct, 100)}%` }}
-        />
+          className={cn(
+            'rounded-lg px-3 py-2',
+            uncertified > 0 ? 'bg-warning-bg' : 'bg-surface-muted/50',
+          )}
+        >
+          <p className="text-fg-subtle text-[10.5px]">미인증 일지</p>
+          <p
+            className={cn(
+              'text-[15px] font-bold tabular-nums',
+              uncertified > 0 ? 'text-warning' : 'text-fg',
+            )}
+          >
+            {logsPending ? '…' : `${uncertified}건`}
+          </p>
+        </div>
+      </div>
+
+      {/* 액션 */}
+      <div className="border-border flex flex-wrap items-center gap-1.5 border-t pt-3">
+        {!team.assignmentId ? (
+          <button
+            type="button"
+            onClick={onAssign}
+            className="bg-danger text-on-color hover:bg-danger/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
+          >
+            <UserPlus className="h-3 w-3" />
+            멘토 배정
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onManage}
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+            >
+              수정
+            </button>
+            <Link
+              to={`/admin/mentoring/teams/${team.teamId}/log-fields`}
+              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+            >
+              일지 항목
+            </Link>
+            {displayStatus === 'in_progress' && (
+              <button
+                type="button"
+                onClick={onEarlyEnd}
+                className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+              >
+                조기 종료
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
@@ -74,28 +200,93 @@ export default function AssignmentsPage() {
     '멘토 배정 관리',
     '반/기수별 멘토 팀 배정 · 배정 시간 N · 일지 템플릿 · 한 반에 한 팀만',
   )
-  const { data, isPending, isError, refetch } = useMentorAssignments()
-  const [course, setCourse] = useSearchParamState('course', 'all')
+  // 과정·기수는 한 번의 setSearchParams로 갱신한다 — setCourse/setCohort를 연속 호출하면
+  // 두 갱신이 각자 현재 URL을 기준으로 덮어써 뒤 호출이 앞 호출을 지운다(과정이 초기화되는 버그).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const course = searchParams.get('course') ?? 'all' // 'all' | courseId
+  const cohort = searchParams.get('cohort') ?? 'all' // 'all' | cohortId
+  // 보드는 상단 선택 기수 기준으로 조회(선택 없으면 담당/폴백 기수).
+  const { data, isPending, isError, refetch } = useMentorAssignments(cohort)
+  const logs = useAdminMentoringLogs()
+  // 상단 과정·기수 셀렉터 — 과정·기수·교과목 페이지와 동일하게 교육 과정 카탈로그(learning-service)에서 가져온다.
+  const courseList = useCourseList()
+  const pickCourse = (next: string) =>
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev)
+        if (next === 'all') p.delete('course')
+        else p.set('course', next)
+        p.delete('cohort') // 과정 변경 시 기수 초기화(같은 갱신 안에서)
+        return p
+      },
+      { replace: true },
+    )
+  const pickCohort = (next: string) =>
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev)
+        if (next === 'all') p.delete('cohort')
+        else p.set('cohort', next)
+        return p
+      },
+      { replace: true },
+    )
+  const courseConfig = useCourseConfig(course === 'all' ? null : course)
+  const selectedCourseTitle =
+    course === 'all'
+      ? null
+      : (courseList.data?.find((c) => c.courseId === course)?.title ?? null)
+
+  // 최초 진입 시 URL에 선택이 없으면 매니저 담당 기수(첫 번째)를 기본 선택한다.
+  const myCohorts = useMyCohorts()
+  const didDefaultCohort = useRef(false)
+  useEffect(() => {
+    if (didDefaultCohort.current) return
+    if (searchParams.get('course')) {
+      didDefaultCohort.current = true // 딥링크/직접 선택은 존중
+      return
+    }
+    const first = myCohorts.data?.[0]
+    if (!first) return
+    didDefaultCohort.current = true
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev)
+        p.set('course', first.courseId)
+        p.set('cohort', first.cohortId)
+        return p
+      },
+      { replace: true },
+    )
+  }, [myCohorts.data, searchParams, setSearchParams])
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [status, setStatus] = useSearchParamState('status', 'with_unassigned')
   const [q, setQ] = useSearchParamState('q')
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
   const [manageRow, setManageRow] = useState<MentorAssignmentRow | null>(null)
   const [earlyEndRow, setEarlyEndRow] = useState<MentorAssignmentRow | null>(
     null,
   )
+  const toast = useToast()
 
   const rows = useMemo(() => data?.rows ?? [], [data])
-  const courses = useMemo(
-    () => [...new Set(rows.map((r) => r.courseName))],
-    [rows],
-  )
-
+  // 팀별 일지 집계 — 총 개수 / 미인증(유효 아님: 초안·수정요청) 개수.
+  const logStats = useMemo(() => {
+    const map = new Map<string, { total: number; uncertified: number }>()
+    for (const r of logs.data?.rows ?? []) {
+      const s = map.get(r.teamId) ?? { total: 0, uncertified: 0 }
+      s.total += 1
+      if (r.status !== 'valid') s.uncertified += 1
+      map.set(r.teamId, s)
+    }
+    return map
+  }, [logs.data])
+  // 보드는 이미 상단 선택 기수로 조회되므로, 클라이언트에선 멘토·상태·검색만 거른다.
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
-      if (course !== 'all' && r.courseName !== course) return false
       if (mentorFilter !== 'all' && r.mentor?.mentorId !== mentorFilter)
         return false
       if (status === 'active_only' && !r.assignmentId) return false
@@ -106,7 +297,32 @@ export default function AssignmentsPage() {
       }
       return true
     })
-  }, [rows, course, mentorFilter, status, q])
+  }, [rows, mentorFilter, status, q])
+
+  // 기수별 카드 그룹 — 필터 통과 팀을 기수 단위로 묶는다.
+  const cohortGroups = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        cohortId: string
+        cohortLabel: string
+        courseName: string
+        teams: MentorAssignmentRow[]
+      }
+    >()
+    for (const r of filtered) {
+      const g = map.get(r.cohortId)
+      if (g) g.teams.push(r)
+      else
+        map.set(r.cohortId, {
+          cohortId: r.cohortId,
+          cohortLabel: r.cohortLabel,
+          courseName: r.courseName,
+          teams: [r],
+        })
+    }
+    return [...map.values()]
+  }, [filtered])
 
   if (isPending) {
     return <SkeletonListPage kpis={4} columns={5} />
@@ -129,135 +345,55 @@ export default function AssignmentsPage() {
     setFormOpen(true)
   }
 
-  const columns: Column<MentorAssignmentRow>[] = [
-    {
-      key: 'cohort',
-      header: '반/기수',
-      className: 'w-28',
-      cell: (r) => (
-        <div className="flex flex-col">
-          <span className="text-fg text-xs font-bold">{r.cohortLabel}</span>
-          <span className="text-fg-subtle text-[11px]">{r.courseName}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'team',
-      header: '팀명',
-      cell: (r) => (
-        <span className="text-fg text-[13px] font-bold">{r.teamName}</span>
-      ),
-    },
-    {
-      key: 'mentor',
-      header: '멘토',
-      className: 'w-36',
-      cell: (r) =>
-        r.mentor ? (
-          <div className="flex items-center gap-2">
-            <Avatar name={r.mentor.name} size={28} />
-            <span className="text-fg text-xs font-bold">{r.mentor.name}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="bg-fg-subtle text-on-color inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold">
-              ?
-            </span>
-            <span className="text-fg-subtle text-xs font-medium">미배정</span>
-          </div>
-        ),
-    },
-    {
-      key: 'members',
-      header: '팀원',
-      className: 'w-16',
-      cell: (r) => (
-        <span className="text-fg text-xs font-bold">{r.memberCount}명</span>
-      ),
-    },
-    {
-      key: 'allocated',
-      header: '배정 N시간',
-      className: 'w-24',
-      cell: (r) =>
-        r.allocatedHours !== null ? (
-          <span className="text-fg text-[13px] font-bold">
-            {r.allocatedHours}h
-          </span>
-        ) : (
-          <span className="text-fg-subtle font-medium">-</span>
-        ),
-    },
-    {
-      key: 'recognized',
-      header: '누적 인정',
-      className: 'w-32',
-      cell: (r) => <RecognizedCell row={r} />,
-    },
-    {
-      key: 'status',
-      header: '상태',
-      className: 'w-28',
-      cell: (r) => {
-        const meta = ASSIGNMENT_STATUS_META[assignmentDisplayStatus(r)]
-        return <StatusBadge label={meta.label} tone={meta.tone} />
-      },
-    },
-    {
-      key: 'actions',
-      header: '액션',
-      align: 'right',
-      className: 'w-56',
-      cell: (r) => {
-        if (!r.assignmentId) {
-          return (
-            <button
-              type="button"
-              onClick={() => openCreate(r.teamId)}
-              className="bg-danger text-on-color hover:bg-danger/90 inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-bold"
-            >
-              <UserPlus className="h-3 w-3" />
-              배정
-            </button>
-          )
-        }
-        const displayStatus = assignmentDisplayStatus(r)
-        return (
-          <div className="flex items-center justify-end gap-1.5">
-            <button
-              type="button"
-              onClick={() => setManageRow(r)}
-              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
-            >
-              수정
-            </button>
-            {/* 팀별 일지 항목(§32) 진입 — 해당 화면 브레드크럼이 '멘토 배정 관리'로 복귀 */}
-            <Link
-              to={`/admin/mentoring/teams/${r.teamId}/log-fields`}
-              className="border-border text-fg-muted hover:bg-surface-muted bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
-            >
-              일지 항목
-            </Link>
-            {displayStatus === 'in_progress' && (
-              <button
-                type="button"
-                onClick={() => setEarlyEndRow(r)}
-                className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
-              >
-                조기 종료
-              </button>
-            )}
-          </div>
-        )
-      },
-    },
-  ]
+  // 새 배정(수강생 선택) — 반/기수는 상단 셀렉터로 고정하므로 기수 선택이 전제.
+  const selectedCohortLabel = (() => {
+    const c = courseConfig.data?.cohorts.find((x) => x.id === cohort)
+    return c ? `${c.cohortNo}기` : ''
+  })()
+  const cohortTeamCount = rows.filter((r) => r.cohortId === cohort).length
+  const openStudentCreate = () => {
+    if (cohort === 'all') {
+      toast.info('먼저 상단에서 교육과정과 기수를 선택해 주세요.')
+      return
+    }
+    setCreateOpen(true)
+  }
 
   return (
     <div className="p-8">
-      <MentoringTabs />
+      {/* 교육 과정·기수 선택 — 과정·기수·교과목 페이지와 동일한 카탈로그 셀렉터 */}
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          aria-label="교육과정 선택"
+          value={course}
+          onChange={(e) => pickCourse(e.target.value)}
+          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
+        >
+          <option value="all">교육과정 전체</option>
+          {(courseList.data ?? []).map((c) => (
+            <option key={c.courseId} value={c.courseId}>
+              {c.title}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="기수 선택"
+          value={cohort}
+          onChange={(e) => pickCohort(e.target.value)}
+          disabled={course === 'all'}
+          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none disabled:opacity-50"
+        >
+          <option value="all">기수 전체</option>
+          {(courseConfig.data?.cohorts ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cohortNo}기
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* Hero — 정책 칩 + 미배정 경고 칩 + CTA */}
-      <div className="bg-brand shadow-hero flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
+      <div className="bg-brand shadow-hero mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
         <div className="flex flex-col gap-3">
           <p className="text-on-color text-lg font-bold">
             반/기수별 팀 배정 · N시간 · 일지 템플릿 관리
@@ -276,82 +412,16 @@ export default function AssignmentsPage() {
         </div>
         <button
           type="button"
-          onClick={() => openCreate(null)}
+          onClick={openStudentCreate}
           className="bg-surface text-fg hover:bg-surface/90 inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-bold"
         >
           <Plus className="h-4 w-4" />새 배정 추가
         </button>
       </div>
 
-      {/* KPI 4 — 값은 mock 상태 파생(배정·조기 종료 즉시 반영) */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="활성 멘토"
-          value={
-            <span className="flex items-center gap-2">
-              <span className="bg-accent-bg text-accent-strong inline-flex h-9 w-9 items-center justify-center rounded-xl">
-                <Star className="h-4 w-4" />
-              </span>
-              {data.kpis.activeMentors}
-            </span>
-          }
-          hint="운영 중 배정 보유"
-        />
-        <KpiCard
-          label="활성 팀 배정"
-          value={
-            <span className="flex items-center gap-2">
-              <span className="bg-brand/10 text-brand inline-flex h-9 w-9 items-center justify-center rounded-xl">
-                <FileText className="h-4 w-4" />
-              </span>
-              {data.kpis.activeAssignments}
-            </span>
-          }
-          hint={data.kpis.activeAssignmentsHint}
-        />
-        <KpiCard
-          label="멘토 미배정 팀"
-          value={
-            <span className="flex items-center gap-2">
-              <span className="bg-warning-bg text-warning inline-flex h-9 w-9 items-center justify-center rounded-xl">
-                <AlertTriangle className="h-4 w-4" />
-              </span>
-              {data.kpis.unassignedTeams}
-            </span>
-          }
-          tone="warning"
-          hint={data.kpis.unassignedTeamsHint}
-        />
-        <KpiCard
-          label="조기 종료"
-          value={
-            <span className="flex items-center gap-2">
-              <span className="bg-success-bg text-success inline-flex h-9 w-9 items-center justify-center rounded-xl">
-                <Clock className="h-4 w-4" />
-              </span>
-              {data.kpis.earlyEnded}
-            </span>
-          }
-          hint="평가 가능 상태 전환"
-        />
-      </div>
-
       {/* 필터 바 */}
       <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={course}
-            onChange={(e) => setCourse(e.target.value)}
-            aria-label="과정 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">과정 전체</option>
-            {courses.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
           <select
             value={mentorFilter}
             onChange={(e) => setMentorFilter(e.target.value)}
@@ -385,64 +455,88 @@ export default function AssignmentsPage() {
         />
       </div>
 
-      {/* 배정 테이블 — 미배정 행은 경고 변형(danger 좌측 보더) */}
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.teamId}
-          rowClassName={(r) =>
-            !r.assignmentId ? 'border-l-4 border-l-danger bg-danger-bg/20' : ''
-          }
-          empty="조건에 맞는 팀이 없어요"
-        />
-        <div className="text-fg-subtle mt-3 text-xs">
+      {/* 기수별 멘토링 카드 — 기수 그룹 안에 팀별 멘토링 카드 */}
+      <div className="mt-4 flex flex-col gap-6">
+        {cohortGroups.length === 0 ? (
+          <div className="border-border bg-surface rounded-xl border p-10 text-center">
+            <p className="text-fg-subtle text-sm">
+              조건에 맞는 멘토링이 없어요
+            </p>
+          </div>
+        ) : (
+          cohortGroups.map((group) => {
+            const assigned = group.teams.filter((t) => t.assignmentId).length
+            const unassigned = group.teams.length - assigned
+            return (
+              <section key={group.cohortId}>
+                {/* 기수 헤더 */}
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="bg-brand h-5 w-1 rounded-full"
+                      aria-hidden
+                    />
+                    <span className="text-fg text-[15px] font-bold">
+                      {selectedCohortLabel || group.cohortLabel}
+                    </span>
+                    <span className="text-fg-subtle text-[12px]">
+                      {selectedCourseTitle ?? group.courseName}
+                    </span>
+                    <span className="text-fg-muted text-[12px]">
+                      · 팀 {group.teams.length} (배정 {assigned}
+                      {unassigned > 0 && (
+                        <span className="text-danger">
+                          {' '}
+                          · 미배정 {unassigned}
+                        </span>
+                      )}
+                      )
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openStudentCreate}
+                    className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-bold"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    배정 추가
+                  </button>
+                </div>
+
+                {/* 멘토링 카드 그리드 */}
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {group.teams.map((team) => (
+                    <MentoringCard
+                      key={team.teamId}
+                      team={team}
+                      logStat={logStats.get(team.teamId)}
+                      logsPending={logs.isPending}
+                      onAssign={() => openCreate(team.teamId)}
+                      onManage={() => setManageRow(team)}
+                      onEarlyEnd={() => setEarlyEndRow(team)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )
+          })
+        )}
+        <div className="text-fg-subtle text-xs">
           총 {data.summary.total} · 활성 {data.summary.active} · 미배정{' '}
           {data.summary.unassigned}
         </div>
       </div>
 
-      {/* 배정 제약 · §29 정책 */}
-      <div className="border-border bg-surface mt-8 rounded-xl border">
-        <div className="px-5 pt-5 pb-3">
-          <p className="text-fg text-sm font-bold">배정 제약 정책</p>
-          <p className="text-fg-subtle mt-1 text-xs">
-            저장 전 자동 검증 — 같은 반 중복 배정·미배정 팀·템플릿 미선택 차단
-          </p>
-        </div>
-        <ul className="divide-divider divide-y">
-          {POLICY_ROWS.map((row) => (
-            <li key={row.key} className="flex items-center gap-4 px-5 py-3">
-              <span className="bg-brand/10 text-brand w-32 shrink-0 rounded-md px-2.5 py-1 text-center text-[11px] font-bold">
-                {row.key}
-              </span>
-              <span className="text-fg-muted text-xs font-medium">
-                {row.desc}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 예외 경고 · 저장 전 자동 검출 */}
-      <div className="bg-warning-bg border-warning/40 mt-4 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">
-          예외 경고 · 저장 전 자동 검출
-        </p>
-        <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
-          <li>
-            • 같은 반 중복 배정 — 동일 cohort에 이미 팀이 배정된 멘토 (저장
-            차단)
-          </li>
-          <li>
-            • 멘토 미배정 팀 — N시간·템플릿 모두 비어 있으면 운영 큐에 노출
-            (현재 {data.kpis.unassignedTeams}건)
-          </li>
-          <li>• 템플릿 미선택 — 배정 폼에서 일지 템플릿 필수 선택 안내</li>
-        </ul>
-      </div>
-
       {/* 모달 — 열림 상태에서만 마운트(폼 기본값 초기화) */}
+      {createOpen && cohort !== 'all' && (
+        <AssignmentCreateModal
+          open
+          onClose={() => setCreateOpen(false)}
+          cohortId={cohort}
+          cohortLabel={selectedCohortLabel}
+          existingTeamCount={cohortTeamCount}
+        />
+      )}
       {formOpen && (
         <AssignmentFormModal
           open

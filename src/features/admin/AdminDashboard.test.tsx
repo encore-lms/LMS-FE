@@ -111,9 +111,11 @@ function mockHooks(
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useOperatorDashboard>)
   vi.mocked(useHrdLiveSummaries).mockReturnValue({
-    data: undefined,
+    // HRD 라이브 쿼리가 resolve된 상태(빈 결과) — 35기는 HRD 데이터 없이 '인입 대기'로 렌더.
+    data: {},
     isPending: false,
     isFetching: false,
+    isError: false,
   } as unknown as ReturnType<typeof useHrdLiveSummaries>)
 }
 

@@ -95,7 +95,18 @@ export default function AdminDashboard() {
     ? null
     : (boards.find((b) => b.cohortId === selected) ?? null)
 
-  if (myCohorts.isPending || (myCohorts.data?.length && dashboard.isPending)) {
+  // HRD 라이브로 채워야 하는 기수(staging 미인입·개강 전 아님)가 있는데 아직 안 오면 대기.
+  // staging 기수만 먼저 렌더되고 HRD 기수가 뒤늦게 '뚝' 나타나는 끊김을 막는다.
+  const needsHrd = (dashboard.data?.cohorts ?? []).some(
+    (b) => !b.hasData && b.status !== 'upcoming',
+  )
+  const hrdNotReady = needsHrd && hrdLive.data == null && !hrdLive.isError
+
+  if (
+    myCohorts.isPending ||
+    (myCohorts.data?.length && dashboard.isPending) ||
+    (dashboard.data && hrdNotReady)
+  ) {
     return <DashboardSkeleton />
   }
   if (myCohorts.isError || dashboard.isError) {

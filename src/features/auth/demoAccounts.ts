@@ -12,8 +12,9 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   { label: '수강생', email: '100058794696', password: 'Lms@B5Btu9DfnGDE' },
   { label: '멘토', email: 'apsxh123@naver.com', password: 'Lms@MXKi7uBGfh76' },
   { label: '강사', email: 'rkdtk123@naver.com', password: 'Lms@RAmGcDJBCqw9' },
+  { label: '매니저', email: 'test@gmail.com', password: 'Lms@W52LbdnWaEFH' },
   {
-    label: '운영(관리자)',
+    label: '최고(관리자)',
     email: 'admin@playdata.io',
     password: 'password123!',
   },

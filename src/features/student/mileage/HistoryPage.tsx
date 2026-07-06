@@ -11,6 +11,7 @@ import {
 } from '../api/mileage'
 import { useToast } from '@/components/ui/use-toast'
 import type { HistoryRow, Tone } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 // 표시 행 — 구매 요청(주문)에서 온 행은 주문을 실어 취소(pending) 버튼을 노출한다.
 type Row = HistoryRow & { order?: MileageOrderRow }
@@ -110,8 +111,7 @@ export default function HistoryPage() {
   const [page, setPage] = useState(1)
   usePageHeader('마일리지 사용 내역', '적립·사용·구매 요청 내역과 처리 상태')
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">내역을 불러오는 중…</div>
+  if (isPending) return <SkeletonListPage columns={5} />
   if (isError || !data) {
     return (
       <div className="p-8">

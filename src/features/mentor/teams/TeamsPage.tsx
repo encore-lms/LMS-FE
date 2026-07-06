@@ -24,6 +24,7 @@ import { MENTOR_TEAM_STATUS_LABEL } from '../types'
 import { CohortChip, TeamStatusChip, TeamSubTag } from '../components/chips'
 import { TeamActionLink } from '../components/TeamActionLink'
 import { TeamSummaryCard } from '../components/TeamSummaryCard'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 type StatusFilter = 'all' | 'action' | MentorTeamStatus
 
@@ -80,7 +81,7 @@ export default function TeamsPage() {
   )
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">배정 팀을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={5} />
   }
   if (isError || !data) {
     return (

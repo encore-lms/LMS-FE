@@ -12,6 +12,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { CertReviewListItem, CertReviewStatus } from '@/shared/types'
 import { useReviewQueue } from '../api/reviews'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const STATUS_META: Record<
   CertReviewStatus,
@@ -49,7 +50,7 @@ export default function ReviewQueuePage() {
   }, [data, tab, q])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">검토 큐를 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={6} />
   }
   if (isError) {
     return (

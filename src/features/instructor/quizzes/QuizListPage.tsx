@@ -18,6 +18,7 @@ import type {
 import { useDeleteQuiz, useInstructorQuizzes } from '../api/quizzes'
 import { useQuizTemplates } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 type ModeFilter = 'all' | GradingMode
 type VisibilityFilter = 'all' | QuizVisibility
@@ -72,7 +73,7 @@ export default function QuizListPage({
   }, [data, q, cohort, mode, visibility])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">퀴즈 목록을 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={5} />
   }
   if (isError || !data) {
     return (

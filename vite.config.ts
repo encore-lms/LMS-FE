@@ -9,6 +9,10 @@ const HRD_API_TARGET =
   process.env.VITE_HRD_API_TARGET ?? 'http://localhost:8082'
 const AUTH_API_TARGET =
   process.env.VITE_AUTH_API_TARGET ?? 'http://localhost:8081'
+// 운영 CSV 인입 — operations-service. 로컬은 kafka-connect가 8083을 점유해 8084로 기동한다
+// (LMS-SV/operations-service: SERVER_PORT=8084 ./gradlew bootRun).
+const OPS_API_TARGET =
+  process.env.VITE_OPS_API_TARGET ?? 'http://localhost:8084'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -23,6 +27,18 @@ export default defineConfig({
       // FE는 baseURL '/api' 뒤에 BE 경로를 붙여 호출한다(→ /api/admin/hrd-keys).
       // BE 컨트롤러에는 /api prefix가 없으므로 프록시에서 제거한 뒤 :8082로 넘긴다.
       // MSW는 이 경로에 핸들러가 없어 bypass → 실제 네트워크 → 이 프록시로 도달한다.
+      // 운영 대시보드(/admin/dashboard) — operations-service(:8084) staging 집계 실연동.
+      '/api/admin/dashboard': {
+        target: OPS_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // 운영 CSV 인입(/admin/csv-ingest) — operations-service(:8084) 실연동(P0_20).
+      '/api/admin/csv-ingest': {
+        target: OPS_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       '/api/admin/hrd-keys': {
         target: HRD_API_TARGET,
         changeOrigin: true,

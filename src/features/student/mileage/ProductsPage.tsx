@@ -17,6 +17,7 @@ import { parseMoney } from './store'
 import { useCartStore, cartCount, cartTotal } from './cartStore'
 import { ProductImage } from './components/ProductImage'
 import type { MileageProduct, Tone } from './types'
+import { SkeletonCards } from '@/components/ui/Skeleton'
 
 // 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
@@ -102,8 +103,7 @@ export default function ProductsPage() {
     '상품을 장바구니에 담고 한 번에 결제하세요.',
   )
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">상품을 불러오는 중…</div>
+  if (isPending) return <SkeletonCards count={6} className="p-8" />
   if (isError || !data) {
     return (
       <div className="p-8">

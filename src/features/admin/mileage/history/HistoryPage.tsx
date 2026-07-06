@@ -15,6 +15,7 @@ import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
 import { useMileageHistory } from './api'
 import type { AmountSign, MileageTxRow, TxType } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const TX_META: Record<TxType, { label: string; tone: BadgeTone }> = {
   grant: { label: '지급', tone: 'success' },
@@ -57,7 +58,7 @@ export default function HistoryPage() {
   }, [rows, txType, q])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">지급 내역을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={6} />
   }
   if (isError || !data) {
     return (

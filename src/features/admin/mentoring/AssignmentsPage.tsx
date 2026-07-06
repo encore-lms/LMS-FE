@@ -28,6 +28,7 @@ import { AssignmentManageModal } from './AssignmentManageModal'
 import { EarlyEndModal } from './EarlyEndModal'
 import { MentoringTabs } from './MentoringTabs'
 import type { MentorAssignmentRow } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 // 배정 제약 · §29 정책 — Figma 2744:7725 원문.
 const POLICY_ROWS: { key: string; desc: string }[] = [
@@ -108,7 +109,7 @@ export default function AssignmentsPage() {
   }, [rows, course, mentorFilter, status, q])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">배정 현황을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={5} />
   }
   if (isError || !data) {
     return (

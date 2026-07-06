@@ -11,6 +11,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useAuditLog } from './api'
 import type { AuditCategory, AuditEvent, AuditResult } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const RESULT_META: Record<AuditResult, { label: string; tone: BadgeTone }> = {
   success: { label: '성공', tone: 'success' },
@@ -51,7 +52,7 @@ export default function AuditLogPage() {
   )
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">감사 로그를 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={6} />
   }
   if (isError || !data) {
     return (

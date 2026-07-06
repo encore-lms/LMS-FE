@@ -1,108 +1,161 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { ToastProvider } from '@/components/ui/Toast'
 import AdminDashboard from './AdminDashboard'
-import { useAdminDashboard } from './api/dashboard'
-import type { AdminOperatorDashboard } from './dashboard/types'
+import {
+  useHrdLiveSummaries,
+  useMyCohorts,
+  useOperatorDashboard,
+} from './api/dashboard'
+import type {
+  CohortBoard,
+  MyCohortRef,
+  OperatorDashboard,
+} from './dashboard/types'
 
 vi.mock('./api/dashboard')
 
-type DashboardHook = ReturnType<typeof useAdminDashboard>
+// 운영 대시보드(관제탑형) — 전체 비교 표 렌더 + 기수 칩 전환 + 미배정 빈 화면.
 
-const dashboard: AdminOperatorDashboard = {
-  today: '2026-07-02',
-  hrdAvailable: true,
-  cohorts: [
-    {
-      cohortId: 'c1',
-      name: 'SKN 22기',
-      totalStudents: 20,
-      checkedInToday: 18,
-      absentToday: [
-        { id: 's1', name: '김민준' },
-        { id: 's2', name: '이서연' },
-      ],
-      weeklyAttendanceRate: [95, 90, 100, 88, 92],
-    },
-  ],
-  repeatedIssues: [
-    {
-      studentId: 's2',
-      name: '이서연',
-      cohortName: 'SKN 22기',
-      lateCount: 3,
-      absenceCount: 1,
-    },
-  ],
-  pending: {
-    mileage: 4,
-    blog: 6,
-    study: 2,
-    certificate: 1,
-    recordsTotal: 9,
-    topCohort: { mileage: null, blog: 'c1', study: 'c1', certificate: 'c1' },
+const refs: MyCohortRef[] = [
+  {
+    cohortId: 'c24',
+    courseId: 'course1',
+    courseName: 'SK네트웍스 Family AI 캠프',
+    cohortNo: '24',
+    startDate: '2025-12-30',
+    endDate: '2026-06-30',
   },
-  upcoming: {
-    quizzes: [
-      {
-        id: 'q1',
-        title: 'Python 평가',
-        cohortName: 'SKN 22기',
-        endAt: '2026-07-03T18:00:00',
-        questionCount: 20,
-        totalScore: 100,
-      },
-    ],
-    cohortEndings: [
-      { cohortId: 'c1', name: 'SKN 22기', endDate: '2026-07-20', daysLeft: 18 },
-    ],
+  {
+    cohortId: 'c35',
+    courseId: 'course1',
+    courseName: 'SK네트웍스 Family AI 캠프',
+    cohortNo: '35',
+    startDate: '2026-06-16',
+    endDate: '2026-12-08',
   },
+]
+
+const board24: CohortBoard = {
+  cohortId: 'c24',
+  courseName: 'SK네트웍스 Family AI 캠프',
+  cohortLabel: '24기',
+  startDate: '2025-12-30',
+  endDate: '2026-06-30',
+  status: 'ended',
+  daysLeft: -6,
+  hasData: true,
+  students: { total: 30, active: 28, dropout: 2 },
+  attendance: {
+    todayPresent: null,
+    todayTotal: null,
+    avgRate: 91.4,
+    weekly: [
+      { date: '2026-06-29', rate: 90.0 },
+      { date: '2026-06-30', rate: 93.3 },
+    ],
+    todayAbsentees: [],
+  },
+  assessment: {
+    avg: 66.1,
+    rounds: [{ round: 1, avg: 81.4 }],
+    latestRound: 1,
+    latestAvg: 81.4,
+    delta: null,
+    lowPerformers: 0,
+    nonTakers: 2,
+  },
+  weeklyCheck: null,
+  issues: [{ studentUuid: 'u1', name: '문성준', lateCount: 1, absentCount: 5 }],
+  pending: { certificates: 4, troubleshooting: 5 },
 }
 
-function mockHook(value: Partial<DashboardHook>) {
-  vi.mocked(useAdminDashboard).mockReturnValue(
-    value as unknown as DashboardHook,
-  )
+const board35: CohortBoard = {
+  ...board24,
+  cohortId: 'c35',
+  cohortLabel: '35기',
+  startDate: '2026-06-16',
+  endDate: '2026-12-08',
+  status: 'operating',
+  daysLeft: 155,
+  hasData: false,
+  students: null,
+  attendance: null,
+  assessment: null,
+  issues: [],
+  pending: null,
 }
 
-function renderDash() {
+const dashboard: OperatorDashboard = {
+  today: '2026-07-06',
+  cohorts: [board24, board35],
+  quarantineCount: 2,
+  upcoming: [],
+}
+
+function mockHooks(
+  myData: MyCohortRef[] | undefined,
+  boardData: OperatorDashboard | undefined,
+) {
+  vi.mocked(useMyCohorts).mockReturnValue({
+    data: myData,
+    isPending: false,
+    isError: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useMyCohorts>)
+  vi.mocked(useOperatorDashboard).mockReturnValue({
+    data: boardData,
+    isPending: false,
+    isError: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useOperatorDashboard>)
+  vi.mocked(useHrdLiveSummaries).mockReturnValue({
+    data: undefined,
+    isPending: false,
+    isFetching: false,
+  } as unknown as ReturnType<typeof useHrdLiveSummaries>)
+}
+
+function renderPage() {
   return render(
     <MemoryRouter>
-      <ToastProvider>
-        <AdminDashboard />
-      </ToastProvider>
+      <AdminDashboard />
     </MemoryRouter>,
   )
 }
 
-describe('AdminDashboard (운영 대시보드 포팅)', () => {
-  it('핵심 섹션(오늘 미출석·연속 결석·처리 대기·일정)을 렌더한다', () => {
-    mockHook({
-      data: dashboard,
-      isPending: false,
-      isError: false,
-      isFetching: false,
-    })
-    renderDash()
-    expect(screen.getByText('오늘 미출석 체크')).toBeInTheDocument()
-    expect(screen.getByText('연속 지각·결석 감지')).toBeInTheDocument()
-    // '처리 대기'는 히어로 지표 타일에도 나오므로 섹션 제목(heading)으로 특정
-    expect(
-      screen.getByRole('heading', { name: /처리 대기/ }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('일정')).toBeInTheDocument()
-    // 미출석자 이름 + 처리 대기 라벨
-    expect(screen.getByText('김민준')).toBeInTheDocument()
-    expect(screen.getByText('마일리지 구매 요청')).toBeInTheDocument()
-    expect(screen.getByText('Python 평가')).toBeInTheDocument()
+describe('AdminDashboard (관제탑형)', () => {
+  it('전체 뷰 — KPI 합산 + 기수 비교 표 + 통합 관리 필요를 렌더한다', () => {
+    mockHooks(refs, dashboard)
+    renderPage()
+    expect(screen.getByText('기수 비교')).toBeInTheDocument()
+    expect(screen.getAllByText('24기').length).toBeGreaterThanOrEqual(2) // 칩 + 표 행
+    // 35기는 칩과 표에 모두 존재
+    expect(screen.getAllByText('35기').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('수료')).toBeInTheDocument()
+    expect(screen.getByText('진행 중')).toBeInTheDocument()
+    // 미인입 기수 표기
+    expect(screen.getAllByText('인입 대기').length).toBeGreaterThanOrEqual(1)
+    // 통합 관리 필요 리스트
+    expect(screen.getByText('문성준')).toBeInTheDocument()
   })
 
-  it('에러 상태에서 다시 시도 버튼을 표시한다', () => {
-    mockHook({ isPending: false, isError: true, refetch: vi.fn() })
-    renderDash()
+  it('기수 칩 클릭 — 해당 기수 딥다이브로 전환한다', async () => {
+    mockHooks(refs, dashboard)
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '24기' }))
     expect(
-      screen.getByRole('button', { name: '다시 시도' }),
+      screen.getByText('SK네트웍스 Family AI 캠프 24기'),
     ).toBeInTheDocument()
+    expect(screen.getByText('최종 출석률')).toBeInTheDocument()
+    expect(screen.getByText('성취도 평가 회차별 평균')).toBeInTheDocument()
+  })
+
+  it('담당 기수가 없으면 배정 안내 빈 화면을 보여준다', () => {
+    mockHooks([], undefined)
+    renderPage()
+    expect(screen.getByText('담당 과정·기수가 없어요')).toBeInTheDocument()
   })
 })

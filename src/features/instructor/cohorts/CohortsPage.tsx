@@ -13,6 +13,7 @@ import type {
   InstructorRole,
 } from '@/shared/types'
 import { useInstructorCohorts } from '../api/console'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const ROLE_META: Record<InstructorRole, { label: string; tone: BadgeTone }> = {
   lead: { label: '강사', tone: 'accent' },
@@ -46,7 +47,7 @@ export default function CohortsPage() {
   }, [data, q, status])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">담당 과정을 불러오는 중…</div>
+    return <SkeletonListPage columns={5} />
   }
   if (isError || !data) {
     return (

@@ -76,3 +76,59 @@ export interface CsvImportData {
 
 // 소스별 데이터 묶음 — 탭 전환 시 해당 소스를 렌더.
 export type CsvImportOverview = Record<CsvImportSource, CsvImportData>
+
+// ---- 실연동(operations-service /admin/csv-ingest) 타입 — P0_20 업로드 구간 ----
+
+/** 인입 가능한 데이터셋 계약 + staging 적재 현황. */
+export interface CsvIngestDataset {
+  key: string
+  label: string
+  table: string
+  /** 수용 가능한 전체 컬럼(풍부판) */
+  columns: string[]
+  /** 반드시 있어야 하는 최소 컬럼(스펙판) */
+  requiredColumns: string[]
+  /** 현재 staging 적재 행 수 */
+  rowCount: number
+}
+
+/** 격리된 행 미리보기(최대 20건). */
+export interface CsvIngestQuarantinePreview {
+  rowNo: number
+  reason: string
+}
+
+/** CSV 업로드 처리 결과 — 정상 행 staging 반영, 오류 행 격리 큐 이동. */
+export interface CsvIngestUploadResult {
+  uploadId: number
+  dataset: string
+  fileName: string
+  mode: 'replace' | 'append'
+  totalRows: number
+  insertedRows: number
+  quarantinedRows: number
+  quarantinePreview: CsvIngestQuarantinePreview[]
+}
+
+/** 업로드 감사 이력 1건. status: applied(반영됨) / rolled_back(롤백됨). */
+export interface CsvIngestUpload {
+  id: number
+  dataset: string
+  fileName: string
+  mode: 'replace' | 'append'
+  totalRows: number
+  insertedRows: number
+  quarantinedRows: number
+  uploadedBy: string | null
+  status: 'applied' | 'rolled_back'
+  rolledBackAt: string | null
+  createdAt: string
+}
+
+/** 업로드 롤백 결과 — 제거된 staging 행·격리 행 수. */
+export interface CsvIngestRollbackResult {
+  uploadId: number
+  dataset: string
+  removedRows: number
+  removedQuarantineRows: number
+}

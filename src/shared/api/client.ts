@@ -1,8 +1,8 @@
-import axios from 'axios'
+import axios, { type InternalAxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/shared/types'
 import { useAuthStore } from '@/shared/store'
 
-// axios instance — 요청에 토큰 자동 첨부, 401 응답 시 세션 초기화(가드가 로그인으로 보냄).
+// axios instance — 요청에 토큰 자동 첨부, 401 응답 시 silent refresh 후 재시도(실패 시에만 세션 초기화).
 const instance = axios.create({
   // 빈 문자열(.env의 VITE_API_BASE_URL=)도 '/api'로 폴백해야 하므로 ?? 가 아닌 || 사용.
   // (?? 는 ''를 통과시켜 baseURL이 비어 /api 없이 요청 → 404. .env.example "비우면 /api 폴백" 계약 준수.)
@@ -16,13 +16,59 @@ instance.interceptors.request.use((config) => {
   return config
 })
 
+// silent refresh — access token(TTL 30m) 만료 401 시 refresh 쿠키(httpOnly, path=/)로
+// 재발급받아 원 요청을 1회 재시도한다. 없으면 실연동 페이지 이동 중 30분마다 강제 로그아웃된다.
+// 동시 다발 401은 refresh 1회로 합류(single-flight). 재발급 실패 시에만 세션을 초기화한다.
+let refreshPromise: Promise<string | null> | null = null
+
+// 로그인 자체의 401(자격 증명 오류)과 refresh·logout은 재발급 재시도 대상이 아니다.
+const REFRESH_EXEMPT_PATHS = ['/auth/login', '/auth/refresh', '/auth/logout']
+
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    // 크로스 오리진 배포(FE CloudFront ↔ API)에서도 쿠키가 전송되도록 credentials 포함.
+    const res = await axios.post<ApiResponse<{ token: string }>>(
+      `${import.meta.env.VITE_API_BASE_URL || '/api'}/auth/refresh`,
+      undefined,
+      { withCredentials: true },
+    )
+    const token = res.data.data.token
+    useAuthStore.setState({ token })
+    return token
+  } catch {
+    return null
+  }
+}
+
 instance.interceptors.response.use(
   (res) => res,
-  (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      useAuthStore.getState().clearSession()
+  async (error) => {
+    if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+      return Promise.reject(error)
     }
-    return Promise.reject(error)
+    const original = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined
+    const url = original?.url ?? ''
+    const exempt = REFRESH_EXEMPT_PATHS.some((path) => url.startsWith(path))
+    const hadSession = useAuthStore.getState().token !== null
+
+    if (!original || original._retry || exempt || !hadSession) {
+      useAuthStore.getState().clearSession()
+      return Promise.reject(error)
+    }
+
+    refreshPromise ??= refreshAccessToken().finally(() => {
+      refreshPromise = null
+    })
+    const newToken = await refreshPromise
+    if (!newToken) {
+      useAuthStore.getState().clearSession()
+      return Promise.reject(error)
+    }
+    original._retry = true
+    original.headers.Authorization = `Bearer ${newToken}`
+    return instance(original)
   },
 )
 

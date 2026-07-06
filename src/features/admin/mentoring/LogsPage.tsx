@@ -15,6 +15,7 @@ import { LogDetailPanel } from './LogDetailPanel'
 import { ChangeRequestModal } from './ChangeRequestModal'
 import { MentoringTabs } from './MentoringTabs'
 import type { AdminMentoringLogRow } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 // 멘토링 일지 관리 (/admin/mentoring/logs) — 운영(MANAGER/ADMIN) 조회·수정 요청 전용.
 // 직접 수정·폐기·반려 없음(05-31 확정 — Figma 2745:7815 의 반려 KPI·버튼은 정책 확정 전
@@ -58,7 +59,7 @@ export default function LogsPage() {
   const detailQuery = useAdminMentoringLogDetail(selected?.logId ?? null)
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">일지 목록을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={6} />
   }
   if (isError || !data) {
     return (

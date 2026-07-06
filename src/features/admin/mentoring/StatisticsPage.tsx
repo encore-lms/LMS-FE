@@ -15,6 +15,7 @@ import {
   evaluationCellMeta,
 } from './statusMeta'
 import { MentoringTabs } from './MentoringTabs'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type {
   MentorTeamStatRow,
   StatEvaluationState,
@@ -84,7 +85,7 @@ export default function StatisticsPage() {
   }, [rows, course, mentor, teamStatus, evalState, recommendState, q])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">멘토 통계를 불러오는 중…</div>
+    return <SkeletonListPage columns={5} />
   }
   if (isError || !data) {
     return (

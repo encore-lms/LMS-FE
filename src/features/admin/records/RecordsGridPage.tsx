@@ -20,6 +20,7 @@ import {
   useRecordsGrid,
 } from '../api/records'
 import { useStudentAccounts } from '../api/students'
+import { SkeletonCards } from '@/components/ui/Skeleton'
 
 // 운영 기록실 — 수강생 × 주차 제출 현황 그리드(이전 LMS RecordsGridView).
 // 블로그/스터디/자격증 탭, 셀(dot) 클릭 시 해당 제출을 검토(승인/보완/반려)한다.
@@ -141,7 +142,7 @@ export default function RecordsGridPage({
       {category === 'certificate' ? (
         <CertList cohortId={cohortId} nameOf={nameOf} q={q} />
       ) : isPending ? (
-        <div className="text-fg-muted py-16 text-center">불러오는 중…</div>
+        <SkeletonCards count={6} className="py-6" />
       ) : isError ? (
         <Empty
           icon={<AlertTriangle />}
@@ -252,7 +253,7 @@ function CertList({
   )
 
   if (isPending) {
-    return <div className="text-fg-muted py-16 text-center">불러오는 중…</div>
+    return <SkeletonCards count={6} className="py-6" />
   }
   if (isError) {
     return (

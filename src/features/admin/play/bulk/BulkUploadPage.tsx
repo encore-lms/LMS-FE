@@ -16,6 +16,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { downloadTypingSampleCsv } from '../sampleCsv'
 import { usePlayBulkPreview } from './api'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type {
   BulkFieldRow,
   BulkValidationRow,
@@ -63,9 +64,7 @@ export default function BulkUploadPage() {
   const [validated, setValidated] = useState(false)
 
   if (isPending) {
-    return (
-      <div className="text-fg-muted p-8">업로드 미리보기를 불러오는 중…</div>
-    )
+    return <SkeletonListPage columns={4} />
   }
   if (isError || !data) {
     return (

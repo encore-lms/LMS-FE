@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useCertificateTemplate } from './api'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type {
   CertFieldAction,
   CertFieldStatus,
@@ -49,7 +50,7 @@ export default function CertificateTemplatePage() {
   const [tab, setTab] = useState<TemplateTab>('public')
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">증명서 템플릿을 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={5} />
   }
   if (isError || !data) {
     return (

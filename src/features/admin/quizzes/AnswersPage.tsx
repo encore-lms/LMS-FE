@@ -9,6 +9,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type {
   QuestionType,
   QuizAnswerChangeItem,
@@ -202,7 +203,7 @@ export default function AnswersPage() {
   const impactFresh = impactKey === currentKey && !!impact.data
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">정답 관리를 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={5} />
   }
   if (isError || !data) {
     return (

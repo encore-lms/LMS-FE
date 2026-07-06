@@ -12,6 +12,7 @@ import type { CohortStudentRow, StudentCertStatus } from '@/shared/types'
 import { useCohortStudents } from '../api/console'
 import { useCohortContext, COHORT_ID_TO_LABEL } from '../cohortContext'
 import { CERT_STATUS_META } from './meta'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 type CertFilter = 'all' | StudentCertStatus
 type RiskFilter = 'all' | 'risky'
@@ -63,7 +64,7 @@ export default function CohortStudentsPage() {
   const paged = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">수강생 목록을 불러오는 중…</div>
+    return <SkeletonListPage columns={5} />
   }
   if (isError || !data) {
     return (

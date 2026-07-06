@@ -15,6 +15,7 @@ import {
 import { ChangeDiffCard } from './ChangeDiffCard'
 import { ReasonModal } from './ReasonModal'
 import { TARGET_TYPE_META, TYPE_FILTERS, type TypeFilter } from './meta'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 // 재인증 통합 검토 (/instructor/recertifications) — P0 29. (Figma 2750:2202)
 // 인증 후 수정으로 재인증이 필요한 프로젝트·트러블슈팅 통합 큐 + 요청 상세(변경된 내역 중심).
@@ -49,7 +50,7 @@ export default function RecertificationsPage() {
     rows.find((r) => r.id === selectedId) ?? rows[0] ?? null
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">재인증 요청을 불러오는 중…</div>
+    return <SkeletonListPage columns={4} />
   }
   if (isError || !data) {
     return (

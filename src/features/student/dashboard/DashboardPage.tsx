@@ -13,6 +13,7 @@ import { NoticeList } from './components/NoticeList'
 import { NotificationList } from './components/NotificationList'
 import { ProjectList } from './components/ProjectList'
 import { TroubleshootingList } from './components/TroubleshootingList'
+import { SkeletonDashboard } from '@/components/ui/Skeleton'
 
 /**
  * 수강생 대시보드 (/student 인덱스) — 오늘 할 일·평가·출결·알림·프로젝트를 한 화면에 요약.
@@ -24,7 +25,7 @@ export default function DashboardPage() {
   usePageHeader('대시보드')
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">대시보드를 불러오는 중…</div>
+    return <SkeletonDashboard kpis={4} panels={4} />
   }
   if (isError) {
     return (

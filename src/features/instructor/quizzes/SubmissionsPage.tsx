@@ -13,6 +13,7 @@ import { usePageHeader } from '@/shared/store'
 import type { QuizSubmissionRow } from '@/shared/types'
 import { useStudentAccounts } from '@/features/admin/api/students'
 import { useQuizSubmissions } from '../api/quizzes'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 type StatusFilter = 'all' | 'manual_pending' | 'not_submitted' | 'done'
 
@@ -59,7 +60,7 @@ export default function SubmissionsPage() {
   }, [rows, q, filter, nameOf])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">제출 현황을 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={5} />
   }
   if (isError || !data) {
     return (

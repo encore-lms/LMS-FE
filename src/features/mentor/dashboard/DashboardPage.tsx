@@ -27,6 +27,7 @@ import {
 import { SectionLink } from '../components/SectionLink'
 import { TeamActionLink } from '../components/TeamActionLink'
 import { TeamSummaryCard } from '../components/TeamSummaryCard'
+import { SkeletonDashboard } from '@/components/ui/Skeleton'
 
 // '해야 할 일' 행 고정 메타 — 문구는 Figma 원문(2553:3399).
 const TODO_META: Record<
@@ -62,7 +63,7 @@ export default function DashboardPage() {
   const { data, isPending, isError, refetch } = useMentorDashboard()
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">대시보드를 불러오는 중…</div>
+    return <SkeletonDashboard kpis={3} panels={3} />
   }
   if (isError || !data) {
     return (

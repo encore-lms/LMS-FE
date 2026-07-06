@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useIntegrations } from './api'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type {
   Integration,
   IntegrationStatus,
@@ -63,7 +64,7 @@ export default function IntegrationsPage() {
   )
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">연동 상태를 불러오는 중…</div>
+    return <SkeletonListPage columns={4} />
   }
   if (isError || !data) {
     return (

@@ -11,6 +11,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { QuizTemplateRow } from '@/shared/types'
 import { useDeleteQuizTemplate, useQuizTemplates } from '../api/quizTemplates'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const CATEGORIES = [
   '전체',
@@ -71,7 +72,7 @@ export default function TemplateListPage() {
   const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">템플릿 목록을 불러오는 중…</div>
+    return <SkeletonListPage columns={4} />
   }
   if (isError || !data) {
     return (

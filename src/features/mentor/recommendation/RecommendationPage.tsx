@@ -31,6 +31,7 @@ import {
   memberAvatarBg,
 } from '../evaluation/evaluationMeta'
 import { CharCounter, RequiredChip } from '../mentoring-logs/LogChips'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type {
   MentorRecommendationCandidate,
   MentorRecommendationMode,
@@ -59,7 +60,7 @@ export default function RecommendationPage() {
   const { data, isPending, isError, refetch } = useTeamRecommendation(teamId)
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">추천 정보를 불러오는 중…</div>
+    return <SkeletonListPage kpis={3} columns={4} />
   }
   if (isError || !data) {
     return (

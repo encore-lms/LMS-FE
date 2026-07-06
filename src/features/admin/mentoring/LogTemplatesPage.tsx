@@ -31,6 +31,7 @@ import { TemplateFormModal } from './TemplateFormModal'
 import { MentoringTabs } from './MentoringTabs'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import type { AdminLogTemplate, AdminTemplateField } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 /** §31 보존 정책 — 항목 폼 모달 하단 안내(작업 요구 고정 문구). */
 const TEMPLATE_NOTICE =
@@ -72,7 +73,7 @@ export default function LogTemplatesPage() {
     visible.find((t) => t.templateId === selectedId) ?? visible[0] ?? null
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">템플릿을 불러오는 중…</div>
+    return <SkeletonListPage columns={4} />
   }
   if (isError || !data) {
     return (

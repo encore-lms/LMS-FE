@@ -3,4 +3,6 @@
 export const adminCsvKeys = {
   all: ['admin-csv'] as const,
   overview: () => [...adminCsvKeys.all, 'overview'] as const,
+  datasets: () => [...adminCsvKeys.all, 'datasets'] as const,
+  uploads: () => [...adminCsvKeys.all, 'uploads'] as const,
 } as const

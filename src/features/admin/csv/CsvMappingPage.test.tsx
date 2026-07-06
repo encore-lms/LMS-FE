@@ -4,7 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import CsvMappingPage from './CsvMappingPage'
-import { useCsvImport } from './api'
+import {
+  useCsvImport,
+  useCsvIngestDatasets,
+  useCsvIngestRollback,
+  useCsvIngestUpload,
+  useCsvIngestUploads,
+} from './api'
 import type { CsvImportData, CsvImportOverview } from './types'
 
 vi.mock('./api')
@@ -114,6 +120,20 @@ function renderPage() {
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useCsvImport>)
+  vi.mocked(useCsvIngestDatasets).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useCsvIngestDatasets>)
+  vi.mocked(useCsvIngestUpload).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useCsvIngestUpload>)
+  vi.mocked(useCsvIngestUploads).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useCsvIngestUploads>)
+  vi.mocked(useCsvIngestRollback).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useCsvIngestRollback>)
   return render(
     <ToastProvider>
       <MemoryRouter>
@@ -147,12 +167,12 @@ describe('CsvMappingPage (CSV 매핑·업로드)', () => {
     expect(screen.queryByText('수강생 백필_2026-05.csv')).toBeNull()
   })
 
-  it('업로드 시작 버튼 — 준비 중 토스트를 띄운다', async () => {
+  it('업로드 시작 — 파일 미선택 시 선택 안내 토스트를 띄운다', async () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: '업로드 시작' }))
     expect(
-      await screen.findByText('업로드 시작은 준비 중입니다.'),
+      await screen.findByText('업로드할 CSV 파일을 먼저 선택해 주세요.'),
     ).toBeInTheDocument()
   })
 })

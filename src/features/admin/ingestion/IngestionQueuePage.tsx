@@ -20,6 +20,7 @@ import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { useIngestionAction, useIngestionQueue } from './api'
 import type { IngestionSession, SessionStatus } from './types'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const STATUS_META: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
   in_progress: { label: '진행 중', tone: 'info' },
@@ -66,7 +67,7 @@ export default function IngestionQueuePage() {
   }, [sessions, domain, status, sort])
 
   if (isPending) {
-    return <div className="text-fg-muted p-8">인입 세션을 불러오는 중…</div>
+    return <SkeletonListPage kpis={4} columns={5} />
   }
   if (isError || !data) {
     return (

@@ -136,16 +136,19 @@ export function useUpdateOpsAccountStatus() {
   })
 }
 
-export interface OpsPasswordResetResult {
+export interface AccountPasswordResetResult {
   userId: string
   temporaryPassword: string
 }
-// 운영 계정 임시 비밀번호 재발급(POST /auth/accounts/{userId}/password/reset).
-export function useResetOpsPassword() {
-  return useMutation<OpsPasswordResetResult, Error, string>({
+// 계정 임시 비밀번호 재발급(POST /auth/accounts/{userId}/password/reset).
+// auth-service 공통 엔드포인트 — 운영 계정·학생 계정 모두 이 훅을 쓴다.
+export function useResetAccountPassword() {
+  return useMutation<AccountPasswordResetResult, Error, string>({
     mutationFn: (userId) =>
       apiClient
-        .post<OpsPasswordResetResult>(`/auth/accounts/${userId}/password/reset`)
+        .post<AccountPasswordResetResult>(
+          `/auth/accounts/${userId}/password/reset`,
+        )
         .then((r) => r.data),
   })
 }

@@ -1,44 +1,71 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Copy, Info, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import type { OpsAccount } from '@/shared/types'
-import { useResetOpsPassword } from '../api/settings'
+import { useResetAccountPassword } from '../api/settings'
+
+export interface TempPasswordTarget {
+  /** 초기화 API 대상 계정 ID */
+  userId: string
+  name: string
+  /** 이메일·학생 UUID 등 보조 식별 표기 */
+  detail?: string
+}
 
 interface TempPasswordModalProps {
   /** non-null이면 해당 계정 기준으로 모달이 열린다. */
-  account: OpsAccount | null
+  target: TempPasswordTarget | null
   onClose: () => void
+  /** true면 매니저 메모 입력을 노출한다(학생 관리 — 감사 로그 기록용). */
+  withMemo?: boolean
+  /** 최초 발급 성공 시 1회 호출 — 감사 로그 기록 등 부가 처리. */
+  onIssued?: (memo: string) => void
 }
 
 // 비밀번호 초기화 모달 — 서버(POST /auth/accounts/{userId}/password/reset)에서 임시 비밀번호를 발급한다.
-// 파괴적 액션이므로 모달 오픈만으로는 재설정하지 않고, 확인 → 발급 2단계를 거친다.
+// 운영 계정(설정)·학생 계정(학생 관리) 공용. 파괴적 액션이므로 모달 오픈만으로는
+// 재설정하지 않고, 확인 → 발급 2단계를 거친다.
 // 발급 시마다 서버 비밀번호가 재설정되고 직전 값은 즉시 무효가 된다(1회 표시).
 export function TempPasswordModal({
-  account,
+  target,
   onClose,
+  withMemo = false,
+  onIssued,
 }: TempPasswordModalProps) {
   const toast = useToast()
   const [pw, setPw] = useState('')
   const [issued, setIssued] = useState(false)
-  const resetPw = useResetOpsPassword()
+  const [memo, setMemo] = useState('')
+  const resetPw = useResetAccountPassword()
+  // 응답 도착 시점의 유효 대상 판별용 — 닫힘/대상 전환 후 늦게 온 응답을 무시한다.
+  const activeUserId = useRef<string | null>(null)
 
-  // 대상 계정이 바뀌면 확인 단계부터 다시 시작(이전 계정의 비밀번호 잔상 제거).
+  // 대상 계정이 바뀌면 확인 단계부터 다시 시작(이전 계정의 비밀번호·메모 잔상 제거).
+  // deps는 스칼라 id — 호출부가 target을 인라인 객체로 만들어도 리렌더마다 리셋되지 않는다.
+  const targetUserId = target?.userId ?? null
   useEffect(() => {
+    activeUserId.current = targetUserId
     setPw('')
     setIssued(false)
-  }, [account])
+    setMemo('')
+  }, [targetUserId])
 
   const issue = () => {
-    if (!account || resetPw.isPending) return
+    if (!target || resetPw.isPending) return
+    const requestFor = target.userId
     resetPw
-      .mutateAsync(account.id)
+      .mutateAsync(requestFor)
       .then((r) => {
+        if (activeUserId.current !== requestFor) return
         setPw(r.temporaryPassword)
+        if (!issued) onIssued?.(memo)
         setIssued(true)
       })
-      .catch(() => toast.danger('임시 비밀번호 발급에 실패했어요'))
+      .catch(() => {
+        if (activeUserId.current !== requestFor) return
+        toast.danger('임시 비밀번호 발급에 실패했어요')
+      })
   }
 
   const copy = async () => {
@@ -52,7 +79,7 @@ export function TempPasswordModal({
 
   return (
     <Modal
-      open={!!account}
+      open={!!target}
       onClose={onClose}
       title="비밀번호 초기화"
       footer={
@@ -117,9 +144,9 @@ export function TempPasswordModal({
       ) : (
         <>
           <p className="text-fg-muted -mt-1 mb-4 text-sm">
-            <span className="text-fg font-semibold">{account?.name}</span>(
-            {account?.email}) 계정의 비밀번호를 초기화하고 임시 비밀번호를
-            발급합니다.
+            <span className="text-fg font-semibold">{target?.name}</span>
+            {target?.detail ? `(${target.detail})` : ''} 계정의 비밀번호를
+            초기화하고 임시 비밀번호를 발급합니다.
           </p>
           <div className="bg-warning-bg flex items-start gap-2 rounded-lg p-3">
             <Info className="text-warning mt-0.5 h-4 w-4 shrink-0" />
@@ -132,6 +159,16 @@ export function TempPasswordModal({
               비밀번호가 필요합니다.
             </p>
           </div>
+          {withMemo && (
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              rows={3}
+              aria-label="매니저 메모"
+              placeholder="매니저 메모 (선택) — 처리 사유를 남기면 감사 로그에 함께 기록됩니다"
+              className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface mt-4 w-full rounded-lg border p-3 text-sm outline-none"
+            />
+          )}
         </>
       )}
     </Modal>

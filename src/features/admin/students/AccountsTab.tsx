@@ -11,11 +11,11 @@ import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { StudentAccount } from '@/shared/types'
 import {
   fetchHrdTrainees,
-  useResetStudentPassword,
   useStudentAccounts,
   useSyncStudents,
 } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
+import { TempPasswordModal } from '../settings/TempPasswordModal'
 import { StudentDetailModal } from './StudentDetailModal'
 
 type StatusFilter = 'all' | 'normal' | 'blocked'
@@ -39,6 +39,8 @@ export function AccountsTab() {
     account: StudentAccount
     action?: string
   } | null>(null)
+  // 비밀번호 초기화 모달 대상 계정 — non-null이면 TempPasswordModal이 열린다(설정 탭과 동일 UX).
+  const [pwTarget, setPwTarget] = useState<StudentAccount | null>(null)
   // 차단/해제 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
   const [blockedOverride, setBlockedOverride] = useState<
     Record<string, boolean>
@@ -53,7 +55,6 @@ export function AccountsTab() {
   // 선택 기수의 배정 학생만 조회 — 기수 변경 시 목록 자동 갱신.
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
   const syncStudents = useSyncStudents()
-  const resetPw = useResetStudentPassword()
   const [syncResult, setSyncResult] = useState<{
     created: number
     updated: number
@@ -100,14 +101,6 @@ export function AccountsTab() {
     if (action === '로그인 차단' || action === '로그인 차단 해제') {
       setBlockedOverride((p) => ({ ...p, [account.id]: !isBlocked(account) }))
       toast.success(`${account.name} · ${action} 적용 — 감사 로그 기록`)
-    } else if (action === '비밀번호 초기화') {
-      resetPw.mutate(account.id, {
-        onSuccess: (r) =>
-          toast.success(
-            `${account.name} · 임시 비밀번호 ${r.temporaryPassword} (1회 표시)`,
-          ),
-        onError: () => toast.danger('비밀번호 초기화에 실패했어요'),
-      })
     } else {
       toast.success(`${account.name} · 변경 저장 — 감사 로그 기록`)
     }
@@ -204,7 +197,7 @@ export function AccountsTab() {
           type="button"
           onClick={(e) => {
             e.stopPropagation()
-            setModal({ account: a, action: '비밀번호 초기화' })
+            setPwTarget(a)
           }}
           className="bg-info-bg text-info hover:bg-info-bg/70 rounded-md px-2.5 py-1 text-xs font-medium"
         >
@@ -378,6 +371,22 @@ export function AccountsTab() {
         actionLabel={modal?.action}
         onClose={() => setModal(null)}
         onSave={onSave}
+      />
+
+      <TempPasswordModal
+        target={
+          pwTarget && {
+            userId: pwTarget.id,
+            name: pwTarget.name,
+            detail: pwTarget.studentUuid,
+          }
+        }
+        withMemo
+        onIssued={(memo) => {
+          if (memo.trim())
+            toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
+        }}
+        onClose={() => setPwTarget(null)}
       />
     </>
   )

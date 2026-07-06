@@ -6,7 +6,7 @@ import type { StudentAccount } from '@/shared/types'
 
 interface StudentDetailModalProps {
   account: StudentAccount | null
-  /** 진입 맥락 라벨 — 비밀번호 초기화 / 로그인 차단 등 (행 액션에서 전달) */
+  /** 진입 맥락 라벨 — 로그인 차단/해제 등 (행 액션에서 전달) */
   actionLabel?: string
   onClose: () => void
   onSave: (memo: string) => void
@@ -45,9 +45,7 @@ export function StudentDetailModal({
         },
         {
           label: '보안 액션',
-          value: actionLabel
-            ? `${actionLabel} — 비밀번호 초기화는 1회 표시 정책 적용`
-            : '비밀번호 초기화는 1회 표시 정책 적용',
+          value: actionLabel ?? '없음 — 계정 정보 조회',
         },
       ]
     : []

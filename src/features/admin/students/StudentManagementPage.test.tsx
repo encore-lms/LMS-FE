@@ -9,9 +9,12 @@ import {
   useStudentAttendance,
   useStudentAttendanceForms,
   useSyncStudents,
-  useResetStudentPassword,
 } from '../api/students'
-import { useCourseList, useCourseConfig } from '../api/settings'
+import {
+  useCourseList,
+  useCourseConfig,
+  useResetAccountPassword,
+} from '../api/settings'
 import type {
   StudentAccountQueue,
   StudentAttendanceData,
@@ -146,9 +149,16 @@ function renderPage() {
   vi.mocked(useSyncStudents).mockReturnValue(
     mutationStub as unknown as ReturnType<typeof useSyncStudents>,
   )
-  vi.mocked(useResetStudentPassword).mockReturnValue(
-    mutationStub as unknown as ReturnType<typeof useResetStudentPassword>,
-  )
+  vi.mocked(useResetAccountPassword).mockReturnValue({
+    mutate: vi.fn(),
+    mutateAsync: vi
+      .fn()
+      .mockResolvedValue({
+        userId: 'stu-0027',
+        temporaryPassword: 'Temp1234!abc',
+      }),
+    isPending: false,
+  } as unknown as ReturnType<typeof useResetAccountPassword>)
   return render(
     <ToastProvider>
       <MemoryRouter>
@@ -185,6 +195,48 @@ describe('StudentManagementPage', () => {
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '저장' }))
     expect(screen.getByText(/로그인 차단 적용/)).toBeInTheDocument()
+  })
+
+  it('초기화 버튼은 비밀번호 초기화 모달을 열고, 발급 시 임시 비밀번호를 표시한다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getAllByRole('button', { name: '초기화' })[0])
+    expect(
+      screen.getByRole('heading', { name: '비밀번호 초기화' }),
+    ).toBeInTheDocument()
+    // 확인 단계 — 모달 오픈만으로는 발급되지 않는다
+    expect(screen.queryByText('Temp1234!abc')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '초기화하고 발급' }))
+    // 발급 후 — 원문·복사 버튼·재발급 버튼이 모달에 유지된다(토스트 휘발 아님)
+    expect(await screen.findByText('Temp1234!abc')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '임시 비밀번호 복사' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /새로 발급/ }),
+    ).toBeInTheDocument()
+    // 복사 토스트(부모 리렌더)가 떠도 발급 화면·비밀번호가 유지된다
+    await user.click(screen.getByRole('button', { name: '임시 비밀번호 복사' }))
+    expect(
+      await screen.findByText('임시 비밀번호를 복사했어요'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Temp1234!abc')).toBeInTheDocument()
+  })
+
+  it('초기화 모달에서 매니저 메모를 남기면 발급 시 감사 로그 토스트가 뜬다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getAllByRole('button', { name: '초기화' })[0])
+    await user.type(
+      screen.getByLabelText('매니저 메모'),
+      '학생 요청으로 초기화',
+    )
+    await user.click(screen.getByRole('button', { name: '초기화하고 발급' }))
+    expect(
+      await screen.findByText('매니저 메모가 감사 로그에 함께 기록됐어요'),
+    ).toBeInTheDocument()
+    // 메모 토스트로 부모가 리렌더돼도 발급된 비밀번호가 소실되지 않는다
+    expect(screen.getByText('Temp1234!abc')).toBeInTheDocument()
   })
 
   it('출결 탭으로 전환하면 HRD 일별 출결 KPI와 행이 보인다', async () => {

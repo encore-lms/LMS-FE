@@ -13,7 +13,7 @@ import {
   useCreateOpsAccount,
   useUpdateOpsAccountStatus,
   useUpdateOperatorCohorts,
-  useResetOpsPassword,
+  useResetAccountPassword,
   useHrdKeyList,
   useHrdKeySummary,
   useHrdKeyHistory,
@@ -290,13 +290,13 @@ function mockAll() {
     mutate: vi.fn(),
     isPending: false,
   } as unknown as ReturnType<typeof useUpdateOperatorCohorts>)
-  vi.mocked(useResetOpsPassword).mockReturnValue({
+  vi.mocked(useResetAccountPassword).mockReturnValue({
     mutate: vi.fn(),
     mutateAsync: vi
       .fn()
       .mockResolvedValue({ temporaryPassword: 'Temp1234!abc' }),
     isPending: false,
-  } as unknown as ReturnType<typeof useResetOpsPassword>)
+  } as unknown as ReturnType<typeof useResetAccountPassword>)
   vi.mocked(useHrdKeyList).mockReturnValue(
     ok(hrdList) as unknown as ReturnType<typeof useHrdKeyList>,
   )
@@ -388,6 +388,25 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
     expect(
       screen.getAllByRole('button', { name: '비활성화' }).length,
     ).toBeGreaterThan(0)
+  })
+
+  it('비번 초기화는 모달에서 확인 → 발급 2단계로 임시 비밀번호를 표시한다', async () => {
+    const user = userEvent.setup()
+    renderWith(<AccountsPage />)
+    await user.click(screen.getAllByRole('button', { name: '비번 초기화' })[0])
+    expect(
+      screen.getByRole('heading', { name: '비밀번호 초기화' }),
+    ).toBeInTheDocument()
+    // 확인 단계 — 모달 오픈만으로는 발급되지 않는다
+    expect(screen.queryByText('Temp1234!abc')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '초기화하고 발급' }))
+    expect(await screen.findByText('Temp1234!abc')).toBeInTheDocument()
+    // 복사 토스트(부모 리렌더)가 떠도 발급 화면·비밀번호가 유지된다
+    await user.click(screen.getByRole('button', { name: '임시 비밀번호 복사' }))
+    expect(
+      await screen.findByText('임시 비밀번호를 복사했어요'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Temp1234!abc')).toBeInTheDocument()
   })
 
   it('행 클릭은 사용자 정보 상세 모달을 연다', async () => {

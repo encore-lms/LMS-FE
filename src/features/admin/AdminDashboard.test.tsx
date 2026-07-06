@@ -141,7 +141,7 @@ describe('AdminDashboard (관제탑형)', () => {
     expect(screen.getByText('문성준')).toBeInTheDocument()
   })
 
-  it('기수 칩 클릭 — 해당 기수 딥다이브로 전환한다', async () => {
+  it('기수 칩 클릭 — 해당 기수 상세 모달을 연다', async () => {
     mockHooks(refs, dashboard)
     renderPage()
     const user = userEvent.setup()

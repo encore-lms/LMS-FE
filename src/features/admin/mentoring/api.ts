@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { adminMentoringKeys } from './queryKeys'
 import type {
+  AdminCohortAssignmentOptions,
   AdminLogTemplate,
   AdminLogTemplatesData,
   AdminMentoringLogDetail,
@@ -11,6 +12,7 @@ import type {
   AdminTeamLogFieldsData,
   AdminTemplateField,
   MentorAssignmentCreateRequest,
+  MentorAssignmentFromStudentsRequest,
   MentorAssignmentRow,
   MentorAssignmentsData,
   MentoringLogChangeRequestPayload,
@@ -20,13 +22,20 @@ import type {
 // 운영 멘토링 API 훅 — P0_25_26 명세 경로 그대로(apiClient baseURL /api → 경로 앞 미부착).
 // 캐시 키는 기능 로컬 adminMentoringKeys(공유 queryKeys.ts 무수정).
 
-/** GET /admin/mentors/assignments — 배정 보드(미배정 팀 포함). */
-export function useMentorAssignments() {
+/**
+ * GET /admin/mentors/assignments — 배정 보드(미배정 팀 포함).
+ * cohortId 를 주면 그 기수(상단 셀렉터) 보드, 없으면 담당/폴백 기수.
+ */
+export function useMentorAssignments(cohortId?: string | null) {
+  const scope = cohortId && cohortId !== 'all' ? cohortId : null
   return useQuery({
-    queryKey: adminMentoringKeys.assignments(),
+    queryKey: [...adminMentoringKeys.assignments(), scope ?? 'default'],
     queryFn: () =>
       apiClient
-        .get<MentorAssignmentsData>('/admin/mentors/assignments')
+        .get<MentorAssignmentsData>(
+          '/admin/mentors/assignments',
+          scope ? { cohort: scope } : undefined,
+        )
         .then((r) => r.data),
   })
 }
@@ -42,6 +51,45 @@ export function useCreateMentorAssignment() {
     mutationFn: (payload: MentorAssignmentCreateRequest) =>
       apiClient
         .post<MentorAssignmentRow>('/admin/mentors/assignments', payload)
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
+/**
+ * GET /admin/mentors/assignments/cohorts/{cohortId}/students
+ * — 기수 수강생 + 활성 템플릿 + 멘토(부하 포함). 수강생 기반 배정 폼 선택지.
+ */
+export function useCohortStudents(cohortId: string | null) {
+  return useQuery({
+    queryKey: [...adminMentoringKeys.assignments(), 'students', cohortId ?? ''],
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<AdminCohortAssignmentOptions>(
+          `/admin/mentors/assignments/cohorts/${cohortId}/students`,
+        )
+        .then((r) => r.data),
+  })
+}
+
+/**
+ * POST /admin/mentors/assignments/from-students — 수강생 선택으로 새 팀 생성 + 멘토 배정.
+ * 반/기수는 상단 셀렉터로 고정. 성공 시 배정 보드 무효화.
+ */
+export function useCreateMentorAssignmentFromStudents() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: MentorAssignmentFromStudentsRequest) =>
+      apiClient
+        .post<MentorAssignmentRow>(
+          '/admin/mentors/assignments/from-students',
+          payload,
+        )
         .then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({

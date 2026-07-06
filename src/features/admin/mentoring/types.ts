@@ -80,6 +80,48 @@ export interface MentorAssignmentCreateRequest {
   logTemplateId: string
 }
 
+/** 기수 수강생 선택지 — 수강생 기반 배정 폼. */
+export interface AdminMentoringStudentOption {
+  userId: string
+  name: string
+}
+
+/** 멘토가 담당 중인 멘토링 한 건 요약. */
+export interface AdminMentoringBrief {
+  teamName: string
+  cohortLabel: string
+  progressPct: number | null
+}
+
+/** 멘토 선택지 + 현재 부하 — 담당 개수·평균 진행률·담당 멘토링 목록. */
+export interface AdminMentorLoadOption {
+  mentorId: string
+  name: string
+  activeCount: number
+  avgProgress: number | null
+  mentorings: AdminMentoringBrief[]
+}
+
+/** 수강생 기반 배정 폼 선택지 — 수강생 + 활성 템플릿 + 멘토(부하 포함). */
+export interface AdminCohortAssignmentOptions {
+  students: AdminMentoringStudentOption[]
+  templates: AdminLogTemplateOption[]
+  mentors: AdminMentorLoadOption[]
+}
+
+/**
+ * POST /admin/mentors/assignments/from-students — 수강생 선택으로 새 팀 생성 + 멘토 배정.
+ * 반/기수는 상단 셀렉터 값으로 고정. 팀명 미지정 시 BE가 자동 부여.
+ */
+export interface MentorAssignmentFromStudentsRequest {
+  cohortId: string
+  name?: string
+  studentUserIds: string[]
+  mentorId: string
+  allocatedHours: number
+  logTemplateId: string
+}
+
 // ───────────────────────── 멘토링 일지 관리 (§30) ─────────────────────────
 
 /** 일지 상태 — 폐기·반려 없음(05-31 확정). '재제출 후 유효'는 valid + resubmitted 보조 라벨. */

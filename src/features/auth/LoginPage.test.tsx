@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { LoginPage } from './LoginPage'
 import { useAuthStore } from '@/shared/store'
 import { apiClient } from '@/shared/api'
@@ -167,6 +167,77 @@ describe('LoginPage', () => {
       expect(useAuthStore.getState().user?.id).toBe('1')
     })
     expect(queryClient.getQueryData(['profile', 'me'])).toBeUndefined()
+  })
+
+  it('임시 비밀번호(mustChangePassword) 사용자는 역할 홈 대신 마이 프로필로 이동한다', async () => {
+    const user = userEvent.setup()
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        token: 'tok',
+        user: {
+          id: 'm1',
+          email: 'mentor@x.com',
+          name: '김멘토',
+          role: 'MENTOR',
+          mustChangePassword: true,
+        },
+        nextRoute: '/mentor/dashboard',
+      },
+    })
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/mentor/profile" element={<div>멘토 프로필 화면</div>} />
+          <Route path="/mentor/dashboard" element={<div>멘토 대시보드</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await user.type(
+      screen.getByPlaceholderText('이메일 또는 수강생 코드'),
+      'mentor@x.com',
+    )
+    await user.type(screen.getByPlaceholderText('••••••••••'), 'Temp1234!')
+    await user.click(screen.getByRole('button', { name: /로그인/ }))
+    // nextRoute(/mentor/dashboard)보다 임시 비밀번호 유도가 우선한다
+    expect(await screen.findByText('멘토 프로필 화면')).toBeInTheDocument()
+  })
+
+  it('온보딩이 필요한 수강생은 임시 비밀번호여도 온보딩부터 진행한다', async () => {
+    const user = userEvent.setup()
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        token: 'tok',
+        user: {
+          id: 's1',
+          email: '',
+          name: '박수진',
+          role: 'STUDENT',
+          mustChangePassword: true,
+        },
+        nextRoute: '/student/onboarding',
+      },
+    })
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/student/onboarding" element={<div>온보딩 화면</div>} />
+          <Route
+            path="/student/profile"
+            element={<div>수강생 프로필 화면</div>}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await user.type(
+      screen.getByPlaceholderText('이메일 또는 수강생 코드'),
+      '100058794696',
+    )
+    await user.type(screen.getByPlaceholderText('••••••••••'), 'Temp1234!')
+    await user.click(screen.getByRole('button', { name: /로그인/ }))
+    // 온보딩 게이트에 튕기지 않도록 온보딩을 우선한다 (완료 화면이 프로필 유도를 이어받음)
+    expect(await screen.findByText('온보딩 화면')).toBeInTheDocument()
   })
 
   it('스타일 가이드로 이동 링크가 /_styleguide를 가리킨다', () => {

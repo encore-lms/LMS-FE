@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { useAuth } from '@/shared/store'
+import { PROFILE_PATH } from '@/features/profile/paths'
 import {
   useSaveStudentOnboarding,
   useStudentOnboarding,
@@ -26,6 +28,7 @@ const EMPTY_SKILL_OPTIONS: StudentSkillOption[] = []
  */
 export default function OnboardingPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [params, setParams] = useSearchParams()
   const onboarding = useStudentOnboarding()
   const saveOnboarding = useSaveStudentOnboarding()
@@ -70,7 +73,13 @@ export default function OnboardingPage() {
         githubUrl: githubUrl.trim() || null,
       },
       {
-        onSuccess: () => navigate('/student', { replace: true }),
+        // 임시 비밀번호(mustChangePassword) 상태면 로그인 시점 유도가 온보딩에 밀렸으므로
+        // 완료 직후 마이 프로필로 이어받아 비밀번호 변경을 안내한다(#375).
+        onSuccess: () =>
+          navigate(
+            user?.mustChangePassword ? PROFILE_PATH.STUDENT : '/student',
+            { replace: true },
+          ),
       },
     )
   }

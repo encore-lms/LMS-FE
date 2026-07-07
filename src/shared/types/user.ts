@@ -16,4 +16,6 @@ export interface User {
   role: Role
   /** 수강생 교육 타입(STUDENT 한정). 없으면 KDT(기본 부트캠프형)로 간주. */
   trainingType?: TrainingType
+  /** 임시 비밀번호(매니저 발급) 상태 — true면 로그인 직후 마이 프로필로 유도해 변경을 안내한다. */
+  mustChangePassword?: boolean
 }

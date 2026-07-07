@@ -74,23 +74,30 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6 p-8">
       <HeroBanner hero={data.hero} attendance={attendance} />
-      <KpiCards kpis={data.kpis} />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <TodoList todos={data.todos} />
-        <DeadlineQuizzes quizzes={data.deadlineQuizzes} />
-      </div>
-      <MentoringSummary mentoring={data.mentoring} />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <AttendanceCalendar attendance={attendance} />
-        <AttendanceSummary attendance={attendance} />
-      </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <NoticeList notices={data.notices} />
-        <NotificationList notifications={data.notifications} />
-      </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ProjectList projects={data.projects} />
-        <TroubleshootingList items={data.troubleshooting} />
+
+      {/* 3섹션: (사이드바) · 메인(실행 콘텐츠) · 우측 레일(개인 현황) */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        {/* 메인 — 오늘 처리할 학습 활동 */}
+        <div className="flex min-w-0 flex-col gap-6">
+          <KpiCards kpis={data.kpis} />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <TodoList todos={data.todos} />
+            <DeadlineQuizzes quizzes={data.deadlineQuizzes} />
+          </div>
+          <MentoringSummary mentoring={data.mentoring} />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <ProjectList projects={data.projects} />
+            <TroubleshootingList items={data.troubleshooting} />
+          </div>
+        </div>
+
+        {/* 우측 레일 — 개인 현황(출결·알림) */}
+        <aside className="flex flex-col gap-6">
+          <AttendanceCalendar attendance={attendance} />
+          <AttendanceSummary attendance={attendance} />
+          <NotificationList notifications={data.notifications} />
+          <NoticeList notices={data.notices} />
+        </aside>
       </div>
     </div>
   )

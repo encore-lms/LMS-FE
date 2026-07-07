@@ -10,6 +10,7 @@ import { DeadlineQuizzes } from './components/DeadlineQuizzes'
 import { MentoringSummary } from './components/MentoringSummary'
 import { AttendanceCalendar } from './components/AttendanceCalendar'
 import { AttendanceSummary } from './components/AttendanceSummary'
+import { WeeklyStreak } from './components/WeeklyStreak'
 import { NoticeList } from './components/NoticeList'
 import { NotificationList } from './components/NotificationList'
 import { ProjectList } from './components/ProjectList'
@@ -73,7 +74,8 @@ export default function DashboardPage() {
   const attendance = data.attendance ?? createEmptyAttendance()
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    // 페이지 배경 틴트 — 보더리스 흰 카드가 떠 보이도록 은은한 서페이스 톤(대시보드 스코프).
+    <div className="bg-surface-muted/45 flex min-h-full flex-col gap-6 p-8">
       <HeroBanner hero={data.hero} attendance={attendance} />
 
       {/* 3섹션: (사이드바) · 메인(실행 콘텐츠) · 우측 레일(개인 현황) */}
@@ -92,9 +94,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 우측 레일 — 개인 현황(프로필·출결·알림) */}
+        {/* 우측 레일 — 개인 현황(프로필·스트릭·출결·알림) */}
         <aside className="flex flex-col gap-6">
           <ProfileCard hero={data.hero} attendance={attendance} />
+          <WeeklyStreak attendance={attendance} />
           <AttendanceCalendar attendance={attendance} />
           <AttendanceSummary attendance={attendance} />
           <NotificationList notifications={data.notifications} />

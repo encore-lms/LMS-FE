@@ -76,7 +76,7 @@ export default function ReputationPage() {
   const students = useMemo(() => data?.students ?? [], [data])
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return students.filter((s) => {
+    const list = students.filter((s) => {
       if (status === 'missing' && s.pushTargets.length === 0) return false
       if (status === 'complete' && s.pushTargets.length > 0) return false
       if (needle) {
@@ -85,6 +85,8 @@ export default function ReputationPage() {
       }
       return true
     })
+    // 이름 가나다순 고정(운영 요구)
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   }, [students, status, q])
 
   if (isPending) {

@@ -102,7 +102,7 @@ export function AttendanceTab() {
   const rows = data?.rows ?? []
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return rows.filter((r) => {
+    const list = rows.filter((r) => {
       if (!matchFilter(r, statusFilter as AttendanceFilter)) return false
       if (needle) {
         const hay = `${r.studentName} ${r.hrdStatusLabel}`.toLowerCase()
@@ -110,6 +110,10 @@ export function AttendanceTab() {
       }
       return true
     })
+    // 이름 가나다순 고정(운영 요구)
+    return [...list].sort((a, b) =>
+      a.studentName.localeCompare(b.studentName, 'ko'),
+    )
   }, [rows, statusFilter, q])
 
   // 필터 탭 + 건수(전체/지각/결석/미입실/미퇴실).

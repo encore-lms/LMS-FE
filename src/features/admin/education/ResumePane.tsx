@@ -121,13 +121,17 @@ export function ResumePane({
 
   // 이름 또는 이력서 제목으로 검색(클라이언트 필터).
   const needle = q.trim().toLowerCase()
-  const rows = needle
+  const matched = needle
     ? data.filter(
         (r) =>
           nameOf(r.studentUserId).toLowerCase().includes(needle) ||
           r.title.toLowerCase().includes(needle),
       )
     : data
+  // 이름 가나다순 고정(운영 요구)
+  const rows = [...matched].sort((a, b) =>
+    nameOf(a.studentUserId).localeCompare(nameOf(b.studentUserId), 'ko'),
+  )
 
   return (
     <div>

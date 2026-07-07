@@ -44,7 +44,7 @@ export default function SubmissionsPage() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return rows.filter((r) => {
+    const list = rows.filter((r) => {
       if (filter === 'manual_pending' && r.gradingState !== 'manual_pending')
         return false
       if (filter === 'not_submitted' && r.submitted) return false
@@ -57,6 +57,10 @@ export default function SubmissionsPage() {
         return false
       return true
     })
+    // 이름 가나다순 고정(운영 요구)
+    return [...list].sort((a, b) =>
+      nameOf(a.studentUserId).localeCompare(nameOf(b.studentUserId), 'ko'),
+    )
   }, [rows, q, filter, nameOf])
 
   if (isPending) {

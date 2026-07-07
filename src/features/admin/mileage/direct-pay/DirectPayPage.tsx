@@ -49,7 +49,14 @@ export default function DirectPayPage() {
     null,
   )
 
-  const students = useMemo(() => data?.students ?? [], [data])
+  // 이름 가나다순 고정(운영 요구)
+  const students = useMemo(
+    () =>
+      [...(data?.students ?? [])].sort((a, b) =>
+        a.name.localeCompare(b.name, 'ko'),
+      ),
+    [data],
+  )
   const selectedCount = selected.size
   const total = selectedCount * amount
   const word = kind === 'grant' ? '지급' : '차감'

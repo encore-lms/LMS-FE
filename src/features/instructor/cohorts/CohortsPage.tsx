@@ -36,7 +36,7 @@ export default function CohortsPage() {
   const filtered = useMemo(() => {
     const items = data?.rows ?? []
     const needle = q.trim().toLowerCase()
-    return items.filter((r) => {
+    const list = items.filter((r) => {
       if (r.status !== status) return false
       if (needle) {
         const hay = `${r.name} ${r.subtitle}`.toLowerCase()
@@ -44,6 +44,8 @@ export default function CohortsPage() {
       }
       return true
     })
+    // 이름 가나다순 고정(운영 요구)
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   }, [data, q, status])
 
   if (isPending) {

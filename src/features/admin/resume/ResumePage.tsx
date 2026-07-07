@@ -185,11 +185,13 @@ function RosterView({ embedded = false }: { embedded?: boolean }) {
 
   const rows = useMemo(() => {
     const q = search.trim()
-    return ROSTER.filter(
+    const list = ROSTER.filter(
       (r) =>
         (statusFilter === '전체' || r.status === statusFilter) &&
         (q === '' || r.name.includes(q)),
     )
+    // 이름 가나다순 고정(운영 요구)
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   }, [search, statusFilter])
 
   const columns: Column<RosterRow>[] = [

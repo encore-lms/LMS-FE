@@ -69,7 +69,7 @@ export default function StatisticsPage() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return rows.filter((r) => {
+    const list = rows.filter((r) => {
       if (course !== 'all' && r.courseName !== course) return false
       if (mentor !== 'all' && r.mentorId !== mentor) return false
       if (teamStatus !== 'all' && r.teamStatus !== teamStatus) return false
@@ -82,6 +82,12 @@ export default function StatisticsPage() {
       }
       return true
     })
+    // 멘토명 가나다순 고정, 같은 멘토는 팀명 순(운영 요구)
+    return [...list].sort(
+      (a, b) =>
+        a.mentorName.localeCompare(b.mentorName, 'ko') ||
+        a.teamName.localeCompare(b.teamName, 'ko'),
+    )
   }, [rows, course, mentor, teamStatus, evalState, recommendState, q])
 
   if (isPending) {

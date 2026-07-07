@@ -88,25 +88,26 @@ export default function RecordReviewPage() {
   }
 
   const needle = q.trim()
+  // 검토 목록 3종 모두 이름 가나다순 고정(운영 요구)
   const blogRows = useMemo(
     () =>
-      (data?.blog ?? []).filter(
-        (r) => !needle || r.student.name.includes(needle),
-      ),
+      [...(data?.blog ?? [])]
+        .filter((r) => !needle || r.student.name.includes(needle))
+        .sort((a, b) => a.student.name.localeCompare(b.student.name, 'ko')),
     [data, needle],
   )
   const studyRows = useMemo(
     () =>
-      (data?.study ?? []).filter(
-        (r) => !needle || r.student.name.includes(needle),
-      ),
+      [...(data?.study ?? [])]
+        .filter((r) => !needle || r.student.name.includes(needle))
+        .sort((a, b) => a.student.name.localeCompare(b.student.name, 'ko')),
     [data, needle],
   )
   const certRows = useMemo(
     () =>
-      (data?.cert ?? []).filter(
-        (r) => !needle || r.student.name.includes(needle),
-      ),
+      [...(data?.cert ?? [])]
+        .filter((r) => !needle || r.student.name.includes(needle))
+        .sort((a, b) => a.student.name.localeCompare(b.student.name, 'ko')),
     [data, needle],
   )
 

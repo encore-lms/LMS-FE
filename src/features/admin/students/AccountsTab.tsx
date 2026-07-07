@@ -67,7 +67,7 @@ export function AccountsTab() {
   const filtered = useMemo(() => {
     const items = data?.items ?? []
     const needle = q.trim().toLowerCase()
-    return items.filter((a) => {
+    const list = items.filter((a) => {
       const blocked = blockedOverride[a.id] ?? a.loginBlocked
       if (status === 'blocked' && !blocked) return false
       if (status === 'normal' && (blocked || a.trainingStatus === 'dropout'))
@@ -78,6 +78,8 @@ export function AccountsTab() {
       }
       return true
     })
+    // 이름 가나다순 고정(운영 요구)
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   }, [data, status, q, blockedOverride])
 
   if (isPending) {

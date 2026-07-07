@@ -81,7 +81,7 @@ export default function RecordsGridPage({
 
   const rows = useMemo(() => {
     const needle = q.trim()
-    return (students?.items ?? [])
+    const list = (students?.items ?? [])
       .filter((s) => !needle || s.name.includes(needle))
       .map((s) => {
         const g = byStudent.get(s.id)
@@ -95,6 +95,8 @@ export default function RecordsGridPage({
           total: weeks.length,
         }
       })
+    // 이름 가나다순 고정(운영 요구)
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   }, [students, byStudent, weeks, q])
 
   if (!cohortId) {
@@ -248,9 +250,12 @@ function CertList({
   const { data, isPending, isError, refetch } = useAdminCertificates(cohortId)
   const [reviewId, setReviewId] = useState<string | null>(null)
   const needle = q.trim()
-  const items = (data ?? []).filter(
-    (c) => !needle || nameOf(c.studentUserId).includes(needle),
-  )
+  // 이름 가나다순 고정(운영 요구)
+  const items = [...(data ?? [])]
+    .filter((c) => !needle || nameOf(c.studentUserId).includes(needle))
+    .sort((a, b) =>
+      nameOf(a.studentUserId).localeCompare(nameOf(b.studentUserId), 'ko'),
+    )
 
   if (isPending) {
     return <SkeletonCards count={6} className="py-6" />

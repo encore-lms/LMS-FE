@@ -60,6 +60,23 @@ export default function RecordReviewPage() {
     cohortId,
   )
 
+  useEffect(() => {
+    if (!data) return
+
+    const courseExists = data.courses.some((c) => c.id === courseId)
+    const nextCourseId = courseExists ? courseId : data.activeCourseId
+    if (!courseExists && data.activeCourseId !== courseId) {
+      setCourseId(data.activeCourseId)
+    }
+
+    const activeCourse = data.courses.find((c) => c.id === nextCourseId)
+    const cohortExists =
+      activeCourse?.cohorts.some((c) => c.id === cohortId) ?? false
+    if (!cohortExists && data.activeCohortId !== cohortId) {
+      setCohortId(data.activeCohortId)
+    }
+  }, [data, courseId, cohortId])
+
   // 과정 전환 시 그 과정의 첫 기수로 이동(빈 상태 방지).
   const cohortTabs =
     data?.courses.find((c) => c.id === courseId)?.cohorts ??

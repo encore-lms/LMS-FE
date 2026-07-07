@@ -72,12 +72,12 @@ export interface MentorAssignmentsData {
   summary: { total: number; active: number; unassigned: number }
 }
 
-/** POST /admin/mentors/assignments — 반→팀→멘토·N시간·기본 템플릿 필수(§29). */
+/** POST /admin/mentors/assignments — 반→팀→멘토·N시간. 활성 템플릿이 있으면 템플릿 선택 필수. */
 export interface MentorAssignmentCreateRequest {
   teamId: string
   mentorId: string
   allocatedHours: number
-  logTemplateId: string
+  logTemplateId?: string
 }
 
 /** 기수 수강생 선택지 — 수강생 기반 배정 폼. */
@@ -146,7 +146,7 @@ export interface MentorAssignmentFromStudentsRequest {
   studentUserIds: string[]
   mentorId: string
   allocatedHours: number
-  logTemplateId: string
+  logTemplateId?: string
 }
 
 // ───────────────────────── 멘토링 일지 관리 (§30) ─────────────────────────

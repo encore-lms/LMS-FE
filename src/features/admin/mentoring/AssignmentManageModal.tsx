@@ -124,7 +124,7 @@ export function AssignmentManageModal({
         logTemplateId:
           row.logTemplateId ??
           data.templates.find((t) => t.isDefault)?.templateId ??
-          '',
+          undefined,
       },
       {
         onSuccess: (updated) => {

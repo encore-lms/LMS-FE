@@ -334,6 +334,7 @@ export function AssignmentCreateModal({
   const students = useMemo(() => options.data?.students ?? [], [options.data])
   const templates = options.data?.templates ?? []
   const mentors = options.data?.mentors ?? []
+  const hasTemplates = templates.length > 0
 
   const filteredStudents = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -366,7 +367,8 @@ export function AssignmentCreateModal({
     const h = Number(hours)
     if (!Number.isFinite(h) || h <= 0)
       return setError('배정 N시간은 0보다 커야 합니다.')
-    if (!templateId) return setError('일지 템플릿을 선택해 주세요.')
+    if (hasTemplates && !templateId)
+      return setError('일지 템플릿을 선택해 주세요.')
     createFromStudents.mutate(
       {
         cohortId,
@@ -374,7 +376,7 @@ export function AssignmentCreateModal({
         studentUserIds: selectedIds,
         mentorId,
         allocatedHours: h,
-        logTemplateId: templateId,
+        logTemplateId: templateId || undefined,
       },
       {
         onSuccess: (row) => {
@@ -504,20 +506,21 @@ export function AssignmentCreateModal({
 
         {/* 기본 일지 템플릿 */}
         <div className="flex flex-col gap-1.5">
-          <span className={FIELD_LABEL}>기본 일지 템플릿 *</span>
-          {!options.isPending && templates.length === 0 ? (
-            // 활성 템플릿이 없으면 선택 대신 생성 안내 + 바로가기.
+          <span className={FIELD_LABEL}>
+            기본 일지 템플릿{hasTemplates ? ' *' : ''}
+          </span>
+          {!options.isPending && !hasTemplates ? (
             <div className="border-border bg-surface-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed px-3 py-3">
               <span className="text-fg-subtle inline-flex items-center gap-1.5 text-xs">
-                <FileWarning className="h-4 w-4" />이 기수에 사용할 수 있는 일지
-                템플릿이 없습니다.
+                <FileWarning className="h-4 w-4" />
+                활성 템플릿 없음 · 일지 항목 없이 배정
               </span>
               <Link
                 to="/admin/mentoring/log-templates"
                 className="bg-brand-deep text-on-color hover:bg-brand-deep/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] font-bold"
               >
                 <Plus className="h-3.5 w-3.5" />
-                템플릿 생성하러 가기
+                템플릿 관리
               </Link>
             </div>
           ) : (

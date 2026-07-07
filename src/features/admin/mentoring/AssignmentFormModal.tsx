@@ -21,8 +21,8 @@ interface AssignmentFormModalProps {
 }
 
 /**
- * 새 배정 추가 / 미배정 팀 배정 모달 — 반→팀→멘토·N시간·기본 템플릿 필수(RHF+Zod 선차단).
- * 서버 게이트(§29): 같은 반 중복 409 · N시간 422 · 템플릿 422 — 응답 message 토스트.
+ * 새 배정 추가 / 미배정 팀 배정 모달 — 반→팀→멘토·N시간(RHF+Zod 선차단).
+ * 서버 게이트(§29): 같은 반 중복 409 · N시간 422 · 활성 템플릿이 있으면 템플릿 422.
  */
 export function AssignmentFormModal({
   open,
@@ -44,6 +44,7 @@ export function AssignmentFormModal({
     handleSubmit,
     watch,
     setValue,
+    setError,
     reset,
     formState: { errors },
   } = useForm<AssignmentInput>({
@@ -76,12 +77,19 @@ export function AssignmentFormModal({
   }
 
   const onValid = (values: AssignmentInput) => {
+    if (data.templates.length > 0 && !values.logTemplateId) {
+      setError('logTemplateId', {
+        type: 'manual',
+        message: '일지 템플릿을 선택해주세요',
+      })
+      return
+    }
     createAssignment.mutate(
       {
         teamId: values.teamId,
         mentorId: values.mentorId,
         allocatedHours: values.allocatedHours,
-        logTemplateId: values.logTemplateId,
+        logTemplateId: values.logTemplateId || undefined,
       },
       {
         onSuccess: (row) => {
@@ -136,8 +144,8 @@ export function AssignmentFormModal({
         className="flex flex-col gap-4"
       >
         <p className="bg-brand/10 text-brand rounded-lg px-3 py-2 text-xs font-medium">
-          한 반에 한 팀만 배정 · 저장 전 자동 검증 — 같은 반 중복 배정·미배정
-          팀·템플릿 미선택 차단
+          한 반에 한 팀만 배정 · 저장 전 자동 검증 — 같은 반 중복 배정·미배정 팀
+          미선택 차단 · 템플릿이 있으면 선택 필수
         </p>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="assignment-cohort" className={FIELD_LABEL}>
@@ -229,14 +237,17 @@ export function AssignmentFormModal({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="assignment-template" className={FIELD_LABEL}>
-            기본 일지 템플릿 *
+            기본 일지 템플릿{data.templates.length > 0 ? ' *' : ''}
           </label>
           <select
             id="assignment-template"
             className={INPUT_CLASS}
+            disabled={data.templates.length === 0}
             {...register('logTemplateId')}
           >
-            <option value="">템플릿 선택</option>
+            <option value="">
+              {data.templates.length === 0 ? '활성 템플릿 없음' : '템플릿 선택'}
+            </option>
             {data.templates.map((t) => (
               <option key={t.templateId} value={t.templateId}>
                 {t.name}
@@ -245,7 +256,9 @@ export function AssignmentFormModal({
             ))}
           </select>
           <p className="text-fg-subtle text-xs">
-            배정 시 기본 템플릿 선택 (일지 템플릿에서 관리)
+            {data.templates.length === 0
+              ? '일지 항목 없이 먼저 배정합니다'
+              : '배정 시 기본 템플릿 선택 (일지 템플릿에서 관리)'}
           </p>
           {errors.logTemplateId && (
             <p className={ERROR_CLASS}>{errors.logTemplateId.message}</p>

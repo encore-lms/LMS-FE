@@ -249,5 +249,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // 개발자 .env.local(실 BE 주소)이 vitest에 새어 들어와 apiClient baseURL이 바뀌면
+    // MSW 핸들러(*/api/*)가 매칭되지 않아 client.test.ts가 로컬에서만 깨진다.
+    // 테스트는 항상 '' → '/api' 폴백으로 고정해 환경 무관하게 만든다.
+    env: {
+      VITE_API_BASE_URL: '',
+    },
   },
 })

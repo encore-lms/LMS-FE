@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { KeyRound, Layers, Mail, ShieldCheck, User } from 'lucide-react'
+import { KeyRound, Mail, ShieldCheck, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -10,11 +10,16 @@ import { useAuthActions } from '@/shared/store'
 import { ROLE_LABEL } from '@/shared/constants'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { SkeletonText } from '@/components/ui/Skeleton'
-import { useMyCohorts } from '../api/dashboard'
 import { useChangePassword, useCurrentUser } from './api'
 
-// 운영 매니저 마이 페이지 (/admin/profile) — 본인 계정 정보 + 담당 과정·기수 + 비밀번호 변경.
+// 마이 프로필(전 역할 공용) — 본인 계정 정보 + 비밀번호 변경 (헤더 아바타 드롭다운 §7-X).
+// 임시 비밀번호(매니저 발급·1회 표시)를 받은 모든 역할이 여기서 비밀번호를 변경한다.
 // 계정 생성·역할 부여는 설정>계정 관리(타인 관리)의 소관이라, 여기선 본인 조회 + 비밀번호 자가 변경만.
+
+interface ProfilePageProps {
+  /** 역할 전용 부가 섹션 — 운영은 담당 과정·기수 카드를 주입한다(/admin/courses가 운영 전용 권한이라 본체에 두지 않음). */
+  cohortSection?: ReactNode
+}
 
 function fmtDateTime(iso: string | null) {
   if (!iso) return '기록 없음'
@@ -26,10 +31,14 @@ function fmtDateTime(iso: string | null) {
   ).padStart(2, '0')}`
 }
 
-export default function ProfilePage() {
-  usePageHeader('마이 프로필', '내 계정 정보와 담당 기수 · 비밀번호 변경')
+export default function ProfilePage({ cohortSection }: ProfilePageProps) {
+  usePageHeader(
+    '마이 프로필',
+    cohortSection
+      ? '내 계정 정보와 담당 기수 · 비밀번호 변경'
+      : '내 계정 정보 · 비밀번호 변경',
+  )
   const me = useCurrentUser()
-  const myCohorts = useMyCohorts()
 
   return (
     <div className="p-8">
@@ -41,7 +50,7 @@ export default function ProfilePage() {
       >
         {me.data && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            {/* 좌: 계정 정보 + 담당 기수 */}
+            {/* 좌: 계정 정보 (+역할별 부가 섹션) */}
             <div className="flex flex-col gap-6">
               <section className="border-border bg-surface rounded-xl border p-6">
                 <div className="flex items-center gap-4">
@@ -86,37 +95,7 @@ export default function ProfilePage() {
                 </dl>
               </section>
 
-              <section className="border-border bg-surface rounded-xl border p-6">
-                <div className="mb-3 flex items-center gap-2">
-                  <Layers className="text-fg-muted h-4 w-4" />
-                  <p className="text-fg text-[15px] font-bold">
-                    담당 과정·기수
-                  </p>
-                </div>
-                {myCohorts.isPending ? (
-                  <SkeletonText lines={2} className="max-w-sm" />
-                ) : (myCohorts.data?.length ?? 0) === 0 ? (
-                  <p className="text-fg-subtle text-[13px]">
-                    배정된 담당 기수가 없어요. 설정 &gt; 계정 관리에서 배정할 수
-                    있습니다.
-                  </p>
-                ) : (
-                  <ul className="flex flex-wrap gap-2">
-                    {myCohorts.data!.map((c) => (
-                      <li
-                        key={c.cohortId}
-                        className="border-border bg-surface-muted/50 text-fg flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-semibold"
-                      >
-                        {c.courseName} {c.cohortNo}기
-                        <span className="text-fg-subtle text-[11px] font-normal">
-                          {c.startDate.replaceAll('-', '.')}~
-                          {c.endDate.replaceAll('-', '.')}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+              {cohortSection}
             </div>
 
             {/* 우: 비밀번호 변경 */}
@@ -148,7 +127,9 @@ function InfoRow({
   )
 }
 
-function PasswordChangeCard() {
+// 수강생 프로필(/student/profile, 박준석 영역)에도 합성할 수 있게 export —
+// 임시 비밀번호 자가 변경 경로가 수강생에게도 필요하다(후속 협의, 이슈 참조).
+export function PasswordChangeCard() {
   const toast = useToast()
   const navigate = useNavigate()
   const { clearSession } = useAuthActions()

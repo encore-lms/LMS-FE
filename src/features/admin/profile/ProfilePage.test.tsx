@@ -3,14 +3,14 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
-import ProfilePage from './ProfilePage'
-import { useChangePassword, useCurrentUser } from './api'
+import AdminProfilePage from './AdminProfilePage'
+import { useChangePassword, useCurrentUser } from '@/features/profile/api'
 import { useMyCohorts } from '../api/dashboard'
 
-vi.mock('./api')
+vi.mock('@/features/profile/api')
 vi.mock('../api/dashboard')
 
-// 운영 매니저 마이 페이지 — 계정 정보·담당 기수 렌더 + 비밀번호 변경 검증.
+// 운영 매니저 마이 페이지 — 공용 ProfilePage + 담당 기수 카드 합성 검증.
 
 function mockAll() {
   vi.mocked(useCurrentUser).mockReturnValue({
@@ -48,7 +48,7 @@ function renderPage() {
   return render(
     <ToastProvider>
       <MemoryRouter>
-        <ProfilePage />
+        <AdminProfilePage />
       </MemoryRouter>
     </ToastProvider>,
   )

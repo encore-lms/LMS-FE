@@ -40,6 +40,8 @@ const QuizFormPage = lazy(() => import('./quizzes/QuizFormPage'))
 const QuestionManagePage = lazy(() => import('./quizzes/QuestionManagePage'))
 const SubmissionsPage = lazy(() => import('./quizzes/SubmissionsPage'))
 const GradingPage = lazy(() => import('./quizzes/GradingPage'))
+// 마이 프로필 — 전 역할 공용 화면(features/profile), 헤더 아바타 드롭다운에서 진입(§7-X).
+const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'))
 
 export const instructorRoutes: RouteObject[] = [
   {
@@ -65,6 +67,8 @@ export const instructorRoutes: RouteObject[] = [
       { path: 'recertifications', element: <RecertificationsPage /> },
       // 담당 기수 없음 안내 — 대시보드가 cohortCount 0이면 동일 안내로 분기.
       { path: 'no-cohort', element: <NoCohortPage /> },
+      // 마이 프로필 — 계정 정보·비밀번호 변경(임시 비밀번호 수령 후 변경 경로).
+      { path: 'profile', element: <ProfilePage /> },
       // 강사 추천서 (Flow 08-1) — /history는 :id보다 먼저(정적 경로 우선).
       { path: 'endorsements', element: <EndorsementsPage /> },
       { path: 'endorsements/history', element: <EndorsementHistoryPage /> },

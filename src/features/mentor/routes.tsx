@@ -30,6 +30,8 @@ const RecommendationPage = lazy(
 const RecommendationsSubmittedPage = lazy(
   () => import('./recommendation/RecommendationsSubmittedPage'),
 )
+// 마이 프로필 — 전 역할 공용 화면(features/profile), 헤더 아바타 드롭다운에서 진입(§7-X).
+const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'))
 
 export const mentorRoutes: RouteObject[] = [
   {
@@ -67,6 +69,8 @@ export const mentorRoutes: RouteObject[] = [
       },
       // 학생 상세 — 팀 상세에서만 진입하는 보조 상세(독립 목록 없음)
       { path: 'mentees/:studentId', element: <MenteeDetailPage /> },
+      // 마이 프로필 — 계정 정보·비밀번호 변경(임시 비밀번호 수령 후 변경 경로).
+      { path: 'profile', element: <ProfilePage /> },
       // 제출 완료 페이지 — Figma 2582:6400/6476(?toast=submitted 공통 토스트 1회 표시).
       { path: 'evaluations', element: <EvaluationsSubmittedPage /> },
       { path: 'recommendations', element: <RecommendationsSubmittedPage /> },

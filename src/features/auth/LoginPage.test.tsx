@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { LoginPage } from './LoginPage'
 import { useAuthStore } from '@/shared/store'
 import { apiClient } from '@/shared/api'
+import { queryClient } from '@/app/queryClient'
 
 vi.mock('@/shared/api', () => ({
   apiClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
@@ -137,6 +138,35 @@ describe('LoginPage', () => {
       })
     })
     expect(useAuthStore.getState().user?.role).toBe('INSTRUCTOR')
+  })
+
+  it('로그아웃 없이 다른 계정으로 로그인하면 이전 세션 캐시가 정리된다', async () => {
+    const user = userEvent.setup()
+    // 이전 사용자 세션 + 캐시가 남아 있는 상태(데모 빠른 로그인으로 계정 교체하는 흐름)
+    useAuthStore.getState().setSession('old-tok', {
+      id: 'u0',
+      email: 'old@playdata.io',
+      name: '이전유저',
+      role: 'MANAGER',
+    })
+    queryClient.setQueryData(['profile', 'me'], { name: '이전유저' })
+    vi.mocked(apiClient.post).mockResolvedValue({
+      data: {
+        token: 'tok',
+        user: { id: '1', email: 'a@b.com', name: '김수강', role: 'STUDENT' },
+      },
+    })
+    renderLogin()
+    await user.type(
+      screen.getByPlaceholderText('이메일 또는 수강생 코드'),
+      'a@b.com',
+    )
+    await user.type(screen.getByPlaceholderText('••••••••••'), 'pw1234')
+    await user.click(screen.getByRole('button', { name: /로그인/ }))
+    await waitFor(() => {
+      expect(useAuthStore.getState().user?.id).toBe('1')
+    })
+    expect(queryClient.getQueryData(['profile', 'me'])).toBeUndefined()
   })
 
   it('스타일 가이드로 이동 링크가 /_styleguide를 가리킨다', () => {

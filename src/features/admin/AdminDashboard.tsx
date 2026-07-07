@@ -129,13 +129,14 @@ export default function AdminDashboard() {
       </div>
     )
   }
+  // 담당 미배정은 useMyCohorts가 전체 기수로 폴백하므로 여기 도달 = 시스템에 기수 자체가 없음.
   if ((myCohorts.data?.length ?? 0) === 0) {
     return (
       <div className="p-8">
         <Empty
           icon={<Users />}
-          title="담당 과정·기수가 없어요"
-          description="설정 > 계정 관리에서 담당 과정·기수를 배정하면 해당 기수의 운영 현황이 여기에 표시됩니다."
+          title="등록된 과정·기수가 없어요"
+          description="설정 > 과정 관리에서 과정과 기수를 등록하면 운영 현황이 여기에 표시됩니다."
         />
       </div>
     )

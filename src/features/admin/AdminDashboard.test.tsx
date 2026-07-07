@@ -155,9 +155,10 @@ describe('AdminDashboard (관제탑형)', () => {
     expect(screen.getByText('성취도 평가 회차별 평균')).toBeInTheDocument()
   })
 
-  it('담당 기수가 없으면 배정 안내 빈 화면을 보여준다', () => {
+  it('기수가 하나도 없으면 등록 안내 빈 화면을 보여준다', () => {
+    // 담당 미배정은 useMyCohorts가 전체 기수로 폴백하므로, refs가 비면 시스템에 기수 자체가 없는 경우다.
     mockHooks([], undefined)
     renderPage()
-    expect(screen.getByText('담당 과정·기수가 없어요')).toBeInTheDocument()
+    expect(screen.getByText('등록된 과정·기수가 없어요')).toBeInTheDocument()
   })
 })

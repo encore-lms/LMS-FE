@@ -36,7 +36,6 @@ export function useMyCohorts() {
       const assigned = await apiClient
         .get<string[]>(`/auth/accounts/${userId}/cohorts`)
         .then((r) => r.data)
-      if (assigned.length === 0) return []
       const courses = await apiClient
         .get<CourseSummary[]>('/admin/courses')
         .then((r) => r.data)
@@ -48,19 +47,23 @@ export function useMyCohorts() {
         ),
       )
       const assignedSet = new Set(assigned)
-      return details
-        .flatMap((d) =>
-          d.cohorts.map((ch) => ({
-            cohortId: ch.id,
-            courseId: d.courseId,
-            courseName: d.title,
-            cohortNo: ch.cohortNo,
-            startDate: ch.startDate,
-            endDate: ch.endDate,
-          })),
-        )
-        .filter((ref) => assignedSet.has(ref.cohortId))
-        .sort((a, b) => Number(a.cohortNo) - Number(b.cohortNo))
+      const all = details.flatMap((d) =>
+        d.cohorts.map((ch) => ({
+          cohortId: ch.id,
+          courseId: d.courseId,
+          courseName: d.title,
+          cohortNo: ch.cohortNo,
+          startDate: ch.startDate,
+          endDate: ch.endDate,
+        })),
+      )
+      // 담당 배정이 없으면(최고 관리자 등) 전체 기수로 폴백 — '담당 없음' 안내
+      // 대신 실제 운영 현황을 보여준다. 배정된 매니저는 기존대로 담당 기수만.
+      const mine =
+        assigned.length === 0
+          ? all
+          : all.filter((ref) => assignedSet.has(ref.cohortId))
+      return mine.sort((a, b) => Number(a.cohortNo) - Number(b.cohortNo))
     },
   })
 }

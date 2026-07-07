@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { assignmentSchema } from './assignmentSchema'
 
-// 배정 생성 폼 검증 — 반→팀→멘토·N시간·기본 템플릿 전부 필수(§29 FE 선차단).
+// 배정 생성 폼 검증 — 반→팀→멘토·N시간 필수.
+// 템플릿 미선택은 활성 템플릿이 있을 때 폼 레벨에서 선차단한다.
 
 const valid = {
   cohortId: 'coh_da4_b',
@@ -17,16 +18,16 @@ describe('assignmentSchema', () => {
     expect(parsed.allocatedHours).toBe(8)
   })
 
-  it('필수 누락 — 반·팀·멘토·템플릿 각각 차단', () => {
-    for (const key of [
-      'cohortId',
-      'teamId',
-      'mentorId',
-      'logTemplateId',
-    ] as const) {
+  it('필수 누락 — 반·팀·멘토 각각 차단', () => {
+    for (const key of ['cohortId', 'teamId', 'mentorId'] as const) {
       const result = assignmentSchema.safeParse({ ...valid, [key]: '' })
       expect(result.success).toBe(false)
     }
+  })
+
+  it('템플릿 미선택 — 스키마에서는 허용한다', () => {
+    const result = assignmentSchema.safeParse({ ...valid, logTemplateId: '' })
+    expect(result.success).toBe(true)
   })
 
   it('N시간 — 빈 값·0·음수 차단(0보다 커야 함)', () => {

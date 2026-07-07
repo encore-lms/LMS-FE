@@ -85,8 +85,8 @@ export default function StatisticsPage() {
     // 멘토명 가나다순 고정, 같은 멘토는 팀명 순(운영 요구)
     return [...list].sort(
       (a, b) =>
-        a.mentorName.localeCompare(b.mentorName, 'ko') ||
-        a.teamName.localeCompare(b.teamName, 'ko'),
+        (a.mentorName ?? '').localeCompare(b.mentorName ?? '', 'ko') ||
+        (a.teamName ?? '').localeCompare(b.teamName ?? '', 'ko'),
     )
   }, [rows, course, mentor, teamStatus, evalState, recommendState, q])
 

@@ -191,7 +191,7 @@ function RosterView({ embedded = false }: { embedded?: boolean }) {
         (q === '' || r.name.includes(q)),
     )
     // 이름 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
   }, [search, statusFilter])
 
   const columns: Column<RosterRow>[] = [

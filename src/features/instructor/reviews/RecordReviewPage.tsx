@@ -93,21 +93,21 @@ export default function RecordReviewPage() {
     () =>
       [...(data?.blog ?? [])]
         .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) => a.student.name.localeCompare(b.student.name, 'ko')),
+        .sort((a, b) => (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko')),
     [data, needle],
   )
   const studyRows = useMemo(
     () =>
       [...(data?.study ?? [])]
         .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) => a.student.name.localeCompare(b.student.name, 'ko')),
+        .sort((a, b) => (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko')),
     [data, needle],
   )
   const certRows = useMemo(
     () =>
       [...(data?.cert ?? [])]
         .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) => a.student.name.localeCompare(b.student.name, 'ko')),
+        .sort((a, b) => (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko')),
     [data, needle],
   )
 

@@ -112,7 +112,7 @@ export function AttendanceTab() {
     })
     // 이름 가나다순 고정(운영 요구)
     return [...list].sort((a, b) =>
-      a.studentName.localeCompare(b.studentName, 'ko'),
+      (a.studentName ?? '').localeCompare(b.studentName ?? '', 'ko'),
     )
   }, [rows, statusFilter, q])
 

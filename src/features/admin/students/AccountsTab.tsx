@@ -79,7 +79,7 @@ export function AccountsTab() {
       return true
     })
     // 이름 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
   }, [data, status, q, blockedOverride])
 
   if (isPending) {

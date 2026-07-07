@@ -113,7 +113,7 @@ export default function AccountsPage() {
       return true
     })
     // 이름 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
   }, [data, role, status, q, statusOverride])
 
   // 사용자 표 페이지네이션 — 사용자가 많아져도 표가 길어지지 않도록.

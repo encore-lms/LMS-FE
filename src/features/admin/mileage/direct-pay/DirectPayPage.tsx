@@ -53,7 +53,7 @@ export default function DirectPayPage() {
   const students = useMemo(
     () =>
       [...(data?.students ?? [])].sort((a, b) =>
-        a.name.localeCompare(b.name, 'ko'),
+        (a.name ?? '').localeCompare(b.name ?? '', 'ko'),
       ),
     [data],
   )

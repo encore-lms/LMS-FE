@@ -74,7 +74,7 @@ export default function TeamsPage() {
       return true
     })
     // 팀명 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => a.teamName.localeCompare(b.teamName, 'ko'))
+    return [...list].sort((a, b) => (a.teamName ?? '').localeCompare(b.teamName ?? '', 'ko'))
   }, [teams, course, status, q])
 
   // 카드 노출 = 액션 필요 팀만(완료·조기 종료 제외, Figma 3장) — 노출 기준 BE 확정 대기 TODO.

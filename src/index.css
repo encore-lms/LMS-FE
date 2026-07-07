@@ -212,7 +212,7 @@ body {
 .cal-cell-hover:hover {
   position: relative;
   z-index: 1;
-  animation: cal-wiggle-rise 0.45s ease-out forwards;
+  animation: cal-wiggle-rise 0.8s ease-out forwards;
   box-shadow: 0 10px 16px -6px rgba(18, 23, 38, 0.28);
 }
 @media (prefers-reduced-motion: reduce) {

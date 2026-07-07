@@ -22,7 +22,7 @@ export function SectionCard({
   return (
     <section
       className={cn(
-        'bg-surface flex flex-col gap-4 rounded-2xl p-6 shadow-[0px_2px_10px_0px_rgba(18,23,38,0.05)] transition-shadow duration-200 hover:shadow-[0px_6px_20px_0px_rgba(18,23,38,0.09)]',
+        'border-border/70 bg-surface flex flex-col gap-4 rounded-2xl border p-6 shadow-[0px_2px_10px_0px_rgba(18,23,38,0.04)] transition-shadow duration-200 hover:shadow-[0px_6px_20px_0px_rgba(18,23,38,0.09)]',
         className,
       )}
     >

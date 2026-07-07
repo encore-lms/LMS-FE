@@ -74,9 +74,9 @@ export default function DashboardPage() {
   const attendance = data.attendance ?? createEmptyAttendance()
 
   return (
-    // 페이지 배경 틴트 — 보더리스 흰 카드가 떠 보이도록 은은한 서페이스 톤(대시보드 스코프).
+    // 배경은 헤더(흰색)와 같은 톤으로 이어지게 무지 — 카드 구분은 보더+소프트 섀도.
     // break-keep: 한국어 어절 중간 개행 방지(좁은 카드·모바일).
-    <div className="bg-surface-muted/45 flex min-h-full flex-col gap-6 p-4 break-keep sm:p-8">
+    <div className="flex min-h-full flex-col gap-6 p-4 break-keep sm:p-8">
       <HeroBanner hero={data.hero} attendance={attendance} />
 
       {/* 3섹션: (사이드바) · 메인(실행 콘텐츠) · 우측 레일(개인 현황) */}

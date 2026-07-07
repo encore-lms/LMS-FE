@@ -52,7 +52,7 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
         return (
           <div
             key={k.key}
-            className="bg-surface flex flex-col gap-2.5 rounded-2xl p-[18px] shadow-[0px_2px_10px_0px_rgba(18,23,38,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0px_8px_20px_0px_rgba(18,23,38,0.1)]"
+            className="border-border/70 bg-surface flex flex-col gap-2.5 rounded-2xl border p-[18px] shadow-[0px_2px_10px_0px_rgba(18,23,38,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0px_8px_20px_0px_rgba(18,23,38,0.1)]"
           >
             {/* 아이콘 배지 + 라벨 */}
             <div className="flex items-center gap-2.5">

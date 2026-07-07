@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useStudentDashboard } from '../api/dashboard'
+import { useMentoringAssigned } from '../api/mentoring'
 import { HeroBanner } from './components/HeroBanner'
 import { ProfileCard } from './components/ProfileCard'
 import { KpiCards } from './components/KpiCards'
@@ -54,6 +55,8 @@ function createEmptyAttendance(): DashboardAttendance {
  */
 export default function DashboardPage() {
   const { data, isPending, isError, refetch } = useStudentDashboard()
+  // 멘토링 요약은 매니저가 멘토를 배정한 수강생에게만(미배정 확정 시 숨김).
+  const mentoringAssigned = useMentoringAssigned().data
   usePageHeader('대시보드')
 
   if (isPending) {
@@ -88,7 +91,9 @@ export default function DashboardPage() {
             <TodoList todos={data.todos} />
             <DeadlineQuizzes quizzes={data.deadlineQuizzes} />
           </div>
-          <MentoringSummary mentoring={data.mentoring} />
+          {mentoringAssigned !== false && (
+            <MentoringSummary mentoring={data.mentoring} />
+          )}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <ProjectList projects={data.projects} />
             <TroubleshootingList items={data.troubleshooting} />

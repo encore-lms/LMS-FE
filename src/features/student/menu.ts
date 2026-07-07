@@ -16,7 +16,9 @@ export const studentMenu: MenuItem[] = [
   { label: '트러블슈팅', to: '/student/troubleshooting' },
   // QnA 게시판 — FE 선반영(기수 게시판 폐기 2026-05-21 이후 재도입 프로토타입). 정식화 시 재합의 필요.
   { label: 'QnA 게시판', to: '/student/qna' },
-  { label: '멘토링', to: '/student/mentoring' },
+  // 멘토링 — 운영 매니저가 멘토를 배정한 수강생에게만 노출(AppShellWithMenu에서
+  // /student/mentoring의 mentor.assigned를 features.mentoring으로 합성).
+  { label: '멘토링', to: '/student/mentoring', featureKey: 'mentoring' },
   // 과정 기능 토글(정본 CohortFeatureConfig: mileage·play)로 노출 제어.
   { label: '마일리지', to: '/student/mileage', featureKey: 'mileage' },
   { label: 'PLAY', to: '/student/play', featureKey: 'play' },

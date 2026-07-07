@@ -1,5 +1,6 @@
 import { CalendarCheck, Coins } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { cn } from '@/shared/lib/cn'
 import { useMileageOverview } from '../../api/mileage'
 import type { DashboardAttendance, DashboardHero } from '../types'
 
@@ -16,6 +17,9 @@ export function ProfileCard({
   const { presentDays, totalDays } = attendance.summary
   const initial = hero.studentName.charAt(0)
   const showMileage = mileage.isSuccess && !!mileage.data?.balance
+  // 잔액 0이면 옐로 강조가 어색하므로 무지 톤으로 낮춘다(획득 전 신규 수강생).
+  const hasBalance =
+    showMileage && mileage.data.balance.replace(/[^0-9]/g, '') !== '0'
 
   return (
     <section className="bg-surface flex flex-col gap-4 rounded-2xl p-5 shadow-[0px_2px_10px_0px_rgba(18,23,38,0.05)] transition-shadow duration-200 hover:shadow-[0px_6px_20px_0px_rgba(18,23,38,0.09)]">
@@ -51,9 +55,19 @@ export function ProfileCard({
         {showMileage ? (
           <Link
             to="/student/mileage"
-            className="bg-warning-bg hover:bg-warning-bg/70 flex flex-col items-center gap-0.5 rounded-lg px-2 py-2.5 transition-colors"
+            className={cn(
+              'flex flex-col items-center gap-0.5 rounded-lg px-2 py-2.5 transition-colors',
+              hasBalance
+                ? 'bg-warning-bg hover:bg-warning-bg/70'
+                : 'bg-surface-muted hover:bg-surface-muted/70',
+            )}
           >
-            <span className="text-warning flex items-center gap-1 text-[11px] font-medium">
+            <span
+              className={cn(
+                'flex items-center gap-1 text-[11px] font-medium',
+                hasBalance ? 'text-warning' : 'text-fg-muted',
+              )}
+            >
               <Coins className="size-3.5" />
               마일리지
             </span>

@@ -75,12 +75,13 @@ export default function DashboardPage() {
 
   return (
     // 페이지 배경 틴트 — 보더리스 흰 카드가 떠 보이도록 은은한 서페이스 톤(대시보드 스코프).
-    <div className="bg-surface-muted/45 flex min-h-full flex-col gap-6 p-8">
+    // break-keep: 한국어 어절 중간 개행 방지(좁은 카드·모바일).
+    <div className="bg-surface-muted/45 flex min-h-full flex-col gap-6 p-4 break-keep sm:p-8">
       <HeroBanner hero={data.hero} attendance={attendance} />
 
       {/* 3섹션: (사이드바) · 메인(실행 콘텐츠) · 우측 레일(개인 현황) */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        {/* 메인 — 오늘 처리할 학습 활동 */}
+        {/* 메인 — 오늘 처리할 학습 활동. 알림·공지는 하단 2열로 메인에 둬 레일과 높이 균형. */}
         <div className="flex min-w-0 flex-col gap-6">
           <KpiCards kpis={data.kpis} />
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -92,16 +93,18 @@ export default function DashboardPage() {
             <ProjectList projects={data.projects} />
             <TroubleshootingList items={data.troubleshooting} />
           </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <NotificationList notifications={data.notifications} />
+            <NoticeList notices={data.notices} />
+          </div>
         </div>
 
-        {/* 우측 레일 — 개인 현황(프로필·스트릭·출결·알림) */}
+        {/* 우측 레일 — 개인 현황(프로필·스트릭·출결) */}
         <aside className="flex flex-col gap-6">
           <ProfileCard hero={data.hero} attendance={attendance} />
           <WeeklyStreak attendance={attendance} />
           <AttendanceCalendar attendance={attendance} />
           <AttendanceSummary attendance={attendance} />
-          <NotificationList notifications={data.notifications} />
-          <NoticeList notices={data.notices} />
         </aside>
       </div>
     </div>

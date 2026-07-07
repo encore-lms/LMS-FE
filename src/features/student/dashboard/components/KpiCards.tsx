@@ -44,7 +44,8 @@ const ICON: Record<string, LucideIcon> = {
 
 export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    // auto-fit: BE가 3개를 주든 4개를 주든 빈 슬롯 없이 균등 분배된다.
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
       {kpis.items.map((k) => {
         const Icon = ICON[k.key] ?? Sparkles
         const isClear = k.barPct === 0 && /^0/.test(k.value)
@@ -88,22 +89,26 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
                 </span>
               )}
             </div>
-            {/* 진행 트랙바 — 값 0이면 클리어 상태로 대체(빈 바 허전함 제거) */}
+            {/* 진행 트랙바 — 값 0이면 클리어 상태로 대체(빈 바 허전함 제거).
+                클리어 문구가 캡션("…없습니다")과 중복이므로 이때 캡션은 생략한다. */}
             {isClear ? (
               <span className="text-success flex items-center gap-1 text-[11px] font-semibold">
                 <CheckCircle2 className="size-3.5" />
                 모두 처리했어요
               </span>
             ) : (
-              <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
-                <div
-                  className={cn('h-full rounded-full', DOT[k.tone])}
-                  style={{ width: `${k.barPct}%` }}
-                />
-              </div>
+              <>
+                <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
+                  <div
+                    className={cn('h-full rounded-full', DOT[k.tone])}
+                    style={{ width: `${k.barPct}%` }}
+                  />
+                </div>
+                <span className="text-fg-subtle text-[11px] break-keep">
+                  {k.caption}
+                </span>
+              </>
             )}
-            {/* 캡션 */}
-            <span className="text-fg-subtle text-[11px]">{k.caption}</span>
           </div>
         )
       })}

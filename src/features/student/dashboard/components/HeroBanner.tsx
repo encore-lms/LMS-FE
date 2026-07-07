@@ -16,12 +16,13 @@ function StatChip({
   label: string
 }) {
   return (
+    // 모바일 좁은 폭에서도 칩 내부가 눌려 세로로 깨지지 않게 라벨·값은 nowrap 유지.
     <div className="flex items-center gap-2.5 rounded-xl bg-white/12 px-3.5 py-2.5 ring-1 ring-white/15 backdrop-blur-sm">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
         <Icon className="size-[17px] text-white" />
       </span>
       <span className="flex flex-col leading-none">
-        <span className="text-[17px] font-bold">
+        <span className="text-[17px] font-bold whitespace-nowrap">
           {value}
           {unit && (
             <span className="ml-0.5 text-[11px] font-semibold text-white/70">
@@ -29,7 +30,7 @@ function StatChip({
             </span>
           )}
         </span>
-        <span className="mt-1 text-[11px] font-medium text-white/70">
+        <span className="mt-1 text-[11px] font-medium whitespace-nowrap text-white/70">
           {label}
         </span>
       </span>
@@ -46,7 +47,7 @@ export function HeroBanner({
 }) {
   const { streakDays, attendanceRate } = attendance.summary
   return (
-    <section className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1a8c85_0%,#15807a_52%,#0e6b63_100%)] p-6 text-white shadow-[0_10px_30px_-12px_rgba(26,140,133,0.55)]">
+    <section className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1a8c85_0%,#15807a_52%,#0e6b63_100%)] p-5 text-white shadow-[0_10px_30px_-12px_rgba(26,140,133,0.55)] sm:p-6">
       {/* 장식용 광원 — 깊이감 */}
       <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-white/10 blur-2xl" />
       <div className="pointer-events-none absolute top-6 right-40 size-28 rounded-full bg-white/5 blur-xl" />
@@ -59,10 +60,10 @@ export function HeroBanner({
               {hero.todayLabel}
             </span>
           )}
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-bold break-keep sm:text-2xl">
             안녕하세요, {hero.studentName}님 👋
           </h2>
-          <p className="text-sm text-white/80">
+          <p className="text-sm break-keep text-white/80">
             {hero.courseName} {hero.cohortName} · {hero.currentWeek}/
             {hero.totalWeeks}주차 진행 중
           </p>

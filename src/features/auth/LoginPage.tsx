@@ -10,6 +10,7 @@ import { apiClient } from '@/shared/api'
 import { useAuthActions } from '@/shared/store'
 import { ROLE_HOME } from '@/shared/constants'
 import type { User } from '@/shared/types'
+import { PROFILE_PATH } from '@/features/profile/paths'
 import { AuthLayout } from './AuthLayout'
 import { DemoQuickLogin } from './DemoQuickLogin'
 import type { DemoAccount } from './demoAccounts'
@@ -70,9 +71,16 @@ export function LoginPage() {
       // 쿼리 캐시·로컬 알림이 새 사용자에게 남지 않도록 세션을 먼저 정리한다(스토어 구독이 정리 수행).
       clearSession()
       setSession(res.data.token, res.data.user)
-      navigate(res.data.nextRoute ?? ROLE_HOME[res.data.user.role], {
-        replace: true,
-      })
+      // 임시 비밀번호(매니저 발급) 상태면 역할 홈 대신 마이 프로필로 보내 비밀번호 변경을 유도한다(P0-01 계약).
+      // 단, 온보딩이 먼저 필요한 수강생은 온보딩부터 — 프로필이 OnboardingGate 하위라 어차피 튕기고,
+      // 온보딩 완료 화면이 mustChangePassword를 이어받아 프로필로 보낸다.
+      const needsOnboarding = res.data.nextRoute === '/student/onboarding'
+      navigate(
+        res.data.user.mustChangePassword && !needsOnboarding
+          ? PROFILE_PATH[res.data.user.role]
+          : (res.data.nextRoute ?? ROLE_HOME[res.data.user.role]),
+        { replace: true },
+      )
     } catch {
       setSubmitError('이메일 또는 비밀번호를 확인해주세요.')
     }

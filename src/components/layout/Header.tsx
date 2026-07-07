@@ -2,17 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { LogOut, Search, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, useAuthActions, usePageHeaderStore } from '@/shared/store'
-import type { Role } from '@/shared/types'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
-
-// 역할별 마이 프로필 경로 — 아바타 드롭다운은 전 역할 공통 노출(화면_레이아웃_탭_설계 §7-X).
-const PROFILE_PATH: Record<Role, string> = {
-  STUDENT: '/student/profile',
-  INSTRUCTOR: '/instructor/profile',
-  MENTOR: '/mentor/profile',
-  MANAGER: '/admin/profile',
-  ADMIN: '/admin/profile',
-}
+import { PROFILE_PATH } from '@/features/profile/paths'
 
 // 헤더 — 콘텐츠 영역 상단 바. 좌측: 페이지 제목·설명(usePageHeader로 각 페이지가 등록),
 // 우측 클러스터: 검색 · 알림 · 프로필. 구분선 없이 본문과 이어지는 통합형(Figma 기준).

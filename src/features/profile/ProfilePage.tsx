@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { KeyRound, Mail, ShieldCheck, User } from 'lucide-react'
+import { Info, KeyRound, Mail, ShieldCheck, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -127,13 +127,14 @@ function InfoRow({
   )
 }
 
-// 수강생 프로필(/student/profile, 박준석 영역)에도 합성할 수 있게 export —
-// 임시 비밀번호 자가 변경 경로가 수강생에게도 필요하다(후속 협의, 이슈 참조).
+// 전 역할 프로필(수강생 포함)에서 재사용하는 비밀번호 변경 카드.
+// 임시 비밀번호(mustChangePassword) 상태면 변경 유도 배너를 함께 노출한다(#375).
 export function PasswordChangeCard() {
   const toast = useToast()
   const navigate = useNavigate()
   const { clearSession } = useAuthActions()
   const changePassword = useChangePassword()
+  const me = useCurrentUser()
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -175,6 +176,17 @@ export function PasswordChangeCard() {
         <KeyRound className="text-fg-muted h-4 w-4" />
         <p className="text-fg text-[15px] font-bold">비밀번호 변경</p>
       </div>
+      {me.data?.mustChangePassword && (
+        <div className="bg-warning-bg mb-4 flex items-start gap-2 rounded-lg p-3">
+          <Info className="text-warning mt-0.5 h-4 w-4 shrink-0" />
+          <p className="text-fg-muted text-xs">
+            <span className="text-fg font-semibold">
+              임시 비밀번호로 로그인 중입니다.
+            </span>{' '}
+            보안을 위해 지금 새 비밀번호로 변경해 주세요.
+          </p>
+        </div>
+      )}
       <form onSubmit={submit} className="flex flex-col gap-3.5">
         <Input
           label="현재 비밀번호"

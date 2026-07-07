@@ -44,8 +44,8 @@ const CELL_TITLE: Record<RecordCellStatus, string> = {
 }
 
 export default function RecordReviewPage() {
-  const [courseId, setCourseId] = useState('skn')
-  const [cohortId, setCohortId] = useState('29기')
+  const [courseId, setCourseId] = useState('none')
+  const [cohortId, setCohortId] = useState('none')
   const [category, setCategory] = useState<InstructorRecordCategory>('blog')
   const [q, setQ] = useState('')
   const [panel, setPanel] = useState<RecordPanelData | null>(null)

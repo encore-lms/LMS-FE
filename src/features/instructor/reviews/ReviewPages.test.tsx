@@ -223,6 +223,11 @@ function renderWith(ui: React.ReactElement) {
 }
 
 describe('RecordReviewPage (§13)', () => {
+  it('초기 조회는 서버 기본 필터로 요청한다', () => {
+    renderWith(<RecordReviewPage />)
+    expect(useRecordReviews).toHaveBeenNthCalledWith(1, 'none', 'none')
+  })
+
   it('과정 선택·기수 탭·수강생·조회 전용 안내를 렌더한다', () => {
     renderWith(<RecordReviewPage />)
     expect(

@@ -3,6 +3,7 @@ import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useStudentDashboard } from '../api/dashboard'
 import { HeroBanner } from './components/HeroBanner'
+import { ProfileCard } from './components/ProfileCard'
 import { KpiCards } from './components/KpiCards'
 import { TodoList } from './components/TodoList'
 import { DeadlineQuizzes } from './components/DeadlineQuizzes'
@@ -91,8 +92,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 우측 레일 — 개인 현황(출결·알림) */}
+        {/* 우측 레일 — 개인 현황(프로필·출결·알림) */}
         <aside className="flex flex-col gap-6">
+          <ProfileCard hero={data.hero} attendance={attendance} />
           <AttendanceCalendar attendance={attendance} />
           <AttendanceSummary attendance={attendance} />
           <NotificationList notifications={data.notifications} />

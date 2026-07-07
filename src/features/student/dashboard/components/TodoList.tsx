@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
+import { ListTodo, PartyPopper } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { DashboardTodo } from '../types'
 import { SectionCard } from './SectionCard'
 import { MoreLink } from './MoreLink'
+import { EmptyState } from './EmptyState'
 import { TONE_TEXT } from './tone'
 
 // 오늘/이번 주 할 일 — 상태점 + 카테고리(색) + 제목 + 마감 표시. 클릭 시 대상 화면으로.
@@ -28,14 +30,19 @@ function DueLabel({ todo }: { todo: DashboardTodo }) {
 export function TodoList({ todos }: { todos: DashboardTodo[] }) {
   return (
     <SectionCard
+      icon={ListTodo}
       title="오늘·이번 주 할 일"
       subtitle={`${todos.length}건 · 마감 일정 순`}
       action={<MoreLink to="/student/course" />}
     >
       {todos.length === 0 ? (
-        <p className="text-fg-subtle py-4 text-center text-sm">
-          할 일이 없어요
-        </p>
+        <EmptyState
+          icon={PartyPopper}
+          title="모든 할 일을 끝냈어요!"
+          sub="오늘은 여유롭게 복습해 보세요"
+          ctaLabel="내 과정 보기"
+          ctaTo="/student/course"
+        />
       ) : (
         <ul className="flex flex-col">
           {todos.map((t) => (

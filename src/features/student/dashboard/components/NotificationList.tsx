@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Bell, BellOff } from 'lucide-react'
 import type { DashboardNotification } from '../types'
 import { SectionCard } from './SectionCard'
+import { EmptyState } from './EmptyState'
 
 // 알림 — 본인 관련 이벤트(보완 요청·검토 결과·평판/멘토링 요청 등). 제목+출처 + 상대시간 + 미확인 점.
 // 일반 게시판 글 미리보기는 미포함(§2).
@@ -22,6 +24,7 @@ export function NotificationList({
 
   return (
     <SectionCard
+      icon={Bell}
       title="알림"
       subtitle={`최근 7일 · 미확인 ${unreadCount}건`}
       action={
@@ -37,7 +40,7 @@ export function NotificationList({
       }
     >
       {rows.length === 0 ? (
-        <p className="text-fg-subtle py-4 text-center text-sm">알림이 없어요</p>
+        <EmptyState icon={BellOff} title="새 알림이 없어요" />
       ) : (
         <ul className="flex flex-col">
           {rows.map((n) => (

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { HeartHandshake } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { DashboardMentoring, Tone } from '../types'
 import { SectionCard } from './SectionCard'
@@ -22,6 +23,7 @@ export function MentoringSummary({
 }) {
   return (
     <SectionCard
+      icon={HeartHandshake}
       title="멘토링 요약"
       subtitle="요청 대기 · 조정 제안 · 확정 예약 · 최근 완료 요약합니다"
       action={

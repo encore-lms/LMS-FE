@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
+import { Wrench } from 'lucide-react'
 import type { DashboardTroubleshooting } from '../types'
 import { SectionCard } from './SectionCard'
 import { MoreLink } from './MoreLink'
 import { Chip } from './Chip'
+import { EmptyState } from './EmptyState'
 
 // 최근 트러블슈팅 — 태그(색) + 제목 + 해결 체크 + 경과일. 본인 최근 작성분.
 export function TroubleshootingList({
@@ -12,14 +14,19 @@ export function TroubleshootingList({
 }) {
   return (
     <SectionCard
+      icon={Wrench}
       title="최근 트러블슈팅"
       subtitle="5건 · 독립 해결 4 · 동료 도움 1"
       action={<MoreLink to="/student/troubleshooting" label="트러블슈팅" />}
     >
       {items.length === 0 ? (
-        <p className="text-fg-subtle py-4 text-center text-sm">
-          최근 트러블슈팅이 없어요
-        </p>
+        <EmptyState
+          icon={Wrench}
+          title="최근 트러블슈팅이 없어요"
+          sub="문제 해결 경험을 기록해 보세요"
+          ctaLabel="기록하러 가기"
+          ctaTo="/student/troubleshooting"
+        />
       ) : (
         <ul className="flex flex-col">
           {items.map((t) => (

@@ -1,3 +1,4 @@
+import { CalendarDays } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { DashboardAttendance, DashboardAttendanceStatus } from '../types'
 import { SectionCard } from './SectionCard'
@@ -52,6 +53,7 @@ export function AttendanceCalendar({
 
   return (
     <SectionCard
+      icon={CalendarDays}
       title="출결 캘린더"
       subtitle={`${calendar.year}년 ${calendar.month}월 · 현재 주 강조`}
       action={<MoreLink to="/student/attendance" />}

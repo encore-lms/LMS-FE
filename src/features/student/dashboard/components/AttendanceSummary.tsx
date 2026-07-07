@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { BarChart3 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { DashboardAttendance } from '../types'
 import { SectionCard } from './SectionCard'
@@ -24,6 +25,7 @@ export function AttendanceSummary({
 
   return (
     <SectionCard
+      icon={BarChart3}
       title="누적 출결"
       subtitle={`총 ${summary.totalDays}일 · 출석률 ${summary.attendanceRate}%`}
     >

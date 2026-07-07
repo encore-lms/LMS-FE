@@ -1,23 +1,30 @@
 import { Link } from 'react-router-dom'
+import { FolderKanban, FolderPlus } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { DashboardProject } from '../types'
 import { SectionCard } from './SectionCard'
 import { MoreLink } from './MoreLink'
 import { Chip } from './Chip'
+import { EmptyState } from './EmptyState'
 import { TONE_SOLID } from './tone'
 
 // 진행 중 프로젝트 — 좌측 액센트 바 + 제목/역할·주차 + 진행률 바 + 상태 칩. 클릭 시 프로젝트로.
 export function ProjectList({ projects }: { projects: DashboardProject[] }) {
   return (
     <SectionCard
+      icon={FolderKanban}
       title="진행 중 프로젝트"
       subtitle="3건 진행 · 1건 인증 완료"
       action={<MoreLink to="/student/projects" label="프로젝트" />}
     >
       {projects.length === 0 ? (
-        <p className="text-fg-subtle py-4 text-center text-sm">
-          진행 중인 프로젝트가 없어요
-        </p>
+        <EmptyState
+          icon={FolderPlus}
+          title="진행 중인 프로젝트가 없어요"
+          sub="새 프로젝트로 경험을 쌓아 보세요"
+          ctaLabel="프로젝트 보러 가기"
+          ctaTo="/student/projects"
+        />
       ) : (
         <ul className="flex flex-col">
           {projects.map((p) => (

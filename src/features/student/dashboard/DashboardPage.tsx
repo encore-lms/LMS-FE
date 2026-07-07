@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6 p-8">
-      <HeroBanner hero={data.hero} />
+      <HeroBanner hero={data.hero} attendance={attendance} />
       <KpiCards kpis={data.kpis} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TodoList todos={data.todos} />

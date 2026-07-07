@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowUpRight,
   CalendarCheck,
   CheckCircle2,
   Hourglass,
@@ -7,10 +8,12 @@ import {
   Sparkles,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import type { DashboardKpis, KpiTone } from '../types'
 
-// 요약 KPI 카드 — 아이콘 리드형(아이콘 배지 + 큰 숫자 + 델타칩 + 트랙바/클리어 상태).
+// 요약 KPI 카드 — 행동 지향(카드 전체가 해당 화면 링크, 우상단 화살표) +
+// 긴급도 위계(D-1 등 warning/danger 델타는 상단 액센트 바·은은한 틴트로 시선 유도).
 // 값이 0이면 빈 트랙바 대신 '클리어' 체크 상태를 보여줘 허전함을 없앤다.
 const DOT: Record<KpiTone, string> = {
   brand: 'bg-brand',
@@ -41,6 +44,19 @@ const ICON: Record<string, LucideIcon> = {
   waiting: Hourglass,
   changes: AlertTriangle,
 }
+// KPI key → 클릭 시 이동할 화면. 미지정 key는 대시보드에 머무는 대신 링크를 걸지 않는다.
+const LINK: Record<string, string> = {
+  attendance: '/student/attendance',
+  quizzes: '/student/quizzes',
+  records: '/student/records',
+  waiting: '/student/records',
+  changes: '/student/records',
+}
+// 긴급 델타(warning·danger) → 상단 액센트 바 색. 클리어·성장(success)은 무지.
+const URGENT_BAR: Record<'warning' | 'danger', string> = {
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+}
 
 export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
   return (
@@ -48,13 +64,25 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
     <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
       {kpis.items.map((k) => {
         const Icon = ICON[k.key] ?? Sparkles
+        const to = LINK[k.key]
         const isClear = k.barPct === 0 && /^0/.test(k.value)
-        return (
-          <div
-            key={k.key}
-            className="border-border/70 bg-surface flex flex-col gap-2.5 rounded-2xl border p-[18px] shadow-[0px_2px_10px_0px_rgba(18,23,38,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0px_8px_20px_0px_rgba(18,23,38,0.1)]"
-          >
-            {/* 아이콘 배지 + 라벨 */}
+        const urgency =
+          !isClear && k.delta && k.delta.tone !== 'success'
+            ? k.delta.tone
+            : null
+
+        const body = (
+          <>
+            {/* 긴급 카드 상단 액센트 바 */}
+            {urgency && (
+              <span
+                className={cn(
+                  'absolute inset-x-0 top-0 h-1 rounded-t-2xl',
+                  URGENT_BAR[urgency],
+                )}
+              />
+            )}
+            {/* 아이콘 배지 + 라벨 + 이동 화살표 */}
             <div className="flex items-center gap-2.5">
               <span
                 className={cn(
@@ -67,6 +95,9 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
               <span className="text-fg-muted text-[12px] font-semibold">
                 {k.label}
               </span>
+              {to && (
+                <ArrowUpRight className="text-fg-subtle group-hover:text-brand ml-auto size-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              )}
             </div>
             {/* 숫자 + 단위 + 델타칩 */}
             <div className="flex items-end gap-0.5">
@@ -109,6 +140,24 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
                 </span>
               </>
             )}
+          </>
+        )
+
+        const cardCls = cn(
+          'group border-border/70 bg-surface relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border p-[18px] shadow-[0px_2px_10px_0px_rgba(18,23,38,0.04)] transition-all duration-200',
+          to &&
+            'hover:-translate-y-0.5 hover:shadow-[0px_8px_20px_0px_rgba(18,23,38,0.1)]',
+          urgency === 'danger' && 'bg-danger-bg/15',
+          urgency === 'warning' && 'bg-warning-bg/15',
+        )
+
+        return to ? (
+          <Link key={k.key} to={to} className={cardCls} aria-label={k.label}>
+            {body}
+          </Link>
+        ) : (
+          <div key={k.key} className={cardCls}>
+            {body}
           </div>
         )
       })}

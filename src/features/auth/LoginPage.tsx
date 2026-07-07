@@ -23,7 +23,7 @@ interface LoginResponse {
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { setSession } = useAuthActions()
+  const { setSession, clearSession } = useAuthActions()
   const [rememberEmail, setRememberEmail] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -66,6 +66,9 @@ export function LoginPage() {
         userId: email,
         password,
       })
+      // 로그아웃 없이 /login에서 계정을 교체하는 경우(데모 빠른 로그인 등) 이전 세션의
+      // 쿼리 캐시·로컬 알림이 새 사용자에게 남지 않도록 세션을 먼저 정리한다(스토어 구독이 정리 수행).
+      clearSession()
       setSession(res.data.token, res.data.user)
       navigate(res.data.nextRoute ?? ROLE_HOME[res.data.user.role], {
         replace: true,

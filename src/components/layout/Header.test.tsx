@@ -13,14 +13,12 @@ vi.mock('@/shared/api', () => ({
 }))
 
 function renderHeader(role: Role) {
-  useAuthStore
-    .getState()
-    .setSession('tok', {
-      id: 'u1',
-      email: 'user@playdata.io',
-      name: '김유저',
-      role,
-    })
+  useAuthStore.getState().setSession('tok', {
+    id: 'u1',
+    email: 'user@playdata.io',
+    name: '김유저',
+    role,
+  })
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -75,4 +73,23 @@ describe('Header 알림 벨', () => {
     await user.click(screen.getByRole('button', { name: '알림' }))
     expect(screen.getByText('알림이 없어요')).toBeInTheDocument()
   })
+})
+
+describe('Header 아바타 드롭다운 — 마이 프로필', () => {
+  beforeEach(() => {
+    useAuthStore.getState().clearSession()
+    vi.clearAllMocks()
+  })
+
+  it.each(['STUDENT', 'INSTRUCTOR', 'MENTOR', 'MANAGER'] as const)(
+    '%s 역할도 마이 프로필 메뉴가 항상 보인다 (§7-X)',
+    async (role) => {
+      const user = userEvent.setup()
+      renderHeader(role)
+      await user.click(screen.getByRole('button', { name: '프로필 메뉴' }))
+      expect(
+        screen.getByRole('button', { name: /마이 프로필/ }),
+      ).toBeInTheDocument()
+    },
+  )
 })

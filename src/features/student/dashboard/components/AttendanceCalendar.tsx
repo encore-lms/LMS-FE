@@ -82,7 +82,8 @@ export function AttendanceCalendar({
             <div
               key={c.key}
               className={cn(
-                'flex h-12 flex-col items-center justify-center gap-0.5 rounded-md text-xs',
+                // cal-cell-hover: 호버 시 흔들리며 떠오르고 떼면 탁 떨어지는 효과(index.css)
+                'cal-cell-hover flex h-12 flex-col items-center justify-center gap-0.5 rounded-md text-xs',
                 cls,
                 c.row === todayRow && !c.isToday && 'ring-brand/15 ring-1',
               )}

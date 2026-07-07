@@ -186,6 +186,42 @@ body {
   font-weight: 600;
 }
 
+/* 수강생 대시보드 출결 캘린더 셀 — 호버 시 흔들리며 떠오르고, 떼면 탁 떨어진다.
+   해제 시 애니메이션이 제거되며 transform이 즉시 0으로 스냅 → '탁' 낙하감.
+   그림자만 트랜지션으로 부드럽게 걷힌다. */
+@keyframes cal-wiggle-rise {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-6px) rotate(-4deg);
+  }
+  55% {
+    transform: translateY(-7px) rotate(3.5deg);
+  }
+  78% {
+    transform: translateY(-7px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(-7px) rotate(0deg);
+  }
+}
+.cal-cell-hover {
+  transition: box-shadow 0.18s ease;
+}
+.cal-cell-hover:hover {
+  position: relative;
+  z-index: 1;
+  animation: cal-wiggle-rise 0.45s ease-out forwards;
+  box-shadow: 0 10px 16px -6px rgba(18, 23, 38, 0.28);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal-cell-hover:hover {
+    animation: none;
+    transform: translateY(-2px);
+  }
+}
+
 /* 인쇄(브라우저 'PDF로 저장') — 이력서 문서(.resume-print)만 출력하고 앱 셸은 숨김 */
 @media print {
   body * {

@@ -233,7 +233,7 @@ export default function AssignmentsPage() {
       ? null
       : (courseList.data?.find((c) => c.courseId === course)?.title ?? null)
 
-  // 최초 진입 시 URL에 선택이 없으면 매니저 담당 기수(첫 번째)를 기본 선택한다.
+  // 최초 진입 시 URL에 선택이 없으면 멘토링 보드가 실제로 조회한 기수를 기본 선택한다.
   const myCohorts = useMyCohorts()
   const didDefaultCohort = useRef(false)
   useEffect(() => {
@@ -242,19 +242,22 @@ export default function AssignmentsPage() {
       didDefaultCohort.current = true // 딥링크/직접 선택은 존중
       return
     }
-    const first = myCohorts.data?.[0]
-    if (!first) return
+    const defaultCohortId = data?.cohorts[0]?.cohortId
+    const first =
+      myCohorts.data?.find((ref) => ref.cohortId === defaultCohortId) ??
+      myCohorts.data?.[0]
+    if (!first || !defaultCohortId) return
     didDefaultCohort.current = true
     setSearchParams(
       (prev) => {
         const p = new URLSearchParams(prev)
         p.set('course', first.courseId)
-        p.set('cohort', first.cohortId)
+        p.set('cohort', defaultCohortId)
         return p
       },
       { replace: true },
     )
-  }, [myCohorts.data, searchParams, setSearchParams])
+  }, [data?.cohorts, myCohorts.data, searchParams, setSearchParams])
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [status, setStatus] = useSearchParamState('status', 'with_unassigned')
   const [q, setQ] = useSearchParamState('q')

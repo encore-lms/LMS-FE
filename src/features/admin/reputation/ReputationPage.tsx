@@ -235,6 +235,37 @@ export default function ReputationPage() {
 
   return (
     <div className="p-8">
+      {/* 과정/기수 선택 — 과정·기수·교과목과 동일한 상단 셀렉트 규격 */}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <Select
+          aria-label="과정 선택"
+          value={courseId}
+          onChange={(v) => {
+            setSelCourseId(v)
+            setCohortFilter('all')
+          }}
+          options={(courses ?? []).map((c) => ({
+            value: c.courseId,
+            label: c.title,
+          }))}
+          placeholder="등록 과정 없음"
+          className="h-11"
+        />
+        <Select
+          aria-label="기수 필터"
+          value={cohortFilter}
+          onChange={(v) => setCohortFilter(v)}
+          options={[
+            { value: 'all', label: '전체 기수' },
+            ...(courseConfig?.cohorts ?? []).map((c) => ({
+              value: c.id,
+              label: `${c.cohortNo}기`,
+            })),
+          ]}
+          className="h-11"
+        />
+      </div>
+
       {/* 히어로 — 수집 현황 + 일괄 푸시 */}
       <div className="bg-brand text-on-color flex flex-col gap-4 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
@@ -302,48 +333,19 @@ export default function ReputationPage() {
         />
       </div>
 
-      {/* 필터 — 과정·기수 스코프 + 상태 + 검색 */}
+      {/* 필터 — 상태 + 검색(과정·기수는 페이지 상단 셀렉트에서 선택) */}
       <div className="border-border bg-surface mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            aria-label="과정 선택"
-            value={courseId}
-            onChange={(v) => {
-              setSelCourseId(v)
-              setCohortFilter('all')
-            }}
-            options={(courses ?? []).map((c) => ({
-              value: c.courseId,
-              label: c.title,
-            }))}
-            placeholder="등록 과정 없음"
-            className="h-9"
-          />
-          <Select
-            aria-label="기수 필터"
-            value={cohortFilter}
-            onChange={(v) => setCohortFilter(v)}
-            options={[
-              { value: 'all', label: '전체 기수' },
-              ...(courseConfig?.cohorts ?? []).map((c) => ({
-                value: c.id,
-                label: `${c.cohortNo}기`,
-              })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            aria-label="상태 필터"
-            value={status}
-            onChange={(v) => setStatus(v)}
-            options={[
-              { value: 'all', label: '상태 전체' },
-              { value: 'missing', label: '누락 있음' },
-              { value: 'complete', label: '완료' },
-            ]}
-            className="h-9"
-          />
-        </div>
+        <Select
+          aria-label="상태 필터"
+          value={status}
+          onChange={(v) => setStatus(v)}
+          options={[
+            { value: 'all', label: '상태 전체' },
+            { value: 'missing', label: '누락 있음' },
+            { value: 'complete', label: '완료' },
+          ]}
+          className="h-9"
+        />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}

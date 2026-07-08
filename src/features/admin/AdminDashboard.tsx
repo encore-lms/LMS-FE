@@ -26,6 +26,7 @@ import {
   useOperatorDashboard,
 } from './api/dashboard'
 import { DashboardInsight } from './dashboard/DashboardInsight'
+import { QuickLinks } from './dashboard/QuickLinks'
 import { Sparkline } from './dashboard/Sparkline'
 import type { CohortBoard, CohortStatus, ScheduleItem } from './dashboard/types'
 
@@ -159,6 +160,7 @@ export default function AdminDashboard() {
               today={dashboard.data.today}
               upcoming={dashboard.data.upcoming}
             />
+            <QuickLinks />
             <CohortDeepDive
               board={boards[0]}
               hrdPending={hrdLive.isPending && hrdLive.isFetching}
@@ -369,6 +371,11 @@ function AllCohortsView({
         today={today}
         upcoming={upcoming}
       />
+
+      {/* 바로가기 — 자주 쓰는 화면 타일(매니저 개인 편집 가능) */}
+      <div className="mt-5">
+        <QuickLinks />
+      </div>
 
       {/* KPI 합산 */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">

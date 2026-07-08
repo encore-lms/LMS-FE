@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
   ChevronLeft,
@@ -62,6 +63,23 @@ export default function AdminDashboard() {
   const hrdLive = useHrdLiveSummaries(myCohorts.data, dashboard.data?.cohorts)
   // 상세 모달로 띄울 기수 id. null이면 전체 비교 화면.
   const [selected, setSelected] = useState<string | null>(null)
+
+  // 관리 필요 수강생 행 클릭 → 해당 기수 학생 관리(계정 탭)로 이름 검색하며 이동.
+  const navigate = useNavigate()
+  const courseIdByCohort = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const r of myCohorts.data ?? []) m.set(r.cohortId, r.courseId)
+    return m
+  }, [myCohorts.data])
+  const goStudent = useCallback(
+    (cohortId: string, name: string) => {
+      const params = new URLSearchParams({ tab: 'accounts', cohort: cohortId, q: name })
+      const courseId = courseIdByCohort.get(cohortId)
+      if (courseId) params.set('course', courseId)
+      navigate(`/admin/students?${params.toString()}`)
+    },
+    [courseIdByCohort, navigate],
+  )
 
   // 소스 우선순위 — 인입큐(staging) 데이터가 있으면 staging, 없으면 HRD-Net 라이브 집계로 채운다.
   const boards = useMemo<CohortBoard[]>(() => {
@@ -163,6 +181,7 @@ export default function AdminDashboard() {
             <CohortDeepDive
               board={boards[0]}
               hrdPending={hrdLive.isPending && hrdLive.isFetching}
+              onStudentClick={goStudent}
             />
           </div>
         ) : (
@@ -172,6 +191,7 @@ export default function AdminDashboard() {
             today={dashboard.data.today}
             upcoming={dashboard.data.upcoming}
             onSelect={(id) => setSelected(id)}
+            onStudentClick={goStudent}
           />
         )}
       </div>
@@ -192,6 +212,7 @@ export default function AdminDashboard() {
             board={modalBoard}
             hrdPending={hrdLive.isPending && hrdLive.isFetching}
             hideHeader
+            onStudentClick={goStudent}
           />
         )}
       </Modal>
@@ -207,12 +228,14 @@ function AllCohortsView({
   today,
   upcoming,
   onSelect,
+  onStudentClick,
 }: {
   boards: CohortBoard[]
   quarantineCount: number
   today: string
   upcoming: ScheduleItem[]
   onSelect: (cohortId: string) => void
+  onStudentClick: (cohortId: string, name: string) => void
 }) {
   const columns: Column<CohortBoard>[] = [
     {
@@ -412,21 +435,10 @@ function AllCohortsView({
                   </span>
                 </div>
                 <div className="p-4">
-                  <ul className="divide-border divide-y">
-                    {b.issues.map((issue) => (
-                      <li
-                        key={issue.studentUuid}
-                        className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
-                      >
-                        <span className="text-fg text-[13px] font-semibold">
-                          {issue.name}
-                        </span>
-                        <span className="text-fg-muted text-[12px]">
-                          지각 {issue.lateCount}회 · 결석 {issue.absentCount}회
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <RiskList
+                    issues={b.issues}
+                    onStudentClick={(name) => onStudentClick(b.cohortId, name)}
+                  />
                 </div>
               </div>
             ))}
@@ -443,11 +455,13 @@ function CohortDeepDive({
   board,
   hrdPending,
   hideHeader,
+  onStudentClick,
 }: {
   board: CohortBoard
   hrdPending?: boolean
   /** 모달에서 제목이 이미 있을 때 내부 헤더를 숨긴다. 소스·기간 배지는 유지. */
   hideHeader?: boolean
+  onStudentClick?: (cohortId: string, name: string) => void
 }) {
   const meta = STATUS_META[board.status]
 
@@ -577,12 +591,13 @@ function CohortDeepDive({
               ) : board.issues.length === 0 ? (
                 <PanelEmpty text="지각·결석 반복 수강생이 없어요" />
               ) : (
-                <IssueList
-                  rows={board.issues.map((i) => ({
-                    key: i.studentUuid,
-                    name: i.name,
-                    desc: `지각 ${i.lateCount}회 · 결석 ${i.absentCount}회`,
-                  }))}
+                <RiskList
+                  issues={board.issues}
+                  onStudentClick={
+                    onStudentClick
+                      ? (name) => onStudentClick(board.cohortId, name)
+                      : undefined
+                  }
                 />
               )}
             </Panel>
@@ -746,7 +761,178 @@ function BarRow({
 
 const ISSUE_PAGE_SIZE = 5
 
-// 관리 필요/결석자 목록 — 한 번에 최대 5명, 좌우 화살표로 페이지 이동.
+// 위험도 등급 — 결석 4회↑=긴급, 결석 2회↑ 또는 지각 5회↑=주의(인사이트 기준과 일치).
+type RiskTier = 'danger' | 'warning' | 'neutral'
+function riskTier(lateCount: number, absentCount: number): RiskTier {
+  if (absentCount >= 4) return 'danger'
+  if (absentCount >= 2 || lateCount >= 5) return 'warning'
+  return 'neutral'
+}
+const RISK_META: Record<
+  RiskTier,
+  { badge: string | null; badgeCls: string; bar: string; dot: string }
+> = {
+  danger: {
+    badge: '긴급',
+    badgeCls: 'bg-danger-bg text-danger',
+    bar: 'bg-danger',
+    dot: 'bg-danger',
+  },
+  warning: {
+    badge: '주의',
+    badgeCls: 'bg-warning-bg text-warning',
+    bar: 'bg-warning',
+    dot: 'bg-warning',
+  },
+  neutral: {
+    badge: null,
+    badgeCls: '',
+    bar: 'bg-fg-subtle/40',
+    dot: 'bg-fg-subtle/40',
+  },
+}
+
+// 관리 필요 수강생 한 행 — 위험도 점/막대(결석 비중)·지각·결석·등급 배지 + 클릭 시 상세.
+// 넓어진 전폭 행의 가운데를 위험도 막대로 채워 심각도가 한눈에 보이게 한다.
+function RiskStudentRow({
+  name,
+  lateCount,
+  absentCount,
+  maxAbsent,
+  onClick,
+}: {
+  name: string
+  lateCount: number
+  absentCount: number
+  maxAbsent: number
+  onClick?: () => void
+}) {
+  const tier = riskTier(lateCount, absentCount)
+  const meta = RISK_META[tier]
+  const pct =
+    maxAbsent > 0 ? Math.max(6, Math.round((absentCount / maxAbsent) * 100)) : 0
+
+  const inner = (
+    <>
+      <span className={cn('size-2 shrink-0 rounded-full', meta.dot)} />
+      <span className="text-fg w-24 shrink-0 truncate text-[13px] font-semibold">
+        {name}
+      </span>
+      <span className="bg-surface-muted hidden h-1.5 min-w-0 flex-1 overflow-hidden rounded-full sm:block">
+        <span
+          className={cn('block h-full rounded-full', meta.bar)}
+          style={{ width: `${pct}%` }}
+        />
+      </span>
+      <span className="text-fg-muted shrink-0 text-[12px] tabular-nums">
+        지각 {lateCount} · 결석 {absentCount}
+      </span>
+      {meta.badge && (
+        <span
+          className={cn(
+            'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold',
+            meta.badgeCls,
+          )}
+        >
+          {meta.badge}
+        </span>
+      )}
+      {onClick && (
+        <ChevronRight className="text-fg-subtle group-hover/risk:text-fg size-4 shrink-0 transition-colors" />
+      )}
+    </>
+  )
+
+  const cls =
+    'flex w-full items-center gap-3 py-2.5 text-left first:pt-0 last:pb-0'
+  return onClick ? (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        cls,
+        'group/risk hover:bg-surface-muted/50 -mx-2 rounded-md px-2',
+      )}
+    >
+      {inner}
+    </button>
+  ) : (
+    <div className={cls}>{inner}</div>
+  )
+}
+
+// 위험도 목록 — 결석 많은 순 정렬 + 한 번에 5명 페이지네이션(딥다이브용).
+function RiskList({
+  issues,
+  onStudentClick,
+}: {
+  issues: { studentUuid: string; name: string; lateCount: number; absentCount: number }[]
+  onStudentClick?: (name: string) => void
+}) {
+  const [page, setPage] = useState(0)
+  const sorted = useMemo(
+    () =>
+      [...issues].sort(
+        (a, b) => b.absentCount - a.absentCount || b.lateCount - a.lateCount,
+      ),
+    [issues],
+  )
+  const maxAbsent = Math.max(1, ...sorted.map((i) => i.absentCount))
+  const pageCount = Math.ceil(sorted.length / ISSUE_PAGE_SIZE)
+  const safePage = Math.min(page, Math.max(0, pageCount - 1))
+  const start = safePage * ISSUE_PAGE_SIZE
+  const visible = sorted.slice(start, start + ISSUE_PAGE_SIZE)
+
+  return (
+    <div className="flex flex-col">
+      <div className="flex flex-col">
+        {visible.map((i) => (
+          <RiskStudentRow
+            key={i.studentUuid}
+            name={i.name}
+            lateCount={i.lateCount}
+            absentCount={i.absentCount}
+            maxAbsent={maxAbsent}
+            onClick={onStudentClick ? () => onStudentClick(i.name) : undefined}
+          />
+        ))}
+      </div>
+      {pageCount > 1 && (
+        <div className="border-border mt-2 flex items-center justify-between border-t pt-2">
+          <span className="text-fg-subtle text-[11px] tabular-nums">
+            {start + 1}–{Math.min(start + ISSUE_PAGE_SIZE, sorted.length)} / 총{' '}
+            {sorted.length}명
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="이전 수강생"
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage === 0}
+              className="border-border text-fg-muted hover:bg-surface-muted flex size-6 items-center justify-center rounded-md border disabled:opacity-40"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-fg-subtle text-[11px] tabular-nums">
+              {safePage + 1}/{pageCount}
+            </span>
+            <button
+              type="button"
+              aria-label="다음 수강생"
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage >= pageCount - 1}
+              className="border-border text-fg-muted hover:bg-surface-muted flex size-6 items-center justify-center rounded-md border disabled:opacity-40"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 결석자 목록 — 한 번에 최대 5명, 좌우 화살표로 페이지 이동.
 function IssueList({
   rows,
 }: {

@@ -47,12 +47,14 @@ export function AccountsTab() {
     Record<string, boolean>
   >({})
   // HRD 동기화 — 과정/기수 선택 + 마지막 동기화 결과.
+  // 과정·기수 선택을 URL로 관리 — 대시보드 '관리 필요 수강생' 행 클릭 등 외부에서
+  // ?course=&cohort=&q= 로 특정 수강생에 바로 착지할 수 있게 한다.
   const { data: courses } = useCourseList()
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const [courseParam, setCourseParam] = useSearchParamState('course')
+  const courseId = courseParam || courses?.[0]?.courseId || null
   const { data: courseConfig } = useCourseConfig(courseId)
-  const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
-  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const [cohortParam, setCohortParam] = useSearchParamState('cohort')
+  const cohortId = cohortParam || courseConfig?.cohorts?.[0]?.id || null
   // 선택 기수의 배정 학생만 조회 — 기수 변경 시 목록 자동 갱신.
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
   const syncStudents = useSyncStudents()
@@ -252,8 +254,8 @@ export function AccountsTab() {
               aria-label="과정 선택"
               value={courseId}
               onChange={(v) => {
-                setSelectedCourseId(v)
-                setSelectedCohortId(null)
+                setCourseParam(v)
+                setCohortParam('')
               }}
               options={(courses ?? []).map((c) => ({
                 value: c.courseId,
@@ -265,7 +267,7 @@ export function AccountsTab() {
             <Select
               aria-label="기수 선택"
               value={cohortId}
-              onChange={(v) => setSelectedCohortId(v)}
+              onChange={(v) => setCohortParam(v)}
               options={(courseConfig?.cohorts ?? []).map((c) => ({
                 value: c.id,
                 label: `${c.cohortNo}기`,

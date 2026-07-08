@@ -523,7 +523,7 @@ export default function QuizFormPage() {
             </p>
             <Button
               type="button"
-              className="h-9 text-sm"
+              size="sm"
               disabled={saveQuiz.isPending}
               onClick={onQuickAddQuestion}
             >
@@ -539,7 +539,7 @@ export default function QuizFormPage() {
           <Button
             type="button"
             variant="secondary"
-            className="h-9 text-sm"
+            size="sm"
             onClick={() => navigate(base)}
           >
             취소
@@ -547,7 +547,7 @@ export default function QuizFormPage() {
           <Button
             type="button"
             variant="secondary"
-            className="h-9 text-sm"
+            size="sm"
             disabled={saveQuiz.isPending}
             onClick={handleSubmit((input) => {
               setVisibility('draft')
@@ -558,7 +558,7 @@ export default function QuizFormPage() {
           </Button>
           <Button
             type="button"
-            className="h-9 text-sm"
+            size="sm"
             disabled={saveQuiz.isPending}
             onClick={handleSubmit((input) => save(input, visibility))}
           >

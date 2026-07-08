@@ -290,14 +290,14 @@ export default function SubmissionsPage() {
                     </div>
                     <div className="mt-7 flex justify-end gap-2">
                       <Button
-                        className="h-10 text-sm"
+                       
                         disabled={selected.status === 'supplement_requested'}
                         onClick={() => setSupplementOpen(true)}
                       >
                         보완요청
                       </Button>
                       <Button
-                        className="h-10 text-sm"
+                       
                         disabled={selected.status === 'review_done'}
                         onClick={() => setReviewOpen(true)}
                       >

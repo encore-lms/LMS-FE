@@ -288,12 +288,12 @@ export default function AssignmentFormPage() {
             <Button
               type="button"
               variant="secondary"
-              className="h-10 text-sm"
+             
               onClick={() => navigate('/instructor/assignments')}
             >
               취소
             </Button>
-            <Button type="submit" className="h-10 text-sm">
+            <Button type="submit">
               저장
             </Button>
           </div>

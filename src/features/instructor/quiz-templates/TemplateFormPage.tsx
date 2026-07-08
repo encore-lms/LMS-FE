@@ -356,7 +356,7 @@ export default function TemplateFormPage() {
           <Button
             type="button"
             variant="secondary"
-            className="h-10 text-sm"
+           
             onClick={() => navigate('/instructor/quiz-templates')}
           >
             취소
@@ -364,14 +364,14 @@ export default function TemplateFormPage() {
           <Button
             type="button"
             variant="secondary"
-            className="h-10 text-sm"
+           
             onClick={handleSubmit((input) => save(input, false))}
           >
             임시저장으로 저장
           </Button>
           <Button
             type="button"
-            className="h-10 text-sm"
+           
             onClick={handleSubmit((input) => save(input, true))}
           >
             저장 + 템플릿 문항 →

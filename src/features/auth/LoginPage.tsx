@@ -167,7 +167,7 @@ export function LoginPage() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? '로그인 중…' : '로그인'}
           <ArrowRight className="h-4 w-4" />
         </Button>

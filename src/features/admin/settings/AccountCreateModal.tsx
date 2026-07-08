@@ -128,7 +128,7 @@ export function AccountCreateModal({
             value={role}
             onChange={(v) => setRole(v as OpsRole)}
             options={ROLE_OPTIONS}
-            className="h-10"
+           
           />
         </div>
 

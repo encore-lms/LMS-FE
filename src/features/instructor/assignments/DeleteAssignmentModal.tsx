@@ -25,13 +25,13 @@ export function DeleteAssignmentModal({
         <>
           <Button
             variant="secondary"
-            className="h-10 text-sm"
+           
             onClick={onClose}
           >
             취소
           </Button>
           <Button
-            className="bg-danger hover:bg-danger/90 h-10 text-sm"
+            className="bg-danger hover:bg-danger/90"
             onClick={() => assignment && onConfirm(assignment)}
           >
             삭제

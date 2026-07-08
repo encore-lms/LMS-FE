@@ -27,11 +27,11 @@ export function ReviewCompleteModal({
       size="md"
       footer={
         <>
-          <Button variant="secondary" className="h-10 text-sm" onClick={close}>
+          <Button variant="secondary" onClick={close}>
             취소
           </Button>
           <Button
-            className="h-10 text-sm"
+           
             onClick={() => {
               onConfirm(feedback.trim())
               setFeedback('')

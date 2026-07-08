@@ -419,11 +419,11 @@ function QuestionForm({
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" className="h-9 text-sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={onClose}>
             취소
           </Button>
           <Button
-            className="h-9 text-sm"
+            size="sm"
             disabled={save.isPending}
             onClick={submit}
           >
@@ -483,7 +483,7 @@ export function QuizQuestionEditor({
           )}
         </p>
         {!adding && (
-          <Button className="h-9 text-sm" onClick={() => setAdding(true)}>
+          <Button size="sm" onClick={() => setAdding(true)}>
             <Plus className="h-4 w-4" /> 문제 추가
           </Button>
         )}

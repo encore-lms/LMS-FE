@@ -324,7 +324,7 @@ export default function GradingPage() {
           <Button
             type="button"
             variant="secondary"
-            className="h-10 text-sm"
+           
             onClick={() => navigate(`${base}/${quizId}/submissions`)}
           >
             취소
@@ -332,7 +332,7 @@ export default function GradingPage() {
           <Button
             type="button"
             variant="secondary"
-            className="h-10 text-sm"
+           
             disabled={saveGrading.isPending}
             onClick={() => handleSave(false)}
           >
@@ -341,7 +341,7 @@ export default function GradingPage() {
           <Button
             type="button"
             disabled={!allEntered || saveGrading.isPending}
-            className="h-10 text-sm"
+           
             onClick={() => handleSave(true)}
           >
             채점 완료

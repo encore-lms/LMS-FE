@@ -25,7 +25,7 @@ export function BrandPanel({ slot }: BrandPanelProps) {
           </div>
         </div>
 
-        <div className="h-10" />
+        <div />
 
         <p className="text-[42px] leading-[54px] font-bold text-white">
           실력은 결과가 아니라
@@ -59,7 +59,7 @@ export function BrandPanel({ slot }: BrandPanelProps) {
           </ul>
         )}
 
-        <div className="h-10" />
+        <div />
 
         <div className="flex items-center gap-[14px] text-[11px] font-medium">
           <span className="text-white/50">© 2026 PLAYDATA</span>

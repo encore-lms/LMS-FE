@@ -238,7 +238,7 @@ export default function CourseAddPage() {
               }))}
               placeholder="활성 키 없음 — HRD API Key 등록 필요"
               disabled={activeKeys.length === 0}
-              className="h-10"
+             
             />
           </div>
           <label className="flex flex-col gap-1">

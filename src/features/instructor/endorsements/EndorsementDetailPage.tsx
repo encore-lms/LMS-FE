@@ -224,14 +224,14 @@ export default function EndorsementDetailPage() {
             <Button
               type="button"
               variant="secondary"
-              className="h-10"
+             
               onClick={() => navigate(LIST)}
             >
               취소
             </Button>
             <Button
               type="submit"
-              className="h-10"
+             
               disabled={isSubmitting || !editable}
             >
               수정 저장
@@ -248,12 +248,12 @@ export default function EndorsementDetailPage() {
           <>
             <Button
               variant="secondary"
-              className="h-10"
+             
               onClick={() => setConfirmDelete(false)}
             >
               취소
             </Button>
-            <Button className="h-10" onClick={onDelete}>
+            <Button onClick={onDelete}>
               삭제
             </Button>
           </>

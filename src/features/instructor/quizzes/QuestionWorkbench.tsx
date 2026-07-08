@@ -261,7 +261,7 @@ export function QuestionWorkbench({
                     value: t,
                     label: `${QUESTION_TYPE_LABEL[t]}${t === 'essay' ? ' (서술형)' : ''}`,
                   }))}
-                  className="h-10"
+                 
                 />
               </label>
               <label className="flex flex-col gap-1.5">
@@ -333,7 +333,7 @@ export function QuestionWorkbench({
                     'SQL',
                     'JavaScript',
                   ].map((c) => ({ value: c, label: c }))}
-                  className="h-10"
+                 
                 />
               </label>
               <label className="mt-3 flex items-center gap-2">
@@ -419,12 +419,12 @@ export function QuestionWorkbench({
           <Button
             type="button"
             variant="secondary"
-            className="h-10 text-sm"
+           
             onClick={handlePreview}
           >
             <Eye className="h-4 w-4" /> {previewLabel}
           </Button>
-          <Button type="button" className="h-10 text-sm" onClick={handleSave}>
+          <Button type="button" onClick={handleSave}>
             저장
           </Button>
         </div>

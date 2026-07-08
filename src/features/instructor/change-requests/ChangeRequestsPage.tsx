@@ -239,14 +239,14 @@ export default function ChangeRequestsPage() {
           <div className="mt-7 flex justify-end gap-2">
             <Button
               variant="secondary"
-              className="h-10 text-sm"
+             
               disabled={resolveMutation.isPending}
               onClick={() => setRejectTarget(selected)}
             >
               반려
             </Button>
             <Button
-              className="h-10 text-sm"
+             
               disabled={resolveMutation.isPending}
               onClick={() => approve(selected)}
             >

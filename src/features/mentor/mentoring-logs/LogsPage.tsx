@@ -483,7 +483,7 @@ function FilterSelect({
         value={value}
         onChange={onChange}
         options={[...options]}
-        className="h-10"
+       
       />
     </div>
   )

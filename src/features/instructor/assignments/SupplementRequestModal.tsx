@@ -28,11 +28,11 @@ export function SupplementRequestModal({
       closeOnBackdrop={false}
       footer={
         <>
-          <Button variant="secondary" className="h-10 text-sm" onClick={close}>
+          <Button variant="secondary" onClick={close}>
             취소
           </Button>
           <Button
-            className="h-10 text-sm"
+           
             disabled={!reason.trim()}
             onClick={() => {
               onConfirm(reason.trim())

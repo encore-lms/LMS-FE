@@ -2,6 +2,8 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary'
+  /** sm=조밀한 인라인 액션 · md=기본(목록 헤더·모달 등) · lg=히어로 CTA(로그인 등) */
+  size?: 'sm' | 'md' | 'lg'
 }
 
 const variants = {
@@ -9,16 +11,31 @@ const variants = {
   secondary: 'bg-white text-fg border border-border hover:bg-surface-muted',
 }
 
+// 크기 표준 — 화면마다 className으로 h-*를 덮어쓰며 파편화되던 것을 size로 통일.
+// 기본(md)은 기존에 가장 널리 쓰이던 h-10·text-sm 조합이다(레이아웃 회귀 최소).
+const sizes = {
+  sm: 'h-9 rounded-lg px-3 text-[13px] font-semibold',
+  md: 'h-10 rounded-[10px] px-4 text-sm font-semibold',
+  lg: 'h-14 rounded-[11px] px-5 text-[15px] font-bold',
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
-    { variant = 'primary', className = '', children, type = 'button', ...rest },
+    {
+      variant = 'primary',
+      size = 'md',
+      className = '',
+      children,
+      type = 'button',
+      ...rest
+    },
     ref,
   ) {
     return (
       <button
         ref={ref}
         type={type}
-        className={`flex h-14 items-center justify-center gap-2 rounded-[11px] px-5 py-4 text-[15px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+        className={`flex items-center justify-center gap-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${sizes[size]} ${variants[variant]} ${className}`}
         {...rest}
       >
         {children}

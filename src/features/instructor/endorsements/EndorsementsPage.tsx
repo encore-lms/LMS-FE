@@ -236,12 +236,12 @@ export default function EndorsementsPage() {
               <Button
                 type="button"
                 variant="secondary"
-                className="h-10"
+               
                 onClick={onDraft}
               >
                 임시 저장
               </Button>
-              <Button type="submit" className="h-10" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting}>
                 제출
               </Button>
             </div>
@@ -338,7 +338,7 @@ function PendingCard({
           D-{dueDays}
         </span>
       </p>
-      <Button type="button" className="mt-4 h-10" onClick={onPick}>
+      <Button type="button" className="mt-4" onClick={onPick}>
         작성하기
       </Button>
     </div>

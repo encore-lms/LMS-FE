@@ -226,14 +226,6 @@ export default function ReputationPage() {
 
   return (
     <div className="p-8">
-      {/* 접근 경계 칩 */}
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <span className="bg-info-bg text-info inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
-          <Info className="h-3 w-3" />
-          내부 사용자 전용 · 외부 토큰 미사용
-        </span>
-      </div>
-
       {/* 히어로 — 수집 현황 + 일괄 푸시 */}
       <div className="bg-brand text-on-color flex flex-col gap-4 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">

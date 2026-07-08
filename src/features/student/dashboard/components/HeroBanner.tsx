@@ -47,7 +47,7 @@ export function HeroBanner({
 }) {
   const { streakDays, attendanceRate } = attendance.summary
   return (
-    <section className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1a8c85_0%,#15807a_52%,#0e6b63_100%)] p-5 text-white shadow-[0_10px_30px_-12px_rgba(26,140,133,0.55)] sm:p-6">
+    <section className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,var(--color-brand)_0%,#15807a_52%,#0e6b63_100%)] p-5 text-white shadow-[0_10px_30px_-12px_rgba(26,140,133,0.55)] sm:p-6">
       {/* 장식용 광원 — 깊이감 */}
       <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-white/10 blur-2xl" />
       <div className="pointer-events-none absolute top-6 right-40 size-28 rounded-full bg-white/5 blur-xl" />

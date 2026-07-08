@@ -11,7 +11,7 @@ export function BrandPanel({ slot }: BrandPanelProps) {
       className="flex w-[720px] flex-col justify-center overflow-clip p-16"
       style={{
         backgroundImage:
-          'linear-gradient(104.63deg, rgba(92, 79, 217, 0.7) 10.317%, rgba(41, 181, 176, 0.35) 89.683%), linear-gradient(90deg, #121726 0%, #121726 100%)',
+          'linear-gradient(104.63deg, rgba(92, 79, 217, 0.7) 10.317%, rgba(41, 181, 176, 0.35) 89.683%), linear-gradient(90deg, var(--color-brand-deep) 0%, var(--color-brand-deep) 100%)',
       }}
     >
       <div className="flex flex-col">

@@ -36,8 +36,8 @@ const toneStyles: Record<
   info: { box: 'bg-brand-deep', text: 'text-white', close: 'text-[#d8dee9]' },
   warning: {
     box: 'bg-[#f1f3f5]',
-    text: 'text-[#121726]',
-    close: 'text-[#121726]/40',
+    text: 'text-fg',
+    close: 'text-fg/40',
   },
 }
 

@@ -10,6 +10,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
+import { useCourseConfig, useCourseList } from '../api/settings'
 import { usePageHeader } from '@/shared/store'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -74,10 +75,18 @@ export default function ReputationPage() {
     null,
   )
 
+  // 과정·기수 스코프 — 전체가 아닌 기수 단위로 조회(운영 요구). 기본은 전체 기수.
+  const { data: courses } = useCourseList()
+  const [selCourseId, setSelCourseId] = useState<string | null>(null)
+  const courseId = selCourseId ?? courses?.[0]?.courseId ?? null
+  const { data: courseConfig } = useCourseConfig(courseId)
+  const [cohortFilter, setCohortFilter] = useSearchParamState('cohort', 'all')
+
   const students = useMemo(() => data?.students ?? [], [data])
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     const list = students.filter((s) => {
+      if (cohortFilter !== 'all' && s.cohortId !== cohortFilter) return false
       if (status === 'missing' && s.pushTargets.length === 0) return false
       if (status === 'complete' && s.pushTargets.length > 0) return false
       if (needle) {
@@ -88,7 +97,7 @@ export default function ReputationPage() {
     })
     // 이름 가나다순 고정(운영 요구)
     return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
-  }, [students, status, q])
+  }, [students, status, q, cohortFilter])
 
   if (isPending) {
     return <SkeletonListPage kpis={4} columns={6} />
@@ -293,19 +302,48 @@ export default function ReputationPage() {
         />
       </div>
 
-      {/* 필터 */}
+      {/* 필터 — 과정·기수 스코프 + 상태 + 검색 */}
       <div className="border-border bg-surface mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-        <Select
-          aria-label="상태 필터"
-          value={status}
-          onChange={(v) => setStatus(v)}
-          options={[
-            { value: 'all', label: '상태 전체' },
-            { value: 'missing', label: '누락 있음' },
-            { value: 'complete', label: '완료' },
-          ]}
-          className="h-9"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            aria-label="과정 선택"
+            value={courseId}
+            onChange={(v) => {
+              setSelCourseId(v)
+              setCohortFilter('all')
+            }}
+            options={(courses ?? []).map((c) => ({
+              value: c.courseId,
+              label: c.title,
+            }))}
+            placeholder="등록 과정 없음"
+            className="h-9"
+          />
+          <Select
+            aria-label="기수 필터"
+            value={cohortFilter}
+            onChange={(v) => setCohortFilter(v)}
+            options={[
+              { value: 'all', label: '전체 기수' },
+              ...(courseConfig?.cohorts ?? []).map((c) => ({
+                value: c.id,
+                label: `${c.cohortNo}기`,
+              })),
+            ]}
+            className="h-9"
+          />
+          <Select
+            aria-label="상태 필터"
+            value={status}
+            onChange={(v) => setStatus(v)}
+            options={[
+              { value: 'all', label: '상태 전체' },
+              { value: 'missing', label: '누락 있음' },
+              { value: 'complete', label: '완료' },
+            ]}
+            className="h-9"
+          />
+        </div>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}

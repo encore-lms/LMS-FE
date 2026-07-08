@@ -8,6 +8,15 @@ import { useReputation, useReputationPush } from './api'
 import type { ReputationOverview } from './types'
 
 vi.mock('./api')
+// 과정·기수 스코프 셀렉트가 쓰는 settings 훅 — QueryClient 없이 렌더되도록 정적 mock.
+vi.mock('../api/settings', () => ({
+  useCourseList: () => ({
+    data: [{ courseId: 'course1', title: 'SK네트웍스 Family AI 캠프' }],
+  }),
+  useCourseConfig: () => ({
+    data: { cohorts: [{ id: 'c32', cohortNo: '32' }] },
+  }),
+}))
 
 // 평판 관리 — 히어로·KPI·수집 그리드·푸시 흐름·정책 렌더 + 상태 필터 + 푸시 토스트.
 

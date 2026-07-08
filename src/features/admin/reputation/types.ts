@@ -18,6 +18,8 @@ export type PushTarget = 'instructor' | 'mentor' | 'peer'
 // 수강생 한 명의 평판 수집 현황(표 한 행).
 export interface ReputationStudent {
   id: string
+  /** 소속 기수 id — 과정·기수 필터용(구버전 BE 응답엔 없을 수 있어 옵셔널) */
+  cohortId?: string
   name: string
   uuid: string
   endorsementStatus: EndorsementStatus

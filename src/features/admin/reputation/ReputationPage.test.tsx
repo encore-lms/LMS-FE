@@ -17,6 +17,10 @@ vi.mock('../api/settings', () => ({
     data: { cohorts: [{ id: 'c32', cohortNo: '32' }] },
   }),
 }))
+// 담당 기수 우선 정렬·기본 선택용 — 담당 없음으로 두면 '전체 기수' 기본이 유지된다.
+vi.mock('../api/dashboard', () => ({
+  useMyCohorts: () => ({ data: [] }),
+}))
 
 // 평판 관리 — 히어로·KPI·수집 그리드·푸시 흐름·정책 렌더 + 상태 필터 + 푸시 토스트.
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { AlertTriangle, ArrowRight, Check, Info, Send } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -11,6 +11,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { useCourseConfig, useCourseList } from '../api/settings'
+import { useMyCohorts } from '../api/dashboard'
 import { usePageHeader } from '@/shared/store'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -75,12 +76,36 @@ export default function ReputationPage() {
     null,
   )
 
-  // 과정·기수 스코프 — 전체가 아닌 기수 단위로 조회(운영 요구). 기본은 전체 기수.
+  // 과정·기수 스코프 — 전체가 아닌 기수 단위로 조회(운영 요구).
   const { data: courses } = useCourseList()
   const [selCourseId, setSelCourseId] = useState<string | null>(null)
   const courseId = selCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [cohortFilter, setCohortFilter] = useSearchParamState('cohort', 'all')
+
+  // 담당 기수 우선(운영 요구) — 옵션 목록에서 담당 기수를 맨 위로 정렬하고,
+  // 첫 진입(URL에 cohort 미지정)엔 담당 첫 기수를 기본 선택한다.
+  const { data: myCohorts } = useMyCohorts()
+  const myCohortIds = useMemo(
+    () => new Set((myCohorts ?? []).map((r) => r.cohortId)),
+    [myCohorts],
+  )
+  const cohortOptions = useMemo(() => {
+    const cs = courseConfig?.cohorts ?? []
+    return [
+      ...cs.filter((c) => myCohortIds.has(c.id)),
+      ...cs.filter((c) => !myCohortIds.has(c.id)),
+    ]
+  }, [courseConfig, myCohortIds])
+  const initRef = useRef(false)
+  useEffect(() => {
+    if (initRef.current || !myCohorts || !courseConfig) return
+    initRef.current = true
+    if (cohortFilter !== 'all') return // URL로 기수를 지정해 들어온 경우 존중
+    const first = cohortOptions.find((c) => myCohortIds.has(c.id))
+    if (first) setCohortFilter(first.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 첫 로드 1회만 적용
+  }, [myCohorts, courseConfig])
 
   const students = useMemo(() => data?.students ?? [], [data])
   const filtered = useMemo(() => {
@@ -257,9 +282,11 @@ export default function ReputationPage() {
           onChange={(v) => setCohortFilter(v)}
           options={[
             { value: 'all', label: '전체 기수' },
-            ...(courseConfig?.cohorts ?? []).map((c) => ({
+            ...cohortOptions.map((c) => ({
               value: c.id,
-              label: `${c.cohortNo}기`,
+              label: myCohortIds.has(c.id)
+                ? `${c.cohortNo}기 (담당)`
+                : `${c.cohortNo}기`,
             })),
           ]}
           className="h-11"

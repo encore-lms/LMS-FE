@@ -142,13 +142,15 @@ export function ResumePane({
             <span className="text-fg-subtle"> · 전체 {data.length}</span>
           )}
         </p>
-        <div className="relative w-72">
-          <Search className="text-fg-subtle absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        {/* 탭 공통 필터 바 규격 — 검색은 우측·아이콘 포함·w-56 */}
+        <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+          <Search className="text-fg-subtle h-4 w-4 shrink-0" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="이름 또는 이력서 제목 검색"
-            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 w-full rounded-lg border pr-3 pl-9 text-sm outline-none"
+            placeholder="이름·이력서 제목 검색"
+            aria-label="이력서 검색"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
           />
         </div>
       </div>

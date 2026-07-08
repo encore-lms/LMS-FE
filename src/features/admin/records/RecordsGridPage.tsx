@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
@@ -165,16 +165,19 @@ export default function RecordsGridPage({
   return (
     <div className={embedded ? '' : 'p-8'}>
       {pickerBar}
-      {/* 검색 + 카테고리 탭 */}
+      {/* 탭 공통 필터 바 규격 — 좌: 카테고리 세그먼트 / 우: 검색(아이콘·w-56) */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="이름으로 검색"
-          aria-label="수강생 이름 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-72 rounded-lg border px-3 text-sm outline-none"
-        />
-        <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
+        <div className="border-border focus-within:border-brand bg-surface order-2 flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+          <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="이름으로 검색"
+            aria-label="수강생 이름 검색"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+          />
+        </div>
+        <div className="bg-surface-muted order-1 flex gap-1 rounded-lg p-1">
           {CATEGORY_TABS.map((t) => (
             <button
               key={t.key}

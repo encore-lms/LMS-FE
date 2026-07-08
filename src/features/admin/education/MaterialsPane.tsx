@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Download, ExternalLink, Plus } from 'lucide-react'
+import {
+  AlertTriangle,
+  Download,
+  ExternalLink,
+  Plus,
+  Search,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Select } from '@/components/ui/Select'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -53,6 +60,21 @@ export function MaterialsPane({
   }, [ops])
 
   const [detail, setDetail] = useState<CohortMaterialItem | null>(null)
+  // 목록 필터 — 제목·본문 검색 + 유형(문서/링크/파일)으로 좁힌다(탭 공통 필터 바 규격).
+  const [q, setQ] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const filtered = useMemo(() => {
+    const needle = q.trim()
+    return (data ?? []).filter((m) => {
+      if (
+        needle &&
+        !m.title.includes(needle) &&
+        !(m.body ?? '').includes(needle)
+      )
+        return false
+      return typeFilter === 'all' || m.materialType === typeFilter
+    })
+  }, [data, q, typeFilter])
   // 삭제 확인 대상 — 파괴적 액션은 ActionModal 확인을 거친다.
   const [deleteTarget, setDeleteTarget] = useState<CohortMaterialItem | null>(
     null,
@@ -243,19 +265,48 @@ export function MaterialsPane({
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-fg-muted text-sm">총 {data.length}개 자료</p>
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" /> 자료 등록
-        </Button>
+      {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·유형 필터·주 액션 */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-fg-muted text-sm">
+          총 {filtered.length}개 자료
+          {filtered.length !== data.length && ` (전체 ${data.length})`}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+            <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="제목·내용 검색"
+              aria-label="자료 검색"
+              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+            />
+          </div>
+          <Select
+            aria-label="유형 필터"
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={[
+              { value: 'all', label: '전체 유형' },
+              { value: 'document', label: '문서' },
+              { value: 'link', label: '링크' },
+              { value: 'file', label: '파일' },
+            ]}
+          />
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" /> 자료 등록
+          </Button>
+        </div>
       </div>
 
       <DataTable
         columns={columns}
-        rows={data}
+        rows={filtered}
         rowKey={(m) => m.id}
         onRowClick={(m) => setDetail(m)}
-        empty="등록된 자료가 없어요"
+        empty={
+          data.length === 0 ? '등록된 자료가 없어요' : '조건에 맞는 자료가 없어요'
+        }
       />
 
       {/* 자료 삭제 확인 — 복구 불가 액션 */}

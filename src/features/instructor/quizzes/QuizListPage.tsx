@@ -242,10 +242,14 @@ export default function QuizListPage({
 
   return (
     <div className={embedded ? '' : 'p-8'}>
-      {/* 필터 바 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
+      {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-fg-muted text-sm">
+          총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+        <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+          <Search className="text-fg-subtle h-4 w-4 shrink-0" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -294,24 +298,12 @@ export default function QuizListPage({
             ]}
           />
         </label>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-fg-subtle text-xs">
-            총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
-          </span>
-          <button
-            type="button"
-            onClick={() => setTemplateOpen(true)}
-            className="border-border text-fg hover:bg-surface-muted flex h-9 items-center gap-1 rounded-lg border px-3.5 text-xs font-bold"
-          >
-            <FileText className="h-3.5 w-3.5" /> 템플릿 열기
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate(`${base}/new`)}
-            className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3.5 text-xs font-bold text-white"
-          >
-            <Plus className="h-3.5 w-3.5" /> 퀴즈 생성
-          </button>
+        <Button variant="secondary" onClick={() => setTemplateOpen(true)}>
+          <FileText className="h-4 w-4" /> 템플릿 열기
+        </Button>
+        <Button onClick={() => navigate(`${base}/new`)}>
+          <Plus className="h-4 w-4" /> 퀴즈 생성
+        </Button>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Plus, Users } from 'lucide-react'
+import { AlertTriangle, Plus, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
@@ -430,13 +430,16 @@ export function AssignmentsPane({
           {filtered.length !== data.total && ` (전체 ${data.total})`}
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="과제·과목 검색"
-            aria-label="과제 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
-          />
+          <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+            <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="과제·과목 검색"
+              aria-label="과제 검색"
+              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+            />
+          </div>
           <Select
             aria-label="제출 상태 필터"
             value={statusFilter}

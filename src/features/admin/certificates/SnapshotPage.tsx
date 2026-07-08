@@ -34,10 +34,7 @@ export default function SnapshotPage() {
   const { data, isPending, isError, refetch } = useSnapshot(certificateId)
   const [tab, setTab] = useState(0)
   const verifyRef = useRef<HTMLElement>(null)
-  usePageHeader(
-    '스냅샷 상세',
-    '인증 완료 시점의 증명서 내용을 확인합니다',
-  )
+  usePageHeader('스냅샷 상세', '인증 완료 시점의 증명서 내용을 확인합니다')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">스냅샷을 불러오는 중…</div>
@@ -111,7 +108,7 @@ export default function SnapshotPage() {
           <div className="flex shrink-0 gap-2">
             <Button
               variant="secondary"
-              onClick={() => toast.info('JSON 다운로드 (mock)')}
+              onClick={() => toast.info('JSON 다운로드는 준비 중입니다.')}
             >
               <Download className="h-4 w-4" /> JSON 다운로드
             </Button>
@@ -127,19 +124,19 @@ export default function SnapshotPage() {
             <p className="mt-0.5 text-sm font-medium">{s.issuedAt}</p>
           </div>
           <div className="bg-surface/10 rounded-lg px-3 py-2">
-            <p className="text-on-color/60 text-xs">certificateId</p>
+            <p className="text-on-color/60 text-xs">증명서 ID</p>
             <p className="mt-0.5 truncate font-mono text-sm">
               {s.certificateId}
             </p>
           </div>
           <div className="bg-surface/10 rounded-lg px-3 py-2">
-            <p className="text-on-color/60 text-xs">snapshotHash</p>
+            <p className="text-on-color/60 text-xs">스냅샷 해시</p>
             <p className="mt-0.5 truncate font-mono text-sm">
               {s.verify.snapshotHash}
             </p>
           </div>
           <div className="bg-surface/10 rounded-lg px-3 py-2">
-            <p className="text-on-color/60 text-xs">publicToken</p>
+            <p className="text-on-color/60 text-xs">공개 토큰</p>
             <p className="mt-0.5 truncate font-mono text-sm">{s.publicToken}</p>
           </div>
         </div>
@@ -316,7 +313,7 @@ export default function SnapshotPage() {
           <Button variant="secondary" onClick={() => navigate(-1)}>
             검토 상세로 돌아가기
           </Button>
-          <Button onClick={() => toast.info('JSON 다운로드 (mock)')}>
+          <Button onClick={() => toast.info('JSON 다운로드는 준비 중입니다.')}>
             <Download className="h-4 w-4" /> JSON 다운로드
           </Button>
         </div>

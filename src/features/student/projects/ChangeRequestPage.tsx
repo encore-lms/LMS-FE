@@ -3,12 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, CircleCheck, Lock, PencilLine, Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
-import { TestModeFab } from '@/components/dev/TestModeFab'
 import { usePageHeader } from '@/shared/store'
 import {
   DEFAULT_PROJECT_CONTENT,
-  EDIT_WINDOW_DAYS,
-  editWindowUntilISO,
   formatEditUntil,
   isEditWindowExpired,
   useProjectFlow,
@@ -20,25 +17,11 @@ import {
 // — Figma 4859:6731(요청·locked) · 4857:6654(승인 후·editing).
 // 인증 완료 프로젝트는 수정 잠금. 수강생이 사유를 적어 수정 권한을 요청 → 강사 승인 시 시한부로 원본 직접 수정 →
 // 수정 완료 + 변경 요약 제출 → 강사 최종 확인. (구 "변경 항목 선택 + 변경 전/후 비교" 방식 대체)
-// 상태 전환의 강사 승인/최종 확인은 BE 연동 전 ProjectFlowTestNav(테스트 FAB)로 시뮬레이션한다.
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 
 const EXAMPLE_REASON =
   '결제 모듈 리팩터링 결과를 설명에 반영하고, 최신 API 명세서로 산출물을 교체하기 위함입니다.'
-
-// 워크스페이스 실편집이 목 필드와 연결돼 있지 않아, '원본 수정 반영' 시뮬이 적용하는 예시 수정본.
-const EDITED_CONTENT: ProjectContent = {
-  설명: '주문·결제·재고 도메인을 분리한 MSA 구조의 백엔드 프로젝트입니다. 결제 모듈은 이벤트 기반 비동기 처리로 리팩터링했습니다.',
-  산출물: 'API 명세서 v2.pdf — 결제 비동기 흐름 반영',
-}
-
-const STATUS_LABEL: Record<EditRequestStatus, string> = {
-  none: '잠금 (요청 전)',
-  requested: '승인 대기',
-  approved: '수정 가능',
-  submitted: '최종 확인 대기',
-}
 
 const HEADER: Record<EditRequestStatus, [string, string]> = {
   none: [
@@ -70,7 +53,6 @@ export default function ChangeRequestPage() {
   const content =
     useProjectFlow((s) => s.projectContent[projectId]) ??
     DEFAULT_PROJECT_CONTENT
-  const setProjectContent = useProjectFlow((s) => s.setProjectContent)
 
   // 만료된 승인은 잠금(none)으로 간주하고 스토어도 정리한다.
   const expired = isEditWindowExpired(editRequest)
@@ -115,41 +97,6 @@ export default function ChangeRequestPage() {
     toast.success('수정 완료를 제출했어요')
   }
   const goEditOriginal = () => navigate(`/student/projects/${projectId}`)
-
-  // 강사 측 승인/반려/최종 확인 — BE 연동·강사 화면 구현 전 테스트 FAB로 시뮬레이션.
-  const approveSim = () => {
-    setEditRequest(projectId, {
-      status: 'approved',
-      editAllowedUntil: editWindowUntilISO(),
-      snapshot: content, // 승인 시점 원본 = '변경 전'
-    })
-    toast.success(
-      `강사가 수정 권한을 승인했어요 · ${EDIT_WINDOW_DAYS}일 동안 수정 가능`,
-    )
-  }
-  // 워크스페이스 원본 수정 대체 시뮬 — 현재 콘텐츠를 바꿔 '변경 후'가 실제로 달라지게 한다.
-  const editSim = () => {
-    setProjectContent(projectId, EDITED_CONTENT)
-    toast.info('원본 수정이 반영됐어요 (시뮬) · 아래 변경 전/후에 표시됩니다')
-  }
-  const rejectSim = () => {
-    resetEditRequest(projectId)
-    toast.info('강사가 요청을 반려했어요 · 계속 잠금 상태예요')
-  }
-  const confirmSim = () => {
-    resetEditRequest(projectId)
-    toast.success(
-      '강사가 변경 내용을 최종 확인했어요 · 원본에 반영되고 다시 잠겼어요',
-    )
-    // 사이클 종료 → 프로젝트 워크스페이스 홈으로(잠금 폼에 잔류하지 않게).
-    navigate(`/student/projects/${projectId}`)
-  }
-  // 7일 대기 없이 만료 자동 잠금을 검증하기 위한 시뮬 — 만료 시각을 과거로 당긴다.
-  const expireSim = () => {
-    setEditRequest(projectId, {
-      editAllowedUntil: new Date(Date.now() - 1000).toISOString(),
-    })
-  }
 
   return (
     <div className="flex flex-col gap-5 p-8 pb-24">
@@ -341,78 +288,6 @@ export default function ChangeRequestPage() {
           )}
         </div>
       </div>
-
-      {/* 테스트 시뮬레이션 — 강사 승인/반려/최종 확인 (FE 목). BE 연동·강사 화면 구현 시 제거. */}
-      <TestModeFab note="수정 권한 요청 흐름 (FE 목 · 강사 승인/반려/최종 확인 시뮬)">
-        <span className="text-accent-strong w-full text-[11px] font-semibold">
-          현재 상태: {STATUS_LABEL[status]}
-        </span>
-        {status === 'none' && (
-          <span className="text-fg-subtle text-[11px]">
-            아래 “수정 권한 요청”을 먼저 보내세요
-          </span>
-        )}
-        {status === 'requested' && (
-          <>
-            <button
-              type="button"
-              onClick={approveSim}
-              className="bg-success rounded-lg px-3 py-2 text-[12px] font-bold text-white"
-            >
-              🧑‍🏫 강사 승인 (시뮬)
-            </button>
-            <button
-              type="button"
-              onClick={rejectSim}
-              className="border-accent-strong/50 text-accent-strong rounded-lg border px-3 py-2 text-[12px] font-bold"
-            >
-              🧑‍🏫 강사 반려 (시뮬)
-            </button>
-          </>
-        )}
-        {status === 'approved' && (
-          <>
-            <span className="text-fg-subtle w-full text-[11px]">
-              “원본 수정 반영”으로 변경 후를 만들고 “수정 완료 제출”을 누르세요
-            </span>
-            <button
-              type="button"
-              onClick={editSim}
-              className="bg-accent-strong rounded-lg px-3 py-2 text-[12px] font-bold text-white"
-            >
-              ✏️ 원본 수정 반영 (시뮬)
-            </button>
-            <button
-              type="button"
-              onClick={expireSim}
-              className="border-accent-strong/50 text-accent-strong rounded-lg border px-3 py-2 text-[12px] font-bold"
-            >
-              ⏩ 수정 기간 만료 (시뮬)
-            </button>
-          </>
-        )}
-        {status === 'submitted' && (
-          <button
-            type="button"
-            onClick={confirmSim}
-            className="bg-success rounded-lg px-3 py-2 text-[12px] font-bold text-white"
-          >
-            🧑‍🏫 강사 최종 확인 (시뮬)
-          </button>
-        )}
-        {status !== 'none' && (
-          <button
-            type="button"
-            onClick={() => {
-              resetEditRequest(projectId)
-              toast.info('수정 권한 상태를 초기화했어요')
-            }}
-            className="border-accent-strong/50 text-accent-strong rounded-lg border px-3 py-2 text-[12px] font-bold"
-          >
-            ↺ 초기화
-          </button>
-        )}
-      </TestModeFab>
     </div>
   )
 }

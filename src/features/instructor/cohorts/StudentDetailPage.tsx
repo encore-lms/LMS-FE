@@ -102,7 +102,7 @@ export default function StudentDetailPage() {
           </button>
           <button
             type="button"
-            onClick={() => toast.info('증명서 미리보기 — 후속 화면 (mock)')}
+            onClick={() => toast.info('증명서 미리보기는 준비 중입니다.')}
             className="bg-brand-deep flex items-center gap-1 rounded-lg px-3.5 py-2 text-xs font-bold text-white"
           >
             증명서 미리보기 <ArrowRight className="h-3.5 w-3.5" />
@@ -185,7 +185,7 @@ export default function StudentDetailPage() {
                 type="button"
                 onClick={() => {
                   if (activeTab.ctaTo) navigate(activeTab.ctaTo)
-                  else toast.info(`${activeTab.ctaLabel} — 후속 화면 (mock)`)
+                  else toast.info(`${activeTab.ctaLabel}은(는) 준비 중입니다.`)
                 }}
                 className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-xs font-medium"
               >
@@ -218,7 +218,7 @@ export default function StudentDetailPage() {
                     if (item.to) navigate(item.to)
                     else
                       toast.info(
-                        `${item.title} ${item.actionLabel} — 후속 화면 (mock)`,
+                        `${item.title} ${item.actionLabel}은(는) 준비 중입니다.`,
                       )
                   }}
                   className="border-border text-fg-muted hover:bg-surface-muted shrink-0 rounded-md border px-2.5 py-1 text-xs font-medium"

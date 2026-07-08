@@ -81,7 +81,9 @@ export function AccountsTab() {
       return true
     })
     // 이름 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
+    return [...list].sort((a, b) =>
+      (a.name ?? '').localeCompare(b.name ?? '', 'ko'),
+    )
   }, [data, status, q, blockedOverride])
 
   if (isPending) {
@@ -279,9 +281,7 @@ export function AccountsTab() {
         <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="secondary"
-            onClick={() =>
-              toast.info('수강생_계정정보_22기.xls 내려받기 (mock)')
-            }
+            onClick={() => toast.info('계정 정보 내려받기는 준비 중입니다.')}
           >
             <Download className="h-4 w-4" /> 계정 정보 다운로드
           </Button>

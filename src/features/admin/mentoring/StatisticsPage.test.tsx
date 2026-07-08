@@ -93,9 +93,7 @@ describe('StatisticsPage (조회 전용)', () => {
         '수강생별 5축 평균, 추천 여부, 증명서용 요약만 조회합니다. 5축 원점수와 멘토 원문 코멘트는 통계 화면에 노출하지 않습니다.',
       ),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText('내부 사용자 전용 · 외부 토큰 미사용'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('내부 사용자 전용')).toBeInTheDocument()
   })
 
   it('멘토/팀 행 — N시간·인정·일지·평가·추천·증명서 반영 라벨을 렌더한다', () => {

@@ -179,7 +179,7 @@ export function MaterialsPane({
       <Empty
         icon={<AlertTriangle className="h-6 w-6" />}
         title="자료실을 불러오지 못했어요"
-        description="실 BE(learning-service) 연결을 확인한 뒤 다시 시도해 주세요."
+        description="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
         action={<Button onClick={() => refetch()}>다시 시도</Button>}
       />
     )
@@ -305,7 +305,9 @@ export function MaterialsPane({
         rowKey={(m) => m.id}
         onRowClick={(m) => setDetail(m)}
         empty={
-          data.length === 0 ? '등록된 자료가 없어요' : '조건에 맞는 자료가 없어요'
+          data.length === 0
+            ? '등록된 자료가 없어요'
+            : '조건에 맞는 자료가 없어요'
         }
       />
 

@@ -325,7 +325,7 @@ export default function CourseConfigPage() {
         isError={isError || !courses}
         onRetry={refetch}
         errorTitle="과정 목록을 불러오지 못했어요"
-        errorDescription="교육 과정 설정은 실 BE 전용입니다. ADMIN/MANAGER로 로그인했는지 확인한 뒤 다시 시도해 주세요."
+        errorDescription="관리자(ADMIN/MANAGER) 계정으로 로그인했는지 확인한 뒤 다시 시도해 주세요."
       >
         {courses && courses.length === 0 ? (
           <Empty

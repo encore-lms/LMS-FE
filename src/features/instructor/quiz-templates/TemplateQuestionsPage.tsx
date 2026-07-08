@@ -187,7 +187,7 @@ export default function TemplateQuestionsPage() {
         modelAnswerHint="수동 채점 기준 — 학생에게 비공개"
         explanationHint="복제된 퀴즈 결과 화면에서 노출"
         manualHint="복제된 퀴즈에서 수동 채점으로 연결"
-        saveToastMessage="템플릿 문항 저장 — 다음 복제부터 반영 (mock)"
+        saveToastMessage="템플릿 문항 저장 — 다음 복제부터 반영"
         onAddQuestion={handleAdd}
         onSaveQuestion={handleSave}
         onDeleteQuestion={handleDelete}

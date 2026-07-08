@@ -214,9 +214,7 @@ export default function TsReviewPage() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.info(
-                  `${r.title} ${STATUS_META[r.status].action} — 후속 화면 (mock)`,
-                )
+                toast.info(`${r.title} — 준비 중입니다.`)
               }}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
             >
@@ -228,7 +226,7 @@ export default function TsReviewPage() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.info(`${r.title} 상세 — 후속 화면 (mock)`)
+                toast.info(`${r.title} 상세는 준비 중입니다.`)
               }}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
             >

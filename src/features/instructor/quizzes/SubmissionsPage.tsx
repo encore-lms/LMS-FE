@@ -28,10 +28,7 @@ export default function SubmissionsPage() {
   const { data, isPending, isError, refetch } = useQuizSubmissions(quizId)
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<StatusFilter>('all')
-  usePageHeader(
-    '제출 현황',
-    '퀴즈 제출률과 채점 대기 현황을 확인합니다',
-  )
+  usePageHeader('제출 현황', '퀴즈 제출률과 채점 대기 현황을 확인합니다')
 
   const rows = useMemo(() => data?.rows ?? [], [data])
   const { data: students } = useStudentAccounts()
@@ -182,7 +179,7 @@ export default function SubmissionsPage() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.success(`${r.studentName} 재독촉 알림 발송 (mock)`)
+                toast.success(`재독촉 알림은 준비 중입니다.`)
               }}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
             >
@@ -206,7 +203,7 @@ export default function SubmissionsPage() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  toast.info(`${r.studentName} 답안 보기 (mock)`)
+                  toast.info(`답안 보기는 준비 중입니다.`)
                 }}
                 className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
               >
@@ -219,7 +216,7 @@ export default function SubmissionsPage() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              toast.info(`${r.studentName} 결과 보기 (mock)`)
+              toast.info(`결과 보기는 준비 중입니다.`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
           >

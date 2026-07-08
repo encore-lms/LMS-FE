@@ -357,16 +357,8 @@ export default function TypingTextsPage() {
         </aside>
       </div>
 
-      {/* 명세 경계(좌) + 일괄 업로드 검증(우) */}
+      {/* 일괄 업로드 검증 */}
       <div className="mt-6 flex flex-col gap-6 lg:flex-row">
-        <aside className="border-border bg-info-bg/40 w-full rounded-xl border p-5 lg:w-[220px] lg:shrink-0">
-          <p className="text-fg text-[13px] font-bold">명세 경계</p>
-          <p className="text-fg-muted mt-2 text-xs leading-relaxed">
-            운영 화면은 콘텐츠 관리만 담당합니다. 수강생 세션 진행과 결과 제출은
-            P0_14 범위입니다.
-          </p>
-        </aside>
-
         <div className="border-border bg-surface min-w-0 flex-1 rounded-xl border p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">

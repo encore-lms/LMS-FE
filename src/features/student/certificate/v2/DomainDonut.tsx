@@ -36,7 +36,7 @@ export function DomainDonut({
       <div className="flex flex-col gap-0.5">
         <span className="text-fg text-[15px] font-bold">도메인 경험</span>
         <span className="text-fg-muted text-[11px]">
-          외부 공개 payload에 포함 가능한 항목
+          외부 공개 시 포함 가능한 항목
         </span>
       </div>
       <div className="flex items-center gap-10">

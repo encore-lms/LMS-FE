@@ -347,7 +347,7 @@ export function AssignmentsPane({
       <Empty
         icon={<AlertTriangle className="h-6 w-6" />}
         title="과제를 불러오지 못했어요"
-        description="실 BE(learning-service) 연결을 확인한 뒤 다시 시도해 주세요."
+        description="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
         action={<Button onClick={() => refetch()}>다시 시도</Button>}
       />
     )
@@ -464,7 +464,9 @@ export function AssignmentsPane({
         rowKey={(r) => r.id}
         onRowClick={(r) => setSubView(r)}
         empty={
-          data.total === 0 ? '등록된 과제가 없어요' : '조건에 맞는 과제가 없어요'
+          data.total === 0
+            ? '등록된 과제가 없어요'
+            : '조건에 맞는 과제가 없어요'
         }
       />
 

@@ -145,7 +145,7 @@ export function AiTab({ studentId = 'stu-001' }: { studentId?: string }) {
       {/* 상담 감성 — 키워드 버블(초기 불안 → 중기 탐색 → 후기 성장) */}
       <SentimentBubbles sentiment={sentiment} />
 
-      <AiBanner text="AI 분석은 승인된 confirmed 데이터에 기반한 해석이며, 검증된 사실과 구분됩니다. 외부 공개 payload에는 confirmed 인증 + 운영자 승인 시 포함됩니다." />
+      <AiBanner text="AI 분석은 강사가 인증한 활동을 근거로 한 해석이며, 검증된 사실과 구분됩니다. 외부에 공개되는 항목에는 인증 완료 + 운영자 승인을 거친 내용만 포함됩니다." />
     </div>
   )
 }

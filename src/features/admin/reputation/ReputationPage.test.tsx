@@ -22,7 +22,7 @@ vi.mock('../api/dashboard', () => ({
   useMyCohorts: () => ({ data: [] }),
 }))
 
-// 평판 관리 — 히어로·KPI·수집 그리드·푸시 흐름·정책 렌더 + 상태 필터 + 푸시 토스트.
+// 평판 관리 — 히어로·KPI·수집 그리드 렌더 + 상태 필터 + 푸시 토스트.
 
 const overview: ReputationOverview = {
   summary: {
@@ -62,14 +62,6 @@ const overview: ReputationOverview = {
       pushTargets: ['instructor', 'mentor', 'peer'],
     },
   ],
-  pushFlows: [
-    {
-      id: 'instructor',
-      label: '강사 추천서',
-      route: '/instructor/endorsements',
-    },
-    { id: 'peer', label: '프로젝트 상호평가' },
-  ],
 }
 
 function renderPage() {
@@ -107,10 +99,6 @@ describe('ReputationPage (평판 관리)', () => {
     expect(screen.getByText('완료', { selector: 'span' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /강사 푸시/ }),
-    ).toBeInTheDocument()
-    // 정책
-    expect(
-      screen.getByText(/멘토 평가는 N시간 완료 또는 운영자 조기 종료 팀/),
     ).toBeInTheDocument()
   })
 

@@ -127,9 +127,9 @@ export default function HrdApiKeyPage() {
   const realAuth = import.meta.env.VITE_REAL_AUTH === 'true'
   const errCopy = !realAuth
     ? {
-        title: 'HRD API Key는 실 BE 전용이에요',
+        title: 'HRD API Key는 서버 연동 환경에서만 사용할 수 있어요',
         description:
-          'mock 모드에선 사용할 수 없습니다. VITE_REAL_AUTH=true 로 dev를 실행하고 ADMIN/MANAGER 실계정으로 로그인해 주세요.',
+          '관리자(ADMIN/MANAGER) 계정으로 로그인했는지 확인해 주세요.',
       }
     : errStatus === 401 || errStatus === 403
       ? {
@@ -139,7 +139,7 @@ export default function HrdApiKeyPage() {
         }
       : {
           title: 'HRD API Key를 불러오지 못했어요',
-          description: 'learning-service 연결을 확인한 뒤 다시 시도해 주세요.',
+          description: '연결 상태를 확인한 뒤 다시 시도해 주세요.',
         }
 
   const list = listQuery.data

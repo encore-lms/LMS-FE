@@ -3,7 +3,6 @@ import { usePageHeader, useAuth } from '@/shared/store'
 import { useCourseHome } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import { OnlineCoursePage } from '../online/OnlineCoursePage'
-import { TrainingTypeTestNav } from '../TrainingTypeTestNav'
 import { CourseHero } from './components/CourseHero'
 import { CourseKpiCards } from './components/CourseKpiCards'
 import { WeekLearningCard } from './components/WeekLearningCard'
@@ -16,13 +15,7 @@ import { CourseNoticeCard } from './components/CourseNoticeCard'
  */
 export default function CourseHomePage() {
   const { user } = useAuth()
-  return (
-    <>
-      {user?.trainingType === 'KDC' ? <OnlineCoursePage /> : <KdtCourseHome />}
-      {/* [테스트] 나의 과정 테스트 FAB(교육 타입 전환 + KDC 주차 잠금) — 삭제 시 이 줄과 위 import 제거 */}
-      <TrainingTypeTestNav />
-    </>
-  )
+  return user?.trainingType === 'KDC' ? <OnlineCoursePage /> : <KdtCourseHome />
 }
 
 /**

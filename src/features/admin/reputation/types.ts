@@ -9,7 +9,7 @@ export type MentorEvalStatus =
   | 'recommended' // 평가 완료 · 추천
   | 'not_recommended' // 평가 완료 · 추천 안 함
   | 'pending' // 평가 대기
-  | 'not_eligible' // N시간 미달 · 대상 외
+  | 'not_eligible' // 평가 대상 외
   | 'in_progress' // 평가 진행 중
 
 /** 푸시 대상 — 강사 / 멘토 / 동료 */
@@ -53,17 +53,7 @@ export interface ReputationSummary {
   missingStudents: number
 }
 
-// 푸시 흐름 — 대상별 진입 화면 참조.
-export interface PushFlowRef {
-  id: string
-  /** 예: "강사 추천서" */
-  label: string
-  /** 진입 라우트(없을 수 있음) */
-  route?: string
-}
-
 export interface ReputationOverview {
   summary: ReputationSummary
   students: ReputationStudent[]
-  pushFlows: PushFlowRef[]
 }

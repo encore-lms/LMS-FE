@@ -7,6 +7,7 @@ import { TestModeFab } from '@/components/dev/TestModeFab'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import {
+  useAcceptMentoringProposal,
   useCancelMentoringRequest,
   useCreateMentoringRequest,
   useMentoring,
@@ -85,8 +86,9 @@ function MentoringView({ data }: { data: MentoringData }) {
   const noMentor = params.get('state') === 'no-mentor' || !data.mentor.assigned
   const createRequest = useCreateMentoringRequest()
   const cancelRequestMutation = useCancelMentoringRequest()
+  const acceptProposalMutation = useAcceptMentoringProposal()
 
-  // 상호작용 상태 — 서버 응답을 즉시 반영하고, 아직 BE 스키마가 없는 조정 제안 수락만 로컬로 표시한다.
+  // 상호작용 상태 — 서버 응답을 즉시 반영한다.
   const [activeRequest, setActiveRequest] =
     useState<MentoringActiveRequest | null>(data.activeRequest)
   const [reservation, setReservation] = useState<MentoringReservation | null>(
@@ -197,23 +199,16 @@ function MentoringView({ data }: { data: MentoringData }) {
 
   // 제안 수락 → 멘토 제안을 확정 예약으로 전환(슬롯 점유 유지) + accepted 토스트.
   const acceptProposal = () => {
-    const p = activeRequest?.proposal
-    if (p) {
-      const [dateLabel, ...rest] = p.datetime.split(' ')
-      setReservation({
-        id: `res_${Math.random().toString(36).slice(2, 6)}`,
-        dateLabel,
-        timeLabel: rest.join(' '),
-        placeType: p.placeType,
-        placeDetail: p.placeDetail,
-        estHours: '2h',
-        mentorName: data.mentor.name,
-        mentorSpecialty: data.mentor.specialty,
-      })
-      setReservationUpcoming(true)
-    }
-    setActiveRequest(null)
-    toast.success(TOAST.accepted.message)
+    if (!activeRequest?.id) return
+    acceptProposalMutation.mutate(activeRequest.id, {
+      onSuccess: (next) => {
+        applyMentoringData(next)
+        toast.success(TOAST.accepted.message)
+      },
+      onError: () => {
+        toast.danger('조정 제안 수락에 실패했어요')
+      },
+    })
   }
 
   // ─── SIMULATION ONLY (FE 목 전용) — BE 연동 시 이 함수와 호출부 제거 ───

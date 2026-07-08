@@ -63,3 +63,16 @@ export function useCancelMentoringRequest() {
     },
   })
 }
+
+export function useAcceptMentoringProposal() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (requestId: string) =>
+      apiClient
+        .post<MentoringData>(`/student/mentoring/requests/${requestId}/accept`)
+        .then((r) => r.data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(mentoringKeys.detail(), data)
+    },
+  })
+}

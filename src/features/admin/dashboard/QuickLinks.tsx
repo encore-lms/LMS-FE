@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   BookOpen,
   Check,
-  ClipboardCheck,
   Coins,
   FileSpreadsheet,
   Gamepad2,
@@ -12,7 +11,6 @@ import {
   Inbox,
   Link2,
   NotebookPen,
-  PenSquare,
   Plus,
   Settings,
   Star,
@@ -34,20 +32,78 @@ interface QuickLinkDef {
 
 // 추가 가능한 화면 카탈로그 — 운영 메뉴의 주요 목적지.
 const CATALOG: QuickLinkDef[] = [
-  { to: '/admin/students', label: '학생 관리', icon: Users, tone: 'bg-info-bg text-info' },
-  { to: '/admin/education', label: '과정·기수·교과목', icon: BookOpen, tone: 'bg-success-bg text-success' },
-  { to: '/admin/mentors/assignments', label: '멘토링 관리', icon: HeartHandshake, tone: 'bg-accent-bg text-accent-strong' },
-  { to: '/admin/mileage', label: '마일리지', icon: Coins, tone: 'bg-warning-bg text-warning' },
-  { to: '/admin/mentoring/logs', label: '멘토링 일지', icon: NotebookPen, tone: 'bg-accent-bg text-accent-strong' },
-  { to: '/admin/reputation', label: '평판 관리', icon: Star, tone: 'bg-warning-bg text-warning' },
-  { to: '/admin/records/review', label: '학습 기록', icon: ClipboardCheck, tone: 'bg-success-bg text-success' },
-  { to: '/admin/certificates/reviews', label: '인증 검토', icon: BadgeCheck, tone: 'bg-success-bg text-success' },
-  { to: '/admin/quizzes', label: '퀴즈 관리', icon: PenSquare, tone: 'bg-info-bg text-info' },
-  { to: '/admin/csv-mapping', label: 'CSV 매핑', icon: FileSpreadsheet, tone: 'bg-info-bg text-info' },
-  { to: '/admin/ingestion/quarantine', label: '인입 격리 큐', icon: Inbox, tone: 'bg-danger-bg text-danger' },
-  { to: '/admin/integrations', label: '외부 연동', icon: Link2, tone: 'bg-info-bg text-info' },
-  { to: '/admin/play/typing-texts', label: 'PLAY 관리', icon: Gamepad2, tone: 'bg-accent-bg text-accent-strong' },
-  { to: '/admin/settings', label: '설정', icon: Settings, tone: 'bg-surface-muted text-fg-muted' },
+  {
+    to: '/admin/students',
+    label: '학생 관리',
+    icon: Users,
+    tone: 'bg-info-bg text-info',
+  },
+  {
+    to: '/admin/education',
+    label: '과정·기수·교과목',
+    icon: BookOpen,
+    tone: 'bg-success-bg text-success',
+  },
+  {
+    to: '/admin/mentors/assignments',
+    label: '멘토링 관리',
+    icon: HeartHandshake,
+    tone: 'bg-accent-bg text-accent-strong',
+  },
+  {
+    to: '/admin/mileage',
+    label: '마일리지',
+    icon: Coins,
+    tone: 'bg-warning-bg text-warning',
+  },
+  {
+    to: '/admin/mentoring/logs',
+    label: '멘토링 일지',
+    icon: NotebookPen,
+    tone: 'bg-accent-bg text-accent-strong',
+  },
+  {
+    to: '/admin/reputation',
+    label: '평판 관리',
+    icon: Star,
+    tone: 'bg-warning-bg text-warning',
+  },
+  {
+    to: '/admin/certificates/reviews',
+    label: '인증 검토',
+    icon: BadgeCheck,
+    tone: 'bg-success-bg text-success',
+  },
+  {
+    to: '/admin/csv-mapping',
+    label: 'CSV 매핑',
+    icon: FileSpreadsheet,
+    tone: 'bg-info-bg text-info',
+  },
+  {
+    to: '/admin/ingestion/quarantine',
+    label: '인입 격리 큐',
+    icon: Inbox,
+    tone: 'bg-danger-bg text-danger',
+  },
+  {
+    to: '/admin/integrations',
+    label: '외부 연동',
+    icon: Link2,
+    tone: 'bg-info-bg text-info',
+  },
+  {
+    to: '/admin/play/typing-texts',
+    label: 'PLAY 관리',
+    icon: Gamepad2,
+    tone: 'bg-accent-bg text-accent-strong',
+  },
+  {
+    to: '/admin/settings',
+    label: '설정',
+    icon: Settings,
+    tone: 'bg-surface-muted text-fg-muted',
+  },
 ]
 
 const STORAGE_KEY = 'admin-quick-links'

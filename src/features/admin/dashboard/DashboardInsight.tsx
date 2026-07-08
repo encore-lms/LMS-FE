@@ -26,16 +26,16 @@ import type { CohortBoard, ScheduleItem } from './types'
 type Tone = 'critical' | 'warning' | 'info' | 'positive'
 
 const ACTION_ICON_COLOR: Record<Tone, string> = {
-  critical: 'text-[#FF8787]',
-  warning: 'text-[#FFD43B]',
-  info: 'text-[#74C0FC]',
-  positive: 'text-[#69DB7C]',
+  critical: 'text-danger-inverse',
+  warning: 'text-warning-inverse',
+  info: 'text-info-inverse',
+  positive: 'text-success-inverse',
 }
 const INSIGHT_ICON: Record<Tone, { icon: LucideIcon; color: string }> = {
-  critical: { icon: AlertOctagon, color: 'text-[#FF6B6B]' },
-  warning: { icon: TriangleAlert, color: 'text-[#FFD43B]' },
-  info: { icon: Info, color: 'text-[#4DABF7]' },
-  positive: { icon: CheckCircle2, color: 'text-[#51CF66]' },
+  critical: { icon: AlertOctagon, color: 'text-danger-inverse' },
+  warning: { icon: TriangleAlert, color: 'text-warning-inverse' },
+  info: { icon: Info, color: 'text-info-inverse' },
+  positive: { icon: CheckCircle2, color: 'text-success-inverse' },
 }
 
 interface Insight {
@@ -384,7 +384,7 @@ function MetricTile({
       <div
         role="tooltip"
         className={cn(
-          'invisible absolute top-[calc(100%+0.625rem)] z-[10002] w-max max-w-[26rem] min-w-[17rem] scale-[0.98] rounded-[14px] bg-white p-4 text-[#181A20] opacity-0 shadow-[0_12px_32px_rgba(0,0,0,0.18)] transition-all group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-visible:visible group-focus-visible:scale-100 group-focus-visible:opacity-100',
+          'text-surface-inverse invisible absolute top-[calc(100%+0.625rem)] z-[10002] w-max max-w-[26rem] min-w-[17rem] scale-[0.98] rounded-[14px] bg-white p-4 opacity-0 shadow-[0_12px_32px_rgba(0,0,0,0.18)] transition-all group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-visible:visible group-focus-visible:scale-100 group-focus-visible:opacity-100',
           alignRight ? 'right-0' : 'left-0',
         )}
       >
@@ -417,7 +417,7 @@ function MetricTile({
                   <span className="min-w-0 flex-1 font-semibold break-keep text-black/[0.78]">
                     {it.label}
                   </span>
-                  <span className="shrink-0 text-right font-bold text-[#181A20] tabular-nums">
+                  <span className="text-surface-inverse shrink-0 text-right font-bold tabular-nums">
                     {it.value}
                   </span>
                 </li>
@@ -431,10 +431,10 @@ function MetricTile({
 }
 
 const SCHEDULE_TONE: Record<string, string> = {
-  '성취도 평가': 'bg-[#74C0FC]/15 text-[#74C0FC]',
-  '단위 프로젝트': 'bg-[#B197FC]/15 text-[#B197FC]',
-  발표회: 'bg-[#FFD43B]/15 text-[#FFD43B]',
-  '최종 프로젝트': 'bg-[#69DB7C]/15 text-[#69DB7C]',
+  '성취도 평가': 'bg-info-inverse/15 text-info-inverse',
+  '단위 프로젝트': 'bg-accent-inverse/15 text-accent-inverse',
+  발표회: 'bg-warning-inverse/15 text-warning-inverse',
+  '최종 프로젝트': 'bg-success-inverse/15 text-success-inverse',
 }
 function scheduleTone(cat: string) {
   return SCHEDULE_TONE[cat] ?? 'bg-white/[0.07] text-white/70'
@@ -442,9 +442,9 @@ function scheduleTone(cat: string) {
 
 /** 출석률에 따른 게이지 색 — 이전 LMS 신호등 규칙(초록/노랑/빨강). */
 function gaugeColor(rate: number) {
-  if (rate >= 90) return '#40C057'
-  if (rate >= 80) return '#FAB005'
-  return '#FF6B6B'
+  if (rate >= 90) return 'var(--color-chart-positive)'
+  if (rate >= 80) return 'var(--color-chart-caution)'
+  return 'var(--color-chart-negative)'
 }
 
 /** 하단 초점 밴드 — 기수별 출석률 게이지 · 성취도 · 위클리 · 수료 임박. */
@@ -534,7 +534,9 @@ function FocusBand({ boards }: { boards: CohortBoard[] }) {
                     <span
                       className={cn(
                         'text-[11px] font-bold',
-                        a.delta > 0 ? 'text-[#69DB7C]' : 'text-[#FF8787]',
+                        a.delta > 0
+                          ? 'text-success-inverse'
+                          : 'text-danger-inverse',
                       )}
                     >
                       {a.delta > 0 ? '▲' : '▼'}
@@ -575,17 +577,19 @@ function FocusBand({ boards }: { boards: CohortBoard[] }) {
                 </span>
                 <span className="flex items-center gap-2 text-[12px] tabular-nums">
                   {w.counselRequests > 0 && (
-                    <span className="rounded-md bg-[#FFD43B]/15 px-1.5 py-0.5 text-[11px] font-bold text-[#FFD43B]">
+                    <span className="bg-warning-inverse/15 text-warning-inverse rounded-md px-1.5 py-0.5 text-[11px] font-bold">
                       상담 {w.counselRequests}
                     </span>
                   )}
                   {w.lowCondition > 0 && (
-                    <span className="rounded-md bg-[#FF8787]/15 px-1.5 py-0.5 text-[11px] font-bold text-[#FF8787]">
+                    <span className="bg-danger-inverse/15 text-danger-inverse rounded-md px-1.5 py-0.5 text-[11px] font-bold">
                       컨디션 {w.lowCondition}
                     </span>
                   )}
                   {w.counselRequests === 0 && w.lowCondition === 0 && (
-                    <span className="text-[11px] text-[#69DB7C]">양호</span>
+                    <span className="text-success-inverse text-[11px]">
+                      양호
+                    </span>
                   )}
                 </span>
               </li>
@@ -609,7 +613,7 @@ function FocusBand({ boards }: { boards: CohortBoard[] }) {
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-semibold',
                     soon
-                      ? 'bg-[#FFD43B]/15 text-[#FFD43B]'
+                      ? 'bg-warning-inverse/15 text-warning-inverse'
                       : 'bg-white/[0.07] text-white/80',
                   )}
                 >
@@ -736,7 +740,9 @@ export function DashboardInsight({
           <span className="text-right font-semibold text-black/65">
             {p}/{t}
           </span>
-          <span className="text-right font-bold text-[#181A20]">{rate}%</span>
+          <span className="text-surface-inverse text-right font-bold">
+            {rate}%
+          </span>
         </span>
       ),
     }
@@ -748,7 +754,7 @@ export function DashboardInsight({
       label: b.cohortLabel,
       value: (
         <span className="inline-grid grid-cols-[2rem_1rem] items-baseline gap-0.5 tabular-nums">
-          <span className="text-right font-bold text-[#181A20]">
+          <span className="text-surface-inverse text-right font-bold">
             {b.issues.length}
           </span>
           <span className="text-left font-semibold text-black/60">명</span>
@@ -776,7 +782,9 @@ export function DashboardInsight({
       label: b.cohortLabel,
       value: (
         <span className="inline-grid grid-cols-[2.5rem_4.25rem_4rem] items-baseline gap-1.5 tabular-nums">
-          <span className="text-right font-bold text-[#181A20]">{n}건</span>
+          <span className="text-surface-inverse text-right font-bold">
+            {n}건
+          </span>
           <span className="text-right font-semibold text-black/65">
             자격증 {b.pending?.certificates ?? 0}
           </span>
@@ -791,14 +799,14 @@ export function DashboardInsight({
       key: '__quarantine',
       label: '인입 격리 큐',
       value: (
-        <span className="font-bold text-[#181A20] tabular-nums">
+        <span className="text-surface-inverse font-bold tabular-nums">
           {quarantineCount}건
         </span>
       ),
     })
 
   return (
-    <section className="relative z-[1] flex flex-col gap-4 overflow-hidden rounded-3xl bg-[#181A20] p-6 text-white">
+    <section className="bg-surface-inverse relative z-[1] flex flex-col gap-4 overflow-hidden rounded-3xl p-6 text-white">
       {/* 우상단 은은한 그린 글로우 */}
       <div
         aria-hidden
@@ -813,7 +821,7 @@ export function DashboardInsight({
         {/* 좌: 라벨 + 액션 큐 + 인사이트 문장 */}
         <div className="relative z-[1] flex min-w-0 flex-col gap-4">
           <span className="inline-flex items-center gap-2 text-[13px] font-bold tracking-wide text-white/[0.78]">
-            <ListChecks className="h-4 w-4 text-[#FAB005]" />
+            <ListChecks className="text-warning-inverse h-4 w-4" />
             오늘 인사이트
           </span>
 
@@ -901,7 +909,7 @@ export function DashboardInsight({
                   points={trend.points}
                   width={168}
                   height={32}
-                  stroke="#40C057"
+                  stroke="var(--color-chart-positive)"
                   todayIndex={todayIdx}
                 />
                 <div
@@ -936,9 +944,11 @@ export function DashboardInsight({
             suffix="명"
             sub={
               riskCount === 0 ? (
-                <span className="text-[#69DB7C]">이상 출결 없음</span>
+                <span className="text-success-inverse">이상 출결 없음</span>
               ) : urgentCount > 0 ? (
-                <span className="text-[#FF8787]">긴급 {urgentCount}명 포함</span>
+                <span className="text-danger-inverse">
+                  긴급 {urgentCount}명 포함
+                </span>
               ) : (
                 '반복 지각·결석 인원'
               )
@@ -954,7 +964,9 @@ export function DashboardInsight({
             suffix="명"
             sub={
               absentCount === 0 ? (
-                <span className="text-[#69DB7C]">모든 기수 출석 완료</span>
+                <span className="text-success-inverse">
+                  모든 기수 출석 완료
+                </span>
               ) : (
                 `${absentCohortCount}개 기수에서 발생`
               )
@@ -969,7 +981,7 @@ export function DashboardInsight({
             suffix="건"
             sub={
               pendingCount === 0 ? (
-                <span className="inline-flex items-center gap-1 text-[#69DB7C]">
+                <span className="text-success-inverse inline-flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
                   모두 처리했어요
                 </span>

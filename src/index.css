@@ -34,6 +34,24 @@
   --color-surface: #ffffff;
   --color-on-color: #ffffff; /* 컬러/딥 배경 위 전경(텍스트·아이콘) 흰색. 배경엔 surface 사용 */
 
+  /* 다크 패널 컨텍스트 — 라이트용 시맨틱(warning #b27300 등)은 다크 배경 위 대비 부족.
+     운영 대시보드 '오늘 인사이트'(2026-07-08) 발원, 혼용값은 다수결 정규화(2026-07-08 감사). */
+  --color-surface-inverse: #181a20;
+  --color-danger-inverse: #ff8787;
+  --color-warning-inverse: #ffd43b;
+  --color-info-inverse: #74c0fc;
+  --color-success-inverse: #69db7c;
+  --color-accent-inverse: #b197fc;
+
+  /* 라이트 배경 차트·게이지 팔레트 — SVG fill/stroke·인라인 style 등 리터럴 색이 필요한 지점 전용.
+     텍스트·배지는 기존 시맨틱 토큰을 그대로 쓴다. */
+  --color-chart-positive: #40c057;
+  --color-chart-caution: #fab005;
+  --color-chart-negative: #ff6b6b;
+  --color-chart-neutral: #adb5bd;
+  --color-chart-info: #4dabf7;
+  --color-chart-accent: #7048e8;
+
   /* 운영 히어로 카드 공통 그림자 — 여러 화면에 중복되던 rgba 그림자를 토큰화(shadow-hero). */
   --shadow-hero: 0 8px 22px rgba(18, 23, 38, 0.18);
 }

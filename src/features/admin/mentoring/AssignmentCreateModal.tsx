@@ -33,12 +33,12 @@ interface AssignmentCreateModalProps {
   existingTeamCount: number
 }
 
-/** 진행률 색 — 신호등(초록/노랑/빨강). */
+/** 진행률 색 — 신호등(초록/노랑/빨강), 차트 팔레트 토큰. */
 function pctColor(pct: number | null) {
-  if (pct == null) return '#868E96'
-  if (pct >= 80) return '#40C057'
-  if (pct >= 50) return '#FAB005'
-  return '#FF6B6B'
+  if (pct == null) return 'var(--color-chart-neutral)'
+  if (pct >= 80) return 'var(--color-chart-positive)'
+  if (pct >= 50) return 'var(--color-chart-caution)'
+  return 'var(--color-chart-negative)'
 }
 
 /** 기본 일지 템플릿 커스텀 드롭다운 — 모달 하단이라 포털(fixed)로 띄워 잘림 방지. */

@@ -33,12 +33,12 @@ import type { AdminTeamLogBrief, MentorAssignmentRow } from './types'
 // 멘토링 팀 상세 (/admin/mentoring/teams/:teamId) — 카드 클릭 진입.
 // 개요 + 할 일·경고 스트립 + 누적 인정시간 추이 + 일지 상태 도넛 + 일지 타임라인 + 멘티 명단.
 
-/** 일지 상태별 색 — LOG_STATUS_META 톤과 동일 계열의 실제 hex. */
+/** 일지 상태별 색 — LOG_STATUS_META 톤과 동일 계열의 차트 팔레트 토큰. */
 const LOG_COLOR: Record<string, string> = {
-  valid: '#40C057',
-  resubmitted_valid: '#7048E8',
-  change_requested: '#4DABF7',
-  draft: '#ADB5BD',
+  valid: 'var(--color-chart-positive)',
+  resubmitted_valid: 'var(--color-chart-accent)',
+  change_requested: 'var(--color-chart-info)',
+  draft: 'var(--color-chart-neutral)',
 }
 function logColorOf(status: string, resubmitted: boolean) {
   if (status === 'valid')

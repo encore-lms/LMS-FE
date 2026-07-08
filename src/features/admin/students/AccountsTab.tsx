@@ -47,6 +47,7 @@ export function AccountsTab() {
     Record<string, boolean>
   >({})
   // HRD 동기화 — 과정/기수 선택 + 마지막 동기화 결과.
+  // HRD 동기화 — 과정/기수 선택 + 마지막 동기화 결과.
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null

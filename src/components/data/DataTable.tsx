@@ -44,7 +44,7 @@ export function DataTable<T>({
               <th
                 key={col.key}
                 className={cn(
-                  'text-fg-subtle px-4 py-3 text-[12.5px] font-medium tracking-wide whitespace-nowrap',
+                  'text-fg-subtle px-4 py-3 text-[12px] font-medium tracking-wide whitespace-nowrap',
                   alignCls(col.align),
                   col.className,
                 )}
@@ -95,7 +95,7 @@ export function DataTable<T>({
                   <td
                     key={col.key}
                     className={cn(
-                      'text-fg px-4 py-3.5 text-[13.5px] tabular-nums',
+                      'text-fg px-4 py-3.5 text-[13px] tabular-nums',
                       alignCls(col.align),
                       col.className,
                     )}

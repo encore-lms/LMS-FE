@@ -229,7 +229,7 @@ function AllCohortsView({
             <span className="text-fg block text-[13px] font-bold">
               {b.cohortLabel}
             </span>
-            <span className="text-fg-subtle block text-[11px]">
+            <span className="text-fg-subtle block text-[12px]">
               {fmtDate(b.startDate)}–{fmtDate(b.endDate)}
               {b.source === 'hrd-live' && (
                 <span className="text-info ml-1.5 font-semibold">
@@ -340,6 +340,17 @@ function AllCohortsView({
 
   // 기수별로 분리해 보여준다 — 이슈가 있는 기수만 패널을 만든다.
   const issueBoards = boards.filter((b) => b.issues.length > 0)
+  // 관리 필요 수강생 기수별 아코디언 — 기본은 첫 기수만 펼침(나머지 접힘).
+  const [openCohorts, setOpenCohorts] = useState<Set<string>>(
+    () => new Set(issueBoards[0] ? [issueBoards[0].cohortId] : []),
+  )
+  const toggleCohort = (id: string) =>
+    setOpenCohorts((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
 
   return (
     <>
@@ -379,57 +390,55 @@ function AllCohortsView({
       <div className="mt-6">
         <p className="text-fg mb-2 text-[15px] font-bold">관리 필요 수강생</p>
         {issueBoards.length === 0 ? (
-          <div className="border-border bg-surface rounded-xl border p-5">
-            <p className="text-fg-subtle py-4 text-center text-[13px]">
-              지각·결석 반복 수강생이 없어요
-            </p>
-          </div>
+          <p className="text-fg-subtle py-8 text-center text-[13px]">
+            지각·결석 반복 수강생이 없어요
+          </p>
         ) : (
-          <div className="flex flex-col gap-4">
-            {issueBoards.map((b) => (
-              <div
-                key={b.cohortId}
-                className="border-border bg-surface rounded-xl border"
-              >
-                <div className="border-border flex items-center justify-between border-b px-4 py-2.5">
-                  <span className="flex items-center gap-2">
-                    <i
-                      className="h-3.5 w-[3px] rounded-full"
-                      style={{ background: cohortColor(boards.indexOf(b)) }}
-                      aria-hidden
-                    />
-                    <span className="text-fg text-[12.5px] font-bold">
-                      {b.cohortLabel}
-                    </span>
-                    {b.source === 'hrd-live' && (
-                      <span className="text-info text-[11px] font-semibold">
-                        HRD 라이브
+          // 아웃라인 없는 플랫 아코디언 — 기수 헤더 클릭으로 접기/펼치기(기본 첫 기수만 펼침).
+          <div className="flex flex-col gap-3">
+            {issueBoards.map((b) => {
+              const open = openCohorts.has(b.cohortId)
+              return (
+                <div key={b.cohortId}>
+                  <button
+                    type="button"
+                    onClick={() => toggleCohort(b.cohortId)}
+                    aria-expanded={open}
+                    className="border-divider hover:bg-surface-muted/40 -mx-2 flex w-full items-center justify-between rounded-md border-b px-2 pb-2 pt-1"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ChevronRight
+                        className={cn(
+                          'text-fg-subtle size-4 shrink-0 transition-transform',
+                          open && 'rotate-90',
+                        )}
+                      />
+                      <i
+                        className="h-3.5 w-[3px] rounded-full"
+                        style={{ background: cohortColor(boards.indexOf(b)) }}
+                        aria-hidden
+                      />
+                      <span className="text-fg text-[13px] font-bold">
+                        {b.cohortLabel}
                       </span>
-                    )}
-                  </span>
-                  <span className="text-fg-subtle text-[11.5px]">
-                    {b.issues.length}명
-                  </span>
-                </div>
-                <div className="p-4">
-                  <ul className="divide-border divide-y">
-                    {b.issues.map((issue) => (
-                      <li
-                        key={issue.studentUuid}
-                        className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
-                      >
-                        <span className="text-fg text-[13px] font-semibold">
-                          {issue.name}
+                      {b.source === 'hrd-live' && (
+                        <span className="text-info text-[12px] font-semibold">
+                          HRD 라이브
                         </span>
-                        <span className="text-fg-muted text-[12px]">
-                          지각 {issue.lateCount}회 · 결석 {issue.absentCount}회
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                      )}
+                    </span>
+                    <span className="text-fg-subtle text-[12px]">
+                      {b.issues.length}명
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="pt-1">
+                      <RiskList issues={b.issues} />
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -577,13 +586,7 @@ function CohortDeepDive({
               ) : board.issues.length === 0 ? (
                 <PanelEmpty text="지각·결석 반복 수강생이 없어요" />
               ) : (
-                <IssueList
-                  rows={board.issues.map((i) => ({
-                    key: i.studentUuid,
-                    name: i.name,
-                    desc: `지각 ${i.lateCount}회 · 결석 ${i.absentCount}회`,
-                  }))}
-                />
+                <RiskList issues={board.issues} />
               )}
             </Panel>
           </div>
@@ -746,7 +749,178 @@ function BarRow({
 
 const ISSUE_PAGE_SIZE = 5
 
-// 관리 필요/결석자 목록 — 한 번에 최대 5명, 좌우 화살표로 페이지 이동.
+// 위험도 등급 — 결석 4회↑=긴급, 결석 2회↑ 또는 지각 5회↑=주의(인사이트 기준과 일치).
+type RiskTier = 'danger' | 'warning' | 'neutral'
+function riskTier(lateCount: number, absentCount: number): RiskTier {
+  if (absentCount >= 4) return 'danger'
+  if (absentCount >= 2 || lateCount >= 5) return 'warning'
+  return 'neutral'
+}
+const RISK_META: Record<
+  RiskTier,
+  { badge: string | null; badgeCls: string; bar: string; dot: string }
+> = {
+  danger: {
+    badge: '긴급',
+    badgeCls: 'bg-danger-bg text-danger',
+    bar: 'bg-danger',
+    dot: 'bg-danger',
+  },
+  warning: {
+    badge: '주의',
+    badgeCls: 'bg-warning-bg text-warning',
+    bar: 'bg-warning',
+    dot: 'bg-warning',
+  },
+  neutral: {
+    badge: null,
+    badgeCls: '',
+    bar: 'bg-fg-subtle/40',
+    dot: 'bg-fg-subtle/40',
+  },
+}
+
+// 관리 필요 수강생 한 행 — 위험도 점/막대(결석 비중)·지각·결석·등급 배지 + 클릭 시 상세.
+// 넓어진 전폭 행의 가운데를 위험도 막대로 채워 심각도가 한눈에 보이게 한다.
+function RiskStudentRow({
+  name,
+  lateCount,
+  absentCount,
+  maxAbsent,
+  onClick,
+}: {
+  name: string
+  lateCount: number
+  absentCount: number
+  maxAbsent: number
+  onClick?: () => void
+}) {
+  const tier = riskTier(lateCount, absentCount)
+  const meta = RISK_META[tier]
+  const pct =
+    maxAbsent > 0 ? Math.max(6, Math.round((absentCount / maxAbsent) * 100)) : 0
+
+  const inner = (
+    <>
+      <span className={cn('size-2 shrink-0 rounded-full', meta.dot)} />
+      <span className="text-fg w-24 shrink-0 truncate text-[13px] font-semibold">
+        {name}
+      </span>
+      <span className="bg-surface-muted hidden h-1.5 min-w-0 flex-1 overflow-hidden rounded-full sm:block">
+        <span
+          className={cn('block h-full rounded-full', meta.bar)}
+          style={{ width: `${pct}%` }}
+        />
+      </span>
+      <span className="text-fg-muted shrink-0 text-[12px] tabular-nums">
+        지각 {lateCount} · 결석 {absentCount}
+      </span>
+      {meta.badge && (
+        <span
+          className={cn(
+            'shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold',
+            meta.badgeCls,
+          )}
+        >
+          {meta.badge}
+        </span>
+      )}
+      {onClick && (
+        <ChevronRight className="text-fg-subtle group-hover/risk:text-fg size-4 shrink-0 transition-colors" />
+      )}
+    </>
+  )
+
+  const cls =
+    'flex w-full items-center gap-3 py-2.5 text-left first:pt-0 last:pb-0'
+  return onClick ? (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        cls,
+        'group/risk hover:bg-surface-muted/50 -mx-2 rounded-md px-2',
+      )}
+    >
+      {inner}
+    </button>
+  ) : (
+    <div className={cls}>{inner}</div>
+  )
+}
+
+// 위험도 목록 — 결석 많은 순 정렬 + 한 번에 5명 페이지네이션(딥다이브용).
+function RiskList({
+  issues,
+  onStudentClick,
+}: {
+  issues: { studentUuid: string; name: string; lateCount: number; absentCount: number }[]
+  onStudentClick?: (name: string) => void
+}) {
+  const [page, setPage] = useState(0)
+  const sorted = useMemo(
+    () =>
+      [...issues].sort(
+        (a, b) => b.absentCount - a.absentCount || b.lateCount - a.lateCount,
+      ),
+    [issues],
+  )
+  const maxAbsent = Math.max(1, ...sorted.map((i) => i.absentCount))
+  const pageCount = Math.ceil(sorted.length / ISSUE_PAGE_SIZE)
+  const safePage = Math.min(page, Math.max(0, pageCount - 1))
+  const start = safePage * ISSUE_PAGE_SIZE
+  const visible = sorted.slice(start, start + ISSUE_PAGE_SIZE)
+
+  return (
+    <div className="flex flex-col">
+      <div className="flex flex-col">
+        {visible.map((i) => (
+          <RiskStudentRow
+            key={i.studentUuid}
+            name={i.name}
+            lateCount={i.lateCount}
+            absentCount={i.absentCount}
+            maxAbsent={maxAbsent}
+            onClick={onStudentClick ? () => onStudentClick(i.name) : undefined}
+          />
+        ))}
+      </div>
+      {pageCount > 1 && (
+        <div className="border-border mt-2 flex items-center justify-between border-t pt-2">
+          <span className="text-fg-subtle text-[11px] tabular-nums">
+            {start + 1}–{Math.min(start + ISSUE_PAGE_SIZE, sorted.length)} / 총{' '}
+            {sorted.length}명
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="이전 수강생"
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage === 0}
+              className="border-border text-fg-muted hover:bg-surface-muted flex size-6 items-center justify-center rounded-md border disabled:opacity-40"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-fg-subtle text-[11px] tabular-nums">
+              {safePage + 1}/{pageCount}
+            </span>
+            <button
+              type="button"
+              aria-label="다음 수강생"
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage >= pageCount - 1}
+              className="border-border text-fg-muted hover:bg-surface-muted flex size-6 items-center justify-center rounded-md border disabled:opacity-40"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 결석자 목록 — 한 번에 최대 5명, 좌우 화살표로 페이지 이동.
 function IssueList({
   rows,
 }: {

@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   BookOpen,
   Check,
+  ClipboardCheck,
   Coins,
   FileSpreadsheet,
   Gamepad2,
@@ -11,6 +12,7 @@ import {
   Inbox,
   Link2,
   NotebookPen,
+  PenSquare,
   Plus,
   Settings,
   Star,
@@ -32,78 +34,20 @@ interface QuickLinkDef {
 
 // 추가 가능한 화면 카탈로그 — 운영 메뉴의 주요 목적지.
 const CATALOG: QuickLinkDef[] = [
-  {
-    to: '/admin/students',
-    label: '학생 관리',
-    icon: Users,
-    tone: 'bg-info-bg text-info',
-  },
-  {
-    to: '/admin/education',
-    label: '과정·기수·교과목',
-    icon: BookOpen,
-    tone: 'bg-success-bg text-success',
-  },
-  {
-    to: '/admin/mentors/assignments',
-    label: '멘토링 관리',
-    icon: HeartHandshake,
-    tone: 'bg-accent-bg text-accent-strong',
-  },
-  {
-    to: '/admin/mileage',
-    label: '마일리지',
-    icon: Coins,
-    tone: 'bg-warning-bg text-warning',
-  },
-  {
-    to: '/admin/mentoring/logs',
-    label: '멘토링 일지',
-    icon: NotebookPen,
-    tone: 'bg-accent-bg text-accent-strong',
-  },
-  {
-    to: '/admin/reputation',
-    label: '평판 관리',
-    icon: Star,
-    tone: 'bg-warning-bg text-warning',
-  },
-  {
-    to: '/admin/certificates/reviews',
-    label: '인증 검토',
-    icon: BadgeCheck,
-    tone: 'bg-success-bg text-success',
-  },
-  {
-    to: '/admin/csv-mapping',
-    label: 'CSV 매핑',
-    icon: FileSpreadsheet,
-    tone: 'bg-info-bg text-info',
-  },
-  {
-    to: '/admin/ingestion/quarantine',
-    label: '인입 격리 큐',
-    icon: Inbox,
-    tone: 'bg-danger-bg text-danger',
-  },
-  {
-    to: '/admin/integrations',
-    label: '외부 연동',
-    icon: Link2,
-    tone: 'bg-info-bg text-info',
-  },
-  {
-    to: '/admin/play/typing-texts',
-    label: 'PLAY 관리',
-    icon: Gamepad2,
-    tone: 'bg-accent-bg text-accent-strong',
-  },
-  {
-    to: '/admin/settings',
-    label: '설정',
-    icon: Settings,
-    tone: 'bg-surface-muted text-fg-muted',
-  },
+  { to: '/admin/students', label: '학생 관리', icon: Users, tone: 'bg-info-bg text-info' },
+  { to: '/admin/education', label: '과정·기수·교과목', icon: BookOpen, tone: 'bg-success-bg text-success' },
+  { to: '/admin/mentors/assignments', label: '멘토링 관리', icon: HeartHandshake, tone: 'bg-accent-bg text-accent-strong' },
+  { to: '/admin/mileage', label: '마일리지', icon: Coins, tone: 'bg-warning-bg text-warning' },
+  { to: '/admin/mentoring/logs', label: '멘토링 일지', icon: NotebookPen, tone: 'bg-accent-bg text-accent-strong' },
+  { to: '/admin/reputation', label: '평판 관리', icon: Star, tone: 'bg-warning-bg text-warning' },
+  { to: '/admin/education?tab=records', label: '학습 기록', icon: ClipboardCheck, tone: 'bg-success-bg text-success' },
+  { to: '/admin/certificates/reviews', label: '인증 검토', icon: BadgeCheck, tone: 'bg-success-bg text-success' },
+  { to: '/admin/quizzes', label: '퀴즈 관리', icon: PenSquare, tone: 'bg-info-bg text-info' },
+  { to: '/admin/csv-mapping', label: 'CSV 매핑', icon: FileSpreadsheet, tone: 'bg-info-bg text-info' },
+  { to: '/admin/ingestion/quarantine', label: '인입 격리 큐', icon: Inbox, tone: 'bg-danger-bg text-danger' },
+  { to: '/admin/integrations', label: '외부 연동', icon: Link2, tone: 'bg-info-bg text-info' },
+  { to: '/admin/play/typing-texts', label: 'PLAY 관리', icon: Gamepad2, tone: 'bg-accent-bg text-accent-strong' },
+  { to: '/admin/settings', label: '설정', icon: Settings, tone: 'bg-surface-muted text-fg-muted' },
 ]
 
 const STORAGE_KEY = 'admin-quick-links'
@@ -114,17 +58,27 @@ const DEFAULTS = [
   '/admin/mileage',
 ]
 
+// 낡은 경로 → 새 경로 마이그레이션. 카탈로그 재정비 시 기존 저장값이 사라지지 않게.
+// 학습 기록: 단독 라우트 제거 → 과정·기수·교과목 기록실 탭으로 흡수.
+const MIGRATE: Record<string, string> = {
+  '/admin/records/review': '/admin/education?tab=records',
+}
+
 function loadLinks(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULTS
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return DEFAULTS
-    // 카탈로그에서 사라진 경로는 걸러 낡은 저장값에도 안전하게.
-    const valid = parsed.filter(
-      (p): p is string =>
-        typeof p === 'string' && CATALOG.some((c) => c.to === p),
-    )
+    // 낡은 경로는 새 경로로 치환하고, 카탈로그에 없는 건 걸러 낸다(중복 제거 포함).
+    const valid: string[] = []
+    for (const p of parsed) {
+      if (typeof p !== 'string') continue
+      const to = MIGRATE[p] ?? p
+      if (CATALOG.some((c) => c.to === to) && !valid.includes(to)) {
+        valid.push(to)
+      }
+    }
     return valid.length > 0 ? valid : DEFAULTS
   } catch {
     return DEFAULTS

@@ -46,7 +46,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 export default function IntegrationsPage() {
   usePageHeader(
     '외부 연동',
-    '노션·GitHub·Google·행정·Slack 연동 상태 · SyncJob · 내부 사용자 전용',
+    '노션·GitHub·Google·Slack 등 외부 서비스 연동 상태를 확인하고 관리합니다',
   )
   const { data, isPending, isError, refetch } = useIntegrations()
   const toast = useToast()

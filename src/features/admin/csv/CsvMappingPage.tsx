@@ -65,7 +65,7 @@ const HANDLING_META: Record<
 // 파일 선택·업로드는 operations-service /admin/csv-ingest 실연동(P0_20 업로드 구간).
 // KPI·매핑 표·검증 표는 소스별 mock 유지(매핑 규칙 UI는 BE 계약 미확정 → 토스트 + TODO).
 export default function CsvMappingPage() {
-  usePageHeader('CSV 매핑·업로드', '원본 CSV/XLSX → 도메인 필드 매핑·검증·인입')
+  usePageHeader('CSV 매핑·업로드', 'CSV·엑셀 파일을 업로드하고 항목을 연결해 데이터를 등록합니다')
   const { data, isPending, isError, refetch } = useCsvImport()
   const { data: ingestDatasets } = useCsvIngestDatasets()
   const { data: ingestUploads } = useCsvIngestUploads()

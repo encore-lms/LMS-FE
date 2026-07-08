@@ -156,7 +156,7 @@ function DescriptionPane({
 export default function EducationPage() {
   usePageHeader(
     '과정·기수·교과목',
-    '자료실·과제·퀴즈·프로젝트·이력서·기록실·설정',
+    '과정·기수별 학습 자료와 활동을 한 곳에서 관리합니다',
   )
 
   const { data: courses } = useCourseList()

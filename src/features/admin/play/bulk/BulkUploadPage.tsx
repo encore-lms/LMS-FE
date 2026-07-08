@@ -56,7 +56,7 @@ const HANDLING_META: Record<
 export default function BulkUploadPage() {
   usePageHeader(
     '타자 제시문 일괄 업로드',
-    'CSV/XLSX 업로드 → 필수 열·본문 길이·제목 중복·난이도 검증',
+    'CSV·엑셀 파일로 제시문을 한 번에 등록합니다',
   )
   const { data, isPending, isError, refetch } = usePlayBulkPreview()
   const toast = useToast()

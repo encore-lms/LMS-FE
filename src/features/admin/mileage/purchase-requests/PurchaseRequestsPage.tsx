@@ -39,7 +39,7 @@ const STATUS_META: Record<
 export default function PurchaseRequestsPage() {
   usePageHeader(
     '마일리지 구매 요청',
-    '수강생 상품 구매 요청 승인·수정 요청·반려 · 타입 한도 자동 검증',
+    '수강생의 상품 구매 요청을 확인하고 승인·반려합니다',
   )
   const [cohortId, setCohortId] = useSearchParamState('cohortId')
   const { data, isPending, isError, refetch } = usePurchaseQueue(cohortId)

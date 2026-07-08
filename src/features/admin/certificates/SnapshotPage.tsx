@@ -36,7 +36,7 @@ export default function SnapshotPage() {
   const verifyRef = useRef<HTMLElement>(null)
   usePageHeader(
     '스냅샷 상세',
-    'certified 증명서의 동결 스냅샷 · 매니저·운영팀 전용',
+    '인증 완료 시점의 증명서 내용을 확인합니다',
   )
 
   if (isPending) {

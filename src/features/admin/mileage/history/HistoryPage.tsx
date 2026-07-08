@@ -37,7 +37,7 @@ const AMOUNT_COLOR: Record<AmountSign, string> = {
 export default function HistoryPage() {
   usePageHeader(
     '마일리지 지급 내역',
-    '지급·차감 원장 조회 · 기수 선택 전 빈 상태 안내 · 직접 지급/구매 승인 즉시 반영',
+    '기수별 마일리지 지급·차감 내역을 확인합니다',
   )
   const [cohortId, setCohortId] = useSearchParamState('cohortId')
   const { data, isPending, isError, refetch } = useMileageHistory(cohortId)

@@ -44,7 +44,7 @@ const TAB_ICON: Record<string, { icon: typeof Receipt; tone: string }> = {
 export default function MileagePage() {
   usePageHeader(
     '마일리지 관리',
-    '지급 내역 · 직접 지급 · 구매 요청 · 상품 관리 · 타입 한도 설정',
+    '마일리지 지급과 구매 요청, 상품을 한 곳에서 관리합니다',
   )
   const { data, isPending, isError, refetch } = useMileageOverview()
   const toast = useToast()

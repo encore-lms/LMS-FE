@@ -43,7 +43,7 @@ const ACTION_LABEL: Record<CertFieldAction, string> = {
 export default function CertificateTemplatePage() {
   usePageHeader(
     '증명서 템플릿',
-    '공개/내부 필드·스냅샷 정책 — 증명서 템플릿 관리',
+    '증명서에 표시할 항목과 공개 범위를 설정합니다',
   )
   const { data, isPending, isError, refetch } = useCertificateTemplate()
   const toast = useToast()

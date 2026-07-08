@@ -33,7 +33,7 @@ export default function ReviewQueuePage() {
   const { data, isPending, isError, refetch } = useReviewQueue()
   const [tab, setTab] = useSearchParamState('tab', 'all')
   const [q, setQ] = useSearchParamState('q')
-  usePageHeader('인증 검토 큐', '운영 › 인증 검토')
+  usePageHeader('인증 검토 큐', '수강생의 증명서 인증 요청을 검토합니다')
 
   const filtered = useMemo(() => {
     if (!data) return []

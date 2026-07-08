@@ -37,7 +37,7 @@ export default function AuditLogPage() {
   const toast = useToast()
   usePageHeader(
     '감사 로그',
-    '증명서 인증·보완·공개·마트·보안 이력 · 불변 로그 · 내부 사용자 전용',
+    '증명서 인증·보완·공개 등 주요 처리 이력을 확인합니다',
   )
   const { data, isPending, isError, refetch } = useAuditLog(certificateId)
   const [active, setActive] = useState<ChipKey[]>([])

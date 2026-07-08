@@ -60,7 +60,7 @@ export default function ReviewDetailPage() {
   const reviewAction = useReviewAction()
   usePageHeader(
     '인증 검토 상세',
-    '증명서 미리보기 · 승인 필수 체크 · 점수 근거 검토',
+    '증명서를 미리 보고 점수 근거를 확인한 뒤 승인 여부를 결정합니다',
   )
   const [tab, setTab] = useState(0)
   const [openModal, setOpenModal] = useState<

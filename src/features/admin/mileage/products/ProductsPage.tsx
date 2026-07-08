@@ -32,7 +32,7 @@ const PRICE_MODE_LABEL = { fixed: '고정가', flexible: '수강생 입력' } as
 export default function ProductsPage() {
   usePageHeader(
     '마일리지 상품 관리',
-    '상품 등록·수정·삭제 · 타입별 가격 방식 분기 · 참조 중 삭제 제한',
+    '마일리지로 구매할 수 있는 상품을 등록하고 관리합니다',
   )
   const { data, isPending, isError, refetch } = useMileageProducts()
   const upsert = useUpsertProduct()

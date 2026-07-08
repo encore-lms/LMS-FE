@@ -42,7 +42,7 @@ const FORM_CRITERIA: { label: string; desc: string }[] = [
 export default function TypingTextsPage() {
   usePageHeader(
     'PLAY 타자 관리',
-    '과정별 PLAY 제시문 등록 · 노출 상태 · 업로드 오류 관리',
+    '과정별 타자 게임 제시문을 등록하고 노출 상태를 관리합니다',
   )
   const { data, isPending, isError, refetch } = usePlayTypingTexts()
   const upsert = useUpsertPassage()

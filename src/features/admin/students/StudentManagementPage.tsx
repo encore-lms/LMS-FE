@@ -20,7 +20,7 @@ export default function StudentManagementPage() {
   const [tab, setTab] = useSearchParamState('tab', 'attendance')
   usePageHeader(
     '학생 관리',
-    'MANAGER 전용 · HRD-Net 동기화 · 계정·출결·출결 폼 관제',
+    '수강생 명단과 출결을 확인하고 계정을 관리합니다',
   )
 
   return (

@@ -56,7 +56,7 @@ function fmtDate(d: string) {
 }
 
 export default function AdminDashboard() {
-  usePageHeader('운영 대시보드', '담당 기수 운영 현황 — CSV 인입 원본 기준')
+  usePageHeader('운영 대시보드', '담당 기수의 운영 현황을 한눈에 확인합니다')
   const myCohorts = useMyCohorts()
   const dashboard = useOperatorDashboard(myCohorts.data)
   const hrdLive = useHrdLiveSummaries(myCohorts.data, dashboard.data?.cohorts)

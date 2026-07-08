@@ -59,7 +59,7 @@ const PUSH_LABEL: Record<PushTarget, string> = {
 export default function ReputationPage() {
   usePageHeader(
     '평판 관리',
-    '수강생별 평판 수집 현황 · 강사·멘토·동료 요청 푸시 · 내부 사용자 전용',
+    '수강생별 평판 수집 현황을 확인하고 강사·멘토·동료에게 평가를 요청합니다',
   )
   const { data, isPending, isError, refetch } = useReputation()
   const push = useReputationPush()

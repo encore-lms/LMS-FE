@@ -35,7 +35,7 @@ const STATUS_META: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
 // 행 클릭 시 우측에 세션 상세(카테고리·실패 행·액션). 재시도·폐기·다운로드 흐름은
 // 별도 시안 미설계 → 토스트 안내 + TODO. '새 CSV 인입'은 CSV 매핑 화면으로 라우팅.
 export default function IngestionQueuePage() {
-  usePageHeader('인입 격리 큐', 'CSV 대량 인입 실패 행 추적·수정·재시도')
+  usePageHeader('인입 격리 큐', '업로드에 실패한 데이터를 확인하고 수정해 다시 처리합니다')
   const { data, isPending, isError, refetch } = useIngestionQueue()
   const sessionAction = useIngestionAction()
   const toast = useToast()

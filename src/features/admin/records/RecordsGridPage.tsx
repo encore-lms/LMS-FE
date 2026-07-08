@@ -54,7 +54,7 @@ export default function RecordsGridPage({
   embedded?: boolean
   cohortId?: string | null
 }) {
-  usePageHeader('학습 기록', '운영 › 학습 기록 검토', !embedded)
+  usePageHeader('학습 기록', '수강생이 제출한 학습 기록을 검토하고 승인·반려합니다', !embedded)
   const [category, setCategory] = useSearchParamState('category', 'blog')
   const [q, setQ] = useSearchParamState('q')
   const [reviewId, setReviewId] = useState<string | null>(null)

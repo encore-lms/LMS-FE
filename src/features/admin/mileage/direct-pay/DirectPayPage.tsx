@@ -31,7 +31,7 @@ const QUICK_ADD = [1000, 5000, 10000, 50000]
 export default function DirectPayPage() {
   usePageHeader(
     '마일리지 직접 지급',
-    '다중 수강생 일괄 지급/차감 · 누적 상한·보유액·부분 지급 자동 검증',
+    '여러 수강생에게 마일리지를 한 번에 지급하거나 차감합니다',
   )
   const [cohortId, setCohortId] = useSearchParamState('cohortId')
   const { data, isPending, isError, refetch } = useDirectPayRoster(cohortId)

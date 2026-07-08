@@ -150,10 +150,20 @@ export default function AdminDashboard() {
       {/* 날짜·기수 칩 헤더 행은 제거(운영 요구) — 기수 상세는 비교 표 행 클릭으로 진입. */}
       <div>
         {single ? (
-          <CohortDeepDive
-            board={boards[0]}
-            hrdPending={hrdLive.isPending && hrdLive.isFetching}
-          />
+          // 담당 1기수도 상단 '오늘 인사이트'를 동일하게 제공(전 매니저 첫인상 통일),
+          // 그 아래 해당 기수 상세를 이어서 보여준다.
+          <div className="flex flex-col gap-6">
+            <DashboardInsight
+              boards={boards}
+              quarantineCount={dashboard.data.quarantineCount}
+              today={dashboard.data.today}
+              upcoming={dashboard.data.upcoming}
+            />
+            <CohortDeepDive
+              board={boards[0]}
+              hrdPending={hrdLive.isPending && hrdLive.isFetching}
+            />
+          </div>
         ) : (
           <AllCohortsView
             boards={boards}

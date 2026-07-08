@@ -156,6 +156,14 @@ describe('AdminDashboard (관제탑형)', () => {
     expect(screen.getByText('성취도 평가 회차별 평균')).toBeInTheDocument()
   })
 
+  it('담당 기수가 1개면 오늘 인사이트와 기수 상세를 함께 보여준다', () => {
+    mockHooks([refs[0]], { ...dashboard, cohorts: [board24] })
+    renderPage()
+    // 상단 인사이트 히어로 + 아래 해당 기수 딥다이브(수료 기수 → 최종 출석률)가 같이 렌더된다.
+    expect(screen.getByText('오늘 인사이트')).toBeInTheDocument()
+    expect(screen.getByText('최종 출석률')).toBeInTheDocument()
+  })
+
   it('기수가 하나도 없으면 등록 안내 빈 화면을 보여준다', () => {
     // 담당 미배정은 useMyCohorts가 전체 기수로 폴백하므로, refs가 비면 시스템에 기수 자체가 없는 경우다.
     mockHooks([], undefined)

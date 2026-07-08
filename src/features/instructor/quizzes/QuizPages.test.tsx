@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import QuizListPage from './QuizListPage'
 import QuizFormPage from './QuizFormPage'
-import QuestionManagePage from './QuestionManagePage'
 import SubmissionsPage from './SubmissionsPage'
 import GradingPage from './GradingPage'
 import {
@@ -287,10 +286,6 @@ function renderAt(path: string, overrideMocks?: () => void) {
             element={<QuizFormPage />}
           />
           <Route
-            path="/instructor/quizzes/:quizId/questions"
-            element={<QuestionManagePage />}
-          />
-          <Route
             path="/instructor/quizzes/:quizId/submissions"
             element={<SubmissionsPage />}
           />
@@ -346,25 +341,6 @@ describe('QuizFormPage (§6)', () => {
     await user.click(screen.getByRole('button', { name: /^저장$/ }))
     // 시작/종료/제한시간은 생성 시 기본값(현재·다음날·60분)이라 제목만 검증 에러.
     expect(await screen.findByText('제목을 입력해주세요')).toBeInTheDocument()
-  })
-})
-
-describe('QuestionManagePage (§7)', () => {
-  it('메타 바·문제 목록·편집 폼을 렌더한다', () => {
-    renderAt('/instructor/quizzes/quiz-algo-3/questions')
-    expect(screen.getByText('총점 합계')).toBeInTheDocument()
-    expect(screen.getByText('100 / 100')).toBeInTheDocument()
-    expect(screen.getByText('재귀 함수의 종료 조건')).toBeInTheDocument()
-    expect(screen.getByText(/문제 1 — 편집 중/)).toBeInTheDocument()
-  })
-
-  it('문제 선택 시 편집 대상이 바뀐다', async () => {
-    const user = userEvent.setup()
-    renderAt('/instructor/quizzes/quiz-algo-3/questions')
-    await user.click(screen.getByText('DP vs 메모이제이션'))
-    expect(screen.getByText(/문제 2 — 편집 중/)).toBeInTheDocument()
-    // 주관식 → 수동 채점 안내
-    expect(screen.getByText('수동 채점 (강사 입력)')).toBeInTheDocument()
   })
 })
 

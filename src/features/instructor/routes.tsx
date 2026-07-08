@@ -37,7 +37,6 @@ const TemplateQuestionsPage = lazy(
   () => import('./quiz-templates/TemplateQuestionsPage'),
 )
 const QuizFormPage = lazy(() => import('./quizzes/QuizFormPage'))
-const QuestionManagePage = lazy(() => import('./quizzes/QuestionManagePage'))
 const SubmissionsPage = lazy(() => import('./quizzes/SubmissionsPage'))
 const GradingPage = lazy(() => import('./quizzes/GradingPage'))
 // 마이 프로필 — 전 역할 공용 화면(features/profile), 헤더 아바타 드롭다운에서 진입(§7-X).
@@ -80,7 +79,6 @@ export const instructorRoutes: RouteObject[] = [
       { path: 'quizzes', element: <QuizListPage /> },
       { path: 'quizzes/new', element: <QuizFormPage /> },
       { path: 'quizzes/:quizId/edit', element: <QuizFormPage /> },
-      { path: 'quizzes/:quizId/questions', element: <QuestionManagePage /> },
       { path: 'quizzes/:quizId/submissions', element: <SubmissionsPage /> },
       {
         path: 'quizzes/:quizId/submissions/:submissionId/grade',

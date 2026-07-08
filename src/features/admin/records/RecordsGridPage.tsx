@@ -2,14 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
-import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/shared/api'
 import { cn } from '@/shared/lib/cn'
 import type { RecordEvidenceImage } from '@/shared/types'
-import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { useCourseConfig, useCourseList } from '../api/settings'
 import type {
   RecordCategory,
   RecordDecision,
@@ -26,7 +23,7 @@ import { SkeletonCards } from '@/components/ui/Skeleton'
 
 // 운영 기록실 — 수강생 × 주차 제출 현황 그리드(이전 LMS RecordsGridView).
 // 블로그/스터디/자격증 탭, 셀(dot) 클릭 시 해당 제출을 검토(승인/보완/반려)한다.
-// embedded=true면 과정·기수·교과목 '기록실' 탭에 임베드(헤더·패딩 생략).
+// 과정·기수·교과목 '기록실' 탭에 임베드된다(헤더·패딩·기수 선택은 부모 화면 소유).
 const CATEGORY_TABS: { key: RecordCategory; label: string }[] = [
   { key: 'blog', label: '블로그' },
   { key: 'study', label: '스터디' },
@@ -48,29 +45,13 @@ const DOT_TITLE: Record<string, string> = {
 }
 
 export default function RecordsGridPage({
-  embedded = false,
-  cohortId: cohortIdProp = null,
+  cohortId = null,
 }: {
-  embedded?: boolean
   cohortId?: string | null
 }) {
-  usePageHeader('학습 기록', '수강생이 제출한 학습 기록을 검토하고 승인·반려합니다', !embedded)
   const [category, setCategory] = useSearchParamState('category', 'blog')
   const [q, setQ] = useSearchParamState('q')
   const [reviewId, setReviewId] = useState<string | null>(null)
-
-  // 단독 라우트(/admin/records/review) 진입 시엔 prop이 없으므로 상단에서 과정·기수를
-  // 직접 고른다(첫 항목 기본 선택). embed(교육 개요 등)일 땐 부모가 준 prop을 그대로 쓴다.
-  const standalone = !embedded && cohortIdProp == null
-  const { data: courses } = useCourseList()
-  const [selCourseId, setSelCourseId] = useState<string | null>(null)
-  const pickedCourseId = selCourseId ?? courses?.[0]?.courseId ?? null
-  const { data: courseConfig } = useCourseConfig(
-    standalone ? pickedCourseId : null,
-  )
-  const [selCohortId, setSelCohortId] = useState<string | null>(null)
-  const pickedCohortId = selCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
-  const cohortId = standalone ? pickedCohortId : cohortIdProp
 
   const {
     data: grid,
@@ -111,60 +92,25 @@ export default function RecordsGridPage({
         }
       })
     // 이름 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
+    return [...list].sort((a, b) =>
+      (a.name ?? '').localeCompare(b.name ?? '', 'ko'),
+    )
   }, [students, byStudent, weeks, q])
-
-  // 단독 진입용 과정·기수 셀렉트 바 — embed에서는 부모 화면이 이미 제공하므로 숨긴다.
-  const pickerBar = standalone && (
-    <div className="mb-4 flex flex-wrap gap-2">
-      <Select
-        aria-label="과정 선택"
-        value={pickedCourseId}
-        onChange={(v) => {
-          setSelCourseId(v)
-          setSelCohortId(null)
-        }}
-        options={(courses ?? []).map((c) => ({
-          value: c.courseId,
-          label: c.title,
-        }))}
-        placeholder="등록 과정 없음"
-        className="h-9"
-      />
-      <Select
-        aria-label="기수 선택"
-        value={pickedCohortId}
-        onChange={(v) => setSelCohortId(v)}
-        options={(courseConfig?.cohorts ?? []).map((c) => ({
-          value: c.id,
-          label: `${c.cohortNo}기`,
-        }))}
-        placeholder="기수 없음"
-        className="h-9"
-      />
-    </div>
-  )
 
   if (!cohortId) {
     return (
-      <div className={embedded ? '' : 'p-8'}>
-        {pickerBar}
+      <div>
         <Empty
           icon={<AlertTriangle />}
-          title={standalone ? '표시할 기수가 없어요' : '기수를 선택해 주세요'}
-          description={
-            standalone
-              ? '설정 > 과정 관리에서 과정과 기수를 등록하면 제출 현황이 표시됩니다.'
-              : '상단에서 과정·기수를 선택하면 제출 현황이 표시됩니다.'
-          }
+          title="기수를 선택해 주세요"
+          description="상단에서 과정·기수를 선택하면 제출 현황이 표시됩니다."
         />
       </div>
     )
   }
 
   return (
-    <div className={embedded ? '' : 'p-8'}>
-      {pickerBar}
+    <div>
       {/* 탭 공통 필터 바 규격 — 좌: 카테고리 세그먼트 / 우: 검색(아이콘·w-56) */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="border-border focus-within:border-brand bg-surface order-2 flex h-9 w-56 items-center gap-2 rounded-lg border px-3">

@@ -1,6 +1,6 @@
 import type { MenuItem } from '@/components/layout'
 
-// 강사 사이드바 — 정본: Figma 강사 Sidebar 그룹핑(6항목) + 평가 관리(P0) 복원 = 7항목.
+// 강사 사이드바 — 정본: Figma 강사 Sidebar 그룹핑(6항목) + 평가 관리(P0) 복원 − 대시보드 제외 = 6항목.
 // 2026-06-10 정합: 리뷰 3종(학습기록 조회·프로젝트·트러블슈팅)을 '검토' 1항목으로 묶고,
 // Figma(05-19)에서 누락됐던 평가 관리(/instructor/quizzes, 퀴즈 출제·채점 P0 27)를 복원.
 export const instructorMenu: MenuItem[] = [

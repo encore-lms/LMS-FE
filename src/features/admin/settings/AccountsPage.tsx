@@ -66,7 +66,7 @@ function genInitialPassword(): string {
   return s + '!'
 }
 
-// 운영 계정 관리 (/admin/settings/accounts) — 매니저·강사·멘토 계정/권한 관제. (Figma 1284:8597)
+// 운영 계정 관리 (/admin/settings) — 매니저·강사·멘토 계정/권한 관제. (Figma 1284:8597)
 // 수정·담당 범위·비번 초기화·비활성화는 운영 액션 모달 v2(1306:8221)로 확인 후 실행.
 export default function AccountsPage() {
   const { data, isPending, isError, refetch } = useOpsAccounts()
@@ -114,7 +114,9 @@ export default function AccountsPage() {
       return true
     })
     // 이름 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
+    return [...list].sort((a, b) =>
+      (a.name ?? '').localeCompare(b.name ?? '', 'ko'),
+    )
   }, [data, role, status, q, statusOverride])
 
   // 사용자 표 페이지네이션 — 사용자가 많아져도 표가 길어지지 않도록.

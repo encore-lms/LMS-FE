@@ -229,7 +229,7 @@ export default function EducationPage() {
           )
         ) : tab === 'records' ? (
           // 검토·심사 '학습 기록 검토' 흡수.
-          <RecordsGridPage embedded cohortId={cohortId} />
+          <RecordsGridPage cohortId={cohortId} />
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />

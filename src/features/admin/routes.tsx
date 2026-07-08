@@ -10,8 +10,6 @@ const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
 const StudentManagementPage = lazy(
   () => import('./students/StudentManagementPage'),
 )
-const ResumePage = lazy(() => import('./resume/ResumePage'))
-const ResumeDetailPage = lazy(() => import('./resume/ResumeDetailPage'))
 // 과정·기수·교과목 통합 관리 (운영 전용 신설 — features/admin/education, Figma 1543:11011)
 const EducationPage = lazy(() => import('./education/EducationPage'))
 // 과정·기수·교과목 이력서 상세(실 BE, 페이지 전환) — ResumePane에서 진입
@@ -67,9 +65,6 @@ const QuizListPage = lazy(
 )
 const QuizFormPage = lazy(
   () => import('@/features/instructor/quizzes/QuizFormPage'),
-)
-const QuestionManagePage = lazy(
-  () => import('@/features/instructor/quizzes/QuestionManagePage'),
 )
 const QuizSubmissionsPage = lazy(
   () => import('@/features/instructor/quizzes/SubmissionsPage'),
@@ -151,8 +146,6 @@ export const adminRoutes: RouteObject[] = [
         element: <MentoringTeamLogFieldsPage />,
       },
       { path: 'students', element: <StudentManagementPage /> },
-      { path: 'resume', element: <ResumePage /> },
-      { path: 'resume/:resumeId', element: <ResumeDetailPage /> },
       { path: 'settings', element: <SettingsAccountsPage /> },
       { path: 'settings/hrd-api-key', element: <HrdApiKeyPage /> },
       { path: 'settings/course-config', element: <CourseConfigPage /> },
@@ -164,7 +157,6 @@ export const adminRoutes: RouteObject[] = [
       // 정답 관리 — 운영 전용(:quizId 하위지만 정적 'answers' 세그먼트를 동적 앞 컨벤션 위치에)
       { path: 'quizzes/:quizId/answers', element: <QuizAnswersPage /> },
       { path: 'quizzes/:quizId/edit', element: <QuizFormPage /> },
-      { path: 'quizzes/:quizId/questions', element: <QuestionManagePage /> },
       { path: 'quizzes/:quizId/submissions', element: <QuizSubmissionsPage /> },
       {
         path: 'quizzes/:quizId/submissions/:submissionId/grade',

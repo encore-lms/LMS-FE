@@ -248,8 +248,8 @@ const mockDashboard: StudentDashboardSummary = {
     },
     {
       id: 'a2',
-      title: '동기수 5명에게 PeerReputation 작성',
-      source: '평판 시스템',
+      title: '프로젝트 팀원 상호평가 작성',
+      source: '프로젝트 상호평가',
       relativeTime: '3시간 전',
       unread: true,
     },

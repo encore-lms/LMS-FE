@@ -93,21 +93,27 @@ export default function RecordReviewPage() {
     () =>
       [...(data?.blog ?? [])]
         .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) => (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko')),
+        .sort((a, b) =>
+          (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko'),
+        ),
     [data, needle],
   )
   const studyRows = useMemo(
     () =>
       [...(data?.study ?? [])]
         .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) => (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko')),
+        .sort((a, b) =>
+          (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko'),
+        ),
     [data, needle],
   )
   const certRows = useMemo(
     () =>
       [...(data?.cert ?? [])]
         .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) => (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko')),
+        .sort((a, b) =>
+          (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko'),
+        ),
     [data, needle],
   )
 
@@ -220,8 +226,7 @@ export default function RecordReviewPage() {
       )}
 
       <p className="text-fg-subtle mt-3 text-xs">
-        조회 전용 — 승인·반려·보완 요청은 운영 매니저(/admin/records/review)가
-        처리합니다.
+        조회 전용 — 승인·반려·보완 요청은 운영 매니저가 처리합니다.
       </p>
 
       <RecordDetailPanel data={panel} onClose={() => setPanel(null)} />

@@ -24,7 +24,7 @@ export default function PlayTypingPage() {
   const { data, isPending, isError, refetch } = usePlayTyping()
   usePageHeader(
     '타자 게임',
-    '제시문을 정확하고 빠르게 입력합니다. 결과는 서버 계산값으로 저장됩니다.',
+    '제시문을 정확하고 빠르게 입력해 점수를 겨룹니다.',
   )
 
   // 현재 제시문 + 다른 제시문을 하나의 목록으로 다룬다.

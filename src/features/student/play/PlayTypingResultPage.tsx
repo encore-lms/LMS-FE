@@ -14,7 +14,7 @@ export default function PlayTypingResultPage() {
   const result = (state as { result?: TypingResult } | null)?.result
   usePageHeader(
     '타자 게임 — 결과',
-    '서버가 세션 원본을 재계산한 최종 결과입니다. 점수·정확도는 저장 후 랭킹에 반영됩니다.',
+    '타자 게임 최종 결과입니다. 점수·정확도가 랭킹에 반영됩니다.',
   )
 
   if (!result) {

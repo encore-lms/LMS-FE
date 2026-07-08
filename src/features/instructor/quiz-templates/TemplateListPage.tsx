@@ -39,7 +39,7 @@ export default function TemplateListPage() {
   const [page, setPage] = useState(1)
   usePageHeader(
     '퀴즈 템플릿',
-    '재사용 문제 풀 관리 — 변경은 기존 파생 퀴즈에 소급 반영되지 않음',
+    '자주 쓰는 문제를 템플릿으로 저장해 재사용합니다',
   )
 
   const filtered = useMemo(() => {

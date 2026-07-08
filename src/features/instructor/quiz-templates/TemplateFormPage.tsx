@@ -90,7 +90,7 @@ export default function TemplateFormPage() {
   const [shuffleChoices, setShuffleChoices] = useState(true)
   usePageHeader(
     isEdit ? '퀴즈 템플릿 편집' : '퀴즈 템플릿 생성',
-    '기본 정보 · 채점 정책 · 문제 정책 · 메타 기본값',
+    '템플릿의 기본 정보와 채점·문제 설정을 입력합니다',
   )
 
   const {

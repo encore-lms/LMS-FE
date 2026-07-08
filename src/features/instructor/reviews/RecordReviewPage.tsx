@@ -52,7 +52,7 @@ export default function RecordReviewPage() {
 
   usePageHeader(
     '학습 기록 조회',
-    '담당 과정·기수 학습 기록 제출·검토 현황 조회 — 승인·반려는 운영 매니저가 처리',
+    '담당 기수 수강생의 학습 기록 제출 현황을 확인합니다',
   )
 
   const { data, isPending, isError, refetch } = useRecordReviews(

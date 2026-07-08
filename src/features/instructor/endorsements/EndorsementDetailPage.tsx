@@ -31,7 +31,7 @@ export default function EndorsementDetailPage() {
   const update = useUpdateEndorsement(endorsementId)
   const del = useDeleteEndorsement()
   const [confirmDelete, setConfirmDelete] = useState(false)
-  usePageHeader('강사 추천서 상세/수정', '강사 › 강사 추천서 › 상세/수정')
+  usePageHeader('강사 추천서 상세/수정', '추천서 내용을 확인하고 수정합니다')
 
   const {
     register,

@@ -14,7 +14,7 @@ export default function PlayQuizResultPage() {
   const result = (state as { result?: QuizBattleResult } | null)?.result
   usePageHeader(
     'CS 퀴즈 배틀 — 결과',
-    '최종 정답 수와 콤보로 산정된 배틀 결과입니다. 서버 재계산 기준으로 랭킹에 반영됩니다.',
+    '최종 정답 수와 콤보로 산정된 배틀 결과입니다. 점수는 랭킹에 반영됩니다.',
   )
 
   if (!result) {

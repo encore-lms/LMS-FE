@@ -52,7 +52,7 @@ export default function ProjectReviewPage() {
   >({})
   usePageHeader(
     '프로젝트 검토',
-    '발표 후 인증 큐 — 인증 후 변경은 변경 제안 흐름으로만 가능',
+    '수강생의 프로젝트를 검토하고 인증합니다',
   )
 
   const cohortTabs = useMemo(

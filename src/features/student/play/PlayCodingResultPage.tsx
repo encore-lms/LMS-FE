@@ -15,7 +15,7 @@ export default function PlayCodingResultPage() {
   const result = (state as { result?: CodingTestResult } | null)?.result
   usePageHeader(
     '코딩 테스트 — 결과',
-    '서버가 제출을 재채점한 최종 결과입니다. 해결·통과율·점수는 저장 후 랭킹에 반영됩니다.',
+    '코딩 테스트 최종 결과입니다. 해결·통과율·점수가 랭킹에 반영됩니다.',
   )
 
   if (!result) {

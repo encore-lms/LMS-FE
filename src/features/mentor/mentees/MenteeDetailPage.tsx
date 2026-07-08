@@ -37,7 +37,7 @@ const AXIS_COLORS = [
 export default function MenteeDetailPage() {
   usePageHeader(
     '학생 상세',
-    '팀 상세 → 팀원 → 학생 상세 · 멘토 관점 평가·추천·참석 이력',
+    '멘티의 평가·추천·참석 이력을 확인합니다',
   )
   const { studentId = '' } = useParams()
   const { data, isPending, isError, refetch } = useMenteeDetail(studentId)

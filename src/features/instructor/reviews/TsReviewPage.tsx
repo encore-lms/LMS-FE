@@ -53,7 +53,7 @@ export default function TsReviewPage() {
   >({})
   usePageHeader(
     '트러블슈팅 검토',
-    'STAR 사례 인증 큐 — 독립해결·소요일수 근거 확인 후 인증',
+    '수강생의 트러블슈팅 사례를 검토하고 인증합니다',
   )
 
   const cohortTabs = useMemo(

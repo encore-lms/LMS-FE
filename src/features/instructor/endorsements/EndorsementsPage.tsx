@@ -29,7 +29,7 @@ export default function EndorsementsPage() {
   const submit = useSubmitEndorsement()
   usePageHeader(
     '강사 추천서',
-    '담당 학생을 위한 추천서를 작성하고 증명서 5번 탭(성장·평판)에 공급합니다',
+    '담당 수강생을 위한 추천서를 작성합니다',
   )
 
   const pending = useMemo(() => data?.pending ?? [], [data])

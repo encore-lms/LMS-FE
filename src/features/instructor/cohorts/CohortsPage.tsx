@@ -30,7 +30,7 @@ export default function CohortsPage() {
   const [status, setStatus] = useState<CohortStatus>('operating')
   usePageHeader(
     '담당 과정/기수',
-    '강사·보조강사·멘토 배정 기수 진입 · 종료 과정은 필터로 조회',
+    '담당하는 과정과 기수를 확인합니다',
   )
 
   const filtered = useMemo(() => {

@@ -27,7 +27,7 @@ export default function EndorsementHistoryPage() {
   const [page, setPage] = useState(1)
   usePageHeader(
     '강사 추천서 전체 보기',
-    '담당 기수 누적 추천서 큐 — 기수·기간·스냅샷 반영 상태로 필터링',
+    '담당 기수에 작성한 추천서를 기수·기간별로 확인합니다',
   )
 
   const items = useMemo(() => data?.items ?? [], [data])

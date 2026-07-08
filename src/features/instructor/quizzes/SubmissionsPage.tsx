@@ -30,7 +30,7 @@ export default function SubmissionsPage() {
   const [filter, setFilter] = useState<StatusFilter>('all')
   usePageHeader(
     '제출 현황',
-    '제출률·수동 채점 대기 관제 — 채점은 수동 채점 화면에서',
+    '퀴즈 제출률과 채점 대기 현황을 확인합니다',
   )
 
   const rows = useMemo(() => data?.rows ?? [], [data])

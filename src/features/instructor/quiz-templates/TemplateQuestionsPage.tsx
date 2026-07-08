@@ -37,7 +37,7 @@ export default function TemplateQuestionsPage() {
   }, [data])
   usePageHeader(
     '템플릿 문항 관리',
-    '문제 풀 편집 · 배점 합계 검증 — 변경은 다음 복제부터 반영',
+    '템플릿에 사용할 문제를 추가하고 관리합니다',
   )
 
   if (isPending) {

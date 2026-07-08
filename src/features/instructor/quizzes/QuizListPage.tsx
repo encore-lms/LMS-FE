@@ -48,7 +48,7 @@ export default function QuizListPage({
   const [templateQ, setTemplateQ] = useState('')
   usePageHeader(
     '퀴즈 관리',
-    '담당 기수 퀴즈 출제·수정·채점 관제 — 정답/배점 변경 시 자동 재채점',
+    '담당 기수의 퀴즈를 출제하고 채점 현황을 관리합니다',
     !embedded,
   )
 

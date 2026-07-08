@@ -33,7 +33,7 @@ export default function CohortStudentsPage() {
   const [page, setPage] = useState(1)
   usePageHeader(
     `수강생 목록 — ${cohortLabel}`,
-    '담당 기수 수강생 조회 · 위험/보완 플래그가 있는 학생 빠르게 식별',
+    '담당 기수 수강생을 확인하고 관리가 필요한 학생을 파악합니다',
   )
 
   const filtered = useMemo(() => {

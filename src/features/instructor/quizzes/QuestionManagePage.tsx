@@ -14,7 +14,7 @@ export default function QuestionManagePage() {
   const navigate = useNavigate()
   const base = useQuizBasePath()
   const { data, isPending, isError, refetch } = useQuizQuestions(quizId)
-  usePageHeader('문제 관리', '문항 편집 · 배점 합계 검증 · 학생 미리보기')
+  usePageHeader('문제 관리', '퀴즈 문항을 편집하고 배점을 확인합니다')
 
   if (isPending) {
     return <div className="text-fg-muted p-8">문제 목록을 불러오는 중…</div>

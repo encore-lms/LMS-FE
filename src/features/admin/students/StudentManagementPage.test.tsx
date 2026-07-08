@@ -161,7 +161,8 @@ function renderPage() {
   } as unknown as ReturnType<typeof useResetAccountPassword>)
   return render(
     <ToastProvider>
-      <MemoryRouter>
+      {/* 기본 탭이 출결로 바뀌어(계정은 맨 뒤) 계정 탭 테스트는 ?tab=accounts로 진입한다. */}
+      <MemoryRouter initialEntries={['/?tab=accounts']}>
         <StudentManagementPage />
       </MemoryRouter>
     </ToastProvider>,

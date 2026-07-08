@@ -7,7 +7,6 @@ const ProfilePage = lazy(() => import('./profile/AdminProfilePage'))
 const ReviewQueuePage = lazy(() => import('./certificates/ReviewQueuePage'))
 const ReviewDetailPage = lazy(() => import('./certificates/ReviewDetailPage'))
 const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
-const RecordsGridPage = lazy(() => import('./records/RecordsGridPage'))
 const StudentManagementPage = lazy(
   () => import('./students/StudentManagementPage'),
 )
@@ -134,7 +133,6 @@ export const adminRoutes: RouteObject[] = [
         path: 'certificates/:certificateId/audit',
         element: <AuditLogPage />,
       },
-      { path: 'records/review', element: <RecordsGridPage /> },
       // 멘토링 관리 — 배정(/admin/mentors/*)·일지·템플릿·통계(/admin/mentoring/*).
       // 정적 세그먼트(logs·log-templates·statistics)를 동적 teams/:teamId 앞 컨벤션 위치에.
       { path: 'mentors/assignments', element: <MentorAssignmentsPage /> },

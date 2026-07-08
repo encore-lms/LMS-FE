@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import {
   apiErrorOf,
@@ -217,22 +218,18 @@ export function AssignmentManageModal({
         </section>
 
         <section className="flex flex-col gap-1.5">
-          <label htmlFor="manage-mentor" className={FIELD_LABEL}>
-            멘토 교체
-          </label>
+          <label className={FIELD_LABEL}>멘토 교체</label>
           <div className="flex gap-2">
-            <select
-              id="manage-mentor"
+            <Select
+              aria-label="멘토 교체"
               value={mentorId}
-              onChange={(e) => setMentorId(e.target.value)}
-              className={INPUT_CLASS}
-            >
-              {data.mentors.map((m) => (
-                <option key={m.mentorId} value={m.mentorId}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setMentorId(v)}
+              options={data.mentors.map((m) => ({
+                value: m.mentorId,
+                label: m.name,
+              }))}
+              className="h-10 w-full"
+            />
             <button
               type="button"
               onClick={saveMentor}

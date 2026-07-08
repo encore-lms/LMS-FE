@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { apiErrorOf, useCreateMentorAssignment } from './api'
 import { assignmentSchema, type AssignmentInput } from './assignmentSchema'
@@ -41,6 +42,7 @@ export function AssignmentFormModal({
   // 부모가 열림 상태에서만 마운트(조건부 렌더) — 닫고 다시 열면 새 기본값으로 초기화된다.
   const {
     register,
+    control,
     handleSubmit,
     watch,
     setValue,
@@ -148,46 +150,58 @@ export function AssignmentFormModal({
           미선택 차단 · 템플릿이 있으면 선택 필수
         </p>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="assignment-cohort" className={FIELD_LABEL}>
-            반/기수 *
-          </label>
-          <select
-            id="assignment-cohort"
-            className={INPUT_CLASS}
-            {...register('cohortId', {
-              onChange: () => setValue('teamId', ''),
-            })}
-          >
-            <option value="">반 선택</option>
-            {data.cohorts.map((c) => (
-              <option key={c.cohortId} value={c.cohortId}>
-                {c.cohortName} ({c.courseName})
-              </option>
-            ))}
-          </select>
+          <span className={FIELD_LABEL}>반/기수 *</span>
+          <Controller
+            name="cohortId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                aria-label="반/기수"
+                value={field.value}
+                onChange={(v) => {
+                  field.onChange(v)
+                  setValue('teamId', '')
+                }}
+                options={[
+                  { value: '', label: '반 선택' },
+                  ...data.cohorts.map((c) => ({
+                    value: c.cohortId,
+                    label: `${c.cohortName} (${c.courseName})`,
+                  })),
+                ]}
+                className="h-10 w-full"
+              />
+            )}
+          />
           {errors.cohortId && (
             <p className={ERROR_CLASS}>{errors.cohortId.message}</p>
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="assignment-team" className={FIELD_LABEL}>
-            팀 *
-          </label>
-          <select
-            id="assignment-team"
-            className={INPUT_CLASS}
-            disabled={!cohortId}
-            {...register('teamId')}
-          >
-            <option value="">
-              {cohortId ? '팀 선택' : '반을 먼저 선택해주세요'}
-            </option>
-            {teamOptions.map((r) => (
-              <option key={r.teamId} value={r.teamId}>
-                {r.teamName} · {r.memberCount}명
-              </option>
-            ))}
-          </select>
+          <span className={FIELD_LABEL}>팀 *</span>
+          <Controller
+            name="teamId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                aria-label="팀"
+                disabled={!cohortId}
+                value={field.value}
+                onChange={field.onChange}
+                options={[
+                  {
+                    value: '',
+                    label: cohortId ? '팀 선택' : '반을 먼저 선택해주세요',
+                  },
+                  ...teamOptions.map((r) => ({
+                    value: r.teamId,
+                    label: `${r.teamName} · ${r.memberCount}명`,
+                  })),
+                ]}
+                className="h-10 w-full"
+              />
+            )}
+          />
           {cohortId && teamOptions.length === 0 && (
             <p className="text-fg-subtle text-xs">
               이 반에는 배정 가능한 미배정 팀이 없어요 — 한 반에 한 팀만 배정
@@ -198,21 +212,26 @@ export function AssignmentFormModal({
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="assignment-mentor" className={FIELD_LABEL}>
-            멘토 *
-          </label>
-          <select
-            id="assignment-mentor"
-            className={INPUT_CLASS}
-            {...register('mentorId')}
-          >
-            <option value="">멘토 선택</option>
-            {data.mentors.map((m) => (
-              <option key={m.mentorId} value={m.mentorId}>
-                {m.name}
-              </option>
-            ))}
-          </select>
+          <span className={FIELD_LABEL}>멘토 *</span>
+          <Controller
+            name="mentorId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                aria-label="멘토"
+                value={field.value}
+                onChange={field.onChange}
+                options={[
+                  { value: '', label: '멘토 선택' },
+                  ...data.mentors.map((m) => ({
+                    value: m.mentorId,
+                    label: m.name,
+                  })),
+                ]}
+                className="h-10 w-full"
+              />
+            )}
+          />
           {errors.mentorId && (
             <p className={ERROR_CLASS}>{errors.mentorId.message}</p>
           )}
@@ -236,25 +255,34 @@ export function AssignmentFormModal({
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="assignment-template" className={FIELD_LABEL}>
+          <span className={FIELD_LABEL}>
             기본 일지 템플릿{data.templates.length > 0 ? ' *' : ''}
-          </label>
-          <select
-            id="assignment-template"
-            className={INPUT_CLASS}
-            disabled={data.templates.length === 0}
-            {...register('logTemplateId')}
-          >
-            <option value="">
-              {data.templates.length === 0 ? '활성 템플릿 없음' : '템플릿 선택'}
-            </option>
-            {data.templates.map((t) => (
-              <option key={t.templateId} value={t.templateId}>
-                {t.name}
-                {t.isDefault ? ' (기본)' : ''}
-              </option>
-            ))}
-          </select>
+          </span>
+          <Controller
+            name="logTemplateId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                aria-label="기본 일지 템플릿"
+                disabled={data.templates.length === 0}
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                placeholder="활성 템플릿 없음"
+                options={
+                  data.templates.length === 0
+                    ? []
+                    : [
+                        { value: '', label: '템플릿 선택' },
+                        ...data.templates.map((t) => ({
+                          value: t.templateId,
+                          label: `${t.name}${t.isDefault ? ' (기본)' : ''}`,
+                        })),
+                      ]
+                }
+                className="h-10 w-full"
+              />
+            )}
+          />
           <p className="text-fg-subtle text-xs">
             {data.templates.length === 0
               ? '일지 항목 없이 먼저 배정합니다'

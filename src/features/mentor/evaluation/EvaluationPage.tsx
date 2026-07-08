@@ -280,7 +280,7 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
       </section>
 
       {/* 평가 기준 — 5축 고정 칩 */}
-      <section className="border-border bg-surface flex flex-col gap-3 rounded-2xl border p-5 shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+      <section className="bg-surface flex flex-col gap-3 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Info className="text-fg h-4 w-4" />

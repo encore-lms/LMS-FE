@@ -18,7 +18,7 @@ import { useMenteeDetail } from '../api/mentees'
 import type { MenteeAttendanceRow } from '../types'
 
 const CARD_SHELL =
-  'border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
 
 // 5축 막대 색 — Figma 축별 색(기술 brand / 책임감 success / 소통 info / 성장 accent /
 // 팀워크 warning). 축별 고정 의미 색인지 장식인지는 openQuestion — Figma 표기 그대로.
@@ -190,7 +190,7 @@ export default function MenteeDetailPage() {
       </div>
 
       {/* Hero — brand 배너 */}
-      <section className="bg-brand text-on-color flex flex-wrap items-center justify-between gap-6 rounded-2xl px-8 py-7 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
+      <section className="bg-brand text-on-color flex flex-wrap items-center justify-between gap-6 rounded-2xl px-8 py-7 shadow-hero">
         <div className="flex items-center gap-5">
           <Avatar name={student.name} size={80} />
           <div className="flex flex-col gap-2">
@@ -385,7 +385,7 @@ export default function MenteeDetailPage() {
                 필수
               </span>
             </span>
-            <div className="border-border rounded-lg border px-3.5 py-3">
+            <div className="bg-surface-muted/50 rounded-lg px-3.5 py-3">
               <p className="text-fg text-[13px] leading-5">
                 {recommendation.reason}
               </p>

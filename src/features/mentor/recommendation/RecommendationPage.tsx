@@ -388,7 +388,7 @@ function RecommendationForm({
       )}
 
       {/* 증명서 반영 · 공개 기준 */}
-      <section className="border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+      <section className="bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
         <header className="flex flex-col gap-0.5 px-[22px] pt-5 pb-3">
           <h3 className="text-fg text-sm font-bold">증명서 반영 · 공개 기준</h3>
           <span className="text-fg-subtle text-[11px]">

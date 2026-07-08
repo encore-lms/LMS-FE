@@ -6,7 +6,11 @@ import { useToast, type ToastTone } from '@/components/ui/use-toast'
 import { TestModeFab } from '@/components/dev/TestModeFab'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { useMentoring } from '../api/mentoring'
+import {
+  useCancelMentoringRequest,
+  useCreateMentoringRequest,
+  useMentoring,
+} from '../api/mentoring'
 import { MentoringHero } from './components/MentoringHero'
 import { MentoringStatCards } from './components/MentoringStatCards'
 import { ActiveRequestCard } from './components/ActiveRequestCard'
@@ -79,8 +83,10 @@ function MentoringView({ data }: { data: MentoringData }) {
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const noMentor = params.get('state') === 'no-mentor' || !data.mentor.assigned
+  const createRequest = useCreateMentoringRequest()
+  const cancelRequestMutation = useCancelMentoringRequest()
 
-  // 상호작용 상태 — 요청 생성/취소/수락에 따라 진행 중 요청·확정 예약이 변한다.
+  // 상호작용 상태 — 서버 응답을 즉시 반영하고, 아직 BE 스키마가 없는 조정 제안 수락만 로컬로 표시한다.
   const [activeRequest, setActiveRequest] =
     useState<MentoringActiveRequest | null>(data.activeRequest)
   const [reservation, setReservation] = useState<MentoringReservation | null>(
@@ -102,6 +108,17 @@ function MentoringView({ data }: { data: MentoringData }) {
     greeted.current = true
     toast[TOAST[t].tone](TOAST[t].message)
   }, [params, toast])
+
+  const applyMentoringData = (next: MentoringData) => {
+    setActiveRequest(next.activeRequest)
+    setReservation(next.reservation)
+    setHistory(next.history)
+    setReservationUpcoming(false)
+  }
+
+  useEffect(() => {
+    applyMentoringData(data)
+  }, [data])
 
   // 멘토 미배정: 히어로(배정 대기)·0 통계·비활성 폼·정책만. 진행 요청/예약/기록은 숨김.
   const display: MentoringData = noMentor
@@ -143,46 +160,36 @@ function MentoringView({ data }: { data: MentoringData }) {
         history,
       }
 
-  // 진행 중 요청이 1건이라도 있으면(요청 대기/조정 제안 OR 수락된 확정 예약) 새 요청 폼을 막는다
-  // (팀당 진행 중 1개 한도).
-  // TODO(BE): "진행 중" 판정·만료 재오픈은 서버 권한이다. 확정 예약의 일정이 지나면 BE가
-  //   완료/이력으로 전환해 슬롯을 비우고 activeRequest 를 비워 내려줘야 한다. FE는 API가
-  //   내려주는 진행 중 요청 유무만 반영한다. 아래 simulateElapse / reservationUpcoming 은
-  //   배포 데모에서 이 흐름을 눈으로 보기 위한 FE 목 전용이며 BE 연동 시 제거한다.
-  const slotTaken = !!activeRequest || reservationUpcoming
+  // 진행 중 요청이나 확정 예약이 있으면 팀당 진행 중 1개 한도에 따라 새 요청 폼을 막는다.
+  const slotTaken = !!activeRequest || !!reservation || reservationUpcoming
 
-  // 새 요청 제출 → 진행 중 요청 생성 + requested 토스트.
-  // 데모에선 멘토가 곧바로 조정 제안을 한 것으로 처리해 "조정 제안" 카드를 띄운다
-  // (실제로는 요청 대기 → 멘토 응답 후 proposed 로 전환됨 — BE/멘토 영역).
   const submitRequest = (v: NewRequestValues) => {
-    const schedule = `${v.date} ${v.startTime} ~ ${v.endTime}`
-    setActiveRequest({
-      id: `req_${Math.random().toString(36).slice(2, 6)}`,
-      status: 'proposed',
-      proposedAtLabel: '방금 전',
-      student: {
-        person: '나 (요청자)',
-        datetime: schedule,
-        placeType: v.placeType,
-        placeDetail: v.placeDetail,
-        memo: v.memo?.trim() ? v.memo : '—',
+    createRequest.mutate(v, {
+      onSuccess: (next) => {
+        applyMentoringData(next)
+        toast.success(TOAST.requested.message)
       },
-      proposal: {
-        person: `${data.mentor.name} 멘토`,
-        datetime: `${v.date} 18:30 ~ 20:30`,
-        placeType: '오프라인',
-        placeDetail: '플레이데이터 강남캠퍼스 세미나실 B',
-        memo: '오프라인이 더 효율적 — 캠퍼스 추천',
+      onError: () => {
+        toast.danger('멘토링 요청 제출에 실패했어요')
       },
     })
-    toast.success(TOAST.requested.message)
   }
 
-  // 요청 취소 / 제안 거절 → 진행 중 요청 해제 + canceled 토스트(폼 활성화).
   const cancelRequest = () => {
-    setActiveRequest(null)
-    setModalOpen(false)
-    toast.warning(TOAST.canceled.message)
+    if (!activeRequest?.id) {
+      setModalOpen(false)
+      return
+    }
+    cancelRequestMutation.mutate(activeRequest.id, {
+      onSuccess: (next) => {
+        applyMentoringData(next)
+        setModalOpen(false)
+        toast.warning(TOAST.canceled.message)
+      },
+      onError: () => {
+        toast.danger('멘토링 요청 취소에 실패했어요')
+      },
+    })
   }
 
   // 제안 수락 → 멘토 제안을 확정 예약으로 전환(슬롯 점유 유지) + accepted 토스트.
@@ -263,7 +270,7 @@ function MentoringView({ data }: { data: MentoringData }) {
       <MentoringHero data={display} />
       <MentoringStatCards stats={display.stats} />
 
-      {display.activeRequest?.status === 'proposed' && (
+      {display.activeRequest && (
         <ActiveRequestCard
           request={display.activeRequest}
           onCancel={() => setModalOpen(true)}
@@ -275,6 +282,7 @@ function MentoringView({ data }: { data: MentoringData }) {
       <NewRequestForm
         disabled={slotTaken || noMentor}
         variant={noMentor ? 'no-mentor' : 'active'}
+        isSubmitting={createRequest.isPending}
         onSubmit={submitRequest}
       />
 

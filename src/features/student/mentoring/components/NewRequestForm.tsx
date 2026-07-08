@@ -31,14 +31,16 @@ const fieldCls =
 export function NewRequestForm({
   disabled,
   variant = 'active',
+  isSubmitting = false,
   onSubmit,
 }: {
   disabled: boolean
   variant?: 'active' | 'no-mentor'
+  isSubmitting?: boolean
   onSubmit?: (values: NewRequestValues) => void
 }) {
   if (disabled) return <ReadOnlyForm variant={variant} />
-  return <EditableForm onSubmit={onSubmit} />
+  return <EditableForm isSubmitting={isSubmitting} onSubmit={onSubmit} />
 }
 
 /* ---------------- 읽기 전용(비활성) ---------------- */
@@ -123,8 +125,10 @@ function FormField({
 }
 
 function EditableForm({
+  isSubmitting,
   onSubmit,
 }: {
+  isSubmitting: boolean
   onSubmit?: (values: NewRequestValues) => void
 }) {
   const {
@@ -152,9 +156,10 @@ function EditableForm({
         footer={
           <button
             type="submit"
-            className="bg-brand rounded-[9px] px-[18px] py-[9px] text-[13px] font-bold text-white"
+            disabled={isSubmitting}
+            className="bg-brand rounded-[9px] px-[18px] py-[9px] text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            요청 제출
+            {isSubmitting ? '제출 중' : '요청 제출'}
           </button>
         }
       >

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
-  CalendarClock,
   ChevronLeft,
   ChevronRight,
   Inbox,
@@ -215,26 +214,6 @@ function AllCohortsView({
   upcoming: ScheduleItem[]
   onSelect: (cohortId: string) => void
 }) {
-  const totalStudents = boards.reduce(
-    (s, b) => s + (b.students?.active ?? 0),
-    0,
-  )
-  const live = boards.filter((b) => b.attendance?.todayTotal != null)
-  const todayPresent = live.reduce(
-    (s, b) => s + (b.attendance?.todayPresent ?? 0),
-    0,
-  )
-  const todayTotal = live.reduce(
-    (s, b) => s + (b.attendance?.todayTotal ?? 0),
-    0,
-  )
-  const issueCount = boards.reduce((s, b) => s + (b.issues?.length ?? 0), 0)
-  const pendingCount = boards.reduce(
-    (s, b) =>
-      s + (b.pending ? b.pending.certificates + b.pending.troubleshooting : 0),
-    0,
-  )
-
   const columns: Column<CohortBoard>[] = [
     {
       key: 'cohort',
@@ -377,39 +356,7 @@ function AllCohortsView({
         <QuickLinks />
       </div>
 
-      {/* KPI 합산 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <KpiCard
-          label="담당 수강생"
-          value={`${totalStudents}명`}
-          hint={`${boards.length}개 기수 합산`}
-          icon={<Users className="h-4 w-4" />}
-        />
-        <KpiCard
-          label="오늘 출석"
-          value={todayTotal > 0 ? `${todayPresent}/${todayTotal}` : '—'}
-          hint={
-            todayTotal > 0
-              ? `진행 기수 ${live.length}개 기준`
-              : '오늘 수업 중인 기수 없음'
-          }
-          icon={<CalendarClock className="h-4 w-4" />}
-        />
-        <KpiCard
-          label="관리 필요"
-          value={`${issueCount}건`}
-          hint="지각·결석 반복 수강생"
-          tone={issueCount > 0 ? 'warning' : 'default'}
-          icon={<AlertTriangle className="h-4 w-4" />}
-        />
-        <KpiCard
-          label="승인·인입 대기"
-          value={`${pendingCount + quarantineCount}건`}
-          hint={`승인 ${pendingCount} · 격리 큐 ${quarantineCount}`}
-          tone={pendingCount + quarantineCount > 0 ? 'info' : 'default'}
-          icon={<Inbox className="h-4 w-4" />}
-        />
-      </div>
+      {/* KPI 합산 카드는 제거(운영 요구) — 인사이트 지표 타일과 중복. */}
 
       {/* 기수 비교 표 */}
       <div className="mt-6">

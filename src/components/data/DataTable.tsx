@@ -25,8 +25,8 @@ const alignCls = (a?: 'left' | 'right' | 'center') =>
 
 // 공통 데이터 컴포넌트 — 컬럼 설정 기반 테이블. 전 운영 list 화면 재사용.
 // 토큰 기반 수동 구현(ADR 0003). 정렬·페이지네이션은 소비 화면에서 관리.
-// 디자인: 1px 외곽 보더 대신 은은한 ring+소프트 섀도, 헤더는 옅은 배경 밴드로
-// 본문과 위계를 분리, 행 구분선은 최소화하고 호버로 현재 행을 알려준다.
+// 디자인: 카드 래퍼 없는 플랫 리스트 — 헤더는 회색 캡션+얇은 선, 행은 여유로운
+// 간격에 연한 구분선만. 배경·외곽선을 걷어내 콘텐츠가 페이지에 바로 얹힌다.
 export function DataTable<T>({
   columns,
   rows,
@@ -36,15 +36,15 @@ export function DataTable<T>({
   empty,
 }: DataTableProps<T>) {
   return (
-    <div className="bg-surface overflow-x-auto rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
+    <div className="overflow-x-auto">
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="bg-surface-muted/55">
+          <tr className="border-divider border-b">
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={cn(
-                  'text-fg-subtle px-4 py-2.5 text-[12px] font-semibold tracking-wide whitespace-nowrap first:rounded-tl-2xl last:rounded-tr-2xl',
+                  'text-fg-subtle px-4 py-3 text-[12.5px] font-medium tracking-wide whitespace-nowrap',
                   alignCls(col.align),
                   col.className,
                 )}
@@ -85,7 +85,7 @@ export function DataTable<T>({
                     : undefined
                 }
                 className={cn(
-                  'border-divider/70 hover:bg-surface-muted/40 border-b transition-colors last:border-b-0',
+                  'border-divider hover:bg-surface-muted/35 border-b transition-colors last:border-b-0',
                   onRowClick &&
                     'hover:bg-surface-muted focus-visible:ring-brand cursor-pointer focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset',
                   rowClassName?.(row),
@@ -95,7 +95,7 @@ export function DataTable<T>({
                   <td
                     key={col.key}
                     className={cn(
-                      'text-fg px-4 py-3 text-[13.5px] tabular-nums',
+                      'text-fg px-4 py-3.5 text-[13.5px] tabular-nums',
                       alignCls(col.align),
                       col.className,
                     )}

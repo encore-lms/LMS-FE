@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
   ChevronLeft,
@@ -63,23 +62,6 @@ export default function AdminDashboard() {
   const hrdLive = useHrdLiveSummaries(myCohorts.data, dashboard.data?.cohorts)
   // 상세 모달로 띄울 기수 id. null이면 전체 비교 화면.
   const [selected, setSelected] = useState<string | null>(null)
-
-  // 관리 필요 수강생 행 클릭 → 해당 기수 학생 관리(계정 탭)로 이름 검색하며 이동.
-  const navigate = useNavigate()
-  const courseIdByCohort = useMemo(() => {
-    const m = new Map<string, string>()
-    for (const r of myCohorts.data ?? []) m.set(r.cohortId, r.courseId)
-    return m
-  }, [myCohorts.data])
-  const goStudent = useCallback(
-    (cohortId: string, name: string) => {
-      const params = new URLSearchParams({ tab: 'accounts', cohort: cohortId, q: name })
-      const courseId = courseIdByCohort.get(cohortId)
-      if (courseId) params.set('course', courseId)
-      navigate(`/admin/students?${params.toString()}`)
-    },
-    [courseIdByCohort, navigate],
-  )
 
   // 소스 우선순위 — 인입큐(staging) 데이터가 있으면 staging, 없으면 HRD-Net 라이브 집계로 채운다.
   const boards = useMemo<CohortBoard[]>(() => {
@@ -181,7 +163,6 @@ export default function AdminDashboard() {
             <CohortDeepDive
               board={boards[0]}
               hrdPending={hrdLive.isPending && hrdLive.isFetching}
-              onStudentClick={goStudent}
             />
           </div>
         ) : (
@@ -191,7 +172,6 @@ export default function AdminDashboard() {
             today={dashboard.data.today}
             upcoming={dashboard.data.upcoming}
             onSelect={(id) => setSelected(id)}
-            onStudentClick={goStudent}
           />
         )}
       </div>
@@ -212,7 +192,6 @@ export default function AdminDashboard() {
             board={modalBoard}
             hrdPending={hrdLive.isPending && hrdLive.isFetching}
             hideHeader
-            onStudentClick={goStudent}
           />
         )}
       </Modal>
@@ -228,14 +207,12 @@ function AllCohortsView({
   today,
   upcoming,
   onSelect,
-  onStudentClick,
 }: {
   boards: CohortBoard[]
   quarantineCount: number
   today: string
   upcoming: ScheduleItem[]
   onSelect: (cohortId: string) => void
-  onStudentClick: (cohortId: string, name: string) => void
 }) {
   const columns: Column<CohortBoard>[] = [
     {
@@ -435,10 +412,7 @@ function AllCohortsView({
                   </span>
                 </div>
                 <div className="p-4">
-                  <RiskList
-                    issues={b.issues}
-                    onStudentClick={(name) => onStudentClick(b.cohortId, name)}
-                  />
+                  <RiskList issues={b.issues} />
                 </div>
               </div>
             ))}
@@ -455,13 +429,11 @@ function CohortDeepDive({
   board,
   hrdPending,
   hideHeader,
-  onStudentClick,
 }: {
   board: CohortBoard
   hrdPending?: boolean
   /** 모달에서 제목이 이미 있을 때 내부 헤더를 숨긴다. 소스·기간 배지는 유지. */
   hideHeader?: boolean
-  onStudentClick?: (cohortId: string, name: string) => void
 }) {
   const meta = STATUS_META[board.status]
 
@@ -591,14 +563,7 @@ function CohortDeepDive({
               ) : board.issues.length === 0 ? (
                 <PanelEmpty text="지각·결석 반복 수강생이 없어요" />
               ) : (
-                <RiskList
-                  issues={board.issues}
-                  onStudentClick={
-                    onStudentClick
-                      ? (name) => onStudentClick(board.cohortId, name)
-                      : undefined
-                  }
-                />
+                <RiskList issues={board.issues} />
               )}
             </Panel>
           </div>

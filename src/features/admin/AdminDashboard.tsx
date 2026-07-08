@@ -340,6 +340,17 @@ function AllCohortsView({
 
   // 기수별로 분리해 보여준다 — 이슈가 있는 기수만 패널을 만든다.
   const issueBoards = boards.filter((b) => b.issues.length > 0)
+  // 관리 필요 수강생 기수별 아코디언 — 기본은 첫 기수만 펼침(나머지 접힘).
+  const [openCohorts, setOpenCohorts] = useState<Set<string>>(
+    () => new Set(issueBoards[0] ? [issueBoards[0].cohortId] : []),
+  )
+  const toggleCohort = (id: string) =>
+    setOpenCohorts((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
 
   return (
     <>
@@ -383,35 +394,51 @@ function AllCohortsView({
             지각·결석 반복 수강생이 없어요
           </p>
         ) : (
-          // 아웃라인 없는 플랫 디자인 — 기수별로 얇은 구분선 헤더 + 행 목록만.
-          <div className="flex flex-col gap-7">
-            {issueBoards.map((b) => (
-              <div key={b.cohortId}>
-                <div className="border-divider flex items-center justify-between border-b pb-2">
-                  <span className="flex items-center gap-2">
-                    <i
-                      className="h-3.5 w-[3px] rounded-full"
-                      style={{ background: cohortColor(boards.indexOf(b)) }}
-                      aria-hidden
-                    />
-                    <span className="text-fg text-[12.5px] font-bold">
-                      {b.cohortLabel}
-                    </span>
-                    {b.source === 'hrd-live' && (
-                      <span className="text-info text-[11px] font-semibold">
-                        HRD 라이브
+          // 아웃라인 없는 플랫 아코디언 — 기수 헤더 클릭으로 접기/펼치기(기본 첫 기수만 펼침).
+          <div className="flex flex-col gap-3">
+            {issueBoards.map((b) => {
+              const open = openCohorts.has(b.cohortId)
+              return (
+                <div key={b.cohortId}>
+                  <button
+                    type="button"
+                    onClick={() => toggleCohort(b.cohortId)}
+                    aria-expanded={open}
+                    className="border-divider hover:bg-surface-muted/40 -mx-2 flex w-full items-center justify-between rounded-md border-b px-2 pb-2 pt-1"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ChevronRight
+                        className={cn(
+                          'text-fg-subtle size-4 shrink-0 transition-transform',
+                          open && 'rotate-90',
+                        )}
+                      />
+                      <i
+                        className="h-3.5 w-[3px] rounded-full"
+                        style={{ background: cohortColor(boards.indexOf(b)) }}
+                        aria-hidden
+                      />
+                      <span className="text-fg text-[12.5px] font-bold">
+                        {b.cohortLabel}
                       </span>
-                    )}
-                  </span>
-                  <span className="text-fg-subtle text-[11.5px]">
-                    {b.issues.length}명
-                  </span>
+                      {b.source === 'hrd-live' && (
+                        <span className="text-info text-[11px] font-semibold">
+                          HRD 라이브
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-fg-subtle text-[11.5px]">
+                      {b.issues.length}명
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="pt-1">
+                      <RiskList issues={b.issues} />
+                    </div>
+                  )}
                 </div>
-                <div className="pt-1">
-                  <RiskList issues={b.issues} />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

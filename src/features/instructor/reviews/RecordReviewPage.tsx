@@ -380,7 +380,7 @@ function BlogGrid({
   onOpen: (submissionId: string) => void
 }) {
   return (
-    <div className="border-border overflow-x-auto rounded-xl border">
+    <div className="overflow-x-auto rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <table className="border-collapse text-sm">
         <thead>
           <tr className="bg-surface-muted">
@@ -441,7 +441,7 @@ function StudyGrid({
   onOpen: (submissionId: string) => void
 }) {
   return (
-    <div className="border-border overflow-x-auto rounded-xl border">
+    <div className="overflow-x-auto rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <table className="border-collapse text-sm">
         <thead>
           <tr className="bg-surface-muted">
@@ -532,7 +532,7 @@ function CertMatrix({
   onOpen: (row: CertGridRow, type: CertType) => void
 }) {
   return (
-    <div className="border-border overflow-x-auto rounded-xl border">
+    <div className="overflow-x-auto rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-surface-muted text-fg-subtle">

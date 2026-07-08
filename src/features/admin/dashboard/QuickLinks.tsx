@@ -93,42 +93,44 @@ export function QuickLinks() {
 
   return (
     <section aria-label="바로가기">
-      <div className="flex flex-wrap items-start gap-5">
-        {items.map(({ to, label, icon: Icon, tone }) => (
-          <Link
-            key={to}
-            to={to}
-            className="group flex w-20 flex-col items-center gap-2"
-          >
-            <span
-              className={cn(
-                'flex size-16 items-center justify-center rounded-[22px] transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_6px_14px_rgba(18,23,38,0.12)]',
-                tone,
-              )}
-            >
-              <Icon className="size-7" />
-            </span>
-            <span className="text-fg text-center text-[13px] leading-tight font-medium break-keep">
-              {label}
-            </span>
-          </Link>
-        ))}
-
-        {/* 바로가기 편집(추가·제거) */}
+      {/* 다른 섹션(기수 비교 등)과 동일한 헤더 문법 — 타이틀 + 우측 보조 액션 */}
+      <div className="mb-2 flex items-baseline justify-between">
+        <p className="text-fg text-[15px] font-bold">바로가기</p>
         <button
           type="button"
           onClick={() => {
             setDraft(links)
             setEditOpen(true)
           }}
-          className="group flex w-20 flex-col items-center gap-2"
+          className="text-fg-subtle hover:text-fg inline-flex items-center gap-1 text-[12px] font-medium"
           aria-label="바로가기 추가"
         >
-          <span className="border-border text-fg-subtle group-hover:border-brand group-hover:text-brand flex size-16 items-center justify-center rounded-[22px] border-2 border-dashed transition-colors">
-            <Plus className="size-6" />
-          </span>
-          <span className="text-fg-subtle text-[13px] font-medium">추가</span>
+          <Plus className="size-3.5" />
+          편집
         </button>
+      </div>
+
+      {/* 옅은 배경 컨테이너 — 다크 인사이트에서 본문으로 넘어가는 시각적 브릿지 */}
+      <div className="bg-surface-muted/50 flex flex-wrap items-start gap-4 rounded-2xl px-5 py-4">
+        {items.map(({ to, label, icon: Icon, tone }) => (
+          <Link
+            key={to}
+            to={to}
+            className="group flex w-[4.75rem] flex-col items-center gap-2"
+          >
+            <span
+              className={cn(
+                'flex size-14 items-center justify-center rounded-[18px] transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_6px_14px_rgba(18,23,38,0.12)]',
+                tone,
+              )}
+            >
+              <Icon className="size-6" />
+            </span>
+            <span className="text-fg text-center text-[12.5px] leading-tight font-medium break-keep">
+              {label}
+            </span>
+          </Link>
+        ))}
       </div>
 
       <Modal

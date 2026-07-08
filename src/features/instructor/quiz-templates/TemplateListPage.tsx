@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -214,35 +215,27 @@ export default function TemplateListPage() {
             className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
           />
         </div>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+        <label className="flex items-center gap-2 text-xs">
           <span className="text-fg-subtle">카테고리</span>
-          <select
+          <Select
             value={category}
-            onChange={(e) =>
-              setCategory(e.target.value as (typeof CATEGORIES)[number])
-            }
+            onChange={(v) => setCategory(v as (typeof CATEGORIES)[number])}
             aria-label="카테고리 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+          />
         </label>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+        <label className="flex items-center gap-2 text-xs">
           <span className="text-fg-subtle">정렬</span>
-          <select
+          <Select
             value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
+            onChange={(v) => setSort(v as SortKey)}
             aria-label="정렬"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            <option value="recent">최근 사용 순</option>
-            <option value="useCount">사용 횟수 순</option>
-            <option value="name">이름 순</option>
-          </select>
+            options={[
+              { value: 'recent', label: '최근 사용 순' },
+              { value: 'useCount', label: '사용 횟수 순' },
+              { value: 'name', label: '이름 순' },
+            ]}
+          />
         </label>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-fg-subtle text-xs">

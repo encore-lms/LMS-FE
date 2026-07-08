@@ -220,8 +220,8 @@ describe('CohortStudentsPage (§3)', () => {
   it('증명서 상태 pill·위험 플래그·정책 푸터를 렌더한다', () => {
     renderAt('/instructor/cohorts/da-4/students')
     expect(screen.getByText('박지훈')).toBeInTheDocument()
-    // '보완 요청'은 증명서 필터 option에도 있어 badge 포함 2곳 이상
-    expect(screen.getAllByText('보완 요청').length).toBeGreaterThan(1)
+    // '보완 요청' badge — 커스텀 Select는 닫힌 상태에서 option을 렌더하지 않는다
+    expect(screen.getAllByText('보완 요청').length).toBeGreaterThan(0)
     expect(screen.getByText('점수 재검토')).toBeInTheDocument()
     expect(screen.getByText('— 없음')).toBeInTheDocument()
     expect(

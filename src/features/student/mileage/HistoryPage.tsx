@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { usePageHeader } from '@/shared/store'
 import {
   useMileageHistory,
@@ -207,20 +208,15 @@ export default function HistoryPage() {
           })}
         </div>
         <div className="flex items-center gap-2">
-          <select
+          <Select
+            aria-label="조회 기간"
             value={period}
-            onChange={(e) => {
-              setPeriod(e.target.value)
+            onChange={(v) => {
+              setPeriod(v)
               setPage(1)
             }}
-            className="border-border text-fg-muted bg-surface focus:border-brand rounded-lg border px-3 py-1.5 text-[12px] font-semibold focus:outline-none"
-          >
-            {PERIODS.map((p) => (
-              <option key={p.key} value={p.key}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+            options={PERIODS.map((p) => ({ value: p.key, label: p.label }))}
+          />
           <div className="border-border focus-within:border-brand hidden items-center gap-1.5 rounded-lg border px-3 py-1.5 sm:flex">
             <span className="text-fg-subtle text-[12px]">🔍</span>
             <input

@@ -4,6 +4,7 @@ import { AlertTriangle, FileText, Plus, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -361,33 +362,33 @@ export default function AssignmentsPage() {
     <div className="p-8">
       {/* 교육 과정·기수 선택 — 과정·기수·교과목 페이지와 동일한 카탈로그 셀렉터 */}
       <div className="flex flex-wrap items-center gap-2">
-        <select
+        <Select
           aria-label="교육과정 선택"
           value={course}
-          onChange={(e) => pickCourse(e.target.value)}
-          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="all">교육과정 전체</option>
-          {(courseList.data ?? []).map((c) => (
-            <option key={c.courseId} value={c.courseId}>
-              {c.title}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={(v) => pickCourse(v)}
+          options={[
+            { value: 'all', label: '교육과정 전체' },
+            ...(courseList.data ?? []).map((c) => ({
+              value: c.courseId,
+              label: c.title,
+            })),
+          ]}
+          className="h-11"
+        />
+        <Select
           aria-label="기수 선택"
           value={cohort}
-          onChange={(e) => pickCohort(e.target.value)}
+          onChange={(v) => pickCohort(v)}
           disabled={course === 'all'}
-          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none disabled:opacity-50"
-        >
-          <option value="all">기수 전체</option>
-          {(courseConfig.data?.cohorts ?? []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cohortNo}기
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: 'all', label: '기수 전체' },
+            ...(courseConfig.data?.cohorts ?? []).map((c) => ({
+              value: c.id,
+              label: `${c.cohortNo}기`,
+            })),
+          ]}
+          className="h-11"
+        />
       </div>
 
       {/* Hero — 타이틀 + CTA */}
@@ -416,29 +417,30 @@ export default function AssignmentsPage() {
       {/* 필터 바 */}
       <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             value={mentorFilter}
-            onChange={(e) => setMentorFilter(e.target.value)}
+            onChange={(v) => setMentorFilter(v)}
             aria-label="멘토 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">멘토 전체</option>
-            {data.mentors.map((m) => (
-              <option key={m.mentorId} value={m.mentorId}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: 'all', label: '멘토 전체' },
+              ...data.mentors.map((m) => ({
+                value: m.mentorId,
+                label: m.name,
+              })),
+            ]}
+            className="h-9"
+          />
+          <Select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(v) => setStatus(v)}
             aria-label="배정 상태 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="with_unassigned">미배정 포함</option>
-            <option value="active_only">배정만</option>
-            <option value="unassigned_only">미배정만</option>
-          </select>
+            options={[
+              { value: 'with_unassigned', label: '미배정 포함' },
+              { value: 'active_only', label: '배정만' },
+              { value: 'unassigned_only', label: '미배정만' },
+            ]}
+            className="h-9"
+          />
         </div>
         <input
           value={q}

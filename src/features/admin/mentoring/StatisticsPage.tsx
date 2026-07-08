@@ -3,6 +3,7 @@ import { AlertTriangle, Info, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
@@ -196,75 +197,66 @@ export default function StatisticsPage() {
       {/* 필터 — 과정/기수 · 멘토 · 팀 상태 · 평가 상태 · 추천 상태 · 팀/멘토 검색 */}
       <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             value={course}
-            onChange={(e) => setCourse(e.target.value)}
+            onChange={(v) => setCourse(v)}
             aria-label="과정/기수 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">과정 전체</option>
-            {courses.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: 'all', label: '과정 전체' },
+              ...courses.map((c) => ({ value: c, label: c })),
+            ]}
+            className="h-9"
+          />
+          <Select
             value={mentor}
-            onChange={(e) => setMentor(e.target.value)}
+            onChange={(v) => setMentor(v)}
             aria-label="멘토 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">멘토 전체</option>
-            {mentors.map((m) => (
-              <option key={m.mentorId} value={m.mentorId}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: 'all', label: '멘토 전체' },
+              ...mentors.map((m) => ({ value: m.mentorId, label: m.name })),
+            ]}
+            className="h-9"
+          />
+          <Select
             value={teamStatus}
-            onChange={(e) => setTeamStatus(e.target.value)}
+            onChange={(v) => setTeamStatus(v)}
             aria-label="팀 상태 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">팀 상태 전체</option>
-            {STAT_TEAM_STATUS_KEYS.map((key) => (
-              <option key={key} value={key}>
-                {STAT_TEAM_STATUS_LABEL[key]}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: 'all', label: '팀 상태 전체' },
+              ...STAT_TEAM_STATUS_KEYS.map((key) => ({
+                value: key,
+                label: STAT_TEAM_STATUS_LABEL[key],
+              })),
+            ]}
+            className="h-9"
+          />
+          <Select
             value={evalState}
-            onChange={(e) => setEvalState(e.target.value)}
+            onChange={(v) => setEvalState(v)}
             aria-label="평가 상태 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">평가 상태 전체</option>
-            {(Object.keys(EVAL_FILTER_LABEL) as StatEvaluationState[]).map(
-              (key) => (
-                <option key={key} value={key}>
-                  {EVAL_FILTER_LABEL[key]}
-                </option>
+            options={[
+              { value: 'all', label: '평가 상태 전체' },
+              ...(Object.keys(EVAL_FILTER_LABEL) as StatEvaluationState[]).map(
+                (key) => ({ value: key, label: EVAL_FILTER_LABEL[key] }),
               ),
-            )}
-          </select>
-          <select
+            ]}
+            className="h-9"
+          />
+          <Select
             value={recommendState}
-            onChange={(e) => setRecommendState(e.target.value)}
+            onChange={(v) => setRecommendState(v)}
             aria-label="추천 상태 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">추천 상태 전체</option>
-            {(
-              Object.keys(RECOMMEND_FILTER_LABEL) as StatRecommendationState[]
-            ).map((key) => (
-              <option key={key} value={key}>
-                {RECOMMEND_FILTER_LABEL[key]}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: 'all', label: '추천 상태 전체' },
+              ...(
+                Object.keys(RECOMMEND_FILTER_LABEL) as StatRecommendationState[]
+              ).map((key) => ({
+                value: key,
+                label: RECOMMEND_FILTER_LABEL[key],
+              })),
+            ]}
+            className="h-9"
+          />
         </div>
         <input
           value={q}

@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
@@ -165,18 +166,15 @@ export default function EndorsementsPage() {
             {pending.length > 1 && (
               <label className="ml-auto flex items-center gap-1.5 text-xs">
                 <span className="text-fg-subtle">학생 변경</span>
-                <select
+                <Select
                   value={selected.student.id}
-                  onChange={(e) => setStudentId(e.target.value)}
+                  onChange={(v) => setStudentId(v)}
                   aria-label="학생 변경"
-                  className="border-border text-fg focus:border-brand rounded-md border bg-white px-2 py-1 text-xs outline-none"
-                >
-                  {pending.map((p) => (
-                    <option key={p.student.id} value={p.student.id}>
-                      {p.student.name}
-                    </option>
-                  ))}
-                </select>
+                  options={pending.map((p) => ({
+                    value: p.student.id,
+                    label: p.student.name,
+                  }))}
+                />
               </label>
             )}
           </div>

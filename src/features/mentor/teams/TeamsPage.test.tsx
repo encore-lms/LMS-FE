@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import TeamsPage from './TeamsPage'
@@ -52,7 +52,12 @@ describe('TeamsPage', () => {
     expect(screen.getAllByText('트러블슈팅 팀').length).toBeGreaterThan(0)
     expect(screen.queryByText('NLP 분석 팀')).not.toBeInTheDocument()
     await user.clear(screen.getByLabelText('팀명·반/기수 검색'))
-    await user.selectOptions(screen.getByLabelText('상태 필터'), 'completed')
+    await user.click(screen.getByLabelText('상태 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '완료',
+      }),
+    )
     expect(screen.getByText('NLP 분석 팀')).toBeInTheDocument()
     expect(screen.queryByText('트러블슈팅 팀')).not.toBeInTheDocument()
   })

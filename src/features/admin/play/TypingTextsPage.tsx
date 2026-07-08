@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
@@ -275,45 +276,39 @@ export default function TypingTextsPage() {
 
       {/* 필터 — 타자 제시문은 언어·난이도 기준 전역 카탈로그(기수 무관) */}
       <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
-        <select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
+        <Select
           aria-label="언어 필터"
-          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="all">언어 전체</option>
-          {LANGUAGES.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <select
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
+          value={language}
+          onChange={(v) => setLanguage(v)}
+          options={[
+            { value: 'all', label: '언어 전체' },
+            ...LANGUAGES.map((l) => ({ value: l, label: l })),
+          ]}
+          className="h-9"
+        />
+        <Select
           aria-label="난이도 필터"
-          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="all">난이도 전체</option>
-          {LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          value={level}
+          onChange={(v) => setLevel(v)}
+          options={[
+            { value: 'all', label: '난이도 전체' },
+            ...LEVELS.map((l) => ({ value: l, label: l })),
+          ]}
+          className="h-9"
+        />
+        <Select
           aria-label="활성 상태 필터"
-          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="all">활성 상태 전체</option>
-          {(Object.keys(STATUS_META) as PassageStatus[]).map((key) => (
-            <option key={key} value={key}>
-              {STATUS_META[key].label}
-            </option>
-          ))}
-        </select>
+          value={status}
+          onChange={(v) => setStatus(v)}
+          options={[
+            { value: 'all', label: '활성 상태 전체' },
+            ...(Object.keys(STATUS_META) as PassageStatus[]).map((key) => ({
+              value: key,
+              label: STATUS_META[key].label,
+            })),
+          ]}
+          className="h-9"
+        />
       </div>
 
       {/* 2단 — 제시문 목록(좌) + 폼 기준 패널(우) */}

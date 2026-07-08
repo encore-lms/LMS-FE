@@ -5,6 +5,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -463,42 +464,38 @@ export default function AccountsPage() {
 
             {/* 필터 + 검색 */}
             <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-3">
-              <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+              <div className="flex items-center gap-2 text-xs">
                 <span className="text-fg-subtle">역할</span>
-                <select
-                  value={role}
-                  onChange={(e) => {
-                    setRole(e.target.value)
-                    setPage(1)
-                  }}
+                <Select
                   aria-label="역할 필터"
-                  className="text-fg bg-transparent text-sm font-medium outline-none"
-                >
-                  {roleFilters.map((f) => (
-                    <option key={f.key} value={f.key}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-                <span className="text-fg-subtle">상태</span>
-                <select
-                  value={status}
-                  onChange={(e) => {
-                    setStatus(e.target.value)
+                  value={role}
+                  onChange={(v) => {
+                    setRole(v)
                     setPage(1)
                   }}
+                  options={roleFilters.map((f) => ({
+                    value: f.key,
+                    label: f.label,
+                  }))}
+                  className="h-9"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-fg-subtle">상태</span>
+                <Select
                   aria-label="상태 필터"
-                  className="text-fg bg-transparent text-sm font-medium outline-none"
-                >
-                  {statusFilters.map((f) => (
-                    <option key={f.key} value={f.key}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  value={status}
+                  onChange={(v) => {
+                    setStatus(v)
+                    setPage(1)
+                  }}
+                  options={statusFilters.map((f) => ({
+                    value: f.key,
+                    label: f.label,
+                  }))}
+                  className="h-9"
+                />
+              </div>
               <input
                 value={q}
                 onChange={(e) => {

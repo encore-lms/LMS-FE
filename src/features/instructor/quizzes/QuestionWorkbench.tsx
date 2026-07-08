@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Copy, Eye, GripVertical, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import type {
@@ -240,31 +241,28 @@ export function QuestionWorkbench({
                 <span className="text-fg text-[13px] font-bold">
                   유형 <span className="text-danger">*</span>
                 </span>
-                <select
+                <Select
                   value={draft.type}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     setDraft({
                       ...draft,
-                      type: e.target.value as InstructorQuestion['type'],
+                      type: v as InstructorQuestion['type'],
                     })
                   }
                   aria-label="문항 유형"
-                  className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm font-medium outline-none"
-                >
-                  {(
+                  options={(
                     [
                       'multiple_choice',
                       'short_answer',
                       'fill_blank',
                       'essay',
                     ] as const
-                  ).map((t) => (
-                    <option key={t} value={t}>
-                      {QUESTION_TYPE_LABEL[t]}
-                      {t === 'essay' ? ' (서술형)' : ''}
-                    </option>
-                  ))}
-                </select>
+                  ).map((t) => ({
+                    value: t,
+                    label: `${QUESTION_TYPE_LABEL[t]}${t === 'essay' ? ' (서술형)' : ''}`,
+                  }))}
+                  className="h-10"
+                />
               </label>
               <label className="flex flex-col gap-1.5">
                 <span className="text-fg text-[13px] font-bold">
@@ -324,26 +322,19 @@ export function QuestionWorkbench({
                 <span className="text-fg text-xs font-bold">
                   카테고리 (QuizCategory) <span className="text-danger">*</span>
                 </span>
-                <select
+                <Select
                   value={draft.category}
-                  onChange={(e) =>
-                    setDraft({ ...draft, category: e.target.value })
-                  }
+                  onChange={(v) => setDraft({ ...draft, category: v })}
                   aria-label="카테고리"
-                  className="border-border focus:border-brand text-fg h-10 rounded-lg border bg-white px-3 text-sm font-medium outline-none"
-                >
-                  {[
+                  options={[
                     '알고리즘 · DP',
                     '알고리즘 · 재귀',
                     '자료구조',
                     'SQL',
                     'JavaScript',
-                  ].map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  ].map((c) => ({ value: c, label: c }))}
+                  className="h-10"
+                />
               </label>
               <label className="mt-3 flex items-center gap-2">
                 <span className="text-fg text-xs font-bold">배점</span>

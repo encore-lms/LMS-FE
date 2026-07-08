@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -324,41 +325,39 @@ export default function IngestionQueuePage() {
 
       {/* 필터 */}
       <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
-        <select
+        <Select
           value={domain}
-          onChange={(e) => setDomain(e.target.value)}
+          onChange={(v) => setDomain(v)}
           aria-label="도메인 필터"
-          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="all">도메인 전체</option>
-          {domains.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-        <select
+          className="h-9"
+          options={[
+            { value: 'all', label: '도메인 전체' },
+            ...domains.map((d) => ({ value: d, label: d })),
+          ]}
+        />
+        <Select
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          onChange={(v) => setStatus(v)}
           aria-label="상태 필터"
-          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="all">상태 전체</option>
-          {(Object.keys(STATUS_META) as SessionStatus[]).map((key) => (
-            <option key={key} value={key}>
-              {STATUS_META[key].label}
-            </option>
-          ))}
-        </select>
-        <select
+          className="h-9"
+          options={[
+            { value: 'all', label: '상태 전체' },
+            ...(Object.keys(STATUS_META) as SessionStatus[]).map((key) => ({
+              value: key,
+              label: STATUS_META[key].label,
+            })),
+          ]}
+        />
+        <Select
           value={sort}
-          onChange={(e) => setSort(e.target.value)}
+          onChange={(v) => setSort(v)}
           aria-label="정렬"
-          className="border-border text-fg-muted focus:border-brand bg-surface ml-auto h-9 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="failed">실패 많은 순</option>
-          <option value="recent">최신 순</option>
-        </select>
+          className="ml-auto h-9"
+          options={[
+            { value: 'failed', label: '실패 많은 순' },
+            { value: 'recent', label: '최신 순' },
+          ]}
+        />
       </div>
 
       {/* 메인 — 세션 이력 표(좌) + 세션 상세 패널(우) */}

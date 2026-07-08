@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Info } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import type { OpsRole } from '@/shared/types'
 
 export interface AccountCreateValues {
@@ -121,24 +122,14 @@ export function AccountCreateModal({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="acc-create-role"
-            className="text-fg-muted text-xs font-bold"
-          >
-            역할
-          </label>
-          <select
-            id="acc-create-role"
+          <span className="text-fg-muted text-xs font-bold">역할</span>
+          <Select
+            aria-label="역할"
             value={role}
-            onChange={(e) => setRole(e.target.value as OpsRole)}
-            className="border-border bg-surface text-fg focus:border-brand h-10 rounded-lg border px-3 text-sm outline-none"
-          >
-            {ROLE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setRole(v as OpsRole)}
+            options={ROLE_OPTIONS}
+            className="h-10"
+          />
         </div>
 
         <div className="bg-info-bg flex items-start gap-2 rounded-lg p-3">

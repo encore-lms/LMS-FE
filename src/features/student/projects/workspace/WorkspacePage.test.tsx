@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -229,7 +229,12 @@ describe('WorkspacePage home', () => {
     expect(screen.queryByText('API 명세서 v2')).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '문서 추가' }))
-    await user.selectOptions(screen.getByRole('combobox'), '설계 문서')
+    await user.click(screen.getByLabelText('카테고리'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '설계 문서',
+      }),
+    )
     await user.type(
       screen.getByPlaceholderText('문서 제목'),
       '릴리즈 체크리스트',
@@ -273,8 +278,13 @@ describe('WorkspacePage home', () => {
     renderPage('/student/projects/p1?tab=team')
 
     await user.click(screen.getByRole('button', { name: '팀원 초대' }))
-    // 같은 기수 동료 후보(usePeers mock) 중 선택 — 동료 선택 콤보박스(첫 번째)
-    await user.selectOptions(screen.getAllByRole('combobox')[0], 'u-os')
+    // 같은 기수 동료 후보(usePeers mock) 중 선택 — 동료 선택 셀렉트
+    await user.click(screen.getByLabelText('팀원 선택'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '오세훈',
+      }),
+    )
     await user.click(screen.getByRole('button', { name: '초대' }))
 
     expect(

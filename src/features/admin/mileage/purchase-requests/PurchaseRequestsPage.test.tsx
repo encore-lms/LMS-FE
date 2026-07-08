@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -114,7 +114,12 @@ describe('PurchaseRequestsPage (마일리지 구매 요청)', () => {
   it('상태 필터 — APPROVED 선택 시 승인 완료 행이 보인다', async () => {
     renderPage()
     const user = userEvent.setup()
-    await user.selectOptions(screen.getByLabelText('상태 필터'), 'approved')
+    await user.click(screen.getByLabelText('상태 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: 'APPROVED',
+      }),
+    )
     expect(screen.getByText('메가커피 디저트 세트')).toBeInTheDocument()
     expect(screen.queryByText('클린 코드')).toBeNull()
   })

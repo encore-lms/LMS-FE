@@ -5,6 +5,7 @@ import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
@@ -247,39 +248,31 @@ export function AccountsTab() {
             HRD-Net 명단 동기화로 학생 계정을 일괄 관리합니다
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <select
+            <Select
               aria-label="과정 선택"
-              value={courseId ?? ''}
-              onChange={(e) => {
-                setSelectedCourseId(e.target.value)
+              value={courseId}
+              onChange={(v) => {
+                setSelectedCourseId(v)
                 setSelectedCohortId(null)
               }}
-              className="text-fg bg-surface h-9 rounded-lg px-3 text-sm outline-none"
-            >
-              {(courses ?? []).map((c) => (
-                <option key={c.courseId} value={c.courseId}>
-                  {c.title}
-                </option>
-              ))}
-              {(courses ?? []).length === 0 && (
-                <option value="">등록 과정 없음</option>
-              )}
-            </select>
-            <select
+              options={(courses ?? []).map((c) => ({
+                value: c.courseId,
+                label: c.title,
+              }))}
+              placeholder="등록 과정 없음"
+              className="h-9"
+            />
+            <Select
               aria-label="기수 선택"
-              value={cohortId ?? ''}
-              onChange={(e) => setSelectedCohortId(e.target.value)}
-              className="text-fg bg-surface h-9 rounded-lg px-3 text-sm outline-none"
-            >
-              {(courseConfig?.cohorts ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cohortNo}기
-                </option>
-              ))}
-              {(courseConfig?.cohorts ?? []).length === 0 && (
-                <option value="">기수 없음</option>
-              )}
-            </select>
+              value={cohortId}
+              onChange={(v) => setSelectedCohortId(v)}
+              options={(courseConfig?.cohorts ?? []).map((c) => ({
+                value: c.id,
+                label: `${c.cohortNo}기`,
+              }))}
+              placeholder="기수 없음"
+              className="h-9"
+            />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">

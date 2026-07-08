@@ -5,12 +5,12 @@ import {
   Calendar,
   Check,
   CheckCircle2,
-  ChevronDown,
   Search,
   Timer,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -200,22 +200,16 @@ export default function RequestsPage() {
           })}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="border-border flex h-[34px] items-center gap-1.5 rounded-lg border px-3">
+          <div className="flex items-center gap-1.5">
             <Calendar className="text-fg-muted h-3 w-3 shrink-0" />
-            <select
+            <Select
               aria-label="기간 필터"
               value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="text-fg appearance-none bg-transparent text-xs font-medium outline-none"
-            >
-              {PERIOD_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="text-fg-subtle pointer-events-none h-2.5 w-2.5 shrink-0" />
-          </label>
+              onChange={setPeriod}
+              options={[...PERIOD_OPTIONS]}
+              className="h-[34px]"
+            />
+          </div>
           <label className="border-border flex h-[34px] w-[220px] items-center gap-2 rounded-lg border px-3">
             <Search className="text-fg-subtle h-3 w-3 shrink-0" />
             <input

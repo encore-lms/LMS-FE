@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { cn } from '@/shared/lib/cn'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
+import { Select } from '@/components/ui/Select'
 
 // 새 멘토링 요청 폼.
 // - disabled(진행 중 요청 1건 / 멘토 미배정): 읽기 전용 placeholder 표시.
@@ -224,18 +225,24 @@ function EditableForm({
             required
             error={errors.placeType?.message}
           >
-            <select
-              {...register('placeType')}
-              defaultValue=""
-              className={fieldCls}
-            >
-              <option value="" disabled>
-                오프라인 / 온라인 / 기타 중 선택
-              </option>
-              <option value="오프라인">오프라인</option>
-              <option value="온라인">온라인</option>
-              <option value="기타">기타</option>
-            </select>
+            <Controller
+              control={control}
+              name="placeType"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: '오프라인', label: '오프라인' },
+                    { value: '온라인', label: '온라인' },
+                    { value: '기타', label: '기타' },
+                  ]}
+                  placeholder="오프라인 / 온라인 / 기타 중 선택"
+                  aria-label="장소 유형"
+                  className="h-[42px] w-full"
+                />
+              )}
+            />
           </FormField>
           <FormField
             label="상세 장소"

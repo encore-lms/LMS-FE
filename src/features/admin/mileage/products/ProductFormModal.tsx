@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Modal } from '@/components/ui/Modal'
-import { cn } from '@/shared/lib/cn'
+import { Select } from '@/components/ui/Select'
 import { ProductImage } from './ProductImage'
 import type { Product, ProductType } from './types'
 
@@ -137,26 +137,14 @@ export function ProductFormModal({
         </div>
 
         <div className="flex flex-col gap-[6px]">
-          <label
-            htmlFor="product-type"
-            className="text-fg text-[13px] font-bold"
-          >
-            타입
-          </label>
-          <select
-            id="product-type"
+          <span className="text-fg text-[13px] font-bold">타입</span>
+          <Select
+            aria-label="타입"
             value={type}
-            onChange={(e) => setType(e.target.value as ProductType)}
-            className={cn(
-              'border-border text-fg focus:border-brand bg-surface h-11 w-full rounded-lg border px-3 text-sm outline-none',
-            )}
-          >
-            {TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setType(v as ProductType)}
+            options={TYPES}
+            className="h-11 w-full"
+          />
         </div>
 
         <Input

@@ -23,6 +23,7 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { Avatar } from '@/components/ui/Avatar'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -423,22 +424,18 @@ function LogComposeForm({
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
           {/* 대상 팀 — 수정 모드에선 고정(작성 시 결정) */}
           <div className="flex flex-col gap-1">
-            <label htmlFor="log-team" className={FIELD_LABEL}>
-              대상 팀 *
-            </label>
-            <select
-              id="log-team"
+            <span className={FIELD_LABEL}>대상 팀 *</span>
+            <Select
+              aria-label="대상 팀"
               value={teamId}
               disabled={mode !== 'new'}
-              onChange={(e) => onTeamChange(e.target.value)}
-              className={cn(INPUT_BOX, 'disabled:bg-surface-muted w-full')}
-            >
-              {targets.map((t) => (
-                <option key={t.teamId} value={t.teamId}>
-                  {t.cohortLabel} · {t.teamName}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => onTeamChange(v)}
+              options={targets.map((t) => ({
+                value: t.teamId,
+                label: `${t.cohortLabel} · ${t.teamName}`,
+              }))}
+              className="h-[46px] w-full"
+            />
             {target && (
               <span className={HELPER}>
                 {target.nextRound}회차 멘토링 · 누적 {target.accumulatedHours}h

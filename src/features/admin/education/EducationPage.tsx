@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -170,41 +171,33 @@ export default function EducationPage() {
 
   return (
     <div className="p-8">
-      {/* 과정/기수 선택 */}
+      {/* 과정/기수 선택 — 공용 Select(커스텀 listbox)로 브라우저 기본 옵션 팝업 대체 */}
       <div className="flex flex-wrap items-center gap-2">
-        <select
+        <Select
           aria-label="과정 선택"
-          value={courseId ?? ''}
-          onChange={(e) => {
-            setCourseParam(e.target.value)
+          value={courseId}
+          onChange={(v) => {
+            setCourseParam(v)
             setCohortParam('')
           }}
-          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
-        >
-          {(courses ?? []).map((c) => (
-            <option key={c.courseId} value={c.courseId}>
-              {c.title}
-            </option>
-          ))}
-          {(courses ?? []).length === 0 && (
-            <option value="">등록 과정 없음</option>
-          )}
-        </select>
-        <select
+          options={(courses ?? []).map((c) => ({
+            value: c.courseId,
+            label: c.title,
+          }))}
+          placeholder="등록 과정 없음"
+          className="h-11"
+        />
+        <Select
           aria-label="기수 선택"
-          value={cohortId ?? ''}
-          onChange={(e) => setCohortParam(e.target.value)}
-          className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
-        >
-          {(courseConfig?.cohorts ?? []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cohortNo}기
-            </option>
-          ))}
-          {(courseConfig?.cohorts ?? []).length === 0 && (
-            <option value="">기수 없음</option>
-          )}
-        </select>
+          value={cohortId}
+          onChange={(v) => setCohortParam(v)}
+          options={(courseConfig?.cohorts ?? []).map((c) => ({
+            value: c.id,
+            label: `${c.cohortNo}기`,
+          }))}
+          placeholder="기수 없음"
+          className="h-11"
+        />
       </div>
 
       {/* 탭 */}

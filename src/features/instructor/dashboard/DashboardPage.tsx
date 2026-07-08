@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -188,15 +189,15 @@ export default function DashboardPage() {
               {activeCohortLabel} · 상위 {data.priorities.length}건
             </p>
           </div>
-          <select
+          <Select
             value={sort}
-            onChange={(e) => setSort(e.target.value as 'urgent' | 'dday')}
+            onChange={(v) => setSort(v as 'urgent' | 'dday')}
             aria-label="우선 처리 목록 정렬"
-            className="border-border text-fg-muted rounded-md border bg-white px-2.5 py-1 text-xs outline-none"
-          >
-            <option value="urgent">정렬: 긴급도</option>
-            <option value="dday">정렬: 마감일</option>
-          </select>
+            options={[
+              { value: 'urgent', label: '정렬: 긴급도' },
+              { value: 'dday', label: '정렬: 마감일' },
+            ]}
+          />
         </div>
         {sortedPriorities.map((p) => {
           const meta = PRIORITY_META[p.type]

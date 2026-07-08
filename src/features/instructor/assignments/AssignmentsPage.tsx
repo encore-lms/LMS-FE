@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -221,31 +222,25 @@ export default function AssignmentsPage() {
         </div>
         <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
           <span className="text-fg-subtle">상태</span>
-          <select
+          <Select
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
+            onChange={(v) => setStatus(v as StatusFilter)}
             aria-label="상태 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            <option value="all">전체</option>
-            <option value="open">진행 중</option>
-            <option value="closed">마감됨</option>
-          </select>
+            options={[
+              { value: 'all', label: '전체' },
+              { value: 'open', label: '진행 중' },
+              { value: 'closed', label: '마감됨' },
+            ]}
+          />
         </label>
         <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
           <span className="text-fg-subtle">기수</span>
-          <select
+          <Select
             value={cohort}
-            onChange={(e) => setCohort(e.target.value)}
+            onChange={(v) => setCohort(v)}
             aria-label="기수 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            {cohortOpts.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            options={cohortOpts.map((c) => ({ value: c, label: c }))}
+          />
         </label>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-fg-subtle text-xs">

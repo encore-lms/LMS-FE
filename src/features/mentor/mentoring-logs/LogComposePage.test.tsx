@@ -206,7 +206,7 @@ describe('LogComposePage', () => {
     expect(
       screen.queryByRole('button', { name: '임시 저장' }),
     ).not.toBeInTheDocument()
-    expect(screen.getByLabelText('대상 팀 *')).toBeDisabled()
+    expect(screen.getByLabelText('대상 팀')).toBeDisabled()
 
     // 전체 수정 후 재제출 → resubmit mutation
     await user.type(screen.getByLabelText('수행 내용'), '● 보강된 진행 내용')

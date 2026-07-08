@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -89,7 +89,12 @@ describe('HistoryPage (마일리지 지급 내역)', () => {
   it('구분 필터 — 차감만 보면 지급 거래가 사라진다', async () => {
     renderPage()
     const user = userEvent.setup()
-    await user.selectOptions(screen.getByLabelText('구분 필터'), 'deduct')
+    await user.click(screen.getByLabelText('구분 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '차감',
+      }),
+    )
     expect(screen.getByText('문화상품권 5만원권 구매')).toBeInTheDocument()
     expect(screen.queryByText('중간 발표 우수상 지급')).toBeNull()
   })

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Input } from '@/components/ui/Input'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -131,20 +132,24 @@ export default function AssignmentFormPage() {
               <span className="text-fg text-[13px] font-bold">
                 기수 <span className="text-danger">*</span>
               </span>
-              <select
-                aria-label="기수"
-                className="border-border focus:border-brand text-fg h-[52px] rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none"
-                {...register('cohortId')}
-              >
-                {(cohortOptions ?? []).map((c) => (
-                  <option key={c.cohortId} value={c.cohortId}>
-                    {c.label}
-                  </option>
-                ))}
-                {(cohortOptions ?? []).length === 0 && (
-                  <option value="">기수 없음</option>
+              {/* RHF register는 name/ref 스프레드라 공용 Select와 호환 불가 → dueAt처럼 Controller로 연결 */}
+              <Controller
+                control={control}
+                name="cohortId"
+                render={({ field }) => (
+                  <Select
+                    aria-label="기수"
+                    value={field.value}
+                    onChange={(v) => field.onChange(v)}
+                    options={(cohortOptions ?? []).map((c) => ({
+                      value: c.cohortId,
+                      label: c.label,
+                    }))}
+                    placeholder="기수 없음"
+                    className="h-[52px]"
+                  />
                 )}
-              </select>
+              />
             </label>
             <Input
               label="과목/회차"

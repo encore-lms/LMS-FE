@@ -7,6 +7,7 @@ import { AlertTriangle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -347,20 +348,23 @@ export default function QuizFormPage() {
           </div>
           <div>
             <FieldLabel required>대상 과정/기수</FieldLabel>
-            <select
-              className={FIELD}
-              aria-label="대상 과정/기수"
-              {...register('cohortId')}
-            >
-              {(cohortOptions ?? []).map((c) => (
-                <option key={c.cohortId} value={c.cohortId}>
-                  {c.label}
-                </option>
-              ))}
-              {(cohortOptions ?? []).length === 0 && (
-                <option value="">기수 없음</option>
+            <Controller
+              name="cohortId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  aria-label="대상 과정/기수"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={(cohortOptions ?? []).map((c) => ({
+                    value: c.cohortId,
+                    label: c.label,
+                  }))}
+                  placeholder="기수 없음"
+                  className="h-10 w-full"
+                />
               )}
-            </select>
+            />
           </div>
         </div>
         <div className="mt-3">
@@ -446,20 +450,13 @@ export default function QuizFormPage() {
           </div>
           <div>
             <FieldLabel>결과 공개</FieldLabel>
-            <select
-              className={FIELD}
+            <Select
+              className="h-10 w-full"
               aria-label="결과 공개 시점"
               value={resultReveal}
-              onChange={(e) =>
-                setResultReveal(e.target.value as ResultRevealPolicy)
-              }
-            >
-              {REVEAL_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setResultReveal(v as ResultRevealPolicy)}
+              options={REVEAL_OPTIONS}
+            />
           </div>
           <div>
             <FieldLabel>총점</FieldLabel>

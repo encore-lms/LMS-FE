@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ListChecks, TriangleAlert } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import type { WorkspaceData, WsMember } from '../../types'
 import { Avatar, Chip, SectionHead, StatBox } from '../components/ws-shared'
@@ -231,21 +232,16 @@ function RoleSelect({
   const selectValue = isPreset ? value : '기타'
   return (
     <div className="flex flex-col gap-2">
-      <select
+      <Select
         value={selectValue}
-        onChange={(e) =>
-          onChange(e.target.value === '기타' ? '' : e.target.value)
-        }
+        onChange={(v) => onChange(v === '기타' ? '' : v)}
         aria-label="역할 선택"
-        className={fieldCls}
-      >
-        {ROLE_PRESETS.map((r) => (
-          <option key={r} value={r}>
-            {r}
-          </option>
-        ))}
-        <option value="기타">기타 (직접 입력)</option>
-      </select>
+        options={[
+          ...ROLE_PRESETS.map((r) => ({ value: r, label: r })),
+          { value: '기타', label: '기타 (직접 입력)' },
+        ]}
+        className="h-10 w-full"
+      />
       {selectValue === '기타' && (
         <input
           value={value}
@@ -317,19 +313,19 @@ function InviteMemberModal({
               초대 가능한 동료가 없어요.
             </span>
           ) : (
-            <select
-              autoFocus
+            <Select
+              aria-label="팀원 선택"
               value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              className="border-border focus:border-brand h-10 w-full rounded-lg border bg-white px-3 text-[13px] outline-none"
-            >
-              <option value="">동료를 선택하세요</option>
-              {candidates.map((c) => (
-                <option key={c.userId} value={c.userId}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              onChange={setUserId}
+              options={[
+                { value: '', label: '동료를 선택하세요' },
+                ...candidates.map((c) => ({
+                  value: c.userId,
+                  label: c.name,
+                })),
+              ]}
+              className="h-10 w-full"
+            />
           )}
         </div>
         <div className="flex flex-col gap-1.5">
@@ -354,8 +350,6 @@ function EditMemberModal({
   // 기존 역할이 '백엔드 · 팀원'처럼 결합형이면 앞 전문분야만 취해 객관식과 맞춘다.
   const [role, setRole] = useState(member.role.split(' · ')[0])
   const [kind, setKind] = useState<WsMember['kind']>(member.kind)
-  const field =
-    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
   const submit = () => {
     if (!role.trim()) return
     onSave({ role: role.trim(), kind })
@@ -395,17 +389,19 @@ function EditMemberModal({
           <span className="text-fg text-[12px] font-bold">역할</span>
           <RoleSelect value={role} onChange={setRole} />
         </div>
-        <label className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">구분</span>
-          <select
+          <Select
+            aria-label="구분"
             value={kind}
-            onChange={(e) => setKind(e.target.value as WsMember['kind'])}
-            className={field}
-          >
-            <option value="팀원">팀원</option>
-            <option value="PM">PM (위임 시 기존 PM은 팀원으로 변경)</option>
-          </select>
-        </label>
+            onChange={(v) => setKind(v as WsMember['kind'])}
+            options={[
+              { value: '팀원', label: '팀원' },
+              { value: 'PM', label: 'PM (위임 시 기존 PM은 팀원으로 변경)' },
+            ]}
+            className="h-10 w-full"
+          />
+        </div>
       </div>
     </Modal>
   )

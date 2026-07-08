@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { useAddTask, useUpdateTaskStatus } from '../../../api/projects'
 import type { WorkspaceData, WsColumn, WsMember, WsTask } from '../../types'
@@ -203,20 +204,19 @@ function AddTaskModal({
       }
     >
       <div className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">컬럼</span>
-          <select
-            value={colIdx}
-            onChange={(e) => setColIdx(Number(e.target.value))}
-            className={field}
-          >
-            {columns.map((c, i) => (
-              <option key={c.key} value={i}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          <Select
+            aria-label="컬럼"
+            value={String(colIdx)}
+            onChange={(v) => setColIdx(Number(v))}
+            options={columns.map((c, i) => ({
+              value: String(i),
+              label: c.label,
+            }))}
+            className="h-10 w-full"
+          />
+        </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">제목</span>
           <input

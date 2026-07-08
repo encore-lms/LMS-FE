@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -174,18 +175,19 @@ export default function LogsPage() {
       {/* 필터 바 */}
       <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(v) => setStatus(v)}
             aria-label="상태 필터"
-            className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="all">상태 전체</option>
-            <option value="submitted">승인 대기</option>
-            <option value="valid">유효</option>
-            <option value="change_requested">수정 요청</option>
-            <option value="draft">초안</option>
-          </select>
+            options={[
+              { value: 'all', label: '상태 전체' },
+              { value: 'submitted', label: '승인 대기' },
+              { value: 'valid', label: '유효' },
+              { value: 'change_requested', label: '수정 요청' },
+              { value: 'draft', label: '초안' },
+            ]}
+            className="h-9"
+          />
         </div>
         <input
           value={q}

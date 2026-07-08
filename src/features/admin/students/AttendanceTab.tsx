@@ -5,6 +5,7 @@ import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
+import { Select } from '@/components/ui/Select'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
@@ -165,43 +166,35 @@ export function AttendanceTab() {
   // 선택 컨트롤(과정·기수·월) — 항상 표시.
   const controls = (
     <div className="flex flex-wrap items-center gap-2">
-      <select
+      <Select
         aria-label="과정 선택"
-        value={courseId ?? ''}
-        onChange={(e) => {
-          setSelectedCourseId(e.target.value)
+        value={courseId}
+        onChange={(v) => {
+          setSelectedCourseId(v)
           setSelectedCohortId(null)
           setSelectedDate(null)
         }}
-        className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
-      >
-        {(courses ?? []).map((c) => (
-          <option key={c.courseId} value={c.courseId}>
-            {c.title}
-          </option>
-        ))}
-        {(courses ?? []).length === 0 && (
-          <option value="">등록 과정 없음</option>
-        )}
-      </select>
-      <select
+        options={(courses ?? []).map((c) => ({
+          value: c.courseId,
+          label: c.title,
+        }))}
+        placeholder="등록 과정 없음"
+        className="h-11"
+      />
+      <Select
         aria-label="기수 선택"
-        value={cohortId ?? ''}
-        onChange={(e) => {
-          setSelectedCohortId(e.target.value)
+        value={cohortId}
+        onChange={(v) => {
+          setSelectedCohortId(v)
           setSelectedDate(null)
         }}
-        className="border-border focus:border-brand text-fg bg-surface h-11 rounded-lg border px-3 text-sm outline-none"
-      >
-        {(courseConfig?.cohorts ?? []).map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.cohortNo}기
-          </option>
-        ))}
-        {(courseConfig?.cohorts ?? []).length === 0 && (
-          <option value="">기수 없음</option>
-        )}
-      </select>
+        options={(courseConfig?.cohorts ?? []).map((c) => ({
+          value: c.id,
+          label: `${c.cohortNo}기`,
+        }))}
+        placeholder="기수 없음"
+        className="h-11"
+      />
       {/* DateTimePicker 루트가 w-full이라 폭 고정 래퍼로 한 줄 유지(좁아지면 wrap). */}
       <div className="w-40">
         <DateTimePicker

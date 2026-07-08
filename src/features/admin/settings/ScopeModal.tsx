@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import type { OpsAccount } from '@/shared/types'
 import { useCourseConfig, useCourseList } from '../api/settings'
 
@@ -77,27 +78,18 @@ export function ScopeModal({
       </p>
 
       {/* 과정 선택 */}
-      <label
-        className="text-fg-subtle text-xs font-medium"
-        htmlFor="scope-course"
-      >
-        과정
-      </label>
-      <select
-        id="scope-course"
-        value={activeCourseId ?? ''}
-        onChange={(e) => setCourseId(e.target.value)}
-        className="border-border focus:border-brand text-fg bg-surface mt-1 mb-4 h-10 w-full rounded-lg border px-3 text-sm outline-none"
-      >
-        {(courses ?? []).map((c) => (
-          <option key={c.courseId} value={c.courseId}>
-            {c.title}
-          </option>
-        ))}
-        {(courses ?? []).length === 0 && (
-          <option value="">등록 과정 없음</option>
-        )}
-      </select>
+      <p className="text-fg-subtle text-xs font-medium">과정</p>
+      <Select
+        aria-label="과정"
+        value={activeCourseId}
+        onChange={(v) => setCourseId(v)}
+        options={(courses ?? []).map((c) => ({
+          value: c.courseId,
+          label: c.title,
+        }))}
+        placeholder="등록 과정 없음"
+        className="mt-1 mb-4 h-10 w-full"
+      />
 
       {/* 기수 다중 선택 */}
       <p className="text-fg-subtle text-xs font-medium">기수 (다중 선택)</p>

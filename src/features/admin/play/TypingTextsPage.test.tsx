@@ -103,7 +103,12 @@ describe('TypingTextsPage (PLAY 타자 관리)', () => {
   it('활성 상태 필터 — 오류만 보면 활성 제시문이 사라진다', async () => {
     renderPage()
     const user = userEvent.setup()
-    await user.selectOptions(screen.getByLabelText('활성 상태 필터'), 'error')
+    await user.click(screen.getByLabelText('활성 상태 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '오류',
+      }),
+    )
     expect(screen.getByText('SQL 윈도우 함수')).toBeInTheDocument()
     expect(screen.queryByText('리팩터링 원칙')).toBeNull()
   })

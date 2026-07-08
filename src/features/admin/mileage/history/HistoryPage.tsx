@@ -4,6 +4,7 @@ import { AlertTriangle, ChevronLeft, Download, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -214,19 +215,19 @@ export default function HistoryPage() {
 
       {/* 필터 */}
       <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
-        <select
+        <Select
           value={txType}
-          onChange={(e) => setTxType(e.target.value)}
+          onChange={(v) => setTxType(v)}
           aria-label="구분 필터"
-          className="border-border text-fg-muted focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-        >
-          <option value="all">구분 전체</option>
-          {(Object.keys(TX_META) as TxType[]).map((key) => (
-            <option key={key} value={key}>
-              {TX_META[key].label}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: 'all', label: '구분 전체' },
+            ...(Object.keys(TX_META) as TxType[]).map((key) => ({
+              value: key,
+              label: TX_META[key].label,
+            })),
+          ]}
+          className="h-9"
+        />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}

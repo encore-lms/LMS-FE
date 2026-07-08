@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { useAddSchedule } from '../../../api/projects'
 import type { Tone, WorkspaceData } from '../../types'
@@ -300,20 +301,19 @@ function AddScheduleModal({
             </span>
           )}
         </div>
-        <label className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">이슈</span>
-          <select
+          <Select
+            aria-label="이슈 유형"
             value={typeKey}
-            onChange={(e) => setTypeKey(e.target.value)}
-            className={field}
-          >
-            {SCHEDULE_TYPES.map((t) => (
-              <option key={t.v} value={t.v}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setTypeKey}
+            options={SCHEDULE_TYPES.map((t) => ({
+              value: t.v,
+              label: t.label,
+            }))}
+            className="h-10 w-full"
+          />
+        </div>
         {isEtc && (
           <input
             value={customType}

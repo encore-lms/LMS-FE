@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import StatisticsPage from './StatisticsPage'
@@ -126,7 +126,12 @@ describe('StatisticsPage (조회 전용)', () => {
   it('멘토 필터 — 선택 시 다른 멘토 행이 사라진다', async () => {
     renderPage()
     const user = userEvent.setup()
-    await user.selectOptions(screen.getByLabelText('멘토 필터'), 'mentor_kim')
+    await user.click(screen.getByLabelText('멘토 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '김효원',
+      }),
+    )
     expect(screen.queryByText('임수현 / 데이터마트 팀')).toBeNull()
     expect(screen.getByText('김효원 / 트러블슈팅 팀')).toBeInTheDocument()
     expect(screen.getByText('총 2팀 · 표시 1팀')).toBeInTheDocument()

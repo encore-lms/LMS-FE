@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -180,34 +181,29 @@ export default function CohortStudentsPage() {
         </div>
         <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
           <span className="text-fg-subtle">기수</span>
-          <select
+          <Select
             value={ctxCohortId}
-            onChange={(e) => setCohortId(e.target.value)}
+            onChange={(v) => setCohortId(v)}
             aria-label="기수 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            {Object.entries(COHORT_ID_TO_LABEL).map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
+            options={Object.entries(COHORT_ID_TO_LABEL).map(([id, label]) => ({
+              value: id,
+              label,
+            }))}
+          />
         </label>
         <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
           <span className="text-fg-subtle">증명서</span>
-          <select
+          <Select
             value={cert}
-            onChange={(e) => setCert(e.target.value as CertFilter)}
+            onChange={(v) => setCert(v as CertFilter)}
             aria-label="증명서 상태 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            <option value="all">전체</option>
-            {(Object.keys(CERT_STATUS_META) as StudentCertStatus[]).map((s) => (
-              <option key={s} value={s}>
-                {CERT_STATUS_META[s].label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: 'all', label: '전체' },
+              ...(Object.keys(CERT_STATUS_META) as StudentCertStatus[]).map(
+                (s) => ({ value: s, label: CERT_STATUS_META[s].label }),
+              ),
+            ]}
+          />
         </label>
         <button
           type="button"

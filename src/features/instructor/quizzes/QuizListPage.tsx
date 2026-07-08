@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, type Column } from '@/components/data/DataTable'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -255,49 +256,43 @@ export default function QuizListPage({
         </div>
         {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
         {!embedded && (
-          <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+          <label className="flex items-center gap-2 text-xs">
             <span className="text-fg-subtle">기수</span>
-            <select
+            <Select
               value={cohort}
-              onChange={(e) => setCohort(e.target.value)}
+              onChange={(v) => setCohort(v)}
               aria-label="기수 필터"
-              className="text-fg bg-transparent text-sm font-medium outline-none"
-            >
-              {cohortOpts.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              options={cohortOpts.map((c) => ({ value: c, label: c }))}
+            />
           </label>
         )}
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+        <label className="flex items-center gap-2 text-xs">
           <span className="text-fg-subtle">채점 모드</span>
-          <select
+          <Select
             value={mode}
-            onChange={(e) => setMode(e.target.value as ModeFilter)}
+            onChange={(v) => setMode(v as ModeFilter)}
             aria-label="채점 모드 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            <option value="all">전체</option>
-            <option value="AUTO">AUTO</option>
-            <option value="MANUAL">MANUAL</option>
-            <option value="MIXED">MIXED</option>
-          </select>
+            options={[
+              { value: 'all', label: '전체' },
+              { value: 'AUTO', label: 'AUTO' },
+              { value: 'MANUAL', label: 'MANUAL' },
+              { value: 'MIXED', label: 'MIXED' },
+            ]}
+          />
         </label>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+        <label className="flex items-center gap-2 text-xs">
           <span className="text-fg-subtle">공개 상태</span>
-          <select
+          <Select
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value as VisibilityFilter)}
+            onChange={(v) => setVisibility(v as VisibilityFilter)}
             aria-label="공개 상태 필터"
-            className="text-fg bg-transparent text-sm font-medium outline-none"
-          >
-            <option value="all">전체</option>
-            <option value="draft">임시저장</option>
-            <option value="published">공개</option>
-            <option value="closed">종료</option>
-          </select>
+            options={[
+              { value: 'all', label: '전체' },
+              { value: 'draft', label: '임시저장' },
+              { value: 'published', label: '공개' },
+              { value: 'closed', label: '종료' },
+            ]}
+          />
         </label>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-fg-subtle text-xs">

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import type { TypingPassage } from './types'
 
 const LANGUAGES = ['Python', '한글', '영문']
@@ -72,9 +73,6 @@ export function PassageFormModal({
     })
   }
 
-  const selectClass =
-    'border-border text-fg focus:border-brand h-11 w-full rounded-lg border bg-surface px-3 text-sm outline-none'
-
   return (
     <Modal
       open={open}
@@ -132,44 +130,24 @@ export function PassageFormModal({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-[6px]">
-            <label
-              htmlFor="passage-language"
-              className="text-fg text-[13px] font-bold"
-            >
-              언어
-            </label>
-            <select
-              id="passage-language"
+            <span className="text-fg text-[13px] font-bold">언어</span>
+            <Select
+              aria-label="언어"
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className={selectClass}
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setLanguage(v)}
+              options={LANGUAGES.map((l) => ({ value: l, label: l }))}
+              className="h-11 w-full"
+            />
           </div>
           <div className="flex flex-col gap-[6px]">
-            <label
-              htmlFor="passage-level"
-              className="text-fg text-[13px] font-bold"
-            >
-              난이도
-            </label>
-            <select
-              id="passage-level"
+            <span className="text-fg text-[13px] font-bold">난이도</span>
+            <Select
+              aria-label="난이도"
               value={level}
-              onChange={(e) => setLevel(e.target.value)}
-              className={selectClass}
-            >
-              {LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setLevel(v)}
+              options={LEVELS.map((l) => ({ value: l, label: l }))}
+              className="h-11 w-full"
+            />
           </div>
           <Input
             label="정렬 순서"

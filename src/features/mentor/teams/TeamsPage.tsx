@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Calendar,
-  ChevronDown,
   Download,
   Info,
   Search,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
@@ -386,7 +386,7 @@ function KpiValue({
   )
 }
 
-// 필터 셀렉트 — 아이콘 + 라벨 + 굵은 현재값 + caret(Figma 컨트롤 재현, 네이티브 select).
+// 필터 셀렉트 — 아이콘 + 라벨 + 공용 Select(커스텀 listbox) 트리거.
 function FilterSelect({
   icon: Icon,
   label,
@@ -403,24 +403,18 @@ function FilterSelect({
   options: { value: string; label: string }[]
 }) {
   return (
-    <div className="border-border flex h-10 flex-1 items-center gap-2 rounded-[10px] border px-3.5">
+    <div className="flex flex-1 items-center gap-2">
       <Icon className="text-fg-muted h-3.5 w-3.5 shrink-0" />
       <span className="text-fg-subtle text-[11px] font-medium whitespace-nowrap">
         {label}
       </span>
-      <select
+      <Select
         aria-label={ariaLabel}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="text-fg min-w-0 flex-1 appearance-none bg-transparent text-xs font-bold outline-none"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="text-fg-subtle pointer-events-none h-2.5 w-2.5 shrink-0" />
+        onChange={onChange}
+        options={options}
+        className="h-10 min-w-0 flex-1"
+      />
     </div>
   )
 }

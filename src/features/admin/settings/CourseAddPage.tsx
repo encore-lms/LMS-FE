@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Pagination } from '@/components/data/Pagination'
+import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
@@ -220,31 +221,26 @@ export default function CourseAddPage() {
         <p className="text-fg text-sm font-bold">HRD-Net 과정 검색</p>
         <p className="text-fg-subtle text-xs">인증키 · 과정명·기관명 검색</p>
         <div className="mt-3 grid items-end gap-3 lg:grid-cols-[200px_1fr_1fr_150px_150px_auto]">
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <span className="text-fg text-xs font-bold">
               인증키 <span className="text-danger">*</span>
             </span>
-            <select
+            <Select
               aria-label="인증키"
               value={effectiveKeyId}
-              onChange={(e) => {
-                setSelectedKeyId(e.target.value)
+              onChange={(v) => {
+                setSelectedKeyId(v)
                 setPage(1)
               }}
+              options={activeKeys.map((k) => ({
+                value: k.id,
+                label: `${k.name} (${k.maskedKey})`,
+              }))}
+              placeholder="활성 키 없음 — HRD API Key 등록 필요"
               disabled={activeKeys.length === 0}
-              className="border-border text-fg focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none disabled:opacity-60"
-            >
-              {activeKeys.length === 0 ? (
-                <option value="">활성 키 없음 — HRD API Key 등록 필요</option>
-              ) : (
-                activeKeys.map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.name} ({k.maskedKey})
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
+              className="h-10"
+            />
+          </div>
           <label className="flex flex-col gap-1">
             <span className="text-fg text-xs font-bold">훈련기관명</span>
             <input

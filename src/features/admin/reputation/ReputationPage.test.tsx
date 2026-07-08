@@ -104,7 +104,12 @@ describe('ReputationPage (평판 관리)', () => {
   it('상태 필터 — 완료만 보면 누락 수강생이 사라진다', async () => {
     renderPage()
     const user = userEvent.setup()
-    await user.selectOptions(screen.getByLabelText('상태 필터'), 'complete')
+    await user.click(screen.getByLabelText('상태 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '완료',
+      }),
+    )
     expect(screen.getByText('김민준')).toBeInTheDocument()
     expect(screen.queryByText('박지훈')).toBeNull()
   })

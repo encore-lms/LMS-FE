@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -419,7 +419,12 @@ describe('AccountsPage (설정 탭 랜딩 · 계정 관리)', () => {
   it('역할 필터는 해당 역할만 남긴다', async () => {
     const user = userEvent.setup()
     renderWith(<AccountsPage />)
-    await user.selectOptions(screen.getByLabelText('역할 필터'), 'INSTRUCTOR')
+    await user.click(screen.getByLabelText('역할 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '강사',
+      }),
+    )
     expect(screen.queryByText('이정훈')).not.toBeInTheDocument()
     expect(screen.getByText('박강사')).toBeInTheDocument()
   })

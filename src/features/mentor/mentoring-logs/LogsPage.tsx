@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Calendar,
   Check,
-  ChevronDown,
   Clock3,
   FileText,
   Info,
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { Pagination } from '@/components/data/Pagination'
@@ -473,25 +473,19 @@ function FilterSelect({
   options: readonly { value: string; label: string }[]
 }) {
   return (
-    <label className="border-border flex h-10 items-center gap-1.5 rounded-[10px] border px-3.5">
+    <div className="flex items-center gap-1.5">
       {icon}
       <span className="text-fg-subtle text-[11px] font-medium whitespace-nowrap">
         {label}
       </span>
-      <select
+      <Select
         aria-label={`${label} 필터`}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="text-fg appearance-none bg-transparent text-xs font-bold outline-none"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="text-fg-subtle pointer-events-none h-2.5 w-2.5 shrink-0" />
-    </label>
+        onChange={onChange}
+        options={[...options]}
+        className="h-10"
+      />
+    </div>
   )
 }
 

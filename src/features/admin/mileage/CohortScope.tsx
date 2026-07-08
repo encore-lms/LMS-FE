@@ -1,3 +1,4 @@
+import { Select } from '@/components/ui/Select'
 import { useMileageCohorts } from './cohortsApi'
 
 // 마일리지 기수 선택 드롭다운 — '전체 기수'(빈 값) + 실제 기수 목록.
@@ -11,18 +12,15 @@ export function CohortScopeSelect({
 }) {
   const { data: cohorts } = useMileageCohorts()
   return (
-    <select
+    <Select
       aria-label="기수 필터"
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="border-border text-fg focus:border-brand bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-    >
-      <option value="">전체 기수</option>
-      {(cohorts ?? []).map((c) => (
-        <option key={c.cohortId} value={c.cohortId}>
-          {c.label}
-        </option>
-      ))}
-    </select>
+      onChange={(v) => onChange(v)}
+      options={[
+        { value: '', label: '전체 기수' },
+        ...(cohorts ?? []).map((c) => ({ value: c.cohortId, label: c.label })),
+      ]}
+      className="h-9"
+    />
   )
 }

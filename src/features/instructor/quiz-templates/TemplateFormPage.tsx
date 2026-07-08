@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -94,6 +95,7 @@ export default function TemplateFormPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -196,22 +198,27 @@ export default function TemplateFormPage() {
             error={errors.name?.message}
             {...register('name')}
           />
-          <label className="flex w-full flex-col gap-[6px]">
+          <div className="flex w-full flex-col gap-[6px]">
             <span className="text-fg text-[13px] font-bold">
               카테고리 <span className="text-danger">*</span>
             </span>
-            <select
-              aria-label="카테고리"
-              className="border-border focus:border-brand text-fg h-[52px] rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none"
-              {...register('category')}
-            >
-              {CATEGORY_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
+            <Controller
+              name="category"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  aria-label="카테고리"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={CATEGORY_OPTIONS.map((c) => ({
+                    value: c,
+                    label: c,
+                  }))}
+                  className="h-[52px]"
+                />
+              )}
+            />
+          </div>
         </div>
         <label className="mt-4 flex w-full flex-col gap-[6px]">
           <span className="text-fg text-[13px] font-bold">설명</span>
@@ -269,20 +276,13 @@ export default function TemplateFormPage() {
         </div>
         <label className="mt-4 flex w-full flex-col gap-[6px] lg:w-[420px]">
           <span className="text-fg text-[13px] font-bold">결과 공개 시점</span>
-          <select
+          <Select
             value={resultReveal}
-            onChange={(e) =>
-              setResultReveal(e.target.value as ResultRevealPolicy)
-            }
+            onChange={(v) => setResultReveal(v as ResultRevealPolicy)}
             aria-label="결과 공개 시점"
-            className="border-border focus:border-brand text-fg h-[44px] rounded-[10px] border-2 bg-white px-4 text-sm font-medium outline-none"
-          >
-            {REVEAL_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            options={REVEAL_OPTIONS}
+            className="h-[44px]"
+          />
         </label>
       </section>
 

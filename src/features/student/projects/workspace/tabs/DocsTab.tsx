@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, FileText, Files } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/shared/api'
 import { useAddArtifact, useUploadArtifactFile } from '../../../api/projects'
@@ -182,20 +183,16 @@ function AddDocModal({
             className={field}
           />
         </label>
-        <label className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">카테고리</span>
-          <select
+          <Select
+            aria-label="카테고리"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={field}
-          >
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setCategory}
+            options={categories.map((item) => ({ value: item, label: item }))}
+            className="h-10 w-full"
+          />
+        </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">링크 URL</span>
           <input

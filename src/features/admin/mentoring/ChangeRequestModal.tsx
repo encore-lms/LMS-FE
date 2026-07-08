@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { apiErrorOf, useCreateLogChangeRequest } from './api'
 import {
@@ -79,27 +80,24 @@ export function ChangeRequestModal({
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="change-reason-code"
-            className="text-fg-muted text-xs font-bold"
-          >
+          <label className="text-fg-muted text-xs font-bold">
             사유 코드 <span className="text-danger">*</span>
           </label>
-          <select
-            id="change-reason-code"
+          <Select
+            aria-label="사유 코드"
             value={reasonCode}
-            onChange={(e) =>
-              setReasonCode(e.target.value as MentoringLogChangeReasonCode | '')
+            onChange={(v) =>
+              setReasonCode(v as MentoringLogChangeReasonCode | '')
             }
-            className="border-border bg-surface text-fg focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
-          >
-            <option value="">사유 코드 선택</option>
-            {MENTORING_LOG_CHANGE_REASON_CODES.map((code) => (
-              <option key={code} value={code}>
-                {MENTORING_LOG_CHANGE_REASON_LABEL[code]}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: '사유 코드 선택' },
+              ...MENTORING_LOG_CHANGE_REASON_CODES.map((code) => ({
+                value: code,
+                label: MENTORING_LOG_CHANGE_REASON_LABEL[code],
+              })),
+            ]}
+            className="h-10 w-full"
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <label

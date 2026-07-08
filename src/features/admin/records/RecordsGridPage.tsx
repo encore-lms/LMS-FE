@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/shared/api'
 import { cn } from '@/shared/lib/cn'
@@ -116,37 +117,31 @@ export default function RecordsGridPage({
   // 단독 진입용 과정·기수 셀렉트 바 — embed에서는 부모 화면이 이미 제공하므로 숨긴다.
   const pickerBar = standalone && (
     <div className="mb-4 flex flex-wrap gap-2">
-      <select
+      <Select
         aria-label="과정 선택"
-        value={pickedCourseId ?? ''}
-        onChange={(e) => {
-          setSelCourseId(e.target.value)
+        value={pickedCourseId}
+        onChange={(v) => {
+          setSelCourseId(v)
           setSelCohortId(null)
         }}
-        className="border-border text-fg bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-      >
-        {(courses ?? []).map((c) => (
-          <option key={c.courseId} value={c.courseId}>
-            {c.title}
-          </option>
-        ))}
-        {(courses ?? []).length === 0 && <option value="">등록 과정 없음</option>}
-      </select>
-      <select
+        options={(courses ?? []).map((c) => ({
+          value: c.courseId,
+          label: c.title,
+        }))}
+        placeholder="등록 과정 없음"
+        className="h-9"
+      />
+      <Select
         aria-label="기수 선택"
-        value={pickedCohortId ?? ''}
-        onChange={(e) => setSelCohortId(e.target.value)}
-        className="border-border text-fg bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
-      >
-        {(courseConfig?.cohorts ?? []).map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.cohortNo}기
-          </option>
-        ))}
-        {(courseConfig?.cohorts ?? []).length === 0 && (
-          <option value="">기수 없음</option>
-        )}
-      </select>
+        value={pickedCohortId}
+        onChange={(v) => setSelCohortId(v)}
+        options={(courseConfig?.cohorts ?? []).map((c) => ({
+          value: c.id,
+          label: `${c.cohortNo}기`,
+        }))}
+        placeholder="기수 없음"
+        className="h-9"
+      />
     </div>
   )
 

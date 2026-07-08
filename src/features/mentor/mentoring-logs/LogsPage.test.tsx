@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import LogsPage from './LogsPage'
@@ -79,16 +79,23 @@ describe('LogsPage', () => {
     const user = userEvent.setup()
     renderPage()
     // 상태=수정 요청 → 수정 요청 행만
-    await user.selectOptions(
-      screen.getByLabelText('상태 필터'),
-      'change_requested',
+    await user.click(screen.getByLabelText('상태 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '수정 요청',
+      }),
     )
     expect(screen.getByText('수정 요청 — 일지 보강 필요')).toBeInTheDocument()
     expect(
       screen.queryByText('추천 모델 v2 평가 지표 검토 + 다음 액션 정리'),
     ).not.toBeInTheDocument()
     // 검색 — 요지 키워드(M1 mock 더미 보존 — Figma 목록 요지와 일부 드리프트)
-    await user.selectOptions(screen.getByLabelText('상태 필터'), 'all')
+    await user.click(screen.getByLabelText('상태 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '전체',
+      }),
+    )
     await user.type(screen.getByLabelText('팀명·일지 요지 검색'), '임베딩')
     expect(
       screen.getByText('임베딩 모델 비교 실험 결과 리뷰'),

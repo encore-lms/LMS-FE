@@ -5,7 +5,7 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
-import { KpiCard } from '@/components/data/KpiCard'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { useStudentAccounts } from '../api/students'
 import { useOpsAccounts } from '../api/settings'
@@ -252,6 +252,32 @@ export function AssignmentsPane({
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [description, setDescription] = useState('')
+  // 목록 필터 — KPI 카드 대신 상태·검색으로 좁혀 본다(운영 요구).
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [q, setQ] = useState('')
+  const filtered = useMemo(() => {
+    const needle = q.trim()
+    return (data?.items ?? []).filter((r) => {
+      if (
+        needle &&
+        !r.title.includes(needle) &&
+        !(r.subject ?? '').includes(needle)
+      )
+        return false
+      switch (statusFilter) {
+        case 'submitted':
+          return r.counts.submitted > 0
+        case 'supplement':
+          return r.counts.supplementRequested > 0
+        case 'done':
+          return r.counts.reviewDone > 0
+        case 'closed':
+          return r.closed
+        default:
+          return true
+      }
+    })
+  }, [data, q, statusFilter])
   const [subView, setSubView] = useState<InstructorAssignmentRow | null>(null)
   // 삭제 확인 대상 — 파괴적 액션은 ActionModal 확인을 거친다.
   const [deleteTarget, setDeleteTarget] =
@@ -397,30 +423,46 @@ export function AssignmentsPane({
 
   return (
     <div>
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <KpiCard label="과제" value={data.total} />
-        <KpiCard label="제출" value={data.kpi.submitted} />
-        <KpiCard
-          label="보완 요청"
-          value={data.kpi.supplementRequested}
-          tone="warning"
-        />
-        <KpiCard label="검토 완료" value={data.kpi.reviewDone} tone="success" />
-      </div>
-
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-fg-muted text-sm">총 {data.total}개 과제</p>
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" /> 과제 등록
-        </Button>
+      {/* KPI 카드 대신 필터 바 — 검색·제출 상태로 목록을 좁힌다(운영 요구). */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-fg-muted text-sm">
+          총 {filtered.length}개 과제
+          {filtered.length !== data.total && ` (전체 ${data.total})`}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="과제·과목 검색"
+            aria-label="과제 검색"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
+          />
+          <Select
+            aria-label="제출 상태 필터"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: 'all', label: '전체' },
+              { value: 'submitted', label: '제출 있음' },
+              { value: 'supplement', label: '보완 요청' },
+              { value: 'done', label: '검토 완료' },
+              { value: 'closed', label: '마감됨' },
+            ]}
+          />
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" /> 과제 등록
+          </Button>
+        </div>
       </div>
 
       <DataTable
         columns={columns}
-        rows={data.items}
+        rows={filtered}
         rowKey={(r) => r.id}
         onRowClick={(r) => setSubView(r)}
-        empty="등록된 과제가 없어요"
+        empty={
+          data.total === 0 ? '등록된 과제가 없어요' : '조건에 맞는 과제가 없어요'
+        }
       />
 
       {/* 과제 삭제 확인 — 복구 불가 액션 */}

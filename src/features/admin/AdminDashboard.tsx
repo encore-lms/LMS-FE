@@ -229,7 +229,7 @@ function AllCohortsView({
             <span className="text-fg block text-[13px] font-bold">
               {b.cohortLabel}
             </span>
-            <span className="text-fg-subtle block text-[11px]">
+            <span className="text-fg-subtle block text-[12px]">
               {fmtDate(b.startDate)}–{fmtDate(b.endDate)}
               {b.source === 'hrd-live' && (
                 <span className="text-info ml-1.5 font-semibold">
@@ -418,16 +418,16 @@ function AllCohortsView({
                         style={{ background: cohortColor(boards.indexOf(b)) }}
                         aria-hidden
                       />
-                      <span className="text-fg text-[12.5px] font-bold">
+                      <span className="text-fg text-[13px] font-bold">
                         {b.cohortLabel}
                       </span>
                       {b.source === 'hrd-live' && (
-                        <span className="text-info text-[11px] font-semibold">
+                        <span className="text-info text-[12px] font-semibold">
                           HRD 라이브
                         </span>
                       )}
                     </span>
-                    <span className="text-fg-subtle text-[11.5px]">
+                    <span className="text-fg-subtle text-[12px]">
                       {b.issues.length}명
                     </span>
                   </button>
@@ -818,7 +818,7 @@ function RiskStudentRow({
       {meta.badge && (
         <span
           className={cn(
-            'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold',
+            'shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold',
             meta.badgeCls,
           )}
         >

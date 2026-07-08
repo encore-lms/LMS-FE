@@ -8,6 +8,7 @@ import { cn } from '@/shared/lib/cn'
 import type { RecordEvidenceImage } from '@/shared/types'
 import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
+import { useCourseConfig, useCourseList } from '../api/settings'
 import type {
   RecordCategory,
   RecordDecision,
@@ -47,7 +48,7 @@ const DOT_TITLE: Record<string, string> = {
 
 export default function RecordsGridPage({
   embedded = false,
-  cohortId = null,
+  cohortId: cohortIdProp = null,
 }: {
   embedded?: boolean
   cohortId?: string | null
@@ -56,6 +57,19 @@ export default function RecordsGridPage({
   const [category, setCategory] = useSearchParamState('category', 'blog')
   const [q, setQ] = useSearchParamState('q')
   const [reviewId, setReviewId] = useState<string | null>(null)
+
+  // 단독 라우트(/admin/records/review) 진입 시엔 prop이 없으므로 상단에서 과정·기수를
+  // 직접 고른다(첫 항목 기본 선택). embed(교육 개요 등)일 땐 부모가 준 prop을 그대로 쓴다.
+  const standalone = !embedded && cohortIdProp == null
+  const { data: courses } = useCourseList()
+  const [selCourseId, setSelCourseId] = useState<string | null>(null)
+  const pickedCourseId = selCourseId ?? courses?.[0]?.courseId ?? null
+  const { data: courseConfig } = useCourseConfig(
+    standalone ? pickedCourseId : null,
+  )
+  const [selCohortId, setSelCohortId] = useState<string | null>(null)
+  const pickedCohortId = selCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const cohortId = standalone ? pickedCohortId : cohortIdProp
 
   const {
     data: grid,
@@ -99,13 +113,55 @@ export default function RecordsGridPage({
     return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
   }, [students, byStudent, weeks, q])
 
+  // 단독 진입용 과정·기수 셀렉트 바 — embed에서는 부모 화면이 이미 제공하므로 숨긴다.
+  const pickerBar = standalone && (
+    <div className="mb-4 flex flex-wrap gap-2">
+      <select
+        aria-label="과정 선택"
+        value={pickedCourseId ?? ''}
+        onChange={(e) => {
+          setSelCourseId(e.target.value)
+          setSelCohortId(null)
+        }}
+        className="border-border text-fg bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
+      >
+        {(courses ?? []).map((c) => (
+          <option key={c.courseId} value={c.courseId}>
+            {c.title}
+          </option>
+        ))}
+        {(courses ?? []).length === 0 && <option value="">등록 과정 없음</option>}
+      </select>
+      <select
+        aria-label="기수 선택"
+        value={pickedCohortId ?? ''}
+        onChange={(e) => setSelCohortId(e.target.value)}
+        className="border-border text-fg bg-surface h-9 rounded-lg border px-3 text-sm outline-none"
+      >
+        {(courseConfig?.cohorts ?? []).map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.cohortNo}기
+          </option>
+        ))}
+        {(courseConfig?.cohorts ?? []).length === 0 && (
+          <option value="">기수 없음</option>
+        )}
+      </select>
+    </div>
+  )
+
   if (!cohortId) {
     return (
       <div className={embedded ? '' : 'p-8'}>
+        {pickerBar}
         <Empty
           icon={<AlertTriangle />}
-          title="기수를 선택해 주세요"
-          description="상단에서 과정·기수를 선택하면 제출 현황이 표시됩니다."
+          title={standalone ? '표시할 기수가 없어요' : '기수를 선택해 주세요'}
+          description={
+            standalone
+              ? '설정 > 과정 관리에서 과정과 기수를 등록하면 제출 현황이 표시됩니다.'
+              : '상단에서 과정·기수를 선택하면 제출 현황이 표시됩니다.'
+          }
         />
       </div>
     )
@@ -113,6 +169,7 @@ export default function RecordsGridPage({
 
   return (
     <div className={embedded ? '' : 'p-8'}>
+      {pickerBar}
       {/* 검색 + 카테고리 탭 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <input

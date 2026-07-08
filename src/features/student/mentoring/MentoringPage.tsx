@@ -143,7 +143,10 @@ function MentoringView({ data }: { data: MentoringData }) {
       }
     : {
         ...data,
-        kpis: { ...data.kpis, inProgress: activeRequest ? 1 : 0 },
+        kpis: {
+          ...data.kpis,
+          inProgress: activeRequest || reservation ? 1 : 0,
+        },
         stats: data.stats.map((s) => {
           if (s.key === 'waiting')
             return {

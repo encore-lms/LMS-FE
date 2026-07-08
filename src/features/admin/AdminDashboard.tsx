@@ -147,28 +147,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-8">
-      {/* 상단 — 날짜 + 기수 바로가기(상세 모달) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-fg-muted text-[13px]">
-          {dashboard.data.today} · 담당 {boards.length}개 기수
-        </p>
-        {!single && (
-          <div className="border-border bg-surface inline-flex gap-1 rounded-lg border p-1">
-            {boards.map((b) => (
-              <button
-                key={b.cohortId}
-                type="button"
-                onClick={() => setSelected(b.cohortId)}
-                className="text-fg-muted hover:text-fg hover:bg-surface-muted rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
-              >
-                {b.cohortLabel}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-5">
+      {/* 날짜·기수 칩 헤더 행은 제거(운영 요구) — 기수 상세는 비교 표 행 클릭으로 진입. */}
+      <div>
         {single ? (
           <CohortDeepDive
             board={boards[0]}

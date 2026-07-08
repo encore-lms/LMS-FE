@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AdminDashboard from './AdminDashboard'
@@ -143,11 +143,12 @@ describe('AdminDashboard (관제탑형)', () => {
     expect(screen.getByText('문성준')).toBeInTheDocument()
   })
 
-  it('기수 칩 클릭 — 해당 기수 상세 모달을 연다', async () => {
+  it('비교 표 행 클릭 — 해당 기수 상세 모달을 연다', async () => {
+    // 헤더 기수 칩 제거(운영 요구) 이후 상세 진입은 비교 표 행 클릭(onRowClick)이다.
     mockHooks(refs, dashboard)
     renderPage()
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: '24기' }))
+    await user.click(within(screen.getByRole('table')).getByText('24기'))
     expect(
       screen.getByText('SK네트웍스 Family AI 캠프 24기'),
     ).toBeInTheDocument()

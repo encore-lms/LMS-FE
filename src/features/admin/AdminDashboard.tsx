@@ -379,19 +379,15 @@ function AllCohortsView({
       <div className="mt-6">
         <p className="text-fg mb-2 text-[15px] font-bold">관리 필요 수강생</p>
         {issueBoards.length === 0 ? (
-          <div className="border-border bg-surface rounded-xl border p-5">
-            <p className="text-fg-subtle py-4 text-center text-[13px]">
-              지각·결석 반복 수강생이 없어요
-            </p>
-          </div>
+          <p className="text-fg-subtle py-8 text-center text-[13px]">
+            지각·결석 반복 수강생이 없어요
+          </p>
         ) : (
-          <div className="flex flex-col gap-4">
+          // 아웃라인 없는 플랫 디자인 — 기수별로 얇은 구분선 헤더 + 행 목록만.
+          <div className="flex flex-col gap-7">
             {issueBoards.map((b) => (
-              <div
-                key={b.cohortId}
-                className="border-border bg-surface rounded-xl border"
-              >
-                <div className="border-border flex items-center justify-between border-b px-4 py-2.5">
+              <div key={b.cohortId}>
+                <div className="border-divider flex items-center justify-between border-b pb-2">
                   <span className="flex items-center gap-2">
                     <i
                       className="h-3.5 w-[3px] rounded-full"
@@ -411,7 +407,7 @@ function AllCohortsView({
                     {b.issues.length}명
                   </span>
                 </div>
-                <div className="p-4">
+                <div className="pt-1">
                   <RiskList issues={b.issues} />
                 </div>
               </div>

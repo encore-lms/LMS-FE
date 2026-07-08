@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import {
   AlertOctagon,
   Bell,
   CheckCircle2,
+  ChevronRight,
   ClockAlert,
   HeartPulse,
   Inbox,
@@ -46,6 +48,7 @@ interface Action {
   label: string
   value: string
   detail: string
+  to?: string // 클릭 시 이동할 처리 화면(없으면 정적 표시)
 }
 interface PopoverItem {
   key: string
@@ -237,6 +240,7 @@ function buildActions(
       label: '미출석 공지',
       value: `${totalAbsent}명`,
       detail: `${absentByCohort[0].label} ${absentByCohort[0].n}명부터 확인`,
+      to: '/admin/students',
     })
   if (urgent.length > 0)
     actions.push({
@@ -245,6 +249,7 @@ function buildActions(
       label: '긴급 위험군',
       value: `${urgent.length}명`,
       detail: `${urgent[0].cohortLabel} ${urgent[0].name} 우선 상담`,
+      to: '/admin/students',
     })
   else if (issues.length > 0)
     actions.push({
@@ -253,6 +258,7 @@ function buildActions(
       label: '반복 이상 출결',
       value: `${issues.length}명`,
       detail: '지각·결석 패턴 확인',
+      to: '/admin/students',
     })
   // 위클리 체크 상담 요청 — 진행 중 기수.
   const counselByCohort = active
@@ -275,6 +281,7 @@ function buildActions(
       detail: firstName
         ? `${top.label} ${firstName} 등 확인`
         : `${top.label} ${top.n}명`,
+      to: '/admin/students',
     })
   }
 
@@ -288,6 +295,10 @@ function buildActions(
         quarantineCount > 0
           ? `승인 ${pending} · 인입 격리 ${quarantineCount}`
           : '자격증·트러블슈팅 승인 필요',
+      to:
+        quarantineCount > 0 && pending === 0
+          ? '/admin/ingestion/quarantine'
+          : '/admin/certificates/reviews',
     })
   if (actions.length === 0)
     actions.push({
@@ -325,11 +336,12 @@ function mergeTrend(active: CohortBoard[]): {
 const fmtMD = (d: string) =>
   d.length >= 10 ? `${Number(d.slice(5, 7))}.${Number(d.slice(8, 10))}` : d
 
-/** 지표 타일 — hover/focus 시 기수별 상세 팝오버 노출. */
+/** 지표 타일 — hover/focus 시 기수별 상세 팝오버 노출. sub는 숫자 아래 한 줄 맥락. */
 function MetricTile({
   label,
   value,
   suffix,
+  sub,
   popoverTitle,
   items,
   emptyText,
@@ -339,6 +351,7 @@ function MetricTile({
   label: string
   value: number
   suffix: string
+  sub?: ReactNode
   popoverTitle: string
   items: PopoverItem[]
   emptyText: string
@@ -347,19 +360,24 @@ function MetricTile({
 }) {
   return (
     <div
-      className="group relative z-0 flex min-h-[7rem] min-w-0 flex-col gap-1.5 rounded-2xl border border-white/[0.08] bg-white/[0.045] p-[0.95rem] transition-all outline-none hover:z-30 hover:-translate-y-px hover:border-white/20 hover:bg-white/[0.075] focus-visible:z-30 focus-visible:border-white/20 focus-visible:bg-white/[0.075]"
+      className="group relative z-0 flex min-h-[6.25rem] min-w-0 flex-col gap-1 rounded-2xl border border-white/[0.08] bg-white/[0.045] p-[0.8rem] transition-all outline-none hover:z-30 hover:-translate-y-px hover:border-white/20 hover:bg-white/[0.075] focus-visible:z-30 focus-visible:border-white/20 focus-visible:bg-white/[0.075]"
       tabIndex={0}
     >
       <span className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wide whitespace-nowrap text-white/55">
         {label}
         <Info className="h-3 w-3 text-white/35 transition-colors group-hover:text-white/75 group-focus-visible:text-white/75" />
       </span>
-      <span className="inline-flex items-baseline gap-0.5 text-[1.75rem] leading-none font-extrabold tracking-tight text-white">
+      <span className="inline-flex items-baseline gap-0.5 text-[1.5rem] leading-none font-extrabold tracking-tight text-white">
         {value}
-        <span className="text-[0.85rem] font-semibold text-white/55">
+        <span className="text-[0.8rem] font-semibold text-white/55">
           {suffix}
         </span>
       </span>
+      {sub && (
+        <span className="text-[11px] leading-tight break-keep text-white/50">
+          {sub}
+        </span>
+      )}
       {children}
 
       {/* hover 팝오버 — 기수별 상세 */}
@@ -677,6 +695,14 @@ export function DashboardInsight({
   const attendanceRate =
     todayTotal > 0 ? Math.round((todayPresent / todayTotal) * 100) : 0
   const riskCount = active.reduce((s, b) => s + (b.issues?.length ?? 0), 0)
+  // 타일 서브 맥락 — 위험군 중 긴급(결석 4회↑) 인원, 미출석이 발생한 기수 수.
+  const urgentCount = active.reduce(
+    (s, b) => s + b.issues.filter((i) => i.absentCount >= 4).length,
+    0,
+  )
+  const absentCohortCount = live.filter(
+    (b) => (b.attendance?.todayAbsentees?.length ?? 0) > 0,
+  ).length
   const absentCount = live.reduce(
     (s, b) => s + (b.attendance?.todayAbsentees?.length ?? 0),
     0,
@@ -772,7 +798,7 @@ export function DashboardInsight({
     })
 
   return (
-    <section className="relative z-[1] flex flex-col gap-5 overflow-hidden rounded-[28px] bg-[#181A20] p-7 text-white">
+    <section className="relative z-[1] flex flex-col gap-4 overflow-hidden rounded-3xl bg-[#181A20] p-6 text-white">
       {/* 우상단 은은한 그린 글로우 */}
       <div
         aria-hidden
@@ -791,23 +817,20 @@ export function DashboardInsight({
             오늘 인사이트
           </span>
 
-          <ul className="grid gap-2.5">
+          <ul className="grid gap-2">
             {actions.map((a) => {
               const Icon = a.icon
-              return (
-                <li
-                  key={a.label}
-                  className="grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl bg-white/[0.07] p-[0.75rem_0.875rem] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                >
+              const inner = (
+                <>
                   <span
                     className={cn(
-                      'inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10',
+                      'inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-white/10',
                       ACTION_ICON_COLOR[a.tone],
                     )}
                   >
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex min-w-0 flex-col">
                     <strong className="text-[13px] tracking-tight text-white">
                       {a.label}
                     </strong>
@@ -815,23 +838,46 @@ export function DashboardInsight({
                       {a.detail}
                     </small>
                   </span>
-                  <span className="text-[1.25rem] font-extrabold whitespace-nowrap text-white tabular-nums">
+                  <span className="inline-flex items-center gap-1.5 text-[1.05rem] font-extrabold whitespace-nowrap text-white tabular-nums">
                     {a.value}
+                    {a.to && (
+                      <ChevronRight className="h-4 w-4 text-white/35 transition-all group-hover/act:translate-x-0.5 group-hover/act:text-white/80" />
+                    )}
                   </span>
+                </>
+              )
+              const cls =
+                'grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl bg-white/[0.07] px-3 py-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
+              return (
+                <li key={a.label}>
+                  {a.to ? (
+                    // 행동 큐는 처리 화면으로 바로 이동(클릭 유도 — chevron·호버 강조)
+                    <Link
+                      to={a.to}
+                      className={cn(
+                        cls,
+                        'group/act transition-colors hover:bg-white/[0.12]',
+                      )}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className={cls}>{inner}</div>
+                  )}
                 </li>
               )
             })}
           </ul>
 
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2">
             {insights.slice(0, 3).map((it, i) => {
               const { icon: Icon, color } = INSIGHT_ICON[it.tone]
               return (
                 <li
                   key={i}
-                  className="grid grid-cols-[1.125rem_1fr] items-start gap-2.5 text-[14px] leading-[1.55] tracking-tight text-white/[0.92]"
+                  className="grid grid-cols-[1.125rem_1fr] items-start gap-2.5 text-[13px] leading-[1.5] tracking-tight text-white/[0.88]"
                 >
-                  <Icon className={cn('mt-0.5 h-4 w-4', color)} />
+                  <Icon className={cn('mt-0.5 h-3.5 w-3.5', color)} />
                   <span>{it.text}</span>
                 </li>
               )
@@ -840,7 +886,7 @@ export function DashboardInsight({
         </div>
 
         {/* 우: 4개 지표 타일 (2x2) */}
-        <div className="relative z-[1] grid grid-cols-2 items-stretch gap-3 rounded-[20px] bg-white/5 p-[1rem_1.25rem]">
+        <div className="relative z-[1] grid grid-cols-2 items-stretch gap-2.5 rounded-[18px] bg-white/5 p-3.5">
           <MetricTile
             label="오늘 출석률"
             value={rateAnim}
@@ -888,6 +934,15 @@ export function DashboardInsight({
             label="위험군"
             value={riskAnim}
             suffix="명"
+            sub={
+              riskCount === 0 ? (
+                <span className="text-[#69DB7C]">이상 출결 없음</span>
+              ) : urgentCount > 0 ? (
+                <span className="text-[#FF8787]">긴급 {urgentCount}명 포함</span>
+              ) : (
+                '반복 지각·결석 인원'
+              )
+            }
             popoverTitle="기수별 반복 이상 출결"
             items={riskItems}
             emptyText="진행 중 기수 위험군이 없습니다."
@@ -897,6 +952,13 @@ export function DashboardInsight({
             label="오늘 미출석"
             value={absentAnim}
             suffix="명"
+            sub={
+              absentCount === 0 ? (
+                <span className="text-[#69DB7C]">모든 기수 출석 완료</span>
+              ) : (
+                `${absentCohortCount}개 기수에서 발생`
+              )
+            }
             popoverTitle="기수별 미출석 수강생"
             items={absentItems}
             emptyText="모든 기수 출석 완료"
@@ -905,6 +967,18 @@ export function DashboardInsight({
             label="처리 대기"
             value={pendingAnim}
             suffix="건"
+            sub={
+              pendingCount === 0 ? (
+                <span className="inline-flex items-center gap-1 text-[#69DB7C]">
+                  <CheckCircle2 className="h-3 w-3" />
+                  모두 처리했어요
+                </span>
+              ) : quarantineCount > 0 ? (
+                `승인 ${pendingCount - quarantineCount} · 격리 ${quarantineCount}`
+              ) : (
+                '자격증·트러블슈팅 승인'
+              )
+            }
             popoverTitle="기수별 처리 대기"
             items={pendingItems}
             emptyText="처리 대기 업무가 없습니다."

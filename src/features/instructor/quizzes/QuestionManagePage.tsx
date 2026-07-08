@@ -51,7 +51,7 @@ export default function QuestionManagePage() {
       modelAnswerHint="강사 채점 시 참고용 — 학생에게 비공개"
       explanationHint="결과 화면에서 학생에게 노출"
       manualHint="주관식은 수동으로 자동 연결됨"
-      saveToastMessage="문제 저장 — 정답/배점 변경 시 자동 재채점"
+      saveToastMessage="문제 저장 — 정답/배점 변경 시 자동 재채점 (mock)"
       metaItems={(draft) => [
         `작성일: ${draft.createdAt}`,
         `최근 수정: ${draft.updatedAt}`,

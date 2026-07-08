@@ -134,8 +134,8 @@ export default function MenteeDetailPage() {
       header: '일지 상태',
       align: 'center',
       className: 'w-[110px]',
-      // Figma 행4 '검토중' 칩은 일지 상태 어휘(초안/유효/수정 요청)에 없어 정본 라벨로
-      // 대체(openQuestion 기록) — 승인·검토 개념 없음(제출 즉시 자동 유효).
+      // 참석 이력의 일지 상태 — 인정된 회차(valid)=인정 완료, 그 외=수정 요청으로 축약.
+      // (일지 승인 흐름 자체는 운영 검토 모달 소관 — 참석 이력엔 인정 완료분 위주로 표시.)
       cell: (r) =>
         r.logStatus === 'valid' ? (
           <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[10px] font-bold whitespace-nowrap">

@@ -17,9 +17,10 @@ import { LogReviewModal } from './LogReviewModal'
 import type { AdminMentoringLogRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
-// 멘토링 일지 관리 (/admin/mentoring/logs) — 운영(MANAGER/ADMIN) 조회·수정 요청 전용.
-// 직접 수정·폐기·반려 없음(05-31 확정 — Figma 2745:7815 의 반려 KPI·버튼은 정책 확정 전
-// 시안이라 제외, 상태 = 초안/유효/수정 요청/재제출 후 유효로 정합).
+// 멘토링 일지 관리 (/admin/mentoring/logs) — 운영(MANAGER/ADMIN) 승인·수정 요청 전용.
+// 검토 모달에서 매니저 승인(POST .../approve)·수정 요청(.../change-requests) 가능,
+// 직접 수정·폐기·반려는 없음(반려 KPI·버튼은 시안 단계라 제외).
+// 상태 = 초안/승인 대기/유효/수정 요청/재제출 후 유효.
 export default function LogsPage() {
   usePageHeader(
     '멘토링 일지 관리',

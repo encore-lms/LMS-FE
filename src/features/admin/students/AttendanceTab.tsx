@@ -100,7 +100,7 @@ export function AttendanceTab() {
     }
   }
 
-  const rows = data?.rows ?? []
+  const rows = useMemo(() => data?.rows ?? [], [data])
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     const list = rows.filter((r) => {

@@ -35,7 +35,7 @@ export function ScopeModal({
     if (account) setSelected(new Set(account.cohortIds ?? []))
   }, [account])
 
-  const cohorts = courseConfig?.cohorts ?? []
+  const cohorts = useMemo(() => courseConfig?.cohorts ?? [], [courseConfig])
   const toggle = (id: string) => {
     setSelected((p) => {
       const next = new Set(p)

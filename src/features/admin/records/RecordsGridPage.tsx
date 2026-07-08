@@ -67,7 +67,7 @@ export default function RecordsGridPage({
     return m
   }, [grid])
 
-  const weeks = grid?.weeks ?? []
+  const weeks = useMemo(() => grid?.weeks ?? [], [grid])
 
   const nameOf = useMemo(() => {
     const m = new Map<string, string>()

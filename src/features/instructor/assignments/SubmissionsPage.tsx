@@ -49,7 +49,7 @@ export default function SubmissionsPage() {
       map.get(userId) ?? { name: '수강생', code: userId.slice(0, 8) }
   }, [students])
 
-  const rows = data?.rows ?? []
+  const rows = useMemo(() => data?.rows ?? [], [data])
 
   const filtered = useMemo(
     () => rows.filter((r) => filter === 'all' || r.status === filter),
@@ -290,14 +290,12 @@ export default function SubmissionsPage() {
                     </div>
                     <div className="mt-7 flex justify-end gap-2">
                       <Button
-                       
                         disabled={selected.status === 'supplement_requested'}
                         onClick={() => setSupplementOpen(true)}
                       >
                         보완요청
                       </Button>
                       <Button
-                       
                         disabled={selected.status === 'review_done'}
                         onClick={() => setReviewOpen(true)}
                       >

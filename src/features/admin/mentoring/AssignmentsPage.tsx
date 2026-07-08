@@ -407,7 +407,7 @@ export default function AssignmentsPage() {
           </button>
           <Link
             to="/admin/mentoring/log-templates"
-            className="text-on-color inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2.5 text-[13px] font-bold hover:bg-white/25"
+            className="text-on-color inline-flex items-center gap-1.5 rounded-lg border border-white/40 px-4 py-2.5 text-[13px] font-bold hover:bg-white/10"
           >
             <FileText className="h-4 w-4" />
             템플릿 관리
@@ -416,7 +416,7 @@ export default function AssignmentsPage() {
       </div>
 
       {/* 필터 바 */}
-      <div className="bg-surface-muted/50 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3.5">
+      <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
         <div className="flex flex-wrap items-center gap-2">
           <Select
             value={mentorFilter}
@@ -448,14 +448,14 @@ export default function AssignmentsPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="팀명·멘토명 검색"
           aria-label="팀명·멘토명 검색"
-          className="text-fg placeholder:text-fg-subtle bg-surface focus:ring-brand h-9 w-60 rounded-lg px-3 text-sm shadow-[0_0_0_1px_rgba(18,23,38,0.06)] outline-none focus:ring-2"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-60 rounded-lg border px-3 text-sm outline-none"
         />
       </div>
 
       {/* 기수별 멘토링 카드 — 기수 그룹 안에 팀별 멘토링 카드 */}
       <div className="mt-4 flex flex-col gap-6">
         {cohortGroups.length === 0 ? (
-          <div className="bg-surface-muted/50 rounded-2xl p-10 text-center">
+          <div className="border-border bg-surface rounded-xl border p-10 text-center">
             <p className="text-fg-subtle text-sm">
               조건에 맞는 멘토링이 없어요
             </p>
@@ -493,7 +493,7 @@ export default function AssignmentsPage() {
                   <button
                     type="button"
                     onClick={openStudentCreate}
-                    className="bg-surface-muted text-fg-muted hover:bg-surface-muted/70 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-bold"
+                    className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-bold"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     배정 추가

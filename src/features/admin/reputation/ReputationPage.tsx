@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { AlertTriangle, ArrowRight, Check, Info, Send } from 'lucide-react'
+import { AlertTriangle, Check, Info, Send } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
@@ -43,7 +43,7 @@ const MENTOR_EVAL_META: Record<
   recommended: { label: '평가 완료 · 추천', tone: 'success' },
   not_recommended: { label: '평가 완료 · 추천 안 함', tone: 'success' },
   pending: { label: '평가 대기', tone: 'neutral' },
-  not_eligible: { label: 'N시간 미달 · 대상 외', tone: 'neutral' },
+  not_eligible: { label: '평가 대상 외', tone: 'neutral' },
   in_progress: { label: '평가 진행 중', tone: 'info' },
 }
 
@@ -55,7 +55,6 @@ const PUSH_LABEL: Record<PushTarget, string> = {
 
 // 평판 관리 (/admin/reputation) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1193:6267. 수강생별 평판 수집 현황(강사 추천서·멘토 평가·동료 5축) + 요청 푸시.
-// 내부 사용자 전용 — 외부 토큰 미사용. 푸시·일괄 푸시·상세는 별도 시안 미설계 → 토스트 + TODO.
 export default function ReputationPage() {
   usePageHeader(
     '평판 관리',
@@ -121,7 +120,9 @@ export default function ReputationPage() {
       return true
     })
     // 이름 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'))
+    return [...list].sort((a, b) =>
+      (a.name ?? '').localeCompare(b.name ?? '', 'ko'),
+    )
   }, [students, status, q, cohortFilter])
 
   if (isPending) {
@@ -140,7 +141,7 @@ export default function ReputationPage() {
     )
   }
 
-  const { summary, pushFlows } = data
+  const { summary } = data
 
   const columns: Column<ReputationStudent>[] = [
     {
@@ -225,8 +226,7 @@ export default function ReputationPage() {
                   setPushAction({
                     spec: {
                       title: `${PUSH_LABEL[t]} 요청`,
-                      subtitle:
-                        'LMS 알림으로 평판 입력을 요청합니다. 외부 토큰 URL은 사용하지 않습니다.',
+                      subtitle: 'LMS 알림으로 평판 입력을 요청합니다.',
                       rows: [
                         { label: '수강생', value: `${s.name} · ${s.uuid}` },
                         { label: '대상', value: PUSH_LABEL[t] },
@@ -395,50 +395,6 @@ export default function ReputationPage() {
         </div>
       </div>
 
-      {/* 푸시 흐름 — 대상별 진입 화면 */}
-      <div className="border-border bg-surface mt-6 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">
-          푸시 흐름 — 대상별 진입 화면
-        </p>
-        <p className="text-fg-muted mt-1 text-xs">
-          LMS 알림으로 처리 · 외부 토큰 URL 미사용 · 외부인 입력 흐름 없음
-        </p>
-        <ul className="mt-3 flex flex-col">
-          {pushFlows.map((f) => (
-            <li
-              key={f.id}
-              className="border-divider flex items-center gap-2 border-t py-2.5 text-[13px] first:border-t-0"
-            >
-              <span className="text-fg font-medium">{f.label}</span>
-              {f.route && (
-                <span className="text-fg-subtle font-mono text-[12px]">
-                  {f.route}
-                </span>
-              )}
-              <ArrowRight className="text-fg-subtle ml-auto h-4 w-4" />
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 평판 수집 정책 — 하단 콜아웃 */}
-      <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-        <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
-          <Info className="h-4 w-4" />
-          평판 수집 정책
-        </p>
-        <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-          <li>
-            내부 사용자 전용 — 동료 수강생·강사·멘토·매니저만 입력 (외부 현업
-            동료 평판 수집 없음)
-          </li>
-          <li>
-            멘토 평가는 N시간 완료 또는 운영자 조기 종료 팀에 대해서만 수집 대상
-          </li>
-          <li>푸시는 LMS 알림으로 처리 · 외부 토큰 URL 미사용</li>
-        </ul>
-      </div>
-
       {/* 푸시 확인 모달 (Figma 푸시 확인 1306:8113 / 결과 1306:8149) */}
       <ActionModal
         spec={pushAction?.spec ?? null}
@@ -529,7 +485,7 @@ export default function ReputationPage() {
               </dl>
             </div>
             <p className="text-fg-subtle text-xs">
-              상세 평판 항목·입력 이력은 BE(P0_25) 연동 후 제공됩니다.
+              상세 평판 항목과 입력 이력은 준비 중입니다.
             </p>
           </div>
         )}

@@ -49,7 +49,7 @@ export function ResumePane({
       <Empty
         icon={<AlertTriangle className="h-6 w-6" />}
         title="이력서 현황을 불러오지 못했어요"
-        description="실 BE(learning-service) 연결을 확인한 뒤 다시 시도해 주세요."
+        description="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
         action={<Button onClick={() => refetch()}>다시 시도</Button>}
       />
     )

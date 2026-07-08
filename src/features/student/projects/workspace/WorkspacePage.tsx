@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useProjectWorkspace } from '../../api/projects'
 import type { WsTab } from '../types'
-import { ProjectFlowTestNav } from './ProjectFlowTestNav'
 import { WorkspaceShell } from './WorkspaceShell'
 import { HomeTab } from './tabs/HomeTab'
 import { BoardTab } from './tabs/BoardTab'
@@ -58,25 +57,22 @@ export default function WorkspacePage() {
     setParams(t === 'home' ? {} : { tab: t }, { replace: true })
 
   return (
-    <>
-      <WorkspaceShell
-        title={data.title}
-        meta={data.meta}
-        active={tab}
-        onTab={setTab}
-      >
-        {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
-        {tab === 'board' && <BoardTab d={data} />}
-        {tab === 'calendar' && <CalendarTab d={data} />}
-        {tab === 'meetings' && <MeetingsTab d={data} />}
-        {tab === 'docs' && <DocsTab d={data} />}
-        {tab === 'issues' && <IssuesTab d={data} />}
-        {tab === 'team' && <TeamTab d={data} />}
-        {tab === 'outcomes' && <OutcomesTab d={data} />}
-        {tab === 'peer-evaluation' && <PeerTab d={data} />}
-        {tab === 'certification' && <CertTab d={data} />}
-      </WorkspaceShell>
-      <ProjectFlowTestNav projectId={projectId} status={data.status} />
-    </>
+    <WorkspaceShell
+      title={data.title}
+      meta={data.meta}
+      active={tab}
+      onTab={setTab}
+    >
+      {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
+      {tab === 'board' && <BoardTab d={data} />}
+      {tab === 'calendar' && <CalendarTab d={data} />}
+      {tab === 'meetings' && <MeetingsTab d={data} />}
+      {tab === 'docs' && <DocsTab d={data} />}
+      {tab === 'issues' && <IssuesTab d={data} />}
+      {tab === 'team' && <TeamTab d={data} />}
+      {tab === 'outcomes' && <OutcomesTab d={data} />}
+      {tab === 'peer-evaluation' && <PeerTab d={data} />}
+      {tab === 'certification' && <CertTab d={data} />}
+    </WorkspaceShell>
   )
 }

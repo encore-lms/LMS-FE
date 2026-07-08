@@ -3,7 +3,6 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
 import { useCertificateOverview } from '../api/certificate'
 import { CertHero } from './components/CertHero'
-import { CertRequestTestNav } from './components/CertRequestTestNav'
 import { CertTabs } from './CertTabs'
 import { SummaryTab } from './tabs/SummaryTab'
 import { TechTab } from './tabs/TechTab'
@@ -17,7 +16,7 @@ import type { CertTab } from './types'
 
 /**
  * 수강 역량 증명서 (/student/certificate) — 인셸 작업 화면.
- * - 사이드바 진입 = 종합요약 탭(기본). 슬림 히어로 + 상단 테스트 네비(정식 인증 요청 흐름 + 미리보기) + 탭 콘텐츠.
+ * - 사이드바 진입 = 종합요약 탭(기본). 슬림 히어로 + 탭 콘텐츠.
  * - 미리보기는 별도 전체화면 라우트(/student/certificate/preview, 사이드바 없음)에서 본다.
  */
 export default function CertificatePage() {
@@ -32,10 +31,8 @@ export default function CertificatePage() {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      {/* 히어로·테스트 네비는 데이터 의존 → 있을 때만. 탭 네비(CertTabs)는 항상 유지. */}
+      {/* 히어로는 데이터 의존 → 있을 때만. 탭 네비(CertTabs)는 항상 유지. */}
       {data && <CertHero header={data.header} status={status} />}
-      {/* 정식 인증 요청 흐름 + 미리보기 — FE 목 전용 테스트 네비 */}
-      {data && <CertRequestTestNav data={data} />}
       <CertTabs active={tab} onChange={setTab} />
 
       <DataBoundary

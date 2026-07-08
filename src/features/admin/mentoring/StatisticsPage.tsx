@@ -186,7 +186,7 @@ export default function StatisticsPage() {
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <span className="bg-info-bg text-info inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
           <Info className="h-3 w-3" />
-          내부 사용자 전용 · 외부 토큰 미사용
+          내부 사용자 전용
         </span>
         <span className="bg-surface-muted text-fg-muted inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
           <Lock className="h-3 w-3" />

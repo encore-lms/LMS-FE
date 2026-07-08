@@ -147,7 +147,7 @@ export default function TemplateListPage() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.success(`${t.name} → 새 퀴즈로 복제 (mock)`)
+                toast.success(`${t.name} → 새 퀴즈로 복제`)
                 navigate('/instructor/quizzes/new')
               }}
               className="bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white"

@@ -127,8 +127,6 @@ export const studentRoutes: RouteObject[] = [
       { path: 'qna/new', element: <QnaNewPage /> },
       { path: 'qna/:id', element: <QnaDetailPage /> },
       // PLAY(게임 선택·타자/코딩/CS퀴즈 게임·게임별 결과).
-      // 결과·예외 상태(저장 실패·제시문 없음·기능 미사용)는 별도 페이지가 아니라
-      // 상태에 따라 뜨는 PlayStateModal 모달로 처리한다(Figma 3370:5976 states 명세).
       { path: 'play', element: <PlaySelectPage /> },
       { path: 'play/typing', element: <PlayTypingPage /> },
       { path: 'play/typing/result', element: <PlayTypingResultPage /> },

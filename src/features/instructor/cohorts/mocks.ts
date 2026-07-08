@@ -96,11 +96,11 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
       },
     ],
     shortcuts: {
-      quizzes: { badge: 14, hint: '/instructor/quizzes · 채점 대기 14' },
-      students: { hint: '/instructor/cohorts · DA 4기 · FE 7기 통합' },
+      quizzes: { badge: 14, hint: '채점 대기 14' },
+      students: { hint: 'DA 4기 · FE 7기 통합' },
       reviews: {
         badge: 12,
-        hint: '/instructor/records/review · 기록 7 + 프로젝트 3 + 트러블슈팅 2',
+        hint: '기록 7 + 프로젝트 3 + 트러블슈팅 2',
       },
     },
   },
@@ -149,11 +149,11 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
       },
     ],
     shortcuts: {
-      quizzes: { badge: 9, hint: '/instructor/quizzes · 채점 대기 9' },
-      students: { hint: '/instructor/cohorts/da-4/students · DA 4기 24명' },
+      quizzes: { badge: 9, hint: '채점 대기 9' },
+      students: { hint: 'DA 4기 24명' },
       reviews: {
         badge: 7,
-        hint: '/instructor/records/review · 기록 4 + 프로젝트 2 + 트러블슈팅 1',
+        hint: '기록 4 + 프로젝트 2 + 트러블슈팅 1',
       },
     },
   },
@@ -202,11 +202,11 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
       },
     ],
     shortcuts: {
-      quizzes: { badge: 5, hint: '/instructor/quizzes · 채점 대기 5' },
-      students: { hint: '/instructor/cohorts/fe-7/students · FE 7기 18명' },
+      quizzes: { badge: 5, hint: '채점 대기 5' },
+      students: { hint: 'FE 7기 18명' },
       reviews: {
         badge: 5,
-        hint: '/instructor/records/review · 기록 3 + 프로젝트 1 + 트러블슈팅 1',
+        hint: '기록 3 + 프로젝트 1 + 트러블슈팅 1',
       },
     },
   },

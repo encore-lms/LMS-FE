@@ -90,27 +90,27 @@ export function QuestionWorkbench({
 
   // 콜백 미지정 시 = 기존 mock 토스트(§7 퀴즈는 실 BE라 콜백을 넘기지 않음).
   const handleAdd = () =>
-    onAddQuestion
-      ? onAddQuestion()
-      : toast.success(`새 ${itemNoun} 추가 (mock)`)
+    onAddQuestion ? onAddQuestion() : toast.success(`새 ${itemNoun} 추가`)
   const handleCopy = () =>
     active
       ? onCopyQuestion
         ? onCopyQuestion(active.id)
-        : toast.success(`${itemNoun} ${active.order} 복제 (mock)`)
+        : toast.success(`${itemNoun} ${active.order} 복제`)
       : undefined
   const handleDelete = () =>
     active
       ? onDeleteQuestion
         ? onDeleteQuestion(active.id)
-        : toast.success(`${itemNoun} ${active.order} 삭제 (mock)`)
+        : toast.success(`${itemNoun} ${active.order} 삭제`)
       : undefined
   const handleSave = () =>
     draft && onSaveQuestion
       ? onSaveQuestion(draft)
       : toast.success(saveToastMessage)
   const handlePreview = () =>
-    onPreview ? onPreview() : toast.info(`${previewLabel} — 후속 화면 (mock)`)
+    onPreview
+      ? onPreview()
+      : toast.info(`${previewLabel} 미리보기는 준비 중입니다.`)
 
   return (
     <div className="p-8">
@@ -261,7 +261,6 @@ export function QuestionWorkbench({
                     value: t,
                     label: `${QUESTION_TYPE_LABEL[t]}${t === 'essay' ? ' (서술형)' : ''}`,
                   }))}
-                 
                 />
               </label>
               <label className="flex flex-col gap-1.5">
@@ -333,7 +332,6 @@ export function QuestionWorkbench({
                     'SQL',
                     'JavaScript',
                   ].map((c) => ({ value: c, label: c }))}
-                 
                 />
               </label>
               <label className="mt-3 flex items-center gap-2">
@@ -416,12 +414,7 @@ export function QuestionWorkbench({
             : '배점 합계가 총점과 달라요'}
         </p>
         <div className="ml-auto flex gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-           
-            onClick={handlePreview}
-          >
+          <Button type="button" variant="secondary" onClick={handlePreview}>
             <Eye className="h-4 w-4" /> {previewLabel}
           </Button>
           <Button type="button" onClick={handleSave}>

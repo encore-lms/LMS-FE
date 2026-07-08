@@ -19,7 +19,6 @@ import {
   type TsProjectLink,
   type Tone,
 } from './types'
-import { TsFlowTestNav } from './components/TsFlowTestNav'
 import { ProjectLinkModal } from './components/ProjectLinkModal'
 import { CaseContentForm } from './components/CaseContentForm'
 
@@ -421,9 +420,6 @@ export default function CaseDetailPage() {
           onConfirm={onCertify}
         />
       )}
-
-      {/* 테스트 시뮬레이션 — 강사 인증 승인(검토 중 → 인증 완료). 보기 전용/BE 연동 시 제외. */}
-      {!viewOnly && <TsFlowTestNav id={data.id} status={data.status} />}
     </div>
   )
 }

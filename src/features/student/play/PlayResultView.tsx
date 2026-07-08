@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
-import { PlayStateTestNav } from './PlayStateTestNav'
 import { StatStrip } from './StatStrip'
 import { card } from './shared'
 import type { PlayStat } from './types'
@@ -133,9 +132,6 @@ export function PlayResultView({
           ))}
         </div>
       </section>
-
-      {/* 결과 저장 실패 시 뜨는 모달(상태 시뮬레이션). BE 연동 시 저장 mutation 실패로 교체. */}
-      <PlayStateTestNav states={['save-failed']} />
     </div>
   )
 }

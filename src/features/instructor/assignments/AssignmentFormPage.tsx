@@ -273,9 +273,7 @@ export default function AssignmentFormPage() {
               <button
                 type="button"
                 disabled={files.length >= MAX_FILES}
-                onClick={() =>
-                  toast.info('파일 업로드는 백엔드 연동 후 제공 (mock)')
-                }
+                onClick={() => toast.info('파일 업로드는 준비 중입니다.')}
                 className="border-border text-fg hover:bg-surface-muted flex h-10 items-center gap-1 rounded-[10px] border px-3.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus className="h-3.5 w-3.5" /> 파일 추가
@@ -288,14 +286,11 @@ export default function AssignmentFormPage() {
             <Button
               type="button"
               variant="secondary"
-             
               onClick={() => navigate('/instructor/assignments')}
             >
               취소
             </Button>
-            <Button type="submit">
-              저장
-            </Button>
+            <Button type="submit">저장</Button>
           </div>
         </form>
 

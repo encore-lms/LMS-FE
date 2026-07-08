@@ -237,7 +237,7 @@ export function AttendanceTab() {
         <Empty
           icon={<AlertTriangle className="h-6 w-6" />}
           title="출결 현황을 불러오지 못했어요"
-          description="실 BE(learning-service)·HRD Key 연결을 확인한 뒤 다시 시도해 주세요."
+          description="연결 상태를 확인한 뒤 다시 시도해 주세요."
           action={<Button onClick={() => refetch()}>다시 시도</Button>}
         />
       ) : (

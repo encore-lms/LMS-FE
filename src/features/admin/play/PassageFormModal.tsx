@@ -123,7 +123,7 @@ export function PassageFormModal({
           )}
           {mode === 'edit' && (
             <p className="text-fg-subtle text-xs">
-              수정 시 기존 본문은 BE 연동 후 자동 로드됩니다 (P0_15).
+              저장된 본문은 자동으로 불러옵니다.
             </p>
           )}
         </div>

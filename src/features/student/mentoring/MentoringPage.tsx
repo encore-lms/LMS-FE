@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast, type ToastTone } from '@/components/ui/use-toast'
-import { TestModeFab } from '@/components/dev/TestModeFab'
-import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import {
   useAcceptMentoringProposal,
@@ -82,7 +80,7 @@ export default function MentoringPage() {
 
 function MentoringView({ data }: { data: MentoringData }) {
   const toast = useToast()
-  const [params, setParams] = useSearchParams()
+  const [params] = useSearchParams()
   const noMentor = params.get('state') === 'no-mentor' || !data.mentor.assigned
   const createRequest = useCreateMentoringRequest()
   const cancelRequestMutation = useCancelMentoringRequest()
@@ -211,51 +209,8 @@ function MentoringView({ data }: { data: MentoringData }) {
     })
   }
 
-  // ─── SIMULATION ONLY (FE 목 전용) — BE 연동 시 이 함수와 호출부 제거 ───
-  // 실제로는 BE가 일정 경과를 감지해 진행 중 요청을 완료/만료 처리하고 슬롯을 비운다.
-  // 데모에서 그 시점을 버튼으로 흉내낸다: 확정 예약은 완료 기록으로 이동, 미확정 요청은 만료.
-  const simulateElapse = () => {
-    if (reservationUpcoming && reservation) {
-      const nextRound = history.reduce((m, r) => Math.max(m, r.round), 0) + 1
-      setHistory([
-        {
-          round: nextRound,
-          datetime: `${reservation.dateLabel} ${reservation.timeLabel}`,
-          place: `${reservation.placeType} · ${reservation.placeDetail}`,
-          hours: `예상 ${reservation.estHours} / 실제 ${reservation.estHours}`,
-          requester: '나 (요청자)',
-        },
-        ...history,
-      ])
-      setReservation(null)
-      setReservationUpcoming(false)
-    } else if (activeRequest) {
-      // 확정 전 요청(요청 대기/조정 제안)은 일정이 지나면 세션 없이 만료된다.
-      setActiveRequest(null)
-    }
-  }
-
-  // 데모용 — 멘토 배정 전/후 화면을 임의로 전환 (?state=no-mentor 토글).
-  const setNoMentor = (next: boolean) => {
-    const p = new URLSearchParams(params)
-    if (next) p.set('state', 'no-mentor')
-    else p.delete('state')
-    p.delete('toast')
-    p.delete('modal')
-    setParams(p, { replace: true })
-    setModalOpen(false)
-  }
-
   return (
     <div className="flex flex-col gap-5 p-8">
-      {/* 데모 컨트롤 (FE 목 전용) — 멘토 배정 전/후 + 일정 경과 시뮬레이션 */}
-      <DemoControls
-        noMentor={noMentor}
-        onToggleNoMentor={setNoMentor}
-        canElapse={!noMentor && slotTaken}
-        onElapse={simulateElapse}
-      />
-
       {/* 상단 안내 칩 */}
       <div className="flex items-center justify-end gap-2">
         <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 text-[11px] font-medium">
@@ -315,57 +270,5 @@ function MentoringView({ data }: { data: MentoringData }) {
         onConfirm={cancelRequest}
       />
     </div>
-  )
-}
-
-// 데모/시뮬레이션 컨트롤 (FE 목 전용) — 우하단 플로팅 버튼(TestModeFab, 보라 테스트색)으로 감싼다.
-// BE 연동 시 컴포넌트와 사용처를 함께 제거한다.
-// 1) 멘토 배정 전/후 화면 전환  2) "일정 경과" → 진행 중 슬롯 해제(BE 자동 처리 흉내).
-function DemoControls({
-  noMentor,
-  onToggleNoMentor,
-  canElapse,
-  onElapse,
-}: {
-  noMentor: boolean
-  onToggleNoMentor: (next: boolean) => void
-  canElapse: boolean
-  onElapse: () => void
-}) {
-  return (
-    <TestModeFab note="멘토 배정 전/후 · 일정 경과 시뮬레이션">
-      <div className="flex items-center gap-1">
-        {(
-          [
-            ['멘토 배정 후', false],
-            ['멘토 배정 전', true],
-          ] as const
-        ).map(([label, value]) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => onToggleNoMentor(value)}
-            className={cn(
-              'rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors',
-              noMentor === value
-                ? 'bg-accent-strong text-white'
-                : 'text-accent-strong/70 hover:text-accent-strong',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {canElapse && (
-        <button
-          type="button"
-          onClick={onElapse}
-          title="진행 중 요청/예약의 일정이 지난 상황을 시뮬레이션 (실제로는 BE가 처리)"
-          className="border-accent-strong/40 text-accent-strong hover:bg-accent-strong/10 rounded-md border border-dashed px-2.5 py-1 text-[11px] font-bold transition-colors"
-        >
-          ⏩ 일정 경과 시뮬레이션
-        </button>
-      )}
-    </TestModeFab>
   )
 }

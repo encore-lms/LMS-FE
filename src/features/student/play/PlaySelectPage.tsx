@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { usePlayOverview } from '../api/play'
-import { PlayStateTestNav } from './PlayStateTestNav'
 
 // PLAY 게임 선택 (/student/play) — Figma 418:2172.
 const card =
@@ -168,9 +167,6 @@ export default function PlaySelectPage() {
           ))}
         </section>
       </div>
-
-      {/* 게임 입장 전 예외 상태 모달(상태 시뮬레이션). BE 연동 시 제시문 0건·playEnabled=false 조건으로 교체. */}
-      <PlayStateTestNav states={['no-prompt', 'feature-off']} />
     </div>
   )
 }

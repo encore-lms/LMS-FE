@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { ComponentProps } from 'react'
+import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
 import { DashboardInsight } from './DashboardInsight'
 import type { CohortBoard } from './types'
@@ -34,16 +36,22 @@ function board(over: Partial<CohortBoard>): CohortBoard {
   }
 }
 
+function renderInsight(props: ComponentProps<typeof DashboardInsight>) {
+  return render(
+    <MemoryRouter>
+      <DashboardInsight {...props} />
+    </MemoryRouter>,
+  )
+}
+
 describe('DashboardInsight', () => {
   it('오늘 미출석이 있으면 미출석 공지 액션과 공지 인사이트를 만든다', () => {
-    render(
-      <DashboardInsight
-        boards={[board({})]}
-        quarantineCount={0}
-        today="2026-07-06"
-        upcoming={[]}
-      />,
-    )
+    renderInsight({
+      boards: [board({})],
+      quarantineCount: 0,
+      today: '2026-07-06',
+      upcoming: [],
+    })
     expect(screen.getByText('미출석 공지')).toBeInTheDocument()
     expect(screen.getByText('2명')).toBeInTheDocument()
     expect(
@@ -58,14 +66,12 @@ describe('DashboardInsight', () => {
         { studentUuid: 'u9', name: '문성준', lateCount: 1, absentCount: 5 },
       ],
     })
-    render(
-      <DashboardInsight
-        boards={[b]}
-        quarantineCount={0}
-        today="2026-07-06"
-        upcoming={[]}
-      />,
-    )
+    renderInsight({
+      boards: [b],
+      quarantineCount: 0,
+      today: '2026-07-06',
+      upcoming: [],
+    })
     expect(screen.getByText('긴급 위험군')).toBeInTheDocument()
     expect(screen.getByText(/문성준 수강생은 결석 5회/)).toBeInTheDocument()
   })
@@ -80,14 +86,12 @@ describe('DashboardInsight', () => {
       issues: [],
       pending: { certificates: 0, troubleshooting: 0 },
     })
-    render(
-      <DashboardInsight
-        boards={[b]}
-        quarantineCount={0}
-        today="2026-07-06"
-        upcoming={[]}
-      />,
-    )
+    renderInsight({
+      boards: [b],
+      quarantineCount: 0,
+      today: '2026-07-06',
+      upcoming: [],
+    })
     expect(screen.getByText('오늘 운영 안정')).toBeInTheDocument()
   })
 
@@ -96,14 +100,12 @@ describe('DashboardInsight', () => {
       attendance: { ...board({}).attendance!, todayAbsentees: [] },
       issues: [],
     })
-    render(
-      <DashboardInsight
-        boards={[b]}
-        quarantineCount={4}
-        today="2026-07-06"
-        upcoming={[]}
-      />,
-    )
+    renderInsight({
+      boards: [b],
+      quarantineCount: 4,
+      today: '2026-07-06',
+      upcoming: [],
+    })
     // 액션 큐 + 지표 팝오버 제목 양쪽에 노출되므로 최소 1개 이상
     expect(screen.getAllByText('처리 대기').length).toBeGreaterThanOrEqual(1)
     // 승인 5(자격증3+트러블2) + 격리 4 = 9건
@@ -125,14 +127,12 @@ describe('DashboardInsight', () => {
       ],
       pending: { certificates: 0, troubleshooting: 0 },
     })
-    render(
-      <DashboardInsight
-        boards={[ended]}
-        quarantineCount={0}
-        today="2026-07-06"
-        upcoming={[]}
-      />,
-    )
+    renderInsight({
+      boards: [ended],
+      quarantineCount: 0,
+      today: '2026-07-06',
+      upcoming: [],
+    })
     // 결석 117회가 긴급 위험군으로 노출되면 안 된다
     expect(screen.queryByText(/문성준/)).not.toBeInTheDocument()
     expect(screen.queryByText('긴급 위험군')).not.toBeInTheDocument()
@@ -151,14 +151,12 @@ describe('DashboardInsight', () => {
         flagged: [{ studentUuid: 'w1', name: '고아라', reason: '상담 요청' }],
       },
     })
-    render(
-      <DashboardInsight
-        boards={[b]}
-        quarantineCount={0}
-        today="2026-07-06"
-        upcoming={[]}
-      />,
-    )
+    renderInsight({
+      boards: [b],
+      quarantineCount: 0,
+      today: '2026-07-06',
+      upcoming: [],
+    })
     expect(screen.getByText('상담 요청')).toBeInTheDocument()
     expect(screen.getByText('위클리 체크')).toBeInTheDocument()
     expect(screen.getByText('상담 5')).toBeInTheDocument()
@@ -166,28 +164,26 @@ describe('DashboardInsight', () => {
   })
 
   it('다가오는 일정을 표시한다', () => {
-    render(
-      <DashboardInsight
-        boards={[
-          board({
-            attendance: { ...board({}).attendance!, todayAbsentees: [] },
-            issues: [],
-          }),
-        ]}
-        quarantineCount={0}
-        today="2026-07-06"
-        upcoming={[
-          {
-            cohortLabel: '35기',
-            date: '2026-07-06',
-            endDate: '',
-            category: '성취도 평가',
-            title: '1회차 성취도 평가',
-            daysUntil: 0,
-          },
-        ]}
-      />,
-    )
+    renderInsight({
+      boards: [
+        board({
+          attendance: { ...board({}).attendance!, todayAbsentees: [] },
+          issues: [],
+        }),
+      ],
+      quarantineCount: 0,
+      today: '2026-07-06',
+      upcoming: [
+        {
+          cohortLabel: '35기',
+          date: '2026-07-06',
+          endDate: '',
+          category: '성취도 평가',
+          title: '1회차 성취도 평가',
+          daysUntil: 0,
+        },
+      ],
+    })
     expect(screen.getByText('다가오는 일정')).toBeInTheDocument()
     expect(screen.getByText('1회차 성취도 평가')).toBeInTheDocument()
     expect(screen.getByText('오늘')).toBeInTheDocument()

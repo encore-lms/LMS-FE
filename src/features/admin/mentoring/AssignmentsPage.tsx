@@ -63,8 +63,9 @@ function MentoringCard({
         }
       }}
       className={cn(
-        'border-border bg-surface hover:border-brand/50 focus-visible:border-brand flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition-colors outline-none',
-        !team.assignmentId && 'border-l-danger border-l-4',
+        'bg-surface flex cursor-pointer flex-col gap-3 rounded-2xl p-4 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)] transition-shadow outline-none hover:shadow-[0_6px_16px_rgba(18,23,38,0.10)] focus-visible:shadow-[0_0_0_2px_var(--color-brand)]',
+        !team.assignmentId &&
+          'bg-danger-bg/30 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(240,69,69,0.3)]',
       )}
     >
       {/* 헤더 — 팀명 + 상태 */}
@@ -81,7 +82,7 @@ function MentoringCard({
       </div>
 
       {/* 멘토 */}
-      <div className="border-border flex items-center gap-2 border-t pt-3">
+      <div className="border-divider flex items-center gap-2 border-t pt-3">
         {team.mentor ? (
           <>
             <Avatar name={team.mentor.name} size={30} />
@@ -164,7 +165,7 @@ function MentoringCard({
       {(!team.assignmentId || displayStatus === 'in_progress') && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="border-border flex flex-wrap items-center gap-1.5 border-t pt-3"
+          className="border-divider flex flex-wrap items-center gap-1.5 border-t pt-3"
         >
           {!team.assignmentId ? (
             <button
@@ -179,7 +180,7 @@ function MentoringCard({
             <button
               type="button"
               onClick={onEarlyEnd}
-              className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-md border px-2.5 py-1.5 text-[11px] font-bold"
+              className="bg-warning-bg text-warning hover:bg-warning-bg/70 rounded-md px-2.5 py-1.5 text-[11px] font-bold"
             >
               조기 종료
             </button>

@@ -1,4 +1,5 @@
 import { Modal } from '@/components/ui/Modal'
+import { buttonClass } from '@/components/ui/Button'
 
 // 과제 수정 제출 확인 모달 (Figma 2236:10522) — 공용 Modal 사용. 덮어쓰기 안내 + 재제출 주의 + 계속 편집/수정 제출.
 export function ConfirmResubmitModal({
@@ -32,7 +33,7 @@ export function ConfirmResubmitModal({
             type="button"
             onClick={onConfirm}
             disabled={isSaving}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className={buttonClass({ size: 'md' })}
           >
             {isSaving ? '저장 중…' : '수정 제출'}
           </button>

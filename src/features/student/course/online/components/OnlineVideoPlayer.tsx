@@ -18,6 +18,7 @@ import {
   VolumeX,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import type { OnlineChapterView } from '../types'
 
 // 중앙 영상 플레이어 — 선택된 차시의 히어로(첫 화면 썸네일 커버 + 커스텀 컨트롤 영상).
@@ -536,7 +537,7 @@ function VideoStage({
               <button
                 type="button"
                 onClick={resumeFromLast}
-                className="bg-brand flex-1 rounded-xl py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+                className={buttonClass({ size: 'md', className: 'flex-1' })}
               >
                 이어보기
               </button>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useQuizResult, useStudentQuizzes } from '../api/quiz'
@@ -235,7 +235,7 @@ export default function QuizResultPage() {
           <button
             type="button"
             onClick={() => navigate('/student/quizzes')}
-            className="bg-brand rounded-[10px] px-10 py-3 text-[13px] font-semibold text-white"
+            className={buttonClass({ size: 'md', className: 'px-10' })}
           >
             나가기
           </button>

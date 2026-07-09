@@ -325,8 +325,8 @@ export default function MenteeDetailPage() {
                 <span className="flex items-center gap-1.5">
                   <MessageSquare className="text-fg-muted h-3 w-3" />
                   <span className="text-fg text-xs font-bold">멘토 코멘트</span>
-                  <span className="bg-surface text-fg-subtle rounded px-1.5 py-px text-[10px]">
-                    선택 입력
+                  <span className="bg-danger-bg text-danger rounded px-1.5 py-px text-[10px] font-bold">
+                    필수
                   </span>
                 </span>
                 <p className="text-fg-muted text-[13px] leading-5">

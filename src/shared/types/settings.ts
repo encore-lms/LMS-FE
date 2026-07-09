@@ -1,30 +1,5 @@
-// 운영 설정 Flow 10 (/admin/settings/*) — 허브·계정 관리·HRD API Key·교육 과정 설정·교육 과정 추가.
+// 운영 설정 Flow 10 (/admin/settings/*) — 계정 관리·HRD API Key·교육 과정 설정·교육 과정 추가.
 // 공유 읽기전용 계약. 변경은 도메인 PR에 섞지 말고 별도 shared PR로.
-
-// ── 설정 허브 (Figma 1284:8852) ──
-export interface SettingsCardSummary {
-  /** 카드 요약 4행 — label/value 그대로 렌더 */
-  rows: { label: string; value: string }[]
-}
-
-export interface SettingsAuditLog {
-  id: string
-  at: string // '05-27 09:05'
-  actor: string
-  /** 출처 영역 — 계정 관리 / HRD API Key / 교육 과정 설정 / 교육 과정 추가 */
-  origin: string
-  action: string
-  detail: string
-}
-
-export interface SettingsHubData {
-  lastChange: { at: string; by: string } // 히어로 우측 '마지막 변경'
-  accounts: SettingsCardSummary
-  hrdKey: SettingsCardSummary
-  courseConfig: SettingsCardSummary
-  courseAdd: SettingsCardSummary
-  auditLogs: SettingsAuditLog[]
-}
 
 // ── 계정 관리 (Figma 1284:8597) ──
 export type OpsRole = 'MANAGER' | 'INSTRUCTOR' | 'MENTOR'

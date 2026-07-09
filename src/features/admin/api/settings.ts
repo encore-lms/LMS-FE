@@ -7,7 +7,6 @@ import {
 import { apiClient, adminKeys } from '@/shared/api'
 import { useAuthStore } from '@/shared/store/auth'
 import type {
-  SettingsHubData,
   OpsAccount,
   OpsAccountsData,
   HrdApiKey,
@@ -21,16 +20,6 @@ import type {
   CohortMaterialItem,
   HrdCourseSearchData,
 } from '@/shared/types'
-import type { SettingsAuditData } from '../settings/settingsAudit.types'
-
-// 운영 설정 Flow 10 (/admin/settings/*) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
-export function useSettingsHub() {
-  return useQuery({
-    queryKey: adminKeys.settingsHub(),
-    queryFn: () =>
-      apiClient.get<SettingsHubData>('/admin/settings/hub').then((r) => r.data),
-  })
-}
 
 // ── 운영 계정(auth-user-service /auth/accounts) — 매니저·강사·멘토 실연동 ──
 // 실 BE 전용(mock 모드에선 mock 토큰이라 401). /api/auth proxy로 :8081 도달.
@@ -528,15 +517,5 @@ export function useDeleteCourseRegistration() {
       queryClient.invalidateQueries({
         queryKey: adminKeys.settingsHrdSearch(),
       }),
-  })
-}
-
-export function useSettingsAudit() {
-  return useQuery({
-    queryKey: adminKeys.settingsAudit(),
-    queryFn: () =>
-      apiClient
-        .get<SettingsAuditData>('/admin/settings/audit')
-        .then((r) => r.data),
   })
 }

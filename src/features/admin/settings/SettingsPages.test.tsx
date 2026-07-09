@@ -8,7 +8,6 @@ import HrdApiKeyPage from './HrdApiKeyPage'
 import CourseConfigPage from './CourseConfigPage'
 import CourseAddPage from './CourseAddPage'
 import {
-  useSettingsHub,
   useOpsAccounts,
   useCreateOpsAccount,
   useUpdateOpsAccountStatus,
@@ -32,7 +31,6 @@ import {
   useDeleteCourseRegistration,
 } from '../api/settings'
 import type {
-  SettingsHubData,
   OpsAccountsData,
   HrdKeyListData,
   HrdKeyHistoryData,
@@ -43,29 +41,6 @@ import type {
 } from '@/shared/types'
 
 vi.mock('../api/settings')
-
-const hub: SettingsHubData = {
-  lastChange: { at: '09:05', by: '김매니저' },
-  accounts: {
-    rows: [
-      { label: '매니저', value: '8명' },
-      { label: '강사', value: '27명' },
-    ],
-  },
-  hrdKey: { rows: [{ label: '등록된 Key', value: '2개' }] },
-  courseConfig: { rows: [{ label: '진행 중 과정', value: '12개' }] },
-  courseAdd: { rows: [{ label: '검색 소스', value: 'HRD-Net' }] },
-  auditLogs: [
-    {
-      id: 'log-1',
-      at: '05-27 09:05',
-      actor: '김매니저',
-      origin: '계정 관리',
-      action: '강사 권한 부여',
-      detail: '이지훈 강사',
-    },
-  ],
-}
 
 const accounts: OpsAccountsData = {
   summary: {
@@ -272,9 +247,6 @@ const registerMutate = vi.fn()
 const updateSettingsMutate = vi.fn()
 
 function mockAll() {
-  vi.mocked(useSettingsHub).mockReturnValue(
-    ok(hub) as unknown as ReturnType<typeof useSettingsHub>,
-  )
   vi.mocked(useOpsAccounts).mockReturnValue(
     ok(accounts) as unknown as ReturnType<typeof useOpsAccounts>,
   )

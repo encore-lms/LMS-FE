@@ -36,15 +36,6 @@ const TOAST: Record<ToastKey, { tone: ToastTone; message: string }> = {
   canceled: { tone: 'warning', message: '멘토링 요청이 취소되었습니다' },
 }
 
-const POLICY = [
-  { k: '요청 단위', v: '팀 단위만 허용' },
-  { k: '요청 권한', v: '팀원 누구나 · 요청자 기록' },
-  { k: '중복', v: '팀당 진행 중 1개' },
-  { k: '취소', v: '확정 전까지 수강생 가능' },
-  { k: '확정 후', v: '멘토만 변경/취소' },
-  { k: '일지', v: '상세 비공개 · 요약만' },
-]
-
 // 멘토 미배정 시 스탯 캡션 (Figma 3206:2514).
 const NO_MENTOR_CAPTION: Record<string, string> = {
   waiting: '팀 요청 후 멘토 미응답',
@@ -211,15 +202,6 @@ function MentoringView({ data }: { data: MentoringData }) {
 
   return (
     <div className="flex flex-col gap-5 p-8">
-      {/* 상단 안내 칩 */}
-      <div className="flex items-center justify-end gap-2">
-        <span className="bg-surface-muted text-fg-muted rounded-md px-2.5 py-1 text-[11px] font-medium">
-          {noMentor
-            ? 'ⓘ 운영자가 멘토를 배정하면 팀 단위 멘토링 요청을 시작할 수 있습니다'
-            : 'ⓘ 팀당 진행 중 요청 1개만 허용 · 확정 후 변경/취소는 멘토만 가능'}
-        </span>
-      </div>
-
       <MentoringHero data={display} />
       <MentoringStatCards stats={display.stats} />
 
@@ -243,26 +225,6 @@ function MentoringView({ data }: { data: MentoringData }) {
         <ConfirmedReservationCard r={display.reservation} />
       )}
       {display.history.length > 0 && <HistoryTable rows={display.history} />}
-
-      {/* 멘토링 정책 */}
-      <section className="bg-info-bg border-info flex items-center gap-3.5 rounded-[14px] border p-[18px]">
-        <span className="bg-surface text-info flex size-11 shrink-0 items-center justify-center rounded-xl text-xl font-bold">
-          ⓘ
-        </span>
-        <div className="flex flex-col gap-1">
-          <span className="text-fg text-[14px] font-bold">멘토링 정책</span>
-          <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-            {POLICY.map((p) => (
-              <div key={p.k} className="flex flex-col gap-px">
-                <span className="text-fg-subtle text-[10px] font-medium tracking-wider">
-                  {p.k}
-                </span>
-                <span className="text-fg text-[12px] font-bold">{p.v}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <CancelRequestModal
         open={modalOpen}

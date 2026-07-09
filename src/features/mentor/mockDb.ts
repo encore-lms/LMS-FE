@@ -999,7 +999,10 @@ export function toAssignment(team: MentorMockTeam): MentorTeamAssignment {
     excessHours: round1(
       Math.max(team.accumulatedHours - team.recognizedHours, 0),
     ),
-    nHoursDone: team.recognizedHours >= team.allocatedHours,
+    // 배정 시간이 0(미배정·미설정)이면 완료로 보지 않는다 — 0>=0 오판으로 평가 게이트가
+    // 잘못 열리는 것을 막는다.
+    nHoursDone:
+      team.allocatedHours > 0 && team.recognizedHours >= team.allocatedHours,
   }
 }
 

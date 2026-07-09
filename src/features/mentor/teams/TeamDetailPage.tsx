@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -390,7 +390,7 @@ export default function TeamDetailPage() {
           </div>
           <Link
             to={`/mentor/mentoring-logs/new?teamId=${team.teamId}`}
-            className="bg-brand text-on-color hover:bg-brand/90 flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold"
+            className={buttonClass({ size: 'sm' })}
           >
             <Check className="h-3 w-3" />새 일지 작성
           </Link>

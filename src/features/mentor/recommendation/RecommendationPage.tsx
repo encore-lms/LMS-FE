@@ -13,7 +13,7 @@ import {
   Star,
   XCircle,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -84,7 +84,7 @@ export default function RecommendationPage() {
           action={
             <Link
               to={`/mentor/teams/${data.teamId}/evaluation`}
-              className="bg-brand text-on-color hover:bg-brand/90 rounded-[10px] px-4 py-2.5 text-[13px] font-bold"
+              className={buttonClass()}
             >
               평가 작성으로 이동
             </Link>

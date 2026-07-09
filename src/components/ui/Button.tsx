@@ -1,7 +1,8 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary'
+  /** primary=주요 CTA(딥 브랜드) · secondary=보조(테두리) · danger=파괴적 · ghost=3차(배경 없음) */
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
   /** sm=조밀한 인라인 액션 · md=기본(목록 헤더·모달 등) · lg=히어로 CTA(로그인 등) */
   size?: 'sm' | 'md' | 'lg'
 }
@@ -9,6 +10,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variants = {
   primary: 'bg-brand-deep text-white hover:bg-brand-deep/90',
   secondary: 'bg-white text-fg border border-border hover:bg-surface-muted',
+  danger: 'bg-danger text-on-color hover:bg-danger/90',
+  ghost: 'text-fg hover:bg-surface-muted',
 }
 
 // 크기 표준 — 화면마다 className으로 h-*를 덮어쓰며 파편화되던 것을 size로 통일.
@@ -35,7 +38,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         type={type}
-        className={`flex items-center justify-center gap-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${sizes[size]} ${variants[variant]} ${className}`}
+        className={`focus-visible:ring-brand flex items-center justify-center gap-2 transition-colors outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${sizes[size]} ${variants[variant]} ${className}`}
         {...rest}
       >
         {children}

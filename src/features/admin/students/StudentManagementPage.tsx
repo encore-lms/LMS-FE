@@ -1,4 +1,4 @@
-import { cn } from '@/shared/lib/cn'
+import { Tabs } from '@/components/ui/Tabs'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { AccountsTab } from './AccountsTab'
@@ -18,30 +18,17 @@ const TABS: { key: TabKey; label: string }[] = [
 // MANAGER 전용: HRD-Net 명단 동기화·계정 관제 + 출결/출결 폼 검토를 한 화면에 묶는다.
 export default function StudentManagementPage() {
   const [tab, setTab] = useSearchParamState('tab', 'attendance')
-  usePageHeader(
-    '학생 관리',
-    '수강생 명단과 출결을 확인하고 계정을 관리합니다',
-  )
+  usePageHeader('학생 관리', '수강생 명단과 출결을 확인하고 계정을 관리합니다')
 
   return (
     <div className="p-8">
-      <div className="border-divider flex gap-1 border-b">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium',
-              tab === t.key
-                ? 'text-brand border-brand border-b-2'
-                : 'text-fg-muted hover:text-fg',
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        variant="underline"
+        aria-label="학생 관리 탭"
+        value={tab}
+        onChange={setTab}
+        items={TABS.map((t) => ({ value: t.key, label: t.label }))}
+      />
 
       <div className="mt-6">
         {tab === 'accounts' && <AccountsTab />}

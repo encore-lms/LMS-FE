@@ -104,17 +104,11 @@ describe('RecordsPage', () => {
     renderPage()
 
     expect(
-      screen.queryByRole('button', { name: /전체\s*3/ }),
+      screen.queryByRole('tab', { name: /전체\s*3/ }),
     ).not.toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /블로그\s*1/ }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /스터디\s*1/ }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /자격증\s*1/ }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /블로그\s*1/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /스터디\s*1/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /자격증\s*1/ })).toBeInTheDocument()
     expect(screen.getByText('블로그 기록')).toBeInTheDocument()
   })
 

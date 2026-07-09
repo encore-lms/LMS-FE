@@ -4,6 +4,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
+import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useRecordsOverview, useDeleteRecord } from '../api/records'
@@ -228,34 +229,16 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   return (
     <div className="flex flex-col gap-5 p-8">
       {/* 필터 탭 */}
-      <div className="flex flex-wrap items-center gap-2">
-        {categoryTabs.map((t) => {
-          const on = t.key === activeTab
-          return (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setActiveTab(t.key as RecordCategory)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                on
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted hover:bg-surface-muted border',
-              )}
-            >
-              {t.label}
-              <span
-                className={cn(
-                  'text-[12px]',
-                  on ? 'text-white/70' : 'text-fg-subtle',
-                )}
-              >
-                {t.count}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+      <Tabs
+        aria-label="기록 카테고리"
+        value={activeTab}
+        onChange={(v) => setActiveTab(v as RecordCategory)}
+        items={categoryTabs.map((t) => ({
+          value: t.key,
+          label: t.label,
+          count: t.count,
+        }))}
+      />
 
       <RecordStatCards stats={data.stats} />
 

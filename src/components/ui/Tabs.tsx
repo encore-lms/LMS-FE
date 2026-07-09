@@ -40,7 +40,8 @@ export function Tabs({
       aria-label={aria['aria-label']}
       className={cn(
         pill
-          ? 'border-border bg-surface inline-flex items-center gap-1 rounded-xl border p-1'
+          ? // w-fit — flex 컬럼 부모의 stretch로 가로가 늘어나지 않게(컴팩트 세그먼트 유지)
+            'border-border bg-surface inline-flex w-fit items-center gap-1 rounded-xl border p-1'
           : 'border-border flex items-center gap-1 border-b',
         className,
       )}

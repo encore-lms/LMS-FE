@@ -158,7 +158,7 @@ export default function RequestsPage() {
       </div>
 
       {/* 필터 툴바 — 상태 탭 6 + 기간 드롭다운 + 팀명·요청자 검색 */}
-      <section className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2.5 shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+      <section className="bg-surface-muted/50 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-2.5">
         <div className="flex flex-wrap items-center gap-2">
           {REQUEST_TABS.map((t) => {
             const active = tab === t.value
@@ -210,7 +210,7 @@ export default function RequestsPage() {
               className="h-[34px]"
             />
           </div>
-          <label className="border-border flex h-[34px] w-[220px] items-center gap-2 rounded-lg border px-3">
+          <label className="bg-surface flex h-[34px] w-[220px] items-center gap-2 rounded-lg px-3">
             <Search className="text-fg-subtle h-3 w-3 shrink-0" />
             <input
               value={q}

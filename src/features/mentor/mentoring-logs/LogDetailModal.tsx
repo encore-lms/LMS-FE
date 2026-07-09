@@ -134,7 +134,7 @@ export default function LogDetailModal() {
     >
       <div className="flex flex-col gap-4">
         {/* 기본 정보 */}
-        <section className="border-border divide-divider flex flex-col divide-y rounded-xl border">
+        <section className="bg-surface-muted/50 divide-divider flex flex-col divide-y rounded-xl">
           <div className="flex items-center justify-between gap-2 px-4 py-3">
             <span className="text-fg flex items-center gap-1.5 text-[13px] font-bold">
               <FileText className="h-3.5 w-3.5" />
@@ -323,7 +323,7 @@ export default function LogDetailModal() {
           </button>
         </div>
         {showTemplate && (
-          <ul className="border-border divide-divider flex flex-col divide-y rounded-xl border">
+          <ul className="bg-surface-muted/50 divide-divider flex flex-col divide-y rounded-xl">
             {data.answers.map(({ field }) => (
               <li
                 key={field.fieldSnapshotId}
@@ -348,7 +348,7 @@ export default function LogDetailModal() {
         {data.answers.map(({ field, value }) => (
           <section
             key={field.fieldSnapshotId}
-            className="border-border flex flex-col gap-2.5 rounded-xl border px-4 py-3.5"
+            className="bg-surface-muted/50 flex flex-col gap-2.5 rounded-xl px-4 py-3.5"
           >
             <div className="flex items-center gap-2">
               <span

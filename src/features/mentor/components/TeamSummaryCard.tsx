@@ -18,7 +18,7 @@ export function TeamSummaryCard({
   return (
     <div
       className={cn(
-        'border-border bg-surface relative flex flex-col gap-3 rounded-2xl border p-5 shadow-[0_2px_8px_rgba(18,23,38,0.04)]',
+        'bg-surface relative flex flex-col gap-3 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]',
         withStatusBar && 'overflow-hidden',
       )}
     >

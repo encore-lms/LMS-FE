@@ -617,7 +617,7 @@ export default function RequestResponseModal() {
         )}
 
         {respondable && mode === 'reject' && (
-          <div className="border-border flex flex-col gap-1.5 rounded-xl border p-3.5">
+          <div className="bg-surface-muted/50 flex flex-col gap-1.5 rounded-xl p-3.5">
             <label htmlFor="reject-note" className={FIELD_LABEL}>
               거절 사유 메모 (선택)
             </label>
@@ -633,7 +633,7 @@ export default function RequestResponseModal() {
 
         {/* 종결 상태(완료·거절·취소) — 응답 메모만 읽기 전용 표시 */}
         {!actionable && data.mentorResponseNote && (
-          <div className="border-border flex flex-col gap-1 rounded-xl border p-3.5">
+          <div className="bg-surface-muted/50 flex flex-col gap-1 rounded-xl p-3.5">
             <span className="text-fg-subtle flex items-center gap-1 text-[10px] font-bold">
               <FileText className="h-3 w-3" />
               응답 메모

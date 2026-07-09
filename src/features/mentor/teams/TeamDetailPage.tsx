@@ -29,7 +29,7 @@ import { ProgressBar } from '../components/ProgressBar'
 import { SectionLink } from '../components/SectionLink'
 
 const CARD_SHELL =
-  'border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
 
 // 팀 상세 (/mentor/teams/:teamId) — Figma 2553:3696.
 // 팀 헤더(배정·누적·잔여) · 팀원 · 예약 요약 · 평가·추천(잠금 사유 표시) · 팀 최근 일지.

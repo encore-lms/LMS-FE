@@ -77,28 +77,28 @@ describe('EducationPage (과정·기수·교과목)', () => {
       '기록실',
       '설정',
     ]) {
-      expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()
     }
   })
 
   it('이력서 탭 = 실 BE 이력서 패널(현황·상세·피드백)', async () => {
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: '이력서' }))
+    await user.click(screen.getByRole('tab', { name: '이력서' }))
     expect(screen.getByText('이력서 패널')).toBeInTheDocument()
   })
 
   it('기록실 탭 = 학습 기록 검토 흡수(임베드)', async () => {
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: '기록실' }))
+    await user.click(screen.getByRole('tab', { name: '기록실' }))
     expect(screen.getByText('기록실 임베드')).toBeInTheDocument()
   })
 
   it('설정 탭 — HRD 과정 상세 항목을 보여준다', async () => {
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: '설정' }))
+    await user.click(screen.getByRole('tab', { name: '설정' }))
     expect(screen.getByText('K-디지털트레이닝')).toBeInTheDocument()
     expect(screen.getByText('17,424,000원')).toBeInTheDocument()
     expect(screen.getByText('~ (총 120일 / 960시간)')).toBeInTheDocument()

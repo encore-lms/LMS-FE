@@ -9,8 +9,8 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
+import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
@@ -201,23 +201,14 @@ export default function EducationPage() {
       </div>
 
       {/* 탭 */}
-      <div className="border-divider mt-5 flex gap-1 border-b">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium',
-              tab === t.key
-                ? 'text-brand border-brand border-b-2'
-                : 'text-fg-muted hover:text-fg',
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        variant="underline"
+        aria-label="교육 관리 탭"
+        value={tab}
+        onChange={setTab}
+        items={TABS.map((t) => ({ value: t.key, label: t.label }))}
+        className="mt-5"
+      />
 
       <div className="mt-6">
         {tab === 'resume' ? (

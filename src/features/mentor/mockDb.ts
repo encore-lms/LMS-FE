@@ -1886,6 +1886,9 @@ export function submitMentoringLog(
 
   // 인정 = min(실제, max(잔여, 0)) — 초과분은 기록 보존·인정 없음(잔여까지만).
   const rec = recognizeMinutes(team, log.actualMinutes)
+  // 정본(실 BE): 제출 → 'submitted'(승인 대기) → 운영 매니저 승인(POST .../approve) 후 'valid'
+  // + 인정 시간 산입. mock은 승인 흐름 미배선이라 제출을 즉시 'valid'로 단순화한다(실 BE
+  // 연동 시 승인 대기 경유). UI 카피·상태 칩은 승인 대기 흐름을 이미 반영한다.
   log.status = 'valid'
   log.statusNote = undefined
   log.recognizedHours = rec.recognizedHours

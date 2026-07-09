@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Download, FileText, Files } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -165,7 +166,7 @@ function AddDocModal({
             type="button"
             onClick={submit}
             disabled={!title.trim() && !file}
-            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+            className={buttonClass({ size: 'sm' })}
           >
             추가
           </button>
@@ -284,7 +285,7 @@ function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
           <button
             type="button"
             onClick={handleDownload}
-            className="bg-brand flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-bold text-white"
+            className={buttonClass({ size: 'sm' })}
           >
             <Download className="size-4" aria-hidden="true" />
             다운로드

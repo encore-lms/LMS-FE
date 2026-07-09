@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
@@ -127,7 +128,7 @@ function TsLinkPickerModal({
         <button
           type="button"
           onClick={onClose}
-          className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white"
+          className={buttonClass({ size: 'sm' })}
         >
           완료
         </button>

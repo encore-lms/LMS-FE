@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
@@ -223,7 +223,7 @@ export default function ProjectListPage() {
           <button
             type="button"
             onClick={() => navigate('/student/projects/new')}
-            className="bg-brand inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-bold text-white"
+            className={buttonClass({ size: 'sm' })}
           >
             신규 프로젝트
             <ArrowRight className="size-3.5" strokeWidth={2.4} />

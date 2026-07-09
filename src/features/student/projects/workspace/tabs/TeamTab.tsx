@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ListChecks, TriangleAlert } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -295,7 +296,7 @@ function InviteMemberModal({
             type="button"
             onClick={submit}
             disabled={!userId || !role.trim()}
-            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+            className={buttonClass({ size: 'sm' })}
           >
             초대
           </button>
@@ -373,7 +374,7 @@ function EditMemberModal({
             type="button"
             onClick={submit}
             disabled={!role.trim()}
-            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+            className={buttonClass({ size: 'sm' })}
           >
             저장
           </button>

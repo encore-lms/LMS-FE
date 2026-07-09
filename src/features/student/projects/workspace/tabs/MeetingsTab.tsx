@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Calendar, Users } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
@@ -129,7 +130,7 @@ function AddMeetingModal({
             type="button"
             onClick={submit}
             disabled={!title.trim() || !summary.trim()}
-            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+            className={buttonClass({ size: 'sm' })}
           >
             저장
           </button>

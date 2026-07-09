@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/use-toast'
 import { useSubmitPeerEval } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
@@ -178,7 +179,7 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
             type="button"
             onClick={submitAll}
             disabled={submitPeerM.isPending}
-            className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:opacity-50"
+            className={buttonClass({ size: 'md' })}
           >
             {submitPeerM.isPending ? '제출 중…' : '제출'}
           </button>

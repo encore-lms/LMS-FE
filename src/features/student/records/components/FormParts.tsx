@@ -4,6 +4,7 @@ import type {
   InputHTMLAttributes,
 } from 'react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 
 // 기록실 등록/수정 폼 공유 프리미티브 — 빵부스러기·라벨·입력·지원형식·하단 액션바.
 
@@ -155,7 +156,7 @@ export function FormBar({
             type="button"
             onClick={onSubmit}
             disabled={disabled}
-            className="bg-brand rounded-[10px] px-6 py-3 text-[14px] font-bold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ size: 'md' })}
           >
             {submitLabel}
           </button>

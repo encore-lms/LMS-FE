@@ -36,17 +36,8 @@ export interface EditRequestState {
   snapshot?: ProjectContent
 }
 
-// 강사 승인 시 열리는 원본 수정 가능 기간(일). 만료되면 자동으로 다시 잠긴다.
-export const EDIT_WINDOW_DAYS = 7
-
-// 승인 시점 기준 만료 시각(ISO) — now + EDIT_WINDOW_DAYS.
-export function editWindowUntilISO() {
-  return new Date(
-    Date.now() + EDIT_WINDOW_DAYS * 24 * 60 * 60 * 1000,
-  ).toISOString()
-}
-
 // approved 상태인데 만료 시각이 지났는지 — true면 잠금(none)으로 자동 복귀시킨다.
+// (수정 가능 기간 정책은 서버가 editAllowedUntil로 내려준다.)
 export function isEditWindowExpired(er?: EditRequestState) {
   return (
     er?.status === 'approved' &&

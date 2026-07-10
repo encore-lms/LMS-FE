@@ -154,21 +154,6 @@ export function useAddArtifact(projectId: string) {
     projectId,
   )
 }
-export function useAddIssue(projectId: string) {
-  return useWsMutation<{ title: string; description?: string }>(
-    (id, v) => apiClient.post(`/student/projects/${id}/issues`, v),
-    projectId,
-  )
-}
-export function useUpdateIssueStatus(projectId: string) {
-  return useWsMutation<{ issueId: string; status: string }>(
-    (id, v) =>
-      apiClient.put(`/student/projects/${id}/issues/${v.issueId}/status`, {
-        status: v.status,
-      }),
-    projectId,
-  )
-}
 export function useSubmitPeerEval(projectId: string) {
   return useWsMutation<{
     targetMemberId: string

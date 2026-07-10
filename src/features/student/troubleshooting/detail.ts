@@ -120,26 +120,3 @@ export function buildCaseDetail(c: TsCase): TsCaseDetail {
     projectLink,
   }
 }
-
-// 서버 목록에 없는 id(클라이언트에서 새로 만든 사례)용 폴백 — 작성 중 빈 상세.
-export function buildFallbackDetail(id: string): TsCaseDetail {
-  return buildCaseDetail({
-    id,
-    category: '기타',
-    categoryKey: 'etc',
-    categoryTone: 'success',
-    status: 'draft',
-    statusLabel: '작성 중',
-    independent: false,
-    days: '진행 중',
-    accentTone: 'accent',
-    title: '작성 중 사례',
-    createdAt: '작성 방금',
-    updatedAt: '최근 수정 방금',
-    situation: '작성 중인 사례입니다. 상황을 입력하세요.',
-    resolution: '해결 과정을 입력하세요.',
-    result: '결과와 학습 내용을 입력하세요.',
-    tags: [],
-    actionLabel: '이어 작성',
-  })
-}

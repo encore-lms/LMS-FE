@@ -72,8 +72,3 @@ export function missingSections(d: ResumeContent): string[] {
   const done = new Set(computeDoneSections(d))
   return SECTIONS.filter((s) => !done.has(s))
 }
-
-/** 작성 완료 기준 — 11개 섹션이 모두 작성됐을 때만 true. */
-export function isResumeComplete(d: ResumeContent): boolean {
-  return missingSections(d).length === 0
-}

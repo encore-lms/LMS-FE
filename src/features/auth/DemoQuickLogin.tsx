@@ -30,15 +30,19 @@ export function DemoQuickLogin({ onPick }: DemoQuickLoginProps) {
         ))}
       </div>
 
-      <div className="mt-1 h-px w-full bg-white/15" />
-
-      <Link
-        to={PATHS.styleguide}
-        className="flex items-center gap-1 text-[13px] font-medium text-white/85 transition-colors hover:text-white"
-      >
-        스타일 가이드로 이동
-        <ArrowRight className="h-[14px] w-[14px]" />
-      </Link>
+      {/* 스타일 가이드 라우트는 로컬 dev에서만 등록되므로 링크도 DEV에서만 노출. */}
+      {import.meta.env.DEV && (
+        <>
+          <div className="mt-1 h-px w-full bg-white/15" />
+          <Link
+            to={PATHS.styleguide}
+            className="flex items-center gap-1 text-[13px] font-medium text-white/85 transition-colors hover:text-white"
+          >
+            스타일 가이드로 이동
+            <ArrowRight className="h-[14px] w-[14px]" />
+          </Link>
+        </>
+      )}
     </div>
   )
 }

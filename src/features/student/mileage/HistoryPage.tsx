@@ -11,8 +11,9 @@ import {
   type MileageOrderRow,
 } from '../api/mileage'
 import { useToast } from '@/components/ui/use-toast'
-import type { HistoryRow, Tone } from './types'
+import type { HistoryRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 // 표시 행 — 구매 요청(주문)에서 온 행은 주문을 실어 취소(pending) 버튼을 노출한다.
 type Row = HistoryRow & { order?: MileageOrderRow }
@@ -76,22 +77,6 @@ function orderToRow(o: MileageOrderRow): Row {
 }
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
 // 조회 기간 옵션(일수). mock이라 기준 시점은 가장 최근 행 날짜로 잡는다.
 const PERIODS = [
   { key: '7', label: '최근 7일', days: 7 },
@@ -164,7 +149,7 @@ export default function HistoryPage() {
           <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
             <div className="flex items-start justify-between">
               <span className="text-fg-muted text-[12px]">{s.label}</span>
-              <span className={cn('size-2 rounded-full', DOT[s.tone])} />
+              <span className={cn('size-2 rounded-full', TONE_SOLID[s.tone])} />
             </div>
             <span className="text-fg text-[24px] leading-none font-bold">
               {s.value}
@@ -256,7 +241,7 @@ export default function HistoryPage() {
               <span
                 className={cn(
                   'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                  CHIP[r.kind.tone],
+                  TONE_SOFT[r.kind.tone],
                 )}
               >
                 {r.kind.label}
@@ -275,7 +260,7 @@ export default function HistoryPage() {
               <span
                 className={cn(
                   'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                  CHIP[r.status.tone],
+                  TONE_SOFT[r.status.tone],
                 )}
               >
                 {r.status.label}

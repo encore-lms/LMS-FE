@@ -1,26 +1,19 @@
 import { Fragment } from 'react'
 import { cn } from '@/shared/lib/cn'
-import type { CertSummaryTab, Tone } from '../types'
+import type { CertSummaryTab } from '../types'
 import { SkillRadar } from '../components/SkillRadar'
 import { CERT_V2 } from '../config'
 import { DomainDonut } from '../v2/DomainDonut'
 import { OntologyMap } from '../v2/OntologyMap'
 import { useQuery } from '@tanstack/react-query'
 import { fetchAiAnalysis, fetchAiDerived } from '../ai'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 증명서 탭1 종합 요약.
 // 상단: 핵심 지표 — 종합 점수 카드 + 핵심 지표 2×2 (Figma 미리보기 metrics-row).
 // 하단: 6축 레이더/360° + 도메인 경험 + 온톨로지 맵(시안엔 없지만 화면 전용 유지).
 // 제외(시안 정렬): 퀴즈 카테고리·근거 요약·대표 프로젝트·요청 전 체크리스트.
 // AI 종합분석은 'AI 분석' 탭에만 노출 — 여기선 제외.
-const SOLID: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 const card =
   'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 
@@ -140,7 +133,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
                 <span
                   className={cn(
                     'size-2 rounded-full',
-                    SOLID[k.tone ?? 'brand'],
+                    TONE_SOLID[k.tone ?? 'brand'],
                   )}
                 />
               </div>
@@ -156,7 +149,7 @@ export function SummaryTab({ s }: { s: CertSummaryTab }) {
                 <div
                   className={cn(
                     'h-full rounded-full',
-                    SOLID[k.tone ?? 'brand'],
+                    TONE_SOLID[k.tone ?? 'brand'],
                   )}
                   style={{ width: `${k.bar ?? 0}%` }}
                 />

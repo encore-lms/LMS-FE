@@ -22,6 +22,7 @@ import {
 } from './types'
 import { ProjectLinkModal } from './components/ProjectLinkModal'
 import { CaseContentForm } from './components/CaseContentForm'
+import { TONE_SOFT } from '@/shared/lib/tone'
 
 // 트러블슈팅 사례 상세 (/student/troubleshooting/:id) — 트러블슈팅 흐름의 단일 페이지.
 //   - 작성 중(draft·미완료)   : 편집 폼(임시 저장·작성 완료). 프로젝트 연결 가능.
@@ -31,14 +32,6 @@ import { CaseContentForm } from './components/CaseContentForm'
 //   - 보기 전용(?view=1)      : 프로젝트 워크스페이스 연결 사례에서 진입. 액션 없이 내용만.
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
 
 export default function CaseDetailPage() {
   const { id = '' } = useParams()
@@ -167,7 +160,7 @@ export default function CaseDetailPage() {
           <span
             className={cn(
               'rounded px-2 py-0.5 text-[11px] font-bold',
-              isCertified ? CHIP.success : CHIP.accent,
+              isCertified ? TONE_SOFT.success : TONE_SOFT.accent,
             )}
           >
             {data.statusLabel}
@@ -175,7 +168,7 @@ export default function CaseDetailPage() {
           <span
             className={cn(
               'rounded px-2 py-0.5 text-[11px] font-bold',
-              CHIP[data.categoryTone],
+              TONE_SOFT[data.categoryTone],
             )}
           >
             {data.category}
@@ -184,7 +177,7 @@ export default function CaseDetailPage() {
             <span
               className={cn(
                 'rounded px-2 py-0.5 text-[11px] font-bold',
-                CHIP.warning,
+                TONE_SOFT.warning,
               )}
             >
               프로젝트 미연결

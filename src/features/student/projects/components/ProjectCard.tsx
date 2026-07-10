@@ -12,18 +12,11 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import type { ProjectSummary, Tone } from '../types'
+import type { ProjectSummary } from '../types'
 import type { ProjectPhase } from '../workspace/useProjectFlow'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 프로젝트 목록 카드 — 좌측 색 바 + 상태 배지 + 메타 + 태그 + 핵심 성과 + 액션.
-const ACCENT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 // 생애주기 단계별 상태 배지 — 작성 중 → 작성 완료 → 검토 중 → 인증 완료.
 const PHASE: Record<
   ProjectPhase,
@@ -83,7 +76,7 @@ export function ProjectCard({
       <span
         className={cn(
           'absolute top-0 left-0 h-full w-1',
-          ACCENT[project.accentTone],
+          TONE_SOLID[project.accentTone],
         )}
       />
 

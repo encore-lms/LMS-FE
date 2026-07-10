@@ -3,14 +3,15 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import type { LucideIcon } from 'lucide-react'
 import type { Badge, Tone, WsTask } from '../../types'
-import { CHIP, SOLID, toneOf } from './ws-style'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
+import { toneOf } from './ws-style'
 
 export function Chip({ badge }: { badge: Badge }) {
   return (
     <span
       className={cn(
         'rounded px-1.5 py-0.5 text-[10px] font-bold',
-        CHIP[badge.tone],
+        TONE_SOFT[badge.tone],
       )}
     >
       {badge.label}
@@ -48,7 +49,7 @@ export function Avatar({ name, tone }: { name: string; tone: Tone }) {
     <span
       className={cn(
         'flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white',
-        SOLID[tone],
+        TONE_SOLID[tone],
       )}
     >
       {name.slice(0, 1)}
@@ -64,7 +65,7 @@ export function TaskCard({ t }: { t: WsTask }) {
         <span
           className={cn(
             'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white',
-            SOLID[toneOf(t.assignee)],
+            TONE_SOLID[toneOf(t.assignee)],
           )}
         >
           {t.assignee.slice(0, 1)}

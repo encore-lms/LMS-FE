@@ -1,23 +1,8 @@
 import { cn } from '@/shared/lib/cn'
-import type { CertChangeFlag, Tone } from '../types'
+import type { CertChangeFlag } from '../types'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 // 보완이 필요한 항목 — 미리보기 상단 경고 카드들(좌측 색 바 + 배지 + 이동). Figma 249:27.
-const BADGE: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
-const BAR: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 
 export function CertChangeFlags({
   flags,
@@ -44,13 +29,13 @@ export function CertChangeFlags({
             key={f.id}
             className="border-border bg-surface flex overflow-hidden rounded-[12px] border"
           >
-            <span className={cn('w-1.5 shrink-0', BAR[f.badgeTone])} />
+            <span className={cn('w-1.5 shrink-0', TONE_SOLID[f.badgeTone])} />
             <div className="flex flex-1 flex-col gap-2 p-4">
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
                     'rounded px-2 py-0.5 text-[10px] font-bold',
-                    BADGE[f.badgeTone],
+                    TONE_SOFT[f.badgeTone],
                   )}
                 >
                   {f.badge}

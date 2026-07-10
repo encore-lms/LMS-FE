@@ -1,22 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/shared/lib/cn'
-import type { Tone } from '../types'
 import { AiBanner } from './TechTab'
 import { AiAnalysisPanel } from '../v2/AiAnalysisPanel'
 import { AiProfile } from '../v2/AiProfile'
 import { SentimentBubbles } from '../v2/SentimentBubbles'
 import { fetchAiAnalysis } from '../ai'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 증명서 v2 — AI 분석 통합 탭. AI 해석은 ai 모듈(getAiAnalysis)에서 단일 소스로 가져온다.
 // 지금은 mock. 나중에 getAiAnalysis 내부만 서버 API로 교체하면 됨(호출부 불변).
-const SOLID: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 
 // TODO(BE 연동): studentId를 실제 학생 식별자로 연결. 지금은 mock 고정.
 export function AiTab({ studentId = 'stu-001' }: { studentId?: string }) {
@@ -113,7 +105,7 @@ export function AiTab({ studentId = 'stu-001' }: { studentId?: string }) {
                 </div>
                 <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
                   <div
-                    className={cn('h-full rounded-full', SOLID[c.tone])}
+                    className={cn('h-full rounded-full', TONE_SOLID[c.tone])}
                     style={{ width: `${c.score}%` }}
                   />
                 </div>

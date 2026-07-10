@@ -1,19 +1,12 @@
 import { Fragment } from 'react'
 import { cn } from '@/shared/lib/cn'
-import type { CertTechTab, Tone } from '../types'
+import type { CertTechTab } from '../types'
 import { CERT_V2 } from '../config'
+import { TONE_SOFT } from '@/shared/lib/tone'
 
 // 증명서 탭2 기술·검증 — 카테고리 점수·시험 추세·자격증 인증·과제 검증.
 const card =
   'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
 function bar(s: number) {
   if (s >= 85) return 'bg-brand'
   if (s >= 75) return 'bg-info'
@@ -119,7 +112,7 @@ export function TechTab({ t }: { t: CertTechTab }) {
               <span
                 className={cn(
                   'shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold',
-                  CHIP[c.statusTone],
+                  TONE_SOFT[c.statusTone],
                 )}
               >
                 {c.statusLabel}

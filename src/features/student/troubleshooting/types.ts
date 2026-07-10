@@ -1,13 +1,8 @@
 // 수강생 트러블슈팅 도메인 계약 — 기능 로컬(공유 파일 미오염). Figma 360:1297 외.
 // 사례 목록 · 상세 · 새 작성 · 변경 제안 · 인증 요청 모달.
 
-export type Tone =
-  | 'brand'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'success'
+import type { Tone } from '@/shared/lib/tone'
+export type { Tone }
 export type TsStatus = 'draft' | 'reviewing' | 'certified' // 작성 중 / 검토 중 / 인증 완료
 
 export interface Badge {

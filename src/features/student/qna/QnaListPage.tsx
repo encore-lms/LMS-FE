@@ -13,8 +13,9 @@ import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useQnaList } from '../api/qna'
 import { QnaQuestionCard } from './components/QnaQuestionCard'
-import type { QnaQuestion, Tone } from './types'
+import type { QnaQuestion } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 
 // 통계 카드 우상단 아이콘 — 키별 매핑.
 const STAT_ICON: Record<string, LucideIcon> = {
@@ -22,22 +23,6 @@ const STAT_ICON: Record<string, LucideIcon> = {
   resolved: CheckCircle2,
   answers: MessageSquare,
   open: Clock,
-}
-const ICON_TEXT: Record<Tone, string> = {
-  brand: 'text-brand',
-  info: 'text-info',
-  warning: 'text-warning',
-  danger: 'text-danger',
-  accent: 'text-accent-strong',
-  success: 'text-success',
-}
-const ACCENT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
 }
 const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
@@ -100,7 +85,7 @@ export default function QnaListPage() {
             <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
               <div className="flex items-start justify-between">
                 <span className="text-fg-muted text-[12px]">{s.label}</span>
-                <Icon className={cn('size-4 shrink-0', ICON_TEXT[s.tone])} />
+                <Icon className={cn('size-4 shrink-0', TONE_TEXT[s.tone])} />
               </div>
               <span className="text-fg text-[26px] leading-none font-bold">
                 {s.value}
@@ -113,7 +98,7 @@ export default function QnaListPage() {
               {s.barPct != null && (
                 <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
                   <div
-                    className={cn('h-full rounded-full', ACCENT[s.tone])}
+                    className={cn('h-full rounded-full', TONE_SOLID[s.tone])}
                     style={{ width: `${s.barPct}%` }}
                   />
                 </div>
@@ -196,7 +181,10 @@ export default function QnaListPage() {
               className="text-fg-muted flex items-center gap-1.5 text-[12px] font-medium"
             >
               <span
-                className={cn('size-2 rounded-full', ACCENT[f.tone ?? 'brand'])}
+                className={cn(
+                  'size-2 rounded-full',
+                  TONE_SOLID[f.tone ?? 'brand'],
+                )}
               />
               {f.label}
               <span className="text-fg font-bold">{f.count}</span>

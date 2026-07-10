@@ -37,16 +37,9 @@ import {
   type Tone,
 } from '../types'
 import { WizardShell } from './WizardShell'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 const card = 'border-border bg-surface rounded-2xl border p-6'
-const AVA: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 const CHIP_ON: Record<Tone, string> = {
   brand: 'border-brand bg-brand text-white',
   info: 'border-info bg-info text-white',
@@ -55,16 +48,6 @@ const CHIP_ON: Record<Tone, string> = {
   accent: 'border-accent-strong bg-accent-strong text-white',
   success: 'border-success bg-success text-white',
 }
-// 옅은 톤 칩(요약 카드 등) — 워크스페이스 CHIP과 동일 규약.
-const CHIP_SOFT: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
-
 // 카탈로그 스택 → 그룹 톤(정적). 커스텀 스택은 그룹 매칭으로 보강.
 const STACK_TONE = new Map<string, Tone>()
 STACK_CATALOG.forEach((g) =>
@@ -746,7 +729,7 @@ function Step3(p: {
                 key={s}
                 className={cn(
                   'flex items-center gap-1.5 rounded-full py-1 pr-1.5 pl-3 text-[12px] font-bold text-white',
-                  AVA[p.stackToneFor(s)],
+                  TONE_SOLID[p.stackToneFor(s)],
                 )}
               >
                 {s}
@@ -765,7 +748,7 @@ function Step3(p: {
         {STACK_CATALOG.map((g) => (
           <div key={g.label} className="flex flex-col gap-2">
             <span className="text-fg-muted flex items-center gap-1.5 text-[12px] font-semibold">
-              <span className={cn('size-2 rounded-full', AVA[g.tone])} />
+              <span className={cn('size-2 rounded-full', TONE_SOLID[g.tone])} />
               {g.label}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -1012,7 +995,7 @@ function Step4(p: {
                 key={s}
                 className={cn(
                   'rounded-md px-2 py-0.5 text-[11px] font-bold',
-                  CHIP_SOFT[p.stackToneFor(s)],
+                  TONE_SOFT[p.stackToneFor(s)],
                 )}
               >
                 {s}
@@ -1041,7 +1024,7 @@ function Step4(p: {
                     key={d}
                     className={cn(
                       'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold',
-                      CHIP_SOFT[meta?.tone ?? 'brand'],
+                      TONE_SOFT[meta?.tone ?? 'brand'],
                     )}
                   >
                     <Icon className="size-3.5" aria-hidden="true" />
@@ -1124,7 +1107,7 @@ function Avatar({
       className={cn(
         'flex shrink-0 items-center justify-center rounded-full font-bold text-white',
         sm ? 'size-7 text-[11px]' : 'size-10 text-[14px]',
-        AVA[tone],
+        TONE_SOLID[tone],
       )}
     >
       {name.slice(0, 1)}
@@ -1155,7 +1138,7 @@ function SummaryCard({
           <span
             className={cn(
               'flex size-10 shrink-0 items-center justify-center rounded-xl text-white',
-              AVA[iconTone],
+              TONE_SOLID[iconTone],
             )}
           >
             <Icon className="size-5" aria-hidden="true" />

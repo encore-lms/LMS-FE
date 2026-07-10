@@ -2,16 +2,10 @@
 // 대시보드는 여러 도메인 요약을 한 endpoint로 합쳐 받는다(StudentDashboardSummary).
 // 정책(§2): 증명서 위젯·6축 역량·강의 진도율·채점 대기·랭킹·커뮤니티 피드는 대시보드에 노출 안 함.
 import type { AppNotification } from '@/shared/types'
+import type { Tone as BaseTone } from '@/shared/lib/tone'
 
 /** 시맨틱 색조 — 칩/배지/점/막대의 @theme 토큰 매핑 키(components/tone.ts) */
-export type Tone =
-  | 'neutral'
-  | 'brand'
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'info'
-  | 'accent'
+export type Tone = BaseTone | 'neutral'
 
 /** 상단 환영 배너 */
 export interface DashboardHero {

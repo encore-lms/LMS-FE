@@ -19,17 +19,9 @@ import { useCreateMileageOrder, useMileageOverview } from '../api/mileage'
 import { parseMoney } from './store'
 import { useCartStore, cartTotal, type CartItem } from './cartStore'
 import { ProductImage } from './components/ProductImage'
-import type { Tone } from './types'
+import { TONE_SOFT } from '@/shared/lib/tone'
 
 // 마일리지 장바구니/결제 (/student/mileage/cart) — 이전 LMS MileageCart 흐름.
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
 const PRODUCT_ICON: Record<CartItem['icon'], LucideIcon> = {
   book: Book,
   video: Video,
@@ -152,7 +144,7 @@ export default function CartPage() {
                 <span
                   className={cn(
                     'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px]',
-                    !i.imageUrl && CHIP[i.tone],
+                    !i.imageUrl && TONE_SOFT[i.tone],
                   )}
                 >
                   <ProductImage

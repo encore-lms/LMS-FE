@@ -7,7 +7,8 @@ import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import type { WorkspaceData, WsMember } from '../../types'
 import { Avatar, Chip, SectionHead, StatBox } from '../components/ws-shared'
-import { SOLID, card } from '../components/ws-style'
+import { TONE_SOLID } from '@/shared/lib/tone'
+import { card } from '../components/ws-style'
 import { useMemberNames } from '../components/useMemberNames'
 import { useInviteMember, useRemoveMember } from '../../../api/projects'
 import { usePeers } from '../../../api/peers'
@@ -454,7 +455,7 @@ function MemberProfileModal({
           <span
             className={cn(
               'flex size-16 shrink-0 items-center justify-center rounded-full text-[24px] font-bold text-white',
-              SOLID[member.avatarTone],
+              TONE_SOLID[member.avatarTone],
             )}
           >
             {member.name.slice(0, 1)}

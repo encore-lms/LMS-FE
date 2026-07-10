@@ -1,13 +1,8 @@
 // 수강생 프로젝트 도메인 계약 — 기능 로컬(공유 파일 미오염). Figma 337:930 외.
 // 프로젝트 목록 · 생성 4단계 마법사 · 워크스페이스(10탭) · 변경 제안.
 
-export type Tone =
-  | 'brand'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'success'
+import type { Tone } from '@/shared/lib/tone'
+export type { Tone }
 
 export type ProjectStatus = 'certified' | 'reviewing' | 'draft'
 export type ProjectKind = 'team' | 'personal'

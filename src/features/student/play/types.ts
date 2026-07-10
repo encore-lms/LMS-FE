@@ -1,13 +1,7 @@
 // 수강생 PLAY 도메인 계약 — 기능 로컬(공유 파일 미오염). Figma 418:2172 외.
 // 게임 선택 · 타자 게임 · 결과·예외 상태.
 
-export type Tone =
-  | 'brand'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'success'
+export type { Tone } from '@/shared/lib/tone'
 
 export interface PlayStat {
   label: string

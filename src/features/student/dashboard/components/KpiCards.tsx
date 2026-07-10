@@ -11,18 +11,11 @@ import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import type { DashboardKpis, KpiTone } from '../types'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 요약 KPI 카드 — 행동 지향(카드 전체가 해당 화면 링크, 우상단 화살표) +
 // 긴급도 위계(D-1 등 warning/danger 델타는 상단 액센트 바·은은한 틴트로 시선 유도).
 // 값이 0이면 빈 트랙바 대신 '클리어' 체크 상태를 보여줘 허전함을 없앤다.
-const DOT: Record<KpiTone, string> = {
-  brand: 'bg-brand',
-  warning: 'bg-warning',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-  info: 'bg-info',
-  danger: 'bg-danger',
-}
 const BADGE: Record<KpiTone, string> = {
   brand: 'bg-success-bg text-brand',
   warning: 'bg-warning-bg text-warning',
@@ -131,7 +124,7 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
               <>
                 <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
                   <div
-                    className={cn('h-full rounded-full', DOT[k.tone])}
+                    className={cn('h-full rounded-full', TONE_SOLID[k.tone])}
                     style={{ width: `${k.barPct}%` }}
                   />
                 </div>

@@ -1,15 +1,8 @@
 import { MessageSquare, Eye } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { QnaQuestion, Tone } from '../types'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 const CHIP: Record<Tone, string> = {
   brand: 'bg-brand/10 text-brand',
   info: 'bg-info-bg text-info',
@@ -61,7 +54,7 @@ export function QnaQuestionCard({ q, onOpen }: Props) {
             <span
               className={cn(
                 'size-1.5 rounded-full',
-                DOT[
+                TONE_SOLID[
                   q.status === 'resolved'
                     ? 'success'
                     : q.status === 'answered'

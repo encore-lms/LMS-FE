@@ -1,13 +1,8 @@
 // 기록실 도메인 계약 — 기능 로컬(공유 파일 미오염). Figma 246:27 외.
 // 기록실 목록(블로그·스터디·자격증) + 삭제/수정 상태 + 블로그/스터디/자격증 등록·수정 폼.
 
-export type Tone =
-  | 'brand'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'success'
+import type { Tone } from '@/shared/lib/tone'
+export type { Tone }
 
 /** 기록 상태 — draft(작성 중·임시저장)는 수강생 본인에게만 노출, 검토 큐에는 안 올라간다 */
 export type RecordStatus = 'draft' | 'approved' | 'reviewing' | 'rejected'

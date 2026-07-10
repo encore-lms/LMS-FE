@@ -18,26 +18,11 @@ import { useCartStore, cartCount, cartTotal } from './cartStore'
 import { ProductImage } from './components/ProductImage'
 import type { MileageProduct, Tone } from './types'
 import { SkeletonCards } from '@/components/ui/Skeleton'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 // 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 const PRODUCT_ICON: Record<'book' | 'video' | 'cup' | 'gift', LucideIcon> = {
   book: Book,
   video: Video,
@@ -69,7 +54,7 @@ function FlyingIcon({ item }: { item: FlyingItem }) {
     <div
       className={cn(
         'pointer-events-none fixed z-[200] flex size-10 items-center justify-center rounded-[10px]',
-        CHIP[item.tone],
+        TONE_SOFT[item.tone],
       )}
       style={{
         left: item.startX,
@@ -252,7 +237,7 @@ export default function ProductsPage() {
                   data-cart-img
                   className={cn(
                     'flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[10px]',
-                    !p.imageUrl && CHIP[p.tone],
+                    !p.imageUrl && TONE_SOFT[p.tone],
                   )}
                 >
                   <ProductImage
@@ -267,7 +252,7 @@ export default function ProductsPage() {
                       key={i}
                       className={cn(
                         'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                        CHIP[b.tone],
+                        TONE_SOFT[b.tone],
                       )}
                     >
                       {b.label}
@@ -290,7 +275,7 @@ export default function ProductsPage() {
               </div>
               <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
                 <div
-                  className={cn('h-full rounded-full', DOT[p.tone])}
+                  className={cn('h-full rounded-full', TONE_SOLID[p.tone])}
                   style={{ width: `${p.barPct ?? 18}%` }}
                 />
               </div>
@@ -345,7 +330,7 @@ export default function ProductsPage() {
                       <span
                         className={cn(
                           'flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg',
-                          !i.imageUrl && CHIP[i.tone],
+                          !i.imageUrl && TONE_SOFT[i.tone],
                         )}
                       >
                         <ProductImage

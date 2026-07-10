@@ -7,25 +7,9 @@ import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useCertChanges } from '../api/certificate'
 import { useCertFlow } from './useCertFlow'
-import type { Tone } from './types'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 // 보완 요청 상세 (/student/certificate/changes-requested) — Figma 248:27.
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
-const SOLID: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 const card =
   'border-border bg-surface rounded-[14px] border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 
@@ -135,7 +119,7 @@ export default function ChangesRequestedPage() {
                   key={i}
                   className={cn(
                     'rounded px-2 py-0.5 text-[10px] font-bold',
-                    CHIP[tg.tone],
+                    TONE_SOFT[tg.tone],
                   )}
                 >
                   {tg.label}
@@ -176,7 +160,7 @@ export default function ChangesRequestedPage() {
               <span
                 className={cn(
                   'flex size-7 items-center justify-center rounded-lg text-[12px] font-bold text-white',
-                  SOLID[a.letterTone],
+                  TONE_SOLID[a.letterTone],
                 )}
               >
                 {a.letter}

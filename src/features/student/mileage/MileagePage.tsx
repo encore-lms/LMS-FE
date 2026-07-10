@@ -5,27 +5,11 @@ import { Empty } from '@/components/ui/Empty'
 import { usePageHeader } from '@/shared/store'
 import { useMileageOverview } from '../api/mileage'
 import { parseMoney } from './store'
-import type { Tone } from './types'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 // 내 마일리지 (/student/mileage) — Figma 418:1850.
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
 
 export default function MileagePage() {
   const navigate = useNavigate()
@@ -191,7 +175,7 @@ export default function MileagePage() {
             <span
               className={cn(
                 'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                CHIP[l.status.tone],
+                TONE_SOFT[l.status.tone],
               )}
             >
               {l.status.label}
@@ -213,12 +197,14 @@ export default function MileagePage() {
           <div key={l.label} className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-[12px]">
               <span className="text-fg flex items-center gap-1.5 font-medium">
-                <span className={cn('size-2 rounded-full', DOT[l.tone])} />
+                <span
+                  className={cn('size-2 rounded-full', TONE_SOLID[l.tone])}
+                />
                 {l.label}
                 <span
                   className={cn(
                     'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                    CHIP[l.status.tone],
+                    TONE_SOFT[l.status.tone],
                   )}
                 >
                   {l.status.label}
@@ -233,7 +219,7 @@ export default function MileagePage() {
             </div>
             <div className="bg-surface-muted h-2.5 w-full overflow-hidden rounded-full">
               <div
-                className={cn('h-full rounded-full', DOT[l.tone])}
+                className={cn('h-full rounded-full', TONE_SOLID[l.tone])}
                 style={{ width: `${Math.round((l.used / l.total) * 100)}%` }}
               />
             </div>

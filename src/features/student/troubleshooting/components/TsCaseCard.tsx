@@ -1,25 +1,10 @@
 import { AlertCircle, ArrowRight, Check, Link2, Timer, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { TsCase, TsStatus, Tone } from '../types'
+import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 // 트러블슈팅 사례 카드 — 목록 화면과 프로젝트 워크스페이스(연결된 사례)에서 공용으로 쓴다.
 // 표시는 동일하고, 우상단 액션(라벨/동작)만 사용처가 주입한다.
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
-const ACCENT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 const STATUS: Record<TsStatus, Tone> = {
   certified: 'success',
   reviewing: 'warning',
@@ -53,14 +38,17 @@ export function TsCaseCard({
   return (
     <section className="border-border bg-surface relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6">
       <span
-        className={cn('absolute top-0 left-0 h-full w-1', ACCENT[c.accentTone])}
+        className={cn(
+          'absolute top-0 left-0 h-full w-1',
+          TONE_SOLID[c.accentTone],
+        )}
       />
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <span
             className={cn(
               'rounded px-2 py-0.5 text-[11px] font-bold',
-              CHIP[c.categoryTone],
+              TONE_SOFT[c.categoryTone],
             )}
           >
             {c.category}
@@ -68,7 +56,7 @@ export function TsCaseCard({
           <span
             className={cn(
               'rounded px-2 py-0.5 text-[11px] font-bold',
-              CHIP[STATUS[c.status]],
+              TONE_SOFT[STATUS[c.status]],
             )}
           >
             {c.statusLabel}

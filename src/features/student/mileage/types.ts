@@ -1,13 +1,8 @@
 // 수강생 마일리지 도메인 계약 — 기능 로컬(공유 파일 미오염). Figma 418:1850 외.
 // 내 마일리지 · 상품 신청 · 구매 요청 상태 · 사용 내역.
 
-export type Tone =
-  | 'brand'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'success'
+import type { Tone } from '@/shared/lib/tone'
+export type { Tone }
 
 export interface Badge {
   label: string

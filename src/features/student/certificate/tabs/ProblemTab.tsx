@@ -1,34 +1,11 @@
 import { cn } from '@/shared/lib/cn'
-import type { CertProblemTab, Tone } from '../types'
+import type { CertProblemTab } from '../types'
 import { TabHead } from './TechTab'
+import { TONE_SOFT, TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 
 // 증명서 탭4 문제해결·협업 — KPI·대표 트러블슈팅·문제 분포·PeerTag 클라우드·태그 연결.
 const card =
   'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
-const SOLID: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
-const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
-const DELTA: Record<Tone, string> = {
-  brand: 'text-brand',
-  info: 'text-info',
-  warning: 'text-warning',
-  danger: 'text-danger',
-  accent: 'text-accent-strong',
-  success: 'text-success',
-}
 
 export function ProblemTab({ p }: { p: CertProblemTab }) {
   return (
@@ -70,7 +47,7 @@ export function ProblemTab({ p }: { p: CertProblemTab }) {
               <span
                 className={cn(
                   'text-[11px] font-semibold',
-                  DELTA[k.deltaTone ?? 'brand'],
+                  TONE_TEXT[k.deltaTone ?? 'brand'],
                 )}
               >
                 {k.delta}
@@ -99,7 +76,7 @@ export function ProblemTab({ p }: { p: CertProblemTab }) {
                 <span
                   className={cn(
                     'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                    CHIP[c.badgeTone],
+                    TONE_SOFT[c.badgeTone],
                   )}
                 >
                   {c.badge}
@@ -132,14 +109,16 @@ export function ProblemTab({ p }: { p: CertProblemTab }) {
             <div key={d.label} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-[12px]">
                 <span className="text-fg flex items-center gap-1.5 font-medium">
-                  <span className={cn('size-2 rounded-full', SOLID[d.tone])} />
+                  <span
+                    className={cn('size-2 rounded-full', TONE_SOLID[d.tone])}
+                  />
                   {d.label}
                 </span>
                 <span className="text-fg-muted font-semibold">{d.count}</span>
               </div>
               <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
                 <div
-                  className={cn('h-full rounded-full', SOLID[d.tone])}
+                  className={cn('h-full rounded-full', TONE_SOLID[d.tone])}
                   style={{ width: `${d.pct}%` }}
                 />
               </div>
@@ -162,7 +141,7 @@ export function ProblemTab({ p }: { p: CertProblemTab }) {
                 key={tg.tag}
                 className={cn(
                   'rounded-full px-3 py-1.5 text-[13px] font-bold',
-                  CHIP[tg.tone],
+                  TONE_SOFT[tg.tone],
                 )}
               >
                 {tg.tag}{' '}
@@ -184,7 +163,7 @@ export function ProblemTab({ p }: { p: CertProblemTab }) {
               <span
                 className={cn(
                   'h-fit shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold',
-                  CHIP[tc.tone],
+                  TONE_SOFT[tc.tone],
                 )}
               >
                 {tc.tag}

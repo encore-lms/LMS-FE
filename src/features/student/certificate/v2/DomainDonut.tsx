@@ -1,23 +1,8 @@
 import { cn } from '@/shared/lib/cn'
-import type { CertDomain, Tone } from '../types'
+import type { CertDomain } from '../types'
+import { TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 
 // 증명서 v2 — 도메인 경험 도넛(프로젝트/기록 기반 분포). 토큰 색만 사용(SVG stroke=currentColor).
-const STROKE: Record<Tone, string> = {
-  brand: 'text-brand',
-  info: 'text-info',
-  warning: 'text-warning',
-  danger: 'text-danger',
-  accent: 'text-accent-strong',
-  success: 'text-success',
-}
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 const card =
   'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 const R = 52
@@ -52,7 +37,7 @@ export function DomainDonut({
                   r={R}
                   fill="none"
                   stroke="currentColor"
-                  className={STROKE[d.tone]}
+                  className={TONE_TEXT[d.tone]}
                   strokeWidth="16"
                   strokeDasharray={`${len} ${C - len}`}
                   strokeDashoffset={-acc}
@@ -69,7 +54,9 @@ export function DomainDonut({
               key={d.label}
               className="border-divider flex items-center gap-2.5 border-b pb-3 text-[13px] last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0"
             >
-              <span className={cn('size-2.5 rounded-full', DOT[d.tone])} />
+              <span
+                className={cn('size-2.5 rounded-full', TONE_SOLID[d.tone])}
+              />
               <span className="text-fg flex-1 font-medium">{d.label}</span>
               <span className="text-fg font-bold">{d.pct}%</span>
             </div>

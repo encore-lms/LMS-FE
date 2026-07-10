@@ -21,33 +21,6 @@ export function toneOf(name: string): Tone {
 export const card =
   'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
 
-export const CHIP: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  info: 'bg-info-bg text-info',
-  warning: 'bg-warning-bg text-warning',
-  danger: 'bg-danger-bg text-danger',
-  accent: 'bg-accent-bg text-accent-strong',
-  success: 'bg-success-bg text-success',
-}
-
-export const SOLID: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
-
-export const TEXT: Record<Tone, string> = {
-  brand: 'text-brand',
-  info: 'text-info',
-  warning: 'text-warning',
-  danger: 'text-danger',
-  accent: 'text-accent-strong',
-  success: 'text-success',
-}
-
 export function parseMeetingMeta(meta: string): {
   date: string
   attendees?: number

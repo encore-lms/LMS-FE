@@ -9,13 +9,8 @@ export type CertTab =
   | 'growth-reputation'
   | 'ai-analysis' // v2 (CERT_V2): AI 분석 통합 탭
 
-export type Tone =
-  | 'brand'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'success'
+import type { Tone } from '@/shared/lib/tone'
+export type { Tone }
 
 /** 증명서 라이프사이클 상태 (draft→under_review→issued/changes_requested) */
 export type CertStatus =

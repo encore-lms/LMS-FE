@@ -2,13 +2,8 @@
 // NOTE(정책): 기수 게시판은 2026-05-21 폐기 결정됨. 본 기능은 FE 선반영(prototyping)으로,
 // DOCS/Figma/BE 정합 없이 트러블슈팅 패턴을 차용해 화면을 살린다. 정식화 시 재합의 필요.
 
-export type Tone =
-  | 'brand'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'accent'
-  | 'success'
+import type { Tone } from '@/shared/lib/tone'
+export type { Tone }
 
 // 질문 상태 — 답변 대기 / 답변 있음 / 해결됨(채택 완료)
 export type QnaStatus = 'open' | 'answered' | 'resolved'

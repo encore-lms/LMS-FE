@@ -28,7 +28,8 @@ import type {
   WsTask,
 } from '../../types'
 import { Avatar, Chip } from '../components/ws-shared'
-import { CHIP, SOLID, TEXT, card, phaseCertBadge } from '../components/ws-style'
+import { TONE_SOFT, TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
+import { card, phaseCertBadge } from '../components/ws-style'
 
 function kpiIcon(label: string): LucideIcon {
   if (label.includes('이슈')) return TriangleAlert
@@ -175,7 +176,7 @@ export function HomeTab({
               <div className="flex items-center justify-between">
                 <span className="text-fg-muted flex items-center gap-1.5 text-[12px] font-semibold">
                   <Icon
-                    className={cn('size-4', TEXT[s.tone])}
+                    className={cn('size-4', TONE_TEXT[s.tone])}
                     aria-hidden="true"
                   />
                   {s.label}
@@ -195,7 +196,7 @@ export function HomeTab({
               </span>
               <div className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
                 <div
-                  className={cn('h-full rounded-full', SOLID[s.tone])}
+                  className={cn('h-full rounded-full', TONE_SOLID[s.tone])}
                   style={{ width: `${fill}%` }}
                 />
               </div>
@@ -310,7 +311,7 @@ export function HomeTab({
                   <span
                     className={cn(
                       'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                      CHIP[tone],
+                      TONE_SOFT[tone],
                     )}
                   >
                     <Icon className="size-4" aria-hidden="true" />

@@ -6,20 +6,12 @@ import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/shared/store'
 import { useCreateQuestion } from '../../api/qna'
 import { MarkdownEditor } from './MarkdownEditor'
-import { QNA_CATEGORIES, type Tone } from '../types'
+import { QNA_CATEGORIES } from '../types'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 const card = 'border-border bg-surface rounded-2xl border p-6'
 const input =
   'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
-
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 
 // 새 질문 작성 폼 — 제목·카테고리·내용·태그. 트러블슈팅 CaseContentForm 패턴(축약).
 export function QuestionForm() {
@@ -115,7 +107,10 @@ export function QuestionForm() {
                     <Check className="size-3" />
                   ) : (
                     <span
-                      className={cn('size-1.5 rounded-full', DOT[c.tone])}
+                      className={cn(
+                        'size-1.5 rounded-full',
+                        TONE_SOLID[c.tone],
+                      )}
                     />
                   )}
                   {c.label}

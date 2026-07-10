@@ -1,15 +1,8 @@
 import { cn } from '@/shared/lib/cn'
-import type { RecordStat, Tone } from '../types'
+import type { RecordStat } from '../types'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 기록실 요약 통계 4종 — 전체 기록 / 승인 완료 / 검토 중 / 반려.
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 
 export function RecordStatCards({ stats }: { stats: RecordStat[] }) {
   // 첫 카드(전체 기록)를 100% 기준으로 각 카드의 비율 막대를 채운다.
@@ -27,7 +20,9 @@ export function RecordStatCards({ stats }: { stats: RecordStat[] }) {
               <span className="text-fg-muted text-[12px] font-medium">
                 {s.label}
               </span>
-              <span className={cn('size-2 rounded-full', DOT[s.dotTone])} />
+              <span
+                className={cn('size-2 rounded-full', TONE_SOLID[s.dotTone])}
+              />
             </div>
             <span className="text-fg text-[28px] leading-none font-bold">
               {s.value}
@@ -37,7 +32,10 @@ export function RecordStatCards({ stats }: { stats: RecordStat[] }) {
             </span>
             <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
               <span
-                className={cn('block h-full rounded-full', DOT[s.dotTone])}
+                className={cn(
+                  'block h-full rounded-full',
+                  TONE_SOLID[s.dotTone],
+                )}
                 style={{ width: `${fill * 100}%` }}
               />
             </div>

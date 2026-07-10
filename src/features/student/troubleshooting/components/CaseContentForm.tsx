@@ -26,6 +26,7 @@ import {
   type TsProjectLink,
   type Tone,
 } from '../types'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 트러블슈팅 사례 내용 편집 폼 — 상세 페이지의 '작성 중(draft·미완료)' 모드에서만 쓰인다.
 // 하단 바 = [임시 저장](→이어 작성, 계속 작성) · [작성 완료](→draft·완료로 저장 후 목록으로).
@@ -33,15 +34,6 @@ import {
 const card = 'border-border bg-surface rounded-2xl border p-6'
 const input =
   'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
-
-const DOT: Record<Tone, string> = {
-  brand: 'bg-brand',
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  accent: 'bg-accent-strong',
-  success: 'bg-success',
-}
 
 // 카테고리 표시명 → 목록 필터 키
 const CATEGORY_KEY: Record<string, string> = {
@@ -349,7 +341,10 @@ export function CaseContentForm({
                         <Check className="size-3" />
                       ) : (
                         <span
-                          className={cn('size-1.5 rounded-full', DOT[c.tone])}
+                          className={cn(
+                            'size-1.5 rounded-full',
+                            TONE_SOLID[c.tone],
+                          )}
                         />
                       )}
                       {c.key}

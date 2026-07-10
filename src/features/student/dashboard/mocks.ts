@@ -342,18 +342,8 @@ export const handlers = [
   http.get('/api/student/dashboard', () =>
     ok<StudentDashboardSummary>(mockDashboard),
   ),
-  // 헤더 알림 벨 — 대시보드 알림과 동일 데이터(경량 엔드포인트로 분리해 헤더가 전체 요약을 패치하지 않게).
-  http.get('/api/student/notifications', () =>
-    ok<DashboardNotification[]>(mockDashboard.notifications),
-  ),
-  // 전체 읽음 — 공유 mock 상태를 갱신해 이후 GET에도 읽음이 유지되게 한다(서버 read_at 영속을 흉내).
-  http.patch('/api/student/notifications/read', () => {
-    mockDashboard.notifications.forEach((notification) => {
-      notification.unread = false
-    })
-    return ok<DashboardNotification[]>(mockDashboard.notifications)
-  }),
   // 역할 무관 알림 벨(전 역할) — 벨은 /notifications 를 호출한다. 로컬에선 대시보드 알림과 동일 데이터.
+  // (구 /student/notifications 핸들러는 벨이 /notifications 로 이관되며 호출부가 사라져 제거됨.)
   http.get('/api/notifications', () =>
     ok<DashboardNotification[]>(mockDashboard.notifications),
   ),

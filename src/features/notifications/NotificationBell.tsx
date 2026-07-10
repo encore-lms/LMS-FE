@@ -5,7 +5,7 @@ import { useMarkNotificationsRead, useRoleNotifications } from './api'
 import { useLocalNotificationStore } from './localNotifications'
 
 // 헤더 알림 벨 — 전 역할 공통. 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기.
-// 서버 알림은 PATCH /student/notifications/read 로 영속 읽음 처리(수강생 전용),
+// 서버 알림은 PATCH /notifications/read 로 영속 읽음 처리(전 역할),
 // 멘션 등 FE 발생 알림(localNotifications)은 로컬 스토어에서 읽음 처리한다.
 export function NotificationBell() {
   const { role } = useAuth()

@@ -9,6 +9,8 @@ import {
   Plus,
   Search,
 } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -402,21 +404,12 @@ export function AssignmentCreateModal({
       size="lg"
       footer={
         <>
-          <button
-            type="button"
-            onClick={close}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-4 py-2 text-sm font-bold"
-          >
+          <Button variant="secondary" onClick={close}>
             취소
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={createFromStudents.isPending}
-            className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          </Button>
+          <Button onClick={submit} disabled={createFromStudents.isPending}>
             {createFromStudents.isPending ? '저장 중…' : '배정 저장'}
-          </button>
+          </Button>
         </>
       }
     >
@@ -517,7 +510,7 @@ export function AssignmentCreateModal({
               </span>
               <Link
                 to="/admin/mentoring/log-templates"
-                className="bg-brand-deep text-on-color hover:bg-brand-deep/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[12px] font-bold"
+                className={buttonClass({ size: 'sm' })}
               >
                 <Plus className="h-3.5 w-3.5" />
                 템플릿 관리

@@ -186,28 +186,27 @@ export default function TsReviewPage() {
         <div className="flex gap-1.5">
           {r.status === 'pending' ? (
             <>
-              <button
-                type="button"
+              <Button
+                size="sm"
                 disabled={certify.isPending}
                 onClick={(e) => {
                   e.stopPropagation()
                   onCertify(r)
                 }}
-                className="bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white disabled:opacity-60"
               >
                 인증
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={requestChanges.isPending}
                 onClick={(e) => {
                   e.stopPropagation()
                   setSupplementTarget(r)
                 }}
-                className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-60"
               >
                 보완 요청
-              </button>
+              </Button>
             </>
           ) : (
             <button

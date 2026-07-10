@@ -447,14 +447,13 @@ export default function LogTemplatesPage() {
                       타입(짧은/긴 텍스트)
                     </p>
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
                     onClick={() => setFieldModal({ mode: 'add' })}
-                    className="bg-brand-deep text-on-color hover:bg-brand-deep/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
                   >
                     <Plus className="h-3 w-3" />
                     항목 추가
-                  </button>
+                  </Button>
                 </div>
                 {selected.fields.length === 0 ? (
                   <Empty

@@ -189,16 +189,15 @@ export default function SubmissionsPage() {
         if (r.gradingState === 'manual_pending')
           return (
             <div className="flex gap-1.5">
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   navigate(`${base}/${quizId}/submissions/${r.id}/grade`)
                 }}
-                className="bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white"
               >
                 채점
-              </button>
+              </Button>
               <button
                 type="button"
                 onClick={(e) => {

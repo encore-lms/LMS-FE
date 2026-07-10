@@ -1,4 +1,5 @@
 import { Avatar } from '@/components/ui/Avatar'
+import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import type { OpsAccount, OpsAccountStatus, OpsRole } from '@/shared/types'
@@ -56,22 +57,10 @@ export function AccountDetailModal({
       title="사용자 정보"
       footer={
         <>
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-4 py-2 text-sm font-bold"
-          >
+          <Button variant="secondary" onClick={onClose}>
             닫기
-          </button>
-          {canEdit && (
-            <button
-              type="button"
-              onClick={onEdit}
-              className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold"
-            >
-              수정
-            </button>
-          )}
+          </Button>
+          {canEdit && <Button onClick={onEdit}>수정</Button>}
         </>
       }
     >

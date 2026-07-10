@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 
 // 평가·추천 최종 제출 확인 모달 — Figma 3150:1928 / 3150:2526 공통 문법.
@@ -40,22 +41,12 @@ export function ConfirmSubmitModal({
           </p>
         </div>
         <div className="flex justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={pending}
-            className="border-border text-fg-muted bg-surface hover:bg-surface-muted h-11 rounded-[10px] border px-7 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button variant="secondary" onClick={onClose} disabled={pending}>
             취소
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={pending}
-            className="bg-brand-deep text-on-color hover:bg-brand-deep/90 h-11 rounded-[10px] px-6 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          </Button>
+          <Button onClick={onConfirm} disabled={pending}>
             최종 제출
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

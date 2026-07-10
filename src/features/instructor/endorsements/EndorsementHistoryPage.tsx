@@ -143,13 +143,12 @@ export default function EndorsementHistoryPage() {
       className: 'w-32',
       cell: (e) => (
         <div className="flex items-center justify-end gap-1">
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={() => navigate(`/instructor/endorsements/${e.id}`)}
-            className="bg-brand-deep rounded-md px-3 py-1.5 text-xs font-medium text-white"
           >
             보기
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => navigate(`/instructor/endorsements/${e.id}`)}

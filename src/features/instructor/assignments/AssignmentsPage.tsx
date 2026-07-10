@@ -246,13 +246,12 @@ export default function AssignmentsPage() {
           <span className="text-fg-subtle text-xs">
             총 {data.total}개 · 마감일 가까운 순
           </span>
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={() => navigate('/instructor/assignments/new')}
-            className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3.5 text-xs font-bold text-white"
           >
             <Plus className="h-3.5 w-3.5" /> 과제 생성
-          </button>
+          </Button>
         </div>
       </div>
 

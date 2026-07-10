@@ -9,6 +9,7 @@ import {
   Minus,
   type LucideIcon,
 } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { cn } from '@/shared/lib/cn'
@@ -227,21 +228,12 @@ export function FieldFormModal({
       closeOnBackdrop={false}
       footer={
         <>
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-4 py-2 text-sm font-bold"
-          >
+          <Button variant="secondary" onClick={onClose}>
             취소
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!name.trim() || pending}
-            className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          </Button>
+          <Button onClick={submit} disabled={!name.trim() || pending}>
             {pending ? '저장 중…' : initial ? '항목 저장' : '항목 추가'}
-          </button>
+          </Button>
         </>
       }
     >

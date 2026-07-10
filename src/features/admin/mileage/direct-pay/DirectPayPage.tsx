@@ -341,15 +341,14 @@ export default function DirectPayPage() {
               </div>
             </div>
 
-            <button
-              type="button"
+            <Button
               disabled={!canSubmit}
               onClick={openConfirm}
-              className="bg-brand-deep hover:bg-brand-deep/90 text-on-color mt-4 h-11 w-full rounded-lg text-[14px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-4 w-full"
             >
               {word} 실행 — {kind === 'grant' ? '+' : '-'}
               {total.toLocaleString()}M / {selectedCount}명
-            </button>
+            </Button>
           </div>
 
           {/* 한도 규칙 §18 */}

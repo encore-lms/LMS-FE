@@ -294,13 +294,9 @@ export default function CourseAddPage() {
             >
               <RotateCcw className="h-3.5 w-3.5" /> 검색 조건 초기화
             </button>
-            <button
-              type="button"
-              onClick={onSearch}
-              className="bg-brand-deep text-on-color flex h-10 items-center gap-1.5 rounded-lg px-4 text-xs font-bold"
-            >
+            <Button onClick={onSearch}>
               <Search className="h-3.5 w-3.5" /> 조회
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -400,14 +396,13 @@ export default function CourseAddPage() {
                         시스템 등록 제거
                       </button>
                     ) : (
-                      <button
-                        type="button"
+                      <Button
+                        size="sm"
                         onClick={() => openRegister(c)}
                         disabled={registerCourse.isPending}
-                        className="bg-brand-deep text-on-color flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold disabled:opacity-50"
                       >
                         <PlusCircle className="h-3 w-3" /> 시스템 등록
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>

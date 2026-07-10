@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -14,9 +15,6 @@ import type { MentorAssignmentRow, MentorAssignmentsData } from './types'
 const FIELD_LABEL = 'text-fg-muted text-xs font-bold'
 const INPUT_CLASS =
   'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none'
-const SECTION_BTN =
-  'bg-brand-deep text-on-color hover:bg-brand-deep/90 shrink-0 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50'
-
 interface AssignmentManageModalProps {
   open: boolean
   onClose: () => void
@@ -149,13 +147,9 @@ export function AssignmentManageModal({
       title={`배정 수정 — ${row.teamName}`}
       closeOnBackdrop={false}
       footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-4 py-2 text-sm font-bold"
-        >
+        <Button variant="secondary" onClick={onClose}>
           닫기
-        </button>
+        </Button>
       }
     >
       <div className="flex flex-col gap-5">
@@ -175,16 +169,15 @@ export function AssignmentManageModal({
               placeholder="팀명"
               className={INPUT_CLASS}
             />
-            <button
-              type="button"
+            <Button
               onClick={saveTeamName}
               disabled={
                 renameTeam.isPending || teamName.trim() === row.teamName
               }
-              className={SECTION_BTN}
+              className="shrink-0"
             >
               저장
-            </button>
+            </Button>
           </div>
         </section>
 
@@ -202,14 +195,13 @@ export function AssignmentManageModal({
               onChange={(e) => setHoursInput(e.target.value)}
               className={INPUT_CLASS}
             />
-            <button
-              type="button"
+            <Button
               onClick={saveHours}
               disabled={updateHours.isPending}
-              className={SECTION_BTN}
+              className="shrink-0"
             >
               저장
-            </button>
+            </Button>
           </div>
           <p className="text-fg-subtle text-xs">
             감소 — 기존 인정 시간 유지(새 기준 충족 시 즉시 완료) · 증가 — 최신
@@ -230,16 +222,15 @@ export function AssignmentManageModal({
               }))}
               className="h-10 w-full"
             />
-            <button
-              type="button"
+            <Button
               onClick={saveMentor}
               disabled={
                 changeMentor.isPending || mentorId === row.mentor?.mentorId
               }
-              className={SECTION_BTN}
+              className="shrink-0"
             >
               교체
-            </button>
+            </Button>
           </div>
           <p className="text-fg-subtle text-xs">
             일지 작성 전에만 기존 배정을 수정할 수 있어요.

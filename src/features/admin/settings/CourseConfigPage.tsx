@@ -549,14 +549,13 @@ export default function CourseConfigPage() {
                       aria-label="자료 링크"
                       className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 min-w-[200px] flex-1 rounded-lg border px-3 text-sm outline-none"
                     />
-                    <button
-                      type="button"
+                    <Button
+                      size="sm"
                       onClick={onAddMaterial}
                       disabled={createMaterial.isPending || !materialCohortId}
-                      className="bg-brand-deep text-on-color flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-bold disabled:opacity-50"
                     >
                       <Plus className="h-3.5 w-3.5" /> 추가
-                    </button>
+                    </Button>
                   </div>
                   {/* 자료 목록 */}
                   <div>

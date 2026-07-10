@@ -10,6 +10,8 @@ import {
   Pencil,
   Timer,
 } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { Modal } from '@/components/ui/Modal'
 import { Avatar } from '@/components/ui/Avatar'
 import { Empty } from '@/components/ui/Empty'
@@ -113,17 +115,18 @@ export default function LogDetailModal() {
               인정 시간 반영
             </span>
           </span>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={close}
-            className="border-border text-fg-muted hover:bg-surface-muted self-center rounded-lg border px-4 py-2 text-[13px] font-medium"
+            className="self-center"
           >
             닫기
-          </button>
+          </Button>
           {editAction && (
             <Link
               to={editAction.to}
-              className="bg-brand-deep text-on-color hover:bg-brand-deep/90 flex items-center gap-1.5 self-center rounded-lg px-4 py-2 text-[13px] font-bold"
+              className={buttonClass({ size: 'sm', className: 'self-center' })}
             >
               <Pencil className="h-3.5 w-3.5" />
               {editAction.label}

@@ -100,13 +100,12 @@ export default function StudentDetailPage() {
           >
             <ArrowLeft className="h-3.5 w-3.5" /> 수강생 목록
           </button>
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={() => toast.info('증명서 미리보기는 준비 중입니다.')}
-            className="bg-brand-deep flex items-center gap-1 rounded-lg px-3.5 py-2 text-xs font-bold text-white"
           >
             증명서 미리보기 <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -245,15 +244,15 @@ export default function StudentDetailPage() {
               className="border-border focus:border-brand text-fg mt-3 w-full rounded-lg border bg-white p-3 text-sm outline-none"
             />
             <div className="mt-2 flex justify-end gap-2">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setComment(data.reviewComment)}
-                className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-xs font-medium"
               >
                 취소
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
                 disabled={saveComment.isPending}
                 onClick={() =>
                   saveComment.mutate(comment, {
@@ -262,10 +261,9 @@ export default function StudentDetailPage() {
                     onError: () => toast.danger('저장에 실패했어요'),
                   })
                 }
-                className="bg-brand-deep rounded-lg px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60"
               >
                 저장
-              </button>
+              </Button>
             </div>
           </div>
 

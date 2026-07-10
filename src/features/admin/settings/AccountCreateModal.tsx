@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Info } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import type { OpsRole } from '@/shared/types'
@@ -61,21 +62,12 @@ export function AccountCreateModal({
       closeOnBackdrop={false}
       footer={
         <>
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-4 py-2 text-sm font-bold"
-          >
+          <Button variant="secondary" onClick={onClose}>
             취소
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!canSubmit}
-            className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          </Button>
+          <Button onClick={submit} disabled={!canSubmit}>
             계정 추가
-          </button>
+          </Button>
         </>
       }
     >
@@ -128,7 +120,6 @@ export function AccountCreateModal({
             value={role}
             onChange={(v) => setRole(v as OpsRole)}
             options={ROLE_OPTIONS}
-           
           />
         </div>
 

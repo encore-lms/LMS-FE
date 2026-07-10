@@ -340,13 +340,9 @@ export default function PlayCodingPage() {
                   <span className="text-fg font-semibold">{r.value}</span>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={finish}
-                className="bg-brand-deep mt-1 rounded-lg py-2.5 text-[12px] font-bold text-white"
-              >
+              <Button size="sm" onClick={finish} className="mt-1">
                 테스트 종료 · 결과 보기
-              </button>
+              </Button>
               <button
                 type="button"
                 onClick={() => setLeaveTo('/student/play')}

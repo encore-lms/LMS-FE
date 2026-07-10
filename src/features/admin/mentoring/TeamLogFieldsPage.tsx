@@ -15,6 +15,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -139,10 +140,7 @@ export default function TeamLogFieldsPage() {
           title="팀을 찾을 수 없어요"
           description="멘토 배정 관리에서 팀을 선택해 다시 진입해 주세요."
           action={
-            <Link
-              to="/admin/mentors/assignments"
-              className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold"
-            >
+            <Link to="/admin/mentors/assignments" className={buttonClass()}>
               멘토 배정 관리로
             </Link>
           }
@@ -158,10 +156,7 @@ export default function TeamLogFieldsPage() {
           title="멘토 배정 전 팀이에요"
           description="멘토 배정(N시간·기본 템플릿) 후 팀별 일지 항목을 설정할 수 있어요."
           action={
-            <Link
-              to="/admin/mentors/assignments"
-              className="bg-brand-deep text-on-color hover:bg-brand-deep/90 rounded-lg px-4 py-2 text-sm font-bold"
-            >
+            <Link to="/admin/mentors/assignments" className={buttonClass()}>
               멘토 배정 관리로
             </Link>
           }
@@ -485,14 +480,10 @@ export default function TeamLogFieldsPage() {
               항목 추가·비활성화 가능
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setFieldModal({ mode: 'add' })}
-            className="bg-brand-deep text-on-color hover:bg-brand-deep/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
-          >
+          <Button size="sm" onClick={() => setFieldModal({ mode: 'add' })}>
             <Plus className="h-3 w-3" />
             항목 추가
-          </button>
+          </Button>
         </div>
         <DataTable
           columns={columns}

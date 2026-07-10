@@ -143,27 +143,26 @@ export default function TemplateListPage() {
         const inUse = t.useCount > 0
         return (
           <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
+            <Button
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation()
                 toast.success(`${t.name} → 새 퀴즈로 복제`)
                 navigate('/instructor/quizzes/new')
               }}
-              className="bg-brand-deep rounded-md px-2.5 py-1 text-xs font-bold text-white"
             >
               새 퀴즈로 복제
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation()
                 navigate(`/instructor/quiz-templates/${t.id}/edit`)
               }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
             >
               편집
-            </button>
+            </Button>
             <button
               type="button"
               disabled={inUse}
@@ -241,13 +240,12 @@ export default function TemplateListPage() {
           <span className="text-fg-subtle text-xs">
             총 {data.total}개 템플릿 · 누적 사용 {data.totalUseCount}회
           </span>
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={() => navigate('/instructor/quiz-templates/new')}
-            className="bg-brand-deep flex h-9 items-center gap-1 rounded-lg px-3.5 text-xs font-bold text-white"
           >
             <Plus className="h-3.5 w-3.5" /> 템플릿 생성
-          </button>
+          </Button>
         </div>
       </div>
 

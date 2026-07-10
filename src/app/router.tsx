@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react'
 import { createBrowserRouter, type RouteObject } from 'react-router-dom'
 import { AppShellWithMenu } from './AppShellWithMenu'
 import { RouteErrorBoundary } from './RouteErrorBoundary'
@@ -6,13 +5,6 @@ import { AuthGuard } from '@/features/auth/AuthGuard'
 import { RequireRole } from '@/features/auth/RequireRole'
 import { RoleEntry } from '@/features/auth/RoleEntry'
 import { LoginPage } from '@/features/auth/LoginPage'
-
-// 개발용 스타일가이드 — DEV에서만 라우트 등록 + lazy(메인 번들 제외).
-const StyleGuidePage = lazy(() =>
-  import('@/features/styleguide/StyleGuidePage').then((m) => ({
-    default: m.StyleGuidePage,
-  })),
-)
 import {
   studentRoutes,
   studentFullscreenRoutes,
@@ -35,16 +27,16 @@ function guarded(allow: Role[], routes: RouteObject[]): RouteObject {
 // 이 파일은 새 shell 추가/제거·가드 매핑 변경 때만 손댄다(평소 도메인 작업에서 건드리지 않음).
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  // 스타일가이드는 로컬 dev 전용 — 배포 라우터에는 등록하지 않는다.
+  // 스타일가이드는 로컬 dev 전용 — 배포 라우터에는 등록하지 않고, import()도 dead branch라
+  // 프로덕션 빌드에서는 청크 자체가 emit되지 않는다(route-level lazy).
   ...(import.meta.env.DEV
     ? [
         {
           path: '/_styleguide',
-          element: (
-            <Suspense fallback={null}>
-              <StyleGuidePage />
-            </Suspense>
-          ),
+          lazy: async () => {
+            const m = await import('@/features/styleguide/StyleGuidePage')
+            return { Component: m.StyleGuidePage }
+          },
         },
       ]
     : []),

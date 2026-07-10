@@ -8,7 +8,6 @@ import {
   useLogFieldSnapshot,
   useMentoringLogDetail,
   useMentoringLogTargets,
-  useSaveLogDraft,
   useSubmitMentoringLog,
 } from '../api/logs'
 import {
@@ -21,8 +20,6 @@ import { usePageHeaderStore } from '@/shared/store'
 
 vi.mock('../api/logs')
 
-const draftMutateAsync = vi.fn()
-const draftMutate = vi.fn()
 const submitMutateAsync = vi.fn()
 
 function mockDetail(v: unknown) {
@@ -56,7 +53,6 @@ function renderPage(entry = '/mentor/mentoring-logs/new') {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  draftMutateAsync.mockResolvedValue({ logId: 'log_draft_t1' })
   vi.mocked(useMentoringLogTargets).mockReturnValue({
     data: buildMentoringLogTargets(),
     isPending: false,
@@ -69,11 +65,6 @@ beforeEach(() => {
     isError: false,
   } as unknown as ReturnType<typeof useLogFieldSnapshot>)
   mockDetail({ isPending: false, isError: false, data: undefined })
-  vi.mocked(useSaveLogDraft).mockReturnValue({
-    mutate: draftMutate,
-    mutateAsync: draftMutateAsync,
-    isPending: false,
-  } as unknown as ReturnType<typeof useSaveLogDraft>)
   vi.mocked(useSubmitMentoringLog).mockReturnValue({
     mutateAsync: submitMutateAsync,
     isPending: false,
@@ -122,7 +113,6 @@ describe('LogComposePage', () => {
       screen.getByText('필수 항목이에요 — 주요 아젠다을(를) 작성해주세요'),
     ).toBeInTheDocument()
     expect(submitMutateAsync).not.toHaveBeenCalled()
-    expect(draftMutateAsync).not.toHaveBeenCalled()
   })
 
   it('작성 완료 제출 — 초안 생성 후 submit, 목록(?toast=submitted)으로 복귀한다', async () => {
@@ -163,7 +153,6 @@ describe('LogComposePage', () => {
 
     await waitFor(() => expect(submitMutateAsync).toHaveBeenCalled())
     // 신규 작성 — 제출=생성(초안 선저장 없음, logId 없이 바로 create). 승인 단계 도입.
-    expect(draftMutateAsync).not.toHaveBeenCalled()
     expect(submitMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: 'submit',
@@ -186,7 +175,6 @@ describe('LogComposePage', () => {
     expect(
       screen.queryByRole('button', { name: '임시 저장' }),
     ).not.toBeInTheDocument()
-    expect(draftMutate).not.toHaveBeenCalled()
   })
 
   it('수정 요청 재제출 — 사유 배너 + 일지 재제출(임시 저장 없음)', async () => {
@@ -220,7 +208,6 @@ describe('LogComposePage', () => {
         expect.objectContaining({ logId: 'log_ts_3', mode: 'resubmit' }),
       ),
     )
-    expect(draftMutateAsync).not.toHaveBeenCalled()
     expect(
       await screen.findByText('일지가 재제출되었습니다'),
     ).toBeInTheDocument()

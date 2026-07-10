@@ -43,9 +43,6 @@ export const PLACE_TYPE_ICON: Record<MentoringPlaceType, LucideIcon> = {
 export const LOG_SUBMITTED_TOAST =
   '멘토링 일지가 제출되었습니다. 매니저 승인 후 인정 시간에 반영됩니다.'
 
-export const LOG_DRAFT_SAVED_TOAST =
-  '임시 저장했어요. 작성 중 일지는 인정 시간에 반영되지 않습니다.'
-
 // 액션바 정책 캡션 — 승인 단계 도입 반영.
 export const LOG_SUBMIT_POLICY_CAPTION =
   '제출 시 승인 대기 · 매니저 승인 후 인정 · 수정 요청 시 전체 수정 후 재제출'

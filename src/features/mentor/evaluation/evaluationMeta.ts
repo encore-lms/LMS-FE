@@ -108,5 +108,3 @@ export const EVALUATION_CONFIRM_BODY =
   '팀원 전체 5축 점수와 줄글 평가 코멘트를 최종 제출합니다. 제출 후 수정할 수 없습니다. 평가 완료 후 별도 추천 선택 단계로 이동합니다.'
 export const EVALUATION_SUBMITTED_TOAST =
   '평가가 제출되었습니다. 팀원별 평가 이력에 반영됩니다.'
-export const EVALUATION_DRAFT_SAVED_TOAST =
-  '평가 초안을 임시 저장했어요. 제출 전까지 자유롭게 수정할 수 있습니다.'

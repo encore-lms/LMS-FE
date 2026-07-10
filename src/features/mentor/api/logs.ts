@@ -59,34 +59,6 @@ export function useLogFieldSnapshot(teamId: string) {
   })
 }
 
-export interface SaveLogDraftVariables {
-  /** 기존 초안 갱신이면 logId — 없으면 신규 초안 생성 */
-  logId?: string
-  payload: MentoringLogDraftPayload
-}
-
-/**
- * 초안 저장 — PUT /mentor/v1/mentoring-logs/draft(신규) · /{logId}/draft(갱신).
- * 초안은 자유 수정·인정 시간 미반영(DRAFT) — 부분 입력 그대로 저장한다.
- */
-export function useSaveLogDraft() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ logId, payload }: SaveLogDraftVariables) =>
-      apiClient
-        .put<MentoringLogDetailData>(
-          logId
-            ? `/mentor/v1/mentoring-logs/${logId}/draft`
-            : '/mentor/v1/mentoring-logs/draft',
-          payload,
-        )
-        .then((r) => r.data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mentorKeys.all })
-    },
-  })
-}
-
 export interface SubmitLogVariables {
   /** 재제출일 때만 필요(수정 요청 일지 id). 제출(신규)은 생성이므로 불필요. */
   logId?: string

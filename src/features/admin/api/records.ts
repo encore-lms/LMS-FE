@@ -6,24 +6,8 @@ import type {
   RecordGrid,
   AdminCertItem,
   RecordReviewActionRequest,
-  RecordReviewQueue,
 } from '@/shared/types'
 import type { RecordSubmissionDetailView } from '../records/detailMeta'
-
-// 학습 기록 검토 큐 — /admin/records/review. MANAGER 단독 1차 검토.
-// baseURL이 /api라 경로 앞에 안 붙임.
-export function useRecordReviewQueue(filter?: {
-  category?: string
-  status?: string
-}) {
-  return useQuery({
-    queryKey: adminKeys.recordReviewQueue(filter),
-    queryFn: () =>
-      apiClient
-        .get<RecordReviewQueue>('/admin/records/review', filter)
-        .then((r) => r.data),
-  })
-}
 
 // 검토 상세 — GET /admin/records/review/{recordId} (P0_15_24 API명세: 유형별 분리 endpoint 없음,
 // 단일 엔드포인트가 유형별 상세+검토 이력 반환). :submissionId = Record.id(큐 RecordReviewItem.id와 동일 키).

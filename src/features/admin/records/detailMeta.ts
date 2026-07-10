@@ -13,19 +13,6 @@ export const RECORD_SEGMENT_BY_CATEGORY: Record<
   certificate: 'certificates',
 }
 
-/** 미지원 세그먼트는 null — 페이지에서 Empty 가드 */
-export function recordCategoryFromSegment(
-  segment: string,
-): RecordCategory | null {
-  const entry = (
-    Object.entries(RECORD_SEGMENT_BY_CATEGORY) as [
-      RecordCategory,
-      RecordCategorySegment,
-    ][]
-  ).find(([, seg]) => seg === segment)
-  return entry ? entry[0] : null
-}
-
 // 페이지 로컬 보강 타입 — KPI '제출 상태' 캡션('5주차 블로그'·'이미지 2장')은
 // shared 계약(RecordSubmissionBase)에 없는 표시 전용 필드.
 // shared/types는 페어 동기화 규칙으로 이번 PR에서 수정하지 않고 로컬로 우회

@@ -38,6 +38,9 @@ jobs:
         run: pnpm build
         env:
           VITE_ENABLE_MOCK: 'true'
+          # 데모 빠른 로그인 — dev 배포는 데모/QA 환경이라 유지. 실배포 빌드에서는 이 플래그를
+          # 넣지 않으면 데모 계정 목록(비밀번호 포함)이 상수 폴딩으로 번들에서 제거된다.
+          VITE_ENABLE_DEMO_LOGIN: 'true'
           VITE_REAL_AUTH: ${{ secrets.VITE_REAL_AUTH }}
           # BE HTTPS 엔드포인트(API용 CloudFront → ALB). 공개 URL이라 시크릿 불필요.
           # 실 auth(VITE_REAL_AUTH=true) 호출이 이 도메인으로 감(cross-origin → BE CORS 필요).

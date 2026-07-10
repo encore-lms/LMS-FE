@@ -13,7 +13,7 @@ import type { User } from '@/shared/types'
 import { PROFILE_PATH } from '@/features/profile/paths'
 import { AuthLayout } from './AuthLayout'
 import { DemoQuickLogin } from './DemoQuickLogin'
-import type { DemoAccount } from './demoAccounts'
+import { DEMO_LOGIN_ENABLED, type DemoAccount } from './demoAccounts'
 import { loginSchema, type LoginInput } from './login.schema'
 
 interface LoginResponse {
@@ -87,7 +87,11 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout brandSlot={<DemoQuickLogin onPick={quickLogin} />}>
+    <AuthLayout
+      brandSlot={
+        DEMO_LOGIN_ENABLED ? <DemoQuickLogin onPick={quickLogin} /> : undefined
+      }
+    >
       <form
         noValidate
         onSubmit={handleSubmit(onSubmit)}
@@ -167,7 +171,12 @@ export function LoginPage() {
           </p>
         )}
 
-        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? '로그인 중…' : '로그인'}
           <ArrowRight className="h-4 w-4" />
         </Button>

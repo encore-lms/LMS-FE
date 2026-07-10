@@ -17,7 +17,7 @@ export function SkillsStep({
       <StepHead
         no="02"
         title="관심 스킬을 선택해주세요"
-        sub="앞으로 집중하고 싶은 기술을 선택해주세요. 선택한 스킬은 역량 리포트와 추천 학습 자료에 활용됩니다."
+        sub="앞으로 집중하고 싶은 기술을 선택해주세요. 선택한 스킬은 역량 증명서와 추천 학습 자료에 활용됩니다."
       />
 
       <div className="flex flex-col gap-3">

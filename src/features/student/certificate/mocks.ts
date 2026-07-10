@@ -303,7 +303,7 @@ const mockOverview: CertificateOverview = {
       {
         id: 'c1',
         label: '점수 재산정 반영',
-        sub: '재응시 점수가 역량 리포트에 반영됨',
+        sub: '재응시 점수가 역량 증명서에 반영됨',
         done: true,
       },
       {
@@ -827,8 +827,8 @@ const mockChanges: CertChangesData = {
       ],
       title: 'JPA 영속성 컨텍스트 퀴즈를 재응시해 주세요',
       detail:
-        '해당 퀴즈 결과가 동료 평균보다 낮게 산출되어 역량 리포트가 갱신되지 않았습니다. 재응시 후 점수가 반영되면 재요청해 주세요.',
-      actionLabel: '역량 리포트 이동',
+        '해당 퀴즈 결과가 동료 평균보다 낮게 산출되어 역량 증명서가 갱신되지 않았습니다. 재응시 후 점수가 반영되면 재요청해 주세요.',
+      actionLabel: '역량 증명서 이동',
     },
   ],
   relatedAreas: [
@@ -891,9 +891,9 @@ const mockChanges: CertChangesData = {
     {
       id: 'c3',
       label: 'JPA 영속성 컨텍스트 퀴즈 재응시 완료',
-      sub: '역량 리포트의 해당 카테고리에서 재응시 가능',
+      sub: '역량 증명서의 해당 카테고리에서 재응시 가능',
       done: false,
-      actionLabel: '역량 리포트 이동',
+      actionLabel: '역량 증명서 이동',
     },
   ],
   checkDoneLabel: '0 / 3',

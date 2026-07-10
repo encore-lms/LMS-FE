@@ -147,7 +147,7 @@ export default function QuizResultPage() {
               카테고리별 점수
             </h2>
             <p className="text-fg-muted text-[12px]">
-              문항별 카테고리는 역량 리포트의 세부 지표와 연결됩니다
+              문항별 카테고리는 역량 증명서의 세부 지표와 연결됩니다
             </p>
           </div>
           {stat.categories.map((c) => (

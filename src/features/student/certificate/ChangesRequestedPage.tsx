@@ -36,7 +36,7 @@ function areaRoute(label: string): string {
   if (label.includes('기록')) return '/student/records'
   if (label.includes('프로젝트')) return '/student/projects'
   if (label.includes('퀴즈')) return '/student/quizzes'
-  return '/student/certificate' // 점수·역량 리포트 등은 증명서로
+  return '/student/certificate' // 점수·역량 증명서 등은 증명서로
 }
 
 export default function ChangesRequestedPage() {

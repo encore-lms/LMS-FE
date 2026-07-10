@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { formatDateTime } from '@/shared/lib/date'
 import type { ProjectStatus } from '../types'
 
 // 프로젝트 생애주기 시뮬레이션 — 백엔드 없이 프론트에서 완료 확정·인증 흐름을 걸어볼 수 있게.
@@ -46,13 +47,10 @@ export function isEditWindowExpired(er?: EditRequestState) {
   )
 }
 
-// editAllowedUntil(ISO) → 'YYYY-MM-DD HH:mm' (표시용).
+// editAllowedUntil(ISO) → 'YYYY-MM-DD HH:mm' (표시용). 파싱 실패 시 원문 그대로(기존 동작 유지).
 export function formatEditUntil(iso?: string) {
   if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+  return formatDateTime(iso) || iso
 }
 
 // 목록의 정적 상태(draft/reviewing/certified) → 시작 단계.

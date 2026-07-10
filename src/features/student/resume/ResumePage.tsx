@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { formatDateDot } from '@/shared/lib/date'
 import { usePageHeader } from '@/shared/store'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
@@ -29,13 +30,9 @@ import type { ResumeSummary } from './types'
 const STATUS_FILTERS = ['전체', '작성 중', '작성 완료'] as const
 type StatusFilter = (typeof STATUS_FILTERS)[number]
 
-// ISO 날짜 → 'YYYY.MM.DD' 표시용.
+// ISO 날짜 → 'YYYY.MM.DD' 표시용. 파싱 실패 시 원문 그대로(기존 동작 유지).
 function formatDate(iso: string) {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}.${mm}.${dd}`
+  return formatDateDot(iso) || iso
 }
 
 /** KPI 타일 — 아이콘 + 값 + 라벨. */

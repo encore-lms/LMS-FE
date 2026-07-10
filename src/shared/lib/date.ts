@@ -38,3 +38,8 @@ export function formatDateTime(value?: string | number | Date | null): string {
   const d = toDate(value)
   return d ? dateTimeFmt.format(d).replace(',', '') : ''
 }
+
+/** ISO/타임스탬프 → 'YYYY.MM.DD' (KST) — 화면 표시용 점 포맷(BE Formats.dateDot와 동일 관례). */
+export function formatDateDot(value?: string | number | Date | null): string {
+  return formatDate(value).replaceAll('-', '.')
+}

@@ -7,6 +7,7 @@ import {
   Users,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { formatDateDot } from '@/shared/lib/date'
 import { Empty } from '@/components/ui/Empty'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -49,10 +50,6 @@ const COHORT_COLORS = [
 
 function cohortColor(index: number) {
   return COHORT_COLORS[index % COHORT_COLORS.length]
-}
-
-function fmtDate(d: string) {
-  return d.replaceAll('-', '.')
 }
 
 export default function AdminDashboard() {
@@ -230,7 +227,7 @@ function AllCohortsView({
               {b.cohortLabel}
             </span>
             <span className="text-fg-subtle block text-[12px]">
-              {fmtDate(b.startDate)}–{fmtDate(b.endDate)}
+              {formatDateDot(b.startDate)}–{formatDateDot(b.endDate)}
               {b.source === 'hrd-live' && (
                 <span className="text-info ml-1.5 font-semibold">
                   HRD 라이브
@@ -404,7 +401,7 @@ function AllCohortsView({
                     type="button"
                     onClick={() => toggleCohort(b.cohortId)}
                     aria-expanded={open}
-                    className="border-divider hover:bg-surface-muted/40 -mx-2 flex w-full items-center justify-between rounded-md border-b px-2 pb-2 pt-1"
+                    className="border-divider hover:bg-surface-muted/40 -mx-2 flex w-full items-center justify-between rounded-md border-b px-2 pt-1 pb-2"
                   >
                     <span className="flex items-center gap-2">
                       <ChevronRight
@@ -476,7 +473,7 @@ function CohortDeepDive({
           <StatusBadge label="인입 데이터" tone="neutral" />
         )}
         <p className="text-fg-subtle text-[12px]">
-          {fmtDate(board.startDate)} – {fmtDate(board.endDate)}
+          {formatDateDot(board.startDate)} – {formatDateDot(board.endDate)}
         </p>
       </div>
 
@@ -854,7 +851,12 @@ function RiskList({
   issues,
   onStudentClick,
 }: {
-  issues: { studentUuid: string; name: string; lateCount: number; absentCount: number }[]
+  issues: {
+    studentUuid: string
+    name: string
+    lateCount: number
+    absentCount: number
+  }[]
   onStudentClick?: (name: string) => void
 }) {
   const [page, setPage] = useState(0)

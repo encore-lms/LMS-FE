@@ -6,6 +6,7 @@ import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { Tabs } from '@/components/ui/Tabs'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { CertReviewStatus } from '@/shared/types'
@@ -142,23 +143,14 @@ export default function ReviewDetailPage() {
           title="증명서 미리보기"
           desc="수강생이 보는 증명서 5탭과 동일한 콘텐츠 · 공개 payload 미리보기"
         >
-          <div className="border-divider -mt-2 mb-4 flex gap-1 border-b">
-            {TABS.map((t, i) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTab(i)}
-                className={cn(
-                  'px-3 py-2 text-sm font-medium',
-                  tab === i
-                    ? 'text-brand border-brand border-b-2'
-                    : 'text-fg-muted hover:text-fg',
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            variant="underline"
+            aria-label="증명서 미리보기 탭"
+            className="-mt-2 mb-4"
+            items={TABS.map((t, i) => ({ value: String(i), label: t }))}
+            value={String(tab)}
+            onChange={(v) => setTab(Number(v))}
+          />
 
           {tab !== 0 ? (
             <p className="text-fg-subtle py-8 text-center text-sm">

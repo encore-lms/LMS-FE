@@ -84,7 +84,7 @@ describe('ReviewDetailPage', () => {
     mockHook({ data: detail, isPending: false, isError: false })
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: '프로젝트' }))
+    await user.click(screen.getByRole('tab', { name: '프로젝트' }))
     expect(screen.getByText(/준비 중/)).toBeInTheDocument()
   })
 

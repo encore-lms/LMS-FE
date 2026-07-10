@@ -1,5 +1,5 @@
 import { cn } from '@/shared/lib/cn'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import type { StudentQuizListItem } from '../types'
 import { CATEGORY_BADGE, GRADING_LABEL } from './quizDisplay'
 

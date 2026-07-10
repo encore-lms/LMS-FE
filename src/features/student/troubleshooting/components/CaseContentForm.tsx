@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { tsKeys } from '../queryKeys'

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import type { AssignmentDraft } from '../types'
 
 // 과제 제출 폼 — 본문(textarea)·제출 URL(input)·첨부 자산(파일 업로드·링크 추가) + 목록으로/제출 저장.

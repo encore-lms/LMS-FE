@@ -1,4 +1,4 @@
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import type { AssignmentDetail, AssignmentDraft } from '../types'
 
 // 제출 완료 요약 (Figma 2236:10480) — 상세 페이지의 제출 후 휴지 상태.

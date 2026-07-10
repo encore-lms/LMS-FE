@@ -1,6 +1,6 @@
 // 워크스페이스 공용 프리미티브 컴포넌트.
 import { cn } from '@/shared/lib/cn'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import type { LucideIcon } from 'lucide-react'
 import type { Badge, Tone, WsTask } from '../../types'
 import { CHIP, SOLID, toneOf } from './ws-style'

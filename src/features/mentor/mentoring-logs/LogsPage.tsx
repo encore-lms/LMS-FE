@@ -12,7 +12,8 @@ import {
   Search,
   Send,
 } from 'lucide-react'
-import { Button, buttonClass } from '@/components/ui/Button'
+import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
 import { DataTable, type Column } from '@/components/data/DataTable'

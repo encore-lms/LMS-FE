@@ -18,7 +18,7 @@ import {
   VolumeX,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import type { OnlineChapterView } from '../types'
 
 // 중앙 영상 플레이어 — 선택된 차시의 히어로(첫 화면 썸네일 커버 + 커스텀 컨트롤 영상).

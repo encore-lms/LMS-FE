@@ -1,5 +1,5 @@
 import { Modal } from '@/components/ui/Modal'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 
 // 과제 수정 제출 확인 모달 (Figma 2236:10522) — 공용 Modal 사용. 덮어쓰기 안내 + 재제출 주의 + 계속 편집/수정 제출.
 export function ConfirmResubmitModal({

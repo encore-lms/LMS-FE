@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { cn } from '@/shared/lib/cn'
 import type { MaterialFileType, ShareMaterialInput } from '../../types'
 

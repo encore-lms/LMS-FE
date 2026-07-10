@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { useSubmitPeerEval } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'

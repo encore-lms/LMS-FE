@@ -4,7 +4,7 @@ import type {
   InputHTMLAttributes,
 } from 'react'
 import { cn } from '@/shared/lib/cn'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 
 // 기록실 등록/수정 폼 공유 프리미티브 — 빵부스러기·라벨·입력·지원형식·하단 액션바.
 

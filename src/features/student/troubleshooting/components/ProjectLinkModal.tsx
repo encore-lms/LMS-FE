@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Check, FolderGit2, Link2Off } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import {
   TS_LINKABLE_PROJECTS,
   type TsLinkableProject,

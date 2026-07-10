@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { AlertTriangle, ExternalLink, Link2, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
-import { buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import type { BlogRecord, RecordStatus } from '../types'
 
 // 블로그 기록 카드 — 상태별 표시 + 수정/삭제. 블로그 상세는 우측 iframe 패널, 스터디/자격증은 상세 모달.

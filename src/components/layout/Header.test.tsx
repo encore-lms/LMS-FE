@@ -9,7 +9,13 @@ import { apiClient } from '@/shared/api'
 import type { Role } from '@/shared/types'
 
 vi.mock('@/shared/api', () => ({
-  apiClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
+  apiClient: {
+    post: vi.fn(),
+    get: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
 }))
 
 function renderHeader(role: Role) {
@@ -37,12 +43,13 @@ describe('Header 알림 벨', () => {
     vi.clearAllMocks()
   })
 
-  it('운영(MANAGER)에서도 종을 누르면 알림 드롭다운이 열린다 (서버 조회는 안 함)', async () => {
+  it('운영(MANAGER)도 종을 누르면 서버 알림을 조회한다 (역할 공통)', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: [] })
     const user = userEvent.setup()
     renderHeader('MANAGER')
     await user.click(screen.getByRole('button', { name: '알림' }))
     expect(screen.getByText('알림이 없어요')).toBeInTheDocument()
-    expect(apiClient.get).not.toHaveBeenCalled()
+    expect(apiClient.get).toHaveBeenCalledWith('/notifications')
   })
 
   it('수강생은 서버 알림을 조회해 드롭다운에 표시한다', async () => {
@@ -64,10 +71,11 @@ describe('Header 알림 벨', () => {
     )
     expect(screen.getByText('과제 마감 임박')).toBeInTheDocument()
     expect(screen.getByText(/미확인 1건/)).toBeInTheDocument()
-    expect(apiClient.get).toHaveBeenCalledWith('/student/notifications')
+    expect(apiClient.get).toHaveBeenCalledWith('/notifications')
   })
 
   it('멘토·강사에서도 종이 동작한다 (역할 공통)', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: [] })
     const user = userEvent.setup()
     renderHeader('MENTOR')
     await user.click(screen.getByRole('button', { name: '알림' }))

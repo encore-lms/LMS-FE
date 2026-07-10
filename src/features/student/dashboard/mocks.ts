@@ -353,4 +353,14 @@ export const handlers = [
     })
     return ok<DashboardNotification[]>(mockDashboard.notifications)
   }),
+  // 역할 무관 알림 벨(전 역할) — 벨은 /notifications 를 호출한다. 로컬에선 대시보드 알림과 동일 데이터.
+  http.get('/api/notifications', () =>
+    ok<DashboardNotification[]>(mockDashboard.notifications),
+  ),
+  http.patch('/api/notifications/read', () => {
+    mockDashboard.notifications.forEach((notification) => {
+      notification.unread = false
+    })
+    return ok<DashboardNotification[]>(mockDashboard.notifications)
+  }),
 ]

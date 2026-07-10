@@ -32,9 +32,9 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
 
-  // 서버 알림은 영속 읽음(수강생 전용 엔드포인트), 로컬 알림은 스토어에서 읽음 처리.
+  // 서버 알림은 영속 읽음(전 역할 /notifications/read), 로컬 알림은 스토어에서 읽음 처리.
   const markAllRead = () => {
-    if (role === 'STUDENT') markServerRead.mutate()
+    if (role) markServerRead.mutate()
     markLocalRead()
   }
 

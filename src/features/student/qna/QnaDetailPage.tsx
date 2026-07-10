@@ -11,6 +11,9 @@ import {
   useAcceptAnswer,
   useCreateAnswer,
   useCreateComment,
+  useDeleteAnswer,
+  useDeleteComment,
+  useDeleteQuestion,
   useQnaDetail,
 } from '../api/qna'
 import { MarkdownEditor } from './components/MarkdownEditor'
@@ -37,6 +40,50 @@ function mentionNamesExcept(self: string): string[] {
   return QNA_MOCK_PARTICIPANTS.map((p) => p.name).filter((n) => n !== self)
 }
 
+// 작성자 전용 삭제 버튼 — 클릭 시 인라인 확인(파괴적이라 즉시 삭제 방지). 모달 없이 경량 처리.
+function DeleteButton({
+  onConfirm,
+  pending,
+  confirmText,
+}: {
+  onConfirm: () => void
+  pending: boolean
+  confirmText: string
+}) {
+  const [confirming, setConfirming] = useState(false)
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="text-fg-subtle hover:text-danger text-[11px] font-semibold transition-colors"
+      >
+        삭제
+      </button>
+    )
+  }
+  return (
+    <span className="flex items-center gap-1.5 text-[11px] whitespace-nowrap">
+      <span className="text-fg-muted">{confirmText}</span>
+      <button
+        type="button"
+        onClick={onConfirm}
+        disabled={pending}
+        className="text-danger font-bold disabled:opacity-50"
+      >
+        {pending ? '삭제 중…' : '삭제'}
+      </button>
+      <button
+        type="button"
+        onClick={() => setConfirming(false)}
+        className="text-fg-subtle hover:text-fg"
+      >
+        취소
+      </button>
+    </span>
+  )
+}
+
 // 답변 1건 + 댓글 스레드 + 댓글 작성기(멘션). 답변별 작성 상태를 자체 보유.
 function AnswerItem({
   answer,
@@ -57,6 +104,8 @@ function AnswerItem({
 }) {
   const toast = useToast()
   const createComment = useCreateComment(questionId, answer.id)
+  const deleteAnswer = useDeleteAnswer(questionId)
+  const deleteComment = useDeleteComment(questionId, answer.id)
   const [draft, setDraft] = useState('')
   const [mentions, setMentions] = useState<string[]>([])
   const [open, setOpen] = useState(false)
@@ -109,7 +158,21 @@ function AnswerItem({
             </span>
           )}
         </div>
-        <span className="text-fg-subtle text-[11px]">{answer.createdAt}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-fg-subtle text-[11px]">{answer.createdAt}</span>
+          {answer.canDelete && (
+            <DeleteButton
+              pending={deleteAnswer.isPending}
+              confirmText="답변·댓글 삭제?"
+              onConfirm={() =>
+                deleteAnswer.mutate(answer.id, {
+                  onSuccess: () => toast.success('답변을 삭제했어요'),
+                  onError: () => toast.danger('답변 삭제에 실패했어요'),
+                })
+              }
+            />
+          )}
+        </div>
       </div>
 
       <Markdown>{answer.content}</Markdown>
@@ -155,6 +218,20 @@ function AnswerItem({
                 <span className="text-fg-subtle text-[10px]">
                   {c.createdAt}
                 </span>
+                {c.canDelete && (
+                  <span className="ml-auto">
+                    <DeleteButton
+                      pending={deleteComment.isPending}
+                      confirmText="삭제?"
+                      onConfirm={() =>
+                        deleteComment.mutate(c.id, {
+                          onSuccess: () => toast.success('댓글을 삭제했어요'),
+                          onError: () => toast.danger('댓글 삭제에 실패했어요'),
+                        })
+                      }
+                    />
+                  </span>
+                )}
               </div>
               <div className="text-[13px]">
                 <Markdown mentions={c.mentions}>{c.content}</Markdown>
@@ -206,6 +283,7 @@ export default function QnaDetailPage() {
   const { data, isPending, isError, refetch } = useQnaDetail(id)
   const createAnswer = useCreateAnswer(id)
   const acceptAnswer = useAcceptAnswer(id)
+  const deleteQuestion = useDeleteQuestion()
   const [draft, setDraft] = useState('')
   usePageHeader('QnA 게시판', '질문 상세')
 
@@ -291,6 +369,23 @@ export default function QnaDetailPage() {
             {resolved && <CheckCircle2 className="size-3.5" />}
             {data.statusLabel}
           </span>
+          {data.canDelete && (
+            <div className="ml-auto">
+              <DeleteButton
+                pending={deleteQuestion.isPending}
+                confirmText="질문·답변·댓글 모두 삭제?"
+                onConfirm={() =>
+                  deleteQuestion.mutate(id, {
+                    onSuccess: () => {
+                      toast.success('질문을 삭제했어요')
+                      navigate('/student/qna')
+                    },
+                    onError: () => toast.danger('질문 삭제에 실패했어요'),
+                  })
+                }
+              />
+            </div>
+          )}
         </div>
 
         <h1 className="text-fg text-[20px] leading-7 font-bold">

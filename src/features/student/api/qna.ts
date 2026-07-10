@@ -9,7 +9,7 @@ import type {
 } from '../qna/types'
 
 // QnA 게시판 훅 — 엔드포인트가 /student/* 라 학생 feature 소유. baseURL /api 라 경로 앞 /api 생략.
-// NOTE: 실 BE에는 QnA API가 없다(게시판 폐기). VITE_API_BASE_URL을 비운 mock 모드에서만 동작.
+// 실 BE 연동(learning-service /student/qna): 목록·상세·작성·답변·댓글·채택·삭제.
 export function useQnaList() {
   return useQuery({
     queryKey: qnaKeys.list(),
@@ -80,6 +80,51 @@ export function useAcceptAnswer(questionId: string) {
       apiClient
         .post<QnaDetail>(
           `/student/qna/${questionId}/answers/${answerId}/accept`,
+        )
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(qnaKeys.detail(questionId), detail)
+      queryClient.invalidateQueries({ queryKey: qnaKeys.list() })
+    },
+  })
+}
+
+// 질문 삭제(작성자만) — 답변·댓글 cascade. 성공 시 상세 캐시 제거 + 목록 무효화(호출부가 목록으로 이동).
+export function useDeleteQuestion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (questionId: string) =>
+      apiClient.delete<void>(`/student/qna/${questionId}`).then((r) => r.data),
+    onSuccess: (_data, questionId) => {
+      queryClient.removeQueries({ queryKey: qnaKeys.detail(questionId) })
+      queryClient.invalidateQueries({ queryKey: qnaKeys.list() })
+    },
+  })
+}
+
+// 답변 삭제(작성자만) — 댓글 cascade. 갱신된 상세 반환.
+export function useDeleteAnswer(questionId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (answerId: string) =>
+      apiClient
+        .delete<QnaDetail>(`/student/qna/${questionId}/answers/${answerId}`)
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(qnaKeys.detail(questionId), detail)
+      queryClient.invalidateQueries({ queryKey: qnaKeys.list() })
+    },
+  })
+}
+
+// 댓글 삭제(작성자만) — 갱신된 상세 반환.
+export function useDeleteComment(questionId: string, answerId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (commentId: string) =>
+      apiClient
+        .delete<QnaDetail>(
+          `/student/qna/${questionId}/answers/${answerId}/comments/${commentId}`,
         )
         .then((r) => r.data),
     onSuccess: (detail) => {

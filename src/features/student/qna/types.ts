@@ -74,6 +74,7 @@ export interface QnaComment {
   authorRole: string
   createdAt: string
   mentions: string[] // 본문에서 @지명된 이름들(알림·강조용)
+  canDelete: boolean // 요청자가 작성자면 true → 삭제 버튼 노출
 }
 
 /** 답변 */
@@ -86,6 +87,7 @@ export interface QnaAnswer {
   isAccepted: boolean // 질문자 채택 답변
   createdAt: string
   comments: QnaComment[] // 답변 스레드
+  canDelete: boolean // 요청자가 작성자면 true
 }
 
 /** 새 댓글 작성 페이로드 */
@@ -127,6 +129,7 @@ export interface QnaDetail {
   viewCount: number
   tags: string[]
   answers: QnaAnswer[]
+  canDelete: boolean // 요청자가 질문 작성자면 true
 }
 
 /** 새 질문 작성 페이로드 */

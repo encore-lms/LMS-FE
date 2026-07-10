@@ -1,26 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bell } from 'lucide-react'
-import { useRoleNotifications } from './api'
+import { useAuth } from '@/shared/store'
+import { useMarkNotificationsRead, useRoleNotifications } from './api'
 import { useLocalNotificationStore } from './localNotifications'
 
-// 헤더 알림 벨 — 전 역할 공통. 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기(로컬 반영).
-// 읽음 처리 mutation은 BE 계약 확정 후 — 현재는 로컬 readIds 로 미확인 점을 끈다.
-// 멘션 등 FE 발생 알림(localNotifications)을 서버 알림 위에 합성한다.
+// 헤더 알림 벨 — 전 역할 공통. 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기.
+// 서버 알림은 PATCH /student/notifications/read 로 영속 읽음 처리(수강생 전용),
+// 멘션 등 FE 발생 알림(localNotifications)은 로컬 스토어에서 읽음 처리한다.
 export function NotificationBell() {
+  const { role } = useAuth()
   const { data } = useRoleNotifications()
   const localItems = useLocalNotificationStore((s) => s.items)
+  const markLocalRead = useLocalNotificationStore((s) => s.markAllRead)
+  const markServerRead = useMarkNotificationsRead()
   const [open, setOpen] = useState(false)
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const ref = useRef<HTMLDivElement>(null)
 
-  // 로컬 알림(최신) + 서버 알림을 합치고, 로컬 읽음 처리를 합성.
+  // 로컬 알림(최신) + 서버 알림을 합친다. 읽음 여부는 각 소스의 unread 를 그대로 쓴다.
   const notifications = useMemo(
-    () =>
-      [...localItems, ...(data ?? [])].map((n) => ({
-        ...n,
-        unread: n.unread && !readIds.has(n.id),
-      })),
-    [data, localItems, readIds],
+    () => [...localItems, ...(data ?? [])],
+    [data, localItems],
   )
   const unreadCount = notifications.filter((n) => n.unread).length
 
@@ -33,8 +32,11 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
 
-  const markAllRead = () =>
-    setReadIds(new Set([...localItems, ...(data ?? [])].map((n) => n.id)))
+  // 서버 알림은 영속 읽음(수강생 전용 엔드포인트), 로컬 알림은 스토어에서 읽음 처리.
+  const markAllRead = () => {
+    if (role === 'STUDENT') markServerRead.mutate()
+    markLocalRead()
+  }
 
   return (
     <div className="relative" ref={ref}>

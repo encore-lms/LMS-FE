@@ -188,7 +188,7 @@ export function RequestCard({
   const meta = REQUEST_STATUS_META[request.status]
   const resolvedSlot = request.confirmed ?? request.desired
   return (
-    <article className="border-border bg-surface relative overflow-hidden rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+    <article className="bg-surface relative overflow-hidden rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <span
         className={cn('absolute inset-y-0 left-0 w-1.5', meta.stripe)}
         aria-hidden

@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -29,7 +29,7 @@ import { ProgressBar } from '../components/ProgressBar'
 import { SectionLink } from '../components/SectionLink'
 
 const CARD_SHELL =
-  'border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
 
 // 팀 상세 (/mentor/teams/:teamId) — Figma 2553:3696.
 // 팀 헤더(배정·누적·잔여) · 팀원 · 예약 요약 · 평가·추천(잠금 사유 표시) · 팀 최근 일지.
@@ -390,7 +390,7 @@ export default function TeamDetailPage() {
           </div>
           <Link
             to={`/mentor/mentoring-logs/new?teamId=${team.teamId}`}
-            className="bg-brand text-on-color hover:bg-brand/90 flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold"
+            className={buttonClass({ size: 'sm' })}
           >
             <Check className="h-3 w-3" />새 일지 작성
           </Link>

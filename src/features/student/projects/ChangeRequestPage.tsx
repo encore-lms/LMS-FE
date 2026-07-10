@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, CircleCheck, Lock, PencilLine, Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -189,7 +190,7 @@ export default function ChangeRequestPage() {
             <button
               type="button"
               onClick={goEditOriginal}
-              className="bg-brand flex w-fit items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+              className={buttonClass({ size: 'sm', className: 'w-fit' })}
             >
               <PencilLine className="size-4" aria-hidden="true" />
               프로젝트 수정하기
@@ -247,7 +248,7 @@ export default function ChangeRequestPage() {
               <button
                 type="button"
                 onClick={requestEdit}
-                className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
+                className={buttonClass({ size: 'md' })}
               >
                 수정 권한 요청
               </button>
@@ -275,7 +276,7 @@ export default function ChangeRequestPage() {
               <button
                 type="button"
                 onClick={submitEdit}
-                className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
+                className={buttonClass({ size: 'md' })}
               >
                 수정 완료 제출
               </button>

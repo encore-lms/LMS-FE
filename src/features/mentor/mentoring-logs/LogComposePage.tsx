@@ -412,7 +412,7 @@ function LogComposeForm({
       </section>
 
       {/* 기본 정보 */}
-      <section className="border-border bg-surface flex flex-col gap-4 rounded-2xl border p-6 shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+      <section className="bg-surface flex flex-col gap-4 rounded-2xl p-6 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-fg text-[15px] font-bold">기본 정보</h3>
           <p className="text-fg-muted text-[11px]">
@@ -720,7 +720,7 @@ function LogComposeForm({
         return (
           <section
             key={field.fieldSnapshotId}
-            className="border-border bg-surface flex flex-col gap-2.5 rounded-2xl border p-5 shadow-[0_2px_8px_rgba(18,23,38,0.04)]"
+            className="bg-surface flex flex-col gap-2.5 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]"
           >
             <div className="flex items-center gap-2">
               <span
@@ -762,7 +762,7 @@ function LogComposeForm({
 
       {/* 작성 산출물 — 드롭존(업로드 계약 미확정: 파일명 표시 전용) */}
       {filesField && (
-        <section className="border-border bg-surface flex flex-col gap-2.5 rounded-2xl border p-5 shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+        <section className="bg-surface flex flex-col gap-2.5 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
           <div className="flex items-center gap-2">
             <span className="bg-surface-muted text-fg-muted flex h-[22px] w-[22px] items-center justify-center rounded-md text-[11px] font-bold">
               {filesField.order}
@@ -816,7 +816,7 @@ function LogComposeForm({
 
       {/* 활동 기록 — 타임스탬프 사진(기존 메타 표시 + 추가는 표시 전용) */}
       {photosField && (
-        <section className="border-border bg-surface flex flex-col gap-2.5 rounded-2xl border p-5 shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+        <section className="bg-surface flex flex-col gap-2.5 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
           <div className="flex items-center gap-2">
             <span className="bg-surface-muted text-fg-muted flex h-[22px] w-[22px] items-center justify-center rounded-md text-[11px] font-bold">
               {photosField.order}

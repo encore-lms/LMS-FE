@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/use-toast'
 import { useUpdateTaskStatus } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
@@ -148,7 +149,7 @@ export function HomeTab({
           <button
             type="button"
             onClick={() => onTab('peer-evaluation')}
-            className="bg-brand shrink-0 rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+            className={buttonClass({ size: 'sm', className: 'shrink-0' })}
           >
             상호평가 작성
           </button>

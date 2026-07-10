@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { useAddMetric } from '../../../api/projects'
@@ -135,7 +136,7 @@ function AddMetricModal({
             disabled={
               !label.trim() || !before.trim() || !after.trim() || !delta.trim()
             }
-            className="bg-brand rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+            className={buttonClass({ size: 'sm' })}
           >
             추가
           </button>

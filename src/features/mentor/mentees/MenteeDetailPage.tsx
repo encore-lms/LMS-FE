@@ -18,7 +18,7 @@ import { useMenteeDetail } from '../api/mentees'
 import type { MenteeAttendanceRow } from '../types'
 
 const CARD_SHELL =
-  'border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
 
 // 5축 막대 색 — Figma 축별 색(기술 brand / 책임감 success / 소통 info / 성장 accent /
 // 팀워크 warning). 축별 고정 의미 색인지 장식인지는 openQuestion — Figma 표기 그대로.
@@ -35,10 +35,7 @@ const AXIS_COLORS = [
 // 노출 경계: 멘토 본인이 작성한 평가·코멘트·추천 + 일지 참석 이력만(05-26 결정).
 // Figma 의 '24h 수정 가능' 표기는 최종 제출 후 수정 불가 정책(05-31)으로 대체(결정 기록).
 export default function MenteeDetailPage() {
-  usePageHeader(
-    '학생 상세',
-    '멘티의 평가·추천·참석 이력을 확인합니다',
-  )
+  usePageHeader('학생 상세', '멘티의 평가·추천·참석 이력을 확인합니다')
   const { studentId = '' } = useParams()
   const { data, isPending, isError, refetch } = useMenteeDetail(studentId)
 
@@ -134,8 +131,8 @@ export default function MenteeDetailPage() {
       header: '일지 상태',
       align: 'center',
       className: 'w-[110px]',
-      // Figma 행4 '검토중' 칩은 일지 상태 어휘(초안/유효/수정 요청)에 없어 정본 라벨로
-      // 대체(openQuestion 기록) — 승인·검토 개념 없음(제출 즉시 자동 유효).
+      // 참석 이력의 일지 상태 — 인정된 회차(valid)=인정 완료, 그 외=수정 요청으로 축약.
+      // (일지 승인 흐름 자체는 운영 검토 모달 소관 — 참석 이력엔 인정 완료분 위주로 표시.)
       cell: (r) =>
         r.logStatus === 'valid' ? (
           <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[10px] font-bold whitespace-nowrap">
@@ -190,7 +187,7 @@ export default function MenteeDetailPage() {
       </div>
 
       {/* Hero — brand 배너 */}
-      <section className="bg-brand text-on-color flex flex-wrap items-center justify-between gap-6 rounded-2xl px-8 py-7 shadow-[0_8px_22px_rgba(18,23,38,0.18)]">
+      <section className="bg-brand text-on-color shadow-hero flex flex-wrap items-center justify-between gap-6 rounded-2xl px-8 py-7">
         <div className="flex items-center gap-5">
           <Avatar name={student.name} size={80} />
           <div className="flex flex-col gap-2">
@@ -328,8 +325,8 @@ export default function MenteeDetailPage() {
                 <span className="flex items-center gap-1.5">
                   <MessageSquare className="text-fg-muted h-3 w-3" />
                   <span className="text-fg text-xs font-bold">멘토 코멘트</span>
-                  <span className="bg-surface text-fg-subtle rounded px-1.5 py-px text-[10px]">
-                    선택 입력
+                  <span className="bg-danger-bg text-danger rounded px-1.5 py-px text-[10px] font-bold">
+                    필수
                   </span>
                 </span>
                 <p className="text-fg-muted text-[13px] leading-5">
@@ -385,7 +382,7 @@ export default function MenteeDetailPage() {
                 필수
               </span>
             </span>
-            <div className="border-border rounded-lg border px-3.5 py-3">
+            <div className="bg-surface-muted/50 rounded-lg px-3.5 py-3">
               <p className="text-fg text-[13px] leading-5">
                 {recommendation.reason}
               </p>

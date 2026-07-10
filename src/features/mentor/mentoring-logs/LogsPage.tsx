@@ -12,7 +12,7 @@ import {
   Search,
   Send,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -367,7 +367,7 @@ export default function LogsPage() {
           onChange={setPeriod}
           options={PERIOD_OPTIONS}
         />
-        <label className="border-border flex h-10 w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
+        <label className="bg-surface focus-within:ring-brand flex h-10 w-[240px] items-center gap-2 rounded-[10px] px-3.5 shadow-[0_0_0_1px_rgba(18,23,38,0.06)] focus-within:ring-2">
           <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
           <input
             value={q}
@@ -379,7 +379,7 @@ export default function LogsPage() {
         </label>
         <Link
           to="/mentor/mentoring-logs/new"
-          className="bg-brand text-on-color hover:bg-brand/90 ml-auto flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-bold whitespace-nowrap"
+          className={buttonClass({ className: 'ml-auto whitespace-nowrap' })}
         >
           <Check className="h-3.5 w-3.5" />새 일지 작성
         </Link>
@@ -483,7 +483,6 @@ function FilterSelect({
         value={value}
         onChange={onChange}
         options={[...options]}
-       
       />
     </div>
   )

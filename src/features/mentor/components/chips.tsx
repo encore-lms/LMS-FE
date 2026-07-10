@@ -73,8 +73,9 @@ export function TeamSubTag({ team }: { team: MentorTeamAssignment }) {
   return null
 }
 
-// 일지 상태 칩 — 제출 즉시 자동 유효(05-31 확정: 운영 승인 단계 없음). Figma 일부 frame의
-// '승인' 라벨은 정책 드리프트라 '유효'로 통일(Figma 동반 정정 2026-06-13).
+// 일지 상태 칩 — 제출 시 승인 대기(submitted) → 매니저 승인 후 유효(valid).
+// 운영이 검토 모달에서 승인(POST /admin/mentoring/logs/:id/approve)하거나 수정 요청한다.
+// (mock은 승인 흐름 미배선이라 제출을 즉시 valid로 단순화 — 실 BE 연동 시 승인 대기 경유.)
 export function LogStatusChip({
   status,
   note,

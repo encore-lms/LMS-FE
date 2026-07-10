@@ -79,11 +79,11 @@ describe('RequestsPage', () => {
     const user = userEvent.setup()
     renderPage()
     // 완료 탭 — 유효 일지 파생 건(NLP 분석 팀 포함), 진행 중 카드 숨김
-    await user.click(screen.getByRole('button', { name: /^완료/ }))
+    await user.click(screen.getByRole('tab', { name: /^완료/ }))
     expect(screen.getAllByText('NLP 분석 팀').length).toBeGreaterThan(0)
     expect(screen.queryByRole('link', { name: '확정' })).not.toBeInTheDocument()
     // 진행 중 복귀 + 검색
-    await user.click(screen.getByRole('button', { name: /진행 중 요청/ }))
+    await user.click(screen.getByRole('tab', { name: /진행 중 요청/ }))
     await user.type(screen.getByLabelText('팀명·요청자 검색'), '트러블')
     expect(screen.getByText('트러블슈팅 팀')).toBeInTheDocument()
     expect(screen.queryByText('추천시스템 팀')).not.toBeInTheDocument()

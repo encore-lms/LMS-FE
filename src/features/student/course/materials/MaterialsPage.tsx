@@ -4,6 +4,7 @@ import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
+import { buttonClass } from '@/components/ui/Button'
 import { usePageHeader } from '@/shared/store'
 import {
   useCourseMaterials,
@@ -140,7 +141,7 @@ export default function MaterialsPage() {
                 <button
                   type="button"
                   onClick={() => setShareOpen(true)}
-                  className="bg-brand flex items-center gap-1.5 rounded-[10px] px-3.5 py-[9px] text-[13px] font-bold text-white"
+                  className={buttonClass({ size: 'md' })}
                 >
                   <span className="text-[14px]">+</span> 자료 공유
                 </button>

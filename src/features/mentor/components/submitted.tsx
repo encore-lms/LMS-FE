@@ -40,7 +40,7 @@ export function SubmitSummaryCard({
   rows: { label: string; value: string }[]
 }) {
   return (
-    <section className="border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+    <section className="bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <header className="flex items-center justify-between gap-3 px-6 pt-5 pb-3.5">
         <div className="flex items-center gap-2">
           <FileText className="text-fg h-4 w-4" />
@@ -78,7 +78,7 @@ export function NextStepBar({
   primary: { label: string; to: string }
 }) {
   return (
-    <section className="border-border bg-surface flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-6 py-4 shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+    <section className="bg-surface flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-4 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <div className="flex flex-col gap-0.5">
         <span className="text-fg text-sm font-bold">다음 단계</span>
         <span className="text-fg-muted text-[11px]">

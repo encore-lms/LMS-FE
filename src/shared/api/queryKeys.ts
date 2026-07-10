@@ -52,7 +52,6 @@ export const adminKeys = {
   }) => [...adminKeys.all, 'students', 'attendance', filter ?? {}] as const,
   studentAttendanceForms: (filter?: { courseId?: string; cohortId?: string }) =>
     [...adminKeys.all, 'students', 'attendance-forms', filter ?? {}] as const,
-  settingsHub: () => [...adminKeys.all, 'settings', 'hub'] as const,
   settingsAccounts: () => [...adminKeys.all, 'settings', 'accounts'] as const,
   // base prefix — 무효화는 이 키로(하위 list/summary/history가 모두 prefix 매칭됨).
   settingsHrdKeys: () => [...adminKeys.all, 'settings', 'hrd-keys'] as const,
@@ -92,7 +91,6 @@ export const adminKeys = {
     to?: string
     page?: number
   }) => [...adminKeys.all, 'settings', 'hrd-search', params ?? {}] as const,
-  settingsAudit: () => [...adminKeys.all, 'settings', 'audit'] as const,
 } as const
 
 // 강사(instructor) 서버 상태 캐시 키.

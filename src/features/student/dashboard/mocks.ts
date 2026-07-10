@@ -346,4 +346,11 @@ export const handlers = [
   http.get('/api/student/notifications', () =>
     ok<DashboardNotification[]>(mockDashboard.notifications),
   ),
+  // 전체 읽음 — 공유 mock 상태를 갱신해 이후 GET에도 읽음이 유지되게 한다(서버 read_at 영속을 흉내).
+  http.patch('/api/student/notifications/read', () => {
+    mockDashboard.notifications.forEach((notification) => {
+      notification.unread = false
+    })
+    return ok<DashboardNotification[]>(mockDashboard.notifications)
+  }),
 ]

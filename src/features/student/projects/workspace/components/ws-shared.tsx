@@ -1,5 +1,6 @@
 // 워크스페이스 공용 프리미티브 컴포넌트.
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import type { LucideIcon } from 'lucide-react'
 import type { Badge, Tone, WsTask } from '../../types'
 import { CHIP, SOLID, toneOf } from './ws-style'
@@ -33,7 +34,7 @@ export function SectionHead({
         <button
           type="button"
           onClick={onAction}
-          className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+          className={buttonClass({ size: 'sm' })}
         >
           {action}
         </button>

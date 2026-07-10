@@ -1,4 +1,5 @@
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import type { StudentQuizListItem } from '../types'
 import { CATEGORY_BADGE, GRADING_LABEL } from './quizDisplay'
 
@@ -74,7 +75,7 @@ export function OtherStatusRow({
         <button
           type="button"
           onClick={onResult}
-          className="bg-brand flex shrink-0 items-center gap-1 rounded-lg px-3.5 py-1.5 text-[12px] font-semibold text-white"
+          className={buttonClass({ size: 'sm', className: 'shrink-0' })}
         >
           결과 보기 <span aria-hidden>→</span>
         </button>

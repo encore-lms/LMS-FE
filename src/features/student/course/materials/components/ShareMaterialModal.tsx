@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { buttonClass } from '@/components/ui/Button'
 import { cn } from '@/shared/lib/cn'
 import type { MaterialFileType, ShareMaterialInput } from '../../types'
 
@@ -122,7 +123,7 @@ export function ShareMaterialModal({
           <button
             type="button"
             onClick={handleShare}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+            className={buttonClass({ size: 'md' })}
           >
             공유하기
           </button>

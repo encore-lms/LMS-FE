@@ -74,7 +74,9 @@ export default function TeamsPage() {
       return true
     })
     // 팀명 가나다순 고정(운영 요구)
-    return [...list].sort((a, b) => (a.teamName ?? '').localeCompare(b.teamName ?? '', 'ko'))
+    return [...list].sort((a, b) =>
+      (a.teamName ?? '').localeCompare(b.teamName ?? '', 'ko'),
+    )
   }, [teams, course, status, q])
 
   // 카드 노출 = 액션 필요 팀만(완료·조기 종료 제외, Figma 3장) — 노출 기준 BE 확정 대기 TODO.
@@ -221,7 +223,7 @@ export default function TeamsPage() {
   return (
     <div className="flex flex-col gap-5 p-8">
       {/* 필터 바 — 과정/기수 · 상태 · 팀명/반기수 검색 */}
-      <section className="border-border bg-surface flex flex-col gap-3 rounded-xl border px-4 py-3 shadow-[0_2px_8px_rgba(18,23,38,0.04)] md:flex-row">
+      <section className="bg-surface-muted/50 flex flex-col gap-3 rounded-xl px-4 py-3 md:flex-row">
         <FilterSelect
           icon={Send}
           label="과정/기수"
@@ -241,7 +243,7 @@ export default function TeamsPage() {
           onChange={(v) => setStatus(v as StatusFilter)}
           options={STATUS_OPTIONS}
         />
-        <label className="border-border flex h-10 flex-1 items-center gap-2 rounded-[10px] border px-3.5">
+        <label className="bg-surface flex h-10 flex-1 items-center gap-2 rounded-[10px] px-3.5">
           <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
           <input
             value={q}
@@ -327,7 +329,7 @@ export default function TeamsPage() {
       </div>
 
       {/* 배정 팀 전체 테이블 + CSV 내보내기 */}
-      <section className="border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+      <section className="bg-surface overflow-hidden rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
         <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div className="flex flex-col gap-0.5">
             <h3 className="text-fg text-[15px] font-bold">

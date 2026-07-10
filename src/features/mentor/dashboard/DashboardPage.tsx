@@ -53,7 +53,7 @@ const TODO_META: Record<
 }
 
 const CARD_SHELL =
-  'border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
 
 // 멘토 대시보드 (/mentor · /mentor/dashboard) — Figma 2553:3399.
 // Hero 배너 · 배정 팀 카드 · 해야 할 일 · 예정된 멘토링(CONFIRMED만) · 배정 팀 테이블 · 최근 일지.

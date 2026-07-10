@@ -13,7 +13,7 @@ import {
   Star,
   XCircle,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -84,7 +84,7 @@ export default function RecommendationPage() {
           action={
             <Link
               to={`/mentor/teams/${data.teamId}/evaluation`}
-              className="bg-brand text-on-color hover:bg-brand/90 rounded-[10px] px-4 py-2.5 text-[13px] font-bold"
+              className={buttonClass()}
             >
               평가 작성으로 이동
             </Link>
@@ -388,7 +388,7 @@ function RecommendationForm({
       )}
 
       {/* 증명서 반영 · 공개 기준 */}
-      <section className="border-border bg-surface rounded-2xl border shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
+      <section className="bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
         <header className="flex flex-col gap-0.5 px-[22px] pt-5 pb-3">
           <h3 className="text-fg text-sm font-bold">증명서 반영 · 공개 기준</h3>
           <span className="text-fg-subtle text-[11px]">

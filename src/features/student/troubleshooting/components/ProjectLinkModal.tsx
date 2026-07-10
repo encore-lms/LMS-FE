@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Check, FolderGit2, Link2Off } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
+import { buttonClass } from '@/components/ui/Button'
 import {
   TS_LINKABLE_PROJECTS,
   type TsLinkableProject,
@@ -63,7 +64,7 @@ export function ProjectLinkModal({
             type="button"
             onClick={confirm}
             disabled={!canLink}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ size: 'md' })}
           >
             연결
           </button>

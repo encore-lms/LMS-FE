@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
@@ -201,7 +201,7 @@ export default function TroubleshootingListPage() {
           <button
             type="button"
             onClick={() => navigate('/student/troubleshooting/new')}
-            className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+            className={buttonClass({ size: 'sm' })}
           >
             + 새 사례 작성
           </button>

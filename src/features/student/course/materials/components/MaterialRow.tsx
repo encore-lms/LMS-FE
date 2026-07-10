@@ -1,5 +1,6 @@
 import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
+import { buttonClass } from '@/components/ui/Button'
 import { downloadCourseMaterialFile } from '@/features/student/api/course'
 import type {
   MaterialCategory,
@@ -205,7 +206,7 @@ export function MaterialRow({
           type="button"
           onClick={handleDownloadOrOpen}
           disabled={!hasFile}
-          className="bg-brand rounded-lg px-3.5 py-[7px] text-[12px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className={buttonClass({ size: 'sm' })}
         >
           {item.isExternalLink ? '링크 열기' : '다운로드'}
         </button>

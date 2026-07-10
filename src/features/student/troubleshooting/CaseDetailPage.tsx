@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { FileText, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
@@ -195,7 +195,7 @@ export default function CaseDetailPage() {
             <button
               type="button"
               onClick={goChangeRequest}
-              className="bg-brand rounded-lg px-4 py-2 text-[12px] font-bold text-white"
+              className={buttonClass({ size: 'sm' })}
             >
               변경 제안
             </button>
@@ -364,7 +364,7 @@ export default function CaseDetailPage() {
                 <button
                   type="button"
                   onClick={goChangeRequest}
-                  className="bg-brand rounded-lg py-2.5 text-[12px] font-bold text-white"
+                  className={buttonClass({ size: 'sm' })}
                 >
                   변경 제안
                 </button>
@@ -460,7 +460,7 @@ function CertifyModal({
             type="button"
             onClick={onConfirm}
             disabled={!allChecked}
-            className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ size: 'md' })}
           >
             인증 요청
           </button>

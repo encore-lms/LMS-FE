@@ -8,6 +8,7 @@ import type { AppNotification } from '@/shared/types'
 interface LocalNotificationState {
   items: AppNotification[]
   add: (input: { title: string; source: string }) => void
+  markAllRead: () => void
   clear: () => void
 }
 
@@ -29,6 +30,8 @@ export const useLocalNotificationStore = create<LocalNotificationState>(
           ...s.items,
         ],
       })),
+    markAllRead: () =>
+      set((s) => ({ items: s.items.map((n) => ({ ...n, unread: false })) })),
     clear: () => set({ items: [] }),
   }),
 )

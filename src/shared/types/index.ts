@@ -184,9 +184,6 @@ export type {
   TsReviewData,
 } from './instructorReviews'
 export type {
-  SettingsCardSummary,
-  SettingsAuditLog,
-  SettingsHubData,
   OpsRole,
   OpsAccountStatus,
   OpsAccount,

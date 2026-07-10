@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Clock, Info, UserPlus } from 'lucide-react'
+import { Clock, Info, UserPlus } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -14,7 +13,6 @@ import type { OpsAccount, OpsRole } from '@/shared/types'
 import {
   useCreateOpsAccount,
   useOpsAccounts,
-  useSettingsHub,
   useUpdateOperatorCohorts,
   useUpdateOpsAccountStatus,
 } from '../api/settings'
@@ -70,13 +68,10 @@ function genInitialPassword(): string {
 // 수정·담당 범위·비번 초기화·비활성화는 운영 액션 모달 v2(1306:8221)로 확인 후 실행.
 export default function AccountsPage() {
   const { data, isPending, isError, refetch } = useOpsAccounts()
-  // 설정 변경 감사 로그(설정 탭 하단) — 설정 허브에서 이전된 '최근 감사 로그' 섹션용.
-  const { data: hub } = useSettingsHub()
   const toast = useToast()
   const createAccount = useCreateOpsAccount()
   const updateStatus = useUpdateOpsAccountStatus()
   const updateScope = useUpdateOperatorCohorts()
-  const navigate = useNavigate()
   const [role, setRole] = useSearchParamState('role', 'all')
   const [status, setStatus] = useSearchParamState('status', 'all')
   const [q, setQ] = useSearchParamState('q')
@@ -534,46 +529,6 @@ export default function AccountsPage() {
               총 {data.summary.total}건 · 매니저 {data.summary.managers} · 강사{' '}
               {data.summary.instructors} · 멘토 {data.summary.mentors}
             </div>
-
-            {/* 최근 감사 로그 — 설정 허브에서 이전(설정 탭에 유지). */}
-            {hub && (
-              <div className="border-border bg-surface mt-6 rounded-2xl border shadow-sm">
-                <div className="flex items-center justify-between px-5 pt-4 pb-3">
-                  <div>
-                    <p className="text-fg text-sm font-bold">최근 감사 로그</p>
-                    <p className="text-fg-subtle text-[11px]">
-                      설정 변경 7일 이력 요약 · 전체는 감사 로그 페이지에서
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/admin/settings/audit')}
-                    className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
-                  >
-                    전체 로그 <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
-                {hub.auditLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="border-divider flex items-center gap-4 border-t px-5 py-3"
-                  >
-                    <div className="w-24 shrink-0">
-                      <p className="text-fg text-xs font-bold">{log.at}</p>
-                      <p className="text-fg-subtle text-[11px]">{log.actor}</p>
-                    </div>
-                    <span className="bg-surface-muted text-fg-muted shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold">
-                      {log.origin}
-                    </span>
-                    <p className="text-xs">
-                      <span className="text-fg font-bold">{log.action}</span>
-                      <span className="text-fg-subtle"> · </span>
-                      <span className="text-fg-muted">{log.detail}</span>
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
           </>
         )}
       </DataBoundary>

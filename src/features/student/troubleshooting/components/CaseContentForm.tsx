@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/use-toast'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { tsKeys } from '../queryKeys'
@@ -728,7 +729,7 @@ export function CaseContentForm({
                     ? undefined
                     : '인증 요청 준비 항목을 모두 충족해야 인증 요청할 수 있어요'
                 }
-                className="bg-brand flex-1 rounded-lg py-2.5 text-[12px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                className={buttonClass({ size: 'sm', className: 'flex-1' })}
               >
                 인증 요청
               </button>

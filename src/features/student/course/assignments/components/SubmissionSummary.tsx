@@ -1,3 +1,4 @@
+import { buttonClass } from '@/components/ui/Button'
 import type { AssignmentDetail, AssignmentDraft } from '../types'
 
 // 제출 완료 요약 (Figma 2236:10480) — 상세 페이지의 제출 후 휴지 상태.
@@ -54,7 +55,7 @@ export function SubmissionSummary({
         <button
           type="button"
           onClick={onEdit}
-          className="bg-brand h-10 shrink-0 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+          className={buttonClass({ size: 'md', className: 'shrink-0' })}
         >
           제출 보기·수정
         </button>

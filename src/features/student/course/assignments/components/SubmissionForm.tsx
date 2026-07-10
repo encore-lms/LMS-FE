@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
+import { buttonClass } from '@/components/ui/Button'
 import type { AssignmentDraft } from '../types'
 
 // 과제 제출 폼 — 본문(textarea)·제출 URL(input)·첨부 자산(파일 업로드·링크 추가) + 목록으로/제출 저장.
@@ -103,7 +104,7 @@ export function SubmissionForm({
               type="button"
               onClick={addLink}
               disabled={!link.trim()}
-              className="bg-brand shrink-0 rounded-lg px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-40"
+              className={buttonClass({ size: 'sm', className: 'shrink-0' })}
             >
               링크 추가
             </button>
@@ -144,7 +145,7 @@ export function SubmissionForm({
           type="button"
           onClick={() => onSave({ body, url, assets })}
           disabled={!canSubmit || isSaving}
-          className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          className={buttonClass({ size: 'md' })}
         >
           {isSaving ? '저장 중…' : '제출 저장'}
         </button>

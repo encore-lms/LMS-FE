@@ -151,12 +151,10 @@ function renderPage() {
   )
   vi.mocked(useResetAccountPassword).mockReturnValue({
     mutate: vi.fn(),
-    mutateAsync: vi
-      .fn()
-      .mockResolvedValue({
-        userId: 'stu-0027',
-        temporaryPassword: 'Temp1234!abc',
-      }),
+    mutateAsync: vi.fn().mockResolvedValue({
+      userId: 'stu-0027',
+      temporaryPassword: 'Temp1234!abc',
+    }),
     isPending: false,
   } as unknown as ReturnType<typeof useResetAccountPassword>)
   return render(
@@ -243,7 +241,7 @@ describe('StudentManagementPage', () => {
   it('출결 탭으로 전환하면 HRD 일별 출결 KPI와 행이 보인다', async () => {
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: /^출결$/ }))
+    await user.click(screen.getByRole('tab', { name: /^출결$/ }))
     expect(screen.getByText('출석(정상)')).toBeInTheDocument()
     expect(screen.getByText('92')).toBeInTheDocument()
     // HRD 일별 출결 — 학생 행(이름·입실 시각)
@@ -254,7 +252,7 @@ describe('StudentManagementPage', () => {
   it('출결 필터 탭은 전체·지각·결석·미입실·미퇴실을 제공한다', async () => {
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: /^출결$/ }))
+    await user.click(screen.getByRole('tab', { name: /^출결$/ }))
     for (const label of ['미입실', '미퇴실']) {
       expect(
         screen.getByRole('button', { name: new RegExp(label) }),

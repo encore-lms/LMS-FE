@@ -11,9 +11,9 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
+import { Tabs } from '@/components/ui/Tabs'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import {
   useMentoringRequestAction,
@@ -158,47 +158,18 @@ export default function RequestsPage() {
       </div>
 
       {/* 필터 툴바 — 상태 탭 6 + 기간 드롭다운 + 팀명·요청자 검색 */}
-      <section className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2.5 shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
-        <div className="flex flex-wrap items-center gap-2">
-          {REQUEST_TABS.map((t) => {
-            const active = tab === t.value
-            const count = searched.filter((r) =>
-              matchRequestTab(r, t.value),
-            ).length
-            return (
-              <button
-                key={t.value}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setTab(t.value)}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-lg px-3.5 py-[7px] text-[13px] whitespace-nowrap',
-                  active
-                    ? 'bg-brand-deep text-on-color font-bold'
-                    : 'border-border text-fg bg-surface hover:bg-surface-muted border font-medium',
-                )}
-              >
-                {t.dot && !active && (
-                  <span
-                    className={cn('h-1.5 w-1.5 rounded-full', t.dot)}
-                    aria-hidden
-                  />
-                )}
-                {t.label}
-                <span
-                  className={cn(
-                    'rounded-[5px] px-1.5 py-0.5 text-[11px] font-bold',
-                    active
-                      ? 'bg-surface text-fg'
-                      : 'bg-surface-muted text-fg-muted',
-                  )}
-                >
-                  {count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+      <section className="bg-surface-muted/50 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-2.5">
+        <Tabs
+          aria-label="요청 상태 필터"
+          value={tab}
+          onChange={(v) => setTab(v as MentoringRequestTab)}
+          items={REQUEST_TABS.map((t) => ({
+            value: t.value,
+            label: t.label,
+            dot: t.dot,
+            count: searched.filter((r) => matchRequestTab(r, t.value)).length,
+          }))}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
             <Calendar className="text-fg-muted h-3 w-3 shrink-0" />
@@ -210,7 +181,7 @@ export default function RequestsPage() {
               className="h-[34px]"
             />
           </div>
-          <label className="border-border flex h-[34px] w-[220px] items-center gap-2 rounded-lg border px-3">
+          <label className="bg-surface flex h-[34px] w-[220px] items-center gap-2 rounded-lg px-3">
             <Search className="text-fg-subtle h-3 w-3 shrink-0" />
             <input
               value={q}

@@ -1,5 +1,4 @@
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
 import { useStudentDashboard } from '../api/dashboard'
 import { useMentoringAssigned } from '../api/mentoring'
@@ -59,59 +58,57 @@ export default function DashboardPage() {
   const mentoringAssigned = useMentoringAssigned().data
   usePageHeader('대시보드')
 
-  if (isPending) {
-    return <SkeletonDashboard kpis={4} panels={4} />
-  }
-  if (isError) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="대시보드를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const attendance = data.attendance ?? createEmptyAttendance()
+  const attendance = data?.attendance ?? createEmptyAttendance()
 
   return (
-    // 배경은 헤더(흰색)와 같은 톤으로 이어지게 무지 — 카드 구분은 보더+소프트 섀도.
-    // break-keep: 한국어 어절 중간 개행 방지(좁은 카드·모바일).
-    <div className="flex min-h-full flex-col gap-6 p-4 break-keep sm:p-8">
-      <HeroBanner hero={data.hero} attendance={attendance} />
+    <DataBoundary
+      isPending={isPending}
+      isError={isError}
+      onRetry={() => refetch()}
+      // 스켈레톤 자체 기본 p-8과 겹치지 않게 여백은 DataBoundary className에서만 부여.
+      skeleton={<SkeletonDashboard kpis={4} panels={4} className="" />}
+      errorTitle="대시보드를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        // 배경은 헤더(흰색)와 같은 톤으로 이어지게 무지 — 카드 구분은 보더+소프트 섀도.
+        // break-keep: 한국어 어절 중간 개행 방지(좁은 카드·모바일).
+        <div className="flex min-h-full flex-col gap-6 p-4 break-keep sm:p-8">
+          <HeroBanner hero={data.hero} attendance={attendance} />
 
-      {/* 3섹션: (사이드바) · 메인(실행 콘텐츠) · 우측 레일(개인 현황) */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        {/* 메인 — 오늘 처리할 학습 활동. 알림·공지는 하단 2열로 메인에 둬 레일과 높이 균형. */}
-        <div className="flex min-w-0 flex-col gap-6">
-          <KpiCards kpis={data.kpis} />
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <TodoList todos={data.todos} />
-            <DeadlineQuizzes quizzes={data.deadlineQuizzes} />
-          </div>
-          {mentoringAssigned !== false && (
-            <MentoringSummary mentoring={data.mentoring} />
-          )}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <ProjectList projects={data.projects} />
-            <TroubleshootingList items={data.troubleshooting} />
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <NotificationList notifications={data.notifications} />
-            <NoticeList notices={data.notices} />
+          {/* 3섹션: (사이드바) · 메인(실행 콘텐츠) · 우측 레일(개인 현황) */}
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+            {/* 메인 — 오늘 처리할 학습 활동. 알림·공지는 하단 2열로 메인에 둬 레일과 높이 균형. */}
+            <div className="flex min-w-0 flex-col gap-6">
+              <KpiCards kpis={data.kpis} />
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <TodoList todos={data.todos} />
+                <DeadlineQuizzes quizzes={data.deadlineQuizzes} />
+              </div>
+              {mentoringAssigned !== false && (
+                <MentoringSummary mentoring={data.mentoring} />
+              )}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <ProjectList projects={data.projects} />
+                <TroubleshootingList items={data.troubleshooting} />
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <NotificationList notifications={data.notifications} />
+                <NoticeList notices={data.notices} />
+              </div>
+            </div>
+
+            {/* 우측 레일 — 개인 현황(프로필·스트릭·출결) */}
+            <aside className="flex flex-col gap-6">
+              <ProfileCard hero={data.hero} attendance={attendance} />
+              <WeeklyStreak attendance={attendance} />
+              <AttendanceCalendar attendance={attendance} />
+              <AttendanceSummary attendance={attendance} />
+            </aside>
           </div>
         </div>
-
-        {/* 우측 레일 — 개인 현황(프로필·스트릭·출결) */}
-        <aside className="flex flex-col gap-6">
-          <ProfileCard hero={data.hero} attendance={attendance} />
-          <WeeklyStreak attendance={attendance} />
-          <AttendanceCalendar attendance={attendance} />
-          <AttendanceSummary attendance={attendance} />
-        </aside>
-      </div>
-    </div>
+      )}
+    </DataBoundary>
   )
 }

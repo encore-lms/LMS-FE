@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, FileText, Plus, UserPlus } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { FileText, Plus, UserPlus } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
@@ -324,22 +323,6 @@ export default function AssignmentsPage() {
     return [...map.values()]
   }, [filtered])
 
-  if (isPending) {
-    return <SkeletonListPage kpis={4} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="배정 현황을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const openCreate = (teamId: string | null) => {
     setFormTeamId(teamId)
     setFormOpen(true)
@@ -415,142 +398,157 @@ export default function AssignmentsPage() {
         </div>
       </div>
 
-      {/* 필터 바 */}
-      <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={mentorFilter}
-            onChange={(v) => setMentorFilter(v)}
-            aria-label="멘토 필터"
-            options={[
-              { value: 'all', label: '멘토 전체' },
-              ...data.mentors.map((m) => ({
-                value: m.mentorId,
-                label: m.name,
-              })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            value={status}
-            onChange={(v) => setStatus(v)}
-            aria-label="배정 상태 필터"
-            options={[
-              { value: 'with_unassigned', label: '미배정 포함' },
-              { value: 'active_only', label: '배정만' },
-              { value: 'unassigned_only', label: '미배정만' },
-            ]}
-            className="h-9"
-          />
-        </div>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="팀명·멘토명 검색"
-          aria-label="팀명·멘토명 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-60 rounded-lg border px-3 text-sm outline-none"
-        />
-      </div>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        skeleton={<SkeletonListPage kpis={4} columns={5} className="" />}
+        errorTitle="배정 현황을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {data && (
+          <>
+            {/* 필터 바 */}
+            <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={mentorFilter}
+                  onChange={(v) => setMentorFilter(v)}
+                  aria-label="멘토 필터"
+                  options={[
+                    { value: 'all', label: '멘토 전체' },
+                    ...data.mentors.map((m) => ({
+                      value: m.mentorId,
+                      label: m.name,
+                    })),
+                  ]}
+                  className="h-9"
+                />
+                <Select
+                  value={status}
+                  onChange={(v) => setStatus(v)}
+                  aria-label="배정 상태 필터"
+                  options={[
+                    { value: 'with_unassigned', label: '미배정 포함' },
+                    { value: 'active_only', label: '배정만' },
+                    { value: 'unassigned_only', label: '미배정만' },
+                  ]}
+                  className="h-9"
+                />
+              </div>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="팀명·멘토명 검색"
+                aria-label="팀명·멘토명 검색"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-60 rounded-lg border px-3 text-sm outline-none"
+              />
+            </div>
 
-      {/* 기수별 멘토링 카드 — 기수 그룹 안에 팀별 멘토링 카드 */}
-      <div className="mt-4 flex flex-col gap-6">
-        {cohortGroups.length === 0 ? (
-          <div className="border-border bg-surface rounded-xl border p-10 text-center">
-            <p className="text-fg-subtle text-sm">
-              조건에 맞는 멘토링이 없어요
-            </p>
-          </div>
-        ) : (
-          cohortGroups.map((group) => {
-            const assigned = group.teams.filter((t) => t.assignmentId).length
-            const unassigned = group.teams.length - assigned
-            return (
-              <section key={group.cohortId}>
-                {/* 기수 헤더 */}
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className="bg-brand h-5 w-1 rounded-full"
-                      aria-hidden
-                    />
-                    <span className="text-fg text-[15px] font-bold">
-                      {selectedCohortLabel || group.cohortLabel}
-                    </span>
-                    <span className="text-fg-subtle text-[12px]">
-                      {selectedCourseTitle ?? group.courseName}
-                    </span>
-                    <span className="text-fg-muted text-[12px]">
-                      · 팀 {group.teams.length} (배정 {assigned}
-                      {unassigned > 0 && (
-                        <span className="text-danger">
-                          {' '}
-                          · 미배정 {unassigned}
-                        </span>
-                      )}
-                      )
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={openStudentCreate}
-                    className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-bold"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    배정 추가
-                  </button>
+            {/* 기수별 멘토링 카드 — 기수 그룹 안에 팀별 멘토링 카드 */}
+            <div className="mt-4 flex flex-col gap-6">
+              {cohortGroups.length === 0 ? (
+                <div className="border-border bg-surface rounded-xl border p-10 text-center">
+                  <p className="text-fg-subtle text-sm">
+                    조건에 맞는 멘토링이 없어요
+                  </p>
                 </div>
+              ) : (
+                cohortGroups.map((group) => {
+                  const assigned = group.teams.filter(
+                    (t) => t.assignmentId,
+                  ).length
+                  const unassigned = group.teams.length - assigned
+                  return (
+                    <section key={group.cohortId}>
+                      {/* 기수 헤더 */}
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="bg-brand h-5 w-1 rounded-full"
+                            aria-hidden
+                          />
+                          <span className="text-fg text-[15px] font-bold">
+                            {selectedCohortLabel || group.cohortLabel}
+                          </span>
+                          <span className="text-fg-subtle text-[12px]">
+                            {selectedCourseTitle ?? group.courseName}
+                          </span>
+                          <span className="text-fg-muted text-[12px]">
+                            · 팀 {group.teams.length} (배정 {assigned}
+                            {unassigned > 0 && (
+                              <span className="text-danger">
+                                {' '}
+                                · 미배정 {unassigned}
+                              </span>
+                            )}
+                            )
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openStudentCreate}
+                          className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-bold"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          배정 추가
+                        </button>
+                      </div>
 
-                {/* 멘토링 카드 그리드 */}
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {group.teams.map((team) => (
-                    <MentoringCard
-                      key={team.teamId}
-                      team={team}
-                      logStat={logStats.get(team.teamId)}
-                      logsPending={logs.isPending}
-                      onAssign={() => openCreate(team.teamId)}
-                      onEarlyEnd={() => setEarlyEndRow(team)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )
-          })
+                      {/* 멘토링 카드 그리드 */}
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {group.teams.map((team) => (
+                          <MentoringCard
+                            key={team.teamId}
+                            team={team}
+                            logStat={logStats.get(team.teamId)}
+                            logsPending={logs.isPending}
+                            onAssign={() => openCreate(team.teamId)}
+                            onEarlyEnd={() => setEarlyEndRow(team)}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  )
+                })
+              )}
+              <div className="text-fg-subtle text-xs">
+                총 {data.summary.total} · 활성 {data.summary.active} · 미배정{' '}
+                {data.summary.unassigned}
+              </div>
+            </div>
+
+            {/* 모달 — 열림 상태에서만 마운트(폼 기본값 초기화) */}
+            {createOpen && cohort !== 'all' && (
+              <AssignmentCreateModal
+                open
+                onClose={() => setCreateOpen(false)}
+                cohortId={cohort}
+                cohortLabel={selectedCohortLabel}
+                existingTeamCount={cohortTeamCount}
+              />
+            )}
+            {formOpen && (
+              <AssignmentFormModal
+                open
+                onClose={() => {
+                  setFormOpen(false)
+                  setFormTeamId(null)
+                }}
+                data={data}
+                presetTeamId={formTeamId}
+              />
+            )}
+            {earlyEndRow && (
+              <EarlyEndModal
+                open
+                onClose={() => setEarlyEndRow(null)}
+                row={earlyEndRow}
+              />
+            )}
+          </>
         )}
-        <div className="text-fg-subtle text-xs">
-          총 {data.summary.total} · 활성 {data.summary.active} · 미배정{' '}
-          {data.summary.unassigned}
-        </div>
-      </div>
-
-      {/* 모달 — 열림 상태에서만 마운트(폼 기본값 초기화) */}
-      {createOpen && cohort !== 'all' && (
-        <AssignmentCreateModal
-          open
-          onClose={() => setCreateOpen(false)}
-          cohortId={cohort}
-          cohortLabel={selectedCohortLabel}
-          existingTeamCount={cohortTeamCount}
-        />
-      )}
-      {formOpen && (
-        <AssignmentFormModal
-          open
-          onClose={() => {
-            setFormOpen(false)
-            setFormTeamId(null)
-          }}
-          data={data}
-          presetTeamId={formTeamId}
-        />
-      )}
-      {earlyEndRow && (
-        <EarlyEndModal
-          open
-          onClose={() => setEarlyEndRow(null)}
-          row={earlyEndRow}
-        />
-      )}
+      </DataBoundary>
     </div>
   )
 }

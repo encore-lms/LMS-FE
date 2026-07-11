@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Plus, Search, Users } from 'lucide-react'
+import { Plus, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -339,20 +340,6 @@ export function AssignmentsPane({
     })
   }
 
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="과제를 불러오지 못했어요"
-        description="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-
   const columns: Column<InstructorAssignmentRow>[] = [
     {
       key: 'title',
@@ -422,153 +409,162 @@ export function AssignmentsPane({
   ]
 
   return (
-    <div>
-      {/* KPI 카드 대신 필터 바 — 검색·제출 상태로 목록을 좁힌다(운영 요구). */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-fg-muted text-sm">
-          총 {filtered.length}개 과제
-          {filtered.length !== data.total && ` (전체 ${data.total})`}
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-            <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="불러오는 중…"
+      errorTitle="과제를 불러오지 못했어요"
+      errorDescription="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
+    >
+      <div>
+        {/* KPI 카드 대신 필터 바 — 검색·제출 상태로 목록을 좁힌다(운영 요구). */}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-fg-muted text-sm">
+            총 {filtered.length}개 과제
+            {data && filtered.length !== data.total && ` (전체 ${data.total})`}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+              <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="과제·과목 검색"
+                aria-label="과제 검색"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            <Select
+              aria-label="제출 상태 필터"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'all', label: '전체' },
+                { value: 'submitted', label: '제출 있음' },
+                { value: 'supplement', label: '보완 요청' },
+                { value: 'done', label: '검토 완료' },
+                { value: 'closed', label: '마감됨' },
+              ]}
+            />
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" /> 과제 등록
+            </Button>
+          </div>
+        </div>
+
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          rowKey={(r) => r.id}
+          onRowClick={(r) => setSubView(r)}
+          empty={
+            (data?.total ?? 0) === 0
+              ? '등록된 과제가 없어요'
+              : '조건에 맞는 과제가 없어요'
+          }
+        />
+
+        {/* 과제 삭제 확인 — 복구 불가 액션 */}
+        <ActionModal
+          spec={deleteSpec}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={onDelete}
+          pending={deleteA.isPending}
+        />
+
+        {/* 제출 현황 검토 */}
+        {subView && (
+          <SubmissionsModal
+            assignmentId={subView.id}
+            title={subView.title}
+            nameOf={nameOf}
+            onClose={() => setSubView(null)}
+          />
+        )}
+
+        {/* 과제 등록 모달 — 강사식 필드(과목/회차·제목·마감·설명) */}
+        <Modal
+          open={addOpen}
+          onClose={() => {
+            setAddOpen(false)
+            resetForm()
+          }}
+          title="과제 등록"
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setAddOpen(false)
+                  resetForm()
+                }}
+              >
+                취소
+              </Button>
+              <Button onClick={onAdd} disabled={createA.isPending}>
+                등록
+              </Button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <label
+              className="text-fg-subtle text-xs font-medium"
+              htmlFor="as-subject"
+            >
+              과목/회차
+            </label>
             <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="과제·과목 검색"
-              aria-label="과제 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              id="as-subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="예: 백엔드 5회차"
+              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
+            />
+            <label
+              className="text-fg-subtle text-xs font-medium"
+              htmlFor="as-title"
+            >
+              제목
+            </label>
+            <input
+              id="as-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="예: JPA 연관관계 매핑 실습"
+              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
+            />
+            <label
+              className="text-fg-subtle text-xs font-medium"
+              htmlFor="as-desc"
+            >
+              설명
+            </label>
+            <textarea
+              id="as-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="과제 안내·제출 조건(최대 5,000자)"
+              rows={4}
+              className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
+            />
+            <label
+              className="text-fg-subtle text-xs font-medium"
+              htmlFor="as-due"
+            >
+              마감일
+            </label>
+            <input
+              id="as-due"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
             />
           </div>
-          <Select
-            aria-label="제출 상태 필터"
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={[
-              { value: 'all', label: '전체' },
-              { value: 'submitted', label: '제출 있음' },
-              { value: 'supplement', label: '보완 요청' },
-              { value: 'done', label: '검토 완료' },
-              { value: 'closed', label: '마감됨' },
-            ]}
-          />
-          <Button onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" /> 과제 등록
-          </Button>
-        </div>
+        </Modal>
       </div>
-
-      <DataTable
-        columns={columns}
-        rows={filtered}
-        rowKey={(r) => r.id}
-        onRowClick={(r) => setSubView(r)}
-        empty={
-          data.total === 0
-            ? '등록된 과제가 없어요'
-            : '조건에 맞는 과제가 없어요'
-        }
-      />
-
-      {/* 과제 삭제 확인 — 복구 불가 액션 */}
-      <ActionModal
-        spec={deleteSpec}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={onDelete}
-        pending={deleteA.isPending}
-      />
-
-      {/* 제출 현황 검토 */}
-      {subView && (
-        <SubmissionsModal
-          assignmentId={subView.id}
-          title={subView.title}
-          nameOf={nameOf}
-          onClose={() => setSubView(null)}
-        />
-      )}
-
-      {/* 과제 등록 모달 — 강사식 필드(과목/회차·제목·마감·설명) */}
-      <Modal
-        open={addOpen}
-        onClose={() => {
-          setAddOpen(false)
-          resetForm()
-        }}
-        title="과제 등록"
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setAddOpen(false)
-                resetForm()
-              }}
-            >
-              취소
-            </Button>
-            <Button onClick={onAdd} disabled={createA.isPending}>
-              등록
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          <label
-            className="text-fg-subtle text-xs font-medium"
-            htmlFor="as-subject"
-          >
-            과목/회차
-          </label>
-          <input
-            id="as-subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="예: 백엔드 5회차"
-            className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
-          />
-          <label
-            className="text-fg-subtle text-xs font-medium"
-            htmlFor="as-title"
-          >
-            제목
-          </label>
-          <input
-            id="as-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="예: JPA 연관관계 매핑 실습"
-            className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
-          />
-          <label
-            className="text-fg-subtle text-xs font-medium"
-            htmlFor="as-desc"
-          >
-            설명
-          </label>
-          <textarea
-            id="as-desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="과제 안내·제출 조건(최대 5,000자)"
-            rows={4}
-            className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
-          />
-          <label
-            className="text-fg-subtle text-xs font-medium"
-            htmlFor="as-due"
-          >
-            마감일
-          </label>
-          <input
-            id="as-due"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
-          />
-        </div>
-      </Modal>
-    </div>
+    </DataBoundary>
   )
 }

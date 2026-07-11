@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Search } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { Search } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { formatDateTime } from '@/shared/lib/date'
@@ -40,20 +39,6 @@ export function ResumePane({
     navigate(
       `/admin/education/resume/${resumeId}?courseId=${courseId}&cohortId=${cohortId}`,
     )
-
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="이력서 현황을 불러오지 못했어요"
-        description="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
 
   const columns: Column<ResumeRow>[] = [
     {
@@ -122,45 +107,54 @@ export function ResumePane({
   // 이름 또는 이력서 제목으로 검색(클라이언트 필터).
   const needle = q.trim().toLowerCase()
   const matched = needle
-    ? data.filter(
+    ? (data ?? []).filter(
         (r) =>
           nameOf(r.studentUserId).toLowerCase().includes(needle) ||
           r.title.toLowerCase().includes(needle),
       )
-    : data
+    : (data ?? [])
   // 이름 가나다순 고정(운영 요구)
   const rows = [...matched].sort((a, b) =>
     nameOf(a.studentUserId).localeCompare(nameOf(b.studentUserId), 'ko'),
   )
 
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-fg-muted text-sm">
-          총 {rows.length}개 이력서
-          {needle && (
-            <span className="text-fg-subtle"> · 전체 {data.length}</span>
-          )}
-        </p>
-        {/* 탭 공통 필터 바 규격 — 검색은 우측·아이콘 포함·w-56 */}
-        <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-          <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="이름·이력서 제목 검색"
-            aria-label="이력서 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
-          />
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="불러오는 중…"
+      errorTitle="이력서 현황을 불러오지 못했어요"
+      errorDescription="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
+    >
+      <div>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-fg-muted text-sm">
+            총 {rows.length}개 이력서
+            {needle && data && (
+              <span className="text-fg-subtle"> · 전체 {data.length}</span>
+            )}
+          </p>
+          {/* 탭 공통 필터 바 규격 — 검색은 우측·아이콘 포함·w-56 */}
+          <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+            <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="이름·이력서 제목 검색"
+              aria-label="이력서 검색"
+              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+            />
+          </div>
         </div>
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          onRowClick={(r) => openDetail(r.id)}
+          empty={needle ? '검색 결과가 없어요' : '등록된 이력서가 없어요'}
+        />
       </div>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        onRowClick={(r) => openDetail(r.id)}
-        empty={needle ? '검색 결과가 없어요' : '등록된 이력서가 없어요'}
-      />
-    </div>
+    </DataBoundary>
   )
 }

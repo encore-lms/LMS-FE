@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, MessageSquarePlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -79,80 +79,83 @@ export default function ResumeDetailPage() {
     )
   }
 
-  if (isPending) {
-    return <div className="text-fg-muted p-8">이력서를 불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="이력서를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={goList}
-          className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium"
-        >
-          <ArrowLeft className="h-4 w-4" /> 목록으로
-        </button>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-fg font-semibold">{studentName}</span>
-          <StatusBadge
-            label={STATUS_LABEL[data.status] ?? data.status}
-            tone={data.status === 'COMPLETED' ? 'success' : 'warning'}
-          />
-          <span className="text-fg-subtle text-xs tabular-nums">
-            {fmt(data.updatedAt)}
-          </span>
-        </div>
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="이력서를 불러오는 중…"
+      errorTitle="이력서를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={goList}
+              className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium"
+            >
+              <ArrowLeft className="h-4 w-4" /> 목록으로
+            </button>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-fg font-semibold">{studentName}</span>
+              <StatusBadge
+                label={STATUS_LABEL[data.status] ?? data.status}
+                tone={data.status === 'COMPLETED' ? 'success' : 'warning'}
+              />
+              <span className="text-fg-subtle text-xs tabular-nums">
+                {fmt(data.updatedAt)}
+              </span>
+            </div>
+          </div>
 
-      {/* 이력서 본문 — 학생 문서 뷰와 동일 렌더(상세 페이지는 외곽선 없이) */}
-      <ResumeDocView data={parseResumeContent(data.content)} bordered={false} />
-
-      {/* 피드백 */}
-      <section className="border-border bg-surface rounded-xl border p-5">
-        <p className="text-fg mb-3 text-sm font-semibold">
-          피드백 {data.feedbacks.length}건
-        </p>
-        <div className="mb-3 flex flex-col gap-2">
-          {data.feedbacks.length === 0 ? (
-            <p className="text-fg-subtle text-xs">아직 피드백이 없어요.</p>
-          ) : (
-            data.feedbacks.map((f) => (
-              <div key={f.id} className="bg-surface-muted rounded-lg px-3 py-2">
-                <p className="text-fg text-[13px] whitespace-pre-wrap">
-                  {f.body}
-                </p>
-                <p className="text-fg-subtle mt-1 text-[11px] tabular-nums">
-                  {fmt(f.createdAt)}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-        <div className="flex items-start gap-2">
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="피드백을 입력하세요"
-            rows={2}
-            className="border-border focus:border-brand text-fg bg-surface flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+          {/* 이력서 본문 — 학생 문서 뷰와 동일 렌더(상세 페이지는 외곽선 없이) */}
+          <ResumeDocView
+            data={parseResumeContent(data.content)}
+            bordered={false}
           />
-          <Button onClick={onSubmit} disabled={addFeedback.isPending}>
-            <MessageSquarePlus className="h-4 w-4" /> 등록
-          </Button>
+
+          {/* 피드백 */}
+          <section className="border-border bg-surface rounded-xl border p-5">
+            <p className="text-fg mb-3 text-sm font-semibold">
+              피드백 {data.feedbacks.length}건
+            </p>
+            <div className="mb-3 flex flex-col gap-2">
+              {data.feedbacks.length === 0 ? (
+                <p className="text-fg-subtle text-xs">아직 피드백이 없어요.</p>
+              ) : (
+                data.feedbacks.map((f) => (
+                  <div
+                    key={f.id}
+                    className="bg-surface-muted rounded-lg px-3 py-2"
+                  >
+                    <p className="text-fg text-[13px] whitespace-pre-wrap">
+                      {f.body}
+                    </p>
+                    <p className="text-fg-subtle mt-1 text-[11px] tabular-nums">
+                      {fmt(f.createdAt)}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex items-start gap-2">
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder="피드백을 입력하세요"
+                rows={2}
+                className="border-border focus:border-brand text-fg bg-surface flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+              />
+              <Button onClick={onSubmit} disabled={addFeedback.isPending}>
+                <MessageSquarePlus className="h-4 w-4" /> 등록
+              </Button>
+            </div>
+          </section>
         </div>
-      </section>
-    </div>
+      )}
+    </DataBoundary>
   )
 }

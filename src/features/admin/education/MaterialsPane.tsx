@@ -1,14 +1,8 @@
 import { useMemo, useState } from 'react'
-import {
-  AlertTriangle,
-  Download,
-  ExternalLink,
-  Plus,
-  Search,
-} from 'lucide-react'
+import { Download, ExternalLink, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
-import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
@@ -171,20 +165,6 @@ export function MaterialsPane({
     )
   }
 
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="자료실을 불러오지 못했어요"
-        description="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-
   const columns: Column<CohortMaterialItem>[] = [
     {
       key: 'title',
@@ -264,223 +244,234 @@ export function MaterialsPane({
   ]
 
   return (
-    <div>
-      {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·유형 필터·주 액션 */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-fg-muted text-sm">
-          총 {filtered.length}개 자료
-          {filtered.length !== data.length && ` (전체 ${data.length})`}
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-            <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="제목·내용 검색"
-              aria-label="자료 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="불러오는 중…"
+      errorTitle="자료실을 불러오지 못했어요"
+      errorDescription="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
+    >
+      <div>
+        {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·유형 필터·주 액션 */}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-fg-muted text-sm">
+            총 {filtered.length}개 자료
+            {data &&
+              filtered.length !== data.length &&
+              ` (전체 ${data.length})`}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+              <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="제목·내용 검색"
+                aria-label="자료 검색"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            <Select
+              aria-label="유형 필터"
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={[
+                { value: 'all', label: '전체 유형' },
+                { value: 'document', label: '문서' },
+                { value: 'link', label: '링크' },
+                { value: 'file', label: '파일' },
+              ]}
             />
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" /> 자료 등록
+            </Button>
           </div>
-          <Select
-            aria-label="유형 필터"
-            value={typeFilter}
-            onChange={setTypeFilter}
-            options={[
-              { value: 'all', label: '전체 유형' },
-              { value: 'document', label: '문서' },
-              { value: 'link', label: '링크' },
-              { value: 'file', label: '파일' },
-            ]}
-          />
-          <Button onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" /> 자료 등록
-          </Button>
         </div>
-      </div>
 
-      <DataTable
-        columns={columns}
-        rows={filtered}
-        rowKey={(m) => m.id}
-        onRowClick={(m) => setDetail(m)}
-        empty={
-          data.length === 0
-            ? '등록된 자료가 없어요'
-            : '조건에 맞는 자료가 없어요'
-        }
-      />
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          rowKey={(m) => m.id}
+          onRowClick={(m) => setDetail(m)}
+          empty={
+            (data?.length ?? 0) === 0
+              ? '등록된 자료가 없어요'
+              : '조건에 맞는 자료가 없어요'
+          }
+        />
 
-      {/* 자료 삭제 확인 — 복구 불가 액션 */}
-      <ActionModal
-        spec={deleteSpec}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={onDelete}
-        pending={deleteMaterial.isPending}
-      />
+        {/* 자료 삭제 확인 — 복구 불가 액션 */}
+        <ActionModal
+          spec={deleteSpec}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={onDelete}
+          pending={deleteMaterial.isPending}
+        />
 
-      {/* 상세 팝업 — 블로그 포스트형 */}
-      <Modal
-        open={!!detail}
-        onClose={() => setDetail(null)}
-        size="lg"
-        footer={
-          <Button variant="secondary" onClick={() => setDetail(null)}>
-            닫기
-          </Button>
-        }
-      >
-        {detail && (
-          <ArticleView
-            badges={[
-              {
-                label: TYPE_LABEL[detail.materialType] ?? detail.materialType,
-                className: 'bg-info-bg text-info',
-              },
-            ]}
-            title={detail.title}
-            metaItems={[
-              nameOf(detail.uploadedByUserId),
-              formatDate(detail.createdAt) || '-',
-            ]}
-            body={detail.body}
-            bodyEmptyText="본문 없이 등록된 자료입니다."
-            footer={
-              detail.hasFile ? (
-                <button
-                  type="button"
-                  onClick={() => onDownload(detail)}
-                  className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
-                >
-                  <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
-                    <Download className="h-5 w-5" />
-                  </span>
-                  <span className="flex min-w-0 flex-col">
-                    <span className="text-fg truncate text-sm font-semibold">
-                      {detail.fileName}
-                    </span>
-                    <span className="text-fg-subtle text-xs">
-                      {fmtSize(detail.fileSize)} · 클릭하여 다운로드
-                    </span>
-                  </span>
-                </button>
-              ) : detail.url ? (
-                <a
-                  href={detail.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
-                >
-                  <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
-                    <ExternalLink className="h-5 w-5" />
-                  </span>
-                  <span className="flex min-w-0 flex-col">
-                    <span className="text-fg text-sm font-semibold">
-                      링크 열기
-                    </span>
-                    <span className="text-info truncate text-xs">
-                      {detail.url}
-                    </span>
-                  </span>
-                </a>
-              ) : null
-            }
-          />
-        )}
-      </Modal>
-
-      {/* 등록 모달 */}
-      <Modal
-        open={addOpen}
-        onClose={() => {
-          setAddOpen(false)
-          resetForm()
-        }}
-        title="자료 등록"
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setAddOpen(false)
-                resetForm()
-              }}
-            >
-              취소
+        {/* 상세 팝업 — 블로그 포스트형 */}
+        <Modal
+          open={!!detail}
+          onClose={() => setDetail(null)}
+          size="lg"
+          footer={
+            <Button variant="secondary" onClick={() => setDetail(null)}>
+              닫기
             </Button>
-            <Button onClick={onAdd} disabled={createMaterial.isPending}>
-              등록
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          <label
-            className="text-fg-subtle text-xs font-medium"
-            htmlFor="mat-title"
-          >
-            제목
-          </label>
-          <input
-            id="mat-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="예: 1주차 강의자료"
-            className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
-          />
-
-          <label
-            className="text-fg-subtle text-xs font-medium"
-            htmlFor="mat-body"
-          >
-            본문
-          </label>
-          <textarea
-            id="mat-body"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="자료 안내·설명을 입력하세요"
-            rows={4}
-            className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
-          />
-
-          {/* 유형 토글 */}
-          <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
-            {(['link', 'file'] as const).map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setKind(k)}
-                className={
-                  'flex-1 rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors ' +
-                  (kind === k
-                    ? 'bg-surface text-fg shadow-sm'
-                    : 'text-fg-muted hover:text-fg')
-                }
-              >
-                {k === 'link' ? '링크' : '파일'}
-              </button>
-            ))}
-          </div>
-
-          {kind === 'link' ? (
-            <input
-              aria-label="링크 URL"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://..."
-              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
-            />
-          ) : (
-            <input
-              aria-label="파일 선택"
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="text-fg-muted file:border-border file:bg-surface-muted file:text-fg text-sm file:mr-3 file:rounded-md file:border file:px-3 file:py-1.5 file:text-[13px]"
+          }
+        >
+          {detail && (
+            <ArticleView
+              badges={[
+                {
+                  label: TYPE_LABEL[detail.materialType] ?? detail.materialType,
+                  className: 'bg-info-bg text-info',
+                },
+              ]}
+              title={detail.title}
+              metaItems={[
+                nameOf(detail.uploadedByUserId),
+                formatDate(detail.createdAt) || '-',
+              ]}
+              body={detail.body}
+              bodyEmptyText="본문 없이 등록된 자료입니다."
+              footer={
+                detail.hasFile ? (
+                  <button
+                    type="button"
+                    onClick={() => onDownload(detail)}
+                    className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
+                  >
+                    <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
+                      <Download className="h-5 w-5" />
+                    </span>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="text-fg truncate text-sm font-semibold">
+                        {detail.fileName}
+                      </span>
+                      <span className="text-fg-subtle text-xs">
+                        {fmtSize(detail.fileSize)} · 클릭하여 다운로드
+                      </span>
+                    </span>
+                  </button>
+                ) : detail.url ? (
+                  <a
+                    href={detail.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
+                  >
+                    <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
+                      <ExternalLink className="h-5 w-5" />
+                    </span>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="text-fg text-sm font-semibold">
+                        링크 열기
+                      </span>
+                      <span className="text-info truncate text-xs">
+                        {detail.url}
+                      </span>
+                    </span>
+                  </a>
+                ) : null
+              }
             />
           )}
-        </div>
-      </Modal>
-    </div>
+        </Modal>
+
+        {/* 등록 모달 */}
+        <Modal
+          open={addOpen}
+          onClose={() => {
+            setAddOpen(false)
+            resetForm()
+          }}
+          title="자료 등록"
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setAddOpen(false)
+                  resetForm()
+                }}
+              >
+                취소
+              </Button>
+              <Button onClick={onAdd} disabled={createMaterial.isPending}>
+                등록
+              </Button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <label
+              className="text-fg-subtle text-xs font-medium"
+              htmlFor="mat-title"
+            >
+              제목
+            </label>
+            <input
+              id="mat-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="예: 1주차 강의자료"
+              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
+            />
+
+            <label
+              className="text-fg-subtle text-xs font-medium"
+              htmlFor="mat-body"
+            >
+              본문
+            </label>
+            <textarea
+              id="mat-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="자료 안내·설명을 입력하세요"
+              rows={4}
+              className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
+            />
+
+            {/* 유형 토글 */}
+            <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
+              {(['link', 'file'] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setKind(k)}
+                  className={
+                    'flex-1 rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors ' +
+                    (kind === k
+                      ? 'bg-surface text-fg shadow-sm'
+                      : 'text-fg-muted hover:text-fg')
+                  }
+                >
+                  {k === 'link' ? '링크' : '파일'}
+                </button>
+              ))}
+            </div>
+
+            {kind === 'link' ? (
+              <input
+                aria-label="링크 URL"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://..."
+                className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
+              />
+            ) : (
+              <input
+                aria-label="파일 선택"
+                type="file"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="text-fg-muted file:border-border file:bg-surface-muted file:text-fg text-sm file:mr-3 file:rounded-md file:border file:px-3 file:py-1.5 file:text-[13px]"
+              />
+            )}
+          </div>
+        </Modal>
+      </div>
+    </DataBoundary>
   )
 }

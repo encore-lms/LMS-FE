@@ -1,12 +1,6 @@
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import {
-  AlertTriangle,
-  BookOpen,
-  FolderOpen,
-  ListChecks,
-  Lock,
-} from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { BookOpen, FolderOpen, ListChecks, Lock } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
@@ -79,76 +73,75 @@ function DescriptionPane({
   )
   const toast = useToast()
 
-  if (isPending) {
-    return (
-      <div className="py-6">
-        <SkeletonText lines={8} />
-      </div>
-    )
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="과정 설명을 불러오지 못했어요"
-        description="HRD 훈련과정ID가 없는 기수이거나 HRD-Net 연결을 확인해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-
-  const rows: { label: string; value: string }[] = [
-    { label: '훈련과정 구분', value: data.trainingType },
-    { label: 'NCS 분류', value: data.ncsName },
-    { label: '훈련기관', value: data.institution },
-    { label: '소재지', value: data.address },
-    { label: '지원 금액', value: data.supportAmount },
-    { label: '담당자', value: data.manager },
-    {
-      label: '훈련기간',
-      value: `~ (총 ${data.trainingDays}일 / ${data.trainingHours}시간)`,
-    },
-  ]
+  const rows: { label: string; value: string }[] = data
+    ? [
+        { label: '훈련과정 구분', value: data.trainingType },
+        { label: 'NCS 분류', value: data.ncsName },
+        { label: '훈련기관', value: data.institution },
+        { label: '소재지', value: data.address },
+        { label: '지원 금액', value: data.supportAmount },
+        { label: '담당자', value: data.manager },
+        {
+          label: '훈련기간',
+          value: `~ (총 ${data.trainingDays}일 / ${data.trainingHours}시간)`,
+        },
+      ]
+    : []
 
   return (
-    <div className="border-border bg-surface rounded-xl border p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-fg text-lg font-bold">{data.title}</h3>
-        <span className="text-info flex items-center gap-1 text-xs font-medium">
-          <Lock className="h-3 w-3" /> HRD-Net 원본
-        </span>
-      </div>
-      <dl className="mt-5 flex flex-col gap-3">
-        {rows.map((r) => (
-          <div key={r.label} className="flex gap-4 text-sm">
-            <dt className="text-fg-muted w-24 shrink-0 font-medium">
-              {r.label}
-            </dt>
-            <dd className="text-fg">{r.value}</dd>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={
+        <div className="py-6">
+          <SkeletonText lines={8} />
+        </div>
+      }
+      errorTitle="과정 설명을 불러오지 못했어요"
+      errorDescription="HRD 훈련과정ID가 없는 기수이거나 HRD-Net 연결을 확인해 주세요."
+    >
+      {data && (
+        <div className="border-border bg-surface rounded-xl border p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-fg text-lg font-bold">{data.title}</h3>
+            <span className="text-info flex items-center gap-1 text-xs font-medium">
+              <Lock className="h-3 w-3" /> HRD-Net 원본
+            </span>
           </div>
-        ))}
-      </dl>
+          <dl className="mt-5 flex flex-col gap-3">
+            {rows.map((r) => (
+              <div key={r.label} className="flex gap-4 text-sm">
+                <dt className="text-fg-muted w-24 shrink-0 font-medium">
+                  {r.label}
+                </dt>
+                <dd className="text-fg">{r.value}</dd>
+              </div>
+            ))}
+          </dl>
 
-      {/* 하단 설정 버튼 — 단위 기간/커리큘럼(이전 LMS '단위 기간 설정' 재현 + 커리큘럼 신규) */}
-      <div className="border-divider mt-6 flex flex-wrap gap-2 border-t pt-5">
-        <button
-          type="button"
-          // TODO: 단위 기간 설정 모달(BE 단위기간 계약 확정 후)
-          onClick={() => toast.info('단위 기간 설정 화면은 준비 중입니다.')}
-          className="bg-brand hover:bg-brand/90 text-on-color inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
-        >
-          <ListChecks className="h-4 w-4" /> 단위 기간 설정
-        </button>
-        <button
-          type="button"
-          // TODO: 커리큘럼 설정 화면(BE 커리큘럼/교과목 계약 확정 후)
-          onClick={() => toast.info('커리큘럼 설정 화면은 준비 중입니다.')}
-          className="bg-info-bg text-info border-border hover:bg-info-bg/70 inline-flex h-9 items-center gap-1.5 rounded-md border px-4 text-[13px] font-semibold transition-colors"
-        >
-          <BookOpen className="h-4 w-4" /> 커리큘럼 설정
-        </button>
-      </div>
-    </div>
+          {/* 하단 설정 버튼 — 단위 기간/커리큘럼(이전 LMS '단위 기간 설정' 재현 + 커리큘럼 신규) */}
+          <div className="border-divider mt-6 flex flex-wrap gap-2 border-t pt-5">
+            <button
+              type="button"
+              // TODO: 단위 기간 설정 모달(BE 단위기간 계약 확정 후)
+              onClick={() => toast.info('단위 기간 설정 화면은 준비 중입니다.')}
+              className="bg-brand hover:bg-brand/90 text-on-color inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
+            >
+              <ListChecks className="h-4 w-4" /> 단위 기간 설정
+            </button>
+            <button
+              type="button"
+              // TODO: 커리큘럼 설정 화면(BE 커리큘럼/교과목 계약 확정 후)
+              onClick={() => toast.info('커리큘럼 설정 화면은 준비 중입니다.')}
+              className="bg-info-bg text-info border-border hover:bg-info-bg/70 inline-flex h-9 items-center gap-1.5 rounded-md border px-4 text-[13px] font-semibold transition-colors"
+            >
+              <BookOpen className="h-4 w-4" /> 커리큘럼 설정
+            </button>
+          </div>
+        </div>
+      )}
+    </DataBoundary>
   )
 }
 

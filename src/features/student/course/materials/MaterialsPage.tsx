@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -247,36 +247,21 @@ export default function MaterialsPage() {
         }}
       />
 
-      <Modal
+      <ConfirmDialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
         size="sm"
         title="자료 삭제"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => setDeleteTarget(null)}
-              className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-              className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:opacity-60"
-            >
-              삭제
-            </button>
-          </>
-        }
+        confirmLabel="삭제"
+        tone="danger"
+        confirmDisabled={deleteMutation.isPending}
       >
         <p className="text-fg-muted text-[14px] leading-[22px]">
           <span className="text-fg font-semibold">{deleteTarget?.title}</span>{' '}
           자료를 삭제할까요? 삭제하면 되돌릴 수 없습니다.
         </p>
-      </Modal>
+      </ConfirmDialog>
 
       {toast && (
         <div className="bg-accent-strong fixed right-8 bottom-8 z-50 flex items-center gap-3 rounded-[10px] px-5 py-3 text-[13px] font-semibold text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">

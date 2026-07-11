@@ -19,7 +19,7 @@ import { formatDateDot } from '@/shared/lib/date'
 import { usePageHeader } from '@/shared/store'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/use-toast'
 import { useDeleteResume, useResumes } from '../api/resume'
 import { SECTIONS, completionOf } from './constants'
@@ -438,36 +438,21 @@ export default function ResumePage() {
           />
         )}
 
-        <Modal
+        <ConfirmDialog
           open={!!deleteTarget}
           onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDelete}
           title="이력서를 삭제할까요?"
           size="sm"
-          footer={
-            <>
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                disabled={deleteResume.isPending}
-                className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:opacity-60"
-              >
-                삭제
-              </button>
-            </>
-          }
+          confirmLabel="삭제"
+          tone="danger"
+          confirmDisabled={deleteResume.isPending}
         >
           <p className="text-fg-muted text-[13px] leading-6">
             <span className="text-fg font-semibold">{deleteTarget?.title}</span>{' '}
             이력서를 삭제하면 되돌릴 수 없습니다.
           </p>
-        </Modal>
+        </ConfirmDialog>
       </div>
     </DataBoundary>
   )

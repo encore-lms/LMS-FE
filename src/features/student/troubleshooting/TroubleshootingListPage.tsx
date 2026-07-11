@@ -11,7 +11,7 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useTsList } from '../api/troubleshooting'
@@ -318,35 +318,20 @@ export default function TroubleshootingListPage() {
           </div>
 
           {delTarget && (
-            <Modal
+            <ConfirmDialog
               open
               onClose={() => setDelTarget(null)}
+              onConfirm={confirmRemove}
               size="sm"
               title="사례 삭제"
-              footer={
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setDelTarget(null)}
-                    className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    onClick={confirmRemove}
-                    className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
-                  >
-                    삭제
-                  </button>
-                </>
-              }
+              confirmLabel="삭제"
+              tone="danger"
             >
               <p className="text-fg-muted text-[13px] leading-5">
                 ‘{delTarget.title}’ 사례를 삭제할까요? 인증 완료 전 사례만
                 삭제할 수 있어요. 삭제하면 목록에서 사라집니다.
               </p>
-            </Modal>
+            </ConfirmDialog>
           )}
 
           {/* 강사 반려 사유 — 카드 '반려 사유' 클릭 시 코멘트 회신을 보여준다(확인 후 페이지에서 보완). */}

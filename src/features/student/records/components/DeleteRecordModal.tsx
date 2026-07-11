@@ -1,4 +1,4 @@
-import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { cn } from '@/shared/lib/cn'
 import type { BlogRecord, RecordStatus } from '../types'
 
@@ -20,29 +20,14 @@ export function DeleteRecordModal({
   onConfirm: () => void
 }) {
   return (
-    <Modal
+    <ConfirmDialog
       open
       onClose={onCancel}
+      onConfirm={onConfirm}
       size="md"
       title="블로그 기록을 삭제할까요?"
-      footer={
-        <>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
-          >
-            삭제
-          </button>
-        </>
-      }
+      confirmLabel="삭제"
+      tone="danger"
     >
       <div className="flex flex-col gap-4">
         <p className="text-fg-muted text-[13px] leading-6">
@@ -67,6 +52,6 @@ export function DeleteRecordModal({
           </div>
         </div>
       </div>
-    </Modal>
+    </ConfirmDialog>
   )
 }

@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ChevronLeft, Download, Info } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { ChevronLeft, Download, Info } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -58,23 +57,8 @@ export default function HistoryPage() {
     })
   }, [rows, txType, q])
 
-  if (isPending) {
-    return <SkeletonListPage kpis={4} columns={6} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="지급 내역을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { summary, footer } = data
+  const summary = data?.summary
+  const footer = data?.footer
 
   const columns: Column<MileageTxRow>[] = [
     {
@@ -186,95 +170,108 @@ export default function HistoryPage() {
         <CohortScopeSelect value={cohortId} onChange={setCohortId} />
       </div>
 
-      {/* KPI 4종 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard
-          label="총 지급"
-          value={`${summary.granted} M`}
-          hint={summary.grantedHint}
-          tone="success"
-        />
-        <KpiCard
-          label="총 차감"
-          value={`${summary.deducted} M`}
-          hint={summary.deductedHint}
-          tone="danger"
-        />
-        <KpiCard
-          label="순증감"
-          value={`${summary.net} M`}
-          hint={summary.netHint}
-          tone="info"
-        />
-        <KpiCard
-          label="내역 건수"
-          value={`${summary.count}건`}
-          hint={summary.countHint}
-        />
-      </div>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        skeleton={<SkeletonListPage kpis={4} columns={6} className="" />}
+        errorTitle="지급 내역을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {/* KPI 4종 */}
+        {summary && (
+          <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <KpiCard
+              label="총 지급"
+              value={`${summary.granted} M`}
+              hint={summary.grantedHint}
+              tone="success"
+            />
+            <KpiCard
+              label="총 차감"
+              value={`${summary.deducted} M`}
+              hint={summary.deductedHint}
+              tone="danger"
+            />
+            <KpiCard
+              label="순증감"
+              value={`${summary.net} M`}
+              hint={summary.netHint}
+              tone="info"
+            />
+            <KpiCard
+              label="내역 건수"
+              value={`${summary.count}건`}
+              hint={summary.countHint}
+            />
+          </div>
+        )}
 
-      {/* 필터 */}
-      <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
-        <Select
-          value={txType}
-          onChange={(v) => setTxType(v)}
-          aria-label="구분 필터"
-          options={[
-            { value: 'all', label: '구분 전체' },
-            ...(Object.keys(TX_META) as TxType[]).map((key) => ({
-              value: key,
-              label: TX_META[key].label,
-            })),
-          ]}
-          className="h-9"
-        />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="수강생 이름·사유 검색"
-          aria-label="수강생 이름·사유 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
-        />
-        <button
-          type="button"
-          // TODO: 원장 CSV 내보내기(P0_16)
-          onClick={() => toast.info('CSV 내보내기는 준비 중입니다.')}
-          className="border-border text-fg-muted hover:bg-surface-muted ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 text-[13px] font-semibold"
-        >
-          <Download className="h-4 w-4" />
-          CSV 내보내기
-        </button>
-      </div>
-
-      {/* 원장 표 */}
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.id}
-          empty="조건에 맞는 거래가 없어요"
-        />
-        <div className="text-fg-subtle mt-3 text-xs">
-          총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
-          부분 {footer.partial} · 실패 {footer.failed}
+        {/* 필터 */}
+        <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
+          <Select
+            value={txType}
+            onChange={(v) => setTxType(v)}
+            aria-label="구분 필터"
+            options={[
+              { value: 'all', label: '구분 전체' },
+              ...(Object.keys(TX_META) as TxType[]).map((key) => ({
+                value: key,
+                label: TX_META[key].label,
+              })),
+            ]}
+            className="h-9"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="수강생 이름·사유 검색"
+            aria-label="수강생 이름·사유 검색"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+          />
+          <button
+            type="button"
+            // TODO: 원장 CSV 내보내기(P0_16)
+            onClick={() => toast.info('CSV 내보내기는 준비 중입니다.')}
+            className="border-border text-fg-muted hover:bg-surface-muted ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 text-[13px] font-semibold"
+          >
+            <Download className="h-4 w-4" />
+            CSV 내보내기
+          </button>
         </div>
-      </div>
 
-      {/* 원장 정책 */}
-      <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-        <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
-          <Info className="h-4 w-4" />
-          원장 정책 · 완료 기준
-        </p>
-        <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-          <li>기수 선택 전에는 빈 상태로 안내 — 잘못된 전체 조회 방지</li>
-          <li>지급/차감 필터·수강생 이름 검색·CSV 내보내기 지원</li>
-          <li>
-            직접 지급·구매 승인 결과가 원장(MileageTransaction)에 즉시
-            반영됩니다
-          </li>
-        </ul>
-      </div>
+        {/* 원장 표 */}
+        <div className="mt-4">
+          <DataTable
+            columns={columns}
+            rows={filtered}
+            rowKey={(r) => r.id}
+            empty="조건에 맞는 거래가 없어요"
+          />
+          {footer && (
+            <div className="text-fg-subtle mt-3 text-xs">
+              총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
+              부분 {footer.partial} · 실패 {footer.failed}
+            </div>
+          )}
+        </div>
+
+        {/* 원장 정책 */}
+        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
+          <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
+            <Info className="h-4 w-4" />
+            원장 정책 · 완료 기준
+          </p>
+          <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
+            <li>기수 선택 전에는 빈 상태로 안내 — 잘못된 전체 조회 방지</li>
+            <li>지급/차감 필터·수강생 이름 검색·CSV 내보내기 지원</li>
+            <li>
+              직접 지급·구매 승인 결과가 원장(MileageTransaction)에 즉시
+              반영됩니다
+            </li>
+          </ul>
+        </div>
+      </DataBoundary>
     </div>
   )
 }

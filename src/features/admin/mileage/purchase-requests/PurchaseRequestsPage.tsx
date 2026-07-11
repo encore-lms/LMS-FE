@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, ChevronLeft, Info } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { ArrowRight, ChevronLeft, Info } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -66,22 +65,6 @@ export default function PurchaseRequestsPage() {
     })
   }, [requests, status, q])
 
-  if (isPending) {
-    return <SkeletonListPage kpis={4} columns={6} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="구매 요청을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const {
     course,
     cohortLabel,
@@ -90,7 +73,15 @@ export default function PurchaseRequestsPage() {
     total,
     pendingCount,
     limitExceededCount,
-  } = data
+  } = data ?? {
+    course: '',
+    cohortLabel: '',
+    kpis: [],
+    typeNotes: [],
+    total: 0,
+    pendingCount: 0,
+    limitExceededCount: 0,
+  }
 
   const NEXT_STATUS: Record<'승인' | '수정 요청' | '반려', PurchaseStatus> = {
     승인: 'approved',
@@ -272,123 +263,132 @@ export default function PurchaseRequestsPage() {
         <CohortScopeSelect value={cohortId} onChange={setCohortId} />
       </div>
 
-      {/* 상태 KPI 5종 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {kpis.map((k) => (
-          <KpiCard
-            key={k.status}
-            label={k.label}
-            value={`${k.count}건`}
-            hint={k.note}
-            tone={STATUS_META[k.status].kpi}
-          />
-        ))}
-      </div>
-
-      {/* 필터 */}
-      <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
-        <Select
-          aria-label="상태 필터"
-          value={status}
-          onChange={(v) => setStatus(v)}
-          options={[
-            { value: 'all', label: '상태 전체' },
-            ...(Object.keys(STATUS_META) as PurchaseStatus[]).map((key) => ({
-              value: key,
-              label: STATUS_META[key].label,
-            })),
-          ]}
-          className="h-9"
-        />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="수강생·상품명·키워드 검색"
-          aria-label="수강생·상품명·키워드 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
-        />
-      </div>
-
-      {/* 처리 큐 표 */}
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.id}
-          empty="조건에 맞는 구매 요청이 없어요"
-        />
-        <div className="text-fg-subtle mt-3 text-xs">
-          총 {total}건 · PENDING {pendingCount} · 한도 초과 {limitExceededCount}
-          건
-        </div>
-      </div>
-
-      {/* 타입 한도 연계 */}
-      <div className="border-border bg-surface mt-6 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">타입 한도 연계</p>
-        <p className="text-fg-muted mt-1 text-xs">
-          승인 시점에 타입 누적 사용액 + 요청 금액이 maxPerUser를 초과하면 자동
-          차단 ·{' '}
-          <Link
-            to="/admin/mileage/type-limits"
-            className="text-brand font-semibold"
-          >
-            타입 한도 설정에서 관리
-          </Link>
-        </p>
-        <ul className="mt-3 flex flex-col">
-          {typeNotes.map((t) => (
-            <li
-              key={t.type}
-              className="border-divider flex items-center gap-2 border-t py-2 text-[13px] first:border-t-0"
-            >
-              <StatusBadge label={t.type} tone="neutral" />
-              <span className="text-fg-muted">{t.note}</span>
-            </li>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        skeleton={<SkeletonListPage kpis={4} columns={6} className="" />}
+        errorTitle="구매 요청을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {/* 상태 KPI 5종 */}
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {kpis.map((k) => (
+            <KpiCard
+              key={k.status}
+              label={k.label}
+              value={`${k.count}건`}
+              hint={k.note}
+              tone={STATUS_META[k.status].kpi}
+            />
           ))}
-        </ul>
-      </div>
+        </div>
 
-      {/* 처리 정책 §19 */}
-      <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-        <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
-          <Info className="h-4 w-4" />
-          처리 정책 · 완료 기준
-        </p>
-        <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-          <li>상태/타입/기간 필터 가능 · 키워드 검색 지원</li>
-          <li>수정 요청 또는 반려 시 매니저 메모 필수 — 수강생에게 노출됨</li>
-          <li>
-            승인 시 원장 차감 + 구매 요청 상태 변경이 트랜잭션으로 함께
-            처리됩니다
-          </li>
-        </ul>
-      </div>
+        {/* 필터 */}
+        <div className="border-border bg-surface mt-5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
+          <Select
+            aria-label="상태 필터"
+            value={status}
+            onChange={(v) => setStatus(v)}
+            options={[
+              { value: 'all', label: '상태 전체' },
+              ...(Object.keys(STATUS_META) as PurchaseStatus[]).map((key) => ({
+                value: key,
+                label: STATUS_META[key].label,
+              })),
+            ]}
+            className="h-9"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="수강생·상품명·키워드 검색"
+            aria-label="수강생·상품명·키워드 검색"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
+          />
+        </div>
 
-      {/* 처리 모달 — 운영 액션 모달 공통 재사용 */}
-      <ActionModal
-        spec={process?.spec ?? null}
-        onClose={() => setProcess(null)}
-        onConfirm={(memo) => {
-          if (!process) return
-          const label = process.spec.confirmLabel
-          processReq.mutate(
-            { id: process.id, next: process.next, memo },
-            {
-              onSuccess: () => {
-                setProcess(null)
-                toast.success(`구매 요청 ${label} 처리됨`)
+        {/* 처리 큐 표 */}
+        <div className="mt-4">
+          <DataTable
+            columns={columns}
+            rows={filtered}
+            rowKey={(r) => r.id}
+            empty="조건에 맞는 구매 요청이 없어요"
+          />
+          <div className="text-fg-subtle mt-3 text-xs">
+            총 {total}건 · PENDING {pendingCount} · 한도 초과{' '}
+            {limitExceededCount}건
+          </div>
+        </div>
+
+        {/* 타입 한도 연계 */}
+        <div className="border-border bg-surface mt-6 rounded-xl border p-5">
+          <p className="text-fg text-sm font-bold">타입 한도 연계</p>
+          <p className="text-fg-muted mt-1 text-xs">
+            승인 시점에 타입 누적 사용액 + 요청 금액이 maxPerUser를 초과하면
+            자동 차단 ·{' '}
+            <Link
+              to="/admin/mileage/type-limits"
+              className="text-brand font-semibold"
+            >
+              타입 한도 설정에서 관리
+            </Link>
+          </p>
+          <ul className="mt-3 flex flex-col">
+            {typeNotes.map((t) => (
+              <li
+                key={t.type}
+                className="border-divider flex items-center gap-2 border-t py-2 text-[13px] first:border-t-0"
+              >
+                <StatusBadge label={t.type} tone="neutral" />
+                <span className="text-fg-muted">{t.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* 처리 정책 §19 */}
+        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
+          <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
+            <Info className="h-4 w-4" />
+            처리 정책 · 완료 기준
+          </p>
+          <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
+            <li>상태/타입/기간 필터 가능 · 키워드 검색 지원</li>
+            <li>수정 요청 또는 반려 시 매니저 메모 필수 — 수강생에게 노출됨</li>
+            <li>
+              승인 시 원장 차감 + 구매 요청 상태 변경이 트랜잭션으로 함께
+              처리됩니다
+            </li>
+          </ul>
+        </div>
+
+        {/* 처리 모달 — 운영 액션 모달 공통 재사용 */}
+        <ActionModal
+          spec={process?.spec ?? null}
+          onClose={() => setProcess(null)}
+          onConfirm={(memo) => {
+            if (!process) return
+            const label = process.spec.confirmLabel
+            processReq.mutate(
+              { id: process.id, next: process.next, memo },
+              {
+                onSuccess: () => {
+                  setProcess(null)
+                  toast.success(`구매 요청 ${label} 처리됨`)
+                },
+                onError: () => {
+                  setProcess(null)
+                  toast.danger(
+                    `구매 요청 ${label} 처리에 실패했어요. 잠시 후 다시 시도해 주세요.`,
+                  )
+                },
               },
-              onError: () => {
-                setProcess(null)
-                toast.danger(
-                  `구매 요청 ${label} 처리에 실패했어요. 잠시 후 다시 시도해 주세요.`,
-                )
-              },
-            },
-          )
-        }}
-      />
+            )
+          }}
+        />
+      </DataBoundary>
     </div>
   )
 }

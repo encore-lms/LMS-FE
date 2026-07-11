@@ -9,9 +9,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -68,19 +67,6 @@ export default function TroubleshootingListPage() {
     '겪어 해결한 사례를 상황·해결·결과로 기록하고 팀별 인증을 준비하세요.',
   )
 
-  if (isPending) return <SkeletonListPage columns={4} />
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   // 트러블슈팅 흐름은 상세(/:id) 한 페이지로 통일 — 어떤 상태든 상세로 진입한다.
   //   작성 중(draft)     → 상세에서 바로 편집(이어 작성).
   //   검토 중(reviewing) → 읽기전용 + '수정'으로 보완(인증 완료 전까지).
@@ -102,7 +88,7 @@ export default function TroubleshootingListPage() {
 
   // 카테고리 칩 + 검색어(제목·카테고리·태그)로 사례 필터.
   const q = query.trim().toLowerCase()
-  const visible = data.cases.filter((c) => {
+  const visible = (data?.cases ?? []).filter((c) => {
     if (active !== 'all' && c.categoryKey !== active) return false
     if (!q) return true
     return (
@@ -121,240 +107,259 @@ export default function TroubleshootingListPage() {
   )
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {data.stats.map((s) => {
-          const Icon = STAT_ICON[s.key] ?? FileText
-          return (
-            <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
-              <div className="flex items-start justify-between">
-                <span className="text-fg-muted text-[12px]">{s.label}</span>
-                <Icon className={cn('size-4 shrink-0', TONE_TEXT[s.tone])} />
-              </div>
-              <span className="text-fg text-[26px] leading-none font-bold">
-                {s.value}
-                {s.unit && (
-                  <span className="text-fg-muted ml-0.5 text-[13px]">
-                    {s.unit}
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      skeleton={<SkeletonListPage columns={4} className="" />}
+      errorTitle="불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="flex flex-col gap-5 p-8">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {data.stats.map((s) => {
+              const Icon = STAT_ICON[s.key] ?? FileText
+              return (
+                <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
+                  <div className="flex items-start justify-between">
+                    <span className="text-fg-muted text-[12px]">{s.label}</span>
+                    <Icon
+                      className={cn('size-4 shrink-0', TONE_TEXT[s.tone])}
+                    />
+                  </div>
+                  <span className="text-fg text-[26px] leading-none font-bold">
+                    {s.value}
+                    {s.unit && (
+                      <span className="text-fg-muted ml-0.5 text-[13px]">
+                        {s.unit}
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-              {s.barPct != null && (
-                <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
-                  <div
-                    className={cn('h-full rounded-full', TONE_SOLID[s.tone])}
-                    style={{ width: `${s.barPct}%` }}
-                  />
+                  {s.barPct != null && (
+                    <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
+                      <div
+                        className={cn(
+                          'h-full rounded-full',
+                          TONE_SOLID[s.tone],
+                        )}
+                        style={{ width: `${s.barPct}%` }}
+                      />
+                    </div>
+                  )}
+                  <span className="text-fg-subtle text-[11px]">{s.sub}</span>
                 </div>
-              )}
-              <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2">
-          <h2 className="text-fg text-[16px] font-bold">내 트러블슈팅 사례</h2>
-          <span className="text-fg-subtle text-[12px]">
-            {data.cases.length}건
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative hidden sm:block">
-            <svg
-              viewBox="0 0 24 24"
-              className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3-3" strokeLinecap="round" />
-            </svg>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="제목·카테고리·태그 검색"
-              className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
-            />
+              )
+            })}
           </div>
-          <button
-            type="button"
-            onClick={() => navigate('/student/troubleshooting/new')}
-            className={buttonClass({ size: 'sm' })}
-          >
-            + 새 사례 작성
-          </button>
-        </div>
-      </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {data.filters.map((f) => {
-            const on = f.key === active
-            return (
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-fg text-[16px] font-bold">
+                내 트러블슈팅 사례
+              </h2>
+              <span className="text-fg-subtle text-[12px]">
+                {data.cases.length}건
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative hidden sm:block">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3-3" strokeLinecap="round" />
+                </svg>
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="제목·카테고리·태그 검색"
+                  className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
+                />
+              </div>
               <button
-                key={f.key}
                 type="button"
-                onClick={() => setActive(f.key)}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                  on
-                    ? 'bg-brand-deep text-white'
-                    : 'border-border text-fg-muted hover:bg-surface-muted border',
-                )}
+                onClick={() => navigate('/student/troubleshooting/new')}
+                className={buttonClass({ size: 'sm' })}
               >
-                {f.label}
+                + 새 사례 작성
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {data.filters.map((f) => {
+                const on = f.key === active
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setActive(f.key)}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
+                      on
+                        ? 'bg-brand-deep text-white'
+                        : 'border-border text-fg-muted hover:bg-surface-muted border',
+                    )}
+                  >
+                    {f.label}
+                    <span
+                      className={cn(
+                        'text-[12px]',
+                        on ? 'text-white/70' : 'text-fg-subtle',
+                      )}
+                    >
+                      {f.count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            {/* 우측 상태 칩 (인증 완료·검토 중·작성 중) */}
+            <div className="flex flex-wrap items-center gap-3">
+              {data.statusFilters.map((f) => (
                 <span
+                  key={f.key}
+                  className="text-fg-muted flex items-center gap-1.5 text-[12px] font-medium"
+                >
+                  <span
+                    className={cn(
+                      'size-2 rounded-full',
+                      TONE_SOLID[f.tone ?? 'brand'],
+                    )}
+                  />
+                  {f.label}
+                  <span className="text-fg font-bold">{f.count}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {visible.length === 0 && (
+              <div className="border-border text-fg-subtle rounded-2xl border border-dashed p-10 text-center text-[13px]">
+                검색·필터 조건에 맞는 사례가 없어요.
+              </div>
+            )}
+            {pageItems.map((c) => {
+              // 인증 완료 사례만 프로젝트 연결 칩 — 연결됨(프로젝트명)/연결 필요.
+              const proj = TS_LINKABLE_PROJECTS.find(
+                (p) => p.id === projectLinks.projectIdFor(c.id),
+              )
+              return (
+                <TsCaseCard
+                  key={c.id}
+                  c={c}
+                  onOpen={open}
+                  actionLabel={listActionLabel(c)}
+                  connection={
+                    c.status === 'certified'
+                      ? proj
+                        ? { label: proj.title, ok: true }
+                        : { label: '연결 필요', ok: false }
+                      : undefined
+                  }
+                  onRemove={
+                    c.status === 'certified' ? undefined : () => setDelTarget(c)
+                  }
+                  removeLabel="삭제"
+                  onShowReason={() => setReasonTarget(c)}
+                />
+              )
+            })}
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-fg-subtle text-[12px]">
+              {visible.length}건 중 {pageItems.length}건 표시
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={pageSafe <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label="이전 페이지"
+                className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPage(n)}
+                  aria-current={n === pageSafe ? 'page' : undefined}
                   className={cn(
-                    'text-[12px]',
-                    on ? 'text-white/70' : 'text-fg-subtle',
+                    'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
+                    n === pageSafe
+                      ? 'bg-brand-deep text-white'
+                      : 'border-border text-fg-muted border',
                   )}
                 >
-                  {f.count}
-                </span>
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={pageSafe >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label="다음 페이지"
+                className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+              >
+                ›
               </button>
-            )
-          })}
-        </div>
-        {/* 우측 상태 칩 (인증 완료·검토 중·작성 중) */}
-        <div className="flex flex-wrap items-center gap-3">
-          {data.statusFilters.map((f) => (
-            <span
-              key={f.key}
-              className="text-fg-muted flex items-center gap-1.5 text-[12px] font-medium"
-            >
-              <span
-                className={cn(
-                  'size-2 rounded-full',
-                  TONE_SOLID[f.tone ?? 'brand'],
-                )}
-              />
-              {f.label}
-              <span className="text-fg font-bold">{f.count}</span>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {visible.length === 0 && (
-          <div className="border-border text-fg-subtle rounded-2xl border border-dashed p-10 text-center text-[13px]">
-            검색·필터 조건에 맞는 사례가 없어요.
+            </div>
           </div>
-        )}
-        {pageItems.map((c) => {
-          // 인증 완료 사례만 프로젝트 연결 칩 — 연결됨(프로젝트명)/연결 필요.
-          const proj = TS_LINKABLE_PROJECTS.find(
-            (p) => p.id === projectLinks.projectIdFor(c.id),
-          )
-          return (
-            <TsCaseCard
-              key={c.id}
-              c={c}
-              onOpen={open}
-              actionLabel={listActionLabel(c)}
-              connection={
-                c.status === 'certified'
-                  ? proj
-                    ? { label: proj.title, ok: true }
-                    : { label: '연결 필요', ok: false }
-                  : undefined
-              }
-              onRemove={
-                c.status === 'certified' ? undefined : () => setDelTarget(c)
-              }
-              removeLabel="삭제"
-              onShowReason={() => setReasonTarget(c)}
-            />
-          )
-        })}
-      </div>
 
-      <div className="flex items-center justify-between pt-1">
-        <span className="text-fg-subtle text-[12px]">
-          {visible.length}건 중 {pageItems.length}건 표시
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            disabled={pageSafe <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            aria-label="이전 페이지"
-            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
-          >
-            ‹
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setPage(n)}
-              aria-current={n === pageSafe ? 'page' : undefined}
-              className={cn(
-                'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
-                n === pageSafe
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted border',
-              )}
+          {delTarget && (
+            <Modal
+              open
+              onClose={() => setDelTarget(null)}
+              size="sm"
+              title="사례 삭제"
+              footer={
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDelTarget(null)}
+                    className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmRemove}
+                    className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+                  >
+                    삭제
+                  </button>
+                </>
+              }
             >
-              {n}
-            </button>
-          ))}
-          <button
-            type="button"
-            disabled={pageSafe >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            aria-label="다음 페이지"
-            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
-          >
-            ›
-          </button>
+              <p className="text-fg-muted text-[13px] leading-5">
+                ‘{delTarget.title}’ 사례를 삭제할까요? 인증 완료 전 사례만
+                삭제할 수 있어요. 삭제하면 목록에서 사라집니다.
+              </p>
+            </Modal>
+          )}
+
+          {/* 강사 반려 사유 — 카드 '반려 사유' 클릭 시 코멘트 회신을 보여준다(확인 후 페이지에서 보완). */}
+          {reasonTarget?.rejectionReason && (
+            <RejectNoticeModal
+              kind={reasonTarget.rejectionFrom ?? 'cert'}
+              reviewer={`${reasonTarget.category} · 임수현 강사`}
+              reason={reasonTarget.rejectionReason}
+              onClose={() => setReasonTarget(null)}
+            />
+          )}
         </div>
-      </div>
-
-      {delTarget && (
-        <Modal
-          open
-          onClose={() => setDelTarget(null)}
-          size="sm"
-          title="사례 삭제"
-          footer={
-            <>
-              <button
-                type="button"
-                onClick={() => setDelTarget(null)}
-                className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={confirmRemove}
-                className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
-              >
-                삭제
-              </button>
-            </>
-          }
-        >
-          <p className="text-fg-muted text-[13px] leading-5">
-            ‘{delTarget.title}’ 사례를 삭제할까요? 인증 완료 전 사례만 삭제할 수
-            있어요. 삭제하면 목록에서 사라집니다.
-          </p>
-        </Modal>
       )}
-
-      {/* 강사 반려 사유 — 카드 '반려 사유' 클릭 시 코멘트 회신을 보여준다(확인 후 페이지에서 보완). */}
-      {reasonTarget?.rejectionReason && (
-        <RejectNoticeModal
-          kind={reasonTarget.rejectionFrom ?? 'cert'}
-          reviewer={`${reasonTarget.category} · 임수현 강사`}
-          reason={reasonTarget.rejectionReason}
-          onClose={() => setReasonTarget(null)}
-        />
-      )}
-    </div>
+    </DataBoundary>
   )
 }

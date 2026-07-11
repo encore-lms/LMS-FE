@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import type { AnswerPayload } from '@/shared/types'
@@ -227,157 +226,158 @@ export default function QuizTakePage() {
     )
   }
 
-  if (isPending) {
-    return <div className="text-fg-muted p-8">문제를 불러오는 중…</div>
-  }
-  if (isError || !questions || questions.length === 0) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="문제를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const current = questions[Math.min(idx, total - 1)]
+  const current = questions?.[Math.min(idx, total - 1)]
   const setAnswer = (v: string) =>
-    setAnswers((prev) => ({ ...prev, [current.id]: v }))
+    setAnswers((prev) => (current ? { ...prev, [current.id]: v } : prev))
 
   return (
-    <div className="bg-surface flex h-screen flex-col">
-      {/* 상단 고정 바 */}
-      <header className="border-border flex h-[88px] shrink-0 items-center justify-between border-b px-8 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.04)]">
-        <div className="flex flex-col gap-1">
-          <p className="text-fg text-[18px] font-semibold">
-            {quiz?.title ?? '퀴즈 응시'}
-          </p>
-          <p className="text-fg-subtle text-[12px]">
-            플레이데이터 부트캠프 12기 · {current.categoryId}
-          </p>
-        </div>
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-2">
-            <span className="bg-warning size-3 rounded" />
-            <span className="text-fg-muted text-[11px] font-medium">
-              남은 시간
-            </span>
-            <span className="text-fg text-[22px] font-bold tracking-[0.5px]">
-              {remain === null ? '--:--:--' : fmt(remain)}
-            </span>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !questions || questions.length === 0}
+      onRetry={refetch}
+      loadingText="문제를 불러오는 중…"
+      errorTitle="문제를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {current && (
+        <div className="bg-surface flex h-screen flex-col">
+          {/* 상단 고정 바 */}
+          <header className="border-border flex h-[88px] shrink-0 items-center justify-between border-b px-8 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.04)]">
+            <div className="flex flex-col gap-1">
+              <p className="text-fg text-[18px] font-semibold">
+                {quiz?.title ?? '퀴즈 응시'}
+              </p>
+              <p className="text-fg-subtle text-[12px]">
+                플레이데이터 부트캠프 12기 · {current.categoryId}
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex items-center gap-2">
+                <span className="bg-warning size-3 rounded" />
+                <span className="text-fg-muted text-[11px] font-medium">
+                  남은 시간
+                </span>
+                <span className="text-fg text-[22px] font-bold tracking-[0.5px]">
+                  {remain === null ? '--:--:--' : fmt(remain)}
+                </span>
+              </div>
+              <div className="bg-border h-1 w-[280px] overflow-hidden rounded-full">
+                <div
+                  className="bg-warning h-1 rounded-full"
+                  style={{
+                    width: quiz
+                      ? `${Math.max(0, Math.min(100, ((remain ?? 0) / (quiz.timeLimitMinutes * 60)) * 100))}%`
+                      : '0%',
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-fg-muted text-[11px] font-medium">
+                진행률
+              </span>
+              <span className="text-fg text-[14px] font-semibold">
+                {answeredIdx.size} / {total} 답변
+              </span>
+            </div>
+          </header>
+
+          {/* 본문 */}
+          <div className="flex min-h-0 flex-1">
+            <QuestionNavRail
+              total={total}
+              currentIdx={idx}
+              answeredIdx={answeredIdx}
+              reachableMax={maxReached}
+              onJump={(i) => i <= maxReached && setIdx(i)}
+            />
+            <main className="flex flex-1 justify-center overflow-y-auto px-16 py-10">
+              <QuestionCard
+                question={current}
+                index={idx}
+                total={total}
+                value={answers[current.id]}
+                onChange={setAnswer}
+              />
+            </main>
           </div>
-          <div className="bg-border h-1 w-[280px] overflow-hidden rounded-full">
-            <div
-              className="bg-warning h-1 rounded-full"
-              style={{
-                width: quiz
-                  ? `${Math.max(0, Math.min(100, ((remain ?? 0) / (quiz.timeLimitMinutes * 60)) * 100))}%`
-                  : '0%',
+
+          {/* 하단 고정 바 — 한 문제씩 순차 진행. 자유 이탈 불가(나가기 버튼 없음). */}
+          <footer className="border-border flex h-[72px] shrink-0 items-center justify-between border-t px-8 shadow-[0px_-1px_2px_0px_rgba(0,0,0,0.04)]">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={idx === 0}
+              className="border-border text-fg rounded-[10px] border px-5 py-3 text-[14px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ← 이전
+            </button>
+
+            <span className="text-fg-muted flex items-center gap-2 text-[12px] font-medium">
+              🔒 집중 모드 · 문제 {idx + 1} / {total}
+              {!isLast &&
+                (currentAnswered
+                  ? ' · Enter로 다음 문제'
+                  : ' · 답을 선택하면 다음으로 넘어가요')}
+              {isLast && ' · 마지막 문제예요. 제출 버튼을 눌러 종료하세요'}
+            </span>
+
+            {isLast ? (
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!allAnswered}
+                title={
+                  allAnswered
+                    ? undefined
+                    : '모든 문제를 풀어야 제출할 수 있어요'
+                }
+                className={cn(
+                  'rounded-[10px] px-6 py-3 text-[14px] font-semibold text-white',
+                  allAnswered
+                    ? 'bg-brand'
+                    : 'bg-fg-subtle cursor-not-allowed opacity-60',
+                )}
+              >
+                제출하기
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={!currentAnswered}
+                title={
+                  currentAnswered
+                    ? undefined
+                    : '현재 문제를 풀어야 다음으로 넘어가요'
+                }
+                className={cn(
+                  'rounded-[10px] px-6 py-3 text-[14px] font-semibold text-white',
+                  currentAnswered
+                    ? 'bg-brand'
+                    : 'bg-fg-subtle cursor-not-allowed opacity-60',
+                )}
+              >
+                다음 문제 →
+              </button>
+            )}
+          </footer>
+
+          {/* 전체화면이 풀리면(ESC/F11) 문제를 가리는 오버레이 — 카운트다운 0초 또는 버튼 클릭 시 닫힘 */}
+          {lock.phase === 'active' && !lock.isFullscreen && !autoReturned && (
+            <ExamRelockOverlay
+              violations={lock.violations}
+              secondsLeft={graceLeft}
+              onRelock={() => {
+                // 버튼은 카운트다운 도중 언제든 활성화 — 즉시 닫고 전체화면 재진입(클릭 제스처)을 시도.
+                setAutoReturned(true)
+                void lock.relock()
               }}
             />
-          </div>
+          )}
         </div>
-        <div className="flex flex-col items-end gap-0.5">
-          <span className="text-fg-muted text-[11px] font-medium">진행률</span>
-          <span className="text-fg text-[14px] font-semibold">
-            {answeredIdx.size} / {total} 답변
-          </span>
-        </div>
-      </header>
-
-      {/* 본문 */}
-      <div className="flex min-h-0 flex-1">
-        <QuestionNavRail
-          total={total}
-          currentIdx={idx}
-          answeredIdx={answeredIdx}
-          reachableMax={maxReached}
-          onJump={(i) => i <= maxReached && setIdx(i)}
-        />
-        <main className="flex flex-1 justify-center overflow-y-auto px-16 py-10">
-          <QuestionCard
-            question={current}
-            index={idx}
-            total={total}
-            value={answers[current.id]}
-            onChange={setAnswer}
-          />
-        </main>
-      </div>
-
-      {/* 하단 고정 바 — 한 문제씩 순차 진행. 자유 이탈 불가(나가기 버튼 없음). */}
-      <footer className="border-border flex h-[72px] shrink-0 items-center justify-between border-t px-8 shadow-[0px_-1px_2px_0px_rgba(0,0,0,0.04)]">
-        <button
-          type="button"
-          onClick={goPrev}
-          disabled={idx === 0}
-          className="border-border text-fg rounded-[10px] border px-5 py-3 text-[14px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          ← 이전
-        </button>
-
-        <span className="text-fg-muted flex items-center gap-2 text-[12px] font-medium">
-          🔒 집중 모드 · 문제 {idx + 1} / {total}
-          {!isLast &&
-            (currentAnswered
-              ? ' · Enter로 다음 문제'
-              : ' · 답을 선택하면 다음으로 넘어가요')}
-          {isLast && ' · 마지막 문제예요. 제출 버튼을 눌러 종료하세요'}
-        </span>
-
-        {isLast ? (
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!allAnswered}
-            title={
-              allAnswered ? undefined : '모든 문제를 풀어야 제출할 수 있어요'
-            }
-            className={cn(
-              'rounded-[10px] px-6 py-3 text-[14px] font-semibold text-white',
-              allAnswered
-                ? 'bg-brand'
-                : 'bg-fg-subtle cursor-not-allowed opacity-60',
-            )}
-          >
-            제출하기
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={!currentAnswered}
-            title={
-              currentAnswered
-                ? undefined
-                : '현재 문제를 풀어야 다음으로 넘어가요'
-            }
-            className={cn(
-              'rounded-[10px] px-6 py-3 text-[14px] font-semibold text-white',
-              currentAnswered
-                ? 'bg-brand'
-                : 'bg-fg-subtle cursor-not-allowed opacity-60',
-            )}
-          >
-            다음 문제 →
-          </button>
-        )}
-      </footer>
-
-      {/* 전체화면이 풀리면(ESC/F11) 문제를 가리는 오버레이 — 카운트다운 0초 또는 버튼 클릭 시 닫힘 */}
-      {lock.phase === 'active' && !lock.isFullscreen && !autoReturned && (
-        <ExamRelockOverlay
-          violations={lock.violations}
-          secondsLeft={graceLeft}
-          onRelock={() => {
-            // 버튼은 카운트다운 도중 언제든 활성화 — 즉시 닫고 전체화면 재진입(클릭 제스처)을 시도.
-            setAutoReturned(true)
-            void lock.relock()
-          }}
-        />
       )}
-    </div>
+    </DataBoundary>
   )
 }

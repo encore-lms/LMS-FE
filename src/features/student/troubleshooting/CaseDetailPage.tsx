@@ -3,9 +3,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { FileText, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
 import { useTsCase } from '../api/troubleshooting'
@@ -83,27 +82,13 @@ export default function CaseDetailPage() {
             : '상황·해결·결과를 기록하고 프로젝트 연결·작성 완료를 진행해요.',
   )
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">사례를 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="사례를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const isCertified = data.status === 'certified'
-  const isReviewing = data.status === 'reviewing'
-  const isDraft = data.status === 'draft'
+  const isCertified = data?.status === 'certified'
+  const isReviewing = data?.status === 'reviewing'
+  const isDraft = data?.status === 'draft'
   // draft(작성 중·작성 완료)는 항상 편집 가능. 인증 요청(검토 중)부터 잠금, 인증 완료는 변경 제안만.
   const editing = !viewOnly && isDraft
   const goChangeRequest = () =>
-    navigate(`/student/troubleshooting/${data.id}/change-requests/new`)
+    navigate(`/student/troubleshooting/${data?.id}/change-requests/new`)
 
   // 프로젝트 연결 — projectLinks 스토어에서 파생(사례가 연결된 프로젝트).
   const link: TsProjectLink | null = connectedPid
@@ -134,227 +119,70 @@ export default function CaseDetailPage() {
     // 홈으로 가지 않고 머문다 — 상태가 검토 중으로 바뀌며 같은 페이지가 잠금 화면으로 전환된다.
   }
 
-  const stats = [
-    {
-      label: '인증 상태',
-      value: data.statusLabel,
-      tone: (isCertified ? 'success' : 'accent') as Tone,
-    },
-    {
-      label: '프로젝트 연결',
-      value: link ? link.projectTitle : '미연결',
-      tone: (projectLinked ? 'success' : 'danger') as Tone,
-    },
-    {
-      label: '독립 해결',
-      value: data.independent ? '예' : '아니오',
-      tone: 'brand' as Tone,
-    },
-    { label: '소요 일수', value: data.days, tone: 'info' as Tone },
-  ]
+  const stats = data
+    ? [
+        {
+          label: '인증 상태',
+          value: data.statusLabel,
+          tone: (isCertified ? 'success' : 'accent') as Tone,
+        },
+        {
+          label: '프로젝트 연결',
+          value: link ? link.projectTitle : '미연결',
+          tone: (projectLinked ? 'success' : 'danger') as Tone,
+        },
+        {
+          label: '독립 해결',
+          value: data.independent ? '예' : '아니오',
+          tone: 'brand' as Tone,
+        },
+        { label: '소요 일수', value: data.days, tone: 'info' as Tone },
+      ]
+    : []
 
   return (
-    <div className={cn('flex flex-col gap-5 p-8', editing && 'pb-28')}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span
-            className={cn(
-              'rounded px-2 py-0.5 text-[11px] font-bold',
-              isCertified ? TONE_SOFT.success : TONE_SOFT.accent,
-            )}
-          >
-            {data.statusLabel}
-          </span>
-          <span
-            className={cn(
-              'rounded px-2 py-0.5 text-[11px] font-bold',
-              TONE_SOFT[data.categoryTone],
-            )}
-          >
-            {data.category}
-          </span>
-          {!viewOnly && !isCertified && !projectLinked && (
-            <span
-              className={cn(
-                'rounded px-2 py-0.5 text-[11px] font-bold',
-                TONE_SOFT.warning,
-              )}
-            >
-              프로젝트 미연결
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {!viewOnly && isCertified && (
-            <button
-              type="button"
-              onClick={goChangeRequest}
-              className={buttonClass({ size: 'sm' })}
-            >
-              변경 제안
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() =>
-              viewOnly ? navigate(-1) : navigate('/student/troubleshooting')
-            }
-            className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
-          >
-            {viewOnly ? '뒤로' : '목록으로'}
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => {
-          // 프로젝트 연결 카드는 연결되면 프로젝트명을 보여줘 길어질 수 있어 작게·말줄임.
-          const long = s.label === '프로젝트 연결' && projectLinked
-          return (
-            <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
-              <span className="text-fg-muted text-[12px]">{s.label}</span>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      loadingText="사례를 불러오는 중…"
+      errorTitle="사례를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className={cn('flex flex-col gap-5 p-8', editing && 'pb-28')}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span
                 className={cn(
-                  'truncate font-bold',
-                  long ? 'text-[14px]' : 'text-[20px]',
-                  s.tone === 'danger' ? 'text-danger' : 'text-fg',
+                  'rounded px-2 py-0.5 text-[11px] font-bold',
+                  isCertified ? TONE_SOFT.success : TONE_SOFT.accent,
                 )}
-                title={s.value}
               >
-                {s.value}
+                {data.statusLabel}
               </span>
-            </div>
-          )
-        })}
-      </div>
-
-      {editing ? (
-        <CaseContentForm
-          caseId={id}
-          projectLink={link}
-          onConnectProject={() => setLinkModal(true)}
-          onRequestCert={() => setCertModal(true)}
-        />
-      ) : (
-        <div className="flex flex-col gap-4 lg:flex-row">
-          <section className={cn(card, 'flex flex-1 flex-col gap-5')}>
-            <div className="flex flex-col gap-1">
-              <span className="text-fg-subtle text-[11px]">사례 제목</span>
-              <h2 className="text-fg text-[18px] font-bold">{data.title}</h2>
-            </div>
-            {[
-              { label: '상황', text: data.situation },
-              { label: '해결', text: data.resolution },
-              { label: '결과', text: data.result },
-            ].map((b) => (
-              <div
-                key={b.label}
-                className="border-divider flex flex-col gap-1.5 border-t pt-4"
+              <span
+                className={cn(
+                  'rounded px-2 py-0.5 text-[11px] font-bold',
+                  TONE_SOFT[data.categoryTone],
+                )}
               >
-                <span className="text-fg text-[14px] font-bold">{b.label}</span>
-                <p className="text-fg-muted text-[13px] leading-6">{b.text}</p>
-              </div>
-            ))}
-            <div className="border-divider flex items-center gap-2 border-t pt-4">
-              <span className="text-fg-subtle text-[11px]">연결 프로젝트</span>
-              <span className="text-fg text-[12px] font-semibold">
-                {link ? link.projectTitle : '연결된 프로젝트 없음'}
+                {data.category}
               </span>
-            </div>
-            <div className="border-divider flex flex-col gap-2 border-t pt-4">
-              <span className="text-fg-subtle text-[11px]">첨부 근거</span>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {data.attachments.map((a) => {
-                  const isLink = a.kind === 'link'
-                  return (
-                    <div
-                      key={a.label}
-                      className="border-border hover:border-brand/50 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 transition-colors"
-                    >
-                      <span
-                        className={cn(
-                          'flex size-9 shrink-0 items-center justify-center rounded-lg',
-                          isLink
-                            ? 'bg-info-bg text-info'
-                            : 'bg-success-bg text-success',
-                        )}
-                      >
-                        {isLink ? (
-                          <Link2 className="size-4" />
-                        ) : (
-                          <FileText className="size-4" />
-                        )}
-                      </span>
-                      <div className="flex min-w-0 flex-col">
-                        <span className="text-fg truncate text-[12px] font-semibold">
-                          {a.label}
-                        </span>
-                        <span className="text-fg-subtle text-[11px]">
-                          {isLink ? '링크' : '업로드 파일'}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-            {caseTags.length > 0 && (
-              <div className="border-divider flex flex-col gap-2 border-t pt-4">
-                <span className="text-fg-subtle text-[11px]">태그</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {caseTags.map((t) => (
-                    <span
-                      key={t}
-                      className="bg-brand/10 text-brand rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-
-          <div className="flex flex-col gap-4 lg:w-[320px]">
-            {/* 검토 중 — 잠금(수정 불가), 강사 승인 대기 */}
-            {!viewOnly && isReviewing && (
-              <section className={cn(card, 'flex flex-col gap-3')}>
-                <span className="text-warning text-[14px] font-bold">
-                  검토 중
-                </span>
-                <span className="text-fg-subtle text-[11px]">
-                  강사 인증 검토를 기다리고 있어요. 인증 완료 전까지 내용은 잠겨
-                  있어요.
-                </span>
-                <div
+              {!viewOnly && !isCertified && !projectLinked && (
+                <span
                   className={cn(
-                    'flex items-start gap-2 rounded-lg p-2.5 text-[11px] leading-4',
-                    link ? 'bg-success-bg' : 'bg-warning-bg',
+                    'rounded px-2 py-0.5 text-[11px] font-bold',
+                    TONE_SOFT.warning,
                   )}
                 >
-                  <Link2
-                    className={cn(
-                      'mt-px size-3.5 shrink-0',
-                      link ? 'text-success' : 'text-warning',
-                    )}
-                  />
-                  <span className="text-fg font-medium">
-                    {link ? link.projectTitle : '연결된 프로젝트가 없어요'}
-                  </span>
-                </div>
-              </section>
-            )}
-
-            {/* 인증 완료 — 잠금, 변경 제안만 */}
-            {!viewOnly && isCertified && (
-              <section className={cn(card, 'flex flex-col gap-3')}>
-                <span className="text-success text-[14px] font-bold">
-                  ✓ 인증 완료
+                  프로젝트 미연결
                 </span>
-                <span className="text-fg-subtle text-[11px]">
-                  인증이 완료된 사례예요. 내용은 잠겨 있고, 수정하려면 변경
-                  제안으로 요청하세요.
-                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {!viewOnly && isCertified && (
                 <button
                   type="button"
                   onClick={goChangeRequest}
@@ -362,59 +190,242 @@ export default function CaseDetailPage() {
                 >
                   변경 제안
                 </button>
-              </section>
-            )}
+              )}
+              <button
+                type="button"
+                onClick={() =>
+                  viewOnly ? navigate(-1) : navigate('/student/troubleshooting')
+                }
+                className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
+              >
+                {viewOnly ? '뒤로' : '목록으로'}
+              </button>
+            </div>
+          </div>
 
-            <section className={cn(card, 'flex flex-col gap-3')}>
-              <span className="text-fg text-[14px] font-bold">상태 이력</span>
-              {data.timeline.map((t) => (
-                <div key={t.key} className="flex items-start gap-2.5">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {stats.map((s) => {
+              // 프로젝트 연결 카드는 연결되면 프로젝트명을 보여줘 길어질 수 있어 작게·말줄임.
+              const long = s.label === '프로젝트 연결' && projectLinked
+              return (
+                <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
+                  <span className="text-fg-muted text-[12px]">{s.label}</span>
                   <span
                     className={cn(
-                      'mt-1 size-2.5 shrink-0 rounded-full',
-                      t.state === 'current'
-                        ? 'bg-brand'
-                        : t.state === 'done'
-                          ? 'bg-success'
-                          : 'bg-border',
+                      'truncate font-bold',
+                      long ? 'text-[14px]' : 'text-[20px]',
+                      s.tone === 'danger' ? 'text-danger' : 'text-fg',
                     )}
-                  />
-                  <div className="flex flex-col">
-                    <span
-                      className={cn(
-                        'text-[13px] font-semibold',
-                        t.state === 'todo' ? 'text-fg-subtle' : 'text-fg',
-                      )}
-                    >
-                      {t.label}
+                    title={s.value}
+                  >
+                    {s.value}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+
+          {editing ? (
+            <CaseContentForm
+              caseId={id}
+              projectLink={link}
+              onConnectProject={() => setLinkModal(true)}
+              onRequestCert={() => setCertModal(true)}
+            />
+          ) : (
+            <div className="flex flex-col gap-4 lg:flex-row">
+              <section className={cn(card, 'flex flex-1 flex-col gap-5')}>
+                <div className="flex flex-col gap-1">
+                  <span className="text-fg-subtle text-[11px]">사례 제목</span>
+                  <h2 className="text-fg text-[18px] font-bold">
+                    {data.title}
+                  </h2>
+                </div>
+                {[
+                  { label: '상황', text: data.situation },
+                  { label: '해결', text: data.resolution },
+                  { label: '결과', text: data.result },
+                ].map((b) => (
+                  <div
+                    key={b.label}
+                    className="border-divider flex flex-col gap-1.5 border-t pt-4"
+                  >
+                    <span className="text-fg text-[14px] font-bold">
+                      {b.label}
                     </span>
-                    <span className="text-fg-subtle text-[11px]">{t.sub}</span>
+                    <p className="text-fg-muted text-[13px] leading-6">
+                      {b.text}
+                    </p>
+                  </div>
+                ))}
+                <div className="border-divider flex items-center gap-2 border-t pt-4">
+                  <span className="text-fg-subtle text-[11px]">
+                    연결 프로젝트
+                  </span>
+                  <span className="text-fg text-[12px] font-semibold">
+                    {link ? link.projectTitle : '연결된 프로젝트 없음'}
+                  </span>
+                </div>
+                <div className="border-divider flex flex-col gap-2 border-t pt-4">
+                  <span className="text-fg-subtle text-[11px]">첨부 근거</span>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {data.attachments.map((a) => {
+                      const isLink = a.kind === 'link'
+                      return (
+                        <div
+                          key={a.label}
+                          className="border-border hover:border-brand/50 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 transition-colors"
+                        >
+                          <span
+                            className={cn(
+                              'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                              isLink
+                                ? 'bg-info-bg text-info'
+                                : 'bg-success-bg text-success',
+                            )}
+                          >
+                            {isLink ? (
+                              <Link2 className="size-4" />
+                            ) : (
+                              <FileText className="size-4" />
+                            )}
+                          </span>
+                          <div className="flex min-w-0 flex-col">
+                            <span className="text-fg truncate text-[12px] font-semibold">
+                              {a.label}
+                            </span>
+                            <span className="text-fg-subtle text-[11px]">
+                              {isLink ? '링크' : '업로드 파일'}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
-              ))}
-            </section>
-          </div>
+                {caseTags.length > 0 && (
+                  <div className="border-divider flex flex-col gap-2 border-t pt-4">
+                    <span className="text-fg-subtle text-[11px]">태그</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {caseTags.map((t) => (
+                        <span
+                          key={t}
+                          className="bg-brand/10 text-brand rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              <div className="flex flex-col gap-4 lg:w-[320px]">
+                {/* 검토 중 — 잠금(수정 불가), 강사 승인 대기 */}
+                {!viewOnly && isReviewing && (
+                  <section className={cn(card, 'flex flex-col gap-3')}>
+                    <span className="text-warning text-[14px] font-bold">
+                      검토 중
+                    </span>
+                    <span className="text-fg-subtle text-[11px]">
+                      강사 인증 검토를 기다리고 있어요. 인증 완료 전까지 내용은
+                      잠겨 있어요.
+                    </span>
+                    <div
+                      className={cn(
+                        'flex items-start gap-2 rounded-lg p-2.5 text-[11px] leading-4',
+                        link ? 'bg-success-bg' : 'bg-warning-bg',
+                      )}
+                    >
+                      <Link2
+                        className={cn(
+                          'mt-px size-3.5 shrink-0',
+                          link ? 'text-success' : 'text-warning',
+                        )}
+                      />
+                      <span className="text-fg font-medium">
+                        {link ? link.projectTitle : '연결된 프로젝트가 없어요'}
+                      </span>
+                    </div>
+                  </section>
+                )}
+
+                {/* 인증 완료 — 잠금, 변경 제안만 */}
+                {!viewOnly && isCertified && (
+                  <section className={cn(card, 'flex flex-col gap-3')}>
+                    <span className="text-success text-[14px] font-bold">
+                      ✓ 인증 완료
+                    </span>
+                    <span className="text-fg-subtle text-[11px]">
+                      인증이 완료된 사례예요. 내용은 잠겨 있고, 수정하려면 변경
+                      제안으로 요청하세요.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={goChangeRequest}
+                      className={buttonClass({ size: 'sm' })}
+                    >
+                      변경 제안
+                    </button>
+                  </section>
+                )}
+
+                <section className={cn(card, 'flex flex-col gap-3')}>
+                  <span className="text-fg text-[14px] font-bold">
+                    상태 이력
+                  </span>
+                  {data.timeline.map((t) => (
+                    <div key={t.key} className="flex items-start gap-2.5">
+                      <span
+                        className={cn(
+                          'mt-1 size-2.5 shrink-0 rounded-full',
+                          t.state === 'current'
+                            ? 'bg-brand'
+                            : t.state === 'done'
+                              ? 'bg-success'
+                              : 'bg-border',
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span
+                          className={cn(
+                            'text-[13px] font-semibold',
+                            t.state === 'todo' ? 'text-fg-subtle' : 'text-fg',
+                          )}
+                        >
+                          {t.label}
+                        </span>
+                        <span className="text-fg-subtle text-[11px]">
+                          {t.sub}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              </div>
+            </div>
+          )}
+
+          {!viewOnly && (
+            <ProjectLinkModal
+              open={linkModal}
+              current={link}
+              onClose={() => setLinkModal(false)}
+              onLink={onLinkChange}
+            />
+          )}
+
+          {certModal && (
+            <CertifyModal
+              data={data}
+              projectValue={link ? link.projectTitle : '미연결'}
+              onClose={() => setCertModal(false)}
+              onConfirm={onCertify}
+            />
+          )}
         </div>
       )}
-
-      {!viewOnly && (
-        <ProjectLinkModal
-          open={linkModal}
-          current={link}
-          onClose={() => setLinkModal(false)}
-          onLink={onLinkChange}
-        />
-      )}
-
-      {certModal && (
-        <CertifyModal
-          data={data}
-          projectValue={link ? link.projectTitle : '미연결'}
-          onClose={() => setCertModal(false)}
-          onConfirm={onCertify}
-        />
-      )}
-    </div>
+    </DataBoundary>
   )
 }
 

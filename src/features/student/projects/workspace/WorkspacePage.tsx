@@ -1,6 +1,5 @@
 import { useParams, useSearchParams } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useProjectWorkspace } from '../../api/projects'
 import type { WsTab } from '../types'
 import { WorkspaceShell } from './WorkspaceShell'
@@ -39,40 +38,38 @@ export default function WorkspacePage() {
     : 'home'
   const { data, isPending, isError, refetch } = useProjectWorkspace(projectId)
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">워크스페이스를 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="워크스페이스를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const setTab = (t: WsTab) =>
     setParams(t === 'home' ? {} : { tab: t }, { replace: true })
 
   return (
-    <WorkspaceShell
-      title={data.title}
-      meta={data.meta}
-      active={tab}
-      onTab={setTab}
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      loadingText="워크스페이스를 불러오는 중…"
+      errorTitle="워크스페이스를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
     >
-      {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
-      {tab === 'board' && <BoardTab d={data} />}
-      {tab === 'calendar' && <CalendarTab d={data} />}
-      {tab === 'meetings' && <MeetingsTab d={data} />}
-      {tab === 'docs' && <DocsTab d={data} />}
-      {tab === 'issues' && <IssuesTab d={data} />}
-      {tab === 'team' && <TeamTab d={data} />}
-      {tab === 'outcomes' && <OutcomesTab d={data} />}
-      {tab === 'peer-evaluation' && <PeerTab d={data} />}
-      {tab === 'certification' && <CertTab d={data} />}
-    </WorkspaceShell>
+      {data && (
+        <WorkspaceShell
+          title={data.title}
+          meta={data.meta}
+          active={tab}
+          onTab={setTab}
+        >
+          {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
+          {tab === 'board' && <BoardTab d={data} />}
+          {tab === 'calendar' && <CalendarTab d={data} />}
+          {tab === 'meetings' && <MeetingsTab d={data} />}
+          {tab === 'docs' && <DocsTab d={data} />}
+          {tab === 'issues' && <IssuesTab d={data} />}
+          {tab === 'team' && <TeamTab d={data} />}
+          {tab === 'outcomes' && <OutcomesTab d={data} />}
+          {tab === 'peer-evaluation' && <PeerTab d={data} />}
+          {tab === 'certification' && <CertTab d={data} />}
+        </WorkspaceShell>
+      )}
+    </DataBoundary>
   )
 }

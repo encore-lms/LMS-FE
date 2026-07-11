@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Eye, MessageSquare } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Markdown } from '@/components/ui/Markdown'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader, useAuth } from '@/shared/store'
@@ -287,31 +286,7 @@ export default function QnaDetailPage() {
   const [draft, setDraft] = useState('')
   usePageHeader('QnA 게시판', '질문 상세')
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">질문을 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="질문을 찾을 수 없어요"
-          description="삭제되었거나 잘못된 주소일 수 있어요."
-          action={
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/student/qna')}
-              >
-                목록으로
-              </Button>
-              <Button onClick={() => refetch()}>다시 시도</Button>
-            </div>
-          }
-        />
-      </div>
-    )
-  }
-
-  const resolved = data.status === 'resolved'
+  const resolved = data?.status === 'resolved'
   const submitAnswer = () => {
     if (!draft.trim() || createAnswer.isPending) return
     createAnswer.mutate(
@@ -345,135 +320,150 @@ export default function QnaDetailPage() {
         목록으로
       </button>
 
-      {/* 질문 본문 */}
-      <section className={cn(card, 'flex flex-col gap-4')}>
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              'rounded-full px-2.5 py-1 text-[11px] font-bold',
-              CHIP[data.categoryTone],
-            )}
-          >
-            {data.category}
-          </span>
-          <span
-            className={cn(
-              'flex items-center gap-1.5 text-[11px] font-semibold',
-              resolved
-                ? 'text-success'
-                : data.status === 'answered'
-                  ? 'text-info'
-                  : 'text-warning',
-            )}
-          >
-            {resolved && <CheckCircle2 className="size-3.5" />}
-            {data.statusLabel}
-          </span>
-          {data.canDelete && (
-            <div className="ml-auto">
-              <DeleteButton
-                pending={deleteQuestion.isPending}
-                confirmText="질문·답변·댓글 모두 삭제?"
-                onConfirm={() =>
-                  deleteQuestion.mutate(id, {
-                    onSuccess: () => {
-                      toast.success('질문을 삭제했어요')
-                      navigate('/student/qna')
-                    },
-                    onError: () => toast.danger('질문 삭제에 실패했어요'),
-                  })
-                }
-              />
-            </div>
-          )}
-        </div>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        loadingText="질문을 불러오는 중…"
+        errorTitle="질문을 찾을 수 없어요"
+        errorDescription="삭제되었거나 잘못된 주소일 수 있어요."
+      >
+        {data && (
+          <>
+            {/* 질문 본문 */}
+            <section className={cn(card, 'flex flex-col gap-4')}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={cn(
+                    'rounded-full px-2.5 py-1 text-[11px] font-bold',
+                    CHIP[data.categoryTone],
+                  )}
+                >
+                  {data.category}
+                </span>
+                <span
+                  className={cn(
+                    'flex items-center gap-1.5 text-[11px] font-semibold',
+                    resolved
+                      ? 'text-success'
+                      : data.status === 'answered'
+                        ? 'text-info'
+                        : 'text-warning',
+                  )}
+                >
+                  {resolved && <CheckCircle2 className="size-3.5" />}
+                  {data.statusLabel}
+                </span>
+                {data.canDelete && (
+                  <div className="ml-auto">
+                    <DeleteButton
+                      pending={deleteQuestion.isPending}
+                      confirmText="질문·답변·댓글 모두 삭제?"
+                      onConfirm={() =>
+                        deleteQuestion.mutate(id, {
+                          onSuccess: () => {
+                            toast.success('질문을 삭제했어요')
+                            navigate('/student/qna')
+                          },
+                          onError: () => toast.danger('질문 삭제에 실패했어요'),
+                        })
+                      }
+                    />
+                  </div>
+                )}
+              </div>
 
-        <h1 className="text-fg text-[20px] leading-7 font-bold">
-          {data.title}
-        </h1>
+              <h1 className="text-fg text-[20px] leading-7 font-bold">
+                {data.title}
+              </h1>
 
-        <div className="text-fg-subtle flex items-center gap-3 text-[12px]">
-          <span className="text-fg-muted font-semibold">{data.authorName}</span>
-          <span>{data.createdAt}</span>
-          <span className="flex items-center gap-1">
-            <Eye className="size-3.5" />
-            {data.viewCount}
-          </span>
-          <span className="flex items-center gap-1">
-            <MessageSquare className="size-3.5" />
-            {data.answers.length}
-          </span>
-        </div>
+              <div className="text-fg-subtle flex items-center gap-3 text-[12px]">
+                <span className="text-fg-muted font-semibold">
+                  {data.authorName}
+                </span>
+                <span>{data.createdAt}</span>
+                <span className="flex items-center gap-1">
+                  <Eye className="size-3.5" />
+                  {data.viewCount}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MessageSquare className="size-3.5" />
+                  {data.answers.length}
+                </span>
+              </div>
 
-        <Markdown>{data.content}</Markdown>
+              <Markdown>{data.content}</Markdown>
 
-        {data.tags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            {data.tags.map((t) => (
-              <span
-                key={t}
-                className="bg-surface-muted text-fg-muted rounded-full px-2.5 py-1 text-[11px] font-semibold"
-              >
-                {t}
+              {data.tags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {data.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="bg-surface-muted text-fg-muted rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* 답변 목록 */}
+            <div className="flex items-center gap-2 pt-1">
+              <h2 className="text-fg text-[16px] font-bold">답변</h2>
+              <span className="text-fg-subtle text-[12px]">
+                {data.answers.length}개
               </span>
-            ))}
-          </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {data.answers.length === 0 && (
+                <div className="border-border text-fg-subtle rounded-2xl border border-dashed p-10 text-center text-[13px]">
+                  아직 답변이 없어요. 첫 답변을 남겨보세요.
+                </div>
+              )}
+              {data.answers.map((a) => (
+                <AnswerItem
+                  key={a.id}
+                  answer={a}
+                  questionId={id}
+                  questionTitle={data.title}
+                  resolved={resolved}
+                  onAccept={accept}
+                  acceptPending={acceptAnswer.isPending}
+                  selfName={selfName}
+                />
+              ))}
+            </div>
+
+            {/* 답변 작성 */}
+            <section className={cn(card, 'flex flex-col gap-3')}>
+              <span className="text-fg text-[14px] font-bold">답변 작성</span>
+              <MarkdownEditor
+                value={draft}
+                onChange={setDraft}
+                minHeight={120}
+                maxLength={2000}
+                placeholder="도움이 될 만한 답변을 남겨주세요. 코드 블록·이미지 지원."
+                onImageRejected={(msg) => toast.danger(msg)}
+              />
+              <div className="flex items-center justify-end gap-2">
+                <span className="text-fg-subtle mr-auto text-[11px]">
+                  마크다운·코드 블록·이미지 지원
+                </span>
+                <button
+                  type="button"
+                  onClick={submitAnswer}
+                  disabled={!draft.trim() || createAnswer.isPending}
+                  className="bg-brand h-10 rounded-[10px] px-5 text-[13px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {createAnswer.isPending ? '등록 중…' : '답변 등록'}
+                </button>
+              </div>
+            </section>
+          </>
         )}
-      </section>
-
-      {/* 답변 목록 */}
-      <div className="flex items-center gap-2 pt-1">
-        <h2 className="text-fg text-[16px] font-bold">답변</h2>
-        <span className="text-fg-subtle text-[12px]">
-          {data.answers.length}개
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {data.answers.length === 0 && (
-          <div className="border-border text-fg-subtle rounded-2xl border border-dashed p-10 text-center text-[13px]">
-            아직 답변이 없어요. 첫 답변을 남겨보세요.
-          </div>
-        )}
-        {data.answers.map((a) => (
-          <AnswerItem
-            key={a.id}
-            answer={a}
-            questionId={id}
-            questionTitle={data.title}
-            resolved={resolved}
-            onAccept={accept}
-            acceptPending={acceptAnswer.isPending}
-            selfName={selfName}
-          />
-        ))}
-      </div>
-
-      {/* 답변 작성 */}
-      <section className={cn(card, 'flex flex-col gap-3')}>
-        <span className="text-fg text-[14px] font-bold">답변 작성</span>
-        <MarkdownEditor
-          value={draft}
-          onChange={setDraft}
-          minHeight={120}
-          maxLength={2000}
-          placeholder="도움이 될 만한 답변을 남겨주세요. 코드 블록·이미지 지원."
-          onImageRejected={(msg) => toast.danger(msg)}
-        />
-        <div className="flex items-center justify-end gap-2">
-          <span className="text-fg-subtle mr-auto text-[11px]">
-            마크다운·코드 블록·이미지 지원
-          </span>
-          <button
-            type="button"
-            onClick={submitAnswer}
-            disabled={!draft.trim() || createAnswer.isPending}
-            className="bg-brand h-10 rounded-[10px] px-5 text-[13px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {createAnswer.isPending ? '등록 중…' : '답변 등록'}
-          </button>
-        </div>
-      </section>
+      </DataBoundary>
     </div>
   )
 }

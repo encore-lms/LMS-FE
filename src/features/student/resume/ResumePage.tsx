@@ -18,8 +18,7 @@ import { cn } from '@/shared/lib/cn'
 import { formatDateDot } from '@/shared/lib/date'
 import { usePageHeader } from '@/shared/store'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { useDeleteResume, useResumes } from '../api/resume'
@@ -291,26 +290,12 @@ export default function ResumePage() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [filterOpen])
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">이력서를 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="이력서를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const resumes = data.resumes
+  const resumes = data?.resumes ?? []
   const kpis = {
     total: resumes.length,
     done: resumes.filter((r) => r.status === '작성 완료').length,
     writing: resumes.filter((r) => r.status === '작성 중').length,
-    feedback: data.feedbackCount,
+    feedback: data?.feedbackCount ?? 0,
   }
   // KPI는 전체 기준, 목록만 상태 필터 적용.
   const visibleResumes =
@@ -334,146 +319,156 @@ export default function ResumePage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard
-          icon={<FileText />}
-          iconClass="bg-surface-muted text-fg-muted"
-          value={kpis.total}
-          label="전체 이력서"
-        />
-        <StatCard
-          icon={<CheckCircle2 />}
-          iconClass="bg-success-bg text-success"
-          value={kpis.done}
-          label="작성 완료"
-        />
-        <StatCard
-          icon={<SquarePen />}
-          iconClass="bg-warning-bg text-warning"
-          value={kpis.writing}
-          label="작성 중"
-        />
-        <StatCard
-          icon={<MessageSquare />}
-          iconClass="bg-accent-bg text-accent-strong"
-          value={kpis.feedback}
-          label="누적 피드백"
-        />
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      loadingText="이력서를 불러오는 중…"
+      errorTitle="이력서를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      <div className="flex flex-col gap-5 p-8">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatCard
+            icon={<FileText />}
+            iconClass="bg-surface-muted text-fg-muted"
+            value={kpis.total}
+            label="전체 이력서"
+          />
+          <StatCard
+            icon={<CheckCircle2 />}
+            iconClass="bg-success-bg text-success"
+            value={kpis.done}
+            label="작성 완료"
+          />
+          <StatCard
+            icon={<SquarePen />}
+            iconClass="bg-warning-bg text-warning"
+            value={kpis.writing}
+            label="작성 중"
+          />
+          <StatCard
+            icon={<MessageSquare />}
+            iconClass="bg-accent-bg text-accent-strong"
+            value={kpis.feedback}
+            label="누적 피드백"
+          />
+        </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={handleCreate}
-          className="bg-accent-strong inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[14px] font-bold text-white"
-        >
-          <Plus className="h-4 w-4" />새 이력서 작성
-        </button>
-        <div className="relative" ref={filterRef}>
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            aria-label="상태 필터"
-            aria-haspopup="menu"
-            aria-expanded={filterOpen}
-            onClick={() => setFilterOpen((v) => !v)}
-            className={cn(
-              'relative flex size-10 items-center justify-center rounded-lg border transition-colors',
-              statusFilter !== '전체'
-                ? 'border-accent-strong text-accent-strong bg-accent-bg'
-                : 'border-border text-fg-muted hover:bg-surface-muted',
-            )}
+            onClick={handleCreate}
+            className="bg-accent-strong inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[14px] font-bold text-white"
           >
-            <SlidersHorizontal className="h-4 w-4" />
-            {statusFilter !== '전체' && (
-              <span className="bg-accent-strong absolute -top-1 -right-1 size-2 rounded-full" />
-            )}
+            <Plus className="h-4 w-4" />새 이력서 작성
           </button>
-          {filterOpen && (
-            <div className="border-border absolute right-0 z-30 mt-1 w-40 rounded-lg border bg-white p-1 shadow-[0px_8px_24px_0px_rgba(18,23,38,0.12)]">
-              {STATUS_FILTERS.map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => {
-                    setStatusFilter(f)
-                    setFilterOpen(false)
-                  }}
-                  className={cn(
-                    'flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-[13px]',
-                    f === statusFilter
-                      ? 'bg-accent-bg text-accent-strong font-semibold'
-                      : 'text-fg-muted hover:bg-surface-muted',
-                  )}
-                >
-                  {f}
-                  {f === statusFilter && <Check className="h-3.5 w-3.5" />}
-                </button>
-              ))}
+          <div className="relative" ref={filterRef}>
+            <button
+              type="button"
+              aria-label="상태 필터"
+              aria-haspopup="menu"
+              aria-expanded={filterOpen}
+              onClick={() => setFilterOpen((v) => !v)}
+              className={cn(
+                'relative flex size-10 items-center justify-center rounded-lg border transition-colors',
+                statusFilter !== '전체'
+                  ? 'border-accent-strong text-accent-strong bg-accent-bg'
+                  : 'border-border text-fg-muted hover:bg-surface-muted',
+              )}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {statusFilter !== '전체' && (
+                <span className="bg-accent-strong absolute -top-1 -right-1 size-2 rounded-full" />
+              )}
+            </button>
+            {filterOpen && (
+              <div className="border-border absolute right-0 z-30 mt-1 w-40 rounded-lg border bg-white p-1 shadow-[0px_8px_24px_0px_rgba(18,23,38,0.12)]">
+                {STATUS_FILTERS.map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter(f)
+                      setFilterOpen(false)
+                    }}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-[13px]',
+                      f === statusFilter
+                        ? 'bg-accent-bg text-accent-strong font-semibold'
+                        : 'text-fg-muted hover:bg-surface-muted',
+                    )}
+                  >
+                    {f}
+                    {f === statusFilter && <Check className="h-3.5 w-3.5" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {resumes.length === 0 ? (
+            <div className="border-border text-fg-muted rounded-xl border border-dashed p-10 text-center text-[14px]">
+              아직 작성한 이력서가 없어요. “새 이력서 작성”으로 시작하세요.
             </div>
+          ) : visibleResumes.length === 0 ? (
+            <div className="border-border text-fg-muted rounded-xl border border-dashed p-10 text-center text-[14px]">
+              ‘{statusFilter}’ 상태의 이력서가 없어요.
+            </div>
+          ) : (
+            visibleResumes.map((r) => (
+              <ResumeCard
+                key={r.id}
+                resume={r}
+                onOpen={() => setSelected(r)}
+                onDelete={() => setDeleteTarget(r)}
+              />
+            ))
           )}
         </div>
-      </div>
 
-      <div className="flex flex-col gap-4">
-        {resumes.length === 0 ? (
-          <div className="border-border text-fg-muted rounded-xl border border-dashed p-10 text-center text-[14px]">
-            아직 작성한 이력서가 없어요. “새 이력서 작성”으로 시작하세요.
-          </div>
-        ) : visibleResumes.length === 0 ? (
-          <div className="border-border text-fg-muted rounded-xl border border-dashed p-10 text-center text-[14px]">
-            ‘{statusFilter}’ 상태의 이력서가 없어요.
-          </div>
-        ) : (
-          visibleResumes.map((r) => (
-            <ResumeCard
-              key={r.id}
-              resume={r}
-              onOpen={() => setSelected(r)}
-              onDelete={() => setDeleteTarget(r)}
-            />
-          ))
+        {selected && (
+          <ResumeDrawer
+            resume={selected}
+            onClose={() => setSelected(null)}
+            onEdit={() => navigate(`/student/resume/${selected.id}/edit`)}
+          />
         )}
+
+        <Modal
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          title="이력서를 삭제할까요?"
+          size="sm"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleteResume.isPending}
+                className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:opacity-60"
+              >
+                삭제
+              </button>
+            </>
+          }
+        >
+          <p className="text-fg-muted text-[13px] leading-6">
+            <span className="text-fg font-semibold">{deleteTarget?.title}</span>{' '}
+            이력서를 삭제하면 되돌릴 수 없습니다.
+          </p>
+        </Modal>
       </div>
-
-      {selected && (
-        <ResumeDrawer
-          resume={selected}
-          onClose={() => setSelected(null)}
-          onEdit={() => navigate(`/student/resume/${selected.id}/edit`)}
-        />
-      )}
-
-      <Modal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="이력서를 삭제할까요?"
-        size="sm"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => setDeleteTarget(null)}
-              className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              onClick={confirmDelete}
-              disabled={deleteResume.isPending}
-              className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:opacity-60"
-            >
-              삭제
-            </button>
-          </>
-        }
-      >
-        <p className="text-fg-muted text-[13px] leading-6">
-          <span className="text-fg font-semibold">{deleteTarget?.title}</span>{' '}
-          이력서를 삭제하면 되돌릴 수 없습니다.
-        </p>
-      </Modal>
-    </div>
+    </DataBoundary>
   )
 }

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
@@ -186,216 +186,213 @@ export default function ProjectListPage() {
 
   const shownLabel = `${filteredProjects.length}건 표시 · 작성 중 ${byPhase('active')} / 작성 완료 ${byPhase('completed')} / 검토 중 ${byPhase('reviewing')} / 인증 완료 ${byPhase('certified')}`
 
-  if (isPending) return <SkeletonCards count={6} className="p-8" />
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="프로젝트를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col gap-5 p-8">
-      <ProjectStatCards stats={stats} />
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      skeleton={<SkeletonCards count={6} />}
+      errorTitle="프로젝트를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      <div className="flex flex-col gap-5 p-8">
+        <ProjectStatCards stats={stats} />
 
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2">
-          <h2 className="text-fg text-[16px] font-bold">참여 프로젝트</h2>
-          <span className="text-fg-subtle text-[12px]">
-            {filteredProjects.length}건
-          </span>
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-fg text-[16px] font-bold">참여 프로젝트</h2>
+            <span className="text-fg-subtle text-[12px]">
+              {filteredProjects.length}건
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="border-border text-fg-subtle focus-within:border-brand hidden h-9 items-center gap-2 rounded-lg border bg-white px-3 text-[12px] sm:inline-flex">
+              <Search className="size-3.5 shrink-0" strokeWidth={2} />
+              <input
+                aria-label="프로젝트명·스택 검색"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="프로젝트명·스택 검색"
+                className="placeholder:text-fg-subtle text-fg w-44 bg-transparent outline-none"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => navigate('/student/projects/new')}
+              className={buttonClass({ size: 'sm' })}
+            >
+              신규 프로젝트
+              <ArrowRight className="size-3.5" strokeWidth={2.4} />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="border-border text-fg-subtle focus-within:border-brand hidden h-9 items-center gap-2 rounded-lg border bg-white px-3 text-[12px] sm:inline-flex">
-            <Search className="size-3.5 shrink-0" strokeWidth={2} />
-            <input
-              aria-label="프로젝트명·스택 검색"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="프로젝트명·스택 검색"
-              className="placeholder:text-fg-subtle text-fg w-44 bg-transparent outline-none"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={() => navigate('/student/projects/new')}
-            className={buttonClass({ size: 'sm' })}
-          >
-            신규 프로젝트
-            <ArrowRight className="size-3.5" strokeWidth={2.4} />
-          </button>
-        </div>
-      </div>
 
-      {/* 필터 칩 */}
-      <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {filters.map((f) => {
-            const on = f.key === activeStatus
-            return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setActiveStatus(f.key)}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                  on
-                    ? 'bg-brand-deep text-white'
-                    : 'border-border text-fg-muted hover:bg-surface-muted border',
-                )}
-              >
-                {f.label}
-                <span
+        {/* 필터 칩 */}
+        <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {filters.map((f) => {
+              const on = f.key === activeStatus
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setActiveStatus(f.key)}
                   className={cn(
-                    'rounded-md px-1.5 text-[12px]',
+                    'flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
                     on
-                      ? 'bg-white/15 text-white'
-                      : 'bg-surface-muted text-fg-subtle',
+                      ? 'bg-brand-deep text-white'
+                      : 'border-border text-fg-muted hover:bg-surface-muted border',
                   )}
                 >
-                  {f.count}
-                </span>
-              </button>
-            )
-          })}
+                  {f.label}
+                  <span
+                    className={cn(
+                      'rounded-md px-1.5 text-[12px]',
+                      on
+                        ? 'bg-white/15 text-white'
+                        : 'bg-surface-muted text-fg-subtle',
+                    )}
+                  >
+                    {f.count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { key: 'team' as const, label: '팀', count: teamCount },
+              { key: 'personal' as const, label: '개인', count: personalCount },
+            ].map((f) => {
+              const on = activeKind === f.key
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setActiveKind(on ? 'all' : f.key)}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors',
+                    on
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-fg-muted hover:bg-surface-muted',
+                  )}
+                >
+                  {f.label}
+                  <span className="bg-surface-muted text-fg-subtle rounded-md px-1.5">
+                    {f.count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {[
-            { key: 'team' as const, label: '팀', count: teamCount },
-            { key: 'personal' as const, label: '개인', count: personalCount },
-          ].map((f) => {
-            const on = activeKind === f.key
-            return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setActiveKind(on ? 'all' : f.key)}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors',
-                  on
-                    ? 'border-brand bg-brand/10 text-brand'
-                    : 'border-border text-fg-muted hover:bg-surface-muted',
-                )}
-              >
-                {f.label}
-                <span className="bg-surface-muted text-fg-subtle rounded-md px-1.5">
-                  {f.count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
 
-      <div className="flex flex-col gap-4">
-        {pageProjects.length > 0 ? (
-          pageProjects.map((p) => (
-            <ProjectCard
-              key={p.id}
-              project={p}
-              phase={p.phase}
-              onOpen={open}
-              onDelete={setPendingDelete}
-              onToggleRep={onToggleRep}
+        <div className="flex flex-col gap-4">
+          {pageProjects.length > 0 ? (
+            pageProjects.map((p) => (
+              <ProjectCard
+                key={p.id}
+                project={p}
+                phase={p.phase}
+                onOpen={open}
+                onDelete={setPendingDelete}
+                onToggleRep={onToggleRep}
+              />
+            ))
+          ) : (
+            <Empty
+              title="조건에 맞는 프로젝트가 없어요"
+              description="검색어와 필터를 다시 조정해 주세요."
             />
-          ))
-        ) : (
-          <Empty
-            title="조건에 맞는 프로젝트가 없어요"
-            description="검색어와 필터를 다시 조정해 주세요."
-          />
-        )}
-      </div>
-
-      <div className="flex items-center justify-between pt-1">
-        <span className="text-fg-subtle text-[12px]">{shownLabel}</span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
-            aria-label="이전 페이지"
-          >
-            <ChevronLeft className="size-4" strokeWidth={2.2} />
-          </button>
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-            (pageNo) => (
-              <button
-                key={pageNo}
-                type="button"
-                onClick={() => setPage(pageNo)}
-                className={cn(
-                  'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
-                  pageNo === page
-                    ? 'bg-brand-deep text-white'
-                    : 'border-border text-fg-subtle border',
-                )}
-              >
-                {pageNo}
-              </button>
-            ),
           )}
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={() =>
-              setPage((current) => Math.min(totalPages, current + 1))
-            }
-            className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
-            aria-label="다음 페이지"
-          >
-            <ChevronRight className="size-4" strokeWidth={2.2} />
-          </button>
         </div>
-      </div>
 
-      <Modal
-        open={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
-        title="프로젝트 삭제"
-        size="sm"
-        footer={
-          <>
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-fg-subtle text-[12px]">{shownLabel}</span>
+          <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setPendingDelete(null)}
-              className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+              disabled={page <= 1}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+              aria-label="이전 페이지"
             >
-              취소
+              <ChevronLeft className="size-4" strokeWidth={2.2} />
             </button>
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+              (pageNo) => (
+                <button
+                  key={pageNo}
+                  type="button"
+                  onClick={() => setPage(pageNo)}
+                  className={cn(
+                    'flex size-8 items-center justify-center rounded-lg text-[13px] font-semibold',
+                    pageNo === page
+                      ? 'bg-brand-deep text-white'
+                      : 'border-border text-fg-subtle border',
+                  )}
+                >
+                  {pageNo}
+                </button>
+              ),
+            )}
             <button
               type="button"
-              onClick={() => {
-                if (!pendingDelete) return
-                const target = pendingDelete
-                deleteProject.mutate(target.id, {
-                  onSuccess: () => {
-                    toast.success(`‘${target.title}’ 프로젝트를 삭제했습니다`)
-                    setPendingDelete(null)
-                  },
-                  onError: () => toast.danger('프로젝트 삭제에 실패했습니다'),
-                })
-              }}
-              disabled={deleteProject.isPending}
-              className="bg-danger rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+              disabled={page >= totalPages}
+              onClick={() =>
+                setPage((current) => Math.min(totalPages, current + 1))
+              }
+              className="border-border text-fg-subtle flex size-8 items-center justify-center rounded-lg border text-[13px] disabled:opacity-40"
+              aria-label="다음 페이지"
             >
-              삭제
+              <ChevronRight className="size-4" strokeWidth={2.2} />
             </button>
-          </>
-        }
-      >
-        <p className="text-fg-muted text-[13px] leading-6">
-          <b className="text-fg">{pendingDelete?.title}</b> 프로젝트를
-          삭제할까요? 이 작업은 되돌릴 수 없으며, 연결된 워크스페이스 정보도
-          함께 제거됩니다.
-        </p>
-      </Modal>
-    </div>
+          </div>
+        </div>
+
+        <Modal
+          open={pendingDelete !== null}
+          onClose={() => setPendingDelete(null)}
+          title="프로젝트 삭제"
+          size="sm"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!pendingDelete) return
+                  const target = pendingDelete
+                  deleteProject.mutate(target.id, {
+                    onSuccess: () => {
+                      toast.success(`‘${target.title}’ 프로젝트를 삭제했습니다`)
+                      setPendingDelete(null)
+                    },
+                    onError: () => toast.danger('프로젝트 삭제에 실패했습니다'),
+                  })
+                }}
+                disabled={deleteProject.isPending}
+                className="bg-danger rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+              >
+                삭제
+              </button>
+            </>
+          }
+        >
+          <p className="text-fg-muted text-[13px] leading-6">
+            <b className="text-fg">{pendingDelete?.title}</b> 프로젝트를
+            삭제할까요? 이 작업은 되돌릴 수 없으며, 연결된 워크스페이스 정보도
+            함께 제거됩니다.
+          </p>
+        </Modal>
+      </div>
+    </DataBoundary>
   )
 }

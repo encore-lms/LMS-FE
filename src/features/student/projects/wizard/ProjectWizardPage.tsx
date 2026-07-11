@@ -24,8 +24,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateProject, useProjectWizard } from '../../api/projects'
@@ -168,19 +167,6 @@ export default function ProjectWizardPage() {
       ?.tone ??
     'brand'
 
-  if (isPending) return <div className="text-fg-muted p-8">불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const updateArrayField = (
     field: 'invited' | 'stacks' | 'deliverables',
     value: string,
@@ -234,19 +220,19 @@ export default function ProjectWizardPage() {
   const team = [
     {
       id: 'pm',
-      name: data.pmName,
+      name: data?.pmName ?? '',
       meta: '백엔드 · 3팀',
       avatarTone: 'brand' as Tone,
       pm: true,
     },
-    ...data.candidates
+    ...(data?.candidates ?? [])
       .filter((c) => invited.includes(c.id))
       .map((c) => ({ ...c, pm: false })),
   ]
   const normalizedTeamSearch = teamSearch.trim().toLowerCase()
   // 검색어가 있을 때만 후보를 노출 — 빈 검색이면 결과를 숨겨 검색을 유도한다.
   const candidates = normalizedTeamSearch
-    ? data.candidates.filter((candidate) =>
+    ? (data?.candidates ?? []).filter((candidate) =>
         `${candidate.name} ${candidate.meta}`
           .toLowerCase()
           .includes(normalizedTeamSearch),
@@ -339,90 +325,108 @@ export default function ProjectWizardPage() {
   }[step]!
 
   return (
-    <WizardShell
-      step={step}
-      {...shellProps}
-      onLeft={left}
-      onRight={next}
-      rightTone={step === 4 ? 'success' : 'brand'}
-      rightDisabled={
-        (step === 1 && !step1Ready) ||
-        (step === 3 && !step3Ready) ||
-        (step === 4 && (checkedCount < 3 || createProject.isPending))
-      }
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      loadingText="불러오는 중…"
+      errorTitle="불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
     >
-      {step === 1 && (
-        <Step1
-          name={name}
-          desc={desc}
-          start={start}
-          end={end}
-          days={days}
-          nameInput={register('name')}
-          descInput={register('desc')}
-          onStartChange={(v) =>
-            setValue('start', v, { shouldDirty: true, shouldValidate: true })
+      {data && (
+        <WizardShell
+          step={step}
+          {...shellProps}
+          onLeft={left}
+          onRight={next}
+          rightTone={step === 4 ? 'success' : 'brand'}
+          rightDisabled={
+            (step === 1 && !step1Ready) ||
+            (step === 3 && !step3Ready) ||
+            (step === 4 && (checkedCount < 3 || createProject.isPending))
           }
-          onEndChange={(v) =>
-            setValue('end', v, { shouldDirty: true, shouldValidate: true })
-          }
-          invalid={{
-            name: Boolean(errors.name),
-            desc: Boolean(errors.desc),
-            start: Boolean(errors.start),
-            end: Boolean(errors.end),
-          }}
-        />
+        >
+          {step === 1 && (
+            <Step1
+              name={name}
+              desc={desc}
+              start={start}
+              end={end}
+              days={days}
+              nameInput={register('name')}
+              descInput={register('desc')}
+              onStartChange={(v) =>
+                setValue('start', v, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              onEndChange={(v) =>
+                setValue('end', v, { shouldDirty: true, shouldValidate: true })
+              }
+              invalid={{
+                name: Boolean(errors.name),
+                desc: Boolean(errors.desc),
+                start: Boolean(errors.start),
+                end: Boolean(errors.end),
+              }}
+            />
+          )}
+          {step === 2 && (
+            <Step2
+              pmName={data.pmName}
+              pmMeta={data.pmMeta}
+              cohortLabel={data.cohortLabel}
+              candidates={candidates}
+              searchQuery={teamSearch.trim()}
+              searchInput={register('teamSearch')}
+              invited={invited}
+              team={team}
+              onToggle={(id) => updateArrayField('invited', id)}
+            />
+          )}
+          {step === 3 && (
+            <Step3
+              stacks={stacks}
+              stackToneFor={stackToneFor}
+              customStacksByGroup={customStacksByGroup}
+              domain={domain}
+              deliverables={deliverables}
+              onStack={onStackToggle}
+              onAddStack={addCustomStack}
+              onDomain={(v) =>
+                setValue('domain', v, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              onDeliverable={(v) => updateArrayField('deliverables', v)}
+            />
+          )}
+          {step === 4 && (
+            <Step4
+              name={name}
+              desc={desc}
+              team={team}
+              stacks={stacks}
+              stackToneFor={stackToneFor}
+              domain={domain}
+              deliverables={deliverables}
+              checks={checks}
+              onEditStep={setStep}
+              onCheck={(i) =>
+                setValue(
+                  'checks',
+                  checks.map((c, j) => (j === i ? !c : c)),
+                  { shouldDirty: true, shouldValidate: true },
+                )
+              }
+            />
+          )}
+        </WizardShell>
       )}
-      {step === 2 && (
-        <Step2
-          pmName={data.pmName}
-          pmMeta={data.pmMeta}
-          cohortLabel={data.cohortLabel}
-          candidates={candidates}
-          searchQuery={teamSearch.trim()}
-          searchInput={register('teamSearch')}
-          invited={invited}
-          team={team}
-          onToggle={(id) => updateArrayField('invited', id)}
-        />
-      )}
-      {step === 3 && (
-        <Step3
-          stacks={stacks}
-          stackToneFor={stackToneFor}
-          customStacksByGroup={customStacksByGroup}
-          domain={domain}
-          deliverables={deliverables}
-          onStack={onStackToggle}
-          onAddStack={addCustomStack}
-          onDomain={(v) =>
-            setValue('domain', v, { shouldDirty: true, shouldValidate: true })
-          }
-          onDeliverable={(v) => updateArrayField('deliverables', v)}
-        />
-      )}
-      {step === 4 && (
-        <Step4
-          name={name}
-          desc={desc}
-          team={team}
-          stacks={stacks}
-          stackToneFor={stackToneFor}
-          domain={domain}
-          deliverables={deliverables}
-          checks={checks}
-          onEditStep={setStep}
-          onCheck={(i) =>
-            setValue(
-              'checks',
-              checks.map((c, j) => (j === i ? !c : c)),
-              { shouldDirty: true, shouldValidate: true },
-            )
-          }
-        />
-      )}
-    </WizardShell>
+    </DataBoundary>
   )
 }
 

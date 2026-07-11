@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { AlertTriangle, Check, Info, Send } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { Check, Info, Send } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -125,23 +124,7 @@ export default function ReputationPage() {
     )
   }, [students, status, q, cohortFilter])
 
-  if (isPending) {
-    return <SkeletonListPage kpis={4} columns={6} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="평판 현황을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { summary } = data
+  const summary = data?.summary
 
   const columns: Column<ReputationStudent>[] = [
     {
@@ -293,203 +276,226 @@ export default function ReputationPage() {
         />
       </div>
 
-      {/* 히어로 — 수집 현황 + 일괄 푸시 */}
-      <div className="bg-brand text-on-color flex flex-col gap-4 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-[17px] font-bold">
-            수강생별 평판 수집 현황과 요청 푸시 추적
-          </p>
-          <p className="text-on-color/75 mt-2 text-[13px]">
-            {summary.cohortLabel} · {summary.students}명
-            <span className="ml-2 inline-flex items-center gap-1">
-              <Info className="h-3.5 w-3.5" />
-              누락 수강생 {summary.missingStudents}명
-            </span>
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() =>
-            setPushAction({
-              spec: {
-                title: '누락 일괄 요청 푸시',
-                subtitle: `누락 수강생 ${summary.missingStudents}명에게 평판 입력을 일괄 요청합니다.`,
-                rows: [
-                  { label: '대상', value: `누락 ${summary.missingStudents}명` },
-                  { label: '기수', value: summary.cohortLabel },
-                  { label: '채널', value: 'LMS 알림' },
-                  { label: '처리', value: '강사·멘토·동료 누락 항목별 발송' },
-                ],
-                confirmLabel: '일괄 푸시',
-              },
-              result: `누락 ${summary.missingStudents}명에게 요청 푸시를 보냈습니다.`,
-              payload: { kind: 'bulk' },
-            })
-          }
-          className="bg-surface text-brand hover:bg-surface/90 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
-        >
-          <Send className="h-4 w-4" />
-          일괄 요청 푸시 — 누락 {summary.missingStudents}명
-        </button>
-      </div>
-
-      {/* KPI 4종 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard
-          label="수강생"
-          value={summary.students}
-          hint={summary.cohortLabel}
-        />
-        <KpiCard
-          label="강사 추천서"
-          value={summary.endorsements}
-          hint={summary.endorsementsHint}
-          tone="success"
-        />
-        <KpiCard
-          label="멘토 평가·추천"
-          value={summary.mentorEval}
-          hint={summary.mentorEvalHint}
-          tone="brand"
-        />
-        <KpiCard
-          label="동료 5축"
-          value={summary.peerAxes}
-          hint={summary.peerAxesHint}
-          tone="accent"
-        />
-      </div>
-
-      {/* 필터 — 상태 + 검색(과정·기수는 페이지 상단 셀렉트에서 선택) */}
-      <div className="border-border bg-surface mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-        <Select
-          aria-label="상태 필터"
-          value={status}
-          onChange={(v) => setStatus(v)}
-          options={[
-            { value: 'all', label: '상태 전체' },
-            { value: 'missing', label: '누락 있음' },
-            { value: 'complete', label: '완료' },
-          ]}
-          className="h-9"
-        />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="수강생 검색"
-          aria-label="수강생 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
-        />
-      </div>
-
-      {/* 평판 수집 그리드 */}
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(s) => s.id}
-          empty="조건에 맞는 수강생이 없어요"
-        />
-        <div className="text-fg-subtle mt-3 text-xs">
-          총 {summary.students}명 · 누락 있음 {summary.missingStudents}명
-        </div>
-      </div>
-
-      {/* 푸시 확인 모달 (Figma 푸시 확인 1306:8113 / 결과 1306:8149) */}
-      <ActionModal
-        spec={pushAction?.spec ?? null}
-        onClose={() => setPushAction(null)}
-        onConfirm={(memo) => {
-          if (!pushAction) return
-          const { result, payload } = pushAction
-          push.mutate(
-            { ...payload, memo },
-            {
-              onSuccess: () => {
-                setPushAction(null)
-                toast.success(result)
-              },
-              onError: () => {
-                setPushAction(null)
-                toast.danger(
-                  '요청 푸시에 실패했어요. 잠시 후 다시 시도해 주세요.',
-                )
-              },
-            },
-          )
-        }}
-        pending={push.isPending}
-      />
-
-      {/* 평판 상세 모달 (Figma 평판 상세 1306:8078) — 행 데이터 기반 읽기 전용 */}
-      <Modal
-        open={!!detailStudent}
-        onClose={() => setDetailStudent(null)}
-        title={detailStudent ? `${detailStudent.name} 평판 상세` : ''}
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        skeleton={<SkeletonListPage kpis={4} columns={6} className="" />}
+        errorTitle="평판 현황을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
       >
-        {detailStudent && (
-          <div className="flex flex-col gap-4">
-            <p className="text-fg-subtle font-mono text-xs">
-              {detailStudent.uuid}
-            </p>
-            <div className="border-border rounded-xl border p-4">
-              <dl className="flex flex-col gap-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-fg-muted">강사 추천서</dt>
-                  <dd className="flex items-center gap-2">
-                    <StatusBadge
-                      label={
-                        ENDORSEMENT_META[detailStudent.endorsementStatus].label
-                      }
-                      tone={
-                        ENDORSEMENT_META[detailStudent.endorsementStatus].tone
-                      }
-                    />
-                    <span className="text-fg-subtle text-xs">
-                      {detailStudent.endorsementBy}
-                    </span>
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-fg-muted">멘토 평가·추천</dt>
-                  <dd className="flex items-center gap-2">
-                    <StatusBadge
-                      label={
-                        MENTOR_EVAL_META[detailStudent.mentorEvalStatus].label
-                      }
-                      tone={
-                        MENTOR_EVAL_META[detailStudent.mentorEvalStatus].tone
-                      }
-                    />
-                    <span className="text-fg-subtle text-xs">
-                      {detailStudent.mentorBy}
-                    </span>
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-fg-muted">동료 5축</dt>
-                  <dd className="text-fg font-semibold tabular-nums">
-                    {detailStudent.peerCount} / {detailStudent.peerTotal}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-fg-muted">누락 푸시 대상</dt>
-                  <dd className="text-fg text-right">
-                    {detailStudent.pushTargets.length === 0
-                      ? '없음 (완료)'
-                      : detailStudent.pushTargets
-                          .map((t) => PUSH_LABEL[t])
-                          .join(' · ')}
-                  </dd>
-                </div>
-              </dl>
+        {summary && (
+          <>
+            {/* 히어로 — 수집 현황 + 일괄 푸시 */}
+            <div className="bg-brand text-on-color flex flex-col gap-4 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[17px] font-bold">
+                  수강생별 평판 수집 현황과 요청 푸시 추적
+                </p>
+                <p className="text-on-color/75 mt-2 text-[13px]">
+                  {summary.cohortLabel} · {summary.students}명
+                  <span className="ml-2 inline-flex items-center gap-1">
+                    <Info className="h-3.5 w-3.5" />
+                    누락 수강생 {summary.missingStudents}명
+                  </span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPushAction({
+                    spec: {
+                      title: '누락 일괄 요청 푸시',
+                      subtitle: `누락 수강생 ${summary.missingStudents}명에게 평판 입력을 일괄 요청합니다.`,
+                      rows: [
+                        {
+                          label: '대상',
+                          value: `누락 ${summary.missingStudents}명`,
+                        },
+                        { label: '기수', value: summary.cohortLabel },
+                        { label: '채널', value: 'LMS 알림' },
+                        {
+                          label: '처리',
+                          value: '강사·멘토·동료 누락 항목별 발송',
+                        },
+                      ],
+                      confirmLabel: '일괄 푸시',
+                    },
+                    result: `누락 ${summary.missingStudents}명에게 요청 푸시를 보냈습니다.`,
+                    payload: { kind: 'bulk' },
+                  })
+                }
+                className="bg-surface text-brand hover:bg-surface/90 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
+              >
+                <Send className="h-4 w-4" />
+                일괄 요청 푸시 — 누락 {summary.missingStudents}명
+              </button>
             </div>
-            <p className="text-fg-subtle text-xs">
-              상세 평판 항목과 입력 이력은 준비 중입니다.
-            </p>
-          </div>
+
+            {/* KPI 4종 */}
+            <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <KpiCard
+                label="수강생"
+                value={summary.students}
+                hint={summary.cohortLabel}
+              />
+              <KpiCard
+                label="강사 추천서"
+                value={summary.endorsements}
+                hint={summary.endorsementsHint}
+                tone="success"
+              />
+              <KpiCard
+                label="멘토 평가·추천"
+                value={summary.mentorEval}
+                hint={summary.mentorEvalHint}
+                tone="brand"
+              />
+              <KpiCard
+                label="동료 5축"
+                value={summary.peerAxes}
+                hint={summary.peerAxesHint}
+                tone="accent"
+              />
+            </div>
+
+            {/* 필터 — 상태 + 검색(과정·기수는 페이지 상단 셀렉트에서 선택) */}
+            <div className="border-border bg-surface mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
+              <Select
+                aria-label="상태 필터"
+                value={status}
+                onChange={(v) => setStatus(v)}
+                options={[
+                  { value: 'all', label: '상태 전체' },
+                  { value: 'missing', label: '누락 있음' },
+                  { value: 'complete', label: '완료' },
+                ]}
+                className="h-9"
+              />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="수강생 검색"
+                aria-label="수강생 검색"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
+              />
+            </div>
+
+            {/* 평판 수집 그리드 */}
+            <div className="mt-4">
+              <DataTable
+                columns={columns}
+                rows={filtered}
+                rowKey={(s) => s.id}
+                empty="조건에 맞는 수강생이 없어요"
+              />
+              <div className="text-fg-subtle mt-3 text-xs">
+                총 {summary.students}명 · 누락 있음 {summary.missingStudents}명
+              </div>
+            </div>
+
+            {/* 푸시 확인 모달 (Figma 푸시 확인 1306:8113 / 결과 1306:8149) */}
+            <ActionModal
+              spec={pushAction?.spec ?? null}
+              onClose={() => setPushAction(null)}
+              onConfirm={(memo) => {
+                if (!pushAction) return
+                const { result, payload } = pushAction
+                push.mutate(
+                  { ...payload, memo },
+                  {
+                    onSuccess: () => {
+                      setPushAction(null)
+                      toast.success(result)
+                    },
+                    onError: () => {
+                      setPushAction(null)
+                      toast.danger(
+                        '요청 푸시에 실패했어요. 잠시 후 다시 시도해 주세요.',
+                      )
+                    },
+                  },
+                )
+              }}
+              pending={push.isPending}
+            />
+
+            {/* 평판 상세 모달 (Figma 평판 상세 1306:8078) — 행 데이터 기반 읽기 전용 */}
+            <Modal
+              open={!!detailStudent}
+              onClose={() => setDetailStudent(null)}
+              title={detailStudent ? `${detailStudent.name} 평판 상세` : ''}
+            >
+              {detailStudent && (
+                <div className="flex flex-col gap-4">
+                  <p className="text-fg-subtle font-mono text-xs">
+                    {detailStudent.uuid}
+                  </p>
+                  <div className="border-border rounded-xl border p-4">
+                    <dl className="flex flex-col gap-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-fg-muted">강사 추천서</dt>
+                        <dd className="flex items-center gap-2">
+                          <StatusBadge
+                            label={
+                              ENDORSEMENT_META[detailStudent.endorsementStatus]
+                                .label
+                            }
+                            tone={
+                              ENDORSEMENT_META[detailStudent.endorsementStatus]
+                                .tone
+                            }
+                          />
+                          <span className="text-fg-subtle text-xs">
+                            {detailStudent.endorsementBy}
+                          </span>
+                        </dd>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-fg-muted">멘토 평가·추천</dt>
+                        <dd className="flex items-center gap-2">
+                          <StatusBadge
+                            label={
+                              MENTOR_EVAL_META[detailStudent.mentorEvalStatus]
+                                .label
+                            }
+                            tone={
+                              MENTOR_EVAL_META[detailStudent.mentorEvalStatus]
+                                .tone
+                            }
+                          />
+                          <span className="text-fg-subtle text-xs">
+                            {detailStudent.mentorBy}
+                          </span>
+                        </dd>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-fg-muted">동료 5축</dt>
+                        <dd className="text-fg font-semibold tabular-nums">
+                          {detailStudent.peerCount} / {detailStudent.peerTotal}
+                        </dd>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-fg-muted">누락 푸시 대상</dt>
+                        <dd className="text-fg text-right">
+                          {detailStudent.pushTargets.length === 0
+                            ? '없음 (완료)'
+                            : detailStudent.pushTargets
+                                .map((t) => PUSH_LABEL[t])
+                                .join(' · ')}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <p className="text-fg-subtle text-xs">
+                    상세 평판 항목과 입력 이력은 준비 중입니다.
+                  </p>
+                </div>
+              )}
+            </Modal>
+          </>
         )}
-      </Modal>
+      </DataBoundary>
     </div>
   )
 }

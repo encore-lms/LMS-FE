@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, FolderOpen } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { FolderOpen } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -206,84 +206,84 @@ export function AttendanceFormTab() {
     <>
       <div className="mb-4">{controls}</div>
 
-      {isPending ? (
-        <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-      ) : isError || !data ? (
-        <Empty
-          icon={<AlertTriangle className="h-6 w-6" />}
-          title="출결 폼을 불러오지 못했어요"
-          description="연결 상태를 확인한 뒤 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            <KpiCard label="전체 제출" value={data.summary.totalSubmitted} />
-            <KpiCard label="지각" value={data.summary.late} tone="warning" />
-            <KpiCard
-              label="조퇴·외출"
-              value={data.summary.earlyLeaveOuting}
-              tone="info"
-            />
-            <KpiCard label="결석" value={data.summary.absent} tone="danger" />
-            <KpiCard
-              label="공가 사용"
-              value={data.summary.officialLeaveUsed}
-              tone="success"
-            />
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-1">
-              {dateFilters.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setDateFilter(f.key)}
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium',
-                    dateFilter === f.key
-                      ? 'bg-accent-bg text-accent-strong'
-                      : 'text-fg-muted hover:bg-surface-muted',
-                  )}
-                >
-                  {f.label}
-                </button>
-              ))}
-              {dateFilter === 'pick' && (
-                <div className="ml-1 w-40">
-                  <DateTimePicker
-                    mode="date"
-                    value={pickedDate}
-                    onChange={(v) => v && setPickedDate(v)}
-                    ariaLabel="조회 일자 선택"
-                    max={today()}
-                  />
-                </div>
-              )}
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        loadingText="불러오는 중…"
+        errorTitle="출결 폼을 불러오지 못했어요"
+        errorDescription="연결 상태를 확인한 뒤 다시 시도해 주세요."
+      >
+        {data && (
+          <>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              <KpiCard label="전체 제출" value={data.summary.totalSubmitted} />
+              <KpiCard label="지각" value={data.summary.late} tone="warning" />
+              <KpiCard
+                label="조퇴·외출"
+                value={data.summary.earlyLeaveOuting}
+                tone="info"
+              />
+              <KpiCard label="결석" value={data.summary.absent} tone="danger" />
+              <KpiCard
+                label="공가 사용"
+                value={data.summary.officialLeaveUsed}
+                tone="success"
+              />
             </div>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="이름·생년월일·사유 검색"
-              aria-label="출결 폼 검색"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
-            />
-          </div>
 
-          <div className="mt-3">
-            <DataTable
-              columns={columns}
-              rows={filtered}
-              rowKey={(r) => r.id}
-              empty="제출된 출결 폼이 없어요"
-            />
-            <div className="text-fg-subtle mt-3 text-xs">
-              총 {filtered.length}건 · 전체 제출 {data.summary.totalSubmitted}
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-1">
+                {dateFilters.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setDateFilter(f.key)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-sm font-medium',
+                      dateFilter === f.key
+                        ? 'bg-accent-bg text-accent-strong'
+                        : 'text-fg-muted hover:bg-surface-muted',
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+                {dateFilter === 'pick' && (
+                  <div className="ml-1 w-40">
+                    <DateTimePicker
+                      mode="date"
+                      value={pickedDate}
+                      onChange={(v) => v && setPickedDate(v)}
+                      ariaLabel="조회 일자 선택"
+                      max={today()}
+                    />
+                  </div>
+                )}
+              </div>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="이름·생년월일·사유 검색"
+                aria-label="출결 폼 검색"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+              />
             </div>
-          </div>
-        </>
-      )}
+
+            <div className="mt-3">
+              <DataTable
+                columns={columns}
+                rows={filtered}
+                rowKey={(r) => r.id}
+                empty="제출된 출결 폼이 없어요"
+              />
+              <div className="text-fg-subtle mt-3 text-xs">
+                총 {filtered.length}건 · 전체 제출 {data.summary.totalSubmitted}
+              </div>
+            </div>
+          </>
+        )}
+      </DataBoundary>
     </>
   )
 }

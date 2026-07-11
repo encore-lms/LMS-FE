@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { ArrowLeft } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -202,23 +201,7 @@ export default function AnswersPage() {
   // 변경안이 계산 시점과 동일할 때만 결과 신선 — 변경안을 고치면 저장이 다시 막힌다.
   const impactFresh = impactKey === currentKey && !!impact.data
 
-  if (isPending) {
-    return <SkeletonListPage kpis={3} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="정답 관리를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const rows = data.rows
+  const rows = data?.rows ?? []
   const selectedRow = rows.find((r) => r.questionId === selectedId) ?? null
   const deactivateCount = rows.filter(
     (r) => r.status === 'deactivate_candidate',
@@ -334,143 +317,158 @@ export default function AnswersPage() {
       '문항 행을 선택해 변경안을 편집하고, 저장 전 영향 계산을 실행하세요.')
 
   return (
-    <div className="p-8">
-      {/* 액션 바 — 뒤로가기 / 영향 계산(amber) / 변경 저장(brand) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => navigate('/admin/quizzes')}
-          className={cn(pill, 'bg-surface-muted text-fg-muted hover:text-fg')}
-        >
-          <ArrowLeft className="mr-1 inline h-3 w-3" /> 퀴즈 운영
-        </button>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            disabled={!canCompute}
-            onClick={() => setImpactKey(currentKey)}
-            className={cn(
-              pill,
-              'bg-warning-bg text-warning hover:bg-warning-bg/70',
-            )}
-          >
-            {impact.isFetching ? '영향 계산 중…' : '저장 전 영향 계산'}
-          </button>
-          {/* 영향 계산 전·사유 미입력 시 비활성(P0-ADM-QUIZ-006 — 운영 원칙 배너 근거) */}
-          <button
-            type="button"
-            disabled={!canSave}
-            onClick={saveAll}
-            className={cn(
-              pill,
-              'bg-brand text-on-color hover:bg-brand/90 px-4',
-            )}
-          >
-            변경 저장
-          </button>
-        </div>
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
+      errorTitle="정답 관리를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="p-8">
+          {/* 액션 바 — 뒤로가기 / 영향 계산(amber) / 변경 저장(brand) */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/quizzes')}
+              className={cn(
+                pill,
+                'bg-surface-muted text-fg-muted hover:text-fg',
+              )}
+            >
+              <ArrowLeft className="mr-1 inline h-3 w-3" /> 퀴즈 운영
+            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={!canCompute}
+                onClick={() => setImpactKey(currentKey)}
+                className={cn(
+                  pill,
+                  'bg-warning-bg text-warning hover:bg-warning-bg/70',
+                )}
+              >
+                {impact.isFetching ? '영향 계산 중…' : '저장 전 영향 계산'}
+              </button>
+              {/* 영향 계산 전·사유 미입력 시 비활성(P0-ADM-QUIZ-006 — 운영 원칙 배너 근거) */}
+              <button
+                type="button"
+                disabled={!canSave}
+                onClick={saveAll}
+                className={cn(
+                  pill,
+                  'bg-brand text-on-color hover:bg-brand/90 px-4',
+                )}
+              >
+                변경 저장
+              </button>
+            </div>
+          </div>
 
-      {/* KPI 5종 — 변경 후보는 로컬 일괄 목록 + 비활성 후보 합산 */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <KpiCard
-          label="대상 문제"
-          value={data.kpi.totalQuestions}
-          hint={`객관식 ${data.kpi.multipleChoiceCount} · 단답형 ${data.kpi.shortAnswerCount}`}
-        />
-        <KpiCard
-          label="변경 후보"
-          value={changeList.length + deactivateCount}
-          hint="정답/배점 수정"
-        />
-        <KpiCard
-          label="영향 제출"
-          value={data.kpi.affectedSubmissions}
-          hint="기존 결과 재계산"
-        />
-        <KpiCard
-          label="지급 후보"
-          value={data.kpi.payoutCandidates}
-          hint="점수 기준 영향"
-        />
-        <KpiCard label="감사 로그" value="필수" hint="저장 시 자동 기록" />
-      </div>
+          {/* KPI 5종 — 변경 후보는 로컬 일괄 목록 + 비활성 후보 합산 */}
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <KpiCard
+              label="대상 문제"
+              value={data.kpi.totalQuestions}
+              hint={`객관식 ${data.kpi.multipleChoiceCount} · 단답형 ${data.kpi.shortAnswerCount}`}
+            />
+            <KpiCard
+              label="변경 후보"
+              value={changeList.length + deactivateCount}
+              hint="정답/배점 수정"
+            />
+            <KpiCard
+              label="영향 제출"
+              value={data.kpi.affectedSubmissions}
+              hint="기존 결과 재계산"
+            />
+            <KpiCard
+              label="지급 후보"
+              value={data.kpi.payoutCandidates}
+              hint="점수 기준 영향"
+            />
+            <KpiCard label="감사 로그" value="필수" hint="저장 시 자동 기록" />
+          </div>
 
-      {/* 2컬럼 — 좌 정답 테이블 / 우 재채점 영향 패널 */}
-      <div className="mt-6 grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-        <DataTable
-          columns={columns}
-          rows={rows}
-          rowKey={(r) => r.questionId}
-          onRowClick={(r) => setSelectedId(r.questionId)}
-          rowClassName={(r) =>
-            r.questionId === selectedId ? 'bg-accent-bg/50' : ''
-          }
-          empty="대상 문제가 없습니다"
-        />
+          {/* 2컬럼 — 좌 정답 테이블 / 우 재채점 영향 패널 */}
+          <div className="mt-6 grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+            <DataTable
+              columns={columns}
+              rows={rows}
+              rowKey={(r) => r.questionId}
+              onRowClick={(r) => setSelectedId(r.questionId)}
+              rowClassName={(r) =>
+                r.questionId === selectedId ? 'bg-accent-bg/50' : ''
+              }
+              empty="대상 문제가 없습니다"
+            />
 
-        <section className="border-border bg-surface rounded-xl border p-5">
-          <h2 className="text-fg text-lg font-bold">재채점 영향</h2>
-          <p className="text-fg-muted mt-3 text-sm leading-relaxed">
-            {summary}
-          </p>
-          {impactFresh && impact.data && (
-            <p className="text-fg-subtle mt-2 text-xs">
-              진행 중 응시 {impact.data.inProgressAttemptExcluded}건은
-              재채점에서 제외돼요 · 지급 후보 {impact.data.payoutCandidateCount}
-              건
-            </p>
-          )}
-          {impact.isError && (
-            <p className="text-danger mt-2 text-xs">
-              영향 계산에 실패했어요 — 다시 실행해 주세요.
-            </p>
-          )}
-
-          <p className="text-fg mt-5 text-xs font-semibold">영향 범위</p>
-          <ul className="text-fg-muted mt-2 flex flex-col gap-1.5 text-sm">
-            {(impactFresh && impact.data
-              ? impact.data.affectedAreas
-              : AFFECTED_AREAS
-            ).map((area) => (
-              <li key={area}>- {area}</li>
-            ))}
-          </ul>
-
-          {selectedRow ? (
-            selectedRow.status === 'deactivate_candidate' ? (
-              // TODO: 문항 비활성(삭제) 처리 — DTO QuizAnswerChangeRequest에 비활성 계약이 없어
-              // BE 확정 대기. 변경 저장 대상에서 제외하고 안내만 표시한다.
-              <p className="text-fg-muted bg-surface-muted mt-6 rounded-md p-3 text-xs leading-relaxed">
-                비활성(삭제) 후보는 BE 비활성 계약 확정 후 지원돼요 — 이번 변경
-                저장 대상에서 제외됩니다.
+            <section className="border-border bg-surface rounded-xl border p-5">
+              <h2 className="text-fg text-lg font-bold">재채점 영향</h2>
+              <p className="text-fg-muted mt-3 text-sm leading-relaxed">
+                {summary}
               </p>
-            ) : (
-              <ChangeEditor
-                key={selectedRow.questionId}
-                row={selectedRow}
-                pending={selectedPending}
-                busy={save.isPending}
-                onApply={applyChange}
-                onCancel={() => setSelectedId(null)}
-              />
-            )
-          ) : (
-            <p className="text-fg-subtle mt-6 text-xs">
-              문항 행을 선택하면 변경안과 사유를 입력할 수 있어요.
-            </p>
-          )}
-        </section>
-      </div>
+              {impactFresh && impact.data && (
+                <p className="text-fg-subtle mt-2 text-xs">
+                  진행 중 응시 {impact.data.inProgressAttemptExcluded}건은
+                  재채점에서 제외돼요 · 지급 후보{' '}
+                  {impact.data.payoutCandidateCount}건
+                </p>
+              )}
+              {impact.isError && (
+                <p className="text-danger mt-2 text-xs">
+                  영향 계산에 실패했어요 — 다시 실행해 주세요.
+                </p>
+              )}
 
-      {/* 운영 원칙 배너 — Figma 원문. 보더는 Figma amber 틴트(#fde68a)의 토큰 근사(warning/30). */}
-      <div className="border-warning/30 bg-warning-bg mt-8 rounded-xl border p-5">
-        <p className="text-warning text-sm font-bold">운영 원칙</p>
-        <p className="text-warning mt-2 text-sm">
-          정답·배점 변경은 저장 전 영향 계산을 먼저 수행하고, 저장 후 재채점
-          작업과 감사 로그를 남깁니다.
-        </p>
-      </div>
-    </div>
+              <p className="text-fg mt-5 text-xs font-semibold">영향 범위</p>
+              <ul className="text-fg-muted mt-2 flex flex-col gap-1.5 text-sm">
+                {(impactFresh && impact.data
+                  ? impact.data.affectedAreas
+                  : AFFECTED_AREAS
+                ).map((area) => (
+                  <li key={area}>- {area}</li>
+                ))}
+              </ul>
+
+              {selectedRow ? (
+                selectedRow.status === 'deactivate_candidate' ? (
+                  // TODO: 문항 비활성(삭제) 처리 — DTO QuizAnswerChangeRequest에 비활성 계약이 없어
+                  // BE 확정 대기. 변경 저장 대상에서 제외하고 안내만 표시한다.
+                  <p className="text-fg-muted bg-surface-muted mt-6 rounded-md p-3 text-xs leading-relaxed">
+                    비활성(삭제) 후보는 BE 비활성 계약 확정 후 지원돼요 — 이번
+                    변경 저장 대상에서 제외됩니다.
+                  </p>
+                ) : (
+                  <ChangeEditor
+                    key={selectedRow.questionId}
+                    row={selectedRow}
+                    pending={selectedPending}
+                    busy={save.isPending}
+                    onApply={applyChange}
+                    onCancel={() => setSelectedId(null)}
+                  />
+                )
+              ) : (
+                <p className="text-fg-subtle mt-6 text-xs">
+                  문항 행을 선택하면 변경안과 사유를 입력할 수 있어요.
+                </p>
+              )}
+            </section>
+          </div>
+
+          {/* 운영 원칙 배너 — Figma 원문. 보더는 Figma amber 틴트(#fde68a)의 토큰 근사(warning/30). */}
+          <div className="border-warning/30 bg-warning-bg mt-8 rounded-xl border p-5">
+            <p className="text-warning text-sm font-bold">운영 원칙</p>
+            <p className="text-warning mt-2 text-sm">
+              정답·배점 변경은 저장 전 영향 계산을 먼저 수행하고, 저장 후 재채점
+              작업과 감사 로그를 남깁니다.
+            </p>
+          </div>
+        </div>
+      )}
+    </DataBoundary>
   )
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, FolderOpen, Lock } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { FolderOpen, Lock } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -231,78 +231,78 @@ export function AttendanceTab() {
         </p>
       </div>
 
-      {isPending ? (
-        <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-      ) : isError || !data ? (
-        <Empty
-          icon={<AlertTriangle className="h-6 w-6" />}
-          title="출결 현황을 불러오지 못했어요"
-          description="연결 상태를 확인한 뒤 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      ) : (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            <KpiCard
-              label="출석(정상)"
-              value={data.summary.present}
-              tone="success"
-            />
-            <KpiCard label="지각" value={data.summary.late} tone="warning" />
-            <KpiCard
-              label="조퇴·외출"
-              value={data.summary.earlyLeaveOuting}
-              tone="info"
-            />
-            <KpiCard label="결석" value={data.summary.absent} tone="danger" />
-            <KpiCard
-              label="퇴실 누락"
-              value={data.summary.hrdMismatch}
-              tone="accent"
-            />
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-1">
-              {filterTabs.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setStatusFilter(t.key)}
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium',
-                    statusFilter === t.key
-                      ? 'bg-accent-bg text-accent-strong'
-                      : 'text-fg-muted hover:bg-surface-muted',
-                  )}
-                >
-                  {t.label}{' '}
-                  <span className="text-fg-subtle">{filterCount(t.key)}</span>
-                </button>
-              ))}
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        loadingText="불러오는 중…"
+        errorTitle="출결 현황을 불러오지 못했어요"
+        errorDescription="연결 상태를 확인한 뒤 다시 시도해 주세요."
+      >
+        {data && (
+          <>
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              <KpiCard
+                label="출석(정상)"
+                value={data.summary.present}
+                tone="success"
+              />
+              <KpiCard label="지각" value={data.summary.late} tone="warning" />
+              <KpiCard
+                label="조퇴·외출"
+                value={data.summary.earlyLeaveOuting}
+                tone="info"
+              />
+              <KpiCard label="결석" value={data.summary.absent} tone="danger" />
+              <KpiCard
+                label="퇴실 누락"
+                value={data.summary.hrdMismatch}
+                tone="accent"
+              />
             </div>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="이름·출결 상태 검색"
-              aria-label="출결 검색"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
-            />
-          </div>
 
-          <div className="mt-3">
-            <DataTable
-              columns={columns}
-              rows={filtered}
-              rowKey={(r) => r.id}
-              empty="해당 월의 출결 데이터가 없어요 (HRD-Net 미집계 월일 수 있어요)"
-            />
-            <div className="text-fg-subtle mt-3 text-xs">
-              총 {filtered.length}건
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-1">
+                {filterTabs.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setStatusFilter(t.key)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-sm font-medium',
+                      statusFilter === t.key
+                        ? 'bg-accent-bg text-accent-strong'
+                        : 'text-fg-muted hover:bg-surface-muted',
+                    )}
+                  >
+                    {t.label}{' '}
+                    <span className="text-fg-subtle">{filterCount(t.key)}</span>
+                  </button>
+                ))}
+              </div>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="이름·출결 상태 검색"
+                aria-label="출결 검색"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+              />
             </div>
-          </div>
-        </>
-      )}
+
+            <div className="mt-3">
+              <DataTable
+                columns={columns}
+                rows={filtered}
+                rowKey={(r) => r.id}
+                empty="해당 월의 출결 데이터가 없어요 (HRD-Net 미집계 월일 수 있어요)"
+              />
+              <div className="text-fg-subtle mt-3 text-xs">
+                총 {filtered.length}건
+              </div>
+            </div>
+          </>
+        )}
+      </DataBoundary>
     </>
   )
 }

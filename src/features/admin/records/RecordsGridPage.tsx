@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Search } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/shared/api'
@@ -144,81 +144,86 @@ export default function RecordsGridPage({
 
       {category === 'certificate' ? (
         <CertList cohortId={cohortId} nameOf={nameOf} q={q} />
-      ) : isPending ? (
-        <SkeletonCards count={6} className="py-6" />
-      ) : isError ? (
-        <Empty
-          icon={<AlertTriangle />}
-          title="제출 현황을 불러오지 못했어요"
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      ) : rows.length === 0 ? (
-        <Empty
-          icon={<AlertTriangle />}
-          title="이 기수에 배정된 수강생이 없어요"
-          description="HRD 동기화로 수강생을 등록하면 표시됩니다."
-        />
       ) : (
-        <div className="overflow-x-auto rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
-          <table className="border-collapse text-sm">
-            <thead>
-              <tr className="bg-surface-muted">
-                <th className="bg-surface-muted text-fg-subtle sticky left-0 z-10 min-w-40 px-4 py-3 text-left font-semibold">
-                  수강생
-                </th>
-                {weeks.map((w) => (
-                  <th
-                    key={w.no}
-                    className="text-fg-subtle px-2 py-3 text-center text-xs font-medium whitespace-nowrap"
-                  >
-                    {w.label}
-                  </th>
-                ))}
-                <th className="text-fg-subtle px-4 py-3 text-center font-semibold">
-                  완주
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-border border-t">
-                  <td className="bg-surface sticky left-0 z-10 min-w-40 px-4 py-2.5">
-                    <div className="text-fg font-medium">{r.name}</div>
-                    {r.birth && r.birth !== '-' && (
-                      <div className="text-fg-subtle text-xs">{r.birth}</div>
-                    )}
-                  </td>
-                  {weeks.map((w) => {
-                    const st = r.cells[String(w.no)] ?? 'none'
-                    const rid = r.recordIds[String(w.no)]
-                    return (
-                      <td key={w.no} className="px-2 py-2.5 text-center">
-                        <button
-                          type="button"
-                          title={`${w.label} · ${DOT_TITLE[st]}`}
-                          disabled={!rid}
-                          onClick={() => rid && setReviewId(rid)}
-                          className={cn(
-                            'inline-block size-6 rounded-md',
-                            DOT[st],
-                            rid
-                              ? 'hover:ring-brand/40 cursor-pointer ring-offset-1 hover:ring-2'
-                              : 'cursor-default',
-                          )}
-                        />
+        <DataBoundary
+          isPending={isPending}
+          isError={isError}
+          onRetry={refetch}
+          skeleton={<SkeletonCards count={6} className="py-6" />}
+          errorTitle="제출 현황을 불러오지 못했어요"
+          errorDescription={null}
+        >
+          {rows.length === 0 ? (
+            <Empty
+              icon={<AlertTriangle />}
+              title="이 기수에 배정된 수강생이 없어요"
+              description="HRD 동기화로 수강생을 등록하면 표시됩니다."
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
+              <table className="border-collapse text-sm">
+                <thead>
+                  <tr className="bg-surface-muted">
+                    <th className="bg-surface-muted text-fg-subtle sticky left-0 z-10 min-w-40 px-4 py-3 text-left font-semibold">
+                      수강생
+                    </th>
+                    {weeks.map((w) => (
+                      <th
+                        key={w.no}
+                        className="text-fg-subtle px-2 py-3 text-center text-xs font-medium whitespace-nowrap"
+                      >
+                        {w.label}
+                      </th>
+                    ))}
+                    <th className="text-fg-subtle px-4 py-3 text-center font-semibold">
+                      완주
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id} className="border-border border-t">
+                      <td className="bg-surface sticky left-0 z-10 min-w-40 px-4 py-2.5">
+                        <div className="text-fg font-medium">{r.name}</div>
+                        {r.birth && r.birth !== '-' && (
+                          <div className="text-fg-subtle text-xs">
+                            {r.birth}
+                          </div>
+                        )}
                       </td>
-                    )
-                  })}
-                  <td className="px-4 py-2.5 text-center">
-                    <span className="bg-accent-bg text-accent-strong inline-block rounded-full px-2.5 py-1 text-xs font-bold">
-                      {r.approved}/{r.total}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      {weeks.map((w) => {
+                        const st = r.cells[String(w.no)] ?? 'none'
+                        const rid = r.recordIds[String(w.no)]
+                        return (
+                          <td key={w.no} className="px-2 py-2.5 text-center">
+                            <button
+                              type="button"
+                              title={`${w.label} · ${DOT_TITLE[st]}`}
+                              disabled={!rid}
+                              onClick={() => rid && setReviewId(rid)}
+                              className={cn(
+                                'inline-block size-6 rounded-md',
+                                DOT[st],
+                                rid
+                                  ? 'hover:ring-brand/40 cursor-pointer ring-offset-1 hover:ring-2'
+                                  : 'cursor-default',
+                              )}
+                            />
+                          </td>
+                        )
+                      })}
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="bg-accent-bg text-accent-strong inline-block rounded-full px-2.5 py-1 text-xs font-bold">
+                          {r.approved}/{r.total}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DataBoundary>
       )}
 
       {reviewId && (
@@ -258,89 +263,88 @@ function CertList({
       nameOf(a.studentUserId).localeCompare(nameOf(b.studentUserId), 'ko'),
     )
 
-  if (isPending) {
-    return <SkeletonCards count={6} className="py-6" />
-  }
-  if (isError) {
-    return (
-      <Empty
-        icon={<AlertTriangle />}
-        title="자격증 제출을 불러오지 못했어요"
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-  if (items.length === 0) {
-    return (
-      <Empty
-        icon={<AlertTriangle />}
-        title="자격증 제출이 없어요"
-        description="수강생이 자격증을 제출하면 여기에서 검토합니다."
-      />
-    )
-  }
-
   return (
-    <>
-      <div className="overflow-hidden rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-surface-muted text-fg-subtle">
-              <th className="px-4 py-3 text-left font-semibold">수강생</th>
-              <th className="px-4 py-3 text-left font-semibold">자격증</th>
-              <th className="px-4 py-3 text-left font-semibold">취득일</th>
-              <th className="px-4 py-3 text-left font-semibold">제출</th>
-              <th className="px-4 py-3 text-center font-semibold">상태</th>
-              <th className="px-4 py-3 text-right font-semibold">검토</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((c) => {
-              const st = CERT_STATUS[c.status] ?? CERT_STATUS.pending
-              return (
-                <tr key={c.recordId} className="border-border border-t">
-                  <td className="text-fg px-4 py-2.5 font-medium">
-                    {nameOf(c.studentUserId)}
-                  </td>
-                  <td className="text-fg px-4 py-2.5">{c.certificateName}</td>
-                  <td className="text-fg-muted px-4 py-2.5">{c.acquiredAt}</td>
-                  <td className="text-fg-muted px-4 py-2.5 text-xs">
-                    {c.submittedAt}
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
-                    <span
-                      className={cn(
-                        'inline-block rounded-full px-2.5 py-1 text-xs font-bold',
-                        st.cls,
-                      )}
-                    >
-                      {st.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
-                    <button
-                      type="button"
-                      onClick={() => setReviewId(c.recordId)}
-                      className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-1 text-xs font-semibold"
-                    >
-                      검토
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-      {reviewId && (
-        <ReviewModal
-          category="certificate"
-          recordId={reviewId}
-          nameOf={nameOf}
-          onClose={() => setReviewId(null)}
+    <DataBoundary
+      isPending={isPending}
+      isError={isError}
+      onRetry={refetch}
+      skeleton={<SkeletonCards count={6} className="py-6" />}
+      errorTitle="자격증 제출을 불러오지 못했어요"
+      errorDescription={null}
+    >
+      {items.length === 0 ? (
+        <Empty
+          icon={<AlertTriangle />}
+          title="자격증 제출이 없어요"
+          description="수강생이 자격증을 제출하면 여기에서 검토합니다."
         />
+      ) : (
+        <>
+          <div className="overflow-hidden rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-surface-muted text-fg-subtle">
+                  <th className="px-4 py-3 text-left font-semibold">수강생</th>
+                  <th className="px-4 py-3 text-left font-semibold">자격증</th>
+                  <th className="px-4 py-3 text-left font-semibold">취득일</th>
+                  <th className="px-4 py-3 text-left font-semibold">제출</th>
+                  <th className="px-4 py-3 text-center font-semibold">상태</th>
+                  <th className="px-4 py-3 text-right font-semibold">검토</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((c) => {
+                  const st = CERT_STATUS[c.status] ?? CERT_STATUS.pending
+                  return (
+                    <tr key={c.recordId} className="border-border border-t">
+                      <td className="text-fg px-4 py-2.5 font-medium">
+                        {nameOf(c.studentUserId)}
+                      </td>
+                      <td className="text-fg px-4 py-2.5">
+                        {c.certificateName}
+                      </td>
+                      <td className="text-fg-muted px-4 py-2.5">
+                        {c.acquiredAt}
+                      </td>
+                      <td className="text-fg-muted px-4 py-2.5 text-xs">
+                        {c.submittedAt}
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span
+                          className={cn(
+                            'inline-block rounded-full px-2.5 py-1 text-xs font-bold',
+                            st.cls,
+                          )}
+                        >
+                          {st.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setReviewId(c.recordId)}
+                          className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-1 text-xs font-semibold"
+                        >
+                          검토
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          {reviewId && (
+            <ReviewModal
+              category="certificate"
+              recordId={reviewId}
+              nameOf={nameOf}
+              onClose={() => setReviewId(null)}
+            />
+          )}
+        </>
       )}
-    </>
+    </DataBoundary>
   )
 }
 

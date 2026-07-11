@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Download, KeyRound, RefreshCw } from 'lucide-react'
+import { Download, KeyRound, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -86,21 +87,7 @@ export function AccountsTab() {
     )
   }, [data, status, q, blockedOverride])
 
-  if (isPending) {
-    return <div className="text-fg-muted py-10 text-center">불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="학생 계정을 불러오지 못했어요"
-        description="잠시 후 다시 시도해 주세요."
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-
-  const { summary } = data
+  const summary = data?.summary
   const onSave = (memo: string) => {
     if (!modal) return
     const { account, action } = modal
@@ -144,9 +131,9 @@ export function AccountsTab() {
   }
 
   const statusTabs: { key: StatusFilter; label: string; count: number }[] = [
-    { key: 'all', label: '전체', count: summary.total },
-    { key: 'normal', label: '정상', count: summary.normal },
-    { key: 'blocked', label: '로그인 차단', count: summary.loginBlocked },
+    { key: 'all', label: '전체', count: summary?.total ?? 0 },
+    { key: 'normal', label: '정상', count: summary?.normal ?? 0 },
+    { key: 'blocked', label: '로그인 차단', count: summary?.loginBlocked ?? 0 },
   ]
 
   const columns: Column<StudentAccount>[] = [
@@ -243,147 +230,161 @@ export function AccountsTab() {
   ]
 
   return (
-    <>
-      {/* HRD 동기화 hero */}
-      <div className="bg-brand text-on-color flex flex-wrap items-center justify-between gap-4 rounded-xl px-6 py-5">
-        <div>
-          <p className="text-lg font-bold">
-            HRD-Net 명단 동기화로 학생 계정을 일괄 관리합니다
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Select
-              aria-label="과정 선택"
-              value={courseId}
-              onChange={(v) => {
-                setSelectedCourseId(v)
-                setSelectedCohortId(null)
-              }}
-              options={(courses ?? []).map((c) => ({
-                value: c.courseId,
-                label: c.title,
-              }))}
-              placeholder="등록 과정 없음"
-              className="h-9"
-            />
-            <Select
-              aria-label="기수 선택"
-              value={cohortId}
-              onChange={(v) => setSelectedCohortId(v)}
-              options={(courseConfig?.cohorts ?? []).map((c) => ({
-                value: c.id,
-                label: `${c.cohortNo}기`,
-              }))}
-              placeholder="기수 없음"
-              className="h-9"
-            />
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => toast.info('계정 정보 내려받기는 준비 중입니다.')}
-          >
-            <Download className="h-4 w-4" /> 계정 정보 다운로드
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={onRefresh}
-            disabled={syncStudents.isPending}
-          >
-            <RefreshCw className="h-4 w-4" /> 계정 갱신 — HRD 동기화
-          </Button>
-        </div>
-      </div>
-
-      <div className="text-fg-subtle mt-2 flex items-center justify-end gap-1 text-xs">
-        <RefreshCw className="text-success h-3 w-3" />
-        {syncResult
-          ? `방금 HRD 동기화 · 생성 ${syncResult.created} / 갱신 ${syncResult.updated} / 총 ${syncResult.total}`
-          : `총 ${summary.total}명 · 계정 갱신으로 HRD 명단 동기화`}
-      </div>
-
-      {summary.total === 0 ? (
-        /* 선택 기수에 등록된 수강생이 없을 때 — 계정 갱신 안내 */
-        <div className="mt-4">
-          <Empty
-            icon={<RefreshCw className="h-6 w-6" />}
-            title="등록된 수강생이 없어요"
-            description="아직 이 기수에 계정이 등록되지 않았어요. 위 ‘계정 갱신 — HRD 동기화’로 수강생 계정을 등록해 주세요."
-            action={
-              <Button onClick={onRefresh} disabled={syncStudents.isPending}>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      loadingText="불러오는 중…"
+      errorTitle="학생 계정을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+    >
+      {summary && (
+        <>
+          {/* HRD 동기화 hero */}
+          <div className="bg-brand text-on-color flex flex-wrap items-center justify-between gap-4 rounded-xl px-6 py-5">
+            <div>
+              <p className="text-lg font-bold">
+                HRD-Net 명단 동기화로 학생 계정을 일괄 관리합니다
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Select
+                  aria-label="과정 선택"
+                  value={courseId}
+                  onChange={(v) => {
+                    setSelectedCourseId(v)
+                    setSelectedCohortId(null)
+                  }}
+                  options={(courses ?? []).map((c) => ({
+                    value: c.courseId,
+                    label: c.title,
+                  }))}
+                  placeholder="등록 과정 없음"
+                  className="h-9"
+                />
+                <Select
+                  aria-label="기수 선택"
+                  value={cohortId}
+                  onChange={(v) => setSelectedCohortId(v)}
+                  options={(courseConfig?.cohorts ?? []).map((c) => ({
+                    value: c.id,
+                    label: `${c.cohortNo}기`,
+                  }))}
+                  placeholder="기수 없음"
+                  className="h-9"
+                />
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  toast.info('계정 정보 내려받기는 준비 중입니다.')
+                }
+              >
+                <Download className="h-4 w-4" /> 계정 정보 다운로드
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={onRefresh}
+                disabled={syncStudents.isPending}
+              >
                 <RefreshCw className="h-4 w-4" /> 계정 갱신 — HRD 동기화
               </Button>
-            }
-          />
-        </div>
-      ) : (
-        <>
-          {/* 상태 필터 + 검색 */}
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-1">
-              {statusTabs.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setStatus(t.key)}
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium',
-                    status === t.key
-                      ? 'bg-accent-bg text-accent-strong'
-                      : 'text-fg-muted hover:bg-surface-muted',
-                  )}
-                >
-                  {t.label} <span className="text-fg-subtle">{t.count}</span>
-                </button>
-              ))}
             </div>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="이름·UUID·생년월일 검색"
-              aria-label="학생 계정 검색"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
-            />
           </div>
 
-          <div className="mt-3">
-            <DataTable
-              columns={columns}
-              rows={filtered}
-              rowKey={(a) => a.id}
-              onRowClick={(a) => setModal({ account: a })}
-              empty="조건에 맞는 학생이 없어요"
-            />
+          <div className="text-fg-subtle mt-2 flex items-center justify-end gap-1 text-xs">
+            <RefreshCw className="text-success h-3 w-3" />
+            {syncResult
+              ? `방금 HRD 동기화 · 생성 ${syncResult.created} / 갱신 ${syncResult.updated} / 총 ${syncResult.total}`
+              : `총 ${summary.total}명 · 계정 갱신으로 HRD 명단 동기화`}
           </div>
-          <div className="text-fg-subtle mt-3 flex items-center gap-1 text-xs">
-            <KeyRound className="h-3 w-3" />총 {summary.total}명 · 정상{' '}
-            {summary.normal} · 로그인 차단 {summary.loginBlocked}
-          </div>
+
+          {summary.total === 0 ? (
+            /* 선택 기수에 등록된 수강생이 없을 때 — 계정 갱신 안내 */
+            <div className="mt-4">
+              <Empty
+                icon={<RefreshCw className="h-6 w-6" />}
+                title="등록된 수강생이 없어요"
+                description="아직 이 기수에 계정이 등록되지 않았어요. 위 ‘계정 갱신 — HRD 동기화’로 수강생 계정을 등록해 주세요."
+                action={
+                  <Button onClick={onRefresh} disabled={syncStudents.isPending}>
+                    <RefreshCw className="h-4 w-4" /> 계정 갱신 — HRD 동기화
+                  </Button>
+                }
+              />
+            </div>
+          ) : (
+            <>
+              {/* 상태 필터 + 검색 */}
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap gap-1">
+                  {statusTabs.map((t) => (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setStatus(t.key)}
+                      className={cn(
+                        'rounded-md px-3 py-1.5 text-sm font-medium',
+                        status === t.key
+                          ? 'bg-accent-bg text-accent-strong'
+                          : 'text-fg-muted hover:bg-surface-muted',
+                      )}
+                    >
+                      {t.label}{' '}
+                      <span className="text-fg-subtle">{t.count}</span>
+                    </button>
+                  ))}
+                </div>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="이름·UUID·생년월일 검색"
+                  aria-label="학생 계정 검색"
+                  className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
+                />
+              </div>
+
+              <div className="mt-3">
+                <DataTable
+                  columns={columns}
+                  rows={filtered}
+                  rowKey={(a) => a.id}
+                  onRowClick={(a) => setModal({ account: a })}
+                  empty="조건에 맞는 학생이 없어요"
+                />
+              </div>
+              <div className="text-fg-subtle mt-3 flex items-center gap-1 text-xs">
+                <KeyRound className="h-3 w-3" />총 {summary.total}명 · 정상{' '}
+                {summary.normal} · 로그인 차단 {summary.loginBlocked}
+              </div>
+            </>
+          )}
+
+          <StudentDetailModal
+            account={modal?.account ?? null}
+            actionLabel={modal?.action}
+            onClose={() => setModal(null)}
+            onSave={onSave}
+          />
+
+          <TempPasswordModal
+            target={
+              pwTarget && {
+                userId: pwTarget.id,
+                name: pwTarget.name,
+                detail: pwTarget.studentUuid,
+              }
+            }
+            withMemo
+            onIssued={(memo) => {
+              if (memo.trim())
+                toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
+            }}
+            onClose={() => setPwTarget(null)}
+          />
         </>
       )}
-
-      <StudentDetailModal
-        account={modal?.account ?? null}
-        actionLabel={modal?.action}
-        onClose={() => setModal(null)}
-        onSave={onSave}
-      />
-
-      <TempPasswordModal
-        target={
-          pwTarget && {
-            userId: pwTarget.id,
-            name: pwTarget.name,
-            detail: pwTarget.studentUuid,
-          }
-        }
-        withMemo
-        onIssued={(memo) => {
-          if (memo.trim())
-            toast.info('매니저 메모가 감사 로그에 함께 기록됐어요')
-        }}
-        onClose={() => setPwTarget(null)}
-      />
-    </>
+    </DataBoundary>
   )
 }

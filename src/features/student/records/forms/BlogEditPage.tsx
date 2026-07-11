@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useBlogRecord } from '../../api/records'
 import { BlogForm } from '../components/BlogForm'
 
@@ -8,18 +7,17 @@ import { BlogForm } from '../components/BlogForm'
 export default function BlogEditPage() {
   const { recordId = '' } = useParams()
   const { data, isPending, isError, refetch } = useBlogRecord(recordId)
-  if (isPending)
-    return <div className="text-fg-muted p-8">기록을 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="기록을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-  return <BlogForm mode="edit" data={data} recordId={recordId} />
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError}
+      onRetry={refetch}
+      loadingText="기록을 불러오는 중…"
+      errorTitle="기록을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && <BlogForm mode="edit" data={data} recordId={recordId} />}
+    </DataBoundary>
+  )
 }

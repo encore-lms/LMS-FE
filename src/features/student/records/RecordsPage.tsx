@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
@@ -55,20 +55,19 @@ export default function RecordsPage() {
     '블로그·스터디·자격증·이력서·GitHub 등 학습 기록을 한 곳에서 관리',
   )
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">기록실을 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="기록실을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-  return <RecordsView data={data} />
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError}
+      onRetry={refetch}
+      loadingText="기록실을 불러오는 중…"
+      errorTitle="기록실을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && <RecordsView data={data} />}
+    </DataBoundary>
+  )
 }
 
 function RecordsView({ data }: { data: RecordsOverview }) {

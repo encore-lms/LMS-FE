@@ -2,14 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
 import type { AttendanceFormPayload, AttendanceFormSubmission } from '../types'
 import {
   useAttendanceFormMeta,
   useSubmitAttendanceForm,
 } from '../../api/attendance'
-import { AttendanceActionButton } from '../components/AttendanceActionButton'
 import { InfoBanner } from '../components/InfoBanner'
 import {
   attendanceFormSchema,
@@ -85,36 +84,6 @@ export default function AttendanceFormPage() {
     },
   })
 
-  if (isPending) {
-    return <div className="text-fg-muted p-8">출결 폼을 불러오는 중…</div>
-  }
-  if (isError) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="출결 폼을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={
-            <AttendanceActionButton onClick={() => refetch()}>
-              다시 시도
-            </AttendanceActionButton>
-          }
-        />
-      </div>
-    )
-  }
-
-  if (submitted) {
-    return (
-      <div className="flex flex-col gap-6 p-8">
-        <SubmitSuccessCard
-          submission={submitted}
-          onHome={() => navigate('/student/attendance')}
-        />
-      </div>
-    )
-  }
-
   const onSubmit = methods.handleSubmit((values) => {
     submitMutation.mutate(toPayload(values, attachments), {
       onSuccess: (submission) => setSubmitted(submission),
@@ -122,34 +91,57 @@ export default function AttendanceFormPage() {
   })
 
   return (
-    <div className="flex flex-col gap-6 p-8">
-      {meta.latestSubmission && (
-        <OverwriteWarningBanner latest={meta.latestSubmission} />
-      )}
-      <FormMetaRow meta={meta} />
-      {submitMutation.isError && (
-        <InfoBanner tone="warning" title="제출에 실패했습니다">
-          잠시 후 다시 시도해 주세요.
-        </InfoBanner>
-      )}
-      <FormProvider {...methods}>
-        <form onSubmit={onSubmit} className="flex flex-col gap-6">
-          <FormStepCard step={1} title="출결 유형" badge="required">
-            <AttendanceTypeStep />
-          </FormStepCard>
-          <FormStepCard step={2} title="공가 사용" badge="toggle">
-            <OfficialLeaveStep />
-          </FormStepCard>
-          <FormStepCard step={3} title="증빙 첨부" badge="recommended">
-            <EvidenceUploadStep files={attachments} onChange={setAttachments} />
-          </FormStepCard>
-          <NoteStep />
-          <AttendanceFormFooter
-            onCancel={() => navigate('/student/attendance')}
-            submitting={submitMutation.isPending}
-          />
-        </form>
-      </FormProvider>
-    </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError}
+      onRetry={() => refetch()}
+      loadingText="출결 폼을 불러오는 중…"
+      errorTitle="출결 폼을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {meta &&
+        (submitted ? (
+          <div className="flex flex-col gap-6 p-8">
+            <SubmitSuccessCard
+              submission={submitted}
+              onHome={() => navigate('/student/attendance')}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6 p-8">
+            {meta.latestSubmission && (
+              <OverwriteWarningBanner latest={meta.latestSubmission} />
+            )}
+            <FormMetaRow meta={meta} />
+            {submitMutation.isError && (
+              <InfoBanner tone="warning" title="제출에 실패했습니다">
+                잠시 후 다시 시도해 주세요.
+              </InfoBanner>
+            )}
+            <FormProvider {...methods}>
+              <form onSubmit={onSubmit} className="flex flex-col gap-6">
+                <FormStepCard step={1} title="출결 유형" badge="required">
+                  <AttendanceTypeStep />
+                </FormStepCard>
+                <FormStepCard step={2} title="공가 사용" badge="toggle">
+                  <OfficialLeaveStep />
+                </FormStepCard>
+                <FormStepCard step={3} title="증빙 첨부" badge="recommended">
+                  <EvidenceUploadStep
+                    files={attachments}
+                    onChange={setAttachments}
+                  />
+                </FormStepCard>
+                <NoteStep />
+                <AttendanceFormFooter
+                  onCancel={() => navigate('/student/attendance')}
+                  submitting={submitMutation.isPending}
+                />
+              </form>
+            </FormProvider>
+          </div>
+        ))}
+    </DataBoundary>
   )
 }

@@ -1,5 +1,4 @@
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useCertificateOverview } from '../api/certificate'
 import { CertPreview } from './components/CertPreview'
 
@@ -8,19 +7,17 @@ import { CertPreview } from './components/CertPreview'
 export default function CertPreviewPage() {
   const { data, isPending, isError, refetch } = useCertificateOverview()
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">증명서를 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="증명서를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  return <CertPreview data={data} />
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="증명서를 불러오는 중…"
+      errorTitle="증명서를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && <CertPreview data={data} />}
+    </DataBoundary>
+  )
 }

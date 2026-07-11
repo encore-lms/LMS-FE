@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast, type ToastTone } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -53,20 +52,19 @@ export default function MentoringPage() {
   const { data, isPending, isError, refetch } = useMentoring()
   usePageHeader('멘토링')
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">멘토링을 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="멘토링을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-  return <MentoringView data={data} />
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="멘토링을 불러오는 중…"
+      errorTitle="멘토링을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && <MentoringView data={data} />}
+    </DataBoundary>
+  )
 }
 
 function MentoringView({ data }: { data: MentoringData }) {

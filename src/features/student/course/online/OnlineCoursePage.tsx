@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useOnlineCourse } from '../../api/course'
@@ -14,6 +13,7 @@ import type {
   OnlineChapter,
   OnlineChapterView,
   OnlineCompletion,
+  OnlineCourse,
 } from './types'
 
 // "mm:ss" → 초. 잘못된 값은 0.
@@ -66,14 +66,31 @@ function loadProgress(): Record<string, ChapterRuntime> {
  */
 export function OnlineCoursePage() {
   usePageHeader('온라인 교육')
-  const toast = useToast()
   const { data, isPending, isError, refetch } = useOnlineCourse()
+
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError}
+      onRetry={() => refetch()}
+      loadingText="온라인 교육을 불러오는 중…"
+      errorTitle="온라인 교육을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && <OnlineCourseView data={data} />}
+    </DataBoundary>
+  )
+}
+
+function OnlineCourseView({ data }: { data: OnlineCourse }) {
+  const toast = useToast()
   // 선택 차시(미선택이면 현재 학습 중 차시로 폴백) + 재생 여부 + 차시별 시청 런타임.
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [runtime, setRuntime] =
     useState<Record<string, ChapterRuntime>>(loadProgress)
-  // 현재 주차(테스트 오버라이드 우선) — Hooks 규칙상 early return 이전에 호출.
+  // 현재 주차(테스트 오버라이드 우선).
   const weekOverride = useOnlineWeekStore((s) => s.week)
 
   // 진행률을 localStorage 에 저장(이전 기록 보존).
@@ -84,21 +101,6 @@ export function OnlineCoursePage() {
       // 저장 실패는 무시
     }
   }, [runtime])
-
-  if (isPending) {
-    return <div className="text-fg-muted p-8">온라인 교육을 불러오는 중…</div>
-  }
-  if (isError) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="온라인 교육을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
 
   const currentWeek = weekOverride ?? data.currentWeek
 

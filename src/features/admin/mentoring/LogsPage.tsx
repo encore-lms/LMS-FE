@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { ArrowLeft } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -44,22 +43,6 @@ export default function LogsPage() {
       return true
     })
   }, [rows, status, q])
-
-  if (isPending) {
-    return <SkeletonListPage kpis={4} columns={6} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="일지 목록을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
 
   const columns: Column<AdminMentoringLogRow>[] = [
     {
@@ -146,88 +129,102 @@ export default function LogsPage() {
         멘토 배정 관리로 돌아가기
       </Link>
 
-      {/* KPI 4 — 반려 없음(05-31) — 유효·수정 요청·초안·재제출 후 유효 */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="유효"
-          value={data.kpis.valid}
-          tone="success"
-          hint="이번 달 인정 시간 산입"
-        />
-        <KpiCard
-          label="수정 요청"
-          value={data.kpis.changeRequested}
-          tone="info"
-          hint="재제출 대기"
-        />
-        <KpiCard
-          label="초안"
-          value={data.kpis.draft}
-          hint="작성 중 · 인정 시간 미반영"
-        />
-        <KpiCard
-          label="재제출 후 유효"
-          value={data.kpis.resubmitted}
-          tone="accent"
-          hint="이번 달 재제출 처리"
-        />
-      </div>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        skeleton={<SkeletonListPage kpis={4} columns={6} className="" />}
+        errorTitle="일지 목록을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {data && (
+          <>
+            {/* KPI 4 — 반려 없음(05-31) — 유효·수정 요청·초안·재제출 후 유효 */}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <KpiCard
+                label="유효"
+                value={data.kpis.valid}
+                tone="success"
+                hint="이번 달 인정 시간 산입"
+              />
+              <KpiCard
+                label="수정 요청"
+                value={data.kpis.changeRequested}
+                tone="info"
+                hint="재제출 대기"
+              />
+              <KpiCard
+                label="초안"
+                value={data.kpis.draft}
+                hint="작성 중 · 인정 시간 미반영"
+              />
+              <KpiCard
+                label="재제출 후 유효"
+                value={data.kpis.resubmitted}
+                tone="accent"
+                hint="이번 달 재제출 처리"
+              />
+            </div>
 
-      {/* 필터 바 */}
-      <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={status}
-            onChange={(v) => setStatus(v)}
-            aria-label="상태 필터"
-            options={[
-              { value: 'all', label: '상태 전체' },
-              { value: 'submitted', label: '승인 대기' },
-              { value: 'valid', label: '유효' },
-              { value: 'change_requested', label: '수정 요청' },
-              { value: 'draft', label: '초안' },
-            ]}
-            className="h-9"
-          />
-        </div>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="팀·멘토 검색"
-          aria-label="팀·멘토 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
-        />
-      </div>
+            {/* 필터 바 */}
+            <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={status}
+                  onChange={(v) => setStatus(v)}
+                  aria-label="상태 필터"
+                  options={[
+                    { value: 'all', label: '상태 전체' },
+                    { value: 'submitted', label: '승인 대기' },
+                    { value: 'valid', label: '유효' },
+                    { value: 'change_requested', label: '수정 요청' },
+                    { value: 'draft', label: '초안' },
+                  ]}
+                  className="h-9"
+                />
+              </div>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="팀·멘토 검색"
+                aria-label="팀·멘토 검색"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+              />
+            </div>
 
-      {/* 일지 테이블 — 행 클릭 시 검토 모달(상세·승인·수정요청) */}
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.logId}
-          onRowClick={(r) => setReviewId(r.logId)}
-          rowClassName={(r) =>
-            cn(
-              'cursor-pointer',
-              r.logId === reviewId && 'border-l-brand border-l-4 bg-brand/10',
-            )
-          }
-          empty="조건에 맞는 일지가 없어요"
-        />
-        <div className="text-fg-subtle mt-3 text-xs">
-          총 {rows.length} · 유효 {data.kpis.valid} · 수정 요청{' '}
-          {data.kpis.changeRequested} · 초안 {data.kpis.draft} · 재제출{' '}
-          {data.kpis.resubmitted}
-        </div>
-      </div>
+            {/* 일지 테이블 — 행 클릭 시 검토 모달(상세·승인·수정요청) */}
+            <div className="mt-4">
+              <DataTable
+                columns={columns}
+                rows={filtered}
+                rowKey={(r) => r.logId}
+                onRowClick={(r) => setReviewId(r.logId)}
+                rowClassName={(r) =>
+                  cn(
+                    'cursor-pointer',
+                    r.logId === reviewId &&
+                      'border-l-brand border-l-4 bg-brand/10',
+                  )
+                }
+                empty="조건에 맞는 일지가 없어요"
+              />
+              <div className="text-fg-subtle mt-3 text-xs">
+                총 {rows.length} · 유효 {data.kpis.valid} · 수정 요청{' '}
+                {data.kpis.changeRequested} · 초안 {data.kpis.draft} · 재제출{' '}
+                {data.kpis.resubmitted}
+              </div>
+            </div>
 
-      {reviewId && (
-        <LogReviewModal
-          open
-          onClose={() => setReviewId(null)}
-          logId={reviewId}
-        />
-      )}
+            {reviewId && (
+              <LogReviewModal
+                open
+                onClose={() => setReviewId(null)}
+                logId={reviewId}
+              />
+            )}
+          </>
+        )}
+      </DataBoundary>
     </div>
   )
 }

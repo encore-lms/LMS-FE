@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -42,7 +43,11 @@ import {
   restoredField,
 } from './fieldDiff'
 import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
-import type { AdminTeamLogField, TeamLogFieldDiffStatus } from './types'
+import type {
+  AdminTeamLogField,
+  AdminTeamLogFieldsData,
+  TeamLogFieldDiffStatus,
+} from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 /** §32 보존 정책 — 항목 폼 모달 하단 안내. */
@@ -76,11 +81,62 @@ export default function TeamLogFieldsPage() {
     '기본 템플릿과 다른 항목 표시 · 작성된 일지 보존 · 다음 일지부터 적용',
   )
   const { teamId } = useParams<{ teamId: string }>()
-  const toast = useToast()
   // 팀 상세로 assignmentId를 해소한다 — 배정 보드는 단일 기수로 해석돼 다른 기수 팀을 못 찾음.
   const teamDetail = useMentoringTeamDetail(teamId ?? null)
   const assignmentId = teamDetail.data?.assignmentId ?? null
   const fieldsQuery = useTeamLogFields(assignmentId)
+  const data = fieldsQuery.data
+
+  return (
+    <DataBoundary
+      isPending={
+        teamDetail.isPending || (!!assignmentId && fieldsQuery.isPending)
+      }
+      isError={teamDetail.isError || (!!assignmentId && fieldsQuery.isError)}
+      onRetry={() =>
+        teamDetail.isError ? teamDetail.refetch() : fieldsQuery.refetch()
+      }
+      skeleton={<SkeletonListPage columns={4} className="" />}
+      errorTitle="팀 일지 항목을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {!teamDetail.data ? (
+        <div className="p-8">
+          <Empty
+            icon={<AlertTriangle />}
+            title="팀을 찾을 수 없어요"
+            description="멘토 배정 관리에서 팀을 선택해 다시 진입해 주세요."
+            action={
+              <Link to="/admin/mentors/assignments" className={buttonClass()}>
+                멘토 배정 관리로
+              </Link>
+            }
+          />
+        </div>
+      ) : !assignmentId || !data ? (
+        <div className="p-8">
+          <Empty
+            icon={<UserPlus />}
+            title="멘토 배정 전 팀이에요"
+            description="멘토 배정(N시간·기본 템플릿) 후 팀별 일지 항목을 설정할 수 있어요."
+            action={
+              <Link to="/admin/mentors/assignments" className={buttonClass()}>
+                멘토 배정 관리로
+              </Link>
+            }
+          />
+        </div>
+      ) : (
+        <TeamLogFieldsBody data={data} />
+      )}
+    </DataBoundary>
+  )
+}
+
+/** 로드 후 본문 — 편집 초안·저장 로직이 non-null 항목 데이터를 전제하므로 분리. */
+function TeamLogFieldsBody({ data }: { data: AdminTeamLogFieldsData }) {
+  const toast = useToast()
   const saveFields = useSaveTeamLogFields()
   const resetFields = useResetTeamLogFields()
 
@@ -92,78 +148,13 @@ export default function TeamLogFieldsPage() {
   } | null>(null)
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
 
-  const data = fieldsQuery.data
-  const fields = useMemo(
-    () => draft ?? data?.fields ?? [],
-    [draft, data?.fields],
-  )
+  const fields = useMemo(() => draft ?? data.fields, [draft, data.fields])
   const dirty = draft !== null
   const counts = useMemo(
-    () =>
-      data
-        ? countFieldDiffs(fields, data.templateFields)
-        : { total: 0, active: 0, inactive: 0, changed: 0 },
-    [data, fields],
+    () => countFieldDiffs(fields, data.templateFields),
+    [data.templateFields, fields],
   )
   const differs = counts.changed > 0 || counts.inactive > 0
-
-  if (teamDetail.isPending || (assignmentId && fieldsQuery.isPending)) {
-    return <SkeletonListPage columns={4} />
-  }
-  if (teamDetail.isError || (assignmentId && fieldsQuery.isError)) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="팀 일지 항목을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={
-            <Button
-              onClick={() =>
-                teamDetail.isError
-                  ? teamDetail.refetch()
-                  : fieldsQuery.refetch()
-              }
-            >
-              다시 시도
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
-  if (!teamDetail.data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="팀을 찾을 수 없어요"
-          description="멘토 배정 관리에서 팀을 선택해 다시 진입해 주세요."
-          action={
-            <Link to="/admin/mentors/assignments" className={buttonClass()}>
-              멘토 배정 관리로
-            </Link>
-          }
-        />
-      </div>
-    )
-  }
-  if (!assignmentId || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<UserPlus />}
-          title="멘토 배정 전 팀이에요"
-          description="멘토 배정(N시간·기본 템플릿) 후 팀별 일지 항목을 설정할 수 있어요."
-          action={
-            <Link to="/admin/mentors/assignments" className={buttonClass()}>
-              멘토 배정 관리로
-            </Link>
-          }
-        />
-      </div>
-    )
-  }
 
   const update = (next: AdminTeamLogField[]) => setDraft(normalized(next))
 

@@ -11,8 +11,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -28,7 +27,11 @@ import { AssignmentManageModal } from './AssignmentManageModal'
 import { AddMenteesModal } from './AddMenteesModal'
 import { EarlyEndModal } from './EarlyEndModal'
 import { LogReviewModal } from './LogReviewModal'
-import type { AdminTeamLogBrief, MentorAssignmentRow } from './types'
+import type {
+  AdminMentoringTeamDetail,
+  AdminTeamLogBrief,
+  MentorAssignmentRow,
+} from './types'
 
 // 멘토링 팀 상세 (/admin/mentoring/teams/:teamId) — 카드 클릭 진입.
 // 개요 + 할 일·경고 스트립 + 누적 인정시간 추이 + 일지 상태 도넛 + 일지 타임라인 + 멘티 명단.
@@ -247,28 +250,40 @@ export default function MentoringTeamDetailPage() {
   usePageHeader('멘토링 상세', '팀 개요 · 멘티 · 일지 · 관리')
   const { teamId } = useParams<{ teamId: string }>()
   const detail = useMentoringTeamDetail(teamId ?? null)
+
+  return (
+    <div className="p-8">
+      <Link
+        to="/admin/mentors/assignments"
+        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        멘토 배정 관리로 돌아가기
+      </Link>
+
+      <DataBoundary
+        isPending={detail.isPending}
+        isError={detail.isError || !detail.data}
+        onRetry={() => detail.refetch()}
+        skeleton={<SkeletonListPage kpis={0} columns={4} className="" />}
+        errorTitle="멘토링 상세를 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {detail.data && <TeamDetailBody d={detail.data} />}
+      </DataBoundary>
+    </div>
+  )
+}
+
+/** 로드 후 본문 — 파생 상태·배정 보드 조회가 non-null 상세를 전제하므로 분리. */
+function TeamDetailBody({ d }: { d: AdminMentoringTeamDetail }) {
   // 관리 모달은 배정 보드의 row(멘토 교체 등에 필요)로 동작 — 이 팀의 기수 보드에서 row를 찾는다.
-  const board = useMentorAssignments(detail.data?.cohortId)
+  const board = useMentorAssignments(d.cohortId)
   const [manageOpen, setManageOpen] = useState(false)
   const [earlyEndOpen, setEarlyEndOpen] = useState(false)
   const [addMenteesOpen, setAddMenteesOpen] = useState(false)
   const [reviewLogId, setReviewLogId] = useState<string | null>(null)
 
-  if (detail.isPending) return <SkeletonListPage kpis={0} columns={4} />
-  if (detail.isError || !detail.data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="멘토링 상세를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => detail.refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const d = detail.data
   const displayStatus: AssignmentDisplayStatus = !d.assignmentId
     ? 'unassigned'
     : d.status === 'early_ended'
@@ -345,15 +360,7 @@ export default function MentoringTeamDetailPage() {
   }
 
   return (
-    <div className="p-8">
-      <Link
-        to="/admin/mentors/assignments"
-        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        멘토 배정 관리로 돌아가기
-      </Link>
-
+    <>
       {/* 헤더 */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -649,6 +656,6 @@ export default function MentoringTeamDetailPage() {
           logId={reviewLogId}
         />
       )}
-    </div>
+    </>
   )
 }

@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Info, Lock } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { Info, Lock } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -91,22 +90,6 @@ export default function StatisticsPage() {
     )
   }, [rows, course, mentor, teamStatus, evalState, recommendState, q])
 
-  if (isPending) {
-    return <SkeletonListPage columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="멘토 통계를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const columns: Column<MentorTeamStatRow>[] = [
     {
       key: 'mentorTeam',
@@ -194,120 +177,141 @@ export default function StatisticsPage() {
         </span>
       </div>
 
-      {/* 필터 — 과정/기수 · 멘토 · 팀 상태 · 평가 상태 · 추천 상태 · 팀/멘토 검색 */}
-      <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={course}
-            onChange={(v) => setCourse(v)}
-            aria-label="과정/기수 필터"
-            options={[
-              { value: 'all', label: '과정 전체' },
-              ...courses.map((c) => ({ value: c, label: c })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            value={mentor}
-            onChange={(v) => setMentor(v)}
-            aria-label="멘토 필터"
-            options={[
-              { value: 'all', label: '멘토 전체' },
-              ...mentors.map((m) => ({ value: m.mentorId, label: m.name })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            value={teamStatus}
-            onChange={(v) => setTeamStatus(v)}
-            aria-label="팀 상태 필터"
-            options={[
-              { value: 'all', label: '팀 상태 전체' },
-              ...STAT_TEAM_STATUS_KEYS.map((key) => ({
-                value: key,
-                label: STAT_TEAM_STATUS_LABEL[key],
-              })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            value={evalState}
-            onChange={(v) => setEvalState(v)}
-            aria-label="평가 상태 필터"
-            options={[
-              { value: 'all', label: '평가 상태 전체' },
-              ...(Object.keys(EVAL_FILTER_LABEL) as StatEvaluationState[]).map(
-                (key) => ({ value: key, label: EVAL_FILTER_LABEL[key] }),
-              ),
-            ]}
-            className="h-9"
-          />
-          <Select
-            value={recommendState}
-            onChange={(v) => setRecommendState(v)}
-            aria-label="추천 상태 필터"
-            options={[
-              { value: 'all', label: '추천 상태 전체' },
-              ...(
-                Object.keys(RECOMMEND_FILTER_LABEL) as StatRecommendationState[]
-              ).map((key) => ({
-                value: key,
-                label: RECOMMEND_FILTER_LABEL[key],
-              })),
-            ]}
-            className="h-9"
-          />
-        </div>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="팀/멘토 검색"
-          aria-label="팀/멘토 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
-        />
-      </div>
-
-      {/* 상태 요약 — 조회 전용 주석 포함(3206:3440 오버레이 원문) */}
-      <div className="border-border bg-surface mt-4 rounded-xl border">
-        <div className="grid grid-cols-2 gap-4 px-6 py-5 sm:grid-cols-5">
-          {STAT_TEAM_STATUS_KEYS.map((key) => (
-            <div key={key} className="flex items-baseline gap-2">
-              <span className="text-fg-muted text-sm font-medium">
-                {STAT_TEAM_STATUS_LABEL[key]}
-              </span>
-              <span className="text-fg text-lg font-semibold">
-                {data.summary[key]}
-              </span>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        skeleton={<SkeletonListPage columns={5} className="" />}
+        errorTitle="멘토 통계를 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {data && (
+          <>
+            {/* 필터 — 과정/기수 · 멘토 · 팀 상태 · 평가 상태 · 추천 상태 · 팀/멘토 검색 */}
+            <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={course}
+                  onChange={(v) => setCourse(v)}
+                  aria-label="과정/기수 필터"
+                  options={[
+                    { value: 'all', label: '과정 전체' },
+                    ...courses.map((c) => ({ value: c, label: c })),
+                  ]}
+                  className="h-9"
+                />
+                <Select
+                  value={mentor}
+                  onChange={(v) => setMentor(v)}
+                  aria-label="멘토 필터"
+                  options={[
+                    { value: 'all', label: '멘토 전체' },
+                    ...mentors.map((m) => ({
+                      value: m.mentorId,
+                      label: m.name,
+                    })),
+                  ]}
+                  className="h-9"
+                />
+                <Select
+                  value={teamStatus}
+                  onChange={(v) => setTeamStatus(v)}
+                  aria-label="팀 상태 필터"
+                  options={[
+                    { value: 'all', label: '팀 상태 전체' },
+                    ...STAT_TEAM_STATUS_KEYS.map((key) => ({
+                      value: key,
+                      label: STAT_TEAM_STATUS_LABEL[key],
+                    })),
+                  ]}
+                  className="h-9"
+                />
+                <Select
+                  value={evalState}
+                  onChange={(v) => setEvalState(v)}
+                  aria-label="평가 상태 필터"
+                  options={[
+                    { value: 'all', label: '평가 상태 전체' },
+                    ...(
+                      Object.keys(EVAL_FILTER_LABEL) as StatEvaluationState[]
+                    ).map((key) => ({
+                      value: key,
+                      label: EVAL_FILTER_LABEL[key],
+                    })),
+                  ]}
+                  className="h-9"
+                />
+                <Select
+                  value={recommendState}
+                  onChange={(v) => setRecommendState(v)}
+                  aria-label="추천 상태 필터"
+                  options={[
+                    { value: 'all', label: '추천 상태 전체' },
+                    ...(
+                      Object.keys(
+                        RECOMMEND_FILTER_LABEL,
+                      ) as StatRecommendationState[]
+                    ).map((key) => ({
+                      value: key,
+                      label: RECOMMEND_FILTER_LABEL[key],
+                    })),
+                  ]}
+                  className="h-9"
+                />
+              </div>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="팀/멘토 검색"
+                aria-label="팀/멘토 검색"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
+              />
             </div>
-          ))}
-        </div>
-        <p className="border-divider text-fg-subtle border-t px-6 py-3 text-xs">
-          상태는 조회용입니다. 평가·추천 원문 수정, 변경 요청, 직접 보정 액션은
-          제공하지 않습니다.
-        </p>
-      </div>
 
-      {/* 통계 테이블 — 읽기 전용(행 액션 없음) */}
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.assignmentId}
-          empty="조건에 맞는 팀이 없어요"
-        />
-        <div className="text-fg-subtle mt-3 text-xs">
-          총 {rows.length}팀 · 표시 {filtered.length}팀
-        </div>
-      </div>
+            {/* 상태 요약 — 조회 전용 주석 포함(3206:3440 오버레이 원문) */}
+            <div className="border-border bg-surface mt-4 rounded-xl border">
+              <div className="grid grid-cols-2 gap-4 px-6 py-5 sm:grid-cols-5">
+                {STAT_TEAM_STATUS_KEYS.map((key) => (
+                  <div key={key} className="flex items-baseline gap-2">
+                    <span className="text-fg-muted text-sm font-medium">
+                      {STAT_TEAM_STATUS_LABEL[key]}
+                    </span>
+                    <span className="text-fg text-lg font-semibold">
+                      {data.summary[key]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="border-divider text-fg-subtle border-t px-6 py-3 text-xs">
+                상태는 조회용입니다. 평가·추천 원문 수정, 변경 요청, 직접 보정
+                액션은 제공하지 않습니다.
+              </p>
+            </div>
 
-      {/* 비공개 기준 — 5축 원점수·원문 코멘트 비노출(§33) */}
-      <div className="bg-surface-muted border-border mt-6 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">비공개 기준</p>
-        <p className="text-fg-muted mt-1.5 text-xs">
-          수강생별 5축 평균, 추천 여부, 증명서용 요약만 조회합니다. 5축 원점수와
-          멘토 원문 코멘트는 통계 화면에 노출하지 않습니다.
-        </p>
-      </div>
+            {/* 통계 테이블 — 읽기 전용(행 액션 없음) */}
+            <div className="mt-4">
+              <DataTable
+                columns={columns}
+                rows={filtered}
+                rowKey={(r) => r.assignmentId}
+                empty="조건에 맞는 팀이 없어요"
+              />
+              <div className="text-fg-subtle mt-3 text-xs">
+                총 {rows.length}팀 · 표시 {filtered.length}팀
+              </div>
+            </div>
+
+            {/* 비공개 기준 — 5축 원점수·원문 코멘트 비노출(§33) */}
+            <div className="bg-surface-muted border-border mt-6 rounded-xl border p-5">
+              <p className="text-fg text-sm font-bold">비공개 기준</p>
+              <p className="text-fg-muted mt-1.5 text-xs">
+                수강생별 5축 평균, 추천 여부, 증명서용 요약만 조회합니다. 5축
+                원점수와 멘토 원문 코멘트는 통계 화면에 노출하지 않습니다.
+              </p>
+            </div>
+          </>
+        )}
+      </DataBoundary>
     </div>
   )
 }

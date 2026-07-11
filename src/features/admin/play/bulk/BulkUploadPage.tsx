@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ChevronLeft,
-  UploadCloud,
-} from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { CheckCircle2, ChevronLeft, UploadCloud } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -63,23 +57,24 @@ export default function BulkUploadPage() {
   // 검증 실행 상태 전이 — 실행 후 결과 배너 노출(매핑 규칙 적용·오류 재집계는 BE TODO).
   const [validated, setValidated] = useState(false)
 
-  if (isPending) {
-    return <SkeletonListPage columns={4} />
+  // DataBoundary children은 eager 평가 — 로딩/에러 중에도 크래시하지 않게 기본값 폴백.
+  const { file, summary, fields, validations } = data ?? {
+    file: { fileName: '', detail: '' },
+    summary: {
+      uploadFiles: 0,
+      uploadFilesHint: '',
+      normalRows: 0,
+      normalHint: '',
+      errorRows: 0,
+      errorHint: '',
+      dupCandidates: 0,
+      dupHint: '',
+      estimated: 0,
+      estimatedHint: '',
+    },
+    fields: [],
+    validations: [],
   }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="업로드 미리보기를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { file, summary, fields, validations } = data
 
   const fieldColumns: Column<BulkFieldRow>[] = [
     {
@@ -188,128 +183,137 @@ export default function BulkUploadPage() {
         <span className="text-fg-subtle">› 일괄 업로드</span>
       </Link>
 
-      {/* 액션 툴바 */}
-      <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            downloadTypingSampleCsv()
-            toast.success('샘플 CSV 양식을 내려받았습니다.')
-          }}
-          className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
-        >
-          샘플 다운로드
-        </button>
-        <button
-          type="button"
-          // TODO: 검증 실행 mutation(매핑 규칙 적용·오류 재집계, P0_15) — 현재는 mock 결과 재노출
-          onClick={() => {
-            setValidated(true)
-            toast.success(
-              `검증 완료 — 정상 ${summary.normalRows.toLocaleString()}행 · 오류 ${summary.errorRows}행`,
-            )
-          }}
-          className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
-        >
-          {validated ? '재검증' : '검증 실행'}
-        </button>
-      </div>
-
-      {/* 검증 결과 배너 (Figma 검증 결과 1557:11207) */}
-      {validated && (
-        <div className="border-success/30 bg-success-bg mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border p-4">
-          <p className="text-success inline-flex items-center gap-1.5 text-sm font-bold">
-            <CheckCircle2 className="h-4 w-4" />
-            검증 완료
-          </p>
-          <p className="text-success/90 text-[13px]">
-            정상 {summary.normalRows.toLocaleString()}행 · 오류{' '}
-            {summary.errorRows}행 · 중복 후보 {summary.dupCandidates}건 · 예상
-            반영 {summary.estimated.toLocaleString()}행
-          </p>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        skeleton={<SkeletonListPage columns={4} className="" />}
+        errorTitle="업로드 미리보기를 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {/* 액션 툴바 */}
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              downloadTypingSampleCsv()
+              toast.success('샘플 CSV 양식을 내려받았습니다.')
+            }}
+            className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
+          >
+            샘플 다운로드
+          </button>
+          <button
+            type="button"
+            // TODO: 검증 실행 mutation(매핑 규칙 적용·오류 재집계, P0_15) — 현재는 mock 결과 재노출
+            onClick={() => {
+              setValidated(true)
+              toast.success(
+                `검증 완료 — 정상 ${summary.normalRows.toLocaleString()}행 · 오류 ${summary.errorRows}행`,
+              )
+            }}
+            className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
+          >
+            {validated ? '재검증' : '검증 실행'}
+          </button>
         </div>
-      )}
 
-      {/* KPI 5종 */}
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard
-          label="업로드 파일"
-          value={summary.uploadFiles}
-          hint={summary.uploadFilesHint}
-        />
-        <KpiCard
-          label="정상 행"
-          value={summary.normalRows}
-          hint={summary.normalHint}
-          tone="success"
-        />
-        <KpiCard
-          label="오류 행"
-          value={summary.errorRows}
-          hint={summary.errorHint}
-          tone={summary.errorRows > 0 ? 'danger' : 'default'}
-        />
-        <KpiCard
-          label="중복 후보"
-          value={summary.dupCandidates}
-          hint={summary.dupHint}
-          tone={summary.dupCandidates > 0 ? 'warning' : 'default'}
-        />
-        <KpiCard
-          label="예상 반영"
-          value={summary.estimated}
-          hint={summary.estimatedHint}
-        />
-      </div>
+        {/* 검증 결과 배너 (Figma 검증 결과 1557:11207) */}
+        {validated && (
+          <div className="border-success/30 bg-success-bg mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border p-4">
+            <p className="text-success inline-flex items-center gap-1.5 text-sm font-bold">
+              <CheckCircle2 className="h-4 w-4" />
+              검증 완료
+            </p>
+            <p className="text-success/90 text-[13px]">
+              정상 {summary.normalRows.toLocaleString()}행 · 오류{' '}
+              {summary.errorRows}행 · 중복 후보 {summary.dupCandidates}건 · 예상
+              반영 {summary.estimated.toLocaleString()}행
+            </p>
+          </div>
+        )}
 
-      {/* 메인 — 파일 업로드 카드(좌) + 필드 표(우) */}
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
-        <div className="w-full lg:w-[360px] lg:shrink-0">
-          <div className="border-border bg-surface rounded-xl border p-5">
-            <p className="text-fg text-lg font-bold">파일 업로드</p>
-            <p className="text-fg mt-4 text-[13px]">{file.fileName}</p>
-            <p className="text-fg-muted mt-1.5 text-xs">{file.detail}</p>
-            <button
-              type="button"
-              // TODO: 파일 선택·교체(드래그앤드롭, P0_15)
-              onClick={() => toast.info('파일 추가·교체는 준비 중입니다.')}
-              className="border-border bg-surface-muted/50 text-fg-muted hover:bg-surface-muted mt-4 flex w-full flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-6 text-[13px] transition-colors"
-            >
-              <UploadCloud className="text-fg-subtle h-5 w-5" />
-              CSV/XLSX 파일을 추가하거나 교체
-            </button>
+        {/* KPI 5종 */}
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <KpiCard
+            label="업로드 파일"
+            value={summary.uploadFiles}
+            hint={summary.uploadFilesHint}
+          />
+          <KpiCard
+            label="정상 행"
+            value={summary.normalRows}
+            hint={summary.normalHint}
+            tone="success"
+          />
+          <KpiCard
+            label="오류 행"
+            value={summary.errorRows}
+            hint={summary.errorHint}
+            tone={summary.errorRows > 0 ? 'danger' : 'default'}
+          />
+          <KpiCard
+            label="중복 후보"
+            value={summary.dupCandidates}
+            hint={summary.dupHint}
+            tone={summary.dupCandidates > 0 ? 'warning' : 'default'}
+          />
+          <KpiCard
+            label="예상 반영"
+            value={summary.estimated}
+            hint={summary.estimatedHint}
+          />
+        </div>
+
+        {/* 메인 — 파일 업로드 카드(좌) + 필드 표(우) */}
+        <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+          <div className="w-full lg:w-[360px] lg:shrink-0">
+            <div className="border-border bg-surface rounded-xl border p-5">
+              <p className="text-fg text-lg font-bold">파일 업로드</p>
+              <p className="text-fg mt-4 text-[13px]">{file.fileName}</p>
+              <p className="text-fg-muted mt-1.5 text-xs">{file.detail}</p>
+              <button
+                type="button"
+                // TODO: 파일 선택·교체(드래그앤드롭, P0_15)
+                onClick={() => toast.info('파일 추가·교체는 준비 중입니다.')}
+                className="border-border bg-surface-muted/50 text-fg-muted hover:bg-surface-muted mt-4 flex w-full flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-6 text-[13px] transition-colors"
+              >
+                <UploadCloud className="text-fg-subtle h-5 w-5" />
+                CSV/XLSX 파일을 추가하거나 교체
+              </button>
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <DataTable
+              columns={fieldColumns}
+              rows={fields}
+              rowKey={(r) => r.id}
+              empty="검증할 필드가 없어요"
+            />
           </div>
         </div>
 
-        <div className="min-w-0 flex-1">
+        {/* 일괄 업로드 처리 기준 — 안내 콜아웃 */}
+        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
+          <p className="text-info text-base font-bold">일괄 업로드 처리 기준</p>
+          <p className="text-info/90 mt-2 text-[13px] leading-relaxed">
+            필수 열은 language, level, title, content, sortOrder입니다. 오류
+            행은 등록하지 않고 미리보기에서 제외하며, 중복 후보는 기존
+            GameContent와 비교해 운영자가 덮어쓰기 여부를 결정합니다.
+          </p>
+        </div>
+
+        {/* 검증 항목 표 */}
+        <div className="mt-6">
           <DataTable
-            columns={fieldColumns}
-            rows={fields}
+            columns={validationColumns}
+            rows={validations}
             rowKey={(r) => r.id}
-            empty="검증할 필드가 없어요"
+            empty="검증 항목이 없어요"
           />
         </div>
-      </div>
-
-      {/* 일괄 업로드 처리 기준 — 안내 콜아웃 */}
-      <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-        <p className="text-info text-base font-bold">일괄 업로드 처리 기준</p>
-        <p className="text-info/90 mt-2 text-[13px] leading-relaxed">
-          필수 열은 language, level, title, content, sortOrder입니다. 오류 행은
-          등록하지 않고 미리보기에서 제외하며, 중복 후보는 기존 GameContent와
-          비교해 운영자가 덮어쓰기 여부를 결정합니다.
-        </p>
-      </div>
-
-      {/* 검증 항목 표 */}
-      <div className="mt-6">
-        <DataTable
-          columns={validationColumns}
-          rows={validations}
-          rowKey={(r) => r.id}
-          empty="검증 항목이 없어요"
-        />
-      </div>
+      </DataBoundary>
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
-import { AlertTriangle, UploadCloud } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { UploadCloud } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -65,7 +64,10 @@ const HANDLING_META: Record<
 // 파일 선택·업로드는 operations-service /admin/csv-ingest 실연동(P0_20 업로드 구간).
 // KPI·매핑 표·검증 표는 소스별 mock 유지(매핑 규칙 UI는 BE 계약 미확정 → 토스트 + TODO).
 export default function CsvMappingPage() {
-  usePageHeader('CSV 매핑·업로드', 'CSV·엑셀 파일을 업로드하고 항목을 연결해 데이터를 등록합니다')
+  usePageHeader(
+    'CSV 매핑·업로드',
+    'CSV·엑셀 파일을 업로드하고 항목을 연결해 데이터를 등록합니다',
+  )
   const { data, isPending, isError, refetch } = useCsvImport()
   const { data: ingestDatasets } = useCsvIngestDatasets()
   const { data: ingestUploads } = useCsvIngestUploads()
@@ -146,24 +148,23 @@ export default function CsvMappingPage() {
     })
   }
 
-  if (isPending) {
-    return <SkeletonListPage kpis={5} columns={5} />
+  // DataBoundary children은 eager 평가 — 로딩/에러 중에도 크래시하지 않게 기본값 폴백.
+  const { file, summary, mappings, validations } = data?.[source] ?? {
+    file: { fileName: '', detail: '' },
+    summary: {
+      uploadFiles: 0,
+      uploadFilesHint: '',
+      mappingConfidence: 0,
+      unmappedFields: 0,
+      validationErrors: 0,
+      requiredValueErrors: 0,
+      quarantineCandidates: 0,
+      estimatedMinutes: 0,
+      totalRows: 0,
+    },
+    mappings: [],
+    validations: [],
   }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="CSV 인입 정보를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const current = data[source]
-  const { file, summary, mappings, validations } = current
 
   const mappingColumns: Column<CsvMappingRow>[] = [
     {
@@ -313,162 +314,171 @@ export default function CsvMappingPage() {
         </div>
       </div>
 
-      {/* KPI 5종 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard
-          label="업로드 파일"
-          value={summary.uploadFiles}
-          hint={summary.uploadFilesHint}
-        />
-        <KpiCard
-          label="매핑 신뢰도"
-          value={`${summary.mappingConfidence}%`}
-          hint={`미매핑 ${summary.unmappedFields}필드`}
-        />
-        <KpiCard
-          label="검증 오류"
-          value={summary.validationErrors}
-          hint={`필수값 ${summary.requiredValueErrors}`}
-          tone={summary.validationErrors > 0 ? 'danger' : 'default'}
-        />
-        <KpiCard
-          label="격리 후보"
-          value={summary.quarantineCandidates}
-          hint="인입 큐 이동"
-          tone={summary.quarantineCandidates > 0 ? 'warning' : 'default'}
-        />
-        <KpiCard
-          label="처리 예상"
-          value={`${summary.estimatedMinutes}m`}
-          hint={`${summary.totalRows.toLocaleString()}행`}
-        />
-      </div>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        skeleton={<SkeletonListPage kpis={5} columns={5} className="" />}
+        errorTitle="CSV 인입 정보를 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {/* KPI 5종 */}
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <KpiCard
+            label="업로드 파일"
+            value={summary.uploadFiles}
+            hint={summary.uploadFilesHint}
+          />
+          <KpiCard
+            label="매핑 신뢰도"
+            value={`${summary.mappingConfidence}%`}
+            hint={`미매핑 ${summary.unmappedFields}필드`}
+          />
+          <KpiCard
+            label="검증 오류"
+            value={summary.validationErrors}
+            hint={`필수값 ${summary.requiredValueErrors}`}
+            tone={summary.validationErrors > 0 ? 'danger' : 'default'}
+          />
+          <KpiCard
+            label="격리 후보"
+            value={summary.quarantineCandidates}
+            hint="인입 큐 이동"
+            tone={summary.quarantineCandidates > 0 ? 'warning' : 'default'}
+          />
+          <KpiCard
+            label="처리 예상"
+            value={`${summary.estimatedMinutes}m`}
+            hint={`${summary.totalRows.toLocaleString()}행`}
+          />
+        </div>
 
-      {/* 메인 — 파일 업로드 카드(좌) + 매핑 표(우) */}
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
-        <div className="w-full lg:w-[360px] lg:shrink-0">
-          <div className="border-border bg-surface rounded-xl border p-5">
-            <p className="text-fg text-lg font-bold">파일 업로드</p>
-            <p className="text-fg mt-4 text-[13px]">
-              {selectedFile ? selectedFile.name : file.fileName}
-            </p>
-            <p className="text-fg-muted mt-1.5 text-xs">
-              {selectedFile
-                ? detectedDataset
-                  ? `데이터셋: ${detectedDataset.label} · staging ${detectedDataset.rowCount.toLocaleString()}행 보유`
-                  : '데이터셋 미인식 — 헤더를 확인해 주세요'
-                : file.detail}
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              data-testid="csv-file-input"
-              onChange={(e) => {
-                const picked = e.target.files?.[0]
-                if (picked) void handleFileSelected(picked)
-                e.target.value = ''
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="border-border bg-surface-muted/50 text-fg-muted hover:bg-surface-muted mt-4 flex w-full flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-6 text-[13px] transition-colors"
-            >
-              <UploadCloud className="text-fg-subtle h-5 w-5" />
-              CSV 파일을 추가하거나 교체
-            </button>
-            {lastResult && (
-              <div className="border-border bg-surface-muted/40 mt-4 rounded-lg border p-3">
-                <p className="text-fg text-[13px] font-semibold">
-                  업로드 결과 — {lastResult.dataset}
-                </p>
-                <p className="text-fg-muted mt-1 text-xs">
-                  전체 {lastResult.totalRows.toLocaleString()}행 · 반영{' '}
-                  {lastResult.insertedRows.toLocaleString()}행 · 격리{' '}
-                  {lastResult.quarantinedRows.toLocaleString()}행
-                </p>
-                {lastResult.quarantinePreview.length > 0 && (
-                  <ul className="text-danger mt-2 space-y-1 text-xs">
-                    {lastResult.quarantinePreview.slice(0, 5).map((q) => (
-                      <li key={q.rowNo}>
-                        {q.rowNo}행: {q.reason}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+        {/* 메인 — 파일 업로드 카드(좌) + 매핑 표(우) */}
+        <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+          <div className="w-full lg:w-[360px] lg:shrink-0">
+            <div className="border-border bg-surface rounded-xl border p-5">
+              <p className="text-fg text-lg font-bold">파일 업로드</p>
+              <p className="text-fg mt-4 text-[13px]">
+                {selectedFile ? selectedFile.name : file.fileName}
+              </p>
+              <p className="text-fg-muted mt-1.5 text-xs">
+                {selectedFile
+                  ? detectedDataset
+                    ? `데이터셋: ${detectedDataset.label} · staging ${detectedDataset.rowCount.toLocaleString()}행 보유`
+                    : '데이터셋 미인식 — 헤더를 확인해 주세요'
+                  : file.detail}
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                data-testid="csv-file-input"
+                onChange={(e) => {
+                  const picked = e.target.files?.[0]
+                  if (picked) void handleFileSelected(picked)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="border-border bg-surface-muted/50 text-fg-muted hover:bg-surface-muted mt-4 flex w-full flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-6 text-[13px] transition-colors"
+              >
+                <UploadCloud className="text-fg-subtle h-5 w-5" />
+                CSV 파일을 추가하거나 교체
+              </button>
+              {lastResult && (
+                <div className="border-border bg-surface-muted/40 mt-4 rounded-lg border p-3">
+                  <p className="text-fg text-[13px] font-semibold">
+                    업로드 결과 — {lastResult.dataset}
+                  </p>
+                  <p className="text-fg-muted mt-1 text-xs">
+                    전체 {lastResult.totalRows.toLocaleString()}행 · 반영{' '}
+                    {lastResult.insertedRows.toLocaleString()}행 · 격리{' '}
+                    {lastResult.quarantinedRows.toLocaleString()}행
+                  </p>
+                  {lastResult.quarantinePreview.length > 0 && (
+                    <ul className="text-danger mt-2 space-y-1 text-xs">
+                      {lastResult.quarantinePreview.slice(0, 5).map((q) => (
+                        <li key={q.rowNo}>
+                          {q.rowNo}행: {q.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 최근 업로드 이력 — 업로드 단위 롤백(반영 행 제거) */}
+            {(ingestUploads?.length ?? 0) > 0 && (
+              <div className="border-border bg-surface mt-4 rounded-xl border p-5">
+                <p className="text-fg text-lg font-bold">최근 업로드</p>
+                <ul className="mt-3 space-y-2.5">
+                  {(ingestUploads ?? []).map((u) => (
+                    <li
+                      key={u.id}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-fg truncate text-[13px] font-semibold">
+                          {u.fileName}
+                        </p>
+                        <p className="text-fg-muted mt-0.5 text-xs">
+                          {u.dataset} · 반영 {u.insertedRows.toLocaleString()}행
+                          {u.quarantinedRows > 0 &&
+                            ` · 격리 ${u.quarantinedRows.toLocaleString()}행`}
+                        </p>
+                      </div>
+                      {u.status === 'rolled_back' ? (
+                        <StatusBadge label="롤백됨" tone="neutral" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleRollback(u.id, u.fileName)}
+                          disabled={rollbackMutation.isPending}
+                          className="text-danger shrink-0 text-[13px] font-semibold hover:underline disabled:opacity-50"
+                        >
+                          롤백
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
 
-          {/* 최근 업로드 이력 — 업로드 단위 롤백(반영 행 제거) */}
-          {(ingestUploads?.length ?? 0) > 0 && (
-            <div className="border-border bg-surface mt-4 rounded-xl border p-5">
-              <p className="text-fg text-lg font-bold">최근 업로드</p>
-              <ul className="mt-3 space-y-2.5">
-                {(ingestUploads ?? []).map((u) => (
-                  <li
-                    key={u.id}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-fg truncate text-[13px] font-semibold">
-                        {u.fileName}
-                      </p>
-                      <p className="text-fg-muted mt-0.5 text-xs">
-                        {u.dataset} · 반영 {u.insertedRows.toLocaleString()}행
-                        {u.quarantinedRows > 0 &&
-                          ` · 격리 ${u.quarantinedRows.toLocaleString()}행`}
-                      </p>
-                    </div>
-                    {u.status === 'rolled_back' ? (
-                      <StatusBadge label="롤백됨" tone="neutral" />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleRollback(u.id, u.fileName)}
-                        disabled={rollbackMutation.isPending}
-                        className="text-danger shrink-0 text-[13px] font-semibold hover:underline disabled:opacity-50"
-                      >
-                        롤백
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div className="min-w-0 flex-1">
+            <DataTable
+              columns={mappingColumns}
+              rows={mappings}
+              rowKey={(r) => r.id}
+              empty="매핑할 필드가 없어요"
+            />
+          </div>
         </div>
 
-        <div className="min-w-0 flex-1">
+        {/* 인입 결과 처리 원칙 — 안내 콜아웃 */}
+        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
+          <p className="text-info text-base font-bold">인입 결과 처리 원칙</p>
+          <p className="text-info/90 mt-2 text-[13px] leading-relaxed">
+            검증 오류가 있는 행은 바로 반영하지 않고 인입 격리 큐로 이동합니다.
+            확정 매핑은 DataMappingRule로 저장되어 다음 업로드에 재사용됩니다.
+          </p>
+        </div>
+
+        {/* 검증 항목 표 */}
+        <div className="mt-6">
           <DataTable
-            columns={mappingColumns}
-            rows={mappings}
+            columns={validationColumns}
+            rows={validations}
             rowKey={(r) => r.id}
-            empty="매핑할 필드가 없어요"
+            empty="검증 항목이 없어요"
           />
         </div>
-      </div>
-
-      {/* 인입 결과 처리 원칙 — 안내 콜아웃 */}
-      <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-        <p className="text-info text-base font-bold">인입 결과 처리 원칙</p>
-        <p className="text-info/90 mt-2 text-[13px] leading-relaxed">
-          검증 오류가 있는 행은 바로 반영하지 않고 인입 격리 큐로 이동합니다.
-          확정 매핑은 DataMappingRule로 저장되어 다음 업로드에 재사용됩니다.
-        </p>
-      </div>
-
-      {/* 검증 항목 표 */}
-      <div className="mt-6">
-        <DataTable
-          columns={validationColumns}
-          rows={validations}
-          rowKey={(r) => r.id}
-          empty="검증 항목이 없어요"
-        />
-      </div>
+      </DataBoundary>
     </div>
   )
 }

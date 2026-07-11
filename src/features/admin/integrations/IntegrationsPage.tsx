@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { RefreshCw } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -63,23 +62,22 @@ export default function IntegrationsPage() {
     [integrations, filter],
   )
 
-  if (isPending) {
-    return <SkeletonListPage columns={4} />
+  // DataBoundary children은 eager 평가 — 로딩/에러 중에도 크래시하지 않게 기본값 폴백.
+  const { summary, jobs } = data ?? {
+    summary: {
+      normal: 0,
+      normalHint: '',
+      warning: 0,
+      warningHint: '',
+      error: 0,
+      errorHint: '',
+      pendingJobs: 0,
+      pendingHint: '',
+      failureRate: '',
+      failureHint: '',
+    },
+    jobs: [],
   }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="연동 상태를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { summary, jobs } = data
 
   const integrationColumns: Column<Integration>[] = [
     {
@@ -212,72 +210,81 @@ export default function IntegrationsPage() {
         </button>
       </div>
 
-      {/* KPI 5종 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard
-          label="정상 연동"
-          value={summary.normal}
-          hint={summary.normalHint}
-          tone="success"
-        />
-        <KpiCard
-          label="주의"
-          value={summary.warning}
-          hint={summary.warningHint}
-          tone="warning"
-        />
-        <KpiCard
-          label="오류"
-          value={summary.error}
-          hint={summary.errorHint}
-          tone="danger"
-        />
-        <KpiCard
-          label="대기 작업"
-          value={summary.pendingJobs}
-          hint={summary.pendingHint}
-        />
-        <KpiCard
-          label="실패율"
-          value={summary.failureRate}
-          hint={summary.failureHint}
-        />
-      </div>
-
-      {/* 연동 표 */}
-      <div className="mt-5">
-        <DataTable
-          columns={integrationColumns}
-          rows={filtered}
-          rowKey={(i) => i.id}
-          empty="조건에 맞는 연동이 없어요"
-        />
-      </div>
-
-      {/* 작업 표(좌) + 운영 기준(우) */}
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
-        <div className="min-w-0 flex-1">
-          <p className="text-fg mb-2 text-sm font-bold">
-            동기화 작업 (SyncJob)
-          </p>
-          <DataTable
-            columns={jobColumns}
-            rows={jobs}
-            rowKey={(j) => j.id}
-            empty="작업이 없어요"
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        skeleton={<SkeletonListPage columns={4} className="" />}
+        errorTitle="연동 상태를 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {/* KPI 5종 */}
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <KpiCard
+            label="정상 연동"
+            value={summary.normal}
+            hint={summary.normalHint}
+            tone="success"
+          />
+          <KpiCard
+            label="주의"
+            value={summary.warning}
+            hint={summary.warningHint}
+            tone="warning"
+          />
+          <KpiCard
+            label="오류"
+            value={summary.error}
+            hint={summary.errorHint}
+            tone="danger"
+          />
+          <KpiCard
+            label="대기 작업"
+            value={summary.pendingJobs}
+            hint={summary.pendingHint}
+          />
+          <KpiCard
+            label="실패율"
+            value={summary.failureRate}
+            hint={summary.failureHint}
           />
         </div>
 
-        <aside className="border-warning/30 bg-warning-bg/50 w-full rounded-xl border p-5 lg:w-[360px] lg:shrink-0">
-          <p className="text-warning text-base font-bold">연동 운영 기준</p>
-          <ul className="text-warning/90 mt-3 flex flex-col gap-2.5 text-[13px] leading-relaxed">
-            <li>토큰·Secret 값은 화면에 노출하지 않음</li>
-            <li>재연결은 권한 범위 diff 확인 후 실행</li>
-            <li>수동 동기화는 SyncJob 감사 로그에 기록</li>
-            <li>오류 3회 이상은 운영 대시보드 위험 KPI에 반영</li>
-          </ul>
-        </aside>
-      </div>
+        {/* 연동 표 */}
+        <div className="mt-5">
+          <DataTable
+            columns={integrationColumns}
+            rows={filtered}
+            rowKey={(i) => i.id}
+            empty="조건에 맞는 연동이 없어요"
+          />
+        </div>
+
+        {/* 작업 표(좌) + 운영 기준(우) */}
+        <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+          <div className="min-w-0 flex-1">
+            <p className="text-fg mb-2 text-sm font-bold">
+              동기화 작업 (SyncJob)
+            </p>
+            <DataTable
+              columns={jobColumns}
+              rows={jobs}
+              rowKey={(j) => j.id}
+              empty="작업이 없어요"
+            />
+          </div>
+
+          <aside className="border-warning/30 bg-warning-bg/50 w-full rounded-xl border p-5 lg:w-[360px] lg:shrink-0">
+            <p className="text-warning text-base font-bold">연동 운영 기준</p>
+            <ul className="text-warning/90 mt-3 flex flex-col gap-2.5 text-[13px] leading-relaxed">
+              <li>토큰·Secret 값은 화면에 노출하지 않음</li>
+              <li>재연결은 권한 범위 diff 확인 후 실행</li>
+              <li>수동 동기화는 SyncJob 감사 로그에 기록</li>
+              <li>오류 3회 이상은 운영 대시보드 위험 KPI에 반영</li>
+            </ul>
+          </aside>
+        </div>
+      </DataBoundary>
     </div>
   )
 }

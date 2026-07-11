@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
 import { usePlayQuizBattle } from '../api/play'
@@ -187,27 +187,13 @@ export default function PlayQuizPage() {
     navigate('/student/play/quiz/result', { state: { result } })
   }
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">배틀을 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="배틀을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   // 영역 선택 → 배틀 상태 초기화.
   const pickArea = (A: string) => {
     setArea(A)
     setIdx(0)
     setPicked(null)
     setPhase('answering')
-    setRemaining(data.perQuestionSec)
+    setRemaining(data?.perQuestionSec ?? 0)
     setCombo(0)
     setMaxCombo(0)
     setMyScore(0)
@@ -227,8 +213,8 @@ export default function PlayQuizPage() {
   const stats = [
     {
       label: '남은 시간',
-      value: fmtTime(remaining ?? data.perQuestionSec),
-      sub: q ? `문제당 ${data.perQuestionSec}초` : '영역 선택 대기',
+      value: fmtTime(remaining ?? data?.perQuestionSec ?? 0),
+      sub: q ? `문제당 ${data?.perQuestionSec}초` : '영역 선택 대기',
     },
     { label: '콤보', value: `×${combo}`, sub: `최대 ×${maxCombo}` },
     { label: '맞은 문제', value: `${correctSoFar}`, sub: `오답 ${wrongSoFar}` },
@@ -254,256 +240,280 @@ export default function PlayQuizPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      <StatStrip stats={stats} />
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      loadingText="배틀을 불러오는 중…"
+      errorTitle="배틀을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="flex flex-col gap-5 p-8">
+          <StatStrip stats={stats} />
 
-      {q ? (
-        <>
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
-              <div className="flex items-center gap-2">
-                <span className="text-fg text-[15px] font-bold">
-                  문제 {idx + 1} / {total}
-                </span>
-                <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
-                  {q.category} · {q.difficulty}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setAreaModalOpen(true)}
-                  className="border-border text-fg-muted hover:border-brand hover:text-brand ml-auto rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-colors"
-                >
-                  영역 변경
-                </button>
-              </div>
-              <p className="text-fg min-h-[52px] text-[16px] leading-7 font-semibold">
-                {q.prompt}
-              </p>
-
-              <div className="flex flex-col gap-2">
-                <span className="text-fg-subtle text-[12px] font-semibold">
-                  보기 선택
-                </span>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {q.options.map((opt, i) => (
+          {q ? (
+            <>
+              <div className="flex flex-col gap-4 lg:flex-row">
+                <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-fg text-[15px] font-bold">
+                      문제 {idx + 1} / {total}
+                    </span>
+                    <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
+                      {q.category} · {q.difficulty}
+                    </span>
                     <button
-                      key={i}
                       type="button"
-                      onClick={() => answer(i)}
-                      disabled={phase === 'revealed'}
+                      onClick={() => setAreaModalOpen(true)}
+                      className="border-border text-fg-muted hover:border-brand hover:text-brand ml-auto rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                    >
+                      영역 변경
+                    </button>
+                  </div>
+                  <p className="text-fg min-h-[52px] text-[16px] leading-7 font-semibold">
+                    {q.prompt}
+                  </p>
+
+                  <div className="flex flex-col gap-2">
+                    <span className="text-fg-subtle text-[12px] font-semibold">
+                      보기 선택
+                    </span>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {q.options.map((opt, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => answer(i)}
+                          disabled={phase === 'revealed'}
+                          className={cn(
+                            'flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-default',
+                            optClass(i),
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'flex size-7 shrink-0 items-center justify-center rounded-lg text-[13px] font-bold',
+                              chipClass(i),
+                            )}
+                          >
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          <span className="text-fg text-[13px]">{opt}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {phase === 'revealed' && (
+                    <div
                       className={cn(
-                        'flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-default',
-                        optClass(i),
+                        'flex flex-col gap-1 rounded-xl p-3.5',
+                        picked === q.answerIndex
+                          ? 'bg-success-bg/60'
+                          : 'bg-danger-bg/50',
                       )}
                     >
                       <span
                         className={cn(
-                          'flex size-7 shrink-0 items-center justify-center rounded-lg text-[13px] font-bold',
-                          chipClass(i),
+                          'text-[12px] font-bold',
+                          picked === q.answerIndex
+                            ? 'text-success'
+                            : 'text-danger',
                         )}
                       >
-                        {String.fromCharCode(65 + i)}
+                        {picked === null
+                          ? '시간 초과 — 오답 처리'
+                          : picked === q.answerIndex
+                            ? '정답!'
+                            : '오답'}
+                        {' · 정답: '}
+                        {String.fromCharCode(65 + q.answerIndex)}
                       </span>
-                      <span className="text-fg text-[13px]">{opt}</span>
+                      <span className="text-fg-muted text-[11px] leading-5">
+                        {q.explanation}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setLeaveTo('/student/play')}
+                      className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold"
+                    >
+                      저장하지 않고 나가기
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => (isLast ? finish() : setIdx((i) => i + 1))}
+                      disabled={phase !== 'revealed'}
+                      className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isLast ? '결과 보기' : '다음 문제'}
+                    </button>
+                  </div>
+                </section>
+
+                <section
+                  className={cn(card, 'flex flex-col gap-3 lg:w-[300px]')}
+                >
+                  <span className="text-fg text-[15px] font-bold">
+                    배틀 정보
+                  </span>
+                  {[
+                    { label: '배틀 ID', value: data.battleId },
+                    { label: '상대', value: data.rival.name },
+                    { label: '영역', value: area ?? data.category },
+                    { label: '내 점수', value: myScore.toLocaleString() },
+                    { label: '상대 점수', value: rivalScore.toLocaleString() },
+                    { label: '보상', value: data.reward },
+                  ].map((r) => (
+                    <div
+                      key={r.label}
+                      className="flex items-center justify-between text-[12px]"
+                    >
+                      <span className="text-fg-subtle">{r.label}</span>
+                      <span className="text-fg font-semibold">{r.value}</span>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setAreaModalOpen(true)}
+                    className="border-border text-fg mt-1 rounded-lg border py-2.5 text-[12px] font-semibold"
+                  >
+                    영역 변경
+                  </button>
+                </section>
+              </div>
+
+              <section className={cn(card, 'flex flex-col gap-3')}>
+                <span className="text-fg text-[15px] font-bold">
+                  실시간 스코어보드
+                </span>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {[
+                    {
+                      name: '나 (김민준)',
+                      detail: `정답 ${correctSoFar} · 콤보 ×${combo} · ${myScore.toLocaleString()}점`,
+                      me: true,
+                    },
+                    {
+                      name: data.rival.name,
+                      detail: `정답 ${rivalCorrect} · ${rivalScore.toLocaleString()}점`,
+                      me: false,
+                    },
+                    {
+                      name: '남은 문제',
+                      detail: `${total - reviews.length}문제 · 현재 ${leading ? '1위' : '2위'}`,
+                      me: false,
+                    },
+                  ].map((c) => (
+                    <div
+                      key={c.name}
+                      className={cn(
+                        'flex flex-col gap-1.5 rounded-[12px] border p-4',
+                        c.me ? 'border-brand/40 bg-brand/5' : 'border-border',
+                      )}
+                    >
+                      <span className="text-fg text-[13px] font-bold">
+                        {c.name}
+                      </span>
+                      <span className="text-fg-muted text-[11px]">
+                        {c.detail}
+                      </span>
+                    </div>
                   ))}
                 </div>
-              </div>
-
-              {phase === 'revealed' && (
-                <div
-                  className={cn(
-                    'flex flex-col gap-1 rounded-xl p-3.5',
-                    picked === q.answerIndex
-                      ? 'bg-success-bg/60'
-                      : 'bg-danger-bg/50',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'text-[12px] font-bold',
-                      picked === q.answerIndex ? 'text-success' : 'text-danger',
-                    )}
-                  >
-                    {picked === null
-                      ? '시간 초과 — 오답 처리'
-                      : picked === q.answerIndex
-                        ? '정답!'
-                        : '오답'}
-                    {' · 정답: '}
-                    {String.fromCharCode(65 + q.answerIndex)}
-                  </span>
-                  <span className="text-fg-muted text-[11px] leading-5">
-                    {q.explanation}
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={() => setLeaveTo('/student/play')}
-                  className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold"
-                >
-                  저장하지 않고 나가기
-                </button>
-                <button
-                  type="button"
-                  onClick={() => (isLast ? finish() : setIdx((i) => i + 1))}
-                  disabled={phase !== 'revealed'}
-                  className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isLast ? '결과 보기' : '다음 문제'}
-                </button>
-              </div>
-            </section>
-
-            <section className={cn(card, 'flex flex-col gap-3 lg:w-[300px]')}>
-              <span className="text-fg text-[15px] font-bold">배틀 정보</span>
-              {[
-                { label: '배틀 ID', value: data.battleId },
-                { label: '상대', value: data.rival.name },
-                { label: '영역', value: area ?? data.category },
-                { label: '내 점수', value: myScore.toLocaleString() },
-                { label: '상대 점수', value: rivalScore.toLocaleString() },
-                { label: '보상', value: data.reward },
-              ].map((r) => (
-                <div
-                  key={r.label}
-                  className="flex items-center justify-between text-[12px]"
-                >
-                  <span className="text-fg-subtle">{r.label}</span>
-                  <span className="text-fg font-semibold">{r.value}</span>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setAreaModalOpen(true)}
-                className="border-border text-fg mt-1 rounded-lg border py-2.5 text-[12px] font-semibold"
-              >
-                영역 변경
-              </button>
-            </section>
-          </div>
-
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <span className="text-fg text-[15px] font-bold">
-              실시간 스코어보드
-            </span>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {[
-                {
-                  name: '나 (김민준)',
-                  detail: `정답 ${correctSoFar} · 콤보 ×${combo} · ${myScore.toLocaleString()}점`,
-                  me: true,
-                },
-                {
-                  name: data.rival.name,
-                  detail: `정답 ${rivalCorrect} · ${rivalScore.toLocaleString()}점`,
-                  me: false,
-                },
-                {
-                  name: '남은 문제',
-                  detail: `${total - reviews.length}문제 · 현재 ${leading ? '1위' : '2위'}`,
-                  me: false,
-                },
-              ].map((c) => (
-                <div
-                  key={c.name}
-                  className={cn(
-                    'flex flex-col gap-1.5 rounded-[12px] border p-4',
-                    c.me ? 'border-brand/40 bg-brand/5' : 'border-border',
-                  )}
-                >
-                  <span className="text-fg text-[13px] font-bold">
-                    {c.name}
-                  </span>
-                  <span className="text-fg-muted text-[11px]">{c.detail}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        </>
-      ) : (
-        <section className={cn(card, 'flex flex-col items-center gap-3 py-16')}>
-          <span className="text-fg text-[15px] font-bold">
-            영역을 선택하면 시작돼요
-          </span>
-          <span className="text-fg-subtle text-[12px]">
-            전체 또는 운영체제 · 네트워크 · 자료구조 중 하나를 골라 배틀을
-            시작합니다.
-          </span>
-          <Button onClick={() => setAreaModalOpen(true)}>영역 선택</Button>
-        </section>
-      )}
-
-      <Modal
-        open={leaveTo !== null}
-        onClose={() => setLeaveTo(null)}
-        title="배틀을 나갈까요?"
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setLeaveTo(null)}>
-              계속하기
-            </Button>
-            <Button
-              onClick={() => {
-                const to = leaveTo
-                setLeaveTo(null)
-                if (to) navigate(to)
-              }}
+              </section>
+            </>
+          ) : (
+            <section
+              className={cn(card, 'flex flex-col items-center gap-3 py-16')}
             >
-              나가기
-            </Button>
-          </>
-        }
-      >
-        지금 나가면 현재 점수와 진행 상황은 저장되지 않습니다.
-      </Modal>
+              <span className="text-fg text-[15px] font-bold">
+                영역을 선택하면 시작돼요
+              </span>
+              <span className="text-fg-subtle text-[12px]">
+                전체 또는 운영체제 · 네트워크 · 자료구조 중 하나를 골라 배틀을
+                시작합니다.
+              </span>
+              <Button onClick={() => setAreaModalOpen(true)}>영역 선택</Button>
+            </section>
+          )}
 
-      <Modal
-        open={areaModalOpen}
-        onClose={() => setAreaModalOpen(false)}
-        title="영역 선택"
-        size="sm"
-      >
-        <div className="flex flex-col gap-3">
-          <p className="text-fg-muted text-[13px] leading-5">
-            어떤 영역의 문제를 풀까요? 선택한 영역의 문제로 배틀이 진행됩니다.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {areas.map((A) => {
-              const count =
-                A === ALL
-                  ? QUESTIONS_PER_BATTLE
-                  : Math.min(
-                      QUESTIONS_PER_BATTLE,
-                      data.questions.filter((qq) => qq.category === A).length,
-                    )
-              const on = A === area
-              return (
-                <button
-                  key={A}
-                  type="button"
-                  onClick={() => pickArea(A)}
-                  className={cn(
-                    'flex flex-col items-center gap-1 rounded-xl border p-4 transition-colors',
-                    on
-                      ? 'border-brand bg-brand/5'
-                      : 'border-border hover:border-brand',
-                  )}
+          <Modal
+            open={leaveTo !== null}
+            onClose={() => setLeaveTo(null)}
+            title="배틀을 나갈까요?"
+            size="sm"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setLeaveTo(null)}>
+                  계속하기
+                </Button>
+                <Button
+                  onClick={() => {
+                    const to = leaveTo
+                    setLeaveTo(null)
+                    if (to) navigate(to)
+                  }}
                 >
-                  <span className="text-fg text-[15px] font-bold">{A}</span>
-                  <span className="text-fg-subtle text-[11px]">
-                    {count}문제
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+                  나가기
+                </Button>
+              </>
+            }
+          >
+            지금 나가면 현재 점수와 진행 상황은 저장되지 않습니다.
+          </Modal>
+
+          <Modal
+            open={areaModalOpen}
+            onClose={() => setAreaModalOpen(false)}
+            title="영역 선택"
+            size="sm"
+          >
+            <div className="flex flex-col gap-3">
+              <p className="text-fg-muted text-[13px] leading-5">
+                어떤 영역의 문제를 풀까요? 선택한 영역의 문제로 배틀이
+                진행됩니다.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {areas.map((A) => {
+                  const count =
+                    A === ALL
+                      ? QUESTIONS_PER_BATTLE
+                      : Math.min(
+                          QUESTIONS_PER_BATTLE,
+                          data.questions.filter((qq) => qq.category === A)
+                            .length,
+                        )
+                  const on = A === area
+                  return (
+                    <button
+                      key={A}
+                      type="button"
+                      onClick={() => pickArea(A)}
+                      className={cn(
+                        'flex flex-col items-center gap-1 rounded-xl border p-4 transition-colors',
+                        on
+                          ? 'border-brand bg-brand/5'
+                          : 'border-border hover:border-brand',
+                      )}
+                    >
+                      <span className="text-fg text-[15px] font-bold">{A}</span>
+                      <span className="text-fg-subtle text-[11px]">
+                        {count}문제
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </Modal>
         </div>
-      </Modal>
-    </div>
+      )}
+    </DataBoundary>
   )
 }

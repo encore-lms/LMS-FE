@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useAuth } from '@/shared/store'
 import { PROFILE_PATH } from '@/features/profile/paths'
 import {
@@ -107,108 +108,97 @@ export default function OnboardingPage() {
         ? blogOk && githubOk
         : true
 
-  if (onboarding.isLoading) {
-    return (
-      <div className="bg-surface text-fg-muted flex min-h-screen items-center justify-center text-sm">
-        온보딩 정보를 불러오는 중입니다.
-      </div>
-    )
-  }
-
-  if (onboarding.isError) {
-    return (
-      <div className="bg-surface flex min-h-screen flex-col items-center justify-center gap-3 text-sm">
-        <p className="text-danger">온보딩 정보를 불러오지 못했습니다.</p>
-        <button
-          type="button"
-          onClick={() => void onboarding.refetch()}
-          className="border-border text-fg hover:bg-surface-muted rounded-[8px] border px-4 py-2 text-[13px] font-semibold"
-        >
-          다시 시도
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <OnboardingShell
-      step={step}
-      skills={selectedSkillNames}
-      blogUrl={blogUrl}
-      githubUrl={githubUrl}
-      onBlog={setBlogUrl}
-      onGithub={setGithubUrl}
+    <DataBoundary
+      isPending={onboarding.isLoading}
+      isError={onboarding.isError}
+      onRetry={() => void onboarding.refetch()}
+      loadingText="온보딩 정보를 불러오는 중입니다."
+      errorTitle="온보딩 정보를 불러오지 못했습니다."
+      errorDescription=""
+      className="bg-surface flex min-h-screen items-center justify-center"
     >
-      {step === 'pledge' && <PledgeStep value={pledge} onChange={setPledge} />}
-      {step === 'skills' && (
-        <SkillsStep
-          options={skillOptions}
-          selected={skills}
-          onToggle={toggleSkill}
-        />
-      )}
-      {step === 'links' && (
-        <LinksStep
-          blogUrl={blogUrl}
-          githubUrl={githubUrl}
-          onBlog={setBlogUrl}
-          onGithub={setGithubUrl}
-        />
-      )}
+      <OnboardingShell
+        step={step}
+        skills={selectedSkillNames}
+        blogUrl={blogUrl}
+        githubUrl={githubUrl}
+        onBlog={setBlogUrl}
+        onGithub={setGithubUrl}
+      >
+        {step === 'pledge' && (
+          <PledgeStep value={pledge} onChange={setPledge} />
+        )}
+        {step === 'skills' && (
+          <SkillsStep
+            options={skillOptions}
+            selected={skills}
+            onToggle={toggleSkill}
+          />
+        )}
+        {step === 'links' && (
+          <LinksStep
+            blogUrl={blogUrl}
+            githubUrl={githubUrl}
+            onBlog={setBlogUrl}
+            onGithub={setGithubUrl}
+          />
+        )}
 
-      {/* 하단 액션바 — 건너뛰기는 스킬(step2)에서만, step3로 이동. step1·step3은 불가 */}
-      <div className="border-divider mt-5 flex items-center justify-between border-t pt-5">
-        {saveOnboarding.isError && (
-          <p role="alert" className="text-danger mr-auto text-[12px]">
-            온보딩 저장에 실패했습니다. 잠시 후 다시 시도해주세요.
-          </p>
-        )}
-        {step === 'skills' ? (
-          <button
-            type="button"
-            onClick={() => go('links')}
-            className="text-fg-muted hover:text-fg text-[13px] font-semibold"
-          >
-            건너뛰기
-          </button>
-        ) : (
-          <span />
-        )}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={isFirst}
-            onClick={() => go(step === 'links' ? 'skills' : 'pledge')}
-            className={cn(
-              'rounded-[10px] border px-5 py-2.5 text-[13px] font-semibold transition-colors',
-              isFirst
-                ? 'border-border text-fg-subtle cursor-not-allowed opacity-50'
-                : 'border-border text-fg hover:bg-surface-muted',
-            )}
-          >
-            ← 이전
-          </button>
-          <button
-            type="button"
-            disabled={!canAdvance || saveOnboarding.isPending}
-            onClick={() =>
-              isLast ? finish() : go(step === 'pledge' ? 'skills' : 'links')
-            }
-            className={cn(
-              'rounded-[10px] px-5 py-2.5 text-[13px] font-bold text-white transition-colors',
-              canAdvance
-                ? 'bg-brand hover:opacity-90'
-                : 'bg-brand/40 cursor-not-allowed',
-            )}
-          >
-            {isLast
-              ? saveOnboarding.isPending
-                ? '저장 중…'
-                : '시작하기'
-              : '다음 →'}
-          </button>
+        {/* 하단 액션바 — 건너뛰기는 스킬(step2)에서만, step3로 이동. step1·step3은 불가 */}
+        <div className="border-divider mt-5 flex items-center justify-between border-t pt-5">
+          {saveOnboarding.isError && (
+            <p role="alert" className="text-danger mr-auto text-[12px]">
+              온보딩 저장에 실패했습니다. 잠시 후 다시 시도해주세요.
+            </p>
+          )}
+          {step === 'skills' ? (
+            <button
+              type="button"
+              onClick={() => go('links')}
+              className="text-fg-muted hover:text-fg text-[13px] font-semibold"
+            >
+              건너뛰기
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isFirst}
+              onClick={() => go(step === 'links' ? 'skills' : 'pledge')}
+              className={cn(
+                'rounded-[10px] border px-5 py-2.5 text-[13px] font-semibold transition-colors',
+                isFirst
+                  ? 'border-border text-fg-subtle cursor-not-allowed opacity-50'
+                  : 'border-border text-fg hover:bg-surface-muted',
+              )}
+            >
+              ← 이전
+            </button>
+            <button
+              type="button"
+              disabled={!canAdvance || saveOnboarding.isPending}
+              onClick={() =>
+                isLast ? finish() : go(step === 'pledge' ? 'skills' : 'links')
+              }
+              className={cn(
+                'rounded-[10px] px-5 py-2.5 text-[13px] font-bold text-white transition-colors',
+                canAdvance
+                  ? 'bg-brand hover:opacity-90'
+                  : 'bg-brand/40 cursor-not-allowed',
+              )}
+            >
+              {isLast
+                ? saveOnboarding.isPending
+                  ? '저장 중…'
+                  : '시작하기'
+                : '다음 →'}
+            </button>
+          </div>
         </div>
-      </div>
-    </OnboardingShell>
+      </OnboardingShell>
+    </DataBoundary>
   )
 }

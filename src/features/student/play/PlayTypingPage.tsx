@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -22,10 +22,7 @@ export default function PlayTypingPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = usePlayTyping()
-  usePageHeader(
-    '타자 게임',
-    '제시문을 정확하고 빠르게 입력해 점수를 겨룹니다.',
-  )
+  usePageHeader('타자 게임', '제시문을 정확하고 빠르게 입력해 점수를 겨룹니다.')
 
   // 현재 제시문 + 다른 제시문을 하나의 목록으로 다룬다.
   const prompts = useMemo(() => {
@@ -117,20 +114,6 @@ export default function PlayTypingPage() {
     setResult(payload)
   }, [status, data, active, elapsedSec, m])
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">세션을 불러오는 중…</div>
-  if (isError || !data || !active) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="세션을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const others = prompts
     .map((p, i) => ({ ...p, i }))
     .filter((p) => p.i !== selected)
@@ -138,7 +121,7 @@ export default function PlayTypingPage() {
   const selectPrompt = (i: number) => {
     setSelected(i)
     setInput('')
-    setRemaining(data.durationSec)
+    setRemaining(data?.durationSec ?? 0)
     setStatus('running')
     backspacesRef.current = 0
     submittedRef.current = false
@@ -149,7 +132,7 @@ export default function PlayTypingPage() {
   const restart = () => {
     setResult(null)
     setInput('')
-    setRemaining(data.durationSec)
+    setRemaining(data?.durationSec ?? 0)
     setStatus('running')
     backspacesRef.current = 0
     submittedRef.current = false
@@ -163,7 +146,7 @@ export default function PlayTypingPage() {
   const stats = [
     {
       label: '남은 시간',
-      value: fmtTime(remaining ?? data.durationSec),
+      value: fmtTime(remaining ?? data?.durationSec ?? 0),
       sub:
         status === 'paused'
           ? '일시정지됨'
@@ -185,186 +168,205 @@ export default function PlayTypingPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      <StatStrip stats={stats} />
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data || !active}
+      onRetry={refetch}
+      loadingText="세션을 불러오는 중…"
+      errorTitle="세션을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && active && (
+        <div className="flex flex-col gap-5 p-8">
+          <StatStrip stats={stats} />
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-fg text-[15px] font-bold">제시문</span>
-              <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
-                {active.level}
-              </span>
-            </div>
-            <CharCompare target={active.text} input={input} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-fg text-[15px] font-bold">입력 영역</span>
-              <span
-                className={cn(
-                  'rounded-full px-2 py-0.5 text-[11px] font-bold',
-                  m.typos > 0
-                    ? 'bg-danger-bg text-danger'
-                    : input.length > 0
-                      ? 'bg-success-bg text-success'
-                      : 'bg-surface-muted text-fg-subtle',
-                )}
-              >
-                {m.typos > 0
-                  ? `오타 ${m.typos}자`
-                  : input.length > 0
-                    ? '정확하게 입력 중'
-                    : '입력을 시작하세요'}
-              </span>
-            </div>
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Backspace' || e.key === 'Delete')
-                  backspacesRef.current += 1
-              }}
-              disabled={status !== 'running'}
-              placeholder={
-                status === 'paused'
-                  ? '일시정지 상태입니다. 이어하기를 누르면 입력할 수 있어요.'
-                  : status === 'finished'
-                    ? '세션이 종료되었습니다.'
-                    : '제시문을 보고 여기에 입력하세요. 글자가 맞으면 초록, 틀리면 빨강으로 표시됩니다.'
-              }
-              className={cn(
-                'bg-surface text-fg min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
-                m.typos > 0
-                  ? 'border-danger focus:border-danger'
-                  : input.length > 0
-                    ? 'border-success focus:border-success'
-                    : 'border-border focus:border-brand',
-              )}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={togglePause}
-                disabled={status === 'finished'}
-                className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {status === 'paused' ? '이어하기' : '일시정지'}
-              </button>
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-fg text-[15px] font-bold">제시문</span>
+                  <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
+                    {active.level}
+                  </span>
+                </div>
+                <CharCompare target={active.text} input={input} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-fg text-[15px] font-bold">
+                    입력 영역
+                  </span>
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-[11px] font-bold',
+                      m.typos > 0
+                        ? 'bg-danger-bg text-danger'
+                        : input.length > 0
+                          ? 'bg-success-bg text-success'
+                          : 'bg-surface-muted text-fg-subtle',
+                    )}
+                  >
+                    {m.typos > 0
+                      ? `오타 ${m.typos}자`
+                      : input.length > 0
+                        ? '정확하게 입력 중'
+                        : '입력을 시작하세요'}
+                  </span>
+                </div>
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace' || e.key === 'Delete')
+                      backspacesRef.current += 1
+                  }}
+                  disabled={status !== 'running'}
+                  placeholder={
+                    status === 'paused'
+                      ? '일시정지 상태입니다. 이어하기를 누르면 입력할 수 있어요.'
+                      : status === 'finished'
+                        ? '세션이 종료되었습니다.'
+                        : '제시문을 보고 여기에 입력하세요. 글자가 맞으면 초록, 틀리면 빨강으로 표시됩니다.'
+                  }
+                  className={cn(
+                    'bg-surface text-fg min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
+                    m.typos > 0
+                      ? 'border-danger focus:border-danger'
+                      : input.length > 0
+                        ? 'border-success focus:border-success'
+                        : 'border-border focus:border-brand',
+                  )}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={togglePause}
+                    disabled={status === 'finished'}
+                    className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {status === 'paused' ? '이어하기' : '일시정지'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeaveTo('/student/play')}
+                    className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold"
+                  >
+                    저장하지 않고 나가기
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStatus('finished')}
+                  disabled={status === 'finished' || input.length === 0}
+                  className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  결과 제출
+                </button>
+              </div>
+            </section>
+
+            <section className={cn(card, 'flex flex-col gap-3 lg:w-[300px]')}>
+              <span className="text-fg text-[15px] font-bold">플레이 정보</span>
+              {[
+                { label: '세션 ID', value: data.sessionId },
+                { label: '제시문', value: active.title },
+                { label: '계산 기준', value: data.basis },
+                { label: '보상', value: data.reward },
+              ].map((r) => (
+                <div
+                  key={r.label}
+                  className="flex items-center justify-between text-[12px]"
+                >
+                  <span className="text-fg-subtle">{r.label}</span>
+                  <span className="text-fg font-semibold">{r.value}</span>
+                </div>
+              ))}
               <button
                 type="button"
                 onClick={() => setLeaveTo('/student/play')}
-                className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold"
+                className="border-border text-fg mt-1 rounded-lg border py-2.5 text-[12px] font-semibold"
               >
-                저장하지 않고 나가기
+                다른 게임 선택
               </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setStatus('finished')}
-              disabled={status === 'finished' || input.length === 0}
-              className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              결과 제출
-            </button>
+            </section>
           </div>
-        </section>
 
-        <section className={cn(card, 'flex flex-col gap-3 lg:w-[300px]')}>
-          <span className="text-fg text-[15px] font-bold">플레이 정보</span>
-          {[
-            { label: '세션 ID', value: data.sessionId },
-            { label: '제시문', value: active.title },
-            { label: '계산 기준', value: data.basis },
-            { label: '보상', value: data.reward },
-          ].map((r) => (
-            <div
-              key={r.label}
-              className="flex items-center justify-between text-[12px]"
-            >
-              <span className="text-fg-subtle">{r.label}</span>
-              <span className="text-fg font-semibold">{r.value}</span>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setLeaveTo('/student/play')}
-            className="border-border text-fg mt-1 rounded-lg border py-2.5 text-[12px] font-semibold"
-          >
-            다른 게임 선택
-          </button>
-        </section>
-      </div>
-
-      <section className={cn(card, 'flex flex-col gap-3')}>
-        <span className="text-fg text-[15px] font-bold">다른 제시문</span>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {others.map((p) => (
-            <div
-              key={p.title}
-              className="border-border flex flex-col gap-2 rounded-[12px] border p-4"
-            >
-              <span className="text-fg text-[13px] font-bold">{p.title}</span>
-              <span className="text-fg-subtle text-[11px]">{p.level}</span>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => selectPrompt(p.i)}
-                  className="border-border text-fg hover:border-brand hover:text-brand rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors"
+          <section className={cn(card, 'flex flex-col gap-3')}>
+            <span className="text-fg text-[15px] font-bold">다른 제시문</span>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {others.map((p) => (
+                <div
+                  key={p.title}
+                  className="border-border flex flex-col gap-2 rounded-[12px] border p-4"
                 >
-                  선택
-                </button>
-              </div>
+                  <span className="text-fg text-[13px] font-bold">
+                    {p.title}
+                  </span>
+                  <span className="text-fg-subtle text-[11px]">{p.level}</span>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => selectPrompt(p.i)}
+                      className="border-border text-fg hover:border-brand hover:text-brand rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                    >
+                      선택
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </section>
+
+          <Modal
+            open={leaveTo !== null}
+            onClose={() => setLeaveTo(null)}
+            title="게임을 나갈까요?"
+            size="sm"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setLeaveTo(null)}>
+                  계속하기
+                </Button>
+                <Button
+                  onClick={() => {
+                    const to = leaveTo
+                    setLeaveTo(null)
+                    if (to) navigate(to)
+                  }}
+                >
+                  나가기
+                </Button>
+              </>
+            }
+          >
+            지금 나가면 현재 입력과 진행 시간은 저장되지 않습니다.
+          </Modal>
+
+          <PlayResultModal
+            open={result !== null}
+            onClose={() => setResult(null)}
+            metrics={
+              result
+                ? [
+                    { label: 'WPM', value: String(result.wpm) },
+                    { label: 'CPM', value: String(result.cpm) },
+                    {
+                      label: '정확도',
+                      value: `${result.accuracy.toFixed(1)}%`,
+                    },
+                    { label: 'Score', value: result.score.toLocaleString() },
+                  ]
+                : []
+            }
+            onReplay={restart}
+            detailTo="/student/play/typing/result"
+            detailState={result ? { result } : undefined}
+          />
         </div>
-      </section>
-
-      <Modal
-        open={leaveTo !== null}
-        onClose={() => setLeaveTo(null)}
-        title="게임을 나갈까요?"
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setLeaveTo(null)}>
-              계속하기
-            </Button>
-            <Button
-              onClick={() => {
-                const to = leaveTo
-                setLeaveTo(null)
-                if (to) navigate(to)
-              }}
-            >
-              나가기
-            </Button>
-          </>
-        }
-      >
-        지금 나가면 현재 입력과 진행 시간은 저장되지 않습니다.
-      </Modal>
-
-      <PlayResultModal
-        open={result !== null}
-        onClose={() => setResult(null)}
-        metrics={
-          result
-            ? [
-                { label: 'WPM', value: String(result.wpm) },
-                { label: 'CPM', value: String(result.cpm) },
-                { label: '정확도', value: `${result.accuracy.toFixed(1)}%` },
-                { label: 'Score', value: result.score.toLocaleString() },
-              ]
-            : []
-        }
-        onReplay={restart}
-        detailTo="/student/play/typing/result"
-        detailState={result ? { result } : undefined}
-      />
-    </div>
+      )}
+    </DataBoundary>
   )
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -143,20 +143,6 @@ export default function PlayCodingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remaining, data, lang])
 
-  if (isPending)
-    return <div className="text-fg-muted p-8">테스트를 불러오는 중…</div>
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          title="테스트를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const pickLang = (L: string) => {
     setLang(L)
     setCurrent(0)
@@ -164,7 +150,7 @@ export default function PlayCodingPage() {
     setSolved({})
     setAttempts({})
     setFeedback({})
-    setRemaining(data.durationSec)
+    setRemaining(data?.durationSec ?? 0)
     submittedRef.current = false
     setLangModalOpen(false)
   }
@@ -186,7 +172,7 @@ export default function PlayCodingPage() {
   const stats = [
     {
       label: '남은 시간',
-      value: fmtTime(remaining ?? data.durationSec),
+      value: fmtTime(remaining ?? data?.durationSec ?? 0),
       sub: lang ? '전체 30분' : '언어 선택 대기',
     },
     {
@@ -210,275 +196,293 @@ export default function PlayCodingPage() {
   const isSolved = p ? !!solved[p.id] : false
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      <StatStrip stats={stats} />
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={refetch}
+      loadingText="테스트를 불러오는 중…"
+      errorTitle="테스트를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="flex flex-col gap-5 p-8">
+          <StatStrip stats={stats} />
 
-      {p ? (
-        <>
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-fg text-[15px] font-bold">
-                  문제 {current + 1} / {total}
-                </span>
-                <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
-                  {FORMAT_LABEL[p.format]}
-                </span>
-                <span className="bg-surface-muted text-fg-subtle rounded px-2 py-0.5 text-[11px] font-semibold">
-                  {p.difficulty}
-                </span>
-                <span className="bg-accent-bg text-accent-strong rounded px-2 py-0.5 text-[11px] font-bold">
-                  {p.points.toLocaleString()}점
-                </span>
-                {isSolved && (
-                  <span className="bg-success-bg text-success rounded px-2 py-0.5 text-[11px] font-bold">
-                    ✓ 통과
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setLangModalOpen(true)}
-                  className="border-border text-fg-muted hover:border-brand hover:text-brand ml-auto rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-colors"
-                >
-                  언어 변경
-                </button>
-              </div>
-
-              <p className="text-fg text-[14px] leading-6">{p.prompt}</p>
-
-              {p.code && (
-                <pre className="bg-surface-muted/50 text-fg overflow-x-auto rounded-xl p-4 font-mono text-[13px] leading-[20px] whitespace-pre">
-                  {p.code}
-                </pre>
-              )}
-
-              <div className="flex flex-col gap-2">
-                <span className="text-fg text-[15px] font-bold">
-                  {INPUT_LABEL[p.format]}
-                </span>
-                <textarea
-                  value={answers[p.id] ?? ''}
-                  onChange={(e) =>
-                    setAnswers((a) => ({ ...a, [p.id]: e.target.value }))
-                  }
-                  spellCheck={false}
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  placeholder={
-                    p.format === 'predict-output'
-                      ? '실행 결과(출력)를 입력하세요. 줄바꿈도 그대로 입력합니다.'
-                      : p.format === 'fill-blank'
-                        ? '빈칸(____)에 들어갈 코드를 입력하세요.'
-                        : '코드를 작성하세요. 오답이면 정답을 맞힐 때까지 다시 제출할 수 있어요.'
-                  }
-                  className="border-border bg-surface text-fg focus:border-brand min-h-[110px] w-full resize-none rounded-xl border px-4 py-3 font-mono text-[13px] leading-6 focus:outline-none"
-                />
-              </div>
-
-              {fb === 'correct' && (
-                <div className="bg-success-bg/60 flex flex-col gap-1 rounded-xl p-3.5">
-                  <span className="text-success text-[12px] font-bold">
-                    정답! · 통과 (+{p.points.toLocaleString()}점)
-                  </span>
-                  <span className="text-fg-muted font-mono text-[11px]">
-                    정답 예시: {p.solution}
-                  </span>
-                </div>
-              )}
-              {fb === 'wrong' && !isSolved && (
-                <div className="bg-danger-bg/50 flex flex-col gap-1 rounded-xl p-3.5">
-                  <span className="text-danger text-[12px] font-bold">
-                    오답 — 다시 제출해 보세요 (시도 {attempts[p.id] ?? 0}회)
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCurrent((i) => Math.max(0, i - 1))}
-                    disabled={current === 0}
-                    className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    이전
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCurrent((i) => Math.min(total - 1, i + 1))
-                    }
-                    disabled={current === total - 1}
-                    className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    다음
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={submit}
-                  className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
-                >
-                  제출
-                </button>
-              </div>
-            </section>
-
-            <section className={cn(card, 'flex flex-col gap-3 lg:w-[300px]')}>
-              <span className="text-fg text-[15px] font-bold">테스트 정보</span>
-              {[
-                { label: '테스트 ID', value: data.testId },
-                { label: '언어', value: lang ?? '-' },
-                { label: '배점 기준', value: '난이도별 차등' },
-                { label: '보상', value: data.reward },
-              ].map((r) => (
-                <div
-                  key={r.label}
-                  className="flex items-center justify-between text-[12px]"
-                >
-                  <span className="text-fg-subtle">{r.label}</span>
-                  <span className="text-fg font-semibold">{r.value}</span>
-                </div>
-              ))}
-              <Button size="sm" onClick={finish} className="mt-1">
-                테스트 종료 · 결과 보기
-              </Button>
-              <button
-                type="button"
-                onClick={() => setLeaveTo('/student/play')}
-                className="border-border text-fg rounded-lg border py-2.5 text-[12px] font-semibold"
-              >
-                저장하지 않고 나가기
-              </button>
-            </section>
-          </div>
-
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <span className="text-fg text-[15px] font-bold">
-              문제 목록 · {lang} ({total}문제)
-            </span>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {problems.map((q, i) => {
-                const st = solved[q.id]
-                  ? '통과'
-                  : i === current
-                    ? '진행 중'
-                    : (attempts[q.id] ?? 0) > 0
-                      ? '미해결'
-                      : '시작 전'
-                return (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => setCurrent(i)}
-                    className={cn(
-                      'flex flex-col gap-2 rounded-[12px] border p-4 text-left transition-colors',
-                      i === current
-                        ? 'border-brand bg-brand/5'
-                        : 'border-border hover:border-brand',
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-fg text-[13px] font-bold">
-                        {i + 1}. {q.title}
+          {p ? (
+            <>
+              <div className="flex flex-col gap-4 lg:flex-row">
+                <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-fg text-[15px] font-bold">
+                      문제 {current + 1} / {total}
+                    </span>
+                    <span className="bg-brand/10 text-brand rounded px-2 py-0.5 text-[11px] font-bold">
+                      {FORMAT_LABEL[p.format]}
+                    </span>
+                    <span className="bg-surface-muted text-fg-subtle rounded px-2 py-0.5 text-[11px] font-semibold">
+                      {p.difficulty}
+                    </span>
+                    <span className="bg-accent-bg text-accent-strong rounded px-2 py-0.5 text-[11px] font-bold">
+                      {p.points.toLocaleString()}점
+                    </span>
+                    {isSolved && (
+                      <span className="bg-success-bg text-success rounded px-2 py-0.5 text-[11px] font-bold">
+                        ✓ 통과
                       </span>
-                      <span
-                        className={cn(
-                          'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                          solved[q.id]
-                            ? 'bg-success-bg text-success'
-                            : 'bg-surface-muted text-fg-subtle',
-                        )}
-                      >
-                        {solved[q.id] ? '✓ 통과' : st}
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setLangModalOpen(true)}
+                      className="border-border text-fg-muted hover:border-brand hover:text-brand ml-auto rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                    >
+                      언어 변경
+                    </button>
+                  </div>
+
+                  <p className="text-fg text-[14px] leading-6">{p.prompt}</p>
+
+                  {p.code && (
+                    <pre className="bg-surface-muted/50 text-fg overflow-x-auto rounded-xl p-4 font-mono text-[13px] leading-[20px] whitespace-pre">
+                      {p.code}
+                    </pre>
+                  )}
+
+                  <div className="flex flex-col gap-2">
+                    <span className="text-fg text-[15px] font-bold">
+                      {INPUT_LABEL[p.format]}
+                    </span>
+                    <textarea
+                      value={answers[p.id] ?? ''}
+                      onChange={(e) =>
+                        setAnswers((a) => ({ ...a, [p.id]: e.target.value }))
+                      }
+                      spellCheck={false}
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      placeholder={
+                        p.format === 'predict-output'
+                          ? '실행 결과(출력)를 입력하세요. 줄바꿈도 그대로 입력합니다.'
+                          : p.format === 'fill-blank'
+                            ? '빈칸(____)에 들어갈 코드를 입력하세요.'
+                            : '코드를 작성하세요. 오답이면 정답을 맞힐 때까지 다시 제출할 수 있어요.'
+                      }
+                      className="border-border bg-surface text-fg focus:border-brand min-h-[110px] w-full resize-none rounded-xl border px-4 py-3 font-mono text-[13px] leading-6 focus:outline-none"
+                    />
+                  </div>
+
+                  {fb === 'correct' && (
+                    <div className="bg-success-bg/60 flex flex-col gap-1 rounded-xl p-3.5">
+                      <span className="text-success text-[12px] font-bold">
+                        정답! · 통과 (+{p.points.toLocaleString()}점)
+                      </span>
+                      <span className="text-fg-muted font-mono text-[11px]">
+                        정답 예시: {p.solution}
                       </span>
                     </div>
-                    <span className="text-fg-subtle text-[11px]">
-                      {FORMAT_LABEL[q.format]} · {q.difficulty} ·{' '}
-                      {q.points.toLocaleString()}점
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        </>
-      ) : (
-        <section className={cn(card, 'flex flex-col items-center gap-3 py-16')}>
-          <span className="text-fg text-[15px] font-bold">
-            언어를 선택하면 시작돼요
-          </span>
-          <span className="text-fg-subtle text-[12px]">
-            Java · Python · C 중 하나를 골라 5문제 코딩 테스트를 시작합니다.
-          </span>
-          <Button onClick={() => setLangModalOpen(true)}>언어 선택</Button>
-        </section>
-      )}
-
-      <Modal
-        open={leaveTo !== null}
-        onClose={() => setLeaveTo(null)}
-        title="테스트를 나갈까요?"
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setLeaveTo(null)}>
-              계속하기
-            </Button>
-            <Button
-              onClick={() => {
-                const to = leaveTo
-                setLeaveTo(null)
-                if (to) navigate(to)
-              }}
-            >
-              나가기
-            </Button>
-          </>
-        }
-      >
-        지금 나가면 현재 풀이와 진행 시간은 저장되지 않습니다.
-      </Modal>
-
-      <Modal
-        open={langModalOpen}
-        onClose={() => setLangModalOpen(false)}
-        title="언어 선택"
-        size="sm"
-      >
-        <div className="flex flex-col gap-3">
-          <p className="text-fg-muted text-[13px] leading-5">
-            어떤 언어로 코딩 테스트를 볼까요? 언어별 5문제가 출제됩니다.
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            {langs.map((L) => {
-              const count = Math.min(
-                QUESTIONS_PER_TEST,
-                data.problems.filter((q) => q.language === L).length,
-              )
-              const on = L === lang
-              return (
-                <button
-                  key={L}
-                  type="button"
-                  onClick={() => pickLang(L)}
-                  className={cn(
-                    'flex flex-col items-center gap-1 rounded-xl border p-4 transition-colors',
-                    on
-                      ? 'border-brand bg-brand/5'
-                      : 'border-border hover:border-brand',
                   )}
+                  {fb === 'wrong' && !isSolved && (
+                    <div className="bg-danger-bg/50 flex flex-col gap-1 rounded-xl p-3.5">
+                      <span className="text-danger text-[12px] font-bold">
+                        오답 — 다시 제출해 보세요 (시도 {attempts[p.id] ?? 0}회)
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCurrent((i) => Math.max(0, i - 1))}
+                        disabled={current === 0}
+                        className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        이전
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCurrent((i) => Math.min(total - 1, i + 1))
+                        }
+                        disabled={current === total - 1}
+                        className="border-border text-fg rounded-lg border px-4 py-2.5 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        다음
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={submit}
+                      className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
+                    >
+                      제출
+                    </button>
+                  </div>
+                </section>
+
+                <section
+                  className={cn(card, 'flex flex-col gap-3 lg:w-[300px]')}
                 >
-                  <span className="text-fg text-[15px] font-bold">{L}</span>
-                  <span className="text-fg-subtle text-[11px]">
-                    {count}문제
+                  <span className="text-fg text-[15px] font-bold">
+                    테스트 정보
                   </span>
-                </button>
-              )
-            })}
-          </div>
+                  {[
+                    { label: '테스트 ID', value: data.testId },
+                    { label: '언어', value: lang ?? '-' },
+                    { label: '배점 기준', value: '난이도별 차등' },
+                    { label: '보상', value: data.reward },
+                  ].map((r) => (
+                    <div
+                      key={r.label}
+                      className="flex items-center justify-between text-[12px]"
+                    >
+                      <span className="text-fg-subtle">{r.label}</span>
+                      <span className="text-fg font-semibold">{r.value}</span>
+                    </div>
+                  ))}
+                  <Button size="sm" onClick={finish} className="mt-1">
+                    테스트 종료 · 결과 보기
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setLeaveTo('/student/play')}
+                    className="border-border text-fg rounded-lg border py-2.5 text-[12px] font-semibold"
+                  >
+                    저장하지 않고 나가기
+                  </button>
+                </section>
+              </div>
+
+              <section className={cn(card, 'flex flex-col gap-3')}>
+                <span className="text-fg text-[15px] font-bold">
+                  문제 목록 · {lang} ({total}문제)
+                </span>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {problems.map((q, i) => {
+                    const st = solved[q.id]
+                      ? '통과'
+                      : i === current
+                        ? '진행 중'
+                        : (attempts[q.id] ?? 0) > 0
+                          ? '미해결'
+                          : '시작 전'
+                    return (
+                      <button
+                        key={q.id}
+                        type="button"
+                        onClick={() => setCurrent(i)}
+                        className={cn(
+                          'flex flex-col gap-2 rounded-[12px] border p-4 text-left transition-colors',
+                          i === current
+                            ? 'border-brand bg-brand/5'
+                            : 'border-border hover:border-brand',
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-fg text-[13px] font-bold">
+                            {i + 1}. {q.title}
+                          </span>
+                          <span
+                            className={cn(
+                              'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                              solved[q.id]
+                                ? 'bg-success-bg text-success'
+                                : 'bg-surface-muted text-fg-subtle',
+                            )}
+                          >
+                            {solved[q.id] ? '✓ 통과' : st}
+                          </span>
+                        </div>
+                        <span className="text-fg-subtle text-[11px]">
+                          {FORMAT_LABEL[q.format]} · {q.difficulty} ·{' '}
+                          {q.points.toLocaleString()}점
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
+            </>
+          ) : (
+            <section
+              className={cn(card, 'flex flex-col items-center gap-3 py-16')}
+            >
+              <span className="text-fg text-[15px] font-bold">
+                언어를 선택하면 시작돼요
+              </span>
+              <span className="text-fg-subtle text-[12px]">
+                Java · Python · C 중 하나를 골라 5문제 코딩 테스트를 시작합니다.
+              </span>
+              <Button onClick={() => setLangModalOpen(true)}>언어 선택</Button>
+            </section>
+          )}
+
+          <Modal
+            open={leaveTo !== null}
+            onClose={() => setLeaveTo(null)}
+            title="테스트를 나갈까요?"
+            size="sm"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setLeaveTo(null)}>
+                  계속하기
+                </Button>
+                <Button
+                  onClick={() => {
+                    const to = leaveTo
+                    setLeaveTo(null)
+                    if (to) navigate(to)
+                  }}
+                >
+                  나가기
+                </Button>
+              </>
+            }
+          >
+            지금 나가면 현재 풀이와 진행 시간은 저장되지 않습니다.
+          </Modal>
+
+          <Modal
+            open={langModalOpen}
+            onClose={() => setLangModalOpen(false)}
+            title="언어 선택"
+            size="sm"
+          >
+            <div className="flex flex-col gap-3">
+              <p className="text-fg-muted text-[13px] leading-5">
+                어떤 언어로 코딩 테스트를 볼까요? 언어별 5문제가 출제됩니다.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                {langs.map((L) => {
+                  const count = Math.min(
+                    QUESTIONS_PER_TEST,
+                    data.problems.filter((q) => q.language === L).length,
+                  )
+                  const on = L === lang
+                  return (
+                    <button
+                      key={L}
+                      type="button"
+                      onClick={() => pickLang(L)}
+                      className={cn(
+                        'flex flex-col items-center gap-1 rounded-xl border p-4 transition-colors',
+                        on
+                          ? 'border-brand bg-brand/5'
+                          : 'border-border hover:border-brand',
+                      )}
+                    >
+                      <span className="text-fg text-[15px] font-bold">{L}</span>
+                      <span className="text-fg-subtle text-[11px]">
+                        {count}문제
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </Modal>
         </div>
-      </Modal>
-    </div>
+      )}
+    </DataBoundary>
   )
 }

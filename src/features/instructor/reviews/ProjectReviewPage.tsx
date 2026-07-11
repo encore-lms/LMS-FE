@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
@@ -99,22 +98,6 @@ export default function ProjectReviewPage() {
         },
         onError: () => toast.danger('보완 요청에 실패했어요'),
       },
-    )
-  }
-
-  if (isPending) {
-    return <div className="text-fg-muted p-8">인증 큐를 불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="인증 큐를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
     )
   }
 
@@ -226,59 +209,75 @@ export default function ProjectReviewPage() {
   ]
 
   return (
-    <div className="p-8">
-      <QueueStats stats={data.stats} />
-      <QueueFilterBar
-        q={q}
-        onSearch={setQ}
-        searchPlaceholder="이름으로 검색"
-        tabs={[
-          { key: 'all' as StatusFilter, label: '전체', count: data.counts.all },
-          {
-            key: 'requested' as StatusFilter,
-            label: '인증 요청',
-            count: data.counts.requested,
-          },
-          {
-            key: 'supplementing' as StatusFilter,
-            label: '보완 중',
-            count: data.counts.supplementing,
-          },
-          {
-            key: 'certified' as StatusFilter,
-            label: '인증 완료',
-            count: data.counts.certified,
-          },
-        ]}
-        active={status}
-        onTab={setStatus}
-        cohortTabs={cohortTabs}
-        activeCohort={cohort}
-        onCohort={(c) => setCohortId(COHORT_LABEL_TO_ID[c] ?? 'all')}
-      />
-      <div className="mt-3">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.id}
-          empty="조건에 맞는 프로젝트가 없어요"
-        />
-      </div>
-      <p className="text-fg-subtle mt-3 text-xs">
-        인증 시 ProjectCertification 기록이 생성되며, 인증 후 학생 직접 수정은
-        차단됩니다 (변경 제안 흐름)
-      </p>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="인증 큐를 불러오는 중…"
+      errorTitle="인증 큐를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="p-8">
+          <QueueStats stats={data.stats} />
+          <QueueFilterBar
+            q={q}
+            onSearch={setQ}
+            searchPlaceholder="이름으로 검색"
+            tabs={[
+              {
+                key: 'all' as StatusFilter,
+                label: '전체',
+                count: data.counts.all,
+              },
+              {
+                key: 'requested' as StatusFilter,
+                label: '인증 요청',
+                count: data.counts.requested,
+              },
+              {
+                key: 'supplementing' as StatusFilter,
+                label: '보완 중',
+                count: data.counts.supplementing,
+              },
+              {
+                key: 'certified' as StatusFilter,
+                label: '인증 완료',
+                count: data.counts.certified,
+              },
+            ]}
+            active={status}
+            onTab={setStatus}
+            cohortTabs={cohortTabs}
+            activeCohort={cohort}
+            onCohort={(c) => setCohortId(COHORT_LABEL_TO_ID[c] ?? 'all')}
+          />
+          <div className="mt-3">
+            <DataTable
+              columns={columns}
+              rows={filtered}
+              rowKey={(r) => r.id}
+              empty="조건에 맞는 프로젝트가 없어요"
+            />
+          </div>
+          <p className="text-fg-subtle mt-3 text-xs">
+            인증 시 ProjectCertification 기록이 생성되며, 인증 후 학생 직접
+            수정은 차단됩니다 (변경 제안 흐름)
+          </p>
 
-      <SupplementRequestModal
-        open={supplementTarget !== null}
-        studentName={supplementTarget?.name ?? ''}
-        onClose={() => setSupplementTarget(null)}
-        onConfirm={(reason) => {
-          const target = supplementTarget
-          setSupplementTarget(null)
-          if (target) onRequestChanges(target, reason)
-        }}
-      />
-    </div>
+          <SupplementRequestModal
+            open={supplementTarget !== null}
+            studentName={supplementTarget?.name ?? ''}
+            onClose={() => setSupplementTarget(null)}
+            onConfirm={(reason) => {
+              const target = supplementTarget
+              setSupplementTarget(null)
+              if (target) onRequestChanges(target, reason)
+            }}
+          />
+        </div>
+      )}
+    </DataBoundary>
   )
 }

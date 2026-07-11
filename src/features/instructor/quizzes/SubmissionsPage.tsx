@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
-import { AlertTriangle, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -60,31 +60,19 @@ export default function SubmissionsPage() {
     )
   }, [rows, q, filter, nameOf])
 
-  if (isPending) {
-    return <SkeletonListPage kpis={3} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="제출 현황을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { kpi } = data
+  const kpi = data?.kpi
   const doneCount = rows.filter(
     (r) => r.gradingState === 'done' || r.gradingState === 'auto_done',
   ).length
 
   const statusTabs: { key: StatusFilter; label: string; count: number }[] = [
-    { key: 'all', label: '전체', count: kpi.targetCount },
-    { key: 'manual_pending', label: '수동 대기', count: kpi.manualPending },
-    { key: 'not_submitted', label: '미제출', count: kpi.notSubmitted },
+    { key: 'all', label: '전체', count: kpi?.targetCount ?? 0 },
+    {
+      key: 'manual_pending',
+      label: '수동 대기',
+      count: kpi?.manualPending ?? 0,
+    },
+    { key: 'not_submitted', label: '미제출', count: kpi?.notSubmitted ?? 0 },
     { key: 'done', label: '완료', count: doneCount },
   ]
 
@@ -130,7 +118,7 @@ export default function SubmissionsPage() {
         ) : (
           <div>
             <p className="text-fg text-sm font-bold">
-              {r.score} / {data.totalPoints}
+              {r.score} / {data?.totalPoints}
             </p>
             <p className="text-fg-subtle text-[11px]">
               {r.scoreFinal ? '확정' : '임시 (수동 대기)'}
@@ -227,77 +215,89 @@ export default function SubmissionsPage() {
   ]
 
   return (
-    <div className="p-8">
-      {/* KPI 4 */}
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="제출률"
-          value={
-            kpi.targetCount > 0
-              ? `${Math.round((kpi.submitted / kpi.targetCount) * 100)}%`
-              : '0%'
-          }
-          hint={`${kpi.submitted}/${kpi.targetCount}`}
-        />
-        <KpiCard label="미제출" value={kpi.notSubmitted} hint="명" />
-        <KpiCard
-          label="수동 대기"
-          value={kpi.manualPending}
-          tone={kpi.manualPending > 0 ? 'warning' : 'default'}
-          hint="건"
-        />
-        <KpiCard
-          label="평균 점수"
-          value={kpi.avgScore}
-          hint={`/${data.totalPoints}`}
-        />
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
+      errorTitle="제출 현황을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && kpi && (
+        <div className="p-8">
+          {/* KPI 4 */}
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label="제출률"
+              value={
+                kpi.targetCount > 0
+                  ? `${Math.round((kpi.submitted / kpi.targetCount) * 100)}%`
+                  : '0%'
+              }
+              hint={`${kpi.submitted}/${kpi.targetCount}`}
+            />
+            <KpiCard label="미제출" value={kpi.notSubmitted} hint="명" />
+            <KpiCard
+              label="수동 대기"
+              value={kpi.manualPending}
+              tone={kpi.manualPending > 0 ? 'warning' : 'default'}
+              hint="건"
+            />
+            <KpiCard
+              label="평균 점수"
+              value={kpi.avgScore}
+              hint={`/${data.totalPoints}`}
+            />
+          </div>
 
-      {/* 검색 + 상태 탭 */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="border-border flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="이름으로 검색"
-            aria-label="수강생 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
-          />
+          {/* 검색 + 상태 탭 */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="border-border flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
+              <Search className="text-fg-subtle h-4 w-4" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="이름으로 검색"
+                aria-label="수강생 검색"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            {statusTabs.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setFilter(t.key)}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-sm font-medium',
+                  filter === t.key
+                    ? 'bg-accent-bg text-accent-strong'
+                    : 'text-fg-muted hover:bg-surface-muted',
+                )}
+              >
+                {t.label}{' '}
+                <span className="text-fg-subtle text-xs">({t.count})</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => navigate(`${base}`)}
+              className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
+            >
+              ← 퀴즈 목록으로
+            </button>
+          </div>
+
+          <div className="mt-3">
+            <DataTable
+              columns={columns}
+              rows={filtered}
+              rowKey={(r) => r.id}
+              empty="조건에 맞는 제출이 없어요"
+            />
+          </div>
         </div>
-        {statusTabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setFilter(t.key)}
-            className={cn(
-              'rounded-md px-3 py-1.5 text-sm font-medium',
-              filter === t.key
-                ? 'bg-accent-bg text-accent-strong'
-                : 'text-fg-muted hover:bg-surface-muted',
-            )}
-          >
-            {t.label}{' '}
-            <span className="text-fg-subtle text-xs">({t.count})</span>
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => navigate(`${base}`)}
-          className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
-        >
-          ← 퀴즈 목록으로
-        </button>
-      </div>
-
-      <div className="mt-3">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.id}
-          empty="조건에 맞는 제출이 없어요"
-        />
-      </div>
-    </div>
+      )}
+    </DataBoundary>
   )
 }

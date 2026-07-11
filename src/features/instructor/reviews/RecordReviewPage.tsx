@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, CheckCircle2, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -177,53 +177,54 @@ export default function RecordReviewPage() {
       </div>
 
       {/* 본문 */}
-      {isPending ? (
-        <div className="text-fg-muted py-16 text-center">불러오는 중…</div>
-      ) : isError || !data ? (
-        <Empty
-          icon={<AlertTriangle />}
-          title="학습 기록을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      ) : category === 'cert' ? (
-        certRows.length === 0 ? (
-          <EmptyGrid />
-        ) : (
-          <CertMatrix
-            rows={certRows}
-            onOpen={(row, type) => {
-              const id = row.submissionIds[type]
-              const detail = id ? data.certDetails[id] : undefined
-              if (detail) setPanel({ kind: 'cert', detail })
-            }}
-          />
-        )
-      ) : category === 'study' ? (
-        studyRows.length === 0 ? (
-          <EmptyGrid />
-        ) : (
-          <StudyGrid
-            weeks={data.weeks}
-            rows={studyRows}
-            onOpen={(id) => {
-              const detail = data.studyDetails[id]
-              if (detail) setPanel({ kind: 'study', detail })
-            }}
-          />
-        )
-      ) : blogRows.length === 0 ? (
-        <EmptyGrid />
-      ) : (
-        <BlogGrid
-          weeks={data.weeks}
-          rows={blogRows}
-          onOpen={(id) => {
-            const detail = data.blogDetails[id]
-            if (detail) setPanel({ kind: 'blog', detail })
-          }}
-        />
-      )}
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        loadingText="불러오는 중…"
+        errorTitle="학습 기록을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {data &&
+          (category === 'cert' ? (
+            certRows.length === 0 ? (
+              <EmptyGrid />
+            ) : (
+              <CertMatrix
+                rows={certRows}
+                onOpen={(row, type) => {
+                  const id = row.submissionIds[type]
+                  const detail = id ? data.certDetails[id] : undefined
+                  if (detail) setPanel({ kind: 'cert', detail })
+                }}
+              />
+            )
+          ) : category === 'study' ? (
+            studyRows.length === 0 ? (
+              <EmptyGrid />
+            ) : (
+              <StudyGrid
+                weeks={data.weeks}
+                rows={studyRows}
+                onOpen={(id) => {
+                  const detail = data.studyDetails[id]
+                  if (detail) setPanel({ kind: 'study', detail })
+                }}
+              />
+            )
+          ) : blogRows.length === 0 ? (
+            <EmptyGrid />
+          ) : (
+            <BlogGrid
+              weeks={data.weeks}
+              rows={blogRows}
+              onOpen={(id) => {
+                const detail = data.blogDetails[id]
+                if (detail) setPanel({ kind: 'blog', detail })
+              }}
+            />
+          ))}
+      </DataBoundary>
 
       <p className="text-fg-subtle mt-3 text-xs">
         조회 전용 — 승인·반려·보완 요청은 운영 매니저가 처리합니다.

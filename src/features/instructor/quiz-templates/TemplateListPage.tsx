@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Info, Plus, Search } from 'lucide-react'
+import { Info, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
 import { Select } from '@/components/ui/Select'
@@ -71,22 +71,6 @@ export default function TemplateListPage() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount)
   const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
-
-  if (isPending) {
-    return <SkeletonListPage columns={4} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="템플릿 목록을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
 
   const columns: Column<QuizTemplateRow>[] = [
     {
@@ -201,80 +185,92 @@ export default function TemplateListPage() {
   ]
 
   return (
-    <div className="p-8">
-      {/* 필터 바 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="템플릿명·카테고리로 검색"
-            aria-label="템플릿 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
-          />
-        </div>
-        <label className="flex items-center gap-2 text-xs">
-          <span className="text-fg-subtle">카테고리</span>
-          <Select
-            value={category}
-            onChange={(v) => setCategory(v as (typeof CATEGORIES)[number])}
-            aria-label="카테고리 필터"
-            options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-          />
-        </label>
-        <label className="flex items-center gap-2 text-xs">
-          <span className="text-fg-subtle">정렬</span>
-          <Select
-            value={sort}
-            onChange={(v) => setSort(v as SortKey)}
-            aria-label="정렬"
-            options={[
-              { value: 'recent', label: '최근 사용 순' },
-              { value: 'useCount', label: '사용 횟수 순' },
-              { value: 'name', label: '이름 순' },
-            ]}
-          />
-        </label>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-fg-subtle text-xs">
-            총 {data.total}개 템플릿 · 누적 사용 {data.totalUseCount}회
-          </span>
-          <Button
-            size="sm"
-            onClick={() => navigate('/instructor/quiz-templates/new')}
-          >
-            <Plus className="h-3.5 w-3.5" /> 템플릿 생성
-          </Button>
-        </div>
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage columns={4} className="" />}
+      errorTitle="템플릿 목록을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="p-8">
+          {/* 필터 바 */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
+              <Search className="text-fg-subtle h-4 w-4" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="템플릿명·카테고리로 검색"
+                aria-label="템플릿 검색"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-xs">
+              <span className="text-fg-subtle">카테고리</span>
+              <Select
+                value={category}
+                onChange={(v) => setCategory(v as (typeof CATEGORIES)[number])}
+                aria-label="카테고리 필터"
+                options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+              />
+            </label>
+            <label className="flex items-center gap-2 text-xs">
+              <span className="text-fg-subtle">정렬</span>
+              <Select
+                value={sort}
+                onChange={(v) => setSort(v as SortKey)}
+                aria-label="정렬"
+                options={[
+                  { value: 'recent', label: '최근 사용 순' },
+                  { value: 'useCount', label: '사용 횟수 순' },
+                  { value: 'name', label: '이름 순' },
+                ]}
+              />
+            </label>
+            <div className="ml-auto flex items-center gap-3">
+              <span className="text-fg-subtle text-xs">
+                총 {data.total}개 템플릿 · 누적 사용 {data.totalUseCount}회
+              </span>
+              <Button
+                size="sm"
+                onClick={() => navigate('/instructor/quiz-templates/new')}
+              >
+                <Plus className="h-3.5 w-3.5" /> 템플릿 생성
+              </Button>
+            </div>
+          </div>
 
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={paged}
-          rowKey={(t) => t.id}
-          onRowClick={(t) =>
-            navigate(`/instructor/quiz-templates/${t.id}/edit`)
-          }
-          empty="조건에 맞는 템플릿이 없어요"
-        />
-        {filtered.length > 0 && (
-          <Pagination
-            className="mt-3"
-            page={safePage}
-            pageCount={pageCount}
-            totalCount={filtered.length}
-            shownCount={paged.length}
-            onPage={setPage}
-          />
-        )}
-      </div>
-      <p className="text-fg-subtle mt-3 flex items-center gap-1.5 text-xs">
-        <Info className="h-3 w-3" />
-        [새 퀴즈로 복제] → 퀴즈 생성 폼으로 이동 · 사용 중인 템플릿(복제된 퀴즈
-        존재)은 삭제 비활성
-      </p>
-    </div>
+          <div className="mt-4">
+            <DataTable
+              columns={columns}
+              rows={paged}
+              rowKey={(t) => t.id}
+              onRowClick={(t) =>
+                navigate(`/instructor/quiz-templates/${t.id}/edit`)
+              }
+              empty="조건에 맞는 템플릿이 없어요"
+            />
+            {filtered.length > 0 && (
+              <Pagination
+                className="mt-3"
+                page={safePage}
+                pageCount={pageCount}
+                totalCount={filtered.length}
+                shownCount={paged.length}
+                onPage={setPage}
+              />
+            )}
+          </div>
+          <p className="text-fg-subtle mt-3 flex items-center gap-1.5 text-xs">
+            <Info className="h-3 w-3" />
+            [새 퀴즈로 복제] → 퀴즈 생성 폼으로 이동 · 사용 중인 템플릿(복제된
+            퀴즈 존재)은 삭제 비활성
+          </p>
+        </div>
+      )}
+    </DataBoundary>
   )
 }

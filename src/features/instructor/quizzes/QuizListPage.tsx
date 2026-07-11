@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
-import { AlertTriangle, FileText, Plus, Search } from 'lucide-react'
+import { FileText, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Select } from '@/components/ui/Select'
@@ -72,22 +72,6 @@ export default function QuizListPage({
       return true
     })
   }, [data, q, cohort, mode, visibility])
-
-  if (isPending) {
-    return <SkeletonListPage kpis={3} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className={embedded ? '' : 'p-8'}>
-        <Empty
-          icon={<AlertTriangle />}
-          title="퀴즈 목록을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
 
   const gradingCell = (r: InstructorQuizRow) => {
     if (r.manualPending === null)
@@ -241,94 +225,106 @@ export default function QuizListPage({
   ]
 
   return (
-    <div className={embedded ? '' : 'p-8'}>
-      {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-fg-muted text-sm">
-          총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
-        </span>
-        <div className="flex flex-wrap items-center gap-2">
-        <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-          <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="퀴즈명·과목으로 검색"
-            aria-label="퀴즈 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
-          />
-        </div>
-        {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
-        {!embedded && (
-          <label className="flex items-center gap-2 text-xs">
-            <span className="text-fg-subtle">기수</span>
-            <Select
-              value={cohort}
-              onChange={(v) => setCohort(v)}
-              aria-label="기수 필터"
-              options={cohortOpts.map((c) => ({ value: c, label: c }))}
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
+      errorTitle="퀴즈 목록을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className={embedded ? '' : 'p-8'}
+    >
+      {data && (
+        <div className={embedded ? '' : 'p-8'}>
+          {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-fg-muted text-sm">
+              총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
+                <Search className="text-fg-subtle h-4 w-4 shrink-0" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="퀴즈명·과목으로 검색"
+                  aria-label="퀴즈 검색"
+                  className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+                />
+              </div>
+              {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
+              {!embedded && (
+                <label className="flex items-center gap-2 text-xs">
+                  <span className="text-fg-subtle">기수</span>
+                  <Select
+                    value={cohort}
+                    onChange={(v) => setCohort(v)}
+                    aria-label="기수 필터"
+                    options={cohortOpts.map((c) => ({ value: c, label: c }))}
+                  />
+                </label>
+              )}
+              <label className="flex items-center gap-2 text-xs">
+                <span className="text-fg-subtle">채점 모드</span>
+                <Select
+                  value={mode}
+                  onChange={(v) => setMode(v as ModeFilter)}
+                  aria-label="채점 모드 필터"
+                  options={[
+                    { value: 'all', label: '전체' },
+                    { value: 'AUTO', label: 'AUTO' },
+                    { value: 'MANUAL', label: 'MANUAL' },
+                    { value: 'MIXED', label: 'MIXED' },
+                  ]}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs">
+                <span className="text-fg-subtle">공개 상태</span>
+                <Select
+                  value={visibility}
+                  onChange={(v) => setVisibility(v as VisibilityFilter)}
+                  aria-label="공개 상태 필터"
+                  options={[
+                    { value: 'all', label: '전체' },
+                    { value: 'draft', label: '임시저장' },
+                    { value: 'published', label: '공개' },
+                    { value: 'closed', label: '종료' },
+                  ]}
+                />
+              </label>
+              <Button variant="secondary" onClick={() => setTemplateOpen(true)}>
+                <FileText className="h-4 w-4" /> 템플릿 열기
+              </Button>
+              <Button onClick={() => navigate(`${base}/new`)}>
+                <Plus className="h-4 w-4" /> 퀴즈 생성
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <DataTable
+              columns={columns}
+              rows={filtered}
+              rowKey={(r) => r.id}
+              onRowClick={(r) => navigate(`${base}/${r.id}/edit`)}
+              empty="조건에 맞는 퀴즈가 없어요"
             />
-          </label>
-        )}
-        <label className="flex items-center gap-2 text-xs">
-          <span className="text-fg-subtle">채점 모드</span>
-          <Select
-            value={mode}
-            onChange={(v) => setMode(v as ModeFilter)}
-            aria-label="채점 모드 필터"
-            options={[
-              { value: 'all', label: '전체' },
-              { value: 'AUTO', label: 'AUTO' },
-              { value: 'MANUAL', label: 'MANUAL' },
-              { value: 'MIXED', label: 'MIXED' },
-            ]}
+          </div>
+
+          {/* 템플릿 열기 — 검색 + 템플릿 목록 팝업 */}
+          <TemplatePickerModal
+            open={templateOpen}
+            query={templateQ}
+            onQueryChange={setTemplateQ}
+            onClose={() => setTemplateOpen(false)}
+            onPick={(t) => {
+              setTemplateOpen(false)
+              navigate(`${base}/new?templateId=${t.id}`)
+            }}
           />
-        </label>
-        <label className="flex items-center gap-2 text-xs">
-          <span className="text-fg-subtle">공개 상태</span>
-          <Select
-            value={visibility}
-            onChange={(v) => setVisibility(v as VisibilityFilter)}
-            aria-label="공개 상태 필터"
-            options={[
-              { value: 'all', label: '전체' },
-              { value: 'draft', label: '임시저장' },
-              { value: 'published', label: '공개' },
-              { value: 'closed', label: '종료' },
-            ]}
-          />
-        </label>
-        <Button variant="secondary" onClick={() => setTemplateOpen(true)}>
-          <FileText className="h-4 w-4" /> 템플릿 열기
-        </Button>
-        <Button onClick={() => navigate(`${base}/new`)}>
-          <Plus className="h-4 w-4" /> 퀴즈 생성
-        </Button>
         </div>
-      </div>
-
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.id}
-          onRowClick={(r) => navigate(`${base}/${r.id}/edit`)}
-          empty="조건에 맞는 퀴즈가 없어요"
-        />
-      </div>
-
-      {/* 템플릿 열기 — 검색 + 템플릿 목록 팝업 */}
-      <TemplatePickerModal
-        open={templateOpen}
-        query={templateQ}
-        onQueryChange={setTemplateQ}
-        onClose={() => setTemplateOpen(false)}
-        onPick={(t) => {
-          setTemplateOpen(false)
-          navigate(`${base}/new?templateId=${t.id}`)
-        }}
-      />
-    </div>
+      )}
+    </DataBoundary>
   )
 }
 

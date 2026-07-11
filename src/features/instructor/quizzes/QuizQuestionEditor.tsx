@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, ChevronDown, Plus, Trash2, X } from 'lucide-react'
+import { ChevronDown, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import type { InstructorQuestion } from '@/shared/types'
@@ -422,11 +422,7 @@ function QuestionForm({
           <Button variant="secondary" size="sm" onClick={onClose}>
             취소
           </Button>
-          <Button
-            size="sm"
-            disabled={save.isPending}
-            onClick={submit}
-          >
+          <Button size="sm" disabled={save.isPending} onClick={submit}>
             {questionId ? '수정' : '추가'}
           </Button>
         </div>
@@ -450,114 +446,110 @@ export function QuizQuestionEditor({
   const [adding, setAdding] = useState(defaultAdding)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  if (isPending) {
-    return (
-      <div className="text-fg-muted py-6 text-center text-sm">
-        문항 불러오는 중…
-      </div>
-    )
-  }
-  if (isError || !data) {
-    return (
-      <Empty
-        icon={<AlertTriangle className="h-6 w-6" />}
-        title="문항을 불러오지 못했어요"
-        action={<Button onClick={() => refetch()}>다시 시도</Button>}
-      />
-    )
-  }
-
-  const questions = data.questions
+  const questions = data?.questions ?? []
   const totalScore = questions.reduce((s, q) => s + (q.points ?? 0), 0)
 
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-fg-muted text-sm">
-          {questions.length}문항 · 총점 {totalScore}점
-          {data.targetPoints > 0 && totalScore !== data.targetPoints && (
-            <span className="text-warning">
-              {' '}
-              · 설정 총점 {data.targetPoints}점과 다름
-            </span>
-          )}
-        </p>
-        {!adding && (
-          <Button size="sm" onClick={() => setAdding(true)}>
-            <Plus className="h-4 w-4" /> 문제 추가
-          </Button>
-        )}
-      </div>
-
-      {adding && (
-        <QuestionForm
-          quizId={quizId}
-          initial={EMPTY_DRAFT}
-          onClose={() => setAdding(false)}
-        />
-      )}
-
-      <div className="mt-2 flex flex-col gap-2">
-        {questions.length === 0 && !adding && (
-          <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
-            아직 문항이 없어요. ‘문제 추가’로 시작하세요.
-          </p>
-        )}
-        {questions.map((q, i) => (
-          <div key={q.id} className="border-border rounded-xl border">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <span className="text-fg-subtle w-8 shrink-0 text-sm font-bold">
-                Q{i + 1}
-              </span>
-              <span className="bg-info-bg text-info shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold">
-                {TYPE_LABEL[q.type] ?? q.type}
-              </span>
-              <span className="text-fg min-w-0 flex-1 truncate text-sm">
-                {q.body || '(내용 없음)'}
-              </span>
-              <span className="text-fg-muted shrink-0 text-xs">
-                {q.points}점
-              </span>
-              <button
-                type="button"
-                onClick={() => setEditingId(editingId === q.id ? null : q.id)}
-                aria-label="문항 편집"
-                className="text-fg-subtle hover:text-fg shrink-0 p-1"
-              >
-                <ChevronDown
-                  className={cn(
-                    'h-4 w-4 transition-transform',
-                    editingId === q.id && 'rotate-180',
-                  )}
-                />
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  deleteQ.mutate(q.id, {
-                    onSuccess: () => toast.success('문항을 삭제했어요'),
-                    onError: () => toast.danger('삭제에 실패했어요'),
-                  })
-                }
-                aria-label="문항 삭제"
-                className="text-fg-subtle hover:text-danger shrink-0 p-1"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-            {editingId === q.id && (
-              <div className="px-4 pb-3">
-                <QuestionForm
-                  quizId={quizId}
-                  questionId={q.id}
-                  initial={toDraft(q)}
-                  onClose={() => setEditingId(null)}
-                />
-              </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="문항 불러오는 중…"
+      errorTitle="문항을 불러오지 못했어요"
+      errorDescription={null}
+    >
+      {data && (
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-fg-muted text-sm">
+              {questions.length}문항 · 총점 {totalScore}점
+              {data.targetPoints > 0 && totalScore !== data.targetPoints && (
+                <span className="text-warning">
+                  {' '}
+                  · 설정 총점 {data.targetPoints}점과 다름
+                </span>
+              )}
+            </p>
+            {!adding && (
+              <Button size="sm" onClick={() => setAdding(true)}>
+                <Plus className="h-4 w-4" /> 문제 추가
+              </Button>
             )}
           </div>
-        ))}
-      </div>
-    </div>
+
+          {adding && (
+            <QuestionForm
+              quizId={quizId}
+              initial={EMPTY_DRAFT}
+              onClose={() => setAdding(false)}
+            />
+          )}
+
+          <div className="mt-2 flex flex-col gap-2">
+            {questions.length === 0 && !adding && (
+              <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
+                아직 문항이 없어요. ‘문제 추가’로 시작하세요.
+              </p>
+            )}
+            {questions.map((q, i) => (
+              <div key={q.id} className="border-border rounded-xl border">
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <span className="text-fg-subtle w-8 shrink-0 text-sm font-bold">
+                    Q{i + 1}
+                  </span>
+                  <span className="bg-info-bg text-info shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold">
+                    {TYPE_LABEL[q.type] ?? q.type}
+                  </span>
+                  <span className="text-fg min-w-0 flex-1 truncate text-sm">
+                    {q.body || '(내용 없음)'}
+                  </span>
+                  <span className="text-fg-muted shrink-0 text-xs">
+                    {q.points}점
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingId(editingId === q.id ? null : q.id)
+                    }
+                    aria-label="문항 편집"
+                    className="text-fg-subtle hover:text-fg shrink-0 p-1"
+                  >
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 transition-transform',
+                        editingId === q.id && 'rotate-180',
+                      )}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      deleteQ.mutate(q.id, {
+                        onSuccess: () => toast.success('문항을 삭제했어요'),
+                        onError: () => toast.danger('삭제에 실패했어요'),
+                      })
+                    }
+                    aria-label="문항 삭제"
+                    className="text-fg-subtle hover:text-danger shrink-0 p-1"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                {editingId === q.id && (
+                  <div className="px-4 pb-3">
+                    <QuestionForm
+                      quizId={quizId}
+                      questionId={q.id}
+                      initial={toDraft(q)}
+                      onClose={() => setEditingId(null)}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </DataBoundary>
   )
 }

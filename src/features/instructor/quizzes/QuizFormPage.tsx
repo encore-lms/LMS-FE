@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -232,21 +232,6 @@ export default function QuizFormPage() {
     )
   }, [isEdit, template, setValue, toast])
 
-  if (isEdit && isPending) {
-    return <div className="text-fg-muted p-8">퀴즈 정보를 불러오는 중…</div>
-  }
-  if (isEdit && (isError || !data)) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="퀴즈 정보를 불러오지 못했어요"
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   const hasSubmissions = isEdit && (data?.submittedCount ?? 0) > 0
 
   const save = (input: QuizInput, vis: QuizVisibility, openAdd = false) => {
@@ -318,254 +303,268 @@ export default function QuizFormPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 p-6">
-      {hasSubmissions && (
-        <div className="bg-warning-bg flex max-w-4xl items-start gap-2.5 rounded-lg p-3">
-          <AlertTriangle className="text-warning mt-0.5 h-4 w-4 shrink-0" />
-          <p className="text-fg-muted text-xs">
-            이미 {data?.submittedCount}명 응시 중 — 정답/배점 변경 시 자동
-            재채점, 채점 모드 변경은 차단됩니다.
-          </p>
-        </div>
-      )}
-
-      {/* 기본 정보 */}
-      <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
-        <p className="text-fg mb-3 text-sm font-bold">기본 정보</p>
-        <div className="grid gap-3 sm:grid-cols-[1fr_240px]">
-          <div>
-            <FieldLabel required>제목</FieldLabel>
-            <input
-              className={FIELD}
-              placeholder="알고리즘 기초 #3"
-              {...register('title')}
-            />
-            {errors.title && (
-              <span className="text-danger mt-1 block text-xs">
-                {errors.title.message}
-              </span>
-            )}
-          </div>
-          <div>
-            <FieldLabel required>대상 과정/기수</FieldLabel>
-            <Controller
-              name="cohortId"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  aria-label="대상 과정/기수"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={(cohortOptions ?? []).map((c) => ({
-                    value: c.cohortId,
-                    label: c.label,
-                  }))}
-                  placeholder="기수 없음"
-                  className="h-10 w-full"
-                />
-              )}
-            />
-          </div>
-        </div>
-        <div className="mt-3">
-          <FieldLabel>설명</FieldLabel>
-          <textarea
-            rows={2}
-            placeholder="퀴즈 안내·범위(선택)"
-            className={`${FIELD} h-auto py-2`}
-            {...register('description')}
-          />
-        </div>
-      </section>
-
-      {/* 출제 설정 — 응시·채점·문제·공개 통합(컴팩트) */}
-      <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
-        <p className="text-fg mb-3 text-sm font-bold">출제 설정</p>
-
-        {/* 기간·제한 */}
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <FieldLabel required>시작일시</FieldLabel>
-            <Controller
-              control={control}
-              name="startAt"
-              render={({ field }) => (
-                <DateTimePicker
-                  mode="datetime"
-                  label=""
-                  placeholder="2026-05-12 09:00"
-                  error={errors.startAt?.message}
-                  value={field.value ? field.value.replace(' ', 'T') : ''}
-                  onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
-                />
-              )}
-            />
-          </div>
-          <div>
-            <FieldLabel required>종료일시</FieldLabel>
-            <Controller
-              control={control}
-              name="endAt"
-              render={({ field }) => (
-                <DateTimePicker
-                  mode="datetime"
-                  label=""
-                  placeholder="2026-05-18 23:59"
-                  error={errors.endAt?.message}
-                  value={field.value ? field.value.replace(' ', 'T') : ''}
-                  onChange={(v) => field.onChange(v ? v.replace('T', ' ') : '')}
-                />
-              )}
-            />
-          </div>
-          <div>
-            <FieldLabel required>제한 시간(분)</FieldLabel>
-            <input
-              type="number"
-              className={FIELD}
-              placeholder="90"
-              {...register('timeLimitMin')}
-            />
-            {errors.timeLimitMin && (
-              <span className="text-danger mt-1 block text-xs">
-                {errors.timeLimitMin.message}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 채점 모드 · 결과 공개 · 총점 */}
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div>
-            <FieldLabel>채점 모드</FieldLabel>
-            <Segmented
-              options={(['AUTO', 'MANUAL', 'MIXED'] as const).map((m) => ({
-                value: m,
-                label: GRADING_MODE_META[m].label,
-              }))}
-              value={gradingMode}
-              onChange={setGradingMode}
-              disabled={(v) => hasSubmissions && v !== gradingMode}
-            />
-          </div>
-          <div>
-            <FieldLabel>결과 공개</FieldLabel>
-            <Select
-              className="h-10 w-full"
-              aria-label="결과 공개 시점"
-              value={resultReveal}
-              onChange={(v) => setResultReveal(v as ResultRevealPolicy)}
-              options={REVEAL_OPTIONS}
-            />
-          </div>
-          <div>
-            <FieldLabel>총점</FieldLabel>
-            <input
-              type="number"
-              className={FIELD}
-              placeholder="100"
-              {...register('totalPoints')}
-            />
-            {errors.totalPoints && (
-              <span className="text-danger mt-1 block text-xs">
-                {errors.totalPoints.message}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 정책 토글 */}
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <CompactToggle
-            label="재응시 허용"
-            checked={allowRetake}
-            onChange={() => setAllowRetake((v) => !v)}
-          />
-          <CompactToggle
-            label="문제 셔플"
-            checked={shuffleQuestions}
-            onChange={() => setShuffleQuestions((v) => !v)}
-          />
-          <CompactToggle
-            label="보기 셔플"
-            checked={shuffleChoices}
-            onChange={() => setShuffleChoices((v) => !v)}
-          />
-        </div>
-
-        {/* 공개 상태 */}
-        <div className="mt-4 sm:w-[420px]">
-          <FieldLabel>공개 상태</FieldLabel>
-          <Segmented
-            options={(['draft', 'published', 'closed'] as const).map((v) => ({
-              value: v,
-              label: VISIBILITY_META[v].label,
-            }))}
-            value={visibility}
-            onChange={setVisibility}
-          />
-        </div>
-      </section>
-
-      {/* 문항 — 수정 모드는 인라인, 생성 모드는 저장 후 안내 */}
-      <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
-        <p className="text-fg mb-3 text-sm font-bold">문항</p>
-        {isEdit && quizId ? (
-          <QuizQuestionEditor
-            quizId={quizId}
-            defaultAdding={searchParams.get('add') === '1'}
-          />
-        ) : (
-          <div className="bg-surface-muted flex flex-col items-center gap-3 rounded-lg px-4 py-6 text-center">
-            <p className="text-fg-subtle text-sm">
-              ‘문제 추가’를 누르면 자동 임시저장 후 바로 문항을 추가할 수
-              있어요.
+    <DataBoundary
+      isPending={isEdit && isPending}
+      isError={isEdit && (isError || !data)}
+      onRetry={() => refetch()}
+      loadingText="퀴즈 정보를 불러오는 중…"
+      errorTitle="퀴즈 정보를 불러오지 못했어요"
+      errorDescription={null}
+      className="p-8"
+    >
+      <div className="mx-auto max-w-4xl space-y-4 p-6">
+        {hasSubmissions && (
+          <div className="bg-warning-bg flex max-w-4xl items-start gap-2.5 rounded-lg p-3">
+            <AlertTriangle className="text-warning mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-fg-muted text-xs">
+              이미 {data?.submittedCount}명 응시 중 — 정답/배점 변경 시 자동
+              재채점, 채점 모드 변경은 차단됩니다.
             </p>
+          </div>
+        )}
+
+        {/* 기본 정보 */}
+        <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
+          <p className="text-fg mb-3 text-sm font-bold">기본 정보</p>
+          <div className="grid gap-3 sm:grid-cols-[1fr_240px]">
+            <div>
+              <FieldLabel required>제목</FieldLabel>
+              <input
+                className={FIELD}
+                placeholder="알고리즘 기초 #3"
+                {...register('title')}
+              />
+              {errors.title && (
+                <span className="text-danger mt-1 block text-xs">
+                  {errors.title.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <FieldLabel required>대상 과정/기수</FieldLabel>
+              <Controller
+                name="cohortId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    aria-label="대상 과정/기수"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={(cohortOptions ?? []).map((c) => ({
+                      value: c.cohortId,
+                      label: c.label,
+                    }))}
+                    placeholder="기수 없음"
+                    className="h-10 w-full"
+                  />
+                )}
+              />
+            </div>
+          </div>
+          <div className="mt-3">
+            <FieldLabel>설명</FieldLabel>
+            <textarea
+              rows={2}
+              placeholder="퀴즈 안내·범위(선택)"
+              className={`${FIELD} h-auto py-2`}
+              {...register('description')}
+            />
+          </div>
+        </section>
+
+        {/* 출제 설정 — 응시·채점·문제·공개 통합(컴팩트) */}
+        <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
+          <p className="text-fg mb-3 text-sm font-bold">출제 설정</p>
+
+          {/* 기간·제한 */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <FieldLabel required>시작일시</FieldLabel>
+              <Controller
+                control={control}
+                name="startAt"
+                render={({ field }) => (
+                  <DateTimePicker
+                    mode="datetime"
+                    label=""
+                    placeholder="2026-05-12 09:00"
+                    error={errors.startAt?.message}
+                    value={field.value ? field.value.replace(' ', 'T') : ''}
+                    onChange={(v) =>
+                      field.onChange(v ? v.replace('T', ' ') : '')
+                    }
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <FieldLabel required>종료일시</FieldLabel>
+              <Controller
+                control={control}
+                name="endAt"
+                render={({ field }) => (
+                  <DateTimePicker
+                    mode="datetime"
+                    label=""
+                    placeholder="2026-05-18 23:59"
+                    error={errors.endAt?.message}
+                    value={field.value ? field.value.replace(' ', 'T') : ''}
+                    onChange={(v) =>
+                      field.onChange(v ? v.replace('T', ' ') : '')
+                    }
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <FieldLabel required>제한 시간(분)</FieldLabel>
+              <input
+                type="number"
+                className={FIELD}
+                placeholder="90"
+                {...register('timeLimitMin')}
+              />
+              {errors.timeLimitMin && (
+                <span className="text-danger mt-1 block text-xs">
+                  {errors.timeLimitMin.message}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* 채점 모드 · 결과 공개 · 총점 */}
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div>
+              <FieldLabel>채점 모드</FieldLabel>
+              <Segmented
+                options={(['AUTO', 'MANUAL', 'MIXED'] as const).map((m) => ({
+                  value: m,
+                  label: GRADING_MODE_META[m].label,
+                }))}
+                value={gradingMode}
+                onChange={setGradingMode}
+                disabled={(v) => hasSubmissions && v !== gradingMode}
+              />
+            </div>
+            <div>
+              <FieldLabel>결과 공개</FieldLabel>
+              <Select
+                className="h-10 w-full"
+                aria-label="결과 공개 시점"
+                value={resultReveal}
+                onChange={(v) => setResultReveal(v as ResultRevealPolicy)}
+                options={REVEAL_OPTIONS}
+              />
+            </div>
+            <div>
+              <FieldLabel>총점</FieldLabel>
+              <input
+                type="number"
+                className={FIELD}
+                placeholder="100"
+                {...register('totalPoints')}
+              />
+              {errors.totalPoints && (
+                <span className="text-danger mt-1 block text-xs">
+                  {errors.totalPoints.message}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* 정책 토글 */}
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <CompactToggle
+              label="재응시 허용"
+              checked={allowRetake}
+              onChange={() => setAllowRetake((v) => !v)}
+            />
+            <CompactToggle
+              label="문제 셔플"
+              checked={shuffleQuestions}
+              onChange={() => setShuffleQuestions((v) => !v)}
+            />
+            <CompactToggle
+              label="보기 셔플"
+              checked={shuffleChoices}
+              onChange={() => setShuffleChoices((v) => !v)}
+            />
+          </div>
+
+          {/* 공개 상태 */}
+          <div className="mt-4 sm:w-[420px]">
+            <FieldLabel>공개 상태</FieldLabel>
+            <Segmented
+              options={(['draft', 'published', 'closed'] as const).map((v) => ({
+                value: v,
+                label: VISIBILITY_META[v].label,
+              }))}
+              value={visibility}
+              onChange={setVisibility}
+            />
+          </div>
+        </section>
+
+        {/* 문항 — 수정 모드는 인라인, 생성 모드는 저장 후 안내 */}
+        <section className="border-border bg-surface max-w-4xl rounded-xl border p-5">
+          <p className="text-fg mb-3 text-sm font-bold">문항</p>
+          {isEdit && quizId ? (
+            <QuizQuestionEditor
+              quizId={quizId}
+              defaultAdding={searchParams.get('add') === '1'}
+            />
+          ) : (
+            <div className="bg-surface-muted flex flex-col items-center gap-3 rounded-lg px-4 py-6 text-center">
+              <p className="text-fg-subtle text-sm">
+                ‘문제 추가’를 누르면 자동 임시저장 후 바로 문항을 추가할 수
+                있어요.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                disabled={saveQuiz.isPending}
+                onClick={onQuickAddQuestion}
+              >
+                <Plus className="h-4 w-4" /> 문제 추가
+              </Button>
+            </div>
+          )}
+        </section>
+
+        {/* 푸터 */}
+        <div className="border-border bg-surface flex max-w-4xl items-center gap-2 rounded-xl border px-4 py-3">
+          <div className="ml-auto flex gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(base)}
+            >
+              취소
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={saveQuiz.isPending}
+              onClick={handleSubmit((input) => {
+                setVisibility('draft')
+                save(input, 'draft')
+              })}
+            >
+              임시저장
+            </Button>
             <Button
               type="button"
               size="sm"
               disabled={saveQuiz.isPending}
-              onClick={onQuickAddQuestion}
+              onClick={handleSubmit((input) => save(input, visibility))}
             >
-              <Plus className="h-4 w-4" /> 문제 추가
+              저장
             </Button>
           </div>
-        )}
-      </section>
-
-      {/* 푸터 */}
-      <div className="border-border bg-surface flex max-w-4xl items-center gap-2 rounded-xl border px-4 py-3">
-        <div className="ml-auto flex gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => navigate(base)}
-          >
-            취소
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={saveQuiz.isPending}
-            onClick={handleSubmit((input) => {
-              setVisibility('draft')
-              save(input, 'draft')
-            })}
-          >
-            임시저장
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={saveQuiz.isPending}
-            onClick={handleSubmit((input) => save(input, visibility))}
-          >
-            저장
-          </Button>
         </div>
       </div>
-    </div>
+    </DataBoundary>
   )
 }

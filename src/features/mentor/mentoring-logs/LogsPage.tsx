@@ -12,9 +12,8 @@ import {
   Search,
   Send,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -195,22 +194,6 @@ export default function LogsPage() {
     [visible, page],
   )
 
-  if (isPending) {
-    return <SkeletonListPage kpis={4} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="멘토링 일지를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   // KPI — 기간 필터 기준 집계(캡션 '최근 30일'과 정합)
   const kpis = {
     total: periodFiltered.length,
@@ -344,118 +327,130 @@ export default function LogsPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      {/* 필터 행 — 팀/상태/기간 드롭다운 + 검색 + 새 일지 작성 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <FilterSelect
-          icon={<Send className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
-          label="팀"
-          value={teamId}
-          onChange={setTeamId}
-          options={[{ value: 'all', label: '전체' }, ...teamOptions]}
-        />
-        <FilterSelect
-          icon={<Info className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
-          label="상태"
-          value={status}
-          onChange={(v) => setStatus(v as MentoringLogStatus | 'all')}
-          options={STATUS_OPTIONS}
-        />
-        <FilterSelect
-          icon={<Calendar className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
-          label="기간"
-          value={period}
-          onChange={setPeriod}
-          options={PERIOD_OPTIONS}
-        />
-        <label className="bg-surface focus-within:ring-brand flex h-10 w-[240px] items-center gap-2 rounded-[10px] px-3.5 shadow-[0_0_0_1px_rgba(18,23,38,0.06)] focus-within:ring-2">
-          <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="팀명·일지 요지 검색"
-            aria-label="팀명·일지 요지 검색"
-            className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none"
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage kpis={4} columns={5} className="" />}
+      errorTitle="멘토링 일지를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      <div className="flex flex-col gap-5 p-8">
+        {/* 필터 행 — 팀/상태/기간 드롭다운 + 검색 + 새 일지 작성 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterSelect
+            icon={<Send className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
+            label="팀"
+            value={teamId}
+            onChange={setTeamId}
+            options={[{ value: 'all', label: '전체' }, ...teamOptions]}
           />
-        </label>
-        <Link
-          to="/mentor/mentoring-logs/new"
-          className={buttonClass({ className: 'ml-auto whitespace-nowrap' })}
-        >
-          <Check className="h-3.5 w-3.5" />새 일지 작성
-        </Link>
-      </div>
-
-      {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(멘토링 일지 2553:4040) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="총 일지"
-          icon={<FileText className="text-brand h-4 w-4" />}
-          value={<KpiCount count={kpis.total} />}
-          hint={PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? '전체'}
-        />
-        <KpiCard
-          label="유효"
-          icon={<Check className="text-success h-4 w-4" />}
-          value={<KpiCount count={kpis.valid} />}
-          hint="매니저 승인 완료 · 인정 시간 산입"
-        />
-        <KpiCard
-          label="승인 대기"
-          icon={<Clock3 className="text-warning h-4 w-4" />}
-          value={<KpiCount count={kpis.submitted} />}
-          hint="매니저 승인 후 인정"
-          tone={kpis.submitted > 0 ? 'warning' : 'default'}
-        />
-        <KpiCard
-          label="수정 요청"
-          icon={<AlertTriangle className="text-danger h-4 w-4" />}
-          value={<KpiCount count={kpis.changeRequested} />}
-          hint="멘토가 전체 수정 후 재제출 필요"
-          tone={kpis.changeRequested > 0 ? 'danger' : 'default'}
-        />
-      </div>
-
-      {/* 섹션 헤더 — 건수 칩 + CSV 내보내기 */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-fg text-lg font-bold">멘토링 일지</h2>
-          <span className="bg-surface-muted text-fg-muted rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
-            {visible.length}건
-          </span>
+          <FilterSelect
+            icon={<Info className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
+            label="상태"
+            value={status}
+            onChange={(v) => setStatus(v as MentoringLogStatus | 'all')}
+            options={STATUS_OPTIONS}
+          />
+          <FilterSelect
+            icon={<Calendar className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
+            label="기간"
+            value={period}
+            onChange={setPeriod}
+            options={PERIOD_OPTIONS}
+          />
+          <label className="bg-surface focus-within:ring-brand flex h-10 w-[240px] items-center gap-2 rounded-[10px] px-3.5 shadow-[0_0_0_1px_rgba(18,23,38,0.06)] focus-within:ring-2">
+            <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="팀명·일지 요지 검색"
+              aria-label="팀명·일지 요지 검색"
+              className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none"
+            />
+          </label>
+          <Link
+            to="/mentor/mentoring-logs/new"
+            className={buttonClass({ className: 'ml-auto whitespace-nowrap' })}
+          >
+            <Check className="h-3.5 w-3.5" />새 일지 작성
+          </Link>
         </div>
-        <button
-          type="button"
-          onClick={() => exportCsv(visible)}
-          className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium"
-        >
-          <ArrowDown className="h-3 w-3" />
-          CSV 내보내기
-        </button>
-      </div>
 
-      {/* 일지 테이블 — 8컬럼 고정폭(Figma) */}
-      <DataTable
-        columns={columns}
-        rows={paged}
-        rowKey={(l) => l.logId}
-        empty="조건에 맞는 일지가 없습니다"
-      />
-      {visible.length > 0 && (
-        <Pagination
-          page={page}
-          pageCount={pageCount}
-          totalCount={visible.length}
-          shownCount={paged.length}
-          onPage={setPage}
+        {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(멘토링 일지 2553:4040) */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            label="총 일지"
+            icon={<FileText className="text-brand h-4 w-4" />}
+            value={<KpiCount count={kpis.total} />}
+            hint={
+              PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? '전체'
+            }
+          />
+          <KpiCard
+            label="유효"
+            icon={<Check className="text-success h-4 w-4" />}
+            value={<KpiCount count={kpis.valid} />}
+            hint="매니저 승인 완료 · 인정 시간 산입"
+          />
+          <KpiCard
+            label="승인 대기"
+            icon={<Clock3 className="text-warning h-4 w-4" />}
+            value={<KpiCount count={kpis.submitted} />}
+            hint="매니저 승인 후 인정"
+            tone={kpis.submitted > 0 ? 'warning' : 'default'}
+          />
+          <KpiCard
+            label="수정 요청"
+            icon={<AlertTriangle className="text-danger h-4 w-4" />}
+            value={<KpiCount count={kpis.changeRequested} />}
+            hint="멘토가 전체 수정 후 재제출 필요"
+            tone={kpis.changeRequested > 0 ? 'danger' : 'default'}
+          />
+        </div>
+
+        {/* 섹션 헤더 — 건수 칩 + CSV 내보내기 */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-fg text-lg font-bold">멘토링 일지</h2>
+            <span className="bg-surface-muted text-fg-muted rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
+              {visible.length}건
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => exportCsv(visible)}
+            className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium"
+          >
+            <ArrowDown className="h-3 w-3" />
+            CSV 내보내기
+          </button>
+        </div>
+
+        {/* 일지 테이블 — 8컬럼 고정폭(Figma) */}
+        <DataTable
+          columns={columns}
+          rows={paged}
+          rowKey={(l) => l.logId}
+          empty="조건에 맞는 일지가 없습니다"
         />
-      )}
+        {visible.length > 0 && (
+          <Pagination
+            page={page}
+            pageCount={pageCount}
+            totalCount={visible.length}
+            shownCount={paged.length}
+            onPage={setPage}
+          />
+        )}
 
-      {/* /:logId 상세 모달 — 목록 필터 상태 유지한 채 오버레이 */}
-      <Suspense fallback={null}>
-        <Outlet />
-      </Suspense>
-    </div>
+        {/* /:logId 상세 모달 — 목록 필터 상태 유지한 채 오버레이 */}
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
+      </div>
+    </DataBoundary>
   )
 }
 

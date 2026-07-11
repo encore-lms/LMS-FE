@@ -18,7 +18,7 @@ import {
   Timer,
   Upload,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { Avatar } from '@/components/ui/Avatar'
@@ -76,54 +76,47 @@ export default function LogComposePage() {
   const targetsQuery = useMentoringLogTargets()
   const detailQuery = useMentoringLogDetail(logId)
 
-  if (targetsQuery.isPending || (!!logId && detailQuery.isPending)) {
-    return <div className="text-fg-muted p-8">작성 정보를 불러오는 중…</div>
-  }
-  if (
-    targetsQuery.isError ||
-    !targetsQuery.data ||
-    (!!logId && (detailQuery.isError || !detailQuery.data))
-  ) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="작성 정보를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={
-            <Button onClick={() => targetsQuery.refetch()}>다시 시도</Button>
-          }
-        />
-      </div>
-    )
-  }
   const detail = logId ? (detailQuery.data ?? null) : null
-  if (detail && detail.status === 'valid') {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<Lock />}
-          title="제출된 일지는 수정할 수 없어요"
-          description="제출하면 매니저 승인 대기 상태가 됩니다. 운영자 수정 요청이 있을 때만 전체 수정 후 재제출할 수 있어요."
-          action={
-            <Link
-              to="/mentor/mentoring-logs"
-              className="border-border text-fg hover:bg-surface-muted flex h-14 items-center rounded-[11px] border bg-white px-5 text-[15px] font-bold"
-            >
-              일지 목록으로
-            </Link>
-          }
-        />
-      </div>
-    )
-  }
 
   return (
-    <LogComposeForm
-      targets={targetsQuery.data.targets}
-      detail={detail}
-      presetTeamId={presetTeamId}
-    />
+    <DataBoundary
+      isPending={targetsQuery.isPending || (!!logId && detailQuery.isPending)}
+      isError={
+        targetsQuery.isError ||
+        !targetsQuery.data ||
+        (!!logId && (detailQuery.isError || !detailQuery.data))
+      }
+      onRetry={() => targetsQuery.refetch()}
+      loadingText="작성 정보를 불러오는 중…"
+      errorTitle="작성 정보를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {targetsQuery.data &&
+        (detail && detail.status === 'valid' ? (
+          <div className="p-8">
+            <Empty
+              icon={<Lock />}
+              title="제출된 일지는 수정할 수 없어요"
+              description="제출하면 매니저 승인 대기 상태가 됩니다. 운영자 수정 요청이 있을 때만 전체 수정 후 재제출할 수 있어요."
+              action={
+                <Link
+                  to="/mentor/mentoring-logs"
+                  className="border-border text-fg hover:bg-surface-muted flex h-14 items-center rounded-[11px] border bg-white px-5 text-[15px] font-bold"
+                >
+                  일지 목록으로
+                </Link>
+              }
+            />
+          </div>
+        ) : (
+          <LogComposeForm
+            targets={targetsQuery.data.targets}
+            detail={detail}
+            presetTeamId={presetTeamId}
+          />
+        ))}
+    </DataBoundary>
   )
 }
 

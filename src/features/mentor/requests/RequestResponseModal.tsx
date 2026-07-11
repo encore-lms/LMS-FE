@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Avatar } from '@/components/ui/Avatar'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -311,22 +311,18 @@ export default function RequestResponseModal() {
   const onFailed = () =>
     toast.danger('응답 저장에 실패했어요. 잠시 후 다시 시도해 주세요.')
 
-  if (isPending) {
-    return (
-      <Modal open onClose={close} size="lg">
-        <div className="text-fg-muted py-10 text-center text-sm">
-          예약 요청을 불러오는 중…
-        </div>
-      </Modal>
-    )
-  }
-  if (isError || !data) {
+  if (!data) {
     return (
       <Modal open onClose={close} size="lg" title="예약 요청 응답">
-        <Empty
-          title="예약 요청을 찾을 수 없어요"
-          description="목록에서 요청을 다시 선택해 주세요."
-        />
+        <DataBoundary
+          isPending={isPending}
+          isError={isError || !data}
+          loadingText="예약 요청을 불러오는 중…"
+          errorTitle="예약 요청을 찾을 수 없어요"
+          errorDescription="목록에서 요청을 다시 선택해 주세요."
+        >
+          {null}
+        </DataBoundary>
       </Modal>
     )
   }

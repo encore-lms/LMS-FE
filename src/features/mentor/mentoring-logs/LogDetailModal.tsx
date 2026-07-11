@@ -12,9 +12,9 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { Avatar } from '@/components/ui/Avatar'
-import { Empty } from '@/components/ui/Empty'
 import { cn } from '@/shared/lib/cn'
 import { useMentoringLogDetail } from '../api/logs'
 import type { MentoringLogDetailData } from '../types'
@@ -42,22 +42,18 @@ export default function LogDetailModal() {
   )
   const [showTemplate, setShowTemplate] = useState(false)
 
-  if (isPending) {
-    return (
-      <Modal open onClose={close} size="lg">
-        <div className="text-fg-muted py-10 text-center text-sm">
-          일지를 불러오는 중…
-        </div>
-      </Modal>
-    )
-  }
-  if (isError || !data) {
+  if (!data) {
     return (
       <Modal open onClose={close} size="lg" title="멘토링 일지 상세">
-        <Empty
-          title="일지를 찾을 수 없어요"
-          description="목록에서 일지를 다시 선택해 주세요."
-        />
+        <DataBoundary
+          isPending={isPending}
+          isError={isError || !data}
+          loadingText="일지를 불러오는 중…"
+          errorTitle="일지를 찾을 수 없어요"
+          errorDescription="목록에서 일지를 다시 선택해 주세요."
+        >
+          {null}
+        </DataBoundary>
       </Modal>
     )
   }

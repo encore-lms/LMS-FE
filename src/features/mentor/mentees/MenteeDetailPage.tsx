@@ -9,7 +9,7 @@ import {
   Star,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
@@ -39,32 +39,26 @@ export default function MenteeDetailPage() {
   const { studentId = '' } = useParams()
   const { data, isPending, isError, refetch } = useMenteeDetail(studentId)
 
-  if (isPending) {
-    return <div className="text-fg-muted p-8">학생 정보를 불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="학생 정보를 불러오지 못했어요"
-          description="배정 팀의 팀원만 조회할 수 있어요."
-          action={
-            <div className="flex items-center gap-2">
-              <Button onClick={() => refetch()}>다시 시도</Button>
-              <Link
-                to="/mentor/teams"
-                className="border-border text-fg hover:bg-surface-muted flex h-14 items-center rounded-[11px] border bg-white px-5 text-[15px] font-bold"
-              >
-                내 배정 팀으로
-              </Link>
-            </div>
-          }
-        />
-      </div>
-    )
-  }
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="학생 정보를 불러오는 중…"
+      errorTitle="학생 정보를 불러오지 못했어요"
+      errorDescription="배정 팀의 팀원만 조회할 수 있어요."
+      className="p-8"
+    >
+      {data && <MenteeDetailBody data={data} />}
+    </DataBoundary>
+  )
+}
 
+function MenteeDetailBody({
+  data,
+}: {
+  data: NonNullable<ReturnType<typeof useMenteeDetail>['data']>
+}) {
   const { student, evaluation, recommendation, attendance } = data
 
   const attendanceColumns: Column<MenteeAttendanceRow>[] = [

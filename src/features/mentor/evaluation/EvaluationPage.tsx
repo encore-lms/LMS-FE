@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
-  AlertTriangle,
   ArrowLeft,
   Check,
   Flag,
@@ -12,7 +11,7 @@ import {
   Timer,
   XCircle,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -63,70 +62,64 @@ export default function EvaluationPage() {
   const { teamId = '' } = useParams()
   const { data, isPending, isError, refetch } = useTeamEvaluation(teamId)
 
-  if (isPending) {
-    return <div className="text-fg-muted p-8">평가 정보를 불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="평가 정보를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-  // 제출 후 수정 불가(PATCH/DELETE 없음) — 작성 화면 재진입은 안내로 차단.
-  if (data.status === 'submitted') {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<Lock />}
-          title="평가가 이미 제출되었습니다"
-          description={`최종 제출(${data.submittedAtLabel}) 후에는 수정할 수 없어요. 다음 단계로 추천 선택을 진행해 주세요.`}
-          action={
-            <div className="flex items-center gap-2">
-              <Link
-                to={`/mentor/evaluations?teamId=${data.teamId}`}
-                className="border-border text-fg-muted hover:bg-surface-muted rounded-[10px] border px-4 py-2.5 text-[13px] font-medium"
-              >
-                제출 요약 보기
-              </Link>
-              <Link
-                to={`/mentor/teams/${data.teamId}/recommendation`}
-                className="bg-success text-on-color hover:bg-success/90 rounded-[10px] px-4 py-2.5 text-[13px] font-bold"
-              >
-                추천 선택 단계로 이동
-              </Link>
-            </div>
-          }
-        />
-      </div>
-    )
-  }
-  // 잠금 — N시간 미완료 + 조기 종료 아님(422 MENTOR_EVALUATION_NOT_ELIGIBLE 선차단).
-  if (!data.eligible) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<Lock />}
-          title="아직 평가를 시작할 수 없어요"
-          description={`${data.lockReasonLabel ?? 'N시간 완료 후 활성'} · 잔여 시간을 채우거나 운영자 조기 종료 후 평가할 수 있습니다.`}
-          action={
-            <Link
-              to={`/mentor/teams/${data.teamId}`}
-              className="border-border text-fg hover:bg-surface-muted rounded-[10px] border bg-white px-4 py-2.5 text-[13px] font-bold"
-            >
-              팀 상세로 돌아가기
-            </Link>
-          }
-        />
-      </div>
-    )
-  }
-  return <EvaluationForm sheet={data} />
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="평가 정보를 불러오는 중…"
+      errorTitle="평가 정보를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data &&
+        (data.status === 'submitted' ? (
+          // 제출 후 수정 불가(PATCH/DELETE 없음) — 작성 화면 재진입은 안내로 차단.
+          <div className="p-8">
+            <Empty
+              icon={<Lock />}
+              title="평가가 이미 제출되었습니다"
+              description={`최종 제출(${data.submittedAtLabel}) 후에는 수정할 수 없어요. 다음 단계로 추천 선택을 진행해 주세요.`}
+              action={
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/mentor/evaluations?teamId=${data.teamId}`}
+                    className="border-border text-fg-muted hover:bg-surface-muted rounded-[10px] border px-4 py-2.5 text-[13px] font-medium"
+                  >
+                    제출 요약 보기
+                  </Link>
+                  <Link
+                    to={`/mentor/teams/${data.teamId}/recommendation`}
+                    className="bg-success text-on-color hover:bg-success/90 rounded-[10px] px-4 py-2.5 text-[13px] font-bold"
+                  >
+                    추천 선택 단계로 이동
+                  </Link>
+                </div>
+              }
+            />
+          </div>
+        ) : !data.eligible ? (
+          // 잠금 — N시간 미완료 + 조기 종료 아님(422 MENTOR_EVALUATION_NOT_ELIGIBLE 선차단).
+          <div className="p-8">
+            <Empty
+              icon={<Lock />}
+              title="아직 평가를 시작할 수 없어요"
+              description={`${data.lockReasonLabel ?? 'N시간 완료 후 활성'} · 잔여 시간을 채우거나 운영자 조기 종료 후 평가할 수 있습니다.`}
+              action={
+                <Link
+                  to={`/mentor/teams/${data.teamId}`}
+                  className="border-border text-fg hover:bg-surface-muted rounded-[10px] border bg-white px-4 py-2.5 text-[13px] font-bold"
+                >
+                  팀 상세로 돌아가기
+                </Link>
+              }
+            />
+          </div>
+        ) : (
+          <EvaluationForm sheet={data} />
+        ))}
+    </DataBoundary>
+  )
 }
 
 function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {

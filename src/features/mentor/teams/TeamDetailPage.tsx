@@ -1,6 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
 import {
-  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Calendar,
@@ -15,9 +14,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
@@ -40,32 +38,26 @@ export default function TeamDetailPage() {
   const { teamId = '' } = useParams()
   const { data, isPending, isError, refetch } = useMentorTeamDetail(teamId)
 
-  if (isPending) {
-    return <div className="text-fg-muted p-8">팀 정보를 불러오는 중…</div>
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="팀 정보를 불러오지 못했어요"
-          description="본인에게 배정된 팀만 열람할 수 있어요."
-          action={
-            <div className="flex items-center gap-2">
-              <Button onClick={() => refetch()}>다시 시도</Button>
-              <Link
-                to="/mentor/teams"
-                className="border-border text-fg hover:bg-surface-muted flex h-14 items-center rounded-[11px] border bg-white px-5 text-[15px] font-bold"
-              >
-                내 배정 팀으로
-              </Link>
-            </div>
-          }
-        />
-      </div>
-    )
-  }
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      loadingText="팀 정보를 불러오는 중…"
+      errorTitle="팀 정보를 불러오지 못했어요"
+      errorDescription="본인에게 배정된 팀만 열람할 수 있어요."
+      className="p-8"
+    >
+      {data && <TeamDetailBody data={data} />}
+    </DataBoundary>
+  )
+}
 
+function TeamDetailBody({
+  data,
+}: {
+  data: NonNullable<ReturnType<typeof useMentorTeamDetail>['data']>
+}) {
   const team = data.assignment
 
   const logColumns: Column<MentorTeamLogRow>[] = [

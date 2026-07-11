@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
-  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -13,8 +12,8 @@ import {
   Star,
   XCircle,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -60,63 +59,55 @@ export default function RecommendationPage() {
   const { teamId = '' } = useParams()
   const { data, isPending, isError, refetch } = useTeamRecommendation(teamId)
 
-  if (isPending) {
-    return <SkeletonListPage kpis={3} columns={4} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="추천 정보를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-  if (data.status === 'locked_until_evaluation') {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<Lock />}
-          title="평가 제출 후 추천을 선택할 수 있어요"
-          description="팀원 전체 평가를 최종 제출하면 추천 선택 단계가 활성됩니다."
-          action={
-            <Link
-              to={`/mentor/teams/${data.teamId}/evaluation`}
-              className={buttonClass()}
-            >
-              평가 작성으로 이동
-            </Link>
-          }
-        />
-      </div>
-    )
-  }
-  if (
-    data.status === 'submitted_recommended' ||
-    data.status === 'submitted_not_recommended'
-  ) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<Lock />}
-          title="추천이 이미 제출되었습니다"
-          description={`최종 제출(${data.submittedAtLabel}) 후에는 수정할 수 없어요. 제출 요약에서 선택 내용을 확인할 수 있습니다.`}
-          action={
-            <Link
-              to={`/mentor/recommendations?teamId=${data.teamId}`}
-              className="border-border text-fg hover:bg-surface-muted rounded-[10px] border bg-white px-4 py-2.5 text-[13px] font-bold"
-            >
-              제출 요약 보기
-            </Link>
-          }
-        />
-      </div>
-    )
-  }
-  return <RecommendationForm sheet={data} />
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage kpis={3} columns={4} className="" />}
+      errorTitle="추천 정보를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data &&
+        (data.status === 'locked_until_evaluation' ? (
+          <div className="p-8">
+            <Empty
+              icon={<Lock />}
+              title="평가 제출 후 추천을 선택할 수 있어요"
+              description="팀원 전체 평가를 최종 제출하면 추천 선택 단계가 활성됩니다."
+              action={
+                <Link
+                  to={`/mentor/teams/${data.teamId}/evaluation`}
+                  className={buttonClass()}
+                >
+                  평가 작성으로 이동
+                </Link>
+              }
+            />
+          </div>
+        ) : data.status === 'submitted_recommended' ||
+          data.status === 'submitted_not_recommended' ? (
+          <div className="p-8">
+            <Empty
+              icon={<Lock />}
+              title="추천이 이미 제출되었습니다"
+              description={`최종 제출(${data.submittedAtLabel}) 후에는 수정할 수 없어요. 제출 요약에서 선택 내용을 확인할 수 있습니다.`}
+              action={
+                <Link
+                  to={`/mentor/recommendations?teamId=${data.teamId}`}
+                  className="border-border text-fg hover:bg-surface-muted rounded-[10px] border bg-white px-4 py-2.5 text-[13px] font-bold"
+                >
+                  제출 요약 보기
+                </Link>
+              }
+            />
+          </div>
+        ) : (
+          <RecommendationForm sheet={data} />
+        ))}
+    </DataBoundary>
+  )
 }
 
 function RecommendationForm({

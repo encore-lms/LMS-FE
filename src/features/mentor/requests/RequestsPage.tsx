@@ -1,14 +1,7 @@
 import { Suspense, useMemo, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import {
-  AlertTriangle,
-  Calendar,
-  Check,
-  CheckCircle2,
-  Search,
-  Timer,
-} from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Calendar, Check, CheckCircle2, Search, Timer } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
@@ -90,22 +83,6 @@ export default function RequestsPage() {
 
   const visible = searched.filter((r) => matchRequestTab(r, tab))
 
-  if (isPending) {
-    return <SkeletonListPage kpis={3} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="예약 요청을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
   // KPI — 상태 집계(완료만 캡션과 동일한 '최근 30일' 고정 창 기준).
   const kpis = {
     requested: requests.filter((r) => r.status === 'requested').length,
@@ -128,88 +105,98 @@ export default function RequestsPage() {
     )
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(멘토링 예약 2553:3820) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="요청 대기"
-          icon={<Timer className="text-warning h-4 w-4" />}
-          value={<KpiCount count={kpis.requested} />}
-          hint="처리 필요 · D-0 ~ D+1"
-        />
-        <KpiCard
-          label="조정 제안"
-          icon={<Calendar className="text-accent-strong h-4 w-4" />}
-          value={<KpiCount count={kpis.counterProposed} />}
-          hint="수강생 응답 대기"
-        />
-        <KpiCard
-          label="확정"
-          icon={<Check className="text-brand h-4 w-4" />}
-          value={<KpiCount count={kpis.confirmed} />}
-          hint="예정된 멘토링"
-        />
-        <KpiCard
-          label="완료"
-          icon={<CheckCircle2 className="text-success h-4 w-4" />}
-          value={<KpiCount count={kpis.completed} />}
-          hint="최근 30일 진행"
-        />
-      </div>
-
-      {/* 필터 툴바 — 상태 탭 6 + 기간 드롭다운 + 팀명·요청자 검색 */}
-      <section className="bg-surface-muted/50 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-2.5">
-        <Tabs
-          aria-label="요청 상태 필터"
-          value={tab}
-          onChange={(v) => setTab(v as MentoringRequestTab)}
-          items={REQUEST_TABS.map((t) => ({
-            value: t.value,
-            label: t.label,
-            dot: t.dot,
-            count: searched.filter((r) => matchRequestTab(r, t.value)).length,
-          }))}
-        />
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="text-fg-muted h-3 w-3 shrink-0" />
-            <Select
-              aria-label="기간 필터"
-              value={period}
-              onChange={setPeriod}
-              options={[...PERIOD_OPTIONS]}
-              className="h-[34px]"
-            />
-          </div>
-          <label className="bg-surface flex h-[34px] w-[220px] items-center gap-2 rounded-lg px-3">
-            <Search className="text-fg-subtle h-3 w-3 shrink-0" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="팀명·요청자 검색"
-              aria-label="팀명·요청자 검색"
-              className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-xs outline-none"
-            />
-          </label>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
+      errorTitle="예약 요청을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      <div className="flex flex-col gap-5 p-8">
+        {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(멘토링 예약 2553:3820) */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            label="요청 대기"
+            icon={<Timer className="text-warning h-4 w-4" />}
+            value={<KpiCount count={kpis.requested} />}
+            hint="처리 필요 · D-0 ~ D+1"
+          />
+          <KpiCard
+            label="조정 제안"
+            icon={<Calendar className="text-accent-strong h-4 w-4" />}
+            value={<KpiCount count={kpis.counterProposed} />}
+            hint="수강생 응답 대기"
+          />
+          <KpiCard
+            label="확정"
+            icon={<Check className="text-brand h-4 w-4" />}
+            value={<KpiCount count={kpis.confirmed} />}
+            hint="예정된 멘토링"
+          />
+          <KpiCard
+            label="완료"
+            icon={<CheckCircle2 className="text-success h-4 w-4" />}
+            value={<KpiCount count={kpis.completed} />}
+            hint="최근 30일 진행"
+          />
         </div>
-      </section>
 
-      {/* 요청 카드 목록 — 응답 결과는 mock 상태 변경 + invalidate 로 즉시 반영 */}
-      {visible.map((request) => (
-        <RequestCard
-          key={request.requestId}
-          request={request}
-          onCancelProposal={onCancelProposal}
-          cancelPending={cancelMutation.isPending}
-        />
-      ))}
-      {visible.length === 0 && <Empty title="조건에 맞는 요청이 없어요" />}
+        {/* 필터 툴바 — 상태 탭 6 + 기간 드롭다운 + 팀명·요청자 검색 */}
+        <section className="bg-surface-muted/50 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-2.5">
+          <Tabs
+            aria-label="요청 상태 필터"
+            value={tab}
+            onChange={(v) => setTab(v as MentoringRequestTab)}
+            items={REQUEST_TABS.map((t) => ({
+              value: t.value,
+              label: t.label,
+              dot: t.dot,
+              count: searched.filter((r) => matchRequestTab(r, t.value)).length,
+            }))}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="text-fg-muted h-3 w-3 shrink-0" />
+              <Select
+                aria-label="기간 필터"
+                value={period}
+                onChange={setPeriod}
+                options={[...PERIOD_OPTIONS]}
+                className="h-[34px]"
+              />
+            </div>
+            <label className="bg-surface flex h-[34px] w-[220px] items-center gap-2 rounded-lg px-3">
+              <Search className="text-fg-subtle h-3 w-3 shrink-0" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="팀명·요청자 검색"
+                aria-label="팀명·요청자 검색"
+                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-xs outline-none"
+              />
+            </label>
+          </div>
+        </section>
 
-      {/* /:requestId 응답 모달 — 목록 상태(탭·검색) 유지한 채 오버레이 */}
-      <Suspense fallback={null}>
-        <Outlet />
-      </Suspense>
-    </div>
+        {/* 요청 카드 목록 — 응답 결과는 mock 상태 변경 + invalidate 로 즉시 반영 */}
+        {visible.map((request) => (
+          <RequestCard
+            key={request.requestId}
+            request={request}
+            onCancelProposal={onCancelProposal}
+            cancelPending={cancelMutation.isPending}
+          />
+        ))}
+        {visible.length === 0 && <Empty title="조건에 맞는 요청이 없어요" />}
+
+        {/* /:requestId 응답 모달 — 목록 상태(탭·검색) 유지한 채 오버레이 */}
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
+      </div>
+    </DataBoundary>
   )
 }
 

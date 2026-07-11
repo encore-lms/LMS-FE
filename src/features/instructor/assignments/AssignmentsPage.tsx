@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Plus, Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { Select } from '@/components/ui/Select'
@@ -58,23 +58,7 @@ export default function AssignmentsPage() {
     })
   }, [data, q, status, cohort])
 
-  if (isPending) {
-    return <SkeletonListPage kpis={4} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="과제 목록을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { kpi } = data
+  const kpi = data?.kpi
 
   const columns: Column<InstructorAssignmentRow>[] = [
     {
@@ -186,96 +170,114 @@ export default function AssignmentsPage() {
   ]
 
   return (
-    <div className="p-8">
-      {/* KPI 4 — 담당 과제 전체 합산 */}
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="제출" value={kpi.submitted} hint="마감 전 제출 완료" />
-        <KpiCard
-          label="미제출"
-          value={kpi.notSubmitted}
-          hint="마감 전 제출 필요"
-        />
-        <KpiCard
-          label="보완요청"
-          value={kpi.supplementRequested}
-          tone={kpi.supplementRequested > 0 ? 'warning' : 'default'}
-          hint="재제출 대기"
-        />
-        <KpiCard
-          label="검토완료"
-          value={kpi.reviewDone}
-          hint="피드백 반영 완료"
-        />
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      // 스켈레톤 여백은 DataBoundary className(p-8)에서 부여 — 중복 패딩 방지
+      skeleton={<SkeletonListPage kpis={4} columns={5} className="" />}
+      errorTitle="과제 목록을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && kpi && (
+        <div className="p-8">
+          {/* KPI 4 — 담당 과제 전체 합산 */}
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label="제출"
+              value={kpi.submitted}
+              hint="마감 전 제출 완료"
+            />
+            <KpiCard
+              label="미제출"
+              value={kpi.notSubmitted}
+              hint="마감 전 제출 필요"
+            />
+            <KpiCard
+              label="보완요청"
+              value={kpi.supplementRequested}
+              tone={kpi.supplementRequested > 0 ? 'warning' : 'default'}
+              hint="재제출 대기"
+            />
+            <KpiCard
+              label="검토완료"
+              value={kpi.reviewDone}
+              hint="피드백 반영 완료"
+            />
+          </div>
 
-      {/* 필터 바 */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="과제명·과목으로 검색"
-            aria-label="과제 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+          {/* 필터 바 */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
+              <Search className="text-fg-subtle h-4 w-4" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="과제명·과목으로 검색"
+                aria-label="과제 검색"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+              <span className="text-fg-subtle">상태</span>
+              <Select
+                value={status}
+                onChange={(v) => setStatus(v as StatusFilter)}
+                aria-label="상태 필터"
+                options={[
+                  { value: 'all', label: '전체' },
+                  { value: 'open', label: '진행 중' },
+                  { value: 'closed', label: '마감됨' },
+                ]}
+              />
+            </label>
+            <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+              <span className="text-fg-subtle">기수</span>
+              <Select
+                value={cohort}
+                onChange={(v) => setCohort(v)}
+                aria-label="기수 필터"
+                options={cohortOpts.map((c) => ({ value: c, label: c }))}
+              />
+            </label>
+            <div className="ml-auto flex items-center gap-3">
+              <span className="text-fg-subtle text-xs">
+                총 {data.total}개 · 마감일 가까운 순
+              </span>
+              <Button
+                size="sm"
+                onClick={() => navigate('/instructor/assignments/new')}
+              >
+                <Plus className="h-3.5 w-3.5" /> 과제 생성
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <DataTable
+              columns={columns}
+              rows={filtered}
+              rowKey={(r) => r.id}
+              onRowClick={(r) => navigate(`/instructor/assignments/${r.id}`)}
+              empty="조건에 맞는 과제가 없어요"
+            />
+          </div>
+
+          <DeleteAssignmentModal
+            assignment={deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={(a) => {
+              setDeleteTarget(null)
+              deleteAssignment.mutate(a.id, {
+                onSuccess: () =>
+                  toast.success(`${a.title} 삭제 — 제출 기록 포함`),
+                onError: () => toast.danger('삭제에 실패했어요'),
+              })
+            }}
           />
         </div>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-          <span className="text-fg-subtle">상태</span>
-          <Select
-            value={status}
-            onChange={(v) => setStatus(v as StatusFilter)}
-            aria-label="상태 필터"
-            options={[
-              { value: 'all', label: '전체' },
-              { value: 'open', label: '진행 중' },
-              { value: 'closed', label: '마감됨' },
-            ]}
-          />
-        </label>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-          <span className="text-fg-subtle">기수</span>
-          <Select
-            value={cohort}
-            onChange={(v) => setCohort(v)}
-            aria-label="기수 필터"
-            options={cohortOpts.map((c) => ({ value: c, label: c }))}
-          />
-        </label>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-fg-subtle text-xs">
-            총 {data.total}개 · 마감일 가까운 순
-          </span>
-          <Button
-            size="sm"
-            onClick={() => navigate('/instructor/assignments/new')}
-          >
-            <Plus className="h-3.5 w-3.5" /> 과제 생성
-          </Button>
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(r) => r.id}
-          onRowClick={(r) => navigate(`/instructor/assignments/${r.id}`)}
-          empty="조건에 맞는 과제가 없어요"
-        />
-      </div>
-
-      <DeleteAssignmentModal
-        assignment={deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={(a) => {
-          setDeleteTarget(null)
-          deleteAssignment.mutate(a.id, {
-            onSuccess: () => toast.success(`${a.title} 삭제 — 제출 기록 포함`),
-            onError: () => toast.danger('삭제에 실패했어요'),
-          })
-        }}
-      />
-    </div>
+      )}
+    </DataBoundary>
   )
 }

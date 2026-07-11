@@ -1,15 +1,9 @@
 import { useMemo, useState } from 'react'
-import {
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  Inbox,
-  Users,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Inbox, Users } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { formatDateDot } from '@/shared/lib/date'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { Button } from '@/components/ui/Button'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -99,100 +93,93 @@ export default function AdminDashboard() {
   )
   const hrdNotReady = needsHrd && hrdLive.data == null && !hrdLive.isError
 
-  if (
-    myCohorts.isPending ||
-    (myCohorts.data?.length && dashboard.isPending) ||
-    (dashboard.data && hrdNotReady)
-  ) {
-    return <DashboardSkeleton />
-  }
-  if (myCohorts.isError || dashboard.isError) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="대시보드를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={
-            <Button
-              onClick={() =>
-                myCohorts.isError ? myCohorts.refetch() : dashboard.refetch()
-              }
-            >
-              다시 시도
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
   // 담당 미배정은 useMyCohorts가 전체 기수로 폴백하므로 여기 도달 = 시스템에 기수 자체가 없음.
-  if ((myCohorts.data?.length ?? 0) === 0) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<Users />}
-          title="등록된 과정·기수가 없어요"
-          description="설정 > 과정 관리에서 과정과 기수를 등록하면 운영 현황이 여기에 표시됩니다."
-        />
-      </div>
-    )
-  }
-  if (!dashboard.data) {
-    return <DashboardSkeleton />
-  }
+  const noCohorts =
+    !myCohorts.isPending &&
+    !myCohorts.isError &&
+    (myCohorts.data?.length ?? 0) === 0
+  const dash = dashboard.data
 
   return (
-    <div className="p-8">
-      {/* 날짜·기수 칩 헤더 행은 제거(운영 요구) — 기수 상세는 비교 표 행 클릭으로 진입. */}
-      <div>
-        {single ? (
-          // 담당 1기수도 상단 '오늘 인사이트'를 동일하게 제공(전 매니저 첫인상 통일),
-          // 그 아래 해당 기수 상세를 이어서 보여준다.
-          <div className="flex flex-col gap-6">
-            <DashboardInsight
-              boards={boards}
-              quarantineCount={dashboard.data.quarantineCount}
-              today={dashboard.data.today}
-              upcoming={dashboard.data.upcoming}
-            />
-            <QuickLinks />
-            <CohortDeepDive
-              board={boards[0]}
-              hrdPending={hrdLive.isPending && hrdLive.isFetching}
-            />
-          </div>
-        ) : (
-          <AllCohortsView
-            boards={boards}
-            quarantineCount={dashboard.data.quarantineCount}
-            today={dashboard.data.today}
-            upcoming={dashboard.data.upcoming}
-            onSelect={(id) => setSelected(id)}
+    <DataBoundary
+      isPending={
+        myCohorts.isPending ||
+        (!!myCohorts.data?.length && dashboard.isPending) ||
+        (!!dash && hrdNotReady) ||
+        (!noCohorts && !myCohorts.isError && !dashboard.isError && !dash)
+      }
+      isError={myCohorts.isError || dashboard.isError}
+      onRetry={() =>
+        myCohorts.isError ? myCohorts.refetch() : dashboard.refetch()
+      }
+      skeleton={<DashboardSkeleton />}
+      errorTitle="대시보드를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {noCohorts ? (
+        <div className="p-8">
+          <Empty
+            icon={<Users />}
+            title="등록된 과정·기수가 없어요"
+            description="설정 > 과정 관리에서 과정과 기수를 등록하면 운영 현황이 여기에 표시됩니다."
           />
-        )}
-      </div>
+        </div>
+      ) : (
+        dash && (
+          <div className="p-8">
+            {/* 날짜·기수 칩 헤더 행은 제거(운영 요구) — 기수 상세는 비교 표 행 클릭으로 진입. */}
+            <div>
+              {single ? (
+                // 담당 1기수도 상단 '오늘 인사이트'를 동일하게 제공(전 매니저 첫인상 통일),
+                // 그 아래 해당 기수 상세를 이어서 보여준다.
+                <div className="flex flex-col gap-6">
+                  <DashboardInsight
+                    boards={boards}
+                    quarantineCount={dash.quarantineCount}
+                    today={dash.today}
+                    upcoming={dash.upcoming}
+                  />
+                  <QuickLinks />
+                  <CohortDeepDive
+                    board={boards[0]}
+                    hrdPending={hrdLive.isPending && hrdLive.isFetching}
+                  />
+                </div>
+              ) : (
+                <AllCohortsView
+                  boards={boards}
+                  quarantineCount={dash.quarantineCount}
+                  today={dash.today}
+                  upcoming={dash.upcoming}
+                  onSelect={(id) => setSelected(id)}
+                />
+              )}
+            </div>
 
-      {/* 기수 상세 모달 — 비교 표/칩에서 기수 클릭 시 */}
-      <Modal
-        open={!!modalBoard}
-        onClose={() => setSelected(null)}
-        size="lg"
-        title={
-          modalBoard
-            ? `${modalBoard.courseName} ${modalBoard.cohortLabel}`
-            : undefined
-        }
-      >
-        {modalBoard && (
-          <CohortDeepDive
-            board={modalBoard}
-            hrdPending={hrdLive.isPending && hrdLive.isFetching}
-            hideHeader
-          />
-        )}
-      </Modal>
-    </div>
+            {/* 기수 상세 모달 — 비교 표/칩에서 기수 클릭 시 */}
+            <Modal
+              open={!!modalBoard}
+              onClose={() => setSelected(null)}
+              size="lg"
+              title={
+                modalBoard
+                  ? `${modalBoard.courseName} ${modalBoard.cohortLabel}`
+                  : undefined
+              }
+            >
+              {modalBoard && (
+                <CohortDeepDive
+                  board={modalBoard}
+                  hrdPending={hrdLive.isPending && hrdLive.isFetching}
+                  hideHeader
+                />
+              )}
+            </Modal>
+          </div>
+        )
+      )}
+    </DataBoundary>
   )
 }
 
@@ -622,9 +609,10 @@ function CohortDeepDive({
 
 /* ─────────────── 소형 빌딩 블록 ─────────────── */
 
+// p-8 여백은 DataBoundary className에서 부여 — 여기서 중복 패딩을 만들지 않는다.
 function DashboardSkeleton() {
   return (
-    <div className="p-8" aria-busy="true">
+    <div aria-busy="true">
       {/* 상단 — 날짜 + 기수 스위처 자리 */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-4 w-40" />

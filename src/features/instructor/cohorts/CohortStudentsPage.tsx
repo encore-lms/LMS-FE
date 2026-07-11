@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { AlertTriangle, Search } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { Search } from 'lucide-react'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
 import { Select } from '@/components/ui/Select'
@@ -63,22 +62,6 @@ export default function CohortStudentsPage() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const current = Math.min(page, pageCount)
   const paged = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
-
-  if (isPending) {
-    return <SkeletonListPage columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="수강생 목록을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
 
   const columns: Column<CohortStudentRow>[] = [
     {
@@ -166,83 +149,97 @@ export default function CohortStudentsPage() {
   ]
 
   return (
-    <div className="p-8">
-      {/* 필터 바 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="이름·이메일로 검색"
-            aria-label="수강생 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
-          />
-        </div>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-          <span className="text-fg-subtle">기수</span>
-          <Select
-            value={ctxCohortId}
-            onChange={(v) => setCohortId(v)}
-            aria-label="기수 필터"
-            options={Object.entries(COHORT_ID_TO_LABEL).map(([id, label]) => ({
-              value: id,
-              label,
-            }))}
-          />
-        </label>
-        <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-          <span className="text-fg-subtle">증명서</span>
-          <Select
-            value={cert}
-            onChange={(v) => setCert(v as CertFilter)}
-            aria-label="증명서 상태 필터"
-            options={[
-              { value: 'all', label: '전체' },
-              ...(Object.keys(CERT_STATUS_META) as StudentCertStatus[]).map(
-                (s) => ({ value: s, label: CERT_STATUS_META[s].label }),
-              ),
-            ]}
-          />
-        </label>
-        <button
-          type="button"
-          onClick={() => setRisk((v) => (v === 'all' ? 'risky' : 'all'))}
-          className={cn(
-            'rounded-lg border px-3 py-1.5 text-xs font-medium',
-            risk === 'risky'
-              ? 'border-danger/40 bg-danger-bg text-danger'
-              : 'border-border text-fg-muted hover:bg-surface-muted',
-          )}
-        >
-          위험: {risk === 'risky' ? '플래그 있음' : '전체'}
-        </button>
-        <span className="text-fg-subtle ml-auto text-xs">
-          정렬: 위험 많은 순 · {cohortLabel} {filtered.length}명
-        </span>
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage columns={5} className="" />}
+      errorTitle="수강생 목록을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        <div className="p-8">
+          {/* 필터 바 */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
+              <Search className="text-fg-subtle h-4 w-4" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="이름·이메일로 검색"
+                aria-label="수강생 검색"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+              <span className="text-fg-subtle">기수</span>
+              <Select
+                value={ctxCohortId}
+                onChange={(v) => setCohortId(v)}
+                aria-label="기수 필터"
+                options={Object.entries(COHORT_ID_TO_LABEL).map(
+                  ([id, label]) => ({
+                    value: id,
+                    label,
+                  }),
+                )}
+              />
+            </label>
+            <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+              <span className="text-fg-subtle">증명서</span>
+              <Select
+                value={cert}
+                onChange={(v) => setCert(v as CertFilter)}
+                aria-label="증명서 상태 필터"
+                options={[
+                  { value: 'all', label: '전체' },
+                  ...(Object.keys(CERT_STATUS_META) as StudentCertStatus[]).map(
+                    (s) => ({ value: s, label: CERT_STATUS_META[s].label }),
+                  ),
+                ]}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setRisk((v) => (v === 'all' ? 'risky' : 'all'))}
+              className={cn(
+                'rounded-lg border px-3 py-1.5 text-xs font-medium',
+                risk === 'risky'
+                  ? 'border-danger/40 bg-danger-bg text-danger'
+                  : 'border-border text-fg-muted hover:bg-surface-muted',
+              )}
+            >
+              위험: {risk === 'risky' ? '플래그 있음' : '전체'}
+            </button>
+            <span className="text-fg-subtle ml-auto text-xs">
+              정렬: 위험 많은 순 · {cohortLabel} {filtered.length}명
+            </span>
+          </div>
 
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={paged}
-          rowKey={(r) => r.id}
-          onRowClick={(r) => navigate(`/instructor/students/${r.id}`)}
-          empty="조건에 맞는 수강생이 없어요"
-        />
-      </div>
-      <div className="mt-3 flex flex-col gap-2">
-        <Pagination
-          page={current}
-          pageCount={pageCount}
-          totalCount={filtered.length}
-          shownCount={paged.length}
-          onPage={setPage}
-        />
-        <p className="text-fg-subtle text-xs">
-          {cohortLabel} · 담당 기수 밖 학생은 노출되지 않습니다
-        </p>
-      </div>
-    </div>
+          <div className="mt-4">
+            <DataTable
+              columns={columns}
+              rows={paged}
+              rowKey={(r) => r.id}
+              onRowClick={(r) => navigate(`/instructor/students/${r.id}`)}
+              empty="조건에 맞는 수강생이 없어요"
+            />
+          </div>
+          <div className="mt-3 flex flex-col gap-2">
+            <Pagination
+              page={current}
+              pageCount={pageCount}
+              totalCount={filtered.length}
+              shownCount={paged.length}
+              onPage={setPage}
+            />
+            <p className="text-fg-subtle text-xs">
+              {cohortLabel} · 담당 기수 밖 학생은 노출되지 않습니다
+            </p>
+          </div>
+        </div>
+      )}
+    </DataBoundary>
   )
 }

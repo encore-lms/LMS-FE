@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -48,22 +47,6 @@ export default function RecertificationsPage() {
   // 기본 선택 = 첫 요청 (Figma 상세 1건 노출과 동일)
   const selected: RecertificationRow | null =
     rows.find((r) => r.id === selectedId) ?? rows[0] ?? null
-
-  if (isPending) {
-    return <SkeletonListPage columns={4} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="재인증 요청을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
 
   // 재인증 승인/보완요청 공통 종결 — 낙관적으로 큐에서 제거 후 mutation 호출.
   const resolve = async (
@@ -129,84 +112,100 @@ export default function RecertificationsPage() {
         </button>
       </div>
 
-      {/* 요청 큐 — 행 선택 시 아래 상세 갱신 */}
-      {rows.length > 1 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {rows.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => setSelectedId(r.id)}
-              className={cn(
-                'flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm',
-                selected?.id === r.id
-                  ? 'border-accent-strong bg-accent-bg/40 text-fg font-bold'
-                  : 'border-border text-fg-muted hover:bg-surface-muted font-medium',
-              )}
-            >
-              {r.target}
-              <span className="text-fg-subtle text-xs">{r.requesterLabel}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* 재인증 요청 상세 */}
-      <section className="border-border bg-surface mt-4 rounded-xl border p-6">
-        <p className="text-fg text-base font-bold">재인증 요청 상세</p>
-        {!selected ? (
-          <p className="text-fg-muted mt-4 text-sm">
-            검토 대기 중인 재인증 요청이 없어요
-          </p>
-        ) : (
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        skeleton={<SkeletonListPage columns={4} className="" />}
+        errorTitle="재인증 요청을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+        className="mt-4"
+      >
+        {data && (
           <>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <StatusBadge
-                label={TARGET_TYPE_META[selected.type].label}
-                tone={TARGET_TYPE_META[selected.type].tone}
-              />
-              <p className="text-fg text-sm font-semibold">
-                {selected.target} · {selected.requesterLabel} ·{' '}
-                {selected.summary}
-              </p>
-            </div>
-            <p className="text-fg mt-6 text-sm font-bold">변경된 내역만 보기</p>
-            <div className="mt-2 flex flex-col gap-2.5">
-              {selected.changes.map((c) => (
-                <ChangeDiffCard key={c.id} item={c} />
-              ))}
-            </div>
-            <div className="mt-7 flex justify-end gap-2">
-              <Button
-                variant="secondary"
-               
-                disabled={resolveMutation.isPending}
-                onClick={() => setSupplementTarget(selected)}
-              >
-                보완요청
-              </Button>
-              <Button
-               
-                disabled={resolveMutation.isPending}
-                onClick={() => approve(selected)}
-              >
-                재인증 승인
-              </Button>
-            </div>
+            {/* 요청 큐 — 행 선택 시 아래 상세 갱신 */}
+            {rows.length > 1 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {rows.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setSelectedId(r.id)}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm',
+                      selected?.id === r.id
+                        ? 'border-accent-strong bg-accent-bg/40 text-fg font-bold'
+                        : 'border-border text-fg-muted hover:bg-surface-muted font-medium',
+                    )}
+                  >
+                    {r.target}
+                    <span className="text-fg-subtle text-xs">
+                      {r.requesterLabel}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 재인증 요청 상세 */}
+            <section className="border-border bg-surface mt-4 rounded-xl border p-6">
+              <p className="text-fg text-base font-bold">재인증 요청 상세</p>
+              {!selected ? (
+                <p className="text-fg-muted mt-4 text-sm">
+                  검토 대기 중인 재인증 요청이 없어요
+                </p>
+              ) : (
+                <>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <StatusBadge
+                      label={TARGET_TYPE_META[selected.type].label}
+                      tone={TARGET_TYPE_META[selected.type].tone}
+                    />
+                    <p className="text-fg text-sm font-semibold">
+                      {selected.target} · {selected.requesterLabel} ·{' '}
+                      {selected.summary}
+                    </p>
+                  </div>
+                  <p className="text-fg mt-6 text-sm font-bold">
+                    변경된 내역만 보기
+                  </p>
+                  <div className="mt-2 flex flex-col gap-2.5">
+                    {selected.changes.map((c) => (
+                      <ChangeDiffCard key={c.id} item={c} />
+                    ))}
+                  </div>
+                  <div className="mt-7 flex justify-end gap-2">
+                    <Button
+                      variant="secondary"
+                      disabled={resolveMutation.isPending}
+                      onClick={() => setSupplementTarget(selected)}
+                    >
+                      보완요청
+                    </Button>
+                    <Button
+                      disabled={resolveMutation.isPending}
+                      onClick={() => approve(selected)}
+                    >
+                      재인증 승인
+                    </Button>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <ReasonModal
+              open={supplementTarget !== null}
+              title="보완요청을 보낼까요?"
+              description="보완요청 사유는 요청자에게 전달되며, 사유 작성은 필수입니다."
+              confirmLabel="보완요청"
+              placeholder="예: 변경된 산출물의 검증 근거를 함께 첨부해 주세요."
+              pending={resolveMutation.isPending}
+              onClose={() => setSupplementTarget(null)}
+              onConfirm={confirmSupplement}
+            />
           </>
         )}
-      </section>
-
-      <ReasonModal
-        open={supplementTarget !== null}
-        title="보완요청을 보낼까요?"
-        description="보완요청 사유는 요청자에게 전달되며, 사유 작성은 필수입니다."
-        confirmLabel="보완요청"
-        placeholder="예: 변경된 산출물의 검증 근거를 함께 첨부해 주세요."
-        pending={resolveMutation.isPending}
-        onClose={() => setSupplementTarget(null)}
-        onConfirm={confirmSupplement}
-      />
+      </DataBoundary>
     </div>
   )
 }

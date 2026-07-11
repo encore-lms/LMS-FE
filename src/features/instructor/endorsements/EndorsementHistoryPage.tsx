@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
@@ -46,23 +45,7 @@ export default function EndorsementHistoryPage() {
     setPage(1)
   }, [filter, q])
 
-  if (isPending) {
-    return <SkeletonListPage kpis={3} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="전체 추천서를 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { stats } = data
+  const stats = data?.stats
   const countBy = (s: EndorsementSnapshotStatus) =>
     items.filter((e) => e.snapshotStatus === s).length
 
@@ -162,70 +145,82 @@ export default function EndorsementHistoryPage() {
   ]
 
   return (
-    <div className="p-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="누적 추천서" value={`${stats.total} 건`} />
-        <KpiCard
-          label="이번 달"
-          value={`${stats.thisMonth} 건`}
-          tone="accent"
-        />
-        <KpiCard
-          label="스냅샷 반영"
-          value={`${stats.snapshotApplied} 건`}
-          tone="success"
-        />
-        <KpiCard
-          label="최신화 대기"
-          value={`${stats.pendingRefresh} 건`}
-          tone="warning"
-        />
-      </div>
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
+      errorTitle="전체 추천서를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && stats && (
+        <div className="p-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard label="누적 추천서" value={`${stats.total} 건`} />
+            <KpiCard
+              label="이번 달"
+              value={`${stats.thisMonth} 건`}
+              tone="accent"
+            />
+            <KpiCard
+              label="스냅샷 반영"
+              value={`${stats.snapshotApplied} 건`}
+              tone="success"
+            />
+            <KpiCard
+              label="최신화 대기"
+              value={`${stats.pendingRefresh} 건`}
+              tone="warning"
+            />
+          </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="이름으로 검색"
-          aria-label="추천서 이름 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-56 rounded-lg border bg-white px-3 text-sm outline-none"
-        />
-        <div className="flex flex-wrap gap-1">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setFilter(f.key)}
-              className={cn(
-                'rounded-md px-3 py-1.5 text-sm font-medium',
-                filter === f.key
-                  ? 'bg-accent-bg text-accent-strong'
-                  : 'text-fg-muted hover:bg-surface-muted',
-              )}
-            >
-              {f.label} <span className="text-fg-subtle">({f.count})</span>
-            </button>
-          ))}
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="이름으로 검색"
+              aria-label="추천서 이름 검색"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-56 rounded-lg border bg-white px-3 text-sm outline-none"
+            />
+            <div className="flex flex-wrap gap-1">
+              {filters.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-sm font-medium',
+                    filter === f.key
+                      ? 'bg-accent-bg text-accent-strong'
+                      : 'text-fg-muted hover:bg-surface-muted',
+                  )}
+                >
+                  {f.label} <span className="text-fg-subtle">({f.count})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <DataTable
+              columns={columns}
+              rows={paged}
+              rowKey={(e) => e.id}
+              onRowClick={(e) => navigate(`/instructor/endorsements/${e.id}`)}
+              empty="조건에 맞는 추천서가 없어요"
+            />
+            <Pagination
+              className="mt-3"
+              page={current}
+              pageCount={pageCount}
+              totalCount={filtered.length}
+              shownCount={paged.length}
+              onPage={setPage}
+            />
+          </div>
         </div>
-      </div>
-
-      <div className="mt-3">
-        <DataTable
-          columns={columns}
-          rows={paged}
-          rowKey={(e) => e.id}
-          onRowClick={(e) => navigate(`/instructor/endorsements/${e.id}`)}
-          empty="조건에 맞는 추천서가 없어요"
-        />
-        <Pagination
-          className="mt-3"
-          page={current}
-          pageCount={pageCount}
-          totalCount={filtered.length}
-          shownCount={paged.length}
-          onPage={setPage}
-        />
-      </div>
-    </div>
+      )}
+    </DataBoundary>
   )
 }

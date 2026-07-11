@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
@@ -53,22 +52,6 @@ export default function ChangeRequestsPage() {
 
   const selected: InstructorChangeRequestRow | null =
     rows.find((r) => r.id === selectedId) ?? null
-
-  if (isPending) {
-    return <SkeletonListPage columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="변경 제안을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
 
   // 승인/반려 공통 종결 — 낙관적으로 큐에서 제거 후 mutation 호출.
   const resolve = async (
@@ -195,77 +178,91 @@ export default function ChangeRequestsPage() {
         </button>
       </div>
 
-      {/* 검토 대기 큐 */}
-      <section className="border-border bg-surface mt-4 rounded-xl border p-6">
-        <p className="text-fg text-base font-bold">검토 대기 변경 제안</p>
-        <div className="mt-4">
-          <DataTable
-            columns={columns}
-            rows={rows}
-            rowKey={(r) => r.id}
-            onRowClick={(r) => setSelectedId(r.id)}
-            rowClassName={(r) =>
-              selected?.id === r.id ? 'bg-accent-bg/30' : ''
-            }
-            empty="검토 대기 중인 변경 제안이 없어요"
-          />
-        </div>
-      </section>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={() => refetch()}
+        skeleton={<SkeletonListPage columns={5} className="" />}
+        errorTitle="변경 제안을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+        className="mt-4"
+      >
+        {data && (
+          <>
+            {/* 검토 대기 큐 */}
+            <section className="border-border bg-surface mt-4 rounded-xl border p-6">
+              <p className="text-fg text-base font-bold">검토 대기 변경 제안</p>
+              <div className="mt-4">
+                <DataTable
+                  columns={columns}
+                  rows={rows}
+                  rowKey={(r) => r.id}
+                  onRowClick={(r) => setSelectedId(r.id)}
+                  rowClassName={(r) =>
+                    selected?.id === r.id ? 'bg-accent-bg/30' : ''
+                  }
+                  empty="검토 대기 중인 변경 제안이 없어요"
+                />
+              </div>
+            </section>
 
-      {/* 상세 패널 — 변경 전/후 비교 + 승인/반려 */}
-      {selected && (
-        <section className="border-border bg-surface mt-5 rounded-xl border p-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <StatusBadge
-              label={TARGET_TYPE_META[selected.type].label}
-              tone={TARGET_TYPE_META[selected.type].tone}
-            />
-            <p className="text-fg text-base font-bold">
-              {selected.target} · {selected.requester}
-            </p>
-            {selected.certifierAbsent && (
-              <StatusBadge
-                label="인증자 부재 — 매니저 대체 검토 가능"
-                tone="info"
-              />
+            {/* 상세 패널 — 변경 전/후 비교 + 승인/반려 */}
+            {selected && (
+              <section className="border-border bg-surface mt-5 rounded-xl border p-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <StatusBadge
+                    label={TARGET_TYPE_META[selected.type].label}
+                    tone={TARGET_TYPE_META[selected.type].tone}
+                  />
+                  <p className="text-fg text-base font-bold">
+                    {selected.target} · {selected.requester}
+                  </p>
+                  {selected.certifierAbsent && (
+                    <StatusBadge
+                      label="인증자 부재 — 매니저 대체 검토 가능"
+                      tone="info"
+                    />
+                  )}
+                </div>
+                <p className="text-fg mt-5 text-sm font-bold">
+                  변경된 내역만 보기
+                </p>
+                <div className="mt-2 flex flex-col gap-2.5">
+                  {selected.changes.map((c) => (
+                    <ChangeDiffCard key={c.id} item={c} />
+                  ))}
+                </div>
+                <div className="mt-7 flex justify-end gap-2">
+                  <Button
+                    variant="secondary"
+                    disabled={resolveMutation.isPending}
+                    onClick={() => setRejectTarget(selected)}
+                  >
+                    반려
+                  </Button>
+                  <Button
+                    disabled={resolveMutation.isPending}
+                    onClick={() => approve(selected)}
+                  >
+                    승인
+                  </Button>
+                </div>
+              </section>
             )}
-          </div>
-          <p className="text-fg mt-5 text-sm font-bold">변경된 내역만 보기</p>
-          <div className="mt-2 flex flex-col gap-2.5">
-            {selected.changes.map((c) => (
-              <ChangeDiffCard key={c.id} item={c} />
-            ))}
-          </div>
-          <div className="mt-7 flex justify-end gap-2">
-            <Button
-              variant="secondary"
-             
-              disabled={resolveMutation.isPending}
-              onClick={() => setRejectTarget(selected)}
-            >
-              반려
-            </Button>
-            <Button
-             
-              disabled={resolveMutation.isPending}
-              onClick={() => approve(selected)}
-            >
-              승인
-            </Button>
-          </div>
-        </section>
-      )}
 
-      <ReasonModal
-        open={rejectTarget !== null}
-        title="변경 제안을 반려할까요?"
-        description="반려 사유는 요청자에게 전달되며, 사유 작성은 필수입니다."
-        confirmLabel="반려"
-        placeholder="예: 변경 근거가 부족합니다. 측정 방법을 함께 첨부해 주세요."
-        pending={resolveMutation.isPending}
-        onClose={() => setRejectTarget(null)}
-        onConfirm={confirmReject}
-      />
+            <ReasonModal
+              open={rejectTarget !== null}
+              title="변경 제안을 반려할까요?"
+              description="반려 사유는 요청자에게 전달되며, 사유 작성은 필수입니다."
+              confirmLabel="반려"
+              placeholder="예: 변경 근거가 부족합니다. 측정 방법을 함께 첨부해 주세요."
+              pending={resolveMutation.isPending}
+              onClose={() => setRejectTarget(null)}
+              onConfirm={confirmReject}
+            />
+          </>
+        )}
+      </DataBoundary>
     </div>
   )
 }

@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Empty } from '@/components/ui/Empty'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
@@ -49,23 +47,9 @@ export default function CertificateTemplatePage() {
   const toast = useToast()
   const [tab, setTab] = useState<TemplateTab>('public')
 
-  if (isPending) {
-    return <SkeletonListPage kpis={3} columns={5} />
-  }
-  if (isError || !data) {
-    return (
-      <div className="p-8">
-        <Empty
-          icon={<AlertTriangle />}
-          title="증명서 템플릿을 불러오지 못했어요"
-          description="잠시 후 다시 시도해 주세요."
-          action={<Button onClick={() => refetch()}>다시 시도</Button>}
-        />
-      </div>
-    )
-  }
-
-  const { summary, fields, preview } = data
+  const summary = data?.summary
+  const fields = data?.fields ?? []
+  const preview = data?.preview
 
   const columns: Column<CertTemplateFieldRow>[] = [
     {
@@ -123,161 +107,176 @@ export default function CertificateTemplatePage() {
   ]
 
   return (
-    <div className="p-8">
-      {/* 탭(공개/내부/스냅샷) + 우측 액션(미리보기·정책 저장) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="border-border bg-surface inline-flex gap-1 rounded-lg border p-1">
-          {TABS.map((t) => (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={() => refetch()}
+      skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
+      errorTitle="증명서 템플릿을 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      <div className="p-8">
+        {/* 탭(공개/내부/스냅샷) + 우측 액션(미리보기·정책 저장) */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="border-border bg-surface inline-flex gap-1 rounded-lg border p-1">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setTab(t.key)}
+                className={cn(
+                  'rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
+                  tab === t.key
+                    ? 'bg-brand text-on-color'
+                    : 'text-fg-muted hover:text-fg',
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
             <button
-              key={t.key}
               type="button"
-              onClick={() => setTab(t.key)}
-              className={cn(
-                'rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
-                tab === t.key
-                  ? 'bg-brand text-on-color'
-                  : 'text-fg-muted hover:text-fg',
-              )}
+              // TODO: 증명서 공개 미리보기 모달(P0_24)
+              onClick={() => toast.info('미리보기는 준비 중입니다.')}
+              className="bg-accent-bg text-accent-strong hover:bg-accent-bg/70 h-9 rounded-md px-4 text-[13px] font-semibold transition-colors"
             >
-              {t.label}
+              미리보기
             </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            // TODO: 증명서 공개 미리보기 모달(P0_24)
-            onClick={() => toast.info('미리보기는 준비 중입니다.')}
-            className="bg-accent-bg text-accent-strong hover:bg-accent-bg/70 h-9 rounded-md px-4 text-[13px] font-semibold transition-colors"
-          >
-            미리보기
-          </button>
-          <button
-            type="button"
-            // TODO: 템플릿 정책 저장(버전 증가·스냅샷 영향, P0_24)
-            onClick={() => toast.info('정책 저장은 준비 중입니다.')}
-            className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-md px-4 text-[13px] font-semibold transition-colors"
-          >
-            정책 저장
-          </button>
-        </div>
-      </div>
-
-      {/* KPI 5종 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard
-          label="템플릿 버전"
-          value={summary.version}
-          hint={summary.versionState}
-        />
-        <KpiCard
-          label="공개 필드"
-          value={summary.publicFields}
-          hint="수강생 표시"
-        />
-        <KpiCard
-          label="내부 필드"
-          value={summary.internalFields}
-          hint="운영/검토용"
-        />
-        <KpiCard
-          label="스냅샷 잠금"
-          value={`${summary.snapshotLockStages}단계`}
-          hint="승인 시 고정"
-        />
-        <KpiCard
-          label="정책 경고"
-          value={summary.policyWarnings}
-          hint="공개 위험"
-          tone={summary.policyWarnings > 0 ? 'warning' : 'default'}
-        />
-      </div>
-
-      {/* 메인 — 필드 매핑 표(좌) + 탭별 우측 패널 */}
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
-        <div className="min-w-0 flex-1">
-          <DataTable
-            columns={columns}
-            rows={fields}
-            rowKey={(r) => r.id}
-            empty="등록된 필드가 없어요"
-          />
+            <button
+              type="button"
+              // TODO: 템플릿 정책 저장(버전 증가·스냅샷 영향, P0_24)
+              onClick={() => toast.info('정책 저장은 준비 중입니다.')}
+              className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-md px-4 text-[13px] font-semibold transition-colors"
+            >
+              정책 저장
+            </button>
+          </div>
         </div>
 
-        <aside className="w-full lg:w-[420px] lg:shrink-0">
-          {tab === 'public' && (
-            <div className="border-border bg-surface rounded-xl border p-5">
-              <p className="text-fg text-lg font-bold">증명서 공개 미리보기</p>
-              <p className="text-fg-muted mt-2 text-[13px]">
-                {preview.studentName} · {preview.cohortLabel}
-              </p>
-              <p className="text-fg mt-6 text-xs font-semibold">핵심 역량</p>
-              <p className="text-fg-muted mt-1.5 text-[13px]">
-                {preview.coreCompetency}
-              </p>
-              <p className="text-fg mt-5 text-xs font-semibold">
-                대표 프로젝트
-              </p>
-              <p className="text-fg-muted mt-1.5 text-[13px]">
-                {preview.representativeProject}
-              </p>
-              <p className="text-warning mt-7 text-xs font-semibold">
-                공개 위험
-              </p>
-              <p className="text-warning/90 mt-1.5 text-[13px]">
-                원문 코멘트와 운영 메모는 공개 필드에서 제외됩니다.
-              </p>
-            </div>
-          )}
+        {/* KPI 5종 */}
+        {summary && (
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <KpiCard
+              label="템플릿 버전"
+              value={summary.version}
+              hint={summary.versionState}
+            />
+            <KpiCard
+              label="공개 필드"
+              value={summary.publicFields}
+              hint="수강생 표시"
+            />
+            <KpiCard
+              label="내부 필드"
+              value={summary.internalFields}
+              hint="운영/검토용"
+            />
+            <KpiCard
+              label="스냅샷 잠금"
+              value={`${summary.snapshotLockStages}단계`}
+              hint="승인 시 고정"
+            />
+            <KpiCard
+              label="정책 경고"
+              value={summary.policyWarnings}
+              hint="공개 위험"
+              tone={summary.policyWarnings > 0 ? 'warning' : 'default'}
+            />
+          </div>
+        )}
 
-          {tab === 'internal' && (
-            <div className="border-border bg-surface rounded-xl border p-5">
-              <p className="text-fg text-lg font-bold">내부 필드 미리보기</p>
-              <p className="text-fg-muted mt-2 text-[13px]">
-                운영/검토 전용 — 수강생·외부에 노출되지 않습니다.
-              </p>
-              <ul className="mt-5 flex flex-col gap-2.5">
-                {fields.map((f) => (
-                  <li
-                    key={f.id}
-                    className="flex items-center justify-between gap-3"
-                  >
-                    <span className="text-fg-muted text-[13px]">
-                      {f.section}
-                    </span>
-                    <span className="text-fg font-mono text-[12px]">
-                      {f.internalField}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {/* 메인 — 필드 매핑 표(좌) + 탭별 우측 패널 */}
+        <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+          <div className="min-w-0 flex-1">
+            <DataTable
+              columns={columns}
+              rows={fields}
+              rowKey={(r) => r.id}
+              empty="등록된 필드가 없어요"
+            />
+          </div>
 
-          {tab === 'snapshot' && (
-            <div className="border-border bg-surface rounded-xl border p-5">
-              <p className="text-fg text-lg font-bold">스냅샷 잠금</p>
-              <p className="text-fg-muted mt-2 text-[13px]">
-                정식 인증 승인 시 {summary.snapshotLockStages}단계로 고정됩니다.
-              </p>
-              <p className="text-fg-muted mt-5 text-[13px] leading-relaxed">
-                공개 필드와 내부 필드가 snapshotPayload로 동결되어 이후 템플릿
-                변경의 영향을 받지 않습니다.
-              </p>
-            </div>
-          )}
-        </aside>
+          <aside className="w-full lg:w-[420px] lg:shrink-0">
+            {tab === 'public' && preview && (
+              <div className="border-border bg-surface rounded-xl border p-5">
+                <p className="text-fg text-lg font-bold">
+                  증명서 공개 미리보기
+                </p>
+                <p className="text-fg-muted mt-2 text-[13px]">
+                  {preview.studentName} · {preview.cohortLabel}
+                </p>
+                <p className="text-fg mt-6 text-xs font-semibold">핵심 역량</p>
+                <p className="text-fg-muted mt-1.5 text-[13px]">
+                  {preview.coreCompetency}
+                </p>
+                <p className="text-fg mt-5 text-xs font-semibold">
+                  대표 프로젝트
+                </p>
+                <p className="text-fg-muted mt-1.5 text-[13px]">
+                  {preview.representativeProject}
+                </p>
+                <p className="text-warning mt-7 text-xs font-semibold">
+                  공개 위험
+                </p>
+                <p className="text-warning/90 mt-1.5 text-[13px]">
+                  원문 코멘트와 운영 메모는 공개 필드에서 제외됩니다.
+                </p>
+              </div>
+            )}
+
+            {tab === 'internal' && (
+              <div className="border-border bg-surface rounded-xl border p-5">
+                <p className="text-fg text-lg font-bold">내부 필드 미리보기</p>
+                <p className="text-fg-muted mt-2 text-[13px]">
+                  운영/검토 전용 — 수강생·외부에 노출되지 않습니다.
+                </p>
+                <ul className="mt-5 flex flex-col gap-2.5">
+                  {fields.map((f) => (
+                    <li
+                      key={f.id}
+                      className="flex items-center justify-between gap-3"
+                    >
+                      <span className="text-fg-muted text-[13px]">
+                        {f.section}
+                      </span>
+                      <span className="text-fg font-mono text-[12px]">
+                        {f.internalField}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {tab === 'snapshot' && summary && (
+              <div className="border-border bg-surface rounded-xl border p-5">
+                <p className="text-fg text-lg font-bold">스냅샷 잠금</p>
+                <p className="text-fg-muted mt-2 text-[13px]">
+                  정식 인증 승인 시 {summary.snapshotLockStages}단계로
+                  고정됩니다.
+                </p>
+                <p className="text-fg-muted mt-5 text-[13px] leading-relaxed">
+                  공개 필드와 내부 필드가 snapshotPayload로 동결되어 이후 템플릿
+                  변경의 영향을 받지 않습니다.
+                </p>
+              </div>
+            )}
+          </aside>
+        </div>
+
+        {/* 스냅샷 정책 — 하단 콜아웃(항상 노출) */}
+        <div className="border-warning/30 bg-warning-bg/50 mt-6 rounded-xl border p-5">
+          <p className="text-warning text-base font-bold">스냅샷 정책</p>
+          <p className="text-warning/90 mt-2 text-[13px] leading-relaxed">
+            정식 인증 승인 시 공개 필드와 내부 필드가 snapshotPayload로
+            고정됩니다. 템플릿 변경은 이후 발급분에만 적용하고 기존 스냅샷은
+            감사 로그를 통해 추적합니다.
+          </p>
+        </div>
       </div>
-
-      {/* 스냅샷 정책 — 하단 콜아웃(항상 노출) */}
-      <div className="border-warning/30 bg-warning-bg/50 mt-6 rounded-xl border p-5">
-        <p className="text-warning text-base font-bold">스냅샷 정책</p>
-        <p className="text-warning/90 mt-2 text-[13px] leading-relaxed">
-          정식 인증 승인 시 공개 필드와 내부 필드가 snapshotPayload로
-          고정됩니다. 템플릿 변경은 이후 발급분에만 적용하고 기존 스냅샷은 감사
-          로그를 통해 추적합니다.
-        </p>
-      </div>
-    </div>
+    </DataBoundary>
   )
 }

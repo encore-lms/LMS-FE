@@ -75,9 +75,9 @@ export function useRecordReviewAction() {
         ),
       })
       // 운영 기록실 그리드(블로그·스터디)·자격증 목록도 갱신 — 처리 즉시 상태 반영
-      queryClient.invalidateQueries({ queryKey: ['admin', 'records', 'grid'] })
+      queryClient.invalidateQueries({ queryKey: adminKeys.recordsGridScope() })
       queryClient.invalidateQueries({
-        queryKey: ['admin', 'records', 'certificates'],
+        queryKey: adminKeys.recordsCertificatesScope(),
       })
     },
   })
@@ -86,7 +86,7 @@ export function useRecordReviewAction() {
 // 운영 기록실 주차 제출 그리드 — GET /admin/records/grid?category=&cohortId=
 export function useRecordsGrid(category: string, cohortId?: string | null) {
   return useQuery({
-    queryKey: ['admin', 'records', 'grid', category, cohortId ?? ''],
+    queryKey: adminKeys.recordsGrid(category, cohortId ?? ''),
     enabled: !!cohortId && category !== 'certificate', // 자격증은 그리드 아닌 목록
 
     queryFn: () =>
@@ -102,7 +102,7 @@ export function useRecordsGrid(category: string, cohortId?: string | null) {
 // 운영 자격증 목록 — GET /admin/records/certificates?cohortId=
 export function useAdminCertificates(cohortId?: string | null) {
   return useQuery({
-    queryKey: ['admin', 'records', 'certificates', cohortId ?? ''],
+    queryKey: adminKeys.recordsCertificates(cohortId ?? ''),
     enabled: !!cohortId,
     queryFn: () =>
       apiClient

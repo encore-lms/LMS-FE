@@ -30,6 +30,15 @@ export const adminKeys = {
       category,
       submissionId,
     ] as const,
+  // 운영 기록실 주차 그리드·자격증 목록 — query는 (category/cohort) 포함,
+  // 무효화는 Scope() prefix로(검토 처리 후 그리드·목록 갱신).
+  recordsGrid: (category: string, cohortId: string) =>
+    [...adminKeys.all, 'records', 'grid', category, cohortId] as const,
+  recordsGridScope: () => [...adminKeys.all, 'records', 'grid'] as const,
+  recordsCertificates: (cohortId: string) =>
+    [...adminKeys.all, 'records', 'certificates', cohortId] as const,
+  recordsCertificatesScope: () =>
+    [...adminKeys.all, 'records', 'certificates'] as const,
   quizAnswers: (quizId: string) =>
     [...adminKeys.all, 'quizzes', quizId, 'answers'] as const,
   // 영향 계산 — quizAnswers의 하위 키(저장 후 quizAnswers 무효화에 함께 쓸려간다).

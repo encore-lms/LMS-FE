@@ -1,7 +1,7 @@
 import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { downloadCourseMaterialFile } from '@/features/student/api/course'
+import { downloadCourseMaterialFile } from '../../../api/course'
 import type {
   MaterialCategory,
   MaterialFileType,

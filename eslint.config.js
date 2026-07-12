@@ -35,6 +35,32 @@ export default tseslint.config(
       ],
     },
   },
+  // feature 경계 — 형제 feature의 api 레이어(@/features/*/api)는 비공개.
+  // 교차 사용이 필요한 훅은 @/shared/api로 승격하고, 같은 feature 안에서는 상대경로(./api)를 쓴다.
+  // (같은 feature의 api는 상대경로라 이 패턴에 걸리지 않는다.) 스코프를 features/ 로 한정해
+  // 합성 루트(src/app)·shared는 feature api를 조합할 수 있게 둔다(top-down은 허용).
+  {
+    files: ['src/features/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/features/*/api', '@/features/*/api/*'],
+              message:
+                'feature의 api 레이어는 비공개입니다. 교차 사용이 필요하면 @/shared/api로 승격하고, 같은 feature 안에서는 상대경로(./api)를 쓰세요.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // 테스트는 합성된 feature의 내부 모듈을 mock해야 하므로 경계 룰에서 제외.
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
   // prettier와 충돌하는 포맷 규칙 비활성 (항상 마지막)
   prettier,
 )

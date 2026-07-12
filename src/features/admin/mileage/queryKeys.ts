@@ -3,4 +3,6 @@
 export const adminMileageKeys = {
   all: ['admin-mileage'] as const,
   overview: () => [...adminMileageKeys.all, 'overview'] as const,
+  // 기수 필터 옵션 — history·direct-pay·purchase-requests가 공유.
+  cohorts: () => [...adminMileageKeys.all, 'cohorts'] as const,
 } as const

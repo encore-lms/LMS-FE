@@ -10,10 +10,14 @@ export interface StudentCourseFeatures {
   features: Record<string, boolean>
 }
 
+export const courseFeaturesKeys = {
+  all: ['student', 'course-features'] as const,
+}
+
 // STUDENT일 때만 조회(enabled). 실패 시 데이터 없음 → 메뉴 전부 노출(graceful).
 export function useStudentCourseFeatures(enabled: boolean) {
   return useQuery({
-    queryKey: ['student', 'course-features'],
+    queryKey: courseFeaturesKeys.all,
     enabled,
     staleTime: 60_000,
     queryFn: () =>

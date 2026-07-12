@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useGradingDetail, useSaveGrading } from '../api/quizzes'
-import { useStudentAccounts } from '@/features/admin/api/students'
+import { useStudentAccounts } from '@/shared/api/students'
 import { QUESTION_TYPE_LABEL } from './meta'
 
 interface DraftEntry {

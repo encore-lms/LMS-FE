@@ -15,7 +15,7 @@ import {
   useDeleteAssignment,
   useChangeSubmissionStatus,
 } from '../api/assignments'
-import { useStudentAccounts } from '@/features/admin/api/students'
+import { useStudentAccounts } from '@/shared/api/students'
 import type {
   InstructorAssignmentListData,
   AssignmentFormDetail,
@@ -23,7 +23,7 @@ import type {
 } from '@/shared/types'
 
 vi.mock('../api/assignments')
-vi.mock('@/features/admin/api/students')
+vi.mock('@/shared/api/students')
 
 const changeStatusMutate = vi.fn()
 

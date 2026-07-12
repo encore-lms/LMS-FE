@@ -1,74 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, adminKeys } from '@/shared/api'
-import type {
-  StudentAccount,
-  StudentAccountQueue,
-  StudentAttendanceData,
-  AttendanceFormData,
-} from '@/shared/types'
+import type { StudentAttendanceData, AttendanceFormData } from '@/shared/types'
 
-// ── 수강생 계정(auth-user-service /users/students) — HRD 동기화 등록·목록 ──
+// ── 수강생 계정(auth-user-service /users/students) — HRD 동기화 등록·출결 ──
 // 실 BE 전용(mock 모드에선 mock 토큰이라 401). 학생 화면 출결 탭 등은 별도 mock 유지.
 
-// auth-service 학생 목록 원본.
-interface RawStudent {
-  userId: string
-  studentUuid: string
-  name: string
-  birth: string | null
-  status: string // ACTIVE | INACTIVE | BLOCKED
-  lastLoginAt: string | null
-  createdAt: string
-}
-interface RawStudentPage {
-  content: RawStudent[]
-  totalElements: number
-}
-
-function toAccount(s: RawStudent): StudentAccount {
-  return {
-    id: s.userId,
-    name: s.name,
-    studentUuid: s.studentUuid,
-    birthDate: s.birth ?? '-',
-    joinedAt: s.createdAt ? s.createdAt.slice(5, 10) : '-',
-    lastLoginAt: s.lastLoginAt ? s.lastLoginAt.slice(0, 10) : null,
-    trainingStatus: s.status === 'INACTIVE' ? 'dropout' : 'active',
-    loginBlocked: s.status === 'BLOCKED',
-  }
-}
-
-// 수강생 계정 목록 — /users/students 실연동(StudentAccountQueue로 매핑해 기존 화면 유지).
-// cohortId가 있으면 해당 기수 배정 학생만 조회(선택 즉시 목록 갱신).
-export function useStudentAccounts(cohortId?: string | null) {
-  return useQuery({
-    queryKey: adminKeys.studentAccounts({ cohortId: cohortId ?? undefined }),
-    queryFn: () =>
-      apiClient
-        .get<RawStudentPage>('/users/students', {
-          size: 100,
-          ...(cohortId ? { cohortId } : {}),
-        })
-        .then((r) => {
-          const items = (r.data.content ?? []).map(toAccount)
-          const queue: StudentAccountQueue = {
-            cohortLabel: '전체',
-            items,
-            summary: {
-              total: r.data.totalElements ?? items.length,
-              normal: items.filter(
-                (a) => !a.loginBlocked && a.trainingStatus !== 'dropout',
-              ).length,
-              loginBlocked: items.filter((a) => a.loginBlocked).length,
-              lastSyncAt: '-',
-              syncCreated: 0,
-              syncExisting: 0,
-            },
-          }
-          return queue
-        }),
-  })
-}
+// 수강생 계정 목록 훅은 강사 화면과도 공유되어 @/shared/api/students로 승격했다.
+// 운영 화면은 이 배럴 재노출로 기존 import 경로(../api/students)를 그대로 유지한다.
+export { useStudentAccounts } from '@/shared/api/students'
 
 // 회차(기수) HRD-Net 훈련생 명단 — 동기화 입력. 온디맨드 호출.
 export interface HrdTrainee {

@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { QuizSubmissionRow } from '@/shared/types'
-import { useStudentAccounts } from '@/features/admin/api/students'
+import { useStudentAccounts } from '@/shared/api/students'
 import { useQuizSubmissions } from '../api/quizzes'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 

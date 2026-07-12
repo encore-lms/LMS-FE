@@ -19,7 +19,7 @@ import {
 } from '../api/quizzes'
 import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
 import { useAssignmentCohortOptions } from '../api/assignments'
-import { useStudentAccounts } from '@/features/admin/api/students'
+import { useStudentAccounts } from '@/shared/api/students'
 import type {
   InstructorQuizListData,
   QuizFormDetail,
@@ -31,7 +31,7 @@ import type {
 vi.mock('../api/quizzes')
 vi.mock('../api/quizTemplates')
 vi.mock('../api/assignments')
-vi.mock('@/features/admin/api/students')
+vi.mock('@/shared/api/students')
 
 const quizList: InstructorQuizListData = {
   total: 14,

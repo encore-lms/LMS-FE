@@ -12,7 +12,7 @@ import {
   useAssignmentSubmissions,
   useChangeSubmissionStatus,
 } from '../api/assignments'
-import { useStudentAccounts } from '@/features/admin/api/students'
+import { useStudentAccounts } from '@/shared/api/students'
 import { ReviewCompleteModal } from './ReviewCompleteModal'
 import { SupplementRequestModal } from './SupplementRequestModal'
 import {

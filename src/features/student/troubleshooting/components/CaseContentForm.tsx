@@ -1,21 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  Check,
-  CheckCircle2,
-  Clock,
-  FileText,
-  Flag,
-  Info,
-  Link2,
-  Send,
-  X,
-} from 'lucide-react'
+import { Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
-import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { tsKeys } from '../queryKeys'
 import { buildCaseDetail, buildTimeline } from '../detail'
 import { TS_STATUS_META } from '../flow'
@@ -24,78 +13,25 @@ import {
   type TsCase,
   type TsListData,
   type TsProjectLink,
-  type Tone,
 } from '../types'
-import { TONE_SOLID } from '@/shared/lib/tone'
+import {
+  ALLOWED_EXT,
+  card,
+  CATEGORY_KEY,
+  formatSize,
+  MAX_FILE_SIZE,
+  STAR,
+  type UploadFile,
+} from './caseFormConstants'
+import { CaseBasicInfoSection } from './CaseBasicInfoSection'
+import { CaseStarSection } from './CaseStarSection'
+import { CaseTagsAttachments } from './CaseTagsAttachments'
 
 // 트러블슈팅 사례 내용 편집 폼 — 상세 페이지의 '작성 중(draft·미완료)' 모드에서만 쓰인다.
 // 하단 바 = [임시 저장](→이어 작성, 계속 작성) · [작성 완료](→draft·완료로 저장 후 목록으로).
 // 작성 완료 사례는 목록에서 '사례 열기' → 상세의 '인증 요청 준비'에서 인증 요청. 삭제는 목록에서.
-const card = 'border-border bg-surface rounded-2xl border p-6'
-const input =
-  'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
-
-// 카테고리 표시명 → 목록 필터 키
-const CATEGORY_KEY: Record<string, string> = {
-  DB: 'DB',
-  '배포·인프라': 'deploy',
-  성능: 'perf',
-  '네트워크·API': 'net',
-  보안: 'etc',
-  기타: 'etc',
-}
-
-const STAR = [
-  {
-    key: 'situation',
-    label: '상황 (Situation)',
-    sub: '무엇이 어떻게 잘못되고 있었는지, 사용자/시스템에 어떤 영향이 있었는지',
-    Icon: Info,
-    box: 'bg-info-bg text-info',
-  },
-  {
-    key: 'resolution',
-    label: '해결 (Resolution)',
-    sub: '원인 파악부터 실제 조치까지 해결 과정을 기록',
-    Icon: Send,
-    box: 'bg-accent-bg text-accent-strong',
-  },
-  {
-    key: 'result',
-    label: '결과 (Result)',
-    sub: '수치로 본 결과와 학습한 점',
-    Icon: CheckCircle2,
-    box: 'bg-success-bg text-success',
-  },
-] as const
-
-const RECOMMENDED_TAGS = [
-  '#컨슈머그룹',
-  '#ack정책',
-  '#dedup',
-  '#트랜잭션',
-  '#격리수준',
-  '#스케일아웃',
-  '#모니터링',
-]
-
-interface UploadFile {
-  id: string
-  name: string
-  size: string
-}
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
+// 첨부 파일 임시 id 시퀀스 — addFiles에서 증가시키므로(let 재할당) 이 모듈에 둔다.
 let fileSeq = 0
-
-// 첨부 허용 형식 — 이미지·PDF·로그/텍스트. accept 속성 + 추가 시 확장자/용량 필터로 이중 방어.
-const ACCEPT_TYPES =
-  '.png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.log,.txt,.md,.json,.yml,.yaml'
-const ALLOWED_EXT = /\.(png|jpe?g|gif|webp|svg|pdf|log|txt|md|json|ya?ml)$/i
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 interface CaseContentFormProps {
   caseId: string
@@ -285,385 +221,40 @@ export function CaseContentForm({
     <>
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="flex flex-1 flex-col gap-5">
-          <section className={cn(card, 'flex flex-col gap-4')}>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-fg text-[15px] font-bold">기본 정보</span>
-              <span className="text-fg-subtle text-[11px]">
-                사례를 한 줄로 요약할 제목과 분류를 입력하세요
-              </span>
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-fg text-[13px] font-bold">
-                제목 <span className="text-danger">*</span>
-              </span>
-              <input
-                className={input}
-                value={title}
-                maxLength={60}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="문제와 해결 핵심을 한 줄로"
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-fg-subtle text-[11px]">
-                  문제와 해결 핵심을 한 줄로 — 60자 이내 권장
-                </span>
-                <span className="text-fg-subtle text-[11px]">
-                  {title.length} / 60
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-fg text-[13px] font-bold">
-                카테고리 <span className="text-danger">*</span>
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  ...TS_CATEGORIES,
-                  ...customCategories.map((key) => ({
-                    key,
-                    tone: 'success' as Tone,
-                  })),
-                ].map((c) => {
-                  const on = c.key === category
-                  return (
-                    <button
-                      key={c.key}
-                      type="button"
-                      onClick={() => setCategory(c.key)}
-                      className={cn(
-                        'flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold',
-                        on
-                          ? 'border-brand bg-brand text-white'
-                          : 'border-border text-fg-muted hover:border-brand/50',
-                      )}
-                    >
-                      {on ? (
-                        <Check className="size-3" />
-                      ) : (
-                        <span
-                          className={cn(
-                            'size-1.5 rounded-full',
-                            TONE_SOLID[c.tone],
-                          )}
-                        />
-                      )}
-                      {c.key}
-                    </button>
-                  )
-                })}
-              </div>
-              {category === '기타' && (
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    className={cn(input, 'flex-1')}
-                    value={customInput}
-                    maxLength={20}
-                    onChange={(e) => setCustomInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        addCustomCategory()
-                      }
-                    }}
-                    placeholder="카테고리를 직접 입력하고 추가하세요"
-                    aria-label="기타 카테고리 직접 입력"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomCategory}
-                    disabled={!customInput.trim()}
-                    className="border-brand text-brand shrink-0 rounded-[10px] border px-4 py-3 text-[13px] font-semibold disabled:opacity-40"
-                  >
-                    추가
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-2">
-                  <span className="text-fg text-[13px] font-bold">
-                    문제 발생일 <span className="text-danger">*</span>
-                  </span>
-                  <DateTimePicker
-                    mode="date"
-                    value={date}
-                    onChange={setDate}
-                    ariaLabel="문제 발생일"
-                    placeholder="날짜 선택"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-fg text-[13px] font-bold">
-                    해결 소요
-                  </span>
-                  <div className="relative">
-                    <Clock className="text-fg-subtle pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2" />
-                    <input
-                      className={cn(input, 'pr-9 pl-10')}
-                      value={dayCount}
-                      inputMode="numeric"
-                      onChange={(e) =>
-                        setDayCount(e.target.value.replace(/[^0-9]/g, ''))
-                      }
-                      placeholder="예) 3"
-                      aria-label="해결 소요 일수"
-                    />
-                    <span className="text-fg-muted pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-[13px]">
-                      일
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <span className="text-fg-subtle text-[11px]">
-                실제 문제가 발생한 일자와 해결까지 소요된 영업일
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIndependent((v) => !v)}
-              className="bg-surface-muted/50 flex items-center justify-between rounded-xl p-3.5"
-            >
-              <div className="flex items-center gap-2.5 text-left">
-                <span className="bg-brand/10 text-brand flex size-8 shrink-0 items-center justify-center rounded-lg">
-                  <Flag className="size-[18px]" />
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-fg text-[13px] font-bold">
-                    독립 해결
-                  </span>
-                  <span className="text-fg-subtle text-[11px]">
-                    동료·강사·외부 도움 없이 본인 주도로 해결한 사례
-                  </span>
-                </div>
-              </div>
-              <span
-                className={cn(
-                  'flex h-6 w-11 items-center rounded-full p-0.5 transition-colors',
-                  independent ? 'bg-brand' : 'bg-border',
-                )}
-              >
-                <span
-                  className={cn(
-                    'size-5 rounded-full bg-white transition-transform',
-                    independent && 'translate-x-5',
-                  )}
-                />
-              </span>
-            </button>
-          </section>
+          <CaseBasicInfoSection
+            title={title}
+            setTitle={setTitle}
+            category={category}
+            setCategory={setCategory}
+            customCategories={customCategories}
+            customInput={customInput}
+            setCustomInput={setCustomInput}
+            addCustomCategory={addCustomCategory}
+            date={date}
+            setDate={setDate}
+            dayCount={dayCount}
+            setDayCount={setDayCount}
+            independent={independent}
+            setIndependent={setIndependent}
+          />
 
-          {STAR.map((s) => (
-            <section key={s.key} className={cn(card, 'flex flex-col gap-3')}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className={cn(
-                      'flex size-9 shrink-0 items-center justify-center rounded-[10px]',
-                      s.box,
-                    )}
-                  >
-                    <s.Icon className="size-[18px]" />
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-fg text-[14px] font-bold">
-                      {s.label}
-                    </span>
-                    <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-                  </div>
-                </div>
-                {star[s.key]?.trim() && (
-                  <span className="bg-success-bg text-success flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
-                    <Check className="size-3" /> 작성됨
-                  </span>
-                )}
-              </div>
-              <textarea
-                className={cn(input, 'min-h-[120px] resize-none leading-6')}
-                value={star[s.key]}
-                maxLength={500}
-                onChange={(e) =>
-                  setStar((p) => ({ ...p, [s.key]: e.target.value }))
-                }
-              />
-              <div className="flex items-center justify-between">
-                <div className="text-fg-subtle flex items-center gap-3 text-[11px]">
-                  <span>Markdown 지원</span>
-                  <span className="bg-surface-muted rounded px-1.5 py-0.5 font-mono">
-                    ` ` 인라인 코드
-                  </span>
-                </div>
-                <span className="text-fg-subtle text-[11px]">
-                  {star[s.key]?.length ?? 0} / 500
-                </span>
-              </div>
-            </section>
-          ))}
+          <CaseStarSection star={star} setStar={setStar} />
 
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <div className="flex items-center justify-between">
-              <span className="text-fg text-[15px] font-bold">태그 · 첨부</span>
-              <span className="bg-brand/10 text-brand rounded-full px-3 py-1 text-[11px] font-bold">
-                태그 {tags.length} / 5
-              </span>
-            </div>
-            <span className="text-fg-subtle text-[11px]">
-              태그는 검색·필터에 사용해요. 해결 근거 파일을 함께 첨부하세요.
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {tags.map((t) => (
-                <span
-                  key={t}
-                  className="bg-brand flex items-center gap-2 rounded-full py-1 pr-1 pl-3 text-[12px] font-semibold text-white"
-                >
-                  {t}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(t)}
-                    aria-label={`${t} 제거`}
-                    className="text-brand flex size-4 items-center justify-center rounded-full bg-white"
-                  >
-                    <X className="size-2.5" strokeWidth={3} />
-                  </button>
-                </span>
-              ))}
-              {tags.length < 5 && (
-                <input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addTag(tagInput)
-                      setTagInput('')
-                    }
-                  }}
-                  placeholder="+ 태그 추가"
-                  className="text-fg-subtle placeholder:text-fg-subtle focus:text-fg w-24 bg-transparent px-1 py-1 text-[12px] outline-none"
-                />
-              )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <span className="text-fg-subtle text-[11px]">추천 태그</span>
-              <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-                {RECOMMENDED_TAGS.map((t) => {
-                  const used = tags.includes(t)
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => addTag(t)}
-                      disabled={used || tags.length >= 5}
-                      className={cn(
-                        'text-[11px]',
-                        used
-                          ? 'text-brand/40 cursor-default'
-                          : 'text-fg-muted hover:text-brand',
-                      )}
-                    >
-                      {t}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="bg-surface-muted/40 text-fg-muted rounded-lg px-3 py-2 text-[11px] leading-4">
-              허용 형식 — 이미지(PNG·JPG·GIF·WEBP·SVG) · PDF ·
-              로그/텍스트(.log·.txt·.md·.json·.yml) · 파일당 최대 10MB
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {files.map((f) => {
-                const isImage = /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name)
-                return (
-                  <span
-                    key={f.id}
-                    className="border-border flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5"
-                  >
-                    <span
-                      className={cn(
-                        'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                        isImage
-                          ? 'bg-accent-bg text-accent-strong'
-                          : 'bg-success-bg text-success',
-                      )}
-                    >
-                      <FileText className="size-4" />
-                    </span>
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-fg truncate text-[12px] font-semibold">
-                        {f.name}
-                      </span>
-                      <span className="text-fg-subtle text-[11px]">
-                        {f.size}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(f.id)}
-                      aria-label={`${f.name} 제거`}
-                      className="border-border text-fg-subtle hover:text-fg flex size-6 shrink-0 items-center justify-center rounded-md border"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                )
-              })}
-              <label className="border-border text-fg-subtle hover:border-brand/50 flex cursor-pointer items-center justify-center gap-1 rounded-[10px] border border-dashed px-3 py-2.5 text-[12px]">
-                + 파일 추가
-                <input
-                  type="file"
-                  multiple
-                  accept={ACCEPT_TYPES}
-                  className="hidden"
-                  onChange={(e) => {
-                    addFiles(e.target.files)
-                    e.target.value = ''
-                  }}
-                />
-              </label>
-            </div>
-            {links.map((url) => (
-              <span
-                key={url}
-                className="border-border flex items-center gap-2 rounded-[10px] border px-3 py-2.5 text-[12px]"
-              >
-                <Link2 className="text-fg-subtle size-3.5 shrink-0" />
-                <span className="text-fg-muted flex-1 truncate">{url}</span>
-                <button
-                  type="button"
-                  onClick={() => removeLink(url)}
-                  aria-label="링크 제거"
-                  className="text-fg-subtle hover:text-fg"
-                >
-                  <X className="size-3.5" />
-                </button>
-              </span>
-            ))}
-            <div className="flex items-center gap-2">
-              <div className="border-border focus-within:border-brand flex flex-1 items-center gap-2 rounded-[10px] border px-3 py-2.5">
-                <Link2 className="text-fg-subtle size-3.5 shrink-0" />
-                <input
-                  value={linkInput}
-                  onChange={(e) => setLinkInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addLink()
-                    }
-                  }}
-                  placeholder="https:// 근거 링크를 붙여넣고 Enter"
-                  className="text-fg placeholder:text-fg-subtle flex-1 bg-transparent text-[12px] outline-none"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={addLink}
-                className="border-border text-fg-muted hover:bg-surface-muted shrink-0 rounded-[10px] border px-3.5 py-2.5 text-[12px] font-semibold"
-              >
-                링크 추가
-              </button>
-            </div>
-          </section>
+          <CaseTagsAttachments
+            tags={tags}
+            tagInput={tagInput}
+            setTagInput={setTagInput}
+            addTag={addTag}
+            removeTag={removeTag}
+            files={files}
+            addFiles={addFiles}
+            removeFile={removeFile}
+            links={links}
+            removeLink={removeLink}
+            linkInput={linkInput}
+            setLinkInput={setLinkInput}
+            addLink={addLink}
+          />
         </div>
 
         <div className="flex flex-col gap-4 lg:w-[320px]">

@@ -15,11 +15,7 @@ import type {
   QuizAnswerRow,
   QuizAnswerRowStatus,
 } from '@/shared/types'
-import {
-  useAnswerImpact,
-  useQuizAnswers,
-  useSaveAnswerChanges,
-} from '../api/quizzes'
+import { useAnswerImpact, useQuizAnswers, useSaveAnswerChanges } from './api'
 
 // 행 상태 4분기 — Figma 배지 원문(정상/확인 필요/검토/비활성 후보).
 const STATUS_META: Record<

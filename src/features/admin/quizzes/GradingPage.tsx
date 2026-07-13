@@ -8,7 +8,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { AdminGradingItem, AdminGradingQuestionType } from '@/shared/types'
-import { useAdminGradingDetail, useSaveGrading } from '../api/quizzes'
+import { useAdminGradingDetail, useSaveGrading } from './api'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 
 // 유형 라벨 — admin 로컬 상수(운영 작업은 instructor/quizzes/meta.ts 무접촉).

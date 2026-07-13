@@ -3,15 +3,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import AnswersPage from './AnswersPage'
-import {
-  useAnswerImpact,
-  useQuizAnswers,
-  useSaveAnswerChanges,
-} from '../api/quizzes'
+import { useAnswerImpact, useQuizAnswers, useSaveAnswerChanges } from './api'
 import { usePageHeaderStore } from '@/shared/store'
 import type { QuizAnswerImpact, QuizAnswersData } from '@/shared/types'
 
-vi.mock('../api/quizzes')
+vi.mock('./api')
 vi.mock('@/components/ui/use-toast', () => ({
   useToast: () => ({
     success: vi.fn(),

@@ -3,15 +3,21 @@ import type { CourseWeek } from '../../types'
 import { WeekRow } from './WeekRow'
 
 // 주차별 학습 카드(좌측) — 제목/부제 + '전체 주차 보기' + 주차 행 목록.
+// 전체 주차는 '전체 주차 보기'로 보고, 카드에는 현재 주차 n 기준 n-2 ~ n+2(최대 5주)만 노출한다.
 export function WeekLearningCard({
   title,
   subtitle,
   weeks,
+  currentWeek,
 }: {
   title: string
   subtitle: string
   weeks: CourseWeek[]
+  currentWeek: number
 }) {
+  const visibleWeeks = weeks.filter(
+    (w) => w.weekNo >= currentWeek - 2 && w.weekNo <= currentWeek + 2,
+  )
   return (
     <section className="border-border bg-surface flex flex-1 flex-col gap-3.5 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
       <div className="flex items-center justify-between gap-2">
@@ -26,7 +32,7 @@ export function WeekLearningCard({
           전체 주차 보기 →
         </Link>
       </div>
-      {weeks.map((w) => (
+      {visibleWeeks.map((w) => (
         <WeekRow key={w.weekNo} week={w} />
       ))}
     </section>

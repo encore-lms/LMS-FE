@@ -45,6 +45,7 @@ function KdtCourseHome() {
                 title={data.weeksTitle}
                 subtitle={data.weeksSubtitle}
                 weeks={data.weeks}
+                currentWeek={data.hero.currentWeek}
               />
               <div className="flex w-full flex-col gap-4 lg:w-[344px]">
                 {data.sideCards.map((card) => (

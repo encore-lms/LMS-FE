@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { usePageHeader } from '@/shared/store'
 import { useAssignments } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
@@ -29,12 +29,10 @@ export default function AssignmentsPage() {
   const { data, isPending, isError, refetch } = useAssignments()
   usePageHeader('과제/실습')
   const [filter, setFilter] = useState<Filter>('all')
-  const [open, setOpen] = useState(false)
   const [page, setPage] = useState(1)
 
   const items = data ?? []
   const shown = items.filter((it) => filter === 'all' || it.status === filter)
-  const activeLabel = FILTERS.find((f) => f.key === filter)?.label ?? '전체'
 
   // 항목이 많아지면 스크롤 대신 페이지로 끊어 본다(자료실과 동일 규칙).
   const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
@@ -52,39 +50,17 @@ export default function AssignmentsPage() {
         errorTitle="과제를 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >
-        {/* 상태 필터 드롭다운 */}
-        <div className="relative w-fit">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="border-border bg-surface text-fg flex items-center gap-2 rounded-[10px] border px-3.5 py-[9px] text-[13px] font-medium"
-          >
-            {activeLabel}
-            <span className="text-fg-subtle text-[10px]">▾</span>
-          </button>
-          {open && (
-            <div className="border-border bg-surface absolute top-[calc(100%+4px)] left-0 z-10 flex w-40 flex-col rounded-[10px] border p-1 shadow-[0px_8px_22px_0px_rgba(18,23,38,0.12)]">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => {
-                    setFilter(f.key)
-                    setPage(1)
-                    setOpen(false)
-                  }}
-                  className={cn(
-                    'rounded-md px-3 py-2 text-left text-[13px]',
-                    f.key === filter
-                      ? 'bg-brand/10 text-brand font-semibold'
-                      : 'text-fg hover:bg-surface-muted',
-                  )}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          )}
+        {/* 상태 필터 — 공통 Select */}
+        <div className="w-fit">
+          <Select
+            aria-label="상태 필터"
+            value={filter}
+            onChange={(v) => {
+              setFilter(v as Filter)
+              setPage(1)
+            }}
+            options={FILTERS.map((f) => ({ value: f.key, label: f.label }))}
+          />
         </div>
 
         {/* 과제 카드 목록 */}

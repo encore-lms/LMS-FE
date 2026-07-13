@@ -4,7 +4,6 @@ import { useCourseHome } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import { OnlineCoursePage } from '../online/OnlineCoursePage'
 import { CourseHero } from './components/CourseHero'
-import { CourseKpiCards } from './components/CourseKpiCards'
 import { WeekLearningCard } from './components/WeekLearningCard'
 import { MiniListCard } from './components/MiniListCard'
 import { CourseNoticeCard } from './components/CourseNoticeCard'
@@ -40,7 +39,6 @@ function KdtCourseHome() {
           <>
             <CourseHero hero={data.hero} />
             <CourseNoticeCard notices={data.notices} />
-            <CourseKpiCards kpis={data.kpis} />
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
               <WeekLearningCard
                 title={data.weeksTitle}

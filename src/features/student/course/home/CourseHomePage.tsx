@@ -39,6 +39,7 @@ function KdtCourseHome() {
         {data && (
           <>
             <CourseHero hero={data.hero} />
+            <CourseNoticeCard notices={data.notices} />
             <CourseKpiCards kpis={data.kpis} />
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
               <WeekLearningCard
@@ -53,7 +54,6 @@ function KdtCourseHome() {
                 ))}
               </div>
             </div>
-            <CourseNoticeCard notices={data.notices} />
           </>
         )}
       </DataBoundary>

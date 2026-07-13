@@ -3,7 +3,20 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import type { StudentQuizListItem } from '../types'
 import { CATEGORY_BADGE, GRADING_LABEL } from './quizDisplay'
 
-// 완료/채점 대기/기간 종료 퀴즈 한 줄 — 제목·메타 + 상태/점수 + 액션(결과 보기/비활성).
+// 상태별 배지(라벨·색) — 완료/채점 대기/기간 종료.
+const STATUS_META: Record<
+  'completed' | 'pending_manual' | 'closed',
+  { label: string; badge: string }
+> = {
+  completed: { label: '완료', badge: 'bg-success-bg text-success' },
+  pending_manual: {
+    label: '채점 대기',
+    badge: 'bg-accent-bg text-accent-strong',
+  },
+  closed: { label: '기간 종료', badge: 'bg-surface-muted text-fg-subtle' },
+}
+
+// 완료/채점 대기/기간 종료 퀴즈 한 줄 — 제목·메타 + 점수·상태 배지 + 액션(결과 보기/비활성).
 export function OtherStatusRow({
   item,
   onResult,
@@ -12,23 +25,28 @@ export function OtherStatusRow({
   onResult: () => void
 }) {
   const closed = item.state === 'closed'
-  const meta = `${item.periodLabel}  ·  ${item.quiz.timeLimitMinutes}분 · ${item.questionCount}문항 · ${GRADING_LABEL[item.quiz.gradingMode]}`
+  const status =
+    STATUS_META[item.state as keyof typeof STATUS_META] ?? STATUS_META.closed
+  const meta = `${item.periodLabel} · ${item.quiz.timeLimitMinutes}분 · ${item.questionCount}문항 · ${GRADING_LABEL[item.quiz.gradingMode]}`
 
   return (
-    <div className="flex w-full items-center gap-3.5 px-6 py-3.5">
+    <div className="flex w-full items-center gap-4 px-6 py-3.5">
+      {/* 좌: 카테고리·제목·메타 */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-center gap-2">
+          {item.category && (
+            <span
+              className={cn(
+                'shrink-0 rounded-[5px] px-2 py-[3px] text-[10px] font-bold tracking-[0.04em]',
+                CATEGORY_BADGE[item.category],
+              )}
+            >
+              {item.category}
+            </span>
+          )}
           <span
             className={cn(
-              'rounded-[5px] px-2 py-[3px] text-[10px] font-bold tracking-[0.04em]',
-              CATEGORY_BADGE[item.category],
-            )}
-          >
-            {item.category}
-          </span>
-          <span
-            className={cn(
-              'text-[13px] font-semibold',
+              'truncate text-[14px] font-semibold',
               closed ? 'text-fg-muted' : 'text-fg',
             )}
           >
@@ -38,52 +56,40 @@ export function OtherStatusRow({
         <span className="text-fg-subtle text-[11px]">{meta}</span>
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-0.5">
-        {item.state === 'completed' && (
-          <>
-            <span className="text-success text-[12px] font-medium">
-              {item.latestSubmission?.totalScore}점
+      {/* 우: 점수 · 상태 배지 · 액션(고정 폭으로 행 간 정렬) */}
+      <div className="flex shrink-0 items-center gap-3">
+        {item.state === 'completed' && item.latestSubmission && (
+          <span className="text-fg text-[14px] font-bold tabular-nums">
+            {item.latestSubmission.totalScore}
+            <span className="text-fg-subtle ml-0.5 text-[11px] font-medium">
+              점
             </span>
-            <span className="bg-success-bg text-success rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
-              완료
-            </span>
-          </>
+          </span>
         )}
-        {item.state === 'pending_manual' && (
-          <>
-            <span className="text-accent-strong text-[12px] font-medium">
-              운영자 채점 진행 중
-            </span>
-            <span className="bg-accent-bg text-accent-strong rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
-              채점 대기
-            </span>
-          </>
-        )}
-        {closed && (
-          <>
-            <span className="text-fg-subtle text-[12px] font-medium">
-              미응시 · 기간 만료
-            </span>
-            <span className="bg-surface-muted text-fg-subtle rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
-              기간 종료
-            </span>
-          </>
-        )}
-      </div>
-
-      {item.state === 'completed' ? (
-        <button
-          type="button"
-          onClick={onResult}
-          className={buttonClass({ size: 'sm', className: 'shrink-0' })}
+        <span
+          className={cn(
+            'rounded-[5px] px-2 py-[3px] text-[11px] font-bold',
+            status.badge,
+          )}
         >
-          결과 보기 <span aria-hidden>→</span>
-        </button>
-      ) : (
-        <span className="bg-surface-muted text-fg-subtle shrink-0 rounded-lg px-3.5 py-1.5 text-[12px] font-semibold">
-          {item.state === 'pending_manual' ? '채점 대기' : '응시 불가'}
+          {status.label}
         </span>
-      )}
+        <div className="flex w-[104px] justify-end">
+          {item.state === 'completed' ? (
+            <button
+              type="button"
+              onClick={onResult}
+              className={buttonClass({ size: 'sm', className: 'shrink-0' })}
+            >
+              결과 보기 <span aria-hidden>→</span>
+            </button>
+          ) : (
+            <span className="text-fg-subtle text-[12px] font-medium">
+              {item.state === 'pending_manual' ? '결과 준비 중' : '응시 불가'}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

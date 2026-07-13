@@ -7,6 +7,7 @@ export type CertTab =
   | 'projects'
   | 'problem-solving'
   | 'growth-reputation'
+  | 'resume' // 이력서 프로필 뷰 — /student/resume 작성분을 링크드인식으로 표시
   | 'ai-analysis' // v2 (CERT_V2): AI 분석 통합 탭
 
 import type { Tone } from '@/shared/lib/tone'

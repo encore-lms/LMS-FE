@@ -58,14 +58,16 @@ export function AvailableQuizRow({
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'rounded-[5px] px-2 py-[3px] text-[10px] font-bold tracking-[0.04em]',
-              CATEGORY_BADGE[item.category],
-            )}
-          >
-            {item.category}
-          </span>
+          {item.category && (
+            <span
+              className={cn(
+                'rounded-[5px] px-2 py-[3px] text-[10px] font-bold tracking-[0.04em]',
+                CATEGORY_BADGE[item.category],
+              )}
+            >
+              {item.category}
+            </span>
+          )}
           <span className="text-fg-subtle text-[11px]">{item.periodLabel}</span>
         </div>
         <p className="text-fg text-[14px] leading-5 font-semibold">

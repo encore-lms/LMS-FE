@@ -1,4 +1,5 @@
 import { cn } from '@/shared/lib/cn'
+import { StatTileCard } from '@/components/data/StatTileCard'
 import type { RecordStat } from '../types'
 import { TONE_SOLID } from '@/shared/lib/tone'
 
@@ -12,35 +13,30 @@ export function RecordStatCards({ stats }: { stats: RecordStat[] }) {
       {stats.map((s) => {
         const fill = Math.min(1, (parseInt(s.value, 10) || 0) / total)
         return (
-          <div
+          <StatTileCard
             key={s.key}
-            className="border-border bg-surface flex flex-col gap-3 rounded-2xl border p-5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-fg-muted text-[12px] font-medium">
-                {s.label}
-              </span>
+            label={s.label}
+            value={s.value}
+            unit={s.unit}
+            sub={s.sub}
+            headerAlign="center"
+            badge={
               <span
                 className={cn('size-2 rounded-full', TONE_SOLID[s.dotTone])}
               />
-            </div>
-            <span className="text-fg text-[28px] leading-none font-bold">
-              {s.value}
-              <span className="text-fg-muted ml-1 text-[14px] font-medium">
-                {s.unit}
-              </span>
-            </span>
-            <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
-              <span
-                className={cn(
-                  'block h-full rounded-full',
-                  TONE_SOLID[s.dotTone],
-                )}
-                style={{ width: `${fill * 100}%` }}
-              />
-            </div>
-            <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-          </div>
+            }
+            bar={
+              <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
+                <span
+                  className={cn(
+                    'block h-full rounded-full',
+                    TONE_SOLID[s.dotTone],
+                  )}
+                  style={{ width: `${fill * 100}%` }}
+                />
+              </div>
+            }
+          />
         )
       })}
     </div>

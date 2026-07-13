@@ -8,6 +8,7 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from 'lucide-react'
+import { StatTileCard } from '@/components/data/StatTileCard'
 import type { ProjectStat, Tone } from '../types'
 
 // 프로젝트 목록 상단 통계 4종 — 참여/인증완료/검토중/작성중.
@@ -34,9 +35,14 @@ function StatCard({ stat: s }: { stat: ProjectStat }) {
   const { Icon, cls } = ICON[s.tone]
 
   return (
-    <div className="border-border bg-surface flex flex-col gap-3 rounded-2xl border p-5">
-      <div className="flex items-start justify-between">
-        <span className="text-fg-muted text-[12px] font-medium">{s.label}</span>
+    <StatTileCard
+      label={s.label}
+      value={s.value}
+      unit={s.unit}
+      sub={s.sub}
+      headerAlign="start"
+      subDivider
+      badge={
         <span
           className={cn(
             'flex size-6 items-center justify-center rounded-md text-[12px] font-bold',
@@ -45,16 +51,7 @@ function StatCard({ stat: s }: { stat: ProjectStat }) {
         >
           <Icon className="size-3.5" strokeWidth={2.2} />
         </span>
-      </div>
-      <span className="text-fg text-[28px] leading-none font-bold">
-        {s.value}
-        <span className="text-fg-muted ml-1 text-[14px] font-medium">
-          {s.unit}
-        </span>
-      </span>
-      <span className="text-fg-subtle border-divider border-t pt-2.5 text-[11px]">
-        {s.sub}
-      </span>
-    </div>
+      }
+    />
   )
 }

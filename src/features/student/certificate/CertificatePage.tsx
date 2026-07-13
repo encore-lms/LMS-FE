@@ -9,6 +9,7 @@ import { TechTab } from './tabs/TechTab'
 import { ProjectsTab } from './tabs/ProjectsTab'
 import { ProblemTab } from './tabs/ProblemTab'
 import { GrowthTab } from './tabs/GrowthTab'
+import { ResumeTab } from './tabs/ResumeTab'
 import { AiTab } from './tabs/AiTab'
 import { CERT_V2 } from './config'
 import { useCertFlow } from './useCertFlow'
@@ -35,24 +36,29 @@ export default function CertificatePage() {
       {data && <CertHero header={data.header} status={status} />}
       <CertTabs active={tab} onChange={setTab} />
 
-      <DataBoundary
-        isPending={isPending}
-        isError={isError || !data}
-        onRetry={refetch}
-        errorTitle="증명서를 불러오지 못했어요"
-        errorDescription="잠시 후 다시 시도해 주세요."
-      >
-        {data && (
-          <>
-            {tab === 'summary' && <SummaryTab s={data.summary} />}
-            {tab === 'tech' && <TechTab t={data.tech} />}
-            {tab === 'projects' && <ProjectsTab p={data.projects} />}
-            {tab === 'problem-solving' && <ProblemTab p={data.problem} />}
-            {tab === 'growth-reputation' && <GrowthTab g={data.growth} />}
-            {tab === 'ai-analysis' && CERT_V2 && <AiTab />}
-          </>
-        )}
-      </DataBoundary>
+      {/* 이력서 탭은 증명서 overview 가 아닌 이력서 API 를 쓴다 — 자체 DataBoundary 보유 */}
+      {tab === 'resume' ? (
+        <ResumeTab />
+      ) : (
+        <DataBoundary
+          isPending={isPending}
+          isError={isError || !data}
+          onRetry={refetch}
+          errorTitle="증명서를 불러오지 못했어요"
+          errorDescription="잠시 후 다시 시도해 주세요."
+        >
+          {data && (
+            <>
+              {tab === 'summary' && <SummaryTab s={data.summary} />}
+              {tab === 'tech' && <TechTab t={data.tech} />}
+              {tab === 'projects' && <ProjectsTab p={data.projects} />}
+              {tab === 'problem-solving' && <ProblemTab p={data.problem} />}
+              {tab === 'growth-reputation' && <GrowthTab g={data.growth} />}
+              {tab === 'ai-analysis' && CERT_V2 && <AiTab />}
+            </>
+          )}
+        </DataBoundary>
+      )}
     </div>
   )
 }

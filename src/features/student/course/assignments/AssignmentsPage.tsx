@@ -1,15 +1,15 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Search } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Empty } from '@/components/ui/Empty'
+import { DataTable, type Column } from '@/components/data/DataTable'
 import { Select } from '@/components/ui/Select'
+import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { usePageHeader } from '@/shared/store'
 import { useAssignments } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
-import { AssignmentCard } from './components/AssignmentCard'
-// 페이지네이션은 자료실과 동일 컴포넌트 재사용(같은 '나의 과정' 도메인).
-import { MaterialPagination } from '../materials/components/MaterialPagination'
-import type { AssignmentStatus } from './types'
+import type { AssignmentListItem, AssignmentStatus, DueTone } from './types'
 
 type Filter = 'all' | AssignmentStatus
 const FILTERS: { key: Filter; label: string }[] = [
@@ -18,29 +18,113 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'submitted', label: '제출 완료' },
   { key: 'reviewed', label: '검토 완료' },
 ]
-const PAGE_SIZE = 5
+
+// 제출 상태 배지(공통 StatusBadge 톤) — 미제출/제출 완료/검토 완료.
+const STATUS_META: Record<
+  AssignmentStatus,
+  { label: string; tone: BadgeTone }
+> = {
+  not_submitted: { label: '미제출', tone: 'neutral' },
+  submitted: { label: '제출 완료', tone: 'info' },
+  reviewed: { label: '검토 완료', tone: 'success' },
+}
+
+// 상태별 액션 — 미제출은 주요 CTA, 그 외는 보조.
+const CTA: Record<AssignmentStatus, { label: string; primary: boolean }> = {
+  not_submitted: { label: '제출하기', primary: true },
+  submitted: { label: '제출 보기', primary: false },
+  reviewed: { label: '피드백 보기', primary: false },
+}
+
+const DUE_TONE: Record<DueTone, string> = {
+  soon: 'text-warning font-medium',
+  normal: 'text-fg-muted',
+  ended: 'text-fg-subtle',
+}
 
 /**
- * 과제/실습 목록 (/student/course/assignments) — 나의 과정 '과제/실습' 탭. Figma 407:1785.
- * 상태 드롭다운으로 필터링, 카드에서 제출/수정/피드백 화면으로 이동.
+ * 과제/실습 목록 (/student/course/assignments) — 나의 과정 '과제/실습' 탭.
+ * 강사 과제 관리와 동일한 공통 DataTable로 정렬된 테이블(과제·마감·상태·액션).
  */
 export default function AssignmentsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAssignments()
   usePageHeader('과제/실습')
   const [filter, setFilter] = useState<Filter>('all')
-  const [page, setPage] = useState(1)
+  const [query, setQuery] = useState('')
 
   const items = data ?? []
-  const shown = items.filter((it) => filter === 'all' || it.status === filter)
+  const shown = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    return (data ?? []).filter((it) => {
+      if (filter !== 'all' && it.status !== filter) return false
+      if (needle && !`${it.title} ${it.subject}`.toLowerCase().includes(needle))
+        return false
+      return true
+    })
+  }, [data, filter, query])
 
-  // 항목이 많아지면 스크롤 대신 페이지로 끊어 본다(자료실과 동일 규칙).
-  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
-  const curPage = Math.min(page, pageCount)
-  const pageItems = shown.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE)
+  const go = (id: string) => navigate(`/student/course/assignments/${id}`)
+
+  const columns: Column<AssignmentListItem>[] = [
+    {
+      key: 'title',
+      header: '과제',
+      cell: (r) => (
+        <div>
+          <p className="text-fg text-[14px] font-semibold">{r.title}</p>
+          <p className="text-fg-subtle text-xs">{r.subject}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'due',
+      header: '마감',
+      className: 'w-24',
+      cell: (r) => (
+        <span className={cn('text-[13px]', DUE_TONE[r.dueTone])}>
+          {r.dueLabel.replace(/^마감\s*/, '')}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: '상태',
+      className: 'w-28',
+      cell: (r) => (
+        <StatusBadge
+          label={STATUS_META[r.status].label}
+          tone={STATUS_META[r.status].tone}
+        />
+      ),
+    },
+    {
+      key: 'action',
+      header: '액션',
+      align: 'right',
+      className: 'w-32',
+      cell: (r) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            go(r.id)
+          }}
+          className={cn(
+            'inline-flex h-8 items-center justify-center rounded-lg px-3 text-[13px] font-semibold',
+            CTA[r.status].primary
+              ? 'bg-brand text-white'
+              : 'border-border text-fg bg-surface border',
+          )}
+        >
+          {CTA[r.status].label}
+        </button>
+      ),
+    },
+  ]
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-5 p-8">
       <CourseTabs />
 
       <DataBoundary
@@ -50,44 +134,38 @@ export default function AssignmentsPage() {
         errorTitle="과제를 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >
-        {/* 상태 필터 — 공통 Select */}
-        <div className="w-fit">
-          <Select
-            aria-label="상태 필터"
-            value={filter}
-            onChange={(v) => {
-              setFilter(v as Filter)
-              setPage(1)
-            }}
-            options={FILTERS.map((f) => ({ value: f.key, label: f.label }))}
-          />
+        {/* 헤더 — 개수 + 검색 + 상태 필터 */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-fg text-[15px] font-bold">
+            총 <span className="text-brand">{items.length}</span>개 과제
+          </span>
+          <div className="flex items-center gap-2">
+            <div className="border-border bg-surface flex h-[38px] w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
+              <Search className="text-fg-subtle size-4 shrink-0" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="과제·과목 검색"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none"
+              />
+            </div>
+            <Select
+              aria-label="상태 필터"
+              value={filter}
+              onChange={(v) => setFilter(v as Filter)}
+              options={FILTERS.map((f) => ({ value: f.key, label: f.label }))}
+            />
+          </div>
         </div>
 
-        {/* 과제 카드 목록 */}
-        {shown.length === 0 ? (
-          <Empty title="해당 상태의 과제가 없어요" />
-        ) : (
-          <>
-            <div className="flex flex-col gap-3">
-              {pageItems.map((it) => (
-                <AssignmentCard
-                  key={it.id}
-                  item={it}
-                  onAction={() =>
-                    navigate(`/student/course/assignments/${it.id}`)
-                  }
-                />
-              ))}
-            </div>
-            <MaterialPagination
-              shownCount={pageItems.length}
-              totalCount={shown.length}
-              pageCount={pageCount}
-              page={curPage}
-              onPage={setPage}
-            />
-          </>
-        )}
+        {/* 과제 테이블 — 공통 DataTable(플랫) */}
+        <DataTable
+          columns={columns}
+          rows={shown}
+          rowKey={(r) => r.id}
+          onRowClick={(r) => go(r.id)}
+          empty="해당 조건의 과제가 없어요"
+        />
       </DataBoundary>
     </div>
   )

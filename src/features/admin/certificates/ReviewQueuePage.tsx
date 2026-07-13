@@ -9,7 +9,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { CertReviewListItem, CertReviewStatus } from '@/shared/types'
-import { useReviewQueue } from '../api/reviews'
+import { useReviewQueue } from './api'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const STATUS_META: Record<

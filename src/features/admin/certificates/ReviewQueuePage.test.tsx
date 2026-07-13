@@ -3,11 +3,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import ReviewQueuePage from './ReviewQueuePage'
-import { useReviewQueue } from '../api/reviews'
+import { useReviewQueue } from './api'
 import { usePageHeaderStore } from '@/shared/store'
 import type { CertReviewQueue } from '@/shared/types'
 
-vi.mock('../api/reviews')
+vi.mock('./api')
 
 type Hook = ReturnType<typeof useReviewQueue>
 

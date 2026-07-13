@@ -9,7 +9,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useSnapshot } from '../api/reviews'
+import { useSnapshot } from './api'
 
 const TABS = [
   '종합 요약',

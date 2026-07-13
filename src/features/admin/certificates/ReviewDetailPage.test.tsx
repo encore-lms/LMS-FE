@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import ReviewDetailPage from './ReviewDetailPage'
-import { useReviewDetail } from '../api/reviews'
+import { useReviewDetail } from './api'
 import type { CertReviewDetail } from '@/shared/types'
 
-vi.mock('../api/reviews')
+vi.mock('./api')
 
 type Hook = ReturnType<typeof useReviewDetail>
 

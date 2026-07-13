@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import SnapshotPage from './SnapshotPage'
-import { useSnapshot } from '../api/reviews'
+import { useSnapshot } from './api'
 import { usePageHeaderStore } from '@/shared/store'
 import type { CertSnapshot } from '@/shared/types'
 
-vi.mock('../api/reviews')
+vi.mock('./api')
 
 type Hook = ReturnType<typeof useSnapshot>
 

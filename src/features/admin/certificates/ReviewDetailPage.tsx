@@ -10,7 +10,7 @@ import { Tabs } from '@/components/ui/Tabs'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { CertReviewStatus } from '@/shared/types'
-import { useReviewAction, useReviewDetail } from '../api/reviews'
+import { useReviewAction, useReviewDetail } from './api'
 import {
   ApproveModal,
   ChangesRequestModal,

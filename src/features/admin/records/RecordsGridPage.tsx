@@ -17,7 +17,7 @@ import {
   useRecordReviewAction,
   useRecordSubmissionDetail,
   useRecordsGrid,
-} from '../api/records'
+} from './api'
 import { useStudentAccounts } from '../api/students'
 import { SkeletonCards } from '@/components/ui/Skeleton'
 

@@ -7,7 +7,7 @@ import type {
   AdminCertItem,
   RecordReviewActionRequest,
 } from '@/shared/types'
-import type { RecordSubmissionDetailView } from '../records/detailMeta'
+import type { RecordSubmissionDetailView } from './detailMeta'
 
 // 검토 상세 — GET /admin/records/review/{recordId} (P0_15_24 API명세: 유형별 분리 endpoint 없음,
 // 단일 엔드포인트가 유형별 상세+검토 이력 반환). :submissionId = Record.id(큐 RecordReviewItem.id와 동일 키).

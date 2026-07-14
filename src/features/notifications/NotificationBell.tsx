@@ -6,7 +6,7 @@ import {
   useMarkNotificationRead,
   useMarkNotificationsRead,
   useRoleNotifications,
-} from './api'
+} from '@/shared/api/notifications'
 import { useLocalNotificationStore } from './localNotifications'
 
 // 헤더 알림 벨 — 전 역할 공통. 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기.

@@ -23,6 +23,9 @@ export const adminMenu: MenuNode[] = [
         // 배정(/admin/mentors/*) + 일지·템플릿·통계(/admin/mentoring/*) 진입 시 활성 유지
         match: ['/admin/mentoring', '/admin/mentors'],
       },
+      // QnA 게시판 — 수강생 질문 열람·답변('QnA 질문' 알림 목적지). 상세(qna/:id) 진입 시에도 활성 유지.
+      // 심사(인증·평판)가 아니라 기수 운영 중 학생 응대라 '기수 설계·운영'에 둔다.
+      { label: 'QnA 게시판', to: '/admin/qna', match: ['/admin/qna'] },
     ],
   },
   {
@@ -36,8 +39,6 @@ export const adminMenu: MenuNode[] = [
         match: ['/admin/certificates'],
       },
       { label: '평판 관리', to: '/admin/reputation' },
-      // QnA 게시판 — 수강생 질문 열람·답변('QnA 질문' 알림 목적지). 상세(qna/:id) 진입 시에도 활성 유지.
-      { label: 'QnA 게시판', to: '/admin/qna', match: ['/admin/qna'] },
     ],
   },
   {

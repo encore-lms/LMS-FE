@@ -34,3 +34,18 @@ export function useMarkNotificationsRead() {
     },
   })
 }
+
+// 알림 1건 읽음 — PATCH /notifications/{id}/read. 벨에서 알림을 클릭(이동)할 때 호출한다.
+// 멱등이라 이미 읽은 알림을 눌러도 안전하다.
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiClient
+        .patch<AppNotification[]>(`/notifications/${id}/read`)
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+    },
+  })
+}

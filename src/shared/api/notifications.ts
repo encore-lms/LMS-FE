@@ -50,3 +50,18 @@ export function useMarkNotificationRead() {
     },
   })
 }
+
+// 알림 1건 삭제 — DELETE /notifications/{id}.
+// 개인 알림은 본인만, 역할 공유 알림은 관리자만(지우면 전원에게서 사라짐) — BE가 강제한다.
+export function useDeleteNotification() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiClient
+        .delete<AppNotification[]>(`/notifications/${id}`)
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+    },
+  })
+}

@@ -2,5 +2,7 @@
 // BE 계약 확정 시 shared adminKeys 승격 검토 — shared PR 합의 필요.
 export const adminReputationKeys = {
   all: ['admin-reputation'] as const,
-  overview: () => [...adminReputationKeys.all, 'overview'] as const,
+  // 조회 범위 기수가 결과(표·요약)를 바꾸므로 키에 포함한다.
+  overview: (cohortIds: string[] = []) =>
+    [...adminReputationKeys.all, 'overview', ...cohortIds] as const,
 } as const

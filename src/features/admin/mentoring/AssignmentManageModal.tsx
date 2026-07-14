@@ -7,6 +7,7 @@ import {
   apiErrorOf,
   useChangeAssignmentMentor,
   useCreateMentorAssignment,
+  useDeleteAssignment,
   useRenameTeam,
   useUpdateAllocatedHours,
 } from './api'
@@ -38,14 +39,30 @@ export function AssignmentManageModal({
   const changeMentor = useChangeAssignmentMentor()
   const createAssignment = useCreateMentorAssignment()
   const renameTeam = useRenameTeam()
+  const deleteAssignment = useDeleteAssignment()
   const [teamName, setTeamName] = useState(row.teamName)
   const [hoursInput, setHoursInput] = useState(String(row.allocatedHours ?? ''))
   const [mentorId, setMentorId] = useState(row.mentor?.mentorId ?? '')
   // 409 MENTOR_ASSIGNMENT_HAS_LOGS 수신 후 새 배정 생성 안내 노출
   const [replaceGuide, setReplaceGuide] = useState(false)
+  // 배정 삭제 인라인 확인(파괴적이라 즉시 삭제 방지)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   if (!row.assignmentId) return null
   const assignmentId = row.assignmentId
+
+  // 배정(팀) 삭제 — 활동 이력이 있으면 BE가 409로 거부하므로 그 메시지를 그대로 보여준다.
+  const removeAssignment = () => {
+    deleteAssignment.mutate(row.teamId, {
+      onSuccess: () => {
+        toast.success('배정을 삭제했어요')
+        setConfirmDelete(false)
+        onClose()
+      },
+      onError: (err) =>
+        toast.danger(apiErrorOf(err)?.message ?? '배정 삭제에 실패했어요'),
+    })
+  }
 
   const saveTeamName = () => {
     const name = teamName.trim()
@@ -251,6 +268,45 @@ export function AssignmentManageModal({
                 className="border-warning text-warning hover:bg-warning/10 bg-surface self-start rounded-lg border px-3 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 기존 배정 보존 · 새 배정 생성
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* 배정 삭제 — 잘못 만든 배정 취소용. 활동 이력(일지·평가·추천서·예약)이 있으면 BE가 409로 거부한다. */}
+        <section className="border-danger/30 flex flex-col gap-2 rounded-xl border p-4">
+          <p className="text-fg text-sm font-bold">배정 삭제</p>
+          <p className="text-fg-subtle text-xs">
+            잘못 만든 배정을 취소합니다. 일지·평가·추천서·예약이 하나라도 있으면
+            삭제할 수 없어요(기록 보호).
+          </p>
+          {!confirmDelete ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="border-danger/40 text-danger hover:bg-danger-bg bg-surface self-start rounded-lg border px-3 py-1.5 text-xs font-bold"
+            >
+              배정 삭제
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-danger text-xs font-bold">
+                팀·배정·멘티 명단을 삭제할까요?
+              </span>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-xs font-medium"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={removeAssignment}
+                disabled={deleteAssignment.isPending}
+                className="bg-danger rounded-lg px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+              >
+                {deleteAssignment.isPending ? '삭제 중…' : '삭제'}
               </button>
             </div>
           )}

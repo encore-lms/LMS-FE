@@ -15,8 +15,9 @@ export function useReputation(cohortIds: string[] | undefined) {
     enabled: !!cohortIds?.length,
     queryFn: () =>
       apiClient
+        // 2번째 인자는 params 객체 그대로다 — { params: ... } 로 감싸면 params[cohortIds]= 로 나간다.
         .get<ReputationOverview>('/admin/reputation', {
-          params: { cohortIds: cohortIds?.join(',') },
+          cohortIds: cohortIds?.join(','),
         })
         .then((r) => r.data),
   })

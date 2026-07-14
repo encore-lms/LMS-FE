@@ -8,7 +8,9 @@ import { useAuthStore } from '@/shared/store'
 import { apiClient } from '@/shared/api'
 import type { Role } from '@/shared/types'
 
-vi.mock('@/shared/api', () => ({
+// apiClient의 원본 모듈(client)을 mock한다 — 배럴(@/shared/api)의 재export와
+// 직접 모듈(@/shared/api/notifications)의 import를 모두 이 mock으로 잡기 위함.
+vi.mock('@/shared/api/client', () => ({
   apiClient: {
     post: vi.fn(),
     get: vi.fn(),

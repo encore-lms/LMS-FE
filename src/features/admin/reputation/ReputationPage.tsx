@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { Check, Info, Send } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { Empty } from '@/components/ui/Empty'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -59,7 +60,6 @@ export default function ReputationPage() {
     '평판 관리',
     '수강생별 평판 수집 현황을 확인하고 강사·멘토·동료에게 평가를 요청합니다',
   )
-  const { data, isPending, isError, refetch } = useReputation()
   const push = useReputationPush()
   const toast = useToast()
   const [status, setStatus] = useSearchParamState('status', 'all')
@@ -96,14 +96,26 @@ export default function ReputationPage() {
     ]
   }, [courseConfig, myCohortIds])
   const initRef = useRef(false)
+  const [scopeReady, setScopeReady] = useState(false)
   useEffect(() => {
     if (initRef.current || !myCohorts || !courseConfig) return
     initRef.current = true
+    setScopeReady(true)
     if (cohortFilter !== 'all') return // URL로 기수를 지정해 들어온 경우 존중
     const first = cohortOptions.find((c) => myCohortIds.has(c.id))
     if (first) setCohortFilter(first.id)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 첫 로드 1회만 적용
   }, [myCohorts, courseConfig])
+
+  // 조회 범위 — 기수 선택 시 그 기수, '전체 기수'면 선택 과정의 기수 전체.
+  // 서버가 이 범위로 요약(KPI·누락 수)까지 집계하므로 표와 숫자가 항상 같은 모수를 본다.
+  const scopeCohortIds = useMemo(() => {
+    if (!scopeReady) return undefined
+    if (cohortFilter !== 'all') return [cohortFilter]
+    return cohortOptions.map((c) => c.id)
+  }, [scopeReady, cohortFilter, cohortOptions])
+
+  const { data, isPending, isError, refetch } = useReputation(scopeCohortIds)
 
   const students = useMemo(() => data?.students ?? [], [data])
   const filtered = useMemo(() => {
@@ -276,9 +288,17 @@ export default function ReputationPage() {
         />
       </div>
 
+      {/* 기수가 없는 과정 — 조회 범위가 비어 서버를 부르지 않으므로 스켈레톤 대신 명시적으로 알린다. */}
+      {scopeCohortIds?.length === 0 && (
+        <Empty
+          title="이 과정에 기수가 없어요"
+          description="기수를 먼저 만들면 평판 수집 현황을 볼 수 있어요."
+        />
+      )}
+
       <DataBoundary
-        isPending={isPending}
-        isError={isError || !data}
+        isPending={isPending && scopeCohortIds?.length !== 0}
+        isError={isError || (!data && scopeCohortIds?.length !== 0)}
         onRetry={refetch}
         skeleton={<SkeletonListPage kpis={4} columns={6} className="" />}
         errorTitle="평판 현황을 불러오지 못했어요"

@@ -5,12 +5,19 @@ import type { PushTarget, ReputationOverview, ReputationStudent } from './types'
 
 // 평판 관리 조회 훅 — 엔드포인트가 /admin/* 라 admin feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
-export function useReputation() {
+//
+// cohortIds — 조회 범위 기수(선택 기수 1개 또는 선택 과정의 전체 기수).
+// 요약(KPI·누락 수)까지 서버가 이 범위로 집계한다. 범위가 정해지기 전(과정·기수 로딩 중)엔
+// 조회하지 않는다 — 파라미터 없이 부르면 전 기수 합계가 잠깐 보였다가 바뀌기 때문.
+export function useReputation(cohortIds: string[] | undefined) {
   return useQuery({
-    queryKey: adminReputationKeys.overview(),
+    queryKey: adminReputationKeys.overview(cohortIds),
+    enabled: !!cohortIds?.length,
     queryFn: () =>
       apiClient
-        .get<ReputationOverview>('/admin/reputation')
+        .get<ReputationOverview>('/admin/reputation', {
+          params: { cohortIds: cohortIds?.join(',') },
+        })
         .then((r) => r.data),
   })
 }
@@ -28,8 +35,9 @@ export function useReputationPush() {
   return useMutation<void, Error, ReputationPushInput>({
     mutationFn: async () => {},
     onSuccess: (_result, input) => {
-      queryClient.setQueryData<ReputationOverview>(
-        adminReputationKeys.overview(),
+      // 기수 범위별로 캐시가 나뉘므로 평판 조회 캐시 전체에 반영한다.
+      queryClient.setQueriesData<ReputationOverview>(
+        { queryKey: adminReputationKeys.all },
         (prev) => {
           if (!prev) return prev
           // 푸시한 대상은 버튼 목록에서 제거하고, 강사 푸시는 추천서 상태를 '요청 중'으로 올린다.

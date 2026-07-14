@@ -14,7 +14,12 @@ vi.mock('../api/settings', () => ({
     data: [{ courseId: 'course1', title: 'SK네트웍스 Family AI 캠프' }],
   }),
   useCourseConfig: () => ({
-    data: { cohorts: [{ id: 'c32', cohortNo: '32' }] },
+    data: {
+      cohorts: [
+        { id: 'c32', cohortNo: '32' },
+        { id: 'c34', cohortNo: '34' },
+      ],
+    },
   }),
 }))
 // 담당 기수 우선 정렬·기본 선택용 — 담당 없음으로 두면 '전체 기수' 기본이 유지된다.
@@ -137,6 +142,20 @@ describe('ReputationPage (평판 관리)', () => {
     expect(
       await screen.findByText('박지훈 강사 푸시 요청을 보냈습니다.'),
     ).toBeInTheDocument()
+  })
+
+  // 회귀 — 기수를 골라도 조회 범위를 안 넘겨 전 기수(78명)가 집계되던 문제.
+  it('조회 범위 — 선택한 기수를 서버 조회에 넘긴다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    // 기본은 '전체 기수' — 선택 과정의 기수 전체가 범위.
+    expect(vi.mocked(useReputation)).toHaveBeenLastCalledWith(['c32', 'c34'])
+
+    await user.click(screen.getByLabelText('기수 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', { name: '34기' }),
+    )
+    expect(vi.mocked(useReputation)).toHaveBeenLastCalledWith(['c34'])
   })
 
   it('평판 상세 — 행 데이터 기반 상세 모달을 연다', async () => {

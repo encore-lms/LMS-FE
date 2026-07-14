@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useAuth } from '@/shared/store'
 import { useMarkNotificationsRead, useRoleNotifications } from './api'
@@ -8,6 +9,7 @@ import { useLocalNotificationStore } from './localNotifications'
 // 서버 알림은 PATCH /notifications/read 로 영속 읽음 처리(전 역할),
 // 멘션 등 FE 발생 알림(localNotifications)은 로컬 스토어에서 읽음 처리한다.
 export function NotificationBell() {
+  const navigate = useNavigate()
   const { role } = useAuth()
   const { data } = useRoleNotifications()
   const localItems = useLocalNotificationStore((s) => s.items)
@@ -80,29 +82,49 @@ export function NotificationBell() {
             </p>
           ) : (
             <ul className="max-h-80 overflow-y-auto py-1">
-              {notifications.map((n) => (
-                <li
-                  key={n.id}
-                  className="hover:bg-surface-muted flex items-start justify-between gap-3 rounded-lg px-3 py-2"
-                >
-                  <span className="flex min-w-0 flex-col">
-                    <span className="text-fg truncate text-[13px]">
-                      {n.title}
+              {notifications.map((n) => {
+                const link = n.link
+                const rowClass =
+                  'flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2 text-left'
+                const content = (
+                  <>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="text-fg truncate text-[13px]">
+                        {n.title}
+                      </span>
+                      <span className="text-fg-subtle text-[11px]">
+                        {n.source}
+                      </span>
                     </span>
-                    <span className="text-fg-subtle text-[11px]">
-                      {n.source}
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      {n.unread && (
+                        <span className="bg-brand size-1.5 rounded-full" />
+                      )}
+                      <span className="text-fg-subtle text-[11px]">
+                        {n.relativeTime}
+                      </span>
                     </span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-1.5">
-                    {n.unread && (
-                      <span className="bg-brand size-1.5 rounded-full" />
+                  </>
+                )
+                return (
+                  <li key={n.id}>
+                    {link ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpen(false)
+                          navigate(link)
+                        }}
+                        className={`hover:bg-surface-muted cursor-pointer ${rowClass}`}
+                      >
+                        {content}
+                      </button>
+                    ) : (
+                      <div className={rowClass}>{content}</div>
                     )}
-                    <span className="text-fg-subtle text-[11px]">
-                      {n.relativeTime}
-                    </span>
-                  </span>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell, BellOff } from 'lucide-react'
 import type { DashboardNotification } from '../types'
 import { SectionCard } from './SectionCard'
@@ -12,6 +13,7 @@ export function NotificationList({
 }: {
   notifications: DashboardNotification[]
 }) {
+  const navigate = useNavigate()
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
 
   // 서버 unread 와 로컬 읽음 처리를 합성.
@@ -43,23 +45,42 @@ export function NotificationList({
         <EmptyState icon={BellOff} title="새 알림이 없어요" />
       ) : (
         <ul className="flex flex-col">
-          {rows.map((n) => (
-            <li
-              key={n.id}
-              className="flex items-start justify-between gap-3 py-2"
-            >
-              <span className="flex min-w-0 flex-col">
-                <span className="text-fg truncate text-sm">{n.title}</span>
-                <span className="text-fg-subtle text-xs">{n.source}</span>
-              </span>
-              <span className="flex shrink-0 items-center gap-1.5">
-                {n.unread && (
-                  <span className="bg-brand size-1.5 rounded-full" />
+          {rows.map((n) => {
+            const link = n.link
+            const rowClass =
+              'flex w-full items-start justify-between gap-3 py-2 text-left'
+            const content = (
+              <>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-fg truncate text-sm">{n.title}</span>
+                  <span className="text-fg-subtle text-xs">{n.source}</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {n.unread && (
+                    <span className="bg-brand size-1.5 rounded-full" />
+                  )}
+                  <span className="text-fg-subtle text-xs">
+                    {n.relativeTime}
+                  </span>
+                </span>
+              </>
+            )
+            return (
+              <li key={n.id}>
+                {link ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate(link)}
+                    className={`hover:bg-surface-muted -mx-2 cursor-pointer rounded-lg px-2 ${rowClass}`}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div className={rowClass}>{content}</div>
                 )}
-                <span className="text-fg-subtle text-xs">{n.relativeTime}</span>
-              </span>
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ul>
       )}
     </SectionCard>

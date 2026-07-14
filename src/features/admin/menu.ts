@@ -36,6 +36,8 @@ export const adminMenu: MenuNode[] = [
         match: ['/admin/certificates'],
       },
       { label: '평판 관리', to: '/admin/reputation' },
+      // QnA 게시판 — 수강생 질문 열람·답변('QnA 질문' 알림 목적지). 상세(qna/:id) 진입 시에도 활성 유지.
+      { label: 'QnA 게시판', to: '/admin/qna', match: ['/admin/qna'] },
     ],
   },
   {

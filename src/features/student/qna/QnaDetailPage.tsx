@@ -17,8 +17,7 @@ import {
 } from '../api/qna'
 import { useQnaBase } from './useQnaBase'
 import { MarkdownEditor } from './components/MarkdownEditor'
-import { addLocalNotification } from '@/features/notifications/localNotifications'
-import { QNA_MOCK_PARTICIPANTS, type QnaAnswer, type Tone } from './types'
+import type { QnaAnswer, QnaDetail, Tone } from './types'
 
 const card = 'border-border bg-surface rounded-2xl border p-6'
 const CHIP: Record<Tone, string> = {
@@ -35,9 +34,19 @@ const ROLE_CHIP: Record<string, string> = {
   수강생: 'bg-surface-muted text-fg-muted',
 }
 
-// 멘션 자동완성 후보(이름) — 현재 사용자 제외.
-function mentionNamesExcept(self: string): string[] {
-  return QNA_MOCK_PARTICIPANTS.map((p) => p.name).filter((n) => n !== self)
+// 멘션 자동완성 후보 — 이 스레드의 실제 참여자(질문 작성자·답변자·댓글 작성자). 현재 사용자 제외.
+// BE가 멘션 이름을 스레드 참여자로만 해석해 알림을 보내므로(이름만으론 임의 사용자를 특정 불가),
+// 후보도 동일 범위여야 실제로 알림이 간다.
+function threadMentionNames(detail: QnaDetail, self: string): string[] {
+  const names = new Set<string>([detail.authorName])
+  for (const answer of detail.answers) {
+    names.add(answer.authorName)
+    for (const comment of answer.comments) {
+      names.add(comment.authorName)
+    }
+  }
+  names.delete(self)
+  return [...names]
 }
 
 // 작성자 전용 삭제 버튼 — 클릭 시 인라인 확인(파괴적이라 즉시 삭제 방지). 모달 없이 경량 처리.
@@ -88,22 +97,23 @@ function DeleteButton({
 function AnswerItem({
   answer,
   questionId,
-  questionTitle,
   resolved,
   canAccept,
   onAccept,
   acceptPending,
   selfName,
+  mentionNames,
 }: {
   answer: QnaAnswer
   questionId: string
-  questionTitle: string
   resolved: boolean
   /** 채택은 질문 작성자만 가능(BE OwnershipGuard). 운영자·타 수강생에겐 숨긴다. */
   canAccept: boolean
   onAccept: (answerId: string) => void
   acceptPending: boolean
   selfName: string
+  /** 멘션 후보 — 스레드 실제 참여자(부모가 전체 스레드 기준으로 계산). */
+  mentionNames: string[]
 }) {
   const toast = useToast()
   const createComment = useCreateComment(questionId, answer.id)
@@ -118,13 +128,9 @@ function AnswerItem({
     createComment.mutate(
       { content: draft.trim(), mentions, authorName: selfName },
       {
+        // 멘션·댓글 알림은 BE가 발행한다(수신자에게 실제로 전달·영속).
+        // 예전엔 여기서 addLocalNotification으로 내 브라우저에만 표시하던 목업이었다.
         onSuccess: () => {
-          if (mentions.length > 0) {
-            addLocalNotification({
-              title: `${selfName}님이 회원님을 멘션했어요 (@${mentions.join(', @')})`,
-              source: `QnA · ${questionTitle}`,
-            })
-          }
           toast.success('댓글을 등록했어요')
           setDraft('')
           setMentions([])
@@ -250,7 +256,7 @@ function AnswerItem({
               minHeight={72}
               maxLength={1000}
               placeholder="댓글 달기 · @로 멘션하면 알림이 가요"
-              mentionNames={mentionNamesExcept(selfName)}
+              mentionNames={mentionNames}
               onMentionsChange={setMentions}
               onImageRejected={(msg) => toast.danger(msg)}
             />
@@ -433,12 +439,12 @@ export default function QnaDetailPage() {
                   key={a.id}
                   answer={a}
                   questionId={id}
-                  questionTitle={data.title}
                   resolved={resolved}
                   canAccept={data.canDelete}
                   onAccept={accept}
                   acceptPending={acceptAnswer.isPending}
                   selfName={selfName}
+                  mentionNames={threadMentionNames(data, selfName)}
                 />
               ))}
             </div>

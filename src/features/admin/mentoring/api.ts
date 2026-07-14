@@ -235,6 +235,25 @@ export function useEarlyEndAssignment() {
   })
 }
 
+/**
+ * DELETE /admin/mentors/assignments/teams/{teamId} — 배정(팀) 삭제.
+ * 잘못 만든 배정 취소용. 활동 이력(일지·평가·추천서·예약)이 있으면 BE가 409로 거부한다.
+ */
+export function useDeleteAssignment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (teamId: string) =>
+      apiClient
+        .delete<void>(`/admin/mentors/assignments/teams/${teamId}`)
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
 /** GET /admin/mentoring/logs — 일지 목록(KPI·요약 포함). */
 export function useAdminMentoringLogs() {
   return useQuery({

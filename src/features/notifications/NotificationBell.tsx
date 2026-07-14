@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell } from 'lucide-react'
+import { Bell, X } from 'lucide-react'
 import { useAuth } from '@/shared/store'
 import {
+  useDeleteNotification,
   useMarkNotificationRead,
   useMarkNotificationsRead,
   useRoleNotifications,
@@ -20,6 +21,7 @@ export function NotificationBell() {
   const markLocalRead = useLocalNotificationStore((s) => s.markAllRead)
   const markServerRead = useMarkNotificationsRead()
   const markOneRead = useMarkNotificationRead()
+  const deleteOne = useDeleteNotification()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -118,7 +120,8 @@ export function NotificationBell() {
                   </>
                 )
                 return (
-                  <li key={n.id}>
+                  // 삭제(✕)는 행 버튼 안에 넣으면 버튼 중첩이 되므로 형제로 두고 hover 시 노출한다.
+                  <li key={n.id} className="group relative">
                     {link ? (
                       <button
                         type="button"
@@ -136,6 +139,18 @@ export function NotificationBell() {
                       </button>
                     ) : (
                       <div className={rowClass}>{content}</div>
+                    )}
+                    {serverIds.has(n.id) && (
+                      <button
+                        type="button"
+                        aria-label="알림 삭제"
+                        title="알림 삭제"
+                        onClick={() => deleteOne.mutate(n.id)}
+                        disabled={deleteOne.isPending}
+                        className="text-fg-subtle hover:bg-surface-muted hover:text-danger absolute top-1 right-1 hidden size-5 items-center justify-center rounded group-hover:flex disabled:opacity-50"
+                      >
+                        <X className="size-3.5" />
+                      </button>
                     )}
                   </li>
                 )

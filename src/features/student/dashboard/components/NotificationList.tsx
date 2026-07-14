@@ -1,28 +1,32 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Bell, BellOff } from 'lucide-react'
+import {
+  useMarkNotificationRead,
+  useMarkNotificationsRead,
+} from '@/shared/api/notifications'
 import type { DashboardNotification } from '../types'
+import { dashboardKeys } from '../queryKeys'
 import { SectionCard } from './SectionCard'
 import { EmptyState } from './EmptyState'
 
-// 알림 — 본인 관련 이벤트(보완 요청·검토 결과·평판/멘토링 요청 등). 제목+출처 + 상대시간 + 미확인 점.
-// 일반 게시판 글 미리보기는 미포함(§2).
-// 읽음 처리 mutation은 BE 계약 확정 후 — 현재는 로컬 readIds 로 미확인 점을 끈다(헤더 알림 벨과 동일 규약).
+// 알림 — 본인 관련 이벤트(보완 요청·검토 결과·QnA 답변·멘토링 등). 제목+출처 + 상대시간 + 미확인 점.
+// 헤더 알림 벨과 같은 알림(동일 id)이라 읽음도 서버에 영속한다(로컬 표시가 아니라 새로고침해도 유지).
+// 클릭 = 확인 → 해당 알림 읽음 처리 후 link로 이동. 대시보드 응답이 알림을 품고 있어 함께 무효화한다.
 export function NotificationList({
   notifications,
 }: {
   notifications: DashboardNotification[]
 }) {
   const navigate = useNavigate()
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const queryClient = useQueryClient()
+  const markOneRead = useMarkNotificationRead()
+  const markAllRead = useMarkNotificationsRead()
 
-  // 서버 unread 와 로컬 읽음 처리를 합성.
-  const rows = notifications.map((n) => ({
-    ...n,
-    unread: n.unread && !readIds.has(n.id),
-  }))
-  const unreadCount = rows.filter((n) => n.unread).length
-  const markAllRead = () => setReadIds(new Set(notifications.map((n) => n.id)))
+  const unreadCount = notifications.filter((n) => n.unread).length
+  // 알림 읽음은 대시보드 응답(notifications)에도 반영돼야 하므로 대시보드 쿼리도 무효화.
+  const refreshDashboard = () =>
+    queryClient.invalidateQueries({ queryKey: dashboardKeys.all })
 
   return (
     <SectionCard
@@ -33,7 +37,9 @@ export function NotificationList({
         unreadCount > 0 ? (
           <button
             type="button"
-            onClick={markAllRead}
+            onClick={() =>
+              markAllRead.mutate(undefined, { onSuccess: refreshDashboard })
+            }
             className="text-fg-subtle hover:text-fg shrink-0 text-xs font-medium"
           >
             모두 읽기 →
@@ -41,11 +47,11 @@ export function NotificationList({
         ) : null
       }
     >
-      {rows.length === 0 ? (
+      {notifications.length === 0 ? (
         <EmptyState icon={BellOff} title="새 알림이 없어요" />
       ) : (
         <ul className="flex flex-col">
-          {rows.map((n) => {
+          {notifications.map((n) => {
             const link = n.link
             const rowClass =
               'flex w-full items-start justify-between gap-3 py-2 text-left'
@@ -70,7 +76,15 @@ export function NotificationList({
                 {link ? (
                   <button
                     type="button"
-                    onClick={() => navigate(link)}
+                    onClick={() => {
+                      // 클릭 = 확인 → 해당 알림만 읽음 처리(멱등) 후 이동.
+                      if (n.unread) {
+                        markOneRead.mutate(n.id, {
+                          onSuccess: refreshDashboard,
+                        })
+                      }
+                      navigate(link)
+                    }}
                     className={`hover:bg-surface-muted -mx-2 cursor-pointer rounded-lg px-2 ${rowClass}`}
                   >
                     {content}

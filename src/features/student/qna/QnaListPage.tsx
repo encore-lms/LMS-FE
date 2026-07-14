@@ -11,6 +11,7 @@ import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
 import { useQnaList } from '../api/qna'
+import { useQnaBase } from './useQnaBase'
 import { QnaQuestionCard } from './components/QnaQuestionCard'
 import type { QnaQuestion } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -42,7 +43,12 @@ export default function QnaListPage() {
     '강의·과제·환경설정·진로 궁금증을 동료·멘토·강사와 함께 풀어요.',
   )
 
-  const open = (q: QnaQuestion) => navigate(`/student/qna/${q.id}`)
+  // 운영(/admin/qna)에서도 같은 화면을 쓴다 — 이동 경로는 마운트 위치를 따르고,
+  // 질문 작성은 수강생 전용이라 운영에선 숨긴다(BE도 /admin/qna에 작성 엔드포인트 없음).
+  const base = useQnaBase()
+  const canAsk = base === '/student/qna'
+
+  const open = (q: QnaQuestion) => navigate(`${base}/${q.id}`)
 
   const q = query.trim().toLowerCase()
   const visible = (data?.questions ?? []).filter((item) => {
@@ -136,13 +142,15 @@ export default function QnaListPage() {
                   className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => navigate('/student/qna/new')}
-                className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
-              >
-                + 질문하기
-              </button>
+              {canAsk && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/student/qna/new')}
+                  className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+                >
+                  + 질문하기
+                </button>
+              )}
             </div>
           </div>
 

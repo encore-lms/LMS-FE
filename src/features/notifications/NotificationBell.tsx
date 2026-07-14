@@ -97,8 +97,9 @@ export function NotificationBell() {
             <ul className="max-h-80 overflow-y-auto py-1">
               {notifications.map((n) => {
                 const link = n.link
+                // 우측 pr-8 은 삭제(✕) 자리 예약 — 없으면 시간 텍스트와 겹친다.
                 const rowClass =
-                  'flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2 text-left'
+                  'flex w-full items-start justify-between gap-3 rounded-lg py-2 pr-8 pl-3 text-left'
                 const content = (
                   <>
                     <span className="flex min-w-0 flex-col">
@@ -147,7 +148,7 @@ export function NotificationBell() {
                         title="알림 삭제"
                         onClick={() => deleteOne.mutate(n.id)}
                         disabled={deleteOne.isPending}
-                        className="text-fg-subtle hover:bg-surface-muted hover:text-danger absolute top-1 right-1 hidden size-5 items-center justify-center rounded group-hover:flex disabled:opacity-50"
+                        className="text-fg-subtle hover:bg-surface-muted hover:text-danger absolute top-1.5 right-1 hidden size-5 items-center justify-center rounded group-hover:flex disabled:opacity-50"
                       >
                         <X className="size-3.5" />
                       </button>

@@ -6,4 +6,6 @@ export interface AppNotification {
   source: string // 운영자 박지수 / 평판 시스템 / 강사 이정훈
   relativeTime: string // "1시간 전"
   unread: boolean
+  /** 클릭 시 이동할 상대 경로(예: /student/qna/{id}). 없으면 비네비게이션 알림. */
+  link?: string | null
 }

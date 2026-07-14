@@ -67,6 +67,9 @@ const QuizFormPage = lazy(
 const QuizSubmissionsPage = lazy(
   () => import('@/features/instructor/quizzes/SubmissionsPage'),
 )
+// QnA 운영 (수강생 컴포넌트 재사용 — 'QnA 질문' 알림 목적지. 열람·답변만, 질문 작성·채택은 수강생 전용)
+const QnaListPage = lazy(() => import('@/features/student/qna/QnaListPage'))
+const QnaDetailPage = lazy(() => import('@/features/student/qna/QnaDetailPage'))
 // 정답 관리 (운영 전용 신설 — features/admin/quizzes, Figma 1515:10493)
 const QuizAnswersPage = lazy(() => import('./quizzes/AnswersPage'))
 // 수동 채점 (운영 전용 신설 B안 — 강사 GradingPage 대체, Figma 1515:10710)
@@ -159,6 +162,9 @@ export const adminRoutes: RouteObject[] = [
         path: 'quizzes/:quizId/submissions/:submissionId/grade',
         element: <QuizGradingPage />,
       },
+      // QnA 운영 — 'QnA 질문' 알림(매니저 브로드캐스트) 목적지. 수강생 화면 재사용.
+      { path: 'qna', element: <QnaListPage /> },
+      { path: 'qna/:id', element: <QnaDetailPage /> },
     ],
   },
 ]

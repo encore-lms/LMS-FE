@@ -15,6 +15,7 @@ import {
   useDeleteQuestion,
   useQnaDetail,
 } from '../api/qna'
+import { useQnaBase } from './useQnaBase'
 import { MarkdownEditor } from './components/MarkdownEditor'
 import { addLocalNotification } from '@/features/notifications/localNotifications'
 import { QNA_MOCK_PARTICIPANTS, type QnaAnswer, type Tone } from './types'
@@ -89,6 +90,7 @@ function AnswerItem({
   questionId,
   questionTitle,
   resolved,
+  canAccept,
   onAccept,
   acceptPending,
   selfName,
@@ -97,6 +99,8 @@ function AnswerItem({
   questionId: string
   questionTitle: string
   resolved: boolean
+  /** 채택은 질문 작성자만 가능(BE OwnershipGuard). 운영자·타 수강생에겐 숨긴다. */
+  canAccept: boolean
   onAccept: (answerId: string) => void
   acceptPending: boolean
   selfName: string
@@ -185,7 +189,7 @@ function AnswerItem({
           <MessageSquare className="size-3.5" />
           댓글 {answer.comments.length}
         </button>
-        {!resolved && !answer.isAccepted && (
+        {canAccept && !resolved && !answer.isAccepted && (
           <button
             type="button"
             onClick={() => onAccept(answer.id)}
@@ -272,10 +276,12 @@ function AnswerItem({
   )
 }
 
-// 수강생 QnA 상세 (/student/qna/:id) — 질문 본문 + 답변 스레드 + 답변/댓글 작성·채택.
+// QnA 상세 — 수강생(/student/qna/:id)·운영(/admin/qna/:id) 공용. 질문 본문 + 답변 스레드 + 답변/댓글.
+// 채택·질문 삭제는 작성자(수강생)만 — data.canDelete로 게이트되어 운영자에겐 노출되지 않는다.
 export default function QnaDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
+  const base = useQnaBase()
   const toast = useToast()
   const { user } = useAuth()
   const selfName = user?.name ?? '나'
@@ -313,7 +319,7 @@ export default function QnaDetailPage() {
     <div className="flex flex-col gap-5 p-8">
       <button
         type="button"
-        onClick={() => navigate('/student/qna')}
+        onClick={() => navigate(base)}
         className="text-fg-muted hover:text-fg flex w-fit items-center gap-1.5 text-[13px] font-semibold"
       >
         <ArrowLeft className="size-4" />
@@ -363,7 +369,7 @@ export default function QnaDetailPage() {
                         deleteQuestion.mutate(id, {
                           onSuccess: () => {
                             toast.success('질문을 삭제했어요')
-                            navigate('/student/qna')
+                            navigate(base)
                           },
                           onError: () => toast.danger('질문 삭제에 실패했어요'),
                         })
@@ -429,6 +435,7 @@ export default function QnaDetailPage() {
                   questionId={id}
                   questionTitle={data.title}
                   resolved={resolved}
+                  canAccept={data.canDelete}
                   onAccept={accept}
                   acceptPending={acceptAnswer.isPending}
                   selfName={selfName}

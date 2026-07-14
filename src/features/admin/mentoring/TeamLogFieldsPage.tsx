@@ -54,20 +54,6 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 const TEAM_NOTICE =
   '이 팀에 한해 적용 — 저장 시 다음 일지부터 반영, 작성된 일지는 보존'
 
-/** 수정 가능 항목 · §32 정본 — Figma 2749:8024 원문. */
-const CAPABILITY_ROWS: { key: string; desc: string }[] = [
-  { key: '항목명', desc: '수정 가능' },
-  { key: '설명/도움말', desc: '수정 가능' },
-  { key: '필수 여부', desc: '수정 가능' },
-  { key: '표시 순서', desc: '수정 가능' },
-  { key: '항목 추가', desc: '가능' },
-  { key: '항목 비활성화', desc: '가능 (작성된 답변은 보존)' },
-  {
-    key: '템플릿으로 되돌리기',
-    desc: '가능 (이 팀 수정 사항 일괄 복원)',
-  },
-]
-
 /** 정규화 — 순서 재부여(이동·복원 제거 후 1..N). */
 const normalized = (fields: AdminTeamLogField[]) =>
   fields.map((f, i) => ({ ...f, order: i + 1 }))
@@ -494,49 +480,6 @@ function TeamLogFieldsBody({ data }: { data: AdminTeamLogFieldsData }) {
           총 {counts.total}항목 · 활성 {counts.active} · 비활성{' '}
           {counts.inactive} · 변경 {counts.changed}
         </div>
-      </div>
-
-      {/* 수정 가능 항목 · §32 정본 */}
-      <div className="border-border bg-surface mt-6 rounded-xl border">
-        <div className="px-5 pt-5 pb-3">
-          <p className="text-fg text-sm font-bold">수정 가능 항목</p>
-          <p className="text-fg-subtle mt-1 text-xs">
-            이 팀에 한해 적용 — 다음 일지부터 반영, 작성된 일지는 보존
-          </p>
-        </div>
-        <ul className="divide-divider divide-y">
-          {CAPABILITY_ROWS.map((row) => (
-            <li
-              key={row.key}
-              className="flex items-center justify-between gap-4 px-5 py-2.5"
-            >
-              <span className="flex items-center gap-4">
-                <span className="bg-brand/10 text-brand w-44 shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold">
-                  {row.key}
-                </span>
-                <span className="text-fg-muted text-xs font-medium">
-                  {row.desc}
-                </span>
-              </span>
-              <Check className="text-success h-3.5 w-3.5 shrink-0" />
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 데이터 보존 정책 · §32 */}
-      <div className="bg-info-bg border-info/30 mt-4 rounded-xl border p-5">
-        <p className="text-fg text-sm font-bold">데이터 보존 정책</p>
-        <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
-          <li>
-            • 이미 작성된 일지는 작성 당시 항목 구조와 답변을 그대로 보존합니다
-          </li>
-          <li>• 팀별 항목 수정은 다음 일지부터 적용됩니다</li>
-          <li>
-            • 팀별 수정이 있으면 항목 행에 &quot;변경됨&quot; 배지 + AMBER
-            strip이 노출됩니다
-          </li>
-        </ul>
       </div>
 
       {fieldModal && (

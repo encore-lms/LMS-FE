@@ -55,8 +55,10 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
   const setScore = (name: string, key: string, score: number) =>
     setScores((prev) => ({ ...prev, [`${name}:${key}`]: score }))
 
-  // 완료 확정 전(진행 중)에는 상호평가가 열리지 않음 (§17)
-  if (phase === 'active') {
+  // 열리지 않은 경우 폼을 아예 그리지 않는다 — 그리면 다 입력하고 제출에서만 실패해 입력이 날아간다.
+  //  · 완료 확정 전(진행 중) (§17)
+  //  · 매니저·강사가 동료 평가를 개시하지 않음(서버가 제출을 막는 실제 조건)
+  if (phase === 'active' || !d.peerEvalEnabled) {
     return (
       <div className="flex flex-col gap-4">
         <h2 className="text-fg text-[16px] font-bold">프로젝트 상호평가</h2>
@@ -71,8 +73,8 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
             아직 상호평가가 열리지 않았어요
           </span>
           <span className="text-fg-muted max-w-md text-[12px] leading-5">
-            강사·운영이 프로젝트 완료를 확정하면 팀원 상호평가를 진행할 수
-            있어요.
+            프로젝트가 끝난 뒤 매니저·강사가 상호평가를 시작하면 팀원을 평가할
+            수 있어요.
           </span>
         </section>
       </div>

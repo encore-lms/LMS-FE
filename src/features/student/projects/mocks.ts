@@ -587,6 +587,7 @@ export const mockWorkspace: WorkspaceData = {
   peerDue: 'D-3',
   peerMyStatus: { label: '내 상태: 미제출', tone: 'warning' },
   peerTeamStatus: { label: '팀 제출 3/4', tone: 'info' },
+  peerEvalEnabled: true,
   peerTargets: [
     {
       memberId: 'pm-1',
@@ -866,6 +867,7 @@ export const mockWorkspaceP2: WorkspaceData = {
   peerDue: '마감 종료',
   peerMyStatus: { label: '내 상태: 제출 완료', tone: 'success' },
   peerTeamStatus: { label: '팀 제출 3/3', tone: 'success' },
+  peerEvalEnabled: true,
   peerTargets: [
     {
       memberId: 'pm-3',
@@ -1171,6 +1173,7 @@ export const mockWorkspaceP3: WorkspaceData = {
   peerDue: '해당 없음',
   peerMyStatus: { label: '개인 프로젝트 · 상호평가 없음', tone: 'info' },
   peerTeamStatus: { label: '팀원 없음', tone: 'info' },
+  peerEvalEnabled: true,
   peerTargets: [],
   certChecklist: [
     {
@@ -1314,6 +1317,7 @@ function buildDraftWorkspace(opts: {
     peerDue: '완료 확정 후 안내',
     peerMyStatus: { label: '완료 확정 전', tone: 'info' },
     peerTeamStatus: { label: '완료 확정 전', tone: 'info' },
+    peerEvalEnabled: true,
     peerTargets: [],
     certChecklist: [
       {

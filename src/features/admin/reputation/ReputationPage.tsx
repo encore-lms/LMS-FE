@@ -54,6 +54,10 @@ const PUSH_LABEL: Record<PushTarget, string> = {
   peer: '동료 푸시',
 }
 
+// 멘토 5축 축 라벨(BE scoresOf 순서와 동일). SHORT 는 테이블 인라인 칩용 축약.
+const AXIS_LABELS = ['기술', '책임감', '소통', '성장', '팀워크']
+const AXIS_SHORT = ['기', '책', '소', '성', '팀']
+
 // 평판 관리 (/admin/reputation) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1193:6267. 수강생별 평판 수집 현황(강사 추천서·멘토 평가·동료 5축) + 요청 푸시.
 export default function ReputationPage() {
@@ -64,6 +68,7 @@ export default function ReputationPage() {
   const push = useReputationPush()
   const toast = useToast()
   const [status, setStatus] = useSearchParamState('status', 'all')
+  const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [q, setQ] = useSearchParamState('q')
   // 푸시 확인 모달(단건·일괄 공용) + 평판 상세 모달.
   const [pushAction, setPushAction] = useState<{
@@ -119,12 +124,23 @@ export default function ReputationPage() {
   const { data, isPending, isError, refetch } = useReputation(scopeCohortIds)
 
   const students = useMemo(() => data?.students ?? [], [data])
+
+  // 멘토 필터 옵션 — 현재 조회 범위에 실제 존재하는 담당 멘토(미배정 '-' 제외) 가나다순.
+  const mentorOptions = useMemo(() => {
+    const names = new Set<string>()
+    for (const s of students) {
+      if (s.mentorBy && s.mentorBy !== '-') names.add(s.mentorBy)
+    }
+    return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
+  }, [students])
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     const list = students.filter((s) => {
       if (cohortFilter !== 'all' && s.cohortId !== cohortFilter) return false
       if (status === 'missing' && s.pushTargets.length === 0) return false
       if (status === 'complete' && s.pushTargets.length > 0) return false
+      if (mentorFilter !== 'all' && s.mentorBy !== mentorFilter) return false
       if (needle) {
         const hay = `${s.name} ${s.uuid}`.toLowerCase()
         if (!hay.includes(needle)) return false
@@ -135,7 +151,7 @@ export default function ReputationPage() {
     return [...list].sort((a, b) =>
       (a.name ?? '').localeCompare(b.name ?? '', 'ko'),
     )
-  }, [students, status, q, cohortFilter])
+  }, [students, status, q, cohortFilter, mentorFilter])
 
   const summary = data?.summary
 
@@ -170,12 +186,29 @@ export default function ReputationPage() {
       key: 'mentor',
       header: '멘토 평가·추천',
       cell: (s) => (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <StatusBadge
             label={MENTOR_EVAL_META[s.mentorEvalStatus].label}
             tone={MENTOR_EVAL_META[s.mentorEvalStatus].tone}
           />
           <span className="text-fg-subtle text-[11px]">{s.mentorBy}</span>
+          {/* 멘토 5축 점수 — 제출 완료 시 인라인 표시(상세를 안 열어도 바로 보이도록) */}
+          {s.mentorScores.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {s.mentorScores.map((v, i) => (
+                <span
+                  key={AXIS_LABELS[i]}
+                  className="bg-surface-muted text-fg-muted inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px]"
+                  title={AXIS_LABELS[i]}
+                >
+                  <span className="text-fg-subtle">{AXIS_SHORT[i]}</span>
+                  <span className="text-fg font-semibold tabular-nums">
+                    {v}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       ),
     },
@@ -380,19 +413,31 @@ export default function ReputationPage() {
               />
             </div>
 
-            {/* 필터 — 상태 + 검색(과정·기수는 페이지 상단 셀렉트에서 선택) */}
+            {/* 필터 — 상태 + 멘토 + 검색(과정·기수는 페이지 상단 셀렉트에서 선택) */}
             <div className="border-border bg-surface mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-              <Select
-                aria-label="상태 필터"
-                value={status}
-                onChange={(v) => setStatus(v)}
-                options={[
-                  { value: 'all', label: '상태 전체' },
-                  { value: 'missing', label: '누락 있음' },
-                  { value: 'complete', label: '완료' },
-                ]}
-                className="h-9"
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  aria-label="상태 필터"
+                  value={status}
+                  onChange={(v) => setStatus(v)}
+                  options={[
+                    { value: 'all', label: '상태 전체' },
+                    { value: 'missing', label: '누락 있음' },
+                    { value: 'complete', label: '완료' },
+                  ]}
+                  className="h-9"
+                />
+                <Select
+                  aria-label="멘토 필터"
+                  value={mentorFilter}
+                  onChange={(v) => setMentorFilter(v)}
+                  options={[
+                    { value: 'all', label: '멘토 전체' },
+                    ...mentorOptions.map((m) => ({ value: m, label: m })),
+                  ]}
+                  className="h-9"
+                />
+              </div>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}

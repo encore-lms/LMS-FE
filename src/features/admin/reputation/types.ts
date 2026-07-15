@@ -28,6 +28,8 @@ export interface ReputationStudent {
   mentorEvalStatus: MentorEvalStatus
   /** 멘토명 — 예: "김효원" / "-" */
   mentorBy: string
+  /** 멘토 5축 점수(기술·책임감·소통·성장·팀워크). 미제출이면 빈 배열 */
+  mentorScores: number[]
   /** 동료 5축 수집 인원 */
   peerCount: number
   /** 동료 5축 대상 인원 */

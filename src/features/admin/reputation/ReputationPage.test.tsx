@@ -54,6 +54,7 @@ const overview: ReputationOverview = {
       endorsementBy: '김지훈 강사',
       mentorEvalStatus: 'recommended',
       mentorBy: '김효원',
+      mentorScores: [5, 4, 5, 4, 5],
       peerCount: 6,
       peerTotal: 6,
       pushTargets: [],
@@ -66,6 +67,7 @@ const overview: ReputationOverview = {
       endorsementBy: '-',
       mentorEvalStatus: 'pending',
       mentorBy: '김효원',
+      mentorScores: [],
       peerCount: 3,
       peerTotal: 6,
       pushTargets: ['instructor', 'mentor', 'peer'],
@@ -183,6 +185,30 @@ describe('ReputationPage (평판 관리)', () => {
       within(screen.getByRole('listbox')).getByRole('button', { name: '34기' }),
     )
     expect(vi.mocked(useReputation)).toHaveBeenLastCalledWith(['c34'])
+  })
+
+  it('멘토 5축 점수를 테이블 행에 바로 보여준다', () => {
+    renderPage()
+    // 김민준(제출됨)은 5축 칩이 보이고, 박지훈(미제출)은 안 보인다.
+    const kim = screen.getByText('김민준').closest('tr') as HTMLElement
+    expect(within(kim).getByTitle('기술')).toHaveTextContent('5')
+    expect(within(kim).getByTitle('팀워크')).toHaveTextContent('5')
+    const park = screen.getByText('박지훈').closest('tr') as HTMLElement
+    expect(within(park).queryByTitle('기술')).toBeNull()
+  })
+
+  it('멘토 필터 — 특정 멘토가 평가한 수강생만 남긴다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getByLabelText('멘토 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: '김효원',
+      }),
+    )
+    // 둘 다 김효원 담당이라 유지된다(옵션이 실제 멘토명으로 뜨는지까지 검증).
+    expect(screen.getByText('김민준')).toBeInTheDocument()
+    expect(screen.getByText('박지훈')).toBeInTheDocument()
   })
 
   it('평판 상세 — 행 데이터 기반 상세 모달을 연다', async () => {

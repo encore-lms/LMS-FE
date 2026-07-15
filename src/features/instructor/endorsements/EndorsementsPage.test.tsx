@@ -4,11 +4,21 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import EndorsementsPage from './EndorsementsPage'
 import EndorsementHistoryPage from './EndorsementHistoryPage'
-import { useEndorsementQueue, useEndorsementHistory } from '../api/endorsements'
+import {
+  useEndorsementQueue,
+  useEndorsementHistory,
+  useEndorsementRoster,
+} from '../api/endorsements'
 import { usePageHeaderStore } from '@/shared/store'
 import type { EndorsementHistory, EndorsementQueue } from '@/shared/types'
 
 vi.mock('../api/endorsements')
+// 담당 기수 해소용 — 화면이 이 기수로 수강생 명단을 가져온다.
+vi.mock('../api/console', () => ({
+  useInstructorCohorts: () => ({
+    data: { rows: [{ id: 'co1', name: 'DA 4기' }] },
+  }),
+}))
 vi.mock('@/components/ui/use-toast', () => ({
   useToast: () => ({
     success: vi.fn(),
@@ -83,6 +93,14 @@ const history: EndorsementHistory = {
 }
 
 function mockQueue(v: Partial<QueueHook>) {
+  // 이름 join·작성 대기 계산의 원천 — BE 는 userId 만 주므로 화면이 이 명단으로 채운다.
+  vi.mocked(useEndorsementRoster).mockReturnValue({
+    data: [
+      { userId: 'st_yerin', name: '최예린' },
+      { userId: 'st_dohyun', name: '윤도현' },
+      { userId: 'st_jeongminseo', name: '정민서' },
+    ],
+  } as unknown as ReturnType<typeof useEndorsementRoster>)
   vi.mocked(useEndorsementQueue).mockReturnValue(v as unknown as QueueHook)
 }
 function mockHistory(v: Partial<HistoryHook>) {
@@ -100,9 +118,11 @@ describe('EndorsementsPage', () => {
     // 제목은 본문이 아닌 공유 헤더(usePageHeader)에 등록된다.
     expect(usePageHeaderStore.getState().title).toBe('강사 추천서')
     expect(screen.getAllByText('윤도현').length).toBeGreaterThan(0)
-    expect(screen.getByText('관찰 5개월')).toBeInTheDocument()
+    // 이미 추천서를 쓴 정민서는 '작성 대기'에서 빠지고 '최근 작성'에만 이름이 채워져 보인다.
     expect(screen.getByText('정민서')).toBeInTheDocument()
-    expect(screen.getByText('· 누적 18건')).toBeInTheDocument()
+    expect(screen.getByText('작성 대기')).toBeInTheDocument()
+    expect(screen.getByText('2건')).toBeInTheDocument() // 최예린·윤도현(정민서 제외)
+    expect(screen.getByText('· 누적 1건')).toBeInTheDocument()
   })
 
   it('코멘트 없이 제출하면 검증 에러를 표시한다', async () => {

@@ -11,7 +11,12 @@ import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import type { EndorsementPending } from '@/shared/types'
-import { useEndorsementQueue, useSubmitEndorsement } from '../api/endorsements'
+import {
+  useEndorsementQueue,
+  useEndorsementRoster,
+  useSubmitEndorsement,
+} from '../api/endorsements'
+import { useInstructorCohorts } from '../api/console'
 import { SNAPSHOT_META } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -29,7 +34,44 @@ export default function EndorsementsPage() {
   const submit = useSubmitEndorsement()
   usePageHeader('강사 추천서', '담당 수강생을 위한 추천서를 작성합니다')
 
-  const pending = useMemo(() => data?.pending ?? [], [data])
+  // 담당 기수 명단 — BE(learning)는 수강생 로스터가 없어 추천서 응답에 userId 만 준다.
+  // 이름 join·작성 대기 계산을 화면이 맡는다(운영 프로젝트 목록과 동일 관례).
+  const { data: cohorts } = useInstructorCohorts()
+  const cohortId = cohorts?.rows?.[0]?.id ?? null
+  const { data: roster } = useEndorsementRoster(cohortId)
+
+  const nameOf = useMemo(() => {
+    const m = new Map((roster ?? []).map((s) => [s.userId, s.name]))
+    return (id: string) => m.get(id) || '(이름 미확인)'
+  }, [roster])
+
+  // 최근 작성 — BE 가 준 userId 에 이름을 채운다.
+  const recent = useMemo(
+    () =>
+      (data?.recent ?? []).map((e) => ({
+        ...e,
+        student: { ...e.student, name: nameOf(e.student.id) },
+      })),
+    [data, nameOf],
+  )
+
+  // 작성 대기 = 담당 기수 명단 − 이미 쓴 대상. BE 는 로스터가 없어 빈 목록을 주므로 여기서 만든다.
+  const pending: EndorsementPending[] = useMemo(() => {
+    const written = new Set((data?.recent ?? []).map((e) => e.student.id))
+    return (roster ?? [])
+      .filter((s) => !written.has(s.userId))
+      .map((s) => ({
+        student: {
+          id: s.userId,
+          name: s.name,
+          cohort: data?.cohort ?? '',
+        },
+        // 관찰 기간·마감은 산출 근거가 정의되지 않아 0(화면에서 숨김).
+        observationMonths: 0,
+        dueDays: 0,
+      }))
+  }, [roster, data])
+
   const [studentId, setStudentId] = useState<string | null>(null)
 
   const {
@@ -244,7 +286,7 @@ export default function EndorsementsPage() {
             <div className="flex items-center gap-2">
               <h2 className="text-fg text-lg font-bold">최근 작성한 추천서</h2>
               <span className="text-fg-subtle text-xs">
-                · 누적 {data.recentTotal}건
+                · 누적 {recent.length}건
               </span>
             </div>
             <button
@@ -256,7 +298,7 @@ export default function EndorsementsPage() {
             </button>
           </div>
           <div className="border-border bg-surface mt-3 rounded-xl border">
-            {data.recent.map((e) => {
+            {recent.map((e) => {
               const meta = SNAPSHOT_META[e.snapshotStatus]
               return (
                 <div
@@ -284,7 +326,7 @@ export default function EndorsementsPage() {
                 </div>
               )
             })}
-            {data.recent.length === 0 && (
+            {recent.length === 0 && (
               <p className="text-fg-subtle px-5 py-6 text-sm">
                 아직 작성한 추천서가 없어요.
               </p>
@@ -306,7 +348,7 @@ function PendingCard({
   onPick: () => void
 }) {
   const { student, observationMonths, dueDays } = pending
-  const urgent = dueDays <= 3
+  const urgent = dueDays > 0 && dueDays <= 3
   return (
     <div
       className={`border-border bg-surface flex flex-col rounded-xl border p-6 ${
@@ -315,23 +357,28 @@ function PendingCard({
     >
       <div className="flex items-center gap-3">
         <Avatar name={student.name} size={36} />
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <span className="text-fg text-sm font-bold">{student.name}</span>
-          {student.track && (
-            <StatusBadge
-              label={`${student.cohort} · ${student.track}`}
-              tone="accent"
-            />
-          )}
+          <span className="text-fg-subtle text-xs">
+            {student.cohort}
+            {student.track ? ` · ${student.track}` : ''}
+          </span>
         </div>
       </div>
-      <p className="text-fg-muted mt-4 text-xs">관찰 {observationMonths}개월</p>
-      <p className="text-fg-subtle mt-1 text-xs">
-        마감{' '}
-        <span className={urgent ? 'text-danger font-bold' : 'text-fg-muted'}>
-          D-{dueDays}
-        </span>
-      </p>
+      {/* 관찰 기간·마감은 산출 근거가 정해지지 않아 값이 있을 때만 보여준다(0이면 숨김). */}
+      {observationMonths > 0 && (
+        <p className="text-fg-muted mt-4 text-xs">
+          관찰 {observationMonths}개월
+        </p>
+      )}
+      {dueDays > 0 && (
+        <p className="text-fg-subtle mt-1 text-xs">
+          마감{' '}
+          <span className={urgent ? 'text-danger font-bold' : 'text-fg-muted'}>
+            D-{dueDays}
+          </span>
+        </p>
+      )}
       <Button type="button" className="mt-4" onClick={onPick}>
         작성하기
       </Button>

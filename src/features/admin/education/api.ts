@@ -230,3 +230,35 @@ export function useCohortProjects(
         .then((r) => r.data),
   })
 }
+
+/**
+ * 프로젝트 동료 평가 개시/중단 — 매니저·강사 공용.
+ * 동료 평가는 프로젝트가 끝난 뒤 진행하므로, 켜는 행위가 개시 신호다(팀원 2명 미만이면 서버가 거부).
+ * 경로가 /instructor/* 인 이유는 그쪽만 강사·운영을 함께 허용하기 때문이다(/admin/* 은 강사 배제).
+ */
+export function usePeerEvalToggle(
+  courseId?: string | null,
+  cohortId?: string | null,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      enabled,
+    }: {
+      projectId: string
+      enabled: boolean
+    }) =>
+      apiClient
+        .patch<{
+          projectId: string
+          peerEvalEnabled: boolean
+        }>(`/instructor/projects/${projectId}/peer-eval`, { enabled })
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.projects(courseId ?? '', cohortId ?? ''),
+      })
+    },
+  })
+}

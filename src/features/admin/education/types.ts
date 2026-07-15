@@ -169,4 +169,6 @@ export interface CohortProject {
   tags: string[] // 기술 스택
   memberCount: number
   members: CohortProjectMember[]
+  /** 동료 평가 개시 여부 — 프로젝트 종료 후 매니저·강사가 켠다(켜야 팀원이 제출 가능) */
+  peerEvalEnabled: boolean
 }

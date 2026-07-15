@@ -20,6 +20,7 @@ import {
   useReputationPush,
   type ReputationPushInput,
 } from './api'
+import { MentorEvaluationDetail } from './MentorEvaluationDetail'
 import type {
   EndorsementStatus,
   MentorEvalStatus,
@@ -507,9 +508,9 @@ export default function ReputationPage() {
                       </div>
                     </dl>
                   </div>
-                  <p className="text-fg-subtle text-xs">
-                    상세 평판 항목과 입력 이력은 준비 중입니다.
-                  </p>
+
+                  {/* 멘토가 실제 남긴 평가 — 5축 점수·코멘트·추천 사유 */}
+                  <MentorEvaluationDetail studentId={detailStudent.id} />
                 </div>
               )}
             </Modal>

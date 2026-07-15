@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { adminReputationKeys } from './queryKeys'
-import type { PushTarget, ReputationOverview, ReputationStudent } from './types'
+import type {
+  MentorEvaluationDetail,
+  PushTarget,
+  ReputationOverview,
+  ReputationStudent,
+} from './types'
 
 // 평판 관리 조회 훅 — 엔드포인트가 /admin/* 라 admin feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
@@ -19,6 +24,21 @@ export function useReputation(cohortIds: string[] | undefined) {
         .get<ReputationOverview>('/admin/reputation', {
           cohortIds: cohortIds?.join(','),
         })
+        .then((r) => r.data),
+  })
+}
+
+// 수강생 1명의 멘토 평가 상세(5축 점수·코멘트·추천 사유) — 상세 모달을 열 때만 조회.
+// studentId 없으면(모달 닫힘) 비활성.
+export function useMentorEvaluationDetail(studentId: string | null) {
+  return useQuery({
+    queryKey: adminReputationKeys.mentorEvaluation(studentId ?? ''),
+    enabled: !!studentId,
+    queryFn: () =>
+      apiClient
+        .get<MentorEvaluationDetail>(
+          `/admin/reputation/students/${studentId}/mentor-evaluation`,
+        )
         .then((r) => r.data),
   })
 }

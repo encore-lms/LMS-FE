@@ -38,7 +38,11 @@ export default function EndorsementsPage() {
   // 이름 join·작성 대기 계산을 화면이 맡는다(운영 프로젝트 목록과 동일 관례).
   const { data: cohorts } = useInstructorCohorts()
   const cohortId = cohorts?.rows?.[0]?.id ?? null
-  const { data: roster } = useEndorsementRoster(cohortId)
+  const { data: roster, isPending: rosterPending } =
+    useEndorsementRoster(cohortId)
+  // 명단이 오기 전에 그리면 이름이 '(이름 미확인)'으로, 작성 대기가 0건으로 잠깐 보인다.
+  // 명단도 이 화면의 필수 데이터라 로딩에 포함한다.
+  const rosterLoading = !cohorts || rosterPending
 
   const nameOf = useMemo(() => {
     const m = new Map((roster ?? []).map((s) => [s.userId, s.name]))
@@ -134,7 +138,7 @@ export default function EndorsementsPage() {
 
   return (
     <DataBoundary
-      isPending={isPending}
+      isPending={isPending || rosterLoading}
       isError={isError || !data}
       onRetry={() => refetch()}
       skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}

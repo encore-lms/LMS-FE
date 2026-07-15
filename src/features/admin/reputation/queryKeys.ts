@@ -5,4 +5,6 @@ export const adminReputationKeys = {
   // 조회 범위 기수가 결과(표·요약)를 바꾸므로 키에 포함한다.
   overview: (cohortIds: string[] = []) =>
     [...adminReputationKeys.all, 'overview', ...cohortIds] as const,
+  mentorEvaluation: (studentId: string) =>
+    [...adminReputationKeys.all, 'mentor-evaluation', studentId] as const,
 } as const

@@ -57,3 +57,26 @@ export interface ReputationOverview {
   summary: ReputationSummary
   students: ReputationStudent[]
 }
+
+/** 5축 점수 한 축 — 미입력이면 value=null */
+export interface AxisScore {
+  label: string
+  value: number | null
+}
+
+/** 멘토 평가 상세(매니저 열람) — 평판 상세 모달에서 펼쳐 보기 */
+export interface MentorEvaluationDetail {
+  /** 멘토링 팀 소속 여부(false면 대상 외) */
+  hasTeam: boolean
+  teamName: string | null
+  mentorName: string | null
+  evalStatus: MentorEvalStatus
+  /** 평가 최종 제출 여부(제출 전이면 점수·코멘트가 비어 있을 수 있음) */
+  evaluationSubmitted: boolean
+  axes: AxisScore[]
+  comment: string | null
+  /** 추천 단계 상태 */
+  recommendation: 'recommended' | 'not_recommended' | 'pending'
+  /** 추천된 경우의 증명서용 요약 */
+  recommendationSummary: string | null
+}

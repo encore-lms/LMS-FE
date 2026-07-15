@@ -4,8 +4,12 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import ReputationPage from './ReputationPage'
-import { useReputation, useReputationPush } from './api'
-import type { ReputationOverview } from './types'
+import {
+  useMentorEvaluationDetail,
+  useReputation,
+  useReputationPush,
+} from './api'
+import type { MentorEvaluationDetail, ReputationOverview } from './types'
 
 vi.mock('./api')
 // 과정·기수 스코프 셀렉트가 쓰는 settings 훅 — QueryClient 없이 렌더되도록 정적 mock.
@@ -69,6 +73,24 @@ const overview: ReputationOverview = {
   ],
 }
 
+const mentorDetail: MentorEvaluationDetail = {
+  hasTeam: true,
+  teamName: '백엔드 1팀',
+  mentorName: '김효원',
+  evalStatus: 'recommended',
+  evaluationSubmitted: true,
+  axes: [
+    { label: '기술', value: 5 },
+    { label: '책임감', value: 4 },
+    { label: '소통', value: 5 },
+    { label: '성장', value: 4 },
+    { label: '팀워크', value: 5 },
+  ],
+  comment: '실무 적응력이 뛰어납니다.',
+  recommendation: 'recommended',
+  recommendationSummary: '현업 즉시 투입 가능한 인재입니다.',
+}
+
 function renderPage() {
   vi.mocked(useReputation).mockReturnValue({
     data: overview,
@@ -79,6 +101,11 @@ function renderPage() {
     mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
       opts?.onSuccess?.(),
   } as unknown as ReturnType<typeof useReputationPush>)
+  vi.mocked(useMentorEvaluationDetail).mockReturnValue({
+    data: mentorDetail,
+    isPending: false,
+    isError: false,
+  } as unknown as ReturnType<typeof useMentorEvaluationDetail>)
   return render(
     <ToastProvider>
       <MemoryRouter>
@@ -165,5 +192,23 @@ describe('ReputationPage (평판 관리)', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText('김민준 평판 상세')).toBeInTheDocument()
     expect(within(dialog).getByText('abc-1234')).toBeInTheDocument()
+  })
+
+  it('평판 상세 — 멘토가 남긴 5축 점수·코멘트·추천 사유를 보여준다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '상세' })[0])
+    const dialog = screen.getByRole('dialog')
+    // 멘토 평가 상세로 studentId를 넘겨 조회한다.
+    expect(vi.mocked(useMentorEvaluationDetail)).toHaveBeenCalledWith('stu-1')
+    // 5축 라벨·코멘트·추천 사유가 노출된다.
+    expect(within(dialog).getByText('멘토 평가 내용')).toBeInTheDocument()
+    expect(within(dialog).getByText('팀워크')).toBeInTheDocument()
+    expect(
+      within(dialog).getByText('실무 적응력이 뛰어납니다.'),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText('현업 즉시 투입 가능한 인재입니다.'),
+    ).toBeInTheDocument()
   })
 })

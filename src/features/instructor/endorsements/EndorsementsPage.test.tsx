@@ -125,6 +125,22 @@ describe('EndorsementsPage', () => {
     expect(screen.getByText('· 누적 1건')).toBeInTheDocument()
   })
 
+  // 회귀 — 명단이 오기 전에 그려서 이름이 '(이름 미확인)', 작성 대기가 0건으로 깜빡였다.
+  it('명단 로딩 중에는 이름 미확인·빈 작성 대기를 보여주지 않는다', () => {
+    mockQueue({ data: queue, isPending: false, isError: false })
+    vi.mocked(useEndorsementRoster).mockReturnValue({
+      data: undefined,
+      isPending: true,
+    } as unknown as ReturnType<typeof useEndorsementRoster>)
+    render(
+      <MemoryRouter>
+        <EndorsementsPage />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText('(이름 미확인)')).toBeNull()
+    expect(screen.queryByText('작성 대기 중인 추천서가 없어요.')).toBeNull()
+  })
+
   it('코멘트 없이 제출하면 검증 에러를 표시한다', async () => {
     mockQueue({ data: queue, isPending: false, isError: false })
     const user = userEvent.setup()

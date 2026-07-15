@@ -32,12 +32,15 @@ export function useEndorsementRoster(cohortId?: string | null) {
 }
 
 // 목록/작성 화면: 작성 대기 카드 + 최근 작성 추천서.
-export function useEndorsementQueue() {
+// 강사는 기수를 여러 개 담당하므로 선택 기수로 조회한다(미지정 시 서버가 기본 기수로 폴백).
+export function useEndorsementQueue(cohortId?: string | null) {
   return useQuery({
-    queryKey: instructorKeys.endorsements(),
+    queryKey: [...instructorKeys.endorsements(), cohortId ?? ''],
     queryFn: () =>
       apiClient
-        .get<EndorsementQueue>('/instructor/endorsements')
+        .get<EndorsementQueue>('/instructor/endorsements', {
+          cohortId: cohortId ?? undefined,
+        })
         .then((r) => r.data),
   })
 }
@@ -69,6 +72,8 @@ export function useEndorsement(endorsementId: string) {
 export interface SubmitEndorsementInput {
   studentId: string
   comment: string
+  /** 대상 기수 — 강사가 여러 기수를 담당하므로 화면이 고른 기수로 저장한다. */
+  cohortId?: string | null
 }
 // 신규 추천서 제출 — 작성 대기에서 빠지고 최근/전체 보기 큐에 추가된다.
 export function useSubmitEndorsement() {

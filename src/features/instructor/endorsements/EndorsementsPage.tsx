@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { EndorsementPending } from '@/shared/types'
 import {
   useEndorsementQueue,
@@ -30,14 +31,19 @@ const draftKey = (studentId: string) => `endorsement-draft:${studentId}`
 export default function EndorsementsPage() {
   const navigate = useNavigate()
   const toast = useToast()
-  const { data, isPending, isError, refetch } = useEndorsementQueue()
   const submit = useSubmitEndorsement()
   usePageHeader('강사 추천서', '담당 수강생을 위한 추천서를 작성합니다')
 
-  // 담당 기수 명단 — BE(learning)는 수강생 로스터가 없어 추천서 응답에 userId 만 준다.
-  // 이름 join·작성 대기 계산을 화면이 맡는다(운영 프로젝트 목록과 동일 관례).
+  // 강사는 기수를 여러 개 담당한다 — 큐·명단·작성이 같은 기수를 보도록 하나로 묶는다.
+  // (기수를 안 맞추면 다른 기수 학생이 대상일 때 이름이 '(이름 미확인)'이 된다.)
   const { data: cohorts } = useInstructorCohorts()
-  const cohortId = cohorts?.rows?.[0]?.id ?? null
+  const cohortOptions = useMemo(() => cohorts?.rows ?? [], [cohorts])
+  const [pickedCohort, setPickedCohort] = useSearchParamState('cohort')
+  const cohortId = pickedCohort || cohortOptions[0]?.id || null
+
+  const { data, isPending, isError, refetch } = useEndorsementQueue(cohortId)
+  // 명단 — BE(learning)는 수강생 로스터가 없어 추천서 응답에 userId 만 준다.
+  // 이름 join·작성 대기 계산을 화면이 맡는다(운영 프로젝트 목록과 동일 관례).
   const { data: roster, isPending: rosterPending } =
     useEndorsementRoster(cohortId)
   // 명단이 오기 전에 그리면 이름이 '(이름 미확인)'으로, 작성 대기가 0건으로 잠깐 보인다.
@@ -110,7 +116,11 @@ export default function EndorsementsPage() {
     if (!selected) return
     const { id, name } = selected.student
     try {
-      await submit.mutateAsync({ studentId: id, comment: input.comment })
+      await submit.mutateAsync({
+        studentId: id,
+        comment: input.comment,
+        cohortId,
+      })
       localStorage.removeItem(draftKey(id))
       toast.success(
         `추천서 제출 — ${name} · 24h 내 수정 가능 · 인증 완료 후 최신화 시 공개 스냅샷 반영`,
@@ -148,6 +158,25 @@ export default function EndorsementsPage() {
     >
       {data && (
         <div className="p-8">
+          {/* 기수 선택 — 강사는 여러 기수를 담당한다. 큐·명단·작성이 이 기수를 함께 따른다. */}
+          {cohortOptions.length > 1 && (
+            <div className="mb-5">
+              <Select
+                aria-label="기수 선택"
+                value={cohortId}
+                onChange={(v) => {
+                  setPickedCohort(v)
+                  setStudentId(null) // 기수가 바뀌면 이전 기수 학생 선택을 버린다
+                }}
+                options={cohortOptions.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+                className="h-11"
+              />
+            </div>
+          )}
+
           {/* 안내 배너 */}
           <div className="border-info/30 bg-info-bg flex gap-3 rounded-xl border p-4">
             <Info className="text-info mt-0.5 h-5 w-5 shrink-0" />

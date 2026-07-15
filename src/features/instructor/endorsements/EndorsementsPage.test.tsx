@@ -141,6 +141,19 @@ describe('EndorsementsPage', () => {
     expect(screen.queryByText('작성 대기 중인 추천서가 없어요.')).toBeNull()
   })
 
+  // 회귀 — 강사가 여러 기수를 담당하는데 큐(JWT 기수)와 명단(rows[0])이 서로 달라
+  // 다른 기수 학생이면 이름이 '(이름 미확인)'이 됐다. 둘이 같은 기수를 봐야 한다.
+  it('큐와 명단을 같은 기수로 조회한다', () => {
+    mockQueue({ data: queue, isPending: false, isError: false })
+    render(
+      <MemoryRouter>
+        <EndorsementsPage />
+      </MemoryRouter>,
+    )
+    expect(vi.mocked(useEndorsementQueue)).toHaveBeenLastCalledWith('co1')
+    expect(vi.mocked(useEndorsementRoster)).toHaveBeenLastCalledWith('co1')
+  })
+
   it('코멘트 없이 제출하면 검증 에러를 표시한다', async () => {
     mockQueue({ data: queue, isPending: false, isError: false })
     const user = userEvent.setup()

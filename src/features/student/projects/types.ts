@@ -265,6 +265,8 @@ export interface WorkspaceData {
   peerMyStatus: Badge
   peerTeamStatus: Badge
   peerTargets: WsPeerTarget[]
+  /** 동료 평가 개시 여부 — 꺼져 있으면 서버가 제출을 막으므로 폼 대신 안내를 띄운다 */
+  peerEvalEnabled: boolean
   // certification
   certChecklist: WsCheck[]
   certStatus: Badge

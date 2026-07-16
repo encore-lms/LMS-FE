@@ -211,6 +211,53 @@ describe('ReputationPage (평판 관리)', () => {
     expect(screen.getByText('박지훈')).toBeInTheDocument()
   })
 
+  // 회귀 — 동료 대상 프로젝트가 없어 0/0 인 걸 '완료(초록 바)'처럼 보이던 문제.
+  it('동료 5축 — 대상이 없으면(0/0) "대상 없음"으로 표시한다', () => {
+    vi.mocked(useReputation).mockReturnValue({
+      data: {
+        ...overview,
+        students: [{ ...overview.students[0], peerCount: 0, peerTotal: 0 }],
+      },
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useReputation>)
+    vi.mocked(useReputationPush).mockReturnValue({
+      mutate: () => {},
+    } as unknown as ReturnType<typeof useReputationPush>)
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <ReputationPage />
+        </MemoryRouter>
+      </ToastProvider>,
+    )
+    expect(screen.getByText('대상 없음')).toBeInTheDocument()
+    expect(screen.queryByText('0 / 0')).toBeNull()
+  })
+
+  // 회귀 — learning 미응답 시 전원 '미수집·0/0' 으로 보여 조회 실패를 못 알아챘다.
+  it('조회 실패(degraded)면 동료·추천서 열에 "조회 실패"를 표시한다', () => {
+    vi.mocked(useReputation).mockReturnValue({
+      data: { ...overview, peerDegraded: true, endorsementDegraded: true },
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useReputation>)
+    vi.mocked(useReputationPush).mockReturnValue({
+      mutate: () => {},
+    } as unknown as ReturnType<typeof useReputationPush>)
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <ReputationPage />
+        </MemoryRouter>
+      </ToastProvider>,
+    )
+    // 두 학생 × 두 열 = 조회 실패 배지가 여러 개
+    expect(screen.getAllByText('조회 실패').length).toBeGreaterThanOrEqual(2)
+    // 대상 없음/0-0 과 혼동되지 않는다
+    expect(screen.queryByText('대상 없음')).toBeNull()
+  })
+
   it('평판 상세 — 행 데이터 기반 상세 모달을 연다', async () => {
     renderPage()
     const user = userEvent.setup()

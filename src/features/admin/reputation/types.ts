@@ -58,6 +58,10 @@ export interface ReputationSummary {
 export interface ReputationOverview {
   summary: ReputationSummary
   students: ReputationStudent[]
+  /** 동료 평가 현황을 learning 에서 못 불러왔는지 — true면 '조회 실패'로 표시(0/0 '대상 없음'과 구분) */
+  peerDegraded?: boolean
+  /** 강사 추천서 현황을 learning 에서 못 불러왔는지 */
+  endorsementDegraded?: boolean
 }
 
 /** 5축 점수 한 축 — 미입력이면 value=null */

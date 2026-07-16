@@ -181,20 +181,29 @@ export default function ReputationPage() {
       header: '강사 추천서',
       className: 'w-36',
       // items-start 필수 — flex-col 기본 stretch 라 배지가 컬럼 너비만큼 늘어난다.
-      cell: (s) => (
-        <div className="flex flex-col items-start gap-1">
-          <StatusBadge
-            label={ENDORSEMENT_META[s.endorsementStatus].label}
-            tone={ENDORSEMENT_META[s.endorsementStatus].tone}
-          />
-          {/* 값 없을 때의 '-' 는 노이즈라 숨긴다 */}
-          {s.endorsementBy && s.endorsementBy !== '-' && (
-            <span className="text-fg-subtle text-[11px]">
-              {s.endorsementBy}
-            </span>
-          )}
-        </div>
-      ),
+      cell: (s) =>
+        // 조회 실패 시 전원 '미수집'으로 보이는 오해를 막는다.
+        data?.endorsementDegraded ? (
+          <span
+            className="text-warning text-[12px]"
+            title="강사 추천서 현황을 일시적으로 불러오지 못했습니다."
+          >
+            조회 실패
+          </span>
+        ) : (
+          <div className="flex flex-col items-start gap-1">
+            <StatusBadge
+              label={ENDORSEMENT_META[s.endorsementStatus].label}
+              tone={ENDORSEMENT_META[s.endorsementStatus].tone}
+            />
+            {/* 값 없을 때의 '-' 는 노이즈라 숨긴다 */}
+            {s.endorsementBy && s.endorsementBy !== '-' && (
+              <span className="text-fg-subtle text-[11px]">
+                {s.endorsementBy}
+              </span>
+            )}
+          </div>
+        ),
     },
     {
       key: 'mentor',
@@ -235,8 +244,22 @@ export default function ReputationPage() {
       header: '동료 5축',
       className: 'w-32',
       cell: (s) => {
-        const full = s.peerTotal > 0 && s.peerCount >= s.peerTotal
-        const pct = s.peerTotal > 0 ? (s.peerCount / s.peerTotal) * 100 : 0
+        // 조회 실패(learning 미응답)와 '대상 없음(개시된 프로젝트 없음)'을 구분해 표시한다.
+        if (data?.peerDegraded) {
+          return (
+            <span
+              className="text-warning text-[12px]"
+              title="동료 평가 현황을 일시적으로 불러오지 못했습니다."
+            >
+              조회 실패
+            </span>
+          )
+        }
+        if (s.peerTotal === 0) {
+          return <span className="text-fg-subtle text-[12px]">대상 없음</span>
+        }
+        const full = s.peerCount >= s.peerTotal
+        const pct = (s.peerCount / s.peerTotal) * 100
         return (
           <div className="flex flex-col items-start gap-1">
             <span className="text-fg text-[13px] font-semibold tabular-nums">
@@ -563,7 +586,17 @@ export default function ReputationPage() {
                       <div className="flex items-center justify-between gap-3">
                         <dt className="text-fg-muted">동료 5축</dt>
                         <dd className="text-fg font-semibold tabular-nums">
-                          {detailStudent.peerCount} / {detailStudent.peerTotal}
+                          {data?.peerDegraded ? (
+                            <span className="text-warning font-normal">
+                              조회 실패
+                            </span>
+                          ) : detailStudent.peerTotal === 0 ? (
+                            <span className="text-fg-subtle font-normal">
+                              대상 없음
+                            </span>
+                          ) : (
+                            `${detailStudent.peerCount} / ${detailStudent.peerTotal}`
+                          )}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between gap-3">

@@ -8,6 +8,7 @@ import {
   useMarkNotificationsRead,
   useRoleNotifications,
 } from '@/shared/api/notifications'
+import { useToast } from '@/components/ui/use-toast'
 import { useLocalNotificationStore } from './localNotifications'
 
 // 헤더 알림 벨 — 전 역할 공통. 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기.
@@ -22,6 +23,7 @@ export function NotificationBell() {
   const markServerRead = useMarkNotificationsRead()
   const markOneRead = useMarkNotificationRead()
   const deleteOne = useDeleteNotification()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -146,7 +148,15 @@ export function NotificationBell() {
                         type="button"
                         aria-label="알림 삭제"
                         title="알림 삭제"
-                        onClick={() => deleteOne.mutate(n.id)}
+                        onClick={() =>
+                          deleteOne.mutate(n.id, {
+                            // BE가 삭제/숨김을 항상 허용하므로 실패는 예외 상황 — 조용히 무시하지 않는다.
+                            onError: () =>
+                              toast.danger(
+                                '알림을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.',
+                              ),
+                          })
+                        }
                         disabled={deleteOne.isPending}
                         className="text-fg-subtle hover:bg-surface-muted hover:text-danger absolute top-1.5 right-1 hidden size-5 items-center justify-center rounded group-hover:flex disabled:opacity-50"
                       >

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Eye, MessageSquare } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Markdown } from '@/components/ui/Markdown'
 import { useToast } from '@/components/ui/use-toast'
@@ -296,6 +297,8 @@ export default function QnaDetailPage() {
   const acceptAnswer = useAcceptAnswer(id)
   const deleteQuestion = useDeleteQuestion()
   const [draft, setDraft] = useState('')
+  // 질문 삭제는 답변·댓글까지 연쇄 삭제라 인라인 확인 대신 모달로 무게를 준다(답변·댓글은 인라인 유지).
+  const [deleteOpen, setDeleteOpen] = useState(false)
   usePageHeader('QnA 게시판', '질문 상세')
 
   const resolved = data?.status === 'resolved'
@@ -368,19 +371,13 @@ export default function QnaDetailPage() {
                 </span>
                 {data.canDelete && (
                   <div className="ml-auto">
-                    <DeleteButton
-                      pending={deleteQuestion.isPending}
-                      confirmText="질문·답변·댓글 모두 삭제?"
-                      onConfirm={() =>
-                        deleteQuestion.mutate(id, {
-                          onSuccess: () => {
-                            toast.success('질문을 삭제했어요')
-                            navigate(base)
-                          },
-                          onError: () => toast.danger('질문 삭제에 실패했어요'),
-                        })
-                      }
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setDeleteOpen(true)}
+                      className="text-fg-subtle hover:text-danger text-[11px] font-semibold transition-colors"
+                    >
+                      삭제
+                    </button>
                   </div>
                 )}
               </div>
@@ -419,6 +416,43 @@ export default function QnaDetailPage() {
                 </div>
               )}
             </section>
+
+            {/* 질문 삭제 확인 — 답변·댓글 연쇄 삭제라 삭제 범위를 명시하고 danger 톤으로 확인 */}
+            <ConfirmDialog
+              open={deleteOpen}
+              onClose={() => setDeleteOpen(false)}
+              onConfirm={() =>
+                deleteQuestion.mutate(id, {
+                  onSuccess: () => {
+                    setDeleteOpen(false)
+                    toast.success('질문을 삭제했어요')
+                    navigate(base)
+                  },
+                  onError: () => toast.danger('질문 삭제에 실패했어요'),
+                })
+              }
+              size="md"
+              title="질문을 삭제할까요?"
+              confirmLabel={deleteQuestion.isPending ? '삭제 중…' : '삭제'}
+              confirmDisabled={deleteQuestion.isPending}
+              tone="danger"
+            >
+              <div className="flex flex-col gap-4">
+                <p className="text-fg-muted text-[13px] leading-6">
+                  질문을 삭제하면 달린 답변과 댓글도 함께 삭제되며 되돌릴 수
+                  없어요.
+                </p>
+                <div className="border-border bg-surface-muted/50 flex flex-col gap-1.5 rounded-[12px] border p-4">
+                  <span className="text-fg text-[14px] font-bold">
+                    {data.title}
+                  </span>
+                  <span className="text-fg-subtle text-[11px]">
+                    답변 {data.answers.length}개 · 댓글{' '}
+                    {data.answers.reduce((n, a) => n + a.comments.length, 0)}개
+                  </span>
+                </div>
+              </div>
+            </ConfirmDialog>
 
             {/* 답변 목록 */}
             <div className="flex items-center gap-2 pt-1">

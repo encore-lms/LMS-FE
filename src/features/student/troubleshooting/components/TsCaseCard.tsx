@@ -1,7 +1,7 @@
 import { AlertCircle, ArrowRight, Check, Link2, Timer, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { TsCase, TsStatus, Tone } from '../types'
-import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
+import { TONE_SOFT } from '@/shared/lib/tone'
 
 // 트러블슈팅 사례 카드 — 목록 화면과 프로젝트 워크스페이스(연결된 사례)에서 공용으로 쓴다.
 // 표시는 동일하고, 우상단 액션(라벨/동작)만 사용처가 주입한다.
@@ -36,13 +36,7 @@ export function TsCaseCard({
   // 작성 중(이어 작성)만 강조 버튼, 나머지는 보조 버튼.
   const primary = c.status === 'draft'
   return (
-    <section className="border-border bg-surface relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6">
-      <span
-        className={cn(
-          'absolute top-0 left-0 h-full w-1',
-          TONE_SOLID[c.accentTone],
-        )}
-      />
+    <section className="bg-surface flex flex-col gap-3 rounded-2xl p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <span

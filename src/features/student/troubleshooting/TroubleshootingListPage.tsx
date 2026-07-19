@@ -1,13 +1,6 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  CheckCircle2,
-  FileText,
-  Flag,
-  Timer,
-  type LucideIcon,
-} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -21,7 +14,7 @@ import { TsCaseCard } from './components/TsCaseCard'
 import { RejectNoticeModal } from './components/RejectNoticeModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { TS_LINKABLE_PROJECTS, type TsCase, type TsListData } from './types'
-import { TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 목록 카드 우상단 버튼 라벨 — 상태/작성완료 기준.
 //   작성 중(미완료) 이어 작성 · 작성 완료 인증요청 · 검토 중 검토 중 · 인증 완료 사례 열기
@@ -31,16 +24,7 @@ function listActionLabel(c: TsCase): string {
   return '사례 열기'
 }
 
-// 트러블슈팅 사례 목록 (/student/troubleshooting) — Figma 360:1297.
-// 통계카드 우상단 아이콘(노트/체크/깃발/스톱워치) — 키별 매핑.
-const STAT_ICON: Record<string, LucideIcon> = {
-  total: FileText,
-  certified: CheckCircle2,
-  independent: Flag,
-  avgdays: Timer,
-}
-const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+// 트러블슈팅 사례 목록 (/student/troubleshooting) — flat 구분선 리스트.
 // 페이지당 사례 수 — 3건씩 × 4페이지(전체 12건) 구성.
 const PAGE_SIZE = 3
 
@@ -118,42 +102,6 @@ export default function TroubleshootingListPage() {
     >
       {data && (
         <div className="flex flex-col gap-5 p-8">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {data.stats.map((s) => {
-              const Icon = STAT_ICON[s.key] ?? FileText
-              return (
-                <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
-                  <div className="flex items-start justify-between">
-                    <span className="text-fg-muted text-[12px]">{s.label}</span>
-                    <Icon
-                      className={cn('size-4 shrink-0', TONE_TEXT[s.tone])}
-                    />
-                  </div>
-                  <span className="text-fg text-[26px] leading-none font-bold">
-                    {s.value}
-                    {s.unit && (
-                      <span className="text-fg-muted ml-0.5 text-[13px]">
-                        {s.unit}
-                      </span>
-                    )}
-                  </span>
-                  {s.barPct != null && (
-                    <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
-                      <div
-                        className={cn(
-                          'h-full rounded-full',
-                          TONE_SOLID[s.tone],
-                        )}
-                        style={{ width: `${s.barPct}%` }}
-                      />
-                    </div>
-                  )}
-                  <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-                </div>
-              )
-            })}
-          </div>
-
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2">
               <h2 className="text-fg text-[16px] font-bold">
@@ -241,36 +189,40 @@ export default function TroubleshootingListPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col">
             {visible.length === 0 && (
-              <div className="border-border text-fg-subtle rounded-2xl border border-dashed p-10 text-center text-[13px]">
+              <div className="text-fg-subtle py-16 text-center text-[13px]">
                 검색·필터 조건에 맞는 사례가 없어요.
               </div>
             )}
-            {pageItems.map((c) => {
+            {pageItems.map((c, i) => {
               // 인증 완료 사례만 프로젝트 연결 칩 — 연결됨(프로젝트명)/연결 필요.
               const proj = TS_LINKABLE_PROJECTS.find(
                 (p) => p.id === projectLinks.projectIdFor(c.id),
               )
               return (
-                <TsCaseCard
-                  key={c.id}
-                  c={c}
-                  onOpen={open}
-                  actionLabel={listActionLabel(c)}
-                  connection={
-                    c.status === 'certified'
-                      ? proj
-                        ? { label: proj.title, ok: true }
-                        : { label: '연결 필요', ok: false }
-                      : undefined
-                  }
-                  onRemove={
-                    c.status === 'certified' ? undefined : () => setDelTarget(c)
-                  }
-                  removeLabel="삭제"
-                  onShowReason={() => setReasonTarget(c)}
-                />
+                <Fragment key={c.id}>
+                  {i > 0 && <div className="bg-divider h-px w-full" />}
+                  <TsCaseCard
+                    c={c}
+                    onOpen={open}
+                    actionLabel={listActionLabel(c)}
+                    connection={
+                      c.status === 'certified'
+                        ? proj
+                          ? { label: proj.title, ok: true }
+                          : { label: '연결 필요', ok: false }
+                        : undefined
+                    }
+                    onRemove={
+                      c.status === 'certified'
+                        ? undefined
+                        : () => setDelTarget(c)
+                    }
+                    removeLabel="삭제"
+                    onShowReason={() => setReasonTarget(c)}
+                  />
+                </Fragment>
               )
             })}
           </div>

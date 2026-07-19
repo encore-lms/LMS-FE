@@ -9,16 +9,10 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useDeleteProject, useProjectList } from '../api/projects'
-import { ProjectStatCards } from './components/ProjectStatCards'
 import { ProjectCard } from './components/ProjectCard'
 import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
 import { SkeletonCards } from '@/components/ui/Skeleton'
-import type {
-  ProjectFilter,
-  ProjectKind,
-  ProjectStat,
-  ProjectSummary,
-} from './types'
+import type { ProjectFilter, ProjectKind, ProjectSummary } from './types'
 import {
   statusToPhase,
   useProjectFlow,
@@ -117,41 +111,7 @@ export default function ProjectListPage() {
   const byPhase = (ph: ProjectPhase) =>
     projects.filter((p) => p.phase === ph).length
 
-  // 통계·필터를 현재 단계 기준으로 재구성 — 목록 배지와 항상 일치.
-  const stats: ProjectStat[] = [
-    {
-      key: 'draft',
-      label: '작성 중',
-      value: String(byPhase('active')),
-      unit: '건',
-      sub: '진행 중',
-      tone: 'accent',
-    },
-    {
-      key: 'completed',
-      label: '작성 완료',
-      value: String(byPhase('completed')),
-      unit: '건',
-      sub: '상호평가·인증 요청',
-      tone: 'info',
-    },
-    {
-      key: 'reviewing',
-      label: '검토 중',
-      value: String(byPhase('reviewing')),
-      unit: '건',
-      sub: '강사 검토 대기',
-      tone: 'warning',
-    },
-    {
-      key: 'certified',
-      label: '인증 완료',
-      value: String(byPhase('certified')),
-      unit: '건',
-      sub: '대표 후보 가능',
-      tone: 'success',
-    },
-  ]
+  // 필터를 현재 단계 기준으로 재구성 — 목록 배지와 항상 일치.
   const filters: ProjectFilter[] = [
     { key: 'all', label: '전체', count: projects.length },
     { key: 'certified', label: '인증 완료', count: byPhase('certified') },
@@ -197,8 +157,6 @@ export default function ProjectListPage() {
       className="p-8"
     >
       <div className="flex flex-col gap-5 p-8">
-        <ProjectStatCards stats={stats} />
-
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
             <h2 className="text-fg text-[16px] font-bold">참여 프로젝트</h2>
@@ -229,7 +187,7 @@ export default function ProjectListPage() {
         </div>
 
         {/* 필터 칩 */}
-        <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3">
+        <div className="bg-surface flex flex-wrap items-center justify-between gap-3 rounded-2xl">
           <div className="flex flex-wrap items-center gap-2">
             {filters.map((f) => {
               const on = f.key === activeStatus

@@ -71,7 +71,7 @@ export function ProjectCard({
           onOpen(project)
         }
       }}
-      className="border-border bg-surface focus-visible:ring-brand/40 hover:border-brand/40 relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-2xl border p-5 pl-6 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      className="bg-surface focus-visible:ring-brand/40 hover:bg-surface-muted relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-2xl p-5 pl-6 transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
       <span
         className={cn(

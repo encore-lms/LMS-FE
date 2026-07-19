@@ -54,9 +54,9 @@ export function BlogRecordCard({
     <>
       <section
         className={cn(
-          'bg-surface flex flex-col gap-3 rounded-2xl p-5',
+          'flex flex-col gap-2.5 py-5',
           clickable &&
-            'hover:bg-surface-muted cursor-pointer transition-colors',
+            'hover:bg-surface-muted -mx-4 cursor-pointer rounded-xl px-4 transition-colors',
         )}
         onClick={clickable ? openDetail : undefined}
         role={clickable ? 'button' : undefined}
@@ -88,9 +88,28 @@ export function BlogRecordCard({
               {record.statusLabel}
             </span>
           </div>
-          <span className="text-fg-subtle shrink-0 text-[11px]">
-            {record.submittedAt} · {record.statusAt}
-          </span>
+          {(record.canEdit || record.canDelete) && (
+            <div className="flex shrink-0 items-center gap-2">
+              {record.canEdit && (
+                <button
+                  type="button"
+                  onClick={stop(() => onEdit(record.id))}
+                  className={buttonClass({ size: 'sm' })}
+                >
+                  수정
+                </button>
+              )}
+              {record.canDelete && (
+                <button
+                  type="button"
+                  onClick={stop(() => onDelete(record.id))}
+                  className="border-border text-fg-muted hover:bg-surface rounded-lg border bg-white px-4 py-2 text-[12px] font-semibold"
+                >
+                  삭제
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <h3 className="text-fg text-[16px] font-bold">{record.title}</h3>
@@ -142,31 +161,10 @@ export function BlogRecordCard({
           </div>
         )}
 
-        <div className="border-divider flex items-center justify-between border-t pt-3">
-          <span className="text-fg-subtle text-[12px]">
-            {record.instructor}
-          </span>
-          <div className="flex items-center gap-2">
-            {record.canEdit && (
-              <button
-                type="button"
-                onClick={stop(() => onEdit(record.id))}
-                className={buttonClass({ size: 'sm' })}
-              >
-                수정
-              </button>
-            )}
-            {record.canDelete && (
-              <button
-                type="button"
-                onClick={stop(() => onDelete(record.id))}
-                className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
-              >
-                삭제
-              </button>
-            )}
-          </div>
-        </div>
+        <span className="text-fg-subtle text-[11px]">
+          {record.instructor ? `${record.instructor} · ` : ''}
+          {record.submittedAt} · {record.statusAt}
+        </span>
       </section>
 
       {isBlog && (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
@@ -297,14 +297,16 @@ function RecordsView({ data }: { data: RecordsOverview }) {
             }
           />
         ) : (
-          <div className="flex flex-col gap-4">
-            {pageItems.map((r) => (
-              <BlogRecordCard
-                key={r.id}
-                record={r}
-                onEdit={goEdit}
-                onDelete={(id) => setDeleteId(id)}
-              />
+          <div className="flex flex-col">
+            {pageItems.map((r, i) => (
+              <Fragment key={r.id}>
+                {i > 0 && <div className="bg-divider h-px w-full" />}
+                <BlogRecordCard
+                  record={r}
+                  onEdit={goEdit}
+                  onDelete={(id) => setDeleteId(id)}
+                />
+              </Fragment>
             ))}
           </div>
         )}

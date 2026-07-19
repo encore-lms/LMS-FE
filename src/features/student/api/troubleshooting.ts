@@ -129,9 +129,12 @@ export function useUploadTsAttachment() {
       const form = new FormData()
       form.append('file', file)
       if (label) form.append('label', label)
-      return apiClient
-        .post(`/student/troubleshooting/${id}/attachments/file`, form)
-        .then((r) => r.data)
+      // postForm — FormData 를 multipart/form-data(boundary 자동)로 전송(선례: projects 산출물 업로드).
+      // 일반 post 는 기본 application/json 헤더가 붙어 BE 가 415(HttpMediaTypeNotSupported)로 거부한다.
+      return apiClient.postForm(
+        `/student/troubleshooting/${id}/attachments/file`,
+        form,
+      )
     },
     onSuccess: (_d, { id }) =>
       qc.invalidateQueries({ queryKey: tsKeys.case(id) }),

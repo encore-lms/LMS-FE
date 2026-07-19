@@ -147,22 +147,23 @@ export function CaseContentForm({
   const removeLink = (url: string) =>
     setLinks((p) => p.filter((l) => l !== url))
 
-  // BE UpsertRequest 매핑 — STAR·제목·독립·소요일수·프로젝트 연결. category 는 BE 미저장,
-  // tech_stack 태그 선택 UI 가 없어 빈 배열(태그는 후속 과제).
-  const buildBody = (): TsUpsertBody => ({
+  // BE UpsertRequest 매핑 — 제목·카테고리·STAR·독립·작성완료·소요일수·자유 태그·프로젝트 연결.
+  const buildBody = (completed: boolean): TsUpsertBody => ({
     title: title.trim() || '제목 없는 사례',
+    category,
     situation: star.situation,
     resolution: star.resolution,
     result: star.result,
     independent,
+    completed,
     daysSpent: Number.parseInt(dayCount, 10) || 0,
-    techStackCategoryIds: [],
+    tags,
     projectId: projectLink?.projectId ?? null,
   })
 
   // 저장 — 신규는 create(POST, BE 발급 id 반환), 기존은 update(PUT). onDone 에 확정 id 전달.
-  const persist = (onDone?: (id: string) => void) => {
-    const body = buildBody()
+  const persist = (completed: boolean, onDone?: (id: string) => void) => {
+    const body = buildBody(completed)
     if (isNew) {
       createMutation.mutate(body, {
         onSuccess: (detail) => onDone?.(detail.id),
@@ -180,14 +181,14 @@ export function CaseContentForm({
   }
 
   const saveDraft = () => {
-    persist((id) => {
+    persist(false, (id) => {
       toast.success('저장했어요 · 이어서 작성할 수 있어요')
       // 신규는 BE 발급 실 id 상세로 교체(이후 수정은 PUT).
       if (isNew) navigate(`/student/troubleshooting/${id}`, { replace: true })
     })
   }
   const complete = () => {
-    persist(() => {
+    persist(true, () => {
       toast.success('저장했어요 · 목록에서 ‘사례 열기’로 인증 요청하세요')
       navigate('/student/troubleshooting')
     })
@@ -202,7 +203,7 @@ export function CaseContentForm({
   // 인증 요청 게이트 — BE 필수는 제목·STAR(프로젝트 연결·태그는 권장, 표시만).
   const canRequestCert = !!title.trim() && filled === 3
   const openCertRequest = () => {
-    persist((id) => {
+    persist(true, (id) => {
       // 신규는 먼저 저장(create)해 실 id 상세로 이동 — 그 화면에서 인증 요청한다.
       if (isNew) navigate(`/student/troubleshooting/${id}`, { replace: true })
       else onRequestCert()

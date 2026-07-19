@@ -3,19 +3,17 @@ import { apiClient } from '@/shared/api'
 import { tsKeys } from '../troubleshooting/queryKeys'
 import type { TsCaseDetail, TsListData } from '../troubleshooting/types'
 
-/**
- * 작성·수정 요청 바디 — BE UpsertRequest 계약.
- * category 는 BE 도메인에 자리가 없어 전송하지 않는다(BE 가 "기타"로 고정).
- * techStackCategoryIds 는 태그(현재 FE 폼에 선택 UI 없어 보통 빈 배열).
- */
+/** 작성·수정 요청 바디 — BE UpsertRequest 계약(category·completed·자유 tags 포함). */
 export interface TsUpsertBody {
   title: string
+  category: string
   situation: string
   resolution: string
   result: string
   independent: boolean
+  completed: boolean
   daysSpent: number
-  techStackCategoryIds: string[]
+  tags: string[]
   projectId: string | null
 }
 

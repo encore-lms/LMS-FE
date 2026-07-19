@@ -1,19 +1,17 @@
 import { Fragment, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useTsList } from '../api/troubleshooting'
-import { tsKeys } from './queryKeys'
+import { useDeleteTsCase, useTsList } from '../api/troubleshooting'
 import { useProjectTsLinks } from './projectLinks'
 import { TsCaseCard } from './components/TsCaseCard'
 import { RejectNoticeModal } from './components/RejectNoticeModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { TS_LINKABLE_PROJECTS, type TsCase, type TsListData } from './types'
+import { TS_LINKABLE_PROJECTS, type TsCase } from './types'
 import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 목록 카드 우상단 버튼 라벨 — 상태/작성완료 기준.
@@ -30,7 +28,6 @@ const PAGE_SIZE = 3
 
 export default function TroubleshootingListPage() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const toast = useToast()
   // 프로젝트 연결 상태(인증완료 카드 표시) — 스토어 전체 구독으로 연결 변경 시 즉시 반영.
   const projectLinks = useProjectTsLinks()
@@ -58,15 +55,14 @@ export default function TroubleshootingListPage() {
   const open = (c: TsCase) => {
     navigate(`/student/troubleshooting/${c.id}`)
   }
-  // 삭제 — 인증 완료 전 사례만(목록·상세 캐시에서 제거). 확인 모달을 거친다.
+  // 삭제 — 인증 완료 전 사례만(BE 게이트). 실 API 삭제 후 목록 무효화.
+  const deleteMutation = useDeleteTsCase()
   const confirmRemove = () => {
     if (!delTarget) return
-    const rid = delTarget.id
-    queryClient.setQueryData<TsListData>(tsKeys.list(), (old) =>
-      old ? { ...old, cases: old.cases.filter((c) => c.id !== rid) } : old,
-    )
-    queryClient.removeQueries({ queryKey: tsKeys.case(rid) })
-    toast.success('사례를 삭제했어요')
+    deleteMutation.mutate(delTarget.id, {
+      onSuccess: () => toast.success('사례를 삭제했어요'),
+      onError: () => toast.danger('삭제에 실패했어요'),
+    })
     setDelTarget(null)
   }
 

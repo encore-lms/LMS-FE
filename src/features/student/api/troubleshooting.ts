@@ -1,7 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { tsKeys } from '../troubleshooting/queryKeys'
 import type { TsCaseDetail, TsListData } from '../troubleshooting/types'
+
+/**
+ * 작성·수정 요청 바디 — BE UpsertRequest 계약.
+ * category 는 BE 도메인에 자리가 없어 전송하지 않는다(BE 가 "기타"로 고정).
+ * techStackCategoryIds 는 태그(현재 FE 폼에 선택 UI 없어 보통 빈 배열).
+ */
+export interface TsUpsertBody {
+  title: string
+  situation: string
+  resolution: string
+  result: string
+  independent: boolean
+  daysSpent: number
+  techStackCategoryIds: string[]
+  projectId: string | null
+}
 
 // 트러블슈팅 훅 — 엔드포인트가 /student/* 라 학생 feature 소유. baseURL /api 라 경로 앞 /api 생략.
 export function useTsList() {
@@ -19,8 +35,11 @@ export function useTsList() {
 }
 
 export function useTsCase(id: string) {
+  // 신규 임시 id(ts_…)는 아직 BE에 없다 — 조회를 건너뛰고 빈 작성 폼으로 시작한다.
+  const isNew = id.startsWith('ts_')
   return useQuery({
     queryKey: tsKeys.case(id),
+    enabled: !isNew,
     queryFn: () =>
       apiClient
         .get<TsCaseDetail>(`/student/troubleshooting/${id}`)
@@ -30,5 +49,67 @@ export function useTsCase(id: string) {
     staleTime: Infinity,
     // 옵저버가 사라져도 캐시가 수거되지 않도록 GC 비활성화(목록과 동일 — 신규 사례 소실 방지).
     gcTime: Infinity,
+  })
+}
+
+// ── write ──────────────────────────────────────────────────────────────────
+
+/** 새 사례 작성(POST) — 반환된 상세(BE 발급 실 id)를 캐시에 심고 목록을 무효화한다. */
+export function useCreateTsCase() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: TsUpsertBody) =>
+      apiClient
+        .post<TsCaseDetail>('/student/troubleshooting', body)
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      qc.setQueryData(tsKeys.case(detail.id), detail)
+      qc.invalidateQueries({ queryKey: tsKeys.list() })
+    },
+  })
+}
+
+/** 사례 수정(PUT). */
+export function useUpdateTsCase() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: TsUpsertBody }) =>
+      apiClient
+        .put<TsCaseDetail>(`/student/troubleshooting/${id}`, body)
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      qc.setQueryData(tsKeys.case(detail.id), detail)
+      qc.invalidateQueries({ queryKey: tsKeys.list() })
+    },
+  })
+}
+
+/** 사례 삭제(DELETE) — 인증 완료 전만(BE 게이트). */
+export function useDeleteTsCase() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiClient.delete(`/student/troubleshooting/${id}`).then((r) => r.data),
+    onSuccess: (_d, id) => {
+      qc.removeQueries({ queryKey: tsKeys.case(id) })
+      qc.invalidateQueries({ queryKey: tsKeys.list() })
+    },
+  })
+}
+
+/** 인증 요청(POST /{id}/certification-request) — SUBMITTED + REQUESTED 전이. */
+export function useRequestTsCertification() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiClient
+        .post<TsCaseDetail>(
+          `/student/troubleshooting/${id}/certification-request`,
+        )
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      qc.setQueryData(tsKeys.case(detail.id), detail)
+      qc.invalidateQueries({ queryKey: tsKeys.list() })
+    },
   })
 }

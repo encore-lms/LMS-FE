@@ -7,9 +7,8 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
-import { useTsCase } from '../api/troubleshooting'
+import { useRequestTsCertification, useTsCase } from '../api/troubleshooting'
 import { useToast } from '@/components/ui/use-toast'
-import { applyTsStatus } from './flow'
 import { tsKeys } from './queryKeys'
 import { useProjectTsLinks } from './projectLinks'
 import {
@@ -34,6 +33,8 @@ const card =
 
 export default function CaseDetailPage() {
   const { id = '' } = useParams()
+  // 신규 임시 id(ts_…)는 아직 BE에 없다 — 빈 작성 폼으로 시작(조회 skip은 useTsCase에서).
+  const isNew = id.startsWith('ts_')
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const queryClient = useQueryClient()
@@ -111,11 +112,15 @@ export default function CaseDetailPage() {
     )
   }
 
-  // 인증 요청(검토 중 전환) — 편집 폼 사이드바의 인증 요청 버튼이 준비 항목 확인 후 호출.
+  // 인증 요청(검토 중 전환) — 실 API(POST /{id}/certification-request). SUBMITTED + REQUESTED.
+  const certMutation = useRequestTsCertification()
   const onCertify = () => {
     setCertModal(false)
-    applyTsStatus(queryClient, id, 'reviewing', 'cert')
-    toast.success('인증 요청을 보냈어요 · 강사 검토 대기 (검토 중)')
+    certMutation.mutate(id, {
+      onSuccess: () =>
+        toast.success('인증 요청을 보냈어요 · 강사 검토 대기 (검토 중)'),
+      onError: () => toast.danger('인증 요청에 실패했어요'),
+    })
     // 홈으로 가지 않고 머문다 — 상태가 검토 중으로 바뀌며 같은 페이지가 잠금 화면으로 전환된다.
   }
 
@@ -142,15 +147,25 @@ export default function CaseDetailPage() {
 
   return (
     <DataBoundary
-      isPending={isPending}
-      isError={isError || !data}
+      isPending={!isNew && isPending}
+      isError={!isNew && (isError || !data)}
       onRetry={refetch}
       loadingText="사례를 불러오는 중…"
       errorTitle="사례를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
       className="p-8"
     >
-      {data && (
+      {isNew && (
+        <div className="flex flex-col gap-5 p-8">
+          <CaseContentForm
+            caseId={id}
+            projectLink={link}
+            onConnectProject={() => setLinkModal(true)}
+            onRequestCert={() => setCertModal(true)}
+          />
+        </div>
+      )}
+      {!isNew && data && (
         <div className={cn('flex flex-col gap-5 p-8', editing && 'pb-28')}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-1.5">

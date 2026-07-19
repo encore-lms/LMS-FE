@@ -6,18 +6,16 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { tsKeys } from '../queryKeys'
-import { buildCaseDetail, buildTimeline } from '../detail'
-import { TS_STATUS_META } from '../flow'
 import {
-  TS_CATEGORIES,
-  type TsCase,
-  type TsListData,
-  type TsProjectLink,
-} from '../types'
+  useCreateTsCase,
+  useUpdateTsCase,
+  type TsUpsertBody,
+} from '../../api/troubleshooting'
+import { buildTimeline } from '../detail'
+import { TS_CATEGORIES, type TsListData, type TsProjectLink } from '../types'
 import {
   ALLOWED_EXT,
   card,
-  CATEGORY_KEY,
   formatSize,
   MAX_FILE_SIZE,
   STAR,
@@ -52,6 +50,10 @@ export function CaseContentForm({
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const toast = useToast()
+  const createMutation = useCreateTsCase()
+  const updateMutation = useUpdateTsCase()
+  // 신규(임시 id ts_…)는 create(POST), 기존은 update(PUT).
+  const isNew = caseId.startsWith('ts_')
   const existing = queryClient
     .getQueryData<TsListData>(tsKeys.list())
     ?.cases.find((c) => c.id === caseId)
@@ -145,62 +147,50 @@ export function CaseContentForm({
   const removeLink = (url: string) =>
     setLinks((p) => p.filter((l) => l !== url))
 
-  // 저장 — 항상 draft로 저장하고 completed 플래그만 다르게 둔다(목록·상세 캐시 함께 갱신).
-  //   completed=false (임시 저장) → 이어 작성. completed=true (작성 완료) → 상세에서 인증 요청.
-  // 프로젝트 연결은 상세 페이지가 소유하므로 빌드 결과에 현재 연결값을 덮어쓴다.
-  const persist = (completed: boolean) => {
-    const isCustom = customCategories.includes(category)
-    const tone =
-      TS_CATEGORIES.find((c) => c.key === category)?.tone ??
-      (isCustom ? 'success' : 'brand')
-    const meta = TS_STATUS_META.draft
-    const next: TsCase = {
-      id: caseId,
-      category,
-      categoryKey: CATEGORY_KEY[category] ?? 'etc',
-      categoryTone: tone,
-      status: 'draft',
-      statusLabel: completed ? '작성 완료' : meta.statusLabel,
-      completed,
-      independent,
-      days: dayCount ? `${dayCount}일` : '진행 중',
-      accentTone: meta.accentTone,
-      title: title.trim() || '제목 없는 사례',
-      createdAt: existing?.createdAt ?? '작성 방금',
-      updatedAt: '최근 수정 방금',
-      situation: star.situation,
-      resolution: star.resolution,
-      result: star.result,
-      tags,
-      // 작성 완료면 목록에서 '인증요청'(→상세 인증 요청), 미완료면 '이어 작성'.
-      actionLabel: completed ? '인증요청' : meta.actionLabel,
+  // BE UpsertRequest 매핑 — STAR·제목·독립·소요일수·프로젝트 연결. category 는 BE 미저장,
+  // tech_stack 태그 선택 UI 가 없어 빈 배열(태그는 후속 과제).
+  const buildBody = (): TsUpsertBody => ({
+    title: title.trim() || '제목 없는 사례',
+    situation: star.situation,
+    resolution: star.resolution,
+    result: star.result,
+    independent,
+    daysSpent: Number.parseInt(dayCount, 10) || 0,
+    techStackCategoryIds: [],
+    projectId: projectLink?.projectId ?? null,
+  })
+
+  // 저장 — 신규는 create(POST, BE 발급 id 반환), 기존은 update(PUT). onDone 에 확정 id 전달.
+  const persist = (onDone?: (id: string) => void) => {
+    const body = buildBody()
+    if (isNew) {
+      createMutation.mutate(body, {
+        onSuccess: (detail) => onDone?.(detail.id),
+        onError: () => toast.danger('저장에 실패했어요'),
+      })
+    } else {
+      updateMutation.mutate(
+        { id: caseId, body },
+        {
+          onSuccess: () => onDone?.(caseId),
+          onError: () => toast.danger('저장에 실패했어요'),
+        },
+      )
     }
-    queryClient.setQueryData<TsListData>(tsKeys.list(), (old) => {
-      if (!old) return old
-      const has = old.cases.some((c) => c.id === caseId)
-      return {
-        ...old,
-        cases: has
-          ? old.cases.map((c) => (c.id === caseId ? next : c))
-          : [next, ...old.cases],
-      }
-    })
-    const detail = buildCaseDetail(next)
-    queryClient.setQueryData(tsKeys.case(caseId), {
-      ...detail,
-      projectLink,
-      certProject: projectLink ? projectLink.projectTitle : detail.certProject,
-    })
   }
 
   const saveDraft = () => {
-    persist(false)
-    toast.success('임시 저장했어요 · 이어서 작성할 수 있어요')
+    persist((id) => {
+      toast.success('저장했어요 · 이어서 작성할 수 있어요')
+      // 신규는 BE 발급 실 id 상세로 교체(이후 수정은 PUT).
+      if (isNew) navigate(`/student/troubleshooting/${id}`, { replace: true })
+    })
   }
   const complete = () => {
-    persist(true)
-    toast.success('작성을 완료했어요 · 목록에서 ‘사례 열기’로 인증 요청하세요')
-    navigate('/student/troubleshooting')
+    persist(() => {
+      toast.success('저장했어요 · 목록에서 ‘사례 열기’로 인증 요청하세요')
+      navigate('/student/troubleshooting')
+    })
   }
 
   const prepChecklist = [
@@ -209,11 +199,14 @@ export function CaseContentForm({
     { label: '프로젝트 연결', done: projectLinked },
     { label: '태그 추가', done: tags.length > 0 },
   ]
-  // 인증 요청은 준비 항목을 모두 충족해야 가능. 누르면 현재 내용을 저장하고 인증 모달을 연다.
-  const canRequestCert = prepChecklist.every((c) => c.done)
+  // 인증 요청 게이트 — BE 필수는 제목·STAR(프로젝트 연결·태그는 권장, 표시만).
+  const canRequestCert = !!title.trim() && filled === 3
   const openCertRequest = () => {
-    persist(false)
-    onRequestCert()
+    persist((id) => {
+      // 신규는 먼저 저장(create)해 실 id 상세로 이동 — 그 화면에서 인증 요청한다.
+      if (isNew) navigate(`/student/troubleshooting/${id}`, { replace: true })
+      else onRequestCert()
+    })
   }
   const timeline = buildTimeline('draft')
 

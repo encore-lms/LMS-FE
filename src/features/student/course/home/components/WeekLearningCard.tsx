@@ -19,7 +19,7 @@ export function WeekLearningCard({
     (w) => w.weekNo >= currentWeek - 2 && w.weekNo <= currentWeek + 2,
   )
   return (
-    <section className="border-border bg-surface flex flex-1 flex-col gap-3.5 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+    <section className="bg-surface flex flex-1 flex-col gap-3.5 rounded-2xl p-6">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-fg text-[15px] font-bold">{title}</h2>

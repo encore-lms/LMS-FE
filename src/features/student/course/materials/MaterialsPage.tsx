@@ -204,7 +204,7 @@ export default function MaterialsPage() {
                 description="검색어나 분류를 바꿔보세요."
               />
             ) : (
-              <div className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+              <div className="bg-surface flex w-full flex-col rounded-2xl">
                 {pageItems.map((it, i) => (
                   <Fragment key={it.id}>
                     {i > 0 && <div className="bg-divider h-px w-full" />}

@@ -14,16 +14,14 @@ export function WeekRow({ week }: { week: CourseWeek }) {
   return (
     <div
       className={cn(
-        'flex w-full items-center gap-3.5 rounded-[12px] border p-4',
-        active ? 'border-brand bg-brand/10' : 'border-divider bg-surface',
+        'flex w-full items-center gap-3.5 rounded-[12px] p-4',
+        active ? 'bg-brand/10' : '',
       )}
     >
       <div
         className={cn(
-          'flex size-12 flex-col items-center justify-center rounded-[12px] border text-center',
-          active
-            ? 'bg-brand border-brand text-white'
-            : 'border-border bg-surface',
+          'flex size-12 flex-col items-center justify-center rounded-[12px] text-center',
+          active ? 'bg-brand text-white' : 'bg-surface-muted',
         )}
       >
         <span

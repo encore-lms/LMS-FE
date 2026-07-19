@@ -92,7 +92,7 @@ export default function QuizListPage() {
         {status === 'available' ? (
           <>
             {/* 응시 가능 퀴즈 */}
-            <section className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+            <section className="bg-surface flex w-full flex-col rounded-2xl">
               <div className="flex items-center justify-between px-6 pt-5 pb-4">
                 <div className="flex items-center gap-2">
                   <span className="bg-warning size-2 rounded-full" />
@@ -126,7 +126,7 @@ export default function QuizListPage() {
 
             {/* 다른 상태 미리보기 */}
             {others.length > 0 && (
-              <section className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+              <section className="bg-surface flex w-full flex-col rounded-2xl">
                 <div className="flex items-center justify-between px-6 pt-5 pb-4">
                   <div className="flex items-center gap-2">
                     <h2 className="text-fg text-[15px] font-bold">
@@ -154,7 +154,7 @@ export default function QuizListPage() {
           </>
         ) : (
           /* 단일 상태 필터 뷰 */
-          <section className="border-border bg-surface flex w-full flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+          <section className="bg-surface flex w-full flex-col rounded-2xl">
             <div className="flex items-center gap-2 px-6 pt-5 pb-4">
               <h2 className="text-fg text-[15px] font-bold">
                 {STATUS_LABEL[status]} 퀴즈

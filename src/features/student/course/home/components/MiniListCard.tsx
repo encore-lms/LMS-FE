@@ -27,7 +27,7 @@ export function MiniListCard({ card }: { card: CourseMiniCard }) {
   const tone = TONE[card.tone]
   const to = KEY_ROUTE[card.key]
   return (
-    <section className="border-border bg-surface flex w-full flex-col gap-3 rounded-[14px] border p-[18px] shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+    <section className="bg-surface flex w-full flex-col gap-3 rounded-[14px] p-[18px]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className={cn('size-2 rounded-full', tone.dot)} />

@@ -3,7 +3,7 @@ import { apiClient } from '@/shared/api'
 import { tsKeys } from '../troubleshooting/queryKeys'
 import type { TsCaseDetail, TsListData } from '../troubleshooting/types'
 
-/** 작성·수정 요청 바디 — BE UpsertRequest 계약(category·completed·자유 tags 포함). */
+/** 작성·수정 요청 바디 — BE UpsertRequest 계약(category·completed·자유 tags·근거 링크 포함). */
 export interface TsUpsertBody {
   title: string
   category: string
@@ -14,6 +14,7 @@ export interface TsUpsertBody {
   completed: boolean
   daysSpent: number
   tags: string[]
+  links: string[]
   projectId: string | null
 }
 
@@ -109,5 +110,30 @@ export function useRequestTsCertification() {
       qc.setQueryData(tsKeys.case(detail.id), detail)
       qc.invalidateQueries({ queryKey: tsKeys.list() })
     },
+  })
+}
+
+/** 근거 파일 업로드(multipart) — 케이스 저장 후 실 id 로 호출. DB(bytea) 저장. */
+export function useUploadTsAttachment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      file,
+      label,
+    }: {
+      id: string
+      file: File
+      label?: string
+    }) => {
+      const form = new FormData()
+      form.append('file', file)
+      if (label) form.append('label', label)
+      return apiClient
+        .post(`/student/troubleshooting/${id}/attachments/file`, form)
+        .then((r) => r.data)
+    },
+    onSuccess: (_d, { id }) =>
+      qc.invalidateQueries({ queryKey: tsKeys.case(id) }),
   })
 }

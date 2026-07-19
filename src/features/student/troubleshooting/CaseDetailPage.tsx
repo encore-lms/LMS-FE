@@ -7,12 +7,14 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
+import { apiClient } from '@/shared/api'
 import { useRequestTsCertification, useTsCase } from '../api/troubleshooting'
 import { useToast } from '@/components/ui/use-toast'
 import { tsKeys } from './queryKeys'
 import { useProjectTsLinks } from './projectLinks'
 import {
   TS_LINKABLE_PROJECTS,
+  type TsAttachment,
   type TsCaseDetail,
   type TsListData,
   type TsProjectLink,
@@ -122,6 +124,24 @@ export default function CaseDetailPage() {
       onError: () => toast.danger('인증 요청에 실패했어요'),
     })
     // 홈으로 가지 않고 머문다 — 상태가 검토 중으로 바뀌며 같은 페이지가 잠금 화면으로 전환된다.
+  }
+
+  // 근거 파일 다운로드 — 인증 헤더가 필요하므로 apiClient(blob)로 받아 브라우저 저장을 트리거.
+  const downloadAttachment = async (a: TsAttachment) => {
+    try {
+      const res = await apiClient.get(
+        `/student/troubleshooting/${id}/attachments/${a.id}/file`,
+        { responseType: 'blob' },
+      )
+      const objectUrl = URL.createObjectURL(res.data as Blob)
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = a.label
+      link.click()
+      URL.revokeObjectURL(objectUrl)
+    } catch {
+      toast.danger('파일을 내려받지 못했어요')
+    }
   }
 
   const stats = data
@@ -286,11 +306,10 @@ export default function CaseDetailPage() {
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {data.attachments.map((a) => {
                       const isLink = a.kind === 'link'
-                      return (
-                        <div
-                          key={a.label}
-                          className="border-border hover:border-brand/50 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 transition-colors"
-                        >
+                      const cls =
+                        'border-border hover:border-brand/50 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-left transition-colors'
+                      const inner = (
+                        <>
                           <span
                             className={cn(
                               'flex size-9 shrink-0 items-center justify-center rounded-lg',
@@ -310,10 +329,30 @@ export default function CaseDetailPage() {
                               {a.label}
                             </span>
                             <span className="text-fg-subtle text-[11px]">
-                              {isLink ? '링크' : '업로드 파일'}
+                              {isLink ? '링크 열기' : '파일 내려받기'}
                             </span>
                           </div>
-                        </div>
+                        </>
+                      )
+                      return isLink ? (
+                        <a
+                          key={a.id}
+                          href={a.url ?? '#'}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={cls}
+                        >
+                          {inner}
+                        </a>
+                      ) : (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => downloadAttachment(a)}
+                          className={cls}
+                        >
+                          {inner}
+                        </button>
                       )
                     })}
                   </div>

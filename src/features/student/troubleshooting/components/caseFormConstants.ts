@@ -53,6 +53,7 @@ export interface UploadFile {
   id: string
   name: string
   size: string
+  file?: File // 신규 선택 파일(업로드 대기). 서버 저장분은 미포함.
 }
 
 export function formatSize(bytes: number): string {

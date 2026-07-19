@@ -9,10 +9,16 @@ import { tsKeys } from '../queryKeys'
 import {
   useCreateTsCase,
   useUpdateTsCase,
+  useUploadTsAttachment,
   type TsUpsertBody,
 } from '../../api/troubleshooting'
 import { buildTimeline } from '../detail'
-import { TS_CATEGORIES, type TsListData, type TsProjectLink } from '../types'
+import {
+  TS_CATEGORIES,
+  type TsCaseDetail,
+  type TsListData,
+  type TsProjectLink,
+} from '../types'
 import {
   ALLOWED_EXT,
   card,
@@ -52,11 +58,16 @@ export function CaseContentForm({
   const toast = useToast()
   const createMutation = useCreateTsCase()
   const updateMutation = useUpdateTsCase()
+  const uploadMutation = useUploadTsAttachment()
   // 신규(임시 id ts_…)는 create(POST), 기존은 update(PUT).
   const isNew = caseId.startsWith('ts_')
   const existing = queryClient
     .getQueryData<TsListData>(tsKeys.list())
     ?.cases.find((c) => c.id === caseId)
+  // 기존 사례 수정 시 서버 첨부(링크·파일)를 폼에 로드 — update 가 링크를 교체하므로 로드 필수.
+  const detailCache = queryClient.getQueryData<TsCaseDetail>(
+    tsKeys.case(caseId),
+  )
 
   const [title, setTitle] = useState(existing?.title ?? '')
   const [category, setCategory] = useState(existing?.category ?? 'DB')
@@ -80,9 +91,19 @@ export function CaseContentForm({
   })
   const [tags, setTags] = useState<string[]>(existing?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
-  const [files, setFiles] = useState<UploadFile[]>([])
+  const [files, setFiles] = useState<UploadFile[]>(
+    () =>
+      detailCache?.attachments
+        ?.filter((a) => a.kind === 'file')
+        .map((a) => ({ id: a.id, name: a.label, size: '' })) ?? [],
+  )
   // 근거 링크 — 파일 외에 PR·블로그·문서 등 링크도 근거로 첨부(변경 제안과 동일 규약).
-  const [links, setLinks] = useState<string[]>([])
+  const [links, setLinks] = useState<string[]>(
+    () =>
+      detailCache?.attachments
+        ?.filter((a) => a.kind === 'link')
+        .map((a) => a.url ?? a.label) ?? [],
+  )
   const [linkInput, setLinkInput] = useState('')
 
   const filled = STAR.filter((s) => star[s.key]?.trim()).length
@@ -124,6 +145,7 @@ export function CaseContentForm({
         id: `u${++fileSeq}`,
         name: f.name,
         size: formatSize(f.size),
+        file: f,
       })
     }
     if (accepted.length) setFiles((p) => [...p, ...accepted])
@@ -158,22 +180,41 @@ export function CaseContentForm({
     completed,
     daysSpent: Number.parseInt(dayCount, 10) || 0,
     tags,
+    links,
     projectId: projectLink?.projectId ?? null,
   })
 
-  // 저장 — 신규는 create(POST, BE 발급 id 반환), 기존은 update(PUT). onDone 에 확정 id 전달.
+  // 저장 — 신규는 create(POST, BE 발급 id 반환), 기존은 update(PUT). 저장 후 신규 선택 파일을
+  // 실 id 로 업로드(multipart)하고 onDone 에 확정 id 전달.
   const persist = (completed: boolean, onDone?: (id: string) => void) => {
     const body = buildBody(completed)
+    const pending = files.filter((f) => f.file)
+    const afterSave = (id: string) => {
+      if (pending.length === 0) {
+        onDone?.(id)
+        return
+      }
+      Promise.all(
+        pending.map((f) =>
+          uploadMutation.mutateAsync({ id, file: f.file!, label: f.name }),
+        ),
+      )
+        .then(() => {
+          setFiles((p) => p.filter((f) => !f.file)) // 업로드분은 서버 attachments 로 이동
+          onDone?.(id)
+        })
+        .catch(() => toast.danger('일부 파일 업로드에 실패했어요'))
+    }
     if (isNew) {
       createMutation.mutate(body, {
-        onSuccess: (detail) => onDone?.(detail.id),
+        onSuccess: (detail) => afterSave(detail.id),
         onError: () => toast.danger('저장에 실패했어요'),
       })
     } else {
       updateMutation.mutate(
         { id: caseId, body },
         {
-          onSuccess: () => onDone?.(caseId),
+          onSuccess: () => afterSave(caseId),
           onError: () => toast.danger('저장에 실패했어요'),
         },
       )

@@ -74,8 +74,10 @@ export interface TsListData {
 
 /** 상세 */
 export interface TsAttachment {
+  id: string
   label: string
   kind: 'file' | 'link'
+  url: string | null
 }
 export interface TsCheck {
   label: string

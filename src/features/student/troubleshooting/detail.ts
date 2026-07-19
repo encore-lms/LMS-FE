@@ -58,7 +58,6 @@ export function buildTimeline(status: TsStatus): TsTimeline[] {
 export function buildCaseDetail(c: TsCase): TsCaseDetail {
   const projectLink = PROJECT_LINK_BY_ID[c.id] ?? null
   const linked = !!projectLink
-  const tagWord = (c.tags[0] ?? '#evidence').replace(/^#/, '')
   return {
     id: c.id,
     title: c.title,
@@ -72,12 +71,8 @@ export function buildCaseDetail(c: TsCase): TsCaseDetail {
     situation: c.situation,
     resolution: c.resolution,
     result: c.result,
-    // 첨부 근거 — 업로드한 파일(로그·캡처) + 근거 링크(URL). 링크는 http(s) URL만 허용.
-    attachments: [
-      { label: `${tagWord}-evidence.log`, kind: 'file' },
-      { label: `${tagWord}-screenshot.png`, kind: 'file' },
-      { label: 'https://github.com/playdata/lms/pull/142', kind: 'link' },
-    ],
+    // 첨부 근거는 실 API(상세 재조회)가 채운다 — 캐시 시드 단계에선 비워 둔다.
+    attachments: [],
     checklist: [
       {
         label: '상황/해결/결과 입력 완료',

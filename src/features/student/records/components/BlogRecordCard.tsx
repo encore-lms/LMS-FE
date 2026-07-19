@@ -54,8 +54,9 @@ export function BlogRecordCard({
     <>
       <section
         className={cn(
-          'border-border bg-surface flex flex-col gap-3 rounded-2xl border p-5',
-          clickable && 'hover:border-brand/40 cursor-pointer transition-colors',
+          'bg-surface flex flex-col gap-3 rounded-2xl p-5',
+          clickable &&
+            'hover:bg-surface-muted cursor-pointer transition-colors',
         )}
         onClick={clickable ? openDetail : undefined}
         role={clickable ? 'button' : undefined}

@@ -8,7 +8,6 @@ import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useRecordsOverview, useDeleteRecord } from '../api/records'
-import { RecordStatCards } from './components/RecordStatCards'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
 import type {
@@ -238,8 +237,6 @@ function RecordsView({ data }: { data: RecordsOverview }) {
           count: t.count,
         }))}
       />
-
-      <RecordStatCards stats={data.stats} />
 
       {/* 제출 안내 배너 */}
       <div className="bg-brand flex items-center justify-between gap-4 rounded-2xl p-5">

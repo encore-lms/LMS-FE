@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
 import { useAttendanceOverview } from '../api/attendance'
-import { AttendanceSummary } from './components/AttendanceSummary'
 import { HrdAttendanceCalendar } from './components/calendar/HrdAttendanceCalendar'
 import { SubmissionHistory } from './components/history/SubmissionHistory'
 
@@ -33,7 +32,6 @@ export default function AttendanceView() {
     >
       {data && (
         <div className="flex flex-col gap-6 p-8">
-          <AttendanceSummary summary={data.summary} />
           <HrdAttendanceCalendar
             calendar={data.calendar}
             onMove={(year, month) => setView({ year, month })}

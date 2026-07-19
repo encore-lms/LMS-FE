@@ -21,7 +21,7 @@ export function HrdAttendanceCalendar({
   const label = `${calendar.year}년 ${calendar.month}월`
 
   return (
-    <section className="border-border bg-surface flex flex-col gap-4 rounded-xl border p-6">
+    <section className="bg-surface flex flex-col gap-4 rounded-xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CalendarHeader
           label={label}

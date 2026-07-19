@@ -47,7 +47,7 @@ export function SubmissionHistory({
   }
 
   return (
-    <section className="border-border bg-surface flex flex-col gap-4 rounded-xl border p-6">
+    <section className="bg-surface flex flex-col gap-4 rounded-xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-fg font-bold">출결 폼 제출 이력</h2>

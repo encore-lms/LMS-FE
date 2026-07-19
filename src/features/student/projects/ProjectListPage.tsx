@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
@@ -246,17 +246,19 @@ export default function ProjectListPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
           {pageProjects.length > 0 ? (
-            pageProjects.map((p) => (
-              <ProjectCard
-                key={p.id}
-                project={p}
-                phase={p.phase}
-                onOpen={open}
-                onDelete={setPendingDelete}
-                onToggleRep={onToggleRep}
-              />
+            pageProjects.map((p, i) => (
+              <Fragment key={p.id}>
+                {i > 0 && <div className="bg-divider h-px w-full" />}
+                <ProjectCard
+                  project={p}
+                  phase={p.phase}
+                  onOpen={open}
+                  onDelete={setPendingDelete}
+                  onToggleRep={onToggleRep}
+                />
+              </Fragment>
             ))
           ) : (
             <Empty

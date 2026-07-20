@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { usePageHeader } from '@/shared/store'
 import { useMileageProducts } from '../api/mileage'
 import { parseMoney } from './store'
@@ -370,7 +371,10 @@ export default function ProductsPage() {
                 type="button"
                 onClick={() => navigate('/student/mileage/cart')}
                 disabled={count === 0}
-                className="bg-brand mt-2 w-full rounded-lg py-2 text-[12px] font-bold text-white disabled:opacity-50"
+                className={buttonClass({
+                  size: 'md',
+                  className: 'mt-2 w-full',
+                })}
               >
                 장바구니로 이동 →
               </button>

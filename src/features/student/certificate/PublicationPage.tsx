@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useCertPublication } from '../api/certificate'
@@ -233,7 +234,7 @@ export default function PublicationPage() {
                     <button
                       type="button"
                       onClick={() => toast.info('PNG를 내려받았어요')}
-                      className="bg-brand rounded-lg px-3 py-1.5 text-[12px] font-bold text-white"
+                      className={buttonClass({ size: 'sm' })}
                     >
                       PNG 다운로드
                     </button>

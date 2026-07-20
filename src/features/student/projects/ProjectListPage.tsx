@@ -339,7 +339,7 @@ export default function ProjectListPage() {
                   })
                 }}
                 disabled={deleteProject.isPending}
-                className="bg-danger rounded-lg px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+                className={buttonClass({ variant: 'danger', size: 'md' })}
               >
                 삭제
               </button>

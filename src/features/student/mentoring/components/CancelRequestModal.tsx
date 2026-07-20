@@ -1,4 +1,5 @@
 import { Modal } from '@/components/ui/Modal'
+import { buttonClass } from '@/components/ui/buttonClass'
 
 // 멘토링 요청 취소 확인 모달 — Figma 3083:6106. 공용 Modal 사용(portal·ESC·배경클릭·스크롤락).
 // 본문 + "취소 가능 조건" 안내 박스 + 돌아가기/요청 취소.
@@ -28,7 +29,7 @@ export function CancelRequestModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="bg-danger h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+            className={buttonClass({ variant: 'danger', size: 'md' })}
           >
             요청 취소
           </button>

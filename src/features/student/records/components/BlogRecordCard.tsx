@@ -146,7 +146,7 @@ export function BlogRecordCard({
               <button
                 type="button"
                 onClick={stop(() => onEdit(record.id))}
-                className="bg-danger rounded-md px-3 py-1.5 text-[11px] font-bold text-white"
+                className={buttonClass({ variant: 'danger', size: 'sm' })}
               >
                 수정 후 재제출
               </button>

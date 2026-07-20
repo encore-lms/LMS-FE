@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
@@ -313,7 +314,7 @@ export default function PlayCodingPage() {
                     <button
                       type="button"
                       onClick={submit}
-                      className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white"
+                      className={buttonClass({ size: 'md' })}
                     >
                       제출
                     </button>

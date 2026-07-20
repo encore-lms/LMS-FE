@@ -13,7 +13,7 @@ export function OnlineCompletionPanel({
   const c = completion
   const remainingPct = Math.max(0, 100 - c.overallPct)
   return (
-    <section className="border-border bg-surface flex flex-col gap-4 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+    <section className="bg-surface flex flex-col gap-4 rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <div className="flex items-center gap-2">
         <span className="bg-success-bg text-success flex size-6 items-center justify-center rounded-md">
           <GraduationCap className="size-3.5" />

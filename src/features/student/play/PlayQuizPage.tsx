@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
@@ -349,7 +350,7 @@ export default function PlayQuizPage() {
                       type="button"
                       onClick={() => (isLast ? finish() : setIdx((i) => i + 1))}
                       disabled={phase !== 'revealed'}
-                      className="bg-brand rounded-lg px-5 py-2.5 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      className={buttonClass({ size: 'md' })}
                     >
                       {isLast ? '결과 보기' : '다음 문제'}
                     </button>

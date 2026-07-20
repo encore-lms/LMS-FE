@@ -1,7 +1,7 @@
 import { CheckCircle2, Info, Send } from 'lucide-react'
 
 // 트러블슈팅 사례 편집 폼(CaseContentForm)과 분해된 섹션 컴포넌트가 공유하는 모듈 상수·헬퍼.
-export const card = 'border-border bg-surface rounded-2xl border p-6'
+export const card = 'bg-surface rounded-2xl p-6'
 export const input =
   'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
 

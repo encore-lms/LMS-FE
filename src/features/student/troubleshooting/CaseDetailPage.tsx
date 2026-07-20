@@ -18,7 +18,6 @@ import {
   type TsCaseDetail,
   type TsListData,
   type TsProjectLink,
-  type Tone,
 } from './types'
 import { ProjectLinkModal } from './components/ProjectLinkModal'
 import { CaseContentForm } from './components/CaseContentForm'
@@ -144,27 +143,6 @@ export default function CaseDetailPage() {
     }
   }
 
-  const stats = data
-    ? [
-        {
-          label: '인증 상태',
-          value: data.statusLabel,
-          tone: (isCertified ? 'success' : 'accent') as Tone,
-        },
-        {
-          label: '프로젝트 연결',
-          value: link ? link.projectTitle : '미연결',
-          tone: (projectLinked ? 'success' : 'danger') as Tone,
-        },
-        {
-          label: '독립 해결',
-          value: data.independent ? '예' : '아니오',
-          tone: 'brand' as Tone,
-        },
-        { label: '소요 일수', value: data.days, tone: 'info' as Tone },
-      ]
-    : []
-
   return (
     <DataBoundary
       isPending={!isNew && isPending}
@@ -236,28 +214,6 @@ export default function CaseDetailPage() {
                 {viewOnly ? '뒤로' : '목록으로'}
               </button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {stats.map((s) => {
-              // 프로젝트 연결 카드는 연결되면 프로젝트명을 보여줘 길어질 수 있어 작게·말줄임.
-              const long = s.label === '프로젝트 연결' && projectLinked
-              return (
-                <div key={s.label} className={cn(card, 'flex flex-col gap-2')}>
-                  <span className="text-fg-muted text-[12px]">{s.label}</span>
-                  <span
-                    className={cn(
-                      'truncate font-bold',
-                      long ? 'text-[14px]' : 'text-[20px]',
-                      s.tone === 'danger' ? 'text-danger' : 'text-fg',
-                    )}
-                    title={s.value}
-                  >
-                    {s.value}
-                  </span>
-                </div>
-              )
-            })}
           </div>
 
           {editing ? (

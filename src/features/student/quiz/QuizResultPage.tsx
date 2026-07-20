@@ -136,7 +136,7 @@ export default function QuizResultPage() {
 
           {/* 카테고리별 점수 */}
           {stat.categories.length > 0 && (
-            <section className="border-border bg-surface flex flex-col gap-4 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)]">
+            <section className="bg-surface flex flex-col gap-4 rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
               <div className="flex flex-col gap-1">
                 <h2 className="text-fg text-[15px] font-semibold">
                   카테고리별 점수

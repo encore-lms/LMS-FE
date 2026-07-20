@@ -39,6 +39,8 @@ export interface MentorAssignmentRow {
   cohortLabel: string
   courseName: string
   memberCount: number
+  /** 팀 멘티 명단(이름) — 카드 표시. BE 미배포 대비 optional. */
+  members?: AdminMentoringStudentOption[]
   /** 미배정 팀이면 null */
   assignmentId: string | null
   mentor: AdminMentorOption | null

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Empty } from '@/components/ui/Empty'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { usePageHeader } from '@/shared/store'
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateMileageOrder, useMileageOverview } from '../api/mileage'
@@ -92,7 +93,7 @@ export default function CartPage() {
             <button
               type="button"
               onClick={() => navigate('/student/mileage/products')}
-              className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+              className={buttonClass({ size: 'md' })}
             >
               상품 보러 가기 →
             </button>

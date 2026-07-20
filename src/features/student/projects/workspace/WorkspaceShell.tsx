@@ -125,7 +125,7 @@ export function WorkspaceShell({
         </div>
       </div>
 
-      <nav className="border-border bg-surface flex gap-1 overflow-x-auto rounded-[14px] border p-1.5">
+      <nav className="bg-surface flex gap-1 overflow-x-auto rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
         {TABS.map((t) => {
           const on = t.key === active
           const Icon = t.icon

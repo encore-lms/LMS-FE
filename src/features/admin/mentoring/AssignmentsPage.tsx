@@ -49,6 +49,10 @@ function MentoringCard({
   const total = logStat?.total ?? 0
   const uncertified = logStat?.uncertified ?? 0
   const openDetail = () => navigate(`/admin/mentoring/teams/${team.teamId}`)
+  // 멘티 명단 — 이름 칩으로 표시(최대 6명, 초과분은 +N). BE 미배포 시 빈 배열.
+  const members = team.members ?? []
+  const shownMembers = members.slice(0, 6)
+  const memberOverflow = members.length - shownMembers.length
 
   return (
     <div
@@ -103,6 +107,28 @@ function MentoringCard({
           </>
         )}
       </div>
+
+      {/* 멘티 명단 — 이름 칩(작은 아바타 + 이름). */}
+      {shownMembers.length > 0 && (
+        <div className="border-divider flex flex-wrap items-center gap-1.5 border-t pt-3">
+          {shownMembers.map((m) => (
+            <span
+              key={m.userId}
+              className="bg-surface-muted flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-0.5"
+            >
+              <Avatar name={m.name} size={20} />
+              <span className="text-fg text-[11.5px] font-medium">
+                {m.name}
+              </span>
+            </span>
+          ))}
+          {memberOverflow > 0 && (
+            <span className="text-fg-subtle bg-surface-muted flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold">
+              +{memberOverflow}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* 진행/잔여 시간 + 진행바 */}
       <div className="flex flex-col gap-1.5">

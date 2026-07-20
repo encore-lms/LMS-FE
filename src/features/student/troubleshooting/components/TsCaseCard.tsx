@@ -36,7 +36,20 @@ export function TsCaseCard({
   // 작성 중(이어 작성)만 강조 버튼, 나머지는 보조 버튼.
   const primary = c.status === 'draft'
   return (
-    <section className="bg-surface flex flex-col gap-3 rounded-2xl p-5">
+    // 카드 전체 클릭 = 상세 열기(QnA 카드와 동일한 pointer + 호버 시에만 그림자).
+    // 내부 액션 버튼들은 stopPropagation으로 카드 클릭과 분리한다.
+    <section
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(c)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen(c)
+        }
+      }}
+      className="bg-surface focus-visible:ring-brand/40 flex cursor-pointer flex-col gap-3 rounded-2xl p-5 transition-shadow outline-none hover:shadow-[0px_8px_24px_0px_rgba(18,23,38,0.14)] focus-visible:ring-2"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <span
@@ -81,7 +94,10 @@ export function TsCaseCard({
             {onRemove && (
               <button
                 type="button"
-                onClick={onRemove}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRemove()
+                }}
                 className="border-border text-fg-muted hover:border-danger hover:text-danger inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-[12px] font-semibold"
               >
                 <X className="size-3" />
@@ -90,7 +106,10 @@ export function TsCaseCard({
             )}
             <button
               type="button"
-              onClick={() => onOpen(c)}
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpen(c)
+              }}
               className={cn(
                 'inline-flex items-center gap-1 rounded-lg px-4 py-2 text-[12px] font-bold',
                 primary
@@ -107,7 +126,10 @@ export function TsCaseCard({
             <div className="group/rj relative">
               <button
                 type="button"
-                onClick={onShowReason}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onShowReason()
+                }}
                 className="text-danger inline-flex items-center gap-1 text-[11px] font-semibold"
               >
                 <AlertCircle className="size-3" />

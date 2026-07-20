@@ -21,7 +21,8 @@ import { useQnaBase } from './useQnaBase'
 import { MarkdownEditor } from './components/MarkdownEditor'
 import type { QnaAnswer, QnaDetail, Tone } from './types'
 
-const card = 'border-border bg-surface rounded-2xl border p-6'
+const card =
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const CHIP: Record<Tone, string> = {
   brand: 'bg-brand/10 text-brand',
   info: 'bg-info-bg text-info',

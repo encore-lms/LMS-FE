@@ -344,7 +344,7 @@ export function HomeTab({
         <div className="flex flex-col gap-4 lg:w-[380px]">
           <section
             className={cn(
-              'bg-surface flex flex-col gap-3 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]',
+              'bg-surface flex flex-col gap-3 rounded-2xl border p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]',
               phase === 'certified'
                 ? 'border-success/50'
                 : phase === 'reviewing'

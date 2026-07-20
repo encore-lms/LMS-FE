@@ -1,12 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { FileText, Link2, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import {
-  ACCEPT_TYPES,
-  card,
-  RECOMMENDED_TAGS,
-  type UploadFile,
-} from './caseFormConstants'
+import { ACCEPT_TYPES, card, type UploadFile } from './caseFormConstants'
 
 interface CaseTagsAttachmentsProps {
   tags: string[]
@@ -82,30 +77,6 @@ export function CaseTagsAttachments({
             className="text-fg-subtle placeholder:text-fg-subtle focus:text-fg w-24 bg-transparent px-1 py-1 text-[12px] outline-none"
           />
         )}
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <span className="text-fg-subtle text-[11px]">추천 태그</span>
-        <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-          {RECOMMENDED_TAGS.map((t) => {
-            const used = tags.includes(t)
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => addTag(t)}
-                disabled={used || tags.length >= 5}
-                className={cn(
-                  'text-[11px]',
-                  used
-                    ? 'text-brand/40 cursor-default'
-                    : 'text-fg-muted hover:text-brand',
-                )}
-              >
-                {t}
-              </button>
-            )
-          })}
-        </div>
       </div>
       <div className="bg-surface-muted/40 text-fg-muted rounded-lg px-3 py-2 text-[11px] leading-4">
         허용 형식 — 이미지(PNG·JPG·GIF·WEBP·SVG) · PDF ·

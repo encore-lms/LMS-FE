@@ -6,7 +6,7 @@ import { TONE_SOFT } from '@/shared/lib/tone'
 
 // 증명서 탭2 기술·검증 — 카테고리 점수·시험 추세·자격증 인증·과제 검증.
 const card =
-  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 function bar(s: number) {
   if (s >= 85) return 'bg-brand'
   if (s >= 75) return 'bg-info'

@@ -26,7 +26,7 @@ export function CertTabs({
 }) {
   const tabs = CERT_V2 ? [...CERT_TABS, AI_TAB] : CERT_TABS
   return (
-    <nav className="border-border bg-surface flex w-full gap-1 rounded-[14px] border p-1.5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+    <nav className="bg-surface flex w-full gap-1 rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       {tabs.map((t) => {
         const isActive = t.key === active
         return (

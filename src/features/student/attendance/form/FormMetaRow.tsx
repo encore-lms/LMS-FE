@@ -21,7 +21,7 @@ export function FormMetaRow({ meta }: { meta: AttendanceFormMeta }) {
     : '없음'
 
   return (
-    <section className="border-border bg-surface flex flex-col gap-3 rounded-xl border p-6">
+    <section className="bg-surface flex flex-col gap-3 rounded-xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <div className="flex flex-wrap gap-4">
         <MetaField label="출결 대상 일자" value={meta.targetDate} />
         <MetaField

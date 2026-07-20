@@ -1,6 +1,6 @@
 // PLAY 화면 공통 토큰·헬퍼 — 기능 로컬(타자/코딩/퀴즈/결과가 동일 카드·타이머 포맷을 공유).
 export const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 export const fmtTime = (sec: number) => {
   const s = Math.max(0, Math.floor(sec))

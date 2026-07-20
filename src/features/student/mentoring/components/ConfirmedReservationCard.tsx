@@ -80,8 +80,8 @@ function Cell({
 
 export function ConfirmedReservationCard({ r }: { r: MentoringReservation }) {
   return (
-    <section className="border-success overflow-hidden rounded-2xl border-[1.5px] shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
-      <div className="bg-success-bg border-success flex items-center justify-between border-b px-6 py-[18px]">
+    <section className="bg-surface overflow-hidden rounded-2xl">
+      <div className="bg-success-bg flex items-center justify-between px-6 py-[18px]">
         <div className="flex items-center gap-2.5">
           <span className="bg-surface text-success flex size-9 items-center justify-center rounded-[10px] text-[15px] font-bold">
             ✓

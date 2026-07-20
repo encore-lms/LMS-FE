@@ -29,7 +29,7 @@ export function ExamIntro({
   ]
   return (
     <div className="bg-surface flex h-screen flex-col items-center justify-center px-6">
-      <div className="border-border bg-surface flex w-[520px] max-w-full flex-col gap-6 rounded-2xl border p-9 shadow-[0px_2px_12px_0px_rgba(0,0,0,0.06)]">
+      <div className="bg-surface flex w-[520px] max-w-full flex-col gap-6 rounded-2xl p-9 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
         <div className="flex flex-col gap-2">
           <span className="bg-accent-bg text-accent-strong w-fit rounded-full px-3 py-1 text-[12px] font-semibold">
             🔒 집중 모드 응시

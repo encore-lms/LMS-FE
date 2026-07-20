@@ -47,7 +47,7 @@ function StatCard({
   label: string
 }) {
   return (
-    <div className="border-border bg-surface flex items-center gap-4 rounded-xl border p-5">
+    <div className="bg-surface flex items-center gap-4 rounded-xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <span
         className={cn(
           'flex size-11 shrink-0 items-center justify-center rounded-xl [&>svg]:h-5 [&>svg]:w-5',
@@ -78,7 +78,7 @@ function ResumeCard({
     <button
       type="button"
       onClick={onOpen}
-      className="border-border bg-surface hover:border-accent/50 flex flex-col gap-3.5 rounded-xl border p-5 text-left transition-colors"
+      className="bg-surface flex flex-col gap-3.5 rounded-xl p-5 text-left shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)] transition-shadow hover:shadow-[0px_6px_20px_0px_rgba(18,23,38,0.12)]"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">

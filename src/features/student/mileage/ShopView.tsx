@@ -255,10 +255,9 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                     className={cn(
                       'rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
                       on
-                        ? 'text-white'
+                        ? 'bg-brand text-white'
                         : 'border-border text-fg-muted hover:bg-surface-muted border',
                     )}
-                    style={on ? { background: '#4c4195' } : undefined}
                   >
                     {s.label}
                   </button>

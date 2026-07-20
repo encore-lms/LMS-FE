@@ -27,7 +27,8 @@ import { applyTsStatus, patchTsCase } from '../flow'
 import { TS_CHANGE_ITEMS, type TsCase } from '../types'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348.
-const card = 'border-border bg-surface rounded-2xl border p-6'
+const card =
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 // 변경 항목 칩 아이콘 (STAR 아이콘과 정합)
 const CHANGE_ICON: Record<string, LucideIcon> = {

@@ -24,7 +24,7 @@ export function FormStepCard({
 }) {
   const b = BADGE[badge]
   return (
-    <section className="border-border bg-surface flex flex-col gap-4 rounded-xl border p-6">
+    <section className="bg-surface flex flex-col gap-4 rounded-xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <div className="flex items-center gap-2">
         <span className="bg-brand flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white">
           {step}

@@ -10,7 +10,8 @@ import { MarkdownEditor } from './MarkdownEditor'
 import { QNA_CATEGORIES } from '../types'
 import { TONE_SOLID } from '@/shared/lib/tone'
 
-const card = 'border-border bg-surface rounded-2xl border p-6'
+const card =
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const input =
   'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
 

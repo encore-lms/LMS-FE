@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
 import { useQnaList } from '../api/qna'
@@ -146,7 +147,7 @@ export default function QnaListPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/student/qna/new')}
-                  className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+                  className={buttonClass({ size: 'md' })}
                 >
                   + 질문하기
                 </button>

@@ -30,7 +30,7 @@ import { TONE_SOFT } from '@/shared/lib/tone'
 //   - 인증 완료(certified)    : 상세(잠금) + '인증 완료' 배지 + 변경 제안만.
 //   - 보기 전용(?view=1)      : 프로젝트 워크스페이스 연결 사례에서 진입. 액션 없이 내용만.
 const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 export default function CaseDetailPage() {
   const { id = '' } = useParams()

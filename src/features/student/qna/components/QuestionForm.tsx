@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/shared/store'
 import { useCreateQuestion } from '../../api/qna'
@@ -197,7 +198,7 @@ export function QuestionForm() {
           type="button"
           onClick={submit}
           disabled={!canSubmit || createQuestion.isPending}
-          className="bg-brand h-11 rounded-[10px] px-6 text-[14px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+          className={buttonClass({ size: 'md' })}
         >
           {createQuestion.isPending ? '등록 중…' : '질문 등록'}
         </button>

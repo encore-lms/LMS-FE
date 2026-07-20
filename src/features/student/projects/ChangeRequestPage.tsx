@@ -19,7 +19,7 @@ import {
 // 인증 완료 프로젝트는 수정 잠금. 수강생이 사유를 적어 수정 권한을 요청 → 강사 승인 시 시한부로 원본 직접 수정 →
 // 수정 완료 + 변경 요약 제출 → 강사 최종 확인. (구 "변경 항목 선택 + 변경 전/후 비교" 방식 대체)
 const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 const EXAMPLE_REASON =
   '결제 모듈 리팩터링 결과를 설명에 반영하고, 최신 API 명세서로 산출물을 교체하기 위함입니다.'
@@ -166,7 +166,7 @@ export default function ChangeRequestPage() {
               className="border-border bg-surface text-fg focus:border-brand min-h-[100px] w-full resize-none rounded-[10px] border px-4 py-3 text-[14px] leading-6 focus:outline-none"
             />
           </section>
-          <div className="border-border bg-surface-muted/40 text-fg-muted flex items-start gap-2 rounded-xl border px-4 py-3 text-[12px] leading-5">
+          <div className="bg-surface-muted/40 text-fg-muted flex items-start gap-2 rounded-xl px-4 py-3 text-[12px] leading-5">
             <span className="text-info mt-px shrink-0 font-bold">ⓘ</span>
             <span>
               변경 항목 선택·변경 전/후 비교는 따로 작성하지 않아요. 승인 후
@@ -331,7 +331,7 @@ function BeforeAfterAux({
   const before = snapshot ?? current
   const fields: (keyof ProjectContent)[] = ['설명', '산출물']
   return (
-    <section className="border-border bg-surface-muted/30 flex flex-col gap-3 rounded-2xl border p-5">
+    <section className="bg-surface-muted/30 flex flex-col gap-3 rounded-2xl p-5">
       <div className="flex items-center gap-1.5">
         <span className="text-fg-muted text-[12px] font-bold">
           변경 전 / 후

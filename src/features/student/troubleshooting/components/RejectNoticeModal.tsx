@@ -1,5 +1,6 @@
 import { XCircle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
+import { buttonClass } from '@/components/ui/buttonClass'
 
 // 강사 반려 안내 — 인증 요청/변경 제안이 반려됐을 때 사유(코멘트)를 회신으로 보여준다.
 // '이어 작성'으로 사유를 반영해 보완할 수 있다. Figma 인증/변경 반려 모달과 대응.
@@ -34,7 +35,7 @@ export function RejectNoticeModal({
         <button
           type="button"
           onClick={onClose}
-          className="bg-brand h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white"
+          className={buttonClass({ size: 'md' })}
         >
           확인
         </button>

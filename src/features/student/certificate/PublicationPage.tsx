@@ -9,7 +9,7 @@ import { useCertPublication } from '../api/certificate'
 
 // 공개 설정 (/student/certificate/publication) — Figma 255:27.
 const card =
-  'border-border bg-surface rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 function Toggle({
   on,
@@ -343,7 +343,7 @@ export default function PublicationPage() {
                   </span>
                 ))}
               </div>
-              <div className="border-border bg-surface-muted/30 flex flex-1 flex-col gap-2.5 rounded-xl border p-4">
+              <div className="bg-surface-muted/30 flex flex-1 flex-col gap-2.5 rounded-xl p-4">
                 <span className="bg-fg-subtle w-fit rounded px-2 py-0.5 text-[11px] font-bold text-white">
                   OFF
                 </span>

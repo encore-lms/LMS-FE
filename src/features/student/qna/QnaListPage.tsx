@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  CheckCircle2,
-  Clock,
-  MessageSquare,
-  MessagesSquare,
-  type LucideIcon,
-} from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -16,17 +9,8 @@ import { useQnaBase } from './useQnaBase'
 import { QnaQuestionCard } from './components/QnaQuestionCard'
 import type { QnaQuestion } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
+import { TONE_SOLID } from '@/shared/lib/tone'
 
-// 통계 카드 우상단 아이콘 — 키별 매핑.
-const STAT_ICON: Record<string, LucideIcon> = {
-  total: MessagesSquare,
-  resolved: CheckCircle2,
-  answers: MessageSquare,
-  open: Clock,
-}
-const card =
-  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const PAGE_SIZE = 4
 
 // 수강생 QnA 게시판 목록 (/student/qna) — 트러블슈팅 목록 패턴 차용(검색·필터·페이지네이션).
@@ -81,42 +65,6 @@ export default function QnaListPage() {
     >
       {data && (
         <div className="flex flex-col gap-5 p-8">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {data.stats.map((s) => {
-              const Icon = STAT_ICON[s.key] ?? MessagesSquare
-              return (
-                <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>
-                  <div className="flex items-start justify-between">
-                    <span className="text-fg-muted text-[12px]">{s.label}</span>
-                    <Icon
-                      className={cn('size-4 shrink-0', TONE_TEXT[s.tone])}
-                    />
-                  </div>
-                  <span className="text-fg text-[26px] leading-none font-bold">
-                    {s.value}
-                    {s.unit && (
-                      <span className="text-fg-muted ml-0.5 text-[13px]">
-                        {s.unit}
-                      </span>
-                    )}
-                  </span>
-                  {s.barPct != null && (
-                    <div className="bg-surface-muted h-[5px] w-full overflow-hidden rounded-full">
-                      <div
-                        className={cn(
-                          'h-full rounded-full',
-                          TONE_SOLID[s.tone],
-                        )}
-                        style={{ width: `${s.barPct}%` }}
-                      />
-                    </div>
-                  )}
-                  <span className="text-fg-subtle text-[11px]">{s.sub}</span>
-                </div>
-              )
-            })}
-          </div>
-
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2">
               <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>

@@ -4,7 +4,7 @@ import { TabHead } from './TechTab'
 
 // 증명서 탭5 성장·평판 — 성장 곡선·Peer Reputation·ShortComment·강사/멘토 추천서.
 const card =
-  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 export function GrowthTab({ g }: { g: CertGrowthTab }) {
   const max = Math.max(...g.timeline, 100)

@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertOctagon,
@@ -42,6 +43,39 @@ const INSIGHT_ICON: Record<Tone, { icon: LucideIcon; color: string }> = {
   warning: { icon: TriangleAlert, color: 'text-warning-inverse' },
   info: { icon: Info, color: 'text-info-inverse' },
   positive: { icon: CheckCircle2, color: 'text-success-inverse' },
+}
+
+// 날짜 축 라벨 하나가 안 잘리려면 필요한 최소 폭(9px 폰트 "7.20" + 여백, px).
+const DATE_LABEL_MIN_PX = 38
+
+// total개 날짜 중 max개만 균등하게 고른다(항상 첫·마지막 포함). 좁은 타일에서 라벨이 잘리지 않게.
+function pickDateIndices(total: number, max: number): Set<number> {
+  if (max >= total) return new Set(Array.from({ length: total }, (_, i) => i))
+  if (max <= 1 || total <= 1) return new Set([0, total - 1])
+  const picked = new Set<number>([0, total - 1])
+  for (let i = 1; i < max - 1; i++) {
+    picked.add(Math.round((i * (total - 1)) / (max - 1)))
+  }
+  return picked
+}
+
+// 컨테이너 폭 측정 훅(ResizeObserver, 미지원 환경 방어).
+function useMeasuredWidth() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    setWidth(Math.floor(el.getBoundingClientRect().width))
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver((entries) => {
+      const cr = entries[0]?.contentRect
+      if (cr) setWidth(Math.floor(cr.width))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, width] as const
 }
 
 export function DashboardInsight({
@@ -98,6 +132,13 @@ export function DashboardInsight({
 
   const trend = mergeTrend(active)
   const todayIdx = trend.dates.indexOf(today)
+  // 날짜 축 라벨 — 타일 폭에 맞춰 표시 개수를 자동 조절(좁으면 균등하게 골라 안 잘리게).
+  const [dateAxisRef, dateAxisW] = useMeasuredWidth()
+  const maxDateLabels =
+    dateAxisW > 0
+      ? Math.max(2, Math.floor(dateAxisW / DATE_LABEL_MIN_PX))
+      : trend.dates.length
+  const shownDateIdx = pickDateIndices(trend.dates.length, maxDateLabels)
 
   // 팝오버 항목 — 기수별 분해.
   const attendanceItems: PopoverItem[] = live.map((b) => {
@@ -284,26 +325,35 @@ export function DashboardInsight({
                   todayIndex={todayIdx}
                 />
                 <div
+                  ref={dateAxisRef}
                   className="grid gap-0.5 overflow-hidden"
                   style={{
                     gridTemplateColumns: `repeat(${trend.dates.length}, minmax(0, 1fr))`,
                   }}
                 >
-                  {trend.dates.map((d, i) => (
-                    <span
-                      key={d}
-                      className={cn(
-                        'overflow-hidden text-center text-[9px] tracking-tight whitespace-nowrap tabular-nums',
-                        i === todayIdx
-                          ? 'font-bold text-white'
-                          : 'text-white/[0.42]',
-                        i === 0 && 'text-left',
-                        i === trend.dates.length - 1 && 'text-right',
-                      )}
-                    >
-                      {fmtMD(d)}
-                    </span>
-                  ))}
+                  {trend.dates.map((d, i) =>
+                    shownDateIdx.has(i) ? (
+                      // 각 라벨을 자기 포인트 컬럼에 배치. 표시 안 하는 이웃 칸이 비어 있어
+                      // 라벨이 잘리지 않고 넘쳐도 겹치지 않는다(양 끝은 타일 경계에 정렬).
+                      <span
+                        key={d}
+                        style={{ gridColumnStart: i + 1 }}
+                        className={cn(
+                          'text-[9px] whitespace-nowrap tabular-nums',
+                          i === todayIdx
+                            ? 'font-bold text-white'
+                            : 'text-white/[0.42]',
+                          i === 0
+                            ? 'text-left'
+                            : i === trend.dates.length - 1
+                              ? 'text-right'
+                              : 'text-center',
+                        )}
+                      >
+                        {fmtMD(d)}
+                      </span>
+                    ) : null,
+                  )}
                 </div>
               </div>
             )}

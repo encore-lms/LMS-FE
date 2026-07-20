@@ -326,7 +326,7 @@ export function DashboardInsight({
                 />
                 <div
                   ref={dateAxisRef}
-                  className="grid gap-0.5 overflow-hidden"
+                  className="grid gap-0.5 overflow-hidden px-1"
                   style={{
                     gridTemplateColumns: `repeat(${trend.dates.length}, minmax(0, 1fr))`,
                   }}

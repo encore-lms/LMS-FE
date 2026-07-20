@@ -284,16 +284,16 @@ export function DashboardInsight({
                   todayIndex={todayIdx}
                 />
                 <div
-                  className="grid gap-0.5"
+                  className="grid gap-0.5 overflow-hidden"
                   style={{
-                    gridTemplateColumns: `repeat(${trend.dates.length}, 1fr)`,
+                    gridTemplateColumns: `repeat(${trend.dates.length}, minmax(0, 1fr))`,
                   }}
                 >
                   {trend.dates.map((d, i) => (
                     <span
                       key={d}
                       className={cn(
-                        'text-center text-[10px] whitespace-nowrap tabular-nums',
+                        'overflow-hidden text-center text-[9px] tracking-tight whitespace-nowrap tabular-nums',
                         i === todayIdx
                           ? 'font-bold text-white'
                           : 'text-white/[0.42]',

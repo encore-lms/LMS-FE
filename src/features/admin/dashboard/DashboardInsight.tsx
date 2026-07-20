@@ -279,7 +279,6 @@ export function DashboardInsight({
               <div className="mt-1 flex flex-col gap-1">
                 <Sparkline
                   points={trend.points}
-                  width={168}
                   height={32}
                   stroke="var(--color-chart-positive)"
                   todayIndex={todayIdx}

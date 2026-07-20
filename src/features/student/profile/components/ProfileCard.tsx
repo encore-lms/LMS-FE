@@ -16,7 +16,7 @@ export function ProfileCard({
   return (
     <section
       className={cn(
-        'border-border bg-surface flex flex-col gap-4 rounded-xl border p-6',
+        'bg-surface flex flex-col gap-4 rounded-xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]',
         className,
       )}
     >

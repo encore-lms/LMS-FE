@@ -12,8 +12,8 @@ const CHIP: Record<Tone, string> = {
   success: 'bg-success-bg text-success',
 }
 
-const card =
-  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+// 기본은 그림자 없이 flat, 호버 시에만 그림자로 떠오르는 인터랙션(클릭 가능 표시).
+const card = 'bg-surface rounded-2xl p-5'
 
 interface Props {
   q: QnaQuestion
@@ -28,7 +28,7 @@ export function QnaQuestionCard({ q, onOpen }: Props) {
       onClick={() => onOpen(q)}
       className={cn(
         card,
-        'flex w-full flex-col gap-3 text-left transition-shadow hover:shadow-[0px_4px_14px_0px_rgba(18,23,38,0.08)]',
+        'flex w-full cursor-pointer flex-col gap-3 text-left transition-shadow hover:shadow-[0px_8px_24px_0px_rgba(18,23,38,0.14)]',
       )}
     >
       <div className="flex items-start justify-between gap-3">

@@ -23,7 +23,7 @@ export function OnlineCourseInfoCard({
   onSelectChapter: (id: string) => void
 }) {
   return (
-    <aside className="border-border bg-surface flex flex-col gap-5 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+    <aside className="bg-surface flex flex-col gap-5 rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       {/* 과정 헤더 */}
       <div className="flex flex-col gap-1.5">
         <span className="text-fg-subtle text-[11px] font-semibold tracking-[0.14em]">

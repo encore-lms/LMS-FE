@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Eye, MessageSquare } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Markdown } from '@/components/ui/Markdown'
@@ -271,7 +272,7 @@ function AnswerItem({
                 type="button"
                 onClick={submit}
                 disabled={!draft.trim() || createComment.isPending}
-                className="bg-brand h-9 rounded-[10px] px-4 text-[12px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                className={buttonClass({ size: 'sm' })}
               >
                 {createComment.isPending ? '등록 중…' : '댓글 등록'}
               </button>
@@ -502,7 +503,7 @@ export default function QnaDetailPage() {
                   type="button"
                   onClick={submitAnswer}
                   disabled={!draft.trim() || createAnswer.isPending}
-                  className="bg-brand h-10 rounded-[10px] px-5 text-[13px] font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                  className={buttonClass({ size: 'md' })}
                 >
                   {createAnswer.isPending ? '등록 중…' : '답변 등록'}
                 </button>

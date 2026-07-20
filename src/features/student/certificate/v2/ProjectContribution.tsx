@@ -5,7 +5,7 @@ import type { CertProjectActivity } from '../types'
 // 증명서 v2 — 프로젝트별 커밋 잔디밭(선택형). 한 프로젝트 레포의 커밋만 일별로 표시.
 // 활동일·최장 연속·주 평균으로 "꾸준한 참여(일관성)"를 정량 증명.
 const card =
-  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 function cell(c: number) {
   if (c <= 0) return 'bg-surface-muted'

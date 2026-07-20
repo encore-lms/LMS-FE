@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
 import { usePlayOverview } from '../api/play'
@@ -94,7 +95,7 @@ export default function PlaySelectPage() {
                         onClick={() =>
                           navigate(GAME_ROUTE[g.key] ?? '/student/play')
                         }
-                        className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+                        className={buttonClass({ size: 'md' })}
                       >
                         게임 입장
                       </button>

@@ -39,7 +39,7 @@ export function QuestionResultRow({
     : answer.correctAnswerKey
 
   return (
-    <div className="border-border bg-surface relative flex overflow-hidden rounded-2xl border shadow-[0px_1px_4px_0px_rgba(0,0,0,0.03)]">
+    <div className="bg-surface relative flex overflow-hidden rounded-2xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <span className={cn('w-1 shrink-0', tone.strip)} />
       <div className="flex flex-1 items-start gap-3.5 p-6">
         <span

@@ -5,7 +5,7 @@ import { TONE_SOFT, TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 
 // 증명서 탭4 문제해결·협업 — KPI·대표 트러블슈팅·문제 분포·PeerTag 클라우드·태그 연결.
 const card =
-  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 export function ProblemTab({ p }: { p: CertProblemTab }) {
   return (

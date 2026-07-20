@@ -11,7 +11,7 @@ import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
 // 보완 요청 상세 (/student/certificate/changes-requested) — Figma 248:27.
 const card =
-  'border-border bg-surface rounded-[14px] border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-[14px] p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 // 보완 영역 라벨/액션 → 해당 기능 화면 라우트(라벨 키워드 기준)
 function areaRoute(label: string): string {
@@ -62,7 +62,7 @@ export default function ChangesRequestedPage() {
       {data && (
         <div className="flex flex-col gap-5 p-8 pb-24">
           {/* 요약 배너 */}
-          <section className="border-border bg-surface flex items-center justify-between gap-4 rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+          <section className="bg-surface flex items-center justify-between gap-4 rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
             <div className="flex items-center gap-4">
               <span className="bg-danger-bg text-danger flex size-14 shrink-0 items-center justify-center rounded-2xl text-3xl">
                 ⚠

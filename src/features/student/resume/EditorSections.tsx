@@ -98,7 +98,7 @@ export function ItemSectionEditor({
         {items.map((it, i) => (
           <div
             key={i}
-            className="border-border bg-surface-muted/40 flex flex-col gap-2 rounded-xl border p-4"
+            className="bg-surface-muted/40 flex flex-col gap-2 rounded-xl p-4"
           >
             <div className="flex items-center gap-2">
               <input

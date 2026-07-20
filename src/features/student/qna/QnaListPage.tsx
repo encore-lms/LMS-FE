@@ -26,7 +26,7 @@ const STAT_ICON: Record<string, LucideIcon> = {
   open: Clock,
 }
 const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const PAGE_SIZE = 4
 
 // 수강생 QnA 게시판 목록 (/student/qna) — 트러블슈팅 목록 패턴 차용(검색·필터·페이지네이션).

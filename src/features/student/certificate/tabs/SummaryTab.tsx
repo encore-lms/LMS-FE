@@ -15,7 +15,7 @@ import { TONE_SOLID } from '@/shared/lib/tone'
 // 제외(시안 정렬): 퀴즈 카테고리·근거 요약·대표 프로젝트·요청 전 체크리스트.
 // AI 종합분석은 'AI 분석' 탭에만 노출 — 여기선 제외.
 const card =
-  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 export function SummaryTab({ s }: { s: CertSummaryTab }) {
   // 온톨로지·AI 분석은 LMS-AI 엔진 서버에서 fetch(없으면 mock). TODO(BE 연동): studentId 실제 연결.

@@ -93,7 +93,7 @@ export function QuestionCard({
   }, [isMultiple, question.choices, onChange])
 
   return (
-    <div className="border-border bg-surface flex w-[800px] max-w-full flex-col gap-7 rounded-2xl border p-9 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)]">
+    <div className="bg-surface flex w-[800px] max-w-full flex-col gap-7 rounded-2xl p-9 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <div className="flex flex-wrap items-center gap-2">
         <span className="bg-accent-strong rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white">
           문제 {index + 1} / {total}

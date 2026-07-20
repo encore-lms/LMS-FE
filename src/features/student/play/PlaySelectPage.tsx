@@ -7,7 +7,7 @@ import { usePlayOverview } from '../api/play'
 
 // PLAY 게임 선택 (/student/play) — Figma 418:2172.
 const card =
-  'border-border bg-surface rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 // 게임 key → 입장 라우트. 미정의 key는 게임 선택에 머문다(준비 중 가드).
 const GAME_ROUTE: Record<string, string> = {

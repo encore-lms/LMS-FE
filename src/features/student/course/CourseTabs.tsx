@@ -51,7 +51,7 @@ export function CourseTabs() {
   const counts = data?.tabCounts
 
   return (
-    <nav className="border-border bg-surface flex w-full gap-2 rounded-2xl border p-2">
+    <nav className="bg-surface flex w-full gap-2 rounded-2xl p-2 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       {TABS.map((t) => {
         const sub =
           t.staticSub ??

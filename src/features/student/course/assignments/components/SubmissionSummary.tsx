@@ -16,7 +16,7 @@ export function SubmissionSummary({
 }) {
   const ex = detail.feedbackExample
   return (
-    <section className="border-border bg-surface flex flex-col gap-5 rounded-2xl border p-6">
+    <section className="bg-surface flex flex-col gap-5 rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <div className="flex flex-col gap-2">
         <h3 className="text-fg text-[18px] font-bold">{detail.title}</h3>
         <div className="flex flex-wrap items-center gap-2">
@@ -62,7 +62,7 @@ export function SubmissionSummary({
       </div>
 
       {ex && (
-        <div className="border-border bg-surface-muted/40 flex flex-col gap-1.5 rounded-xl border p-4">
+        <div className="bg-surface-muted/40 flex flex-col gap-1.5 rounded-xl p-4">
           <div className="flex items-center gap-2">
             <span className="bg-info-bg text-info rounded-md px-2 py-[3px] text-[11px] font-semibold">
               {ex.statusLabel}

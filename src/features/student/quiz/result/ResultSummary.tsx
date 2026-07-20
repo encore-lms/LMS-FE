@@ -26,7 +26,7 @@ export function ResultSummary({
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       {/* 점수 카드 */}
-      <section className="border-border bg-surface flex flex-1 gap-8 rounded-2xl border p-8 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)]">
+      <section className="bg-surface flex flex-1 gap-8 rounded-2xl p-8 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
         <div className="flex flex-col">
           <span className="text-fg-muted text-[12px] font-medium">
             현재 점수 (자동 채점)
@@ -72,7 +72,7 @@ export function ResultSummary({
       </section>
 
       {/* 채점 상태 카드 */}
-      <section className="border-border bg-surface-muted flex w-full flex-col gap-3 rounded-2xl border p-6 lg:w-[384px]">
+      <section className="bg-surface-muted flex w-full flex-col gap-3 rounded-2xl p-6 lg:w-[384px]">
         <p className="text-fg text-[13px] font-semibold">채점 상태</p>
         <StatusRow
           label="자동 채점"

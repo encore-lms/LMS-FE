@@ -6,7 +6,7 @@ import { ProjectContribution } from '../v2/ProjectContribution'
 
 // 증명서 탭3 프로젝트 — 프로젝트 카드·기여 히트맵·Before/After·공개 산출물.
 const card =
-  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const HEAT = ['bg-surface-muted', 'bg-brand/30', 'bg-brand/60', 'bg-brand']
 
 export function ProjectsTab({ p }: { p: CertProjectsTab }) {

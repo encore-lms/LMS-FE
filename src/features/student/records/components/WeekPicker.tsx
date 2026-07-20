@@ -42,7 +42,7 @@ export function WeekPicker({
   const canExpand = !locked && !showAll && hiddenCount > 0
 
   return (
-    <section className="border-border bg-surface relative flex flex-col gap-4 overflow-hidden rounded-2xl border p-6">
+    <section className="bg-surface relative flex flex-col gap-4 overflow-hidden rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <span className="bg-brand absolute top-0 left-0 h-full w-1" />
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-0.5">

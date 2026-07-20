@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { StatStrip } from './StatStrip'
 import { card } from './shared'
 import type { PlayStat } from './types'
@@ -87,7 +88,7 @@ export function PlayResultView({
             <button
               type="button"
               onClick={() => navigate(primary.to)}
-              className="bg-brand rounded-lg px-4 py-2.5 text-[13px] font-bold text-white"
+              className={buttonClass({ size: 'md' })}
             >
               {primary.label}
             </button>

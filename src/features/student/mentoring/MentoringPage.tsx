@@ -10,14 +10,15 @@ import {
   useMentoring,
 } from '../api/mentoring'
 import { MentoringHero } from './components/MentoringHero'
-import { MentoringStatCards } from './components/MentoringStatCards'
+import { MentoringSkeleton } from './components/MentoringSkeleton'
 import { ActiveRequestCard } from './components/ActiveRequestCard'
 import {
-  NewRequestForm,
+  NewRequestModal,
   type NewRequestValues,
-} from './components/NewRequestForm'
+} from './components/NewRequestModal'
 import { ConfirmedReservationCard } from './components/ConfirmedReservationCard'
-import { HistoryTable } from './components/HistoryTable'
+import { MentoringHistorySection } from './components/MentoringHistorySection'
+import { CoMenteesPanel } from './components/CoMenteesPanel'
 import { CancelRequestModal } from './components/CancelRequestModal'
 import type {
   MentoringActiveRequest,
@@ -35,18 +36,11 @@ const TOAST: Record<ToastKey, { tone: ToastTone; message: string }> = {
   canceled: { tone: 'warning', message: '멘토링 요청이 취소되었습니다' },
 }
 
-// 멘토 미배정 시 스탯 캡션 (Figma 3206:2514).
-const NO_MENTOR_CAPTION: Record<string, string> = {
-  waiting: '팀 요청 후 멘토 미응답',
-  proposed: '멘토 배정 후 표시',
-  confirmed: '멘토 배정 후 표시',
-  done: '최근 완료 기록 없음',
-}
-
 /**
  * 수강생 멘토링 (/student/mentoring) — Figma 2651:5430 외 변형.
- * 완료 알림은 화면 상단 고정 토스트(?toast=requested/accepted/canceled),
- * 취소 모달(?modal=cancel-request), 멘토 미배정(?state=no-mentor).
+ * 아웃라인 없는 flat: 히어로 + 좌(진행/확정/기록) · 우(함께 받는 팀원).
+ * 새 요청은 기록 헤더의 버튼 → 팝업(NewRequestModal). 취소 모달(?modal=cancel-request),
+ * 완료 알림은 상단 고정 토스트(?toast=requested/accepted/canceled), 멘토 미배정(?state=no-mentor).
  */
 export default function MentoringPage() {
   const { data, isPending, isError, refetch } = useMentoring()
@@ -57,7 +51,7 @@ export default function MentoringPage() {
       isPending={isPending}
       isError={isError || !data}
       onRetry={() => refetch()}
-      loadingText="멘토링을 불러오는 중…"
+      skeleton={<MentoringSkeleton />}
       errorTitle="멘토링을 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
       className="p-8"
@@ -87,6 +81,8 @@ function MentoringView({ data }: { data: MentoringData }) {
   const [modalOpen, setModalOpen] = useState(
     params.get('modal') === 'cancel-request',
   )
+  // 새 멘토링 요청 팝업 열림.
+  const [requestModalOpen, setRequestModalOpen] = useState(false)
 
   // 다른 화면에서 ?toast=... 로 진입하면 공용 토스트로 한 번 알린다.
   const greeted = useRef(false)
@@ -109,7 +105,7 @@ function MentoringView({ data }: { data: MentoringData }) {
     applyMentoringData(data)
   }, [data])
 
-  // 멘토 미배정: 히어로(배정 대기)·0 통계·비활성 폼·정책만. 진행 요청/예약/기록은 숨김.
+  // 멘토 미배정: 히어로(배정 대기)·비활성 요청만. 진행 요청/예약/기록은 숨김. 팀원은 그대로 노출.
   const display: MentoringData = noMentor
     ? {
         ...data,
@@ -121,11 +117,6 @@ function MentoringView({ data }: { data: MentoringData }) {
           cumulativeHours: 0,
           remainingHours: 0,
         },
-        stats: data.stats.map((s) => ({
-          ...s,
-          value: 0,
-          caption: NO_MENTOR_CAPTION[s.key] ?? s.caption,
-        })),
         activeRequest: null,
         reservation: null,
         history: [],
@@ -136,29 +127,25 @@ function MentoringView({ data }: { data: MentoringData }) {
           ...data.kpis,
           inProgress: activeRequest || reservation ? 1 : 0,
         },
-        stats: data.stats.map((s) => {
-          if (s.key === 'waiting')
-            return {
-              ...s,
-              value: activeRequest?.status === 'requested' ? 1 : 0,
-            }
-          if (s.key === 'proposed')
-            return { ...s, value: activeRequest?.status === 'proposed' ? 1 : 0 }
-          if (s.key === 'confirmed') return { ...s, value: reservation ? 1 : 0 }
-          return s
-        }),
         activeRequest,
         reservation,
         history,
       }
 
-  // 진행 중 요청이나 확정 예약이 있으면 팀당 진행 중 1개 한도에 따라 새 요청 폼을 막는다.
+  // 진행 중 요청이나 확정 예약이 있으면 팀당 진행 중 1개 한도에 따라 새 요청을 막는다.
   const slotTaken = !!activeRequest || !!reservation || reservationUpcoming
+  const canRequest = !slotTaken && !noMentor
+  const disabledReason = noMentor
+    ? '멘토 배정 후 요청할 수 있어요'
+    : slotTaken
+      ? '진행 중 요청 1건이 있어요'
+      : ''
 
   const submitRequest = (v: NewRequestValues) => {
     createRequest.mutate(v, {
       onSuccess: (next) => {
         applyMentoringData(next)
+        setRequestModalOpen(false)
         toast.success(TOAST.requested.message)
       },
       onError: () => {
@@ -201,28 +188,47 @@ function MentoringView({ data }: { data: MentoringData }) {
   return (
     <div className="flex flex-col gap-5 p-8">
       <MentoringHero data={display} />
-      <MentoringStatCards stats={display.stats} />
 
-      {display.activeRequest && (
-        <ActiveRequestCard
-          request={display.activeRequest}
-          onCancel={() => setModalOpen(true)}
-          onReject={() => setModalOpen(true)}
-          onAccept={acceptProposal}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+        {/* 좌: 진행 중 요청 · 확정 예약 · 멘토링 기록(+ 새 요청 버튼) */}
+        <div className="flex flex-col gap-5">
+          {display.activeRequest && (
+            <ActiveRequestCard
+              request={display.activeRequest}
+              onCancel={() => setModalOpen(true)}
+              onReject={() => setModalOpen(true)}
+              onAccept={acceptProposal}
+            />
+          )}
+          {display.reservation && (
+            <ConfirmedReservationCard r={display.reservation} />
+          )}
+          <MentoringHistorySection
+            rows={display.history}
+            onNewRequest={() => setRequestModalOpen(true)}
+            canRequest={canRequest}
+            disabledReason={disabledReason}
+          />
+        </div>
+
+        {/* 우: 함께 멘토링 받는 팀원 */}
+        <aside className="flex flex-col gap-5">
+          <CoMenteesPanel
+            teamName={display.teamName}
+            mentor={display.mentor}
+            members={display.teamMembers ?? []}
+          />
+        </aside>
+      </div>
+
+      {requestModalOpen && (
+        <NewRequestModal
+          open
+          onClose={() => setRequestModalOpen(false)}
+          isSubmitting={createRequest.isPending}
+          onSubmit={submitRequest}
         />
       )}
-
-      <NewRequestForm
-        disabled={slotTaken || noMentor}
-        variant={noMentor ? 'no-mentor' : 'active'}
-        isSubmitting={createRequest.isPending}
-        onSubmit={submitRequest}
-      />
-
-      {display.reservation && (
-        <ConfirmedReservationCard r={display.reservation} />
-      )}
-      {display.history.length > 0 && <HistoryTable rows={display.history} />}
 
       <CancelRequestModal
         open={modalOpen}

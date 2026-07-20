@@ -30,7 +30,7 @@ import { TabHead } from './TechTab'
 // 증명서 탭6 이력서 — /student/resume 에서 작성한 이력서를 링크드인식 프로필로 보여준다.
 // 데이터는 증명서 overview 와 별개로 이력서 API(useResumes/useResume)에서 직접 가져온다.
 const card =
-  'border-border bg-surface rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 /** 표시 기본값 — 최근 수정순, '작성 완료'가 있으면 그중 최신 우선 */
 function pickDefault(resumes: ResumeSummary[]) {

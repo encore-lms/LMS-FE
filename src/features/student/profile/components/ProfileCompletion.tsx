@@ -18,7 +18,7 @@ export function ProfileCompletion({
   const requiredPct = Math.round((requiredDone / requiredTotal) * 100)
 
   return (
-    <section className="border-border bg-surface flex flex-wrap items-center justify-between gap-4 rounded-xl border p-6">
+    <section className="bg-surface flex flex-wrap items-center justify-between gap-4 rounded-xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <div className="relative h-16 w-16 shrink-0">
           <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">

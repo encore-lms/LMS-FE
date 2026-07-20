@@ -12,8 +12,6 @@ import { CartView } from './CartView'
 // 내 마일리지 (/student/mileage) — 이전 LMS 레이아웃 그대로.
 // 랜딩: 보라 신용카드 + '마일리지 사용하기'(→상품) + 내역/구매요청 2탭 + 하단 안내.
 // ?view=shop|cart 는 상품/장바구니 전체 뷰(카드 없이). ?tab=requests 는 랜딩의 구매요청 탭.
-const PURPLE = '#4c4195'
-
 export default function MileagePage() {
   const [params, setParams] = useSearchParams()
   const view = params.get('view') // 없음=랜딩, 'shop', 'cart'
@@ -61,13 +59,7 @@ export default function MileagePage() {
     <div className="flex flex-col items-center gap-6 p-8">
       {/* 보라 신용카드(가운데) */}
       <div className="flex w-full max-w-[460px] flex-col items-center">
-        <div
-          className="relative aspect-[1.62/1] w-full overflow-hidden rounded-[20px] p-6 text-white shadow-[0_10px_36px_rgba(76,65,149,0.35)]"
-          style={{
-            background:
-              'linear-gradient(135deg,#4c4195 0%,#5c5488 40%,#3d3478 100%)',
-          }}
-        >
+        <div className="from-brand to-brand-deep relative aspect-[1.62/1] w-full overflow-hidden rounded-[20px] bg-gradient-to-br p-6 text-white shadow-[0_12px_32px_rgba(18,23,38,0.24)]">
           <div className="absolute -top-10 -right-8 size-40 rounded-full bg-white/[0.06]" />
           <div className="absolute -bottom-8 -left-6 size-32 rounded-full bg-white/[0.05]" />
           <div className="relative flex h-full flex-col justify-between">
@@ -129,8 +121,7 @@ export default function MileagePage() {
         <button
           type="button"
           onClick={() => setView('shop')}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-[14px] font-bold text-white transition-opacity hover:opacity-90"
-          style={{ background: PURPLE }}
+          className="bg-brand-deep hover:bg-brand-deep/90 mt-4 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-[14px] font-bold text-white transition-colors"
         >
           <ShoppingBag className="size-[18px]" />
           마일리지 사용하기
@@ -155,9 +146,10 @@ export default function MileagePage() {
                 onClick={() => setTab(t.k)}
                 className={cn(
                   'rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors',
-                  on ? 'text-white' : 'text-fg-muted hover:text-fg',
+                  on
+                    ? 'bg-brand-deep text-white'
+                    : 'text-fg-muted hover:text-fg',
                 )}
-                style={on ? { background: PURPLE } : undefined}
               >
                 {t.l}
               </button>

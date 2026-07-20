@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useCertChanges } from '../api/certificate'
@@ -134,7 +135,7 @@ export default function ChangesRequestedPage() {
               <button
                 type="button"
                 onClick={() => navigate(areaRoute(r.actionLabel))}
-                className="bg-brand shrink-0 rounded-lg px-4 py-2.5 text-[12px] font-bold text-white"
+                className={buttonClass({ size: 'sm', className: 'shrink-0' })}
               >
                 {r.actionLabel} →
               </button>

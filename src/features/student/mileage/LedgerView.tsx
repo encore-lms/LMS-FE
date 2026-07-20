@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
-import { usePageHeader } from '@/shared/store'
 import {
   useMileageHistory,
   useMileageOrders,
@@ -85,7 +84,7 @@ const PERIODS = [
 ]
 const PAGE_SIZE = 5
 
-export default function HistoryPage() {
+export function LedgerView() {
   const { data, isPending, isError, refetch } = useMileageHistory()
   const { data: ordersData } = useMileageOrders()
   const cancel = useCancelMileageOrder()
@@ -94,7 +93,6 @@ export default function HistoryPage() {
   const [query, setQuery] = useState('')
   const [period, setPeriod] = useState('all')
   const [page, setPage] = useState(1)
-  usePageHeader('마일리지 사용 내역', '적립·사용·구매 요청 내역과 처리 상태')
 
   // mock 적립 내역 + 스토어 구매 요청(제출/승인/반려)을 한 목록으로 병합.
   // 구매 요청은 스토어가 단일 출처라 mock의 구매/사용 행은 제외(중복 방지), 적립만 가져온다.
@@ -136,10 +134,9 @@ export default function HistoryPage() {
       skeleton={<SkeletonListPage columns={5} className="" />}
       errorTitle="내역을 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
     >
       {data && (
-        <div className="flex flex-col gap-5 p-8">
+        <div className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {data.stats.map((s) => (
               <div key={s.key} className={cn(card, 'flex flex-col gap-2')}>

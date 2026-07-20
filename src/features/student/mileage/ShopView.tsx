@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   Book,
   Coffee,
@@ -11,7 +10,6 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { usePageHeader } from '@/shared/store'
 import { useMileageProducts } from '../api/mileage'
 import { parseMoney } from './store'
 import { useCartStore, cartCount, cartTotal } from './cartStore'
@@ -72,8 +70,7 @@ function FlyingIcon({ item }: { item: FlyingItem }) {
   )
 }
 
-export default function ProductsPage() {
-  const navigate = useNavigate()
+export function ShopView({ onView }: { onView: (v: string) => void }) {
   const { data, isPending, isError, refetch } = useMileageProducts()
   const balance = data ? parseMoney(data.balance) : 0
   const [active, setActive] = useState('all')
@@ -83,10 +80,6 @@ export default function ProductsPage() {
   const flyId = useRef(0)
   const items = useCartStore((s) => s.items)
   const add = useCartStore((s) => s.add)
-  usePageHeader(
-    '마일리지 상품 신청',
-    '상품을 장바구니에 담고 한 번에 결제하세요.',
-  )
 
   const visible = (data?.products ?? []).filter(
     (p) => active === 'all' || p.categoryKey === active,
@@ -142,40 +135,9 @@ export default function ProductsPage() {
       skeleton={<SkeletonCards count={6} />}
       errorTitle="상품을 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
     >
       {data && (
-        <div className="flex flex-col gap-5 p-8 pb-28">
-          {/* 잔액 배너 */}
-          <div className="from-brand to-brand-deep flex items-center justify-between rounded-2xl bg-gradient-to-br p-5">
-            <div className="flex items-center gap-8">
-              <div className="flex flex-col">
-                <span className="text-[11px] font-bold tracking-wider text-white/70">
-                  BALANCE · 사용 가능
-                </span>
-                <span className="text-[24px] font-bold text-white">
-                  {balance.toLocaleString()}
-                  <span className="ml-0.5 text-[15px]">M</span>
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[11px] font-bold tracking-wider text-white/70">
-                  진행 중 요청
-                </span>
-                <span className="text-[24px] font-bold text-white">
-                  {data.inProgress}건
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/student/mileage/history')}
-              className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold text-white"
-            >
-              사용 내역 →
-            </button>
-          </div>
-
+        <div className="flex flex-col gap-5 pb-28">
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2">
               <h2 className="text-fg text-[16px] font-bold">상품 목록</h2>
@@ -369,7 +331,7 @@ export default function ProductsPage() {
               )}
               <button
                 type="button"
-                onClick={() => navigate('/student/mileage/cart')}
+                onClick={() => onView('cart')}
                 disabled={count === 0}
                 className={buttonClass({
                   size: 'md',
@@ -382,7 +344,7 @@ export default function ProductsPage() {
             {/* 버튼 */}
             <button
               type="button"
-              onClick={() => navigate('/student/mileage/cart')}
+              onClick={() => onView('cart')}
               className={cn(
                 'bg-brand-deep flex items-center gap-3 rounded-2xl px-5 py-3.5 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)] transition-transform',
                 bump && 'scale-110',

@@ -1,162 +1,187 @@
 import { useSearchParams } from 'react-router-dom'
+import { ShoppingBag, Star } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { Skeleton } from '@/components/ui/Skeleton'
 import { useMileageOverview } from '../api/mileage'
 import { parseMoney } from './store'
-import { useCartStore, cartCount } from './cartStore'
 import { LedgerView } from './LedgerView'
 import { OrdersView } from './OrdersView'
 import { ShopView } from './ShopView'
 import { CartView } from './CartView'
 
-// 내 마일리지 (/student/mileage) — 이전 LMS처럼 단일 페이지.
-// 상단 신용카드(잔액) 고정 + 4개 뷰 pill 전환(내역·구매요청·상품·장바구니) + 하단 안내.
-// 상품/장바구니/내역 라우트는 ?view= 로 리다이렉트(routes.tsx).
-const VIEWS = [
-  { key: 'history', label: '마일리지 내역' },
-  { key: 'orders', label: '구매 요청' },
-  { key: 'shop', label: '상품 신청' },
-  { key: 'cart', label: '장바구니' },
-] as const
-type ViewKey = (typeof VIEWS)[number]['key']
+// 내 마일리지 (/student/mileage) — 이전 LMS 레이아웃 그대로.
+// 랜딩: 보라 신용카드 + '마일리지 사용하기'(→상품) + 내역/구매요청 2탭 + 하단 안내.
+// ?view=shop|cart 는 상품/장바구니 전체 뷰(카드 없이). ?tab=requests 는 랜딩의 구매요청 탭.
+const PURPLE = '#4c4195'
 
 export default function MileagePage() {
   const [params, setParams] = useSearchParams()
-  const raw = params.get('view')
-  const view = (VIEWS.some((v) => v.key === raw) ? raw : 'history') as ViewKey
-  const setView = (v: string) =>
+  const view = params.get('view') // 없음=랜딩, 'shop', 'cart'
+  const tab = params.get('tab') === 'requests' ? 'requests' : 'history'
+  const setView = (v: string | null) =>
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev)
-        if (v === 'history') next.delete('view')
+        if (!v) next.delete('view')
         else next.set('view', v)
+        next.delete('tab')
+        return next
+      },
+      { replace: true },
+    )
+  const setTab = (t: string) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (t === 'history') next.delete('tab')
+        else next.set('tab', t)
         return next
       },
       { replace: true },
     )
 
-  const { data, isPending } = useMileageOverview()
+  const { data } = useMileageOverview()
   const balance = data ? parseMoney(data.balance) : 0
-  const earned = data?.stats.find((s) => s.key === 'earned')?.value ?? '0'
-  const spent = data?.stats.find((s) => s.key === 'spent')?.value ?? '0'
-  const cartN = cartCount(useCartStore((s) => s.items))
-
   usePageHeader('마일리지', '적립 내역을 확인하고 상품을 교환하세요.')
 
+  if (view === 'shop')
+    return (
+      <div className="p-8">
+        <ShopView onView={setView} />
+      </div>
+    )
+  if (view === 'cart')
+    return (
+      <div className="p-8">
+        <CartView onView={setView} />
+      </div>
+    )
+
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-5 p-8',
-        (view === 'shop' || view === 'cart') && 'pb-32',
-      )}
-    >
-      {/* 신용카드 — 잔액·누적 적립/사용·만료(이전 LMS 신용카드 메타포) */}
-      {isPending && !data ? (
-        <Skeleton className="h-[188px] w-full rounded-3xl" />
-      ) : (
-        <div className="from-brand to-brand-deep relative overflow-hidden rounded-3xl bg-gradient-to-br p-7 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.22)]">
-          <div className="absolute -top-12 -right-10 size-48 rounded-full bg-white/10" />
-          <div className="absolute top-16 right-20 size-28 rounded-full bg-white/5" />
-          <div className="relative flex flex-col gap-7">
+    <div className="flex flex-col items-center gap-6 p-8">
+      {/* 보라 신용카드(가운데) */}
+      <div className="flex w-full max-w-[460px] flex-col items-center">
+        <div
+          className="relative aspect-[1.62/1] w-full overflow-hidden rounded-[20px] p-6 text-white shadow-[0_10px_36px_rgba(76,65,149,0.35)]"
+          style={{
+            background:
+              'linear-gradient(135deg,#4c4195 0%,#5c5488 40%,#3d3478 100%)',
+          }}
+        >
+          <div className="absolute -top-10 -right-8 size-40 rounded-full bg-white/[0.06]" />
+          <div className="absolute -bottom-8 -left-6 size-32 rounded-full bg-white/[0.05]" />
+          <div className="relative flex h-full flex-col justify-between">
+            {/* 상단: 브랜드 + 금색 칩 */}
             <div className="flex items-start justify-between">
               <div className="flex flex-col leading-tight">
-                <span className="text-[14px] font-bold tracking-[0.18em] text-white">
+                <span className="text-[15px] font-bold tracking-[0.14em]">
                   PLAYDATA
                 </span>
-                <span className="text-[10px] font-semibold tracking-[0.32em] text-white/60">
+                <span className="text-[10px] font-semibold tracking-[0.3em] text-white/50">
                   MILEAGE
                 </span>
               </div>
-              <div className="h-7 w-10 rounded-md bg-gradient-to-br from-white/40 to-white/15" />
+              <div
+                className="relative h-8 w-11 rounded-md"
+                style={{
+                  background:
+                    'linear-gradient(135deg,#e8d5a3 0%,#c9a84c 50%,#e8d5a3 100%)',
+                }}
+              >
+                <div className="absolute top-1/2 right-0 left-0 h-px bg-black/15" />
+                <div className="absolute top-0 bottom-0 left-1/2 w-px bg-black/15" />
+              </div>
             </div>
+            {/* 중앙: 포인트 */}
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] font-bold tracking-wider text-white/70">
-                BALANCE · 사용 가능 마일리지
+              <span className="text-[11px] font-semibold tracking-wider text-white/50">
+                TOTAL POINTS
               </span>
-              <span className="text-[44px] leading-none font-bold">
+              <span className="text-[38px] leading-none font-bold">
                 {balance.toLocaleString()}
-                <span className="ml-1 text-[20px]">M</span>
+                <small className="ml-1 text-[17px] font-semibold">P</small>
               </span>
-              {data?.balanceDelta && (
-                <div className="mt-0.5 flex items-center gap-2">
-                  <span className="rounded-md bg-white/15 px-2 py-0.5 text-[11px] font-bold">
-                    {data.balanceDelta}
-                  </span>
-                  <span className="text-[12px] text-white/80">
-                    {data.balanceSub}
-                  </span>
-                </div>
-              )}
             </div>
-            <div className="flex gap-7 border-t border-white/15 pt-4">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] tracking-wider text-white/55">
-                  누적 적립
-                </span>
-                <span className="text-[16px] font-bold">{earned}M</span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] tracking-wider text-white/55">
-                  누적 사용
-                </span>
-                <span className="text-[16px] font-bold">{spent}M</span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] tracking-wider text-white/55">
+            {/* 하단: 만료 + 별 */}
+            <div className="flex items-end justify-between">
+              <div className="flex flex-col">
+                <span className="text-[9px] tracking-wider text-white/45">
                   VALID THRU
                 </span>
-                <span className="text-[13px] font-bold">종강월 말일</span>
+                <span className="text-[12px] font-semibold text-white/85">
+                  종강월 말일
+                </span>
+              </div>
+              <div className="flex gap-0.5 text-white/35">
+                <Star className="size-3 fill-current" />
+                <Star className="size-3 fill-current" />
+                <Star className="size-3 fill-current" />
               </div>
             </div>
           </div>
         </div>
-      )}
 
-      {/* 뷰 전환 pill — 내역 · 구매 요청 · 상품 신청 · 장바구니(N) */}
-      <div className="flex flex-wrap items-center gap-2">
-        {VIEWS.map((v) => {
-          const on = v.key === view
-          return (
-            <button
-              key={v.key}
-              type="button"
-              onClick={() => setView(v.key)}
-              aria-current={on ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors',
-                on
-                  ? 'bg-brand-deep text-white'
-                  : 'border-border text-fg-muted hover:bg-surface-muted border',
-              )}
-            >
-              {v.label}
-              {v.key === 'cart' && cartN > 0 && (
-                <span
-                  className={cn(
-                    'rounded-full px-1.5 py-0.5 text-[11px] font-bold',
-                    on ? 'bg-white/20 text-white' : 'bg-brand/10 text-brand',
-                  )}
-                >
-                  {cartN}
-                </span>
-              )}
-            </button>
-          )
-        })}
+        {/* 안내 + 사용하기 */}
+        <p className="text-fg-subtle mt-4 text-center text-[13px] leading-5">
+          모든 마일리지는 종강일 기준 2주까지 사용 가능하며, 이후 자동
+          소멸됩니다.
+        </p>
+        <button
+          type="button"
+          onClick={() => setView('shop')}
+          className="mt-4 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-[14px] font-bold text-white transition-opacity hover:opacity-90"
+          style={{ background: PURPLE }}
+        >
+          <ShoppingBag className="size-[18px]" />
+          마일리지 사용하기
+        </button>
       </div>
 
-      {/* 활성 뷰 */}
-      {view === 'history' && <LedgerView />}
-      {view === 'orders' && <OrdersView onView={setView} />}
-      {view === 'shop' && <ShopView onView={setView} />}
-      {view === 'cart' && <CartView onView={setView} />}
+      {/* 구분선 */}
+      <div className="bg-divider h-px w-full" />
 
-      {/* 하단 안내(이전 LMS 만료 정책 문구) */}
-      <p className="text-fg-subtle text-[11px] leading-5">
-        · 마일리지는 종강일이 속한 달의 말일까지 사용 가능하며, 이후 자동
-        소멸됩니다. 누락 건은 증빙과 함께 담당 매니저에게 문의해 주세요.
-      </p>
+      {/* 탭 + 목록 */}
+      <div className="flex w-full flex-col gap-5">
+        <div className="bg-surface-muted flex w-fit gap-1 rounded-full p-1">
+          {[
+            { k: 'history', l: '마일리지 내역' },
+            { k: 'requests', l: '구매 요청' },
+          ].map((t) => {
+            const on = tab === t.k
+            return (
+              <button
+                key={t.k}
+                type="button"
+                onClick={() => setTab(t.k)}
+                className={cn(
+                  'rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors',
+                  on ? 'text-white' : 'text-fg-muted hover:text-fg',
+                )}
+                style={on ? { background: PURPLE } : undefined}
+              >
+                {t.l}
+              </button>
+            )
+          })}
+        </div>
+        {tab === 'requests' ? <OrdersView onView={setView} /> : <LedgerView />}
+      </div>
+
+      {/* 하단 안내(이전 LMS 3줄) */}
+      <div className="text-fg-subtle flex w-full flex-col gap-1.5 text-[12px] leading-5">
+        <p>· 마일리지 관련 내용은 현재 순으로 조회가 되고 있습니다.</p>
+        <p>
+          · 마일리지는{' '}
+          <strong className="text-fg-muted font-semibold">
+            종강일이 속한 달의 말일
+          </strong>
+          까지 사용 가능합니다.
+        </p>
+        <p>
+          · 마일리지 관련하여 누락건이 있을 경우 증빙 자료와 함께 담당
+          매니저님께 문의 부탁드립니다.
+        </p>
+      </div>
     </div>
   )
 }

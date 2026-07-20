@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  ArrowLeft,
   Book,
   Coffee,
   Gift,
+  Search,
   ShoppingCart,
   Video,
   type LucideIcon,
@@ -10,11 +12,11 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { useMileageProducts } from '../api/mileage'
+import { useMileageProducts, useMileageOverview } from '../api/mileage'
 import { parseMoney } from './store'
 import { useCartStore, cartCount, cartTotal } from './cartStore'
 import { ProductImage } from './components/ProductImage'
-import type { MileageProduct, Tone } from './types'
+import type { MileageLimit, MileageProduct, Tone } from './types'
 import { SkeletonCards } from '@/components/ui/Skeleton'
 import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 
@@ -27,6 +29,17 @@ const PRODUCT_ICON: Record<'book' | 'video' | 'cup' | 'gift', LucideIcon> = {
   cup: Coffee,
   gift: Gift,
 }
+// 타입별 한도 카드 아이콘 — 라벨 기준(기프티콘/도서/인터넷 강의).
+function limitIcon(label: string): LucideIcon {
+  if (label.includes('도서')) return Book
+  if (label.includes('강의')) return Video
+  return Gift
+}
+const SORTS = [
+  { key: 'latest', label: '전체' },
+  { key: 'desc', label: '마일리지 높은 순' },
+  { key: 'asc', label: '마일리지 낮은 순' },
+] as const
 
 interface FlyingItem {
   id: number
@@ -70,10 +83,13 @@ function FlyingIcon({ item }: { item: FlyingItem }) {
   )
 }
 
-export function ShopView({ onView }: { onView: (v: string) => void }) {
+export function ShopView({ onView }: { onView: (v: string | null) => void }) {
   const { data, isPending, isError, refetch } = useMileageProducts()
+  const { data: overview } = useMileageOverview()
   const balance = data ? parseMoney(data.balance) : 0
   const [active, setActive] = useState('all')
+  const [sort, setSort] = useState<'latest' | 'desc' | 'asc'>('latest')
+  const [query, setQuery] = useState('')
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([])
   const [bump, setBump] = useState(false)
   const cartBtnRef = useRef<HTMLDivElement>(null)
@@ -81,9 +97,18 @@ export function ShopView({ onView }: { onView: (v: string) => void }) {
   const items = useCartStore((s) => s.items)
   const add = useCartStore((s) => s.add)
 
-  const visible = (data?.products ?? []).filter(
-    (p) => active === 'all' || p.categoryKey === active,
-  )
+  const q = query.trim().toLowerCase()
+  const visible = (data?.products ?? [])
+    .filter((p) => active === 'all' || p.categoryKey === active)
+    .filter((p) => !q || p.name.toLowerCase().includes(q))
+    .sort((a, b) =>
+      sort === 'latest'
+        ? 0
+        : sort === 'desc'
+          ? parseMoney(b.price) - parseMoney(a.price)
+          : parseMoney(a.price) - parseMoney(b.price),
+    )
+  const limits: MileageLimit[] = overview?.limits ?? []
   const count = cartCount(items)
   const total = cartTotal(items)
 
@@ -138,18 +163,56 @@ export function ShopView({ onView }: { onView: (v: string) => void }) {
     >
       {data && (
         <div className="flex flex-col gap-5 pb-28">
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-fg text-[16px] font-bold">상품 목록</h2>
-              <span className="text-fg-subtle text-[12px]">
-                {data.products.length}개
-              </span>
-            </div>
-            <span className="text-fg-subtle text-[12px]">
-              담은 뒤 장바구니에서 한 번에 결제합니다
-            </span>
-          </div>
+          {/* 뒤로 — 마일리지 랜딩 */}
+          <button
+            type="button"
+            onClick={() => onView(null)}
+            className="text-fg-muted hover:text-fg flex w-fit items-center gap-1 text-[13px] font-medium"
+          >
+            <ArrowLeft className="size-4" /> 마일리지
+          </button>
 
+          {/* 타입별 한도 카드(도서·강의·기프티콘) */}
+          {limits.length > 0 && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {limits.map((l) => {
+                const Icon = limitIcon(l.label)
+                const remaining = Math.max(0, l.total - l.used)
+                return (
+                  <section
+                    key={l.label}
+                    className={cn(card, 'flex flex-col gap-2.5')}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={cn(
+                          'flex items-center gap-1.5 rounded-md px-2 py-1 text-[12px] font-bold',
+                          TONE_SOFT[l.tone],
+                        )}
+                      >
+                        <Icon className="size-3.5" />
+                        {l.label}
+                      </span>
+                      <span className="text-fg-subtle text-[11px]">
+                        한도 {l.total.toLocaleString()}M
+                      </span>
+                    </div>
+                    <span className="text-fg text-[18px] font-bold">
+                      {remaining.toLocaleString()}M{' '}
+                      <span className="text-fg-subtle text-[12px] font-normal">
+                        추가 신청 가능
+                      </span>
+                    </span>
+                    <span className="text-fg-subtle text-[11px]">
+                      사용 {l.used.toLocaleString()}M · {l.status.label}
+                    </span>
+                  </section>
+                )
+              })}
+            </div>
+          )}
+
+          {/* 카테고리 필터 */}
           <div className="flex flex-wrap items-center gap-2">
             {data.filters.map((f) => {
               const on = f.key === active
@@ -177,6 +240,40 @@ export function ShopView({ onView }: { onView: (v: string) => void }) {
                 </button>
               )
             })}
+          </div>
+
+          {/* 정렬 + 검색 */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {SORTS.map((s) => {
+                const on = s.key === sort
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setSort(s.key)}
+                    className={cn(
+                      'rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
+                      on
+                        ? 'text-white'
+                        : 'border-border text-fg-muted hover:bg-surface-muted border',
+                    )}
+                    style={on ? { background: '#4c4195' } : undefined}
+                  >
+                    {s.label}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="border-border focus-within:border-brand flex items-center gap-1.5 rounded-lg border px-3 py-1.5">
+              <Search className="text-fg-subtle size-3.5" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="검색어 입력"
+                className="text-fg placeholder:text-fg-subtle w-40 bg-transparent text-[13px] outline-none"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

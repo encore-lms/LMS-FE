@@ -28,7 +28,7 @@ const PRODUCT_ICON: Record<CartItem['icon'], LucideIcon> = {
   gift: Gift,
 }
 
-export function CartView({ onView }: { onView: (v: string) => void }) {
+export function CartView({ onView }: { onView: (v: string | null) => void }) {
   const toast = useToast()
   const { data } = useMileageOverview()
   const balance = data ? parseMoney(data.balance) : 0
@@ -72,7 +72,7 @@ export function CartView({ onView }: { onView: (v: string) => void }) {
           toast.success(
             `${selectedItems.length}개 상품 구매를 요청했습니다. (${total.toLocaleString()}M 차감)`,
           )
-          onView('history')
+          onView(null)
         },
         onError: () => toast.danger('결제에 실패했어요.'),
       },

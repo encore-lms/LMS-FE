@@ -4,7 +4,7 @@ import { TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 
 // 증명서 v2 — 도메인 경험 도넛(프로젝트/기록 기반 분포). 토큰 색만 사용(SVG stroke=currentColor).
 const card =
-  'border-border bg-surface rounded-2xl border p-6 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]'
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const R = 52
 const C = 2 * Math.PI * R
 

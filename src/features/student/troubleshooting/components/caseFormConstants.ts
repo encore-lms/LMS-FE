@@ -39,16 +39,6 @@ export const STAR = [
   },
 ] as const
 
-export const RECOMMENDED_TAGS = [
-  '#컨슈머그룹',
-  '#ack정책',
-  '#dedup',
-  '#트랜잭션',
-  '#격리수준',
-  '#스케일아웃',
-  '#모니터링',
-]
-
 export interface UploadFile {
   id: string
   name: string

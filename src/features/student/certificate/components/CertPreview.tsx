@@ -120,7 +120,7 @@ export function CertPreview({ data }: { data: CertificateOverview }) {
         <SummaryTab s={data.summary} />
 
         {/* 요청 전 체크리스트 */}
-        <section className="border-border bg-surface flex flex-col rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
+        <section className="bg-surface flex flex-col rounded-2xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <div className="flex flex-col">
               <span className="text-fg text-[15px] font-bold">

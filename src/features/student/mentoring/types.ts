@@ -7,6 +7,12 @@ export interface MentoringMentor {
   assigned: boolean
 }
 
+/** 같은 팀에서 함께 멘토링 받는 수강생. isMe=본인. BE(MentoringResponse.Member). */
+export interface MentoringTeamMemberInfo {
+  name: string
+  isMe: boolean
+}
+
 export interface MentoringKpis {
   inProgress: number
   requestLimit: number
@@ -71,4 +77,6 @@ export interface MentoringData {
   activeRequest: MentoringActiveRequest | null
   reservation: MentoringReservation | null
   history: MentoringHistoryRow[]
+  // 함께 멘토링 받는 팀원. BE 미배포 환경 대비 optional(없으면 빈 패널).
+  teamMembers?: MentoringTeamMemberInfo[]
 }

@@ -26,15 +26,10 @@ function SlotCard({
   datetimeLabel: string
   memoLabel: string
 }) {
-  const cls =
-    tone === 'student'
-      ? 'bg-info-bg border-info'
-      : 'bg-warning-bg border-warning'
+  const cls = tone === 'student' ? 'bg-info-bg' : 'bg-warning-bg'
   const dot = tone === 'student' ? 'bg-info' : 'bg-warning'
   return (
-    <div
-      className={cn('flex flex-1 flex-col gap-2.5 rounded-xl border p-4', cls)}
-    >
+    <div className={cn('flex flex-1 flex-col gap-2.5 rounded-xl p-4', cls)}>
       <div className="flex items-center gap-1.5">
         <span className={cn('size-1.5 rounded-full', dot)} />
         <span className="text-fg text-[12px] font-bold">{title}</span>
@@ -68,19 +63,12 @@ export function ActiveRequestCard({
     : '멘토가 요청을 확인한 뒤 확정하거나 조정 제안을 보낼 수 있습니다.'
 
   return (
-    <section
-      className={cn(
-        'overflow-hidden rounded-2xl border-[1.5px] shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]',
-        hasProposal ? 'border-warning' : 'border-info',
-      )}
-    >
+    <section className="bg-surface overflow-hidden rounded-2xl">
       {/* 헤더 */}
       <div
         className={cn(
-          'flex items-center justify-between border-b px-6 py-[18px]',
-          hasProposal
-            ? 'bg-warning-bg border-warning'
-            : 'bg-info-bg border-info',
+          'flex items-center justify-between px-6 py-[18px]',
+          hasProposal ? 'bg-warning-bg' : 'bg-info-bg',
         )}
       >
         <div className="flex items-center gap-2.5">

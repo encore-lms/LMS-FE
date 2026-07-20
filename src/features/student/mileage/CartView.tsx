@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   Book,
   Coffee,
@@ -14,7 +13,6 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { Empty } from '@/components/ui/Empty'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { usePageHeader } from '@/shared/store'
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateMileageOrder, useMileageOverview } from '../api/mileage'
 import { parseMoney } from './store'
@@ -30,8 +28,7 @@ const PRODUCT_ICON: Record<CartItem['icon'], LucideIcon> = {
   gift: Gift,
 }
 
-export default function CartPage() {
-  const navigate = useNavigate()
+export function CartView({ onView }: { onView: (v: string) => void }) {
   const toast = useToast()
   const { data } = useMileageOverview()
   const balance = data ? parseMoney(data.balance) : 0
@@ -42,7 +39,6 @@ export default function CartPage() {
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(items.map((i) => i.productId)),
   )
-  usePageHeader('마일리지 장바구니', '담은 상품을 확인하고 한 번에 결제합니다.')
 
   const selectedItems = items.filter((i) => selected.has(i.productId))
   const total = cartTotal(selectedItems)
@@ -76,7 +72,7 @@ export default function CartPage() {
           toast.success(
             `${selectedItems.length}개 상품 구매를 요청했습니다. (${total.toLocaleString()}M 차감)`,
           )
-          navigate('/student/mileage/history')
+          onView('history')
         },
         onError: () => toast.danger('결제에 실패했어요.'),
       },
@@ -85,29 +81,27 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="p-8">
-        <Empty
-          title="장바구니가 비어 있어요"
-          description="상품 목록에서 원하는 상품을 담아보세요."
-          action={
-            <button
-              type="button"
-              onClick={() => navigate('/student/mileage/products')}
-              className={buttonClass({ size: 'md' })}
-            >
-              상품 보러 가기 →
-            </button>
-          }
-        />
-      </div>
+      <Empty
+        title="장바구니가 비어 있어요"
+        description="상품 목록에서 원하는 상품을 담아보세요."
+        action={
+          <button
+            type="button"
+            onClick={() => onView('shop')}
+            className={buttonClass({ size: 'md' })}
+          >
+            상품 보러 가기 →
+          </button>
+        }
+      />
     )
   }
 
   return (
-    <div className="flex flex-col gap-5 p-8 pb-28">
+    <div className="flex flex-col gap-5 pb-28">
       <button
         type="button"
-        onClick={() => navigate('/student/mileage/products')}
+        onClick={() => onView('shop')}
         className="text-fg-muted hover:text-fg flex w-fit items-center gap-1 text-[13px] font-medium"
       >
         ← 상품 더 담기

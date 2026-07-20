@@ -286,7 +286,6 @@ export default function AssignmentsPage() {
     )
   }, [data?.cohorts, myCohorts.data, searchParams, setSearchParams])
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
-  const [status, setStatus] = useSearchParamState('status', 'with_unassigned')
   const [q, setQ] = useSearchParamState('q')
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -308,21 +307,19 @@ export default function AssignmentsPage() {
     }
     return map
   }, [logs.data])
-  // 보드는 이미 상단 선택 기수로 조회되므로, 클라이언트에선 멘토·상태·검색만 거른다.
+  // 보드는 이미 상단 선택 기수로 조회되므로, 클라이언트에선 멘토·검색만 거른다.
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
       if (mentorFilter !== 'all' && r.mentor?.mentorId !== mentorFilter)
         return false
-      if (status === 'active_only' && !r.assignmentId) return false
-      if (status === 'unassigned_only' && r.assignmentId) return false
       if (needle) {
         const hay = `${r.teamName} ${r.mentor?.name ?? ''}`.toLowerCase()
         if (!hay.includes(needle)) return false
       }
       return true
     })
-  }, [rows, mentorFilter, status, q])
+  }, [rows, mentorFilter, q])
 
   // 기수별 카드 그룹 — 필터 통과 팀을 기수 단위로 묶는다.
   const cohortGroups = useMemo(() => {
@@ -447,17 +444,6 @@ export default function AssignmentsPage() {
                       value: m.mentorId,
                       label: m.name,
                     })),
-                  ]}
-                  className="h-9"
-                />
-                <Select
-                  value={status}
-                  onChange={(v) => setStatus(v)}
-                  aria-label="배정 상태 필터"
-                  options={[
-                    { value: 'with_unassigned', label: '미배정 포함' },
-                    { value: 'active_only', label: '배정만' },
-                    { value: 'unassigned_only', label: '미배정만' },
                   ]}
                   className="h-9"
                 />

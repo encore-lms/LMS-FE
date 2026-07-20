@@ -21,7 +21,7 @@ export function SubmitSuccessCard({
   onHome: () => void
 }) {
   return (
-    <section className="border-border bg-surface flex flex-col gap-4 rounded-xl border p-6">
+    <section className="bg-surface flex flex-col gap-4 rounded-xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       <div className="flex flex-col gap-1">
         <h2 className="text-fg text-lg font-bold">출결 폼을 제출했습니다</h2>
         <p className="text-fg-muted text-sm">

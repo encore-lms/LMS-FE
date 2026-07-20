@@ -28,7 +28,7 @@ export function OnlineChapterProgress({
       aria-current={active}
       aria-disabled={locked}
       className={cn(
-        'flex w-full flex-col gap-3 rounded-2xl border p-5 text-left shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)] transition-colors',
+        'flex w-full flex-col gap-3 rounded-2xl border p-5 text-left shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)] transition-colors',
         locked
           ? 'border-border bg-surface-muted/40 cursor-not-allowed'
           : active

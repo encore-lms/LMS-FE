@@ -1,4 +1,5 @@
 import { lazy } from 'react'
+import { Navigate } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
 import { OnboardingGate } from './onboarding/OnboardingGate'
 
@@ -61,9 +62,6 @@ const PlayCodingResultPage = lazy(() => import('./play/PlayCodingResultPage'))
 const PlayQuizPage = lazy(() => import('./play/PlayQuizPage'))
 const PlayQuizResultPage = lazy(() => import('./play/PlayQuizResultPage'))
 const MileagePage = lazy(() => import('./mileage/MileagePage'))
-const MileageProductsPage = lazy(() => import('./mileage/ProductsPage'))
-const MileageCartPage = lazy(() => import('./mileage/CartPage'))
-const MileageHistoryPage = lazy(() => import('./mileage/HistoryPage'))
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -131,11 +129,21 @@ export const studentRoutes: RouteObject[] = [
       { path: 'play/coding/result', element: <PlayCodingResultPage /> },
       { path: 'play/quiz', element: <PlayQuizPage /> },
       { path: 'play/quiz/result', element: <PlayQuizResultPage /> },
-      // 마일리지(내 마일리지·상품 신청·사용 내역). 구매 요청 내역은 사용 내역에 병합됨.
+      // 마일리지 — 단일 페이지(내역·구매요청·상품·장바구니 뷰 전환). 이전 LMS 구조.
       { path: 'mileage', element: <MileagePage /> },
-      { path: 'mileage/products', element: <MileageProductsPage /> },
-      { path: 'mileage/cart', element: <MileageCartPage /> },
-      { path: 'mileage/history', element: <MileageHistoryPage /> },
+      // 구 라우트는 단일 페이지 뷰로 리다이렉트(북마크·기존 링크 보존).
+      {
+        path: 'mileage/products',
+        element: <Navigate to="/student/mileage?view=shop" replace />,
+      },
+      {
+        path: 'mileage/cart',
+        element: <Navigate to="/student/mileage?view=cart" replace />,
+      },
+      {
+        path: 'mileage/history',
+        element: <Navigate to="/student/mileage?view=history" replace />,
+      },
       // 출결/태도(조회) + 출결 폼(작성). STUDENT 전용 가드는 취합층(router.tsx)에서 적용됨.
       { path: 'attendance', element: <AttendanceView /> },
       { path: 'attendance/form', element: <AttendanceFormPage /> },

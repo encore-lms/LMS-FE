@@ -230,7 +230,9 @@ export function QuestionForm({ initial }: { initial?: QuestionFormInitial }) {
             )}
           </div>
           <span className="text-fg-subtle text-[11px]">
-            Enter 또는 쉼표로 추가 · 빈 칸에서 Backspace로 마지막 태그 삭제
+            {tags.length >= 5
+              ? '최대 5개를 모두 사용했어요 · ×로 삭제하면 다시 추가할 수 있어요'
+              : 'Enter 또는 쉼표로 추가 · 빈 칸에서 Backspace로 마지막 태그 삭제'}
           </span>
         </div>
       </section>

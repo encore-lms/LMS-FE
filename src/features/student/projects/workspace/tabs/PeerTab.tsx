@@ -3,7 +3,11 @@ import { Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
-import { useSaveSelfReview, useSubmitPeerEval } from '../../../api/projects'
+import {
+  useSaveSelfReview,
+  useSubmitPeerEval,
+  wsWriteError,
+} from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
 import type { WorkspaceData } from '../../types'
 import { Chip } from '../components/ws-shared'
@@ -52,7 +56,9 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
         setSubmitted(true)
         toast.success('상호평가를 제출했습니다')
       })
-      .catch(() => toast.danger('상호평가 제출에 실패했어요.'))
+      .catch((e) =>
+        toast.danger(wsWriteError(e, '상호평가 제출에 실패했어요.')),
+      )
   }
   void AXIS_KEYS
   const setScore = (name: string, key: string, score: number) =>
@@ -197,7 +203,9 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
               saveSelfM
                 .mutateAsync({ content: selfReview })
                 .then(() => toast.info('상호평가를 임시 저장했습니다'))
-                .catch(() => toast.danger('임시 저장에 실패했어요.'))
+                .catch((e) =>
+                  toast.danger(wsWriteError(e, '임시 저장에 실패했어요.')),
+                )
             }
             disabled={saveSelfM.isPending}
             className="border-border text-fg rounded-lg border px-4 py-2.5 text-[13px] font-semibold"

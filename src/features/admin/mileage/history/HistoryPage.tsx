@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronLeft, Download, Info } from 'lucide-react'
+
+import { Download } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
@@ -155,17 +155,8 @@ export default function HistoryPage() {
   return (
     <div className="p-8">
       {/* 브레드크럼 */}
-      <Link
-        to="/admin/mileage"
-        className="text-fg-muted hover:text-fg inline-flex items-center gap-1 text-[13px]"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        마일리지 관리
-        <span className="text-fg-subtle">› 지급 내역</span>
-      </Link>
-
       {/* 클러스터 탭 + 기수 필터(실 BE) */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
         <CohortScopeSelect value={cohortId} onChange={setCohortId} />
       </div>
@@ -254,22 +245,6 @@ export default function HistoryPage() {
               부분 {footer.partial} · 실패 {footer.failed}
             </div>
           )}
-        </div>
-
-        {/* 원장 정책 */}
-        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-          <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
-            <Info className="h-4 w-4" />
-            원장 정책 · 완료 기준
-          </p>
-          <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-            <li>기수 선택 전에는 빈 상태로 안내 — 잘못된 전체 조회 방지</li>
-            <li>지급/차감 필터·수강생 이름 검색·CSV 내보내기 지원</li>
-            <li>
-              직접 지급·구매 승인 결과가 원장(MileageTransaction)에 즉시
-              반영됩니다
-            </li>
-          </ul>
         </div>
       </DataBoundary>
     </div>

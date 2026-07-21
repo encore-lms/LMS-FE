@@ -18,7 +18,7 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
-import { useUpdateTaskStatus } from '../../../api/projects'
+import { useUpdateTaskStatus, wsWriteError } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
 import type {
   Tone,
@@ -113,13 +113,13 @@ export function HomeTab({
       { taskId: t.id, status: 'DONE' },
       {
         onSuccess: () => toast.success('작업을 완료 처리했습니다'),
-        onError: () => {
+        onError: (e) => {
           setDoneTasks((prev) => {
             const n = new Set(prev)
             n.delete(t.title)
             return n
           })
-          toast.danger('완료 처리에 실패했어요.')
+          toast.danger(wsWriteError(e, '완료 처리에 실패했어요.'))
         },
       },
     )

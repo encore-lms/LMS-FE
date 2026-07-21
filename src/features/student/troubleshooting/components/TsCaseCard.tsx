@@ -1,5 +1,6 @@
 import { AlertCircle, ArrowRight, Check, Link2, Timer, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { InteractiveCard } from '@/components/ui/InteractiveCard'
 import type { TsCase, TsStatus, Tone } from '../types'
 import { TONE_SOFT } from '@/shared/lib/tone'
 
@@ -36,19 +37,12 @@ export function TsCaseCard({
   // 작성 중(이어 작성)만 강조 버튼, 나머지는 보조 버튼.
   const primary = c.status === 'draft'
   return (
-    // 카드 전체 클릭 = 상세 열기(QnA 카드와 동일한 pointer + 호버 시에만 그림자).
+    // 카드 전체 클릭 = 상세 열기 — 공용 InteractiveCard(프로젝트 카드 정본 인터랙션).
     // 내부 액션 버튼들은 stopPropagation으로 카드 클릭과 분리한다.
-    <section
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen(c)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onOpen(c)
-        }
-      }}
-      className="bg-surface focus-visible:ring-brand/40 flex cursor-pointer flex-col gap-3 rounded-2xl p-5 transition-shadow outline-none hover:shadow-[0px_8px_24px_0px_rgba(18,23,38,0.14)] focus-visible:ring-2"
+    <InteractiveCard
+      onOpen={() => onOpen(c)}
+      ariaLabel={`${c.title} 상세 보기`}
+      className="bg-surface flex flex-col gap-3 rounded-2xl p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -175,6 +169,6 @@ export function TsCaseCard({
           </span>
         ))}
       </div>
-    </section>
+    </InteractiveCard>
   )
 }

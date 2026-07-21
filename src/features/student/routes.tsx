@@ -53,6 +53,7 @@ const TsChangePage = lazy(
 // QnA 게시판 — 목록·작성·상세(FE 선반영). 기수 게시판 폐기(2026-05-21) 이후 재도입 프로토타입.
 const QnaListPage = lazy(() => import('./qna/QnaListPage'))
 const QnaNewPage = lazy(() => import('./qna/forms/NewQuestionPage'))
+const QnaEditPage = lazy(() => import('./qna/forms/EditQuestionPage'))
 const QnaDetailPage = lazy(() => import('./qna/QnaDetailPage'))
 const PlaySelectPage = lazy(() => import('./play/PlaySelectPage'))
 const PlayTypingPage = lazy(() => import('./play/PlayTypingPage'))
@@ -121,6 +122,7 @@ export const studentRoutes: RouteObject[] = [
       { path: 'qna', element: <QnaListPage /> },
       { path: 'qna/new', element: <QnaNewPage /> },
       { path: 'qna/:id', element: <QnaDetailPage /> },
+      { path: 'qna/:id/edit', element: <QnaEditPage /> },
       // PLAY(게임 선택·타자/코딩/CS퀴즈 게임·게임별 결과).
       { path: 'play', element: <PlaySelectPage /> },
       { path: 'play/typing', element: <PlayTypingPage /> },

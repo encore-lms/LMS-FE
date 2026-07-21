@@ -1,5 +1,6 @@
 import { type ComponentPropsWithoutRef, useMemo } from 'react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
@@ -72,7 +73,7 @@ export function Markdown({ children, mentions, className }: MarkdownProps) {
   return (
     <div className={`markdown-body ${className ?? ''}`}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, [rehypeSanitize, schema]]}
         urlTransform={urlTransform}
         components={{

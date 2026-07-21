@@ -372,7 +372,14 @@ export default function QnaDetailPage() {
                   {data.statusLabel}
                 </span>
                 {data.canDelete && (
-                  <div className="ml-auto">
+                  <div className="ml-auto flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/student/qna/${data.id}/edit`)}
+                      className="text-fg-subtle hover:text-fg text-[11px] font-semibold transition-colors"
+                    >
+                      수정
+                    </button>
                     <button
                       type="button"
                       onClick={() => setDeleteOpen(true)}

@@ -5,7 +5,7 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/shared/store'
-import { useCreateQuestion } from '../../api/qna'
+import { useCreateQuestion, useUpdateQuestion } from '../../api/qna'
 import { MarkdownEditor } from './MarkdownEditor'
 import { QNA_CATEGORIES } from '../types'
 import { TONE_SOLID } from '@/shared/lib/tone'
@@ -15,17 +15,33 @@ const card =
 const input =
   'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
 
-// 새 질문 작성 폼 — 제목·카테고리·내용·태그. 트러블슈팅 CaseContentForm 패턴(축약).
-export function QuestionForm() {
+/** 수정 모드 초기값 — 전달되면 기존 질문을 수정한다. */
+export interface QuestionFormInitial {
+  id: string
+  title: string
+  categoryKey: string
+  content: string
+  tags: string[]
+}
+
+// 새 질문 작성/수정 폼 — 제목·카테고리·내용·태그. 트러블슈팅 CaseContentForm 패턴(축약).
+export function QuestionForm({ initial }: { initial?: QuestionFormInitial }) {
   const navigate = useNavigate()
   const toast = useToast()
   const { user } = useAuth()
   const createQuestion = useCreateQuestion()
+  const updateQuestion = useUpdateQuestion(initial?.id ?? '')
+  const editing = !!initial
+  const isPending = editing
+    ? updateQuestion.isPending
+    : createQuestion.isPending
 
-  const [title, setTitle] = useState('')
-  const [categoryKey, setCategoryKey] = useState('lecture')
-  const [content, setContent] = useState('')
-  const [tags, setTags] = useState<string[]>([])
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [categoryKey, setCategoryKey] = useState(
+    initial?.categoryKey ?? 'lecture',
+  )
+  const [content, setContent] = useState(initial?.content ?? '')
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
 
   const addTag = (raw: string) => {
@@ -39,15 +55,25 @@ export function QuestionForm() {
 
   const canSubmit = title.trim().length > 0 && content.trim().length > 0
   const submit = () => {
-    if (!canSubmit || createQuestion.isPending) return
+    if (!canSubmit || isPending) return
+    const payload = {
+      title: title.trim(),
+      content: content.trim(),
+      categoryKey,
+      tags,
+    }
+    if (editing) {
+      updateQuestion.mutate(payload, {
+        onSuccess: (detail) => {
+          toast.success('질문을 수정했어요')
+          navigate(`/student/qna/${detail.id}`)
+        },
+        onError: () => toast.danger('질문 수정에 실패했어요'),
+      })
+      return
+    }
     createQuestion.mutate(
-      {
-        title: title.trim(),
-        content: content.trim(),
-        categoryKey,
-        tags,
-        authorName: user?.name,
-      },
+      { ...payload, authorName: user?.name },
       {
         onSuccess: (detail) => {
           toast.success('질문을 등록했어요')
@@ -62,7 +88,9 @@ export function QuestionForm() {
     <div className="flex flex-col gap-5 p-8">
       <section className={cn(card, 'flex flex-col gap-4')}>
         <div className="flex flex-col gap-0.5">
-          <span className="text-fg text-[15px] font-bold">질문 작성</span>
+          <span className="text-fg text-[15px] font-bold">
+            {editing ? '질문 수정' : '질문 작성'}
+          </span>
           <span className="text-fg-subtle text-[11px]">
             구체적으로 적을수록 좋은 답변을 받을 수 있어요
           </span>
@@ -173,8 +201,16 @@ export function QuestionForm() {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  // 한글 IME 조합 중 Enter는 무시 — 조합 확정 이벤트에 태그가 잘려 들어가는 것 방지.
+                  if (e.nativeEvent.isComposing) return
+                  if (e.key === 'Enter' || e.key === ',') {
                     e.preventDefault()
+                    addTag(tagInput)
+                    setTagInput('')
+                  }
+                }}
+                onBlur={() => {
+                  if (tagInput.trim()) {
                     addTag(tagInput)
                     setTagInput('')
                   }
@@ -190,7 +226,9 @@ export function QuestionForm() {
       <div className="flex items-center justify-end gap-2">
         <button
           type="button"
-          onClick={() => navigate('/student/qna')}
+          onClick={() =>
+            navigate(editing ? `/student/qna/${initial.id}` : '/student/qna')
+          }
           className="border-border text-fg h-11 rounded-[10px] border px-5 text-[14px] font-semibold"
         >
           취소
@@ -198,10 +236,10 @@ export function QuestionForm() {
         <button
           type="button"
           onClick={submit}
-          disabled={!canSubmit || createQuestion.isPending}
+          disabled={!canSubmit || isPending}
           className={buttonClass({ size: 'md' })}
         >
-          {createQuestion.isPending ? '등록 중…' : '질문 등록'}
+          {isPending ? '저장 중…' : editing ? '수정 완료' : '질문 등록'}
         </button>
       </div>
     </div>

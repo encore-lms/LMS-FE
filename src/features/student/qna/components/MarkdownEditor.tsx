@@ -255,7 +255,7 @@ export function MarkdownEditor({
             onBlur={() => setTimeout(() => setMentionQuery(null), 120)}
             placeholder={placeholder}
             style={{ minHeight }}
-            className="text-fg placeholder:text-fg-subtle w-full resize-none rounded-b-[10px] bg-transparent px-4 py-3 text-[14px] leading-6 focus:outline-none"
+            className="text-fg placeholder:text-fg-subtle w-full resize-none rounded-b-[10px] bg-transparent px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none"
           />
           {suggestions.length > 0 && (
             <ul className="border-border absolute bottom-2 left-3 z-20 w-52 overflow-hidden rounded-lg border bg-white shadow-[0px_8px_24px_0px_rgba(18,23,38,0.16)]">

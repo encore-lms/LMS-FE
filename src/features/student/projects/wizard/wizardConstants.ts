@@ -15,8 +15,9 @@ import {
 } from 'lucide-react'
 import { STACK_CATALOG, type Tone } from '../types'
 
+// 평소엔 flat, 호버 시 소프트 그림자가 천천히 올라온다(워크스페이스 card와 동일 인터랙션).
 export const card =
-  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+  'bg-surface rounded-2xl p-6 transition-shadow duration-300 hover:shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 export const CHIP_ON: Record<Tone, string> = {
   brand: 'border-brand bg-brand text-white',
   info: 'border-info bg-info text-white',

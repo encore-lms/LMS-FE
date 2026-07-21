@@ -18,8 +18,9 @@ export function toneOf(name: string): Tone {
   return TONES[h]
 }
 
+// 평소엔 flat, 호버 시 소프트 그림자가 천천히 올라오고 pointer 커서(사용자 확정 인터랙션).
 export const card =
-  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+  'bg-surface rounded-2xl p-5 cursor-pointer transition-shadow duration-300 hover:shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 export function parseMeetingMeta(meta: string): {
   date: string

@@ -3,7 +3,7 @@ import { Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
-import { useSubmitPeerEval } from '../../../api/projects'
+import { useSaveSelfReview, useSubmitPeerEval } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
 import type { WorkspaceData } from '../../types'
 import { Chip } from '../components/ws-shared'
@@ -22,8 +22,10 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
     ),
   )
   const [comments, setComments] = useState<Record<string, string>>({})
+  const [selfReview, setSelfReview] = useState(d.selfReview ?? '')
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const submitPeerM = useSubmitPeerEval(d.id)
+  const saveSelfM = useSaveSelfReview(d.id)
   // 축 라벨(BE 한글 key) → 제출 필드 매핑
   const AXIS_KEYS = ['협업', '소통', '책임감', '문제해결', '기술기여']
   const submitAll = () => {
@@ -32,8 +34,9 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
       toast.danger('평가할 팀원이 없어요.')
       return
     }
-    Promise.all(
-      targets.map((t) =>
+    Promise.all([
+      saveSelfM.mutateAsync({ content: selfReview }),
+      ...targets.map((t) =>
         submitPeerM.mutateAsync({
           targetMemberId: t.memberId!,
           collaboration: scores[`${t.name}:협업`] ?? 0,
@@ -44,7 +47,7 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
           comment: comments[t.name] ?? '',
         }),
       ),
-    )
+    ])
       .then(() => {
         setSubmitted(true)
         toast.success('상호평가를 제출했습니다')
@@ -111,6 +114,22 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
           <Chip badge={d.peerTeamStatus} />
         </div>
       </section>
+      <section className={cn(card, 'flex flex-col gap-2')}>
+        <div className="flex flex-col gap-1">
+          <span className="text-fg text-[14px] font-bold">본인 수행 내용</span>
+          <span className="text-fg-muted text-[12px]">
+            이번 프로젝트에서 본인이 맡은 업무와 기여를 정리해 주세요. 임시
+            저장·제출 시 함께 저장됩니다.
+          </span>
+        </div>
+        <textarea
+          value={selfReview}
+          onChange={(e) => setSelfReview(e.target.value)}
+          placeholder="예: 로그인·회원가입 API 구현, 팀 일정 관리, 발표 자료 제작 등"
+          aria-label="본인 수행 내용"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-24 resize-none rounded-lg border px-3 py-2 text-[12px] focus:outline-none"
+        />
+      </section>
       {d.peerTargets.map((t) => (
         <section key={t.name} className={cn(card, 'flex flex-col gap-3')}>
           <div className="flex items-center gap-2">
@@ -174,7 +193,13 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => toast.info('상호평가를 임시 저장했습니다')}
+            onClick={() =>
+              saveSelfM
+                .mutateAsync({ content: selfReview })
+                .then(() => toast.info('상호평가를 임시 저장했습니다'))
+                .catch(() => toast.danger('임시 저장에 실패했어요.'))
+            }
+            disabled={saveSelfM.isPending}
             className="border-border text-fg rounded-lg border px-4 py-2.5 text-[13px] font-semibold"
           >
             임시 저장

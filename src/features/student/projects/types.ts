@@ -267,6 +267,8 @@ export interface WorkspaceData {
   peerTargets: WsPeerTarget[]
   /** 동료 평가 개시 여부 — 꺼져 있으면 서버가 제출을 막으므로 폼 대신 안내를 띄운다 */
   peerEvalEnabled: boolean
+  /** 상호평가 화면 '본인 수행 내용' — 내가 저장한 자기 업무 요약(없으면 null) */
+  selfReview?: string | null
   // certification
   certChecklist: WsCheck[]
   certStatus: Badge

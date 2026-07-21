@@ -11,6 +11,7 @@ import {
   useAddMeeting,
   useAddArtifact,
   useSubmitPeerEval,
+  useSaveSelfReview,
   useRequestCertification,
   useAddSchedule,
   useAddMetric,
@@ -103,6 +104,7 @@ function renderPage(
   vi.mocked(useAddMeeting).mockReturnValue(writeMock as never)
   vi.mocked(useAddArtifact).mockReturnValue(writeMock as never)
   vi.mocked(useSubmitPeerEval).mockReturnValue(writeMock as never)
+  vi.mocked(useSaveSelfReview).mockReturnValue(writeMock as never)
   vi.mocked(useRequestCertification).mockReturnValue(writeMock as never)
   vi.mocked(useAddSchedule).mockReturnValue(writeMock as never)
   vi.mocked(useAddMetric).mockReturnValue(writeMock as never)

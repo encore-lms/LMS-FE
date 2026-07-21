@@ -149,9 +149,10 @@ describe('AdminDashboard (관제탑형)', () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(within(screen.getByRole('table')).getByText('24기'))
+    // 기수명은 연속 지각·결석 감지 그룹 헤더에도 렌더되므로 존재 여부만 단언한다.
     expect(
-      screen.getByText('SK네트웍스 Family AI 캠프 24기'),
-    ).toBeInTheDocument()
+      screen.getAllByText('SK네트웍스 Family AI 캠프 24기').length,
+    ).toBeGreaterThan(0)
     expect(screen.getByText('최종 출석률')).toBeInTheDocument()
     expect(screen.getByText('성취도 평가 회차별 평균')).toBeInTheDocument()
   })

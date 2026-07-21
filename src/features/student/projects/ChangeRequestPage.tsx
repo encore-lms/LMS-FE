@@ -19,7 +19,7 @@ import {
 // 인증 완료 프로젝트는 수정 잠금. 수강생이 사유를 적어 수정 권한을 요청 → 강사 승인 시 시한부로 원본 직접 수정 →
 // 수정 완료 + 변경 요약 제출 → 강사 최종 확인. (구 "변경 항목 선택 + 변경 전/후 비교" 방식 대체)
 const card =
-  'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+  'bg-surface rounded-2xl p-5 transition-shadow duration-300 hover:shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 const EXAMPLE_REASON =
   '결제 모듈 리팩터링 결과를 설명에 반영하고, 최신 API 명세서로 산출물을 교체하기 위함입니다.'

@@ -64,7 +64,7 @@ export function WizardShell({
       </div>
 
       {/* 스테퍼 */}
-      <div className="bg-surface flex items-center rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+      <div className="bg-surface flex items-center rounded-2xl p-4 transition-shadow duration-300 hover:shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
         {STEPS.map((s, i) => {
           const done = s.no < step
           const active = s.no === step

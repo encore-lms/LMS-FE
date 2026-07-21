@@ -19,7 +19,7 @@ const DEFAULT_WIZARD_VALUES = {
   desc: '주문/결제 도메인을 마이크로서비스로 분리하고 Kafka 이벤트 라우팅으로 결제 실패율을 안정화하는 백엔드 프로젝트.',
   start: '2026-06-01',
   end: '2026-07-15',
-  invited: ['c2', 'c3', 'c4'],
+  invited: [],
   teamSearch: '',
   stacks: ['Java 17', 'Spring Boot', 'PostgreSQL', 'Apache Kafka', 'Docker'],
   domain: '커머스',

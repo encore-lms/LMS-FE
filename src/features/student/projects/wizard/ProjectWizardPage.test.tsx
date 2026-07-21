@@ -93,12 +93,14 @@ describe('ProjectWizardPage', () => {
     )
     expect(screen.getByText('검색 결과 (1명)')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '박준석 초대 취소' }))
-
-    expect(screen.getByText('초대 2 / 7명')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '초대하기' }))
+    expect(screen.getByText('초대 1 / 6명')).toBeInTheDocument()
     expect(
-      screen.getByText('팀 3명 구성 완료 (PM 1 + 팀원 2)'),
+      screen.getByText('팀 2명 구성 완료 (PM 1 + 팀원 1)'),
     ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '최하늘 초대 취소' }))
+    expect(screen.getByText('초대 0 / 6명')).toBeInTheDocument()
   })
 
   it('3단계 직접 추가로 입력한 커스텀 스택을 해당 그룹과 요약에 칩으로 추가한다', async () => {

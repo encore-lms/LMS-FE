@@ -73,16 +73,13 @@ function renderPage() {
 }
 
 describe('HistoryPage (마일리지 지급 내역)', () => {
-  it('KPI·원장 표·구분 배지·정책을 렌더한다', () => {
+  it('KPI·원장 표·구분 배지를 렌더한다', () => {
     renderPage()
     expect(screen.getByText('+312,500 M')).toBeInTheDocument()
     expect(screen.getByText('중간 발표 우수상 지급')).toBeInTheDocument()
     expect(screen.getByText('구매 승인 → 차감')).toBeInTheDocument()
     expect(
       screen.getByText('총 482건 · 지급 312 · 차감 162 · 부분 5 · 실패 3'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(/원장\(MileageTransaction\)에 즉시/),
     ).toBeInTheDocument()
   })
 

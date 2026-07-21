@@ -1,4 +1,5 @@
 import { lazy } from 'react'
+import { Navigate } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
 
 // 운영(매니저/ADMIN) 라우트 — features/admin 소유자만 편집.
@@ -32,8 +33,6 @@ const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
 const PlayBulkUploadPage = lazy(() => import('./play/bulk/BulkUploadPage'))
 // 외부 연동 (운영 전용 신설 — features/admin/integrations, Figma 1546:11613)
 const IntegrationsPage = lazy(() => import('./integrations/IntegrationsPage'))
-// 마일리지 관리 허브 (운영 전용 신설 — features/admin/mileage, Figma 1127:5639)
-const MileagePage = lazy(() => import('./mileage/MileagePage'))
 // 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
 const MileageHistoryPage = lazy(() => import('./mileage/history/HistoryPage'))
 // 마일리지 직접 지급 (클러스터 sub — features/admin/mileage/direct-pay, Figma 1226:6549)
@@ -112,7 +111,11 @@ export const adminRoutes: RouteObject[] = [
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
       { path: 'play/typing-texts/bulk', element: <PlayBulkUploadPage /> },
       { path: 'integrations', element: <IntegrationsPage /> },
-      { path: 'mileage', element: <MileagePage /> },
+      // 마일리지는 허브 없이 지급 내역이 첫 화면(허브 페이지 폐기).
+      {
+        path: 'mileage',
+        element: <Navigate to="/admin/mileage/history" replace />,
+      },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
       { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },
       { path: 'mileage/purchase-requests', element: <MileagePurchasePage /> },

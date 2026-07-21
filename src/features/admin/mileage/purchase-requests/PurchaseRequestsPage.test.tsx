@@ -98,7 +98,7 @@ function renderPage() {
 }
 
 describe('PurchaseRequestsPage (마일리지 구매 요청)', () => {
-  it('KPI·처리 큐(기본 PENDING)·한도 초과 차단·정책을 렌더한다', () => {
+  it('KPI·처리 큐(기본 PENDING)·한도 초과 차단을 렌더한다', () => {
     renderPage()
     expect(screen.getByText('처리 대기 — 승인·수정·반려')).toBeInTheDocument()
     // 기본 상태 필터 = PENDING → 승인 완료 행은 숨김
@@ -106,9 +106,6 @@ describe('PurchaseRequestsPage (마일리지 구매 요청)', () => {
     expect(screen.queryByText('메가커피 디저트 세트')).toBeNull()
     // 한도 초과 행 = 승인 차단
     expect(screen.getByText('한도 초과 — 승인 차단')).toBeInTheDocument()
-    expect(
-      screen.getByText(/매니저 메모 필수 — 수강생에게 노출됨/),
-    ).toBeInTheDocument()
   })
 
   it('상태 필터 — APPROVED 선택 시 승인 완료 행이 보인다', async () => {

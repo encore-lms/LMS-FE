@@ -11,6 +11,10 @@ vi.mock('./api')
 vi.mock('../CohortScope', () => ({
   CohortScopeSelect: () => null,
 }))
+// 담당 기수 기본 선택용 훅 — 테스트에선 담당 없음으로 고정(기본 선택 effect 미발동).
+vi.mock('../../api/dashboard', () => ({
+  useMyCohorts: () => ({ data: undefined }),
+}))
 
 // 마일리지 직접 지급 — 폼/합계 렌더 + 지급 실행 → 확인 모달 → 결과 모달 흐름.
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowRight, ChevronLeft, Info } from 'lucide-react'
+
+import { ArrowRight } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
@@ -65,23 +65,15 @@ export default function PurchaseRequestsPage() {
     })
   }, [requests, status, q])
 
-  const {
-    course,
-    cohortLabel,
-    kpis,
-    typeNotes,
-    total,
-    pendingCount,
-    limitExceededCount,
-  } = data ?? {
-    course: '',
-    cohortLabel: '',
-    kpis: [],
-    typeNotes: [],
-    total: 0,
-    pendingCount: 0,
-    limitExceededCount: 0,
-  }
+  const { course, cohortLabel, kpis, total, pendingCount, limitExceededCount } =
+    data ?? {
+      course: '',
+      cohortLabel: '',
+      kpis: [],
+      total: 0,
+      pendingCount: 0,
+      limitExceededCount: 0,
+    }
 
   const NEXT_STATUS: Record<'승인' | '수정 요청' | '반려', PurchaseStatus> = {
     승인: 'approved',
@@ -248,17 +240,8 @@ export default function PurchaseRequestsPage() {
   return (
     <div className="p-8">
       {/* 브레드크럼 */}
-      <Link
-        to="/admin/mileage"
-        className="text-fg-muted hover:text-fg inline-flex items-center gap-1 text-[13px]"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        마일리지 관리
-        <span className="text-fg-subtle">› 구매 요청</span>
-      </Link>
-
       {/* 클러스터 탭 + 기수 필터(실 BE) */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
         <CohortScopeSelect value={cohortId} onChange={setCohortId} />
       </div>
@@ -320,48 +303,6 @@ export default function PurchaseRequestsPage() {
             총 {total}건 · PENDING {pendingCount} · 한도 초과{' '}
             {limitExceededCount}건
           </div>
-        </div>
-
-        {/* 타입 한도 연계 */}
-        <div className="border-border bg-surface mt-6 rounded-xl border p-5">
-          <p className="text-fg text-sm font-bold">타입 한도 연계</p>
-          <p className="text-fg-muted mt-1 text-xs">
-            승인 시점에 타입 누적 사용액 + 요청 금액이 maxPerUser를 초과하면
-            자동 차단 ·{' '}
-            <Link
-              to="/admin/mileage/type-limits"
-              className="text-brand font-semibold"
-            >
-              타입 한도 설정에서 관리
-            </Link>
-          </p>
-          <ul className="mt-3 flex flex-col">
-            {typeNotes.map((t) => (
-              <li
-                key={t.type}
-                className="border-divider flex items-center gap-2 border-t py-2 text-[13px] first:border-t-0"
-              >
-                <StatusBadge label={t.type} tone="neutral" />
-                <span className="text-fg-muted">{t.note}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* 처리 정책 §19 */}
-        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-          <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
-            <Info className="h-4 w-4" />
-            처리 정책 · 완료 기준
-          </p>
-          <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-            <li>상태/타입/기간 필터 가능 · 키워드 검색 지원</li>
-            <li>수정 요청 또는 반려 시 매니저 메모 필수 — 수강생에게 노출됨</li>
-            <li>
-              승인 시 원장 차감 + 구매 요청 상태 변경이 트랜잭션으로 함께
-              처리됩니다
-            </li>
-          </ul>
         </div>
 
         {/* 처리 모달 — 운영 액션 모달 공통 재사용 */}

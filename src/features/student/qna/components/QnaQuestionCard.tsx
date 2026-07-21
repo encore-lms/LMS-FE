@@ -1,5 +1,6 @@
 import { MessageSquare, Eye } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { InteractiveCard } from '@/components/ui/InteractiveCard'
 import type { QnaQuestion, Tone } from '../types'
 import { TONE_SOLID } from '@/shared/lib/tone'
 
@@ -12,24 +13,18 @@ const CHIP: Record<Tone, string> = {
   success: 'bg-success-bg text-success',
 }
 
-// 기본은 그림자 없이 flat, 호버 시에만 그림자로 떠오르는 인터랙션(클릭 가능 표시).
-const card = 'bg-surface rounded-2xl p-5'
-
 interface Props {
   q: QnaQuestion
   onOpen: (q: QnaQuestion) => void
 }
 
-// QnA 목록 질문 카드 — 클릭 시 상세로. 트러블슈팅 TsCaseCard 패턴 차용.
+// QnA 목록 질문 카드 — 클릭 시 상세로. 카드 인터랙션은 공용 InteractiveCard(프로젝트 카드 정본).
 export function QnaQuestionCard({ q, onOpen }: Props) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(q)}
-      className={cn(
-        card,
-        'flex w-full cursor-pointer flex-col gap-3 text-left transition-shadow hover:shadow-[0px_8px_24px_0px_rgba(18,23,38,0.14)]',
-      )}
+    <InteractiveCard
+      onOpen={() => onOpen(q)}
+      ariaLabel={`${q.title} 상세 보기`}
+      className="bg-surface flex w-full flex-col gap-3 rounded-2xl p-5 text-left"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -98,6 +93,6 @@ export function QnaQuestionCard({ q, onOpen }: Props) {
           </span>
         </div>
       </div>
-    </button>
+    </InteractiveCard>
   )
 }

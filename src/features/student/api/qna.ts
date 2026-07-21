@@ -43,6 +43,22 @@ export function useCreateQuestion() {
   })
 }
 
+// 질문 수정(작성자만) — 성공 시 상세 캐시 즉시 교체 + 목록 무효화.
+export function useUpdateQuestion(questionId: string) {
+  const base = useQnaBase()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: NewQuestionInput) =>
+      apiClient
+        .put<QnaDetail>(`${base}/${questionId}`, input)
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(qnaKeys.detail(questionId), detail)
+      queryClient.invalidateQueries({ queryKey: qnaKeys.list() })
+    },
+  })
+}
+
 // 답변 작성 — 성공 시 해당 질문 상세 캐시 갱신 + 목록(답변 수·상태) 무효화.
 export function useCreateAnswer(questionId: string) {
   const base = useQnaBase()

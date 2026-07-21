@@ -59,7 +59,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           aria-required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
-          className={`text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[15px] font-medium outline-none ${className}`}
+          className={`text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[15px] font-medium outline-none focus-visible:shadow-none ${className}`}
           {...rest}
         />
         {rightIcon && <div className="text-fg-muted shrink-0">{rightIcon}</div>}

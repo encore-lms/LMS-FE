@@ -10,6 +10,7 @@ import { TsCaseCard } from '../../../troubleshooting/components/TsCaseCard'
 import {
   useLinkTroubleshooting,
   useUnlinkTroubleshooting,
+  wsWriteError,
 } from '../../../api/projects'
 import type { TsCase } from '../../../troubleshooting/types'
 import type { WorkspaceData } from '../../types'
@@ -70,7 +71,8 @@ export function IssuesTab({ d }: { d: WorkspaceData }) {
                       toast.info(
                         '프로젝트 연결을 해제했어요 (사례는 그대로예요)',
                       ),
-                    onError: () => toast.danger('연결 해제에 실패했어요.'),
+                    onError: (e) =>
+                      toast.danger(wsWriteError(e, '연결 해제에 실패했어요.')),
                   },
                 )
               }}

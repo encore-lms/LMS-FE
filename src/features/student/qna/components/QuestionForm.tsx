@@ -179,7 +179,9 @@ export function QuestionForm({ initial }: { initial?: QuestionFormInitial }) {
               {tags.length} / 5
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* 칩이 입력 필드 안에 들어있는 패턴 — 떠 있는 입력 + 전역 포커스 링이 어색하던 것을
+              하나의 테두리 필드로 통합. 포커스 링은 index.css 규칙이 래퍼(.border)로 옮겨 준다. */}
+          <div className="border-border focus-within:border-brand flex min-h-12 flex-wrap items-center gap-1.5 rounded-[10px] border px-3 py-2">
             {tags.map((t) => (
               <span
                 key={t}
@@ -208,6 +210,10 @@ export function QuestionForm({ initial }: { initial?: QuestionFormInitial }) {
                     addTag(tagInput)
                     setTagInput('')
                   }
+                  // 빈 입력에서 백스페이스 → 마지막 태그 삭제(칩-인-필드 관례).
+                  if (e.key === 'Backspace' && tagInput === '' && tags.length) {
+                    removeTag(tags[tags.length - 1])
+                  }
                 }}
                 onBlur={() => {
                   if (tagInput.trim()) {
@@ -215,11 +221,17 @@ export function QuestionForm({ initial }: { initial?: QuestionFormInitial }) {
                     setTagInput('')
                   }
                 }}
-                placeholder="+ 태그 추가"
-                className="text-fg-subtle placeholder:text-fg-subtle focus:text-fg w-24 bg-transparent px-1 py-1 text-[12px] outline-none"
+                placeholder={
+                  tags.length === 0 ? '태그 입력 후 Enter (예: Kafka)' : ''
+                }
+                aria-label="태그 입력"
+                className="text-fg placeholder:text-fg-subtle min-w-28 flex-1 bg-transparent py-1 text-[13px] outline-none"
               />
             )}
           </div>
+          <span className="text-fg-subtle text-[11px]">
+            Enter 또는 쉼표로 추가 · 빈 칸에서 Backspace로 마지막 태그 삭제
+          </span>
         </div>
       </section>
 

@@ -170,7 +170,7 @@ export function HomeTab({
               onClick={() => onTab(target)}
               className={cn(
                 card,
-                'hover:border-brand/40 flex min-h-[136px] flex-col gap-3 text-left transition-colors',
+                'flex min-h-[136px] flex-col gap-3 text-left',
               )}
             >
               <div className="flex items-center justify-between">
@@ -344,7 +344,7 @@ export function HomeTab({
         <div className="flex flex-col gap-4 lg:w-[380px]">
           <section
             className={cn(
-              'bg-surface flex flex-col gap-3 rounded-2xl border p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]',
+              'bg-surface flex cursor-pointer flex-col gap-3 rounded-2xl border p-5 transition-shadow duration-300 hover:shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]',
               phase === 'certified'
                 ? 'border-success/50'
                 : phase === 'reviewing'

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronLeft, Info, Plus } from 'lucide-react'
+
+import { Info, Plus } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
@@ -76,17 +76,8 @@ export default function ProductsPage() {
   return (
     <div className="p-8">
       {/* 브레드크럼 */}
-      <Link
-        to="/admin/mileage"
-        className="text-fg-muted hover:text-fg inline-flex items-center gap-1 text-[13px]"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        마일리지 관리
-        <span className="text-fg-subtle">› 상품 관리</span>
-      </Link>
-
       {/* 클러스터 탭 — 상품 카탈로그는 전체 과정 공용(기수 무관) */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
       </div>
 

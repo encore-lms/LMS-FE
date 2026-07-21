@@ -21,8 +21,8 @@ import { useQnaBase } from './useQnaBase'
 import { MarkdownEditor } from './components/MarkdownEditor'
 import type { QnaAnswer, QnaDetail, Tone } from './types'
 
-const card =
-  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+// 상세는 클릭 대상이 아닌 읽기 컨테이너라 그림자 없이 flat(간격만으로 구분).
+const card = 'bg-surface rounded-2xl p-6'
 const CHIP: Record<Tone, string> = {
   brand: 'bg-brand/10 text-brand',
   info: 'bg-info-bg text-info',

@@ -49,7 +49,7 @@ export function Step2(p: {
             </span>
           </div>
           <span className="bg-brand/10 text-brand rounded-full px-3 py-1 text-[12px] font-bold">
-            초대 {p.invited.length} / 7명
+            초대 {p.invited.length} / 6명
           </span>
         </div>
         <label className="border-border text-fg-subtle focus-within:border-brand flex items-center gap-2 rounded-[10px] border px-4 py-3 text-[13px]">

@@ -6,7 +6,11 @@ import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/shared/api'
-import { useAddArtifact, useUploadArtifactFile } from '../../../api/projects'
+import {
+  useAddArtifact,
+  useUploadArtifactFile,
+  wsWriteError,
+} from '../../../api/projects'
 import type { WorkspaceData, WsDoc } from '../../types'
 import { Chip, DetailRow, SectionHead } from '../components/ws-shared'
 import { card, parseDocMeta } from '../components/ws-style'
@@ -83,7 +87,8 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
                     toast.success('파일을 첨부했습니다')
                     setAdding(false)
                   },
-                  onError: () => toast.danger('파일 첨부에 실패했어요.'),
+                  onError: (e) =>
+                    toast.danger(wsWriteError(e, '파일 첨부에 실패했어요.')),
                 },
               )
               return
@@ -95,7 +100,8 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
                   toast.success('문서를 추가했습니다')
                   setAdding(false)
                 },
-                onError: () => toast.danger('문서 추가에 실패했어요.'),
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '문서 추가에 실패했어요.')),
               },
             )
           }}

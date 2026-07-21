@@ -185,20 +185,19 @@ export default function TroubleshootingListPage() {
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-4">
             {visible.length === 0 && (
               <div className="text-fg-subtle py-16 text-center text-[13px]">
                 검색·필터 조건에 맞는 사례가 없어요.
               </div>
             )}
-            {pageItems.map((c, i) => {
+            {pageItems.map((c) => {
               // 인증 완료 사례만 프로젝트 연결 칩 — 연결됨(프로젝트명)/연결 필요.
               const proj = TS_LINKABLE_PROJECTS.find(
                 (p) => p.id === projectLinks.projectIdFor(c.id),
               )
               return (
                 <Fragment key={c.id}>
-                  {i > 0 && <div className="bg-divider h-px w-full" />}
                   <TsCaseCard
                     c={c}
                     onOpen={open}

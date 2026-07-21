@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Calendar, Users } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
@@ -28,33 +29,40 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
         action="회의록 작성"
         onAction={() => setAdding(true)}
       />
-      <section className={cn(card, 'flex flex-col')}>
-        {meetings.map((m, i) => (
-          <div
-            key={i}
-            className={cn(
-              'flex items-center gap-4 py-3.5',
-              i > 0 && 'border-divider border-t',
-            )}
-          >
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-fg text-[14px] font-bold">{m.title}</span>
-              <span className="text-fg-subtle text-[11px]">{m.meta}</span>
-            </div>
-            <span className="text-fg-muted hidden text-[12px] sm:block">
-              {m.summary}
-            </span>
-            <Chip badge={m.status} />
-            <button
-              type="button"
-              onClick={() => setOpenMeeting(m)}
-              className="border-border text-fg-muted shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+      {meetings.length === 0 ? (
+        <Empty
+          title="아직 작성된 회의록이 없어요"
+          description="‘회의록 작성’으로 첫 회의록을 남겨보세요."
+        />
+      ) : (
+        <section className={cn(card, 'flex flex-col')}>
+          {meetings.map((m, i) => (
+            <div
+              key={i}
+              className={cn(
+                'flex items-center gap-4 py-3.5',
+                i > 0 && 'border-divider border-t',
+              )}
             >
-              열기
-            </button>
-          </div>
-        ))}
-      </section>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="text-fg text-[14px] font-bold">{m.title}</span>
+                <span className="text-fg-subtle text-[11px]">{m.meta}</span>
+              </div>
+              <span className="text-fg-muted hidden text-[12px] sm:block">
+                {m.summary}
+              </span>
+              <Chip badge={m.status} />
+              <button
+                type="button"
+                onClick={() => setOpenMeeting(m)}
+                className="border-border text-fg-muted shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+              >
+                열기
+              </button>
+            </div>
+          ))}
+        </section>
+      )}
       {openMeeting && (
         <MeetingDetailModal
           meeting={openMeeting}

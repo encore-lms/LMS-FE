@@ -18,15 +18,16 @@ interface BeListResponse {
   total: number
 }
 
+// 이전 LMS 정본 표기 — 기프티콘(COUPON)/도서(GOODS)/인터넷 강의(ETC). 저장 enum은 유지.
 const EMOJI: Record<ProductType, string> = {
   COUPON: '🎁',
-  GOODS: '👕',
-  ETC: '🎫',
+  GOODS: '📚',
+  ETC: '🎬',
 }
 const LABEL: Record<ProductType, string> = {
-  COUPON: '쿠폰',
-  GOODS: '굿즈',
-  ETC: '기타',
+  COUPON: '기프티콘',
+  GOODS: '도서',
+  ETC: '인터넷 강의',
 }
 const TYPES: ProductType[] = ['COUPON', 'GOODS', 'ETC']
 
@@ -58,10 +59,14 @@ function toProductsData(be: BeListResponse): ProductsData {
       })),
     ],
     products,
+    // 이전 LMS 정본 — 기프티콘만 고정가, 도서·인터넷 강의는 수강생이 링크·가격 제출.
     typePricing: TYPES.map((t) => ({
       type: t,
-      mode: '고정가',
-      note: '결제 시 마일리지 차감',
+      mode: t === 'COUPON' ? '고정가' : '수강생 직접 입력',
+      note:
+        t === 'COUPON'
+          ? '결제 시 마일리지 차감 · 승인 후 매니저가 일괄 전송'
+          : '수강생이 구매 링크·가격 제출 → 매니저 확인 후 구매',
     })),
   }
 }

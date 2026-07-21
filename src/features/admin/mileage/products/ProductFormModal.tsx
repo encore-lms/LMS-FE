@@ -9,9 +9,9 @@ import { ProductImage } from './ProductImage'
 import type { Product, ProductType } from './types'
 
 const TYPES: { value: ProductType; label: string }[] = [
-  { value: 'COUPON', label: '쿠폰·기프티콘' },
-  { value: 'GOODS', label: '굿즈' },
-  { value: 'ETC', label: '기타' },
+  { value: 'COUPON', label: '기프티콘' },
+  { value: 'GOODS', label: '도서' },
+  { value: 'ETC', label: '인터넷 강의' },
 ]
 
 /** 폼 입력값 — 등록/수정 시 페이지로 전달. */

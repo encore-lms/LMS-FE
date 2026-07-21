@@ -195,8 +195,8 @@ export default function ProductsPage() {
               가능
             </li>
             <li>
-              유연가 상품(BOOK·LECTURE)은 매니저가 가격 입력 안 함 — 수강생 구매
-              시 입력
+              도서·인터넷 강의는 매니저가 가격 입력 안 함 — 수강생이 구매 링크와
+              가격을 제출
             </li>
           </ul>
         </div>

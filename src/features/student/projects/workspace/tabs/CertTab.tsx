@@ -4,7 +4,7 @@ import { CircleCheck, Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
-import { useRequestCertification } from '../../../api/projects'
+import { useRequestCertification, wsWriteError } from '../../../api/projects'
 import {
   formatEditUntil,
   isEditWindowExpired,
@@ -38,7 +38,7 @@ export function CertTab({ d }: { d: WorkspaceData }) {
         setPhase(d.id, 'reviewing')
         toast.success('인증 요청을 제출했습니다')
       },
-      onError: () => toast.danger('인증 요청에 실패했어요.'),
+      onError: (e) => toast.danger(wsWriteError(e, '인증 요청에 실패했어요.')),
     })
   }
   return (

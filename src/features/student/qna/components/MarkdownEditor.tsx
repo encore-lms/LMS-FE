@@ -178,7 +178,7 @@ export function MarkdownEditor({
             type="button"
             onClick={() => setTab('write')}
             className={cn(
-              'rounded-md px-2.5 py-1 text-[12px] font-semibold',
+              'h-7 rounded-md px-2.5 text-[12px] font-semibold',
               tab === 'write'
                 ? 'bg-surface-muted text-fg'
                 : 'text-fg-subtle hover:text-fg',
@@ -190,7 +190,7 @@ export function MarkdownEditor({
             type="button"
             onClick={() => setTab('preview')}
             className={cn(
-              'rounded-md px-2.5 py-1 text-[12px] font-semibold',
+              'h-7 rounded-md px-2.5 text-[12px] font-semibold',
               tab === 'preview'
                 ? 'bg-surface-muted text-fg'
                 : 'text-fg-subtle hover:text-fg',

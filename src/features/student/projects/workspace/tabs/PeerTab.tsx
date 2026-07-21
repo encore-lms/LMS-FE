@@ -148,7 +148,9 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
           </div>
           <div className="flex items-start gap-3">
             <div className="flex flex-wrap gap-1.5">
-              <span className="text-fg-subtle text-[11px]">카테고리 태그</span>
+              <span className="text-fg-subtle text-[11px]">
+                팀원 한줄 코멘트
+              </span>
               {t.tags.map((tg, i) => (
                 <Chip key={i} badge={tg} />
               ))}

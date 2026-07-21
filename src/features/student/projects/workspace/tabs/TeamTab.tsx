@@ -10,7 +10,11 @@ import { Avatar, Chip, SectionHead, StatBox } from '../components/ws-shared'
 import { TONE_SOLID } from '@/shared/lib/tone'
 import { card } from '../components/ws-style'
 import { useMemberNames } from '../components/useMemberNames'
-import { useInviteMember, useRemoveMember } from '../../../api/projects'
+import {
+  useInviteMember,
+  useRemoveMember,
+  wsWriteError,
+} from '../../../api/projects'
 import { usePeers } from '../../../api/peers'
 
 export function TeamTab({ d }: { d: WorkspaceData }) {
@@ -165,7 +169,10 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
                         setRemoving(null)
                         toast.success(`${name} 님을 팀에서 삭제했습니다`)
                       },
-                      onError: () => toast.danger('팀원 삭제에 실패했어요.'),
+                      onError: (e) =>
+                        toast.danger(
+                          wsWriteError(e, '팀원 삭제에 실패했어요.'),
+                        ),
                     },
                   )
                 }}
@@ -198,9 +205,7 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
                   toast.success(`${label} 님을 초대했습니다`)
                 },
                 onError: (e) =>
-                  toast.danger(
-                    (e as Error)?.message ?? '팀원 초대에 실패했어요.',
-                  ),
+                  toast.danger(wsWriteError(e, '팀원 초대에 실패했어요.')),
               },
             )
           }}

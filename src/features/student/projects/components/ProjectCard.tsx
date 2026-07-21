@@ -1,4 +1,5 @@
 import { cn } from '@/shared/lib/cn'
+import { InteractiveCard } from '@/components/ui/InteractiveCard'
 import {
   ArrowRight,
   Calendar,
@@ -59,18 +60,11 @@ export function ProjectCard({
   const canToggleRep = phase === 'certified' && !!onToggleRep
 
   return (
-    <section
-      role="button"
-      tabIndex={0}
-      aria-label={`${project.title} 상세 보기`}
-      onClick={() => onOpen(project)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onOpen(project)
-        }
-      }}
-      className="group hover:bg-surface-muted focus-visible:ring-brand/40 -mx-4 flex cursor-pointer gap-4 rounded-xl px-4 py-5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+    // 카드 인터랙션은 공용 InteractiveCard(이 카드가 정본 — QnA·트러블슈팅과 동일).
+    <InteractiveCard
+      onOpen={() => onOpen(project)}
+      ariaLabel={`${project.title} 상세 보기`}
+      className="group -mx-4 flex gap-4 rounded-xl px-4 py-5"
     >
       {/* 좌측 — 정보 계층: 배지 → 제목 → 메타 → 태그 → 핵심 성과(조건부) */}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -206,6 +200,6 @@ export function ProjectCard({
           <ArrowRight className="ml-1 inline size-3.5" strokeWidth={2.4} />
         </button>
       </div>
-    </section>
+    </InteractiveCard>
   )
 }

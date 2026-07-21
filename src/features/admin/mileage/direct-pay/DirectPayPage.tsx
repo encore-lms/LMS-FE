@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft, MinusCircle } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { MinusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
@@ -19,6 +19,7 @@ import {
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
+import { useMyCohorts } from '../../api/dashboard'
 import { useDirectPayRoster, useDirectPaySubmit } from './api'
 import type { MileageStudent, PayKind } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -34,6 +35,16 @@ export default function DirectPayPage() {
     '여러 수강생에게 마일리지를 한 번에 지급하거나 차감합니다',
   )
   const [cohortId, setCohortId] = useSearchParamState('cohortId')
+  // 진입 시 담당 기수를 기본 선택 — '전체 기수' 고정으로 다른 기수 오지급을 방지.
+  const myCohorts = useMyCohorts()
+  const didDefaultCohort = useRef(false)
+  useEffect(() => {
+    if (didDefaultCohort.current || cohortId) return
+    const first = myCohorts.data?.[0]
+    if (!first) return
+    didDefaultCohort.current = true
+    setCohortId(first.cohortId)
+  }, [cohortId, myCohorts.data, setCohortId])
   const { data, isPending, isError, refetch } = useDirectPayRoster(cohortId)
   const submit = useDirectPaySubmit()
   const navigate = useNavigate()
@@ -145,7 +156,10 @@ export default function DirectPayPage() {
               {s.name}
               {s.nearLimit && <StatusBadge label="상한 근접" tone="warning" />}
             </p>
-            <p className="text-fg-subtle font-mono text-[11px]">{s.uuid}</p>
+            <p className="text-fg-subtle text-[11px] tabular-nums">
+              현재 {s.held.toLocaleString()}M · 누적{' '}
+              {s.accrued.toLocaleString()}M · 사용 {s.used.toLocaleString()}M
+            </p>
           </div>
         </div>
       ),
@@ -185,17 +199,8 @@ export default function DirectPayPage() {
   return (
     <div className="p-8">
       {/* 브레드크럼 */}
-      <Link
-        to="/admin/mileage"
-        className="text-fg-muted hover:text-fg inline-flex items-center gap-1 text-[13px]"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        마일리지 관리
-        <span className="text-fg-subtle">› 직접 지급</span>
-      </Link>
-
       {/* 클러스터 탭 + 기수 필터(실 BE) — 기수 전환 시 선택 초기화(오지급 방지) */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <MileageTabs />
         <CohortScopeSelect
           value={cohortId}
@@ -347,28 +352,6 @@ export default function DirectPayPage() {
                 {total.toLocaleString()}M / {selectedCount}명
               </Button>
             </div>
-
-            {/* 한도 규칙 §18 */}
-            <div className="border-border bg-surface mt-4 rounded-xl border p-4">
-              <p className="text-fg text-[13px] font-bold">한도 규칙</p>
-              <ul className="mt-2.5 flex flex-col gap-2.5">
-                <RuleRow
-                  tone="warning"
-                  title="누적 적립 상한 초과"
-                  desc="잔여 한도까지 부분 지급 또는 409 오류"
-                />
-                <RuleRow
-                  tone="danger"
-                  title="차감 금액 > 보유액"
-                  desc="처리 차단 — 부분 차감 없음"
-                />
-                <RuleRow
-                  tone="info"
-                  title="일부 학생만 부분 지급"
-                  desc="partialApplied=true 안내 표시"
-                />
-              </ul>
-            </div>
           </aside>
         </div>
 
@@ -427,32 +410,5 @@ export default function DirectPayPage() {
         </Modal>
       </DataBoundary>
     </div>
-  )
-}
-
-// 한도 규칙 한 줄.
-function RuleRow({
-  tone,
-  title,
-  desc,
-}: {
-  tone: 'warning' | 'danger' | 'info'
-  title: string
-  desc: string
-}) {
-  const dot =
-    tone === 'warning'
-      ? 'bg-warning'
-      : tone === 'danger'
-        ? 'bg-danger'
-        : 'bg-info'
-  return (
-    <li className="flex gap-2">
-      <span className={cn('mt-1.5 size-1.5 shrink-0 rounded-full', dot)} />
-      <span className="min-w-0">
-        <span className="text-fg block text-[13px] font-medium">{title}</span>
-        <span className="text-fg-muted block text-xs">{desc}</span>
-      </span>
-    </li>
   )
 }

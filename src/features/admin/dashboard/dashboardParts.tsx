@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock3, XCircle } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import {
   Skeleton,
@@ -133,40 +133,43 @@ export function BarRow({
   )
 }
 
-// 관리 필요 수강생 한 행 — 위험도 점/막대(결석 비중)·지각·결석·등급 배지 + 클릭 시 상세.
-// 넓어진 전폭 행의 가운데를 위험도 막대로 채워 심각도가 한눈에 보이게 한다.
+// 관리 필요 수강생 한 행 — 연속 지각·결석 감지 디자인.
+// 좌: 아바타(이름 뒤 2글자)·이름·등급 칩(관찰/주의/긴급) / 우: 최근 5영업일 도트 + 지각·결석 칩.
+const MARK_DOT: Record<string, string> = {
+  late: 'bg-warning',
+  absent: 'bg-danger',
+  ok: 'border-border border bg-transparent',
+  none: 'bg-surface-muted',
+}
+
 function RiskStudentRow({
   name,
   lateCount,
   absentCount,
-  maxAbsent,
+  marks,
   onClick,
 }: {
   name: string
   lateCount: number
   absentCount: number
-  maxAbsent: number
+  marks?: string[]
   onClick?: () => void
 }) {
   const tier = riskTier(lateCount, absentCount)
   const meta = RISK_META[tier]
-  const pct =
-    maxAbsent > 0 ? Math.max(6, Math.round((absentCount / maxAbsent) * 100)) : 0
+  // 도트는 항상 5칸 — marks 없으면(구 BE) 기록없음 표시로 채운다.
+  const dots =
+    marks && marks.length > 0
+      ? marks.slice(0, 5)
+      : Array.from({ length: 5 }, () => 'none')
 
   const inner = (
     <>
-      <span className={cn('size-2 shrink-0 rounded-full', meta.dot)} />
-      <span className="text-fg w-24 shrink-0 truncate text-[13px] font-semibold">
+      <span className="bg-info-bg text-info flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-bold">
+        {name.slice(-2)}
+      </span>
+      <span className="text-fg shrink-0 truncate text-[14px] font-bold">
         {name}
-      </span>
-      <span className="bg-surface-muted hidden h-1.5 min-w-0 flex-1 overflow-hidden rounded-full sm:block">
-        <span
-          className={cn('block h-full rounded-full', meta.bar)}
-          style={{ width: `${pct}%` }}
-        />
-      </span>
-      <span className="text-fg-muted shrink-0 text-[12px] tabular-nums">
-        지각 {lateCount} · 결석 {absentCount}
       </span>
       {meta.badge && (
         <span
@@ -178,22 +181,33 @@ function RiskStudentRow({
           {meta.badge}
         </span>
       )}
-      {onClick && (
-        <ChevronRight className="text-fg-subtle group-hover/risk:text-fg size-4 shrink-0 transition-colors" />
-      )}
+      <span className="min-w-0 flex-1" />
+      <span className="flex shrink-0 items-center gap-1.5">
+        {dots.map((m, i) => (
+          <span
+            key={i}
+            className={cn('size-4 rounded-full', MARK_DOT[m] ?? MARK_DOT.none)}
+          />
+        ))}
+      </span>
+      <span className="bg-warning-bg text-warning flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-bold tabular-nums">
+        <Clock3 className="size-3.5" />
+        {lateCount}
+      </span>
+      <span className="bg-danger-bg text-danger flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-bold tabular-nums">
+        <XCircle className="size-3.5" />
+        {absentCount}
+      </span>
     </>
   )
 
   const cls =
-    'flex w-full items-center gap-3 py-2.5 text-left first:pt-0 last:pb-0'
+    'bg-surface-muted/50 flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left'
   return onClick ? (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        cls,
-        'group/risk hover:bg-surface-muted/50 -mx-2 rounded-md px-2',
-      )}
+      className={cn(cls, 'hover:bg-surface-muted transition-colors')}
     >
       {inner}
     </button>
@@ -212,6 +226,7 @@ export function RiskList({
     name: string
     lateCount: number
     absentCount: number
+    marks?: string[]
   }[]
   onStudentClick?: (name: string) => void
 }) {
@@ -223,7 +238,6 @@ export function RiskList({
       ),
     [issues],
   )
-  const maxAbsent = Math.max(1, ...sorted.map((i) => i.absentCount))
   const pageCount = Math.ceil(sorted.length / ISSUE_PAGE_SIZE)
   const safePage = Math.min(page, Math.max(0, pageCount - 1))
   const start = safePage * ISSUE_PAGE_SIZE
@@ -231,14 +245,14 @@ export function RiskList({
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-2.5">
         {visible.map((i) => (
           <RiskStudentRow
             key={i.studentUuid}
             name={i.name}
             lateCount={i.lateCount}
             absentCount={i.absentCount}
-            maxAbsent={maxAbsent}
+            marks={i.marks}
             onClick={onStudentClick ? () => onStudentClick(i.name) : undefined}
           />
         ))}

@@ -50,6 +50,8 @@ export interface CohortBoard {
   assessment: CohortAssessment | null
   weeklyCheck: CohortWeeklyCheck | null
   issues: IssueStudent[]
+  /** issues 일별 마크의 날짜 축(최근 5영업일, ISO) — HRD 라이브 병합 시 채움. */
+  issueDays?: string[]
   pending: CohortPending | null
 }
 
@@ -102,6 +104,8 @@ export interface IssueStudent {
   name: string
   lateCount: number
   absentCount: number
+  /** issueDays 축과 같은 길이의 일별 상태('ok'|'late'|'absent'|'none') — 구 BE 응답엔 없음. */
+  marks?: string[]
 }
 
 export interface CohortPending {
@@ -120,6 +124,8 @@ export interface CohortHrdSummary {
   avgRate: number | null
   weekly: DailyRate[]
   issues: IssueStudent[]
+  /** issues 일별 마크의 날짜 축(최근 5영업일, ISO) — 구 BE 응답엔 없음. */
+  issueDays?: string[]
 }
 
 /** 위클리 체크 조기경보 — 각 학생의 가장 최근 응답 기준. 데이터 없으면 null. */

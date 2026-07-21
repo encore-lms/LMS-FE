@@ -48,8 +48,8 @@ export const RISK_META: Record<
     dot: 'bg-warning',
   },
   neutral: {
-    badge: null,
-    badgeCls: '',
+    badge: '관찰',
+    badgeCls: 'bg-info-bg text-info',
     bar: 'bg-fg-subtle/40',
     dot: 'bg-fg-subtle/40',
   },

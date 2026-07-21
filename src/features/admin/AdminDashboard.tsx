@@ -50,6 +50,7 @@ export default function AdminDashboard() {
         assessment: null,
         weeklyCheck: null,
         issues: live.issues,
+        issueDays: live.issueDays,
         pending: null,
       }
     })

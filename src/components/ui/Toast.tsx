@@ -107,7 +107,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <span
                 className={cn(
-                  'flex-1 text-[13px] leading-[20px] font-semibold [word-break:break-word]',
+                  'flex-1 text-[13px] leading-[20px] font-semibold [word-break:break-word] whitespace-pre-line',
                   toneStyles[t.tone].text,
                 )}
               >

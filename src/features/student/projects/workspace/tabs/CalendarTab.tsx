@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddSchedule } from '../../../api/projects'
+import { useAddSchedule, wsWriteError } from '../../../api/projects'
 import type { Tone, WorkspaceData } from '../../types'
 import { Chip, SectionHead } from '../components/ws-shared'
 import { card, dateStr, formatKoreanDate, pad2 } from '../components/ws-style'
@@ -216,7 +216,8 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                   setAddDate(null)
                   toast.success('일정을 추가했습니다')
                 },
-                onError: () => toast.danger('일정 추가에 실패했어요.'),
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '일정 추가에 실패했어요.')),
               },
             )
           }}

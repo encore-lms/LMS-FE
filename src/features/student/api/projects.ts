@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import { apiClient } from '@/shared/api'
 import { useAuth } from '@/shared/store/auth'
 import { projectKeys } from '../projects/queryKeys'
@@ -111,6 +112,20 @@ export function useDeleteProject() {
 }
 
 // ── 워크스페이스 쓰기(BE #75) — 성공 시 워크스페이스 캐시 무효화 ──
+/**
+ * 워크스페이스 쓰기 실패 안내 — 인증 동결(409)은 고정 안내로, 그 외에는 BE 메시지를 우선 표시.
+ * BE는 인증 완료(CERTIFIED) 프로젝트의 수정을 409로 막는다(assertEditable).
+ */
+export function wsWriteError(e: unknown, fallback: string): string {
+  if (axios.isAxiosError(e)) {
+    if (e.response?.status === 409)
+      return '현재 프로젝트는 인증이 완료된 프로젝트입니다.\n수정 요청 후 재요청하세요.'
+    const msg = (e.response?.data as { message?: string } | undefined)?.message
+    if (msg) return msg
+  }
+  return fallback
+}
+
 function useWsMutation<TVars>(
   fn: (id: string, vars: TVars) => Promise<unknown>,
   projectId: string,

@@ -4,7 +4,11 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddTask, useUpdateTaskStatus } from '../../../api/projects'
+import {
+  useAddTask,
+  useUpdateTaskStatus,
+  wsWriteError,
+} from '../../../api/projects'
 import type { WorkspaceData, WsColumn, WsMember, WsTask } from '../../types'
 import { SectionHead, TaskCard } from '../components/ws-shared'
 import { card } from '../components/ws-style'
@@ -32,7 +36,8 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
       { taskId: moved.id, status: columns[toCol].key },
       {
         onSuccess: () => toast.info('작업 상태를 변경했습니다'),
-        onError: () => toast.danger('상태 변경에 실패했어요.'),
+        onError: (e) =>
+          toast.danger(wsWriteError(e, '상태 변경에 실패했어요.')),
       },
     )
   }
@@ -108,7 +113,8 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
                   toast.success('작업을 추가했습니다')
                   setAddCol(null)
                 },
-                onError: () => toast.danger('작업 추가에 실패했어요.'),
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '작업 추가에 실패했어요.')),
               },
             )
           }}

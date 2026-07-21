@@ -6,7 +6,7 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddMeeting } from '../../../api/projects'
+import { useAddMeeting, wsWriteError } from '../../../api/projects'
 import type { WorkspaceData, WsMeeting, WsMember } from '../../types'
 import { Avatar, Chip, SectionHead } from '../components/ws-shared'
 import {
@@ -81,7 +81,8 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
                   toast.success('회의록을 추가했습니다')
                   setAdding(false)
                 },
-                onError: () => toast.danger('회의록 추가에 실패했어요.'),
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '회의록 추가에 실패했어요.')),
               },
             )
           }}

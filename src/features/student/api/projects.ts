@@ -168,6 +168,12 @@ export function useSubmitPeerEval(projectId: string) {
     projectId,
   )
 }
+export function useSaveSelfReview(projectId: string) {
+  return useWsMutation<{ content: string }>(
+    (id, v) => apiClient.put(`/student/projects/${id}/self-review`, v),
+    projectId,
+  )
+}
 export function useRequestCertification(projectId: string) {
   return useWsMutation<void>(
     (id) => apiClient.post(`/student/projects/${id}/certification`),

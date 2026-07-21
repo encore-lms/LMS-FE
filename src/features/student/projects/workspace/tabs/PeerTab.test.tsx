@@ -5,6 +5,7 @@ import type { WorkspaceData } from '../../types'
 
 vi.mock('../../../api/projects', () => ({
   useSubmitPeerEval: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useSaveSelfReview: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 vi.mock('@/components/ui/use-toast', () => ({
   useToast: () => ({ success: vi.fn(), danger: vi.fn(), info: vi.fn() }),

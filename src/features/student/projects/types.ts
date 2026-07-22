@@ -137,7 +137,6 @@ export type WsTab =
   | 'meetings'
   | 'docs'
   | 'issues'
-  | 'team'
   | 'outcomes'
   | 'peer-evaluation'
   | 'certification'

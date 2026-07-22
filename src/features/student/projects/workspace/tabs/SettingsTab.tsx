@@ -196,8 +196,10 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
       onError: () => toast.danger('연결 해제에 실패했어요.'),
     })
 
+  // focus-visible:shadow-none — 전역 base의 input 포커스 링을 끄고 focus:border-brand 테두리만 남긴다
+  // (옆 DateTimePicker 트리거는 button이라 링이 없어, 링+테두리 2겹을 없애 date picker와 맞춘다).
   const infoInput =
-    'border-border bg-surface text-fg focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none disabled:opacity-60'
+    'border-border bg-surface text-fg focus:border-brand focus-visible:shadow-none w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none disabled:opacity-60'
 
   return (
     <div className="flex flex-col gap-4 pb-4">

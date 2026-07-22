@@ -319,7 +319,7 @@ export default function DirectPayPage() {
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
                 aria-label="사유"
-                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface mt-1.5 w-full rounded-lg border p-3 text-sm outline-none"
+                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface mt-1.5 w-full rounded-lg border p-3 text-sm outline-none focus-visible:shadow-none"
               />
 
               {/* 합계 요약 */}

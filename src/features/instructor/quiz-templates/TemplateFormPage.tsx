@@ -218,7 +218,7 @@ export default function TemplateFormPage() {
             <textarea
               rows={2}
               placeholder="재귀·동적 계획법·그리디 기본 개념 확인 퀴즈 풀."
-              className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none"
+              className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none focus-visible:shadow-none"
               {...register('description')}
             />
           </label>

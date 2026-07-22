@@ -10,6 +10,7 @@ import { useMemberNames } from '../components/useMemberNames'
 import {
   useInviteMember,
   useRemoveMember,
+  useUpdateMember,
   wsWriteError,
 } from '../../../api/projects'
 import { EditMemberModal } from './team/EditMemberModal'
@@ -22,7 +23,9 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
   const nameOf = useMemberNames()
   const inviteM = useInviteMember(d.id)
   const removeM = useRemoveMember(d.id)
-  const [members, setMembers] = useState(d.members)
+  const updateM = useUpdateMember(d.id)
+  // 서버 데이터 단일 원천 — 로컬 복제(useState) 없이 워크스페이스 재조회(invalidate)로 갱신한다.
+  const members = d.members
   const [inviting, setInviting] = useState(false)
   const [openMember, setOpenMember] = useState<WsMember | null>(null)
   const [editing, setEditing] = useState<number | null>(null)
@@ -112,19 +115,27 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
       {editing !== null && members[editing] && (
         <EditMemberModal
           member={members[editing]}
+          canDelegate={d.isOwner === true}
+          saving={updateM.isPending}
           onClose={() => setEditing(null)}
           onSave={(patch) => {
-            setMembers((prev) =>
-              prev.map((mm, idx) => {
-                if (idx === editing) return { ...mm, ...patch }
-                // PM 위임 — 다른 멤버를 PM으로 지정하면 기존 PM은 팀원으로 강등.
-                if (patch.kind === 'PM' && mm.kind === 'PM')
-                  return { ...mm, kind: '팀원' }
-                return mm
-              }),
+            const target = members[editing]
+            updateM.mutate(
+              {
+                memberId: target.memberId ?? '',
+                specialty: patch.role,
+                // PM 위임 — 다른 멤버를 PM으로 지정하면 BE가 기존 PM을 팀원으로 강등.
+                makePm: patch.kind === 'PM' && target.kind !== 'PM',
+              },
+              {
+                onSuccess: () => {
+                  setEditing(null)
+                  toast.success('팀원 정보를 수정했습니다')
+                },
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '팀원 수정에 실패했어요.')),
+              },
             )
-            setEditing(null)
-            toast.success('팀원 정보를 수정했습니다')
           }}
         />
       )}
@@ -152,9 +163,7 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
                     { memberId: target.memberId ?? '' },
                     {
                       onSuccess: () => {
-                        setMembers((prev) =>
-                          prev.filter((_, idx) => idx !== removing),
-                        )
+                        // 목록 갱신은 invalidate(워크스페이스 재조회)가 담당 — 로컬 복제 없음.
                         setRemoving(null)
                         toast.success(`${name} 님을 팀에서 삭제했습니다`)
                       },

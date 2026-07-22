@@ -37,12 +37,17 @@ const TABS: { key: WsTab; label: string; icon: LucideIcon }[] = [
 export function WorkspaceShell({
   title,
   meta,
+  startDate,
+  endDate,
   active,
   onTab,
   children,
 }: {
   title: string
   meta: string
+  /** '프로젝트 기간'(YYYY-MM-DD) — meta 문자열 파싱 대신 구조 필드로 히어로에 표시 */
+  startDate?: string | null
+  endDate?: string | null
   active: WsTab
   onTab: (t: WsTab) => void
   children: ReactNode
@@ -56,6 +61,11 @@ export function WorkspaceShell({
   // meta("팀 프로젝트 · 4명 · 기간 · PM …") 파싱 — 이브로우 태그 + 아이콘 메타 행.
   const metaParts = meta.split(' · ')
   const memberCount = meta.match(/(\d+)\s*명/)?.[1]
+  // 기간은 구조 필드(startDate·endDate) 우선 — 실 BE meta엔 기간이 없어 문자열 파싱만으론 표시 불가.
+  const metaRow = [...metaParts.slice(1)]
+  if (startDate && endDate && !metaRow.some((s) => s.includes('~'))) {
+    metaRow.push(`${startDate} ~ ${endDate}`)
+  }
   const metaRowIcon = (seg: string): LucideIcon =>
     seg.includes('~') ? Calendar : seg.startsWith('PM') ? Flag : Send
   return (
@@ -93,7 +103,7 @@ export function WorkspaceShell({
           </span>
           <h1 className="text-[22px] font-bold text-white">{title}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-white/80">
-            {metaParts.slice(1).map((seg) => {
+            {metaRow.map((seg) => {
               const Icon = metaRowIcon(seg)
               return (
                 <span key={seg} className="flex items-center gap-1">

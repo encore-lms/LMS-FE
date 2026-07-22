@@ -56,7 +56,7 @@ export function Header() {
             type="search"
             aria-label="검색"
             placeholder="검색"
-            className="border-border bg-surface-muted/60 text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-[240px] rounded-lg border pr-3 pl-9 text-[13px] focus:bg-white focus:outline-none"
+            className="border-border bg-surface-muted/60 text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-[240px] rounded-lg border pr-3 pl-9 text-[13px] focus:bg-white focus:outline-none focus-visible:shadow-none"
           />
         </div>
 

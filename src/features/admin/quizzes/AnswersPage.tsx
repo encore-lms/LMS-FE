@@ -104,7 +104,7 @@ function ChangeEditor({
           onChange={(e) => setAfterKey(e.target.value)}
           aria-label="변경안"
           placeholder="변경 정답 입력"
-          className="border-border bg-surface-muted focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-md border px-3 py-2 text-sm outline-none"
+          className="border-border bg-surface-muted focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
         />
         <input
           value={maxPoints}
@@ -112,7 +112,7 @@ function ChangeEditor({
           type="number"
           min={1}
           aria-label="배점"
-          className="border-border bg-surface-muted focus:border-brand text-fg w-full rounded-md border px-3 py-2 text-sm outline-none"
+          className="border-border bg-surface-muted focus:border-brand text-fg w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
         />
       </div>
       <textarea
@@ -121,7 +121,7 @@ function ChangeEditor({
         rows={3}
         aria-label="변경 사유"
         placeholder="변경 사유 입력"
-        className="border-border bg-surface-muted focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-md border p-3 text-sm outline-none"
+        className="border-border bg-surface-muted focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-md border p-3 text-sm outline-none focus-visible:shadow-none"
       />
       <div className="flex items-center justify-end gap-3">
         <button

@@ -155,7 +155,7 @@ export default function RecordReviewPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="이름으로 검색"
           aria-label="수강생 이름 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none"
         />
         <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
           {CATEGORY_TABS.map((t) => (

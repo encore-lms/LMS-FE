@@ -44,7 +44,7 @@ import { AutoLockChip, CalcDivider, CalcStat } from './logComposeAtoms'
 
 const FIELD_LABEL = 'text-fg-subtle text-[11px] font-medium tracking-[0.66px]'
 const INPUT_BOX =
-  'border-border bg-surface text-fg placeholder:text-fg-subtle h-[46px] rounded-[10px] border px-3.5 text-sm font-medium outline-none focus:border-brand'
+  'border-border bg-surface text-fg placeholder:text-fg-subtle h-[46px] rounded-[10px] border px-3.5 text-sm font-medium outline-none focus:border-brand focus-visible:shadow-none'
 
 type ComposeMode = 'new' | 'draft' | 'resubmit'
 
@@ -672,7 +672,7 @@ export function LogComposeForm({
               rows={field.charLimit != null && field.charLimit > 1000 ? 10 : 5}
               {...register(`answers.${field.fieldSnapshotId}` as const)}
               placeholder={field.description}
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-y rounded-[10px] border px-4 py-3 text-[13px] leading-5 font-medium outline-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-y rounded-[10px] border px-4 py-3 text-[13px] leading-5 font-medium outline-none focus-visible:shadow-none"
             />
             {error && (
               <p className="text-danger text-[11px]">{String(error.message)}</p>

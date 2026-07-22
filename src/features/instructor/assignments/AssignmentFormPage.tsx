@@ -184,7 +184,7 @@ export default function AssignmentFormPage() {
               <textarea
                 rows={5}
                 placeholder="과제 설명은 최대 5,000자까지 입력합니다. 제출은 텍스트, URL, 파일 중 하나 이상이면 가능합니다."
-                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none"
+                className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none focus-visible:shadow-none"
                 {...register('description')}
               />
               {errors.description && (
@@ -218,7 +218,7 @@ export default function AssignmentFormPage() {
                         }
                         placeholder="https://"
                         aria-label={`첨부 URL ${i + 1}`}
-                        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-10 w-full rounded-[10px] border-2 bg-white px-3 text-sm outline-none"
+                        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle h-10 w-full rounded-[10px] border-2 bg-white px-3 text-sm outline-none focus-visible:shadow-none"
                       />
                       <button
                         type="button"

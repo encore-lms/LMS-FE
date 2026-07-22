@@ -350,7 +350,7 @@ export default function CourseConfigPage() {
                     onChange={(e) => setCourseQuery(e.target.value)}
                     placeholder="과정명 검색"
                     aria-label="과정명 검색"
-                    className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface mt-2 h-9 w-full rounded-lg border px-3 text-sm outline-none"
+                    className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface mt-2 h-9 w-full rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
                   />
                 </div>
                 {filteredCourses.map((c) => (
@@ -540,14 +540,14 @@ export default function CourseConfigPage() {
                       onChange={(e) => setMaterialTitle(e.target.value)}
                       placeholder="자료 제목"
                       aria-label="자료 제목"
-                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 min-w-[160px] flex-1 rounded-lg border px-3 text-sm outline-none"
+                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 min-w-[160px] flex-1 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
                     />
                     <input
                       value={materialUrl}
                       onChange={(e) => setMaterialUrl(e.target.value)}
                       placeholder="https://링크"
                       aria-label="자료 링크"
-                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 min-w-[200px] flex-1 rounded-lg border px-3 text-sm outline-none"
+                      className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface h-9 min-w-[200px] flex-1 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
                     />
                     <Button
                       size="sm"

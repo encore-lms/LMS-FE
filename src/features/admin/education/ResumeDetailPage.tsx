@@ -147,7 +147,7 @@ export default function ResumeDetailPage() {
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="피드백을 입력하세요"
                 rows={2}
-                className="border-border focus:border-brand text-fg bg-surface flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+                className="border-border focus:border-brand text-fg bg-surface flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
               />
               <Button onClick={onSubmit} disabled={addFeedback.isPending}>
                 <MessageSquarePlus className="h-4 w-4" /> 등록

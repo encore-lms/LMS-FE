@@ -32,7 +32,6 @@ export function SupplementRequestModal({
             취소
           </Button>
           <Button
-           
             disabled={!reason.trim()}
             onClick={() => {
               onConfirm(reason.trim())
@@ -58,7 +57,7 @@ export function SupplementRequestModal({
           onChange={(e) => setReason(e.target.value)}
           placeholder="예: cascade 범위와 테스트 근거를 보완해 주세요."
           aria-label={`${studentName} 보완 요청 사유`}
-          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none"
+          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none focus-visible:shadow-none"
         />
       </label>
     </Modal>

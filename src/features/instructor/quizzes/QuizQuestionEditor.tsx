@@ -97,7 +97,7 @@ function distributeBlankScores(points: number, blanks: number): number[] {
 }
 
 const FIELD_BASE =
-  'border-border focus:border-brand text-fg placeholder:text-fg-subtle rounded-lg border bg-white px-3 py-2 text-sm outline-none'
+  'border-border focus:border-brand text-fg placeholder:text-fg-subtle rounded-lg border bg-white px-3 py-2 text-sm outline-none focus-visible:shadow-none'
 const FIELD = `${FIELD_BASE} w-full`
 
 // 인라인 문항 폼 — 추가/편집 공용.

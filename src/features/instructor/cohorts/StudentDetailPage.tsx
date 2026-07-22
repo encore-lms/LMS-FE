@@ -248,7 +248,7 @@ export default function StudentDetailPage() {
                   onChange={(e) => setComment(e.target.value)}
                   rows={3}
                   aria-label="검토 코멘트"
-                  className="border-border focus:border-brand text-fg mt-3 w-full rounded-lg border bg-white p-3 text-sm outline-none"
+                  className="border-border focus:border-brand text-fg mt-3 w-full rounded-lg border bg-white p-3 text-sm outline-none focus-visible:shadow-none"
                 />
                 <div className="mt-2 flex justify-end gap-2">
                   <Button

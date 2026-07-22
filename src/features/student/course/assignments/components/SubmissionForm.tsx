@@ -56,7 +56,7 @@ export function SubmissionForm({
           onChange={(e) => setBody(e.target.value)}
           rows={6}
           placeholder="구현 범위, 실행 방법, 설계 의도를 작성합니다."
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-[150px] w-full rounded-[10px] border p-3.5 text-[13px] leading-5 outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-[150px] w-full rounded-[10px] border p-3.5 text-[13px] leading-5 outline-none focus-visible:shadow-none"
         />
       </div>
 
@@ -66,7 +66,7 @@ export function SubmissionForm({
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://github.com/..."
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none focus-visible:shadow-none"
         />
       </div>
 
@@ -98,7 +98,7 @@ export function SubmissionForm({
               onChange={(e) => setLink(e.target.value)}
               onKeyDown={onLinkKey}
               placeholder="GitHub PR · 배포 링크 URL"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 min-w-0 flex-1 rounded-lg border px-3 text-[12px] outline-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 min-w-0 flex-1 rounded-lg border px-3 text-[12px] outline-none focus-visible:shadow-none"
             />
             <button
               type="button"

@@ -154,7 +154,7 @@ export function ChangesRequestModal({
             rows={4}
             onChange={(e) => setComment(e.target.value)}
             placeholder="보완이 필요한 항목과 조치 방법을 구체적으로 적어주세요."
-            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface w-full rounded-lg border p-3 text-sm outline-none"
+            className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface w-full rounded-lg border p-3 text-sm outline-none focus-visible:shadow-none"
           />
         </div>
         <div>

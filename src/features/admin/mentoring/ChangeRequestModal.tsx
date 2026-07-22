@@ -112,7 +112,7 @@ export function ChangeRequestModal({
             onChange={(e) => setNote(e.target.value)}
             rows={4}
             placeholder="(사유 입력 — 멘토 알림에 포함됨)"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none"
+            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
           />
         </div>
         <ul className="text-fg-subtle flex flex-col gap-1 text-xs">

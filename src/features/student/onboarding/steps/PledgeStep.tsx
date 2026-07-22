@@ -29,7 +29,7 @@ export function PledgeStep({
             value={value}
             onChange={(e) => onChange(e.target.value.slice(0, PLEDGE_MAX))}
             placeholder="예) 매일 1시간씩 꾸준히 코딩하고, 한 달 안에 첫 토이 프로젝트를 완성하는 학습자가 되겠습니다."
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand min-h-[140px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none"
+            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand min-h-[140px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none"
           />
           <span className="text-fg-subtle absolute right-3 bottom-3 text-[11px]">
             {value.length} / {PLEDGE_MAX}

@@ -278,3 +278,18 @@ export function useRemoveMember(projectId: string) {
     projectId,
   )
 }
+// 팀원 수정 — specialty(전문분야, 누구나)·makePm(PM 위임, 현재 PM만)
+export function useUpdateMember(projectId: string) {
+  return useWsMutation<{
+    memberId: string
+    specialty?: string
+    makePm?: boolean
+  }>(
+    (id, v) =>
+      apiClient.put(`/student/projects/${id}/members/${v.memberId}`, {
+        specialty: v.specialty,
+        makePm: v.makePm,
+      }),
+    projectId,
+  )
+}

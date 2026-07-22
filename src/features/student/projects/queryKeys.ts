@@ -4,4 +4,6 @@ export const projectKeys = {
   list: () => [...projectKeys.all, 'list'] as const,
   wizard: () => [...projectKeys.all, 'wizard'] as const,
   workspace: (id: string) => [...projectKeys.all, 'workspace', id] as const,
+  githubConnection: (id: string) =>
+    [...projectKeys.all, 'github-connection', id] as const,
 }

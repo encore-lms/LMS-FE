@@ -277,7 +277,8 @@ describe('WorkspacePage home', () => {
 
   it('팀원 초대 모달로 새 팀원을 추가한다', async () => {
     const user = userEvent.setup()
-    renderPage('/student/projects/p1?tab=team')
+    // 팀 관리는 설정 탭으로 이관됨 — 설정 탭에서 팀원 초대 확인
+    renderPage('/student/projects/p1?tab=settings')
 
     await user.click(screen.getByRole('button', { name: '팀원 초대' }))
     // 같은 기수 동료 후보(usePeers mock) 중 선택 — 동료 선택 셀렉트

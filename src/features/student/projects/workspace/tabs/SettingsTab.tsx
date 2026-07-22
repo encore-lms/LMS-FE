@@ -25,6 +25,7 @@ import type { ProjectGithubStatus } from '../../githubTypes'
 import { Field } from '../../wizard/wizardShared'
 import { StackPicker } from '../components/StackPicker'
 import { card } from '../components/ws-style'
+import { TeamTab } from './TeamTab'
 
 // GitHub 마크 — lucide는 브랜드 아이콘을 제거해 인라인 SVG로 둔다.
 function GithubMark({ className }: { className?: string }) {
@@ -283,6 +284,11 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
           </div>
         )}
       </section>
+
+      {/* ── 팀 관리 (탭에서 이관) — '팀원 관리' 헤더가 섹션 헤더 역할 ── */}
+      <div className="pt-2">
+        <TeamTab d={d} />
+      </div>
 
       {/* ── GitHub 연결 ── */}
       <div className="flex flex-col gap-1 pt-2">

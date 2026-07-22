@@ -22,6 +22,8 @@ vi.mock('../../../api/projects', () => ({
   useUpdateProjectTechStacks: () => ({ mutate: techMutate, isPending: false }),
   wsWriteError: (_e: unknown, f: string) => f,
 }))
+// 팀 관리는 설정 탭으로 이관됐지만 내부 훅(useInviteMember 등)이 많아 SettingsTab 테스트에선 대체.
+vi.mock('./TeamTab', () => ({ TeamTab: () => <div>팀 관리 섹션</div> }))
 const toast = { success: vi.fn(), danger: vi.fn(), info: vi.fn(), warning: vi.fn(), show: vi.fn() }
 vi.mock('@/components/ui/use-toast', () => ({ useToast: () => toast }))
 

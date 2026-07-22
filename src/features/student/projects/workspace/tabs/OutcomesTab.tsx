@@ -51,19 +51,6 @@ export function OutcomesTab({ d }: { d: WorkspaceData }) {
           </section>
         ))}
       </div>
-      <section className={cn(card, 'flex flex-col gap-3')}>
-        <span className="text-fg text-[14px] font-bold">기술 스택</span>
-        <div className="flex flex-wrap gap-2">
-          {d.stack.map((s) => (
-            <span
-              key={s}
-              className="bg-surface-muted text-fg-muted rounded-lg px-3 py-1.5 text-[12px] font-medium"
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      </section>
       {adding && (
         <AddMetricModal
           onClose={() => setAdding(false)}

@@ -9,7 +9,6 @@ import { CalendarTab } from './tabs/CalendarTab'
 import { MeetingsTab } from './tabs/MeetingsTab'
 import { DocsTab } from './tabs/DocsTab'
 import { IssuesTab } from './tabs/IssuesTab'
-import { TeamTab } from './tabs/TeamTab'
 import { OutcomesTab } from './tabs/OutcomesTab'
 import { PeerTab } from './tabs/PeerTab'
 import { CertTab } from './tabs/CertTab'
@@ -22,7 +21,6 @@ const TABS: WsTab[] = [
   'meetings',
   'docs',
   'issues',
-  'team',
   'outcomes',
   'peer-evaluation',
   'certification',
@@ -66,7 +64,6 @@ export default function WorkspacePage() {
           {tab === 'meetings' && <MeetingsTab d={data} />}
           {tab === 'docs' && <DocsTab d={data} />}
           {tab === 'issues' && <IssuesTab d={data} />}
-          {tab === 'team' && <TeamTab d={data} />}
           {tab === 'outcomes' && <OutcomesTab d={data} />}
           {tab === 'peer-evaluation' && <PeerTab d={data} />}
           {tab === 'certification' && <CertTab d={data} />}

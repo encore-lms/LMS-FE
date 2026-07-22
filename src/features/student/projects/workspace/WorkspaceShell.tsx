@@ -28,8 +28,7 @@ const TABS: { key: WsTab; label: string; icon: LucideIcon }[] = [
   { key: 'meetings', label: '회의록', icon: FileText },
   { key: 'docs', label: '문서·파일·위키', icon: Files },
   { key: 'issues', label: '이슈', icon: TriangleAlert },
-  { key: 'team', label: '팀 관리', icon: Send },
-  { key: 'outcomes', label: '성과·기술스택', icon: CircleCheck },
+  { key: 'outcomes', label: '성과', icon: CircleCheck },
   { key: 'peer-evaluation', label: '상호평가', icon: Star },
   { key: 'certification', label: '인증 요청', icon: Info },
   { key: 'settings', label: '설정', icon: Settings },
@@ -108,8 +107,8 @@ export function WorkspaceShell({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => onTab('team')}
-            aria-label="팀원 초대 탭으로 이동"
+            onClick={() => onTab('settings')}
+            aria-label="설정(팀 관리) 탭으로 이동"
             className="flex items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-white/25"
           >
             <Send className="size-3.5" aria-hidden="true" />

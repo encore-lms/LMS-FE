@@ -16,7 +16,7 @@ export function useGithubIdentity() {
     queryKey: profileKeys.githubIdentity(),
     queryFn: () =>
       apiClient
-        .get<StudentGithubIdentity>('/student/me/github-identity')
+        .get<StudentGithubIdentity>('/student/profile/github-identity')
         .then((r) => r.data),
   })
 }
@@ -29,7 +29,7 @@ export function useStartGithubConnection() {
   return useMutation({
     mutationFn: () =>
       apiClient
-        .post<GithubConnectionStart>('/github/user-connections/start')
+        .post<GithubConnectionStart>('/student/profile/github/start')
         .then((r) => r.data),
   })
 }
@@ -40,7 +40,7 @@ export function useDisconnectGithub() {
   return useMutation({
     mutationFn: () =>
       apiClient
-        .delete<StudentGithubIdentity>('/student/me/github-identity')
+        .delete<StudentGithubIdentity>('/student/profile/github-identity')
         .then((r) => r.data),
     onSuccess: (data) => {
       queryClient.setQueryData(profileKeys.githubIdentity(), data)

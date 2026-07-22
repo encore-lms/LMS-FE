@@ -46,20 +46,20 @@ const save = (v: StudentGithubIdentity) =>
   sessionStorage.setItem(KEY, JSON.stringify(v))
 
 export const handlers = [
-  http.get('/api/student/me/github-identity', () =>
+  http.get('/api/student/profile/github-identity', () =>
     ok<StudentGithubIdentity>(load()),
   ),
   // 인증 시작 — 실 BE면 authorizeUrl이 github.com/login/oauth/authorize?...
   // mock은 실제 GitHub로 갈 수 없으므로 앱 내부 복귀 경로를 반환해 콜백 성공을 시뮬레이션한다.
   // (전이: 다음 조회부터 CONNECTED). state는 일회성 토큰 자리표시자.
-  http.post('/api/github/user-connections/start', () => {
+  http.post('/api/student/profile/github/start', () => {
     save({ ...CONNECTED })
     return ok<GithubConnectionStart>({
       authorizeUrl: '/student/profile?github=connected',
       state: 'mock-state-' + CONNECTED.githubUserId,
     })
   }),
-  http.delete('/api/student/me/github-identity', () => {
+  http.delete('/api/student/profile/github-identity', () => {
     save({ ...DISCONNECTED })
     return ok<StudentGithubIdentity>({ ...DISCONNECTED })
   }),

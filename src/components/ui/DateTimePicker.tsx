@@ -226,7 +226,7 @@ export function DateTimePicker({
           aria-label={ariaLabel ?? label}
           aria-invalid={error ? true : undefined}
           className={cn(
-            'border-border focus:border-brand flex h-11 w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm transition-colors outline-none',
+            'border-border focus:border-brand flex h-11 w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm transition-colors outline-none focus-visible:shadow-none',
             error && 'border-danger',
             disabled && 'cursor-not-allowed opacity-50',
           )}

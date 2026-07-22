@@ -85,7 +85,7 @@ export function EarlyEndModal({ open, onClose, row }: EarlyEndModalProps) {
             onChange={(e) => setReason(e.target.value)}
             rows={4}
             placeholder="조기 종료 사유를 입력해주세요 (필수)"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none"
+            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
           />
         </div>
         <ul className="text-fg-subtle flex flex-col gap-1 text-xs">

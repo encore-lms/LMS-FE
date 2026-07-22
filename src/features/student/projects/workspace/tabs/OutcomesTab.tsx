@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { useAddMetric, wsWriteError } from '../../../api/projects'
@@ -90,8 +91,7 @@ function AddMetricModal({
   const [before, setBefore] = useState('')
   const [after, setAfter] = useState('')
   const [delta, setDelta] = useState('')
-  const field =
-    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const field = inputClass()
   const submit = () => {
     if (!label.trim() || !before.trim() || !after.trim() || !delta.trim())
       return
@@ -114,7 +114,7 @@ function AddMetricModal({
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             취소
           </button>

@@ -13,6 +13,7 @@ import { TeamTab } from './tabs/TeamTab'
 import { OutcomesTab } from './tabs/OutcomesTab'
 import { PeerTab } from './tabs/PeerTab'
 import { CertTab } from './tabs/CertTab'
+import { SettingsTab } from './tabs/SettingsTab'
 
 const TABS: WsTab[] = [
   'home',
@@ -25,6 +26,7 @@ const TABS: WsTab[] = [
   'outcomes',
   'peer-evaluation',
   'certification',
+  'settings',
 ]
 
 // 프로젝트 워크스페이스 (/student/projects/:projectId ?tab=) — Figma 342:1032 외 9탭.
@@ -68,6 +70,7 @@ export default function WorkspacePage() {
           {tab === 'outcomes' && <OutcomesTab d={data} />}
           {tab === 'peer-evaluation' && <PeerTab d={data} />}
           {tab === 'certification' && <CertTab d={data} />}
+          {tab === 'settings' && <SettingsTab d={data} />}
         </WorkspaceShell>
       )}
     </DataBoundary>

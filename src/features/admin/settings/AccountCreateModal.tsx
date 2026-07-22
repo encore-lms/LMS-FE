@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import type { OpsRole } from '@/shared/types'
@@ -89,7 +90,7 @@ export function AccountCreateModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="예: 김운영"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            className={inputClass()}
           />
         </div>
 
@@ -106,7 +107,7 @@ export function AccountCreateModal({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@playdata.io"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            className={inputClass()}
           />
           {email.trim() && !emailValid && (
             <p className="text-danger text-xs">이메일 형식이 올바르지 않아요</p>

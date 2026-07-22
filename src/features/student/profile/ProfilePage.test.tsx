@@ -8,9 +8,12 @@ import { useChangePassword, useCurrentUser } from '@/features/profile/api'
 
 vi.mock('../api/profile')
 vi.mock('@/features/profile/api')
-// 공개 프로필 폼 자체는 자체 검증 범위 — 여기선 페이지 합성(폼+비밀번호 카드)만 확인.
+// 공개 프로필 폼·GitHub 연결 카드는 각자 자체 검증 범위 — 여기선 페이지 합성만 확인.
 vi.mock('./components/ProfileForm', () => ({
   ProfileForm: () => <div>공개 프로필 폼</div>,
+}))
+vi.mock('./components/GithubConnectionCard', () => ({
+  GithubConnectionCard: () => <div>GitHub 연결 카드</div>,
 }))
 
 describe('수강생 마이 프로필 페이지 합성', () => {

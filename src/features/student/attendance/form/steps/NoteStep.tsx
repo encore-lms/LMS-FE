@@ -14,7 +14,7 @@ export function NoteStep() {
       <textarea
         rows={3}
         placeholder="특이사항이 있으면 입력하세요 (선택)"
-        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white px-4 py-3 text-[15px] outline-none"
+        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white px-4 py-3 text-[15px] outline-none focus-visible:shadow-none"
         {...register('note')}
       />
     </FormStepCard>

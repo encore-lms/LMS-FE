@@ -1,69 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { Check, Info, Send } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
-import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import { DataTable, type Column } from '@/components/data/DataTable'
+import { DataTable } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
-import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { useMyCohorts } from '../api/dashboard'
 import { usePageHeader } from '@/shared/store'
-import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
+import { ActionModal } from '../settings/ActionModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import {
-  useReputation,
-  useReputationPush,
-  type ReputationPushInput,
-} from './api'
-import { MentorEvaluationDetail } from './MentorEvaluationDetail'
-import type {
-  EndorsementStatus,
-  MentorEvalStatus,
-  PushTarget,
-  ReputationStudent,
-} from './types'
-
-const ENDORSEMENT_META: Record<
-  EndorsementStatus,
-  { label: string; tone: BadgeTone }
-> = {
-  collected: { label: '수집됨', tone: 'success' },
-  not_collected: { label: '미수집', tone: 'neutral' },
-  requesting: { label: '요청 중', tone: 'warning' },
-}
-
-const MENTOR_EVAL_META: Record<
-  MentorEvalStatus,
-  { label: string; tone: BadgeTone }
-> = {
-  recommended: { label: '평가 완료 · 추천', tone: 'success' },
-  not_recommended: { label: '평가 완료 · 추천 안 함', tone: 'success' },
-  pending: { label: '평가 대기', tone: 'neutral' },
-  not_eligible: { label: '평가 대상 외', tone: 'neutral' },
-  in_progress: { label: '평가 진행 중', tone: 'info' },
-}
-
-const PUSH_LABEL: Record<PushTarget, string> = {
-  instructor: '강사 푸시',
-  mentor: '멘토 푸시',
-  peer: '동료 푸시',
-}
-
-// 테이블 액션 버튼용 축약 — 3개까지 한 줄에 들어가야 해 대상만 쓴다(전체 라벨은 title).
-const PUSH_SHORT: Record<PushTarget, string> = {
-  instructor: '강사',
-  mentor: '멘토',
-  peer: '동료',
-}
-
-// 멘토 5축 축 라벨(BE scoresOf 순서와 동일). SHORT 는 테이블 인라인 칩용 축약.
-const AXIS_LABELS = ['기술', '책임감', '소통', '성장', '팀워크']
-const AXIS_SHORT = ['기', '책', '소', '성', '팀']
+import { useReputation, useReputationPush } from './api'
+import { type ReputationPushAction } from './reputationMeta'
+import { buildReputationColumns } from './reputationColumns'
+import { ReputationHero } from './ReputationHero'
+import { ReputationDetailModal } from './ReputationDetailModal'
+import type { ReputationStudent } from './types'
 
 // 평판 관리 (/admin/reputation) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1193:6267. 수강생별 평판 수집 현황(강사 추천서·멘토 평가·동료 5축) + 요청 푸시.
@@ -78,11 +31,9 @@ export default function ReputationPage() {
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [q, setQ] = useSearchParamState('q')
   // 푸시 확인 모달(단건·일괄 공용) + 평판 상세 모달.
-  const [pushAction, setPushAction] = useState<{
-    spec: ActionModalSpec
-    result: string
-    payload: ReputationPushInput
-  } | null>(null)
+  const [pushAction, setPushAction] = useState<ReputationPushAction | null>(
+    null,
+  )
   const [detailStudent, setDetailStudent] = useState<ReputationStudent | null>(
     null,
   )
@@ -162,178 +113,12 @@ export default function ReputationPage() {
 
   const summary = data?.summary
 
-  const columns: Column<ReputationStudent>[] = [
-    {
-      key: 'student',
-      header: '수강생',
-      cell: (s) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar name={s.name} size={28} />
-          <div className="min-w-0">
-            <p className="text-fg text-[13px] font-semibold">{s.name}</p>
-            <p className="text-fg-subtle font-mono text-[11px]">{s.uuid}</p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'endorsement',
-      header: '강사 추천서',
-      className: 'w-36',
-      // items-start 필수 — flex-col 기본 stretch 라 배지가 컬럼 너비만큼 늘어난다.
-      cell: (s) =>
-        // 조회 실패 시 전원 '미수집'으로 보이는 오해를 막는다.
-        data?.endorsementDegraded ? (
-          <span
-            className="text-warning text-[12px]"
-            title="강사 추천서 현황을 일시적으로 불러오지 못했습니다."
-          >
-            조회 실패
-          </span>
-        ) : (
-          <div className="flex flex-col items-start gap-1">
-            <StatusBadge
-              label={ENDORSEMENT_META[s.endorsementStatus].label}
-              tone={ENDORSEMENT_META[s.endorsementStatus].tone}
-            />
-            {/* 값 없을 때의 '-' 는 노이즈라 숨긴다 */}
-            {s.endorsementBy && s.endorsementBy !== '-' && (
-              <span className="text-fg-subtle text-[11px]">
-                {s.endorsementBy}
-              </span>
-            )}
-          </div>
-        ),
-    },
-    {
-      key: 'mentor',
-      header: '멘토 평가·추천',
-      cell: (s) => (
-        <div className="flex flex-col items-start gap-1.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <StatusBadge
-              label={MENTOR_EVAL_META[s.mentorEvalStatus].label}
-              tone={MENTOR_EVAL_META[s.mentorEvalStatus].tone}
-            />
-            {s.mentorBy && s.mentorBy !== '-' && (
-              <span className="text-fg-subtle text-[11px]">{s.mentorBy}</span>
-            )}
-          </div>
-          {/* 멘토 5축 점수 — 제출 완료 시 인라인 표시(상세를 안 열어도 바로 보이도록) */}
-          {s.mentorScores.length > 0 && (
-            <div className="border-border flex items-center overflow-hidden rounded-md border">
-              {s.mentorScores.map((v, i) => (
-                <span
-                  key={AXIS_LABELS[i]}
-                  className="border-border flex items-center gap-1 border-r px-1.5 py-0.5 text-[10px] last:border-r-0"
-                  title={AXIS_LABELS[i]}
-                >
-                  <span className="text-fg-subtle">{AXIS_SHORT[i]}</span>
-                  <span className="text-fg font-semibold tabular-nums">
-                    {v}
-                  </span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'peer',
-      header: '동료 5축',
-      className: 'w-32',
-      cell: (s) => {
-        // 조회 실패(learning 미응답)와 '대상 없음(개시된 프로젝트 없음)'을 구분해 표시한다.
-        if (data?.peerDegraded) {
-          return (
-            <span
-              className="text-warning text-[12px]"
-              title="동료 평가 현황을 일시적으로 불러오지 못했습니다."
-            >
-              조회 실패
-            </span>
-          )
-        }
-        if (s.peerTotal === 0) {
-          return <span className="text-fg-subtle text-[12px]">대상 없음</span>
-        }
-        const full = s.peerCount >= s.peerTotal
-        const pct = (s.peerCount / s.peerTotal) * 100
-        return (
-          <div className="flex flex-col items-start gap-1">
-            <span className="text-fg text-[13px] font-semibold tabular-nums">
-              {s.peerCount}
-              <span className="text-fg-subtle font-normal">
-                {' '}
-                / {s.peerTotal}
-              </span>
-            </span>
-            <div className="bg-surface-muted h-1 w-16 overflow-hidden rounded-full">
-              <div
-                className={full ? 'bg-success h-full' : 'bg-brand h-full'}
-                style={{ width: `${Math.round(pct)}%` }}
-              />
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      key: 'action',
-      header: '액션',
-      className: 'w-52',
-      // 한 줄 유지 — 푸시 버튼은 대상만 짧게(툴팁에 전체 라벨), 상세는 끝에 고정.
-      cell: (s) => (
-        <div className="flex items-center gap-1.5">
-          {s.pushTargets.length === 0 ? (
-            <span className="text-success inline-flex items-center gap-1 text-[13px] font-semibold">
-              <Check className="h-3.5 w-3.5" />
-              완료
-            </span>
-          ) : (
-            s.pushTargets.map((t) => (
-              <button
-                key={t}
-                type="button"
-                // 화면엔 '강사'로 축약(한 줄 유지)하되, 접근성 이름·툴팁은 전체 라벨을 준다.
-                aria-label={`${PUSH_LABEL[t]} 요청`}
-                title={`${PUSH_LABEL[t]} 요청`}
-                onClick={() =>
-                  setPushAction({
-                    spec: {
-                      title: `${PUSH_LABEL[t]} 요청`,
-                      subtitle: 'LMS 알림으로 평판 입력을 요청합니다.',
-                      rows: [
-                        { label: '수강생', value: `${s.name} · ${s.uuid}` },
-                        { label: '대상', value: PUSH_LABEL[t] },
-                        { label: '채널', value: 'LMS 알림' },
-                        { label: '처리', value: '요청 후 상태 = 요청 중' },
-                      ],
-                      confirmLabel: '푸시',
-                    },
-                    result: `${s.name} ${PUSH_LABEL[t]} 요청을 보냈습니다.`,
-                    payload: { kind: 'single', studentId: s.id, target: t },
-                  })
-                }
-                className="border-border text-fg-muted hover:bg-surface-muted hover:text-fg inline-flex items-center gap-1 rounded-md border px-1.5 py-1 text-[12px] font-medium whitespace-nowrap"
-              >
-                <Send className="h-3 w-3" />
-                {PUSH_SHORT[t]}
-              </button>
-            ))
-          )}
-          <button
-            type="button"
-            onClick={() => setDetailStudent(s)}
-            className="text-brand ml-auto text-[13px] font-semibold hover:underline"
-          >
-            상세
-          </button>
-        </div>
-      ),
-    },
-  ]
+  const columns = buildReputationColumns({
+    endorsementDegraded: data?.endorsementDegraded,
+    peerDegraded: data?.peerDegraded,
+    onPushAction: setPushAction,
+    onDetail: setDetailStudent,
+  })
 
   return (
     <div className="p-8">
@@ -389,50 +174,7 @@ export default function ReputationPage() {
         {summary && (
           <>
             {/* 히어로 — 수집 현황 + 일괄 푸시 */}
-            <div className="bg-brand text-on-color flex flex-col gap-4 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-[17px] font-bold">
-                  수강생별 평판 수집 현황과 요청 푸시 추적
-                </p>
-                <p className="text-on-color/75 mt-2 text-[13px]">
-                  {summary.cohortLabel} · {summary.students}명
-                  <span className="ml-2 inline-flex items-center gap-1">
-                    <Info className="h-3.5 w-3.5" />
-                    누락 수강생 {summary.missingStudents}명
-                  </span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  setPushAction({
-                    spec: {
-                      title: '누락 일괄 요청 푸시',
-                      subtitle: `누락 수강생 ${summary.missingStudents}명에게 평판 입력을 일괄 요청합니다.`,
-                      rows: [
-                        {
-                          label: '대상',
-                          value: `누락 ${summary.missingStudents}명`,
-                        },
-                        { label: '기수', value: summary.cohortLabel },
-                        { label: '채널', value: 'LMS 알림' },
-                        {
-                          label: '처리',
-                          value: '강사·멘토·동료 누락 항목별 발송',
-                        },
-                      ],
-                      confirmLabel: '일괄 푸시',
-                    },
-                    result: `누락 ${summary.missingStudents}명에게 요청 푸시를 보냈습니다.`,
-                    payload: { kind: 'bulk' },
-                  })
-                }
-                className="bg-surface text-brand hover:bg-surface/90 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
-              >
-                <Send className="h-4 w-4" />
-                일괄 요청 푸시 — 누락 {summary.missingStudents}명
-              </button>
-            </div>
+            <ReputationHero summary={summary} onPushAction={setPushAction} />
 
             {/* KPI 4종 */}
             <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -535,88 +277,11 @@ export default function ReputationPage() {
             />
 
             {/* 평판 상세 모달 (Figma 평판 상세 1306:8078) — 행 데이터 기반 읽기 전용 */}
-            <Modal
-              open={!!detailStudent}
+            <ReputationDetailModal
+              student={detailStudent}
+              peerDegraded={data?.peerDegraded}
               onClose={() => setDetailStudent(null)}
-              title={detailStudent ? `${detailStudent.name} 평판 상세` : ''}
-            >
-              {detailStudent && (
-                <div className="flex flex-col gap-4">
-                  <p className="text-fg-subtle font-mono text-xs">
-                    {detailStudent.uuid}
-                  </p>
-                  <div className="border-border rounded-xl border p-4">
-                    <dl className="flex flex-col gap-3 text-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <dt className="text-fg-muted">강사 추천서</dt>
-                        <dd className="flex items-center gap-2">
-                          <StatusBadge
-                            label={
-                              ENDORSEMENT_META[detailStudent.endorsementStatus]
-                                .label
-                            }
-                            tone={
-                              ENDORSEMENT_META[detailStudent.endorsementStatus]
-                                .tone
-                            }
-                          />
-                          <span className="text-fg-subtle text-xs">
-                            {detailStudent.endorsementBy}
-                          </span>
-                        </dd>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <dt className="text-fg-muted">멘토 평가·추천</dt>
-                        <dd className="flex items-center gap-2">
-                          <StatusBadge
-                            label={
-                              MENTOR_EVAL_META[detailStudent.mentorEvalStatus]
-                                .label
-                            }
-                            tone={
-                              MENTOR_EVAL_META[detailStudent.mentorEvalStatus]
-                                .tone
-                            }
-                          />
-                          <span className="text-fg-subtle text-xs">
-                            {detailStudent.mentorBy}
-                          </span>
-                        </dd>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <dt className="text-fg-muted">동료 5축</dt>
-                        <dd className="text-fg font-semibold tabular-nums">
-                          {data?.peerDegraded ? (
-                            <span className="text-warning font-normal">
-                              조회 실패
-                            </span>
-                          ) : detailStudent.peerTotal === 0 ? (
-                            <span className="text-fg-subtle font-normal">
-                              대상 없음
-                            </span>
-                          ) : (
-                            `${detailStudent.peerCount} / ${detailStudent.peerTotal}`
-                          )}
-                        </dd>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <dt className="text-fg-muted">누락 푸시 대상</dt>
-                        <dd className="text-fg text-right">
-                          {detailStudent.pushTargets.length === 0
-                            ? '없음 (완료)'
-                            : detailStudent.pushTargets
-                                .map((t) => PUSH_LABEL[t])
-                                .join(' · ')}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  {/* 멘토가 실제 남긴 평가 — 5축 점수·코멘트·추천 사유 */}
-                  <MentorEvaluationDetail studentId={detailStudent.id} />
-                </div>
-              )}
-            </Modal>
+            />
           </>
         )}
       </DataBoundary>

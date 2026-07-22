@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Lock, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { RefreshCw, TriangleAlert } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Empty } from '@/components/ui/Empty'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import {
   useDisconnectProjectGithub,
   useProjectGithub,
-  useSaveProjectGithub,
+  useSaveMyGithubVisibility,
+  useSaveProjectGithubBranches,
   useStartProjectGithubInstall,
 } from '../../../api/projectGithub'
 import type { WorkspaceData } from '../../types'
@@ -32,77 +34,79 @@ const STATUS_BADGE: Record<ProjectGithubStatus, { label: string; tone: BadgeTone
   DISCONNECTED: { label: '미연결', tone: 'neutral' },
 }
 
-interface RepoEdit {
-  selected: boolean
-  branch: string
-  pub: boolean
-}
-
 /**
- * 프로젝트 설정 — GitHub Organization·Repository 연결(작업 2). PM(OWNER) 전용 편집.
- * 선택 중(로컬 edits)과 서버 저장 상태를 분리한다. GitHub App 설치·레포 목록은 초기 mock.
+ * 프로젝트 설정 — GitHub 연결(작업 2 재설계).
+ * · 팀 공통(참여 멤버 누구나): Org 연결, 레포별 분석 브랜치(select).
+ * · 개인: 내 증명서에 공개할 저장소(로그인한 사람마다 자기 것).
  */
 export function SettingsTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
-  const isOwner = d.isOwner ?? false
   const { data, isPending, isError, refetch } = useProjectGithub(d.id)
   const startM = useStartProjectGithubInstall(d.id)
-  const saveM = useSaveProjectGithub(d.id)
+  const branchesM = useSaveProjectGithubBranches(d.id)
+  const visibilityM = useSaveMyGithubVisibility(d.id)
   const disconnectM = useDisconnectProjectGithub(d.id)
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [edits, setEdits] = useState<Record<number, RepoEdit>>({})
+  // 팀 공통 브랜치(레포별) 로컬 편집
+  const [branchEdits, setBranchEdits] = useState<Record<number, string>>({})
+  // 개인 공개 로컬 편집
+  const [visEdits, setVisEdits] = useState<Record<number, boolean>>({})
 
-  // 서버 데이터 → 로컬 편집 초기화(저장 전까지 로컬로만 반영)
   useEffect(() => {
     if (!data?.repositories) return
-    const init: Record<number, RepoEdit> = {}
+    const b: Record<number, string> = {}
+    const v: Record<number, boolean> = {}
     for (const r of data.repositories) {
-      init[r.githubRepositoryId] = {
-        selected: r.isSelected,
-        branch: r.analysisBranch ?? r.defaultBranch ?? '',
-        pub: r.isCertificatePublic,
-      }
+      b[r.githubRepositoryId] = r.analysisBranch ?? r.defaultBranch ?? 'main'
+      v[r.githubRepositoryId] = r.isPublicForMe
     }
-    setEdits(init)
+    setBranchEdits(b)
+    setVisEdits(v)
   }, [data])
 
   const status = data?.status ?? 'DISCONNECTED'
   const connected = status === 'CONNECTED' || status === 'PERMISSION_REQUIRED'
   const repos = data?.repositories ?? []
-  const filtered = useMemo(
-    () => repos.filter((r) => r.fullName.toLowerCase().includes(query.toLowerCase())),
-    [repos, query],
-  )
-  const selectedCount = Object.values(edits).filter((e) => e.selected).length
+  const badge = STATUS_BADGE[status]
 
-  const connect = () => {
+  const connect = () =>
     startM.mutate(undefined, {
       onSuccess: () => toast.success('GitHub Organization을 연결했어요'),
       onError: () => toast.danger('GitHub 연결에 실패했어요. 다시 시도해 주세요.'),
     })
-  }
 
-  const save = () => {
-    const repositories = repos.map((r) => {
-      const e = edits[r.githubRepositoryId]
-      return {
-        githubRepositoryId: r.githubRepositoryId,
-        analysisBranch: e?.branch ?? r.defaultBranch ?? '',
-        isSelected: e?.selected ?? false,
-        isCertificatePublic: e?.pub ?? false,
-      }
-    })
-    saveM.mutate(
-      { repositories },
+  const saveBranches = () => {
+    branchesM.mutate(
       {
-        onSuccess: () => toast.success('GitHub 연결 설정을 저장했어요'),
-        onError: () => toast.danger('저장에 실패했어요. 다시 시도해 주세요.'),
+        repositories: repos.map((r) => ({
+          githubRepositoryId: r.githubRepositoryId,
+          analysisBranch: branchEdits[r.githubRepositoryId] ?? r.defaultBranch ?? 'main',
+          isSelected: r.isSelected,
+        })),
+      },
+      {
+        onSuccess: () => toast.success('분석 브랜치를 저장했어요'),
+        onError: () => toast.danger('브랜치 저장에 실패했어요.'),
       },
     )
   }
 
-  const disconnect = () => {
+  const saveVisibility = () => {
+    visibilityM.mutate(
+      {
+        repositories: repos.map((r) => ({
+          githubRepositoryId: r.githubRepositoryId,
+          isPublic: visEdits[r.githubRepositoryId] ?? false,
+        })),
+      },
+      {
+        onSuccess: () => toast.success('증명서 공개 설정을 저장했어요'),
+        onError: () => toast.danger('저장에 실패했어요.'),
+      },
+    )
+  }
+
+  const disconnect = () =>
     disconnectM.mutate(undefined, {
       onSuccess: () => {
         setConfirmOpen(false)
@@ -110,30 +114,16 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
       },
       onError: () => toast.danger('연결 해제에 실패했어요.'),
     })
-  }
-
-  const setEdit = (id: number, patch: Partial<RepoEdit>) =>
-    setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }))
-
-  const badge = STATUS_BADGE[status]
 
   return (
     <div className="flex flex-col gap-4 pb-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-fg text-[16px] font-bold">프로젝트 설정 · GitHub 연결</h2>
         <span className="text-fg-subtle text-[12px]">
-          프로젝트에서 사용하는 GitHub Organization과 Repository를 연결합니다. 연결된
-          저장소의 기여도가 증명서에 반영됩니다.
+          연결과 분석 브랜치는 팀원 누구나 설정할 수 있어요. 증명서 공개는 팀원 각자가 자기
+          증명서에서 고릅니다.
         </span>
       </div>
-
-      {/* PM이 아니면 편집 불가 안내 */}
-      {!isOwner && (
-        <div className="bg-surface-muted text-fg-muted flex items-center gap-2 rounded-xl p-3 text-[12px]">
-          <Lock className="size-4 shrink-0" aria-hidden="true" />
-          GitHub 연결 설정은 PM(팀장)만 변경할 수 있어요. 아래는 현재 연결 상태입니다.
-        </div>
-      )}
 
       {isPending && <div className="bg-surface-muted h-40 animate-pulse rounded-2xl" />}
 
@@ -155,21 +145,19 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
             아직 GitHub Organization이 연결되지 않았어요
           </span>
           <span className="text-fg-muted max-w-md text-[12px] leading-5">
-            GitHub App을 설치해 Organization을 연결하면 이 프로젝트에서 사용할 저장소를
-            선택할 수 있어요. App은 선택한 저장소에 읽기 권한으로만 접근합니다.
+            GitHub App을 설치해 Organization을 연결하면 이 프로젝트의 저장소가 들어옵니다. App은
+            읽기 권한으로만 접근합니다.
           </span>
-          {isOwner && (
-            <Button
-              variant="primary"
-              size="md"
-              className="mt-1"
-              onClick={connect}
-              disabled={startM.isPending}
-            >
-              <GithubMark className="size-4" />
-              {startM.isPending ? '연결 중…' : 'GitHub 연결'}
-            </Button>
-          )}
+          <Button
+            variant="primary"
+            size="md"
+            className="mt-1"
+            onClick={connect}
+            disabled={startM.isPending}
+          >
+            <GithubMark className="size-4" />
+            {startM.isPending ? '연결 중…' : 'GitHub 연결'}
+          </Button>
         </section>
       )}
 
@@ -194,50 +182,21 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
             <StatusBadge label={badge.label} tone={badge.tone} />
           </section>
 
-          {/* 레포 선택 */}
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <div className="flex items-center justify-between">
-              <span className="text-fg text-[14px] font-bold">
-                Repository 선택{' '}
-                <span className="text-fg-subtle text-[12px]">
-                  {selectedCount}개 선택 · 총 {repos.length}개
-                </span>
-              </span>
-              <label className="border-border text-fg-subtle focus-within:border-brand flex w-56 items-center gap-2 rounded-lg border px-3 py-1.5 text-[12px]">
-                <Search className="size-3.5 shrink-0" aria-hidden="true" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="저장소 검색"
-                  className="text-fg placeholder:text-fg-subtle w-full bg-transparent focus:outline-none"
-                />
-              </label>
-            </div>
-
-            {filtered.length === 0 ? (
-              <Empty
-                title="표시할 저장소가 없어요"
-                description={
-                  repos.length === 0
-                    ? '연결된 Organization에 접근 가능한 저장소가 없어요.'
-                    : '검색어와 일치하는 저장소가 없어요.'
-                }
-              />
-            ) : (
-              <div className="flex flex-col divide-y divide-[color:var(--color-divider)]">
-                {filtered.map((r) => {
-                  const e = edits[r.githubRepositoryId]
-                  const accessible = r.permissionStatus === 'ACCESSIBLE'
-                  return (
+          {repos.length === 0 ? (
+            <Empty title="접근 가능한 저장소가 없어요" description="연결된 Organization에 접근 가능한 저장소가 없어요." />
+          ) : (
+            <>
+              {/* 팀 공통 — 분석 브랜치 */}
+              <section className={cn(card, 'flex flex-col gap-3')}>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-fg text-[14px] font-bold">분석 브랜치 · 팀 공통</span>
+                  <span className="text-fg-subtle text-[12px]">
+                    각 저장소에서 기여도를 집계할 브랜치입니다. 팀원 누구나 바꿀 수 있어요.
+                  </span>
+                </div>
+                <div className="flex flex-col divide-y divide-[color:var(--color-divider)]">
+                  {repos.map((r) => (
                     <div key={r.githubRepositoryId} className="flex items-center gap-3 py-3">
-                      <input
-                        type="checkbox"
-                        checked={e?.selected ?? false}
-                        disabled={!isOwner || !accessible}
-                        onChange={(ev) => setEdit(r.githubRepositoryId, { selected: ev.target.checked })}
-                        aria-label={`${r.fullName} 선택`}
-                        className="accent-brand size-4 shrink-0"
-                      />
                       <div className="flex min-w-0 flex-1 flex-col">
                         <span className="text-fg flex items-center gap-1.5 text-[13px] font-semibold">
                           {r.name}
@@ -251,65 +210,86 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
                           >
                             {r.visibility === 'PRIVATE' ? 'Private' : 'Public'}
                           </span>
-                          {!accessible && (
-                            <span className="bg-danger-bg text-danger rounded px-1.5 py-0.5 text-[10px] font-bold">
-                              권한 필요
-                            </span>
-                          )}
                         </span>
                         <span className="text-fg-subtle text-[11px]">{r.fullName}</span>
                       </div>
-                      {/* 분석 브랜치 */}
                       <label className="flex items-center gap-1.5">
                         <span className="text-fg-subtle text-[11px]">브랜치</span>
-                        <input
-                          value={e?.branch ?? ''}
-                          disabled={!isOwner || !e?.selected}
-                          onChange={(ev) => setEdit(r.githubRepositoryId, { branch: ev.target.value })}
-                          placeholder={r.defaultBranch ?? 'main'}
-                          className="border-border text-fg focus:border-brand w-28 rounded-md border px-2 py-1 text-[12px] focus:outline-none disabled:opacity-50"
+                        <Select
+                          aria-label={`${r.fullName} 분석 브랜치`}
+                          value={branchEdits[r.githubRepositoryId] ?? r.defaultBranch ?? 'main'}
+                          onChange={(v) =>
+                            setBranchEdits((prev) => ({ ...prev, [r.githubRepositoryId]: v }))
+                          }
+                          options={r.availableBranches.map((b) => ({ value: b, label: b }))}
+                          className="h-9 w-40"
                         />
-                      </label>
-                      {/* 증명서 공개 */}
-                      <label className="flex items-center gap-1.5 text-[11px]">
-                        <input
-                          type="checkbox"
-                          checked={e?.pub ?? false}
-                          disabled={!isOwner || !e?.selected}
-                          onChange={(ev) => setEdit(r.githubRepositoryId, { pub: ev.target.checked })}
-                          aria-label={`${r.fullName} 증명서 공개`}
-                          className="accent-brand size-3.5"
-                        />
-                        <span className="text-fg-subtle">증명서 공개</span>
                       </label>
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </section>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <Button variant="secondary" size="sm" onClick={saveBranches} disabled={branchesM.isPending}>
+                    {branchesM.isPending ? '저장 중…' : '분석 브랜치 저장'}
+                  </Button>
+                </div>
+              </section>
 
-          {isOwner && (
-            <div className="border-border flex items-center justify-between border-t pt-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-danger hover:bg-danger-bg"
-                onClick={() => setConfirmOpen(true)}
-              >
-                연결 해제
-              </Button>
-              <div className="flex items-center gap-2">
-                <Button variant="secondary" size="sm" onClick={() => connect()} disabled={startM.isPending}>
-                  <RefreshCw className="size-3.5" aria-hidden="true" />
-                  동기화
-                </Button>
-                <Button variant="primary" size="md" onClick={save} disabled={saveM.isPending}>
-                  {saveM.isPending ? '저장 중…' : '변경사항 저장'}
-                </Button>
-              </div>
-            </div>
+              {/* 개인 — 내 증명서 공개 */}
+              <section className={cn(card, 'flex flex-col gap-3')}>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-fg text-[14px] font-bold">내 증명서에 공개할 저장소</span>
+                  <span className="text-fg-subtle text-[12px]">
+                    선택한 저장소의 내 기여가 내 증명서에 노출됩니다. 팀원마다 각자 설정합니다.
+                  </span>
+                </div>
+                <div className="flex flex-col divide-y divide-[color:var(--color-divider)]">
+                  {repos.map((r) => (
+                    <label
+                      key={r.githubRepositoryId}
+                      className="flex cursor-pointer items-center gap-3 py-3"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visEdits[r.githubRepositoryId] ?? false}
+                        onChange={(e) =>
+                          setVisEdits((prev) => ({ ...prev, [r.githubRepositoryId]: e.target.checked }))
+                        }
+                        aria-label={`${r.fullName} 증명서 공개`}
+                        className="accent-brand size-4 shrink-0"
+                      />
+                      <span className="text-fg min-w-0 flex-1 truncate text-[13px] font-semibold">
+                        {r.name}
+                      </span>
+                      <span className="text-fg-subtle shrink-0 text-[12px]">
+                        내 커밋 {r.myCommits} · 기여 {r.myContribPercent}%
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <Button variant="primary" size="md" onClick={saveVisibility} disabled={visibilityM.isPending}>
+                    {visibilityM.isPending ? '저장 중…' : '내 공개 설정 저장'}
+                  </Button>
+                </div>
+              </section>
+            </>
           )}
+
+          <div className="border-border flex items-center justify-between border-t pt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-danger hover:bg-danger-bg"
+              onClick={() => setConfirmOpen(true)}
+            >
+              연결 해제
+            </Button>
+            <Button variant="secondary" size="sm" onClick={connect} disabled={startM.isPending}>
+              <RefreshCw className="size-3.5" aria-hidden="true" />
+              동기화
+            </Button>
+          </div>
         </>
       )}
 
@@ -323,7 +303,7 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
         confirmDisabled={disconnectM.isPending}
       >
         <div className="text-fg-muted flex flex-col gap-2 text-[13px] leading-5">
-          <p>연결을 해제하면 이 프로젝트의 저장소 선택·분석 브랜치 설정이 모두 삭제됩니다.</p>
+          <p>연결을 해제하면 이 프로젝트의 저장소·분석 브랜치·팀원 공개 설정이 모두 삭제됩니다.</p>
           <p>이미 발급된 증명서는 변경되지 않으며, 언제든 다시 연결할 수 있어요.</p>
         </div>
       </ConfirmDialog>

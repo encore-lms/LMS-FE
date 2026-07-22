@@ -141,6 +141,7 @@ export type WsTab =
   | 'outcomes'
   | 'peer-evaluation'
   | 'certification'
+  | 'settings'
 
 export interface Badge {
   label: string
@@ -269,6 +270,8 @@ export interface WorkspaceData {
   peerEvalEnabled: boolean
   /** 상호평가 화면 '본인 수행 내용' — 내가 저장한 자기 업무 요약(없으면 null) */
   selfReview?: string | null
+  /** 요청자가 이 프로젝트의 OWNER(PM)인지 — 설정 탭 등 PM 전용 게이팅용 */
+  isOwner?: boolean
   // certification
   certChecklist: WsCheck[]
   certStatus: Badge

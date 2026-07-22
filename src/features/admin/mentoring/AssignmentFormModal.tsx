@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/Button'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -10,8 +11,7 @@ import { assignmentSchema, type AssignmentInput } from './assignmentSchema'
 import type { MentorAssignmentsData } from './types'
 
 const FIELD_LABEL = 'text-fg-muted text-xs font-bold'
-const INPUT_CLASS =
-  'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none'
+const INPUT_CLASS = inputClass()
 const ERROR_CLASS = 'text-danger text-xs'
 
 interface AssignmentFormModalProps {

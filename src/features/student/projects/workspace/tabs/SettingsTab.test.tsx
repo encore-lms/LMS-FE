@@ -12,10 +12,25 @@ import type { WorkspaceData } from '../../types'
 import type { ProjectGithubConnection } from '../../githubTypes'
 
 vi.mock('../../../api/projectGithub')
+// 프로젝트 정보·기술 카테고리 편집 훅은 useQueryClient에 의존하므로 mock으로 대체(GitHub 테스트 격리).
+const { infoMutate, techMutate } = vi.hoisted(() => ({
+  infoMutate: vi.fn(),
+  techMutate: vi.fn(),
+}))
+vi.mock('../../../api/projects', () => ({
+  useUpdateProjectInfo: () => ({ mutate: infoMutate, isPending: false }),
+  useUpdateProjectTechStacks: () => ({ mutate: techMutate, isPending: false }),
+  wsWriteError: (_e: unknown, f: string) => f,
+}))
 const toast = { success: vi.fn(), danger: vi.fn(), info: vi.fn(), warning: vi.fn(), show: vi.fn() }
 vi.mock('@/components/ui/use-toast', () => ({ useToast: () => toast }))
 
-const base = { id: 'p1' } as unknown as WorkspaceData
+const base = {
+  id: 'p1',
+  title: '프로젝트',
+  stack: [],
+  status: 'draft',
+} as unknown as WorkspaceData
 
 const CONNECTED: ProjectGithubConnection = {
   githubConnectionId: 'conn-1',
@@ -105,5 +120,41 @@ describe('SettingsTab', () => {
       githubRepositoryId: 101,
       isPublic: true,
     })
+  })
+
+  // ── 프로젝트 정보 편집 ──
+  it('PM은 이름·기간 저장 버튼을 보고 저장을 호출한다', () => {
+    mockQuery({ githubConnectionId: null, organization: null, status: 'DISCONNECTED', repositories: [], lastSyncedAt: null })
+    const pm = { ...base, isOwner: true, startDate: '2026-05-01', endDate: '2026-06-01' } as WorkspaceData
+    render(<SettingsTab d={pm} />)
+    fireEvent.click(screen.getByRole('button', { name: '이름·기간 저장' }))
+    expect(infoMutate).toHaveBeenCalledTimes(1)
+    expect(infoMutate.mock.calls[0][0]).toMatchObject({ title: '프로젝트', start: '2026-05-01', end: '2026-06-01' })
+  })
+
+  it('PM이 아니면 이름·기간 저장 버튼이 없고 입력이 비활성', () => {
+    mockQuery({ githubConnectionId: null, organization: null, status: 'DISCONNECTED', repositories: [], lastSyncedAt: null })
+    const member = { ...base, isOwner: false } as WorkspaceData
+    render(<SettingsTab d={member} />)
+    expect(screen.queryByRole('button', { name: '이름·기간 저장' })).toBeNull()
+    expect(screen.getByLabelText('프로젝트명')).toBeDisabled()
+  })
+
+  it('기술 카테고리는 팀원 누구나 저장할 수 있다', () => {
+    mockQuery({ githubConnectionId: null, organization: null, status: 'DISCONNECTED', repositories: [], lastSyncedAt: null })
+    const member = { ...base, isOwner: false, stack: ['Spring Boot'] } as WorkspaceData
+    render(<SettingsTab d={member} />)
+    fireEvent.click(screen.getByRole('button', { name: '기술 카테고리 저장' }))
+    expect(techMutate).toHaveBeenCalledTimes(1)
+    expect(techMutate.mock.calls[0][0]).toEqual({ stacks: ['Spring Boot'] })
+  })
+
+  it('인증 완료면 정보·기술 편집이 잠긴다', () => {
+    mockQuery({ githubConnectionId: null, organization: null, status: 'DISCONNECTED', repositories: [], lastSyncedAt: null })
+    const certified = { ...base, isOwner: true, status: 'certified' } as WorkspaceData
+    render(<SettingsTab d={certified} />)
+    expect(screen.queryByRole('button', { name: '이름·기간 저장' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '기술 카테고리 저장' })).toBeNull()
+    expect(screen.getByText(/인증이 완료된 프로젝트는 정보를 수정할 수 없어요/)).toBeInTheDocument()
   })
 })

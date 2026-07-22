@@ -2,30 +2,15 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { isAxiosError } from 'axios'
-import {
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Info,
-  KeyRound,
-  ShieldCheck,
-} from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { ShieldCheck } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Input } from '@/components/ui/Input'
-import { DataTable, type Column } from '@/components/data/DataTable'
+import { DataTable } from '@/components/data/DataTable'
 import { Pagination } from '@/components/data/Pagination'
-import { KpiCard } from '@/components/data/KpiCard'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import type {
-  HrdApiKey,
-  HrdKeyHistoryAction,
-  HrdKeyHistoryRow,
-} from '@/shared/types'
+import type { HrdApiKey, HrdKeyHistoryRow } from '@/shared/types'
 import {
   useHrdKeyList,
   useHrdKeySummary,
@@ -35,50 +20,22 @@ import {
   useDeleteHrdKey,
   useTestHrdKey,
 } from '../api/settings'
-import { formatDate, formatDateTime } from '@/shared/lib/date'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { SettingsTabs } from './SettingsTabs'
 import { hrdKeySchema, type HrdKeyInput } from './hrdKey.schema'
-
-type HistoryFilter = 'all' | HrdKeyHistoryAction
-
-// BE history action(create/update/delete/test) 표시 라벨.
-const ACTION_LABEL: Record<HrdKeyHistoryAction, string> = {
-  create: '등록',
-  update: '수정',
-  delete: '삭제',
-  test: '연결 테스트',
-}
-
-const HISTORY_FILTERS: { key: HistoryFilter; label: string }[] = [
-  { key: 'all', label: '전체' },
-  { key: 'create', label: '등록' },
-  { key: 'update', label: '수정' },
-  { key: 'delete', label: '삭제' },
-  { key: 'test', label: '연결 테스트' },
-]
-
-const KEY_PAGE_SIZE = 6
-const HISTORY_PAGE_SIZE = 8
-
-// ISO-8601 Instant → 'YYYY-MM-DD' (공용 Intl 유틸 — KST 고정)
-function fmtDate(iso: string) {
-  return formatDate(iso) || '-'
-}
-
-// ISO-8601 Instant → 'YYYY-MM-DD HH:mm' — 연도 생략 시 해가 바뀐 이력이 모호해져 연도 포함.
-function fmtDateTime(iso: string) {
-  return formatDateTime(iso) || '-'
-}
-
-// axios 에러에서 BE 메시지(ErrorResponse.message) 추출, 없으면 fallback.
-function errMsg(e: unknown, fallback: string) {
-  if (isAxiosError(e)) {
-    const msg = (e.response?.data as { message?: string } | undefined)?.message
-    if (msg) return msg
-  }
-  return fallback
-}
+import {
+  ACTION_LABEL,
+  KEY_PAGE_SIZE,
+  HISTORY_PAGE_SIZE,
+  errMsg,
+  fmtDateTime,
+  type HistoryFilter,
+} from './hrdKeyMeta'
+import { buildKeyColumns } from './hrdKeyColumns'
+import { HrdKeyHero } from './HrdKeyHero'
+import { HrdKeyKpis } from './HrdKeyKpis'
+import { HrdKeyRegisterForm } from './HrdKeyRegisterForm'
+import { HrdKeyHistorySection } from './HrdKeyHistorySection'
 
 // HRD API Key 관리 (/admin/settings/hrd-api-key) — learning-service 실연동.
 // 키 원문은 마스킹 표시·암호화 저장·재조회 불가. 상태는 active 토글(활성/비활성)로 관리.
@@ -249,179 +206,20 @@ export default function HrdApiKeyPage() {
     })
   }
 
-  const keyColumns: Column<HrdApiKey>[] = [
-    {
-      key: 'name',
-      header: '이름',
-      cell: (k) => (
-        <div>
-          <p className="text-fg text-sm font-medium">{k.name}</p>
-          {k.description && (
-            <p className="text-fg-subtle text-xs">{k.description}</p>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'masked',
-      header: 'Masked Key',
-      cell: (k) => (
-        <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 font-mono text-xs">
-          {k.maskedKey}
-        </span>
-      ),
-    },
-    {
-      key: 'createdAt',
-      header: '생성일',
-      cell: (k) => (
-        <span className="text-fg-muted text-sm">{fmtDate(k.createdAt)}</span>
-      ),
-    },
-    {
-      key: 'status',
-      header: '상태',
-      className: 'w-20',
-      cell: (k) => (
-        <StatusBadge
-          label={k.active ? '활성' : '비활성'}
-          tone={k.active ? 'success' : 'neutral'}
-        />
-      ),
-    },
-    {
-      key: 'actions',
-      header: '',
-      align: 'right',
-      cell: (k) => (
-        <div className="flex justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => testConnection(k)}
-            disabled={isTesting}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
-          >
-            {testingId === k.id ? '테스트 중…' : '연결 테스트'}
-          </button>
-          <button
-            type="button"
-            onClick={() => toggleActive(k)}
-            disabled={updateKey.isPending}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
-          >
-            {k.active ? '비활성화' : '활성화'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(k)}
-            disabled={deleteKey.isPending}
-            className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
-          >
-            삭제
-          </button>
-        </div>
-      ),
-    },
-  ]
-
-  const historyColumns: Column<HrdKeyHistoryRow>[] = [
-    {
-      key: 'at',
-      header: '일시',
-      className: 'w-28',
-      cell: (h) => (
-        <span className="text-fg-muted text-sm">{fmtDateTime(h.at)}</span>
-      ),
-    },
-    {
-      key: 'action',
-      header: '작업',
-      className: 'w-28',
-      cell: (h) => <StatusBadge label={ACTION_LABEL[h.action]} tone="accent" />,
-    },
-    {
-      key: 'actor',
-      header: '담당자',
-      className: 'w-24',
-      cell: (h) => <span className="text-fg text-sm">{h.actor}</span>,
-    },
-    {
-      key: 'result',
-      header: '결과',
-      className: 'w-24',
-      cell: (h) => (
-        <StatusBadge
-          label={h.ok ? '성공' : '실패'}
-          tone={h.ok ? 'success' : 'danger'}
-        />
-      ),
-    },
-    {
-      key: 'response',
-      header: '응답',
-      className: 'w-24',
-      cell: (h) => (
-        <span className="text-fg-muted text-sm">
-          {h.responseMs != null ? `${h.responseMs}ms` : '-'}
-        </span>
-      ),
-    },
-    {
-      key: 'target',
-      header: '대상 키',
-      cell: (h) => (
-        <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 font-mono text-xs">
-          {h.targetKeyMasked}
-        </span>
-      ),
-    },
-    {
-      key: 'detail',
-      header: '',
-      align: 'right',
-      className: 'w-24',
-      cell: (h) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            openHistoryDetail(h)
-          }}
-          className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium whitespace-nowrap"
-        >
-          상세 <ArrowRight className="h-3.5 w-3.5" />
-        </button>
-      ),
-    },
-  ]
+  const keyColumns = buildKeyColumns({
+    onTest: testConnection,
+    onToggleActive: toggleActive,
+    onDelete: setDeleteTarget,
+    isTesting,
+    testingId,
+    updatePending: updateKey.isPending,
+    deletePending: deleteKey.isPending,
+  })
 
   return (
     <div className="p-8">
       {/* 히어로 */}
-      <div className="bg-brand text-on-color mt-4 flex flex-wrap items-start justify-between gap-4 rounded-xl px-6 py-5">
-        <div>
-          <p className="text-on-color/60 text-[11px] font-semibold tracking-wider">
-            HRD API KEY · HRD-Net 연동
-          </p>
-          <p className="mt-1 text-xl font-bold">HRD API Key 관리</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
-            <span className="bg-surface/15 flex items-center gap-1.5 rounded-full px-2.5 py-1">
-              <CheckCircle2 className="h-3 w-3" />
-              {lastTest
-                ? lastTest.ok
-                  ? '최근 연결 정상'
-                  : '최근 연결 실패'
-                : '연결 테스트 이력 없음'}
-            </span>
-            {lastTest && (
-              <span className="bg-surface/15 flex items-center gap-1.5 rounded-full px-2.5 py-1">
-                <Clock className="h-3 w-3" /> 마지막 연결 테스트{' '}
-                {fmtDateTime(lastTest.at)} · {lastTest.latencyMs}ms
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      <HrdKeyHero lastTest={lastTest} />
 
       <SettingsTabs
         right={
@@ -442,37 +240,11 @@ export default function HrdApiKeyPage() {
         {list && (
           <>
             {/* KPI 4 */}
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <KpiCard
-                label="활성 키"
-                value={activeCount}
-                hint="active = true 기준"
-              />
-              <KpiCard
-                label="마지막 검증"
-                value={lastTest ? (lastTest.ok ? '성공' : '실패') : '없음'}
-                tone={
-                  lastTest ? (lastTest.ok ? 'success' : 'danger') : 'default'
-                }
-                hint={
-                  lastTest
-                    ? `${fmtDateTime(lastTest.at)} · ${lastTest.latencyMs}ms`
-                    : '테스트 이력 없음'
-                }
-              />
-              <KpiCard
-                label="만료/교체 예정"
-                value={summary?.expiring ?? 0}
-                tone={(summary?.expiring ?? 0) > 0 ? 'warning' : 'default'}
-                hint="만료 정책 연동 시 표시"
-              />
-              <KpiCard
-                label="최근 실패"
-                value={summary?.recentFail ?? 0}
-                tone={(summary?.recentFail ?? 0) > 0 ? 'danger' : 'default'}
-                hint="24시간 기준"
-              />
-            </div>
+            <HrdKeyKpis
+              activeCount={activeCount}
+              lastTest={lastTest}
+              summary={summary}
+            />
 
             {/* 키 테이블 + 새 키 등록 폼 */}
             <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_380px]">
@@ -508,136 +280,29 @@ export default function HrdApiKeyPage() {
                 )}
               </div>
 
-              <form
+              <HrdKeyRegisterForm
                 onSubmit={onRegister}
-                className="border-border bg-surface h-fit rounded-xl border p-5"
-              >
-                <p className="text-fg flex items-center gap-1.5 text-sm font-bold">
-                  <KeyRound className="h-4 w-4" /> 새 API Key 등록
-                </p>
-                <p className="text-fg-subtle mt-0.5 text-xs">
-                  등록 후 키 원문은 다시 표시되지 않습니다
-                </p>
-                <div className="mt-4 flex flex-col gap-4">
-                  <Input
-                    label="API 이름"
-                    required
-                    placeholder="HRD 운영키 2026"
-                    error={errors.name?.message}
-                    {...register('name')}
-                  />
-                  <Input
-                    label="API Key"
-                    required
-                    type="password"
-                    placeholder="********-********-********"
-                    error={errors.key?.message}
-                    {...register('key')}
-                  />
-                  <Input
-                    label="설명"
-                    placeholder="운영용 · 분기별 교체 예정"
-                    error={errors.description?.message}
-                    {...register('description')}
-                  />
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-fg text-xs font-medium">
-                      등록 즉시 사용
-                    </p>
-                    <p className="text-fg-subtle text-[11px]">
-                      OFF 시 비활성으로 보관
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={activateNow}
-                    aria-label="등록 즉시 사용"
-                    onClick={() => setActivateNow((v) => !v)}
-                    className={cn(
-                      'h-6 w-11 rounded-full p-0.5 transition-colors',
-                      activateNow ? 'bg-brand' : 'bg-border',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'bg-surface block h-5 w-5 rounded-full transition-transform',
-                        activateNow && 'translate-x-5',
-                      )}
-                    />
-                  </button>
-                </div>
-                <div className="border-divider mt-4 flex gap-2 border-t pt-4">
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    disabled={createKey.isPending}
-                  >
-                    {createKey.isPending ? '등록 중…' : '등록'}
-                  </Button>
-                </div>
-                <p className="bg-surface-muted text-fg-muted mt-3 flex items-start gap-1.5 rounded-lg p-3 text-xs">
-                  <Info className="mt-0.5 h-3 w-3 shrink-0" />
-                  연결 테스트는 등록된 키 행에서 실행할 수 있습니다
-                </p>
-              </form>
+                register={register}
+                errors={errors}
+                activateNow={activateNow}
+                onToggleActivateNow={() => setActivateNow((v) => !v)}
+                pending={createKey.isPending}
+              />
             </div>
 
             {/* 이력 */}
-            <div className="mt-6">
-              <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
-                <div>
-                  <p className="text-fg text-sm font-bold">이력</p>
-                  <p className="text-fg-subtle text-xs">
-                    등록·수정·삭제·연결 테스트 · 감사 로그
-                  </p>
-                </div>
-                <div className="flex gap-1">
-                  {HISTORY_FILTERS.map((f) => (
-                    <button
-                      key={f.key}
-                      type="button"
-                      onClick={() => {
-                        setHistoryFilter(f.key)
-                        setHistoryPage(1)
-                      }}
-                      className={cn(
-                        'rounded-md px-2.5 py-1 text-xs font-medium',
-                        historyFilter === f.key
-                          ? 'bg-accent-bg text-accent-strong'
-                          : 'text-fg-muted hover:bg-surface-muted',
-                      )}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <DataTable
-                columns={historyColumns}
-                rows={history?.items ?? []}
-                rowKey={(h) => h.id}
-                onRowClick={openHistoryDetail}
-                empty={
-                  historyQuery.isError
-                    ? '이력을 불러오지 못했어요'
-                    : '이력이 없어요'
-                }
-              />
-              {history && history.totalElements > 0 && (
-                <div className="mt-3">
-                  <Pagination
-                    page={historyPage}
-                    pageCount={Math.max(1, history.totalPages)}
-                    totalCount={history.totalElements}
-                    shownCount={history.items.length}
-                    onPage={setHistoryPage}
-                  />
-                </div>
-              )}
-            </div>
+            <HrdKeyHistorySection
+              history={history}
+              isError={historyQuery.isError}
+              filter={historyFilter}
+              onFilterChange={(key) => {
+                setHistoryFilter(key)
+                setHistoryPage(1)
+              }}
+              page={historyPage}
+              onPage={setHistoryPage}
+              onOpenDetail={openHistoryDetail}
+            />
           </>
         )}
       </DataBoundary>

@@ -181,7 +181,7 @@ export default function EndorsementHistoryPage() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="이름으로 검색"
               aria-label="추천서 이름 검색"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-56 rounded-lg border bg-white px-3 text-sm outline-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-56 rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none"
             />
             <div className="flex flex-wrap gap-1">
               {filters.map((f) => (

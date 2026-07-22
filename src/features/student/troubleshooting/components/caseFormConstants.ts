@@ -1,9 +1,9 @@
 import { CheckCircle2, Info, Send } from 'lucide-react'
+import { inputClass } from '@/components/ui/inputClass'
 
 // 트러블슈팅 사례 편집 폼(CaseContentForm)과 분해된 섹션 컴포넌트가 공유하는 모듈 상수·헬퍼.
 export const card = 'bg-surface rounded-2xl p-6'
-export const input =
-  'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
+export const input = inputClass({ size: 'md' })
 
 // 카테고리 표시명 → 목록 필터 키
 export const CATEGORY_KEY: Record<string, string> = {

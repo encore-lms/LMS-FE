@@ -22,6 +22,19 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // 거대 index 청크(500kB+ 경고) 분할 — 앱 코드와 갱신 주기가 다른 vendor를 분리해
+        // 배포 시 브라우저 캐시 재사용을 높인다. 앱 라우트는 기존 dynamic import 그대로.
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-data': ['@tanstack/react-query', 'axios'],
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       // FE는 baseURL '/api' 뒤에 BE 경로를 붙여 호출한다(→ /api/admin/hrd-keys).

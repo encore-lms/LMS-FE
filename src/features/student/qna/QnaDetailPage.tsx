@@ -22,7 +22,8 @@ import { MarkdownEditor } from './components/MarkdownEditor'
 import type { QnaAnswer, QnaDetail, Tone } from './types'
 
 // 상세는 클릭 대상이 아닌 읽기 컨테이너라 그림자 없이 flat(간격만으로 구분).
-const card = 'bg-surface rounded-2xl p-6'
+// flat이라 카드 경계가 안 보이므로 좌우 패딩을 두지 않고 페이지 컨테이너 라인에 정렬한다.
+const card = 'bg-surface rounded-2xl'
 const CHIP: Record<Tone, string> = {
   brand: 'bg-brand/10 text-brand',
   info: 'bg-info-bg text-info',

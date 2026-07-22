@@ -509,7 +509,7 @@ function ReviewModal({
                 onChange={(e) => setReason(e.target.value)}
                 rows={2}
                 placeholder="예) URL이 비공개 상태입니다. 공개로 전환해 재제출해 주세요."
-                className="border-border focus:border-brand bg-surface w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none"
+                className="border-border focus:border-brand bg-surface w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
               />
               <div className="mt-3 flex justify-end gap-2">
                 <button

@@ -42,6 +42,21 @@ export function useStartProjectGithubInstall(projectId: string) {
   })
 }
 
+/** 재동기화(누구나) — 설치 페이지 없이 조직·저장소·브랜치·기여도를 다시 읽는다(작업 3). */
+export function useResyncProjectGithub(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient
+        .post<ProjectGithubConnection>(
+          `/student/projects/${projectId}/github/resync`,
+        )
+        .then((r) => r.data),
+    onSuccess: (data) =>
+      qc.setQueryData(projectKeys.githubConnection(projectId), data),
+  })
+}
+
 /** 팀 공통 — 레포별 분석 브랜치·사용 여부 저장(누구나). */
 export function useSaveProjectGithubBranches(projectId: string) {
   const qc = useQueryClient()

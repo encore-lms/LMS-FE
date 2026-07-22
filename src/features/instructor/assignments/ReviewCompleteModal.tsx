@@ -31,7 +31,6 @@ export function ReviewCompleteModal({
             취소
           </Button>
           <Button
-           
             onClick={() => {
               onConfirm(feedback.trim())
               setFeedback('')
@@ -63,7 +62,7 @@ export function ReviewCompleteModal({
           onChange={(e) => setFeedback(e.target.value)}
           placeholder="검토 완료와 함께 남길 피드백이 있으면 입력하세요."
           aria-label={`${studentName} 검토 피드백`}
-          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none"
+          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none focus-visible:shadow-none"
         />
       </label>
     </Modal>

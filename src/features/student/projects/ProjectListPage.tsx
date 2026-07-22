@@ -321,7 +321,7 @@ export default function ProjectListPage() {
               <button
                 type="button"
                 onClick={() => setPendingDelete(null)}
-                className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+                className={buttonClass({ variant: 'secondary', size: 'sm' })}
               >
                 취소
               </button>

@@ -41,7 +41,6 @@ export function ReasonModal({
             취소
           </Button>
           <Button
-           
             disabled={!reason.trim() || pending}
             onClick={() => onConfirm(reason.trim())}
           >
@@ -61,7 +60,7 @@ export function ReasonModal({
           onChange={(e) => setReason(e.target.value)}
           placeholder={placeholder}
           aria-label={title}
-          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none"
+          className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-[10px] border-2 bg-white p-3 text-sm outline-none focus-visible:shadow-none"
         />
       </label>
     </Modal>

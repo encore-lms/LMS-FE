@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, FileText, Files } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -137,8 +138,7 @@ function AddDocModal({
   const [category, setCategory] = useState(categories[0] ?? '위키')
   const [url, setUrl] = useState('')
   const [file, setFile] = useState<File | null>(null)
-  const field =
-    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const field = inputClass()
   const submit = () => {
     if (!title.trim() && !file) return
     onAdd(
@@ -164,7 +164,7 @@ function AddDocModal({
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             취소
           </button>
@@ -284,7 +284,7 @@ function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             닫기
           </button>

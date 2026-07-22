@@ -64,6 +64,23 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
     setVisEdits(v)
   }, [data])
 
+  // 설치 콜백 복귀(?github=connected|error) — 토스트 + 재조회 후 github 쿼리만 정리(tab 등은 유지).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const gh = params.get('github')
+    if (!gh) return
+    if (gh === 'connected') {
+      toast.success('GitHub Organization을 연결했어요')
+      refetch()
+    } else if (gh === 'error') {
+      toast.danger('GitHub 연결에 실패했어요. 다시 시도해 주세요.')
+    }
+    params.delete('github')
+    const qs = params.toString()
+    window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const status = data?.status ?? 'DISCONNECTED'
   const connected = status === 'CONNECTED' || status === 'PERMISSION_REQUIRED'
   const repos = data?.repositories ?? []
@@ -71,7 +88,15 @@ export function SettingsTab({ d }: { d: WorkspaceData }) {
 
   const connect = () =>
     startM.mutate(undefined, {
-      onSuccess: () => toast.success('GitHub Organization을 연결했어요'),
+      onSuccess: (data) => {
+        if (!data.installed && data.installUrl) {
+          // 실 연동 — GitHub App 설치 페이지로 이동. 설치 후 콜백이 이 화면(?github=)으로 돌려보낸다.
+          window.location.href = data.installUrl
+          return
+        }
+        // mock 폴백(로컬·미배포) — 즉시 연결.
+        toast.success('GitHub Organization을 연결했어요')
+      },
       onError: () => toast.danger('GitHub 연결에 실패했어요. 다시 시도해 주세요.'),
     })
 

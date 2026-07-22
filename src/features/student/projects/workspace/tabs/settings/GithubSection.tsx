@@ -13,6 +13,7 @@ import {
   useDisconnectProjectGithub,
   useProjectGithub,
   useSaveMyGithubVisibility,
+  useResyncProjectGithub,
   useSaveProjectGithubBranches,
   useStartProjectGithubInstall,
 } from '../../../../api/projectGithub'
@@ -33,6 +34,7 @@ export function GithubSection({ projectId }: { projectId: string }) {
   const toast = useToast()
   const { data, isPending, isError, refetch } = useProjectGithub(projectId)
   const startM = useStartProjectGithubInstall(projectId)
+  const resyncM = useResyncProjectGithub(projectId)
   const branchesM = useSaveProjectGithubBranches(projectId)
   const visibilityM = useSaveMyGithubVisibility(projectId)
   const disconnectM = useDisconnectProjectGithub(projectId)
@@ -79,6 +81,13 @@ export function GithubSection({ projectId }: { projectId: string }) {
   const connected = status === 'CONNECTED' || status === 'PERMISSION_REQUIRED'
   const repos = data?.repositories ?? []
   const badge = STATUS_BADGE[status]
+
+  // 동기화 — 이미 설치된 installation으로 서버가 재동기화(기여도 재집계 포함). 설치 페이지 안 밟음.
+  const resync = () =>
+    resyncM.mutate(undefined, {
+      onSuccess: () => toast.success('GitHub 정보를 다시 불러왔어요'),
+      onError: () => toast.danger('동기화에 실패했어요. 다시 시도해 주세요.'),
+    })
 
   const connect = () =>
     startM.mutate(undefined, {
@@ -369,11 +378,11 @@ export function GithubSection({ projectId }: { projectId: string }) {
             <Button
               variant="secondary"
               size="sm"
-              onClick={connect}
-              disabled={startM.isPending}
+              onClick={resync}
+              disabled={resyncM.isPending}
             >
               <RefreshCw className="size-3.5" aria-hidden="true" />
-              동기화
+              {resyncM.isPending ? '동기화 중…' : '동기화'}
             </Button>
           </div>
         </>

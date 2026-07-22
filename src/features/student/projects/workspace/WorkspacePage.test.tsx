@@ -327,7 +327,7 @@ describe('WorkspacePage home', () => {
     expect(screen.getByText('제출 완료')).toBeInTheDocument()
   })
 
-  it('인증 요청은 체크리스트 완료 후 제출 상태로 전환한다', async () => {
+  it('체크리스트 미완료 판정이면 제출이 막히고 손으로 전환할 수 없다', async () => {
     const user = userEvent.setup()
     // 인증 요청은 완료 확정(기간 종료) 이후에만 — completed 단계로 고정
     renderPage(
@@ -340,15 +340,22 @@ describe('WorkspacePage home', () => {
     expect(
       await screen.findByText('요청 전 체크리스트를 모두 완료해 주세요'),
     ).toBeInTheDocument()
+    // 체크리스트는 BE 자동 판정의 읽기 전용 표시 — 토글 버튼이 없어야 한다(판정 우회 차단).
+    expect(screen.queryByRole('button', { name: /완료 전환/ })).toBeNull()
+  })
 
-    await user.click(
-      screen.getByRole('button', { name: '성과 지표 3개 이상 등록 완료 전환' }),
-    )
-    await user.click(
-      screen.getByRole('button', { name: '산출물 공개 범위 확인 완료 전환' }),
-    )
+  it('체크리스트가 서버 판정으로 모두 완료면 인증 요청이 제출된다', async () => {
+    const user = userEvent.setup()
+    const allDone = {
+      ...mockWorkspaceP3,
+      certChecklist: mockWorkspaceP3.certChecklist.map((c) => ({
+        ...c,
+        status: { label: '완료', tone: 'success' as const },
+      })),
+    }
+    renderPage('/student/projects/p3?tab=certification', allDone, 'completed')
+
     await user.click(screen.getByRole('button', { name: '인증 요청 제출' }))
-
     expect(
       await screen.findByText('인증 요청을 제출했습니다'),
     ).toBeInTheDocument()

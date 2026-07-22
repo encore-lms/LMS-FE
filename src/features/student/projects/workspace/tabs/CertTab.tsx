@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CircleCheck, Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
@@ -18,7 +17,9 @@ import { card, phaseCertBadge } from '../components/ws-style'
 export function CertTab({ d }: { d: WorkspaceData }) {
   const navigate = useNavigate()
   const toast = useToast()
-  const [checks, setChecks] = useState(d.certChecklist)
+  // 체크리스트는 BE가 실데이터(작업·산출물·지표·상호평가)로 자동 판정 — 읽기 전용 표시.
+  // 로컬 토글(useState 복제)은 판정을 손으로 덮어써 제출 가드를 뚫는 가짜였다.
+  const checks = d.certChecklist
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const setPhase = useProjectFlow((s) => s.setPhase)
   const editRequest = useProjectFlow((s) => s.editRequests[d.id])
@@ -59,23 +60,8 @@ export function CertTab({ d }: { d: WorkspaceData }) {
                   i > 0 && 'border-divider border-t',
                 )}
               >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setChecks((prev) =>
-                      prev.map((item, idx) =>
-                        idx === i
-                          ? {
-                              ...item,
-                              status: done
-                                ? { label: '필요', tone: 'danger' }
-                                : { label: '완료', tone: 'success' },
-                            }
-                          : item,
-                      ),
-                    )
-                  }
-                  aria-label={`${c.label} 완료 전환`}
+                <span
+                  aria-hidden="true"
                   className={cn(
                     'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
                     done
@@ -84,7 +70,7 @@ export function CertTab({ d }: { d: WorkspaceData }) {
                   )}
                 >
                   {done ? '✓' : ''}
-                </button>
+                </span>
                 <span className="text-fg flex-1 text-[13px] font-semibold">
                   {c.label}
                 </span>

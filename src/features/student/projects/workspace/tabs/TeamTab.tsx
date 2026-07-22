@@ -37,82 +37,72 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
         action="팀원 초대"
         onAction={() => setInviting(true)}
       />
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <section className={cn(card, 'flex flex-1 flex-col py-2')}>
-          {members.map((m, i) => (
-            <div
-              key={m.name}
-              className={cn(
-                'flex items-center gap-4 py-5',
-                i > 0 && 'border-divider border-t',
-              )}
-            >
-              <Avatar name={nameOf(m.userId, m.name)} tone={m.avatarTone} />
-              <div className="flex w-40 flex-col gap-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-fg text-[13px] font-bold">
-                    {nameOf(m.userId, m.name)}
-                  </span>
-                  <span
-                    className={cn(
-                      'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                      m.kind === 'PM'
-                        ? 'bg-accent-bg text-accent-strong'
-                        : 'bg-surface-muted text-fg-muted',
-                    )}
-                  >
-                    {m.kind}
-                  </span>
-                  {i === SELF_INDEX && (
-                    <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
-                      본인
-                    </span>
-                  )}
-                </div>
-                <span className="text-fg-subtle text-[11px]">{m.role}</span>
-              </div>
-              <div className="flex-1" />
-              <div className="flex shrink-0 items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpenMember(m)}
-                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
-                >
-                  상세
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditing(i)}
-                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
-                >
-                  수정
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRemoving(i)}
-                  disabled={m.kind === 'PM'}
-                  title={
+      <section className={cn(card, 'flex flex-col py-2')}>
+        {members.map((m, i) => (
+          <div
+            key={m.name}
+            className={cn(
+              'flex items-center gap-4 py-5',
+              i > 0 && 'border-divider border-t',
+            )}
+          >
+            <Avatar name={nameOf(m.userId, m.name)} tone={m.avatarTone} />
+            <div className="flex w-40 flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-fg text-[13px] font-bold">
+                  {nameOf(m.userId, m.name)}
+                </span>
+                <span
+                  className={cn(
+                    'rounded px-1.5 py-0.5 text-[10px] font-bold',
                     m.kind === 'PM'
-                      ? 'PM은 삭제할 수 없어요. 다른 팀원에게 PM을 위임한 뒤 삭제하세요.'
-                      : undefined
-                  }
-                  className="border-border text-danger hover:bg-danger-bg rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                      ? 'bg-accent-bg text-accent-strong'
+                      : 'bg-surface-muted text-fg-muted',
+                  )}
                 >
-                  삭제
-                </button>
+                  {m.kind}
+                </span>
+                {i === SELF_INDEX && (
+                  <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
+                    본인
+                  </span>
+                )}
               </div>
+              <span className="text-fg-subtle text-[11px]">{m.role}</span>
             </div>
-          ))}
-        </section>
-        <section className={cn(card, 'flex flex-col gap-4 lg:w-[300px]')}>
-          <span className="text-fg text-[14px] font-bold">역할 정책</span>
-          {d.rolePolicy.map((r, i) => (
-            <span key={i} className="text-fg-muted text-[12px] leading-5">
-              {i + 1}. {r}
-            </span>
-          ))}
-        </section>
-      </div>
+            <div className="flex-1" />
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOpenMember(m)}
+                className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+              >
+                상세
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(i)}
+                className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+              >
+                수정
+              </button>
+              <button
+                type="button"
+                onClick={() => setRemoving(i)}
+                disabled={m.kind === 'PM'}
+                title={
+                  m.kind === 'PM'
+                    ? 'PM은 삭제할 수 없어요. 다른 팀원에게 PM을 위임한 뒤 삭제하세요.'
+                    : undefined
+                }
+                className="border-border text-danger hover:bg-danger-bg rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        ))}
+      </section>
       {openMember && (
         <MemberProfileModal
           member={openMember}

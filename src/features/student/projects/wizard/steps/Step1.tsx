@@ -17,8 +17,10 @@ export function Step1(p: {
   onEndChange: (v: string) => void
   invalid: Record<'name' | 'desc' | 'start' | 'end', boolean>
 }) {
+  // focus-visible:shadow-none — 전역 base의 input/textarea 포커스 링을 끄고 focus:border-brand 테두리만
+  // 남긴다(링+테두리 2겹 방지, 날짜 picker 트리거와 동일 포커스 표현).
   const input =
-    'border-border bg-surface text-fg focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
+    'border-border bg-surface text-fg focus:border-brand focus-visible:shadow-none w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
   return (
     <section className={cn(card, 'flex flex-col gap-4')}>
       <div className="flex flex-col gap-0.5">

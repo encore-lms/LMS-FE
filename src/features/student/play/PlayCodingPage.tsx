@@ -268,7 +268,7 @@ export default function PlayCodingPage() {
                             ? '빈칸(____)에 들어갈 코드를 입력하세요.'
                             : '코드를 작성하세요. 오답이면 정답을 맞힐 때까지 다시 제출할 수 있어요.'
                       }
-                      className="border-border bg-surface text-fg focus:border-brand min-h-[110px] w-full resize-none rounded-xl border px-4 py-3 font-mono text-[13px] leading-6 focus:outline-none"
+                      className="border-border bg-surface text-fg focus:border-brand min-h-[110px] w-full resize-none rounded-xl border px-4 py-3 font-mono text-[13px] leading-6 focus:outline-none focus-visible:shadow-none"
                     />
                   </div>
 

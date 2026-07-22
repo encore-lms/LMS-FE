@@ -9,10 +9,15 @@ import { RoleSelect } from './RoleSelect'
 
 export function EditMemberModal({
   member,
+  canDelegate,
+  saving,
   onClose,
   onSave,
 }: {
   member: WsMember
+  /** PM 위임 셀렉트 노출 여부 — 위임은 BE가 현재 PM만 허용하므로 PM에게만 보여준다. */
+  canDelegate?: boolean
+  saving?: boolean
   onClose: () => void
   onSave: (patch: { role: string; kind: WsMember['kind'] }) => void
 }) {
@@ -41,10 +46,10 @@ export function EditMemberModal({
           <button
             type="button"
             onClick={submit}
-            disabled={!role.trim()}
+            disabled={!role.trim() || saving}
             className={buttonClass({ size: 'sm' })}
           >
-            저장
+            {saving ? '저장 중…' : '저장'}
           </button>
         </>
       }
@@ -58,19 +63,21 @@ export function EditMemberModal({
           <span className="text-fg text-[12px] font-bold">역할</span>
           <RoleSelect value={role} onChange={setRole} />
         </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">구분</span>
-          <Select
-            aria-label="구분"
-            value={kind}
-            onChange={(v) => setKind(v as WsMember['kind'])}
-            options={[
-              { value: '팀원', label: '팀원' },
-              { value: 'PM', label: 'PM (위임 시 기존 PM은 팀원으로 변경)' },
-            ]}
-            className="h-10 w-full"
-          />
-        </div>
+        {canDelegate && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-fg text-[12px] font-bold">구분</span>
+            <Select
+              aria-label="구분"
+              value={kind}
+              onChange={(v) => setKind(v as WsMember['kind'])}
+              options={[
+                { value: '팀원', label: '팀원' },
+                { value: 'PM', label: 'PM (위임 시 기존 PM은 팀원으로 변경)' },
+              ]}
+              className="h-10 w-full"
+            />
+          </div>
+        )}
       </div>
     </Modal>
   )

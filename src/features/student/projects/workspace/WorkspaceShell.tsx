@@ -9,6 +9,7 @@ import {
   Flag,
   House,
   Info,
+  Settings,
   Send,
   Star,
   TriangleAlert,
@@ -31,6 +32,7 @@ const TABS: { key: WsTab; label: string; icon: LucideIcon }[] = [
   { key: 'outcomes', label: '성과·기술스택', icon: CircleCheck },
   { key: 'peer-evaluation', label: '상호평가', icon: Star },
   { key: 'certification', label: '인증 요청', icon: Info },
+  { key: 'settings', label: '설정', icon: Settings },
 ]
 
 export function WorkspaceShell({

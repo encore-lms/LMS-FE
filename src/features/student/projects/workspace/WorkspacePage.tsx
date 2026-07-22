@@ -55,6 +55,8 @@ export default function WorkspacePage() {
         <WorkspaceShell
           title={data.title}
           meta={data.meta}
+          startDate={data.startDate}
+          endDate={data.endDate}
           active={tab}
           onTab={setTab}
         >

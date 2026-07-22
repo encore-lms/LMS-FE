@@ -264,7 +264,7 @@ export default function StatisticsPage() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="팀/멘토 검색"
                 aria-label="팀/멘토 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
               />
             </div>
 

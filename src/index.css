@@ -96,6 +96,18 @@ body {
   }
 }
 
+/* Tailwind v4는 v3와 달리 button에 cursor:pointer를 기본 적용하지 않는다(브라우저 기본 default).
+   클릭 가능한 요소에 포인터 커서를 일괄 복원한다. disabled는 제외해 not-allowed/default 유지. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  label:has(> input[type='checkbox']:not(:disabled)),
+  label:has(> input[type='radio']:not(:disabled)),
+  summary {
+    cursor: pointer;
+  }
+}
+
 /* 모션 감쇠 선호 시 전환·애니메이션·스무스 스크롤을 일괄 최소화 */
 @media (prefers-reduced-motion: reduce) {
   *,

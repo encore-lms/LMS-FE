@@ -196,6 +196,21 @@ export function useRequestCertification(projectId: string) {
   )
 }
 
+// 설정 탭 — 이름·기간 수정(PM 전용). 날짜는 YYYY-MM-DD.
+export function useUpdateProjectInfo(projectId: string) {
+  return useWsMutation<{ title: string; start?: string; end?: string }>(
+    (id, v) => apiClient.put(`/student/projects/${id}/info`, v),
+    projectId,
+  )
+}
+// 설정 탭 — 기술 카테고리 교체(팀원 누구나). stacks 전체로 덮어씀.
+export function useUpdateProjectTechStacks(projectId: string) {
+  return useWsMutation<{ stacks: string[] }>(
+    (id, v) => apiClient.put(`/student/projects/${id}/tech-stacks`, v),
+    projectId,
+  )
+}
+
 // 산출물 파일 업로드(multipart, BE #78) — 성공 시 워크스페이스 무효화
 export function useUploadArtifactFile(projectId: string) {
   const qc = useQueryClient()

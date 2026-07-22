@@ -473,7 +473,7 @@ export default function QnaDetailPage() {
 
             <div className="flex flex-col gap-4">
               {data.answers.length === 0 && (
-                <div className="border-border text-fg-subtle rounded-2xl border border-dashed p-10 text-center text-[13px]">
+                <div className="text-fg-subtle rounded-2xl p-10 text-center text-[13px]">
                   아직 답변이 없어요. 첫 답변을 남겨보세요.
                 </div>
               )}

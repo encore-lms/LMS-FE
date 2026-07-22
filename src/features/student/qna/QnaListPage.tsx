@@ -88,7 +88,7 @@ export default function QnaListPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="제목·내용·태그 검색"
-                  className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
+                  className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none focus-visible:shadow-none"
                 />
               </div>
               {canAsk && (

@@ -272,6 +272,9 @@ export interface WorkspaceData {
   selfReview?: string | null
   /** 요청자가 이 프로젝트의 OWNER(PM)인지 — 설정 탭 등 PM 전용 게이팅용 */
   isOwner?: boolean
+  /** 설정 탭 편집 폼 채우기용 — '프로젝트 기간' 시작·종료(YYYY-MM-DD, 없으면 null) */
+  startDate?: string | null
+  endDate?: string | null
   // certification
   certChecklist: WsCheck[]
   certStatus: Badge

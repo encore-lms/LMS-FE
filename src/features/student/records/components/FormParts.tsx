@@ -5,6 +5,7 @@ import type {
 } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 
 // 기록실 등록/수정 폼 공유 프리미티브 — 빵부스러기·라벨·입력·지원형식·하단 액션바.
 
@@ -48,10 +49,6 @@ export function FieldLabel({
   )
 }
 
-const inputBase =
-  'bg-surface text-fg placeholder:text-fg-subtle w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
-const inputBorder = 'border-border focus:border-brand'
-
 export function TextInput({
   error,
   className,
@@ -61,11 +58,7 @@ export function TextInput({
     <input
       {...props}
       aria-invalid={error || undefined}
-      className={cn(
-        inputBase,
-        error ? 'border-danger focus:border-danger' : inputBorder,
-        className,
-      )}
+      className={cn(inputClass({ size: 'md', invalid: error }), className)}
     />
   )
 }
@@ -75,9 +68,10 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       {...props}
       className={cn(
-        inputBase,
-        inputBorder,
-        'min-h-[112px] resize-none leading-6',
+        inputClass({
+          size: 'md',
+          className: 'min-h-[112px] resize-none leading-6',
+        }),
         props.className,
       )}
     />

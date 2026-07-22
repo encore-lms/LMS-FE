@@ -20,6 +20,7 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
+import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -368,7 +369,10 @@ export default function ChangeRequestPage() {
           value={reason}
           maxLength={500}
           onChange={(e) => setReason(e.target.value)}
-          className="border-border bg-surface text-fg focus:border-brand min-h-[96px] w-full resize-none rounded-[10px] border px-4 py-3 text-[14px] leading-6 focus:outline-none"
+          className={inputClass({
+            size: 'md',
+            className: 'min-h-[96px] resize-none leading-6',
+          })}
         />
         <div className="text-fg-subtle flex items-center gap-3 text-[11px]">
           <span>Markdown 지원</span>

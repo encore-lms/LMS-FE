@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { cn } from '@/shared/lib/cn'
@@ -250,7 +251,7 @@ export function FieldFormModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="예: 주요 아젠다"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            className={inputClass()}
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -265,7 +266,7 @@ export function FieldFormModal({
             value={helpText}
             onChange={(e) => setHelpText(e.target.value)}
             placeholder="작성 시 보이는 도움말 (선택)"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            className={inputClass()}
           />
         </div>
         <div className="flex items-start gap-6">

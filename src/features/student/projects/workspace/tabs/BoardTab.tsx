@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -158,8 +159,7 @@ function AddTaskModal({
   const today = todayISO()
   const [startAt, setStartAt] = useState(today)
   const [endAt, setEndAt] = useState(nextDayISO(today))
-  const field =
-    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const field = inputClass()
 
   const submit = () => {
     if (!title.trim()) return
@@ -195,7 +195,7 @@ function AddTaskModal({
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             취소
           </button>

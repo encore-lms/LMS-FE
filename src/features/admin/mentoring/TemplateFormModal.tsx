@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { apiErrorOf, useCreateLogTemplate, useUpdateTemplateMeta } from './api'
@@ -109,7 +110,7 @@ export function TemplateFormModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="예: AI 캠프 기본 v2.2"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            className={inputClass()}
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -124,7 +125,7 @@ export function TemplateFormModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="템플릿 용도 한 줄 요약 (선택)"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border px-3 text-sm outline-none"
+            className={inputClass()}
           />
         </div>
         <ul className="text-fg-subtle flex flex-col gap-1 text-xs">

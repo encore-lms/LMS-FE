@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, CircleCheck, Lock, PencilLine, Timer } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -163,7 +164,10 @@ export default function ChangeRequestPage() {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="왜 다시 수정해야 하는지 적어주세요"
-              className="border-border bg-surface text-fg focus:border-brand min-h-[100px] w-full resize-none rounded-[10px] border px-4 py-3 text-[14px] leading-6 focus:outline-none"
+              className={inputClass({
+                size: 'md',
+                className: 'min-h-[100px] resize-none leading-6',
+              })}
             />
           </section>
           <div className="bg-surface-muted/40 text-fg-muted flex items-start gap-2 rounded-xl px-4 py-3 text-[12px] leading-5">
@@ -207,7 +211,10 @@ export default function ChangeRequestPage() {
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="무엇을 어떻게 수정했는지 요약해 주세요"
-              className="border-border bg-surface text-fg focus:border-brand min-h-[100px] w-full resize-none rounded-[10px] border px-4 py-3 text-[14px] leading-6 focus:outline-none"
+              className={inputClass({
+                size: 'md',
+                className: 'min-h-[100px] resize-none leading-6',
+              })}
             />
           </section>
         </>

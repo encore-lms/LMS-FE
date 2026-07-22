@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ListChecks, TriangleAlert } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
@@ -140,7 +141,7 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
               <button
                 type="button"
                 onClick={() => setRemoving(null)}
-                className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+                className={buttonClass({ variant: 'secondary', size: 'sm' })}
               >
                 취소
               </button>
@@ -215,8 +216,7 @@ const ROLE_PRESETS = [
   '기획',
   '디자인',
 ]
-const fieldCls =
-  'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+const fieldCls = inputClass()
 
 function RoleSelect({
   value,
@@ -284,7 +284,7 @@ function InviteMemberModal({
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             취소
           </button>
@@ -362,7 +362,7 @@ function EditMemberModal({
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             취소
           </button>
@@ -439,7 +439,7 @@ function MemberProfileModal({
         <button
           type="button"
           onClick={onClose}
-          className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          className={buttonClass({ variant: 'secondary', size: 'sm' })}
         >
           닫기
         </button>

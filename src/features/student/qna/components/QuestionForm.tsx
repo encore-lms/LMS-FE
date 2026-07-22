@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/shared/store'
 import { useCreateQuestion, useUpdateQuestion } from '../../api/qna'
@@ -12,8 +13,7 @@ import { TONE_SOLID } from '@/shared/lib/tone'
 
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
-const input =
-  'border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-[10px] border px-4 py-3 text-[14px] focus:outline-none'
+const input = inputClass({ size: 'md' })
 
 /** 수정 모드 초기값 — 전달되면 기존 질문을 수정한다. */
 export interface QuestionFormInitial {

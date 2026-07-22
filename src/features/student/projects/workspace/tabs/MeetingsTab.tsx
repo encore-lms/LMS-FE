@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Calendar, Users } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
@@ -105,8 +106,7 @@ function AddMeetingModal({
     dateStr(now.getFullYear(), now.getMonth(), now.getDate()),
   )
   const [summary, setSummary] = useState('')
-  const field =
-    'border-border focus:border-brand h-10 w-full rounded-lg border px-3 text-[13px] outline-none'
+  const field = inputClass()
   const submit = () => {
     if (!title.trim() || !summary.trim()) return
     onAdd(
@@ -131,7 +131,7 @@ function AddMeetingModal({
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             취소
           </button>
@@ -212,7 +212,7 @@ function MeetingDetailModal({
         <button
           type="button"
           onClick={onClose}
-          className="border-border text-fg rounded-lg border px-4 py-2 text-[13px] font-semibold"
+          className={buttonClass({ variant: 'secondary', size: 'sm' })}
         >
           닫기
         </button>

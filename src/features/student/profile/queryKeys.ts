@@ -2,4 +2,5 @@
 export const profileKeys = {
   all: ['student-profile'] as const,
   detail: () => [...profileKeys.all, 'detail'] as const,
+  githubIdentity: () => [...profileKeys.all, 'github-identity'] as const,
 } as const

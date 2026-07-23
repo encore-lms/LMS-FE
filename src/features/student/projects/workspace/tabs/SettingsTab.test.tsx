@@ -66,6 +66,7 @@ const CONNECTED: ProjectGithubConnection = {
       myContribPercent: 38,
       totalCommits: 240,
       contributors: [],
+      dailyActivity: [],
     },
   ],
   lastSyncedAt: '2026-07-22T00:00:00Z',

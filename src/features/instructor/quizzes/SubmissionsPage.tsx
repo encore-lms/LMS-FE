@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
 import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -24,6 +24,13 @@ export default function SubmissionsPage() {
   const { quizId = '' } = useParams()
   const navigate = useNavigate()
   const base = useQuizBasePath()
+  const [searchParams] = useSearchParams()
+  // 허브 진입이면 목록으로 = 허브 퀴즈 탭. 채점 진입에도 cohortId를 이어붙인다.
+  const fromCohortId = searchParams.get('cohortId')
+  const hubQs = fromCohortId ? `?cohortId=${fromCohortId}` : ''
+  const backTo = fromCohortId
+    ? `/instructor/cohorts/${fromCohortId}/education?tab=quizzes`
+    : base
   const toast = useToast()
   const { data, isPending, isError, refetch } = useQuizSubmissions(quizId)
   const [q, setQ] = useState('')
@@ -181,7 +188,7 @@ export default function SubmissionsPage() {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation()
-                  navigate(`${base}/${quizId}/submissions/${r.id}/grade`)
+                  navigate(`${base}/${quizId}/submissions/${r.id}/grade${hubQs}`)
                 }}
               >
                 채점
@@ -281,7 +288,7 @@ export default function SubmissionsPage() {
             ))}
             <button
               type="button"
-              onClick={() => navigate(`${base}`)}
+              onClick={() => navigate(backTo)}
               className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
             >
               ← 퀴즈 목록으로

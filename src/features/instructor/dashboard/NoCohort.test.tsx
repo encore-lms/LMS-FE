@@ -14,7 +14,6 @@ const noCohort: InstructorDashboardData = {
   cohortCount: 0,
   cohorts: [],
   kpiGrading: { value: 0, hint: '-' },
-  kpiRecords: { value: 0, hint: '-' },
   kpiProjects: { value: 0, hint: '-' },
   kpiSupplements: { value: 0, hint: '-' },
   priorities: [],

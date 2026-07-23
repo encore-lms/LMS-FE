@@ -354,11 +354,11 @@ function ScoreSummary({
             핵심 지표 · 종합 요약
           </span>
           <span className="text-fg-subtle text-[11px]">
-            v6 운영 mock 원천데이터 기반 6축 절대·상대 산정
+            학습·프로젝트·평가 데이터를 바탕으로 한 6축 절대·상대 산정
           </span>
         </div>
         <span className="text-fg-subtle text-[11px]">
-          정책 2026.07.20 · 산정일 {score.calculatedAt}
+          산정일 {score.calculatedAt}
         </span>
       </div>
 

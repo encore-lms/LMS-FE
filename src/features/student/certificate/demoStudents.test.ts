@@ -29,6 +29,11 @@ describe('certificate demo students', () => {
     expect(
       CERTIFICATE_DEMO_STUDENTS.map((student) => student.recommendationState),
     ).toEqual(['BOTH', 'BOTH', 'MENTOR_ONLY', 'INSTRUCTOR_ONLY', 'NONE'])
+    expect(
+      CERTIFICATE_DEMO_STUDENTS.every(
+        (student) => !/mock|시연 데이터/.test(student.periodLabel),
+      ),
+    ).toBe(true)
 
     const noRecommendation = CERTIFICATE_DEMO_STUDENTS.at(-1)!
     expect(noRecommendation).toMatchObject({

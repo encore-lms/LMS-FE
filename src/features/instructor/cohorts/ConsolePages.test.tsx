@@ -5,16 +5,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import DashboardPage from '../dashboard/DashboardPage'
 import CohortsPage from './CohortsPage'
-import CohortStudentsPage from './CohortStudentsPage'
-import {
-  useInstructorDashboard,
-  useInstructorCohorts,
-  useCohortStudents,
-} from '../api/console'
+import { useInstructorDashboard, useInstructorCohorts } from '../api/console'
 import type {
   InstructorDashboardData,
   InstructorCohortsData,
-  CohortStudentsData,
 } from '@/shared/types'
 
 vi.mock('../api/console')
@@ -42,7 +36,7 @@ const dashboard: InstructorDashboardData = {
       dday: 'D+5',
       urgent: true,
       actionLabel: '확인',
-      to: '/instructor/cohorts/fe-7/students',
+      to: '/instructor/cohorts/fe-7/education',
     },
     {
       id: 'pri-2',
@@ -107,40 +101,6 @@ const cohorts: InstructorCohortsData = {
   ],
 }
 
-const students: CohortStudentsData = {
-  cohortLabel: 'DA 4기',
-  total: 24,
-  riskTotal: 3,
-  rows: [
-    {
-      id: 'stu-1',
-      name: '박지훈',
-      emailUuid: 'park.jh@playdata · ghi-9012',
-      cohortLabel: 'FE 7기',
-      certStatus: 'changes_requested',
-      quizAvg: '평균 78.2',
-      quizDetail: '미응시 0 · 채점 1',
-      recordApproved: '승인 8',
-      recordDetail: '대기 0 · 반려 1',
-      projectStatus: 'reviewing',
-      riskFlags: ['점수 재검토'],
-    },
-    {
-      id: 'stu-2',
-      name: '이서연',
-      emailUuid: 'lee.sy@playdata · def-5678',
-      cohortLabel: 'DA 4기',
-      certStatus: 'reviewing',
-      quizAvg: '평균 84.7',
-      quizDetail: '미응시 1 · 채점 2',
-      recordApproved: '승인 12',
-      recordDetail: '대기 1 · 반려 0',
-      projectStatus: 'certified',
-      riskFlags: [],
-    },
-  ],
-}
-
 function ok(data: unknown) {
   return { data, isPending: false, isError: false }
 }
@@ -152,9 +112,6 @@ function mockAll() {
   vi.mocked(useInstructorCohorts).mockReturnValue(
     ok(cohorts) as unknown as ReturnType<typeof useInstructorCohorts>,
   )
-  vi.mocked(useCohortStudents).mockReturnValue(
-    ok(students) as unknown as ReturnType<typeof useCohortStudents>,
-  )
 }
 
 function renderAt(path: string) {
@@ -165,10 +122,6 @@ function renderAt(path: string) {
         <Routes>
           <Route path="/instructor" element={<DashboardPage />} />
           <Route path="/instructor/cohorts" element={<CohortsPage />} />
-          <Route
-            path="/instructor/cohorts/:cohortId/students"
-            element={<CohortStudentsPage />}
-          />
         </Routes>
       </MemoryRouter>
     </ToastProvider>,
@@ -215,24 +168,3 @@ describe('CohortsPage (§2)', () => {
   })
 })
 
-describe('CohortStudentsPage (§3)', () => {
-  it('증명서 상태 pill·위험 플래그·정책 푸터를 렌더한다', () => {
-    renderAt('/instructor/cohorts/da-4/students')
-    expect(screen.getByText('박지훈')).toBeInTheDocument()
-    // '보완 요청' badge — 커스텀 Select는 닫힌 상태에서 option을 렌더하지 않는다
-    expect(screen.getAllByText('보완 요청').length).toBeGreaterThan(0)
-    expect(screen.getByText('점수 재검토')).toBeInTheDocument()
-    expect(screen.getByText('— 없음')).toBeInTheDocument()
-    expect(
-      screen.getByText(/담당 기수 밖 학생은 노출되지 않습니다/),
-    ).toBeInTheDocument()
-  })
-
-  it('위험 필터는 플래그 있는 수강생만 남긴다', async () => {
-    const user = userEvent.setup()
-    renderAt('/instructor/cohorts/da-4/students')
-    await user.click(screen.getByRole('button', { name: /위험: 전체/ }))
-    expect(screen.getByText('박지훈')).toBeInTheDocument()
-    expect(screen.queryByText('이서연')).not.toBeInTheDocument()
-  })
-})

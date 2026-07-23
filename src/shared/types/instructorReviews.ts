@@ -75,6 +75,7 @@ export interface CertGridRow {
 // 블로그 모달 상세 (읽기 전용 + 매니저 결정)
 export interface BlogRecordDetail {
   studentName: string
+  studentUserId?: string // 실 BE만 제공 — FE 계정 join으로 실명 치환용
   weekLabel: string // '6월 4주차'
   status: RecordCellStatus // 매니저 결정
   url: string
@@ -85,6 +86,7 @@ export interface BlogRecordDetail {
 // 스터디 모달 상세 (읽기 전용 + 매니저 결정)
 export interface StudyRecordDetail {
   studentName: string
+  studentUserId?: string // 실 BE만 제공 — FE 계정 join으로 실명 치환용
   title: string // 'skn29기 예복습 스터디 7회차'
   status: RecordCellStatus
   submittedAt: string // '2026-05-08'
@@ -98,6 +100,7 @@ export interface StudyRecordDetail {
 // ⚠️ 증빙 링크·이미지 열람 가능 여부는 운영·수강생 화면과 정합 확인 필요(BE 계약 대기).
 export interface CertRecordDetail {
   studentName: string
+  studentUserId?: string // 실 BE만 제공 — FE 계정 join으로 실명 치환용
   certType: CertType // 'PCSQL'
   grade: string // 'Lv.3' — 등급(합격 표기용)
   status: RecordCellStatus // 매니저 결정

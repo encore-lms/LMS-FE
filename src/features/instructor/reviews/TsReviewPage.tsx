@@ -19,6 +19,7 @@ import {
   COHORT_LABEL_TO_ID,
 } from '../cohortContext'
 import { QueueFilterBar, QueueStats } from './QueueShell'
+import { REVIEW_TABS, RouteTabBar } from '../components/RouteTabBar'
 
 type StatusFilter = 'all' | TsReviewStatus
 
@@ -232,6 +233,7 @@ export default function TsReviewPage() {
     >
       {data && (
         <div className="p-8">
+          <RouteTabBar tabs={REVIEW_TABS} />
           <QueueStats stats={data.stats} />
           <QueueFilterBar
             q={q}

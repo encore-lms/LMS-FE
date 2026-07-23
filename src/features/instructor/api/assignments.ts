@@ -7,12 +7,15 @@ import type {
 } from '@/shared/types'
 
 // 강사 과제·실습 Main Flow (/instructor/assignments*) — 실 BE(learning-service). baseURL '/api'.
-export function useInstructorAssignments() {
+// cohortId 지정 시 해당 기수로 서버 스코프(과정·기수 허브의 과제 탭 임베드).
+export function useInstructorAssignments(cohortId?: string | null) {
   return useQuery({
-    queryKey: instructorKeys.assignments(),
+    queryKey: [...instructorKeys.assignments(), cohortId ?? 'all'],
     queryFn: () =>
       apiClient
-        .get<InstructorAssignmentListData>('/instructor/assignments')
+        .get<InstructorAssignmentListData>('/instructor/assignments', {
+          cohortId: cohortId ?? undefined,
+        })
         .then((r) => r.data),
   })
 }

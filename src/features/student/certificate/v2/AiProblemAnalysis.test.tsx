@@ -9,7 +9,8 @@ describe('AI 문제해결·협업 종합 분석', () => {
     const problem = {
       ...base,
       status: 'PARTIAL' as const,
-      certifiedCaseCount: 1,
+      certifiedCaseCount: 3,
+      unmappedCaseCount: 1,
       caps: [
         {
           ...base.caps[0],
@@ -24,11 +25,38 @@ describe('AI 문제해결·협업 종합 분석', () => {
         status: 'READY' as const,
         summary: '동료평가에서 협업과 진행 공유 행동이 확인됩니다.',
         evaluatorCount: 2,
+        projectCount: 1,
         behaviorSignals: ['진행 공유'],
+        projectEvaluations: [
+          {
+            projectId: 'internal-project-id',
+            evaluatorCount: 2,
+            average: 4.3,
+            deviation: 0.2,
+            axes: {
+              collaboration: 4.4,
+              communication: 4.2,
+              responsibility: 4.5,
+              problemSolving: 4.1,
+            },
+          },
+        ],
+        evidence: ['진행 상황을 문서로 공유했다'],
       },
       growth: {
         ...base.growth,
+        status: 'READY' as const,
+        confidence: 'MEDIUM' as const,
         summary: '인증 사례가 쌓이며 문제 범위가 확장되고 있습니다.',
+        certifiedCaseCount: 3,
+        period: {
+          firstAt: '2026-04-01T00:00:00.000Z',
+          lastAt: '2026-06-30T00:00:00.000Z',
+        },
+        newDomains: ['인프라·배포'],
+        repeatedDomains: ['데이터 처리'],
+        newTechnologies: ['Docker'],
+        repeatedTechnologies: ['Python'],
       },
     }
     render(<AiProblemAnalysis problem={problem} />)
@@ -37,6 +65,24 @@ describe('AI 문제해결·협업 종합 분석', () => {
     expect(screen.getByText('인증 트러블슈팅 역량')).toBeInTheDocument()
     expect(screen.getByText('협업 스타일')).toBeInTheDocument()
     expect(screen.getByText(problem.collaboration.summary)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '세 분야는 역량 점수가 아니라 인증 문제해결 사례가 확인된 범위입니다.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '세 분야로 명확히 분류되지 않은 인증 사례 1건도 분석 근거에서 보존했습니다.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('프로젝트별 동료평가 근거')).toBeInTheDocument()
+    expect(screen.getByText('익명화된 행동 근거')).toBeInTheDocument()
+    expect(screen.getByText('반복 기술')).toBeInTheDocument()
+    expect(screen.getByText('Python')).toBeInTheDocument()
+    expect(
+      screen.getByText('분석 기간 2026.04.01 – 2026.06.30'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('internal-project-id')).not.toBeInTheDocument()
   })
 
   it('근거가 준비되지 않으면 점수를 만들지 않고 산출 전 상태를 표시한다', () => {

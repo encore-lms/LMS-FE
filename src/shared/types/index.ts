@@ -133,11 +133,6 @@ export type {
   StudentCertStatus,
   CohortStudentRow,
   CohortStudentsData,
-  StudentDetailTabKey,
-  StudentDetailTabItem,
-  StudentDetailTab,
-  StudentSupplement,
-  StudentDetailData,
 } from './instructorConsole'
 export type {
   CertReviewTargetType,

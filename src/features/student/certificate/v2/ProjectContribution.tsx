@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import type { CertProjectActivity } from '../types'
 
+export interface ProjectContributionActivity extends CertProjectActivity {
+  metricLabel?: string
+  metricValue?: string
+  note?: string
+}
+
 // 증명서 v2 — 프로젝트별 커밋 잔디밭(선택형). 한 프로젝트 레포의 커밋만 일별로 표시.
 // 활동일·최장 연속·주 평균으로 "꾸준한 참여(일관성)"를 정량 증명.
 const card =
@@ -18,7 +24,7 @@ export function ProjectContribution({
   activities,
   className,
 }: {
-  activities: CertProjectActivity[]
+  activities: ProjectContributionActivity[]
   className?: string
 }) {
   const [sel, setSel] = useState(0)
@@ -35,7 +41,10 @@ export function ProjectContribution({
     },
     { label: '최장 연속', value: `${a.longestStreak}일` },
     { label: '주 평균', value: `${a.weeklyAvg}` },
-    { label: '기여도', value: a.contrib },
+    {
+      label: a.metricLabel ?? '기여도',
+      value: a.metricValue ?? a.contrib,
+    },
   ]
 
   return (
@@ -124,8 +133,8 @@ export function ProjectContribution({
       </div>
 
       <span className="text-fg-muted text-[11px]">
-        ⓘ 선택한 프로젝트 레포의 커밋만 집계했습니다. 활동일·최장 연속·주
-        평균으로 꾸준한 참여를 확인할 수 있습니다.
+        {a.note ??
+          'ⓘ 선택한 프로젝트 레포의 커밋만 집계했습니다. 활동일·최장 연속·주 평균으로 꾸준한 참여를 확인할 수 있습니다.'}
       </span>
     </section>
   )

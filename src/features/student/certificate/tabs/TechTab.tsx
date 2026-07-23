@@ -3,7 +3,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
 import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 import type { CertificateTechDetail } from '../ai'
-import type { CertTechTab, Tone } from '../types'
+import type { Tone } from '../types'
 import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
 
 const card =
@@ -256,7 +256,7 @@ export function AssessmentTrendChart({
           className="text-fg-subtle text-[11px]"
           title={
             averagePopulationSize > 0
-              ? `전체 수강생 평균 순위 비교 표본 ${averagePopulationSize}명`
+              ? `기수 평균 순위 비교 표본 ${averagePopulationSize}명`
               : undefined
           }
         >
@@ -324,11 +324,12 @@ export function AssessmentTrendChart({
                   }}
                 >
                   {assessments.map((assessment, index) => {
-                    const cohortAverage = assessment.cohortAverageScore ?? null
+                    const allStudentAverage =
+                      assessment.cohortAverageScore ?? null
                     const isAboveAverage =
-                      cohortAverage === null
+                      allStudentAverage === null
                         ? null
-                        : assessment.score >= cohortAverage
+                        : assessment.score >= allStudentAverage
                     const previousAssessment =
                       index > 0 ? assessments[index - 1] : null
                     const scoreDifference = previousAssessment
@@ -347,14 +348,14 @@ export function AssessmentTrendChart({
                         key={assessment.id}
                         className="relative flex h-full min-w-0 items-end justify-center"
                       >
-                        {cohortAverage !== null && (
+                        {allStudentAverage !== null && (
                           <button
                             type="button"
                             data-assessment-average-marker={assessment.id}
-                            aria-label={`${assessment.title} 기수 평균 ${formatNumber(cohortAverage)}점`}
+                            aria-label={`${assessment.title} 기수 평균 ${formatNumber(allStudentAverage)}점`}
                             className="group focus-visible:ring-ring absolute left-1/2 z-[45] flex h-5 w-14 max-w-full -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none"
                             style={{
-                              bottom: `${clampScore(cohortAverage)}%`,
+                              bottom: `${clampScore(allStudentAverage)}%`,
                             }}
                             onMouseEnter={() => setFocusedAverageIndex(index)}
                             onMouseLeave={() => setFocusedAverageIndex(null)}
@@ -367,7 +368,7 @@ export function AssessmentTrendChart({
                             />
                           </button>
                         )}
-                        {cohortAverage !== null &&
+                        {allStudentAverage !== null &&
                           focusedAverageIndex === index && (
                             <aside
                               role="tooltip"
@@ -382,12 +383,12 @@ export function AssessmentTrendChart({
                                     : 'left-1/2 -translate-x-1/2',
                               )}
                               style={
-                                cohortAverage >= 70
+                                allStudentAverage >= 70
                                   ? {
-                                      top: `calc(${100 - clampScore(cohortAverage)}% + 10px)`,
+                                      top: `calc(${100 - clampScore(allStudentAverage)}% + 10px)`,
                                     }
                                   : {
-                                      bottom: `calc(${clampScore(cohortAverage)}% + 10px)`,
+                                      bottom: `calc(${clampScore(allStudentAverage)}% + 10px)`,
                                     }
                               }
                             >
@@ -402,7 +403,7 @@ export function AssessmentTrendChart({
                                   평균 점수
                                 </span>
                                 <strong className="text-danger text-[17px] leading-none">
-                                  {formatNumber(cohortAverage)}점
+                                  {formatNumber(allStudentAverage)}점
                                 </strong>
                               </div>
                               <p className="text-surface/50 mt-1.5 text-[9px] font-medium">
@@ -666,7 +667,7 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
       <TabHead
         no={2}
         title="기술·검증"
-        sub="퀴즈 카테고리 점수·시험 추세·외부 인증"
+        sub="퀴즈 카테고리 점수·평가 추세·자격증·과제 제출 근거"
       >
         <span className="text-fg-muted text-[11px] font-semibold">
           ● 기술 평균 {formatNumber(tech.averageScore)}
@@ -778,13 +779,7 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
   )
 }
 
-export function TechTab({
-  studentId,
-}: {
-  /** 기존 CertificatePage 호출 호환용이며 실제 화면 데이터로 사용하지 않는다. */
-  t?: CertTechTab
-  studentId?: string
-}) {
+export function TechTab({ studentId }: { studentId?: string }) {
   const query = useCertificateDetailTabs(studentId)
 
   return (

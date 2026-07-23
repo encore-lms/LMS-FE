@@ -340,6 +340,12 @@ export interface CertProblemTab {
 }
 
 /** 탭5 성장·평판 */
+export interface CertGrowthTimelinePoint {
+  date: string
+  type: string
+  title: string
+  score: number
+}
 export interface CertReputation {
   key: string
   score: number
@@ -358,9 +364,11 @@ export interface CertRecommendation {
   date: string
 }
 export interface CertGrowthTab {
-  timeline: number[]
-  startScore: number
-  currentScore: number
+  timeline: CertGrowthTimelinePoint[]
+  startScore?: number
+  currentScore?: number
+  peerAverage?: number
+  peerEvaluationCount?: number
   reputation: CertReputation[]
   shortComments: CertShortComment[]
   recommendations: CertRecommendation[]

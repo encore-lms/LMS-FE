@@ -327,25 +327,6 @@ export function AiProfile({
             {profile.summary}
           </p>
         </div>
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <div className="bg-success-bg/60 flex flex-col gap-1 rounded-xl p-3">
-            <span className="text-success text-[11px] font-bold">
-              핵심 강점
-            </span>
-            <span className="text-fg-muted text-[11px] leading-4">
-              {profile.strengths}
-            </span>
-          </div>
-          <div className="bg-warning-bg/60 flex flex-col gap-1 rounded-xl p-3">
-            <span className="text-warning text-[11px] font-bold">
-              성장 포인트
-            </span>
-            <span className="text-fg-muted text-[11px] leading-4">
-              {profile.growth}
-            </span>
-          </div>
-        </div>
       </AiAnalysisPanel>
 
       {personas.length > 0 && (

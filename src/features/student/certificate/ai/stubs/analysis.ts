@@ -1,6 +1,77 @@
-// AI 분석 출력 stub (개발용) — 정규화 원천이 없는 레거시 ID는 준비 상태를 명시한다.
+// AI 분석 출력 stub (개발용) — 통찰형(교차 종합) 예시. 나중에 생성 계층(LLM)으로 교체.
+// 각 서술은 '최소 2소스 연결' 톤. FE에서 LMS-AI로 이전(계산 SSOT).
+import type {
+  AiAnalysis,
+  SentimentBubble,
+  SentimentPhase,
+  SentimentPolarity,
+} from '../types'
 
-import type { AiAnalysis } from '../types'
+const STUB_SENTIMENT_PHASE_CENTER: Record<SentimentPhase, number> = {
+  early: 60,
+  mid: 112,
+  late: 164,
+}
+const STUB_SENTIMENT_LAYOUT: Record<
+  number,
+  readonly { x: number; y: number }[]
+> = {
+  1: [{ x: 0, y: 50 }],
+  2: [
+    { x: -10, y: 43 },
+    { x: 10, y: 57 },
+  ],
+  3: [
+    { x: 0, y: 27 },
+    { x: -11, y: 56 },
+    { x: 15, y: 54 },
+  ],
+  4: [
+    { x: 0, y: 24 },
+    { x: -16, y: 50 },
+    { x: 16, y: 48 },
+    { x: 1, y: 75 },
+  ],
+  5: [
+    { x: 0, y: 22 },
+    { x: -13, y: 47 },
+    { x: 14, y: 45 },
+    { x: -9, y: 73 },
+    { x: 14, y: 72 },
+  ],
+}
+
+interface SentimentStubInput {
+  label: string
+  phase: SentimentPhase
+  polarity: SentimentPolarity
+  weight: number
+  evidenceCount: number
+}
+
+function sentimentStubBubbles(items: SentimentStubInput[]): SentimentBubble[] {
+  return items.map((item, itemIndex) => {
+    const peers = items.filter((candidate) => candidate.phase === item.phase)
+    const phaseIndex = items
+      .slice(0, itemIndex)
+      .filter((candidate) => candidate.phase === item.phase).length
+    const layout =
+      STUB_SENTIMENT_LAYOUT[Math.min(5, peers.length)] ??
+      STUB_SENTIMENT_LAYOUT[5]
+    const point = layout[phaseIndex] ?? layout.at(-1)!
+    return {
+      ...item,
+      x: STUB_SENTIMENT_PHASE_CENTER[item.phase] + point.x,
+      y: point.y,
+      r: Number(
+        Math.max(
+          6,
+          item.weight * 2 - 4 + Math.min(1.2, item.evidenceCount * 0.3),
+        ).toFixed(1),
+      ),
+    }
+  })
+}
 
 const STU_001: AiAnalysis = {
   // 블록1 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
@@ -90,47 +161,368 @@ const STU_001: AiAnalysis = {
     generatedBy: 'FALLBACK',
   },
 
-  // 블록5 — 문제해결·협업 (caps 3축 + style + scaling)
+  // 블록5 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
   problem: {
+    status: 'NOT_READY',
+    mappingVersion: '2026.07.23-troubleshooting-axis-v1',
     caps: [
-      { label: '데이터처리', score: 70, tag: 'DB', tone: 'info' },
-      { label: '모델튜닝', score: 40, tag: '성능', tone: 'warning' },
-      { label: '인프라·배포', score: 85, tag: '배포', tone: 'accent' },
+      {
+        key: 'DATA_PROCESSING',
+        label: '데이터 처리',
+        status: 'NOT_READY',
+        score: null,
+        certifiedCaseCount: 0,
+        evidence: [],
+        evidenceCodes: [],
+        limitations: ['구조화 인증 평가가 없어 역량 점수는 산출하지 않음'],
+      },
+      {
+        key: 'MODEL_TUNING',
+        label: '모델 튜닝',
+        status: 'NOT_READY',
+        score: null,
+        certifiedCaseCount: 0,
+        evidence: [],
+        evidenceCodes: [],
+        limitations: ['구조화 인증 평가가 없어 역량 점수는 산출하지 않음'],
+      },
+      {
+        key: 'INFRA_DEPLOYMENT',
+        label: '인프라·배포',
+        status: 'NOT_READY',
+        score: null,
+        certifiedCaseCount: 0,
+        evidence: [],
+        evidenceCodes: [],
+        limitations: ['구조화 인증 평가가 없어 역량 점수는 산출하지 않음'],
+      },
     ],
     style:
-      '혼자 파고들기보다 팀에 공유하며 푸는 편(상호평가 "공유" 태그 + 협업 84점)입니다.',
+      '서로 다른 유효 평가자가 충분하지 않아 협업 방식을 아직 설명할 수 없습니다.',
     scaling:
-      '후반 과목에서도 성취를 유지하고 트슈 소요일이 줄어, 더 어려운 문제로 확장 중입니다.',
+      '인증 문제해결 사례가 더 쌓이면 분야와 기술 범위의 변화를 설명할 수 있습니다.',
+    collaboration: {
+      status: 'NOT_READY',
+      summary:
+        '서로 다른 유효 평가자가 충분하지 않아 협업 방식을 아직 설명할 수 없습니다.',
+      evaluatorCount: 0,
+      projectCount: 0,
+      behaviorSignals: [],
+      projectEvaluations: [],
+      evidence: [],
+      evidenceCodes: [],
+      limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
+      generatedBy: 'FALLBACK',
+    },
+    growth: {
+      status: 'NOT_READY',
+      confidence: 'LOW',
+      summary:
+        '인증 문제해결 사례가 더 쌓이면 분야와 기술 범위의 변화를 설명할 수 있습니다.',
+      certifiedCaseCount: 0,
+      period: null,
+      newDomains: [],
+      repeatedDomains: [],
+      newTechnologies: [],
+      repeatedTechnologies: [],
+      evidence: [],
+      evidenceCodes: [],
+      limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
+      generatedBy: 'FALLBACK',
+    },
+    certifiedCaseCount: 0,
+    unmappedCaseCount: 0,
+    limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
   },
 
   // 블록6 — 감성·키워드 버블 (mock)
   sentiment: {
-    bubbles: [
-      { label: '불안', x: 20, y: 30, r: 8, phase: 'early' },
-      { label: '적응', x: 48, y: 42, r: 6, phase: 'mid' },
-      { label: '몰입', x: 62, y: 30, r: 7, phase: 'mid' },
-      { label: '성장', x: 78, y: 36, r: 9, phase: 'late' },
+    policyVersion: '2026.07.18-counseling-sentiment-v5',
+    status: 'READY',
+    noteCount: 6,
+    phases: [
+      {
+        phase: 'early',
+        label: '초기',
+        period: { startedAt: '2024-04-22', endedAt: '2024-06-21' },
+        noteCount: 2,
+        summary: '초기 상담에서는 진로 불안과 학습 지속이 함께 확인됩니다.',
+        confidence: 'MEDIUM',
+      },
+      {
+        phase: 'mid',
+        label: '중기',
+        period: { startedAt: '2024-06-22', endedAt: '2024-08-21' },
+        noteCount: 2,
+        summary: '중기 상담에서는 복습 조정과 수업 몰입이 함께 확인됩니다.',
+        confidence: 'MEDIUM',
+      },
+      {
+        phase: 'late',
+        label: '후기',
+        period: { startedAt: '2024-08-22', endedAt: '2024-10-20' },
+        noteCount: 2,
+        summary: '후기 상담에서는 준비 부담과 방향 구체화가 함께 확인됩니다.',
+        confidence: 'MEDIUM',
+      },
     ],
-    trend: 'V자 변동형: 초반 불안 → 중기 적응 → 후반 몰입·성장',
+    bubbles: sentimentStubBubbles([
+      {
+        label: '진로 불안',
+        phase: 'early',
+        polarity: 'CONCERN',
+        weight: 9,
+        evidenceCount: 2,
+      },
+      {
+        label: '학습 지속',
+        phase: 'early',
+        polarity: 'POSITIVE',
+        weight: 8,
+        evidenceCount: 2,
+      },
+      {
+        label: '직무 거리감',
+        phase: 'early',
+        polarity: 'CONCERN',
+        weight: 8,
+        evidenceCount: 2,
+      },
+      {
+        label: '과정 탐색',
+        phase: 'early',
+        polarity: 'NEUTRAL',
+        weight: 6,
+        evidenceCount: 2,
+      },
+      {
+        label: '성취 확인',
+        phase: 'early',
+        polarity: 'POSITIVE',
+        weight: 7,
+        evidenceCount: 1,
+      },
+      {
+        label: '복습 조정',
+        phase: 'mid',
+        polarity: 'NEUTRAL',
+        weight: 9,
+        evidenceCount: 2,
+      },
+      {
+        label: '수업 몰입',
+        phase: 'mid',
+        polarity: 'POSITIVE',
+        weight: 8,
+        evidenceCount: 1,
+      },
+      {
+        label: '일정 부담',
+        phase: 'mid',
+        polarity: 'CONCERN',
+        weight: 7,
+        evidenceCount: 1,
+      },
+      {
+        label: '준비 실행',
+        phase: 'mid',
+        polarity: 'POSITIVE',
+        weight: 8,
+        evidenceCount: 2,
+      },
+      {
+        label: '역할 수행',
+        phase: 'mid',
+        polarity: 'NEUTRAL',
+        weight: 7,
+        evidenceCount: 2,
+      },
+      {
+        label: '설명 부담',
+        phase: 'late',
+        polarity: 'CONCERN',
+        weight: 9,
+        evidenceCount: 2,
+      },
+      {
+        label: '준비 실행',
+        phase: 'late',
+        polarity: 'POSITIVE',
+        weight: 8,
+        evidenceCount: 2,
+      },
+      {
+        label: '결과물 정리',
+        phase: 'late',
+        polarity: 'NEUTRAL',
+        weight: 8,
+        evidenceCount: 2,
+      },
+      {
+        label: '방향 구체화',
+        phase: 'late',
+        polarity: 'POSITIVE',
+        weight: 8,
+        evidenceCount: 2,
+      },
+      {
+        label: '실전 적용',
+        phase: 'late',
+        polarity: 'POSITIVE',
+        weight: 7,
+        evidenceCount: 1,
+      },
+    ]),
+    trend:
+      '초기(진로 불안·학습 지속) → 중기(복습 조정·수업 몰입) → 후기(설명 부담·방향 구체화) 순으로 상담의 감성·주제 중심이 이동했습니다.',
+    confidence: 'MEDIUM',
+    limitations: [
+      '상담 기록에 표현된 감성·주제만 해석하며 심리 상태를 진단하지 않음',
+      '상담 원문과 개인정보는 분석 응답에 포함하지 않음',
+    ],
   },
 
   // 온톨로지 (가능한 노드는 실데이터 경로, 방법론만 mock)
   ontology: {
+    policyVersion: '2026.07.21-competency-ontology-v2',
+    status: 'READY',
+    summary:
+      '본인을 중심으로 과목, 프로젝트, 기술, 방법론, 도메인을 근거 관계로 연결했습니다.',
+    counts: { self: 1, subject: 1, skill: 2, method: 1, project: 1, domain: 1 },
+    omittedCounts: {},
     nodes: [
-      { id: 'self', label: '김수강', x: 50, y: 50, kind: 'self' },
-      { id: 'subj-java', label: 'Java/Spring', x: 30, y: 30, kind: 'subject' },
-      { id: 'skill-spring', label: 'Spring', x: 40, y: 20, kind: 'skill' },
-      { id: 'skill-redis', label: 'Redis', x: 62, y: 22, kind: 'skill' },
-      { id: 'proj-1', label: '주문 MSA', x: 70, y: 44, kind: 'project' },
-      { id: 'dom-commerce', label: '커머스', x: 82, y: 62, kind: 'domain' },
+      {
+        id: 'self',
+        label: '김수강',
+        x: 8,
+        y: 50,
+        kind: 'self',
+        weight: 1,
+        evidenceCount: 1,
+        evidence: ['수강생 프로필'],
+        confidence: 'HIGH',
+      },
+      {
+        id: 'subj-java',
+        label: 'Java/Spring',
+        x: 25,
+        y: 50,
+        kind: 'subject',
+        weight: 0.82,
+        evidenceCount: 1,
+        evidence: ['확정 평가로 학습 이력 확인'],
+        confidence: 'MEDIUM',
+      },
+      {
+        id: 'proj-1',
+        label: '주문 MSA',
+        x: 43,
+        y: 50,
+        kind: 'project',
+        weight: 0.88,
+        evidenceCount: 2,
+        evidence: ['완료 프로젝트', '본인 담당 과업'],
+        confidence: 'HIGH',
+      },
+      {
+        id: 'skill-spring',
+        label: 'Spring',
+        x: 61,
+        y: 35,
+        kind: 'skill',
+        weight: 0.86,
+        evidenceCount: 2,
+        evidence: ['주문 MSA 팀 기술스택', '본인 과업 교차 확인'],
+        confidence: 'HIGH',
+      },
+      {
+        id: 'skill-redis',
+        label: 'Redis',
+        x: 61,
+        y: 65,
+        kind: 'skill',
+        weight: 0.7,
+        evidenceCount: 1,
+        evidence: ['주문 MSA 팀 기술스택'],
+        confidence: 'MEDIUM',
+      },
+      {
+        id: 'method-review',
+        label: '코드 리뷰',
+        x: 79,
+        y: 50,
+        kind: 'method',
+        weight: 0.76,
+        evidenceCount: 2,
+        evidence: ['본인 과업', '동료평가'],
+        confidence: 'HIGH',
+      },
+      {
+        id: 'dom-commerce',
+        label: '커머스',
+        x: 94,
+        y: 50,
+        kind: 'domain',
+        weight: 0.8,
+        evidenceCount: 1,
+        evidence: ['주문 MSA 프로젝트 도메인'],
+        confidence: 'MEDIUM',
+      },
     ],
     edges: [
-      ['self', 'subj-java'],
-      ['self', 'skill-spring'],
-      ['self', 'proj-1'],
-      ['proj-1', 'skill-spring'],
-      ['proj-1', 'skill-redis'],
-      ['proj-1', 'dom-commerce'],
+      {
+        source: 'self',
+        target: 'subj-java',
+        type: 'LEARNED',
+        strength: 0.82,
+        evidence: ['확정 평가'],
+      },
+      {
+        source: 'self',
+        target: 'proj-1',
+        type: 'PARTICIPATED',
+        strength: 0.88,
+        evidence: ['본인 담당 과업'],
+      },
+      {
+        source: 'subj-java',
+        target: 'proj-1',
+        type: 'FOLLOWED_BY',
+        strength: 0.82,
+        evidence: ['Java/Spring 과목 이수 후 주문 MSA 프로젝트 수행'],
+      },
+      {
+        source: 'proj-1',
+        target: 'skill-spring',
+        type: 'USED',
+        strength: 0.86,
+        evidence: ['팀 기술스택'],
+      },
+      {
+        source: 'proj-1',
+        target: 'skill-redis',
+        type: 'USED',
+        strength: 0.7,
+        evidence: ['팀 기술스택'],
+      },
+      {
+        source: 'proj-1',
+        target: 'method-review',
+        type: 'APPLIED',
+        strength: 0.76,
+        evidence: ['본인 과업'],
+      },
+      {
+        source: 'proj-1',
+        target: 'dom-commerce',
+        type: 'BELONGS_TO',
+        strength: 0.8,
+        evidence: ['프로젝트 도메인'],
+      },
+    ],
+    limitations: [
+      '기술스택은 팀 프로젝트 맥락이며 본인 과업 근거가 있으면 관계 강도만 높임',
+      '노드·관계의 수와 크기는 숙련도 점수가 아님',
     ],
   },
 }

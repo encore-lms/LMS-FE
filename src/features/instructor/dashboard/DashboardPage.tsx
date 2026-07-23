@@ -117,7 +117,11 @@ export default function DashboardPage() {
       title: '퀴즈 관리',
       badge: data.shortcuts.quizzes.badge,
       hint: data.shortcuts.quizzes.hint,
-      to: '/instructor/quizzes',
+      // 퀴즈·과제는 교육 과정 허브(기수별) 안으로 이관 — 기수 선택 시 해당 허브 퀴즈 탭, 전체면 과정 목록.
+      to:
+        activeCohortId !== COHORT_ALL
+          ? `/instructor/cohorts/${activeCohortId}/education?tab=quizzes`
+          : '/instructor/cohorts',
     },
     {
       key: 'students',

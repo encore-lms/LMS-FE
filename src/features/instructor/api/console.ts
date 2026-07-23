@@ -3,7 +3,6 @@ import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   InstructorDashboardData,
   InstructorCohortsData,
-  CohortStudentsData,
 } from '@/shared/types'
 
 // 강사 콘솔 골격 (대시보드·담당 과정/기수·수강생 목록) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
@@ -32,13 +31,24 @@ export function useInstructorCohorts() {
   })
 }
 
-// 허브 '이력서' 탭(ResumeViewPane)의 학생명 join에 사용 — 단독 수강생 목록 화면은 폐기됨.
-export function useCohortStudents(cohortId: string) {
+/** 담당 기수 수강생 1명 — 이름 join·작성 대기 계산용. */
+export interface CohortStudent {
+  userId: string
+  name: string
+}
+
+/**
+ * 담당 기수 수강생 로스터 — auth-user-service의 기수 스코프 명단(강사 허용).
+ * learning 응답(이력서·추천서)은 studentUserId만 주므로 화면이 여기서 이름을 join 한다.
+ * (구 /instructor/cohorts/{id}/students는 BE 미구현 404라 폐기 — 로스터 정본은 auth.)
+ */
+export function useCohortRoster(cohortId?: string | null) {
   return useQuery({
-    queryKey: instructorKeys.cohortStudents(cohortId),
+    queryKey: [...instructorKeys.all, 'cohort-roster', cohortId ?? ''],
+    enabled: !!cohortId,
     queryFn: () =>
       apiClient
-        .get<CohortStudentsData>(`/instructor/cohorts/${cohortId}/students`)
-        .then((r) => r.data),
+        .get<{ items: CohortStudent[] }>('/users/cohort-students', { cohortId })
+        .then((r) => r.data.items),
   })
 }

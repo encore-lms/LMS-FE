@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -26,46 +27,6 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
       <h3 className="text-fg text-base font-bold">{title}</h3>
       {hint && <span className="text-fg-subtle text-xs">{hint}</span>}
     </div>
-  )
-}
-
-// ── 수강생 명단 ── (HRD 훈련생 목록 = 오늘 출결 명단에서 이름을 파생)
-function RosterSection({ cohortId }: { cohortId: string }) {
-  const { data, isPending, isError, refetch } =
-    useInstructorAttendance(cohortId)
-  return (
-    <section>
-      <SectionTitle
-        title="수강생 명단"
-        hint={data ? `${data.rows.length}명` : undefined}
-      />
-      <DataBoundary
-        isPending={isPending}
-        isError={isError || !data}
-        onRetry={() => refetch()}
-        skeleton={<SkeletonText lines={3} />}
-        errorTitle="명단을 불러오지 못했어요"
-        errorDescription="HRD 훈련과정ID가 없는 기수이거나 HRD-Net 연결을 확인해 주세요."
-      >
-        {data &&
-          (data.rows.length === 0 ? (
-            <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
-              표시할 명단이 없어요.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {data.rows.map((r) => (
-                <span
-                  key={r.id}
-                  className="bg-surface-muted text-fg rounded-lg px-3 py-1.5 text-sm font-medium"
-                >
-                  {r.studentName}
-                </span>
-              ))}
-            </div>
-          ))}
-      </DataBoundary>
-    </section>
   )
 }
 
@@ -179,10 +140,14 @@ function AttendanceSummarySection({ cohortId }: { cohortId: string }) {
   )
 }
 
-// ── 오늘 출석(일별) ──
+// ── 오늘 출석(일별, 날짜 선택 가능) ──
 function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
-  const { data, isPending, isError, refetch } =
-    useInstructorAttendance(cohortId)
+  // date='' → 오늘. 날짜 선택 시 해당 일자 출결 조회.
+  const [date, setDate] = useState('')
+  const { data, isPending, isError, refetch } = useInstructorAttendance(
+    cohortId,
+    date || undefined,
+  )
   const columns: Column<StudentAttendanceRow>[] = [
     {
       key: 'student',
@@ -229,10 +194,17 @@ function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
   ]
   return (
     <section>
-      <SectionTitle
-        title="오늘 출석"
-        hint={data ? data.date : undefined}
-      />
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-fg text-base font-bold">출석</h3>
+        {/* 날짜 선택 — 미선택(오늘) 시 응답 일자로 표시. */}
+        <input
+          type="date"
+          aria-label="출석 조회 일자"
+          value={date || data?.date || ''}
+          onChange={(e) => setDate(e.target.value)}
+          className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none"
+        />
+      </div>
       <DataBoundary
         isPending={isPending}
         isError={isError || !data}
@@ -261,7 +233,7 @@ function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
               columns={columns}
               rows={data.rows}
               rowKey={(r) => r.id}
-              empty="오늘 출결 기록이 없어요"
+              empty="해당 일자 출결 기록이 없어요"
             />
           </div>
         )}
@@ -270,11 +242,10 @@ function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
   )
 }
 
-// 수강생 탭 — 명단 + 출석 현황 + 오늘 출석(모두 조회 전용).
+// 수강생 탭 — 출석 현황 + 출석(일별, 날짜 선택). 모두 조회 전용.
 export function StudentsPane({ cohortId }: { cohortId: string }) {
   return (
     <div className="flex flex-col gap-8">
-      <RosterSection cohortId={cohortId} />
       <AttendanceSummarySection cohortId={cohortId} />
       <TodayAttendanceSection cohortId={cohortId} />
     </div>

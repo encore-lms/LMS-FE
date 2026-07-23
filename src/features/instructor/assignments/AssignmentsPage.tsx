@@ -230,7 +230,7 @@ export default function AssignmentsPage({
                 className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
               />
             </div>
-            <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+            <label className="flex items-center gap-2 text-xs">
               <span className="text-fg-subtle">상태</span>
               <Select
                 value={status}
@@ -245,7 +245,7 @@ export default function AssignmentsPage({
             </label>
             {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
             {!embedded && (
-              <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+              <label className="flex items-center gap-2 text-xs">
                 <span className="text-fg-subtle">기수</span>
                 <Select
                   value={cohort}

@@ -24,7 +24,6 @@ const PRIORITY_META: Record<PriorityType, { label: string; tone: BadgeTone }> =
     supplement: { label: '보완', tone: 'danger' },
     manual_grading: { label: '수동 채점', tone: 'warning' },
     project_cert: { label: '프로젝트 인증', tone: 'accent' },
-    blog_review: { label: '블로그 검토', tone: 'info' },
     ts_review: { label: '트러블슈팅 검토', tone: 'info' },
   }
 
@@ -172,10 +171,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI 4 */}
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      {/* KPI 3 — 기록 검토는 운영 매니저 소관이라 강사 대시보드에서 제외 */}
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
         <KpiTile label="채점 대기" kpi={data.kpiGrading} unit="건" />
-        <KpiTile label="기록 검토 대기" kpi={data.kpiRecords} unit="건" />
         <KpiTile label="프로젝트 인증 대기" kpi={data.kpiProjects} unit="건" />
         <KpiTile label="보완 요청" kpi={data.kpiSupplements} unit="건" />
       </div>

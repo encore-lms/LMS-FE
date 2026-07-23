@@ -492,7 +492,7 @@ export function QuizQuestionEditor({
               </p>
             )}
             {questions.map((q, i) => (
-              <div key={q.id} className="border-border rounded-xl border">
+              <div key={q.id} className="bg-surface-muted rounded-xl">
                 <div className="flex items-center gap-3 px-4 py-3">
                   <span className="text-fg-subtle w-8 shrink-0 text-sm font-bold">
                     Q{i + 1}

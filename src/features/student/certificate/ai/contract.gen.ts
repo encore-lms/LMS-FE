@@ -91,6 +91,26 @@ export interface CertificateScoreComparison {
   mentorScore: number | null;
 }
 
+export interface CertificateAxisEvidenceItem {
+  /** 화면에서 안정적으로 구분하는 축 내부 입력 키. */
+  key: string;
+  /** 사용자에게 표시하는 평가·활동명. */
+  label: string;
+  /** 원천에서 집계한 실제 값. */
+  value: number | null;
+  unit: "점" | "%" | "건" | "회";
+  /** 비율의 분자. 건수 근거가 없으면 null. */
+  numerator: number | null;
+  /** 비율의 분모. 건수 근거가 없으면 null. */
+  denominator: number | null;
+  /** 축 점수에 반영하는 비중. 가산점이면 null. */
+  weightPercent: number | null;
+  /** 가중치·환산·가산점을 적용해 축 점수에 기여한 점수. */
+  appliedScore: number | null;
+  /** 사용자에게 보여줄 짧은 실제 근거. */
+  detail: string;
+}
+
 export interface CertificateAxisScore {
   key: CertificateAxisKey;
   score: number | null;
@@ -99,6 +119,7 @@ export interface CertificateAxisScore {
   detail: string;
   relative: CertificateRelativePosition;
   comparison: CertificateScoreComparison;
+  evidence: CertificateAxisEvidenceItem[];
 }
 
 export type CertificateMetricKey =
@@ -146,6 +167,13 @@ export interface CertificateDomainExperience {
   percentage: number;
 }
 
+export interface CertificateProjectNavigation {
+  /** 인증 트러블슈팅을 확인할 프로젝트 워크스페이스. 원천이 없으면 null. */
+  issuesProjectId: string | null;
+  /** 누적 상호평가 결과를 확인할 최근 완료 프로젝트 워크스페이스. */
+  peerEvaluationProjectId: string | null;
+}
+
 export interface CertificateScoreResult {
   policyVersion: "2026.07.21-six-axis-persistence-v4";
   calculatedAt: string;
@@ -164,6 +192,7 @@ export interface CertificateScoreResult {
   axes: CertificateAxisScore[];
   metrics: CertificateScoreMetric[];
   peerEvaluation: CertificatePeerEvaluationAxis[];
+  projectNavigation: CertificateProjectNavigation;
   domainExperience: CertificateDomainExperience[];
   warnings: string[];
 }

@@ -89,14 +89,6 @@ export interface CertRadarAxis {
   relativeDetail: string
 }
 
-/** 동료평가 모드에서 절대 점수와 프로젝트 동료평가를 비교하는 5축. */
-export interface CertThreeSixtyRadarAxis {
-  key: string
-  score: number | null
-  /** 프로젝트 동료평가를 1~5점에서 0~100점으로 환산한 값. */
-  peerScore: number | null
-}
-
 /** 점수 막대(퀴즈 카테고리 등) */
 export interface CertScoreBar {
   label: string

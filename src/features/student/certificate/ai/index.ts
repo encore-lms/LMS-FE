@@ -9,6 +9,7 @@ import type {
   StudentDerived,
 } from './types'
 import { ANALYSIS_STUBS } from './stubs/analysis'
+import certificateSnapshot from './stubs/certificate.snapshot.json'
 import { DERIVED_STUBS } from './stubs/derived'
 
 export {
@@ -38,6 +39,9 @@ const AI_API = import.meta.env.VITE_AI_API_URL as string | undefined
 const CERTIFICATE_SCORE_API =
   (import.meta.env.VITE_AI_API_URL as string | undefined)?.replace(/\/$/, '') ??
   '/lms-ai'
+const CERTIFICATE_MOCK_MODE =
+  import.meta.env.MODE === 'development' ||
+  import.meta.env.VITE_ENABLE_MOCK === 'true'
 
 /** 발급 조건과 점수 산출 원천을 충족하는 기본 개발 수강생. */
 export const CERTIFICATE_MOCK_STUDENT_ID =
@@ -51,6 +55,17 @@ export const CERTIFICATE_MOCK_STUDENT_ID =
 export async function fetchCertificateScore(
   studentId: string,
 ): Promise<CertificateScoreResult> {
+  if (CERTIFICATE_MOCK_MODE) {
+    return {
+      ...(certificateSnapshot.score as CertificateScoreResult),
+      student: {
+        ...(certificateSnapshot.score
+          .student as CertificateScoreResult['student']),
+        studentId,
+      },
+    }
+  }
+
   const res = await fetch(
     `${CERTIFICATE_SCORE_API}/scores/${encodeURIComponent(studentId)}`,
   )
@@ -69,6 +84,13 @@ export async function fetchCertificateScore(
 export async function fetchCertificateDetailTabs(
   studentId: string,
 ): Promise<CertificateDetailTabsResult> {
+  if (CERTIFICATE_MOCK_MODE) {
+    return {
+      ...(certificateSnapshot.tabs as CertificateDetailTabsResult),
+      studentId,
+    }
+  }
+
   const res = await fetch(
     `${CERTIFICATE_SCORE_API}/tabs/${encodeURIComponent(studentId)}`,
   )
@@ -108,6 +130,8 @@ export async function fetchAiDerived(
  * 다른 학생이나 정적 mock으로 대체하지 않고 조회 실패를 호출부에 전달한다.
  */
 export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
+  if (CERTIFICATE_MOCK_MODE) return certificateSnapshot.analysis as AiAnalysis
+
   const res = await fetch(
     `${CERTIFICATE_SCORE_API}/analysis/${encodeURIComponent(studentId)}`,
   )

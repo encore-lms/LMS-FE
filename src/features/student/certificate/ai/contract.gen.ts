@@ -344,9 +344,44 @@ export interface AiVerdict {
 }
 
 // 블록2 — 프로파일링
+export type AiProfileLevel = 'HIGH' | 'MID' | 'LOW' | 'NOT_READY'
+export type AiProfileConfidence = 'HIGH' | 'MEDIUM' | 'LOW'
+export type AiProfileDimensionKey =
+  | 'STRUCTURING'
+  | 'EXECUTION'
+  | 'VERIFICATION'
+  | 'DIRECTION'
+  | 'COORDINATION'
+  | 'ENABLEMENT'
+  | 'IMPROVEMENT'
+  | 'RETENTION'
+  | 'PERSISTENCE'
+  | 'CLARITY'
+  | 'SHARING'
+  | 'FEEDBACK'
+  | 'FOUNDATION'
+  | 'APPLICATION'
+  | 'OPERATIONS'
+
+export interface AiProfileDimension {
+  key: AiProfileDimensionKey
+  label: string
+  level: AiProfileLevel
+  /** 0~100 결정 점수. 조건형 판정은 null일 수 있다. */
+  score?: number | null
+  /** 해당 수강생의 실제 입력값과 배점을 포함한 계산 설명. */
+  calculation?: string[]
+}
+
 export interface AiProfileRow {
   label: string // 업무/리더십/학습/소통/기술
   value: string
+  /** 업무 프로파일부터 단계적으로 연결하는 근거 기반 상세 정보. */
+  description?: string
+  dimensions?: AiProfileDimension[]
+  evidence?: string[]
+  confidence?: AiProfileConfidence
+  limitations?: string[]
 }
 export interface AiProfile {
   rows: AiProfileRow[]
@@ -361,6 +396,20 @@ export interface AiPersona {
   title: string
   subtitle: string // 아이콘 호버 근거(활동)
   baseCategory: PersonaBase
+  /** 결정 점수 기반 정렬·감사용 적합도. */
+  fitScore: number
+  confidence: AiProfileConfidence
+  evidence: string[]
+  limitations?: string[]
+  components?: {
+    personalContribution: number
+    verifiedProblemSolving: number
+    roleAchievement: number | null
+    crossCheckedProject: number
+    declaredInterest: number
+  }
+  evidenceCodes?: string[]
+  generatedBy?: 'AI' | 'FALLBACK'
 }
 
 // 블록4 — 프로젝트 분석

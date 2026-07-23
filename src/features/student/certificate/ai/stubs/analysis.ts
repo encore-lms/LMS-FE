@@ -41,6 +41,10 @@ const STU_001: AiAnalysis = {
       subtitle:
         '주문 관리 MSA 프로젝트에서 실시간 처리를 맡았고, "성능" 트러블슈팅 5건을 인증받았습니다.',
       baseCategory: '백엔드',
+      fitScore: 0,
+      confidence: 'LOW',
+      evidence: ['정규화 증명서 원천 연결 전 기존 mock 분석'],
+      limitations: ['결정 근거 적합도는 아직 산출하지 않음'],
     },
     {
       rank: 2,
@@ -48,6 +52,10 @@ const STU_001: AiAnalysis = {
       subtitle:
         '배포·인프라 트러블슈팅 4건을 평균 소요일 단축(3일→1.5일)으로 해결했습니다.',
       baseCategory: 'DevOps·인프라',
+      fitScore: 0,
+      confidence: 'LOW',
+      evidence: ['정규화 증명서 원천 연결 전 기존 mock 분석'],
+      limitations: ['결정 근거 적합도는 아직 산출하지 않음'],
     },
     {
       rank: 3,
@@ -55,6 +63,10 @@ const STU_001: AiAnalysis = {
       subtitle:
         '커머스·핀테크 도메인에서 개선 지표(전환율·응답속도)를 앞세워 설계했습니다.',
       baseCategory: '풀스택',
+      fitScore: 0,
+      confidence: 'LOW',
+      evidence: ['정규화 증명서 원천 연결 전 기존 mock 분석'],
+      limitations: ['결정 근거 적합도는 아직 산출하지 않음'],
     },
   ],
 

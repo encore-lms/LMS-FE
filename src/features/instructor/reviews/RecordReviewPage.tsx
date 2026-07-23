@@ -4,6 +4,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { REVIEW_TABS, RouteTabBar } from '../components/RouteTabBar'
 import type {
   BlogGridRow,
   CertGridRow,
@@ -119,6 +120,7 @@ export default function RecordReviewPage() {
 
   return (
     <div className="p-8">
+      <RouteTabBar tabs={REVIEW_TABS} />
       {/* 과정 선택 */}
       <div className="mb-3">
         <CourseSelect

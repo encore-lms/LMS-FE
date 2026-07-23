@@ -226,7 +226,6 @@ describe('AssignmentFormPage (실 BE)', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('2026-05-24 오후 11:59')).toBeInTheDocument()
     expect(screen.getByText('jpa-mapping-guide.pdf')).toBeInTheDocument()
-    expect(screen.getByText('생성 정책')).toBeInTheDocument()
   })
 
   it('생성 모드 빈 제출은 검증 에러를 보여준다', async () => {

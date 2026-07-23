@@ -1,19 +1,15 @@
 import { AlertTriangle } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SkeletonListPage, SkeletonText } from '@/components/ui/Skeleton'
 import { cn } from '@/shared/lib/cn'
 import type {
-  CohortStudentRow,
   HrdAttendanceStatus,
   StudentAttendanceRow,
 } from '@/shared/types'
-import { CERT_STATUS_META } from '../cohorts/meta'
 import {
   useInstructorAttendance,
   useInstructorAttendanceSummary,
-  useInstructorCohortStudents,
 } from './api'
 
 const HRD_META: Record<HrdAttendanceStatus, { label: string; cls: string }> = {
@@ -33,67 +29,41 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
   )
 }
 
-// ── 수강생 명단 ──
+// ── 수강생 명단 ── (HRD 훈련생 목록 = 오늘 출결 명단에서 이름을 파생)
 function RosterSection({ cohortId }: { cohortId: string }) {
   const { data, isPending, isError, refetch } =
-    useInstructorCohortStudents(cohortId)
-  const columns: Column<CohortStudentRow>[] = [
-    {
-      key: 'student',
-      header: '수강생',
-      cell: (r) => (
-        <div>
-          <p className="text-fg text-sm font-medium">{r.name}</p>
-          <p className="text-fg-subtle text-xs">{r.emailUuid}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'cert',
-      header: '증명서',
-      className: 'w-28',
-      cell: (r) => (
-        <StatusBadge
-          label={CERT_STATUS_META[r.certStatus].label}
-          tone={CERT_STATUS_META[r.certStatus].tone}
-        />
-      ),
-    },
-    {
-      key: 'risk',
-      header: '위험',
-      className: 'w-24',
-      cell: (r) =>
-        r.riskFlags.length > 0 ? (
-          <span className="bg-danger-bg text-danger rounded px-1.5 py-px text-[11px] font-bold">
-            {r.riskFlags.length}건
-          </span>
-        ) : (
-          <span className="text-fg-subtle text-xs">-</span>
-        ),
-    },
-  ]
+    useInstructorAttendance(cohortId)
   return (
     <section>
       <SectionTitle
         title="수강생 명단"
-        hint={data ? `${data.total}명` : undefined}
+        hint={data ? `${data.rows.length}명` : undefined}
       />
       <DataBoundary
         isPending={isPending}
         isError={isError || !data}
         onRetry={() => refetch()}
-        skeleton={<SkeletonListPage columns={3} className="" />}
+        skeleton={<SkeletonText lines={3} />}
         errorTitle="명단을 불러오지 못했어요"
+        errorDescription="HRD 훈련과정ID가 없는 기수이거나 HRD-Net 연결을 확인해 주세요."
       >
-        {data && (
-          <DataTable
-            columns={columns}
-            rows={data.rows}
-            rowKey={(r) => r.id}
-            empty="배정된 수강생이 없어요"
-          />
-        )}
+        {data &&
+          (data.rows.length === 0 ? (
+            <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
+              표시할 명단이 없어요.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {data.rows.map((r) => (
+                <span
+                  key={r.id}
+                  className="bg-surface-muted text-fg rounded-lg px-3 py-1.5 text-sm font-medium"
+                >
+                  {r.studentName}
+                </span>
+              ))}
+            </div>
+          ))}
       </DataBoundary>
     </section>
   )

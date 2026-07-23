@@ -3,7 +3,6 @@ import type {
   InstructorDashboardData,
   InstructorCohortsData,
   CohortStudentsData,
-  StudentDetailData,
 } from '@/shared/types'
 
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
@@ -41,7 +40,7 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
         dday: 'D+5',
         urgent: true,
         actionLabel: '확인',
-        to: '/instructor/cohorts/fe-7/students',
+        to: '/instructor/cohorts/fe-7/education',
       },
       {
         id: 'pri-2',
@@ -165,7 +164,7 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
         dday: 'D+5',
         urgent: true,
         actionLabel: '확인',
-        to: '/instructor/cohorts/fe-7/students',
+        to: '/instructor/cohorts/fe-7/education',
       },
       {
         id: 'pri-5',
@@ -458,261 +457,6 @@ const students: CohortStudentsData = {
   ],
 }
 
-// ── §4 수강생 상세 (Figma 1334:9714) — 이서연 기준 ──
-const studentDetail: StudentDetailData = {
-  id: 'stu-2',
-  name: '이서연',
-  uuidEmail: 'def-5678 · lee.sy@playdata.io',
-  cohortLabel: 'DA 4기',
-  certStatus: 'reviewing',
-  kpis: [
-    { label: '교육시간', value: '420h', hint: '목표 480 · 88%' },
-    { label: '출석률', value: '96.2%', hint: '지각 2 결석 0' },
-    { label: '퀴즈 평균', value: '84.7', hint: '/100 · 미응시 1 · 채점 2' },
-    { label: '제출률', value: '91%', hint: '대기 1 · 반려 0' },
-  ],
-  skillScores: [
-    { label: '기술', score: 82 },
-    { label: '책임', score: 76 },
-    { label: '소통', score: 88 },
-    { label: '성장', score: 79 },
-    { label: '팀워크', score: 84 },
-    { label: '문해', score: 81 },
-  ],
-  warningLine1: '결측 0 · 점수 재검토 0',
-  warningLine2: '개인정보 위험 0 · 미승인 0',
-  reviewComment:
-    '6축 점수 전반 안정. 알고리즘 #3 채점 후 인증 요청 가능 판단. (2026-05-17 황설현)',
-  supplements: [
-    {
-      id: 'sup-1',
-      date: '2026-05-16',
-      status: 'responded',
-      code: 'unapproved_artifact',
-      category: '프로젝트',
-    },
-    {
-      id: 'sup-2',
-      date: '2026-05-10',
-      status: 'waiting',
-      code: 'score_review_needed',
-      category: '점수',
-    },
-    {
-      id: 'sup-3',
-      date: '2026-04-28',
-      status: 'responded',
-      code: 'missing_evidence',
-      category: '기록실',
-    },
-  ],
-  tabs: {
-    quiz: {
-      title: '퀴즈 제출·채점 이력',
-      summary: '전체 14건 · 채점 대기 2건 · 평균 84.7',
-      ctaLabel: '퀴즈 관리로 →',
-      ctaTo: '/instructor/quizzes',
-      items: [
-        {
-          id: 'sdq-1',
-          title: '알고리즘 기초 #3',
-          subtitle: '제출 2026-05-17',
-          value: null,
-          statusLabel: '채점 대기',
-          statusTone: 'warning',
-          actionLabel: '채점',
-          to: '/instructor/quizzes/quiz-algo-3/submissions/sub-2/grade',
-        },
-        {
-          id: 'sdq-2',
-          title: '데이터 정제 실습',
-          subtitle: '제출 2026-05-15',
-          value: '92/100',
-          statusLabel: '채점 완료',
-          statusTone: 'success',
-          actionLabel: '결과',
-          to: null,
-        },
-        {
-          id: 'sdq-3',
-          title: 'SQL 윈도우 함수',
-          subtitle: '제출 2026-05-13',
-          value: null,
-          statusLabel: '미응시',
-          statusTone: 'neutral',
-          actionLabel: '결과',
-          to: null,
-        },
-        {
-          id: 'sdq-4',
-          title: 'Python 기본 문법',
-          subtitle: '제출 2026-05-10',
-          value: '88/100',
-          statusLabel: '채점 완료',
-          statusTone: 'success',
-          actionLabel: '결과',
-          to: null,
-        },
-        {
-          id: 'sdq-5',
-          title: '시각화 라이브러리 비교',
-          subtitle: '제출 2026-05-08',
-          value: '76/100',
-          statusLabel: '재시험 권장',
-          statusTone: 'danger',
-          actionLabel: '결과',
-          to: null,
-        },
-      ],
-    },
-    records: {
-      title: '기록실 승인 이력',
-      summary: '승인 12 · 대기 1 · 반려 0',
-      ctaLabel: '검토 화면으로 →',
-      ctaTo: '/instructor/records/review',
-      items: [
-        {
-          id: 'sdr-1',
-          title: '회고 블로그 #12',
-          subtitle: '제출 2026-05-16 · 블로그',
-          value: null,
-          statusLabel: '승인 대기',
-          statusTone: 'warning',
-          actionLabel: '보기',
-          to: null,
-        },
-        {
-          id: 'sdr-2',
-          title: 'SQLD 자격증',
-          subtitle: '등록 2026-05-02 · 자격증',
-          value: null,
-          statusLabel: '승인',
-          statusTone: 'success',
-          actionLabel: '보기',
-          to: null,
-        },
-        {
-          id: 'sdr-3',
-          title: '알고리즘 스터디 8주차',
-          subtitle: '등록 2026-04-26 · 스터디',
-          value: null,
-          statusLabel: '승인',
-          statusTone: 'success',
-          actionLabel: '보기',
-          to: null,
-        },
-      ],
-    },
-    projects: {
-      title: '프로젝트 참여 현황',
-      summary: '진행 1 · 인증 완료 1',
-      ctaLabel: '프로젝트 검토로 →',
-      ctaTo: '/instructor/projects/review',
-      items: [
-        {
-          id: 'sdp-1',
-          title: '추천 영상 큐레이션',
-          subtitle: 'DA 4팀 · 팀원',
-          value: null,
-          statusLabel: '인증 완료',
-          statusTone: 'success',
-          actionLabel: '보기',
-          to: null,
-        },
-        {
-          id: 'sdp-2',
-          title: '물류 데이터 대시보드',
-          subtitle: 'DA 2팀 · PM',
-          value: null,
-          statusLabel: '진행 중',
-          statusTone: 'info',
-          actionLabel: '보기',
-          to: null,
-        },
-      ],
-    },
-    troubleshooting: {
-      title: '트러블슈팅 사례',
-      summary: '등록 2 · 승인 대기 1',
-      ctaLabel: '트러블슈팅 검토로 →',
-      ctaTo: '/instructor/troubleshooting/review',
-      items: [
-        {
-          id: 'sdt-1',
-          title: 'Pandas 메모리 초과 해결',
-          subtitle: '등록 2026-05-14',
-          value: null,
-          statusLabel: '승인 대기',
-          statusTone: 'warning',
-          actionLabel: '보기',
-          to: null,
-        },
-        {
-          id: 'sdt-2',
-          title: 'CSV 인코딩 오류 분석',
-          subtitle: '등록 2026-04-30',
-          value: null,
-          statusLabel: '승인',
-          statusTone: 'success',
-          actionLabel: '보기',
-          to: null,
-        },
-      ],
-    },
-    endorsements: {
-      title: '강사 추천서',
-      summary: '작성 1 · 스냅샷 반영 1',
-      ctaLabel: '추천서 관리로 →',
-      ctaTo: '/instructor/endorsements',
-      items: [
-        {
-          id: 'sde-1',
-          title: '데이터 처리 역량 추천',
-          subtitle: '작성 2026-05-12 · 황설현',
-          value: null,
-          statusLabel: '스냅샷 반영',
-          statusTone: 'success',
-          actionLabel: '보기',
-          to: '/instructor/endorsements',
-        },
-      ],
-    },
-  },
-}
-
-// §4 per-student 상세 — students.rows 기준으로 base 템플릿에서 파생.
-// 이름·이메일·기수·증명서 상태·경고 플래그·퀴즈 평균·검토 코멘트는 학생별 개별화,
-// 6축·보완 이력·하위 탭은 mock 공통 템플릿 재사용(실 BE 전환 시 학생별 응답으로 교체).
-const studentDetailById: Record<string, StudentDetailData> = Object.fromEntries(
-  students.rows.map((r): [string, StudentDetailData] => {
-    const has = (flag: string) => r.riskFlags.includes(flag)
-    return [
-      r.id,
-      {
-        ...studentDetail,
-        id: r.id,
-        name: r.name,
-        uuidEmail: r.emailUuid,
-        cohortLabel: r.cohortLabel,
-        certStatus: r.certStatus,
-        kpis: studentDetail.kpis.map((k) =>
-          k.label === '퀴즈 평균'
-            ? {
-                ...k,
-                value: r.quizAvg.replace('평균 ', ''),
-                hint: `/100 · ${r.quizDetail}`,
-              }
-            : k,
-        ),
-        warningLine1: `결측 ${has('결측') ? 1 : 0} · 점수 재검토 ${has('점수 재검토') ? 1 : 0}`,
-        warningLine2: `개인정보 위험 ${has('개인정보') ? 1 : 0} · 미승인 ${has('미승인 산출물') ? 1 : 0}`,
-        reviewComment:
-          r.id === studentDetail.id ? studentDetail.reviewComment : '',
-      },
-    ]
-  }),
-)
-
 // 담당 기수 없음 시연용 변형 (Figma 2750:1974) — instructor-new@* 계정으로 로그인 시 반환.
 const dashboardNoCohort: InstructorDashboardData = {
   ...dashboardByCohort['da-4'],
@@ -746,21 +490,5 @@ export const handlers = [
   http.get('/api/instructor/cohorts', () => ok<InstructorCohortsData>(cohorts)),
   http.get('/api/instructor/cohorts/:cohortId/students', () =>
     ok<CohortStudentsData>(students),
-  ),
-  http.get('/api/instructor/students/:studentId', ({ params }) =>
-    ok<StudentDetailData>(
-      studentDetailById[String(params.studentId)] ?? studentDetail,
-    ),
-  ),
-  // 검토 코멘트 저장 — 학생별 reviewComment in-memory 갱신(새로고침 시 초기화).
-  http.patch(
-    '/api/instructor/students/:studentId',
-    async ({ request, params }) => {
-      const body = (await request.json()) as { reviewComment: string }
-      const target =
-        studentDetailById[String(params.studentId)] ?? studentDetail
-      target.reviewComment = body.reviewComment
-      return HttpResponse.json({ data: null })
-    },
   ),
 ]

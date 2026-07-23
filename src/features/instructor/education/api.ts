@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import type {
   CohortMaterialItem,
-  CohortStudentsData,
   StudentAttendanceData,
 } from '@/shared/types'
 import type {
@@ -39,27 +38,13 @@ const keys = {
     ['instructor', 'education', 'resumes', cohortId] as const,
   resume: (cohortId: string, resumeId: string) =>
     ['instructor', 'education', 'resume', cohortId, resumeId] as const,
-  students: (cohortId: string) =>
-    ['instructor', 'education', 'students', cohortId] as const,
   attendance: (cohortId: string) =>
     ['instructor', 'education', 'attendance', cohortId] as const,
   attendanceSummary: (cohortId: string) =>
     ['instructor', 'education', 'attendance-summary', cohortId] as const,
 }
 
-// 수강생 탭 — 명단(/instructor/cohorts/{id}/students, 강사 허용).
-export function useInstructorCohortStudents(cohortId: string | null) {
-  return useQuery({
-    queryKey: keys.students(cohortId ?? ''),
-    enabled: !!cohortId,
-    queryFn: () =>
-      apiClient
-        .get<CohortStudentsData>(`/instructor/cohorts/${cohortId}/students`)
-        .then((r) => r.data),
-  })
-}
-
-// 수강생 탭 — 오늘 출석(HRD 라이브, date 미지정=오늘).
+// 수강생 탭 — 오늘 출석(HRD 라이브, date 미지정=오늘). 명단도 이 rows(HRD 훈련생)에서 파생.
 export function useInstructorAttendance(cohortId: string | null) {
   return useQuery({
     queryKey: keys.attendance(cohortId ?? ''),

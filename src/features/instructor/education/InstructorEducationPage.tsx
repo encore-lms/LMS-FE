@@ -5,6 +5,7 @@ import { Tabs } from '@/components/ui/Tabs'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import QuizListPage from '../quizzes/QuizListPage'
+import EndorsementsPage from '../endorsements/EndorsementsPage'
 import AssignmentsPage from '../assignments/AssignmentsPage'
 import ProjectReviewPage from '../reviews/ProjectReviewPage'
 import RecordReviewPage from '../reviews/RecordReviewPage'
@@ -23,6 +24,7 @@ type TabKey =
   | 'projects'
   | 'resume'
   | 'records'
+  | 'endorsements'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'students', label: '수강생' },
@@ -32,6 +34,8 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'projects', label: '프로젝트' },
   { key: 'resume', label: '이력서' },
   { key: 'records', label: '기록실' },
+  // 강사 추천서 이관(2026-07-24) — 단독 화면 폐기, 허브 마지막 탭으로 일원화.
+  { key: 'endorsements', label: '코멘트/추천' },
 ]
 
 export default function InstructorEducationPage() {
@@ -78,8 +82,10 @@ export default function InstructorEducationPage() {
           <ProjectReviewPage embedded cohortId={cohortId} />
         ) : tab === 'resume' ? (
           <ResumeViewPane cohortId={cohortId} />
-        ) : (
+        ) : tab === 'records' ? (
           <RecordReviewPage embedded cohortId={cohortId} />
+        ) : (
+          <EndorsementsPage embedded cohortId={cohortId} />
         )}
       </div>
     </div>

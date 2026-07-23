@@ -16,6 +16,7 @@ export const instructorMenu: MenuItem[] = [
       '/instructor/quizzes',
       '/instructor/assignments',
       '/instructor/quiz-templates',
+      '/instructor/endorsements',
     ],
   },
   // 검토 = 프로젝트 검토 + 트러블슈팅 검토. 학습 기록 조회는 교육 과정 허브 '기록실' 탭으로 이관(진입은 프로젝트).
@@ -30,5 +31,4 @@ export const instructorMenu: MenuItem[] = [
     to: '/instructor/change-requests',
     match: ['/instructor/recertifications'],
   },
-  { label: '강사 추천서', to: '/instructor/endorsements' },
 ]

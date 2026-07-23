@@ -18,7 +18,8 @@ import {
 import { SNAPSHOT_META, formatRemaining } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
 
-const LIST = '/instructor/endorsements'
+// 단독 목록 폐기(허브 탭 이관) — 복귀는 이력 화면으로.
+const LIST = '/instructor/endorsements/history'
 
 // 강사 추천서 상세/수정 (/instructor/endorsements/:endorsementId).
 // 24h 수정 창 안에서만 기존 row 수정. 이후 변경은 신규 row. 삭제는 확인 모달.

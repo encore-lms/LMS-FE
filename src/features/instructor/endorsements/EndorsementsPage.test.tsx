@@ -117,8 +117,10 @@ describe('EndorsementsPage', () => {
     // 제목은 본문이 아닌 공유 헤더(usePageHeader)에 등록된다.
     expect(usePageHeaderStore.getState().title).toBe('강사 추천서')
     expect(screen.getAllByText('윤도현').length).toBeGreaterThan(0)
-    // 이미 추천서를 쓴 정민서는 '작성 대기'에서 빠지고 '최근 작성'에만 이름이 채워져 보인다.
-    expect(screen.getByText('정민서')).toBeInTheDocument()
+    // 명단은 전원을 세로로 보여준다 — 이미 추천서를 쓴 정민서는 명단 행(작성됨)과
+    // '최근 작성' 두 곳에 나온다.
+    expect(screen.getAllByText('정민서').length).toBeGreaterThan(0)
+    expect(screen.getByText('작성됨')).toBeInTheDocument() // 정민서 행 배지
     expect(screen.getByText('작성 대기')).toBeInTheDocument()
     expect(screen.getByText('2건')).toBeInTheDocument() // 최예린·윤도현(정민서 제외)
     expect(screen.getByText('· 누적 1건')).toBeInTheDocument()
@@ -137,7 +139,7 @@ describe('EndorsementsPage', () => {
       </MemoryRouter>,
     )
     expect(screen.queryByText('(이름 미확인)')).toBeNull()
-    expect(screen.queryByText('작성 대기 중인 추천서가 없어요.')).toBeNull()
+    expect(screen.queryByText('이 기수에 수강생이 없어요.')).toBeNull()
   })
 
   // 회귀 — 강사가 여러 기수를 담당하는데 큐(JWT 기수)와 명단(rows[0])이 서로 달라

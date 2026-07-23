@@ -324,7 +324,7 @@ export default function QuizFormPage() {
         )}
 
         {/* 기본 정보 */}
-        <section className="bg-surface max-w-4xl rounded-xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+        <section className="bg-surface max-w-4xl rounded-xl p-5">
           <p className="text-fg mb-3 text-sm font-bold">기본 정보</p>
           <div className="grid gap-3 sm:grid-cols-[1fr_240px]">
             <div>
@@ -373,7 +373,7 @@ export default function QuizFormPage() {
         </section>
 
         {/* 출제 설정 — 응시·채점·문제·공개 통합(컴팩트) */}
-        <section className="bg-surface max-w-4xl rounded-xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+        <section className="bg-surface max-w-4xl rounded-xl p-5">
           <p className="text-fg mb-3 text-sm font-bold">출제 설정</p>
 
           {/* 기간·제한 */}
@@ -506,7 +506,7 @@ export default function QuizFormPage() {
         </section>
 
         {/* 문항 — 수정 모드는 인라인, 생성 모드는 저장 후 안내 */}
-        <section className="bg-surface max-w-4xl rounded-xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+        <section className="bg-surface max-w-4xl rounded-xl p-5">
           <p className="text-fg mb-3 text-sm font-bold">문항</p>
           {isEdit && quizId ? (
             <QuizQuestionEditor
@@ -532,7 +532,7 @@ export default function QuizFormPage() {
         </section>
 
         {/* 푸터 */}
-        <div className="bg-surface flex max-w-4xl items-center gap-2 rounded-xl px-4 py-3 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+        <div className="bg-surface flex max-w-4xl items-center gap-2 rounded-xl px-4 py-3">
           <div className="ml-auto flex gap-2">
             <Button
               type="button"

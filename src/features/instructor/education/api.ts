@@ -1,10 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
-import type { CohortMaterialItem } from '@/shared/types'
+import type {
+  CohortMaterialItem,
+  CohortStudentsData,
+  StudentAttendanceData,
+} from '@/shared/types'
 import type {
   ResumeDetail,
   ResumeRow,
 } from '@/features/admin/education/types'
+
+// 수강생 탭 출석 현황 요약(BE CohortAttendanceSummaryResponse 미러).
+export interface CohortAttendanceSummary {
+  cohortLabel: string
+  date: string
+  students: { total: number; active: number; dropout: number }
+  todayPresent: number | null
+  todayTotal: number | null
+  todayAbsentees: { studentUuid: string; name: string; detail: string }[]
+  avgRate: number | null
+  weekly: { date: string; rate: number }[]
+  issues: {
+    studentUuid: string
+    name: string
+    lateCount: number
+    absentCount: number
+    marks: string[]
+  }[]
+  issueDays: string[]
+}
 
 // 강사 과정·기수 허브의 조회 전용 탭(자료실·이력서·설정) — /instructor 미러(운영 /admin/* 은 강사 배제).
 // courseId는 서버가 기수에서 해석하므로 cohortId만 넘긴다. baseURL이 /api 라 경로 앞에 /api 안 붙임.
@@ -15,6 +39,50 @@ const keys = {
     ['instructor', 'education', 'resumes', cohortId] as const,
   resume: (cohortId: string, resumeId: string) =>
     ['instructor', 'education', 'resume', cohortId, resumeId] as const,
+  students: (cohortId: string) =>
+    ['instructor', 'education', 'students', cohortId] as const,
+  attendance: (cohortId: string) =>
+    ['instructor', 'education', 'attendance', cohortId] as const,
+  attendanceSummary: (cohortId: string) =>
+    ['instructor', 'education', 'attendance-summary', cohortId] as const,
+}
+
+// 수강생 탭 — 명단(/instructor/cohorts/{id}/students, 강사 허용).
+export function useInstructorCohortStudents(cohortId: string | null) {
+  return useQuery({
+    queryKey: keys.students(cohortId ?? ''),
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<CohortStudentsData>(`/instructor/cohorts/${cohortId}/students`)
+        .then((r) => r.data),
+  })
+}
+
+// 수강생 탭 — 오늘 출석(HRD 라이브, date 미지정=오늘).
+export function useInstructorAttendance(cohortId: string | null) {
+  return useQuery({
+    queryKey: keys.attendance(cohortId ?? ''),
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<StudentAttendanceData>(`/instructor/cohorts/${cohortId}/attendance`)
+        .then((r) => r.data),
+  })
+}
+
+// 수강생 탭 — 출석 현황 요약.
+export function useInstructorAttendanceSummary(cohortId: string | null) {
+  return useQuery({
+    queryKey: keys.attendanceSummary(cohortId ?? ''),
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<CohortAttendanceSummary>(
+          `/instructor/cohorts/${cohortId}/attendance-summary`,
+        )
+        .then((r) => r.data),
+  })
 }
 
 // 자료실 탭 — 기수 자료 목록.

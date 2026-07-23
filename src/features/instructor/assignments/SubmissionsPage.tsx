@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
@@ -26,6 +26,12 @@ import {
 export default function SubmissionsPage() {
   const { assignmentId = '' } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // 허브 진입이면 목록으로 = 허브 과제 탭.
+  const fromCohortId = searchParams.get('cohortId')
+  const backTo = fromCohortId
+    ? `/instructor/cohorts/${fromCohortId}/education?tab=assignments`
+    : '/instructor/assignments'
   const toast = useToast()
   const { data, isPending, isError, refetch } =
     useAssignmentSubmissions(assignmentId)
@@ -116,7 +122,7 @@ export default function SubmissionsPage() {
               </p>
               <button
                 type="button"
-                onClick={() => navigate('/instructor/assignments')}
+                onClick={() => navigate(backTo)}
                 className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
               >
                 ← 과제 목록으로

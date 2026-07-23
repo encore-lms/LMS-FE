@@ -140,7 +140,7 @@ export default function DashboardPage() {
       title: '검토 화면',
       badge: data.shortcuts.reviews.badge,
       hint: data.shortcuts.reviews.hint,
-      to: '/instructor/records/review',
+      to: '/instructor/projects/review',
     },
   ]
 

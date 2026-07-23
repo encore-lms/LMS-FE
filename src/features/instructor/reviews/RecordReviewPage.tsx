@@ -134,10 +134,9 @@ export default function RecordReviewPage({
 
   return (
     <div className={embedded ? '' : 'p-8'}>
-      {!embedded && <RouteTabBar tabs={REVIEW_TABS} />}
-      {/* 담당 과정·기수 — 강사는 한 교육만 맡으므로 선택이 아닌 단일 고정 표시. */}
+      {/* 담당 과정·기수 — 강사는 한 교육만 맡으므로 선택이 아닌 단일 고정 표시(탭 위에 배치). */}
       {!embedded && (
-        <p className="text-fg mb-4 text-lg font-bold">
+        <p className="text-fg mb-3 text-lg font-bold">
           <span>
             {data?.courses.find((c) => c.id === courseId)?.label ?? '담당 과정'}
           </span>
@@ -151,6 +150,7 @@ export default function RecordReviewPage({
           })()}
         </p>
       )}
+      {!embedded && <RouteTabBar tabs={REVIEW_TABS} />}
 
       {/* 검색 + 카테고리 토글 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

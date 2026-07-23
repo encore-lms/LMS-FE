@@ -19,11 +19,11 @@ export const instructorMenu: MenuItem[] = [
       '/instructor/quiz-templates',
     ],
   },
-  // 검토 = 학습기록 조회 + 프로젝트 검토 + 트러블슈팅 검토 묶음(Figma '검토' 부모 항목)
+  // 검토 = 프로젝트 검토 + 트러블슈팅 검토. 학습 기록 조회는 교육 과정 허브 '기록실' 탭으로 이관(진입은 프로젝트).
   {
     label: '검토',
-    to: '/instructor/records/review',
-    match: ['/instructor/projects', '/instructor/troubleshooting'],
+    to: '/instructor/projects/review',
+    match: ['/instructor/troubleshooting', '/instructor/records'],
   },
   // 재인증 통합 검토는 별도 메뉴 없이 같은 항목 하위(Figma 2750:2202 sidebar active 동일).
   {

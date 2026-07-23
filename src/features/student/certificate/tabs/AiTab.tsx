@@ -6,6 +6,7 @@ import { AiAnalysisPanel } from '../v2/AiAnalysisPanel'
 import { AiProfile } from '../v2/AiProfile'
 import { SentimentBubbles } from '../v2/SentimentBubbles'
 import { TechnicalVerdict } from '../v2/TechnicalVerdict'
+import { ProjectAnalysis } from '../v2/ProjectAnalysis'
 import {
   CERTIFICATE_MOCK_STUDENT_ID,
   fetchAiAnalysis,
@@ -37,30 +38,7 @@ function AiTabContent({ data }: { data: AiAnalysis }) {
       {/* 기술 종합 판단 + 프로젝트 분석 */}
       <div className="flex flex-col gap-4 lg:flex-row">
         <TechnicalVerdict verdict={verdict} />
-        <AiAnalysisPanel title="AI 프로젝트 분석" className="flex-1">
-          <div className="flex flex-col gap-3">
-            <span className="text-fg-muted text-[12px] leading-5">
-              {projects.summary}
-            </span>
-            {projects.groups.length > 0 && (
-              <div className="flex flex-col gap-2">
-                {projects.groups.map((g) => (
-                  <div
-                    key={g.label}
-                    className="bg-surface flex flex-col gap-1 rounded-xl p-3"
-                  >
-                    <span className="text-accent-strong text-[11px] font-bold">
-                      {g.label}
-                    </span>
-                    <span className="text-fg-muted text-[11px] leading-4">
-                      {g.summary}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </AiAnalysisPanel>
+        <ProjectAnalysis projects={projects} />
       </div>
 
       {/* 문제해결·협업 종합 */}

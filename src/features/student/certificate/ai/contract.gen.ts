@@ -421,9 +421,50 @@ export interface AiPersona {
 }
 
 // 블록4 — 프로젝트 분석
+export type AiProjectStatus = 'READY' | 'PARTIAL' | 'NOT_READY'
+export type AiProjectMembershipRole = 'OWNER' | 'MEMBER'
+export interface AiProjectTeamContext {
+  domain: string | null
+  scope: string
+  techStacks: string[]
+  /** 프로젝트 전체의 결과이며 개인 성과로 해석하지 않는다. */
+  outcomes: string[]
+}
+export interface AiProjectPersonalEvidence {
+  tasks: string[]
+  peerObservations: string[]
+  troubleshootingCases: string[]
+  artifacts: string[]
+}
+export interface AiProjectSnapshot {
+  projectId: string
+  order: number
+  name: string
+  period: { startedAt: string; endedAt: string }
+  certificationStatus: 'CERTIFIED'
+  status: AiProjectStatus
+  membershipRole: AiProjectMembershipRole
+  teamContext: AiProjectTeamContext
+  personalEvidence: AiProjectPersonalEvidence
+  analysis: string
+  evidenceCodes: string[]
+  limitations: string[]
+  generatedBy: 'AI' | 'FALLBACK'
+}
+export interface AiProjectOverview {
+  experienceScope: string
+  workingStyle: string
+  overall: string
+}
 export interface AiProjects {
   summary: string
+  /** 기존 FE의 단계적 연결을 위해 프로젝트별 분석을 같은 shape로 제공한다. */
   groups: { label: string; summary: string }[]
+  status: AiProjectStatus
+  projects: AiProjectSnapshot[]
+  overview: AiProjectOverview
+  limitations: string[]
+  generatedBy: 'AI' | 'FALLBACK'
 }
 
 // 블록5 — 문제해결·협업

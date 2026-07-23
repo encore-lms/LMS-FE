@@ -10,7 +10,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { EVAL_TABS, RouteTabBar } from '../components/RouteTabBar'
 import type { InstructorAssignmentRow } from '@/shared/types'
 import {
   useDeleteAssignment,
@@ -194,7 +193,6 @@ export default function AssignmentsPage({
     >
       {data && kpi && (
         <div className={embedded ? '' : 'p-8'}>
-          {!embedded && <RouteTabBar tabs={EVAL_TABS} />}
           {/* KPI 4 — 담당 과제 전체 합산 */}
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard

@@ -20,7 +20,6 @@ const EndorsementHistoryPage = lazy(
 const EndorsementDetailPage = lazy(
   () => import('./endorsements/EndorsementDetailPage'),
 )
-const QuizListPage = lazy(() => import('./quizzes/QuizListPage'))
 const ChangeRequestsPage = lazy(
   () => import('./change-requests/ChangeRequestsPage'),
 )
@@ -28,7 +27,6 @@ const RecertificationsPage = lazy(
   () => import('./change-requests/RecertificationsPage'),
 )
 const NoCohortPage = lazy(() => import('./dashboard/NoCohortNotice'))
-const AssignmentsPage = lazy(() => import('./assignments/AssignmentsPage'))
 const AssignmentFormPage = lazy(
   () => import('./assignments/AssignmentFormPage'),
 )
@@ -81,7 +79,8 @@ export const instructorRoutes: RouteObject[] = [
         element: <EndorsementDetailPage />,
       },
       // 퀴즈 Main Flow (§5~§9) — /new는 :quizId보다 먼저(정적 경로 우선).
-      { path: 'quizzes', element: <QuizListPage /> },
+      // 독립 퀴즈 목록은 폐기 — 교육 과정 허브(퀴즈 탭)로 일원화. 폼·제출 라우트는 유지.
+      { path: 'quizzes', element: <Navigate to="/instructor/cohorts" replace /> },
       { path: 'quizzes/new', element: <QuizFormPage /> },
       { path: 'quizzes/:quizId/edit', element: <QuizFormPage /> },
       { path: 'quizzes/:quizId/submissions', element: <SubmissionsPage /> },
@@ -91,7 +90,11 @@ export const instructorRoutes: RouteObject[] = [
       },
       // 과제·실습 Main Flow (P0 30) — /new는 :assignmentId보다 먼저(정적 경로 우선).
       // :assignmentId가 상세+수정 단일 폼(생성 정책: 생성/수정 후 상세 화면 이동).
-      { path: 'assignments', element: <AssignmentsPage /> },
+      // 독립 과제 목록은 폐기 — 교육 과정 허브(과제 탭)로 일원화. 폼·제출 라우트는 유지.
+      {
+        path: 'assignments',
+        element: <Navigate to="/instructor/cohorts" replace />,
+      },
       { path: 'assignments/new', element: <AssignmentFormPage /> },
       {
         path: 'assignments/:assignmentId/submissions',

@@ -11,7 +11,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { EVAL_TABS, RouteTabBar } from '../components/RouteTabBar'
 import type {
   GradingMode,
   InstructorQuizRow,
@@ -39,6 +38,8 @@ export default function QuizListPage({
   const navigate = useNavigate()
   const base = useQuizBasePath()
   const toast = useToast()
+  // 허브(퀴즈 탭) 진입이면 폼·제출현황에 cohortId를 넘겨 저장·취소 후 허브로 복귀·기수 고정.
+  const hubQs = embedded && cohortId ? `?cohortId=${cohortId}` : ''
   const { data, isPending, isError, refetch } = useInstructorQuizzes(cohortId)
   const deleteQuiz = useDeleteQuiz()
   const [q, setQ] = useState('')
@@ -172,7 +173,7 @@ export default function QuizListPage({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`${base}/${r.id}/edit`)
+                navigate(`${base}/${r.id}/edit${hubQs}`)
               }}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
             >
@@ -208,7 +209,7 @@ export default function QuizListPage({
               title={isDraft ? '임시저장 퀴즈는 제출 현황이 없어요' : undefined}
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`${base}/${r.id}/submissions`)
+                navigate(`${base}/${r.id}/submissions${hubQs}`)
               }}
               className={cn(
                 'rounded-md border px-2 py-1 text-xs font-medium',
@@ -237,8 +238,6 @@ export default function QuizListPage({
     >
       {data && (
         <div className={embedded ? '' : 'p-8'}>
-          {/* 강사 직접 진입 시 퀴즈↔과제 탭(임베드 시엔 상위 탭이 담당) */}
-          {!embedded && <RouteTabBar tabs={EVAL_TABS} />}
           {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-fg-muted text-sm">
@@ -322,7 +321,7 @@ export default function QuizListPage({
               columns={columns}
               rows={filtered}
               rowKey={(r) => r.id}
-              onRowClick={(r) => navigate(`${base}/${r.id}/edit`)}
+              onRowClick={(r) => navigate(`${base}/${r.id}/edit${hubQs}`)}
               empty="조건에 맞는 퀴즈가 없어요"
             />
           </div>

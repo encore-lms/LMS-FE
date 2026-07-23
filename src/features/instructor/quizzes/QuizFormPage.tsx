@@ -143,6 +143,17 @@ export default function QuizFormPage() {
   const templateId = isEdit ? null : searchParams.get('templateId')
   // 과정·기수 허브에서 진입 시 대상 기수를 그 기수로 고정(자유 선택 차단).
   const lockedCohortId = isEdit ? null : searchParams.get('cohortId')
+  // 허브 진입(생성·수정 모두)이면 저장·취소 후 허브 퀴즈 탭으로 복귀. cohortId를 편집 화면에도 이어붙인다.
+  const fromCohortId = searchParams.get('cohortId')
+  const backTo = fromCohortId
+    ? `/instructor/cohorts/${fromCohortId}/education?tab=quizzes`
+    : base
+  const editUrl = (id: string, add: boolean) => {
+    const params: string[] = []
+    if (add) params.push('add=1')
+    if (fromCohortId) params.push(`cohortId=${fromCohortId}`)
+    return `${base}/${id}/edit${params.length ? `?${params.join('&')}` : ''}`
+  }
   const { data, isPending, isError, refetch } = useInstructorQuizDetail(
     quizId ?? null,
   )
@@ -262,8 +273,7 @@ export default function QuizFormPage() {
           toast.success(`${input.title} 저장 — ${VISIBILITY_META[vis].label}`)
           // 생성 직후엔 같은 폼의 수정 화면으로 — 문항 섹션이 인라인으로 함께 보인다.
           // openAdd면 문항 추가 폼을 바로 펼친다(임시저장 따로 누를 필요 없음).
-          if (!isEdit)
-            navigate(`${base}/${saved.id}/edit${openAdd ? '?add=1' : ''}`)
+          if (!isEdit) navigate(editUrl(saved.id, openAdd))
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },
@@ -301,7 +311,7 @@ export default function QuizFormPage() {
       {
         onSuccess: (saved) => {
           toast.success('임시저장했어요 — 문항을 추가하세요')
-          navigate(`${base}/${saved.id}/edit?add=1`)
+          navigate(editUrl(saved.id, true))
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },
@@ -555,7 +565,7 @@ export default function QuizFormPage() {
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => navigate(base)}
+              onClick={() => navigate(backTo)}
             >
               취소
             </Button>

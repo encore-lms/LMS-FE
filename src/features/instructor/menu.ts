@@ -8,12 +8,11 @@ export const instructorMenu: MenuItem[] = [
   // 대시보드 = 담당 기수 채점·인증·보완 KPI + 우선 처리 목록(로그인 랜딩).
   { label: '대시보드', to: '/instructor/dashboard' },
   // 교육 과정 = 담당 과정/기수 + 과정 클릭 시 허브(자료실·과제·퀴즈·프로젝트·이력서·기록실 탭).
-  // 수강생 상세·퀴즈/과제 관리·퀴즈 템플릿을 match로 묶어 활성 유지.
+  // 퀴즈/과제 관리·퀴즈 템플릿을 match로 묶어 활성 유지.
   {
     label: '교육 과정',
     to: '/instructor/cohorts',
     match: [
-      '/instructor/students',
       '/instructor/quizzes',
       '/instructor/assignments',
       '/instructor/quiz-templates',
@@ -23,7 +22,7 @@ export const instructorMenu: MenuItem[] = [
   {
     label: '검토',
     to: '/instructor/projects/review',
-    match: ['/instructor/troubleshooting', '/instructor/records'],
+    match: ['/instructor/troubleshooting'],
   },
   // 재인증 통합 검토는 별도 메뉴 없이 같은 항목 하위(Figma 2750:2202 sidebar active 동일).
   {

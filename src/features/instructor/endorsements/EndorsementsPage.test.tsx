@@ -4,11 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import EndorsementsPage from './EndorsementsPage'
 import EndorsementHistoryPage from './EndorsementHistoryPage'
-import {
-  useEndorsementQueue,
-  useEndorsementHistory,
-  useEndorsementRoster,
-} from '../api/endorsements'
+import { useEndorsementQueue, useEndorsementHistory } from '../api/endorsements'
+import { useCohortRoster } from '../api/console'
 import { usePageHeaderStore } from '@/shared/store'
 import type { EndorsementHistory, EndorsementQueue } from '@/shared/types'
 
@@ -18,6 +15,8 @@ vi.mock('../api/console', () => ({
   useInstructorCohorts: () => ({
     data: { rows: [{ id: 'co1', name: 'DA 4기' }] },
   }),
+  // 로스터는 콘솔 공용 훅으로 이동 — 테스트별로 vi.mocked(useCohortRoster)로 값 지정.
+  useCohortRoster: vi.fn(),
 }))
 vi.mock('@/components/ui/use-toast', () => ({
   useToast: () => ({
@@ -94,13 +93,13 @@ const history: EndorsementHistory = {
 
 function mockQueue(v: Partial<QueueHook>) {
   // 이름 join·작성 대기 계산의 원천 — BE 는 userId 만 주므로 화면이 이 명단으로 채운다.
-  vi.mocked(useEndorsementRoster).mockReturnValue({
+  vi.mocked(useCohortRoster).mockReturnValue({
     data: [
       { userId: 'st_yerin', name: '최예린' },
       { userId: 'st_dohyun', name: '윤도현' },
       { userId: 'st_jeongminseo', name: '정민서' },
     ],
-  } as unknown as ReturnType<typeof useEndorsementRoster>)
+  } as unknown as ReturnType<typeof useCohortRoster>)
   vi.mocked(useEndorsementQueue).mockReturnValue(v as unknown as QueueHook)
 }
 function mockHistory(v: Partial<HistoryHook>) {
@@ -128,10 +127,10 @@ describe('EndorsementsPage', () => {
   // 회귀 — 명단이 오기 전에 그려서 이름이 '(이름 미확인)', 작성 대기가 0건으로 깜빡였다.
   it('명단 로딩 중에는 이름 미확인·빈 작성 대기를 보여주지 않는다', () => {
     mockQueue({ data: queue, isPending: false, isError: false })
-    vi.mocked(useEndorsementRoster).mockReturnValue({
+    vi.mocked(useCohortRoster).mockReturnValue({
       data: undefined,
       isPending: true,
-    } as unknown as ReturnType<typeof useEndorsementRoster>)
+    } as unknown as ReturnType<typeof useCohortRoster>)
     render(
       <MemoryRouter>
         <EndorsementsPage />
@@ -151,7 +150,7 @@ describe('EndorsementsPage', () => {
       </MemoryRouter>,
     )
     expect(vi.mocked(useEndorsementQueue)).toHaveBeenLastCalledWith('co1')
-    expect(vi.mocked(useEndorsementRoster)).toHaveBeenLastCalledWith('co1')
+    expect(vi.mocked(useCohortRoster)).toHaveBeenLastCalledWith('co1')
   })
 
   it('코멘트 없이 제출하면 검증 에러를 표시한다', async () => {

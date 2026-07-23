@@ -127,8 +127,6 @@ export const instructorKeys = {
     ] as const,
   dashboard: () => [...instructorKeys.all, 'dashboard'] as const,
   cohorts: () => [...instructorKeys.all, 'cohorts'] as const,
-  cohortStudents: (cohortId: string) =>
-    [...instructorKeys.all, 'cohorts', cohortId, 'students'] as const,
   recordReviews: (courseId: string, cohortId: string) =>
     [...instructorKeys.all, 'record-reviews', courseId, cohortId] as const,
   projectReviews: () => [...instructorKeys.all, 'project-reviews'] as const,

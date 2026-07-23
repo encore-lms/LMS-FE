@@ -81,31 +81,10 @@ export interface InstructorCohortsData {
 }
 
 // ── §3 수강생 목록 (Figma 1330:9675) ──
+// 증명서 상태 pill 5종 — CERT_STATUS_META(cohorts/meta.ts)가 사용. 수강생 목록 화면 폐기 후에도 유지.
 export type StudentCertStatus =
   | 'requested' // 요청됨
   | 'reviewing' // 검토 중
   | 'changes_requested' // 보완 요청
   | 'certified' // 인증 완료
   | 'drafting' // 작성 중
-
-export interface CohortStudentRow {
-  id: string
-  name: string
-  emailUuid: string // 'park.jh@playdata · ghi-9012'
-  cohortLabel: string
-  certStatus: StudentCertStatus
-  quizAvg: string // '평균 78.2'
-  quizDetail: string // '미응시 0 · 채점 1'
-  recordApproved: string // '승인 8'
-  recordDetail: string // '대기 0 · 반려 1'
-  projectStatus: StudentCertStatus // 프로젝트 상태도 동일 pill 5종 사용
-  /** 위험 플래그 — 결측/점수 재검토/개인정보/미승인 산출물 (빈 배열 = 없음) */
-  riskFlags: string[]
-}
-
-export interface CohortStudentsData {
-  cohortLabel: string // 'DA 4기'
-  total: number
-  riskTotal: number
-  rows: CohortStudentRow[]
-}

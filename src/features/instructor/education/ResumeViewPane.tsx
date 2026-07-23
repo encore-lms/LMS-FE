@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { formatDateTime } from '@/shared/lib/date'
 import type { ResumeRow } from '@/features/admin/education/types'
-import { useCohortStudents } from '../api/console'
+import { useCohortRoster } from '../api/console'
 import { useInstructorResume, useInstructorResumes } from './api'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -112,15 +112,16 @@ function ResumeDetailModal({
 // 이력서 탭(강사 조회 전용) — 기수 이력서 현황(수강생명 join) + 검색 + 상세 팝업. 피드백 작성 없음.
 export function ResumeViewPane({ cohortId }: { cohortId: string }) {
   const { data, isPending, isError, refetch } = useInstructorResumes(cohortId)
-  const { data: students } = useCohortStudents(cohortId)
+  // 학생명 join — 로스터 정본은 auth(/users/cohort-students). 추천서 화면과 동일 관례.
+  const { data: roster } = useCohortRoster(cohortId)
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<ResumeRow | null>(null)
 
   const nameOf = useMemo(() => {
     const map = new Map<string, string>()
-    for (const s of students?.rows ?? []) map.set(s.id, s.name)
+    for (const s of roster ?? []) map.set(s.userId, s.name)
     return (userId: string) => map.get(userId) ?? '(이름 미확인)'
-  }, [students])
+  }, [roster])
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()

@@ -24,10 +24,18 @@ type StatusFilter = 'all' | 'open' | 'closed'
 
 // 과제·실습 관리 (/instructor/assignments) — P0 30. (Figma 2236:10561)
 // 점수 없음 — 제출/미제출/보완요청/검토완료 상태 관제만. 마감일 가까운 순 기본 정렬.
-export default function AssignmentsPage() {
+// embedded=true면 과정·기수·교과목 '과제' 탭에 임베드(자체 헤더·탭·기수 필터 생략, 선택 기수로 서버 스코프).
+export default function AssignmentsPage({
+  embedded = false,
+  cohortId = null,
+}: {
+  embedded?: boolean
+  cohortId?: string | null
+}) {
   const navigate = useNavigate()
   const toast = useToast()
-  const { data, isPending, isError, refetch } = useInstructorAssignments()
+  const { data, isPending, isError, refetch } =
+    useInstructorAssignments(cohortId)
   const deleteAssignment = useDeleteAssignment()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -42,6 +50,7 @@ export default function AssignmentsPage() {
   usePageHeader(
     '과제·실습 관리',
     '담당 기수 과제·실습을 생성하고 제출 상태를 관리합니다',
+    !embedded,
   )
 
   const filtered = useMemo(() => {
@@ -179,11 +188,11 @@ export default function AssignmentsPage() {
       skeleton={<SkeletonListPage kpis={4} columns={5} className="" />}
       errorTitle="과제 목록을 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
       {data && kpi && (
-        <div className="p-8">
-          <RouteTabBar tabs={EVAL_TABS} />
+        <div className={embedded ? '' : 'p-8'}>
+          {!embedded && <RouteTabBar tabs={EVAL_TABS} />}
           {/* KPI 4 — 담당 과제 전체 합산 */}
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard
@@ -234,15 +243,18 @@ export default function AssignmentsPage() {
                 ]}
               />
             </label>
-            <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
-              <span className="text-fg-subtle">기수</span>
-              <Select
-                value={cohort}
-                onChange={(v) => setCohort(v)}
-                aria-label="기수 필터"
-                options={cohortOpts.map((c) => ({ value: c, label: c }))}
-              />
-            </label>
+            {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
+            {!embedded && (
+              <label className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs">
+                <span className="text-fg-subtle">기수</span>
+                <Select
+                  value={cohort}
+                  onChange={(v) => setCohort(v)}
+                  aria-label="기수 필터"
+                  options={cohortOpts.map((c) => ({ value: c, label: c }))}
+                />
+              </label>
+            )}
             <div className="ml-auto flex items-center gap-3">
               <span className="text-fg-subtle text-xs">
                 총 {data.total}개 · 마감일 가까운 순

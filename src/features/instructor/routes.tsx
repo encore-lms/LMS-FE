@@ -5,6 +5,9 @@ import type { RouteObject } from 'react-router-dom'
 // 강사 라우트 — features/instructor 소유자만 편집.
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
+const InstructorEducationPage = lazy(
+  () => import('./education/InstructorEducationPage'),
+)
 const CohortStudentsPage = lazy(() => import('./cohorts/CohortStudentsPage'))
 const StudentDetailPage = lazy(() => import('./cohorts/StudentDetailPage'))
 const RecordReviewPage = lazy(() => import('./reviews/RecordReviewPage'))
@@ -52,6 +55,11 @@ export const instructorRoutes: RouteObject[] = [
       { path: 'dashboard', element: <DashboardPage /> },
       // 강사 콘솔 골격 (§2·§3) — 기수 컨텍스트는 후속 화면에 유지.
       { path: 'cohorts', element: <CohortsPage /> },
+      // 과정·기수·교과목 허브 — 과정 클릭 시 7탭(자료실·과제·퀴즈·프로젝트·이력서·기록실·설정).
+      {
+        path: 'cohorts/:cohortId/education',
+        element: <InstructorEducationPage />,
+      },
       { path: 'cohorts/:cohortId/students', element: <CohortStudentsPage /> },
       { path: 'students/:studentId', element: <StudentDetailPage /> },
       // 검토 3종 (§13~§15) — 사이드바 '검토' 묶음.

@@ -158,55 +158,6 @@ export default function CohortsPage() {
         </div>
       ),
     },
-    {
-      key: 'actions',
-      header: '액션',
-      className: 'w-56',
-      cell: (r) => (
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              navigate(`/instructor/cohorts/${r.id}/students`)
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            수강생
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              navigate('/instructor/quizzes')
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            퀴즈
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              navigate('/instructor/records/review')
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            기록
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              navigate('/instructor/projects/review')
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            프로젝트
-          </button>
-        </div>
-      ),
-    },
   ]
 
   return (
@@ -287,15 +238,15 @@ export default function CohortsPage() {
               rows={filtered}
               rowKey={(r) => r.id}
               onRowClick={(r) =>
-                navigate(`/instructor/cohorts/${r.id}/students`)
+                navigate(`/instructor/cohorts/${r.id}/education`)
               }
               empty="조건에 맞는 과정이 없어요"
             />
           </div>
           <p className="text-fg-subtle mt-3 flex items-center gap-1.5 text-xs">
             <Info className="h-3 w-3" />
-            종료 과정 {data.ended}개는 [종료] 탭에서 조회 · 기수 컨텍스트는
-            퀴즈·수강생·검토 화면에 유지됨
+            종료 과정 {data.ended}개는 [종료] 탭에서 조회 · 과정을 클릭하면
+            자료실·과제·퀴즈·프로젝트·이력서·기록실·설정을 한 곳에서 확인
           </p>
         </div>
       )}

@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import type { CohortMaterialItem } from '@/shared/types'
 import type {
-  CourseDetail,
   ResumeDetail,
   ResumeRow,
 } from '@/features/admin/education/types'
@@ -16,8 +15,6 @@ const keys = {
     ['instructor', 'education', 'resumes', cohortId] as const,
   resume: (cohortId: string, resumeId: string) =>
     ['instructor', 'education', 'resume', cohortId, resumeId] as const,
-  detail: (cohortId: string) =>
-    ['instructor', 'education', 'detail', cohortId] as const,
 }
 
 // 자료실 탭 — 기수 자료 목록.
@@ -76,18 +73,6 @@ export function useInstructorResume(
         .get<ResumeDetail>(
           `/instructor/cohorts/${cohortId}/resumes/${resumeId}`,
         )
-        .then((r) => r.data),
-  })
-}
-
-// 설정 탭 — HRD-Net 과정 상세.
-export function useInstructorCohortDetail(cohortId: string | null) {
-  return useQuery({
-    queryKey: keys.detail(cohortId ?? ''),
-    enabled: !!cohortId,
-    queryFn: () =>
-      apiClient
-        .get<CourseDetail>(`/instructor/cohorts/${cohortId}/detail`)
         .then((r) => r.data),
   })
 }

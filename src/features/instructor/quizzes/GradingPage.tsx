@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -24,6 +24,10 @@ export default function GradingPage() {
   const { quizId = '', submissionId = '' } = useParams()
   const navigate = useNavigate()
   const base = useQuizBasePath()
+  const [searchParams] = useSearchParams()
+  // 허브 진입이면 제출현황 복귀에도 cohortId를 이어붙여 최종 목록이 허브로 가게 한다.
+  const fromCohortId = searchParams.get('cohortId')
+  const hubQs = fromCohortId ? `?cohortId=${fromCohortId}` : ''
   const toast = useToast()
   const { data, isPending, isError, refetch } = useGradingDetail(
     quizId,
@@ -78,7 +82,7 @@ export default function GradingPage() {
       {
         onSuccess: () => {
           toast.success(done ? '채점을 완료했어요' : '임시 저장했어요')
-          if (done) navigate(`${base}/${quizId}/submissions`)
+          if (done) navigate(`${base}/${quizId}/submissions${hubQs}`)
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },
@@ -155,7 +159,7 @@ export default function GradingPage() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate(`${base}/${quizId}/submissions`)}
+                onClick={() => navigate(`${base}/${quizId}/submissions${hubQs}`)}
                 className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
               >
                 ← 제출 현황으로
@@ -321,7 +325,7 @@ export default function GradingPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate(`${base}/${quizId}/submissions`)}
+                onClick={() => navigate(`${base}/${quizId}/submissions${hubQs}`)}
               >
                 취소
               </Button>

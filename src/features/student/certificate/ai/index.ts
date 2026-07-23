@@ -2,9 +2,19 @@
 // 계산 엔진(derive 등)은 별도 레포 LMS-AI로 이전됨 — 이 경계는 서버가 뜨면
 // 내부만 `fetch('/api/.../ai-analysis?studentId=...')`로 교체(호출부·컴포넌트 불변).
 
-import type { AiAnalysis, StudentDerived } from './types'
+import type {
+  AiAnalysis,
+  CertificateScoreResult,
+  StudentDerived,
+} from './types'
 import { ANALYSIS_STUBS } from './stubs/analysis'
 import { DERIVED_STUBS } from './stubs/derived'
+
+export {
+  CERTIFICATE_360_AXIS_KEYS,
+  CERTIFICATE_AXIS_KEYS,
+  CERTIFICATE_PEER_AXIS_KEYS,
+} from './types'
 
 /**
  * 학생별 AI 분석 결과(LLM 생성 블록). 현재 mock 반환.
@@ -24,6 +34,35 @@ export function getAiDerived(studentId: string): StudentDerived {
 // LMS-AI 엔진 서버 주소. 설정 시 실제 계산값 fetch, 없으면 mock.
 // 로컬 확인: .env.local 에 VITE_AI_API_URL=http://localhost:5177
 const AI_API = import.meta.env.VITE_AI_API_URL as string | undefined
+const CERTIFICATE_SCORE_API =
+  (import.meta.env.VITE_AI_API_URL as string | undefined)?.replace(/\/$/, '') ??
+  '/lms-ai'
+
+/** 발급 조건과 점수 산출 원천을 충족하는 기본 개발 수강생. */
+export const CERTIFICATE_MOCK_STUDENT_ID =
+  (import.meta.env.VITE_CERTIFICATE_STUDENT_ID as string | undefined) ??
+  'd9552119-7a27-5be5-b2a4-1d82a709cfb9'
+
+/**
+ * 최신 6축·종합점수·상대 위치·동료 5축 비교 결과를 가져온다.
+ * 점수 데이터는 다른 학생이나 정적 mock으로 대체하지 않는다.
+ */
+export async function fetchCertificateScore(
+  studentId: string,
+): Promise<CertificateScoreResult> {
+  const res = await fetch(
+    `${CERTIFICATE_SCORE_API}/scores/${encodeURIComponent(studentId)}`,
+  )
+  if (!res.ok) {
+    throw new Error(`수강역량 점수 조회 실패 (${res.status})`)
+  }
+
+  const result = (await res.json()) as CertificateScoreResult
+  if (result.policyVersion !== '2026.07.21-six-axis-persistence-v4') {
+    throw new Error('지원하지 않는 수강역량 점수 정책 버전입니다.')
+  }
+  return result
+}
 
 /**
  * 파생값을 LMS-AI 엔진 서버에서 가져온다(결정 함수 계산 결과).
@@ -68,6 +107,13 @@ export type {
   AiVerdict,
   AiPersona,
   AiProjects,
+  CertificateAxisScore,
+  CertificateDomainExperience,
+  CertificateMetricKey,
+  CertificatePeerAxisKey,
+  CertificatePeerEvaluationAxis,
+  CertificateScoreMetric,
+  CertificateScoreResult,
   StudentDerived,
   PersonaBase,
 } from './types'

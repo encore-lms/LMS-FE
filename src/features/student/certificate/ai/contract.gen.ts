@@ -44,6 +44,130 @@ export interface StudentDerived {
   }
 }
 
+// ── 수강역량증명서 종합점수·6축 + 상대 위치 ──
+export const CERTIFICATE_AXIS_KEYS = [
+  '기술',
+  '소통',
+  '팀워크',
+  '책임감',
+  '문제해결',
+  '학습지속성',
+] as const
+export type CertificateAxisKey = (typeof CERTIFICATE_AXIS_KEYS)[number]
+
+/** 종합요약 동료평가 비교에 노출하는 축과 고정 순서. */
+export const CERTIFICATE_360_AXIS_KEYS = [
+  '기술',
+  '팀워크',
+  '책임감',
+  '소통',
+  '문제해결',
+] as const satisfies readonly CertificateAxisKey[]
+export type Certificate360AxisKey = (typeof CERTIFICATE_360_AXIS_KEYS)[number]
+
+export type CertificateScoreStatus = 'READY' | 'NOT_READY' | 'ERROR'
+export type CertificateComponentStatus =
+  | CertificateScoreStatus
+  | 'NOT_APPLICABLE'
+export type CertificateRelativeStatus = 'READY' | 'NOT_READY'
+export type CertificateRelativeScope = 'COHORT' | 'ALL_STUDENTS'
+
+export interface CertificateRelativePosition {
+  status: CertificateRelativeStatus
+  /** 축은 동일 기수, 종합점수는 전체 산출 가능 수강생을 모집단으로 사용한다. */
+  scope: CertificateRelativeScope
+  /** 레이더 표시용 백분위. 0~100이며 클수록 상대 위치가 높다. */
+  percentile: number | null
+  /** 수강생 표시용 상위 비율. 0~100이며 작을수록 상대 위치가 높다. */
+  topPercent: number | null
+  populationSize: number
+  detail: string
+}
+
+export interface CertificateScoreComparison {
+  /** 프로젝트 상호평가를 1~5점에서 0~100점으로 환산한 값. 비교 원천이 없으면 null. */
+  peerScore: number | null
+  /** 최종 멘토평가를 1~5점에서 0~100점으로 환산한 값. 비교 원천이 없으면 null. */
+  mentorScore: number | null
+}
+
+export interface CertificateAxisScore {
+  key: CertificateAxisKey
+  score: number | null
+  status: CertificateScoreStatus
+  source: string
+  detail: string
+  relative: CertificateRelativePosition
+  comparison: CertificateScoreComparison
+}
+
+export type CertificateMetricKey =
+  | 'attendance'
+  | 'assessment'
+  | 'blog'
+  | 'certifiedProject'
+  | 'certifiedTroubleshooting'
+
+export interface CertificateScoreMetric {
+  key: CertificateMetricKey
+  label: string
+  value: number | null
+  /** 진행률 표현용 분모. 단순 건수처럼 분모가 없으면 null. */
+  maximum: number | null
+  unit: '%' | '점' | '건'
+  status: CertificateComponentStatus
+  detail: string
+}
+
+export const CERTIFICATE_PEER_AXIS_KEYS = [
+  '협업',
+  '소통',
+  '책임감',
+  '문제해결',
+  '기술기여',
+] as const
+export type CertificatePeerAxisKey =
+  (typeof CERTIFICATE_PEER_AXIS_KEYS)[number]
+
+export interface CertificatePeerEvaluationAxis {
+  key: CertificatePeerAxisKey
+  /** 완료 프로젝트별 유효 평가자 평균을 다시 동일 가중 평균한 1~5점 값. */
+  score: number | null
+  status: CertificateScoreStatus
+  detail: string
+}
+
+export interface CertificateDomainExperience {
+  /** 인증 완료 프로젝트에 설정된 도메인명. */
+  label: string
+  /** 해당 도메인의 인증 완료 프로젝트 수. */
+  projectCount: number
+  /** 도메인이 설정된 인증 완료 프로젝트 중 비중(0~100). */
+  percentage: number
+}
+
+export interface CertificateScoreResult {
+  policyVersion: '2026.07.21-six-axis-persistence-v4'
+  calculatedAt: string
+  student: {
+    studentId: string
+    studentName: string
+    courseName: string
+    cohortName: string
+    cohortStartedAt: string
+    cohortEndedAt: string
+  }
+  status: CertificateScoreStatus
+  overallScore: number | null
+  grade: string | null
+  overallRelative: CertificateRelativePosition
+  axes: CertificateAxisScore[]
+  metrics: CertificateScoreMetric[]
+  peerEvaluation: CertificatePeerEvaluationAxis[]
+  domainExperience: CertificateDomainExperience[]
+  warnings: string[]
+}
+
 // ── 페르소나 고정 base 카테고리(7) — 화면 미표시, 매칭·통계용 ──
 export const PERSONA_BASE = [
   '백엔드',

@@ -74,10 +74,27 @@ export interface CertSkillAxis {
   note?: string // 360 강사·근거 열 텍스트 (없으면 confirmed 배지)
 }
 
-/** 6축 자동 산정 레이더 축 (Figma: 기술 도메인축 — 360°의 역량축과 별개) */
+/** 6축 절대점수·기수 상대 위치 비교 레이더 축 */
 export interface CertRadarAxis {
-  key: string // 백엔드/데이터/협업/문제해결/성장/신뢰
-  score: number
+  key: string
+  score: number | null
+  relativePercentile: number | null
+  relativeTopPercent: number | null
+  detail: string
+  source: string
+  status: 'READY' | 'NOT_READY' | 'ERROR'
+  relativeStatus: 'READY' | 'NOT_READY'
+  relativeScope: 'COHORT' | 'ALL_STUDENTS'
+  relativePopulationSize: number
+  relativeDetail: string
+}
+
+/** 동료평가 모드에서 절대 점수와 프로젝트 동료평가를 비교하는 5축. */
+export interface CertThreeSixtyRadarAxis {
+  key: string
+  score: number | null
+  /** 프로젝트 동료평가를 1~5점에서 0~100점으로 환산한 값. */
+  peerScore: number | null
 }
 
 /** 점수 막대(퀴즈 카테고리 등) */
@@ -153,6 +170,7 @@ export interface CertPersona {
 export interface CertDomain {
   label: string
   pct: number
+  projectCount?: number
   tone: Tone
 }
 export interface CertAiVerdict {

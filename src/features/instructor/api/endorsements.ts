@@ -7,29 +7,7 @@ import type {
 } from '@/shared/types'
 
 // 강사 추천서 — /instructor/endorsements 묶음. baseURL이 /api라 경로 앞에 안 붙임.
-
-/** 담당 기수 수강생 1명 — 이름 join·작성 대기 계산용. */
-export interface CohortStudent {
-  userId: string
-  name: string
-}
-
-/**
- * 담당 기수 수강생 명단 — 추천서 화면이 이름을 채우고 '작성 대기'를 계산하는 데 쓴다.
- *
- * BE(learning)는 수강생 로스터를 갖고 있지 않아 추천서 응답에 userId 만 준다(로스터 정본은 auth).
- * 그래서 화면이 여기서 이름을 join 한다 — 운영 프로젝트 목록과 동일한 관례.
- */
-export function useEndorsementRoster(cohortId?: string | null) {
-  return useQuery({
-    queryKey: [...instructorKeys.all, 'endorsement-roster', cohortId ?? ''],
-    enabled: !!cohortId,
-    queryFn: () =>
-      apiClient
-        .get<{ items: CohortStudent[] }>('/users/cohort-students', { cohortId })
-        .then((r) => r.data.items),
-  })
-}
+// 수강생 로스터(이름 join·작성 대기 계산)는 콘솔 공용 useCohortRoster(api/console.ts) 사용.
 
 // 목록/작성 화면: 작성 대기 카드 + 최근 작성 추천서.
 // 강사는 기수를 여러 개 담당하므로 선택 기수로 조회한다(미지정 시 서버가 기본 기수로 폴백).

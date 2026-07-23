@@ -21,21 +21,31 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 // 임시 저장 초안 — 학생별 localStorage 키. 제출 성공 시 제거(BE 연동 시 draft API로 대체).
 const draftKey = (studentId: string) => `endorsement-draft:${studentId}`
 
-// 강사 추천서 (/instructor/endorsements) — 긍정 추천서 작성 화면.
-// 작성 대기 카드 → 학생 선택 → 코멘트 작성 → 제출. 하단에 최근 작성 + 전체 보기.
-// (Figma "강사 — 강사 추천서" 2117:14624)
-export default function EndorsementsPage() {
+// 강사 추천서 — 긍정 추천서(코멘트) 작성 화면.
+// 교육 과정 허브 '코멘트/추천' 탭에 임베드가 정본(embedded=true, 허브 기수 스코프).
+// 수강생 명단 세로 리스트 → 행의 '추천서 작성' → 코멘트 작성 → 제출. 하단에 최근 작성 + 전체 보기.
+export default function EndorsementsPage({
+  embedded = false,
+  cohortId: cohortIdProp,
+}: {
+  /** true면 과정·기수 허브 '코멘트/추천' 탭 임베드 — 자체 헤더·패딩·기수 선택 생략. */
+  embedded?: boolean
+  cohortId?: string
+}) {
   const navigate = useNavigate()
   const toast = useToast()
   const submit = useSubmitEndorsement()
-  usePageHeader('강사 추천서', '담당 수강생을 위한 추천서를 작성합니다')
+  usePageHeader('강사 추천서', '담당 수강생을 위한 추천서를 작성합니다', !embedded)
 
   // 강사는 기수를 여러 개 담당한다 — 큐·명단·작성이 같은 기수를 보도록 하나로 묶는다.
   // (기수를 안 맞추면 다른 기수 학생이 대상일 때 이름이 '(이름 미확인)'이 된다.)
+  // 임베드는 허브가 기수를 확정해 주므로 기수 선택 UI·목록 조회를 생략한다.
   const { data: cohorts } = useInstructorCohorts()
   const cohortOptions = useMemo(() => cohorts?.rows ?? [], [cohorts])
   const [pickedCohort, setPickedCohort] = useSearchParamState('cohort')
-  const cohortId = pickedCohort || cohortOptions[0]?.id || null
+  const cohortId = embedded
+    ? (cohortIdProp ?? null)
+    : pickedCohort || cohortOptions[0]?.id || null
 
   const { data, isPending, isError, refetch } = useEndorsementQueue(cohortId)
   // 명단 — BE(learning)는 수강생 로스터가 없어 추천서 응답에 userId 만 준다.
@@ -43,7 +53,7 @@ export default function EndorsementsPage() {
   const { data: roster, isPending: rosterPending } = useCohortRoster(cohortId)
   // 명단이 오기 전에 그리면 이름이 '(이름 미확인)'으로, 작성 대기가 0건으로 잠깐 보인다.
   // 명단도 이 화면의 필수 데이터라 로딩에 포함한다.
-  const rosterLoading = !cohorts || rosterPending
+  const rosterLoading = (embedded ? false : !cohorts) || rosterPending
 
   const nameOf = useMemo(() => {
     const m = new Map((roster ?? []).map((s) => [s.userId, s.name]))
@@ -60,22 +70,29 @@ export default function EndorsementsPage() {
     [data, nameOf],
   )
 
+  // 학생별 최근 추천서 — 명단 행의 '작성됨' 표시와 보기 이동에 쓴다.
+  const writtenBy = useMemo(
+    () => new Map((data?.recent ?? []).map((e) => [e.student.id, e.id])),
+    [data],
+  )
+
   // 작성 대기 = 담당 기수 명단 − 이미 쓴 대상. BE 는 로스터가 없어 빈 목록을 주므로 여기서 만든다.
-  const pending: EndorsementPending[] = useMemo(() => {
-    const written = new Set((data?.recent ?? []).map((e) => e.student.id))
-    return (roster ?? [])
-      .filter((s) => !written.has(s.userId))
-      .map((s) => ({
-        student: {
-          id: s.userId,
-          name: s.name,
-          cohort: data?.cohort ?? '',
-        },
-        // 관찰 기간·마감은 산출 근거가 정의되지 않아 0(화면에서 숨김).
-        observationMonths: 0,
-        dueDays: 0,
-      }))
-  }, [roster, data])
+  const pending: EndorsementPending[] = useMemo(
+    () =>
+      (roster ?? [])
+        .filter((s) => !writtenBy.has(s.userId))
+        .map((s) => ({
+          student: {
+            id: s.userId,
+            name: s.name,
+            cohort: data?.cohort ?? '',
+          },
+          // 관찰 기간·마감은 산출 근거가 정의되지 않아 0(화면에서 숨김).
+          observationMonths: 0,
+          dueDays: 0,
+        })),
+    [roster, writtenBy, data],
+  )
 
   const [studentId, setStudentId] = useState<string | null>(null)
 
@@ -149,12 +166,13 @@ export default function EndorsementsPage() {
       skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
       errorTitle="추천서 화면을 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
       {data && (
-        <div className="p-8">
-          {/* 기수 선택 — 강사는 여러 기수를 담당한다. 큐·명단·작성이 이 기수를 함께 따른다. */}
-          {cohortOptions.length > 1 && (
+        <div className={embedded ? '' : 'p-8'}>
+          {/* 기수 선택 — 강사는 여러 기수를 담당한다. 큐·명단·작성이 이 기수를 함께 따른다.
+              임베드는 허브 기수로 고정이라 선택 UI를 숨긴다. */}
+          {!embedded && cohortOptions.length > 1 && (
             <div className="mb-5">
               <Select
                 aria-label="기수 선택"
@@ -186,23 +204,62 @@ export default function EndorsementsPage() {
             </div>
           </div>
 
-          {/* 작성 대기 */}
+          {/* 작성 대기 — 담당 기수 수강생 명단 세로 리스트. 행마다 작성/보기 액션. */}
           <div className="mt-8 flex items-center gap-2">
             <h2 className="text-fg text-lg font-bold">작성 대기</h2>
             <StatusBadge label={`${pending.length}건`} tone="warning" />
+            <span className="text-fg-subtle text-xs">
+              · 수강생 {(roster ?? []).length}명
+            </span>
           </div>
-          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pending.map((p) => (
-              <PendingCard
-                key={p.student.id}
-                pending={p}
-                active={p.student.id === selected?.student.id}
-                onPick={() => setStudentId(p.student.id)}
-              />
-            ))}
-            {pending.length === 0 && (
-              <p className="text-fg-subtle col-span-full py-6 text-sm">
-                작성 대기 중인 추천서가 없어요.
+          <div className="mt-3 rounded-xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+            {(roster ?? []).map((s) => {
+              const endorsementId = writtenBy.get(s.userId)
+              const active = !endorsementId && s.userId === selected?.student.id
+              return (
+                <div
+                  key={s.userId}
+                  className={`border-divider flex items-center gap-3 border-b px-5 py-3 transition-colors first:rounded-t-xl last:rounded-b-xl last:border-b-0 ${
+                    active ? 'bg-surface-muted' : 'bg-surface'
+                  }`}
+                >
+                  <Avatar name={s.name} size={36} />
+                  <div className="flex min-w-0 flex-col">
+                    <span className="text-fg text-sm font-bold">{s.name}</span>
+                    <span className="text-fg-subtle text-xs">
+                      {data.cohort}
+                    </span>
+                  </div>
+                  {endorsementId ? (
+                    <div className="ml-auto flex items-center gap-2">
+                      <StatusBadge label="작성됨" tone="success" />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/instructor/endorsements/${endorsementId}`)
+                        }
+                        className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-1.5 text-xs font-medium"
+                      >
+                        보기
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={active ? 'primary' : 'secondary'}
+                      className="ml-auto"
+                      onClick={() => setStudentId(s.userId)}
+                    >
+                      {active ? '작성 중' : '추천서 작성'}
+                    </Button>
+                  )}
+                </div>
+              )
+            })}
+            {(roster ?? []).length === 0 && (
+              <p className="text-fg-subtle bg-surface rounded-xl px-5 py-6 text-sm">
+                이 기수에 수강생이 없어요.
               </p>
             )}
           </div>
@@ -366,50 +423,3 @@ export default function EndorsementsPage() {
   )
 }
 
-function PendingCard({
-  pending,
-  active,
-  onPick,
-}: {
-  pending: EndorsementPending
-  active: boolean
-  onPick: () => void
-}) {
-  const { student, observationMonths, dueDays } = pending
-  const urgent = dueDays > 0 && dueDays <= 3
-  return (
-    <div
-      className={`border-border bg-surface flex flex-col rounded-xl border p-6 ${
-        active ? 'ring-accent ring-2' : ''
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <Avatar name={student.name} size={36} />
-        <div className="flex min-w-0 flex-col">
-          <span className="text-fg text-sm font-bold">{student.name}</span>
-          <span className="text-fg-subtle text-xs">
-            {student.cohort}
-            {student.track ? ` · ${student.track}` : ''}
-          </span>
-        </div>
-      </div>
-      {/* 관찰 기간·마감은 산출 근거가 정해지지 않아 값이 있을 때만 보여준다(0이면 숨김). */}
-      {observationMonths > 0 && (
-        <p className="text-fg-muted mt-4 text-xs">
-          관찰 {observationMonths}개월
-        </p>
-      )}
-      {dueDays > 0 && (
-        <p className="text-fg-subtle mt-1 text-xs">
-          마감{' '}
-          <span className={urgent ? 'text-danger font-bold' : 'text-fg-muted'}>
-            D-{dueDays}
-          </span>
-        </p>
-      )}
-      <Button type="button" className="mt-4" onClick={onPick}>
-        작성하기
-      </Button>
-    </div>
-  )
-}

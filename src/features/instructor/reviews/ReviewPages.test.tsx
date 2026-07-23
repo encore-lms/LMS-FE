@@ -10,6 +10,8 @@ import {
   useRecordReviews,
   useProjectReviews,
   useTsReviews,
+  useProjectReviewDetail,
+  useTsReviewDetail,
   useCertifyProject,
   useRequestProjectChanges,
   useCertifyTroubleshooting,
@@ -18,10 +20,17 @@ import {
 import type {
   InstructorRecordReviewData,
   ProjectReviewData,
+  ProjectReviewDetail,
   TsReviewData,
 } from '@/shared/types'
 
 vi.mock('../api/reviews')
+// 상세 패널의 이름 join 훅 — QueryClient 없이 동작하도록 계정 목록을 고정 반환.
+vi.mock('@/shared/api/students', () => ({
+  useStudentAccounts: () => ({
+    data: { items: [{ id: 'stu-1', name: '박지훈' }] },
+  }),
+}))
 
 const student = { id: 's1', name: '김은진', birth: '1995-09-08' }
 const records: InstructorRecordReviewData = {
@@ -205,6 +214,19 @@ function renderWith(ui: React.ReactElement) {
   vi.mocked(useTsReviews).mockReturnValue(
     ok(ts) as unknown as ReturnType<typeof useTsReviews>,
   )
+  // 상세 패널 훅 — 기본은 미조회 상태(패널 닫힘). 패널 테스트에서 개별 override.
+  vi.mocked(useProjectReviewDetail).mockReturnValue({
+    data: undefined,
+    isPending: true,
+    isError: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useProjectReviewDetail>)
+  vi.mocked(useTsReviewDetail).mockReturnValue({
+    data: undefined,
+    isPending: true,
+    isError: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useTsReviewDetail>)
   vi.mocked(useCertifyProject).mockReturnValue(mutationStub())
   vi.mocked(useRequestProjectChanges).mockReturnValue(
     mutationStub() as unknown as ReturnType<typeof useRequestProjectChanges>,
@@ -271,6 +293,47 @@ describe('ProjectReviewPage (§14)', () => {
     const certifyBtn = screen.getByRole('button', { name: '인증' })
     expect(certifyBtn.className).toContain('bg-brand-deep')
     expect(screen.getByRole('button', { name: '결과' })).toBeInTheDocument()
+  })
+
+  it('상세 버튼 클릭 시 검토 상세 패널이 열린다', async () => {
+    const detail: ProjectReviewDetail = {
+      id: 'pr-1',
+      name: '팀 Nexus · 데이터 파이프라인',
+      cohortId: 'cohort-1',
+      cohortLabel: 'DA 4기',
+      status: 'requested',
+      createdAt: '2026.06.01',
+      updatedAt: '2026.07.18',
+      requestedAt: '2026.07.15',
+      certifiedAt: null,
+      reviewComment: null,
+      members: [{ userId: 'stu-1', role: 'LEADER' }],
+      stack: ['Airflow', 'BigQuery'],
+      artifacts: [
+        {
+          type: 'GitHub',
+          title: '데이터 파이프라인 GitHub',
+          url: 'https://github.com/example/repo',
+          fileName: null,
+        },
+      ],
+    }
+    const user = userEvent.setup()
+    renderWith(<ProjectReviewPage />)
+    vi.mocked(useProjectReviewDetail).mockReturnValue({
+      data: detail,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useProjectReviewDetail>)
+    await user.click(screen.getAllByRole('button', { name: '상세' })[0])
+    expect(
+      screen.getByRole('dialog', { name: '검토 상세' }),
+    ).toBeInTheDocument()
+    // 팀원 이름은 계정 join(stu-1 → 박지훈), 산출물·기술 스택 렌더 확인.
+    expect(screen.getByText('박지훈')).toBeInTheDocument()
+    expect(screen.getByText('BigQuery')).toBeInTheDocument()
+    expect(screen.getByText('데이터 파이프라인 GitHub')).toBeInTheDocument()
   })
 })
 

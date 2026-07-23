@@ -11,6 +11,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { EVAL_TABS, RouteTabBar } from '../components/RouteTabBar'
 import type {
   GradingMode,
   InstructorQuizRow,
@@ -236,6 +237,8 @@ export default function QuizListPage({
     >
       {data && (
         <div className={embedded ? '' : 'p-8'}>
+          {/* 강사 직접 진입 시 퀴즈↔과제 탭(임베드 시엔 상위 탭이 담당) */}
+          {!embedded && <RouteTabBar tabs={EVAL_TABS} />}
           {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-fg-muted text-sm">

@@ -1,20 +1,23 @@
-// AI 분석 출력 stub (개발용) — 새 설계(통찰형·페르소나 풍부표시+base·부연 호버·뱃지·groups) 예시.
-// 나중에 서버 생성값으로 교체. 각 서술은 '교차 종합(최소 2소스 연결)' 톤.
+// AI 분석 출력 stub (개발용) — 정규화 원천이 없는 레거시 ID는 준비 상태를 명시한다.
 
 import type { AiAnalysis } from '../types'
 
 const STU_001: AiAnalysis = {
-  // 블록1 — 기술 종합 판단 (통찰형 + 멘토 추천 뱃지)
+  // 블록1 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
   verdict: {
     strength:
-      '성취도(백엔드 상위 8%)·트러블슈팅(성능 5건)·프로젝트 스택(Redis·JPA)이 모두 백엔드 성능 최적화를 가리킵니다.',
-    gap: '모델링·튜닝 경험이 얕아, 데이터 심화 프로젝트로 보완하면 좋습니다.',
+      '서로 다른 원천에서 교차 확인되는 기술 강점을 아직 산출할 수 없습니다.',
+    gap: '평가된 범위에서 보완 방향을 정할 직접 근거가 아직 충분하지 않습니다.',
     unique:
-      '자격증 없이도 인증 트러블슈팅 14건으로 실무 문제해결을 실증한 유형입니다.',
-    recommendBadge: {
-      recommended: true,
-      summary: '주문 관리 MSA 팀에서 성능 개선을 주도해 추천합니다.',
+      '기초와 적용 사이의 차이나 반복 패턴을 설명할 근거가 아직 충분하지 않습니다.',
+    details: {
+      strength: { status: 'NOT_READY', evidence: [], evidenceCodes: [] },
+      gap: { status: 'NOT_READY', evidence: [], evidenceCodes: [] },
+      unique: { status: 'NOT_READY', evidence: [], evidenceCodes: [] },
     },
+    confidence: 'LOW',
+    limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
+    generatedBy: 'FALLBACK',
   },
 
   // 블록2 — 프로파일링 (5축 라벨은 생성값, 여기선 mock)

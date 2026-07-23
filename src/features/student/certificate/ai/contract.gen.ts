@@ -332,15 +332,23 @@ export type PersonaBase = (typeof PERSONA_BASE)[number]
 export type Tone = 'brand' | 'info' | 'warning' | 'danger' | 'accent' | 'success'
 
 // 블록1 — 기술 종합 판단
-export interface RecommendBadge {
-  recommended: boolean
-  summary: string
+export type AiVerdictItemKey = 'strength' | 'gap' | 'unique'
+export type AiVerdictItemStatus = 'READY' | 'NOT_READY'
+export type AiVerdictConfidence = 'HIGH' | 'MEDIUM' | 'LOW'
+export interface AiVerdictDetail {
+  status: AiVerdictItemStatus
+  evidence: string[]
+  evidenceCodes: string[]
 }
 export interface AiVerdict {
   strength: string // 강점
   gap: string // 보완
   unique: string // 특이형
-  recommendBadge?: RecommendBadge // 멘토 추천 뱃지
+  /** 기존 3줄 표시와 분리한 항목별 산출·근거 추적 정보. */
+  details: Record<AiVerdictItemKey, AiVerdictDetail>
+  confidence: AiVerdictConfidence
+  limitations: string[]
+  generatedBy: 'AI' | 'FALLBACK'
 }
 
 // 블록2 — 프로파일링

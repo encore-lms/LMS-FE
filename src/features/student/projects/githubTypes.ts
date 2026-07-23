@@ -34,6 +34,14 @@ export interface ProjectGithubRepository {
   totalCommits: number
   /** 레포별 전체 기여자(커밋 내림차순) */
   contributors: ProjectGithubContributor[]
+  /** 잔디 — 일별 커밋 수(날짜 오름차순) */
+  dailyActivity: ProjectGithubDailyActivity[]
+}
+
+/** 잔디 셀 — 날짜(YYYY-MM-DD)와 그날 커밋 수. */
+export interface ProjectGithubDailyActivity {
+  date: string
+  commits: number
 }
 
 /** 레포 기여자 — LMS 매칭이면 name·avatarUrl이 LMS 것(isLmsUser), 아니면 GitHub login·avatar. */

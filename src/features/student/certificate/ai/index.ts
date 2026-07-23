@@ -4,6 +4,7 @@
 
 import type {
   AiAnalysis,
+  CertificateDetailTabsResult,
   CertificateScoreResult,
   StudentDerived,
 } from './types'
@@ -64,6 +65,24 @@ export async function fetchCertificateScore(
   return result
 }
 
+/** 기술·문제해결·성장 탭의 검증 데이터를 현재 수강생 ID로 조회한다. */
+export async function fetchCertificateDetailTabs(
+  studentId: string,
+): Promise<CertificateDetailTabsResult> {
+  const res = await fetch(
+    `${CERTIFICATE_SCORE_API}/tabs/${encodeURIComponent(studentId)}`,
+  )
+  if (!res.ok) {
+    throw new Error(`수강역량 상세 탭 조회 실패 (${res.status})`)
+  }
+
+  const result = (await res.json()) as CertificateDetailTabsResult
+  if (result.policyVersion !== '2026.07.23-certificate-detail-tabs-v1') {
+    throw new Error('지원하지 않는 수강역량 상세 탭 정책 버전입니다.')
+  }
+  return result
+}
+
 /**
  * 파생값을 LMS-AI 엔진 서버에서 가져온다(결정 함수 계산 결과).
  * 서버 미설정·오류·다운 시 mock 반환 → 화면 blank 방지, 커밋/배포본 그대로 동작.
@@ -108,12 +127,18 @@ export type {
   AiPersona,
   AiProjects,
   CertificateAxisScore,
+  CertificateAssessmentPoint,
+  CertificateDetailStatus,
+  CertificateDetailTabsResult,
   CertificateDomainExperience,
+  CertificateExternalCertification,
   CertificateMetricKey,
   CertificatePeerAxisKey,
   CertificatePeerEvaluationAxis,
   CertificateScoreMetric,
   CertificateScoreResult,
+  CertificateTechCategory,
+  CertificateTechDetail,
   StudentDerived,
   PersonaBase,
 } from './types'

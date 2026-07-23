@@ -168,6 +168,144 @@ export interface CertificateScoreResult {
   warnings: string[]
 }
 
+// ── 수강역량증명서 데이터 탭 상세(기술·검증 / 문제해결·협업 / 성장·평판) ──
+export type CertificateDetailStatus = 'READY' | 'PARTIAL' | 'NOT_READY'
+
+export interface CertificateTechCategory {
+  label: string
+  score: number
+  attemptCount: number
+  topPercent: number | null
+  populationSize: number
+}
+
+export interface CertificateAssessmentPoint {
+  id: string
+  title: string
+  category: string
+  /** 수강생의 최신 유효 성취도평가 점수(0~100). */
+  score: number
+  /** 같은 시험을 치른 기수 수강생의 최신 유효 점수 평균(0~100). */
+  cohortAverageScore: number | null
+  /** 같은 시험 기수 모집단 내 평균 순위를 0~100으로 환산한 백분위. */
+  relativeScore: number | null
+  /** 시험 비교에 포함된 동일 기수 유효 수강생 수. */
+  comparisonCount: number
+  submittedAt: string
+}
+
+export interface CertificateExternalCertification {
+  name: string
+  /** 수강생이 취득한 공식 인증시험 원점수(0~1,000). */
+  score: number | null
+  /** 공식 원점수 구간에서 계산한 등급. */
+  grade: string | null
+  status: string
+  scheduledAt: string | null
+  submittedAt: string | null
+  issuedAt: string | null
+  registrationSource: string
+}
+
+export interface CertificateAssignmentEvidence {
+  id: string
+  week: string
+  subjectName: string
+  type: string
+  reviewStatus: string
+  submissionStatus: string
+}
+
+export interface CertificateTechDetail {
+  status: CertificateDetailStatus
+  averageScore: number | null
+  /** 전체 수강생별 전체 유효 시험 평균을 비교한 상위 비율. */
+  assessmentAverageTopPercent: number | null
+  /** 전체 시험 평균 순위 산정에 포함된 전체 유효 수강생 수. */
+  assessmentAveragePopulationSize: number
+  categories: CertificateTechCategory[]
+  assessments: CertificateAssessmentPoint[]
+  certifications: CertificateExternalCertification[]
+  assignments: CertificateAssignmentEvidence[]
+  limitations: string[]
+}
+
+export interface CertificateTroubleshootingCase {
+  id: string
+  title: string
+  category: string
+  independent: boolean
+  days: number | null
+  situation: string
+  resolution: string
+  result: string
+  createdAt: string
+}
+
+export interface CertificateProblemCategory {
+  label: string
+  count: number
+  percentage: number
+}
+
+export interface CertificatePeerTag {
+  label: string
+  count: number
+}
+
+export interface CertificatePeerTagCase {
+  tag: string
+  caseId: string
+  caseTitle: string
+}
+
+export interface CertificateProblemDetail {
+  status: CertificateDetailStatus
+  certifiedCount: number
+  independentRate: number | null
+  averageDays: number | null
+  categories: CertificateProblemCategory[]
+  cases: CertificateTroubleshootingCase[]
+  peerEvaluatorCount: number
+  peerTags: CertificatePeerTag[]
+  peerTagCases: CertificatePeerTagCase[]
+  limitations: string[]
+}
+
+export interface CertificatePeerReputationAxis {
+  key: CertificatePeerAxisKey
+  score: number | null
+}
+
+export interface CertificatePeerComment {
+  comment: string
+  submittedAt: string
+}
+
+export interface CertificateMentorEvaluationSummary {
+  averageScore: number
+  submittedAt: string
+}
+
+export interface CertificateGrowthDetail {
+  status: CertificateDetailStatus
+  growthTimelineStatus: 'NOT_READY'
+  peerEvaluationCount: number
+  peerReputation: CertificatePeerReputationAxis[]
+  peerComments: CertificatePeerComment[]
+  mentorEvaluation: CertificateMentorEvaluationSummary | null
+  limitations: string[]
+}
+
+export interface CertificateDetailTabsResult {
+  policyVersion: '2026.07.23-certificate-detail-tabs-v1'
+  calculatedAt: string
+  studentId: string
+  tech: CertificateTechDetail
+  problem: CertificateProblemDetail
+  growth: CertificateGrowthDetail
+}
+
 // ── 페르소나 고정 base 카테고리(7) — 화면 미표시, 매칭·통계용 ──
 export const PERSONA_BASE = [
   '백엔드',

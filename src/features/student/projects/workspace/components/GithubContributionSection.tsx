@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { GitBranch } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { useProjectGithub } from '../../../api/projectGithub'
 import type { ProjectGithubContributor } from '../../githubTypes'
@@ -19,13 +20,18 @@ function GithubMark({ className }: { className?: string }) {
   )
 }
 
-const CHART_TONES = [
-  'bg-brand',
-  'bg-info',
-  'bg-accent-strong',
-  'bg-warning',
-  'bg-success',
-  'bg-danger',
+// 기여자 막대·아바타 색 — 순위별 팔레트(1위 brand, 이후 순환).
+const RANK_TONE = [
+  { bar: 'bg-brand', ring: 'ring-brand/30', text: 'text-brand' },
+  { bar: 'bg-info', ring: 'ring-info/30', text: 'text-info' },
+  {
+    bar: 'bg-accent-strong',
+    ring: 'ring-accent-strong/30',
+    text: 'text-accent-strong',
+  },
+  { bar: 'bg-warning', ring: 'ring-warning/30', text: 'text-warning' },
+  { bar: 'bg-success', ring: 'ring-success/30', text: 'text-success' },
+  { bar: 'bg-danger', ring: 'ring-danger/30', text: 'text-danger' },
 ]
 
 function ContributorRow({
@@ -35,32 +41,42 @@ function ContributorRow({
   c: ProjectGithubContributor
   index: number
 }) {
+  const tone = RANK_TONE[index % RANK_TONE.length]
   const initial = (c.name || c.githubLogin || '?').slice(0, 1).toUpperCase()
   return (
-    <div className="flex items-center gap-3 py-2.5">
+    <div className="hover:bg-surface-muted/40 flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors">
+      {/* 순위 */}
+      <span className="text-fg-subtle w-4 shrink-0 text-center text-[12px] font-bold tabular-nums">
+        {index + 1}
+      </span>
+      {/* 아바타 (톤 ring) */}
       {c.avatarUrl ? (
         <img
           src={c.avatarUrl}
           alt=""
-          className="size-8 shrink-0 rounded-full object-cover"
+          className={cn(
+            'size-9 shrink-0 rounded-full object-cover ring-2',
+            tone.ring,
+          )}
         />
       ) : (
         <span
           className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white',
-            CHART_TONES[index % CHART_TONES.length],
+            'flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white ring-2',
+            tone.bar,
+            tone.ring,
           )}
         >
           {initial}
         </span>
       )}
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
-          <span className="text-fg truncate text-[13px] font-semibold">
+          <span className="text-fg truncate text-[13px] font-bold">
             {c.name}
           </span>
           {c.isLmsUser ? (
-            <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
+            <span className="bg-brand/10 text-brand rounded-md px-1.5 py-0.5 text-[10px] font-bold">
               LMS
             </span>
           ) : (
@@ -69,25 +85,33 @@ function ContributorRow({
             </span>
           )}
         </div>
-        <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
+        <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
           <div
             className={cn(
-              'h-full rounded-full',
-              CHART_TONES[index % CHART_TONES.length],
+              'h-full rounded-full transition-[width] duration-500',
+              tone.bar,
             )}
             style={{ width: `${Math.max(c.contribPercent, 2)}%` }}
           />
         </div>
       </div>
-      <span className="text-fg-subtle shrink-0 text-[12px] tabular-nums">
-        {c.commits} · {c.contribPercent}%
-      </span>
+      {/* 커밋·기여율 — 커밋 강조 + 기여율 부제 */}
+      <div className="flex shrink-0 flex-col items-end leading-tight">
+        <span className="text-fg text-[14px] font-bold tabular-nums">
+          {c.commits.toLocaleString()}
+        </span>
+        <span
+          className={cn('text-[11px] font-semibold tabular-nums', tone.text)}
+        >
+          {c.contribPercent}%
+        </span>
+      </div>
     </div>
   )
 }
 
 /**
- * 워크스페이스 홈 GitHub 기여도 — 레포 탭 전환 + 레포별 기여자 목록(커밋·기여율 막대).
+ * 워크스페이스 홈 GitHub 기여도 — 레포 탭 전환 + 잔디 히트맵 + 기여자 순위(커밋·기여율).
  * GitHub 미연동(DISCONNECTED) 프로젝트는 섹션 전체를 숨긴다.
  */
 export function GithubContributionSection({
@@ -117,10 +141,18 @@ export function GithubContributionSection({
     repos.find((r) => r.githubRepositoryId === activeId) ?? repos[0]
 
   return (
-    <section className={cn(card, 'flex flex-col gap-3')}>
-      <div className="flex items-center gap-2">
-        <GithubMark className="text-fg size-4" />
-        <h2 className="text-fg text-[15px] font-bold">GitHub 기여도</h2>
+    <section className={cn(card, 'flex flex-col gap-4')}>
+      {/* 헤더 — 제목 + 조직 요약 */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <GithubMark className="text-fg size-[18px]" />
+          <h2 className="text-fg text-[15px] font-bold">GitHub 기여도</h2>
+        </div>
+        {data?.organization?.login && (
+          <span className="text-fg-subtle truncate text-[12px]">
+            @{data.organization.login} · {repos.length}개 저장소
+          </span>
+        )}
       </div>
 
       {/* 레포 탭 */}
@@ -135,7 +167,7 @@ export function GithubContributionSection({
               className={cn(
                 'rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors',
                 on
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-white shadow-[0px_2px_8px_0px_rgba(41,181,176,0.25)]'
                   : 'bg-surface-muted text-fg-muted hover:bg-surface-muted/70',
               )}
             >
@@ -145,21 +177,26 @@ export function GithubContributionSection({
         })}
       </div>
 
-      {/* 활성 레포 기여자 */}
-      <div className="flex items-center justify-between">
-        <span className="text-fg-subtle text-[12px]">
-          분석 브랜치 {active.analysisBranch ?? '-'} · 총 커밋{' '}
-          {active.totalCommits}
+      {/* 활성 레포 요약 */}
+      <div className="flex items-center gap-1.5 text-[12px]">
+        <GitBranch className="text-fg-subtle size-3.5" aria-hidden="true" />
+        <span className="text-fg font-semibold">
+          {active.analysisBranch ?? '-'}
+        </span>
+        <span className="text-fg-subtle">
+          · 총 {active.totalCommits.toLocaleString()} 커밋
         </span>
       </div>
+
       {/* 잔디 — 일별 커밋 히트맵 */}
       <GithubHeatmap daily={active.dailyActivity} />
+
       {active.contributors.length === 0 ? (
-        <p className="text-fg-subtle py-4 text-center text-[12px]">
+        <p className="text-fg-subtle border-divider border-t py-5 text-center text-[12px]">
           아직 집계된 기여가 없어요. 설정 탭에서 동기화하면 반영됩니다.
         </p>
       ) : (
-        <div className="flex flex-col divide-y divide-[color:var(--color-divider)]">
+        <div className="border-divider flex flex-col border-t pt-2">
           {active.contributors.map((c, i) => (
             <ContributorRow key={c.githubLogin} c={c} index={i} />
           ))}

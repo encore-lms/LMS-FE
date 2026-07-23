@@ -131,8 +131,6 @@ export type {
   InstructorCohortRow,
   InstructorCohortsData,
   StudentCertStatus,
-  CohortStudentRow,
-  CohortStudentsData,
 } from './instructorConsole'
 export type {
   CertReviewTargetType,

@@ -118,7 +118,7 @@ export default function AssignmentFormPage() {
           {/* 과제 폼 */}
           <form
             onSubmit={onSave}
-            className="border-border bg-surface rounded-xl border p-6"
+            className="bg-surface rounded-xl p-6"
           >
             <div className="grid gap-4 lg:grid-cols-2">
               <label className="flex w-full flex-col gap-[6px]">
@@ -198,10 +198,10 @@ export default function AssignmentFormPage() {
             <div className="mt-6">
               <p className="text-fg text-[13px] font-bold">첨부 자료</p>
               <div className="mt-2 flex gap-2">
-                <span className="border-border bg-surface-muted text-fg-muted inline-flex rounded-lg border px-3.5 py-1.5 text-xs font-semibold">
+                <span className="bg-surface-muted text-fg-muted inline-flex rounded-lg px-3.5 py-1.5 text-xs font-semibold">
                   URL 최대 {MAX_URLS}개
                 </span>
-                <span className="border-border bg-surface-muted text-fg-muted inline-flex rounded-lg border px-3.5 py-1.5 text-xs font-semibold">
+                <span className="bg-surface-muted text-fg-muted inline-flex rounded-lg px-3.5 py-1.5 text-xs font-semibold">
                   파일당 20MB · 최대 {MAX_FILES}개
                 </span>
               </div>
@@ -239,7 +239,7 @@ export default function AssignmentFormPage() {
                   {files.map((f) => (
                     <span
                       key={f}
-                      className="border-border bg-surface-muted text-fg-muted inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium"
+                      className="bg-surface-muted text-fg-muted inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
                     >
                       {f}
                       <button
@@ -290,7 +290,7 @@ export default function AssignmentFormPage() {
           </form>
 
           {/* 생성 정책 패널 */}
-          <aside className="border-border bg-surface rounded-xl border p-6">
+          <aside className="bg-surface rounded-xl p-6">
             <p className="text-fg text-base font-bold">생성 정책</p>
             <ul className="mt-4 flex flex-col gap-3">
               {POLICY_NOTES.map((note) => (

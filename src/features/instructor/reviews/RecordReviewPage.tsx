@@ -44,9 +44,16 @@ const CELL_TITLE: Record<RecordCellStatus, string> = {
   none: '미제출',
 }
 
-export default function RecordReviewPage() {
+// embedded=true면 과정·기수·교과목 '기록실' 탭에 임베드(자체 헤더·탭·과정/기수 선택 생략, 선택 기수로 고정).
+export default function RecordReviewPage({
+  embedded = false,
+  cohortId: propCohortId = null,
+}: {
+  embedded?: boolean
+  cohortId?: string | null
+} = {}) {
   const [courseId, setCourseId] = useState('none')
-  const [cohortId, setCohortId] = useState('none')
+  const [cohortId, setCohortId] = useState(propCohortId ?? 'none')
   const [category, setCategory] = useState<InstructorRecordCategory>('blog')
   const [q, setQ] = useState('')
   const [panel, setPanel] = useState<RecordPanelData | null>(null)
@@ -54,6 +61,7 @@ export default function RecordReviewPage() {
   usePageHeader(
     '학습 기록 조회',
     '담당 기수 수강생의 학습 기록 제출 현황을 확인합니다',
+    !embedded,
   )
 
   const { data, isPending, isError, refetch } = useRecordReviews(
@@ -61,7 +69,18 @@ export default function RecordReviewPage() {
     cohortId,
   )
 
+  // 임베드 — 선택 기수(실 UUID)를 포함한 과정으로 고정. 일반 자동 선택 효과보다 우선.
   useEffect(() => {
+    if (!embedded || !propCohortId || !data) return
+    const owner = data.courses.find((c) =>
+      c.cohorts.some((ch) => ch.id === propCohortId),
+    )
+    if (owner && courseId !== owner.id) setCourseId(owner.id)
+    if (cohortId !== propCohortId) setCohortId(propCohortId)
+  }, [embedded, propCohortId, data, courseId, cohortId])
+
+  useEffect(() => {
+    if (embedded) return
     if (!data) return
 
     const courseExists = data.courses.some((c) => c.id === courseId)
@@ -119,36 +138,40 @@ export default function RecordReviewPage() {
   )
 
   return (
-    <div className="p-8">
-      <RouteTabBar tabs={REVIEW_TABS} />
-      {/* 과정 선택 */}
-      <div className="mb-3">
-        <CourseSelect
-          courses={data?.courses ?? []}
-          value={courseId}
-          onChange={selectCourse}
-        />
-      </div>
+    <div className={embedded ? '' : 'p-8'}>
+      {!embedded && <RouteTabBar tabs={REVIEW_TABS} />}
+      {/* 과정 선택 — 임베드에선 상단에서 이미 기수를 선택하므로 숨김 */}
+      {!embedded && (
+        <div className="mb-3">
+          <CourseSelect
+            courses={data?.courses ?? []}
+            value={courseId}
+            onChange={selectCourse}
+          />
+        </div>
+      )}
 
       {/* 기수 탭 */}
-      <div className="border-divider mb-4 flex flex-wrap items-center gap-1 border-b">
-        {cohortTabs.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => setCohortId(c.id)}
-            aria-pressed={cohortId === c.id}
-            className={cn(
-              '-mb-px border-b-2 px-3.5 py-2.5 text-sm font-semibold',
-              cohortId === c.id
-                ? 'border-brand text-fg'
-                : 'text-fg-subtle hover:text-fg border-transparent',
-            )}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      {!embedded && (
+        <div className="border-divider mb-4 flex flex-wrap items-center gap-1 border-b">
+          {cohortTabs.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setCohortId(c.id)}
+              aria-pressed={cohortId === c.id}
+              className={cn(
+                '-mb-px border-b-2 px-3.5 py-2.5 text-sm font-semibold',
+                cohortId === c.id
+                  ? 'border-brand text-fg'
+                  : 'text-fg-subtle hover:text-fg border-transparent',
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 검색 + 카테고리 토글 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

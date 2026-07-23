@@ -135,10 +135,12 @@ export type {
   CertificateMetricKey,
   CertificatePeerAxisKey,
   CertificatePeerEvaluationAxis,
+  CertificateProblemDetail,
   CertificateScoreMetric,
   CertificateScoreResult,
   CertificateTechCategory,
   CertificateTechDetail,
+  CertificateTroubleshootingCaseSummary,
   StudentDerived,
   PersonaBase,
 } from './types'

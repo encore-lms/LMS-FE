@@ -239,7 +239,17 @@ export interface CertificateTroubleshootingCase {
   situation: string
   resolution: string
   result: string
+  /** 원문을 민감정보 마스킹 후 화면용으로 축약한 상황·해결·결과. */
+  summary?: CertificateTroubleshootingCaseSummary
   createdAt: string
+}
+
+export interface CertificateTroubleshootingCaseSummary {
+  policyVersion: string
+  situation: string
+  resolution: string
+  result: string
+  generatedBy: 'AI' | 'FALLBACK'
 }
 
 export interface CertificateProblemCategory {

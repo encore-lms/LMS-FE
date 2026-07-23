@@ -259,12 +259,13 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('인증 문제해결 사례와 동료 태그를 표시한다', async () => {
+  it('인증 문제해결 사례와 문제 분포만 표시한다', async () => {
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(result)
     renderWithQuery(<ProblemTab />)
 
     expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
-    expect(screen.getByText('#협업')).toBeInTheDocument()
+    expect(screen.queryByText('#협업')).not.toBeInTheDocument()
+    expect(screen.queryByText('PeerTag 클라우드')).not.toBeInTheDocument()
     expect(screen.getByText('대표 트러블슈팅 사례')).toBeInTheDocument()
     expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
     expect(screen.queryByText('인증 사례')).not.toBeInTheDocument()
@@ -286,8 +287,8 @@ describe('수강생 증명서 상세 데이터 탭', () => {
         'API 조회를 점검했습니다. 인덱스가 없어 목록 조회가 지연됐습니다.',
       ),
     ).not.toBeInTheDocument()
-    expect(screen.getByLabelText('#협업 3회')).toHaveStyle({ fontSize: '20px' })
-    expect(screen.getByLabelText('#소통 1회')).toHaveStyle({ fontSize: '12px' })
+    expect(screen.queryByLabelText('#협업 3회')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('#소통 1회')).not.toBeInTheDocument()
 
     fireEvent.click(
       screen.getByRole('button', {

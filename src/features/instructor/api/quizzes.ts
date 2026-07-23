@@ -129,6 +129,47 @@ export function useQuizQuestions(quizId: string) {
   })
 }
 
+// 문항 순서 재정렬(드래그) — orderedIds 순서대로 sort_order 재부여. 낙관적 업데이트.
+export function useReorderQuizQuestions(quizId: string) {
+  const qc = useQueryClient()
+  return useMutation<
+    QuizQuestionsData,
+    Error,
+    string[],
+    { prev?: QuizQuestionsData }
+  >({
+    mutationFn: (orderedIds) =>
+      apiClient
+        .patch<QuizQuestionsData>(
+          `/instructor/quizzes/${quizId}/questions/reorder`,
+          { orderedIds },
+        )
+        .then((r) => r.data),
+    onMutate: async (orderedIds) => {
+      const key = instructorKeys.quizQuestions(quizId)
+      await qc.cancelQueries({ queryKey: key })
+      const prev = qc.getQueryData<QuizQuestionsData>(key)
+      if (prev) {
+        const byId = new Map(prev.questions.map((q) => [q.id, q]))
+        const reordered = orderedIds
+          .map((id) => byId.get(id))
+          .filter((q): q is (typeof prev.questions)[number] => Boolean(q))
+        qc.setQueryData<QuizQuestionsData>(key, {
+          ...prev,
+          questions: reordered,
+        })
+      }
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev)
+        qc.setQueryData(instructorKeys.quizQuestions(quizId), ctx.prev)
+    },
+    onSettled: () =>
+      qc.invalidateQueries({ queryKey: instructorKeys.quizQuestions(quizId) }),
+  })
+}
+
 export function useQuizSubmissions(quizId: string) {
   return useQuery({
     queryKey: instructorKeys.quizSubmissions(quizId),

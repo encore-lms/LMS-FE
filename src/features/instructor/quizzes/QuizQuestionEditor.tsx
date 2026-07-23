@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, Plus, Trash2, X } from 'lucide-react'
+import { ChevronDown, GripVertical, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast } from '@/components/ui/use-toast'
@@ -8,6 +8,7 @@ import type { InstructorQuestion } from '@/shared/types'
 import {
   useDeleteQuizQuestion,
   useQuizQuestions,
+  useReorderQuizQuestions,
   useSaveQuizQuestion,
   type SaveQuizQuestionInput,
 } from '../api/quizzes'
@@ -480,10 +481,27 @@ export function QuizQuestionEditor({
   // insertAt = 추가 폼이 열린 위치(0-based gap). null = 닫힘.
   const [insertAt, setInsertAt] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  // 드래그 재정렬 — dragIndex=잡은 문항, overIndex=올려둔 위치.
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+  const reorder = useReorderQuizQuestions(quizId)
   const initedRef = useRef(false)
 
   const questions = data?.questions ?? []
   const totalScore = questions.reduce((s, q) => s + (q.points ?? 0), 0)
+
+  // 드롭 확정 — 순서 배열을 만들어 재정렬 저장(낙관적).
+  const commitReorder = () => {
+    const from = dragIndex
+    const to = overIndex
+    setDragIndex(null)
+    setOverIndex(null)
+    if (from === null || to === null || from === to) return
+    const ids = questions.map((x) => x.id)
+    const [moved] = ids.splice(from, 1)
+    ids.splice(to, 0, moved)
+    reorder.mutate(ids)
+  }
 
   // 생성 직후 진입(defaultAdding) — 데이터 로드 후 맨 아래에 추가 폼을 연다.
   useEffect(() => {
@@ -546,11 +564,42 @@ export function QuizQuestionEditor({
                       />
                     </div>
                   ) : (
-                    <InsertZone onClick={() => setInsertAt(p)} hidden={adding} />
+                    <InsertZone
+                      onClick={() => setInsertAt(p)}
+                      hidden={adding || dragIndex !== null}
+                    />
                   )}
                   {q && (
-                    <div className="bg-surface-muted rounded-xl">
-                      <div className="flex items-center gap-3 px-4 py-3">
+                    <div
+                      draggable={editingId !== q.id && !adding}
+                      onDragStart={() => setDragIndex(p)}
+                      onDragEnter={() => {
+                        if (dragIndex !== null) setOverIndex(p)
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDragEnd={commitReorder}
+                      className={cn(
+                        'bg-surface-muted rounded-xl transition',
+                        dragIndex === p && 'opacity-40',
+                        dragIndex !== null &&
+                          overIndex === p &&
+                          dragIndex !== p &&
+                          'ring-brand/60 ring-2',
+                      )}
+                    >
+                      <div className="flex items-center gap-2 px-4 py-3">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'text-fg-subtle hover:text-fg shrink-0',
+                            editingId !== q.id && !adding
+                              ? 'cursor-grab active:cursor-grabbing'
+                              : 'cursor-default opacity-30',
+                          )}
+                          title="드래그로 순서 이동"
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </span>
                         <span className="text-fg-subtle w-8 shrink-0 text-sm font-bold">
                           Q{p + 1}
                         </span>

@@ -237,6 +237,12 @@ describe('SummaryTab', () => {
     )
 
     expect(await screen.findByText('71.2')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '학습·프로젝트·평가 데이터를 바탕으로 한 6축 절대·상대 산정',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/mock|정책 2026\.07\.20/)).not.toBeInTheDocument()
     expect(screen.getByText('Grade B')).toBeInTheDocument()
     expect(screen.getByText('전체 상위 31.7%')).toBeInTheDocument()
     expect(container.querySelectorAll('[data-summary-kpi]')).toHaveLength(6)

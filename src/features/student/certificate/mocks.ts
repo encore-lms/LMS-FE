@@ -103,7 +103,7 @@ const mockOverview: CertificateOverview = {
     studentName: '박준서',
     courseName: 'SKN LLM·AI 개발자 과정',
     cohortName: 'SKN 4기',
-    periodLabel: '2024.03.11 — 2024.09.08 · v6 운영 mock',
+    periodLabel: '2024.03.11 — 2024.09.08',
     certId: 'abc-1234',
     isPublic: false,
     status: 'changes_requested',

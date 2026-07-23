@@ -136,6 +136,7 @@ export type ProjectCertReviewStatus =
 export interface ProjectReviewRow {
   id: string
   name: string // '팀 Nexus · 데이터 파이프라인'
+  cohortId?: string | null // 실 기수 UUID(허브 임베드 스코프용) — mock/구버전은 없을 수 있음
   cohortLabel: string
   team: string // '5명 (PM 박지훈)'
   stack: string // 'Airflow · BigQuery · dbt'

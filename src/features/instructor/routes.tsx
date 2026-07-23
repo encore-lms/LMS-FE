@@ -8,9 +8,6 @@ const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
 const InstructorEducationPage = lazy(
   () => import('./education/InstructorEducationPage'),
 )
-const CohortStudentsPage = lazy(() => import('./cohorts/CohortStudentsPage'))
-const StudentDetailPage = lazy(() => import('./cohorts/StudentDetailPage'))
-const RecordReviewPage = lazy(() => import('./reviews/RecordReviewPage'))
 const ProjectReviewPage = lazy(() => import('./reviews/ProjectReviewPage'))
 const TsReviewPage = lazy(() => import('./reviews/TsReviewPage'))
 const EndorsementsPage = lazy(() => import('./endorsements/EndorsementsPage'))
@@ -26,7 +23,6 @@ const ChangeRequestsPage = lazy(
 const RecertificationsPage = lazy(
   () => import('./change-requests/RecertificationsPage'),
 )
-const NoCohortPage = lazy(() => import('./dashboard/NoCohortNotice'))
 const AssignmentFormPage = lazy(
   () => import('./assignments/AssignmentFormPage'),
 )
@@ -58,17 +54,14 @@ export const instructorRoutes: RouteObject[] = [
         path: 'cohorts/:cohortId/education',
         element: <InstructorEducationPage />,
       },
-      { path: 'cohorts/:cohortId/students', element: <CohortStudentsPage /> },
-      { path: 'students/:studentId', element: <StudentDetailPage /> },
-      // 검토 3종 (§13~§15) — 사이드바 '검토' 묶음.
-      { path: 'records/review', element: <RecordReviewPage /> },
+      // 수강생 목록·상세 단독 화면은 폐기 — 허브 '수강생' 탭(StudentsPane)으로 일원화.
+      // 검토 2종 (§14~§15) — 사이드바 '검토' 묶음. 학습 기록 조회는 허브 '기록실' 탭으로 이관.
       { path: 'projects/review', element: <ProjectReviewPage /> },
       { path: 'troubleshooting/review', element: <TsReviewPage /> },
       // 인증 후 통합 검토 (P0 29 §11~§12 대체) — 변경 제안·재인증, 사이드바 '인증 후 변경 제안' 묶음.
       { path: 'change-requests', element: <ChangeRequestsPage /> },
       { path: 'recertifications', element: <RecertificationsPage /> },
-      // 담당 기수 없음 안내 — 대시보드가 cohortCount 0이면 동일 안내로 분기.
-      { path: 'no-cohort', element: <NoCohortPage /> },
+      // 담당 기수 없음 안내는 대시보드가 cohortCount 0일 때 인라인 렌더(별도 라우트 없음).
       // 마이 프로필 — 계정 정보·비밀번호 변경(임시 비밀번호 수령 후 변경 경로).
       { path: 'profile', element: <ProfilePage /> },
       // 강사 추천서 (Flow 08-1) — /history는 :id보다 먼저(정적 경로 우선).

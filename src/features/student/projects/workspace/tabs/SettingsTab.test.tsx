@@ -64,6 +64,8 @@ const CONNECTED: ProjectGithubConnection = {
       isPublicForMe: false,
       myCommits: 92,
       myContribPercent: 38,
+      totalCommits: 240,
+      contributors: [],
     },
   ],
   lastSyncedAt: '2026-07-22T00:00:00Z',

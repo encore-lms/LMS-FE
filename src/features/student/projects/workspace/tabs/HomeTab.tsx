@@ -28,6 +28,7 @@ import type {
   WsTask,
 } from '../../types'
 import { Avatar, Chip } from '../components/ws-shared'
+import { GithubContributionSection } from '../components/GithubContributionSection'
 import { TONE_SOFT, TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 import { card, phaseCertBadge } from '../components/ws-style'
 
@@ -338,6 +339,9 @@ export function HomeTab({
               )
             })}
           </section>
+
+          {/* GitHub 기여도 — 미연동 프로젝트면 컴포넌트가 스스로 숨김 */}
+          <GithubContributionSection projectId={d.id} />
         </div>
 
         {/* 우측: 인증 상태 · 팀원 · 성과 지표 · 기술 스택 */}

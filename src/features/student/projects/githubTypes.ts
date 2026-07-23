@@ -30,6 +30,20 @@ export interface ProjectGithubRepository {
   isPublicForMe: boolean
   myCommits: number
   myContribPercent: number
+  /** 분석 브랜치 총 커밋(0=미집계) */
+  totalCommits: number
+  /** 레포별 전체 기여자(커밋 내림차순) */
+  contributors: ProjectGithubContributor[]
+}
+
+/** 레포 기여자 — LMS 매칭이면 name·avatarUrl이 LMS 것(isLmsUser), 아니면 GitHub login·avatar. */
+export interface ProjectGithubContributor {
+  name: string
+  avatarUrl: string | null
+  isLmsUser: boolean
+  githubLogin: string
+  commits: number
+  contribPercent: number
 }
 
 export interface ProjectGithubConnection {

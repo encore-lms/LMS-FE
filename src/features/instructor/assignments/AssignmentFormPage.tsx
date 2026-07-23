@@ -20,14 +20,6 @@ import { assignmentSchema, type AssignmentInput } from './assignment.schema'
 const MAX_URLS = 5
 const MAX_FILES = 5
 
-// 생성 정책 (Figma 2750:1667) — 폼 우측 고정 안내.
-const POLICY_NOTES = [
-  '생성 즉시 공개',
-  '대상은 기수 전체만 가능',
-  '공개 후 수정 알림 없음',
-  '생성/수정 후 상세 화면 이동',
-]
-
 // 과제·실습 생성/수정 (/instructor/assignments/new · /:assignmentId) — P0 30. (Figma 2750:1547)
 // 첨부 자료는 URL 최대 5개 · 파일당 20MB·최대 5개. 점수/채점 정책 없음.
 export default function AssignmentFormPage() {
@@ -114,11 +106,11 @@ export default function AssignmentFormPage() {
       className="p-8"
     >
       <div className="p-8">
-        <div className="grid items-start gap-5 lg:grid-cols-[1fr_336px]">
+        <div className="grid items-start gap-5">
           {/* 과제 폼 */}
           <form
             onSubmit={onSave}
-            className="bg-surface rounded-xl p-6"
+            className="bg-surface max-w-4xl rounded-xl p-6"
           >
             <div className="grid gap-4 lg:grid-cols-2">
               <label className="flex w-full flex-col gap-[6px]">
@@ -288,18 +280,6 @@ export default function AssignmentFormPage() {
               <Button type="submit">저장</Button>
             </div>
           </form>
-
-          {/* 생성 정책 패널 */}
-          <aside className="bg-surface rounded-xl p-6">
-            <p className="text-fg text-base font-bold">생성 정책</p>
-            <ul className="mt-4 flex flex-col gap-3">
-              {POLICY_NOTES.map((note) => (
-                <li key={note} className="text-fg-muted text-sm">
-                  - {note}
-                </li>
-              ))}
-            </ul>
-          </aside>
         </div>
       </div>
     </DataBoundary>

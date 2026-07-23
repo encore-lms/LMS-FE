@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/shared/lib/cn'
 import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 import type { CertificateProblemDetail } from '../ai'
@@ -28,23 +30,27 @@ function peerTagLabel(label: string) {
 }
 
 function summaryFields(item: CertificateProblemDetail['cases'][number]) {
+  const summary = item.summary?.generatedBy === 'AI' ? item.summary : null
   return [
     {
       key: 'situation',
       label: '상황',
-      summary: item.summary?.situation,
+      summary: summary?.situation,
+      original: item.situation,
       tone: 'info' as const,
     },
     {
       key: 'resolution',
       label: '해결',
-      summary: item.summary?.resolution,
+      summary: summary?.resolution,
+      original: item.resolution,
       tone: 'brand' as const,
     },
     {
       key: 'result',
       label: '결과',
-      summary: item.summary?.result,
+      summary: summary?.result,
+      original: item.result,
       tone: 'success' as const,
     },
   ]
@@ -66,32 +72,34 @@ function EmptyData({ children }: { children: React.ReactNode }) {
 }
 
 function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
+  const [detail, setDetail] = useState<{
+    caseTitle: string
+    label: string
+    content: string
+  } | null>(null)
   const peerTags = [...problem.peerTags].sort(
     (a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ko'),
   )
   const tagCount = peerTags.reduce((sum, tag) => sum + tag.count, 0)
   const maxTagCount = peerTags[0]?.count ?? 0
   const minTagCount = peerTags.at(-1)?.count ?? 0
-  const representativeCases = problem.cases.slice(0, 4)
+  const representativeCases = problem.cases.slice(0, 3)
 
   return (
     <div className="flex flex-col gap-4">
       <TabHead
         no={4}
         title="문제해결·협업"
-        sub="인증 트러블슈팅 사례 · 문제 분포 · 동료 협업 태그"
+        sub="트러블슈팅 사례 · 문제 분포 · PeerTag · 협업 평판 · 자동 산정 기반"
       >
         <span className="bg-success-bg text-success rounded-full px-2.5 py-1 text-[11px] font-semibold">
           인증 사례 {problem.certifiedCount}건
-        </span>
-        <span className="bg-brand/10 text-brand rounded-full px-2.5 py-1 text-[11px] font-semibold">
-          독립 해결 {formatNumber(problem.independentRate)}%
         </span>
         <span className="bg-info-bg text-info rounded-full px-2.5 py-1 text-[11px] font-semibold">
           평균 {formatNumber(problem.averageDays)}일
         </span>
         <span className="bg-accent-bg text-accent rounded-full px-2.5 py-1 text-[11px] font-semibold">
-          동료 평가자 {problem.peerEvaluatorCount}명
+          협업 태그 {tagCount}회
         </span>
       </TabHead>
 
@@ -102,11 +110,11 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
               대표 트러블슈팅 사례
             </span>
             <span className="text-fg-subtle text-[11px]">
-              인증 사례 중 최근 4건 · 상황·해결·결과 안전 요약
+              인증 사례 중 대표 3건 · 상황·해결·결과 핵심 요약
             </span>
           </div>
           <span className="bg-success-bg text-success rounded-full px-2.5 py-1 text-[11px] font-semibold">
-            최대 4건
+            최대 3건
           </span>
         </div>
 
@@ -132,11 +140,6 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
                   >
                     {item.category}
                   </span>
-                  {item.independent && (
-                    <span className="bg-success-bg text-success rounded px-1.5 py-0.5 text-[10px] font-bold">
-                      독립 해결
-                    </span>
-                  )}
                   <span className="text-fg text-[14px] font-bold">
                     {item.title}
                   </span>
@@ -153,17 +156,33 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
                       key={field.key}
                       className="bg-surface-muted flex min-w-0 flex-col gap-2 rounded-xl p-3.5"
                     >
-                      <dt className="text-fg flex items-center gap-2 text-[12px] font-bold">
-                        <span
-                          className={cn(
-                            'size-2 rounded-full',
-                            TONE_SOLID[field.tone],
-                          )}
-                        />
-                        {field.label}
+                      <dt className="flex items-center justify-between gap-2">
+                        <span className="text-fg flex items-center gap-2 text-[12px] font-bold">
+                          <span
+                            className={cn(
+                              'size-2 rounded-full',
+                              TONE_SOLID[field.tone],
+                            )}
+                          />
+                          {field.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDetail({
+                              caseTitle: item.title,
+                              label: field.label,
+                              content: field.original,
+                            })
+                          }
+                          aria-label={`${item.title} ${field.label} 상세보기`}
+                          className="text-brand hover:text-brand-deep text-[10px] font-semibold underline-offset-2 hover:underline"
+                        >
+                          상세보기
+                        </button>
                       </dt>
                       <dd className="text-fg-muted m-0 text-[11px] leading-5">
-                        {field.summary || '안전 요약을 준비하고 있습니다.'}
+                        {field.summary || 'AI 요약을 생성하지 못했습니다.'}
                       </dd>
                     </div>
                   ))}
@@ -210,19 +229,17 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
           )}
         </section>
 
-        <section className={cn(card, 'flex flex-col gap-4')}>
-          <div className="flex flex-col gap-1">
-            <span className="text-fg text-[15px] font-bold">
-              PeerTag 클라우드
-            </span>
-            <span className="text-fg-subtle text-[11px]">
-              동료 평가에서 수집된 태그 · 누적 {tagCount}회
-            </span>
-          </div>
+        <section className={cn(card, 'flex flex-col gap-3')}>
+          <span className="text-fg text-[15px] font-bold">
+            PeerTag 클라우드
+          </span>
+          <span className="text-fg-subtle text-[11px]">
+            동료 평가에서 수집된 태그 · 누적 {tagCount}회
+          </span>
           {peerTags.length === 0 ? (
             <EmptyData>수집된 동료 평가 태그가 없습니다.</EmptyData>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-1">
               {peerTags.map((tag, index) => (
                 <span
                   key={tag.label}
@@ -241,40 +258,26 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
               ))}
             </div>
           )}
-
-          <div className="border-divider flex flex-col gap-3 border-t pt-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-fg text-[13px] font-bold">
-                태그 ↔ 사례 연결
-              </span>
-              <span className="text-fg-subtle text-[11px]">
-                주요 동료 태그와 인증 사례의 프로젝트 연결
-              </span>
-            </div>
-            {problem.peerTagCases.length === 0 ? (
-              <span className="text-fg-subtle text-[11px]">
-                연결된 대표 사례가 없습니다.
-              </span>
-            ) : (
-              problem.peerTagCases.map((item, index) => (
-                <div key={`${item.tag}-${item.caseId}`} className="flex gap-3">
-                  <span
-                    className={cn(
-                      'h-fit shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold',
-                      TONE_SOFT[tones[index % tones.length]],
-                    )}
-                  >
-                    {peerTagLabel(item.tag)}
-                  </span>
-                  <span className="text-fg-muted text-[11px] leading-4">
-                    {item.caseTitle}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
         </section>
       </div>
+
+      <Modal
+        open={detail !== null}
+        onClose={() => setDetail(null)}
+        size="md"
+        title={detail ? `${detail.caseTitle} · ${detail.label}` : undefined}
+      >
+        {detail && (
+          <div className="flex flex-col gap-3">
+            <span className="text-fg-subtle text-[11px] font-semibold">
+              수강생 작성 원문
+            </span>
+            <p className="bg-surface-muted text-fg-muted m-0 rounded-xl p-4 text-[13px] leading-6 whitespace-pre-wrap">
+              {detail.content.trim() || '작성된 내용이 없습니다.'}
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

@@ -1,7 +1,6 @@
-import { useState } from 'react'
-import { Info } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { AiVerdict, AiVerdictItemKey } from '../ai'
+import { AnalysisEvidenceTooltip } from './AnalysisEvidenceTooltip'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
 const CONFIDENCE_LABEL = {
@@ -25,6 +24,13 @@ const VERDICT_ITEMS: {
     accentClassName: 'bg-success',
   },
   {
+    key: 'growth',
+    label: '성장 포인트',
+    labelClassName: 'text-info',
+    cardClassName: 'border-info/20 bg-info-bg/45',
+    accentClassName: 'bg-info',
+  },
+  {
     key: 'gap',
     label: '보완',
     labelClassName: 'text-warning',
@@ -41,6 +47,9 @@ const VERDICT_ITEMS: {
 ]
 
 function dataSourceFor(key: AiVerdictItemKey) {
+  if (key === 'growth') {
+    return '성취도 평가 · CS 평가 · 평가 시점별 점수 추이'
+  }
   if (key === 'gap') {
     return '기술 역량 판단과 부족 근거 제한사항'
   }
@@ -57,9 +66,9 @@ export function AiTechnicalVerdict({
   verdict: AiVerdict
   className?: string
 }) {
-  const [openKey, setOpenKey] = useState<AiVerdictItemKey | null>(null)
   const values: Record<AiVerdictItemKey, string> = {
     strength: verdict.strength,
+    growth: verdict.growth,
     gap: verdict.gap,
     unique: verdict.unique,
   }
@@ -71,10 +80,9 @@ export function AiTechnicalVerdict({
           전체 근거 충분도 {CONFIDENCE_LABEL[verdict.confidence]}
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-3 overflow-visible md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 overflow-visible md:grid-cols-2 xl:grid-cols-4">
         {VERDICT_ITEMS.map((item) => {
           const detail = verdict.details[item.key]
-          const active = openKey === item.key
           const hasDetail =
             detail.evidence.length > 0 ||
             detail.evidenceCodes.length > 0 ||
@@ -87,7 +95,6 @@ export function AiTechnicalVerdict({
               className={cn(
                 'relative min-w-0 rounded-xl border p-4',
                 item.cardClassName,
-                active && 'ring-brand/40 ring-2',
               )}
             >
               <span
@@ -101,48 +108,36 @@ export function AiTechnicalVerdict({
                   {item.label}
                 </b>
                 {hasDetail && (
-                  <button
-                    type="button"
-                    aria-expanded={active}
-                    aria-controls={`technical-verdict-detail-${item.key}`}
-                    onClick={() =>
-                      setOpenKey((current) =>
-                        current === item.key ? null : item.key,
-                      )
-                    }
-                    className="text-fg-subtle hover:text-fg focus-visible:ring-ring flex size-5 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none"
-                    aria-label={`${item.label} 판단 근거 보기`}
+                  <AnalysisEvidenceTooltip
+                    label={`${item.label} 판단 근거`}
+                    ariaLabel={`${item.label} 판단 근거 보기`}
                   >
-                    <Info className="size-3.5" aria-hidden />
-                  </button>
+                    <span>
+                      <b className="text-fg">사용 데이터</b>
+                      <br />
+                      {dataSourceFor(item.key)}
+                    </span>
+                    <span>
+                      <b className="text-fg">판단 근거</b>
+                      <br />
+                      {detail.evidence.slice(0, 3).join(' · ') ||
+                        detail.evidenceCodes.slice(0, 3).join(' · ') ||
+                        '연결된 직접 근거 없음'}
+                    </span>
+                    {verdict.limitations.map((limitation) => (
+                      <span
+                        key={limitation}
+                        className="border-border border-t pt-2"
+                      >
+                        제한: {limitation}
+                      </span>
+                    ))}
+                  </AnalysisEvidenceTooltip>
                 )}
               </div>
               <p className="text-fg-muted mt-2.5 text-[12px] leading-5">
                 {values[item.key]}
               </p>
-              {active && (
-                <div
-                  id={`technical-verdict-detail-${item.key}`}
-                  role="tooltip"
-                  className="border-border bg-surface absolute top-11 right-3 left-3 z-30 rounded-xl border p-3 text-[10px] leading-4 shadow-xl"
-                >
-                  <b className="text-fg block">사용 데이터</b>
-                  <p className="text-fg-muted mt-0.5">
-                    {dataSourceFor(item.key)}
-                  </p>
-                  <b className="text-fg mt-2 block">판단 근거</b>
-                  <p className="text-fg-muted mt-0.5">
-                    {detail.evidence.slice(0, 3).join(' · ') ||
-                      detail.evidenceCodes.slice(0, 3).join(' · ') ||
-                      '연결된 직접 근거 없음'}
-                  </p>
-                  {verdict.limitations[0] && (
-                    <p className="border-border text-fg-muted mt-2 border-t pt-2">
-                      제한: {verdict.limitations[0]}
-                    </p>
-                  )}
-                </div>
-              )}
             </article>
           )
         })}

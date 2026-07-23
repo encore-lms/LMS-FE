@@ -136,6 +136,7 @@ export type {
   AiProjects,
   ProblemAi,
   ProblemCap,
+  CollaborationEvidenceStat,
   AiCollaborationAnalysis,
   AiCollaborationProjectEvaluation,
   AiProblemGrowthAnalysis,

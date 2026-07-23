@@ -91,10 +91,7 @@ export default function CertificatePage() {
                 <ProblemTab studentId={selectedStudent.id} />
               )}
               {tab === 'growth-reputation' && (
-                <GrowthTab
-                  g={certificateData.growth}
-                  studentId={selectedStudent.id}
-                />
+                <GrowthTab g={certificateData.growth} />
               )}
               {tab === 'ai-analysis' && CERT_V2 && (
                 <AiTab studentId={selectedStudent.id} />

@@ -2,12 +2,12 @@ import {
   ArrowUpRight,
   CalendarRange,
   CheckCircle2,
-  Info,
   Link2,
   Route,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { AiProfileConfidence, AiProjects } from '../ai'
+import { AnalysisEvidenceTooltip } from './AnalysisEvidenceTooltip'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
 const CONFIDENCE_LABEL: Record<AiProfileConfidence, string> = {
@@ -63,52 +63,35 @@ function EvidenceInfo({
   if (!hasDetail) return null
 
   return (
-    <span className="group relative shrink-0">
-      <button
-        type="button"
-        className="text-fg-subtle hover:text-fg focus-visible:ring-ring flex size-4 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none"
-        aria-label={`${label} 분석 근거 보기`}
-      >
-        <Info className="size-3" aria-hidden="true" />
-      </button>
-      <span
-        role="tooltip"
-        className="border-border bg-surface text-fg-muted pointer-events-none absolute top-full right-0 z-20 mt-1.5 hidden w-72 max-w-[calc(100vw-4rem)] rounded-lg border p-3 text-[11px] leading-4 font-normal shadow-lg group-focus-within:block group-hover:block"
-      >
-        <span className="text-fg mb-1.5 block font-bold">
-          {label} 분석 근거
-        </span>
-        <span className="grid gap-2">
-          <span>
-            <b className="text-fg">사용 데이터</b>
-            <br />
-            {dataSource}
-          </span>
-          <span>
-            <b className="text-fg">판단 근거</b>
-            <br />
-            {projectNames && projectNames.length > 0
-              ? `연결 프로젝트: ${projectNames.join(' · ')} · ${compactProjectEvidence(evidence, '유효 근거 확인')}`
-              : compactProjectEvidence(evidence, '프로젝트별 유효 근거만 반영')}
-          </span>
-          <span>
-            <b className="text-fg">계산 흐름</b>
-            <br />
-            {calculation}
-          </span>
-          <span>
-            <b className="text-fg">결과</b>
-            <br />
-            {result}
-          </span>
-        </span>
-        {limitations?.map((item) => (
-          <span key={item} className="border-border mt-2 block border-t pt-2">
-            제한: {item}
-          </span>
-        ))}
+    <AnalysisEvidenceTooltip label={label} triggerClassName="size-4">
+      <span>
+        <b className="text-fg">사용 데이터</b>
+        <br />
+        {dataSource}
       </span>
-    </span>
+      <span>
+        <b className="text-fg">판단 근거</b>
+        <br />
+        {projectNames && projectNames.length > 0
+          ? `연결 프로젝트: ${projectNames.join(' · ')} · ${compactProjectEvidence(evidence, '유효 근거 확인')}`
+          : compactProjectEvidence(evidence, '프로젝트별 유효 근거만 반영')}
+      </span>
+      <span>
+        <b className="text-fg">계산 흐름</b>
+        <br />
+        {calculation}
+      </span>
+      <span>
+        <b className="text-fg">결과</b>
+        <br />
+        {result}
+      </span>
+      {limitations?.map((item) => (
+        <span key={item} className="border-border border-t pt-2">
+          제한: {item}
+        </span>
+      ))}
+    </AnalysisEvidenceTooltip>
   )
 }
 
@@ -127,41 +110,40 @@ export function AiProjectAnalysis({
 }) {
   const timeline = projects.projects.map((project) => ({
     projectId: project.projectId,
-    phase: `프로젝트 ${project.order}`,
+    phase: `${project.order}차 프로젝트`,
     startedAt: project.period.startedAt,
     endedAt: project.period.endedAt,
     name: project.name,
-    evidence: project.evidenceCodes,
+    evidence: [
+      ...project.personalEvidence.tasks,
+      ...project.personalEvidence.peerObservations,
+      ...project.personalEvidence.troubleshootingCases,
+    ],
     contribution: project.analysis,
     domain: project.teamContext.domain ?? '도메인 미분류',
     role: project.membershipRole === 'OWNER' ? '프로젝트 리더' : '팀원',
     themes: project.teamContext.techStacks,
-    workCategories: project.personalEvidence.tasks,
-    usedTechnologies: project.teamContext.techStacks,
+    workCategories: project.personalEvidence.workCategories,
+    usedTechnologies: project.personalEvidence.technologies,
   }))
-  const groups = projects.groups.map((group, index) => ({
+  const groups = projects.groups.map((group) => ({
     ...group,
-    key: ['CONTINUITY', 'EXPANSION', 'VALIDATION'][index],
-    confidence: 'MEDIUM' as const,
-    evidence: projects.projects.flatMap((project) => project.evidenceCodes),
-    limitations: projects.limitations,
-    projectNames: projects.projects.map((project) => project.name),
+    evidence: projects.projects
+      .filter((project) => group.projectIds.includes(project.projectId))
+      .flatMap((project) => [
+        ...project.personalEvidence.tasks,
+        ...project.personalEvidence.peerObservations,
+        ...project.personalEvidence.troubleshootingCases,
+      ]),
   }))
-  const projectCount = timeline.length
-  const period =
-    timeline.length > 0
-      ? {
-          startedAt: timeline[0].startedAt,
-          endedAt: timeline.at(-1)?.endedAt ?? timeline[0].endedAt,
-        }
-      : null
-  const confidence: AiProfileConfidence =
-    projects.status === 'READY'
-      ? 'HIGH'
-      : projects.status === 'PARTIAL'
-        ? 'MEDIUM'
-        : 'LOW'
-  const evidence = projects.projects.flatMap((project) => project.evidenceCodes)
+  const projectCount = projects.projectCount
+  const period = projects.period
+  const confidence: AiProfileConfidence = projects.confidence
+  const evidence = projects.projects.flatMap((project) => [
+    ...project.personalEvidence.tasks,
+    ...project.personalEvidence.peerObservations,
+    ...project.personalEvidence.troubleshootingCases,
+  ])
   const hasProject = timeline.length > 0
   const canShowJourneySummary = timeline.length >= 2
   const groupGridClassName =

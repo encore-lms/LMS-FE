@@ -6,7 +6,6 @@ import type {
   CertGrowthTab,
   CertRecommendation,
 } from '../types'
-import { GrowthDetailPanel } from './GrowthDetailPanel'
 import { TabHead } from './TechTab'
 
 const card =
@@ -102,7 +101,7 @@ function RecommendationRow({ item }: { item: CertRecommendation }) {
   )
 }
 
-function LegacyGrowthTab({ g }: { g: CertGrowthTab }) {
+export function GrowthTab({ g }: { g: CertGrowthTab }) {
   const toast = useToast()
   const growthChartRef = useRef<HTMLDivElement>(null)
   const [focusedAssessmentIndex, setFocusedAssessmentIndex] = useState<
@@ -198,7 +197,8 @@ function LegacyGrowthTab({ g }: { g: CertGrowthTab }) {
           6개월 평가 {g.timeline.length}회 {signedScore(totalGrowth)}점
         </Metric>
         <Metric dot="bg-accent-strong">
-          동료 5축 평균 {(g.peerAverage ?? 0).toFixed(1)}
+          동료 5축 평균{' '}
+          {g.peerAverage === undefined ? '산출 전' : g.peerAverage.toFixed(1)}
         </Metric>
         {g.recommendations.length > 0 && (
           <Metric dot="bg-warning">추천서 {g.recommendations.length}건</Metric>
@@ -630,23 +630,6 @@ function LegacyGrowthTab({ g }: { g: CertGrowthTab }) {
           ))}
         </section>
       )}
-    </div>
-  )
-}
-
-export function GrowthTab({
-  g,
-  studentId,
-}: {
-  g?: CertGrowthTab
-  studentId?: string
-}) {
-  if (!g) return <GrowthDetailPanel studentId={studentId} />
-
-  return (
-    <div className="flex flex-col gap-4">
-      <LegacyGrowthTab g={g} />
-      <GrowthDetailPanel studentId={studentId} />
     </div>
   )
 }

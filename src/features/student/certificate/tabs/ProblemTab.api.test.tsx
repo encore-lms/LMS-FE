@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CertificateDetailTabsResult } from '../ai'
 import { fetchCertificateDetailTabs } from '../ai'
@@ -89,24 +89,23 @@ function renderProblemTab(result = detailTabs) {
 }
 
 describe('ProblemTab 상세 API 연결', () => {
-  it('인증 통계·안전 요약·문제 분포·동료 태그와 사례 연결을 표시한다', async () => {
+  it('인증 통계·안전 요약·문제 분포·동료 태그를 표시한다', async () => {
     renderProblemTab()
 
-    expect(await screen.findAllByText('쿼리 지연 해결')).toHaveLength(2)
+    expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(screen.getByText('인증 사례 1건')).toBeInTheDocument()
-    expect(screen.getByText('독립 해결 100%')).toBeInTheDocument()
     expect(screen.getByText('평균 2일')).toBeInTheDocument()
-    expect(screen.getByText('동료 평가자 2명')).toBeInTheDocument()
+    expect(screen.getByText('협업 태그 4회')).toBeInTheDocument()
     expect(screen.getAllByText('성능최적화')).toHaveLength(2)
-    expect(
-      screen.getByText('[IP] 서버에 복합 인덱스를 추가했습니다.'),
-    ).toBeInTheDocument()
+    expect(screen.getAllByText('AI 요약을 생성하지 못했습니다.')).toHaveLength(
+      3,
+    )
     expect(screen.getByLabelText('#협업 3회')).toHaveStyle({ fontSize: '20px' })
-    expect(screen.getByText('태그 ↔ 사례 연결')).toBeInTheDocument()
+    expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
   })
 
-  it('내부 원문과 생성 방식·정책 버전을 사용자 화면에 노출하지 않는다', async () => {
+  it('상세보기 전에는 원문을 숨기고 선택한 항목의 원문만 모달로 표시한다', async () => {
     renderProblemTab()
 
     await screen.findAllByText('쿼리 지연 해결')
@@ -116,9 +115,16 @@ describe('ProblemTab 상세 API 연결', () => {
     expect(
       screen.queryByText(/FALLBACK|troubleshooting-summary-v1/),
     ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /상세보기/ }),
-    ).not.toBeInTheDocument()
+    const detailButtons = screen.getAllByRole('button', { name: /상세보기/ })
+    expect(detailButtons).toHaveLength(3)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '쿼리 지연 해결 상황 상세보기' }),
+    )
+
+    expect(screen.getByText('수강생 작성 원문')).toBeInTheDocument()
+    expect(screen.getByText(/dev@example\.com/)).toBeInTheDocument()
+    expect(screen.queryByText(/10\.0\.0\.7/)).not.toBeInTheDocument()
   })
 
   it('요약이 없으면 원문으로 대체하지 않고 준비 상태를 표시한다', async () => {
@@ -131,7 +137,7 @@ describe('ProblemTab 상세 API 연결', () => {
     })
 
     expect(
-      await screen.findAllByText('안전 요약을 준비하고 있습니다.'),
+      await screen.findAllByText('AI 요약을 생성하지 못했습니다.'),
     ).toHaveLength(3)
     expect(
       screen.queryByText(/dev@example\.com|10\.0\.0\.7/),

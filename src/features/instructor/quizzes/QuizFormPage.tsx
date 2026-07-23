@@ -141,6 +141,8 @@ export default function QuizFormPage() {
   const toast = useToast()
   const [searchParams] = useSearchParams()
   const templateId = isEdit ? null : searchParams.get('templateId')
+  // 과정·기수 허브에서 진입 시 대상 기수를 그 기수로 고정(자유 선택 차단).
+  const lockedCohortId = isEdit ? null : searchParams.get('cohortId')
   const { data, isPending, isError, refetch } = useInstructorQuizDetail(
     quizId ?? null,
   )
@@ -193,13 +195,17 @@ export default function QuizFormPage() {
     setVisibility(data.visibility)
   }, [data, reset])
 
-  // 생성 모드 — 기수 옵션 로드되면 첫 기수 기본 선택(미선택 시).
+  // 생성 모드 — 고정 기수(허브 진입)면 그 기수로, 아니면 기수 옵션 로드 시 첫 기수 기본 선택.
   useEffect(() => {
-    if (!isEdit && cohortOptions && cohortOptions.length > 0) {
-      if (!getValues('cohortId'))
-        setValue('cohortId', cohortOptions[0].cohortId)
+    if (isEdit) return
+    if (lockedCohortId) {
+      setValue('cohortId', lockedCohortId)
+      return
     }
-  }, [isEdit, cohortOptions, getValues, setValue])
+    if (cohortOptions && cohortOptions.length > 0 && !getValues('cohortId')) {
+      setValue('cohortId', cohortOptions[0].cohortId)
+    }
+  }, [isEdit, lockedCohortId, cohortOptions, getValues, setValue])
 
   // 생성 모드 — 일시/제한시간 기본값(시작=현재, 종료=다음날, 제한 60분). 1회.
   const initDefaultsRef = useRef(false)
@@ -342,23 +348,34 @@ export default function QuizFormPage() {
             </div>
             <div>
               <FieldLabel required>대상 과정/기수</FieldLabel>
-              <Controller
-                name="cohortId"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    aria-label="대상 과정/기수"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={(cohortOptions ?? []).map((c) => ({
-                      value: c.cohortId,
-                      label: c.label,
-                    }))}
-                    placeholder="기수 없음"
-                    className="h-10 w-full"
-                  />
-                )}
-              />
+              {lockedCohortId ? (
+                // 허브 진입 — 대상 기수 고정(변경 불가). 라벨은 옵션 로드 후 표시.
+                <div
+                  aria-label="대상 과정/기수(고정)"
+                  className="border-border bg-surface-muted text-fg flex h-10 w-full items-center rounded-lg border px-3 text-sm"
+                >
+                  {cohortOptions?.find((c) => c.cohortId === lockedCohortId)
+                    ?.label ?? '기수 고정'}
+                </div>
+              ) : (
+                <Controller
+                  name="cohortId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      aria-label="대상 과정/기수"
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={(cohortOptions ?? []).map((c) => ({
+                        value: c.cohortId,
+                        label: c.label,
+                      }))}
+                      placeholder="기수 없음"
+                      className="h-10 w-full"
+                    />
+                  )}
+                />
+              )}
             </div>
           </div>
           <div className="mt-3">

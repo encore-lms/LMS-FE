@@ -87,6 +87,8 @@ export interface SaveQuizQuestionInput {
   blankScores?: number[]
   explanation?: string
   points: number
+  /** 삽입 위치(0-based). 생성 시에만 사용, 미지정이면 맨 뒤. */
+  order?: number
 }
 // 문항 추가(POST) 또는 수정(PATCH, questionId 지정)
 export function useSaveQuizQuestion(quizId: string, questionId?: string) {

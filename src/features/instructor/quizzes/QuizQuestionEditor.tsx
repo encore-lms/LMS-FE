@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -105,11 +105,14 @@ function QuestionForm({
   quizId,
   questionId,
   initial,
+  order,
   onClose,
 }: {
   quizId: string
   questionId?: string
   initial: DraftState
+  /** 생성 시 삽입 위치(0-based). 미지정이면 맨 뒤. */
+  order?: number
   onClose: () => void
 }) {
   const save = useSaveQuizQuestion(quizId, questionId)
@@ -144,6 +147,8 @@ function QuestionForm({
       prompt: d.prompt.trim(),
       points: d.points,
     }
+    // 생성 시에만 삽입 위치를 전달(수정은 위치 유지).
+    if (!questionId && order != null) payload.order = order
     if (d.type === 'multiple_choice') {
       const valid = d.choices.filter((c) => c.trim() !== '')
       if (valid.length < 2) {
@@ -431,23 +436,61 @@ function QuestionForm({
   )
 }
 
-// 문항 에디터 — 목록 카드 + "+ 문제 추가" + 인라인 폼(이전 LMS 방식).
+// 문항 사이 삽입 어포던스 — hover 시 원형 + 아이콘이 페이드·스케일로 나타난다(레이아웃 시프트 없음).
+function InsertZone({
+  onClick,
+  hidden,
+}: {
+  onClick: () => void
+  /** 다른 폼이 열려 있으면 + 어포던스를 숨기되 간격은 유지 */
+  hidden?: boolean
+}) {
+  if (hidden) return <div className="h-5" aria-hidden="true" />
+  return (
+    <div className="group relative h-5" aria-hidden="true">
+      {/* hover 시 얇은 안내선 */}
+      <span className="bg-brand/30 absolute inset-x-0 top-1/2 h-px -translate-y-1/2 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="이 위치에 문항 추가"
+        className="bg-brand hover:bg-brand/90 text-on-color absolute top-1/2 left-1/2 z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 scale-50 items-center justify-center rounded-full opacity-0 shadow-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
+
+// 문항 에디터 — 목록 카드 + 문항 사이 hover 삽입 + 인라인 폼(이전 LMS 방식).
 export function QuizQuestionEditor({
   quizId,
   defaultAdding = false,
 }: {
   quizId: string
-  /** 생성 직후 진입 시 문항 추가 폼을 바로 펼침 */
+  /** 생성 직후 진입 시 문항 추가 폼을 맨 아래에 펼침 */
   defaultAdding?: boolean
 }) {
   const { data, isPending, isError, refetch } = useQuizQuestions(quizId)
   const deleteQ = useDeleteQuizQuestion(quizId)
   const toast = useToast()
-  const [adding, setAdding] = useState(defaultAdding)
+  // insertAt = 추가 폼이 열린 위치(0-based gap). null = 닫힘.
+  const [insertAt, setInsertAt] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const initedRef = useRef(false)
 
   const questions = data?.questions ?? []
   const totalScore = questions.reduce((s, q) => s + (q.points ?? 0), 0)
+
+  // 생성 직후 진입(defaultAdding) — 데이터 로드 후 맨 아래에 추가 폼을 연다.
+  useEffect(() => {
+    if (defaultAdding && data && !initedRef.current) {
+      initedRef.current = true
+      setInsertAt(data.questions.length)
+    }
+  }, [defaultAdding, data])
+
+  const adding = insertAt !== null
 
   return (
     <DataBoundary
@@ -460,7 +503,7 @@ export function QuizQuestionEditor({
     >
       {data && (
         <div>
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-1 flex items-center justify-between">
             <p className="text-fg-muted text-sm">
               {questions.length}문항 · 총점 {totalScore}점
               {data.targetPoints > 0 && totalScore !== data.targetPoints && (
@@ -470,83 +513,98 @@ export function QuizQuestionEditor({
                 </span>
               )}
             </p>
+            {/* 버튼 추가는 항상 맨 아래에 폼을 연다(요청). */}
             {!adding && (
-              <Button size="sm" onClick={() => setAdding(true)}>
+              <Button size="sm" onClick={() => setInsertAt(questions.length)}>
                 <Plus className="h-4 w-4" /> 문제 추가
               </Button>
             )}
           </div>
 
-          {adding && (
-            <QuestionForm
-              quizId={quizId}
-              initial={EMPTY_DRAFT}
-              onClose={() => setAdding(false)}
-            />
+          {questions.length === 0 && !adding && (
+            <p className="text-fg-subtle bg-surface-muted mt-2 rounded-lg px-4 py-6 text-center text-sm">
+              아직 문항이 없어요. ‘문제 추가’로 시작하세요.
+            </p>
           )}
 
-          <div className="mt-2 flex flex-col gap-2">
-            {questions.length === 0 && !adding && (
-              <p className="text-fg-subtle bg-surface-muted rounded-lg px-4 py-6 text-center text-sm">
-                아직 문항이 없어요. ‘문제 추가’로 시작하세요.
-              </p>
-            )}
-            {questions.map((q, i) => (
-              <div key={q.id} className="bg-surface-muted rounded-xl">
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <span className="text-fg-subtle w-8 shrink-0 text-sm font-bold">
-                    Q{i + 1}
-                  </span>
-                  <span className="bg-info-bg text-info shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold">
-                    {TYPE_LABEL[q.type] ?? q.type}
-                  </span>
-                  <span className="text-fg min-w-0 flex-1 truncate text-sm">
-                    {q.body || '(내용 없음)'}
-                  </span>
-                  <span className="text-fg-muted shrink-0 text-xs">
-                    {q.points}점
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingId(editingId === q.id ? null : q.id)
-                    }
-                    aria-label="문항 편집"
-                    className="text-fg-subtle hover:text-fg shrink-0 p-1"
-                  >
-                    <ChevronDown
-                      className={cn(
-                        'h-4 w-4 transition-transform',
-                        editingId === q.id && 'rotate-180',
+          {/* 각 위치(gap)마다 삽입 어포던스 또는 열린 추가 폼 → 그 뒤 문항 카드 */}
+          <div className="flex flex-col">
+            {Array.from({ length: questions.length + 1 }).map((_, p) => {
+              const q = p < questions.length ? questions[p] : null
+              return (
+                <Fragment key={q ? q.id : `tail-${p}`}>
+                  {insertAt === p ? (
+                    <div className="my-1">
+                      <QuestionForm
+                        quizId={quizId}
+                        initial={EMPTY_DRAFT}
+                        order={p}
+                        onClose={() => setInsertAt(null)}
+                      />
+                    </div>
+                  ) : (
+                    <InsertZone onClick={() => setInsertAt(p)} hidden={adding} />
+                  )}
+                  {q && (
+                    <div className="bg-surface-muted rounded-xl">
+                      <div className="flex items-center gap-3 px-4 py-3">
+                        <span className="text-fg-subtle w-8 shrink-0 text-sm font-bold">
+                          Q{p + 1}
+                        </span>
+                        <span className="bg-info-bg text-info shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold">
+                          {TYPE_LABEL[q.type] ?? q.type}
+                        </span>
+                        <span className="text-fg min-w-0 flex-1 truncate text-sm">
+                          {q.body || '(내용 없음)'}
+                        </span>
+                        <span className="text-fg-muted shrink-0 text-xs">
+                          {q.points}점
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingId(editingId === q.id ? null : q.id)
+                          }
+                          aria-label="문항 편집"
+                          className="text-fg-subtle hover:text-fg shrink-0 p-1"
+                        >
+                          <ChevronDown
+                            className={cn(
+                              'h-4 w-4 transition-transform',
+                              editingId === q.id && 'rotate-180',
+                            )}
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteQ.mutate(q.id, {
+                              onSuccess: () =>
+                                toast.success('문항을 삭제했어요'),
+                              onError: () => toast.danger('삭제에 실패했어요'),
+                            })
+                          }
+                          aria-label="문항 삭제"
+                          className="text-fg-subtle hover:text-danger shrink-0 p-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {editingId === q.id && (
+                        <div className="px-4 pb-3">
+                          <QuestionForm
+                            quizId={quizId}
+                            questionId={q.id}
+                            initial={toDraft(q)}
+                            onClose={() => setEditingId(null)}
+                          />
+                        </div>
                       )}
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      deleteQ.mutate(q.id, {
-                        onSuccess: () => toast.success('문항을 삭제했어요'),
-                        onError: () => toast.danger('삭제에 실패했어요'),
-                      })
-                    }
-                    aria-label="문항 삭제"
-                    className="text-fg-subtle hover:text-danger shrink-0 p-1"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-                {editingId === q.id && (
-                  <div className="px-4 pb-3">
-                    <QuestionForm
-                      quizId={quizId}
-                      questionId={q.id}
-                      initial={toDraft(q)}
-                      onClose={() => setEditingId(null)}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+                    </div>
+                  )}
+                </Fragment>
+              )
+            })}
           </div>
         </div>
       )}

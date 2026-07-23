@@ -179,9 +179,14 @@ export type {
   ProjectCertReviewStatus,
   ProjectReviewRow,
   ProjectReviewData,
+  ProjectReviewMember,
+  ProjectReviewArtifact,
+  ProjectReviewDetail,
   TsReviewStatus,
   TsReviewRow,
   TsReviewData,
+  TsReviewAttachment,
+  TsReviewDetail,
 } from './instructorReviews'
 export type {
   OpsRole,

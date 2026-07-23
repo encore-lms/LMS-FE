@@ -144,6 +144,35 @@ export interface ProjectReviewRow {
   status: ProjectCertReviewStatus
 }
 
+// 프로젝트 검토 상세 — 패널(팀·기술·산출물·인증 이력). 이름은 FE에서 계정 join.
+export interface ProjectReviewMember {
+  userId: string
+  role: string | null // 'LEADER' 등 — BE role 원문
+}
+
+export interface ProjectReviewArtifact {
+  type: string // 'GitHub' | '배포' | '문서' … (BE 라벨)
+  title: string
+  url: string | null
+  fileName: string | null // 파일 업로드 산출물은 url 대신 파일명
+}
+
+export interface ProjectReviewDetail {
+  id: string
+  name: string
+  cohortId: string
+  cohortLabel: string
+  status: ProjectCertReviewStatus | 'draft'
+  createdAt: string | null // 'yyyy.MM.dd'
+  updatedAt: string | null
+  requestedAt: string | null
+  certifiedAt: string | null
+  reviewComment: string | null // 최근 인증/보완 코멘트
+  members: ProjectReviewMember[]
+  stack: string[]
+  artifacts: ProjectReviewArtifact[]
+}
+
 export interface ProjectReviewData {
   stats: ReviewStat[] // 인증 요청 대기·보완 중·이번 달 인증·평균 검토 일수
   counts: {
@@ -171,6 +200,35 @@ export interface TsReviewRow {
   durationDays: string | null // '3일'
   project: string | null // '팀 Nexus' (null = '-')
   status: TsReviewStatus
+}
+
+// 트러블슈팅 검토 상세 — STAR 본문·태그·첨부·연결 프로젝트. 이름은 FE에서 계정 join.
+export interface TsReviewAttachment {
+  id: string
+  label: string
+  kind: string // 'link' | 'file'
+  url: string | null
+  fileName: string | null
+}
+
+export interface TsReviewDetail {
+  id: string
+  title: string
+  studentUserId: string
+  cohortLabel: string
+  status: TsReviewStatus | 'draft'
+  independent: boolean
+  daysSpent: number
+  createdAt: string | null // 'yyyy.MM.dd'
+  situation: string
+  resolution: string
+  result: string
+  tags: string[]
+  stack: string[]
+  attachments: TsReviewAttachment[]
+  project: string | null // 연결 프로젝트명
+  certifiedAt: string | null
+  reviewComment: string | null
 }
 
 export interface TsReviewData {

@@ -14,6 +14,8 @@ import type {
   StudyGridRow,
   StudyRecordDetail,
   TsReviewData,
+  ProjectReviewDetail,
+  TsReviewDetail,
 } from '@/shared/types'
 
 // 기능별 mock — handlers.ts의 import.meta.glob('../features/**/mocks.ts')가 자동 수집(#37).
@@ -607,6 +609,79 @@ function recountTs(rows: TsReviewData['rows']): TsReviewData['counts'] {
   }
 }
 
+// ── §14·§15 검토 상세 — 목록 시드에서 파생(로컬 데모). 실 BE는 InstructorReviewDetailController. ──
+function buildProjectDetail(id: string): ProjectReviewDetail | null {
+  const row = projectReviews.rows.find((r) => r.id === id)
+  if (!row) return null
+  return {
+    id: row.id,
+    name: row.name,
+    cohortId: row.cohortId ?? 'cohort-mock',
+    cohortLabel: row.cohortLabel,
+    status: row.status,
+    createdAt: '2026.06.01',
+    updatedAt: '2026.07.18',
+    requestedAt: '2026.07.15',
+    certifiedAt: row.status === 'certified' ? '2026.07.20' : null,
+    reviewComment:
+      row.status === 'supplementing'
+        ? 'README에 아키텍처 다이어그램을 보강해 주세요.'
+        : null,
+    members: [
+      { userId: 'stu-1', role: 'LEADER' },
+      { userId: 'stu-2', role: null },
+      { userId: 'stu-3', role: null },
+    ],
+    stack: row.stack === '-' ? [] : row.stack.split(' · '),
+    artifacts: (row.artifacts ?? '')
+      .split(' · ')
+      .filter(Boolean)
+      .map((type, i) => ({
+        type,
+        title: `${row.name.split(' · ')[1] ?? row.name} ${type}`,
+        url: i === 0 ? 'https://github.com/example/repo' : null,
+        fileName: i === 0 ? null : '발표자료.pdf',
+      })),
+  }
+}
+
+function buildTsDetail(id: string): TsReviewDetail | null {
+  const row = tsReviews.rows.find((r) => r.id === id)
+  if (!row) return null
+  return {
+    id: row.id,
+    title: row.title,
+    studentUserId: 'stu-1',
+    cohortLabel: row.cohortLabel,
+    status: row.status,
+    independent: row.solvedBy === '독립',
+    daysSpent: Number.parseInt(row.durationDays ?? '0', 10) || 0,
+    createdAt: '2026.07.10',
+    situation:
+      '배치 파이프라인 실행 중 워커 메모리가 지속 증가해 OOM으로 태스크가 실패했다.',
+    resolution:
+      '힙 덤프로 누수 지점을 특정하고 커넥션 풀 반환 누락을 수정, 배치 크기를 조정했다.',
+    result: '메모리 사용량이 안정화되어 전체 파이프라인이 재실행 없이 완주했다.',
+    tags: [row.category],
+    stack: ['Python', 'Airflow'],
+    attachments: [
+      {
+        id: 'att-1',
+        label: '원인 분석 노트',
+        kind: 'link',
+        url: 'https://blog.example.com/oom-debug',
+        fileName: null,
+      },
+    ],
+    project: row.project,
+    certifiedAt: row.status === 'certified' ? '2026.07.19' : null,
+    reviewComment:
+      row.status === 'supplementing'
+        ? '해결 과정의 재현 절차를 단계별로 보강해 주세요.'
+        : null,
+  }
+}
+
 export const handlers = [
   http.get('/api/instructor/records/review', ({ request }) => {
     const sp = new URL(request.url).searchParams
@@ -620,6 +695,18 @@ export const handlers = [
   http.get('/api/instructor/troubleshooting/review', () =>
     ok<TsReviewData>(tsReviews),
   ),
+  http.get('/api/instructor/projects/review/:id', ({ params }) => {
+    const detail = buildProjectDetail(String(params.id))
+    return detail
+      ? ok<ProjectReviewDetail>(detail)
+      : HttpResponse.json({ message: 'not found' }, { status: 404 })
+  }),
+  http.get('/api/instructor/troubleshooting/review/:id', ({ params }) => {
+    const detail = buildTsDetail(String(params.id))
+    return detail
+      ? ok<TsReviewDetail>(detail)
+      : HttpResponse.json({ message: 'not found' }, { status: 404 })
+  }),
 
   // §14 프로젝트 인증/보완 — certify: requested→certified / requestChanges: →supplementing(보완 중).
   http.patch(

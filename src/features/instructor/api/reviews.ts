@@ -3,7 +3,9 @@ import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   InstructorRecordReviewData,
   ProjectReviewData,
+  ProjectReviewDetail,
   TsReviewData,
+  TsReviewDetail,
 } from '@/shared/types'
 
 // 강사 검토 3종 (§13~§15) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
@@ -40,7 +42,30 @@ export function useTsReviews() {
   })
 }
 
-// ── 인증/보완 요청 (mutations) — mock 백엔드. 실 BE 계약 확정 시 페어가 shared PR로 교체. ──
+// §14·§15 검토 상세 — 상세 패널용. id가 null이면 조회하지 않음(패널 닫힘 상태).
+export function useProjectReviewDetail(projectId: string | null) {
+  return useQuery({
+    queryKey: instructorKeys.projectReviewDetail(projectId ?? ''),
+    queryFn: () =>
+      apiClient
+        .get<ProjectReviewDetail>(`/instructor/projects/review/${projectId}`)
+        .then((r) => r.data),
+    enabled: projectId !== null,
+  })
+}
+
+export function useTsReviewDetail(caseId: string | null) {
+  return useQuery({
+    queryKey: instructorKeys.tsReviewDetail(caseId ?? ''),
+    queryFn: () =>
+      apiClient
+        .get<TsReviewDetail>(`/instructor/troubleshooting/review/${caseId}`)
+        .then((r) => r.data),
+    enabled: caseId !== null,
+  })
+}
+
+// ── 인증/보완 요청 (mutations) — 실 BE(InstructorReviewActionController) 연동. ──
 // 액션 계약: certify(사유 없음) → 인증 완료 / requestChanges(사유 필수) → 보완 요청.
 
 interface CertifyInput {

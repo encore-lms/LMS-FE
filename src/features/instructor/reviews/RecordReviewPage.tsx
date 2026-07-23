@@ -12,9 +12,11 @@ import type {
   InstructorRecordCategory,
   RecordCellStatus,
   RecordCourseTab,
+  RecordGridStudent,
   RecordWeek,
   StudyGridRow,
 } from '@/shared/types'
+import { useStudentAccounts } from '@/shared/api/students'
 import { useRecordReviews } from '../api/reviews'
 import { RecordDetailPanel, type RecordPanelData } from './RecordDetailPanel'
 
@@ -64,10 +66,43 @@ export default function RecordReviewPage({
     !embedded,
   )
 
-  const { data, isPending, isError, refetch } = useRecordReviews(
+  const { data: raw, isPending, isError, refetch } = useRecordReviews(
     courseId,
     cohortId,
   )
+  // 실 BE는 학생 실명이 없어 studentUserId 라벨만 준다 — 계정 join으로 실명 치환(이름 있으면 유지).
+  const { data: accounts } = useStudentAccounts()
+  const data = useMemo(() => {
+    if (!raw) return raw
+    const items = accounts?.items ?? []
+    if (items.length === 0) return raw
+    const nameById = new Map(items.map((s) => [s.id, s.name]))
+    const fixStudent = <T extends { student: RecordGridStudent }>(r: T): T =>
+      nameById.has(r.student.id)
+        ? { ...r, student: { ...r.student, name: nameById.get(r.student.id)! } }
+        : r
+    const fixDetail = <D extends { studentName: string; studentUserId?: string }>(
+      d: D,
+    ): D =>
+      d.studentUserId && nameById.has(d.studentUserId)
+        ? { ...d, studentName: nameById.get(d.studentUserId)! }
+        : d
+    const mapValues = <D extends { studentName: string; studentUserId?: string }>(
+      obj: Record<string, D>,
+    ): Record<string, D> =>
+      Object.fromEntries(
+        Object.entries(obj).map(([k, v]) => [k, fixDetail(v)]),
+      )
+    return {
+      ...raw,
+      blog: raw.blog.map(fixStudent),
+      study: raw.study.map(fixStudent),
+      cert: raw.cert.map(fixStudent),
+      blogDetails: mapValues(raw.blogDetails),
+      studyDetails: mapValues(raw.studyDetails),
+      certDetails: mapValues(raw.certDetails),
+    }
+  }, [raw, accounts])
 
   // 임베드 — 선택 기수(실 UUID)를 포함한 과정으로 고정. 일반 자동 선택 효과보다 우선.
   useEffect(() => {

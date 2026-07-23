@@ -447,9 +447,12 @@ function InsertZone({
 }) {
   if (hidden) return <div className="h-5" aria-hidden="true" />
   return (
-    <div className="group relative h-5" aria-hidden="true">
-      {/* hover 시 얇은 안내선 */}
-      <span className="bg-brand/30 absolute inset-x-0 top-1/2 h-px -translate-y-1/2 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+    <div className="group relative h-5">
+      {/* hover 시 얇은 안내선(장식) */}
+      <span
+        aria-hidden="true"
+        className="bg-brand/30 absolute inset-x-0 top-1/2 h-px -translate-y-1/2 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+      />
       <button
         type="button"
         onClick={onClick}

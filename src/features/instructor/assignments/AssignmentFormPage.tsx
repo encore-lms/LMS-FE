@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, X } from 'lucide-react'
@@ -26,6 +26,13 @@ export default function AssignmentFormPage() {
   const { assignmentId } = useParams()
   const isEdit = !!assignmentId
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // 과정·기수 허브에서 진입(cohortId). 저장·취소 시 허브 과제 탭으로 복귀하고, 생성 시 대상 기수를 고정한다.
+  const fromCohortId = searchParams.get('cohortId')
+  const backTo = fromCohortId
+    ? `/instructor/cohorts/${fromCohortId}/education?tab=assignments`
+    : '/instructor/assignments'
+  const lockCohortId = isEdit ? null : fromCohortId
   const toast = useToast()
   const { data, isPending, isError, refetch } = useAssignmentDetail(
     assignmentId ?? null,
@@ -53,13 +60,17 @@ export default function AssignmentFormPage() {
     defaultValues: { cohortId: '', dueAt: '' },
   })
 
-  // 생성 모드 — 기수 옵션 로드되면 첫 기수 기본 선택(미선택 시).
+  // 생성 모드 — 허브 진입이면 그 기수로 고정, 아니면 기수 옵션 로드 시 첫 기수 기본 선택.
   useEffect(() => {
-    if (!isEdit && cohortOptions && cohortOptions.length > 0) {
-      if (!getValues('cohortId'))
-        setValue('cohortId', cohortOptions[0].cohortId)
+    if (isEdit) return
+    if (lockCohortId) {
+      setValue('cohortId', lockCohortId)
+      return
     }
-  }, [isEdit, cohortOptions, getValues, setValue])
+    if (cohortOptions && cohortOptions.length > 0 && !getValues('cohortId')) {
+      setValue('cohortId', cohortOptions[0].cohortId)
+    }
+  }, [isEdit, lockCohortId, cohortOptions, getValues, setValue])
 
   // 수정 모드 — 상세 도착 시 폼·첨부 자료 동기화.
   useEffect(() => {
@@ -87,8 +98,9 @@ export default function AssignmentFormPage() {
       {
         onSuccess: (saved) => {
           toast.success(`${input.title} 저장 — 생성 즉시 공개`)
-          // 생성 정책: 생성/수정 후 상세 화면 이동.
-          navigate(`/instructor/assignments/${assignmentId ?? saved.id}`)
+          // 허브 진입이면 허브 과제 탭으로 복귀, 아니면 생성/수정 후 상세 화면 이동(기존 정책).
+          if (fromCohortId) navigate(backTo)
+          else navigate(`/instructor/assignments/${assignmentId ?? saved.id}`)
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },
@@ -117,24 +129,35 @@ export default function AssignmentFormPage() {
                 <span className="text-fg text-[13px] font-bold">
                   기수 <span className="text-danger">*</span>
                 </span>
-                {/* RHF register는 name/ref 스프레드라 공용 Select와 호환 불가 → dueAt처럼 Controller로 연결 */}
-                <Controller
-                  control={control}
-                  name="cohortId"
-                  render={({ field }) => (
-                    <Select
-                      aria-label="기수"
-                      value={field.value}
-                      onChange={(v) => field.onChange(v)}
-                      options={(cohortOptions ?? []).map((c) => ({
-                        value: c.cohortId,
-                        label: c.label,
-                      }))}
-                      placeholder="기수 없음"
-                      className="h-[52px]"
-                    />
-                  )}
-                />
+                {/* 허브 진입 시 대상 기수 고정(읽기 전용), 아니면 선택. */}
+                {lockCohortId ? (
+                  <div
+                    aria-label="기수(고정)"
+                    className="border-border bg-surface-muted text-fg flex h-[52px] w-full items-center rounded-lg border px-3 text-sm"
+                  >
+                    {cohortOptions?.find((c) => c.cohortId === lockCohortId)
+                      ?.label ?? '기수 고정'}
+                  </div>
+                ) : (
+                  /* RHF register는 name/ref 스프레드라 공용 Select와 호환 불가 → dueAt처럼 Controller로 연결 */
+                  <Controller
+                    control={control}
+                    name="cohortId"
+                    render={({ field }) => (
+                      <Select
+                        aria-label="기수"
+                        value={field.value}
+                        onChange={(v) => field.onChange(v)}
+                        options={(cohortOptions ?? []).map((c) => ({
+                          value: c.cohortId,
+                          label: c.label,
+                        }))}
+                        placeholder="기수 없음"
+                        className="h-[52px]"
+                      />
+                    )}
+                  />
+                )}
               </label>
               <Input
                 label="과목/회차"
@@ -273,7 +296,7 @@ export default function AssignmentFormPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate('/instructor/assignments')}
+                onClick={() => navigate(backTo)}
               >
                 취소
               </Button>

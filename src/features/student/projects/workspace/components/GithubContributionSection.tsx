@@ -177,31 +177,38 @@ export function GithubContributionSection({
         })}
       </div>
 
-      {/* 활성 레포 요약 */}
-      <div className="flex items-center gap-1.5 text-[12px]">
-        <GitBranch className="text-fg-subtle size-3.5" aria-hidden="true" />
-        <span className="text-fg font-semibold">
-          {active.analysisBranch ?? '-'}
-        </span>
-        <span className="text-fg-subtle">
-          · 총 {active.totalCommits.toLocaleString()} 커밋
-        </span>
-      </div>
-
-      {/* 잔디 — 일별 커밋 히트맵 */}
-      <GithubHeatmap daily={active.dailyActivity} />
-
-      {active.contributors.length === 0 ? (
-        <p className="text-fg-subtle border-divider border-t py-5 text-center text-[12px]">
-          아직 집계된 기여가 없어요. 설정 탭에서 동기화하면 반영됩니다.
-        </p>
-      ) : (
-        <div className="border-divider flex flex-col border-t pt-2">
-          {active.contributors.map((c, i) => (
-            <ContributorRow key={c.githubLogin} c={c} index={i} />
-          ))}
+      {/* 본문 — 좌: 잔디 / 우: 기여자 (좁으면 세로로) */}
+      <div className="flex flex-col gap-5 lg:flex-row lg:gap-6">
+        {/* 좌: 활성 레포 요약 + 잔디 */}
+        <div className="flex shrink-0 flex-col gap-3">
+          <div className="flex items-center gap-1.5 text-[12px]">
+            <GitBranch className="text-fg-subtle size-3.5" aria-hidden="true" />
+            <span className="text-fg font-semibold">
+              {active.analysisBranch ?? '-'}
+            </span>
+            <span className="text-fg-subtle">
+              · 총 {active.totalCommits.toLocaleString()} 커밋
+            </span>
+          </div>
+          <GithubHeatmap daily={active.dailyActivity} />
         </div>
-      )}
+
+        {/* 우: 기여자 순위 */}
+        <div className="border-divider flex flex-1 flex-col gap-1 lg:border-l lg:pl-6">
+          <span className="text-fg-subtle pb-1 text-[11px] font-semibold">
+            기여자 {active.contributors.length}명
+          </span>
+          {active.contributors.length === 0 ? (
+            <p className="text-fg-subtle py-5 text-center text-[12px]">
+              아직 집계된 기여가 없어요. 설정 탭에서 동기화하면 반영됩니다.
+            </p>
+          ) : (
+            active.contributors.map((c, i) => (
+              <ContributorRow key={c.githubLogin} c={c} index={i} />
+            ))
+          )}
+        </div>
+      </div>
     </section>
   )
 }

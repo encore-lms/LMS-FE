@@ -37,8 +37,8 @@ export function RouteTabBar({
 }
 
 // 검토 3종 — 학습기록·프로젝트·트러블슈팅 인증 검토.
+// 학습 기록 조회는 검토 하위 탭에서 제외(자기참조 탭 삭제). 검토 = 프로젝트·트러블슈팅.
 export const REVIEW_TABS = [
-  { label: '학습 기록', to: '/instructor/records/review' },
   { label: '프로젝트', to: '/instructor/projects/review' },
   { label: '트러블슈팅', to: '/instructor/troubleshooting/review' },
 ]

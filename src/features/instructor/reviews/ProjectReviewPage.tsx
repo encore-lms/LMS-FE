@@ -34,7 +34,14 @@ const STATUS_META: Record<
 
 // 프로젝트 검토 (/instructor/projects/review) — §14. (Figma 1422:10276)
 // 발표 후 인증 큐 — 인증 시 ProjectCertification 생성, 인증 후 학생 직접 수정 불가(§11 변경 제안 분리).
-export default function ProjectReviewPage() {
+// embedded=true면 과정·기수·교과목 '프로젝트' 탭에 임베드(자체 헤더·탭·기수 필터 생략, 선택 기수로 스코프).
+export default function ProjectReviewPage({
+  embedded = false,
+  cohortId: propCohortId = null,
+}: {
+  embedded?: boolean
+  cohortId?: string | null
+} = {}) {
   const toast = useToast()
   const { data, isPending, isError, refetch } = useProjectReviews()
   const certify = useCertifyProject()
@@ -50,7 +57,11 @@ export default function ProjectReviewPage() {
   const [localStatus, setLocalStatus] = useState<
     Record<string, ProjectCertReviewStatus>
   >({})
-  usePageHeader('프로젝트 검토', '수강생의 프로젝트를 검토하고 인증합니다')
+  usePageHeader(
+    '프로젝트 검토',
+    '수강생의 프로젝트를 검토하고 인증합니다',
+    !embedded,
+  )
 
   const cohortTabs = useMemo(
     () => cohortOptions(data?.rows ?? []),
@@ -66,7 +77,12 @@ export default function ProjectReviewPage() {
     )
     const needle = q.trim().toLowerCase()
     return rows.filter((r) => {
-      if (cohort !== COHORT_ALL && r.cohortLabel !== cohort) return false
+      // 임베드는 선택 기수(실 UUID)로 스코프, 일반은 기수 라벨 탭으로 필터.
+      if (embedded) {
+        if (propCohortId && r.cohortId !== propCohortId) return false
+      } else if (cohort !== COHORT_ALL && r.cohortLabel !== cohort) {
+        return false
+      }
       if (status !== 'all' && r.status !== status) return false
       if (needle) {
         const hay = `${r.name} ${r.team}`.toLowerCase()
@@ -74,7 +90,7 @@ export default function ProjectReviewPage() {
       }
       return true
     })
-  }, [data, q, status, cohort, localStatus])
+  }, [data, q, status, cohort, localStatus, embedded, propCohortId])
 
   const onCertify = (row: ProjectReviewRow) => {
     certify.mutate(
@@ -217,11 +233,11 @@ export default function ProjectReviewPage() {
       loadingText="인증 큐를 불러오는 중…"
       errorTitle="인증 큐를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
       {data && (
-        <div className="p-8">
-          <RouteTabBar tabs={REVIEW_TABS} />
+        <div className={embedded ? '' : 'p-8'}>
+          {!embedded && <RouteTabBar tabs={REVIEW_TABS} />}
           <QueueStats stats={data.stats} />
           <QueueFilterBar
             q={q}
@@ -251,7 +267,7 @@ export default function ProjectReviewPage() {
             ]}
             active={status}
             onTab={setStatus}
-            cohortTabs={cohortTabs}
+            cohortTabs={embedded ? [] : cohortTabs}
             activeCohort={cohort}
             onCohort={(c) => setCohortId(COHORT_LABEL_TO_ID[c] ?? 'all')}
           />

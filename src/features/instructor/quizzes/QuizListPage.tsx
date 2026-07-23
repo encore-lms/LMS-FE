@@ -305,7 +305,13 @@ export default function QuizListPage({
               <Button variant="secondary" onClick={() => setTemplateOpen(true)}>
                 <FileText className="h-4 w-4" /> 템플릿 열기
               </Button>
-              <Button onClick={() => navigate(`${base}/new`)}>
+              <Button
+                onClick={() =>
+                  navigate(
+                    `${base}/new${cohortId ? `?cohortId=${cohortId}` : ''}`,
+                  )
+                }
+              >
                 <Plus className="h-4 w-4" /> 퀴즈 생성
               </Button>
             </div>
@@ -329,7 +335,9 @@ export default function QuizListPage({
             onClose={() => setTemplateOpen(false)}
             onPick={(t) => {
               setTemplateOpen(false)
-              navigate(`${base}/new?templateId=${t.id}`)
+              navigate(
+                `${base}/new?templateId=${t.id}${cohortId ? `&cohortId=${cohortId}` : ''}`,
+              )
             }}
           />
         </div>

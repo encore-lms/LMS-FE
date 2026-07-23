@@ -19,6 +19,7 @@ import {
   COHORT_LABEL_TO_ID,
 } from '../cohortContext'
 import { QueueFilterBar, QueueStats } from './QueueShell'
+import { ReviewDetailPanel, type ReviewDetailTarget } from './ReviewDetailPanel'
 import { REVIEW_TABS, RouteTabBar } from '../components/RouteTabBar'
 
 type StatusFilter = 'all' | ProjectCertReviewStatus
@@ -57,6 +58,8 @@ export default function ProjectReviewPage({
   const [localStatus, setLocalStatus] = useState<
     Record<string, ProjectCertReviewStatus>
   >({})
+  // 상세 패널 대상 — 상세/결과/확인 버튼에서 오픈.
+  const [detailTarget, setDetailTarget] = useState<ReviewDetailTarget>(null)
   usePageHeader(
     '프로젝트 검토',
     '수강생의 프로젝트를 검토하고 인증합니다',
@@ -201,7 +204,7 @@ export default function ProjectReviewPage({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.info(`${r.name} — 준비 중입니다.`)
+                setDetailTarget({ kind: 'project', id: r.id })
               }}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
             >
@@ -213,7 +216,7 @@ export default function ProjectReviewPage({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.info(`${r.name} 상세는 준비 중입니다.`)
+                setDetailTarget({ kind: 'project', id: r.id })
               }}
               className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
             >
@@ -280,6 +283,10 @@ export default function ProjectReviewPage({
             />
           </div>
 
+          <ReviewDetailPanel
+            target={detailTarget}
+            onClose={() => setDetailTarget(null)}
+          />
           <SupplementRequestModal
             open={supplementTarget !== null}
             studentName={supplementTarget?.name ?? ''}

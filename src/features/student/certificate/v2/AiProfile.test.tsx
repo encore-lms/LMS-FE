@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { AiPersona, AiProfile as AiProfileData } from '../ai'
 import { AiProfile } from './AiProfile'
@@ -91,7 +91,7 @@ const personas: AiPersona[] = [
 
 describe('AiProfile', () => {
   it('업무 유형과 결정 차원·근거를 표시한다', () => {
-    const { container } = render(<AiProfile profile={profile} personas={[]} />)
+    render(<AiProfile profile={profile} personas={[]} />)
 
     expect(screen.getByText('체계형')).toBeInTheDocument()
     expect(screen.getByText('근거 충분도 보통')).toBeInTheDocument()
@@ -101,9 +101,7 @@ describe('AiProfile', () => {
     expect(
       screen.getByText('향상도 보통 · 숙련유지도 산출 전 · 학습지속성 높음'),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: '업무 분석 근거 보기' }),
-    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '업무 분석 근거 보기' }))
     expect(screen.getByText('업무 분석 근거')).toBeInTheDocument()
     expect(screen.getAllByText('사용 데이터').length).toBeGreaterThan(0)
     expect(screen.getAllByText('판단 근거').length).toBeGreaterThan(0)
@@ -125,12 +123,11 @@ describe('AiProfile', () => {
     expect(
       screen.getByRole('button', { name: '기술 분석 근거 보기' }),
     ).toBeInTheDocument()
-    const technicalTooltip = container.querySelector(
-      '[data-profile-axis="기술"] [role="tooltip"]',
-    )
-    expect(technicalTooltip).toHaveClass('left-3')
-    expect(technicalTooltip).toHaveClass('right-3')
-    expect(technicalTooltip).not.toHaveClass('w-72')
+    fireEvent.click(screen.getByRole('button', { name: '기술 분석 근거 보기' }))
+    const technicalTooltip = screen
+      .getByText('기술 분석 근거')
+      .closest('[role="tooltip"]')
+    expect(technicalTooltip).toHaveClass('fixed')
     expect(technicalTooltip).toHaveClass('[overflow-wrap:anywhere]')
     expect(screen.queryByText('핵심 강점')).not.toBeInTheDocument()
     expect(screen.queryByText('성장 포인트')).not.toBeInTheDocument()
@@ -143,9 +140,9 @@ describe('AiProfile', () => {
       screen.getByText('운영 근거를 쌓는 클라우드 운영형'),
     ).toBeInTheDocument()
     expect(screen.getAllByText('근거 충분도 높음').length).toBeGreaterThan(0)
-    expect(
+    fireEvent.click(
       screen.getByRole('button', { name: '1순위 페르소나 추천 근거 보기' }),
-    ).toBeInTheDocument()
+    )
     expect(screen.getByText('1순위 판단 근거')).toBeInTheDocument()
     expect(screen.getAllByText('사용 데이터').length).toBeGreaterThan(0)
     expect(screen.getAllByText('판단 근거').length).toBeGreaterThan(0)

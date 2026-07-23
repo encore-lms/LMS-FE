@@ -76,13 +76,17 @@ function sentimentStubBubbles(items: SentimentStubInput[]): SentimentBubble[] {
 const STU_001: AiAnalysis = {
   // 블록1 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
   verdict: {
+    policyVersion: '2026.07.23-technical-verdict-v1',
     strength:
       '서로 다른 원천에서 교차 확인되는 기술 강점을 아직 산출할 수 없습니다.',
+    growth:
+      '완료된 성취도 평가가 더 쌓이면 카테고리별 점수 변화와 심화 학습 흐름을 성장 포인트로 확인할 수 있습니다.',
     gap: '평가된 범위에서 보완 방향을 정할 직접 근거가 아직 충분하지 않습니다.',
     unique:
       '기초와 적용 사이의 차이나 반복 패턴을 설명할 근거가 아직 충분하지 않습니다.',
     details: {
       strength: { status: 'NOT_READY', evidence: [], evidenceCodes: [] },
+      growth: { status: 'NOT_READY', evidence: [], evidenceCodes: [] },
       gap: { status: 'NOT_READY', evidence: [], evidenceCodes: [] },
       unique: { status: 'NOT_READY', evidence: [], evidenceCodes: [] },
     },
@@ -146,11 +150,16 @@ const STU_001: AiAnalysis = {
 
   // 블록4 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
   projects: {
+    policyVersion: '2026.07.23-project-analysis-v2',
     summary:
       '인증 완료 프로젝트 원천과 연결되면 프로젝트 경험을 분석할 수 있습니다.',
     groups: [],
     status: 'NOT_READY',
     projects: [],
+    projectCount: 0,
+    period: null,
+    evidenceCodes: [],
+    confidence: 'LOW',
     overview: {
       experienceScope: '분석할 인증 완료 프로젝트가 없습니다.',
       workingStyle: '개인 수행 방식을 설명할 프로젝트 근거가 없습니다.',
@@ -163,6 +172,7 @@ const STU_001: AiAnalysis = {
 
   // 블록5 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
   problem: {
+    policyVersion: '2026.07.23-problem-collaboration-v1',
     status: 'NOT_READY',
     mappingVersion: '2026.07.23-troubleshooting-axis-v1',
     caps: [
@@ -203,14 +213,18 @@ const STU_001: AiAnalysis = {
       '인증 문제해결 사례가 더 쌓이면 분야와 기술 범위의 변화를 설명할 수 있습니다.',
     collaboration: {
       status: 'NOT_READY',
+      label: '협업 근거 산출 전',
       summary:
         '서로 다른 유효 평가자가 충분하지 않아 협업 방식을 아직 설명할 수 없습니다.',
       evaluatorCount: 0,
       projectCount: 0,
       behaviorSignals: [],
+      tagStats: [],
+      behaviorStats: [],
       projectEvaluations: [],
       evidence: [],
       evidenceCodes: [],
+      confidence: 'LOW',
       limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
       generatedBy: 'FALLBACK',
     },
@@ -231,6 +245,18 @@ const STU_001: AiAnalysis = {
       generatedBy: 'FALLBACK',
     },
     certifiedCaseCount: 0,
+    peerEvaluationCount: 0,
+    period: null,
+    troubleshooting: {
+      label: '역량 산출 전',
+      problemSolvingSummary:
+        '강사 인증이 완료된 트러블슈팅의 상황·해결·결과 본문이 없어 문제를 해결해 나가는 방식을 아직 서술하지 않습니다.',
+      problemSolvingSteps: [],
+      problemGroups: [],
+      evidence: [],
+      confidence: 'LOW',
+      limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
+    },
     unmappedCaseCount: 0,
     limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
   },

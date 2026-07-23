@@ -26,6 +26,8 @@ describe('AI 프로젝트 분석', () => {
           },
           personalEvidence: {
             tasks: ['AI 분석 탭 구현'],
+            workCategories: ['프론트엔드'],
+            technologies: ['React', 'TypeScript'],
             peerObservations: [],
             troubleshootingCases: [],
             artifacts: [],
@@ -38,10 +40,20 @@ describe('AI 프로젝트 분석', () => {
       ],
       groups: [
         {
-          label: '기술 적용',
+          key: 'CONTINUITY' as const,
+          label: '이어진 공통 축',
           summary: '프로젝트에서 기술을 직접 적용했습니다.',
+          projectIds: ['project-1', 'project-2'],
+          projectNames: ['수강역량 증명서', '후속 프로젝트'],
+          evidenceCodes: ['PROJECT_TASK_1'],
+          confidence: 'MEDIUM' as const,
+          limitations: [],
         },
       ],
+      projectCount: 2,
+      period: { startedAt: '2026-06-01', endedAt: '2026-07-23' },
+      evidenceCodes: ['PROJECT_TASK_1'],
+      confidence: 'MEDIUM' as const,
     }
     projects.projects.push({
       ...projects.projects[0],

@@ -9,6 +9,7 @@ describe('AI 기술 역량 종합 판단', () => {
     render(<AiTechnicalVerdict verdict={verdict} />)
 
     expect(screen.getByText('핵심 강점')).toBeInTheDocument()
+    expect(screen.getByText('성장 포인트')).toBeInTheDocument()
     expect(screen.getByText('보완')).toBeInTheDocument()
     expect(screen.getByText('특이형')).toBeInTheDocument()
     expect(screen.getByText(verdict.strength)).toBeInTheDocument()

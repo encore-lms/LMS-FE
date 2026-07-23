@@ -1,4 +1,3 @@
-import { Info } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type {
   AiPersona,
@@ -6,6 +5,7 @@ import type {
   AiProfileConfidence,
   AiProfileLevel,
 } from '../ai'
+import { AnalysisEvidenceTooltip } from './AnalysisEvidenceTooltip'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
 const LEVEL_LABEL: Record<AiProfileLevel, string> = {
@@ -168,77 +168,63 @@ export function AiProfile({
                     </span>
                   )}
                   {r.evidence && r.evidence.length > 0 && (
-                    <span className="group static shrink-0">
-                      <button
-                        type="button"
-                        className="text-fg-subtle hover:text-fg focus-visible:ring-ring flex size-4 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none"
-                        aria-label={`${r.label} 분석 근거 보기`}
-                      >
-                        <Info className="size-3" aria-hidden="true" />
-                      </button>
-                      <span
-                        role="tooltip"
-                        className="border-border bg-surface text-fg-muted pointer-events-none absolute top-10 right-3 left-3 z-20 hidden rounded-lg border p-3 text-[11px] leading-4 font-normal [overflow-wrap:anywhere] whitespace-normal shadow-lg group-focus-within:block group-hover:block"
-                      >
-                        <span className="text-fg mb-1.5 block font-bold">
-                          {r.label} 분석 근거
-                        </span>
-                        <span className="flex min-w-0 flex-col gap-2">
-                          <span>
-                            <b className="text-fg">사용 데이터</b>
-                            <br />
-                            {profileDataSourceFor(r.label)}
-                          </span>
-                          <span>
-                            <b className="text-fg">판단 근거</b>
-                            <br />
-                            {compactEvidence(
-                              r.evidence,
-                              r.description ?? '유효 근거만 반영',
-                            )}
-                          </span>
-                          <span>
-                            <b className="text-fg">계산 흐름</b>
-                            <br />
-                            <span className="mt-1 flex flex-col gap-2">
-                              {profileCalculationFor(r)?.map((dimension) => (
-                                <span
-                                  key={dimension.key}
-                                  className="border-border block border-l-2 pl-2"
-                                >
-                                  <b className="text-fg">{dimension.label}</b>
-                                  <br />
-                                  {dimension.calculation.map((item) => (
-                                    <span key={item} className="block">
-                                      {item}
-                                    </span>
-                                  ))}
-                                  <span className="text-fg mt-0.5 block font-semibold">
-                                    {dimension.result}
-                                  </span>
-                                </span>
-                              )) ?? '하위 항목 계산값 미제공'}
-                            </span>
-                          </span>
-                          <span>
-                            <b className="text-fg">결과</b>
-                            <br />
-                            {r.label} · {r.value}
-                            {r.confidence
-                              ? ` · 근거 충분도 ${CONFIDENCE_LABEL[r.confidence]}`
-                              : ''}
-                          </span>
-                        </span>
-                        {r.limitations?.map((item) => (
-                          <span
-                            key={item}
-                            className="border-border mt-2 block border-t pt-2"
-                          >
-                            제한: {item}
-                          </span>
-                        ))}
+                    <AnalysisEvidenceTooltip
+                      label={r.label}
+                      triggerClassName="size-4"
+                    >
+                      <span>
+                        <b className="text-fg">사용 데이터</b>
+                        <br />
+                        {profileDataSourceFor(r.label)}
                       </span>
-                    </span>
+                      <span>
+                        <b className="text-fg">판단 근거</b>
+                        <br />
+                        {compactEvidence(
+                          r.evidence,
+                          r.description ?? '유효 근거만 반영',
+                        )}
+                      </span>
+                      <span>
+                        <b className="text-fg">계산 흐름</b>
+                        <br />
+                        <span className="mt-1 flex flex-col gap-2">
+                          {profileCalculationFor(r)?.map((dimension) => (
+                            <span
+                              key={dimension.key}
+                              className="border-border block border-l-2 pl-2"
+                            >
+                              <b className="text-fg">{dimension.label}</b>
+                              <br />
+                              {dimension.calculation.map((item) => (
+                                <span key={item} className="block">
+                                  {item}
+                                </span>
+                              ))}
+                              <span className="text-fg mt-0.5 block font-semibold">
+                                {dimension.result}
+                              </span>
+                            </span>
+                          )) ?? '하위 항목 계산값 미제공'}
+                        </span>
+                      </span>
+                      <span>
+                        <b className="text-fg">결과</b>
+                        <br />
+                        {r.label} · {r.value}
+                        {r.confidence
+                          ? ` · 근거 충분도 ${CONFIDENCE_LABEL[r.confidence]}`
+                          : ''}
+                      </span>
+                      {r.limitations?.map((item) => (
+                        <span
+                          key={item}
+                          className="border-border border-t pt-2"
+                        >
+                          제한: {item}
+                        </span>
+                      ))}
+                    </AnalysisEvidenceTooltip>
                   )}
                 </div>
               </div>
@@ -281,47 +267,33 @@ export function AiProfile({
             <span className="text-accent-strong text-[10px] font-bold">
               PROFILE SUMMARY
             </span>
-            <span className="group relative shrink-0">
-              <button
-                type="button"
-                className="text-fg-subtle hover:text-fg focus-visible:ring-ring flex size-4 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none"
-                aria-label="PROFILE SUMMARY 분석 근거 보기"
-              >
-                <Info className="size-3" aria-hidden="true" />
-              </button>
-              <span
-                role="tooltip"
-                className="border-border bg-surface text-fg-muted pointer-events-none absolute top-full left-0 z-20 mt-1.5 hidden w-72 max-w-[calc(100vw-4rem)] rounded-lg border p-3 text-[11px] leading-4 font-normal [overflow-wrap:anywhere] shadow-lg group-focus-within:block group-hover:block"
-              >
-                <span className="text-fg mb-1.5 block font-bold">
-                  PROFILE SUMMARY 분석 근거
-                </span>
-                <span className="flex flex-col gap-2">
-                  <span>
-                    <b className="text-fg">사용 데이터</b>
-                    <br />
-                    AI 역량 프로파일링 5개 카드, 본인 수행업무, 인증 트러블슈팅,
-                    프로젝트 상호평가·최종 멘토평가
-                  </span>
-                  <span>
-                    <b className="text-fg">판단 근거</b>
-                    <br />
-                    강점이 반복 확인된 카드와 서로 다른 데이터의 공통 근거를
-                    우선 반영
-                  </span>
-                  <span>
-                    <b className="text-fg">계산 흐름</b>
-                    <br />
-                    강한 근거 2~3개 선택 → 의미 중복 제거 → 한 줄 요약으로 압축
-                  </span>
-                  <span>
-                    <b className="text-fg">결과</b>
-                    <br />
-                    {profile.summary}
-                  </span>
-                </span>
+            <AnalysisEvidenceTooltip
+              label="PROFILE SUMMARY"
+              triggerClassName="size-4"
+            >
+              <span>
+                <b className="text-fg">사용 데이터</b>
+                <br />
+                AI 역량 프로파일링 5개 카드, 본인 수행업무, 인증 트러블슈팅,
+                프로젝트 상호평가·최종 멘토평가
               </span>
-            </span>
+              <span>
+                <b className="text-fg">판단 근거</b>
+                <br />
+                강점이 반복 확인된 카드와 서로 다른 데이터의 공통 근거를 우선
+                반영
+              </span>
+              <span>
+                <b className="text-fg">계산 흐름</b>
+                <br />
+                강한 근거 2~3개 선택 → 의미 중복 제거 → 한 줄 요약으로 압축
+              </span>
+              <span>
+                <b className="text-fg">결과</b>
+                <br />
+                {profile.summary}
+              </span>
+            </AnalysisEvidenceTooltip>
           </div>
           <p className="text-fg mt-1 text-[13px] leading-5 font-semibold">
             {profile.summary}
@@ -370,58 +342,41 @@ export function AiProfile({
                     </span>
                   )}
                 </div>
-                <span className="group relative ml-auto shrink-0">
-                  <button
-                    type="button"
-                    className={cn(
-                      'focus-visible:ring-ring flex size-5 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none',
-                      p.rank === 1 ? 'text-white/80' : 'text-fg-subtle',
-                    )}
-                    aria-label={`${p.rank}순위 페르소나 추천 근거 보기`}
-                  >
-                    <Info className="size-3.5" aria-hidden="true" />
-                  </button>
-                  <span
-                    role="tooltip"
-                    className="border-border bg-surface text-fg-muted pointer-events-none absolute top-full right-0 z-20 mt-1.5 hidden w-64 max-w-[calc(100vw-4rem)] rounded-lg border p-3 text-[11px] leading-4 font-normal [overflow-wrap:anywhere] shadow-lg group-focus-within:block group-hover:block sm:w-72"
-                  >
-                    <span className="text-fg mb-1.5 block font-bold">
-                      {p.rank}순위 판단 근거
-                    </span>
-                    <span className="flex min-w-0 flex-col gap-2">
-                      <span>
-                        <b className="text-fg">사용 데이터</b>
-                        <br />
-                        성취도 평가·CS 평가, 외부 인증 코딩테스트, 인증
-                        트러블슈팅, 본인 수행업무·개인 활용기술,
-                        희망직무·관심기술
-                      </span>
-                      <span>
-                        <b className="text-fg">판단 근거</b>
-                        <br />
-                        {p.subtitle}
-                      </span>
-                      <span>
-                        <b className="text-fg">계산 흐름</b>
-                        <br />
-                        {personaCalculation(p)}
-                      </span>
-                      <span>
-                        <b className="text-fg">결과</b>
-                        <br />
-                        {p.title} · 적합도 {formatPersonaScore(p.fitScore)}
-                      </span>
-                    </span>
-                    {p.limitations?.map((item) => (
-                      <span
-                        key={item}
-                        className="border-border mt-2 block border-t pt-2"
-                      >
-                        제한: {item}
-                      </span>
-                    ))}
+                <AnalysisEvidenceTooltip
+                  label={`${p.rank}순위 판단 근거`}
+                  ariaLabel={`${p.rank}순위 페르소나 추천 근거 보기`}
+                  className="ml-auto"
+                  triggerClassName={
+                    p.rank === 1 ? 'text-white/80' : 'text-fg-subtle'
+                  }
+                >
+                  <span>
+                    <b className="text-fg">사용 데이터</b>
+                    <br />
+                    성취도 평가·CS 평가, 외부 인증 코딩테스트, 인증 트러블슈팅,
+                    본인 수행업무·개인 활용기술, 희망직무·관심기술
                   </span>
-                </span>
+                  <span>
+                    <b className="text-fg">판단 근거</b>
+                    <br />
+                    {p.subtitle}
+                  </span>
+                  <span>
+                    <b className="text-fg">계산 흐름</b>
+                    <br />
+                    {personaCalculation(p)}
+                  </span>
+                  <span>
+                    <b className="text-fg">결과</b>
+                    <br />
+                    {p.title} · 적합도 {formatPersonaScore(p.fitScore)}
+                  </span>
+                  {p.limitations?.map((item) => (
+                    <span key={item} className="border-border border-t pt-2">
+                      제한: {item}
+                    </span>
+                  ))}
+                </AnalysisEvidenceTooltip>
               </div>
             ))}
           </div>

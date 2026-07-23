@@ -263,13 +263,16 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(result)
     renderWithQuery(<ProblemTab />)
 
-    expect(await screen.findAllByText('쿼리 지연 해결')).toHaveLength(2)
-    expect(screen.getAllByText('#협업')).toHaveLength(2)
+    expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
+    expect(screen.getByText('#협업')).toBeInTheDocument()
     expect(screen.getByText('대표 트러블슈팅 사례')).toBeInTheDocument()
-    expect(screen.getByText('태그 ↔ 사례 연결')).toBeInTheDocument()
-    expect(screen.getByText('인증 사례 1건')).toBeInTheDocument()
-    expect(screen.getByText('동료 평가자 2명')).toBeInTheDocument()
-    expect(screen.getByText('독립 해결 100%')).toBeInTheDocument()
+    expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
+    expect(screen.queryByText('인증 사례')).not.toBeInTheDocument()
+    expect(screen.queryByText('평균 소요 일수')).not.toBeInTheDocument()
+    expect(screen.queryByText('협업 태그')).not.toBeInTheDocument()
+    expect(screen.queryByText('동료 평가자')).not.toBeInTheDocument()
+    expect(screen.queryByText('독립 해결 비율')).not.toBeInTheDocument()
+    expect(screen.queryByText('독립 해결')).not.toBeInTheDocument()
     expect(screen.queryByText(/검토·보완/)).not.toBeInTheDocument()
     expect(screen.getByText('소요 2일')).toBeInTheDocument()
     expect(screen.getByText('상황')).toBeInTheDocument()
@@ -286,13 +289,21 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.getByLabelText('#협업 3회')).toHaveStyle({ fontSize: '20px' })
     expect(screen.getByLabelText('#소통 1회')).toHaveStyle({ fontSize: '12px' })
 
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '쿼리 지연 해결 상황 상세보기',
+      }),
+    )
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('수강생 작성 원문')).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: /상세보기/ }),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText('수강생 작성 원문')).not.toBeInTheDocument()
+      screen.getByText(
+        'API 조회를 점검했습니다. 인덱스가 없어 목록 조회가 지연됐습니다.',
+      ),
+    ).toBeInTheDocument()
   })
 
-  it('대표 트러블슈팅 사례를 최대 4건만 상황·해결·결과로 표시한다', async () => {
+  it('대표 트러블슈팅 사례를 최대 3건만 상황·해결·결과로 표시한다', async () => {
     const cases = Array.from({ length: 4 }, (_, index) => ({
       ...result.problem.cases[0],
       id: `case-${index + 1}`,
@@ -312,8 +323,8 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(await screen.findByText('대표 후보 1')).toBeInTheDocument()
     expect(
       document.querySelectorAll('[data-troubleshooting-case]'),
-    ).toHaveLength(4)
-    expect(screen.getByText('대표 후보 4')).toBeInTheDocument()
+    ).toHaveLength(3)
+    expect(screen.queryByText('대표 후보 4')).not.toBeInTheDocument()
   })
 
   it('AI 요약이 없으면 원문을 잘라 요약처럼 표시하지 않는다', async () => {
@@ -328,7 +339,7 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     renderWithQuery(<ProblemTab />)
 
     expect(
-      await screen.findAllByText('안전 요약을 준비하고 있습니다.'),
+      await screen.findAllByText('AI 요약을 생성하지 못했습니다.'),
     ).toHaveLength(3)
     expect(screen.queryByText(/API 조회를 점검했습니다.*…/)).toBeNull()
   })

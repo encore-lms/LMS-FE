@@ -62,26 +62,17 @@ describe('AI 문제해결·협업 종합 분석', () => {
     render(<AiProblemAnalysis problem={problem} />)
 
     expect(screen.getByText('AI 문제해결·협업 종합 분석')).toBeInTheDocument()
-    expect(screen.getByText('인증 트러블슈팅 역량')).toBeInTheDocument()
+    expect(
+      screen.getByText(`트러블슈팅 역량 · ${problem.troubleshooting.label}`),
+    ).toBeInTheDocument()
+    expect(screen.getByText('문제를 해결해 나가는 방식')).toBeInTheDocument()
+    expect(
+      screen.getByText(problem.troubleshooting.problemSolvingSummary),
+    ).toBeInTheDocument()
+    expect(screen.getByText('많이 다룬 문제와 근거 태그')).toBeInTheDocument()
     expect(screen.getByText('협업 스타일')).toBeInTheDocument()
+    expect(screen.getByText(problem.collaboration.label)).toBeInTheDocument()
     expect(screen.getByText(problem.collaboration.summary)).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        '세 분야는 역량 점수가 아니라 인증 문제해결 사례가 확인된 범위입니다.',
-      ),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        '세 분야로 명확히 분류되지 않은 인증 사례 1건도 분석 근거에서 보존했습니다.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('프로젝트별 동료평가 근거')).toBeInTheDocument()
-    expect(screen.getByText('익명화된 행동 근거')).toBeInTheDocument()
-    expect(screen.getByText('반복 기술')).toBeInTheDocument()
-    expect(screen.getByText('Python')).toBeInTheDocument()
-    expect(
-      screen.getByText('분석 기간 2026.04.01 – 2026.06.30'),
-    ).toBeInTheDocument()
     expect(screen.queryByText('internal-project-id')).not.toBeInTheDocument()
   })
 

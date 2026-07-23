@@ -13,6 +13,7 @@ const AUTH_API_TARGET =
 // (LMS-SV/operations-service: SERVER_PORT=8084 ./gradlew bootRun).
 const OPS_API_TARGET =
   process.env.VITE_OPS_API_TARGET ?? 'http://localhost:8084'
+const LMS_AI_TARGET = process.env.VITE_LMS_AI_TARGET ?? 'http://localhost:5177'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -37,6 +38,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // 수강역량증명서 6축·종합점수 — LMS-AI 로컬 엔진.
+      '/lms-ai': {
+        target: LMS_AI_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/lms-ai/, ''),
+      },
       // FE는 baseURL '/api' 뒤에 BE 경로를 붙여 호출한다(→ /api/admin/hrd-keys).
       // BE 컨트롤러에는 /api prefix가 없으므로 프록시에서 제거한 뒤 :8082로 넘긴다.
       // MSW는 이 경로에 핸들러가 없어 bypass → 실제 네트워크 → 이 프록시로 도달한다.

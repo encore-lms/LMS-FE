@@ -73,21 +73,21 @@ const STU_001: AiAnalysis = {
     },
   ],
 
-  // 블록4 — 프로젝트 분석 (전체 궤적 + 그룹별)
+  // 블록4 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
   projects: {
     summary:
-      '커머스→핀테크로 도메인을 넓히며 "실시간 처리"를 공통으로 심화한 궤적을 보입니다.',
-    groups: [
-      {
-        label: '커머스',
-        summary:
-          '주문·결제를 3개 프로젝트에서 다루며 성능 개선을 반복했습니다.',
-      },
-      {
-        label: '인프라',
-        summary: '배포 자동화와 캐시 도입으로 안정성을 끌어올렸습니다.',
-      },
-    ],
+      '인증 완료 프로젝트 원천과 연결되면 프로젝트 경험을 분석할 수 있습니다.',
+    groups: [],
+    status: 'NOT_READY',
+    projects: [],
+    overview: {
+      experienceScope: '분석할 인증 완료 프로젝트가 없습니다.',
+      workingStyle: '개인 수행 방식을 설명할 프로젝트 근거가 없습니다.',
+      overall:
+        '인증 완료 프로젝트 원천과 연결되면 프로젝트 경험을 분석할 수 있습니다.',
+    },
+    limitations: ['정규화 증명서 원천과 연결되지 않은 레거시 mock 학생'],
+    generatedBy: 'FALLBACK',
   },
 
   // 블록5 — 문제해결·협업 (caps 3축 + style + scaling)

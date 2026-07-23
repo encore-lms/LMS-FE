@@ -36,6 +36,8 @@ export default function AssignmentsPage({
   const toast = useToast()
   const { data, isPending, isError, refetch } =
     useInstructorAssignments(cohortId)
+  // 허브(과정·기수 탭)에서 폼·상세로 진입 시 cohortId를 넘겨, 저장·취소 후 허브로 복귀·기수 고정.
+  const hubQs = embedded && cohortId ? `?cohortId=${cohortId}` : ''
   const deleteAssignment = useDeleteAssignment()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -138,7 +140,7 @@ export default function AssignmentsPage({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/instructor/assignments/${r.id}`)
+              navigate(`/instructor/assignments/${r.id}${hubQs}`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -148,7 +150,7 @@ export default function AssignmentsPage({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/instructor/assignments/${r.id}`)
+              navigate(`/instructor/assignments/${r.id}${hubQs}`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -168,7 +170,7 @@ export default function AssignmentsPage({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/instructor/assignments/${r.id}/submissions`)
+              navigate(`/instructor/assignments/${r.id}/submissions${hubQs}`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
           >
@@ -261,7 +263,7 @@ export default function AssignmentsPage({
               </span>
               <Button
                 size="sm"
-                onClick={() => navigate('/instructor/assignments/new')}
+                onClick={() => navigate(`/instructor/assignments/new${hubQs}`)}
               >
                 <Plus className="h-3.5 w-3.5" /> 과제 생성
               </Button>
@@ -273,7 +275,7 @@ export default function AssignmentsPage({
               columns={columns}
               rows={filtered}
               rowKey={(r) => r.id}
-              onRowClick={(r) => navigate(`/instructor/assignments/${r.id}`)}
+              onRowClick={(r) => navigate(`/instructor/assignments/${r.id}${hubQs}`)}
               empty="조건에 맞는 과제가 없어요"
             />
           </div>

@@ -271,9 +271,6 @@ describe('ProjectReviewPage (§14)', () => {
     const certifyBtn = screen.getByRole('button', { name: '인증' })
     expect(certifyBtn.className).toContain('bg-brand-deep')
     expect(screen.getByRole('button', { name: '결과' })).toBeInTheDocument()
-    expect(
-      screen.getByText(/인증 후 학생 직접 수정은 차단됩니다/),
-    ).toBeInTheDocument()
   })
 })
 

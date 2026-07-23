@@ -275,10 +275,6 @@ export default function TsReviewPage() {
               empty="조건에 맞는 사례가 없어요"
             />
           </div>
-          <p className="text-fg-subtle mt-3 text-xs">
-            인증 시 TroubleshootingCertification 기록이 생성되며, 인증 후 학생
-            직접 수정은 차단됩니다 (변경 제안 흐름)
-          </p>
 
           <SupplementRequestModal
             open={supplementTarget !== null}

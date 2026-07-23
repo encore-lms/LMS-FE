@@ -11,7 +11,6 @@ export type PriorityType =
   | 'supplement' // 보완
   | 'manual_grading' // 수동 채점
   | 'project_cert' // 프로젝트 인증
-  | 'blog_review' // 블로그 검토
   | 'ts_review' // 트러블슈팅 검토
 
 export interface PriorityItem {
@@ -37,7 +36,6 @@ export interface InstructorDashboardData {
   cohortCount: number
   cohorts: InstructorCohortChip[]
   kpiGrading: DashboardKpi
-  kpiRecords: DashboardKpi
   kpiProjects: DashboardKpi
   kpiSupplements: DashboardKpi
   priorities: PriorityItem[]

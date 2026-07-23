@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { useProjectGithub } from '../../../api/projectGithub'
 import type { ProjectGithubContributor } from '../../githubTypes'
+import { GithubHeatmap } from './GithubHeatmap'
 import { card } from './ws-style'
 
 // GitHub 마크 — 기여도 섹션 헤더용.
@@ -151,6 +152,8 @@ export function GithubContributionSection({
           {active.totalCommits}
         </span>
       </div>
+      {/* 잔디 — 일별 커밋 히트맵 */}
+      <GithubHeatmap daily={active.dailyActivity} />
       {active.contributors.length === 0 ? (
         <p className="text-fg-subtle py-4 text-center text-[12px]">
           아직 집계된 기여가 없어요. 설정 탭에서 동기화하면 반영됩니다.

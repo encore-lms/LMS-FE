@@ -537,54 +537,6 @@ const mockOverview: CertificateOverview = {
       },
     ],
     matrix: Array.from({ length: 84 }, (_, i) => (i * 3 + 1) % 4),
-    beforeAfter: [
-      {
-        label: 'API 응답시간(P95)',
-        before: '320ms',
-        after: '145ms',
-        delta: '-55%',
-        good: true,
-      },
-      {
-        label: '결제 실패 자동복구율',
-        before: '42%',
-        after: '95%',
-        delta: '+53%p',
-        good: true,
-      },
-      {
-        label: 'DB connection 점유',
-        before: '180',
-        after: '68',
-        delta: '-62%',
-        good: true,
-      },
-      {
-        label: '트랜잭션 처리 오류',
-        before: '7건/주',
-        after: '0건/주',
-        delta: '100%↓',
-        good: true,
-      },
-    ],
-    artifacts: [
-      {
-        title: 'encore-mart-backend',
-        meta: 'github.com/kimsk · ★24 · 커밋 134 · PR 22',
-      },
-      {
-        title: 'meeting-summarizer-llm',
-        meta: 'github.com/kimsk · ★38 · 단독 100% · 커밋 92',
-      },
-      {
-        title: '비동기 처리 패턴 12편 시리즈',
-        meta: 'velog · 누적 12k 조회 · 12편 발행',
-      },
-      {
-        title: 'MSA 도서 추천 — 시스템 설계 발표',
-        meta: 'PDF · 32 슬라이드 · 발표일 2026-04-12',
-      },
-    ],
     ai: {
       summary:
         '응답 320→145ms·결제 자동복구 95%는 Kafka 이벤트 라우팅 + 트랜잭션 격리 재설계의 결과. 배포·모니터링까지 이어져 E2E 운영 가능 수준을 입증.',

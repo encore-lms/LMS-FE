@@ -89,19 +89,20 @@ function renderProblemTab(result = detailTabs) {
 }
 
 describe('ProblemTab 상세 API 연결', () => {
-  it('인증 통계·안전 요약·문제 분포·동료 태그를 표시한다', async () => {
+  it('인증 통계·안전 요약·문제 분포만 표시한다', async () => {
     renderProblemTab()
 
     expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(screen.getByText('인증 사례 1건')).toBeInTheDocument()
     expect(screen.getByText('평균 2일')).toBeInTheDocument()
-    expect(screen.getByText('협업 태그 4회')).toBeInTheDocument()
     expect(screen.getAllByText('성능최적화')).toHaveLength(2)
     expect(screen.getAllByText('AI 요약을 생성하지 못했습니다.')).toHaveLength(
       3,
     )
-    expect(screen.getByLabelText('#협업 3회')).toHaveStyle({ fontSize: '20px' })
+    expect(screen.queryByText('PeerTag 클라우드')).not.toBeInTheDocument()
+    expect(screen.queryByText('협업 태그 4회')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('#협업 3회')).not.toBeInTheDocument()
     expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
   })
 

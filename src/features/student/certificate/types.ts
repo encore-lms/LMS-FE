@@ -267,24 +267,11 @@ export interface CertProjectCard {
   tags: string[]
   outcomes: string[]
 }
-export interface CertBeforeAfter {
-  label: string
-  before: string
-  after: string
-  delta: string
-  good: boolean
-}
-export interface CertArtifact {
-  title: string
-  meta: string
-}
 export interface CertProjectsTab {
   certifiedLabel: string
   contribAvg: string
   projects: CertProjectCard[]
   matrix: number[] // 0~3 강도, 주차 순
-  beforeAfter: CertBeforeAfter[]
-  artifacts: CertArtifact[]
   ai?: CertProjectsAi // v2 (CERT_V2)
   commitActivity?: CertProjectActivity[] // v2: 프로젝트별 커밋 잔디밭(선택형)
 }

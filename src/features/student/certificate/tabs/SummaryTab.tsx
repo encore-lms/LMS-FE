@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Sparkles } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
 import { TONE_SOLID } from '@/shared/lib/tone'
@@ -7,6 +7,7 @@ import {
   CERTIFICATE_MOCK_STUDENT_ID,
   CERTIFICATE_360_AXIS_KEYS,
   CERTIFICATE_AXIS_KEYS,
+  fetchAiAnalysis,
   fetchCertificateScore,
   type CertificatePeerEvaluationAxis,
   type CertificateScoreMetric,
@@ -14,9 +15,14 @@ import {
 } from '../ai'
 import { SkillRadar, SkillRadarLoading } from '../components/SkillRadar'
 import { CERT_V2 } from '../config'
-import { certKeys } from '../queryKeys'
-import type { CertKpi, CertSummaryTab, Tone } from '../types'
+import type {
+  CertKpi,
+  CertRecommendation,
+  CertSummaryTab,
+  Tone,
+} from '../types'
 import { DomainDonut } from '../v2/DomainDonut'
+import { OntologyMap } from '../v2/OntologyMap'
 
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
@@ -165,6 +171,35 @@ function CertificateScoreLoading() {
   )
 }
 
+function RecommendationMark({ role }: { role: '강사' | '멘토' }) {
+  const isInstructor = role === '강사'
+
+  return (
+    <a
+      href="/student/certificate?tab=growth-reputation"
+      aria-label={`${role} 추천서 보기`}
+      className={cn(
+        'group flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors',
+        isInstructor
+          ? 'border-warning/30 bg-warning-bg/45 text-warning hover:bg-warning-bg/70'
+          : 'border-border bg-surface-muted/65 text-fg-muted hover:bg-surface-muted',
+      )}
+    >
+      <span
+        className={cn(
+          'flex size-5 items-center justify-center rounded-md',
+          isInstructor ? 'bg-warning/10' : 'bg-surface',
+        )}
+      >
+        <Sparkles aria-hidden="true" className="size-3" strokeWidth={1.8} />
+      </span>
+      <span className="text-[11px] font-bold tracking-[-0.01em]">
+        {role} 추천
+      </span>
+    </a>
+  )
+}
+
 function ThreeSixtyComparisonPanel({
   axes,
 }: {
@@ -233,7 +268,15 @@ function ScoreWarnings({ warnings }: { warnings: string[] }) {
   )
 }
 
-function ScoreSummary({ score }: { score: CertificateScoreResult }) {
+function ScoreSummary({
+  score,
+  ontology,
+  recommendations,
+}: {
+  score: CertificateScoreResult
+  ontology?: Awaited<ReturnType<typeof fetchAiAnalysis>>['ontology']
+  recommendations: CertRecommendation[]
+}) {
   const axisByKey = new Map(score.axes.map((axis) => [axis.key, axis]))
   const radarAxes = CERTIFICATE_AXIS_KEYS.map((key) => {
     const axis = axisByKey.get(key)
@@ -295,6 +338,14 @@ function ScoreSummary({ score }: { score: CertificateScoreResult }) {
     { value: scoreStatusLabel[score.status], label: '산출 상태' },
     { value: '균등 평균', label: '종합 방식' },
   ]
+  const recommendationRoles = new Set(
+    recommendations.map((recommendation) => recommendation.role),
+  )
+  const hasInstructorRecommendation = recommendationRoles.has('강사')
+  const hasMentorRecommendation = recommendationRoles.has('멘토')
+  const hasRecommendation =
+    hasInstructorRecommendation || hasMentorRecommendation
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -303,17 +354,17 @@ function ScoreSummary({ score }: { score: CertificateScoreResult }) {
             핵심 지표 · 종합 요약
           </span>
           <span className="text-fg-subtle text-[11px]">
-            학습·프로젝트·평가 데이터를 바탕으로 한 6축 절대·상대 산정
+            v6 운영 mock 원천데이터 기반 6축 절대·상대 산정
           </span>
         </div>
         <span className="text-fg-subtle text-[11px]">
-          산정일 {score.calculatedAt}
+          정책 2026.07.20 · 산정일 {score.calculatedAt}
         </span>
       </div>
 
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex flex-col gap-5 lg:w-[46%]')}>
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
               <span className="text-fg-subtle text-[10px] font-bold">
                 AGGREGATE SCORE
@@ -322,6 +373,18 @@ function ScoreSummary({ score }: { score: CertificateScoreResult }) {
                 절대 종합 점수
               </span>
             </div>
+
+            {hasRecommendation && (
+              <div
+                aria-label="추천 현황"
+                className="flex flex-wrap items-center justify-end gap-1.5"
+              >
+                {hasInstructorRecommendation && (
+                  <RecommendationMark role="강사" />
+                )}
+                {hasMentorRecommendation && <RecommendationMark role="멘토" />}
+              </div>
+            )}
           </div>
 
           <div className="flex items-end gap-3">
@@ -441,19 +504,26 @@ function ScoreSummary({ score }: { score: CertificateScoreResult }) {
       <ScoreWarnings warnings={score.warnings} />
 
       {CERT_V2 && <DomainDonut domains={domains} />}
+      {CERT_V2 && ontology && <OntologyMap ontology={ontology} />}
     </div>
   )
 }
 
 export function SummaryTab({
   studentId = CERTIFICATE_MOCK_STUDENT_ID,
+  recommendations = [],
 }: {
   s: CertSummaryTab
   studentId?: string
+  recommendations?: CertRecommendation[]
 }) {
   const scoreQuery = useQuery({
-    queryKey: certKeys.score(studentId),
+    queryKey: ['certificateScore', studentId],
     queryFn: () => fetchCertificateScore(studentId),
+  })
+  const { data: ai } = useQuery({
+    queryKey: ['aiAnalysis', studentId],
+    queryFn: () => fetchAiAnalysis(studentId),
   })
 
   return (
@@ -463,9 +533,15 @@ export function SummaryTab({
       onRetry={scoreQuery.refetch}
       skeleton={<CertificateScoreLoading />}
       errorTitle="수강역량 점수를 불러오지 못했어요"
-      errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
+      errorDescription="LMS-AI 엔진 상태와 수강생 식별자를 확인해 주세요."
     >
-      {scoreQuery.data && <ScoreSummary score={scoreQuery.data} />}
+      {scoreQuery.data && (
+        <ScoreSummary
+          score={scoreQuery.data}
+          ontology={ai?.ontology}
+          recommendations={recommendations}
+        />
+      )}
     </DataBoundary>
   )
 }

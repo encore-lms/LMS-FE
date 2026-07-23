@@ -468,33 +468,120 @@ export interface AiProjects {
 }
 
 // 블록5 — 문제해결·협업
+export type AiProblemStatus = 'READY' | 'PARTIAL' | 'NOT_READY'
+export type AiProblemAxisKey =
+  | 'DATA_PROCESSING'
+  | 'MODEL_TUNING'
+  | 'INFRA_DEPLOYMENT'
+export type AiProblemConfidence = 'MEDIUM' | 'LOW'
 export interface ProblemCap {
+  key: AiProblemAxisKey
   label: string
-  score: number
-  tag: string // 연결 PeerTag
-  tone: Tone
+  status: 'PARTIAL' | 'NOT_READY'
+  /** 구조화 인증 평가가 도입되기 전에는 역량 점수를 만들지 않는다. */
+  score: null
+  certifiedCaseCount: number
+  evidence: string[]
+  evidenceCodes: string[]
+  limitations: string[]
+}
+export interface AiCollaborationProjectEvaluation {
+  projectId: string
+  evaluatorCount: number
+  /** 협업·소통·책임감·문제해결 4축의 평가자 평균. */
+  average: number
+  /** 평가자별 4축 평균의 모집단 표준편차. */
+  deviation: number
+  axes: {
+    collaboration: number
+    communication: number
+    responsibility: number
+    problemSolving: number
+  }
+}
+export interface AiCollaborationAnalysis {
+  status: 'READY' | 'NOT_READY'
+  summary: string
+  evaluatorCount: number
+  projectCount: number
+  behaviorSignals: string[]
+  projectEvaluations: AiCollaborationProjectEvaluation[]
+  evidence: string[]
+  evidenceCodes: string[]
+  limitations: string[]
+  generatedBy: 'AI' | 'FALLBACK'
+}
+export interface AiProblemGrowthAnalysis {
+  status: 'READY' | 'NOT_READY'
+  confidence: AiProblemConfidence
+  summary: string
+  certifiedCaseCount: number
+  period: { firstAt: string; lastAt: string } | null
+  newDomains: string[]
+  repeatedDomains: string[]
+  newTechnologies: string[]
+  repeatedTechnologies: string[]
+  evidence: string[]
+  evidenceCodes: string[]
+  limitations: string[]
+  generatedBy: 'AI' | 'FALLBACK'
 }
 export interface ProblemAi {
+  status: AiProblemStatus
+  mappingVersion: string
   caps: ProblemCap[]
-  style: string // 스타일 종합
-  scaling: string // 확장 종합
+  /** 기존 FE 단계적 연결용. collaboration.summary와 같다. */
+  style: string
+  /** 기존 FE 단계적 연결용. growth.summary와 같다. */
+  scaling: string
+  collaboration: AiCollaborationAnalysis
+  growth: AiProblemGrowthAnalysis
+  certifiedCaseCount: number
+  unmappedCaseCount: number
+  limitations: string[]
 }
 
-// 블록6 — 감성·키워드 버블
+// 블록6 — 상담 감성·키워드 버블
+export type SentimentAnalysisStatus = 'READY' | 'PARTIAL' | 'NOT_READY'
 export type SentimentPhase = 'early' | 'mid' | 'late'
+export type SentimentPolarity = 'CONCERN' | 'NEUTRAL' | 'POSITIVE'
+export interface SentimentEvidence {
+  code: string
+  at: string
+  excerpt: string
+}
 export interface SentimentBubble {
   label: string
-  x: number // 0~100
-  y: number // 0~100
-  r: number // 반지름(px, viewBox 기준)
+  x: number
+  y: number
+  r: number
   phase: SentimentPhase
+  polarity: SentimentPolarity
+  weight: number
+  evidenceCount: number
+  evidence?: SentimentEvidence[]
+}
+export interface SentimentPhaseDetail {
+  phase: SentimentPhase
+  label: string
+  period: { startedAt: string; endedAt: string }
+  noteCount: number
+  summary: string
+  confidence: AiProfileConfidence
 }
 export interface Sentiment {
+  policyVersion: string
+  status: SentimentAnalysisStatus
+  noteCount: number
+  phases: SentimentPhaseDetail[]
   bubbles: SentimentBubble[]
   trend: string
+  confidence: AiProfileConfidence
+  limitations?: string[]
 }
 
 // 온톨로지 역량 맵
+export type OntologyStatus = 'READY' | 'PARTIAL' | 'NOT_READY'
 export type OntologyKind =
   | 'self'
   | 'subject'
@@ -502,16 +589,40 @@ export type OntologyKind =
   | 'method'
   | 'project'
   | 'domain'
+export type OntologyEdgeType =
+  | 'LEARNED'
+  | 'FOLLOWED_BY'
+  | 'PARTICIPATED'
+  | 'USED'
+  | 'APPLIED'
+  | 'BELONGS_TO'
 export interface OntologyNode {
   id: string
   label: string
-  x: number // 0~100 (viewBox 비율)
-  y: number // 0~100
+  x: number
+  y: number
   kind: OntologyKind
+  weight: number
+  evidenceCount: number
+  evidence: string[]
+  confidence: AiProfileConfidence
+}
+export interface OntologyEdge {
+  source: string
+  target: string
+  type: OntologyEdgeType
+  strength: number
+  evidence: string[]
 }
 export interface Ontology {
+  policyVersion: string
+  status: OntologyStatus
+  summary: string
+  counts: Record<OntologyKind, number>
+  omittedCounts: Partial<Record<OntologyKind, number>>
   nodes: OntologyNode[]
-  edges: [string, string][] // 노드 id 쌍
+  edges: OntologyEdge[]
+  limitations?: string[]
 }
 
 // 최종 분석 결과 (getAnalysis 반환 / 서버 /analysis 응답)

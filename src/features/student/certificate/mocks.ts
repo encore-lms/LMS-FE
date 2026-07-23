@@ -100,10 +100,10 @@ const mockCommitActivity = [
 
 const mockOverview: CertificateOverview = {
   header: {
-    studentName: '김수강',
-    courseName: '백엔드 부트캠프',
-    cohortName: '3기',
-    periodLabel: '2025.11.04 — 2026.05.20 · 총 800h · 출석 768h',
+    studentName: '박준서',
+    courseName: 'SKN LLM·AI 개발자 과정',
+    cohortName: 'SKN 4기',
+    periodLabel: '2024.03.11 — 2024.09.08 · v6 운영 mock',
     certId: 'abc-1234',
     isPublic: false,
     status: 'changes_requested',
@@ -195,13 +195,13 @@ const mockOverview: CertificateOverview = {
         sub: '퀴즈 12회 · 상위 18%',
       },
       {
-        key: 'assignment',
-        label: '과제 달성',
-        value: '88',
+        key: 'blog',
+        label: '블로그 제출률',
+        value: '81',
         unit: '%',
         tone: 'accent',
-        bar: 88,
-        sub: '44 / 50 검토 완료',
+        bar: 81,
+        sub: '21 / 26 제출 완료',
       },
       {
         key: 'project',
@@ -717,9 +717,46 @@ const mockOverview: CertificateOverview = {
     },
   },
   growth: {
-    timeline: [64, 68, 66, 63, 66, 68, 70, 72, 75, 77, 76, 80, 83, 85, 85, 86],
-    startScore: 54,
-    currentScore: 86,
+    timeline: [
+      {
+        date: '2024-04-17',
+        type: '성취도',
+        title: '파이썬 기초·데이터 처리 성취도 평가',
+        score: 54,
+      },
+      {
+        date: '2024-05-10',
+        type: 'CS',
+        title: '자료구조·운영체제 CS 평가',
+        score: 58,
+      },
+      {
+        date: '2024-06-13',
+        type: '성취도',
+        title: 'SQL·Pandas·웹 개발 통합 성취도 평가',
+        score: 68,
+      },
+      {
+        date: '2024-07-09',
+        type: '성취도',
+        title: '머신러닝·딥러닝 모델링 성취도 평가',
+        score: 75,
+      },
+      {
+        date: '2024-08-07',
+        type: 'CS',
+        title: '네트워크·데이터베이스 CS 평가',
+        score: 80,
+      },
+      {
+        date: '2024-08-28',
+        type: '성취도',
+        title: 'LLM·RAG·AWS 배포 성취도 평가',
+        score: 86,
+      },
+    ],
+    peerAverage: 4.6,
+    peerEvaluationCount: 12,
     reputation: [
       { key: '기술', score: 4.6, detail: 'PR 22 · 코드 리뷰 평균 4.6' },
       {
@@ -728,7 +765,7 @@ const mockOverview: CertificateOverview = {
         detail: '리더십 평가 #1 · 동료 평가 5인 일관',
       },
       { key: '소통', score: 4.5, detail: '논리적설득 10회 · 코드리뷰 5회' },
-      { key: '성장', score: 4.3, detail: '최근 8주 점수 가속 구간' },
+      { key: '성장', score: 4.3, detail: '6개월 성취도·CS 점수 상승' },
       { key: '팀워크', score: 4.5, detail: 'Encore Mart 백엔드 4인 협업' },
     ],
     shortComments: [

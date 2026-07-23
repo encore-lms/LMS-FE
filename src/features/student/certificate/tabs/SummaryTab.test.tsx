@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CertificateScoreResult } from '../ai'
-import { fetchCertificateScore } from '../ai'
-import type { CertSummaryTab } from '../types'
+import { fetchAiAnalysis, fetchCertificateScore } from '../ai'
+import type { CertRecommendation, CertSummaryTab } from '../types'
 import { SummaryTab } from './SummaryTab'
 
 vi.mock('../ai', () => ({
@@ -17,6 +17,7 @@ vi.mock('../ai', () => ({
     '문제해결',
     '학습지속성',
   ],
+  fetchAiAnalysis: vi.fn(),
   fetchCertificateScore: vi.fn(),
 }))
 
@@ -150,9 +151,58 @@ const summary: CertSummaryTab = {
   checkDoneLabel: '',
 }
 
+const recommendations: CertRecommendation[] = [
+  {
+    role: '강사',
+    name: '이정훈 강사',
+    meta: '백엔드 과정',
+    quote: '기술 깊이와 협업 태도가 인상적입니다.',
+    date: '2026-05-10 작성',
+  },
+  {
+    role: '멘토',
+    name: '황설현 멘토',
+    meta: '코드 리뷰',
+    quote: '동료의 성장에도 긍정적인 영향을 주었습니다.',
+    date: '2026-05-08 작성',
+  },
+]
+
 describe('SummaryTab', () => {
+  it('실제 추천서가 있는 평가자의 추천 마크만 종합 점수에 표시한다', async () => {
+    vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+    vi.mocked(fetchAiAnalysis).mockImplementation(
+      () => new Promise(() => undefined),
+    )
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SummaryTab s={summary} recommendations={recommendations} />
+      </QueryClientProvider>,
+    )
+
+    const instructor = await screen.findByRole('link', {
+      name: '강사 추천서 보기',
+    })
+    const mentor = screen.getByRole('link', { name: '멘토 추천서 보기' })
+    expect(instructor).toHaveAttribute(
+      'href',
+      '/student/certificate?tab=growth-reputation',
+    )
+    expect(mentor).toHaveAttribute(
+      'href',
+      '/student/certificate?tab=growth-reputation',
+    )
+  })
+
   it('점수 계산 중에는 회전 스캔 레이더를 표시한다', () => {
     vi.mocked(fetchCertificateScore).mockImplementation(
+      () => new Promise(() => undefined),
+    )
+    vi.mocked(fetchAiAnalysis).mockImplementation(
       () => new Promise(() => undefined),
     )
     const queryClient = new QueryClient({
@@ -173,6 +223,9 @@ describe('SummaryTab', () => {
 
   it('6축 비교와 360도 동료평가 5축을 표시하고 축 클릭 시 평가 기준을 연다', async () => {
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+    vi.mocked(fetchAiAnalysis).mockImplementation(
+      () => new Promise(() => undefined),
+    )
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     })

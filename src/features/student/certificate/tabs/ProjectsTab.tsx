@@ -3,6 +3,9 @@ import type { CertProjectsTab } from '../types'
 import { TabHead } from './TechTab'
 import { CERT_V2 } from '../config'
 import { ProjectContribution } from '../v2/ProjectContribution'
+import { LmsFeGithubProjectCard } from '../github/LmsFeGithubProject'
+import { useLmsFeGithubProject } from '../github/useLmsFeGithubProject'
+import { useLmsProjectMetrics } from '../github/useLmsProjectMetrics'
 
 // 증명서 탭3 프로젝트 — 프로젝트 카드·기여 히트맵·Before/After·공개 산출물.
 const card =
@@ -10,6 +13,34 @@ const card =
 const HEAT = ['bg-surface-muted', 'bg-brand/30', 'bg-brand/60', 'bg-brand']
 
 export function ProjectsTab({ p }: { p: CertProjectsTab }) {
+  const githubProject = useLmsFeGithubProject()
+  const lmsProject = useLmsProjectMetrics()
+  const githubActivity = githubProject.data
+    ? {
+        id: 'github-lms-fe-junseok-dev',
+        name: 'LMS-FE — 수강역량증명서 프론트엔드',
+        period: `${githubProject.data.createdAt.slice(0, 10)} ~ ${githubProject.data.pushedAt.slice(0, 10)}`,
+        weeksLabel: '12주',
+        certified: false,
+        grid: githubProject.data.grid.map((week) =>
+          week.map((day) => day.count),
+        ),
+        totalCommits: githubProject.data.authorCommitCount,
+        activeDays: githubProject.data.activeDays,
+        totalDays: githubProject.data.totalDays,
+        longestStreak: githubProject.data.longestStreak,
+        weeklyAvg: githubProject.data.weeklyAverage,
+        contrib: `${githubProject.data.commitContributionRate}%`,
+        metricLabel: '커밋 기여율',
+        metricValue: `${githubProject.data.commitContributionRate}%`,
+        note: `ⓘ @${githubProject.data.authorLogin} 커밋 ${githubProject.data.authorCommitCount}개 ÷ develop 전체 ${githubProject.data.projectCommitCount}개로 계산한 커밋 기준 기여율입니다. 잔디·활동일·주 평균은 최근 12주 기준입니다.`,
+      }
+    : null
+  const contributionActivities = [
+    ...(p.commitActivity ?? []),
+    ...(githubActivity ? [githubActivity] : []),
+  ]
+
   return (
     <div className="flex flex-col gap-4">
       <TabHead
@@ -80,11 +111,20 @@ export function ProjectsTab({ p }: { p: CertProjectsTab }) {
             </div>
           </section>
         ))}
+        <LmsFeGithubProjectCard
+          data={githubProject.data}
+          isPending={githubProject.isPending}
+          error={githubProject.error}
+          onRetry={() => void githubProject.refetch()}
+          lmsProject={lmsProject.data}
+          isLmsPending={lmsProject.isPending}
+          lmsError={lmsProject.error}
+        />
       </div>
 
       {/* v2: 프로젝트별 커밋 잔디밭(선택형) — 켜지면 아래 집계 매트릭스 대신 노출 */}
-      {CERT_V2 && p.commitActivity && (
-        <ProjectContribution activities={p.commitActivity} />
+      {CERT_V2 && contributionActivities.length > 0 && (
+        <ProjectContribution activities={contributionActivities} />
       )}
 
       <div className="flex flex-col gap-4 lg:flex-row">

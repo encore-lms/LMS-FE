@@ -117,7 +117,10 @@ export function CertPreview({ data }: { data: CertificateOverview }) {
 
         {/* 탭(요약) — 다른 탭 클릭 시 인셸 상세로 이동 */}
         <CertTabs active="summary" onChange={goTab} />
-        <SummaryTab s={data.summary} />
+        <SummaryTab
+          s={data.summary}
+          recommendations={data.growth.recommendations}
+        />
 
         {/* 요청 전 체크리스트 */}
         <section className="bg-surface flex flex-col rounded-2xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">

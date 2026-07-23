@@ -132,10 +132,8 @@ describe('AiProfile', () => {
     expect(technicalTooltip).toHaveClass('right-3')
     expect(technicalTooltip).not.toHaveClass('w-72')
     expect(technicalTooltip).toHaveClass('[overflow-wrap:anywhere]')
-    expect(screen.getByText('핵심 강점')).toBeInTheDocument()
-    expect(screen.getByText('강점')).toBeInTheDocument()
-    expect(screen.getByText('성장 포인트')).toBeInTheDocument()
-    expect(screen.getByText('성장')).toBeInTheDocument()
+    expect(screen.queryByText('핵심 강점')).not.toBeInTheDocument()
+    expect(screen.queryByText('성장 포인트')).not.toBeInTheDocument()
   })
 
   it('페르소나 순위와 근거 충분도·판단 근거 4단계를 표시한다', () => {

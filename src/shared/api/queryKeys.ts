@@ -134,7 +134,11 @@ export const instructorKeys = {
   recordReviews: (courseId: string, cohortId: string) =>
     [...instructorKeys.all, 'record-reviews', courseId, cohortId] as const,
   projectReviews: () => [...instructorKeys.all, 'project-reviews'] as const,
+  projectReviewDetail: (projectId: string) =>
+    [...instructorKeys.all, 'project-reviews', projectId] as const,
   tsReviews: () => [...instructorKeys.all, 'ts-reviews'] as const,
+  tsReviewDetail: (caseId: string) =>
+    [...instructorKeys.all, 'ts-reviews', caseId] as const,
   changeRequests: () => [...instructorKeys.all, 'change-requests'] as const,
   recertifications: () => [...instructorKeys.all, 'recertifications'] as const,
   assignments: () => [...instructorKeys.all, 'assignments'] as const,

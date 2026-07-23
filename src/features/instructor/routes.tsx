@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
 
 // 강사 라우트 — features/instructor 소유자만 편집.
+const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
 const CohortStudentsPage = lazy(() => import('./cohorts/CohortStudentsPage'))
 const StudentDetailPage = lazy(() => import('./cohorts/StudentDetailPage'))
@@ -46,13 +47,9 @@ export const instructorRoutes: RouteObject[] = [
   {
     path: 'instructor',
     children: [
-      // 강사 대시보드는 BE 엔드포인트 미구현 상태라, 로그인 랜딩(index)과 별칭(dashboard)을
-      // 동작하는 평가 관리(퀴즈)로 리다이렉트한다. 대시보드 BE 구축 후 원복 예정.
-      { index: true, element: <Navigate to="/instructor/quizzes" replace /> },
-      {
-        path: 'dashboard',
-        element: <Navigate to="/instructor/quizzes" replace />,
-      },
+      // 강사 로그인 랜딩(index)은 대시보드로. auth 세션도 /instructor/dashboard 지정.
+      { index: true, element: <Navigate to="/instructor/dashboard" replace /> },
+      { path: 'dashboard', element: <DashboardPage /> },
       // 강사 콘솔 골격 (§2·§3) — 기수 컨텍스트는 후속 화면에 유지.
       { path: 'cohorts', element: <CohortsPage /> },
       { path: 'cohorts/:cohortId/students', element: <CohortStudentsPage /> },

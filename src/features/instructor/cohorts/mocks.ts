@@ -26,7 +26,6 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
       hint: '수동 채점 9 · 자동 재검토 5',
       badge: '오늘 +3',
     },
-    kpiRecords: { value: 7, hint: '블로그 4 · 스터디 2 · 자격증 1' },
     kpiProjects: { value: 3, hint: 'PM 인증 요청 · D+2 1건' },
     kpiSupplements: {
       value: 2,
@@ -59,16 +58,6 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
         type: 'project_cert',
         title: '추천 영상 큐레이션 PM 인증 요청',
         subtitle: 'DA 4팀 (3명)',
-        dday: 'D+2',
-        urgent: false,
-        actionLabel: '검토',
-        to: '/instructor/records/review',
-      },
-      {
-        id: 'pri-4',
-        type: 'blog_review',
-        title: '회고 블로그 #12 · 강사 승인 대기',
-        subtitle: '한소율 · FE 7기',
         dday: 'D+2',
         urgent: false,
         actionLabel: '검토',
@@ -113,7 +102,6 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
       hint: '수동 채점 6 · 자동 재검토 3',
       badge: '오늘 +3',
     },
-    kpiRecords: { value: 4, hint: '블로그 2 · 스터디 1 · 자격증 1' },
     kpiProjects: { value: 2, hint: 'PM 인증 요청 · D+2 1건' },
     kpiSupplements: { value: 1, hint: '학생 응답 대기 1건' },
     priorities: [
@@ -162,7 +150,6 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
     cohortCount: 2,
     cohorts: dashboardCohorts,
     kpiGrading: { value: 5, hint: '수동 채점 3 · 자동 재검토 2' },
-    kpiRecords: { value: 3, hint: '블로그 2 · 스터디 1' },
     kpiProjects: { value: 1, hint: 'PM 인증 요청 1건' },
     kpiSupplements: {
       value: 1,
@@ -179,16 +166,6 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
         urgent: true,
         actionLabel: '확인',
         to: '/instructor/cohorts/fe-7/students',
-      },
-      {
-        id: 'pri-4',
-        type: 'blog_review',
-        title: '회고 블로그 #12 · 강사 승인 대기',
-        subtitle: '한소율 · FE 7기',
-        dday: 'D+2',
-        urgent: false,
-        actionLabel: '검토',
-        to: '/instructor/records/review',
       },
       {
         id: 'pri-5',

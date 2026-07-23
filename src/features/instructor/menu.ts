@@ -4,7 +4,8 @@ import type { MenuItem } from '@/components/layout'
 // 2026-06-10 정합: 리뷰 3종(학습기록 조회·프로젝트·트러블슈팅)을 '검토' 1항목으로 묶고,
 // Figma(05-19)에서 누락됐던 평가 관리(/instructor/quizzes, 퀴즈 출제·채점 P0 27)를 복원.
 export const instructorMenu: MenuItem[] = [
-  // 대시보드는 BE 미구현이라 메뉴에서 제외(로그인 랜딩은 평가 관리로 리다이렉트). BE 구축 후 복원.
+  // 대시보드 = 담당 기수 채점·인증·보완 KPI + 우선 처리 목록(로그인 랜딩).
+  { label: '대시보드', to: '/instructor/dashboard' },
   // 교육 과정 = 담당 과정/기수 + 하위 수강생 목록·상세. 수강생 상세는 /instructor/students/* 라
   // /instructor/cohorts prefix로 안 잡혀 활성 탭이 풀린다 → match로 묶어 활성 유지.
   {

@@ -31,7 +31,6 @@ const dashboard: InstructorDashboardData = {
     hint: '수동 채점 9 · 자동 재검토 5',
     badge: '오늘 +3',
   },
-  kpiRecords: { value: 7, hint: '블로그 4 · 스터디 2 · 자격증 1' },
   kpiProjects: { value: 3, hint: 'PM 인증 요청 · D+2 1건' },
   kpiSupplements: { value: 2, hint: '학생 응답 대기 · D+5 1건', badge: '긴급' },
   priorities: [

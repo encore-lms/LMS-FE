@@ -5,6 +5,7 @@ import { AiBanner } from './TechTab'
 import { AiAnalysisPanel } from '../v2/AiAnalysisPanel'
 import { AiProfile } from '../v2/AiProfile'
 import { SentimentBubbles } from '../v2/SentimentBubbles'
+import { TechnicalVerdict } from '../v2/TechnicalVerdict'
 import {
   CERTIFICATE_MOCK_STUDENT_ID,
   fetchAiAnalysis,
@@ -35,32 +36,7 @@ function AiTabContent({ data }: { data: AiAnalysis }) {
 
       {/* 기술 종합 판단 + 프로젝트 분석 */}
       <div className="flex flex-col gap-4 lg:flex-row">
-        <AiAnalysisPanel title="AI 기술 역량 종합 판단" className="flex-1">
-          <div className="flex flex-col gap-2.5">
-            {verdict.recommendBadge?.recommended && (
-              <div
-                className="border-accent/30 bg-accent-bg/60 text-accent-strong flex w-fit items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold"
-                title={verdict.recommendBadge.summary}
-              >
-                <span aria-hidden>★</span> 멘토 추천 수강생
-              </div>
-            )}
-            <div className="flex flex-col gap-2 text-[12px] leading-5">
-              <p>
-                <b className="text-success">강점 </b>
-                <span className="text-fg-muted">{verdict.strength}</span>
-              </p>
-              <p>
-                <b className="text-warning">보완 </b>
-                <span className="text-fg-muted">{verdict.gap}</span>
-              </p>
-              <p>
-                <b className="text-accent-strong">특이형 </b>
-                <span className="text-fg-muted">{verdict.unique}</span>
-              </p>
-            </div>
-          </div>
-        </AiAnalysisPanel>
+        <TechnicalVerdict verdict={verdict} />
         <AiAnalysisPanel title="AI 프로젝트 분석" className="flex-1">
           <div className="flex flex-col gap-3">
             <span className="text-fg-muted text-[12px] leading-5">

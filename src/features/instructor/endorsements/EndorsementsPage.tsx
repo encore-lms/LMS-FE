@@ -12,12 +12,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { EndorsementPending } from '@/shared/types'
-import {
-  useEndorsementQueue,
-  useEndorsementRoster,
-  useSubmitEndorsement,
-} from '../api/endorsements'
-import { useInstructorCohorts } from '../api/console'
+import { useEndorsementQueue, useSubmitEndorsement } from '../api/endorsements'
+import { useCohortRoster, useInstructorCohorts } from '../api/console'
 import { SNAPSHOT_META } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -44,8 +40,7 @@ export default function EndorsementsPage() {
   const { data, isPending, isError, refetch } = useEndorsementQueue(cohortId)
   // 명단 — BE(learning)는 수강생 로스터가 없어 추천서 응답에 userId 만 준다.
   // 이름 join·작성 대기 계산을 화면이 맡는다(운영 프로젝트 목록과 동일 관례).
-  const { data: roster, isPending: rosterPending } =
-    useEndorsementRoster(cohortId)
+  const { data: roster, isPending: rosterPending } = useCohortRoster(cohortId)
   // 명단이 오기 전에 그리면 이름이 '(이름 미확인)'으로, 작성 대기가 0건으로 잠깐 보인다.
   // 명단도 이 화면의 필수 데이터라 로딩에 포함한다.
   const rosterLoading = !cohorts || rosterPending

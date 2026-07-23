@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
-import { FileText, Plus, Search } from 'lucide-react'
+import { FileText, Plus, Search, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
@@ -295,6 +295,13 @@ export default function QuizListPage({
                   ]}
                 />
               </label>
+              {/* 템플릿 관리 — 전역 자산이라 별도 메뉴 없이 퀴즈 영역에서 진입(생성·편집·삭제). */}
+              <Button
+                variant="secondary"
+                onClick={() => navigate('/instructor/quiz-templates')}
+              >
+                <Settings2 className="h-4 w-4" /> 템플릿 관리
+              </Button>
               <Button variant="secondary" onClick={() => setTemplateOpen(true)}>
                 <FileText className="h-4 w-4" /> 템플릿 열기
               </Button>

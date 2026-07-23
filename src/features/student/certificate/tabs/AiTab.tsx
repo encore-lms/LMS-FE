@@ -1,22 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
+import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
 import { AiBanner } from './TechTab'
 import { AiAnalysisPanel } from '../v2/AiAnalysisPanel'
 import { AiProfile } from '../v2/AiProfile'
 import { SentimentBubbles } from '../v2/SentimentBubbles'
-import { fetchAiAnalysis } from '../ai'
+import {
+  CERTIFICATE_MOCK_STUDENT_ID,
+  fetchAiAnalysis,
+  type AiAnalysis,
+} from '../ai'
+import { certKeys } from '../queryKeys'
 import { TONE_SOLID } from '@/shared/lib/tone'
 
-// 증명서 v2 — AI 분석 통합 탭. AI 해석은 ai 모듈(getAiAnalysis)에서 단일 소스로 가져온다.
-// 지금은 mock. 나중에 getAiAnalysis 내부만 서버 API로 교체하면 됨(호출부 불변).
-
-// TODO(BE 연동): studentId를 실제 학생 식별자로 연결. 지금은 mock 고정.
-export function AiTab({ studentId = 'stu-001' }: { studentId?: string }) {
-  const { data } = useQuery({
-    queryKey: ['aiAnalysis', studentId],
-    queryFn: () => fetchAiAnalysis(studentId),
-  })
-  if (!data) return null
+function AiTabContent({ data }: { data: AiAnalysis }) {
   const { verdict, profile, personas, projects, problem, sentiment } = data
   return (
     <div className="flex flex-col gap-4">
@@ -139,5 +136,28 @@ export function AiTab({ studentId = 'stu-001' }: { studentId?: string }) {
 
       <AiBanner text="AI 분석은 강사가 인증한 활동을 근거로 한 해석이며, 검증된 사실과 구분됩니다. 외부에 공개되는 항목에는 인증 완료 + 운영자 승인을 거친 내용만 포함됩니다." />
     </div>
+  )
+}
+
+export function AiTab({
+  studentId = CERTIFICATE_MOCK_STUDENT_ID,
+}: {
+  studentId?: string
+}) {
+  const query = useQuery({
+    queryKey: certKeys.analysis(studentId),
+    queryFn: () => fetchAiAnalysis(studentId),
+  })
+
+  return (
+    <DataBoundary
+      isPending={query.isPending}
+      isError={query.isError || !query.data}
+      onRetry={query.refetch}
+      errorTitle="AI 분석 데이터를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
+    >
+      {query.data && <AiTabContent data={query.data} />}
+    </DataBoundary>
   )
 }

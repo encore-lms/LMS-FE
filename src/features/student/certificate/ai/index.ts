@@ -105,26 +105,27 @@ export async function fetchAiDerived(
 
 /**
  * AI 분석(블록1~6 + 온톨로지)을 LMS-AI 엔진 서버에서 가져온다.
- * 서버 미설정·오류·다운 시 mock 반환 → 화면 blank 방지, 커밋/배포본 그대로 동작.
+ * 다른 학생이나 정적 mock으로 대체하지 않고 조회 실패를 호출부에 전달한다.
  */
 export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
-  const mock = ANALYSIS_STUBS[studentId] ?? ANALYSIS_STUBS['stu-001']
-  if (!AI_API) return mock
-  try {
-    const res = await fetch(
-      `${AI_API}/analysis/${encodeURIComponent(studentId)}`,
-    )
-    if (!res.ok) return mock
-    return (await res.json()) as AiAnalysis
-  } catch {
-    return mock // 서버 다운/네트워크 오류 → mock
+  const res = await fetch(
+    `${CERTIFICATE_SCORE_API}/analysis/${encodeURIComponent(studentId)}`,
+  )
+  if (!res.ok) {
+    throw new Error(`수강역량 AI 분석 조회 실패 (${res.status})`)
   }
+  return (await res.json()) as AiAnalysis
 }
 
 export type {
   AiAnalysis,
   AiVerdict,
   AiPersona,
+  AiProfile,
+  AiProfileConfidence,
+  AiProfileDimension,
+  AiProfileDimensionKey,
+  AiProfileLevel,
   AiProjects,
   CertificateAxisScore,
   CertificateAssessmentPoint,

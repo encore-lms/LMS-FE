@@ -6,6 +6,8 @@ export const certKeys = {
     [...certKeys.all, 'score-v4', studentId] as const,
   detailTabs: (studentId: string) =>
     [...certKeys.all, 'detail-tabs-v1', studentId] as const,
+  analysis: (studentId: string) =>
+    [...certKeys.all, 'analysis', studentId] as const,
   changes: () => [...certKeys.all, 'changes'] as const,
   publication: () => [...certKeys.all, 'publication'] as const,
 } as const

@@ -42,9 +42,3 @@ export const REVIEW_TABS = [
   { label: '프로젝트', to: '/instructor/projects/review' },
   { label: '트러블슈팅', to: '/instructor/troubleshooting/review' },
 ]
-
-// 평가 관리 — 퀴즈·과제.
-export const EVAL_TABS = [
-  { label: '퀴즈', to: '/instructor/quizzes' },
-  { label: '과제·실습', to: '/instructor/assignments' },
-]

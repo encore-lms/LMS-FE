@@ -11,10 +11,12 @@ import RecordReviewPage from '../reviews/RecordReviewPage'
 import { useInstructorCohorts } from '../api/console'
 import { MaterialsViewPane } from './MaterialsViewPane'
 import { ResumeViewPane } from './ResumeViewPane'
+import { StudentsPane } from './StudentsPane'
 
 // 강사 과정·기수 허브 — 운영 EducationPage와 같은 탭 구성(설정 탭은 강사에서 제외).
-// 자료실·이력서 = 조회 전용(강사 /instructor 미러). 과제·퀴즈·프로젝트·기록 = 기존 강사 기능 화면 임베드(기수 스코프).
+// 수강생·자료실·이력서 = 조회 전용(강사 /instructor 미러). 과제·퀴즈·프로젝트·기록 = 기존 강사 기능 화면 임베드(기수 스코프).
 type TabKey =
+  | 'students'
   | 'materials'
   | 'assignments'
   | 'quizzes'
@@ -23,6 +25,7 @@ type TabKey =
   | 'records'
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: 'students', label: '수강생' },
   { key: 'materials', label: '자료실' },
   { key: 'assignments', label: '과제' },
   { key: 'quizzes', label: '퀴즈' },
@@ -43,7 +46,7 @@ export default function InstructorEducationPage() {
     row?.subtitle ?? '과정·기수별 학습 자료와 활동을 확인합니다',
   )
 
-  const [tab, setTab] = useSearchParamState('tab', 'materials')
+  const [tab, setTab] = useSearchParamState('tab', 'students')
 
   return (
     <div className="p-8">
@@ -63,7 +66,9 @@ export default function InstructorEducationPage() {
       />
 
       <div className="mt-6">
-        {tab === 'materials' ? (
+        {tab === 'students' ? (
+          <StudentsPane cohortId={cohortId} />
+        ) : tab === 'materials' ? (
           <MaterialsViewPane cohortId={cohortId} />
         ) : tab === 'assignments' ? (
           <AssignmentsPage embedded cohortId={cohortId} />

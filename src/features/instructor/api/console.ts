@@ -1,15 +1,9 @@
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   InstructorDashboardData,
   InstructorCohortsData,
   CohortStudentsData,
-  StudentDetailData,
 } from '@/shared/types'
 
 // 강사 콘솔 골격 (대시보드·담당 과정/기수·수강생 목록) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
@@ -38,16 +32,7 @@ export function useInstructorCohorts() {
   })
 }
 
-export function useStudentDetail(studentId: string) {
-  return useQuery({
-    queryKey: instructorKeys.studentDetail(studentId),
-    queryFn: () =>
-      apiClient
-        .get<StudentDetailData>(`/instructor/students/${studentId}`)
-        .then((r) => r.data),
-  })
-}
-
+// 허브 '이력서' 탭(ResumeViewPane)의 학생명 join에 사용 — 단독 수강생 목록 화면은 폐기됨.
 export function useCohortStudents(cohortId: string) {
   return useQuery({
     queryKey: instructorKeys.cohortStudents(cohortId),
@@ -55,20 +40,5 @@ export function useCohortStudents(cohortId: string) {
       apiClient
         .get<CohortStudentsData>(`/instructor/cohorts/${cohortId}/students`)
         .then((r) => r.data),
-  })
-}
-
-// 검토 코멘트 저장(학생 비공개) — mock PATCH. 실 BE 계약 확정 시 페어가 교체.
-export function useSaveReviewComment(studentId: string) {
-  const qc = useQueryClient()
-  return useMutation<void, Error, string>({
-    mutationFn: (reviewComment) =>
-      apiClient
-        .patch<void>(`/instructor/students/${studentId}`, { reviewComment })
-        .then(() => undefined),
-    onSuccess: () =>
-      qc.invalidateQueries({
-        queryKey: instructorKeys.studentDetail(studentId),
-      }),
   })
 }

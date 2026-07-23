@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, CheckCircle2, ChevronDown } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { cn } from '@/shared/lib/cn'
@@ -97,15 +97,10 @@ export default function RecordReviewPage({
     }
   }, [data, courseId, cohortId])
 
-  // 과정 전환 시 그 과정의 첫 기수로 이동(빈 상태 방지).
+  // 담당 과정/기수 라벨(단일 고정 표시용).
   const cohortTabs =
     data?.courses.find((c) => c.id === courseId)?.cohorts ??
     ([{ id: cohortId, label: cohortId }] as RecordCourseTab['cohorts'])
-  const selectCourse = (id: string) => {
-    setCourseId(id)
-    const first = data?.courses.find((c) => c.id === id)?.cohorts[0]?.id
-    if (first) setCohortId(first)
-  }
 
   const needle = q.trim()
   // 검토 목록 3종 모두 이름 가나다순 고정(운영 요구)
@@ -140,37 +135,21 @@ export default function RecordReviewPage({
   return (
     <div className={embedded ? '' : 'p-8'}>
       {!embedded && <RouteTabBar tabs={REVIEW_TABS} />}
-      {/* 과정 선택 — 임베드에선 상단에서 이미 기수를 선택하므로 숨김 */}
+      {/* 담당 과정·기수 — 강사는 한 교육만 맡으므로 선택이 아닌 단일 고정 표시. */}
       {!embedded && (
-        <div className="mb-3">
-          <CourseSelect
-            courses={data?.courses ?? []}
-            value={courseId}
-            onChange={selectCourse}
-          />
-        </div>
-      )}
-
-      {/* 기수 탭 */}
-      {!embedded && (
-        <div className="border-divider mb-4 flex flex-wrap items-center gap-1 border-b">
-          {cohortTabs.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setCohortId(c.id)}
-              aria-pressed={cohortId === c.id}
-              className={cn(
-                '-mb-px border-b-2 px-3.5 py-2.5 text-sm font-semibold',
-                cohortId === c.id
-                  ? 'border-brand text-fg'
-                  : 'text-fg-subtle hover:text-fg border-transparent',
-              )}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
+        <p className="text-fg mb-4 text-lg font-bold">
+          <span>
+            {data?.courses.find((c) => c.id === courseId)?.label ?? '담당 과정'}
+          </span>
+          {(() => {
+            const label = cohortTabs.find((c) => c.id === cohortId)?.label
+            return label ? (
+              <span className="text-fg-muted ml-1.5 font-semibold">
+                {label}
+              </span>
+            ) : null
+          })()}
+        </p>
       )}
 
       {/* 검색 + 카테고리 토글 */}
@@ -267,69 +246,6 @@ function EmptyGrid() {
       title="이 기수의 학습 기록이 없어요"
       description="다른 기수를 선택하거나 검색어를 지워 보세요."
     />
-  )
-}
-
-// 과정 선택 드롭다운 — 제목형 버튼 + 팝오버. 바깥 클릭 시 닫힘.
-function CourseSelect({
-  courses,
-  value,
-  onChange,
-}: {
-  courses: RecordCourseTab[]
-  value: string
-  onChange: (id: string) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [open])
-
-  const active = courses.find((c) => c.id === value)
-  return (
-    <div ref={ref} className="relative inline-block">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className="text-fg hover:text-brand flex items-center gap-1.5 text-lg font-bold"
-      >
-        {active?.label ?? '과정 선택'}
-        <ChevronDown className="text-fg-muted h-4 w-4" />
-      </button>
-      {open && courses.length > 0 && (
-        <div
-          role="listbox"
-          className="border-border absolute left-0 z-20 mt-1 min-w-56 rounded-lg border bg-white py-1 shadow-lg"
-        >
-          {courses.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              role="option"
-              aria-selected={c.id === value}
-              onClick={() => {
-                onChange(c.id)
-                setOpen(false)
-              }}
-              className={cn(
-                'hover:bg-surface-muted flex w-full items-center px-3 py-2 text-left text-sm',
-                c.id === value ? 'text-brand font-semibold' : 'text-fg',
-              )}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   )
 }
 

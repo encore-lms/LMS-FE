@@ -228,12 +228,16 @@ describe('RecordReviewPage (§13)', () => {
     expect(useRecordReviews).toHaveBeenNthCalledWith(1, 'none', 'none')
   })
 
-  it('과정 선택·기수 탭·수강생·조회 전용 안내를 렌더한다', () => {
+  it('담당 과정·기수를 단일 고정으로 표시하고 조회 전용 안내를 렌더한다', () => {
     renderWith(<RecordReviewPage />)
+    // 과정 드롭다운·기수 탭이 아닌 고정 텍스트로 표시(강사는 한 교육만 담당).
     expect(
-      screen.getByRole('button', { name: /SK네트웍스 Family AI 캠프/ }),
+      screen.getByText(/SK네트웍스 Family AI 캠프/),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '29기' })).toBeInTheDocument()
+    expect(screen.getByText('29기')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '29기' }),
+    ).not.toBeInTheDocument()
     expect(screen.getByText('김은진')).toBeInTheDocument()
     expect(
       screen.getByText(/승인·반려·보완 요청은 운영 매니저/),

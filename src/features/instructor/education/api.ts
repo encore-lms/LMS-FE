@@ -45,13 +45,19 @@ const keys = {
 }
 
 // 수강생 탭 — 오늘 출석(HRD 라이브, date 미지정=오늘). 명단도 이 rows(HRD 훈련생)에서 파생.
-export function useInstructorAttendance(cohortId: string | null) {
+export function useInstructorAttendance(
+  cohortId: string | null,
+  date?: string,
+) {
   return useQuery({
-    queryKey: keys.attendance(cohortId ?? ''),
+    queryKey: [...keys.attendance(cohortId ?? ''), date ?? 'today'] as const,
     enabled: !!cohortId,
     queryFn: () =>
       apiClient
-        .get<StudentAttendanceData>(`/instructor/cohorts/${cohortId}/attendance`)
+        .get<StudentAttendanceData>(
+          `/instructor/cohorts/${cohortId}/attendance`,
+          { date: date || undefined },
+        )
         .then((r) => r.data),
   })
 }

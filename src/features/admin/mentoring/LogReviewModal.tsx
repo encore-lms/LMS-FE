@@ -74,7 +74,6 @@ export function LogReviewModal({ open, onClose, logId }: LogReviewModalProps) {
         <LogDetailPanel
           detail={detail ?? null}
           isPending={detailQuery.isPending}
-          onRequestChange={() => setChangeOpen(true)}
         />
       </Modal>
       {changeOpen && detail && (

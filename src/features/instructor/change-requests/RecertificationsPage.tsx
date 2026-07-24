@@ -11,6 +11,7 @@ import {
   useRecertifications,
   useResolveRecertification,
 } from '../api/changeRequests'
+import { useCohortRosterMap } from '../api/console'
 import { ChangeDiffCard } from './ChangeDiffCard'
 import { ReasonModal } from './ReasonModal'
 import { TARGET_TYPE_META, TYPE_FILTERS, type TypeFilter } from './meta'
@@ -23,6 +24,8 @@ export default function RecertificationsPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useRecertifications()
+  // 요청자 이름 — BE 는 requesterUserId 만 주므로 담당 기수 통합 로스터로 join.
+  const nameOf = useCohortRosterMap()
   const resolveMutation = useResolveRecertification()
   const [filter, setFilter] = useState<TypeFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -140,7 +143,7 @@ export default function RecertificationsPage() {
                   >
                     {r.target}
                     <span className="text-fg-subtle text-xs">
-                      {r.requesterLabel}
+                      {nameOf(r.requesterUserId)}
                     </span>
                   </button>
                 ))}
@@ -162,7 +165,7 @@ export default function RecertificationsPage() {
                       tone={TARGET_TYPE_META[selected.type].tone}
                     />
                     <p className="text-fg text-sm font-semibold">
-                      {selected.target} · {selected.requesterLabel} ·{' '}
+                      {selected.target} · {nameOf(selected.requesterUserId)} ·{' '}
                       {selected.summary}
                     </p>
                   </div>
@@ -170,8 +173,8 @@ export default function RecertificationsPage() {
                     변경된 내역만 보기
                   </p>
                   <div className="mt-2 flex flex-col gap-2.5">
-                    {selected.changes.map((c) => (
-                      <ChangeDiffCard key={c.id} item={c} />
+                    {selected.changes.map((c, i) => (
+                      <ChangeDiffCard key={c.id ?? i} item={c} />
                     ))}
                   </div>
                   <div className="mt-7 flex justify-end gap-2">

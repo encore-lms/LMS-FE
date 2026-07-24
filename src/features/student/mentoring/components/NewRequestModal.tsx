@@ -9,7 +9,7 @@ import { buttonClass } from '@/components/ui/buttonClass'
 
 // 새 멘토링 요청 폼(팝업). 멘토링 기록 헤더의 "새 멘토링 요청" 버튼으로 열린다.
 // 희망 일정은 공용 DateTimePicker(날짜 1 + 시작/종료 시각 2). 제출하면 onSubmit 으로 값 전달.
-// 진행 중 요청 1건 한도·멘토 미배정 게이트는 부모(버튼 disabled)가 담당 — 모달은 항상 입력 가능 상태.
+// 진행 중 3건 한도·멘토 미배정 게이트는 부모(버튼 disabled)가 담당 — 모달은 항상 입력 가능 상태.
 
 const schema = z
   .object({
@@ -126,8 +126,8 @@ export function NewRequestModal({
         className="flex flex-col gap-4"
       >
         <p className="text-fg-subtle text-[12px] leading-5">
-          팀당 진행 중 요청은 1개만 허용 · 팀원 누구나 요청 가능 · 확정 전까지
-          수강생이 취소할 수 있습니다.
+          팀당 최대 3건까지 동시 진행 · 팀원 누구나 요청·취소 가능 · 확정 전
+          요청만 취소할 수 있습니다.
         </p>
         <FormField
           label="희망 일정"
@@ -152,7 +152,7 @@ export function NewRequestModal({
                 />
               )}
             />
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Controller
                 control={control}
                 name="startTime"
@@ -163,10 +163,13 @@ export function NewRequestModal({
                     onChange={field.onChange}
                     placeholder="시작 시각"
                     ariaLabel="시작 시각"
+                    className="min-w-0 flex-1"
                   />
                 )}
               />
-              <span className="text-fg-subtle text-[13px]">~</span>
+              <span className="text-fg-subtle hidden text-[13px] sm:inline">
+                ~
+              </span>
               <Controller
                 control={control}
                 name="endTime"
@@ -177,6 +180,7 @@ export function NewRequestModal({
                     onChange={field.onChange}
                     placeholder="종료 시각"
                     ariaLabel="종료 시각"
+                    className="min-w-0 flex-1"
                   />
                 )}
               />

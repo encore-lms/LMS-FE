@@ -19,7 +19,7 @@ import {
 } from '../api/quizzes'
 import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
 import { useAssignmentCohortOptions } from '../api/assignments'
-import { useStudentAccounts } from '@/shared/api/students'
+import { useCohortRoster } from '../api/console'
 import type {
   InstructorQuizListData,
   QuizFormDetail,
@@ -31,7 +31,7 @@ import type {
 vi.mock('../api/quizzes')
 vi.mock('../api/quizTemplates')
 vi.mock('../api/assignments')
-vi.mock('@/shared/api/students')
+vi.mock('../api/console')
 
 const quizList: InstructorQuizListData = {
   total: 14,
@@ -260,15 +260,12 @@ function mockAll() {
   vi.mocked(useSaveQuiz).mockReturnValue(mut())
   vi.mocked(useDeleteQuiz).mockReturnValue(mut())
   vi.mocked(useSaveGrading).mockReturnValue(mut())
-  vi.mocked(useStudentAccounts).mockReturnValue(
-    ok({
-      items: [
-        { id: 'u-1', name: '박지훈', studentUuid: 'u-1' },
-        { id: 'u-4', name: '김민준', studentUuid: 'u-4' },
-        { id: 'u-6', name: '송하늘', studentUuid: 'u-6' },
-      ],
-      total: 3,
-    }) as unknown as ReturnType<typeof useStudentAccounts>,
+  vi.mocked(useCohortRoster).mockReturnValue(
+    ok([
+      { userId: 'u-1', name: '박지훈' },
+      { userId: 'u-4', name: '김민준' },
+      { userId: 'u-6', name: '송하늘' },
+    ]) as unknown as ReturnType<typeof useCohortRoster>,
   )
 }
 

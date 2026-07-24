@@ -21,6 +21,8 @@ export interface PurchaseRequest {
   productName: string
   /** 구매 링크 확인 필요(도서·강의 등) */
   needsLink: boolean
+  /** 수강생이 제출한 구매 링크(도서·강의). 기프티콘은 null. */
+  link?: string | null
   qty: number
   /** 신청 가격(M) */
   price: number

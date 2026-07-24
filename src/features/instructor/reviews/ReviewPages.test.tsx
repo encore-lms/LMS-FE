@@ -27,9 +27,14 @@ import type {
 vi.mock('../api/reviews')
 // 상세 패널·그리드의 이름 join 훅 — QueryClient 없이 동작하도록 기수 로스터를 고정 반환.
 // 강사는 계정 목록(/users/students)이 막혀(403) 담당 기수 로스터로 실명을 붙인다.
+// 기록실 그리드 뼈대이기도 하다 — s1(기록 있음)·stu-1(검토 상세 팀원) 둘을 명단에 둔다.
 vi.mock('../api/console', () => ({
   useCohortRoster: () => ({
-    data: [{ userId: 'stu-1', name: '박지훈' }],
+    data: [
+      { userId: 's1', name: '김은진' },
+      { userId: 'stu-1', name: '박지훈' },
+    ],
+    isLoading: false,
   }),
 }))
 

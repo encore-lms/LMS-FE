@@ -7,7 +7,6 @@ import {
   Check,
   CheckCircle2,
   Clipboard,
-  Command,
   Eye,
   FileText,
   Flag,
@@ -26,7 +25,28 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { applyTsStatus, patchTsCase } from '../flow'
 import { useCreateTsChangeRequest } from '../api/changeRequests'
-import { TS_CHANGE_ITEMS, type TsCase } from '../types'
+import { useTsCase } from '../../api/troubleshooting'
+
+// 변경 항목 → 사례 현재값(before). TsCaseDetail 은 태그를 노출하지 않아 태그는 빈 원본으로 둔다
+// (강사가 변경 후 값만 검토 — 태그는 BE 원본 매핑 대상도 아님).
+function currentValue(c: TsCaseDetail | undefined, item: string): string {
+  if (!c) return ''
+  switch (item) {
+    case '제목':
+      return c.title
+    case '카테고리':
+      return c.category
+    case '상황':
+      return c.situation
+    case '해결':
+      return c.resolution
+    case '결과':
+      return c.result
+    default:
+      return ''
+  }
+}
+import { TS_CHANGE_ITEMS, type TsCase, type TsCaseDetail } from '../types'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348.
 const card =
@@ -40,28 +60,6 @@ const CHANGE_ICON: Record<string, LucideIcon> = {
   해결: Send, // Figma 칩·STAR는 send-fill, diff 박스 헤더만 command
   결과: CheckCircle2,
   태그: Flag,
-}
-// 변경 전/후 비교 — 항목별 아이콘 박스 + 본문
-const DIFF: Record<
-  string,
-  { Icon: LucideIcon; box: string; before: string; after: string }
-> = {
-  해결: {
-    Icon: Command,
-    box: 'bg-accent-bg text-accent-strong',
-    before:
-      '`enable.auto.commit=false` 전환, 외부 키 기반 dedup 테이블 추가, 컨슈머 그룹 ack 정책 정리. 팀 회의에서 격리 수준 재설계를 설득해 합의했습니다.',
-    after:
-      '`enable.auto.commit=false` 전환, 멱등성 키(Idempotency-Key) 기반 dedup 테이블 추가 후 TTL 24h 운영. 컨슈머 그룹 ack 정책을 manual commit + back-pressure로 재설계하고, 격리 수준은 READ COMMITTED + 도메인 이벤트 outbox로 합의.',
-  },
-  결과: {
-    Icon: CheckCircle2,
-    box: 'bg-success-bg text-success',
-    before:
-      '중복 처리 0건/주, 결제 실패율 8% → 0.4%, 컨슈머 lag 평균 1.2s → 240ms. 학습: 컨슈머 그룹 토폴로지 가시화가 우선이었음을 확인.',
-    after:
-      '중복 처리 0건/주(8주 누적), 결제 실패율 8% → 0.4%, 컨슈머 lag 평균 1.2s → 240ms (P95 480ms). 학습: 토폴로지 가시화 + 멱등성 키 운영 룰 문서화, 재발 방지 알람 임계치 설정.',
-  },
 }
 // 처리 흐름 단계
 type StepTone = 'warning' | 'success' | 'danger'
@@ -122,10 +120,14 @@ export default function ChangeRequestPage() {
   const { id = '' } = useParams()
   const queryClient = useQueryClient()
   const createChange = useCreateTsChangeRequest(id)
-  const [selected, setSelected] = useState<string[]>(['해결', '결과'])
-  const [reason, setReason] = useState(
-    '멱등성 키 도입 이후의 해결 방식을 본문에 정확하게 반영하고, 결과에 재발 방지 조치를 추가하기 위함입니다. 외부 발표에서 받은 피드백으로 격리 수준 관련 수치도 보강합니다.',
-  )
+  // 현재 사례 — 변경 전(before) 값의 원본. 캐시(목록)에서 로드.
+  const { data: tsCase } = useTsCase(id)
+  const [selected, setSelected] = useState<string[]>([])
+  const [reason, setReason] = useState('')
+  // 항목별 변경 후(after) 입력값. 처음 선택할 때 현재값으로 채워 수강생이 편집하게 한다.
+  const [afterValues, setAfterValues] = useState<Record<string, string>>({})
+  const setAfter = (item: string, value: string) =>
+    setAfterValues((p) => ({ ...p, [item]: value }))
   // 근거 자료 — 파일 업로드 + 링크 추가 (실제 기능)
   const [files, setFiles] = useState<UploadFile[]>([
     { id: 'r1', name: 'retro-2026-05-25.md', meta: '4.7 KB · 학습 노트' },
@@ -136,7 +138,14 @@ export default function ChangeRequestPage() {
   const [linkInput, setLinkInput] = useState('')
 
   const toggle = (v: string) =>
-    setSelected((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))
+    setSelected((p) => {
+      if (p.includes(v)) return p.filter((x) => x !== v)
+      // 처음 선택하는 항목은 현재값으로 after 를 채워 편집 시작점을 준다(이미 입력했으면 유지).
+      setAfterValues((av) =>
+        av[v] === undefined ? { ...av, [v]: currentValue(tsCase, v) } : av,
+      )
+      return [...p, v]
+    })
   const addFiles = (list: FileList | null) => {
     if (!list || list.length === 0) return
     setFiles((p) => [
@@ -177,11 +186,17 @@ export default function ChangeRequestPage() {
       toast.danger('변경할 항목을 1개 이상 선택해 주세요.')
       return
     }
-    // 선택 항목별 diff 를 실 BE 로 전송(강사가 항목별로 검토). 해결/결과만 원본 매핑 대상.
+    // 변경 후 값이 비어 있으면 막는다(현재값 그대로면 변경 아님).
+    const empty = selected.find((it) => !(afterValues[it] ?? '').trim())
+    if (empty) {
+      toast.danger(`'${empty}'의 변경 후 내용을 입력해 주세요.`)
+      return
+    }
+    // 선택 항목별 실제 diff(현재값 → 입력값)를 BE 로 전송. 강사가 항목별로 검토한다.
     const changes = selected.map((label) => ({
       label,
-      before: DIFF[label]?.before ?? '',
-      after: DIFF[label]?.after ?? '',
+      before: currentValue(tsCase, label),
+      after: afterValues[label] ?? '',
     }))
     createChange.mutate(
       { requestReason: reason, changes },
@@ -189,10 +204,8 @@ export default function ChangeRequestPage() {
         onSuccess: () => {
           // 로컬 미러 — 목록·상세가 즉시 '검토 중'으로 보이게(서버 반영과 별개 UX).
           const patch: Partial<TsCase> = { updatedAt: '최근 수정 방금' }
-          if (selected.includes('해결') && DIFF['해결'])
-            patch.resolution = DIFF['해결'].after
-          if (selected.includes('결과') && DIFF['결과'])
-            patch.result = DIFF['결과'].after
+          if (selected.includes('해결')) patch.resolution = afterValues['해결']
+          if (selected.includes('결과')) patch.result = afterValues['결과']
           patchTsCase(queryClient, id, patch)
           applyTsStatus(queryClient, id, 'reviewing', 'change')
           toast.success('변경 제안을 보냈어요 · 강사 검토 대기 (검토 중)')
@@ -421,9 +434,8 @@ export default function ChangeRequestPage() {
           </span>
         )}
         {selected.map((it) => {
-          const d = DIFF[it]
-          const before = d?.before ?? '기존 값'
-          const after = d?.after ?? '새 값을 입력하세요'
+          const before = currentValue(tsCase, it)
+          const after = afterValues[it] ?? ''
           const delta = after.length - before.length
           return (
             <div
@@ -431,32 +443,16 @@ export default function ChangeRequestPage() {
               className="border-border flex flex-col gap-3 rounded-[12px] border p-4"
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  {d && (
-                    <span
-                      className={cn(
-                        'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                        d.box,
-                      )}
-                    >
-                      <d.Icon className="size-4" />
-                    </span>
-                  )}
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-fg text-[13px] font-bold">
-                        {d
-                          ? `${it} (${it === '해결' ? 'Resolution' : 'Result'})`
-                          : it}
-                      </span>
-                      <span className="bg-warning-bg text-warning flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold">
-                        <Pencil className="size-2.5" /> 변경 예정
-                      </span>
-                    </div>
-                    <span className="text-fg-subtle text-[11px]">
-                      좌측 변경 전 (원본) ↔ 우측 변경 후 (수정안)
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-fg text-[13px] font-bold">{it}</span>
+                    <span className="bg-warning-bg text-warning flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                      <Pencil className="size-2.5" /> 변경 예정
                     </span>
                   </div>
+                  <span className="text-fg-subtle text-[11px]">
+                    좌측 변경 전 (원본) ↔ 우측 변경 후 (직접 입력)
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -476,21 +472,28 @@ export default function ChangeRequestPage() {
                       {before.length}자
                     </span>
                   </div>
-                  <span className="text-fg-muted text-[12px] leading-5">
-                    {before}
+                  <span className="text-fg-muted text-[12px] leading-5 whitespace-pre-wrap">
+                    {before || '(현재 값 없음)'}
                   </span>
                 </div>
                 <div className="border-brand/40 bg-brand/5 flex flex-col gap-1.5 rounded-[10px] border p-3.5">
                   <div className="flex items-center justify-between">
                     <span className="text-brand text-[11px] font-semibold">
-                      변경 후 · 수정안 (편집 가능)
+                      변경 후 · 수정안 (직접 입력)
                     </span>
                     <span className="text-brand text-[11px] font-semibold">
-                      ▲ {after.length}자 ({delta >= 0 ? '+' : ''}
+                      {after.length}자 ({delta >= 0 ? '+' : ''}
                       {delta})
                     </span>
                   </div>
-                  <span className="text-fg text-[12px] leading-5">{after}</span>
+                  <textarea
+                    value={after}
+                    onChange={(e) => setAfter(it, e.target.value)}
+                    rows={it === '제목' || it === '카테고리' || it === '태그' ? 1 : 4}
+                    aria-label={`${it} 변경 후 내용`}
+                    placeholder={`${it}의 변경 후 내용을 입력하세요`}
+                    className="text-fg placeholder:text-fg-subtle focus:border-brand border-border/60 w-full resize-y rounded-lg border bg-white p-2 text-[12px] leading-5 outline-none"
+                  />
                 </div>
               </div>
             </div>

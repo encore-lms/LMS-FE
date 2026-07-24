@@ -110,7 +110,6 @@ export default function TypeLimitsPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <p className="text-fg text-base font-bold">{l.label}</p>
-                    <StatusBadge label={l.type} tone="neutral" />
                   </div>
                   {isChanged && <StatusBadge label="변경됨" tone="warning" />}
                 </div>

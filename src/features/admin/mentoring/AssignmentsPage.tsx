@@ -360,57 +360,84 @@ export default function AssignmentsPage() {
 
   return (
     <div className="p-8">
-      {/* 교육 과정·기수 선택 — 과정·기수·교과목 페이지와 동일한 카탈로그 셀렉터 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select
-          aria-label="교육과정 선택"
-          value={course}
-          onChange={(v) => pickCourse(v)}
-          options={[
-            { value: 'all', label: '교육과정 전체' },
-            ...(courseList.data ?? []).map((c) => ({
-              value: c.courseId,
-              label: c.title,
-            })),
-          ]}
-          className="h-11"
-        />
-        <Select
-          aria-label="기수 선택"
-          value={cohort}
-          onChange={(v) => pickCohort(v)}
-          disabled={course === 'all'}
-          options={[
-            { value: 'all', label: '기수 전체' },
-            ...(courseConfig.data?.cohorts ?? []).map((c) => ({
-              value: c.id,
-              label: `${c.cohortNo}기`,
-            })),
-          ]}
-          className="h-11"
-        />
-      </div>
+      {/* 과정·기수·멘토·검색·액션을 한 곳에 모은 관리 툴바 */}
+      <div
+        role="region"
+        aria-label="배정 관리 도구"
+        className="border-border bg-surface flex flex-col gap-3 rounded-xl border p-3.5 xl:flex-row xl:items-center xl:justify-between"
+      >
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <Select
+            aria-label="교육과정 선택"
+            value={course}
+            onChange={(v) => pickCourse(v)}
+            options={[
+              { value: 'all', label: '교육과정 전체' },
+              ...(courseList.data ?? []).map((c) => ({
+                value: c.courseId,
+                label: c.title,
+              })),
+            ]}
+            className="h-9"
+          />
+          <Select
+            aria-label="기수 선택"
+            value={cohort}
+            onChange={(v) => pickCohort(v)}
+            disabled={course === 'all'}
+            options={[
+              { value: 'all', label: '기수 전체' },
+              ...(courseConfig.data?.cohorts ?? []).map((c) => ({
+                value: c.id,
+                label: `${c.cohortNo}기`,
+              })),
+            ]}
+            className="h-9"
+          />
+          <Select
+            value={mentorFilter}
+            onChange={(v) => setMentorFilter(v)}
+            aria-label="멘토 필터"
+            disabled={!data}
+            options={[
+              { value: 'all', label: '멘토 전체' },
+              ...(data?.mentors ?? []).map((m) => ({
+                value: m.mentorId,
+                label: m.name,
+              })),
+            ]}
+            className="h-9"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="팀명·멘토명 검색"
+            aria-label="팀명·멘토명 검색"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-full rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none sm:w-60"
+          />
+        </div>
 
-      {/* Hero — 타이틀 + CTA */}
-      <div className="bg-brand shadow-hero mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6">
-        <p className="text-on-color text-lg font-bold">
-          반/기수별 팀 배정 · N시간 · 일지 템플릿 관리
-        </p>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={openStudentCreate}
-            className="bg-surface text-fg hover:bg-surface/90 inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-bold"
-          >
-            <Plus className="h-4 w-4" />새 배정 추가
-          </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
             to="/admin/mentoring/log-templates"
-            className="text-on-color inline-flex items-center gap-1.5 rounded-lg border border-white/40 px-4 py-2.5 text-[13px] font-bold hover:bg-white/10"
+            className="border-border text-fg hover:bg-surface-muted inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 text-[13px] font-bold"
           >
             <FileText className="h-4 w-4" />
             템플릿 관리
           </Link>
+          <button
+            type="button"
+            onClick={openStudentCreate}
+            disabled={cohort === 'all'}
+            title={
+              cohort === 'all'
+                ? '교육과정과 기수를 선택하면 배정을 추가할 수 있어요.'
+                : undefined
+            }
+            className="bg-brand text-on-color hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[13px] font-bold disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />새 배정 추가
+          </button>
         </div>
       </div>
 
@@ -424,34 +451,8 @@ export default function AssignmentsPage() {
       >
         {data && (
           <>
-            {/* 필터 바 */}
-            <div className="border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <Select
-                  value={mentorFilter}
-                  onChange={(v) => setMentorFilter(v)}
-                  aria-label="멘토 필터"
-                  options={[
-                    { value: 'all', label: '멘토 전체' },
-                    ...data.mentors.map((m) => ({
-                      value: m.mentorId,
-                      label: m.name,
-                    })),
-                  ]}
-                  className="h-9"
-                />
-              </div>
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="팀명·멘토명 검색"
-                aria-label="팀명·멘토명 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-60 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
-
             {/* 기수별 멘토링 카드 — 기수 그룹 안에 팀별 멘토링 카드 */}
-            <div className="mt-4 flex flex-col gap-6">
+            <div className="mt-6 flex flex-col gap-6">
               {cohortGroups.length === 0 ? (
                 <div className="border-border bg-surface rounded-xl border p-10 text-center">
                   <p className="text-fg-subtle text-sm">
@@ -467,7 +468,7 @@ export default function AssignmentsPage() {
                   return (
                     <section key={group.cohortId}>
                       {/* 기수 헤더 */}
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
                         <div className="flex items-center gap-2.5">
                           <span
                             className="bg-brand h-5 w-1 rounded-full"
@@ -490,14 +491,6 @@ export default function AssignmentsPage() {
                             )
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={openStudentCreate}
-                          className="border-border text-fg-muted hover:bg-surface-muted bg-surface inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-bold"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          배정 추가
-                        </button>
                       </div>
 
                       {/* 멘토링 카드 그리드 */}

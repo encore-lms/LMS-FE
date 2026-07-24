@@ -25,6 +25,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { applyTsStatus, patchTsCase } from '../flow'
+import { useCreateTsChangeRequest } from '../api/changeRequests'
 import { TS_CHANGE_ITEMS, type TsCase } from '../types'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348.
@@ -120,6 +121,7 @@ export default function ChangeRequestPage() {
   const navigate = useNavigate()
   const { id = '' } = useParams()
   const queryClient = useQueryClient()
+  const createChange = useCreateTsChangeRequest(id)
   const [selected, setSelected] = useState<string[]>(['해결', '결과'])
   const [reason, setReason] = useState(
     '멱등성 키 도입 이후의 해결 방식을 본문에 정확하게 반영하고, 결과에 재발 방지 조치를 추가하기 위함입니다. 외부 발표에서 받은 피드백으로 격리 수준 관련 수치도 보강합니다.',
@@ -175,15 +177,31 @@ export default function ChangeRequestPage() {
       toast.danger('변경할 항목을 1개 이상 선택해 주세요.')
       return
     }
-    const patch: Partial<TsCase> = { updatedAt: '최근 수정 방금' }
-    if (selected.includes('해결') && DIFF['해결'])
-      patch.resolution = DIFF['해결'].after
-    if (selected.includes('결과') && DIFF['결과'])
-      patch.result = DIFF['결과'].after
-    patchTsCase(queryClient, id, patch)
-    applyTsStatus(queryClient, id, 'reviewing', 'change')
-    toast.success('변경 제안을 보냈어요 · 강사 검토 대기 (검토 중)')
-    navigate('/student/troubleshooting')
+    // 선택 항목별 diff 를 실 BE 로 전송(강사가 항목별로 검토). 해결/결과만 원본 매핑 대상.
+    const changes = selected.map((label) => ({
+      label,
+      before: DIFF[label]?.before ?? '',
+      after: DIFF[label]?.after ?? '',
+    }))
+    createChange.mutate(
+      { requestReason: reason, changes },
+      {
+        onSuccess: () => {
+          // 로컬 미러 — 목록·상세가 즉시 '검토 중'으로 보이게(서버 반영과 별개 UX).
+          const patch: Partial<TsCase> = { updatedAt: '최근 수정 방금' }
+          if (selected.includes('해결') && DIFF['해결'])
+            patch.resolution = DIFF['해결'].after
+          if (selected.includes('결과') && DIFF['결과'])
+            patch.result = DIFF['결과'].after
+          patchTsCase(queryClient, id, patch)
+          applyTsStatus(queryClient, id, 'reviewing', 'change')
+          toast.success('변경 제안을 보냈어요 · 강사 검토 대기 (검토 중)')
+          navigate('/student/troubleshooting')
+        },
+        onError: () =>
+          toast.danger('변경 제안 전송에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+      },
+    )
   }
 
   return (

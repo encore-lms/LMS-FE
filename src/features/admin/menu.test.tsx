@@ -43,7 +43,8 @@ describe('adminMenu 사이드바 active highlight', () => {
   it('인입 격리 큐 경로에서는 인증 검토가 비활성', () => {
     renderAt('/admin/ingestion/quarantine')
     expect(isActive('인증 검토')).toBe(false)
-    expect(isActive('인입 격리 큐')).toBe(true)
+    // 데이터·연동 임시 숨김 — 사이드바 항목 부재. 재활성화 시 아래 복원.
+    // expect(isActive('인입 격리 큐')).toBe(true)
   })
 
   // 설정 하위 화면 — 계정 관리가 설정 랜딩이 되며 하위 탭은 prefix 매칭으로 '설정' 활성 유지.
@@ -74,9 +75,9 @@ describe('adminMenu 사이드바 대분류 드롭다운', () => {
     // 인증 검토 = 검토·심사 그룹 → 자동 펼침 + 자식 링크 노출
     expect(isExpanded('검토·심사')).toBe(true)
     expect(screen.queryByRole('link', { name: '인증 검토' })).not.toBeNull()
-    // 데이터·연동 그룹은 활성 자식 없음 → 접힘 → 자식 링크 DOM에 없음
-    expect(isExpanded('데이터·연동')).toBe(false)
-    expect(screen.queryByRole('link', { name: '인입 격리 큐' })).toBeNull()
+    // 데이터·연동 임시 숨김 — 그룹 부재. 재활성화 시 아래 복원.
+    // expect(isExpanded('데이터·연동')).toBe(false)
+    // expect(screen.queryByRole('link', { name: '인입 격리 큐' })).toBeNull()
   })
 
   it('접힌 그룹 헤더를 클릭하면 자식 링크가 펼쳐진다', () => {

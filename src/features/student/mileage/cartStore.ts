@@ -4,11 +4,14 @@ import type { Tone } from './types'
 export interface CartItem {
   productId: string
   name: string
-  price: number // 단가(M)
+  price: number // 단가(M) — flexible이면 수강생이 입력한 가격
   icon: 'book' | 'video' | 'cup' | 'gift'
   tone: Tone
   imageUrl?: string | null
   quantity: number
+  // 도서·인터넷 강의(수강생 직접 입력) — 가격을 수강생이 정하고 구매 링크를 제출.
+  flexible?: boolean
+  link?: string
 }
 
 interface CartState {

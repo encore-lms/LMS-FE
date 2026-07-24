@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast'
 import {
   apiErrorOf,
   useChangeAssignmentMentor,
+  useChangeAssignmentTemplate,
   useCreateMentorAssignment,
   useDeleteAssignment,
   useRenameTeam,
@@ -37,12 +38,14 @@ export function AssignmentManageModal({
   const toast = useToast()
   const updateHours = useUpdateAllocatedHours()
   const changeMentor = useChangeAssignmentMentor()
+  const changeTemplate = useChangeAssignmentTemplate()
   const createAssignment = useCreateMentorAssignment()
   const renameTeam = useRenameTeam()
   const deleteAssignment = useDeleteAssignment()
   const [teamName, setTeamName] = useState(row.teamName)
   const [hoursInput, setHoursInput] = useState(String(row.allocatedHours ?? ''))
   const [mentorId, setMentorId] = useState(row.mentor?.mentorId ?? '')
+  const [templateId, setTemplateId] = useState(row.logTemplateId ?? '')
   // 409 MENTOR_ASSIGNMENT_HAS_LOGS 수신 후 새 배정 생성 안내 노출
   const [replaceGuide, setReplaceGuide] = useState(false)
   // 배정 삭제 인라인 확인(파괴적이라 즉시 삭제 방지)
@@ -97,7 +100,7 @@ export function AssignmentManageModal({
       {
         onSuccess: (updated) => {
           toast.success(
-            `N시간 수정 — ${updated.teamName} · ${updated.allocatedHours}h (감소 시 기존 인정 유지 · 증가 시 재계산)`,
+            `배정 시간 수정 — ${updated.teamName} · ${updated.allocatedHours}h (감소 시 기존 인정 유지 · 증가 시 재계산)`,
           )
         },
         onError: (error) =>
@@ -126,6 +129,25 @@ export function AssignmentManageModal({
             toast.danger(message ?? '멘토 교체에 실패했어요.')
           }
         },
+      },
+    )
+  }
+
+  // 일지 템플릿 교체 — 이후 작성 일지에 새 템플릿 적용(기존 일지 스냅샷 보존, 언제든 교체 가능).
+  const saveTemplate = () => {
+    if (!templateId || templateId === (row.logTemplateId ?? '')) return
+    changeTemplate.mutate(
+      { assignmentId, logTemplateId: templateId },
+      {
+        onSuccess: (updated) => {
+          const name =
+            data.templates.find((t) => t.templateId === templateId)?.name ?? ''
+          toast.success(
+            `일지 템플릿 교체 — ${updated.teamName} · ${name} (이후 일지부터 적용)`,
+          )
+        },
+        onError: (error) =>
+          toast.danger(apiErrorOf(error).message ?? '템플릿 교체에 실패했어요.'),
       },
     )
   }
@@ -200,7 +222,7 @@ export function AssignmentManageModal({
 
         <section className="flex flex-col gap-1.5">
           <label htmlFor="manage-hours" className={FIELD_LABEL}>
-            배정 N시간 수정
+            배정 시간 수정
           </label>
           <div className="flex gap-2">
             <input
@@ -271,6 +293,40 @@ export function AssignmentManageModal({
               </button>
             </div>
           )}
+        </section>
+
+        <section className="flex flex-col gap-1.5">
+          <label className={FIELD_LABEL}>일지 템플릿 교체</label>
+          <div className="flex gap-2">
+            <Select
+              aria-label="일지 템플릿 교체"
+              value={templateId}
+              onChange={(v) => setTemplateId(v)}
+              placeholder={
+                data.templates.length === 0 ? '활성 템플릿 없음' : '템플릿 선택'
+              }
+              options={data.templates.map((t) => ({
+                value: t.templateId,
+                label: `${t.name}${t.isDefault ? ' (기본)' : ''}`,
+              }))}
+              className="h-10 w-full"
+            />
+            <Button
+              onClick={saveTemplate}
+              disabled={
+                changeTemplate.isPending ||
+                !templateId ||
+                templateId === (row.logTemplateId ?? '')
+              }
+              className="shrink-0"
+            >
+              교체
+            </Button>
+          </div>
+          <p className="text-fg-subtle text-xs">
+            교체하면 이후 작성하는 일지부터 새 템플릿 항목이 적용돼요 · 기존
+            일지는 그대로 보존됩니다.
+          </p>
         </section>
 
         {/* 배정 삭제 — 잘못 만든 배정 취소용. 활동 이력(일지·평가·추천서·예약)이 있으면 BE가 409로 거부한다. */}

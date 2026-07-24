@@ -372,8 +372,13 @@ export function AssignmentCreateModal({
     const h = Number(hours)
     if (!Number.isFinite(h) || h <= 0)
       return setError('배정 N시간은 0보다 커야 합니다.')
-    if (hasTemplates && !templateId)
-      return setError('일지 템플릿을 선택해 주세요.')
+    // 일지 템플릿은 필수 — 템플릿 없이는 배정 불가(§31 정책).
+    if (!templateId)
+      return setError(
+        hasTemplates
+          ? '일지 템플릿을 선택해 주세요.'
+          : '먼저 일지 템플릿을 만들어 주세요 — 템플릿 없이는 배정할 수 없어요.',
+      )
     createFromStudents.mutate(
       {
         cohortId,
@@ -381,7 +386,7 @@ export function AssignmentCreateModal({
         studentUserIds: selectedIds,
         mentorId,
         allocatedHours: h,
-        logTemplateId: templateId || undefined,
+        logTemplateId: templateId,
       },
       {
         onSuccess: (row) => {
@@ -410,7 +415,10 @@ export function AssignmentCreateModal({
           <Button variant="secondary" onClick={close}>
             취소
           </Button>
-          <Button onClick={submit} disabled={createFromStudents.isPending}>
+          <Button
+            onClick={submit}
+            disabled={createFromStudents.isPending || !templateId}
+          >
             {createFromStudents.isPending ? '저장 중…' : '배정 저장'}
           </Button>
         </>
@@ -508,16 +516,14 @@ export function AssignmentCreateModal({
           />
         </div>
 
-        {/* 기본 일지 템플릿 */}
+        {/* 기본 일지 템플릿 — 필수(§31): 템플릿 없이는 배정 불가 */}
         <div className="flex flex-col gap-1.5">
-          <span className={FIELD_LABEL}>
-            기본 일지 템플릿{hasTemplates ? ' *' : ''}
-          </span>
+          <span className={FIELD_LABEL}>기본 일지 템플릿 *</span>
           {!options.isPending && !hasTemplates ? (
-            <div className="border-border bg-surface-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed px-3 py-3">
-              <span className="text-fg-subtle inline-flex items-center gap-1.5 text-xs">
+            <div className="border-warning/40 bg-warning-bg/40 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed px-3 py-3">
+              <span className="text-warning inline-flex items-center gap-1.5 text-xs font-medium">
                 <FileWarning className="h-4 w-4" />
-                활성 템플릿 없음 · 일지 항목 없이 배정
+                활성 템플릿 없음 · 먼저 템플릿을 만들어야 배정할 수 있어요
               </span>
               <Link
                 to="/admin/mentoring/log-templates"

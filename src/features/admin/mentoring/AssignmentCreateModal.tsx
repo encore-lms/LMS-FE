@@ -33,6 +33,8 @@ interface AssignmentCreateModalProps {
   cohortLabel: string
   /** 팀명 자동 생성용 — 이 기수의 기존 팀 수 */
   existingTeamCount: number
+  /** 이미 다른 팀에 배정된 수강생 userId — 목록에 '배정됨' 표시 */
+  assignedStudentIds?: Set<string>
 }
 
 /** 진행률 색 — 신호등(초록/노랑/빨강), 차트 팔레트 토큰. */
@@ -313,6 +315,7 @@ export function AssignmentCreateModal({
   cohortId,
   cohortLabel,
   existingTeamCount,
+  assignedStudentIds,
 }: AssignmentCreateModalProps) {
   const toast = useToast()
   const options = useCohortStudents(cohortId)
@@ -450,21 +453,29 @@ export function AssignmentCreateModal({
               </p>
             ) : (
               <ul className="divide-border divide-y">
-                {filteredStudents.map((s) => (
-                  <li key={s.userId}>
-                    <label className="hover:bg-surface-muted flex cursor-pointer items-center gap-3 px-3 py-2.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(s.userId)}
-                        onChange={() => toggle(s.userId)}
-                        className="accent-brand h-4 w-4"
-                      />
-                      <span className="text-fg text-sm font-medium">
-                        {s.name}
-                      </span>
-                    </label>
-                  </li>
-                ))}
+                {filteredStudents.map((s) => {
+                  const assigned = assignedStudentIds?.has(s.userId) ?? false
+                  return (
+                    <li key={s.userId}>
+                      <label className="hover:bg-surface-muted flex cursor-pointer items-center gap-3 px-3 py-2.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(s.userId)}
+                          onChange={() => toggle(s.userId)}
+                          className="accent-brand h-4 w-4"
+                        />
+                        <span className="text-fg text-sm font-medium">
+                          {s.name}
+                        </span>
+                        {assigned && (
+                          <span className="bg-success-bg text-success ml-auto flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold">
+                            <Check className="h-3 w-3" /> 배정됨
+                          </span>
+                        )}
+                      </label>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>

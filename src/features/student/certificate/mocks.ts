@@ -968,18 +968,31 @@ const analyzedSentiment: CertSentiment = {
   trend: '하강 후 회복형: 번아웃(상담 초반) → 멘토 조언 → 후반 자신감 회복',
 }
 
+const certificateApiBase =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
+    /\/+$/,
+    '',
+  ) || '/api'
+
+export const CERTIFICATE_MOCK_ENDPOINTS = {
+  overview: `${certificateApiBase}/student/certificate`,
+  changes: `${certificateApiBase}/student/certificate/changes`,
+  publication: `${certificateApiBase}/student/certificate/publication`,
+  sentiment: `${certificateApiBase}/student/certificate/sentiment/analyze`,
+} as const
+
 export const handlers = [
-  http.get('/api/student/certificate', () =>
+  http.get(CERTIFICATE_MOCK_ENDPOINTS.overview, () =>
     ok<CertificateOverview>(mockOverview),
   ),
-  http.get('/api/student/certificate/changes', () =>
+  http.get(CERTIFICATE_MOCK_ENDPOINTS.changes, () =>
     ok<CertChangesData>(mockChanges),
   ),
-  http.get('/api/student/certificate/publication', () =>
+  http.get(CERTIFICATE_MOCK_ENDPOINTS.publication, () =>
     ok<CertPublicationData>(mockPublication),
   ),
   // 녹음 업로드 → 분석. 실제 처리시간을 흉내내 약 2.2초 지연 후 결과 반환.
-  http.post('/api/student/certificate/sentiment/analyze', async () => {
+  http.post(CERTIFICATE_MOCK_ENDPOINTS.sentiment, async () => {
     await delay(2200)
     return ok<CertSentiment>(analyzedSentiment)
   }),

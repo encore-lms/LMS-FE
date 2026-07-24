@@ -14,6 +14,7 @@ import {
 import { MileageTabs } from '../MileageTabs'
 import { ProductFormModal } from './ProductFormModal'
 import {
+  PRODUCT_TYPE_LABEL,
   useDeleteProduct,
   useMileageProducts,
   useUpsertProduct,
@@ -64,7 +65,7 @@ export default function ProductsPage() {
         rows: [
           {
             label: '상품',
-            value: `[${deleteTarget.type}] ${deleteTarget.name}`,
+            value: `[${PRODUCT_TYPE_LABEL[deleteTarget.type]}] ${deleteTarget.name}`,
           },
           { label: '판매', value: `${deleteTarget.salesCount}건` },
           { label: '주의', value: '삭제 후 복구할 수 없습니다.' },
@@ -162,7 +163,7 @@ export default function ProductsPage() {
                 key={t.type}
                 className="border-divider flex flex-wrap items-center gap-2 border-t py-2.5 text-[13px] first:border-t-0"
               >
-                <StatusBadge label={t.type} tone="neutral" />
+                <StatusBadge label={PRODUCT_TYPE_LABEL[t.type]} tone="neutral" />
                 <span className="text-fg font-semibold">{t.mode}</span>
                 <span className="text-fg-muted">{t.note}</span>
               </li>
@@ -270,7 +271,7 @@ function ProductCard({
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center gap-1.5">
-          <StatusBadge label={p.type} tone="neutral" />
+          <StatusBadge label={PRODUCT_TYPE_LABEL[p.type]} tone="neutral" />
           <StatusBadge
             label={p.active ? '활성' : '비활성'}
             tone={p.active ? 'success' : 'neutral'}

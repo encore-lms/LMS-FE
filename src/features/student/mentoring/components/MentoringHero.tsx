@@ -2,7 +2,10 @@ import type { MentoringData } from '../types'
 
 // 멘토링 히어로 — 팀명·담당 멘토·상태 + 진행/완료 KPI. 히어로 배경은 brand 단색 통일(SSOT).
 export function MentoringHero({ data }: { data: MentoringData }) {
-  const { teamName, mentor, kpis, activeRequest } = data
+  const { teamName, mentor, kpis } = data
+  const hasProposal = (
+    data.activeRequests ?? (data.activeRequest ? [data.activeRequest] : [])
+  ).some((request) => request.status === 'proposed')
   return (
     <section className="bg-brand flex items-center justify-between gap-6 rounded-2xl px-7 py-6 text-white shadow-[0px_8px_22px_0px_rgba(26,140,133,0.18)]">
       <div className="flex flex-col gap-2">
@@ -21,7 +24,7 @@ export function MentoringHero({ data }: { data: MentoringData }) {
                   담당 멘토 {mentor.name}
                 </span>
               </span>
-              {activeRequest?.status === 'proposed' && (
+              {hasProposal && (
                 <span className="bg-warning-bg text-warning rounded-[7px] px-2.5 py-[5px] text-[12px] font-bold">
                   조정 제안 응답 대기
                 </span>
@@ -63,7 +66,7 @@ export function MentoringHero({ data }: { data: MentoringData }) {
           </span>
           <span className="text-[22px] font-bold">{kpis.inProgress}</span>
           <span className="text-[10px] font-medium text-white/90">
-            요청 {kpis.inProgress} / 한도 {kpis.requestLimit}
+            진행 {kpis.inProgress} / 한도 {kpis.requestLimit}
           </span>
         </div>
         <span className="h-10 w-px bg-white/40" />

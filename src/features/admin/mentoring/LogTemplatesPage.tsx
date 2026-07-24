@@ -10,6 +10,7 @@ import {
   Pencil,
   Plus,
   RotateCcw,
+  Trash2,
   XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -21,6 +22,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import {
   apiErrorOf,
+  useDeleteLogTemplate,
   useDuplicateLogTemplate,
   useLogTemplates,
   useSetTemplateStatus,
@@ -50,6 +52,7 @@ export default function LogTemplatesPage() {
   const { data, isPending, isError, refetch } = useLogTemplates()
   const duplicateTemplate = useDuplicateLogTemplate()
   const setStatus = useSetTemplateStatus()
+  const deleteTemplate = useDeleteLogTemplate()
   const updateFields = useUpdateTemplateFields()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -64,6 +67,9 @@ export default function LogTemplatesPage() {
   const [deleteField, setDeleteField] = useState<AdminTemplateField | null>(
     null,
   )
+  // 템플릿 삭제 확인 대상(null이면 닫힘) — 기본·사용 중이면 BE가 거부(토스트 안내).
+  const [deleteTemplateTarget, setDeleteTemplateTarget] =
+    useState<AdminLogTemplate | null>(null)
   const [fieldModal, setFieldModal] = useState<{
     mode: 'add' | 'edit'
     field?: AdminTemplateField
@@ -175,6 +181,32 @@ export default function LogTemplatesPage() {
         onSettled: () => setDeleteField(null),
       },
     )
+  }
+
+  const deleteTemplateSpec: ActionModalSpec | null = deleteTemplateTarget
+    ? {
+        title: '일지 템플릿 삭제',
+        subtitle:
+          '템플릿과 항목을 삭제합니다. 기본 템플릿이거나 사용 중인 배정이 있으면 삭제할 수 없어요(작성된 일지는 스냅샷으로 보존).',
+        rows: [
+          { label: '템플릿', value: deleteTemplateTarget.name },
+          { label: '항목 수', value: `${deleteTemplateTarget.fields.length}개` },
+          { label: '적용 팀', value: `${deleteTemplateTarget.appliedTeamCount}팀` },
+        ],
+        confirmLabel: '삭제',
+      }
+    : null
+  const removeTemplate = () => {
+    if (!deleteTemplateTarget) return
+    const target = deleteTemplateTarget
+    deleteTemplate.mutate(target.templateId, {
+      onSuccess: () => {
+        toast.success(`템플릿 삭제 — ${target.name}`)
+        if (selectedId === target.templateId) setSelectedId(null)
+      },
+      onError: (error) => mutationError(error, '템플릿 삭제에 실패했어요.'),
+      onSettled: () => setDeleteTemplateTarget(null),
+    })
   }
 
   const moveField = (field: AdminTemplateField, dir: -1 | 1) => {
@@ -408,6 +440,15 @@ export default function LogTemplatesPage() {
                               복원
                             </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTemplateTarget(selected)}
+                            disabled={deleteTemplate.isPending}
+                            className="border-danger/40 text-danger hover:bg-danger-bg bg-surface inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            삭제
+                          </button>
                         </div>
                       </div>
                       <div className="border-divider grid grid-cols-1 gap-3 border-t px-5 py-4 sm:grid-cols-3">
@@ -587,6 +628,13 @@ export default function LogTemplatesPage() {
               onClose={() => setDeleteField(null)}
               onConfirm={removeField}
               pending={updateFields.isPending}
+            />
+            {/* 템플릿 삭제 확인 — 기본·사용 중이면 BE가 거부(토스트) */}
+            <ActionModal
+              spec={deleteTemplateSpec}
+              onClose={() => setDeleteTemplateTarget(null)}
+              onConfirm={removeTemplate}
+              pending={deleteTemplate.isPending}
             />
             {fieldModal && selected && (
               <FieldFormModal

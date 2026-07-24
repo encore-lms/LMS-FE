@@ -821,14 +821,3 @@ export function TabHead({
     </div>
   )
 }
-
-export function AiBanner({ text }: { text: string }) {
-  return (
-    <div className="bg-warning-bg/50 border-warning flex flex-col gap-1 rounded-[14px] border p-4">
-      <span className="text-warning w-fit rounded bg-white px-1.5 py-0.5 text-[10px] font-bold">
-        AI · 종합 분석
-      </span>
-      <span className="text-fg-muted text-[12px] leading-5">{text}</span>
-    </div>
-  )
-}

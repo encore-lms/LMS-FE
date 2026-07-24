@@ -425,6 +425,13 @@ describe('SummaryTab', () => {
     expect(screen.queryByText(/mock|정책 2026\.07\.20/)).not.toBeInTheDocument()
     expect(screen.getByText('Grade B')).toBeInTheDocument()
     expect(screen.getByText('전체 상위 31.7%')).toBeInTheDocument()
+    expect(screen.getByText('종합 산정 축')).toBeInTheDocument()
+    expect(screen.getByText('산출 상태')).toBeInTheDocument()
+    expect(screen.getByText('종합 방식')).toBeInTheDocument()
+    expect(screen.queryByText('데이터 안내')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('수동 채점 대기 시험 1건은 계산에서 제외했습니다.'),
+    ).not.toBeInTheDocument()
     expect(container.querySelectorAll('[data-summary-kpi]')).toHaveLength(6)
     expect(screen.getByText('블로그 제출률')).toBeInTheDocument()
     expect(screen.queryByText('과제 제출률')).not.toBeInTheDocument()

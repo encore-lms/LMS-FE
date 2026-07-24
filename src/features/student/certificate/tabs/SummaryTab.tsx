@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, AlertTriangle, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
@@ -711,24 +711,6 @@ function ScoreEvidencePanel({
   )
 }
 
-function ScoreWarnings({ warnings }: { warnings: string[] }) {
-  if (warnings.length === 0) return null
-
-  return (
-    <section className="border-warning/20 bg-warning-bg/45 flex items-start gap-2 rounded-xl border px-4 py-3">
-      <AlertTriangle className="text-warning mt-0.5 size-4 shrink-0" />
-      <div className="flex flex-col gap-1">
-        <span className="text-fg-muted text-[11px] font-bold">데이터 안내</span>
-        {warnings.map((warning) => (
-          <span key={warning} className="text-fg-subtle text-[10px] leading-4">
-            {warning}
-          </span>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function ScoreSummary({
   score,
   ontology,
@@ -791,7 +773,6 @@ function ScoreSummary({
     score.overallRelative.scope === 'ALL_STUDENTS' ? '전체' : '기수'
   const miniStats = [
     { value: `${score.axes.length}개`, label: '종합 산정 축' },
-    { value: `${score.warnings.length}건`, label: '데이터 안내' },
     { value: scoreStatusLabel[score.status], label: '산출 상태' },
     { value: '균등 평균', label: '종합 방식' },
   ]
@@ -878,7 +859,7 @@ function ScoreSummary({
             </div>
           </div>
 
-          <div className="border-divider grid grid-cols-2 gap-3 border-t pt-4 sm:grid-cols-4">
+          <div className="border-divider grid grid-cols-2 gap-3 border-t pt-4 sm:grid-cols-3">
             {miniStats.map((item) => (
               <div key={item.label} className="flex flex-col gap-0.5">
                 <span className="text-fg text-[15px] font-bold">
@@ -989,8 +970,6 @@ function ScoreSummary({
           onSelectAxis={setSelectedAxisKey}
         />
       </div>
-
-      <ScoreWarnings warnings={score.warnings} />
 
       {CERT_V2 && <DomainDonut domains={domains} />}
       {CERT_V2 && ontology && <OntologyMap ontology={ontology} />}

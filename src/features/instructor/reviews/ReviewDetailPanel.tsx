@@ -225,7 +225,7 @@ function ProjectBody({
                 </span>
                 {m.role && (
                   <span className="bg-surface-muted text-fg-subtle rounded px-1.5 py-px text-[10px] font-bold">
-                    {m.role}
+                    {m.role === 'LEADER' ? '팀장' : m.role}
                   </span>
                 )}
               </li>

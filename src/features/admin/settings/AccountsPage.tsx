@@ -295,7 +295,7 @@ export default function AccountsPage() {
                           ? `${a.name} 계정을 비활성화합니다. 로그인이 차단됩니다.`
                           : `${a.name} 계정을 활성화합니다. 로그인이 다시 허용됩니다.`,
                         rows: [
-                          { label: '계정', value: `${a.name} · ${a.role}` },
+                          { label: '계정', value: `${a.name} · ${ROLE_LABEL[a.role]}` },
                           {
                             label: '처리',
                             value: isActive

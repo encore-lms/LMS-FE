@@ -108,13 +108,13 @@ describe('PurchaseRequestsPage (마일리지 구매 요청)', () => {
     expect(screen.getByText('한도 초과 — 승인 차단')).toBeInTheDocument()
   })
 
-  it('상태 필터 — APPROVED 선택 시 승인 완료 행이 보인다', async () => {
+  it('상태 필터 — 승인 선택 시 승인 완료 행이 보인다', async () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(screen.getByLabelText('상태 필터'))
     await user.click(
       within(screen.getByRole('listbox')).getByRole('button', {
-        name: 'APPROVED',
+        name: /^승인/,
       }),
     )
     expect(screen.getByText('메가커피 디저트 세트')).toBeInTheDocument()

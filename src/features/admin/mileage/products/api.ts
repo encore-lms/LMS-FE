@@ -24,7 +24,7 @@ const EMOJI: Record<ProductType, string> = {
   GOODS: '📚',
   ETC: '🎬',
 }
-const LABEL: Record<ProductType, string> = {
+export const PRODUCT_TYPE_LABEL: Record<ProductType, string> = {
   COUPON: '기프티콘',
   GOODS: '도서',
   ETC: '인터넷 강의',
@@ -54,7 +54,7 @@ function toProductsData(be: BeListResponse): ProductsData {
       { type: 'all', label: '전체', count: products.length },
       ...TYPES.map((t) => ({
         type: t,
-        label: LABEL[t],
+        label: PRODUCT_TYPE_LABEL[t],
         count: products.filter((p) => p.type === t).length,
       })),
     ],

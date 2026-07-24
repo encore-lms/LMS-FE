@@ -19,7 +19,6 @@ import {
 } from './statusMeta'
 import { AssignmentFormModal } from './AssignmentFormModal'
 import { AssignmentCreateModal } from './AssignmentCreateModal'
-import { EarlyEndModal } from './EarlyEndModal'
 import type { MentorAssignmentRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
@@ -29,17 +28,14 @@ function MentoringCard({
   logStat,
   logsPending,
   onAssign,
-  onEarlyEnd,
 }: {
   team: MentorAssignmentRow
   logStat?: { total: number; uncertified: number }
   logsPending: boolean
   onAssign: () => void
-  onEarlyEnd: () => void
 }) {
   const navigate = useNavigate()
   const meta = ASSIGNMENT_STATUS_META[assignmentDisplayStatus(team)]
-  const displayStatus = assignmentDisplayStatus(team)
   const progress = team.recognizedHours ?? 0
   const remaining =
     team.allocatedHours !== null
@@ -186,30 +182,20 @@ function MentoringCard({
         </div>
       </div>
 
-      {/* 액션 — 카드 클릭(상세 이동)과 분리(전파 차단). 수정·일지 항목은 상세 페이지로 이동. */}
-      {(!team.assignmentId || displayStatus === 'in_progress') && (
+      {/* 액션 — 미배정 팀의 멘토 배정만. 조기 종료·수정·일지 항목은 상세 페이지에서. */}
+      {!team.assignmentId && (
         <div
           onClick={(e) => e.stopPropagation()}
           className="border-divider flex flex-wrap items-center gap-1.5 border-t pt-3"
         >
-          {!team.assignmentId ? (
-            <button
-              type="button"
-              onClick={onAssign}
-              className="bg-danger text-on-color hover:bg-danger/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
-            >
-              <UserPlus className="h-3 w-3" />
-              멘토 배정
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onEarlyEnd}
-              className="bg-warning-bg text-warning hover:bg-warning-bg/70 rounded-md px-2.5 py-1.5 text-[11px] font-bold"
-            >
-              조기 종료
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onAssign}
+            className="bg-danger text-on-color hover:bg-danger/90 inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold"
+          >
+            <UserPlus className="h-3 w-3" />
+            멘토 배정
+          </button>
         </div>
       )}
     </div>
@@ -290,9 +276,6 @@ export default function AssignmentsPage() {
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
-  const [earlyEndRow, setEarlyEndRow] = useState<MentorAssignmentRow | null>(
-    null,
-  )
   const toast = useToast()
 
   const rows = useMemo(() => data?.rows ?? [], [data])
@@ -526,7 +509,6 @@ export default function AssignmentsPage() {
                             logStat={logStats.get(team.teamId)}
                             logsPending={logs.isPending}
                             onAssign={() => openCreate(team.teamId)}
-                            onEarlyEnd={() => setEarlyEndRow(team)}
                           />
                         ))}
                       </div>
@@ -560,13 +542,6 @@ export default function AssignmentsPage() {
                 }}
                 data={data}
                 presetTeamId={formTeamId}
-              />
-            )}
-            {earlyEndRow && (
-              <EarlyEndModal
-                open
-                onClose={() => setEarlyEndRow(null)}
-                row={earlyEndRow}
               />
             )}
           </>

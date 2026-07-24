@@ -17,6 +17,11 @@ import type {
 } from '@/shared/types'
 
 vi.mock('../api/changeRequests')
+// 요청자 이름 join — 담당 기수 통합 로스터 훅을 고정 이름 매핑으로 mock.
+vi.mock('../api/console', () => ({
+  useCohortRosterMap: () => (userId: string) =>
+    ({ 'u-mj': '김민준', 'u-sy': '이서연' })[userId] ?? '(이름 미확인)',
+}))
 
 // 신규 mutation 훅은 auto-mock 시 undefined → .mutateAsync 호출이 터진다.
 // 검토 화면은 낙관적 로컬 제거(resolved set)로 행을 즉시 숨기므로, mutateAsync는
@@ -33,7 +38,7 @@ const changeRequests: InstructorChangeRequestsData = {
       id: 'cr-1',
       type: 'project',
       target: '추천 영상 큐레이션',
-      requester: '김민준 PM',
+      requesterUserId: 'u-mj',
       status: 'requested',
       certifierAbsent: false,
       changes: [
@@ -49,7 +54,7 @@ const changeRequests: InstructorChangeRequestsData = {
       id: 'cr-2',
       type: 'troubleshooting',
       target: 'OOM 원인 분석',
-      requester: '이서연',
+      requesterUserId: 'u-sy',
       status: 'reviewing',
       certifierAbsent: true,
       changes: [
@@ -70,7 +75,7 @@ const recertifications: RecertificationsData = {
       id: 'rc-1',
       type: 'project',
       target: '추천 영상 큐레이션',
-      requesterLabel: 'PM 김민준',
+      requesterUserId: 'u-mj',
       summary: '수정 완료 요청',
       changes: [
         {
@@ -85,7 +90,7 @@ const recertifications: RecertificationsData = {
       id: 'rc-2',
       type: 'troubleshooting',
       target: 'OOM 원인 분석',
-      requesterLabel: '이서연',
+      requesterUserId: 'u-sy',
       summary: '수정 완료 요청',
       changes: [
         {
@@ -176,7 +181,7 @@ describe('RecertificationsPage (P0 29)', () => {
     renderAt('/instructor/recertifications')
     expect(screen.getByText('재인증 요청 상세')).toBeInTheDocument()
     expect(
-      screen.getByText(/추천 영상 큐레이션 · PM 김민준 · 수정 완료 요청/),
+      screen.getByText(/추천 영상 큐레이션 · 김민준 · 수정 완료 요청/),
     ).toBeInTheDocument()
     expect(screen.getByText('산출물: 최종 발표 PDF 교체')).toBeInTheDocument()
     expect(

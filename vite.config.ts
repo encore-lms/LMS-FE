@@ -93,6 +93,17 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // 강사 인증 후 변경 제안·재인증(/instructor/change-requests·recertifications) learning-service 실연동.
+      '/api/instructor/change-requests': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      '/api/instructor/recertifications': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 강사 퀴즈 템플릿(/instructor/quiz-templates) learning-service 실연동(mock 제거).
       '/api/instructor/quiz-templates': {
         target: HRD_API_TARGET,

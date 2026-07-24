@@ -70,18 +70,18 @@ export default function RecordReviewPage({
     courseId,
     cohortId,
   )
-  // 실 BE는 학생 실명이 없어 studentUserId 라벨만 준다 — 로스터 join으로 실명 치환(이름 있으면 유지).
   // 강사는 계정 목록(/users/students) 조회가 막혀 있어(403) 담당 기수 로스터를 쓴다.
-  const { data: roster } = useCohortRoster(cohortId === 'none' ? null : cohortId)
+  // 그리드 행은 매니저 기록실(RecordsGridPage)과 동일하게 이 로스터(수강생 명단)를 뼈대로
+  // 만든다 — 기록이 없어도 수강생 행 + 주차 열이 서고, BE 기록은 셀에 얹는다(아래 rows 참조).
+  const { data: roster, isLoading: rosterLoading } = useCohortRoster(
+    cohortId === 'none' ? null : cohortId,
+  )
+  // 상세 패널 본문은 studentUserId만 오므로 로스터로 실명 치환(rows 이름은 로스터에서 직접).
   const data = useMemo(() => {
     if (!raw) return raw
     const items = roster ?? []
     if (items.length === 0) return raw
     const nameById = new Map(items.map((s) => [s.userId, s.name]))
-    const fixStudent = <T extends { student: RecordGridStudent }>(r: T): T =>
-      nameById.has(r.student.id)
-        ? { ...r, student: { ...r.student, name: nameById.get(r.student.id)! } }
-        : r
     const fixDetail = <D extends { studentName: string; studentUserId?: string }>(
       d: D,
     ): D =>
@@ -96,9 +96,6 @@ export default function RecordReviewPage({
       )
     return {
       ...raw,
-      blog: raw.blog.map(fixStudent),
-      study: raw.study.map(fixStudent),
-      cert: raw.cert.map(fixStudent),
       blogDetails: mapValues(raw.blogDetails),
       studyDetails: mapValues(raw.studyDetails),
       certDetails: mapValues(raw.certDetails),
@@ -139,33 +136,74 @@ export default function RecordReviewPage({
     ([{ id: cohortId, label: cohortId }] as RecordCourseTab['cohorts'])
 
   const needle = q.trim()
-  // 검토 목록 3종 모두 이름 가나다순 고정(운영 요구)
-  const blogRows = useMemo(
-    () =>
-      [...(data?.blog ?? [])]
-        .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) =>
-          (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko'),
-        ),
-    [data, needle],
+  // 그리드 행 = 로스터(수강생 명단) 뼈대 × BE 기록 셀 병합 (매니저 RecordsGridPage와 동일).
+  // BE 기록이 있는 학생은 studentUserId로 매칭해 셀을 채우고, 없으면 빈 셀 행으로 남긴다.
+  // 이름은 로스터에서 직접 취하고(실명), birth·atRisk는 BE 행이 있으면 유지한다.
+  const rosterList = useMemo(() => roster ?? [], [roster])
+  const byBlog = useMemo(
+    () => new Map((data?.blog ?? []).map((r) => [r.student.id, r])),
+    [data],
   )
-  const studyRows = useMemo(
-    () =>
-      [...(data?.study ?? [])]
-        .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) =>
-          (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko'),
-        ),
-    [data, needle],
+  const byStudy = useMemo(
+    () => new Map((data?.study ?? []).map((r) => [r.student.id, r])),
+    [data],
   )
-  const certRows = useMemo(
+  const byCert = useMemo(
+    () => new Map((data?.cert ?? []).map((r) => [r.student.id, r])),
+    [data],
+  )
+  const weekCount = data?.weeks.length ?? 0
+  // 로스터를 이름 필터·가나다순 정렬한 (userId·name) 목록 — 3종 그리드 공용 뼈대.
+  const rosterSorted = useMemo(
     () =>
-      [...(data?.cert ?? [])]
-        .filter((r) => !needle || r.student.name.includes(needle))
-        .sort((a, b) =>
-          (a.student.name ?? '').localeCompare(b.student.name ?? '', 'ko'),
-        ),
-    [data, needle],
+      rosterList
+        .filter((s) => !needle || s.name.includes(needle))
+        .sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    [rosterList, needle],
+  )
+  const studentOf = (s: { userId: string; name: string }, birth = '', atRisk?: boolean) =>
+    ({ id: s.userId, name: s.name, birth, atRisk }) satisfies RecordGridStudent
+  const blogRows = useMemo<BlogGridRow[]>(
+    () =>
+      rosterSorted.map((s) => {
+        const g = byBlog.get(s.userId)
+        return {
+          student: studentOf(s, g?.student.birth ?? '', g?.student.atRisk),
+          cells: g?.cells ?? {},
+          submissionIds: g?.submissionIds ?? {},
+          completed: g?.completed ?? 0,
+          total: g?.total ?? weekCount,
+        }
+      }),
+    [rosterSorted, byBlog, weekCount],
+  )
+  const studyRows = useMemo<StudyGridRow[]>(
+    () =>
+      rosterSorted.map((s) => {
+        const g = byStudy.get(s.userId)
+        return {
+          student: studentOf(s, g?.student.birth ?? '', g?.student.atRisk),
+          cells: g?.cells ?? {},
+          submissionIds: g?.submissionIds ?? {},
+          streakWeeks: g?.streakWeeks ?? 0,
+          mileagePaid: g?.mileagePaid ?? false,
+        }
+      }),
+    [rosterSorted, byStudy],
+  )
+  const certRows = useMemo<CertGridRow[]>(
+    () =>
+      rosterSorted.map((s) => {
+        const g = byCert.get(s.userId)
+        return {
+          student: studentOf(s, g?.student.birth ?? '', g?.student.atRisk),
+          certs: g?.certs ?? { PCCE: 'none', PCCP: 'none', PCSQL: 'none' },
+          submissionIds: g?.submissionIds ?? {},
+          mileage: g?.mileage ?? 0,
+          paid: g?.paid ?? false,
+        }
+      }),
+    [rosterSorted, byCert],
   )
 
   return (
@@ -216,9 +254,9 @@ export default function RecordReviewPage({
         </div>
       </div>
 
-      {/* 본문 */}
+      {/* 본문 — 그리드 뼈대가 로스터라, 명단 로딩도 로딩에 포함(빈 상태 깜빡임 방지). */}
       <DataBoundary
-        isPending={isPending}
+        isPending={isPending || rosterLoading}
         isError={isError || !data}
         onRetry={() => refetch()}
         loadingText="불러오는 중…"
@@ -279,8 +317,8 @@ function EmptyGrid() {
   return (
     <Empty
       icon={<AlertTriangle />}
-      title="이 기수의 학습 기록이 없어요"
-      description="다른 기수를 선택하거나 검색어를 지워 보세요."
+      title="이 기수에 수강생이 없어요"
+      description="매니저가 HRD 계정 동기화로 수강생을 등록하면 그리드가 표시됩니다."
     />
   )
 }

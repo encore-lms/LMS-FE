@@ -47,7 +47,6 @@ export function AssignmentFormModal({
     handleSubmit,
     watch,
     setValue,
-    setError,
     reset,
     formState: { errors },
   } = useForm<AssignmentInput>({
@@ -80,19 +79,13 @@ export function AssignmentFormModal({
   }
 
   const onValid = (values: AssignmentInput) => {
-    if (data.templates.length > 0 && !values.logTemplateId) {
-      setError('logTemplateId', {
-        type: 'manual',
-        message: '일지 템플릿을 선택해주세요',
-      })
-      return
-    }
+    // 일지 템플릿 필수는 스키마(min(1))에서 선차단 — 여기선 항상 전송한다.
     createAssignment.mutate(
       {
         teamId: values.teamId,
         mentorId: values.mentorId,
         allocatedHours: values.allocatedHours,
-        logTemplateId: values.logTemplateId || undefined,
+        logTemplateId: values.logTemplateId,
       },
       {
         onSuccess: (row) => {
@@ -129,7 +122,7 @@ export function AssignmentFormModal({
           <Button
             type="submit"
             form="assignment-form"
-            disabled={createAssignment.isPending}
+            disabled={createAssignment.isPending || !watch('logTemplateId')}
           >
             {createAssignment.isPending ? '저장 중…' : '배정 저장'}
           </Button>
@@ -251,9 +244,7 @@ export function AssignmentFormModal({
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className={FIELD_LABEL}>
-            기본 일지 템플릿{data.templates.length > 0 ? ' *' : ''}
-          </span>
+          <span className={FIELD_LABEL}>기본 일지 템플릿 *</span>
           <Controller
             name="logTemplateId"
             control={control}
@@ -281,7 +272,7 @@ export function AssignmentFormModal({
           />
           <p className="text-fg-subtle text-xs">
             {data.templates.length === 0
-              ? '일지 항목 없이 먼저 배정합니다'
+              ? '활성 템플릿 없음 · 먼저 템플릿을 만들어야 배정할 수 있어요'
               : '배정 시 기본 템플릿 선택 (일지 템플릿에서 관리)'}
           </p>
           {errors.logTemplateId && (

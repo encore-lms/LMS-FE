@@ -14,6 +14,11 @@ import {
   type EditRequestStatus,
   type ProjectContent,
 } from './workspace/useProjectFlow'
+import {
+  useProjectChangeStatus,
+  useRequestProjectChange,
+  useSubmitProjectRevision,
+} from './api/changeRequests'
 
 // 프로젝트 수정 권한 요청 (/student/projects/:projectId/change-requests/new)
 // — Figma 4859:6731(요청·locked) · 4857:6654(승인 후·editing).
@@ -56,6 +61,16 @@ export default function ChangeRequestPage() {
     useProjectFlow((s) => s.projectContent[projectId]) ??
     DEFAULT_PROJECT_CONTENT
 
+  // 서버가 상태 정본 — 강사 승인/반려가 여기로 반영된다. zustand 는 화면 공용 미러라 동기화.
+  const { data: serverStatus } = useProjectChangeStatus(projectId)
+  const requestMutation = useRequestProjectChange(projectId)
+  const submitMutation = useSubmitProjectRevision(projectId)
+  useEffect(() => {
+    if (!serverStatus) return
+    if (serverStatus.status === 'none') resetEditRequest(projectId)
+    else setEditRequest(projectId, serverStatus)
+  }, [serverStatus, projectId, setEditRequest, resetEditRequest])
+
   // 만료된 승인은 잠금(none)으로 간주하고 스토어도 정리한다.
   const expired = isEditWindowExpired(editRequest)
   const status: EditRequestStatus = expired
@@ -81,9 +96,13 @@ export default function ChangeRequestPage() {
       toast.danger('수정 사유를 입력해 주세요')
       return
     }
-    // 계약 확정 시 apiClient.post(`/student/projects/${projectId}/edit-requests`, { requestReason: reason })로 교체.
-    setEditRequest(projectId, { status: 'requested', requestReason: reason })
-    toast.success('수정 권한을 요청했어요')
+    requestMutation.mutate(reason, {
+      onSuccess: () => {
+        setEditRequest(projectId, { status: 'requested', requestReason: reason })
+        toast.success('수정 권한을 요청했어요')
+      },
+      onError: () => toast.danger('수정 권한 요청에 실패했어요'),
+    })
   }
   const cancelRequest = () => {
     resetEditRequest(projectId)
@@ -94,9 +113,13 @@ export default function ChangeRequestPage() {
       toast.danger('변경 요약을 입력해 주세요')
       return
     }
-    // 계약 확정 시 apiClient.post(`/student/projects/${projectId}/edit-requests/submit`, { changeSummary: summary })로 교체.
-    setEditRequest(projectId, { status: 'submitted', changeSummary: summary })
-    toast.success('수정 완료를 제출했어요')
+    submitMutation.mutate(summary, {
+      onSuccess: () => {
+        setEditRequest(projectId, { status: 'submitted', changeSummary: summary })
+        toast.success('수정 완료를 제출했어요')
+      },
+      onError: () => toast.danger('수정 완료 제출에 실패했어요'),
+    })
   }
   const goEditOriginal = () => navigate(`/student/projects/${projectId}`)
 

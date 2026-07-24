@@ -1,4 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import { createPortal } from 'react-dom'
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 
@@ -77,8 +85,30 @@ export function DateTimePicker({
   className,
 }: DateTimePickerProps) {
   const id = useId()
-  const ref = useRef<HTMLDivElement>(null)
+  // 팝오버는 body 로 portal 렌더한다 — 모달 등 overflow 컨테이너 안에서 잘리지 않게.
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
+  // 팝오버 fixed 위치(트리거 기준). 화면 하단을 넘으면 위로 뒤집는다.
+  const [pos, setPos] = useState<{ top: number; left: number; width: number }>({
+    top: 0,
+    left: 0,
+    width: 300,
+  })
+
+  // 대략적인 패널 높이(달력 ~360, 시간 ~300). flip 판정용 상한.
+  const PANEL_H = 360
+  const updatePos = useCallback(() => {
+    const r = triggerRef.current?.getBoundingClientRect()
+    if (!r) return
+    const below = r.bottom + 6
+    const flip = below + PANEL_H > window.innerHeight && r.top - 6 - PANEL_H > 0
+    setPos({
+      top: flip ? r.top - 6 - PANEL_H : below,
+      left: Math.min(r.left, window.innerWidth - 300 - 8),
+      width: r.width,
+    })
+  }, [])
   // datetime 모드의 단계: 달력 → 시간.
   const [view, setView] = useState<'calendar' | 'time'>(
     mode === 'time' ? 'time' : 'calendar',
@@ -119,18 +149,31 @@ export function DateTimePicker({
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      // 트리거·패널(portal) 밖 클릭이면 닫는다.
+      if (
+        !triggerRef.current?.contains(t) &&
+        !panelRef.current?.contains(t)
+      ) {
+        setOpen(false)
+      }
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
+    // 스크롤·리사이즈로 트리거가 움직이면 팝오버 위치를 따라간다.
+    const onReflow = () => updatePos()
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', onReflow, true)
+    window.addEventListener('resize', onReflow)
     return () => {
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onReflow, true)
+      window.removeEventListener('resize', onReflow)
     }
-  }, [open])
+  }, [open, updatePos])
 
   const openPanel = () => {
     if (disabled) return
@@ -144,6 +187,7 @@ export function DateTimePicker({
     )
     if (parsedDate) setCursor({ y: parsedDate.y, m: parsedDate.m })
     else if (parsedMonth) setCursor((c) => ({ ...c, y: parsedMonth.y }))
+    updatePos()
     setOpen((v) => !v)
   }
 
@@ -215,9 +259,10 @@ export function DateTimePicker({
           {required && <span className="text-danger"> *</span>}
         </label>
       )}
-      <div className="relative" ref={ref}>
+      <div className="relative">
         <button
           id={id}
+          ref={triggerRef}
           type="button"
           disabled={disabled}
           onClick={openPanel}
@@ -237,11 +282,19 @@ export function DateTimePicker({
           <TriggerIcon className="text-fg-subtle h-4 w-4 shrink-0" />
         </button>
 
-        {open && (
-          <div
-            role="dialog"
-            className="border-border absolute left-0 z-50 mt-1.5 w-[300px] rounded-xl border bg-white p-3 shadow-[0px_12px_32px_0px_rgba(18,23,38,0.16)]"
-          >
+        {open &&
+          createPortal(
+            <div
+              ref={panelRef}
+              role="dialog"
+              style={{
+                position: 'fixed',
+                top: pos.top,
+                left: pos.left,
+                width: Math.max(pos.width, 300),
+              }}
+              className="border-border z-[60] rounded-xl border bg-white p-3 shadow-[0px_12px_32px_0px_rgba(18,23,38,0.16)]"
+            >
             {mode === 'month' ? (
               <>
                 {/* 연도 네비게이션 */}
@@ -437,8 +490,9 @@ export function DateTimePicker({
                 </button>
               </>
             )}
-          </div>
-        )}
+            </div>,
+            document.body,
+          )}
       </div>
       {error && (
         <p role="alert" className="text-danger text-[13px]">

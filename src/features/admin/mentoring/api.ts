@@ -185,6 +185,31 @@ export function useChangeAssignmentMentor() {
   })
 }
 
+/** PATCH /admin/mentors/assignments/{id}/template — 일지 템플릿 교체(이후 일지에 새 템플릿 적용·기존 일지 보존). */
+export function useChangeAssignmentTemplate() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      assignmentId,
+      logTemplateId,
+    }: {
+      assignmentId: string
+      logTemplateId: string
+    }) =>
+      apiClient
+        .patch<MentorAssignmentRow>(
+          `/admin/mentors/assignments/${assignmentId}/template`,
+          { logTemplateId },
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
 /** PATCH /admin/mentors/assignments/{id}/allocated-hours — N시간 수정(감소=인정 유지·증가=재계산). */
 export function useUpdateAllocatedHours() {
   const queryClient = useQueryClient()

@@ -18,18 +18,25 @@ import {
 import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
 import { usePurchaseProcess, usePurchaseQueue } from './api'
-import type { PurchaseRequest, PurchaseStatus } from './types'
+import type { PurchaseRequest, PurchaseStatus, PurchaseType } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const STATUS_META: Record<
   PurchaseStatus,
   { label: string; tone: BadgeTone; kpi: KpiTone }
 > = {
-  pending: { label: 'PENDING', tone: 'info', kpi: 'info' },
-  approved: { label: 'APPROVED', tone: 'success', kpi: 'success' },
-  revision: { label: 'REVISION', tone: 'warning', kpi: 'warning' },
-  rejected: { label: 'REJECTED', tone: 'danger', kpi: 'danger' },
-  canceled: { label: 'CANCELED', tone: 'neutral', kpi: 'default' },
+  pending: { label: '요청 대기', tone: 'info', kpi: 'info' },
+  approved: { label: '승인', tone: 'success', kpi: 'success' },
+  revision: { label: '보완 요청', tone: 'warning', kpi: 'warning' },
+  rejected: { label: '반려', tone: 'danger', kpi: 'danger' },
+  canceled: { label: '취소', tone: 'neutral', kpi: 'default' },
+}
+
+// 구매 유형 라벨 — 저장 enum(BOOK/GIFTICON/LECTURE)은 유지, 화면은 한글.
+const TYPE_LABEL: Record<PurchaseType, string> = {
+  BOOK: '도서',
+  GIFTICON: '기프티콘',
+  LECTURE: '인터넷 강의',
 }
 
 // 마일리지 구매 요청 (/admin/mileage/purchase-requests) — 운영(MANAGER/ADMIN) 신규.
@@ -95,7 +102,7 @@ export default function PurchaseRequestsPage() {
             label: '수강생',
             value: `${r.studentName} · ${course} ${cohortLabel}`,
           },
-          { label: '상품', value: `[${r.type}] ${r.productName}` },
+          { label: '상품', value: `[${TYPE_LABEL[r.type]}] ${r.productName}` },
           {
             label: '수량·가격',
             value: `${r.qty}개 · ${r.price.toLocaleString()}M`,
@@ -128,7 +135,7 @@ export default function PurchaseRequestsPage() {
       key: 'type',
       header: '타입',
       className: 'w-24',
-      cell: (r) => <StatusBadge label={r.type} tone="neutral" />,
+      cell: (r) => <StatusBadge label={TYPE_LABEL[r.type]} tone="neutral" />,
     },
     {
       key: 'student',

@@ -92,7 +92,7 @@ export function ActiveRequestCard({
         </div>
 
         {/* 본문: 희망 vs 제안 */}
-        <div className="flex items-stretch gap-3 px-6 pb-5">
+        <div className="flex flex-col items-stretch gap-3 px-6 pb-5 sm:flex-row">
           <SlotCard
             slot={request.student}
             title="희망 일정 (수강생)"
@@ -103,7 +103,7 @@ export function ActiveRequestCard({
           />
           {hasProposal && request.proposal && (
             <>
-              <div className="text-fg-subtle flex items-center justify-center">
+              <div className="text-fg-subtle flex rotate-90 items-center justify-center sm:rotate-0">
                 →
               </div>
               <SlotCard

@@ -364,7 +364,7 @@ export default function AssignmentsPage() {
       <div
         role="region"
         aria-label="배정 관리 도구"
-        className="flex flex-col gap-3 rounded-xl border border-[#466759] bg-[#527565] p-3.5 shadow-[0_4px_14px_rgba(52,85,72,0.14)] xl:flex-row xl:items-center xl:justify-between"
+        className="border-brand bg-brand flex flex-col gap-3 rounded-xl border p-3.5 shadow-[0_4px_14px_rgba(26,140,133,0.18)] xl:flex-row xl:items-center xl:justify-between"
       >
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <Select

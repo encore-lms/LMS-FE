@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { ExternalLink, Paperclip, X } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import { useStudentAccounts } from '@/shared/api/students'
+import { useCohortRoster } from '../api/console'
 import type {
   ProjectCertReviewStatus,
   ProjectReviewDetail,
@@ -37,18 +37,28 @@ const TS_STATUS: Record<
 
 interface ReviewDetailPanelProps {
   target: ReviewDetailTarget
+  /** 담당 기수 UUID — 학생 이름 join용 로스터 조회 키(허브 임베드 시 전달, 단독 라우트는 null). */
+  cohortId?: string | null
   onClose: () => void
 }
 
-export function ReviewDetailPanel({ target, onClose }: ReviewDetailPanelProps) {
+export function ReviewDetailPanel({
+  target,
+  cohortId = null,
+  onClose,
+}: ReviewDetailPanelProps) {
   const projectQ = useProjectReviewDetail(
     target?.kind === 'project' ? target.id : null,
   )
   const tsQ = useTsReviewDetail(target?.kind === 'ts' ? target.id : null)
-  // 멤버·작성자 이름 — learning BE는 userId만 주므로 학생 계정 join.
-  const { data: students } = useStudentAccounts()
+  // 멤버·작성자 이름 — learning BE는 userId만 주므로 학생명 join.
+  // 강사는 계정 목록(/users/students) 조회가 막혀 있어(403) 담당 기수 로스터를 쓴다.
+  // 프로젝트 상세는 응답에 cohortId가 있어 그걸 우선(전체 탭 등 기수 혼재 대비), 없으면 prop.
+  const rosterCohortId =
+    (target?.kind === 'project' ? projectQ.data?.cohortId : null) ?? cohortId
+  const { data: roster } = useCohortRoster(rosterCohortId)
   const nameOf = (userId: string) =>
-    (students?.items ?? []).find((s) => s.id === userId)?.name ?? '수강생'
+    (roster ?? []).find((s) => s.userId === userId)?.name ?? '수강생'
 
   useEffect(() => {
     if (!target) return

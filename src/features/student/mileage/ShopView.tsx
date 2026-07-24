@@ -15,6 +15,7 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import { useMileageProducts, useMileageOverview } from '../api/mileage'
 import { parseMoney } from './store'
 import { useCartStore, cartCount, cartTotal } from './cartStore'
+import { FlexiblePurchaseModal } from './components/FlexiblePurchaseModal'
 import { ProductImage } from './components/ProductImage'
 import type { MileageLimit, MileageProduct, Tone } from './types'
 import { SkeletonCards } from '@/components/ui/Skeleton'
@@ -96,6 +97,24 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
   const flyId = useRef(0)
   const items = useCartStore((s) => s.items)
   const add = useCartStore((s) => s.add)
+  // 도서·인터넷 강의(수강생 직접 입력) 구매 신청 모달 대상.
+  const [flexTarget, setFlexTarget] = useState<MileageProduct | null>(null)
+
+  // flexible 구매 확정 — 입력한 가격·링크로 장바구니에 담는다.
+  const confirmFlexible = (price: number, link: string) => {
+    if (!flexTarget) return
+    add({
+      productId: flexTarget.id,
+      name: flexTarget.name,
+      price,
+      icon: flexTarget.icon,
+      tone: flexTarget.tone,
+      imageUrl: flexTarget.imageUrl,
+      flexible: true,
+      link,
+    })
+    setFlexTarget(null)
+  }
 
   const q = query.trim().toLowerCase()
   const visible = (data?.products ?? [])
@@ -278,8 +297,10 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map((p) => {
               const Icon = PRODUCT_ICON[p.icon]
+              // 도서·인터넷 강의는 수강생이 구매 시 링크·가격을 직접 입력(flexible).
+              const flexible = p.priceType === '직접 입력'
               const unit = parseMoney(p.price)
-              const affordable = unit <= balance
+              const affordable = flexible || unit <= balance
               const inCart = items.some((i) => i.productId === p.id)
               return (
                 <section
@@ -340,7 +361,11 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => affordable && handleAdd(e, p)}
+                    onClick={(e) =>
+                      flexible
+                        ? setFlexTarget(p)
+                        : affordable && handleAdd(e, p)
+                    }
                     disabled={!affordable}
                     className={cn(
                       'mt-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[13px] font-bold transition-colors',
@@ -354,9 +379,11 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                     <ShoppingCart className="size-4" />
                     {!affordable
                       ? '잔액 부족'
-                      : inCart
-                        ? '담김 · 더 담기'
-                        : '담기'}
+                      : flexible
+                        ? '구매 신청'
+                        : inCart
+                          ? '담김 · 더 담기'
+                          : '담기'}
                   </button>
                 </section>
               )
@@ -464,6 +491,13 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
           </div>
         </div>
       )}
+      <FlexiblePurchaseModal
+        open={!!flexTarget}
+        productName={flexTarget?.name ?? ''}
+        balance={balance}
+        onClose={() => setFlexTarget(null)}
+        onConfirm={confirmFlexible}
+      />
     </DataBoundary>
   )
 }

@@ -156,8 +156,21 @@ export default function PurchaseRequestsPage() {
       cell: (r) => (
         <div className="min-w-0">
           <p className="text-fg text-[13px]">{r.productName}</p>
-          {r.needsLink && (
-            <p className="text-warning text-[11px]">구매 링크 확인</p>
+          {r.link ? (
+            <a
+              href={r.link}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-brand block max-w-[280px] truncate text-[11px] font-medium hover:underline"
+              title={r.link}
+            >
+              구매 링크 열기 ↗
+            </a>
+          ) : (
+            r.needsLink && (
+              <p className="text-warning text-[11px]">구매 링크 미제출</p>
+            )
           )}
         </div>
       ),

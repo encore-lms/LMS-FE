@@ -69,7 +69,12 @@ export function useCreateMileageOrder() {
       requestedPrice?: number
       link?: string
       memo?: string
-      items?: { productId: string; quantity: number; requestedPrice?: number }[]
+      items?: {
+        productId: string
+        quantity: number
+        requestedPrice?: number
+        link?: string
+      }[]
     }) => apiClient.post('/student/mileage/orders', input),
     onSuccess: () => invalidateMileage(qc),
   })

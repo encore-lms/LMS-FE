@@ -64,6 +64,9 @@ export function CartView({ onView }: { onView: (v: string | null) => void }) {
         items: selectedItems.map((i) => ({
           productId: i.productId,
           quantity: i.quantity,
+          // 도서·인터넷 강의(수강생 직접 입력)는 입력한 가격·구매 링크를 함께 전송.
+          requestedPrice: i.flexible ? i.price : undefined,
+          link: i.flexible ? i.link : undefined,
         })),
       },
       {

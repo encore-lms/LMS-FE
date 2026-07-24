@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { assignmentSchema } from './assignmentSchema'
 
-// 배정 생성 폼 검증 — 반→팀→멘토·N시간 필수.
-// 템플릿 미선택은 활성 템플릿이 있을 때 폼 레벨에서 선차단한다.
+// 배정 생성 폼 검증 — 반→팀→멘토·N시간·일지 템플릿 필수.
+// 일지 템플릿은 스키마에서 필수 — 미선택이면 배정 불가.
 
 const valid = {
   cohortId: 'coh_da4_b',
@@ -25,9 +25,12 @@ describe('assignmentSchema', () => {
     }
   })
 
-  it('템플릿 미선택 — 스키마에서는 허용한다', () => {
+  it('템플릿 미선택 — 차단(일지 템플릿 필수)', () => {
     const result = assignmentSchema.safeParse({ ...valid, logTemplateId: '' })
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe('일지 템플릿을 선택해주세요')
+    }
   })
 
   it('N시간 — 빈 값·0·음수 차단(0보다 커야 함)', () => {

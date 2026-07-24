@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -16,7 +17,6 @@ import {
   useAssignmentSubmissions,
   useChangeSubmissionStatus,
   useCohortAssignments,
-  useCreateInstructorAssignment,
   useDeleteInstructorAssignment,
 } from './api'
 
@@ -235,10 +235,9 @@ export function AssignmentsPane({
   courseId: string
   cohortId: string
 }) {
-  void courseId
+  const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useCohortAssignments(cohortId)
   const { data: students } = useStudentAccounts(cohortId)
-  const createA = useCreateInstructorAssignment()
   const deleteA = useDeleteInstructorAssignment(cohortId)
   const toast = useToast()
 
@@ -248,11 +247,6 @@ export function AssignmentsPane({
     return (userId: string) => map.get(userId) ?? '수강생'
   }, [students])
 
-  const [addOpen, setAddOpen] = useState(false)
-  const [subject, setSubject] = useState('')
-  const [title, setTitle] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [description, setDescription] = useState('')
   // 목록 필터 — KPI 카드 대신 상태·검색으로 좁혀 본다(운영 요구).
   const [statusFilter, setStatusFilter] = useState('all')
   const [q, setQ] = useState('')
@@ -284,36 +278,11 @@ export function AssignmentsPane({
   const [deleteTarget, setDeleteTarget] =
     useState<InstructorAssignmentRow | null>(null)
 
-  const resetForm = () => {
-    setSubject('')
-    setTitle('')
-    setDueDate('')
-    setDescription('')
-  }
-
-  const onAdd = () => {
-    if (!title.trim()) {
-      toast.danger('과제 제목을 입력해 주세요')
-      return
-    }
-    createA.mutate(
-      {
-        cohortId,
-        subject: subject.trim() || undefined,
-        title: title.trim(),
-        dueAt: dueDate ? `${dueDate} 23:59` : undefined,
-        description: description.trim() || undefined,
-      },
-      {
-        onSuccess: () => {
-          toast.success(`과제 등록 — ${title.trim()}`)
-          setAddOpen(false)
-          resetForm()
-        },
-        onError: () => toast.danger('과제 등록에 실패했어요'),
-      },
+  // 과제 등록은 페이지로 정합 — /admin/education/assignments/new 로 이동(팝업 폐지).
+  const goCreate = () =>
+    navigate(
+      `/admin/education/assignments/new?course=${courseId}&cohort=${cohortId}`,
     )
-  }
 
   const deleteSpec: ActionModalSpec | null = deleteTarget
     ? {
@@ -447,7 +416,7 @@ export function AssignmentsPane({
                 { value: 'closed', label: '마감됨' },
               ]}
             />
-            <Button onClick={() => setAddOpen(true)}>
+            <Button onClick={goCreate}>
               <Plus className="h-4 w-4" /> 과제 등록
             </Button>
           </div>
@@ -482,88 +451,6 @@ export function AssignmentsPane({
             onClose={() => setSubView(null)}
           />
         )}
-
-        {/* 과제 등록 모달 — 강사식 필드(과목/회차·제목·마감·설명) */}
-        <Modal
-          open={addOpen}
-          onClose={() => {
-            setAddOpen(false)
-            resetForm()
-          }}
-          title="과제 등록"
-          footer={
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setAddOpen(false)
-                  resetForm()
-                }}
-              >
-                취소
-              </Button>
-              <Button onClick={onAdd} disabled={createA.isPending}>
-                등록
-              </Button>
-            </>
-          }
-        >
-          <div className="flex flex-col gap-3">
-            <label
-              className="text-fg-subtle text-xs font-medium"
-              htmlFor="as-subject"
-            >
-              과목/회차
-            </label>
-            <input
-              id="as-subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="예: 백엔드 5회차"
-              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
-            />
-            <label
-              className="text-fg-subtle text-xs font-medium"
-              htmlFor="as-title"
-            >
-              제목
-            </label>
-            <input
-              id="as-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="예: JPA 연관관계 매핑 실습"
-              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
-            />
-            <label
-              className="text-fg-subtle text-xs font-medium"
-              htmlFor="as-desc"
-            >
-              설명
-            </label>
-            <textarea
-              id="as-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="과제 안내·제출 조건(최대 5,000자)"
-              rows={4}
-              className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
-            />
-            <label
-              className="text-fg-subtle text-xs font-medium"
-              htmlFor="as-due"
-            >
-              마감일
-            </label>
-            <input
-              id="as-due"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
-            />
-          </div>
-        </Modal>
       </div>
     </DataBoundary>
   )

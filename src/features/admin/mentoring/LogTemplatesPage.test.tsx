@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import LogTemplatesPage from './LogTemplatesPage'
 import {
+  useDeleteLogTemplate,
   useDuplicateLogTemplate,
   useLogTemplates,
   useSetTemplateStatus,
@@ -88,6 +89,9 @@ function renderPage() {
   )
   vi.mocked(useUpdateTemplateFields).mockReturnValue(
     stubMutation() as unknown as ReturnType<typeof useUpdateTemplateFields>,
+  )
+  vi.mocked(useDeleteLogTemplate).mockReturnValue(
+    stubMutation() as unknown as ReturnType<typeof useDeleteLogTemplate>,
   )
   vi.mocked(useSetTemplateStatus).mockReturnValue({
     mutate: setStatusMutate,

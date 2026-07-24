@@ -70,15 +70,19 @@ export function ProductFormModal({
     setPreview(f ? URL.createObjectURL(f) : null)
   }
 
+  // 도서·인터넷 강의는 수강생이 구매 시 가격을 직접 입력한다(flexible) — 매니저는 가격을 정하지 않는다.
+  const flexible = type === 'GOODS' || type === 'ETC'
+
   const submit = () => {
     const next: { name?: string; price?: string } = {}
     if (!name.trim()) next.name = '상품명을 입력해주세요'
-    if (!price.trim() || Number(price) <= 0) next.price = '가격을 입력해주세요'
+    if (!flexible && (!price.trim() || Number(price) <= 0))
+      next.price = '가격을 입력해주세요'
     setErrors(next)
     if (next.name || next.price) return
     onSubmit(
       mode,
-      { type, name: name.trim(), price: price.trim(), active },
+      { type, name: name.trim(), price: flexible ? '0' : price.trim(), active },
       file,
     )
   }
@@ -155,15 +159,25 @@ export function ProductFormModal({
           placeholder="상품명을 입력하세요"
           error={errors.name}
         />
-        <Input
-          label="가격 (M)"
-          required
-          type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="예: 50000"
-          error={errors.price}
-        />
+        {flexible ? (
+          <div className="flex flex-col gap-[6px]">
+            <span className="text-fg text-[13px] font-bold">가격</span>
+            <div className="border-border bg-surface-muted text-fg-muted rounded-lg border px-3 py-2.5 text-[13px]">
+              수강생이 구매 시 구매 링크와 가격을 직접 입력합니다 · 매니저는
+              가격을 정하지 않아요.
+            </div>
+          </div>
+        ) : (
+          <Input
+            label="가격 (M)"
+            required
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="예: 50000"
+            error={errors.price}
+          />
+        )}
         <Checkbox
           checked={active}
           onChange={setActive}

@@ -38,7 +38,8 @@ function toProductsData(be: BeListResponse): ProductsData {
     emoji: EMOJI[it.productType] ?? '🎁',
     type: it.productType,
     name: it.name,
-    priceMode: 'fixed',
+    // 이전 LMS 정본 — 기프티콘만 고정가, 도서·인터넷 강의는 수강생이 가격 직접 입력(flexible).
+    priceMode: it.productType === 'COUPON' ? 'fixed' : 'flexible',
     price: it.price ? it.price.toLocaleString() : null,
     order: idx,
     salesCount: 0,

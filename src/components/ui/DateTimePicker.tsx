@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -48,6 +49,17 @@ const periodLabel = (p: 'AM' | 'PM') => (p === 'AM' ? '오전' : '오후')
 const pad = (n: number) => String(n).padStart(2, '0')
 const toDateStr = (y: number, m: number, d: number) =>
   `${y}-${pad(m + 1)}-${pad(d)}`
+const VIEWPORT_PADDING = 8
+const TRIGGER_GAP = 6
+const MIN_PANEL_WIDTH = 300
+const ESTIMATED_PANEL_HEIGHT = 360
+
+interface PopoverPosition {
+  top: number
+  left: number
+  width: number
+  maxHeight: number
+}
 
 function parseDate(s: string) {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s)
@@ -89,24 +101,71 @@ export function DateTimePicker({
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
-  // 팝오버 fixed 위치(트리거 기준). 화면 하단을 넘으면 위로 뒤집는다.
-  const [pos, setPos] = useState<{ top: number; left: number; width: number }>({
+  // 팝오버 fixed 위치(트리거 기준). 가용 공간이 더 넓은 쪽에 배치한다.
+  const [pos, setPos] = useState<PopoverPosition>({
     top: 0,
     left: 0,
-    width: 300,
+    width: MIN_PANEL_WIDTH,
+    maxHeight: ESTIMATED_PANEL_HEIGHT,
   })
 
-  // 대략적인 패널 높이(달력 ~360, 시간 ~300). flip 판정용 상한.
-  const PANEL_H = 360
   const updatePos = useCallback(() => {
     const r = triggerRef.current?.getBoundingClientRect()
     if (!r) return
-    const below = r.bottom + 6
-    const flip = below + PANEL_H > window.innerHeight && r.top - 6 - PANEL_H > 0
+
+    // 모바일 주소창·키보드가 열린 상태도 반영하도록 visual viewport를 우선한다.
+    const viewport = window.visualViewport
+    const viewportTop = viewport?.offsetTop ?? 0
+    const viewportLeft = viewport?.offsetLeft ?? 0
+    const viewportWidth = viewport?.width ?? window.innerWidth
+    const viewportHeight = viewport?.height ?? window.innerHeight
+    const viewportRight = viewportLeft + viewportWidth
+    const viewportBottom = viewportTop + viewportHeight
+
+    const width = Math.min(
+      Math.max(r.width, MIN_PANEL_WIDTH),
+      Math.max(0, viewportWidth - VIEWPORT_PADDING * 2),
+    )
+    const minLeft = viewportLeft + VIEWPORT_PADDING
+    const maxLeft = Math.max(minLeft, viewportRight - VIEWPORT_PADDING - width)
+    const left = Math.min(Math.max(r.left, minLeft), maxLeft)
+
+    // 첫 렌더 전에는 추정값을 쓰고, 마운트 후에는 실제 콘텐츠 높이로 재계산한다.
+    // scrollHeight를 포함해 이전 max-height에 의해 줄어든 패널도 원래 높이를 복원한다.
+    const panelRectHeight =
+      panelRef.current?.getBoundingClientRect().height ?? 0
+    const panelHeight = Math.max(
+      panelRef.current?.scrollHeight ?? 0,
+      panelRectHeight,
+      panelRef.current ? 0 : ESTIMATED_PANEL_HEIGHT,
+    )
+    const naturalHeight = panelHeight || ESTIMATED_PANEL_HEIGHT
+    const spaceBelow = Math.max(
+      0,
+      viewportBottom - VIEWPORT_PADDING - r.bottom - TRIGGER_GAP,
+    )
+    const spaceAbove = Math.max(
+      0,
+      r.top - TRIGGER_GAP - (viewportTop + VIEWPORT_PADDING),
+    )
+    const placeAbove = naturalHeight > spaceBelow && spaceAbove > spaceBelow
+    const maxHeight = placeAbove ? spaceAbove : spaceBelow
+    const renderedHeight = Math.min(naturalHeight, maxHeight)
+    const minTop = viewportTop + VIEWPORT_PADDING
+    const maxTop = Math.max(
+      minTop,
+      viewportBottom - VIEWPORT_PADDING - renderedHeight,
+    )
+    const idealTop = placeAbove
+      ? r.top - TRIGGER_GAP - renderedHeight
+      : r.bottom + TRIGGER_GAP
+    const top = Math.min(Math.max(idealTop, minTop), maxTop)
+
     setPos({
-      top: flip ? r.top - 6 - PANEL_H : below,
-      left: Math.min(r.left, window.innerWidth - 300 - 8),
-      width: r.width,
+      top,
+      left,
+      width,
+      maxHeight,
     })
   }, [])
   // datetime 모드의 단계: 달력 → 시간.
@@ -151,10 +210,7 @@ export function DateTimePicker({
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node
       // 트리거·패널(portal) 밖 클릭이면 닫는다.
-      if (
-        !triggerRef.current?.contains(t) &&
-        !panelRef.current?.contains(t)
-      ) {
+      if (!triggerRef.current?.contains(t) && !panelRef.current?.contains(t)) {
         setOpen(false)
       }
     }
@@ -167,13 +223,22 @@ export function DateTimePicker({
     document.addEventListener('keydown', onKey)
     window.addEventListener('scroll', onReflow, true)
     window.addEventListener('resize', onReflow)
+    window.visualViewport?.addEventListener('scroll', onReflow)
+    window.visualViewport?.addEventListener('resize', onReflow)
     return () => {
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
       window.removeEventListener('scroll', onReflow, true)
       window.removeEventListener('resize', onReflow)
+      window.visualViewport?.removeEventListener('scroll', onReflow)
+      window.visualViewport?.removeEventListener('resize', onReflow)
     }
   }, [open, updatePos])
+
+  // portal이 마운트되거나 달력/시간 화면의 높이가 바뀐 직후 실제 크기로 보정한다.
+  useLayoutEffect(() => {
+    if (open) updatePos()
+  }, [cursor.m, cursor.y, mode, open, updatePos, view])
 
   const openPanel = () => {
     if (disabled) return
@@ -291,205 +356,207 @@ export function DateTimePicker({
                 position: 'fixed',
                 top: pos.top,
                 left: pos.left,
-                width: Math.max(pos.width, 300),
+                width: pos.width,
+                maxHeight: pos.maxHeight,
+                overflowY: 'auto',
               }}
               className="border-border z-[60] rounded-xl border bg-white p-3 shadow-[0px_12px_32px_0px_rgba(18,23,38,0.16)]"
             >
-            {mode === 'month' ? (
-              <>
-                {/* 연도 네비게이션 */}
-                <div className="mb-2 flex items-center justify-between">
-                  <button
-                    type="button"
-                    aria-label="이전 해"
-                    onClick={() => setCursor((c) => ({ ...c, y: c.y - 1 }))}
-                    className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="text-fg text-[13px] font-bold">
-                    {cursor.y}년
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="다음 해"
-                    onClick={() => setCursor((c) => ({ ...c, y: c.y + 1 }))}
-                    className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
+              {mode === 'month' ? (
+                <>
+                  {/* 연도 네비게이션 */}
+                  <div className="mb-2 flex items-center justify-between">
+                    <button
+                      type="button"
+                      aria-label="이전 해"
+                      onClick={() => setCursor((c) => ({ ...c, y: c.y - 1 }))}
+                      className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-fg text-[13px] font-bold">
+                      {cursor.y}년
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="다음 해"
+                      onClick={() => setCursor((c) => ({ ...c, y: c.y + 1 }))}
+                      className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
 
-                {/* 월 격자(1~12월) */}
-                <div className="grid grid-cols-3 gap-1.5">
-                  {Array.from({ length: 12 }, (_, m) => {
-                    const ms = `${cursor.y}-${pad(m + 1)}`
-                    const selected = value === ms
-                    const disabledMonth = !inRange(ms)
-                    return (
-                      <button
-                        key={ms}
-                        type="button"
-                        disabled={disabledMonth}
-                        onClick={() => pickMonth(m)}
+                  {/* 월 격자(1~12월) */}
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {Array.from({ length: 12 }, (_, m) => {
+                      const ms = `${cursor.y}-${pad(m + 1)}`
+                      const selected = value === ms
+                      const disabledMonth = !inRange(ms)
+                      return (
+                        <button
+                          key={ms}
+                          type="button"
+                          disabled={disabledMonth}
+                          onClick={() => pickMonth(m)}
+                          className={cn(
+                            'flex h-9 items-center justify-center rounded-md text-[13px] tabular-nums transition-colors',
+                            selected
+                              ? 'bg-brand font-bold text-white'
+                              : 'text-fg hover:bg-surface-muted',
+                            disabledMonth &&
+                              'cursor-not-allowed opacity-30 hover:bg-transparent',
+                          )}
+                        >
+                          {m + 1}월
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              ) : view === 'calendar' ? (
+                <>
+                  {/* 월 네비게이션 */}
+                  <div className="mb-2 flex items-center justify-between">
+                    <button
+                      type="button"
+                      aria-label="이전 달"
+                      onClick={() =>
+                        setCursor((c) =>
+                          c.m === 0
+                            ? { y: c.y - 1, m: 11 }
+                            : { y: c.y, m: c.m - 1 },
+                        )
+                      }
+                      className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-fg text-[13px] font-bold">
+                      {cursor.y}년 {cursor.m + 1}월
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="다음 달"
+                      onClick={() =>
+                        setCursor((c) =>
+                          c.m === 11
+                            ? { y: c.y + 1, m: 0 }
+                            : { y: c.y, m: c.m + 1 },
+                        )
+                      }
+                      className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* 요일 헤더 */}
+                  <div className="grid grid-cols-7 gap-0.5">
+                    {WEEKDAYS.map((w, i) => (
+                      <span
+                        key={w}
                         className={cn(
-                          'flex h-9 items-center justify-center rounded-md text-[13px] tabular-nums transition-colors',
-                          selected
-                            ? 'bg-brand font-bold text-white'
-                            : 'text-fg hover:bg-surface-muted',
-                          disabledMonth &&
-                            'cursor-not-allowed opacity-30 hover:bg-transparent',
+                          'flex h-7 items-center justify-center text-[11px] font-semibold',
+                          i === 0
+                            ? 'text-danger'
+                            : i === 6
+                              ? 'text-info'
+                              : 'text-fg-subtle',
                         )}
                       >
-                        {m + 1}월
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            ) : view === 'calendar' ? (
-              <>
-                {/* 월 네비게이션 */}
-                <div className="mb-2 flex items-center justify-between">
-                  <button
-                    type="button"
-                    aria-label="이전 달"
-                    onClick={() =>
-                      setCursor((c) =>
-                        c.m === 0
-                          ? { y: c.y - 1, m: 11 }
-                          : { y: c.y, m: c.m - 1 },
-                      )
-                    }
-                    className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="text-fg text-[13px] font-bold">
-                    {cursor.y}년 {cursor.m + 1}월
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="다음 달"
-                    onClick={() =>
-                      setCursor((c) =>
-                        c.m === 11
-                          ? { y: c.y + 1, m: 0 }
-                          : { y: c.y, m: c.m + 1 },
-                      )
-                    }
-                    className="text-fg-muted hover:bg-surface-muted hover:text-fg rounded-md p-1.5"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* 요일 헤더 */}
-                <div className="grid grid-cols-7 gap-0.5">
-                  {WEEKDAYS.map((w, i) => (
-                    <span
-                      key={w}
-                      className={cn(
-                        'flex h-7 items-center justify-center text-[11px] font-semibold',
-                        i === 0
-                          ? 'text-danger'
-                          : i === 6
-                            ? 'text-info'
-                            : 'text-fg-subtle',
-                      )}
-                    >
-                      {w}
-                    </span>
-                  ))}
-                  {monthCells(cursor.y, cursor.m).map((d, i) =>
-                    d === null ? (
-                      <span key={`e${i}`} className="h-8" />
-                    ) : (
-                      (() => {
-                        const ds = toDateStr(cursor.y, cursor.m, d)
-                        const selected =
-                          draftDate === ds || value.startsWith(ds)
-                        const isToday = ds === todayStr
-                        const disabledDay = !inRange(ds)
-                        return (
-                          <button
-                            key={ds}
-                            type="button"
-                            disabled={disabledDay}
-                            onClick={() => pickDay(d)}
-                            className={cn(
-                              'flex h-8 items-center justify-center rounded-md text-[13px] tabular-nums transition-colors',
-                              selected
-                                ? 'bg-brand font-bold text-white'
-                                : 'text-fg hover:bg-surface-muted',
-                              !selected && isToday && 'text-brand font-bold',
-                              disabledDay &&
-                                'cursor-not-allowed opacity-30 hover:bg-transparent',
-                            )}
-                          >
-                            {d}
-                          </button>
-                        )
-                      })()
-                    ),
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* 시간 선택 */}
-                {mode === 'datetime' && (
-                  <button
-                    type="button"
-                    onClick={() => setView('calendar')}
-                    className="text-fg-muted hover:text-fg mb-2 inline-flex items-center gap-1 text-xs font-medium"
-                  >
-                    <ChevronLeft className="h-3.5 w-3.5" />
-                    {draftDate ?? '날짜'}
-                  </button>
-                )}
-                {/* 오전/오후 */}
-                <div className="border-border bg-surface-muted/40 mb-2 grid grid-cols-2 gap-1 rounded-lg border p-1">
-                  {(['AM', 'PM'] as const).map((p) => (
+                        {w}
+                      </span>
+                    ))}
+                    {monthCells(cursor.y, cursor.m).map((d, i) =>
+                      d === null ? (
+                        <span key={`e${i}`} className="h-8" />
+                      ) : (
+                        (() => {
+                          const ds = toDateStr(cursor.y, cursor.m, d)
+                          const selected =
+                            draftDate === ds || value.startsWith(ds)
+                          const isToday = ds === todayStr
+                          const disabledDay = !inRange(ds)
+                          return (
+                            <button
+                              key={ds}
+                              type="button"
+                              disabled={disabledDay}
+                              onClick={() => pickDay(d)}
+                              className={cn(
+                                'flex h-8 items-center justify-center rounded-md text-[13px] tabular-nums transition-colors',
+                                selected
+                                  ? 'bg-brand font-bold text-white'
+                                  : 'text-fg hover:bg-surface-muted',
+                                !selected && isToday && 'text-brand font-bold',
+                                disabledDay &&
+                                  'cursor-not-allowed opacity-30 hover:bg-transparent',
+                              )}
+                            >
+                              {d}
+                            </button>
+                          )
+                        })()
+                      ),
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* 시간 선택 */}
+                  {mode === 'datetime' && (
                     <button
-                      key={p}
                       type="button"
-                      onClick={() => setDraftPeriod(p)}
-                      className={cn(
-                        'rounded-md py-1.5 text-[13px] font-semibold transition-colors',
-                        draftPeriod === p
-                          ? 'bg-brand text-white'
-                          : 'text-fg-muted hover:bg-surface-muted',
-                      )}
+                      onClick={() => setView('calendar')}
+                      className="text-fg-muted hover:text-fg mb-2 inline-flex items-center gap-1 text-xs font-medium"
                     >
-                      {periodLabel(p)}
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      {draftDate ?? '날짜'}
                     </button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <TimeColumn
-                    title="시"
-                    values={HOURS12}
-                    selected={draftH12}
-                    onSelect={setDraftH12}
-                  />
-                  <TimeColumn
-                    title="분"
-                    values={minutes}
-                    selected={draftMin}
-                    onSelect={setDraftMin}
-                  />
-                </div>
-                <button
-                  type="button"
-                  disabled={draftH12 === null}
-                  onClick={applyTime}
-                  className="bg-brand-deep hover:bg-brand-deep/90 mt-3 h-9 w-full rounded-lg text-[13px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  적용
-                </button>
-              </>
-            )}
+                  )}
+                  {/* 오전/오후 */}
+                  <div className="border-border bg-surface-muted/40 mb-2 grid grid-cols-2 gap-1 rounded-lg border p-1">
+                    {(['AM', 'PM'] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setDraftPeriod(p)}
+                        className={cn(
+                          'rounded-md py-1.5 text-[13px] font-semibold transition-colors',
+                          draftPeriod === p
+                            ? 'bg-brand text-white'
+                            : 'text-fg-muted hover:bg-surface-muted',
+                        )}
+                      >
+                        {periodLabel(p)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <TimeColumn
+                      title="시"
+                      values={HOURS12}
+                      selected={draftH12}
+                      onSelect={setDraftH12}
+                    />
+                    <TimeColumn
+                      title="분"
+                      values={minutes}
+                      selected={draftMin}
+                      onSelect={setDraftMin}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={draftH12 === null}
+                    onClick={applyTime}
+                    className="bg-brand-deep hover:bg-brand-deep/90 mt-3 h-9 w-full rounded-lg text-[13px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    적용
+                  </button>
+                </>
+              )}
             </div>,
             document.body,
           )}

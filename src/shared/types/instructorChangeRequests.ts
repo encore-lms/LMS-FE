@@ -18,7 +18,8 @@ export type RecertificationAction = 'approved' | 'changes_requested'
 
 /** 변경된 내역 1건 — 접힘 카드에서 이전/변경 값 비교 */
 export interface ChangeDiffItem {
-  id: string
+  /** BE 응답엔 없어 optional — 렌더 key 는 index 폴백. */
+  id?: string
   /** '기술스택: React Query 추가' */
   label: string
   before: string
@@ -30,8 +31,8 @@ export interface InstructorChangeRequestRow {
   type: CertReviewTargetType
   /** '추천 영상 큐레이션' */
   target: string
-  /** '김민준 PM' */
-  requester: string
+  /** 제안한 수강생 userId — 이름은 FE 로스터 join(검토 화면과 동일 관례). */
+  requesterUserId: string
   status: ChangeRequestStatus
   /** 원 인증 강사 부재 — 매니저 대체 검토 허용 (P0-INS-REV-009) */
   certifierAbsent: boolean
@@ -46,8 +47,8 @@ export interface RecertificationRow {
   id: string
   type: CertReviewTargetType
   target: string
-  /** 'PM 김민준' */
-  requesterLabel: string
+  /** 제안한 수강생 userId — 이름은 FE 로스터 join. */
+  requesterUserId: string
   /** '수정 완료 요청' */
   summary: string
   changes: ChangeDiffItem[]

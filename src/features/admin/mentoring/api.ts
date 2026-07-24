@@ -338,6 +338,24 @@ export function useApproveLog() {
   })
 }
 
+/** DELETE /admin/mentoring/logs/{logId} — 매니저 일지 삭제(정정·정리). 삭제 후 목록·팀 타임라인 갱신. */
+export function useDeleteMentoringLog() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (logId: string) =>
+      apiClient
+        .delete<void>(`/admin/mentoring/logs/${logId}`)
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminMentoringKeys.logs() })
+      // 팀 상세 일지 타임라인·보드 일지 수(assignments 접두사 키) 갱신.
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
 // ───────────────────────── 일지 템플릿 (§31) ─────────────────────────
 
 /** GET /admin/mentoring/log-templates — 템플릿 목록(항목 포함, 비활성 포함). */

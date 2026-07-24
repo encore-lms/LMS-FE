@@ -1,9 +1,14 @@
 import { useState } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import { apiErrorOf, useAdminMentoringLogDetail, useApproveLog } from './api'
+import {
+  apiErrorOf,
+  useAdminMentoringLogDetail,
+  useApproveLog,
+  useDeleteMentoringLog,
+} from './api'
 import { LogDetailPanel } from './LogDetailPanel'
 import { ChangeRequestModal } from './ChangeRequestModal'
 
@@ -21,7 +26,10 @@ export function LogReviewModal({ open, onClose, logId }: LogReviewModalProps) {
   const toast = useToast()
   const detailQuery = useAdminMentoringLogDetail(logId)
   const approve = useApproveLog()
+  const deleteLog = useDeleteMentoringLog()
   const [changeOpen, setChangeOpen] = useState(false)
+  // 삭제는 파괴적이라 인라인 확인 단계를 둔다(잘못 등록·정리 대상 일지 제거용).
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const detail = detailQuery.data
 
   const doApprove = () => {
@@ -37,6 +45,17 @@ export function LogReviewModal({ open, onClose, logId }: LogReviewModalProps) {
     })
   }
 
+  const doDelete = () => {
+    deleteLog.mutate(logId, {
+      onSuccess: () => {
+        toast.success('일지를 삭제했어요')
+        onClose()
+      },
+      onError: (error) =>
+        toast.danger(apiErrorOf(error).message ?? '일지 삭제에 실패했어요.'),
+    })
+  }
+
   const canApprove = detail?.status === 'submitted'
   const canRequestChange =
     detail?.status === 'submitted' || detail?.status === 'valid'
@@ -49,26 +68,57 @@ export function LogReviewModal({ open, onClose, logId }: LogReviewModalProps) {
         title="일지 검토"
         size="lg"
         footer={
-          <>
-            <Button variant="secondary" onClick={onClose}>
-              닫기
-            </Button>
-            {canRequestChange && (
+          confirmDelete ? (
+            <>
+              <span className="text-danger mr-auto text-sm font-bold">
+                이 일지를 삭제할까요? 되돌릴 수 없어요.
+              </span>
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleteLog.isPending}
+              >
+                취소
+              </Button>
               <button
                 type="button"
-                onClick={() => setChangeOpen(true)}
-                className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-lg border px-4 py-2 text-sm font-bold"
+                onClick={doDelete}
+                disabled={deleteLog.isPending}
+                className="bg-danger rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
               >
-                수정 요청
+                {deleteLog.isPending ? '삭제 중…' : '삭제'}
               </button>
-            )}
-            {canApprove && (
-              <Button onClick={doApprove} disabled={approve.isPending}>
-                <CheckCircle2 className="h-4 w-4" />
-                {approve.isPending ? '승인 중…' : '승인'}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="border-danger/40 text-danger hover:bg-danger-bg bg-surface mr-auto inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-bold"
+              >
+                <Trash2 className="h-4 w-4" />
+                삭제
+              </button>
+              <Button variant="secondary" onClick={onClose}>
+                닫기
               </Button>
-            )}
-          </>
+              {canRequestChange && (
+                <button
+                  type="button"
+                  onClick={() => setChangeOpen(true)}
+                  className="border-warning text-warning hover:bg-warning/10 bg-surface rounded-lg border px-4 py-2 text-sm font-bold"
+                >
+                  수정 요청
+                </button>
+              )}
+              {canApprove && (
+                <Button onClick={doApprove} disabled={approve.isPending}>
+                  <CheckCircle2 className="h-4 w-4" />
+                  {approve.isPending ? '승인 중…' : '승인'}
+                </Button>
+              )}
+            </>
+          )
         }
       >
         <LogDetailPanel

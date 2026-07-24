@@ -20,10 +20,11 @@ import { ConfirmedReservationCard } from './components/ConfirmedReservationCard'
 import { MentoringHistorySection } from './components/MentoringHistorySection'
 import { CoMenteesPanel } from './components/CoMenteesPanel'
 import { CancelRequestModal } from './components/CancelRequestModal'
+import { MentoringProgressSummary } from './components/MentoringProgressSummary'
 import type {
   MentoringActiveRequest,
   MentoringData,
-  MentoringHistoryRow,
+  MentoringRequestPolicy,
   MentoringReservation,
 } from './types'
 
@@ -34,6 +35,54 @@ const TOAST: Record<ToastKey, { tone: ToastTone; message: string }> = {
   requested: { tone: 'success', message: '멘토링 요청이 제출되었습니다' },
   accepted: { tone: 'success', message: '조정 제안을 수락했습니다' },
   canceled: { tone: 'warning', message: '멘토링 요청이 취소되었습니다' },
+}
+
+function activeRequestsOf(data: MentoringData) {
+  return data.activeRequests ?? (data.activeRequest ? [data.activeRequest] : [])
+}
+
+function reservationsOf(data: MentoringData) {
+  return data.reservations ?? (data.reservation ? [data.reservation] : [])
+}
+
+function requestPolicyOf(
+  data: MentoringData,
+  activeRequests: MentoringActiveRequest[],
+  reservations: MentoringReservation[],
+): MentoringRequestPolicy {
+  if (data.requestPolicy) return data.requestPolicy
+
+  const requestedCount = activeRequests.filter(
+    (request) => request.status === 'requested',
+  ).length
+  const proposedCount = activeRequests.filter(
+    (request) => request.status === 'proposed',
+  ).length
+  const reservedCount = reservations.filter(
+    (reservation) => reservation.phase !== 'awaiting_completion',
+  ).length
+  const inUse = requestedCount + proposedCount + reservedCount
+  const limit = data.kpis.requestLimit
+
+  return {
+    limit,
+    inUse,
+    canRequest: inUse < limit,
+    requestedCount,
+    proposedCount,
+    reservedCount,
+    blockReason: inUse < limit ? null : 'limit_reached',
+  }
+}
+
+function limitReachedReason(policy: MentoringRequestPolicy) {
+  const states = [
+    policy.requestedCount > 0 && `요청 대기 ${policy.requestedCount}건`,
+    policy.proposedCount > 0 && `조정 제안 ${policy.proposedCount}건`,
+    policy.reservedCount > 0 && `확정 예약 ${policy.reservedCount}건`,
+  ].filter(Boolean)
+
+  return `${states.join(' · ')}으로 팀 한도(${policy.limit}건)에 도달했어요`
 }
 
 /**
@@ -69,18 +118,15 @@ function MentoringView({ data }: { data: MentoringData }) {
   const cancelRequestMutation = useCancelMentoringRequest()
   const acceptProposalMutation = useAcceptMentoringProposal()
 
-  // 상호작용 상태 — 서버 응답을 즉시 반영한다.
-  const [activeRequest, setActiveRequest] =
-    useState<MentoringActiveRequest | null>(data.activeRequest)
-  const [reservation, setReservation] = useState<MentoringReservation | null>(
-    data.reservation,
-  )
-  const [history, setHistory] = useState<MentoringHistoryRow[]>(data.history)
-  // 새로 수락한 확정 예약이 "진행 중 슬롯"을 점유 중인지. 초기 목 예약(과거 일정)은 참고용이라 false.
-  const [reservationUpcoming, setReservationUpcoming] = useState(false)
-  const [modalOpen, setModalOpen] = useState(
-    params.get('modal') === 'cancel-request',
-  )
+  // 상호작용 상태 — mutation 응답을 즉시 반영한다.
+  const [current, setCurrent] = useState(data)
+  const initialRequests = activeRequestsOf(data)
+  const [cancelTarget, setCancelTarget] =
+    useState<MentoringActiveRequest | null>(
+      params.get('modal') === 'cancel-request'
+        ? (initialRequests[0] ?? null)
+        : null,
+    )
   // 새 멘토링 요청 팝업 열림.
   const [requestModalOpen, setRequestModalOpen] = useState(false)
 
@@ -95,50 +141,69 @@ function MentoringView({ data }: { data: MentoringData }) {
   }, [params, toast])
 
   const applyMentoringData = (next: MentoringData) => {
-    setActiveRequest(next.activeRequest)
-    setReservation(next.reservation)
-    setHistory(next.history)
-    setReservationUpcoming(false)
+    setCurrent(next)
   }
 
   useEffect(() => {
-    applyMentoringData(data)
+    setCurrent(data)
   }, [data])
+
+  const activeRequests = activeRequestsOf(current)
+  const reservations = reservationsOf(current)
+  const policy = requestPolicyOf(current, activeRequests, reservations)
+  const awaitingCompletionCount = reservations.filter(
+    (reservation) => reservation.phase === 'awaiting_completion',
+  ).length
 
   // 멘토 미배정: 히어로(배정 대기)·비활성 요청만. 진행 요청/예약/기록은 숨김. 팀원은 그대로 노출.
   const display: MentoringData = noMentor
     ? {
-        ...data,
-        mentor: { ...data.mentor, assigned: false },
+        ...current,
+        mentor: { ...current.mentor, assigned: false },
         kpis: {
           inProgress: 0,
-          requestLimit: 1,
+          requestLimit: policy.limit,
           completed: 0,
           cumulativeHours: 0,
           remainingHours: 0,
         },
         activeRequest: null,
         reservation: null,
+        activeRequests: [],
+        reservations: [],
+        requestPolicy: {
+          ...policy,
+          inUse: 0,
+          canRequest: false,
+          requestedCount: 0,
+          proposedCount: 0,
+          reservedCount: 0,
+          blockReason: 'mentor_not_assigned',
+        },
         history: [],
       }
     : {
-        ...data,
+        ...current,
         kpis: {
-          ...data.kpis,
-          inProgress: activeRequest || reservation ? 1 : 0,
+          ...current.kpis,
+          inProgress: policy.inUse,
+          requestLimit: policy.limit,
         },
-        activeRequest,
-        reservation,
-        history,
+        activeRequest: activeRequests[0] ?? null,
+        reservation:
+          reservations.find(
+            (reservation) => reservation.phase !== 'awaiting_completion',
+          ) ?? null,
+        activeRequests,
+        reservations,
+        requestPolicy: policy,
       }
 
-  // 진행 중 요청이나 확정 예약이 있으면 팀당 진행 중 1개 한도에 따라 새 요청을 막는다.
-  const slotTaken = !!activeRequest || !!reservation || reservationUpcoming
-  const canRequest = !slotTaken && !noMentor
+  const canRequest = policy.canRequest && !noMentor
   const disabledReason = noMentor
     ? '멘토 배정 후 요청할 수 있어요'
-    : slotTaken
-      ? '진행 중 요청 1건이 있어요'
+    : !policy.canRequest
+      ? limitReachedReason(policy)
       : ''
 
   const submitRequest = (v: NewRequestValues) => {
@@ -155,14 +220,14 @@ function MentoringView({ data }: { data: MentoringData }) {
   }
 
   const cancelRequest = () => {
-    if (!activeRequest?.id) {
-      setModalOpen(false)
+    if (!cancelTarget?.id) {
+      setCancelTarget(null)
       return
     }
-    cancelRequestMutation.mutate(activeRequest.id, {
+    cancelRequestMutation.mutate(cancelTarget.id, {
       onSuccess: (next) => {
         applyMentoringData(next)
-        setModalOpen(false)
+        setCancelTarget(null)
         toast.warning(TOAST.canceled.message)
       },
       onError: () => {
@@ -172,9 +237,8 @@ function MentoringView({ data }: { data: MentoringData }) {
   }
 
   // 제안 수락 → 멘토 제안을 확정 예약으로 전환(슬롯 점유 유지) + accepted 토스트.
-  const acceptProposal = () => {
-    if (!activeRequest?.id) return
-    acceptProposalMutation.mutate(activeRequest.id, {
+  const acceptProposal = (request: MentoringActiveRequest) => {
+    acceptProposalMutation.mutate(request.id, {
       onSuccess: (next) => {
         applyMentoringData(next)
         toast.success(TOAST.accepted.message)
@@ -192,17 +256,24 @@ function MentoringView({ data }: { data: MentoringData }) {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         {/* 좌: 진행 중 요청 · 확정 예약 · 멘토링 기록(+ 새 요청 버튼) */}
         <div className="flex flex-col gap-5">
-          {display.activeRequest && (
-            <ActiveRequestCard
-              request={display.activeRequest}
-              onCancel={() => setModalOpen(true)}
-              onReject={() => setModalOpen(true)}
-              onAccept={acceptProposal}
+          {!noMentor && (
+            <MentoringProgressSummary
+              policy={policy}
+              awaitingCompletionCount={awaitingCompletionCount}
             />
           )}
-          {display.reservation && (
-            <ConfirmedReservationCard r={display.reservation} />
-          )}
+          {(display.activeRequests ?? []).map((request) => (
+            <ActiveRequestCard
+              key={request.id}
+              request={request}
+              onCancel={() => setCancelTarget(request)}
+              onReject={() => setCancelTarget(request)}
+              onAccept={() => acceptProposal(request)}
+            />
+          ))}
+          {(display.reservations ?? []).map((reservation) => (
+            <ConfirmedReservationCard key={reservation.id} r={reservation} />
+          ))}
           <MentoringHistorySection
             rows={display.history}
             onNewRequest={() => setRequestModalOpen(true)}
@@ -231,8 +302,9 @@ function MentoringView({ data }: { data: MentoringData }) {
       )}
 
       <CancelRequestModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={!!cancelTarget}
+        requester={cancelTarget?.student.person}
+        onClose={() => setCancelTarget(null)}
         onConfirm={cancelRequest}
       />
     </div>

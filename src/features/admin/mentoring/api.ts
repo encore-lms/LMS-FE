@@ -499,6 +499,18 @@ export function useSetTemplateStatus() {
   })
 }
 
+/** DELETE /admin/mentoring/log-templates/{id} — 템플릿 삭제(기본·사용 중이면 BE가 거부). 항목 함께 삭제. */
+export function useDeleteLogTemplate() {
+  const invalidate = useInvalidateTemplates()
+  return useMutation({
+    mutationFn: (templateId: string) =>
+      apiClient
+        .delete<void>(`/admin/mentoring/log-templates/${templateId}`)
+        .then((r) => r.data),
+    onSuccess: invalidate,
+  })
+}
+
 // ───────────────────────── 팀별 일지 항목 (§32) ─────────────────────────
 
 /**

@@ -2,9 +2,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
 import ChangeRequestPage from './ChangeRequestPage'
+// 변경 제안 실 BE 훅 mock — GET 은 서버 상태 없음(none), POST 는 즉시 성공.
+vi.mock('./api/changeRequests', () => ({
+  useProjectChangeStatus: () => ({ data: undefined }),
+  useRequestProjectChange: () => ({
+    mutate: (_reason: string, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  }),
+  useSubmitProjectRevision: () => ({
+    mutate: (_summary: string, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  }),
+}))
 import { useProjectFlow } from './workspace/useProjectFlow'
 
 function renderPage() {

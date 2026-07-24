@@ -1,5 +1,5 @@
 // 수강생 멘토링 도메인 계약 — 기능 로컬. Figma 2651:5430.
-// 팀 단위 요청 · 진행 중 1건 한도 · 조정 제안/확정/완료 기록.
+// 팀 단위 요청 · 진행 중 3건 한도 · 조정 제안/확정/완료 기록.
 
 export interface MentoringMentor {
   name: string
@@ -51,6 +51,7 @@ export interface MentoringActiveRequest {
 /** 확정 예약 */
 export interface MentoringReservation {
   id: string // "res_8b21"
+  phase?: 'upcoming' | 'awaiting_completion'
   dateLabel: string // "2026-03-26(목)"
   timeLabel: string // "18:30 ~ 20:30"
   placeType: string
@@ -58,6 +59,17 @@ export interface MentoringReservation {
   estHours: string // "2h"
   mentorName: string
   mentorSpecialty: string
+}
+
+/** 팀 단위 새 요청 가능 여부와 상태별 한도 점유 현황 */
+export interface MentoringRequestPolicy {
+  limit: number
+  inUse: number
+  canRequest: boolean
+  requestedCount: number
+  proposedCount: number
+  reservedCount: number
+  blockReason: 'limit_reached' | 'mentor_not_assigned' | string | null
 }
 
 /** 완료 기록 한 줄 */
@@ -74,8 +86,12 @@ export interface MentoringData {
   mentor: MentoringMentor
   kpis: MentoringKpis
   stats: MentoringStat[]
+  // 단건 필드는 BE 순차 배포 중인 구버전 응답과의 호환용이다.
   activeRequest: MentoringActiveRequest | null
   reservation: MentoringReservation | null
+  activeRequests?: MentoringActiveRequest[]
+  reservations?: MentoringReservation[]
+  requestPolicy?: MentoringRequestPolicy
   history: MentoringHistoryRow[]
   // 함께 멘토링 받는 팀원. BE 미배포 환경 대비 optional(없으면 빈 패널).
   teamMembers?: MentoringTeamMemberInfo[]

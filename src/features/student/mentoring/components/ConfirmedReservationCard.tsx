@@ -79,29 +79,41 @@ function Cell({
 }
 
 export function ConfirmedReservationCard({ r }: { r: MentoringReservation }) {
+  const awaitingCompletion = r.phase === 'awaiting_completion'
+
   return (
     <section className="bg-surface overflow-hidden rounded-2xl">
-      <div className="bg-success-bg flex items-center justify-between px-6 py-[18px]">
+      <div
+        className={`${awaitingCompletion ? 'bg-surface-muted' : 'bg-success-bg'} flex items-center justify-between px-6 py-[18px]`}
+      >
         <div className="flex items-center gap-2.5">
-          <span className="bg-surface text-success flex size-9 items-center justify-center rounded-[10px] text-[15px] font-bold">
-            ✓
+          <span
+            className={`${awaitingCompletion ? 'text-fg-muted' : 'text-success'} bg-surface flex size-9 items-center justify-center rounded-[10px] text-[15px] font-bold`}
+          >
+            {awaitingCompletion ? '…' : '✓'}
           </span>
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
               <span className="text-fg text-[15px] font-bold">
-                확정 예약 1건
+                {awaitingCompletion
+                  ? '일정 종료 · 완료 처리 대기'
+                  : '확정 예약'}
               </span>
-              <span className="bg-success rounded-[5px] px-[7px] py-[3px] text-[11px] font-bold text-white">
-                확정
+              <span
+                className={`${awaitingCompletion ? 'bg-fg-muted' : 'bg-success'} rounded-[5px] px-[7px] py-[3px] text-[11px] font-bold text-white`}
+              >
+                {awaitingCompletion ? '처리 대기' : '확정'}
               </span>
             </div>
             <span className="text-fg-muted text-[12px]">
-              확정 후 일정·장소 변경/취소는 멘토만 가능합니다.
+              {awaitingCompletion
+                ? '예정된 일정은 지났으며 멘토의 완료 처리를 기다리고 있습니다.'
+                : '확정 후 일정·장소 변경/취소는 멘토만 가능합니다.'}
             </span>
           </div>
         </div>
       </div>
-      <div className="bg-surface flex items-start gap-4 px-6 py-5">
+      <div className="bg-surface grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2 xl:grid-cols-4">
         <Cell
           icon={ClockIcon}
           label="확정 일시"

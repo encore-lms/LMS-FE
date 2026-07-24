@@ -357,6 +357,16 @@ export default function AssignmentsPage() {
     return c ? `${c.cohortNo}기` : ''
   })()
   const cohortTeamCount = rows.filter((r) => r.cohortId === cohort).length
+  // 이 기수에서 이미 다른 팀에 배정된 수강생 — 수강생 선택 모달에 '배정됨' 표시.
+  const assignedStudentIds = useMemo(
+    () =>
+      new Set(
+        rows
+          .filter((r) => r.cohortId === cohort)
+          .flatMap((r) => (r.members ?? []).map((m) => m.userId)),
+      ),
+    [rows, cohort],
+  )
   const openStudentCreate = () => {
     if (cohort === 'all') {
       toast.info('먼저 상단에서 교육과정과 기수를 선택해 주세요.')
@@ -538,6 +548,7 @@ export default function AssignmentsPage() {
                 cohortId={cohort}
                 cohortLabel={selectedCohortLabel}
                 existingTeamCount={cohortTeamCount}
+                assignedStudentIds={assignedStudentIds}
               />
             )}
             {formOpen && (

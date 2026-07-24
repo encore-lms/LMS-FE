@@ -42,9 +42,6 @@ export function CancelRequestModal({
             !
           </span>
           <div className="flex flex-col gap-1">
-            <span className="text-warning text-[10px] font-bold tracking-[0.12em]">
-              CANCEL_CONFIRM
-            </span>
             <h2 className="text-fg text-[17px] font-bold">
               멘토링 요청을 취소할까요?
             </h2>

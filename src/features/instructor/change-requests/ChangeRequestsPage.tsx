@@ -12,6 +12,7 @@ import {
   useChangeRequests,
   useResolveChangeRequest,
 } from '../api/changeRequests'
+import { useCohortRosterMap } from '../api/console'
 import { ChangeDiffCard } from './ChangeDiffCard'
 import { ReasonModal } from './ReasonModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -29,6 +30,8 @@ export default function ChangeRequestsPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useChangeRequests()
+  // 요청자 이름 — BE 는 requesterUserId 만 주므로 담당 기수 통합 로스터로 join.
+  const nameOf = useCohortRosterMap()
   const resolveMutation = useResolveChangeRequest()
   const [filter, setFilter] = useState<TypeFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -115,7 +118,11 @@ export default function ChangeRequestsPage() {
       key: 'requester',
       header: '요청자',
       className: 'w-32',
-      cell: (r) => <span className="text-fg-muted text-sm">{r.requester}</span>,
+      cell: (r) => (
+        <span className="text-fg-muted text-sm">
+          {nameOf(r.requesterUserId)}
+        </span>
+      ),
     },
     {
       key: 'status',
@@ -215,7 +222,7 @@ export default function ChangeRequestsPage() {
                     tone={TARGET_TYPE_META[selected.type].tone}
                   />
                   <p className="text-fg text-base font-bold">
-                    {selected.target} · {selected.requester}
+                    {selected.target} · {nameOf(selected.requesterUserId)}
                   </p>
                   {selected.certifierAbsent && (
                     <StatusBadge
@@ -228,8 +235,8 @@ export default function ChangeRequestsPage() {
                   변경된 내역만 보기
                 </p>
                 <div className="mt-2 flex flex-col gap-2.5">
-                  {selected.changes.map((c) => (
-                    <ChangeDiffCard key={c.id} item={c} />
+                  {selected.changes.map((c, i) => (
+                    <ChangeDiffCard key={c.id ?? i} item={c} />
                   ))}
                 </div>
                 <div className="mt-7 flex justify-end gap-2">

@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { QuizSubmissionRow } from '@/shared/types'
-import { useStudentAccounts } from '@/shared/api/students'
+import { useCohortRoster } from '../api/console'
 import { useQuizSubmissions } from '../api/quizzes'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
@@ -38,13 +38,14 @@ export default function SubmissionsPage() {
   usePageHeader('제출 현황', '퀴즈 제출률과 채점 대기 현황을 확인합니다')
 
   const rows = useMemo(() => data?.rows ?? [], [data])
-  const { data: students } = useStudentAccounts()
-  // 제출자 userId → 이름(학생 계정 join). BE는 studentUserId만 주고 이름은 FE에서 결합.
+  // 제출자 userId → 이름 join. BE는 studentUserId만 주고 이름은 FE에서 결합.
+  // 강사는 계정 목록(/users/students) 조회가 막혀 있어(403), 담당 기수 로스터로 join한다.
+  const { data: roster } = useCohortRoster(fromCohortId)
   const nameOf = useMemo(() => {
     const map = new Map<string, string>()
-    for (const s of students?.items ?? []) map.set(s.id, s.name)
+    for (const s of roster ?? []) map.set(s.userId, s.name)
     return (userId: string) => map.get(userId) ?? '수강생'
-  }, [students])
+  }, [roster])
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()

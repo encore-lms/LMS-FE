@@ -138,6 +138,19 @@ describe('AssignmentsPage 관리 툴바', () => {
     ).toBeEnabled()
   })
 
+  it('세이지 그린 배경에서 새 배정 추가를 흰색 주요 버튼으로 표시한다', () => {
+    renderPage()
+
+    const toolbar = screen.getByRole('region', { name: '배정 관리 도구' })
+    expect(toolbar).toHaveClass('bg-[#527565]')
+    expect(
+      within(toolbar).getByRole('link', { name: '템플릿 관리' }),
+    ).toHaveClass('text-white')
+    expect(
+      within(toolbar).getByRole('button', { name: '새 배정 추가' }),
+    ).toHaveClass('bg-white', 'text-[#355548]')
+  })
+
   it('기존 히어로 문구와 기수별 중복 배정 버튼을 제거한다', () => {
     renderPage()
 

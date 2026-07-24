@@ -364,7 +364,7 @@ export default function AssignmentsPage() {
       <div
         role="region"
         aria-label="배정 관리 도구"
-        className="border-border bg-surface flex flex-col gap-3 rounded-xl border p-3.5 xl:flex-row xl:items-center xl:justify-between"
+        className="flex flex-col gap-3 rounded-xl border border-[#466759] bg-[#527565] p-3.5 shadow-[0_4px_14px_rgba(52,85,72,0.14)] xl:flex-row xl:items-center xl:justify-between"
       >
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <Select
@@ -420,7 +420,7 @@ export default function AssignmentsPage() {
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
             to="/admin/mentoring/log-templates"
-            className="border-border text-fg hover:bg-surface-muted inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 text-[13px] font-bold"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/45 px-3.5 text-[13px] font-bold text-white hover:bg-white/10"
           >
             <FileText className="h-4 w-4" />
             템플릿 관리
@@ -434,7 +434,7 @@ export default function AssignmentsPage() {
                 ? '교육과정과 기수를 선택하면 배정을 추가할 수 있어요.'
                 : undefined
             }
-            className="bg-brand text-on-color hover:bg-brand/90 inline-flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[13px] font-bold disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white bg-white px-3.5 text-[13px] font-bold text-[#355548] shadow-[0_2px_6px_rgba(30,56,45,0.18)] hover:bg-[#f4f8f6] disabled:cursor-not-allowed disabled:opacity-55"
           >
             <Plus className="h-4 w-4" />새 배정 추가
           </button>

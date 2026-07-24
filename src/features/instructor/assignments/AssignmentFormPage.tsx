@@ -118,11 +118,11 @@ export default function AssignmentFormPage() {
       className="p-8"
     >
       <div className="p-8">
-        <div className="grid items-start gap-5">
+        <div className="mx-auto w-full max-w-4xl">
           {/* 과제 폼 */}
           <form
             onSubmit={onSave}
-            className="bg-surface max-w-4xl rounded-xl p-6"
+            className="bg-surface w-full rounded-xl p-6"
           >
             <div className="grid gap-4 lg:grid-cols-2">
               <label className="flex w-full flex-col gap-[6px]">

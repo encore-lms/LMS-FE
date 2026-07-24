@@ -21,5 +21,6 @@ export const studentMenu: MenuItem[] = [
   { label: '멘토링', to: '/student/mentoring', featureKey: 'mentoring' },
   // 과정 기능 토글(정본 CohortFeatureConfig: mileage·play)로 노출 제어.
   { label: '마일리지', to: '/student/mileage', featureKey: 'mileage' },
-  { label: 'PLAY', to: '/student/play', featureKey: 'play' },
+  // 임시 숨김(나중에 재활성화) — 삭제 아님. 재활성화 시 아래 주석 해제.
+  // { label: 'PLAY', to: '/student/play', featureKey: 'play' },
 ]

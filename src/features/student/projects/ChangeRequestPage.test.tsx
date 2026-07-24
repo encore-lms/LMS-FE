@@ -16,6 +16,10 @@ vi.mock('./api/changeRequests', () => ({
     mutate: (_summary: string, opts?: { onSuccess?: () => void }) =>
       opts?.onSuccess?.(),
   }),
+  useCancelProjectChange: () => ({
+    mutate: (_v: undefined, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+  }),
 }))
 import { useProjectFlow } from './workspace/useProjectFlow'
 

@@ -47,3 +47,15 @@ export function useSubmitProjectRevision(projectId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: statusKey(projectId) }),
   })
 }
+
+/** 변경 제안 취소 — 강사 승인 전(requested)만. 성공 시 상태 재조회(none 복귀). */
+export function useCancelProjectChange(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient
+        .delete(`/student/projects/${projectId}/change-requests`)
+        .then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: statusKey(projectId) }),
+  })
+}

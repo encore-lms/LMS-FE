@@ -15,6 +15,7 @@ import {
   type ProjectContent,
 } from './workspace/useProjectFlow'
 import {
+  useCancelProjectChange,
   useProjectChangeStatus,
   useRequestProjectChange,
   useSubmitProjectRevision,
@@ -65,6 +66,7 @@ export default function ChangeRequestPage() {
   const { data: serverStatus } = useProjectChangeStatus(projectId)
   const requestMutation = useRequestProjectChange(projectId)
   const submitMutation = useSubmitProjectRevision(projectId)
+  const cancelMutation = useCancelProjectChange(projectId)
   useEffect(() => {
     if (!serverStatus) return
     if (serverStatus.status === 'none') resetEditRequest(projectId)
@@ -105,8 +107,13 @@ export default function ChangeRequestPage() {
     })
   }
   const cancelRequest = () => {
-    resetEditRequest(projectId)
-    toast.info('수정 권한 요청을 취소했어요')
+    cancelMutation.mutate(undefined, {
+      onSuccess: () => {
+        resetEditRequest(projectId)
+        toast.info('수정 권한 요청을 취소했어요')
+      },
+      onError: () => toast.danger('요청 취소에 실패했어요'),
+    })
   }
   const submitEdit = () => {
     if (!summary.trim()) {

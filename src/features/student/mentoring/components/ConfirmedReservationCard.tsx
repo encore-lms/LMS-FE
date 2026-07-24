@@ -100,9 +100,6 @@ export function ConfirmedReservationCard({ r }: { r: MentoringReservation }) {
             </span>
           </div>
         </div>
-        <span className="text-fg-subtle text-[11px] font-medium">
-          예약 #{r.id}
-        </span>
       </div>
       <div className="bg-surface flex items-start gap-4 px-6 py-5">
         <Cell

@@ -5,10 +5,12 @@ import { buttonClass } from '@/components/ui/buttonClass'
 // 본문 + "취소 가능 조건" 안내 박스 + 돌아가기/요청 취소.
 export function CancelRequestModal({
   open,
+  requester,
   onClose,
   onConfirm,
 }: {
   open: boolean
+  requester?: string
   onClose: () => void
   onConfirm: () => void
 }) {
@@ -52,7 +54,16 @@ export function CancelRequestModal({
           </div>
         </div>
 
-        <div className="bg-surface-muted flex flex-col gap-1 rounded-[10px] p-3.5">
+        <div className="bg-surface-muted flex flex-col gap-2 rounded-[10px] p-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-fg-muted text-[12px] font-medium">
+              요청자
+            </span>
+            <span className="text-fg text-[12px] font-bold">
+              {requester || '수강생'}
+            </span>
+          </div>
+          <div className="bg-divider h-px" />
           <span className="text-fg text-[12px] font-bold">취소 가능 조건</span>
           <span className="text-fg-muted text-[12px] leading-5">
             요청 대기 또는 조정 제안 상태에서만 취소 가능 · 확정 후 변경/취소는

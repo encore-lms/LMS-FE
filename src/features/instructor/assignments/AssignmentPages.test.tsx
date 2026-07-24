@@ -15,7 +15,7 @@ import {
   useDeleteAssignment,
   useChangeSubmissionStatus,
 } from '../api/assignments'
-import { useStudentAccounts } from '@/shared/api/students'
+import { useCohortRoster } from '../api/console'
 import type {
   InstructorAssignmentListData,
   AssignmentFormDetail,
@@ -23,7 +23,7 @@ import type {
 } from '@/shared/types'
 
 vi.mock('../api/assignments')
-vi.mock('@/shared/api/students')
+vi.mock('../api/console')
 
 const changeStatusMutate = vi.fn()
 
@@ -136,12 +136,10 @@ const submissions: AssignmentSubmissionsData = {
   ],
 }
 
-const students = {
-  items: [
-    { id: 'stu-1', name: '이서연', studentUuid: 'def-5678' },
-    { id: 'stu-2', name: '최현우', studentUuid: 'jkl-3456' },
-  ],
-}
+const roster = [
+  { userId: 'stu-1', name: '이서연' },
+  { userId: 'stu-2', name: '최현우' },
+]
 
 function ok(data: unknown) {
   return { data, isPending: false, isError: false }
@@ -164,8 +162,8 @@ function mockAll() {
       typeof useAssignmentCohortOptions
     >,
   )
-  vi.mocked(useStudentAccounts).mockReturnValue(
-    ok(students) as unknown as ReturnType<typeof useStudentAccounts>,
+  vi.mocked(useCohortRoster).mockReturnValue(
+    ok(roster) as unknown as ReturnType<typeof useCohortRoster>,
   )
   const mut = (fn = vi.fn()) =>
     ({ mutate: fn, isPending: false }) as unknown as never
@@ -249,8 +247,8 @@ describe('SubmissionsPage (과제, 실 BE)', () => {
     expect(screen.getByText('제출 21')).toBeInTheDocument()
     expect(screen.getByText('학생별 제출')).toBeInTheDocument()
     expect(screen.getByText('제출물 검토')).toBeInTheDocument()
-    // studentUserId stu-1 → 이서연(def-5678) join
-    expect(screen.getByText(/이서연 · def-5678/)).toBeInTheDocument()
+    // studentUserId stu-1 → 이서연(로스터 join). 학번(code)은 로스터에 없어 userId 폴백.
+    expect(screen.getByText(/이서연 · stu-1/)).toBeInTheDocument()
     expect(
       screen.getByText('https://github.com/lee/jpa-mapping-practice/pull/12'),
     ).toBeInTheDocument()

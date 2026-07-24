@@ -25,10 +25,11 @@ import type {
 } from '@/shared/types'
 
 vi.mock('../api/reviews')
-// 상세 패널의 이름 join 훅 — QueryClient 없이 동작하도록 계정 목록을 고정 반환.
-vi.mock('@/shared/api/students', () => ({
-  useStudentAccounts: () => ({
-    data: { items: [{ id: 'stu-1', name: '박지훈' }] },
+// 상세 패널·그리드의 이름 join 훅 — QueryClient 없이 동작하도록 기수 로스터를 고정 반환.
+// 강사는 계정 목록(/users/students)이 막혀(403) 담당 기수 로스터로 실명을 붙인다.
+vi.mock('../api/console', () => ({
+  useCohortRoster: () => ({
+    data: [{ userId: 'stu-1', name: '박지훈' }],
   }),
 }))
 

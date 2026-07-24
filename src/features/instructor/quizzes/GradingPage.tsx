@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useGradingDetail, useSaveGrading } from '../api/quizzes'
-import { useStudentAccounts } from '@/shared/api/students'
+import { useCohortRoster } from '../api/console'
 import { QUESTION_TYPE_LABEL } from './meta'
 
 interface DraftEntry {
@@ -35,7 +35,8 @@ export default function GradingPage() {
   )
   const [drafts, setDrafts] = useState<Record<string, DraftEntry>>({})
   const saveGrading = useSaveGrading(quizId, submissionId)
-  const { data: students } = useStudentAccounts()
+  // 강사는 계정 목록 조회가 막혀 있어(403), 담당 기수 로스터로 이름을 join한다.
+  const { data: roster } = useCohortRoster(fromCohortId)
   usePageHeader('수동 채점', '문항별 점수·피드백 입력 — 완료 시 점수 확정')
 
   // 채점 데이터 도착 시 기존 입력값으로 초기화.
@@ -92,9 +93,9 @@ export default function GradingPage() {
   const total = data?.totalManualCount ?? 0
   const allEntered = gradedCount >= total
   const pct = total > 0 ? Math.round((gradedCount / total) * 100) : 0
-  // 학생명 — BE는 studentUserId만 주므로 계정 join(없으면 BE studentName/대체).
+  // 학생명 — BE는 studentUserId만 주므로 로스터 join(없으면 BE studentName/대체).
   const studentName =
-    (students?.items ?? []).find((s) => s.id === data?.studentUserId)?.name ||
+    (roster ?? []).find((s) => s.userId === data?.studentUserId)?.name ||
     data?.studentName ||
     '수강생'
   // 임시 점수 = 자동 채점분 + 입력된 수동 점수 합 (입력값 우선 반영).

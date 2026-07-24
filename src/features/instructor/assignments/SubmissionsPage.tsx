@@ -12,7 +12,7 @@ import {
   useAssignmentSubmissions,
   useChangeSubmissionStatus,
 } from '../api/assignments'
-import { useStudentAccounts } from '@/shared/api/students'
+import { useCohortRoster } from '../api/console'
 import { ReviewCompleteModal } from './ReviewCompleteModal'
 import { SupplementRequestModal } from './SupplementRequestModal'
 import {
@@ -35,7 +35,9 @@ export default function SubmissionsPage() {
   const toast = useToast()
   const { data, isPending, isError, refetch } =
     useAssignmentSubmissions(assignmentId)
-  const { data: students } = useStudentAccounts()
+  // 강사는 계정 목록 조회가 막혀 있어(403), 담당 기수 로스터로 이름을 join한다.
+  // 로스터는 학번(studentUuid)을 주지 않아 code는 userId 앞자리로 폴백한다.
+  const { data: roster } = useCohortRoster(fromCohortId)
   const changeStatus = useChangeSubmissionStatus(assignmentId)
   const [filter, setFilter] = useState<SubmissionFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -46,14 +48,15 @@ export default function SubmissionsPage() {
     '제출 내용을 확인하고 보완요청 또는 검토완료 상태를 처리합니다',
   )
 
-  // 제출자 사용자 ID → 이름/코드(학생 계정 join).
+  // 제출자 사용자 ID → 이름(로스터 join). 코드(학번)는 로스터에 없어 userId 앞자리로 폴백.
   const student = useMemo(() => {
-    const map = new Map<string, { name: string; code: string }>()
-    for (const s of students?.items ?? [])
-      map.set(s.id, { name: s.name, code: s.studentUuid })
-    return (userId: string) =>
-      map.get(userId) ?? { name: '수강생', code: userId.slice(0, 8) }
-  }, [students])
+    const map = new Map<string, string>()
+    for (const s of roster ?? []) map.set(s.userId, s.name)
+    return (userId: string) => ({
+      name: map.get(userId) ?? '수강생',
+      code: userId.slice(0, 8),
+    })
+  }, [roster])
 
   const rows = useMemo(() => data?.rows ?? [], [data])
 

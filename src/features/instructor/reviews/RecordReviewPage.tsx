@@ -16,7 +16,7 @@ import type {
   RecordWeek,
   StudyGridRow,
 } from '@/shared/types'
-import { useStudentAccounts } from '@/shared/api/students'
+import { useCohortRoster } from '../api/console'
 import { useRecordReviews } from '../api/reviews'
 import { RecordDetailPanel, type RecordPanelData } from './RecordDetailPanel'
 
@@ -70,13 +70,14 @@ export default function RecordReviewPage({
     courseId,
     cohortId,
   )
-  // 실 BE는 학생 실명이 없어 studentUserId 라벨만 준다 — 계정 join으로 실명 치환(이름 있으면 유지).
-  const { data: accounts } = useStudentAccounts()
+  // 실 BE는 학생 실명이 없어 studentUserId 라벨만 준다 — 로스터 join으로 실명 치환(이름 있으면 유지).
+  // 강사는 계정 목록(/users/students) 조회가 막혀 있어(403) 담당 기수 로스터를 쓴다.
+  const { data: roster } = useCohortRoster(cohortId === 'none' ? null : cohortId)
   const data = useMemo(() => {
     if (!raw) return raw
-    const items = accounts?.items ?? []
+    const items = roster ?? []
     if (items.length === 0) return raw
-    const nameById = new Map(items.map((s) => [s.id, s.name]))
+    const nameById = new Map(items.map((s) => [s.userId, s.name]))
     const fixStudent = <T extends { student: RecordGridStudent }>(r: T): T =>
       nameById.has(r.student.id)
         ? { ...r, student: { ...r.student, name: nameById.get(r.student.id)! } }
@@ -102,7 +103,7 @@ export default function RecordReviewPage({
       studyDetails: mapValues(raw.studyDetails),
       certDetails: mapValues(raw.certDetails),
     }
-  }, [raw, accounts])
+  }, [raw, roster])
 
   // 임베드 — 선택 기수(실 UUID)를 포함한 과정으로 고정. 일반 자동 선택 효과보다 우선.
   useEffect(() => {

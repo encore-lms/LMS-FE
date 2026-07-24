@@ -285,6 +285,7 @@ export default function ProjectReviewPage({
 
           <ReviewDetailPanel
             target={detailTarget}
+            cohortId={propCohortId}
             onClose={() => setDetailTarget(null)}
           />
           <SupplementRequestModal

@@ -3,7 +3,7 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import type { MentoringHistoryRow } from '../types'
 
 // 멘토링 기록 섹션(flat 구분선 리스트) — 완료 기록 + 헤더의 "새 멘토링 요청" 버튼(팝업 트리거).
-// 진행 중 1건 한도·멘토 미배정이면 버튼 비활성 + 사유 표기. 기록 0건이어도 항상 렌더(요청 진입점 유지).
+// 진행 중 3건 한도·멘토 미배정이면 버튼 비활성 + 사유 표기. 기록 0건이어도 항상 렌더(요청 진입점 유지).
 const COLS = 'grid grid-cols-[40px_1.7fr_1.4fr_1.3fr_0.9fr_0.7fr] gap-3'
 
 export function MentoringHistorySection({

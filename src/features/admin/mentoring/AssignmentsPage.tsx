@@ -420,7 +420,7 @@ export default function AssignmentsPage() {
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
             to="/admin/mentoring/log-templates"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/45 px-3.5 text-[13px] font-bold text-white hover:bg-white/10"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white bg-white px-3.5 text-[13px] font-bold text-[#355548] hover:bg-[#f4f8f6]"
           >
             <FileText className="h-4 w-4" />
             템플릿 관리

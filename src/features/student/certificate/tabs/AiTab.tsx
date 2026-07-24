@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronDown } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
-import { AiBanner } from './TechTab'
 import { AiProfile } from '../v2/AiProfile'
 import { AiProjectAnalysis } from '../v2/AiProjectAnalysis'
 import { AiProblemAnalysis } from '../v2/AiProblemAnalysis'
@@ -86,8 +85,6 @@ export function AiTab({
 
           {/* 상담 감성 — 과정 기간을 초기·중기·후기로 나눈 실제 상담 흐름 */}
           <SentimentBubbles sentiment={query.data.sentiment} />
-
-          <AiBanner text="AI 분석은 강사가 인증한 활동을 근거로 한 해석이며, 검증된 사실과 구분됩니다. 외부에 공개되는 항목에는 인증 완료 + 운영자 승인을 거친 내용만 포함됩니다." />
         </div>
       )}
     </DataBoundary>

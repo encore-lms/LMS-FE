@@ -36,6 +36,10 @@ describe('AiTab 상세 API 연결', () => {
     expect(fetchAiAnalysis).toHaveBeenCalledWith('student-1')
     expect(screen.getByText('AI 역량 프로파일링')).toBeInTheDocument()
     expect(screen.getByText('AI 페르소나 TOP 3')).toBeInTheDocument()
+    expect(screen.queryByText('AI · 종합 분석')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/AI 분석은 강사가 인증한 활동을 근거로 한 해석/),
+    ).not.toBeInTheDocument()
   })
 
   it('조회 실패 시 엔진명과 학생 식별자를 노출하지 않는다', async () => {

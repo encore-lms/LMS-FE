@@ -55,9 +55,11 @@ interface FlyingItem {
   endY: number
   icon: MileageProduct['icon']
   tone: Tone
+  imageSrc?: string | null // 카드에 이미 로드된 상품 이미지(object URL) — 있으면 이미지가 날아감
 }
 
-// 담기 시 상품 아이콘이 장바구니 버튼으로 날아가는 연출(이전 LMS flyToCart).
+// 담기 시 상품 이미지가 장바구니 버튼으로 날아가는 연출(이전 LMS flyToCart).
+// 카드에 로드된 이미지가 있으면 그 이미지를, 없으면 타입 아이콘을 날린다.
 function FlyingIcon({ item }: { item: FlyingItem }) {
   const [flown, setFlown] = useState(false)
   useEffect(() => {
@@ -69,22 +71,30 @@ function FlyingIcon({ item }: { item: FlyingItem }) {
   const Icon = PRODUCT_ICON[item.icon]
   return (
     <div
-      className={cn(
-        'pointer-events-none fixed z-[200] flex size-10 items-center justify-center rounded-[10px]',
-        TONE_SOFT[item.tone],
-      )}
+      className="bg-surface pointer-events-none fixed z-[200] size-16 overflow-hidden rounded-xl shadow-[0px_8px_24px_0px_rgba(18,23,38,0.18)]"
       style={{
         left: item.startX,
         top: item.startY,
         transform: flown
-          ? `translate(${item.endX - item.startX}px, ${item.endY - item.startY}px) scale(0.35)`
+          ? `translate(${item.endX - item.startX}px, ${item.endY - item.startY}px) scale(0.3)`
           : 'translate(0,0) scale(1)',
-        opacity: flown ? 0.15 : 1,
+        opacity: flown ? 0.2 : 1,
         transition:
           'transform 0.9s cubic-bezier(0.5,-0.2,0.7,1.2), opacity 0.9s ease-in',
       }}
     >
-      <Icon className="size-[21px]" />
+      {item.imageSrc ? (
+        <img src={item.imageSrc} alt="" className="size-full object-contain" />
+      ) : (
+        <span
+          className={cn(
+            'flex size-full items-center justify-center',
+            TONE_SOFT[item.tone],
+          )}
+        >
+          <Icon className="size-7" />
+        </span>
+      )}
     </div>
   )
 }
@@ -145,6 +155,9 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
   ) => {
     const cardEl = e.currentTarget.closest('[data-product-card]')
     const iconEl = cardEl?.querySelector('[data-cart-img]')
+    // 카드에 이미 로드된 상품 이미지(object URL)를 그대로 날린다.
+    const imageSrc =
+      iconEl?.querySelector('img')?.getAttribute('src') ?? null
     const cartBtn = cartBtnRef.current
     add({
       productId: p.id,
@@ -157,17 +170,19 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
     if (iconEl && cartBtn) {
       const r = iconEl.getBoundingClientRect()
       const c = cartBtn.getBoundingClientRect()
+      const SIZE = 64 // FlyingIcon size-16
       const id = ++flyId.current
       setFlyingItems((prev) => [
         ...prev,
         {
           id,
-          startX: r.left,
-          startY: r.top,
-          endX: c.left + c.width / 2 - 20,
-          endY: c.top + c.height / 2 - 20,
+          startX: r.left + r.width / 2 - SIZE / 2,
+          startY: r.top + r.height / 2 - SIZE / 2,
+          endX: c.left + c.width / 2 - SIZE / 2,
+          endY: c.top + c.height / 2 - SIZE / 2,
           icon: p.icon,
           tone: p.tone,
+          imageSrc,
         },
       ])
       window.setTimeout(() => {

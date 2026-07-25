@@ -50,15 +50,19 @@ export const adminMenu: MenuNode[] = [
       { label: '증명서 템플릿', to: '/admin/certificate-template' },
     ],
   },
-  // 임시 숨김(나중에 재활성화) — 삭제 아님. 라우트는 유지, 사이드바 항목만 감춤. 재활성화 시 주석 해제.
-  // {
-  //   label: '데이터·연동',
-  //   children: [
-  //     { label: 'CSV 매핑', to: '/admin/csv-mapping' },
-  //     { label: '인입 격리 큐', to: '/admin/ingestion/quarantine' },
-  //     { label: '외부 연동', to: '/admin/integrations' },
-  //   ],
-  // },
+  // 데이터·연동 — 준비 중. 항목 클릭 시 이동 없이 '준비중' 토스트만. 정식 오픈 시 comingSoon 제거.
+  {
+    label: '데이터·연동',
+    children: [
+      { label: 'CSV 매핑', to: '/admin/csv-mapping', comingSoon: true },
+      {
+        label: '인입 격리 큐',
+        to: '/admin/ingestion/quarantine',
+        comingSoon: true,
+      },
+      { label: '외부 연동', to: '/admin/integrations', comingSoon: true },
+    ],
+  },
   // 설정 — 랜딩(/admin/settings)이 계정 관리이며, 하위 탭(hrd-api-key·course-config·
   // courses/new)은 prefix 매칭으로 활성 유지. 운영 계정·권한 메뉴는 설정으로 통합되어 폐지.
   { label: '설정', to: '/admin/settings' },

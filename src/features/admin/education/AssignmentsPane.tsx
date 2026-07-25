@@ -278,11 +278,12 @@ export function AssignmentsPane({
   const [deleteTarget, setDeleteTarget] =
     useState<InstructorAssignmentRow | null>(null)
 
-  // 과제 등록은 페이지로 정합 — /admin/education/assignments/new 로 이동(팝업 폐지).
+  // 과제 등록·수정은 강사·운영 공용 폼 페이지로 이동(팝업 폐지, 첨부 포함).
+  const hubQs = `?course=${courseId}&cohort=${cohortId}`
   const goCreate = () =>
-    navigate(
-      `/admin/education/assignments/new?course=${courseId}&cohort=${cohortId}`,
-    )
+    navigate(`/admin/education/assignments/new${hubQs}`)
+  const goEdit = (id: string) =>
+    navigate(`/admin/education/assignments/${id}${hubQs}`)
 
   const deleteSpec: ActionModalSpec | null = deleteTarget
     ? {
@@ -361,6 +362,16 @@ export function AssignmentsPane({
             className="bg-info-bg text-info hover:bg-info-bg/70 rounded-md px-2 py-1 text-xs font-medium"
           >
             제출 현황
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              goEdit(r.id)
+            }}
+            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+          >
+            수정
           </button>
           <button
             type="button"

@@ -72,6 +72,9 @@ export function useCohortAssignments(cohortId?: string | null) {
   return useQuery({
     queryKey: adminEducationKeys.cohortAssignments(cohortId ?? ''),
     enabled: !!cohortId,
+    // 공용 폼(강사 endpoint, 별도 키)에서 생성·수정 후 복귀 시 항상 최신화 —
+    // 이 목록 키를 무효화하지 않으므로 재마운트마다 refetch.
+    refetchOnMount: 'always',
     queryFn: () =>
       apiClient
         .get<InstructorAssignmentList>('/admin/assignments', {

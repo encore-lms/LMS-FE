@@ -13,9 +13,9 @@ const StudentManagementPage = lazy(
 )
 // 과정·기수·교과목 통합 관리 (운영 전용 신설 — features/admin/education, Figma 1543:11011)
 const EducationPage = lazy(() => import('./education/EducationPage'))
-// 운영 과제 등록 페이지 — 과제 등록 모달을 페이지로 정합(강사 과제 생성 페이지와 동일 UX)
-const AdminAssignmentFormPage = lazy(
-  () => import('./education/AdminAssignmentFormPage'),
+// 과제 등록·수정 — 강사·운영 공용 폼(첨부 포함). 운영은 ?course&cohort로 진입.
+const AssignmentFormPage = lazy(
+  () => import('../instructor/assignments/AssignmentFormPage'),
 )
 // 과정·기수·교과목 이력서 상세(실 BE, 페이지 전환) — ResumePane에서 진입
 const EducationResumeDetailPage = lazy(
@@ -104,9 +104,14 @@ export const adminRoutes: RouteObject[] = [
       { path: 'dashboard', element: <AdminDashboard /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'education', element: <EducationPage /> },
+      // 과제 등록·수정 — 강사·운영 공용 폼(첨부 포함). /new 는 :assignmentId보다 먼저(정적 우선).
       {
         path: 'education/assignments/new',
-        element: <AdminAssignmentFormPage />,
+        element: <AssignmentFormPage />,
+      },
+      {
+        path: 'education/assignments/:assignmentId',
+        element: <AssignmentFormPage />,
       },
       {
         path: 'education/resume/:resumeId',

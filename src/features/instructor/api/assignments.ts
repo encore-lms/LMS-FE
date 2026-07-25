@@ -3,6 +3,7 @@ import { apiClient, instructorKeys } from '@/shared/api'
 import type {
   InstructorAssignmentListData,
   AssignmentFormDetail,
+  AssignmentFileRef,
   AssignmentSubmissionsData,
 } from '@/shared/types'
 
@@ -52,6 +53,7 @@ export interface SaveAssignmentInput {
   title: string
   dueAt?: string // "yyyy-MM-dd HH:mm"
   description?: string
+  urls?: string[] // 첨부 링크(최대 5) — 저장 시 전면 교체
 }
 // 생성(POST) 또는 수정(PUT, assignmentId 지정)
 export function useSaveAssignment(assignmentId?: string) {
@@ -84,6 +86,38 @@ export function useDeleteAssignment() {
         .then(() => undefined),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: instructorKeys.assignments() }),
+  })
+}
+
+// 과제 첨부 파일 업로드(multipart) — 과제 저장(실 id 확보) 후 호출.
+export function useUploadAssignmentFile() {
+  return useMutation<
+    AssignmentFileRef,
+    Error,
+    { assignmentId: string; file: File }
+  >({
+    mutationFn: ({ assignmentId, file }) => {
+      const form = new FormData()
+      form.append('file', file)
+      return apiClient
+        .postForm<AssignmentFileRef>(
+          `/instructor/assignments/${assignmentId}/attachments/file`,
+          form,
+        )
+        .then((r) => r.data)
+    },
+  })
+}
+
+// 과제 첨부 파일 삭제.
+export function useDeleteAssignmentFile() {
+  return useMutation<void, Error, { assignmentId: string; fileId: string }>({
+    mutationFn: ({ assignmentId, fileId }) =>
+      apiClient
+        .delete<void>(
+          `/instructor/assignments/${assignmentId}/attachments/${fileId}`,
+        )
+        .then(() => undefined),
   })
 }
 

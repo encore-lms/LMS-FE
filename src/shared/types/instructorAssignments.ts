@@ -19,8 +19,6 @@ export interface AssignmentCounts {
 export interface InstructorAssignmentRow {
   id: string
   title: string
-  /** 과목/회차 — 예: '백엔드 5회차' */
-  subject: string | null
   cohortLabel: string
   /** 'D-2' 등 — closed면 '마감됨'으로 표기 */
   dueLabel: string
@@ -51,7 +49,6 @@ export interface AssignmentFormDetail {
   id: string
   cohortId: string
   cohortLabel: string
-  subject: string | null
   title: string
   dueAt: string
   description: string | null
@@ -85,7 +82,6 @@ export interface AssignmentSubmissionRow {
 export interface AssignmentSubmissionsData {
   assignmentId: string
   assignmentTitle: string
-  subject: string | null
   description: string | null
   createdByUserId: string
   createdAtLabel: string

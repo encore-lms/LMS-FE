@@ -39,6 +39,13 @@ export interface InstructorAssignmentListData {
   items: InstructorAssignmentRow[]
 }
 
+/** 과제 첨부 파일 참조(다운로드용) */
+export interface AssignmentFileRef {
+  id: string
+  name: string
+  downloadUrl: string
+}
+
 /** 생성/수정 폼 상세 (/instructor/assignments/:assignmentId) */
 export interface AssignmentFormDetail {
   id: string
@@ -49,7 +56,7 @@ export interface AssignmentFormDetail {
   dueAt: string
   description: string | null
   urls: string[]
-  files: string[]
+  files: AssignmentFileRef[]
   submittedCount: number
 }
 

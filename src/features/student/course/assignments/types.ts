@@ -10,7 +10,6 @@ export type DueTone = 'soon' | 'normal' | 'ended'
 export interface AssignmentListItem {
   id: string
   title: string
-  subject: string // "백엔드 심화"
   status: AssignmentStatus
   dueLabel: string // "마감 D-2" | "마감 5/9 종료"
   dueTone: DueTone
@@ -40,7 +39,6 @@ export interface AssignmentDetail {
   id: string
   title: string
   description: string
-  subject: string
   status: AssignmentStatus
   dueAtLabel: string // "2026-05-24 23:59"
   dueBadge: string // "D-2"

@@ -12,6 +12,7 @@ interface BeItem {
   status: string
   hasImage: boolean
   imageUrl: string | null
+  referenced?: boolean // 구매 이력 존재 — 물리 삭제 불가(삭제 버튼 숨김)
 }
 interface BeListResponse {
   items: BeItem[]
@@ -44,7 +45,7 @@ function toProductsData(be: BeListResponse): ProductsData {
     order: idx,
     salesCount: 0,
     active: it.status === 'ACTIVE',
-    referenced: false,
+    referenced: it.referenced ?? false,
     imageUrl: it.imageUrl,
   }))
   return {

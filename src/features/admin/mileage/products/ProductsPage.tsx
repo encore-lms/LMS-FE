@@ -20,7 +20,7 @@ import {
   useUpsertProduct,
   useUploadProductImage,
 } from './api'
-import { ProductImage } from './ProductImage'
+import { usePreloadedProductImages } from './usePreloadedProductImages'
 import type { Product } from './types'
 import { SkeletonCards } from '@/components/ui/Skeleton'
 
@@ -45,6 +45,8 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
 
   const products = useMemo(() => data?.products ?? [], [data])
+  // 상품 이미지를 전부 미리 로드 — 준비되기 전엔 스켈레톤(아이콘 깜빡임 방지).
+  const { images, ready: imagesReady } = usePreloadedProductImages(products)
   const filtered = useMemo(
     () => products.filter((p) => type === 'all' || p.type === type),
     [products, type],
@@ -80,10 +82,10 @@ export default function ProductsPage() {
       </div>
 
       <DataBoundary
-        isPending={isPending}
+        isPending={isPending || !imagesReady}
         isError={isError || !data}
         onRetry={() => refetch()}
-        skeleton={<SkeletonCards count={6} />}
+        skeleton={<SkeletonCards count={10} />}
         errorTitle="상품을 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >
@@ -134,6 +136,7 @@ export default function ProductsPage() {
             <ProductCard
               key={p.id}
               product={p}
+              imageSrc={images[p.id]}
               onEdit={() => {
                 setFormProduct(p)
                 setFormOpen(true)
@@ -201,12 +204,15 @@ export default function ProductsPage() {
 }
 
 // 상품 카드 — 기본은 이미지·배지·이름·가격, 호버 시 이미지 위에 삭제/수정 버튼.
+// imageSrc는 상위에서 미리 로드해 전달(모두 준비된 뒤에만 렌더되므로 즉시 표시).
 function ProductCard({
   product: p,
+  imageSrc,
   onEdit,
   onDelete,
 }: {
   product: Product
+  imageSrc?: string
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -216,11 +222,15 @@ function ProductCard({
     <div className="group bg-surface flex flex-col overflow-hidden rounded-2xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       {/* 이미지 + 호버 오버레이(삭제·수정) */}
       <div className="bg-surface relative flex aspect-square items-center justify-center overflow-hidden">
-        <ProductImage
-          url={p.imageUrl}
-          className="size-full object-contain"
-          fallback={<span className="text-5xl">{p.emoji}</span>}
-        />
+        {imageSrc ? (
+          <img
+            src={imageSrc}
+            alt=""
+            className="size-full object-contain"
+          />
+        ) : (
+          <span className="text-5xl">{p.emoji}</span>
+        )}
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           {/* 참조 중(구매 이력 존재) 상품은 삭제 불가 — 수정만 노출 */}
           {!p.referenced && (

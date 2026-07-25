@@ -9,6 +9,8 @@ export interface MenuItem {
   match?: string[]
   /** 과정 기능 토글 키. 설정되면 해당 토글이 OFF인 과정의 수강생에게 메뉴를 숨긴다. */
   featureKey?: string
+  /** 준비 중인 기능 — 클릭 시 이동하지 않고 '준비중' 토스트만 띄운다(라우팅 없음). */
+  comingSoon?: boolean
 }
 
 // 대분류(드롭다운) 그룹 — 항목이 많은 사이드바(운영)를 접이식으로 묶을 때 사용한다.

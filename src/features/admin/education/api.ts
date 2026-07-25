@@ -86,7 +86,6 @@ export function useCohortAssignments(cohortId?: string | null) {
 
 export interface SaveInstructorAssignmentInput {
   cohortId: string
-  subject?: string
   title: string
   dueAt?: string // "yyyy-MM-dd HH:mm"
   description?: string

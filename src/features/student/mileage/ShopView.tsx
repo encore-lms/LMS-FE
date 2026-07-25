@@ -340,7 +340,7 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                     {p.name}
                   </span>
                   <span className="text-brand text-[13px] font-bold">
-                    {p.price}
+                    {flexible ? '가격 직접 입력' : p.price}
                   </span>
                   <span className="text-fg-muted min-h-[32px] text-[12px] leading-5">
                     {p.desc}

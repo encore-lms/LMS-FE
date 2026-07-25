@@ -58,8 +58,7 @@ export default function AssignmentsPage() {
     const needle = query.trim().toLowerCase()
     return (data ?? []).filter((it) => {
       if (filter !== 'all' && it.status !== filter) return false
-      if (needle && !`${it.title} ${it.subject}`.toLowerCase().includes(needle))
-        return false
+      if (needle && !it.title.toLowerCase().includes(needle)) return false
       return true
     })
   }, [data, filter, query])
@@ -73,7 +72,6 @@ export default function AssignmentsPage() {
       cell: (r) => (
         <div>
           <p className="text-fg text-[14px] font-semibold">{r.title}</p>
-          <p className="text-fg-subtle text-xs">{r.subject}</p>
         </div>
       ),
     },

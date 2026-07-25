@@ -62,8 +62,7 @@ export default function AssignmentsPage({
       if (status === 'closed' && !r.closed) return false
       if (cohort !== '전체' && r.cohortLabel !== cohort) return false
       if (needle) {
-        const hay = `${r.title} ${r.subject ?? ''}`.toLowerCase()
-        if (!hay.includes(needle)) return false
+        if (!r.title.toLowerCase().includes(needle)) return false
       }
       return true
     })
@@ -80,14 +79,6 @@ export default function AssignmentsPage({
           <p className="text-fg text-sm font-medium">{r.title}</p>
           <p className="text-fg-subtle text-xs">{r.cohortLabel}</p>
         </div>
-      ),
-    },
-    {
-      key: 'subject',
-      header: '과목/회차',
-      className: 'w-32',
-      cell: (r) => (
-        <span className="text-fg-muted text-sm">{r.subject ?? '-'}</span>
       ),
     },
     {

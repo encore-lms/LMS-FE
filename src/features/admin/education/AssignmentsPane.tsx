@@ -79,12 +79,6 @@ function SubmissionsModal({
           </h2>
           <div className="text-fg-muted mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
             <span>작성자 {authorName}</span>
-            {data?.subject && (
-              <>
-                <span className="bg-border h-3 w-px" />
-                <span>{data.subject}</span>
-              </>
-            )}
           </div>
           <div className="text-fg-muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
             <span>작성일 {data?.createdAtLabel || '-'}</span>
@@ -253,12 +247,7 @@ export function AssignmentsPane({
   const filtered = useMemo(() => {
     const needle = q.trim()
     return (data?.items ?? []).filter((r) => {
-      if (
-        needle &&
-        !r.title.includes(needle) &&
-        !(r.subject ?? '').includes(needle)
-      )
-        return false
+      if (needle && !r.title.includes(needle)) return false
       switch (statusFilter) {
         case 'submitted':
           return r.counts.submitted > 0
@@ -317,9 +306,6 @@ export function AssignmentsPane({
       cell: (r) => (
         <div className="flex flex-col">
           <span className="text-fg font-medium">{r.title}</span>
-          {r.subject && (
-            <span className="text-fg-subtle text-xs">{r.subject}</span>
-          )}
         </div>
       ),
     },

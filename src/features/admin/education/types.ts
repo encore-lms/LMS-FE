@@ -84,7 +84,6 @@ export interface AssignmentCounts {
 export interface InstructorAssignmentRow {
   id: string
   title: string
-  subject: string | null
   cohortLabel: string
   dueLabel: string
   closed: boolean
@@ -102,7 +101,6 @@ export interface AssignmentFormDetail {
   id: string
   cohortId: string
   cohortLabel: string
-  subject: string | null
   title: string
   dueAt: string // "yyyy-MM-dd HH:mm"
   description: string | null
@@ -130,7 +128,6 @@ export interface AssignmentSubmissionRow {
 export interface AssignmentSubmissionsData {
   assignmentId: string
   assignmentTitle: string
-  subject: string | null
   description: string | null
   createdByUserId: string
   createdAtLabel: string

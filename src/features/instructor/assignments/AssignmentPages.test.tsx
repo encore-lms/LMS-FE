@@ -42,7 +42,6 @@ const assignmentList: InstructorAssignmentListData = {
     {
       id: 'assign-jpa-mapping',
       title: 'JPA 연관관계 매핑 실습',
-      subject: '백엔드 5회차',
       cohortLabel: 'DA 3기',
       dueLabel: 'D-2',
       closed: false,
@@ -59,7 +58,6 @@ const assignmentList: InstructorAssignmentListData = {
     {
       id: 'assign-unit-test',
       title: '단위 테스트 작성 과제',
-      subject: '테스트 2회차',
       cohortLabel: 'DA 3기',
       dueLabel: '마감됨',
       closed: true,
@@ -80,7 +78,6 @@ const assignmentDetail: AssignmentFormDetail = {
   id: 'assign-jpa-mapping',
   cohortId: 'c1',
   cohortLabel: 'DA 3기',
-  subject: '백엔드 5회차',
   title: 'JPA 연관관계 매핑 실습',
   dueAt: '2026-05-24 23:59',
   description: '양방향/단방향 연관관계 설계 비교.',
@@ -99,7 +96,6 @@ const assignmentDetail: AssignmentFormDetail = {
 const submissions: AssignmentSubmissionsData = {
   assignmentId: 'assign-jpa-mapping',
   assignmentTitle: 'JPA 연관관계 매핑 실습',
-  subject: '백엔드 5회차',
   description: '양방향/단방향 연관관계 설계 비교.',
   createdByUserId: 'mgr-1',
   createdAtLabel: '2026-05-20 09:00',

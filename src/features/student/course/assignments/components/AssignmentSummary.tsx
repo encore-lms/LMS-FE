@@ -85,9 +85,6 @@ export function AssignmentSummary({
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2.5">
-          <span className="bg-surface-muted text-fg-muted rounded-md px-2 py-[3px] text-[11px] font-semibold">
-            {detail.subject}
-          </span>
           <span
             className={cn(
               'rounded-md px-2 py-[3px] text-[11px] font-semibold',

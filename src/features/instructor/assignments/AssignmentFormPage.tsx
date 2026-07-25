@@ -99,7 +99,6 @@ export default function AssignmentFormPage() {
     if (!data) return
     reset({
       cohortId: data.cohortId,
-      subject: data.subject ?? '',
       title: data.title,
       dueAt: data.dueAt,
       description: data.description ?? '',
@@ -154,7 +153,6 @@ export default function AssignmentFormPage() {
     try {
       const saved = await saveAssignment.mutateAsync({
         cohortId: input.cohortId,
-        subject: input.subject,
         title: input.title,
         dueAt: input.dueAt,
         description: input.description,
@@ -194,7 +192,7 @@ export default function AssignmentFormPage() {
             onSubmit={onSave}
             className="bg-surface w-full rounded-xl p-6"
           >
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div>
               <label className="flex w-full flex-col gap-[6px]">
                 <span className="text-fg text-[13px] font-bold">
                   기수 <span className="text-danger">*</span>
@@ -229,13 +227,6 @@ export default function AssignmentFormPage() {
                   />
                 )}
               </label>
-              <Input
-                label="과목/회차"
-                required
-                placeholder="백엔드 5회차"
-                error={errors.subject?.message}
-                {...register('subject')}
-              />
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <Input

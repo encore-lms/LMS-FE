@@ -97,14 +97,15 @@ function renderPage() {
 }
 
 describe('ProductsPage (마일리지 상품 관리)', () => {
-  it('상품 카드·가격·참조 중 삭제 제한·정책을 렌더한다', () => {
+  it('상품 카드·가격·참조 중 삭제 제한을 렌더한다', () => {
     renderPage()
     expect(screen.getByText('문화상품권 5만원권')).toBeInTheDocument()
     expect(screen.getByText('50,000 M')).toBeInTheDocument()
     expect(screen.getByText('PLAYDATA 후드 집업')).toBeInTheDocument()
     expect(screen.getByText('30,000 M')).toBeInTheDocument()
-    // 참조 중 상품 = 삭제 불가
-    expect(screen.getByText('참조 중 — 삭제 불가')).toBeInTheDocument()
+    // 수정은 전 상품(3개), 삭제는 참조 중(pd-8) 제외 → 2개
+    expect(screen.getAllByRole('button', { name: '수정' })).toHaveLength(3)
+    expect(screen.getAllByRole('button', { name: '삭제' })).toHaveLength(2)
   })
 
   it('타입 필터(굿즈) — 쿠폰 상품이 사라진다', async () => {

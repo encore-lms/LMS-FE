@@ -25,18 +25,25 @@ const MAX_URLS = 5
 const MAX_FILES = 5
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
 
-// 과제·실습 생성/수정 (/instructor/assignments/new · /:assignmentId) — P0 30. (Figma 2750:1547)
+// 과제·실습 생성/수정 — 강사(/instructor/assignments/*)·운영(/admin/education/assignments/*) 공용 폼.
 // 첨부 자료는 URL 최대 5개 · 파일당 20MB·최대 5개. 점수/채점 정책 없음.
 export default function AssignmentFormPage() {
   const { assignmentId } = useParams()
   const isEdit = !!assignmentId
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  // 과정·기수 허브에서 진입(cohortId). 저장·취소 시 허브 과제 탭으로 복귀하고, 생성 시 대상 기수를 고정한다.
-  const fromCohortId = searchParams.get('cohortId')
-  const backTo = fromCohortId
-    ? `/instructor/cohorts/${fromCohortId}/education?tab=assignments`
-    : '/instructor/assignments'
+  // 진입 컨텍스트 — 강사 허브(cohortId) 또는 운영 허브(course+cohort). 둘 다 지원(공용 폼).
+  // 저장·취소 시 진입한 허브 과제 탭으로 복귀하고, 생성 시 대상 기수를 고정한다.
+  const cohortIdParam = searchParams.get('cohortId')
+  const courseParam = searchParams.get('course')
+  const cohortParam = searchParams.get('cohort')
+  const isAdminCtx = !!(courseParam || cohortParam)
+  const fromCohortId = cohortIdParam ?? cohortParam
+  const backTo = isAdminCtx
+    ? `/admin/education?course=${courseParam ?? ''}&cohort=${cohortParam ?? ''}&tab=assignments`
+    : fromCohortId
+      ? `/instructor/cohorts/${fromCohortId}/education?tab=assignments`
+      : '/instructor/assignments'
   const lockCohortId = isEdit ? null : fromCohortId
   const toast = useToast()
   const { data, isPending, isError, refetch } = useAssignmentDetail(

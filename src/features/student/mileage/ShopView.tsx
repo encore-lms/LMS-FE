@@ -372,7 +372,7 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                       구매 신청
                     </button>
                   ) : inCart ? (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-center gap-5">
                       <button
                         type="button"
                         aria-label="수량 줄이기"
@@ -383,7 +383,7 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                       >
                         <Minus className="size-4" />
                       </button>
-                      <span className="text-fg text-[16px] font-bold tabular-nums">
+                      <span className="text-fg min-w-[2ch] text-center text-[16px] font-bold tabular-nums">
                         {qty}
                       </span>
                       <button

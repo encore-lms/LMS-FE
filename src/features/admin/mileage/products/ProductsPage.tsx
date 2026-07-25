@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { Info, Plus } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
@@ -23,8 +23,6 @@ import {
 import { ProductImage } from './ProductImage'
 import type { Product } from './types'
 import { SkeletonCards } from '@/components/ui/Skeleton'
-
-const PRICE_MODE_LABEL = { fixed: '고정가', flexible: '수강생 입력' } as const
 
 // 마일리지 상품 관리 (/admin/mileage/products) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1246:7113. 상품 카드 그리드 + 타입별 가격 방식(고정가/유연가) + 참조 중 삭제 제한.
@@ -130,8 +128,8 @@ export default function ProductsPage() {
           </button>
         </div>
 
-        {/* 상품 카드 그리드 */}
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 상품 카드 그리드 — 한 줄 5개 */}
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filtered.map((p) => (
             <ProductCard
               key={p.id}
@@ -202,7 +200,7 @@ export default function ProductsPage() {
   )
 }
 
-// 상품 카드.
+// 상품 카드 — 기본은 이미지·배지·이름·가격, 호버 시 이미지 위에 삭제/수정 버튼.
 function ProductCard({
   product: p,
   onEdit,
@@ -212,16 +210,33 @@ function ProductCard({
   onEdit: () => void
   onDelete: () => void
 }) {
+  const overlayBtn =
+    'inline-flex items-center gap-1.5 rounded-full border border-white/50 bg-white/15 px-4 py-2 text-[13px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/30'
   return (
-    <div className="border-border bg-surface flex flex-col overflow-hidden rounded-xl border">
-      <div className="bg-surface-muted flex h-24 items-center justify-center overflow-hidden text-4xl">
+    <div className="group bg-surface flex flex-col overflow-hidden rounded-2xl shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+      {/* 이미지 + 호버 오버레이(삭제·수정) */}
+      <div className="bg-surface relative flex aspect-square items-center justify-center overflow-hidden">
         <ProductImage
           url={p.imageUrl}
-          className="size-full object-cover"
-          fallback={<span>{p.emoji}</span>}
+          className="size-full object-contain"
+          fallback={<span className="text-5xl">{p.emoji}</span>}
         />
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          {/* 참조 중(구매 이력 존재) 상품은 삭제 불가 — 수정만 노출 */}
+          {!p.referenced && (
+            <button type="button" onClick={onDelete} className={overlayBtn}>
+              <Trash2 className="size-4" />
+              삭제
+            </button>
+          )}
+          <button type="button" onClick={onEdit} className={overlayBtn}>
+            <Pencil className="size-4" />
+            수정
+          </button>
+        </div>
       </div>
-      <div className="flex flex-1 flex-col p-4">
+      {/* 내용 */}
+      <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex items-center gap-1.5">
           <StatusBadge label={PRODUCT_TYPE_LABEL[p.type]} tone="neutral" />
           <StatusBadge
@@ -229,49 +244,12 @@ function ProductCard({
             tone={p.active ? 'success' : 'neutral'}
           />
         </div>
-        <p className="text-fg mt-2 text-[14px] font-bold">{p.name}</p>
-        <div className="mt-2 flex items-baseline gap-1.5">
-          {p.priceMode === 'fixed' ? (
-            <>
-              <span className="text-fg-subtle text-[11px]">
-                {PRICE_MODE_LABEL.fixed}
-              </span>
-              <span className="text-fg text-[15px] font-bold tabular-nums">
-                {p.price ?? '0'} M
-              </span>
-            </>
-          ) : (
-            <span className="text-fg text-[13px] font-semibold">
-              수강생이 구매 시 링크·가격 직접 입력
-            </span>
-          )}
-        </div>
-        <div className="text-fg-subtle mt-2 flex items-center justify-between text-[11px]">
-          <span>순서 {p.order}</span>
-          <span>판매 {p.salesCount}건</span>
-        </div>
-        <div className="border-divider mt-3 flex items-center gap-3 border-t pt-3">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="text-brand text-[13px] font-semibold hover:underline"
-          >
-            수정
-          </button>
-          {p.referenced ? (
-            <span className="text-fg-subtle inline-flex items-center gap-1 text-[12px]">
-              <Info className="h-3.5 w-3.5" />
-              참조 중 — 삭제 불가
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="text-danger text-[13px] font-semibold hover:underline"
-            >
-              삭제
-            </button>
-          )}
+        <p className="text-fg text-[15px] font-bold">{p.name}</p>
+        <div className="flex items-baseline gap-2">
+          <span className="text-fg-subtle text-[12px]">상품 가격</span>
+          <span className="text-fg text-[17px] font-bold tabular-nums">
+            {p.priceMode === 'fixed' ? `${p.price ?? '0'} M` : '수강생 입력'}
+          </span>
         </div>
       </div>
     </div>

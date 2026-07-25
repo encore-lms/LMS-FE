@@ -26,9 +26,9 @@ import { TONE_SOFT } from '@/shared/lib/tone'
 // 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
-// 상품 카드(한 줄 5개) — 좁아진 폭에 맞춰 패딩·간격을 card보다 조금 작게.
+// 상품 카드(한 줄 5개) — 기본은 그림자 없이 flat, 호버 시에만 그림자로 떠오르게.
 const productCard =
-  'bg-surface flex flex-col gap-3 rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+  'bg-surface flex flex-col gap-3 rounded-2xl p-4 transition-shadow duration-200 hover:shadow-[0px_8px_24px_0px_rgba(18,23,38,0.12)]'
 const PRODUCT_ICON: Record<'book' | 'video' | 'cup' | 'gift', LucideIcon> = {
   book: Book,
   video: Video,

@@ -26,6 +26,9 @@ import { TONE_SOFT } from '@/shared/lib/tone'
 // 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+// 상품 카드(한 줄 5개) — 좁아진 폭에 맞춰 패딩·간격을 card보다 조금 작게.
+const productCard =
+  'bg-surface flex flex-col gap-3 rounded-2xl p-4 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const PRODUCT_ICON: Record<'book' | 'video' | 'cup' | 'gift', LucideIcon> = {
   book: Book,
   video: Video,
@@ -298,7 +301,7 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {visible.map((p) => {
               const Icon = PRODUCT_ICON[p.icon]
               // 도서·인터넷 강의는 수강생이 구매 시 링크·가격을 직접 입력(flexible).
@@ -311,15 +314,11 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
               // 지갑 잔액 내에서만 수량 추가 허용(장바구니 전체 합계 기준).
               const canAddMore = total + unit <= balance
               return (
-                <section
-                  key={p.id}
-                  data-product-card
-                  className={cn(card, 'flex flex-col gap-4')}
-                >
+                <section key={p.id} data-product-card className={productCard}>
                   {/* 상품 이미지 — 흰 배경에 전체가 보이도록 contain */}
                   <div
                     data-cart-img
-                    className="bg-surface flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl"
+                    className="bg-surface flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
                   >
                     <ProductImage
                       url={p.imageUrl}
@@ -331,18 +330,18 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                             TONE_SOFT[p.tone],
                           )}
                         >
-                          <Icon className="size-16" />
+                          <Icon className="size-12" />
                         </span>
                       }
                     />
                   </div>
 
                   {/* 이름 · 가격 */}
-                  <div className="flex flex-1 flex-col gap-2">
-                    <h3 className="text-fg text-[17px] leading-snug font-bold">
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <h3 className="text-fg text-[14px] leading-snug font-bold">
                       {p.name}
                     </h3>
-                    <span className="text-brand text-[20px] font-extrabold tabular-nums">
+                    <span className="text-brand text-[17px] font-extrabold tabular-nums">
                       {flexible ? '가격 직접 입력' : p.price}
                     </span>
                   </div>
@@ -352,9 +351,9 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                     <button
                       type="button"
                       onClick={() => setFlexTarget(p)}
-                      className="bg-brand hover:bg-brand/90 flex h-12 items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white transition-colors"
+                      className="bg-brand hover:bg-brand/90 flex h-11 items-center justify-center gap-1.5 rounded-xl text-[14px] font-bold text-white transition-colors"
                     >
-                      <ShoppingCart className="size-5" />
+                      <ShoppingCart className="size-4" />
                       구매 신청
                     </button>
                   ) : inCart ? (
@@ -365,11 +364,11 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                         onClick={() =>
                           qty <= 1 ? remove(p.id) : setQty(p.id, qty - 1)
                         }
-                        className="bg-brand hover:bg-brand/90 flex size-12 items-center justify-center rounded-full text-white transition-colors"
+                        className="bg-brand hover:bg-brand/90 flex size-10 items-center justify-center rounded-full text-white transition-colors"
                       >
-                        <Minus className="size-5" />
+                        <Minus className="size-4" />
                       </button>
-                      <span className="text-fg text-[18px] font-bold tabular-nums">
+                      <span className="text-fg text-[16px] font-bold tabular-nums">
                         {qty}
                       </span>
                       <button
@@ -377,9 +376,9 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                         aria-label="수량 늘리기"
                         onClick={() => setQty(p.id, qty + 1)}
                         disabled={!canAddMore}
-                        className="bg-brand hover:bg-brand/90 disabled:bg-surface-muted disabled:text-fg-subtle flex size-12 items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed"
+                        className="bg-brand hover:bg-brand/90 disabled:bg-surface-muted disabled:text-fg-subtle flex size-10 items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed"
                       >
-                        <Plus className="size-5" />
+                        <Plus className="size-4" />
                       </button>
                     </div>
                   ) : (
@@ -388,13 +387,13 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                       onClick={(e) => affordable && handleAdd(e, p)}
                       disabled={!affordable}
                       className={cn(
-                        'flex h-12 items-center justify-center gap-2 rounded-xl text-[15px] font-bold transition-colors',
+                        'flex h-11 items-center justify-center gap-1.5 rounded-xl text-[14px] font-bold transition-colors',
                         affordable
                           ? 'bg-brand hover:bg-brand/90 text-white'
                           : 'bg-surface-muted text-fg-subtle cursor-not-allowed',
                       )}
                     >
-                      <ShoppingCart className="size-5" />
+                      <ShoppingCart className="size-4" />
                       {affordable ? '담기' : '잔액 부족'}
                     </button>
                   )}

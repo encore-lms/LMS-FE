@@ -13,6 +13,8 @@ import {
   useAssignmentCohortOptions,
   useSaveAssignment,
   useDeleteAssignment,
+  useUploadAssignmentFile,
+  useDeleteAssignmentFile,
   useChangeSubmissionStatus,
 } from '../api/assignments'
 import { useCohortRoster } from '../api/console'
@@ -83,7 +85,14 @@ const assignmentDetail: AssignmentFormDetail = {
   dueAt: '2026-05-24 23:59',
   description: '양방향/단방향 연관관계 설계 비교.',
   urls: ['https://docs.spring.io/spring-data-jpa/reference/'],
-  files: ['jpa-mapping-guide.pdf'],
+  files: [
+    {
+      id: 'file-1',
+      name: 'jpa-mapping-guide.pdf',
+      downloadUrl:
+        '/instructor/assignments/assign-jpa-mapping/attachments/file-1/file',
+    },
+  ],
   submittedCount: 21,
 }
 
@@ -166,9 +175,15 @@ function mockAll() {
     ok(roster) as unknown as ReturnType<typeof useCohortRoster>,
   )
   const mut = (fn = vi.fn()) =>
-    ({ mutate: fn, isPending: false }) as unknown as never
+    ({
+      mutate: fn,
+      mutateAsync: vi.fn().mockResolvedValue({ id: 'assign-jpa-mapping' }),
+      isPending: false,
+    }) as unknown as never
   vi.mocked(useSaveAssignment).mockReturnValue(mut())
   vi.mocked(useDeleteAssignment).mockReturnValue(mut())
+  vi.mocked(useUploadAssignmentFile).mockReturnValue(mut())
+  vi.mocked(useDeleteAssignmentFile).mockReturnValue(mut())
   vi.mocked(useChangeSubmissionStatus).mockReturnValue(mut(changeStatusMutate))
 }
 

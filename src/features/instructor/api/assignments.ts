@@ -49,7 +49,6 @@ export function useAssignmentDetail(assignmentId: string | null) {
 
 export interface SaveAssignmentInput {
   cohortId: string
-  subject?: string
   title: string
   dueAt?: string // "yyyy-MM-dd HH:mm"
   description?: string

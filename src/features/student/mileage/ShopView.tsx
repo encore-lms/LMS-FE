@@ -4,6 +4,8 @@ import {
   Book,
   Coffee,
   Gift,
+  Minus,
+  Plus,
   Search,
   ShoppingCart,
   Video,
@@ -19,7 +21,7 @@ import { FlexiblePurchaseModal } from './components/FlexiblePurchaseModal'
 import { ProductImage } from './components/ProductImage'
 import type { MileageLimit, MileageProduct, Tone } from './types'
 import { SkeletonCards } from '@/components/ui/Skeleton'
-import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
+import { TONE_SOFT } from '@/shared/lib/tone'
 
 // 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
@@ -97,6 +99,8 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
   const flyId = useRef(0)
   const items = useCartStore((s) => s.items)
   const add = useCartStore((s) => s.add)
+  const remove = useCartStore((s) => s.remove)
+  const setQty = useCartStore((s) => s.setQty)
   // 도서·인터넷 강의(수강생 직접 입력) 구매 신청 모달 대상.
   const [flexTarget, setFlexTarget] = useState<MileageProduct | null>(null)
 
@@ -301,90 +305,99 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
               const flexible = p.priceType === '직접 입력'
               const unit = parseMoney(p.price)
               const affordable = flexible || unit <= balance
-              const inCart = items.some((i) => i.productId === p.id)
+              const cartItem = items.find((i) => i.productId === p.id)
+              const qty = cartItem?.quantity ?? 0
+              const inCart = qty > 0
+              // 지갑 잔액 내에서만 수량 추가 허용(장바구니 전체 합계 기준).
+              const canAddMore = total + unit <= balance
               return (
                 <section
                   key={p.id}
                   data-product-card
-                  className={cn(card, 'flex flex-col gap-2.5')}
+                  className={cn(card, 'flex flex-col gap-4')}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <span
-                      data-cart-img
-                      className={cn(
-                        'flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[10px]',
-                        !p.imageUrl && TONE_SOFT[p.tone],
-                      )}
-                    >
-                      <ProductImage
-                        url={p.imageUrl}
-                        className="size-full object-cover"
-                        fallback={<Icon className="size-[21px]" />}
-                      />
-                    </span>
-                    <div className="flex flex-wrap justify-end gap-1.5">
-                      {p.badges.map((b, i) => (
+                  {/* 상품 이미지 — 흰 배경에 전체가 보이도록 contain */}
+                  <div
+                    data-cart-img
+                    className="bg-surface flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl"
+                  >
+                    <ProductImage
+                      url={p.imageUrl}
+                      className="size-full object-contain"
+                      fallback={
                         <span
-                          key={i}
                           className={cn(
-                            'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                            TONE_SOFT[b.tone],
+                            'flex size-full items-center justify-center',
+                            TONE_SOFT[p.tone],
                           )}
                         >
-                          {b.label}
+                          <Icon className="size-16" />
                         </span>
-                      ))}
-                    </div>
-                  </div>
-                  <span className="text-fg text-[15px] font-bold">
-                    {p.name}
-                  </span>
-                  <span className="text-brand text-[13px] font-bold">
-                    {flexible ? '가격 직접 입력' : p.price}
-                  </span>
-                  <span className="text-fg-muted min-h-[32px] text-[12px] leading-5">
-                    {p.desc}
-                  </span>
-                  <div className="flex items-center justify-between">
-                    <span className="text-fg-subtle text-[11px]">
-                      잔여 한도
-                    </span>
-                    <span className="text-fg text-[13px] font-bold">
-                      {p.limit}M
-                    </span>
-                  </div>
-                  <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
-                    <div
-                      className={cn('h-full rounded-full', TONE_SOLID[p.tone])}
-                      style={{ width: `${p.barPct ?? 18}%` }}
+                      }
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) =>
-                      flexible
-                        ? setFlexTarget(p)
-                        : affordable && handleAdd(e, p)
-                    }
-                    disabled={!affordable}
-                    className={cn(
-                      'mt-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[13px] font-bold transition-colors',
-                      !affordable
-                        ? 'bg-surface-muted text-fg-subtle cursor-not-allowed'
-                        : inCart
-                          ? 'bg-brand/10 text-brand'
-                          : 'bg-brand text-white',
-                    )}
-                  >
-                    <ShoppingCart className="size-4" />
-                    {!affordable
-                      ? '잔액 부족'
-                      : flexible
-                        ? '구매 신청'
-                        : inCart
-                          ? '담김 · 더 담기'
-                          : '담기'}
-                  </button>
+
+                  {/* 이름 · 가격 */}
+                  <div className="flex flex-1 flex-col gap-2">
+                    <h3 className="text-fg text-[17px] leading-snug font-bold">
+                      {p.name}
+                    </h3>
+                    <span className="text-brand text-[20px] font-extrabold tabular-nums">
+                      {flexible ? '가격 직접 입력' : p.price}
+                    </span>
+                  </div>
+
+                  {/* 액션 — 담기 전: 담기 버튼 / 담기 후: 수량 스테퍼 */}
+                  {flexible ? (
+                    <button
+                      type="button"
+                      onClick={() => setFlexTarget(p)}
+                      className="bg-brand hover:bg-brand/90 flex h-12 items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white transition-colors"
+                    >
+                      <ShoppingCart className="size-5" />
+                      구매 신청
+                    </button>
+                  ) : inCart ? (
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        aria-label="수량 줄이기"
+                        onClick={() =>
+                          qty <= 1 ? remove(p.id) : setQty(p.id, qty - 1)
+                        }
+                        className="bg-brand hover:bg-brand/90 flex size-12 items-center justify-center rounded-full text-white transition-colors"
+                      >
+                        <Minus className="size-5" />
+                      </button>
+                      <span className="text-fg text-[18px] font-bold tabular-nums">
+                        {qty}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="수량 늘리기"
+                        onClick={() => setQty(p.id, qty + 1)}
+                        disabled={!canAddMore}
+                        className="bg-brand hover:bg-brand/90 disabled:bg-surface-muted disabled:text-fg-subtle flex size-12 items-center justify-center rounded-full text-white transition-colors disabled:cursor-not-allowed"
+                      >
+                        <Plus className="size-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => affordable && handleAdd(e, p)}
+                      disabled={!affordable}
+                      className={cn(
+                        'flex h-12 items-center justify-center gap-2 rounded-xl text-[15px] font-bold transition-colors',
+                        affordable
+                          ? 'bg-brand hover:bg-brand/90 text-white'
+                          : 'bg-surface-muted text-fg-subtle cursor-not-allowed',
+                      )}
+                    >
+                      <ShoppingCart className="size-5" />
+                      {affordable ? '담기' : '잔액 부족'}
+                    </button>
+                  )}
                 </section>
               )
             })}

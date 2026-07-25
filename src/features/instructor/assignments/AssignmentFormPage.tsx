@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, X } from 'lucide-react'
+import { Download, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Input } from '@/components/ui/Input'
@@ -10,15 +10,20 @@ import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
+import { apiClient } from '@/shared/api'
+import type { AssignmentFileRef } from '@/shared/types'
 import {
   useAssignmentCohortOptions,
   useAssignmentDetail,
+  useDeleteAssignmentFile,
   useSaveAssignment,
+  useUploadAssignmentFile,
 } from '../api/assignments'
 import { assignmentSchema, type AssignmentInput } from './assignment.schema'
 
 const MAX_URLS = 5
 const MAX_FILES = 5
+const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
 
 // 과제·실습 생성/수정 (/instructor/assignments/new · /:assignmentId) — P0 30. (Figma 2750:1547)
 // 첨부 자료는 URL 최대 5개 · 파일당 20MB·최대 5개. 점수/채점 정책 없음.
@@ -39,8 +44,18 @@ export default function AssignmentFormPage() {
   )
   const { data: cohortOptions } = useAssignmentCohortOptions()
   const saveAssignment = useSaveAssignment(assignmentId)
+  const uploadFile = useUploadAssignmentFile()
+  const deleteFile = useDeleteAssignmentFile()
   const [urls, setUrls] = useState<string[]>([])
-  const [files, setFiles] = useState<string[]>([])
+  // 기존 업로드된 파일(상세에서), 새로 고른 파일(저장 후 업로드), 삭제 예정 파일 id
+  const [existingFiles, setExistingFiles] = useState<AssignmentFileRef[]>([])
+  const [stagedFiles, setStagedFiles] = useState<File[]>([])
+  const [removedFileIds, setRemovedFileIds] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const visibleExisting = existingFiles.filter(
+    (f) => !removedFileIds.includes(f.id),
+  )
+  const fileCount = visibleExisting.length + stagedFiles.length
   usePageHeader(
     isEdit ? '과제·실습 수정' : '과제·실습 생성',
     '기수 전체 대상 과제 정보를 작성하고 URL·파일 자료를 첨부합니다',
@@ -83,28 +98,76 @@ export default function AssignmentFormPage() {
       description: data.description ?? '',
     })
     setUrls(data.urls)
-    setFiles(data.files)
+    setExistingFiles(data.files)
+    setStagedFiles([])
+    setRemovedFileIds([])
   }, [data, reset])
 
-  const onSave = handleSubmit((input) => {
-    saveAssignment.mutate(
-      {
+  // 파일 선택 — 20MB 초과·최대 개수 초과는 제외하고 스테이징.
+  const onPickFiles = (list: FileList | null) => {
+    if (!list) return
+    let remaining = MAX_FILES - fileCount
+    const accepted: File[] = []
+    for (const file of Array.from(list)) {
+      if (remaining <= 0) {
+        toast.warning(`파일은 최대 ${MAX_FILES}개까지 첨부할 수 있습니다.`)
+        break
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        toast.warning(`${file.name}은(는) 20MB를 초과해 제외했습니다.`)
+        continue
+      }
+      accepted.push(file)
+      remaining -= 1
+    }
+    if (accepted.length > 0) setStagedFiles((prev) => [...prev, ...accepted])
+  }
+
+  // 기존 파일 다운로드(인증 blob).
+  const downloadFile = async (f: AssignmentFileRef) => {
+    try {
+      const blob = await apiClient.getBlob(f.downloadUrl)
+      const href = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = f.name
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(href)
+    } catch {
+      toast.danger('파일을 내려받지 못했어요')
+    }
+  }
+
+  const saving =
+    saveAssignment.isPending || uploadFile.isPending || deleteFile.isPending
+
+  const onSave = handleSubmit(async (input) => {
+    try {
+      const saved = await saveAssignment.mutateAsync({
         cohortId: input.cohortId,
         subject: input.subject,
         title: input.title,
         dueAt: input.dueAt,
         description: input.description,
-      },
-      {
-        onSuccess: (saved) => {
-          toast.success(`${input.title} 저장 — 생성 즉시 공개`)
-          // 허브 진입이면 허브 과제 탭으로 복귀, 아니면 생성/수정 후 상세 화면 이동(기존 정책).
-          if (fromCohortId) navigate(backTo)
-          else navigate(`/instructor/assignments/${assignmentId ?? saved.id}`)
-        },
-        onError: () => toast.danger('저장에 실패했어요'),
-      },
-    )
+        urls: urls.map((u) => u.trim()).filter(Boolean),
+      })
+      const id = assignmentId ?? saved.id
+      // 삭제 예정 파일 제거 → 새 파일 업로드(실 id 확보 후).
+      for (const fileId of removedFileIds) {
+        await deleteFile.mutateAsync({ assignmentId: id, fileId })
+      }
+      for (const file of stagedFiles) {
+        await uploadFile.mutateAsync({ assignmentId: id, file })
+      }
+      toast.success(`${input.title} 저장 — 생성 즉시 공개`)
+      // 허브 진입이면 허브 과제 탭으로 복귀, 아니면 생성/수정 후 상세 화면 이동(기존 정책).
+      if (fromCohortId) navigate(backTo)
+      else navigate(`/instructor/assignments/${id}`)
+    } catch {
+      toast.danger('저장에 실패했어요')
+    }
   })
 
   return (
@@ -249,21 +312,52 @@ export default function AssignmentFormPage() {
                   ))}
                 </div>
               )}
-              {files.length > 0 && (
+              {(visibleExisting.length > 0 || stagedFiles.length > 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {files.map((f) => (
+                  {visibleExisting.map((f) => (
                     <span
-                      key={f}
+                      key={f.id}
                       className="bg-surface-muted text-fg-muted inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
                     >
-                      {f}
+                      <button
+                        type="button"
+                        onClick={() => downloadFile(f)}
+                        aria-label={`${f.name} 다운로드`}
+                        className="text-fg-muted hover:text-brand inline-flex items-center gap-1.5"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        {f.name}
+                      </button>
                       <button
                         type="button"
                         onClick={() =>
-                          setFiles((prev) => prev.filter((x) => x !== f))
+                          setRemovedFileIds((prev) => [...prev, f.id])
                         }
-                        aria-label={`${f} 제거`}
+                        aria-label={`${f.name} 제거`}
                         className="text-fg-subtle hover:text-fg"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                  {stagedFiles.map((file, i) => (
+                    <span
+                      key={`staged-${i}`}
+                      className="bg-brand/10 text-brand inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
+                    >
+                      {file.name}
+                      <span className="text-brand/70 text-[10px] font-semibold">
+                        새 파일
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStagedFiles((prev) =>
+                            prev.filter((_, j) => j !== i),
+                          )
+                        }
+                        aria-label={`${file.name} 제거`}
+                        className="text-brand/70 hover:text-brand"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -282,12 +376,22 @@ export default function AssignmentFormPage() {
                 </button>
                 <button
                   type="button"
-                  disabled={files.length >= MAX_FILES}
-                  onClick={() => toast.info('파일 업로드는 준비 중입니다.')}
+                  disabled={fileCount >= MAX_FILES}
+                  onClick={() => fileInputRef.current?.click()}
                   className="border-border text-fg hover:bg-surface-muted flex h-10 items-center gap-1 rounded-[10px] border px-3.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Plus className="h-3.5 w-3.5" /> 파일 추가
                 </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    onPickFiles(e.target.files)
+                    e.target.value = '' // 같은 파일 재선택 허용
+                  }}
+                />
               </div>
             </div>
 
@@ -300,7 +404,9 @@ export default function AssignmentFormPage() {
               >
                 취소
               </Button>
-              <Button type="submit">저장</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? '저장 중…' : '저장'}
+              </Button>
             </div>
           </form>
         </div>

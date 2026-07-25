@@ -149,6 +149,7 @@ export type {
   InstructorAssignmentRow,
   InstructorAssignmentListData,
   AssignmentFormDetail,
+  AssignmentFileRef,
   AssignmentFeedbackItem,
   AssignmentSubmissionRow,
   AssignmentSubmissionsData,

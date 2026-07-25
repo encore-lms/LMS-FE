@@ -28,6 +28,13 @@ export interface AssignmentDraft {
 /** 과제 제출 요청 — POST /student/course/assignments/{assignmentId}/submission */
 export type AssignmentSubmitInput = AssignmentDraft
 
+/** 강사가 붙인 첨부 파일 참조(다운로드) */
+export interface AssignmentFileRef {
+  id: string
+  name: string
+  downloadUrl: string
+}
+
 /** 과제 상세·제출(/…/:id) */
 export interface AssignmentDetail {
   id: string
@@ -48,4 +55,7 @@ export interface AssignmentDetail {
     evaluationType: string // "피드백"
     feedback: string
   }
+  /** 강사 첨부 자료 — URL·파일 */
+  urls?: string[]
+  files?: AssignmentFileRef[]
 }

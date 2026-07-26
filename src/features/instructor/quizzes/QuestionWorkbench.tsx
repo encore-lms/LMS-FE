@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Copy, Eye, GripVertical, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { NumberInput } from '@/components/ui/NumberInput'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -336,11 +337,10 @@ export function QuestionWorkbench({
               </label>
               <label className="mt-3 flex items-center gap-2">
                 <span className="text-fg text-xs font-bold">배점</span>
-                <input
+                <NumberInput
+                  min={1}
                   value={draft.points}
-                  onChange={(e) =>
-                    setDraft({ ...draft, points: Number(e.target.value) || 0 })
-                  }
+                  onChange={(points) => setDraft({ ...draft, points })}
                   aria-label="배점"
                   className="border-border focus:border-brand text-fg h-9 w-24 rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none"
                 />

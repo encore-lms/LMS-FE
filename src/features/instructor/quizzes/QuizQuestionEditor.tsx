@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, GripVertical, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { NumberInput } from '@/components/ui/NumberInput'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import type { InstructorQuestion } from '@/shared/types'
@@ -379,15 +380,14 @@ function QuestionForm({
                       placeholder={`빈칸 ${i + 1} 정답`}
                       className={`${FIELD_BASE} min-w-0 flex-1`}
                     />
-                    <input
-                      type="number"
+                    <NumberInput
                       min={1}
                       aria-label={`빈칸 ${i + 1} 배점`}
                       value={scores[i] ?? 0}
-                      onChange={(e) =>
+                      onChange={(score) =>
                         set({
                           blankScores: scores.map((x, j) =>
-                            j === i ? Number(e.target.value) : x,
+                            j === i ? score : x,
                           ),
                         })
                       }
@@ -416,11 +416,10 @@ function QuestionForm({
           <span className="text-fg-muted mb-1 block text-xs font-semibold">
             배점
           </span>
-          <input
-            type="number"
+          <NumberInput
             min={1}
             value={d.points}
-            onChange={(e) => set({ points: Number(e.target.value) })}
+            onChange={(points) => set({ points })}
             className={FIELD}
           />
         </div>

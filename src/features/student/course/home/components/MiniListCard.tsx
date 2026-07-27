@@ -76,7 +76,12 @@ function RowBody({ row }: { row: CourseMiniCard['rows'][number] }) {
   return (
     <>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-fg text-[12px] font-semibold">{row.title}</span>
+        <span
+          className="text-fg truncate text-[12px] font-semibold"
+          title={row.title}
+        >
+          {row.title}
+        </span>
         {row.badge && (
           <span
             className={cn(

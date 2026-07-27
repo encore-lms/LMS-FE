@@ -28,7 +28,7 @@ export type NewRequestValues = z.infer<typeof schema>
 
 const FORM_ID = 'mentoring-new-request'
 const fieldCls =
-  'bg-surface border-border text-fg placeholder:text-fg-subtle focus:border-brand h-[42px] w-full rounded-lg border px-3 text-[13px] outline-none focus-visible:shadow-none'
+  'bg-surface border-border text-fg placeholder:text-fg-subtle focus:border-brand h-[42px] w-full rounded-lg border px-3 text-[13px] outline-none'
 
 function FieldLabel({
   label,

@@ -212,7 +212,9 @@ export default function ChangeRequestPage() {
           navigate('/student/troubleshooting')
         },
         onError: () =>
-          toast.danger('변경 제안 전송에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+          toast.danger(
+            '변경 제안 전송에 실패했어요. 잠시 후 다시 시도해 주세요.',
+          ),
       },
     )
   }
@@ -489,7 +491,11 @@ export default function ChangeRequestPage() {
                   <textarea
                     value={after}
                     onChange={(e) => setAfter(it, e.target.value)}
-                    rows={it === '제목' || it === '카테고리' || it === '태그' ? 1 : 4}
+                    rows={
+                      it === '제목' || it === '카테고리' || it === '태그'
+                        ? 1
+                        : 4
+                    }
                     aria-label={`${it} 변경 후 내용`}
                     placeholder={`${it}의 변경 후 내용을 입력하세요`}
                     className="text-fg placeholder:text-fg-subtle focus:border-brand border-border/60 w-full resize-y rounded-lg border bg-white p-2 text-[12px] leading-5 outline-none focus-visible:shadow-none"
@@ -578,7 +584,7 @@ export default function ChangeRequestPage() {
                 }
               }}
               placeholder="https:// 링크를 붙여넣고 Enter"
-              className="text-fg placeholder:text-fg-subtle flex-1 bg-transparent text-[12px] outline-none"
+              className="text-fg placeholder:text-fg-subtle flex-1 bg-transparent text-[12px] outline-none focus-visible:shadow-none"
             />
           </div>
           <button

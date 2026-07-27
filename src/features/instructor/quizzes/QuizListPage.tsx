@@ -254,7 +254,7 @@ export default function QuizListPage({
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="퀴즈명·과목으로 검색"
                   aria-label="퀴즈 검색"
-                  className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+                  className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
                 />
               </div>
               {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
@@ -381,14 +381,14 @@ function TemplatePickerModal({
     >
       <div className="flex flex-col gap-3">
         {/* 검색 */}
-        <div className="border-border flex h-10 items-center gap-2 rounded-lg border bg-white px-3">
+        <div className="border-border focus-within:border-brand flex h-10 items-center gap-2 rounded-lg border bg-white px-3">
           <Search className="text-fg-subtle h-4 w-4" />
           <input
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="템플릿명·분류로 검색"
             aria-label="템플릿 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
           />
         </div>
 

@@ -160,7 +160,9 @@ export default function GradingPage() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate(`${base}/${quizId}/submissions${hubQs}`)}
+                onClick={() =>
+                  navigate(`${base}/${quizId}/submissions${hubQs}`)
+                }
                 className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
               >
                 ← 제출 현황으로
@@ -254,7 +256,7 @@ export default function GradingPage() {
                           }}
                           placeholder="입력 필요"
                           aria-label={`문제 ${it.index} 점수`}
-                          className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-base font-bold outline-none"
+                          className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-base font-bold outline-none focus-visible:shadow-none"
                         />
                         <span className="text-fg-subtle shrink-0 text-xs">
                           / {it.points}점
@@ -326,7 +328,9 @@ export default function GradingPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate(`${base}/${quizId}/submissions${hubQs}`)}
+                onClick={() =>
+                  navigate(`${base}/${quizId}/submissions${hubQs}`)
+                }
               >
                 취소
               </Button>

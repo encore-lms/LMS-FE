@@ -73,9 +73,12 @@ body {
   font-family: var(--font-sans);
 }
 
-/* 폼 컨트롤 공통 키보드 포커스 링 — 화면 곳곳의 `outline-none` + border 색 변화만으로는
-   포커스 위치 파악이 어려워, base 레이어에서 box-shadow 링을 일괄 보장한다.
-   (utility의 focus:ring/shadow가 있으면 그쪽이 우선 적용됨) */
+/* 폼 컨트롤 포커스 표시의 최후 안전망 — 아무 처리도 하지 않은 컨트롤이 포커스를 받았을 때
+   최소한의 표시를 보장한다. (utility의 focus:ring/shadow가 있으면 그쪽이 우선 적용됨)
+
+   정본은 링이 아니라 **teal 테두리 1겹**이다(inputClass 참조). 따라서 실제 화면의 컨트롤은
+   `focus-visible:shadow-none`으로 이 링을 끄고, 자신 또는 감싼 래퍼의 테두리 색만 바꾼다.
+   투명 컨트롤을 감싼 테두리 래퍼는 `focus-within:border-brand`를 쓴다. */
 @layer base {
   input:focus-visible,
   select:focus-visible,
@@ -83,22 +86,6 @@ body {
     box-shadow:
       0 0 0 2px var(--color-surface),
       0 0 0 4px var(--color-brand);
-  }
-
-  /* 검색·필터 등 '테두리 래퍼(.border)가 직접 감싼 투명(bg-transparent) 폼 컨트롤'은
-     컨트롤 자체에 각진 사각 링이 갇혀 보이므로, 링을 감싼 래퍼로 옮긴다(rounded border라
-     둥글게 잡힘). 래퍼 밖 투명 input은 영향받지 않아 기존 링을 유지한다. */
-  :where(.border):has(> input.bg-transparent:focus-visible),
-  :where(.border):has(> textarea.bg-transparent:focus-visible) {
-    box-shadow:
-      0 0 0 2px var(--color-surface),
-      0 0 0 4px var(--color-brand);
-  }
-  :where(.border):has(> input.bg-transparent:focus-visible)
-    > input.bg-transparent:focus-visible,
-  :where(.border):has(> textarea.bg-transparent:focus-visible)
-    > textarea.bg-transparent:focus-visible {
-    box-shadow: none;
   }
 }
 

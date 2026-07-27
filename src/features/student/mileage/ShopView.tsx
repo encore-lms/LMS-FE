@@ -156,8 +156,7 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
     const cardEl = e.currentTarget.closest('[data-product-card]')
     const iconEl = cardEl?.querySelector('[data-cart-img]')
     // 카드에 이미 로드된 상품 이미지(object URL)를 그대로 날린다.
-    const imageSrc =
-      iconEl?.querySelector('img')?.getAttribute('src') ?? null
+    const imageSrc = iconEl?.querySelector('img')?.getAttribute('src') ?? null
     const cartBtn = cartBtnRef.current
     add({
       productId: p.id,
@@ -311,7 +310,7 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="검색어 입력"
-                className="text-fg placeholder:text-fg-subtle w-40 bg-transparent text-[13px] outline-none"
+                className="text-fg placeholder:text-fg-subtle w-40 bg-transparent text-[13px] outline-none focus-visible:shadow-none"
               />
             </div>
           </div>

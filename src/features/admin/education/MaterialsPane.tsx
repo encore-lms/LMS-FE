@@ -269,7 +269,7 @@ export function MaterialsPane({
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="제목·내용 검색"
                 aria-label="자료 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
               />
             </div>
             <Select

@@ -269,8 +269,7 @@ export function AssignmentsPane({
 
   // 과제 등록·수정은 강사·운영 공용 폼 페이지로 이동(팝업 폐지, 첨부 포함).
   const hubQs = `?course=${courseId}&cohort=${cohortId}`
-  const goCreate = () =>
-    navigate(`/admin/education/assignments/new${hubQs}`)
+  const goCreate = () => navigate(`/admin/education/assignments/new${hubQs}`)
   const goEdit = (id: string) =>
     navigate(`/admin/education/assignments/${id}${hubQs}`)
 
@@ -398,7 +397,7 @@ export function AssignmentsPane({
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="과제·과목 검색"
                 aria-label="과제 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
               />
             </div>
             <Select

@@ -76,14 +76,14 @@ export function QueueFilterBar<K extends string>({
         </div>
       )}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="border-border flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
+        <div className="border-border focus-within:border-brand flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
           <Search className="text-fg-subtle h-4 w-4" />
           <input
             value={q}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
           />
         </div>
         {tabs.map((t) => (

@@ -142,13 +142,13 @@ export default function AssignmentsPage() {
             총 <span className="text-brand">{items.length}</span>개 과제
           </span>
           <div className="flex items-center gap-2">
-            <div className="border-border bg-surface flex h-[38px] w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
+            <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
               <Search className="text-fg-subtle size-4 shrink-0" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="과제·과목 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none focus-visible:shadow-none"
               />
             </div>
             <Select

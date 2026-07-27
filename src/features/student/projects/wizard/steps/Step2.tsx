@@ -55,7 +55,7 @@ export function Step2(p: {
         <label className="border-border text-fg-subtle focus-within:border-brand flex items-center gap-2 rounded-[10px] border px-4 py-3 text-[13px]">
           <Search className="size-4 shrink-0" aria-hidden="true" />
           <input
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent focus:outline-none"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent focus:outline-none focus-visible:shadow-none"
             placeholder="이름이나 영문 닉네임으로 검색"
             {...p.searchInput}
           />

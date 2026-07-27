@@ -366,7 +366,7 @@ export default function LogsPage() {
             onChange={setPeriod}
             options={PERIOD_OPTIONS}
           />
-          <label className="bg-surface focus-within:ring-brand flex h-10 w-[240px] items-center gap-2 rounded-[10px] px-3.5 shadow-[0_0_0_1px_rgba(18,23,38,0.06)] focus-within:ring-2">
+          <label className="border-border focus-within:border-brand bg-surface flex h-10 w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
             <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
             <input
               value={q}

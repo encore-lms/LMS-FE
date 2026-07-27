@@ -112,7 +112,7 @@ export function PassageFormModal({
             rows={5}
             placeholder="타자 입력 대상 원문"
             aria-invalid={errors.content ? true : undefined}
-            className={`border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface w-full rounded-lg border-2 p-3 text-sm outline-none ${
+            className={`border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface w-full rounded-lg border-2 p-3 text-sm outline-none focus-visible:shadow-none ${
               errors.content ? 'border-danger' : ''
             }`}
           />

@@ -172,7 +172,7 @@ export default function SubmissionsPage() {
                           : 'hover:bg-surface-muted',
                       )}
                     >
-                      <span className="text-fg w-20 shrink-0 text-[15px] font-semibold">
+                      <span className="text-fg w-24 shrink-0 truncate text-[15px] font-semibold">
                         {student(r.studentUserId).name}
                       </span>
                       <StatusBadge

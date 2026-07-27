@@ -66,10 +66,12 @@ export default function RecordReviewPage({
     !embedded,
   )
 
-  const { data: raw, isPending, isError, refetch } = useRecordReviews(
-    courseId,
-    cohortId,
-  )
+  const {
+    data: raw,
+    isPending,
+    isError,
+    refetch,
+  } = useRecordReviews(courseId, cohortId)
   // 강사는 계정 목록(/users/students) 조회가 막혀 있어(403) 담당 기수 로스터를 쓴다.
   // 그리드 행은 매니저 기록실(RecordsGridPage)과 동일하게 이 로스터(수강생 명단)를 뼈대로
   // 만든다 — 기록이 없어도 수강생 행 + 주차 열이 서고, BE 기록은 셀에 얹는다(아래 rows 참조).
@@ -82,18 +84,20 @@ export default function RecordReviewPage({
     const items = roster ?? []
     if (items.length === 0) return raw
     const nameById = new Map(items.map((s) => [s.userId, s.name]))
-    const fixDetail = <D extends { studentName: string; studentUserId?: string }>(
+    const fixDetail = <
+      D extends { studentName: string; studentUserId?: string },
+    >(
       d: D,
     ): D =>
       d.studentUserId && nameById.has(d.studentUserId)
         ? { ...d, studentName: nameById.get(d.studentUserId)! }
         : d
-    const mapValues = <D extends { studentName: string; studentUserId?: string }>(
+    const mapValues = <
+      D extends { studentName: string; studentUserId?: string },
+    >(
       obj: Record<string, D>,
     ): Record<string, D> =>
-      Object.fromEntries(
-        Object.entries(obj).map(([k, v]) => [k, fixDetail(v)]),
-      )
+      Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fixDetail(v)]))
     return {
       ...raw,
       blogDetails: mapValues(raw.blogDetails),
@@ -161,7 +165,11 @@ export default function RecordReviewPage({
         .sort((a, b) => a.name.localeCompare(b.name, 'ko')),
     [rosterList, needle],
   )
-  const studentOf = (s: { userId: string; name: string }, birth = '', atRisk?: boolean) =>
+  const studentOf = (
+    s: { userId: string; name: string },
+    birth = '',
+    atRisk?: boolean,
+  ) =>
     ({ id: s.userId, name: s.name, birth, atRisk }) satisfies RecordGridStudent
   const blogRows = useMemo<BlogGridRow[]>(
     () =>
@@ -233,7 +241,7 @@ export default function RecordReviewPage({
           onChange={(e) => setQ(e.target.value)}
           placeholder="이름으로 검색"
           aria-label="수강생 이름 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none"
         />
         <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
           {CATEGORY_TABS.map((t) => (

@@ -21,7 +21,7 @@ describe('ResumeContentView', () => {
   it('JSON content를 문서 뷰로 렌더한다(원문 노출 없음)', () => {
     render(<ResumeContentView content={DOC} />)
     expect(screen.getByText('박수진')).toBeInTheDocument()
-    expect(screen.getByText('기술스택')).toBeInTheDocument()
+    expect(screen.getByText('스킬')).toBeInTheDocument()
     expect(screen.getByText('Java')).toBeInTheDocument()
     expect(screen.queryByText(/"basicInfo"/)).not.toBeInTheDocument()
   })

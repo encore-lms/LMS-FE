@@ -153,7 +153,7 @@ export default function TypeLimitsPage() {
                     }
                     inputMode="numeric"
                     aria-label={`${l.label} 새 maxPerUser`}
-                    className="text-fg h-10 flex-1 bg-transparent text-[15px] font-bold outline-none"
+                    className="text-fg h-10 flex-1 bg-transparent text-[15px] font-bold outline-none focus-visible:shadow-none"
                   />
                   <span className="text-fg-subtle text-sm">M</span>
                 </div>

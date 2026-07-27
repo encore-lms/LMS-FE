@@ -192,7 +192,8 @@ export function QuestionWorkbench({
                   <span className="bg-accent-strong absolute top-2 bottom-2 left-0 w-0.5 rounded-full" />
                 )}
                 <GripVertical className="text-fg-subtle h-4 w-4 shrink-0" />
-                <span className="text-fg-muted w-4 text-sm font-bold">
+                {/* 두 자릿수(10번 이상)에서 숫자가 쪼개지지 않게 여유 폭 + 가운데 정렬. */}
+                <span className="text-fg-muted w-6 shrink-0 text-center text-sm font-bold tabular-nums">
                   {q.order}
                 </span>
                 <span className="min-w-0">

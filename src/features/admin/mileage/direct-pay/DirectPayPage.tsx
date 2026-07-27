@@ -293,7 +293,7 @@ export default function DirectPayPage() {
                   }
                   inputMode="numeric"
                   aria-label="금액 (1인당)"
-                  className="text-fg h-11 flex-1 bg-transparent text-lg font-bold outline-none"
+                  className="text-fg h-11 flex-1 bg-transparent text-lg font-bold outline-none focus-visible:shadow-none"
                 />
                 <span className="text-fg-subtle text-sm">M</span>
               </div>

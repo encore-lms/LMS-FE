@@ -237,14 +237,14 @@ export default function TeamsPage() {
               onChange={(v) => setStatus(v as StatusFilter)}
               options={STATUS_OPTIONS}
             />
-            <label className="bg-surface flex h-10 flex-1 items-center gap-2 rounded-[10px] px-3.5">
+            <label className="border-border focus-within:border-brand bg-surface flex h-10 flex-1 items-center gap-2 rounded-[10px] border px-3.5">
               <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="팀명·반/기수 검색"
                 aria-label="팀명·반/기수 검색"
-                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none"
+                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none focus-visible:shadow-none"
               />
             </label>
           </section>

@@ -99,8 +99,8 @@ export default function EndorsementDetailPage() {
                 이 추천서는 작성 후 24시간 내 수정할 수 있어요
               </p>
               <p className="text-fg-muted mt-0.5 text-xs">
-                24시간 이후 변경은 신규 row로 저장됩니다. 외부 공개는 증명서
-                최신화 작업 이후 공개 스냅샷에 반영됩니다.
+                24시간이 지난 뒤 고치면 새 추천서로 따로 저장됩니다. 외부 공개는
+                증명서 최신화 작업 이후에 반영됩니다.
               </p>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function EndorsementDetailPage() {
             <div className="mt-4 flex items-center justify-between">
               <span className="text-fg-subtle text-xs">
                 수정 사항은 다음 증명서 최신화 작업 후 외부 공개에 반영됩니다 ·
-                24h 이후 변경은 신규 row
+                24시간이 지난 뒤 고치면 새 추천서로 저장
               </span>
               <div className="flex gap-2">
                 <Button

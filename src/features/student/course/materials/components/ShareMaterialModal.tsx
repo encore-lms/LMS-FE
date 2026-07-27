@@ -177,7 +177,7 @@ export function ShareMaterialModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="예) JPA N+1 문제 정리 노트"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none focus-visible:shadow-none"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
           />
         </Field>
 
@@ -186,13 +186,13 @@ export function ShareMaterialModal({
           <Field label="관련 주차/과목">
             <input
               defaultValue="9주차 · Spring Boot"
-              className="border-border text-fg focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none focus-visible:shadow-none"
+              className="border-border text-fg focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
             />
           </Field>
           <Field label="카테고리">
             <input
               defaultValue="학생 공유"
-              className="border-border text-fg focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none focus-visible:shadow-none"
+              className="border-border text-fg focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
             />
           </Field>
         </div>
@@ -202,7 +202,7 @@ export function ShareMaterialModal({
           <textarea
             rows={3}
             placeholder="자료를 보는 사람이 알면 좋은 맥락을 짧게 적어 주세요."
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-[88px] w-full rounded-[10px] border p-3.5 text-[13px] outline-none focus-visible:shadow-none"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-[88px] w-full rounded-[10px] border p-3.5 text-[13px] outline-none"
           />
         </Field>
 
@@ -289,7 +289,7 @@ export function ShareMaterialModal({
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="https://github.com/... 또는 블로그 URL"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none focus-visible:shadow-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
             />
           </Field>
         )}

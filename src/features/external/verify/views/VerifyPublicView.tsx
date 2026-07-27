@@ -297,9 +297,9 @@ export function VerifyPublicView({
           <button
             type="button"
             onClick={downloadPublicJson}
-            className="border-border bg-surface text-fg-muted hover:text-fg flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1.5 text-[11px] font-bold"
+            className="border-border bg-surface text-fg-muted hover:text-fg flex shrink-0 items-center gap-1.5 rounded-[7px] border px-2.5 py-1.5 text-[11px] font-bold whitespace-nowrap"
           >
-            <Download size={12} aria-hidden />
+            <Download size={12} aria-hidden className="shrink-0" />
             공개 JSON 다운로드
           </button>
         }
@@ -310,7 +310,10 @@ export function VerifyPublicView({
             { label: 'publicToken', value: publicToken },
             { label: '발급 시점', value: p.issuedAt },
           ].map((field) => (
-            <div key={field.label} className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div
+              key={field.label}
+              className="flex min-w-0 flex-1 flex-col gap-1.5"
+            >
               <span className="text-fg-subtle text-[10px] font-medium tracking-[0.6px]">
                 {field.label}
               </span>

@@ -76,7 +76,7 @@ export default function LogsPage() {
     {
       key: 'actual',
       header: '실제',
-      className: 'w-16',
+      className: 'w-20',
       cell: (r) => (
         <span className="text-fg text-xs font-bold">{r.actualMinutes}분</span>
       ),

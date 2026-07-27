@@ -106,8 +106,6 @@ export const adminKeys = {
 export const instructorKeys = {
   all: ['instructor'] as const,
   endorsements: () => [...instructorKeys.all, 'endorsements'] as const,
-  endorsementHistory: () =>
-    [...instructorKeys.all, 'endorsements', 'history'] as const,
   endorsementDetail: (endorsementId: string) =>
     [...instructorKeys.all, 'endorsements', endorsementId] as const,
   quizzes: () => [...instructorKeys.all, 'quizzes'] as const,

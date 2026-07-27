@@ -33,7 +33,7 @@ describe('assignmentSchema', () => {
     }
   })
 
-  it('N시간 — 빈 값·0·음수 차단(0보다 커야 함)', () => {
+  it('배정 시간 — 빈 값·0·음수 차단(0보다 커야 함)', () => {
     for (const hours of ['', '0', '-2']) {
       const result = assignmentSchema.safeParse({
         ...valid,
@@ -42,7 +42,7 @@ describe('assignmentSchema', () => {
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.error.issues[0].message).toBe(
-          '배정 N시간은 0보다 커야 합니다',
+          '배정 시간은 0보다 커야 합니다',
         )
       }
     }

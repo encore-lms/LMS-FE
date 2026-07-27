@@ -52,8 +52,3 @@ export interface EndorsementStats {
   snapshotApplied: number // 스냅샷 반영 8
   pendingRefresh: number // 최신화 대기 2
 }
-
-export interface EndorsementHistory {
-  stats: EndorsementStats
-  items: Endorsement[]
-}

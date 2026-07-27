@@ -205,14 +205,14 @@ export default function TemplateListPage() {
         <div className="p-8">
           {/* 필터 바 */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="border-border flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
+            <div className="border-border focus-within:border-brand flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
               <Search className="text-fg-subtle h-4 w-4" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="템플릿명·카테고리로 검색"
                 aria-label="템플릿 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
               />
             </div>
             <label className="flex items-center gap-2 text-xs">

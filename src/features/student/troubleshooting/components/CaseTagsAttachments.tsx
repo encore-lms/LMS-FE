@@ -161,7 +161,7 @@ export function CaseTagsAttachments({
               }
             }}
             placeholder="https:// 근거 링크를 붙여넣고 Enter"
-            className="text-fg placeholder:text-fg-subtle flex-1 bg-transparent text-[12px] outline-none"
+            className="text-fg placeholder:text-fg-subtle flex-1 bg-transparent text-[12px] outline-none focus-visible:shadow-none"
           />
         </div>
         <button

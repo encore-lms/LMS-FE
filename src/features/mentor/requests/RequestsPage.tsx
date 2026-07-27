@@ -167,14 +167,14 @@ export default function RequestsPage() {
                 className="h-[34px]"
               />
             </div>
-            <label className="bg-surface flex h-[34px] w-[220px] items-center gap-2 rounded-lg px-3">
+            <label className="border-border focus-within:border-brand bg-surface flex h-[34px] w-[220px] items-center gap-2 rounded-lg border px-3">
               <Search className="text-fg-subtle h-3 w-3 shrink-0" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="팀명·요청자 검색"
                 aria-label="팀명·요청자 검색"
-                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-xs outline-none"
+                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-xs outline-none focus-visible:shadow-none"
               />
             </label>
           </div>

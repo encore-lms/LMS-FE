@@ -38,14 +38,14 @@ export function LogTemplateModal({
               key={field.fieldSnapshotId}
               className="flex items-center gap-2 px-4 py-2.5"
             >
-              <span className="text-fg-subtle w-4 text-[11px] font-bold">
+              <span className="text-fg-subtle w-4 shrink-0 text-[11px] font-bold">
                 {field.order}
               </span>
-              <span className="text-fg text-[13px] font-semibold">
+              <span className="text-fg shrink-0 text-[13px] font-semibold whitespace-nowrap">
                 {field.name}
               </span>
               <RequiredChip required={field.required} />
-              <span className="text-fg-subtle ml-auto text-[11px]">
+              <span className="text-fg-subtle ml-auto min-w-0 truncate text-[11px]">
                 {field.description}
               </span>
             </li>

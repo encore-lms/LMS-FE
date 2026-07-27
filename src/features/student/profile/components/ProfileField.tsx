@@ -49,7 +49,7 @@ export function ProfileField({
         {...register(name)}
         placeholder={placeholder}
         className={cn(
-          'text-fg placeholder:text-fg-subtle h-[52px] w-full rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none',
+          'text-fg placeholder:text-fg-subtle h-[52px] w-full rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none focus-visible:shadow-none',
           invalid ? 'border-danger' : 'border-border focus:border-brand',
         )}
       />

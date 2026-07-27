@@ -76,9 +76,8 @@ body {
 /* 폼 컨트롤 포커스 표시의 최후 안전망 — 아무 처리도 하지 않은 컨트롤이 포커스를 받았을 때
    최소한의 표시를 보장한다. (utility의 focus:ring/shadow가 있으면 그쪽이 우선 적용됨)
 
-   정본은 링이 아니라 **teal 테두리 1겹**이다(inputClass 참조). 따라서 실제 화면의 컨트롤은
-   `focus-visible:shadow-none`으로 이 링을 끄고, 자신 또는 감싼 래퍼의 테두리 색만 바꾼다.
-   투명 컨트롤을 감싼 테두리 래퍼는 `focus-within:border-brand`를 쓴다. */
+   정본은 링이 아니라 **teal 테두리 1겹 + 안쪽 1px 강조(시각적 2px)**이다(inputClass 참조).
+   실제 화면의 컨트롤은 자신 또는 감싼 래퍼의 테두리 색을 바꾸고, box-shadow 로 안쪽 1px 을 덧그린다. */
 @layer base {
   input:focus-visible,
   select:focus-visible,
@@ -86,6 +85,14 @@ body {
     box-shadow:
       0 0 0 2px var(--color-surface),
       0 0 0 4px var(--color-brand);
+  }
+
+  /* 포커스 테두리 강조 — 투명 컨트롤을 감싼 테두리 래퍼(검색바 등)는 래퍼가 테두리를 그리므로
+     inputClass 와 같은 방식으로 안쪽 1px 을 덧그려 시각적 2px 을 만든다. inset 이라 레이아웃 불변.
+     래퍼는 focus-within:border-brand 로 색을 바꾸고 있어 색이 어긋나지 않는다. */
+  :where(.border):has(> input:focus-visible),
+  :where(.border):has(> textarea:focus-visible) {
+    box-shadow: inset 0 0 0 1px var(--color-brand);
   }
 }
 

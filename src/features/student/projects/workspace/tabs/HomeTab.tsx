@@ -211,7 +211,7 @@ export function HomeTab({
 
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* 좌측: 내 할 일 · 최근 활동 */}
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
           <section className={cn(card, 'flex flex-col')}>
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">

@@ -3,11 +3,12 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import type { StudentQuizListItem } from '../types'
 import { CATEGORY_BADGE, GRADING_LABEL } from './quizDisplay'
 
-// 상태별 배지(라벨·색) — 완료/채점 대기/기간 종료.
+// 상태별 배지(라벨·색) — 응시 예정/완료/채점 대기/기간 종료.
 const STATUS_META: Record<
-  'completed' | 'pending_manual' | 'closed',
+  'scheduled' | 'completed' | 'pending_manual' | 'closed',
   { label: string; badge: string }
 > = {
+  scheduled: { label: '응시 예정', badge: 'bg-warning-bg text-warning' },
   completed: { label: '완료', badge: 'bg-success-bg text-success' },
   pending_manual: {
     label: '채점 대기',
@@ -16,7 +17,7 @@ const STATUS_META: Record<
   closed: { label: '기간 종료', badge: 'bg-surface-muted text-fg-subtle' },
 }
 
-// 완료/채점 대기/기간 종료 퀴즈 한 줄 — 제목·메타 + 점수·상태 배지 + 액션(결과 보기/비활성).
+// 응시 예정/완료/채점 대기/기간 종료 퀴즈 한 줄 — 제목·메타 + 점수·상태 배지 + 액션(결과 보기/비활성).
 export function OtherStatusRow({
   item,
   onResult,
@@ -85,7 +86,11 @@ export function OtherStatusRow({
             </button>
           ) : (
             <span className="text-fg-subtle text-[12px] font-medium">
-              {item.state === 'pending_manual' ? '결과 준비 중' : '응시 불가'}
+              {item.state === 'pending_manual'
+                ? '결과 준비 중'
+                : item.state === 'scheduled'
+                  ? '시작 전'
+                  : '응시 불가'}
             </span>
           )}
         </div>

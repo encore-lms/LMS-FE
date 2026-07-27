@@ -107,8 +107,8 @@ export interface QuizAnswer {
 export interface QuizListItem {
   quiz: Quiz
   myAttemptCount: number
-  /** 탭 판정용 파생 상태 (BE 계산값; FE는 표시만) */
-  state: 'available' | 'completed' | 'pending_manual' | 'closed'
+  /** 탭 판정용 파생 상태 (BE 계산값; FE는 표시만). scheduled=공개됐지만 시작일시 전 */
+  state: 'available' | 'scheduled' | 'completed' | 'pending_manual' | 'closed'
   latestSubmission?: Pick<
     QuizSubmission,
     'id' | 'gradingStatus' | 'totalScore' | 'submittedAt'

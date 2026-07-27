@@ -1,23 +1,26 @@
 import { cn } from '@/shared/lib/cn'
 import type { QuizListItem } from '@/shared/types'
 
-// 퀴즈 상태 필터 칩 — 응시 가능/완료/채점 대기/기간 종료. 활성 칩은 brand-deep 강조.
+// 퀴즈 상태 필터 칩 — 응시 가능/응시 예정/완료/채점 대기/기간 종료. 활성 칩은 brand-deep 강조.
 export type QuizStatus = QuizListItem['state']
 
 const DOT: Record<QuizStatus, string> = {
   available: 'bg-brand',
+  scheduled: 'bg-warning',
   completed: 'bg-success',
   pending_manual: 'bg-accent-strong',
   closed: 'bg-fg-subtle',
 }
 const LABEL: Record<QuizStatus, string> = {
   available: '응시 가능',
+  scheduled: '응시 예정',
   completed: '완료',
   pending_manual: '채점 대기',
   closed: '기간 종료',
 }
 const ORDER: QuizStatus[] = [
   'available',
+  'scheduled',
   'completed',
   'pending_manual',
   'closed',

@@ -7,8 +7,13 @@ function MetaField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-1 basis-56 flex-col gap-1.5">
       <span className="text-fg text-[13px] font-bold">{label}</span>
-      <div className="border-border bg-surface-muted text-fg flex h-[52px] items-center rounded-[10px] border px-4 text-[15px] font-medium">
-        {value}
+      {/* 높이 고정 박스 — '과정 기수'처럼 공백이 있는 값이 두 줄이 되면
+          둘째 줄이 테두리 밖으로 삐져나가므로 한 줄 말줄임으로 묶는다. */}
+      <div
+        className="border-border bg-surface-muted text-fg flex h-[52px] items-center rounded-[10px] border px-4 text-[15px] font-medium"
+        title={value}
+      >
+        <span className="truncate">{value}</span>
       </div>
     </div>
   )

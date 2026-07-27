@@ -1,10 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient, instructorKeys } from '@/shared/api'
-import type {
-  Endorsement,
-  EndorsementHistory,
-  EndorsementQueue,
-} from '@/shared/types'
+import type { Endorsement, EndorsementQueue } from '@/shared/types'
 
 // 강사 추천서 — /instructor/endorsements 묶음. baseURL이 /api라 경로 앞에 안 붙임.
 // 수강생 로스터(이름 join·작성 대기 계산)는 콘솔 공용 useCohortRoster(api/console.ts) 사용.
@@ -19,17 +15,6 @@ export function useEndorsementQueue(cohortId?: string | null) {
         .get<EndorsementQueue>('/instructor/endorsements', {
           cohortId: cohortId ?? undefined,
         })
-        .then((r) => r.data),
-  })
-}
-
-// 전체 보기: 누적 추천서 큐 + KPI.
-export function useEndorsementHistory() {
-  return useQuery({
-    queryKey: instructorKeys.endorsementHistory(),
-    queryFn: () =>
-      apiClient
-        .get<EndorsementHistory>('/instructor/endorsements/history')
         .then((r) => r.data),
   })
 }
@@ -63,7 +48,6 @@ export function useSubmitEndorsement() {
         .then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: instructorKeys.endorsements() })
-      qc.invalidateQueries({ queryKey: instructorKeys.endorsementHistory() })
     },
   })
 }
@@ -84,7 +68,6 @@ export function useUpdateEndorsement(endorsementId: string) {
         queryKey: instructorKeys.endorsementDetail(endorsementId),
       })
       qc.invalidateQueries({ queryKey: instructorKeys.endorsements() })
-      qc.invalidateQueries({ queryKey: instructorKeys.endorsementHistory() })
     },
   })
 }
@@ -99,7 +82,6 @@ export function useDeleteEndorsement() {
         .then(() => undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: instructorKeys.endorsements() })
-      qc.invalidateQueries({ queryKey: instructorKeys.endorsementHistory() })
     },
   })
 }

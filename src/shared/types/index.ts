@@ -97,7 +97,6 @@ export type {
   Endorsement,
   EndorsementQueue,
   EndorsementStats,
-  EndorsementHistory,
 } from './endorsements'
 export type {
   QuizVisibility,

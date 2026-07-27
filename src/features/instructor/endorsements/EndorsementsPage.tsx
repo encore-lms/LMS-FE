@@ -370,20 +370,11 @@ export default function EndorsementsPage({
           </div>
 
           {/* 최근 작성한 추천서 */}
-          <div className="mt-8 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-fg text-lg font-bold">최근 작성한 추천서</h2>
-              <span className="text-fg-subtle text-xs">
-                · 누적 {recent.length}건
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/instructor/endorsements/history')}
-              className="text-brand text-sm font-medium hover:underline"
-            >
-              전체 보기 →
-            </button>
+          <div className="mt-8 flex items-center gap-2">
+            <h2 className="text-fg text-lg font-bold">최근 작성한 추천서</h2>
+            <span className="text-fg-subtle text-xs">
+              · 누적 {recent.length}건
+            </span>
           </div>
           <div className="border-border bg-surface mt-3 rounded-xl border">
             {recent.map((e) => {

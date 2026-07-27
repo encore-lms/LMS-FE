@@ -3,11 +3,10 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import EndorsementsPage from './EndorsementsPage'
-import EndorsementHistoryPage from './EndorsementHistoryPage'
-import { useEndorsementQueue, useEndorsementHistory } from '../api/endorsements'
+import { useEndorsementQueue } from '../api/endorsements'
 import { useCohortRoster } from '../api/console'
 import { usePageHeaderStore } from '@/shared/store'
-import type { EndorsementHistory, EndorsementQueue } from '@/shared/types'
+import type { EndorsementQueue } from '@/shared/types'
 
 vi.mock('../api/endorsements')
 // 담당 기수 해소용 — 화면이 이 기수로 수강생 명단을 가져온다.
@@ -29,7 +28,6 @@ vi.mock('@/components/ui/use-toast', () => ({
 }))
 
 type QueueHook = ReturnType<typeof useEndorsementQueue>
-type HistoryHook = ReturnType<typeof useEndorsementHistory>
 
 const queue: EndorsementQueue = {
   cohort: 'DA 4기',
@@ -69,28 +67,6 @@ const queue: EndorsementQueue = {
   ],
 }
 
-const history: EndorsementHistory = {
-  stats: { total: 14, thisMonth: 3, snapshotApplied: 8, pendingRefresh: 2 },
-  items: [
-    {
-      id: 'en_a',
-      student: { id: 'st_a', name: '박지훈', cohort: 'DA 4기' },
-      summary: '모델링 근거 정리',
-      comment: '박지훈은 모델링 근거를 잘 정리했습니다. 구체적 사례 포함.',
-      createdAt: '2026-05-17',
-      snapshotStatus: 'pending_refresh',
-    },
-    {
-      id: 'en_b',
-      student: { id: 'st_b', name: '김서연', cohort: 'DA 4기' },
-      summary: '피드백 수용 관찰',
-      comment: '김서연은 피드백을 잘 수용했습니다. 구체적 사례 포함.',
-      createdAt: '2026-05-17',
-      snapshotStatus: 'snapshot_applied',
-    },
-  ],
-}
-
 function mockQueue(v: Partial<QueueHook>) {
   // 이름 join·작성 대기 계산의 원천 — BE 는 userId 만 주므로 화면이 이 명단으로 채운다.
   vi.mocked(useCohortRoster).mockReturnValue({
@@ -101,9 +77,6 @@ function mockQueue(v: Partial<QueueHook>) {
     ],
   } as unknown as ReturnType<typeof useCohortRoster>)
   vi.mocked(useEndorsementQueue).mockReturnValue(v as unknown as QueueHook)
-}
-function mockHistory(v: Partial<HistoryHook>) {
-  vi.mocked(useEndorsementHistory).mockReturnValue(v as unknown as HistoryHook)
 }
 
 describe('EndorsementsPage', () => {
@@ -205,32 +178,5 @@ describe('EndorsementsPage', () => {
     expect(
       screen.getByRole('button', { name: '다시 시도' }),
     ).toBeInTheDocument()
-  })
-})
-
-describe('EndorsementHistoryPage', () => {
-  it('KPI와 행을 렌더한다', () => {
-    mockHistory({ data: history, isPending: false, isError: false })
-    render(
-      <MemoryRouter>
-        <EndorsementHistoryPage />
-      </MemoryRouter>,
-    )
-    expect(screen.getByText('누적 추천서')).toBeInTheDocument()
-    expect(screen.getByText('박지훈')).toBeInTheDocument()
-    expect(screen.getByText('김서연')).toBeInTheDocument()
-  })
-
-  it('스냅샷 반영 필터로 거른다', async () => {
-    mockHistory({ data: history, isPending: false, isError: false })
-    const user = userEvent.setup()
-    render(
-      <MemoryRouter>
-        <EndorsementHistoryPage />
-      </MemoryRouter>,
-    )
-    await user.click(screen.getByRole('button', { name: /스냅샷 반영/ }))
-    expect(screen.getByText('김서연')).toBeInTheDocument()
-    expect(screen.queryByText('박지훈')).not.toBeInTheDocument()
   })
 })

@@ -10,10 +10,7 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type { CohortMaterialItem } from '@/shared/types'
 import { formatDate } from '@/shared/lib/date'
 import { ArticleView } from '@/features/admin/education/ArticleView'
-import {
-  downloadInstructorMaterialFile,
-  useInstructorMaterials,
-} from './api'
+import { downloadInstructorMaterialFile, useInstructorMaterials } from './api'
 
 const TYPE_LABEL: Record<string, string> = {
   link: '링크',
@@ -143,7 +140,7 @@ export function MaterialsViewPane({ cohortId }: { cohortId: string }) {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="제목·내용 검색"
                 aria-label="자료 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
               />
             </div>
             <Select

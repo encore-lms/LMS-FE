@@ -6,6 +6,7 @@ import { Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
+import { inputClass } from '@/components/ui/inputClass'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
@@ -219,11 +220,11 @@ export default function EndorsementsPage({
           aria-label="추천 코멘트"
           aria-invalid={errors.comment ? true : undefined}
           placeholder="구체적 사례를 함께 적어 주세요. (예: 데이터 분석 프로젝트에서 가설 수립부터 검증까지 본인 언어로 설계 근거를 정리한 점이 인상적)"
-          className={`text-fg placeholder:text-fg-subtle mt-2 w-full rounded-lg border-2 bg-white p-3 text-sm transition-colors outline-none ${
-            errors.comment
-              ? 'border-danger'
-              : 'focus:border-brand border-border'
-          }`}
+          className={inputClass({
+            size: 'md',
+            invalid: !!errors.comment,
+            className: 'mt-2 resize-y transition-colors',
+          })}
         />
         {errors.comment && (
           <p role="alert" className="text-danger mt-1 text-[13px]">

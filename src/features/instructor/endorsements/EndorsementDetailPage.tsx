@@ -8,6 +8,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
+import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -205,11 +206,12 @@ export default function EndorsementDetailPage() {
                 disabled={!editable}
                 aria-label="추천 코멘트"
                 aria-invalid={errors.comment ? true : undefined}
-                className={`text-fg placeholder:text-fg-subtle mt-2 w-full rounded-lg border-2 bg-white p-3 text-sm transition-colors outline-none disabled:opacity-60 ${
-                  errors.comment
-                    ? 'border-danger'
-                    : 'focus:border-brand border-border'
-                }`}
+                className={inputClass({
+                  size: 'md',
+                  invalid: !!errors.comment,
+                  className:
+                    'mt-2 resize-y transition-colors disabled:opacity-60',
+                })}
               />
               {errors.comment && (
                 <p role="alert" className="text-danger mt-1 text-[13px]">

@@ -169,7 +169,7 @@ function UrlPreviewInput({
       placeholder={`🔗 ${label} (선택)`}
       aria-invalid={invalid}
       className={cn(
-        'bg-surface w-full rounded-lg border px-3 py-2 text-[11px] focus:outline-none',
+        'bg-surface w-full rounded-lg border px-3 py-2 text-[11px] focus:outline-none focus-visible:shadow-none',
         invalid
           ? 'border-danger text-danger focus:border-danger'
           : 'border-border text-fg placeholder:text-fg-subtle focus:border-brand',

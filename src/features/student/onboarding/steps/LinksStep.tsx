@@ -1,11 +1,8 @@
-import { cn } from '@/shared/lib/cn'
+import { inputClass } from '@/components/ui/inputClass'
 import { isValidUrl } from '../types'
 import { StepHead } from '../components/StepHead'
 
 // 온보딩 Step 3 외부 URL — 블로그·GitHub 링크(선택). Figma 2197:15032.
-const inputCls =
-  'bg-surface text-fg placeholder:text-fg-subtle w-full rounded-lg border px-4 py-3 text-[13px] focus:outline-none'
-
 export function LinksStep({
   blogUrl,
   githubUrl,
@@ -75,12 +72,7 @@ function UrlField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-invalid={invalid}
-        className={cn(
-          inputCls,
-          invalid
-            ? 'border-danger focus:border-danger'
-            : 'border-border focus:border-brand',
-        )}
+        className={inputClass({ size: 'md', invalid })}
       />
       {invalid && (
         <span className="text-danger text-[11px]">

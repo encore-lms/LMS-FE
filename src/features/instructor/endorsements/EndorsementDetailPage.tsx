@@ -18,9 +18,9 @@ import {
 import { SNAPSHOT_META, formatRemaining } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
 
-// 단독 목록 폐기(허브 탭 이관). 복귀는 진입한 화면으로 —
-// 허브 탭에서 들어왔으면 ?cohortId= 가 붙어 있고, 없으면 이력 화면이 기본.
-const HISTORY = '/instructor/endorsements/history'
+// 단독 목록·전체 보기 폐기(허브 탭 이관). 복귀는 진입한 화면으로 —
+// 허브 탭에서 들어왔으면 ?cohortId= 가 붙어 있고, 없으면 담당 과정/기수 목록이 기본.
+const COHORTS = '/instructor/cohorts'
 
 // 강사 추천서 상세/수정 (/instructor/endorsements/:endorsementId).
 // 24h 수정 창 안에서만 기존 row 수정. 이후 변경은 신규 row. 삭제는 확인 모달.
@@ -31,7 +31,7 @@ export default function EndorsementDetailPage() {
   const fromCohortId = params.get('cohortId')
   const LIST = fromCohortId
     ? `/instructor/cohorts/${fromCohortId}/education?tab=endorsements`
-    : HISTORY
+    : COHORTS
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useEndorsement(endorsementId)

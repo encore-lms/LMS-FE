@@ -37,10 +37,11 @@ export function OnlineChapterProgress({
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        {/* 제목이 길어도 우측 진도율(%)을 밀어내지 않도록 좌측 그룹만 줄어들게 한다 */}
+        <div className="flex min-w-0 items-center gap-3">
           <span
             className={cn(
-              'flex size-10 items-center justify-center rounded-xl',
+              'flex size-10 shrink-0 items-center justify-center rounded-xl',
               locked
                 ? 'bg-surface-muted text-fg-subtle'
                 : started
@@ -54,7 +55,7 @@ export function OnlineChapterProgress({
               <MonitorPlay className="size-5" />
             )}
           </span>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex min-w-0 flex-col gap-0.5">
             <span
               className={cn(
                 'text-[14px] font-bold',

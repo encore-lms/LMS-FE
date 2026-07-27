@@ -99,7 +99,7 @@ function distributeBlankScores(points: number, blanks: number): number[] {
 }
 
 const FIELD_BASE =
-  'border-border focus:border-brand text-fg placeholder:text-fg-subtle rounded-lg border bg-white px-3 py-2 text-sm outline-none focus-visible:shadow-none'
+  'border-border focus:border-brand text-fg placeholder:text-fg-subtle rounded-lg border bg-white px-3 py-2 text-sm outline-none'
 const FIELD = `${FIELD_BASE} w-full`
 
 // 인라인 문항 폼 — 추가/편집 공용.
@@ -457,7 +457,7 @@ function InsertZone({
         type="button"
         onClick={onClick}
         aria-label="이 위치에 문항 추가"
-        className="bg-brand hover:bg-brand/90 text-on-color absolute top-1/2 left-1/2 z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 scale-50 items-center justify-center rounded-full opacity-0 shadow-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+        className="bg-brand hover:bg-brand/90 text-on-color pointer-events-none absolute top-1/2 left-1/2 z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 scale-50 items-center justify-center rounded-full opacity-0 shadow-sm transition-all duration-200 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100"
       >
         <Plus className="h-4 w-4" />
       </button>

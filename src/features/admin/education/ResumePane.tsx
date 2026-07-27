@@ -88,7 +88,7 @@ export function ResumePane({
       key: 'action',
       header: '액션',
       align: 'right',
-      className: 'w-24',
+      className: 'w-32',
       cell: (r) => (
         <button
           type="button"
@@ -96,7 +96,7 @@ export function ResumePane({
             e.stopPropagation()
             openDetail(r.id)
           }}
-          className="bg-info-bg text-info hover:bg-info-bg/70 rounded-md px-2 py-1 text-xs font-medium"
+          className="bg-info-bg text-info hover:bg-info-bg/70 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap"
         >
           상세·피드백
         </button>

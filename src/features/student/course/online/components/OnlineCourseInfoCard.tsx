@@ -112,7 +112,11 @@ function ChapterNavRow({
         onClick={onSelect}
         aria-current={active}
         aria-disabled={locked}
-        title={locked ? `${chapter.no}주차에 열려요` : undefined}
+        title={
+          locked
+            ? `${chapter.title} · ${chapter.no}주차에 열려요`
+            : chapter.title
+        }
         className={cn(
           'flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-left transition-colors',
           locked
@@ -130,9 +134,10 @@ function ChapterNavRow({
         >
           {String(chapter.no).padStart(2, '0')}
         </span>
+        {/* 320px 레일이라 제목 가용폭이 ~186px — 말줄임하고 전체는 버튼 title로 */}
         <span
           className={cn(
-            'flex-1 text-[13px] font-semibold',
+            'flex-1 truncate text-[13px] font-semibold',
             locked ? 'text-fg-muted' : active ? 'text-brand' : 'text-fg',
           )}
         >

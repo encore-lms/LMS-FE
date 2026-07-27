@@ -51,7 +51,7 @@ function NavGroup({
             : 'text-fg hover:bg-divider font-medium'
         }`}
       >
-        <span>{group.label}</span>
+        <span className="truncate">{group.label}</span>
         <ChevronDown
           className={`text-fg-subtle h-3.5 w-3.5 shrink-0 transition-transform ${
             expanded ? '' : '-rotate-90'

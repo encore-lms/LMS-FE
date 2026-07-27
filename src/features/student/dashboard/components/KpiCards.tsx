@@ -85,7 +85,11 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
               >
                 <Icon className="size-[18px]" />
               </span>
-              <span className="text-fg-muted text-[12px] font-semibold">
+              {/* 카드 최소폭(180px)에서 라벨 가용폭이 ~78px뿐 — 두 줄로 밀리지 않게 말줄임 */}
+              <span
+                className="text-fg-muted min-w-0 truncate text-[12px] font-semibold"
+                title={k.label}
+              >
                 {k.label}
               </span>
               {to && (

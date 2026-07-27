@@ -53,7 +53,8 @@ describe('LogsPage', () => {
     expect(
       screen.getByText('추천 모델 v2 평가 지표 검토 + 다음 액션 정리'),
     ).toBeInTheDocument()
-    expect(screen.getByText('수정 요청 — 일지 보강 필요')).toBeInTheDocument()
+    // 수정 요청 사유는 칩 아래 별도 줄(칩이 상태 컬럼을 밀지 않도록 분리)
+    expect(screen.getByText('일지 보강 필요')).toBeInTheDocument()
     // 페이지네이션 — 페이지당 8건(공통 Pagination), 전체 건수 대비 표시 건수 안내
     expect(screen.getByText(/건 중 8건 표시/)).toBeInTheDocument()
     // 상태 연동 액션 — 열기(상세 모달) / 수정(재제출 폼 딥링크)
@@ -85,7 +86,7 @@ describe('LogsPage', () => {
         name: '수정 요청',
       }),
     )
-    expect(screen.getByText('수정 요청 — 일지 보강 필요')).toBeInTheDocument()
+    expect(screen.getByText('일지 보강 필요')).toBeInTheDocument()
     expect(
       screen.queryByText('추천 모델 v2 평가 지표 검토 + 다음 액션 정리'),
     ).not.toBeInTheDocument()

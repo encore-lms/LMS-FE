@@ -23,7 +23,7 @@ export function SubmissionHistoryTable({
       <thead>
         <tr className="bg-surface-muted text-fg-muted text-left text-xs">
           {COLUMNS.map((col) => (
-            <th key={col} className="px-4 py-3 font-medium">
+            <th key={col} className="px-4 py-3 font-medium whitespace-nowrap">
               {col}
             </th>
           ))}

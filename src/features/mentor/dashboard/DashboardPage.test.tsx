@@ -41,8 +41,9 @@ describe('DashboardPage', () => {
     expect(screen.getByText('최근 멘토링 일지')).toBeInTheDocument()
     // 'N시간 완료'는 상태가 아닌 보조 라벨로 표기
     expect(screen.getAllByText(/N시간 완료/).length).toBeGreaterThan(0)
-    // 수정 요청 일지 상태 칩 — 사유 메모 병기
-    expect(screen.getByText('수정 요청 — 일지 보강 필요')).toBeInTheDocument()
+    // 수정 요청 일지 상태 칩 — 사유 메모는 칩 아래 별도 줄로 병기
+    expect(screen.getAllByText('수정 요청').length).toBeGreaterThan(0)
+    expect(screen.getByText('일지 보강 필요')).toBeInTheDocument()
   })
 
   it('비용·정산·매출 표현이 없다 — 활동 인정 요건 캡션만 허용', () => {

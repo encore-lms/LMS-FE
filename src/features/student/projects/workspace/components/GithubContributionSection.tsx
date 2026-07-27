@@ -194,7 +194,7 @@ export function GithubContributionSection({
         </div>
 
         {/* 우: 기여자 순위 */}
-        <div className="border-divider flex flex-1 flex-col gap-1 lg:border-l lg:pl-6">
+        <div className="border-divider flex min-w-0 flex-1 flex-col gap-1 lg:border-l lg:pl-6">
           <span className="text-fg-subtle pb-1 text-[11px] font-semibold">
             기여자 {active.contributors.length}명
           </span>

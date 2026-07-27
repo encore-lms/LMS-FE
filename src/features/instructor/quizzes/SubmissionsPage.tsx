@@ -119,7 +119,8 @@ export default function SubmissionsPage() {
     {
       key: 'score',
       header: '총점',
-      className: 'w-32',
+      // 보조 라벨 "임시 (수동 대기)"가 한 줄에 들어갈 폭.
+      className: 'w-36',
       cell: (r) =>
         r.score === null ? (
           <span className="text-fg-muted text-sm">-</span>
@@ -177,7 +178,7 @@ export default function SubmissionsPage() {
                 e.stopPropagation()
                 toast.success(`재독촉 알림은 준비 중입니다.`)
               }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
             >
               재독촉 알림
             </button>
@@ -189,7 +190,9 @@ export default function SubmissionsPage() {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation()
-                  navigate(`${base}/${quizId}/submissions/${r.id}/grade${hubQs}`)
+                  navigate(
+                    `${base}/${quizId}/submissions/${r.id}/grade${hubQs}`,
+                  )
                 }}
               >
                 채점
@@ -200,7 +203,7 @@ export default function SubmissionsPage() {
                   e.stopPropagation()
                   toast.info(`답안 보기는 준비 중입니다.`)
                 }}
-                className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
+                className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
               >
                 답안 보기
               </button>
@@ -213,7 +216,7 @@ export default function SubmissionsPage() {
               e.stopPropagation()
               toast.info(`결과 보기는 준비 중입니다.`)
             }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
+            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
           >
             결과 보기
           </button>

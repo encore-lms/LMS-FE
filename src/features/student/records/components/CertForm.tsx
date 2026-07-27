@@ -213,7 +213,8 @@ export function CertForm({
                     <Award className="size-5" />
                   )}
                 </span>
-                <div className="flex flex-1 flex-col gap-0.5">
+                {/* min-w-0 없으면 파일명 span의 truncate가 먹지 않는다 */}
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="bg-warning-bg text-warning w-fit rounded px-2 py-0.5 text-[10px] font-bold">
                     ● CERTIFICATE
                   </span>

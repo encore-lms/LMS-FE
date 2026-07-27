@@ -69,7 +69,10 @@ export function MentoringHistorySection({
                 className={`${COLS} text-fg items-center px-1 py-3 text-[12px]`}
               >
                 <span className="font-bold">{r.round}</span>
-                <span className="font-medium">{r.datetime}</span>
+                {/* "2026-03-25(수) 19:00 ~ 21:00" — 공백에서 끊기면 행이 2줄이 된다 */}
+                <span className="font-medium whitespace-nowrap">
+                  {r.datetime}
+                </span>
                 <span className="text-fg-muted font-medium">{r.place}</span>
                 <span className="text-fg-muted font-medium">{r.hours}</span>
                 <span className="text-fg-muted font-medium">{r.requester}</span>

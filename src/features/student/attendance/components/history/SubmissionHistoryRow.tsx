@@ -41,7 +41,13 @@ export function SubmissionHistoryRow({
       <td className="text-fg-muted px-4 py-3 text-sm">
         {officialLeaveType ? OFFICIAL_LEAVE_LABEL[officialLeaveType] : '—'}
       </td>
-      <td className="text-fg-muted px-4 py-3 text-sm">{note ?? '—'}</td>
+      <td className="text-fg-muted px-4 py-3 text-sm">
+        {/* 비고는 자유 입력이라 길면 auto-layout 표의 폭을 독식한다.
+            (td의 max-width는 auto 레이아웃에서 무시되므로 안쪽 div에 건다) */}
+        <div className="max-w-[280px] truncate" title={note ?? undefined}>
+          {note ?? '—'}
+        </div>
+      </td>
       <td className="px-4 py-3 text-sm">
         <div className="flex items-center gap-2">
           <span className="text-fg-muted">

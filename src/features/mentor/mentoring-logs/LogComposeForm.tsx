@@ -403,7 +403,7 @@ export function LogComposeForm({
             <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  'flex h-[22px] w-[22px] items-center justify-center rounded-md text-[11px] font-bold',
+                  'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
                   field.required
                     ? 'bg-brand/10 text-brand'
                     : 'bg-surface-muted text-fg-muted',

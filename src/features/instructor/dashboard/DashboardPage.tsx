@@ -154,7 +154,7 @@ export default function DashboardPage() {
             {data.instructorName} 강사 · 담당 {data.cohortCount}개
           </p>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex flex-wrap justify-end gap-2">
           {/* 담당 기수 셀렉터 — 전체(통합) + 기수별. 선택 기수 = 검정 채움. */}
           {cohortTabs.map((c) => (
             <button
@@ -163,7 +163,7 @@ export default function DashboardPage() {
               onClick={() => setCohortId(c.id)}
               aria-pressed={c.id === activeCohortId}
               className={cn(
-                'rounded-lg px-3 py-1.5 text-sm font-medium',
+                'shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap',
                 c.id === activeCohortId
                   ? 'bg-accent-bg text-accent-strong font-bold'
                   : 'border-border text-fg-muted hover:bg-surface-muted border',

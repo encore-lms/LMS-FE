@@ -73,16 +73,17 @@ export function ProjectsTab({ p }: { p: CertProjectsTab }) {
               )}
             </div>
             <span className="text-fg text-[17px] font-bold">{pj.title}</span>
-            <div className="text-fg flex gap-6 text-[12px]">
-              <span>
+            {/* 라벨+값 사이 공백에서 끊기지 않게 항목 단위로만 줄바꿈시킨다 */}
+            <div className="text-fg flex flex-wrap gap-x-6 gap-y-1 text-[12px]">
+              <span className="whitespace-nowrap">
                 <span className="text-fg-subtle">시간 </span>
                 {pj.period}
               </span>
-              <span>
+              <span className="whitespace-nowrap">
                 <span className="text-fg-subtle">역할 </span>
                 {pj.role}
               </span>
-              <span>
+              <span className="whitespace-nowrap">
                 <span className="text-fg-subtle">기여도 </span>
                 <b>{pj.contrib}</b>
               </span>

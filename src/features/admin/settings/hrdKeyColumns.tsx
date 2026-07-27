@@ -72,7 +72,7 @@ export function buildKeyColumns({
             type="button"
             onClick={() => onTest(k)}
             disabled={isTesting}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
+            className="border-border text-fg-muted hover:bg-surface-muted shrink-0 rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap disabled:opacity-50"
           >
             {testingId === k.id ? '테스트 중…' : '연결 테스트'}
           </button>
@@ -80,7 +80,7 @@ export function buildKeyColumns({
             type="button"
             onClick={() => onToggleActive(k)}
             disabled={updatePending}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
+            className="border-border text-fg-muted hover:bg-surface-muted shrink-0 rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap disabled:opacity-50"
           >
             {k.active ? '비활성화' : '활성화'}
           </button>
@@ -88,7 +88,7 @@ export function buildKeyColumns({
             type="button"
             onClick={() => onDelete(k)}
             disabled={deletePending}
-            className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
+            className="border-danger/40 text-danger hover:bg-danger-bg shrink-0 rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap disabled:opacity-50"
           >
             삭제
           </button>

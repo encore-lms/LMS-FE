@@ -309,8 +309,12 @@ function CertBody({ detail }: { detail: CertRecordDetail }) {
             <span className="flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" /> {detail.acquiredAt}
             </span>
-            <span className="flex items-center gap-1">
-              <FileText className="h-3.5 w-3.5" /> {detail.fileName}
+            {/* 파일명이 길면 잘라서 보여준다(전체는 title). */}
+            <span className="flex min-w-0 items-center gap-1">
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate" title={detail.fileName}>
+                {detail.fileName}
+              </span>
             </span>
           </div>
 

@@ -54,12 +54,18 @@ export default function ProfilePage({ cohortSection }: ProfilePageProps) {
             <div className="flex flex-col gap-6">
               <section className="border-border bg-surface rounded-xl border p-6">
                 <div className="flex items-center gap-4">
-                  <span className="bg-brand flex size-14 items-center justify-center rounded-full text-xl font-bold text-white">
+                  {/* 본인 계정 아바타는 헤더(Header) 프로필 버튼과 같은 brand 원형 —
+                      이름 해시 색을 쓰는 공용 Avatar 로 바꾸면 헤더와 색이 어긋난다. */}
+                  <span className="bg-brand flex size-14 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white">
                     {me.data.name.charAt(0)}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-fg text-lg font-bold">{me.data.name}</p>
-                    <p className="text-fg-muted text-[13px]">{me.data.email}</p>
+                    <p className="text-fg truncate text-lg font-bold">
+                      {me.data.name}
+                    </p>
+                    <p className="text-fg-muted truncate text-[13px]">
+                      {me.data.email}
+                    </p>
                   </div>
                   <StatusBadge label={ROLE_LABEL[me.data.role]} tone="info" />
                 </div>

@@ -164,10 +164,15 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                       >
                         {day}
                       </span>
+                      {/* items-start 컨테이너라 폭이 max-content로 벌어진다 —
+                          w-full·min-w-0으로 일자 칸(~104px) 안에 가둬야 line-clamp가 먹는다 */}
                       {eventsOf(day).map((ev, idx) => (
-                        <span key={idx} className="flex flex-col gap-0.5">
+                        <span
+                          key={idx}
+                          className="flex w-full min-w-0 flex-col items-start gap-0.5"
+                        >
                           <Chip badge={{ label: ev.type, tone: ev.tone }} />
-                          <span className="text-fg-muted line-clamp-1 text-[10px]">
+                          <span className="text-fg-muted line-clamp-1 w-full text-[10px]">
                             {ev.label}
                           </span>
                         </span>

@@ -35,7 +35,8 @@ export function CertTabs({
             type="button"
             onClick={() => onChange(t.key)}
             className={cn(
-              'flex-1 rounded-[10px] px-4 py-2.5 text-[13px] font-semibold',
+              // 탭 7개가 균등 분할되면 좁은 폭에서 '문제해결·협업'이 두 줄이 된다.
+              'flex-1 rounded-[10px] px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap',
               isActive
                 ? 'bg-brand/10 text-brand'
                 : 'text-fg-muted hover:bg-surface-muted',

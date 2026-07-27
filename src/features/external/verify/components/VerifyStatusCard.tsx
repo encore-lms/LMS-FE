@@ -46,14 +46,16 @@ export function VerifyStatusCard({
             </span>
           </div>
         ) : (
+          // 외부 공유 URL이라 모바일 유입 전제 — 값이 2줄이 되어도 행이 겹치지
+          // 않도록 높이는 최소값으로 두고, 좁은 폭에서는 라벨 폭을 줄인다.
           <div
             key={row.label}
-            className="flex h-8 items-center justify-between gap-4"
+            className="flex min-h-8 items-center justify-between gap-4"
           >
-            <span className="text-fg-subtle w-[150px] shrink-0 text-[10px] font-medium">
+            <span className="text-fg-subtle w-[110px] shrink-0 text-[10px] font-medium sm:w-[150px]">
               {row.label}
             </span>
-            <span className="text-fg text-right text-[13px] font-bold">
+            <span className="text-fg min-w-0 text-right text-[13px] font-bold">
               {row.value}
             </span>
           </div>

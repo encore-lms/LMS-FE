@@ -94,7 +94,9 @@ export function ReviewDetailPanel({
           <div className="min-w-0">
             <p className="text-fg truncate text-base font-bold">{headTitle}</p>
             <p className="text-fg-subtle mt-0.5 text-xs">
-              {target.kind === 'project' ? '프로젝트 검토 상세' : '트러블슈팅 검토 상세'}
+              {target.kind === 'project'
+                ? '프로젝트 검토 상세'
+                : '트러블슈팅 검토 상세'}
             </p>
           </div>
           <button
@@ -156,9 +158,12 @@ function Section({
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    // 3열 그리드라 칸이 좁다 — 값이 접히지 않게 말줄임 처리(전체는 title로).
+    <div className="min-w-0">
       <p className="text-fg-subtle text-xs">{label}</p>
-      <p className="text-fg mt-0.5 text-sm font-medium">{value}</p>
+      <p className="text-fg mt-0.5 truncate text-sm font-medium" title={value}>
+        {value}
+      </p>
     </div>
   )
 }

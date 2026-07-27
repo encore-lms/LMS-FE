@@ -63,16 +63,22 @@ function Cell({
   sub: string
 }) {
   return (
-    <div className="flex flex-1 items-center gap-2.5">
+    // 4열 그리드 셀이 148px 남짓 — 장소 상세처럼 길이 제한 없는 값이
+    // 셀을 밀어내지 않도록 min-w-0으로 좁히고 한 줄 말줄임한다.
+    <div className="flex min-w-0 flex-1 items-center gap-2.5">
       <span className="bg-surface-muted text-fg-muted flex size-8 shrink-0 items-center justify-center rounded-lg">
         {icon}
       </span>
-      <div className="flex flex-col gap-px">
+      <div className="flex min-w-0 flex-col gap-px">
         <span className="text-fg-subtle text-[10px] font-medium tracking-wider">
           {label}
         </span>
-        <span className="text-fg text-[13px] font-bold">{top}</span>
-        <span className="text-fg-subtle text-[10px]">{sub}</span>
+        <span className="text-fg truncate text-[13px] font-bold" title={top}>
+          {top}
+        </span>
+        <span className="text-fg-subtle truncate text-[10px]" title={sub}>
+          {sub}
+        </span>
       </div>
     </div>
   )

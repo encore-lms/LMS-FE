@@ -255,7 +255,9 @@ export default function AccountsPage() {
       header: '최근 로그인',
       className: 'w-28',
       cell: (a) => (
-        <span className="text-fg-muted text-sm">{a.lastLoginAt ?? '-'}</span>
+        <span className="text-fg-muted text-sm whitespace-nowrap">
+          {a.lastLoginAt ?? '-'}
+        </span>
       ),
     },
     {

@@ -75,8 +75,12 @@ function TeamDetailBody({
       key: 'location',
       header: '장소',
       className: 'w-[160px]',
+      // 장소는 '유형 · 상세'라 컬럼(160px)보다 길 수 있어 말줄임 — 전체는 title 로
       cell: (r) => (
-        <span className="text-fg-muted text-xs font-medium">
+        <span
+          className="text-fg-muted block max-w-[128px] truncate text-xs font-medium"
+          title={r.locationLabel}
+        >
           {r.locationLabel}
         </span>
       ),

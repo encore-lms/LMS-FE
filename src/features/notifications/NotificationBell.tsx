@@ -108,7 +108,7 @@ export function NotificationBell() {
                       <span className="text-fg truncate text-[13px]">
                         {n.title}
                       </span>
-                      <span className="text-fg-subtle text-[11px]">
+                      <span className="text-fg-subtle truncate text-[11px]">
                         {n.source}
                       </span>
                     </span>

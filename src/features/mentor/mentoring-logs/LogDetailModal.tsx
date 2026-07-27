@@ -20,6 +20,7 @@ import { useMentoringLogDetail } from '../api/logs'
 import type { MentoringLogDetailData } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { CharCounter, LogStateChip, RequiredChip } from './LogChips'
+import { TemplateFieldList } from './TemplateFieldList'
 import { durationLabel } from './logMeta'
 
 const ROUND1 = (n: number) => Math.round(n * 10) / 10
@@ -322,25 +323,10 @@ export default function LogDetailModal() {
           </button>
         </div>
         {showTemplate && (
-          <ul className="bg-surface-muted/50 divide-divider flex flex-col divide-y rounded-xl">
-            {data.answers.map(({ field }) => (
-              <li
-                key={field.fieldSnapshotId}
-                className="flex items-center gap-2 px-4 py-2.5"
-              >
-                <span className="text-fg-subtle w-4 text-[11px] font-bold">
-                  {field.order}
-                </span>
-                <span className="text-fg text-[13px] font-semibold">
-                  {field.name}
-                </span>
-                <RequiredChip required={field.required} />
-                <span className="text-fg-subtle ml-auto text-[11px]">
-                  {field.description}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <TemplateFieldList
+            fields={data.answers.map(({ field }) => field)}
+            className="bg-surface-muted/50 rounded-xl"
+          />
         )}
 
         {/* 항목 카드 — 텍스트/첨부 변형 */}
@@ -352,7 +338,7 @@ export default function LogDetailModal() {
             <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  'flex h-[22px] w-[22px] items-center justify-center rounded-md text-[11px] font-bold',
+                  'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
                   field.required
                     ? 'bg-brand/10 text-brand'
                     : 'bg-surface-muted text-fg-muted',

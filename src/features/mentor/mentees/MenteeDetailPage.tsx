@@ -290,7 +290,7 @@ function MenteeDetailBody({
                 AXIS_COLORS[i % AXIS_COLORS.length].split(' ')
               return (
                 <div key={axis.label} className="flex items-center gap-3">
-                  <span className="text-fg w-14 text-[13px] font-bold">
+                  <span className="text-fg w-14 shrink-0 text-[13px] font-bold whitespace-nowrap">
                     {axis.label}
                   </span>
                   <div className="flex flex-1 gap-1">

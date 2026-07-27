@@ -47,6 +47,13 @@ export default function EndorsementsPage({
     ? (cohortIdProp ?? null)
     : pickedCohort || cohortOptions[0]?.id || null
 
+  // 상세로 나갔다가 '목록'으로 돌아올 때 원래 있던 화면으로 복귀시킨다.
+  // 허브 탭 임베드는 기수 컨텍스트가 있으므로 cohortId를 쿼리로 넘긴다(없으면 이력 화면으로).
+  const detailPath = (id: string) =>
+    embedded && cohortId
+      ? `/instructor/endorsements/${id}?cohortId=${cohortId}`
+      : `/instructor/endorsements/${id}`
+
   const { data, isPending, isError, refetch } = useEndorsementQueue(cohortId)
   // 명단 — BE(learning)는 수강생 로스터가 없어 추천서 응답에 userId 만 준다.
   // 이름 join·작성 대기 계산을 화면이 맡는다(운영 프로젝트 목록과 동일 관례).
@@ -235,9 +242,7 @@ export default function EndorsementsPage({
                       <StatusBadge label="작성됨" tone="success" />
                       <button
                         type="button"
-                        onClick={() =>
-                          navigate(`/instructor/endorsements/${endorsementId}`)
-                        }
+                        onClick={() => navigate(detailPath(endorsementId))}
                         className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-1.5 text-xs font-medium"
                       >
                         보기
@@ -403,7 +408,7 @@ export default function EndorsementsPage({
                   <StatusBadge label={meta.label} tone={meta.tone} />
                   <button
                     type="button"
-                    onClick={() => navigate(`/instructor/endorsements/${e.id}`)}
+                    onClick={() => navigate(detailPath(e.id))}
                     className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-md border px-3 py-1.5 text-xs font-medium"
                   >
                     보기

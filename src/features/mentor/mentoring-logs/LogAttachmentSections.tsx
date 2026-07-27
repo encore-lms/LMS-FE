@@ -19,7 +19,7 @@ export function LogArtifactsSection({
   return (
     <section className="bg-surface flex flex-col gap-2.5 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <div className="flex items-center gap-2">
-        <span className="bg-surface-muted text-fg-muted flex h-[22px] w-[22px] items-center justify-center rounded-md text-[11px] font-bold">
+        <span className="bg-surface-muted text-fg-muted flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md text-[11px] font-bold">
           {filesField.order}
         </span>
         <span className="text-fg text-sm font-bold">{filesField.name}</span>
@@ -84,7 +84,7 @@ export function LogPhotosSection({
   return (
     <section className="bg-surface flex flex-col gap-2.5 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
       <div className="flex items-center gap-2">
-        <span className="bg-surface-muted text-fg-muted flex h-[22px] w-[22px] items-center justify-center rounded-md text-[11px] font-bold">
+        <span className="bg-surface-muted text-fg-muted flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md text-[11px] font-bold">
           {photosField.order}
         </span>
         <span className="text-fg text-sm font-bold">{photosField.name}</span>

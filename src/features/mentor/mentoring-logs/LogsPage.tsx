@@ -252,7 +252,13 @@ export default function LogsPage() {
               <Icon className="h-[11px] w-[11px]" />
               {MENTORING_PLACE_TYPE_LABEL[l.placeType]}
             </span>
-            <span className="text-fg-subtle text-[11px]">{l.placeDetail}</span>
+            {/* 장소 상세는 컬럼(130px)보다 길 수 있어 셀 안에서 말줄임 — 전체는 title 로 */}
+            <span
+              className="text-fg-subtle block max-w-[98px] truncate text-[11px]"
+              title={l.placeDetail}
+            >
+              {l.placeDetail}
+            </span>
           </span>
         )
       },

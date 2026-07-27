@@ -102,9 +102,21 @@ export default function AssignmentsPage({
       className: 'w-52',
       cell: (r) => (
         <div>
+          {/* 열 폭보다 긴 문장이라 접히는데, 라벨과 숫자가 갈라지지 않도록 쌍 단위로 nowrap. */}
           <p className="text-fg-muted text-xs">
-            제출 {r.counts.submitted} · 미제출 {r.counts.notSubmitted} · 보완{' '}
-            {r.counts.supplementRequested} · 완료 {r.counts.reviewDone}
+            <span className="whitespace-nowrap">제출 {r.counts.submitted}</span>{' '}
+            ·{' '}
+            <span className="whitespace-nowrap">
+              미제출 {r.counts.notSubmitted}
+            </span>{' '}
+            ·{' '}
+            <span className="whitespace-nowrap">
+              보완 {r.counts.supplementRequested}
+            </span>{' '}
+            ·{' '}
+            <span className="whitespace-nowrap">
+              완료 {r.counts.reviewDone}
+            </span>
           </p>
           <div className="mt-1.5">
             <StatusBadge
@@ -125,14 +137,15 @@ export default function AssignmentsPage({
       className: 'w-56',
       cell: (r) => (
         <div className="flex flex-wrap gap-1.5">
-          {/* 상세 = 생성/수정 폼 단일 화면 (생성 정책: 생성/수정 후 상세 화면 이동) */}
+          {/* 상세 = 생성/수정 폼 단일 화면 (생성 정책: 생성/수정 후 상세 화면 이동)
+              — 구 [수정] 버튼과 이동 경로가 같아 [상세] 하나로 합쳤다. */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
               navigate(`/instructor/assignments/${r.id}${hubQs}`)
             }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap"
           >
             상세
           </button>
@@ -140,19 +153,9 @@ export default function AssignmentsPage({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/instructor/assignments/${r.id}${hubQs}`)
-            }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            수정
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
               setDeleteTarget(r)
             }}
-            className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
+            className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap"
           >
             삭제
           </button>
@@ -162,7 +165,7 @@ export default function AssignmentsPage({
               e.stopPropagation()
               navigate(`/instructor/assignments/${r.id}/submissions${hubQs}`)
             }}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+            className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap"
           >
             제출 현황
           </button>
@@ -264,7 +267,9 @@ export default function AssignmentsPage({
               columns={columns}
               rows={filtered}
               rowKey={(r) => r.id}
-              onRowClick={(r) => navigate(`/instructor/assignments/${r.id}${hubQs}`)}
+              onRowClick={(r) =>
+                navigate(`/instructor/assignments/${r.id}${hubQs}`)
+              }
               empty="조건에 맞는 과제가 없어요"
             />
           </div>

@@ -80,7 +80,10 @@ export default function AssignmentsPage() {
       header: '마감',
       className: 'w-24',
       cell: (r) => (
-        <span className={cn('text-[13px]', DUE_TONE[r.dueTone])}>
+        // "5/9 종료"처럼 공백이 있는 라벨이 좁은 열에서 두 줄이 되지 않게.
+        <span
+          className={cn('text-[13px] whitespace-nowrap', DUE_TONE[r.dueTone])}
+        >
           {r.dueLabel.replace(/^마감\s*/, '')}
         </span>
       ),
@@ -100,7 +103,8 @@ export default function AssignmentsPage() {
       key: 'action',
       header: '액션',
       align: 'right',
-      className: 'w-32',
+      // '피드백 보기'가 96px 콘텐츠 폭에 3.6px 여유로 아슬아슬해 두 줄이 되던 열.
+      className: 'w-36',
       cell: (r) => (
         <button
           type="button"
@@ -109,7 +113,7 @@ export default function AssignmentsPage() {
             go(r.id)
           }}
           className={cn(
-            'inline-flex h-8 items-center justify-center rounded-lg px-3 text-[13px] font-semibold',
+            'inline-flex h-8 items-center justify-center rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap',
             CTA[r.status].primary
               ? 'bg-brand text-white'
               : 'border-border text-fg bg-surface border',

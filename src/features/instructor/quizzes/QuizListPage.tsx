@@ -92,9 +92,12 @@ export default function QuizListPage({
       key: 'title',
       header: '퀴즈명',
       cell: (r) => (
-        <div>
-          <p className="text-fg text-sm font-medium">{r.title}</p>
-          <p className="text-fg-subtle text-xs">
+        // 긴 퀴즈명이 여러 줄로 접히지 않도록 폭 상한 + 말줄임.
+        <div className="max-w-[320px]">
+          <p className="text-fg truncate text-sm font-medium" title={r.title}>
+            {r.title}
+          </p>
+          <p className="text-fg-subtle truncate text-xs">
             {[r.cohortLabel, r.subject].filter(Boolean).join(' · ')}
           </p>
         </div>
@@ -175,7 +178,7 @@ export default function QuizListPage({
                 e.stopPropagation()
                 navigate(`${base}/${r.id}/edit${hubQs}`)
               }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium"
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap"
             >
               수정
             </button>
@@ -195,7 +198,7 @@ export default function QuizListPage({
                 })
               }}
               className={cn(
-                'rounded-md border px-2 py-1 text-xs font-medium',
+                'rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap',
                 hasSubmissions
                   ? 'border-border text-fg-subtle cursor-not-allowed opacity-50'
                   : 'border-danger/40 text-danger hover:bg-danger-bg',
@@ -212,7 +215,7 @@ export default function QuizListPage({
                 navigate(`${base}/${r.id}/submissions${hubQs}`)
               }}
               className={cn(
-                'rounded-md border px-2 py-1 text-xs font-medium',
+                'rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap',
                 isDraft
                   ? 'border-border text-fg-subtle cursor-not-allowed opacity-50'
                   : 'border-border text-fg-muted hover:bg-surface-muted',

@@ -129,7 +129,7 @@ export default function IntegrationsPage() {
           onClick={() =>
             toast.info(`${i.name} ${i.actionLabel}은(는) 준비 중입니다.`)
           }
-          className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-[12px] font-semibold"
+          className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap"
         >
           {i.actionLabel}
         </button>

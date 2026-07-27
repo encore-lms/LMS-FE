@@ -123,10 +123,11 @@ export function QuickLinks() {
       {/* 옅은 배경 컨테이너 — 다크 인사이트에서 본문으로 넘어가는 시각적 브릿지 */}
       <div className="bg-surface-muted/50 flex flex-wrap items-start gap-4 rounded-2xl px-5 py-4">
         {items.map(({ to, label, icon: Icon, tone }) => (
+          // 타일 폭은 가장 긴 라벨('과정·기수·교과목')이 한 줄에 들어가는 값.
           <Link
             key={to}
             to={to}
-            className="group flex w-[4.75rem] flex-col items-center gap-2"
+            className="group flex w-[5.5rem] flex-col items-center gap-2"
           >
             <span
               className={cn(

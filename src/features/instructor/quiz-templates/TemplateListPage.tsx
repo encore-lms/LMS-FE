@@ -86,7 +86,13 @@ export default function TemplateListPage() {
               </span>
             )}
           </p>
-          <p className="text-fg-subtle text-xs">{t.description}</p>
+          {/* 설명은 길이가 제각각 — 행 높이가 들쭉날쭉해지지 않게 한 줄로 자른다. */}
+          <p
+            className="text-fg-subtle line-clamp-1 text-xs"
+            title={t.description}
+          >
+            {t.description}
+          </p>
         </div>
       ),
     },
@@ -122,7 +128,8 @@ export default function TemplateListPage() {
     {
       key: 'actions',
       header: '액션',
-      className: 'w-56',
+      // [새 퀴즈로 복제]가 긴 라벨이라 3버튼이 한 줄에 들어갈 폭.
+      className: 'w-64',
       cell: (t) => {
         const inUse = t.useCount > 0
         return (

@@ -231,7 +231,7 @@ export default function PlayTypingPage() {
                         : '제시문을 보고 여기에 입력하세요. 글자가 맞으면 초록, 틀리면 빨강으로 표시됩니다.'
                   }
                   className={cn(
-                    'bg-surface text-fg min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
+                    'bg-surface text-fg min-h-[120px] w-full resize-none rounded-xl border px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none disabled:cursor-not-allowed disabled:opacity-60',
                     m.typos > 0
                       ? 'border-danger focus:border-danger'
                       : input.length > 0

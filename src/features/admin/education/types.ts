@@ -60,6 +60,8 @@ export interface ResumeRow {
 export interface ResumeFeedbackItem {
   id: string
   authorUserId: string
+  /** BE가 auth에서 해석한 작성자 실명 — 조회 실패 시 null */
+  authorName: string | null
   body: string
   createdAt: string
 }

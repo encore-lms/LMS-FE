@@ -15,16 +15,29 @@ export function LogStateChip({
 }) {
   const meta = LOG_STATUS_META[status]
   const Icon = meta.icon
-  return (
+  const chip = (
     <span
       className={cn(
         'inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap',
         meta.chip,
       )}
     >
-      <Icon className="h-[11px] w-[11px]" />
+      <Icon className="h-[11px] w-[11px] shrink-0" />
       {status === 'valid' ? validLabel : meta.label}
-      {status === 'change_requested' && note ? ` — ${note}` : ''}
+    </span>
+  )
+  // 수정 요청 사유는 칩 안에 이어 붙이면(nowrap) 칩이 상태 컬럼(170px)을 밀어내
+  // 표 전체가 가로 스크롤된다. 사유는 칩 아래 별도 줄에 말줄임으로 둔다.
+  if (status !== 'change_requested' || !note) return chip
+  return (
+    <span className="inline-flex flex-col items-center gap-0.5">
+      {chip}
+      <span
+        className="text-fg-subtle max-w-[130px] truncate text-[10px] font-medium"
+        title={note}
+      >
+        {note}
+      </span>
     </span>
   )
 }

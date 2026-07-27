@@ -92,10 +92,24 @@ export function LogStatusChip({
     )
   }
   if (status === 'change_requested') {
-    return (
+    const chip = (
       <span className="bg-danger-bg text-danger inline-flex items-center gap-1 rounded-[5px] px-2 py-[3px] text-[11px] font-bold whitespace-nowrap">
-        <AlertTriangle className="h-[11px] w-[11px]" />
-        수정 요청{note ? ` — ${note}` : ''}
+        <AlertTriangle className="h-[11px] w-[11px] shrink-0" />
+        수정 요청
+      </span>
+    )
+    if (!note) return chip
+    // 사유를 칩 안에 이어 붙이면(nowrap) 칩이 상태 컬럼(140px)을 밀어내 표가
+    // 가로 스크롤된다. 사유는 칩 아래 별도 줄에 말줄임으로 둔다.
+    return (
+      <span className="inline-flex flex-col items-start gap-0.5">
+        {chip}
+        <span
+          className="text-fg-subtle max-w-[108px] truncate text-[10px] font-medium"
+          title={note}
+        >
+          {note}
+        </span>
       </span>
     )
   }

@@ -492,7 +492,7 @@ export default function ChangeRequestPage() {
                     rows={it === '제목' || it === '카테고리' || it === '태그' ? 1 : 4}
                     aria-label={`${it} 변경 후 내용`}
                     placeholder={`${it}의 변경 후 내용을 입력하세요`}
-                    className="text-fg placeholder:text-fg-subtle focus:border-brand border-border/60 w-full resize-y rounded-lg border bg-white p-2 text-[12px] leading-5 outline-none"
+                    className="text-fg placeholder:text-fg-subtle focus:border-brand border-border/60 w-full resize-y rounded-lg border bg-white p-2 text-[12px] leading-5 outline-none focus-visible:shadow-none"
                   />
                 </div>
               </div>

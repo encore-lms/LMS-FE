@@ -8,15 +8,23 @@ const inputSizes: Record<InputSize, string> = {
   md: 'rounded-[10px] px-4 py-3 text-[14px]',
 }
 
-// display·크기·테두리 색 제외 공통 스타일. focus-visible:shadow-none — 전역 base의 input 포커스 링을
-// 끄고 테두리 색 변화 하나만 남긴다(링+테두리 2겹 방지, DateTimePicker 트리거와 동일한 포커스 표현).
+// display·크기·테두리 색 제외 공통 스타일. box-shadow 는 inputBorders 가 담당한다
+// (전역 base 의 링을 끄면서 동시에 포커스 강조 inset 을 그린다 — 같은 속성이라 한 곳에서 관리).
 export const inputBase =
-  'bg-surface text-fg placeholder:text-fg-subtle focus-visible:shadow-none w-full border outline-none'
+  'bg-surface text-fg placeholder:text-fg-subtle w-full border outline-none'
 
 // 테두리 색은 invalid 상태와 상호배타로 합성한다 — cn이 단순 join이라 색 클래스가 공존하면 CSS 순서에 좌우됨.
+//
+// 포커스 시 테두리 안쪽에 같은 색 1px 을 inset 그림자로 덧그려
+// 1px 테두리를 시각적으로 2px 로 키운다. WCAG 2.4.11(Focus Appearance)의 최소 두께 권고 대응.
+// inset 그림자라 박스 크기·내용 위치가 전혀 움직이지 않는다(focus:border-2 는 콘텐츠가 밀린다).
+// 이 값이 전역 base 의 포커스 링도 함께 덮어쓴다(같은 box-shadow 속성, utilities 레이어가 base 를 이긴다).
+// Tailwind v4 는 shadow-[inset_…] 대신 inset-shadow-* 를 쓰므로 임의 속성 문법으로 직접 지정한다.
 const inputBorders = {
-  normal: 'border-border focus:border-brand',
-  invalid: 'border-danger focus:border-danger',
+  normal:
+    'border-border focus:border-brand focus-visible:[box-shadow:inset_0_0_0_1px_var(--color-brand)]',
+  invalid:
+    'border-danger focus:border-danger focus-visible:[box-shadow:inset_0_0_0_1px_var(--color-danger)]',
 }
 
 /**

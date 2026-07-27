@@ -360,7 +360,7 @@ export default function TemplateFormPage() {
               variant="secondary"
               onClick={handleSubmit((input) => save(input, false))}
             >
-              임시저장으로 저장
+              저장
             </Button>
             <Button
               type="button"

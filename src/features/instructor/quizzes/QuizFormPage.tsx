@@ -569,25 +569,14 @@ export default function QuizFormPage() {
             >
               취소
             </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={saveQuiz.isPending}
-              onClick={handleSubmit((input) => {
-                setVisibility('draft')
-                save(input, 'draft')
-              })}
-            >
-              임시저장
-            </Button>
+            {/* 공개 상태는 위 세그먼트가 단일 진실원 — 적용될 상태를 라벨에 노출한다. */}
             <Button
               type="button"
               size="sm"
               disabled={saveQuiz.isPending}
               onClick={handleSubmit((input) => save(input, visibility))}
             >
-              저장
+              저장 ({VISIBILITY_META[visibility].label})
             </Button>
           </div>
         </div>

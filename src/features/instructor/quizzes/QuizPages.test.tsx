@@ -335,9 +335,23 @@ describe('QuizFormPage (§6)', () => {
         ok(undefined) as unknown as ReturnType<typeof useInstructorQuizDetail>,
       )
     })
-    await user.click(screen.getByRole('button', { name: /^저장$/ }))
+    // 저장 버튼은 적용될 공개 상태를 라벨에 노출한다(생성 기본값=임시저장).
+    await user.click(screen.getByRole('button', { name: '저장 (임시저장)' }))
     // 시작/종료/제한시간은 생성 시 기본값(현재·다음날·60분)이라 제목만 검증 에러.
     expect(await screen.findByText('제목을 입력해주세요')).toBeInTheDocument()
+  })
+
+  it('공개 상태를 바꾸면 저장 버튼 라벨이 따라 바뀐다', async () => {
+    const user = userEvent.setup()
+    renderAt('/instructor/quizzes/new', () => {
+      vi.mocked(useInstructorQuizDetail).mockReturnValue(
+        ok(undefined) as unknown as ReturnType<typeof useInstructorQuizDetail>,
+      )
+    })
+    await user.click(screen.getByRole('button', { name: '공개' }))
+    expect(
+      screen.getByRole('button', { name: '저장 (공개)' }),
+    ).toBeInTheDocument()
   })
 })
 

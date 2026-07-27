@@ -33,7 +33,7 @@ function FillBlankInline({
               value={vals[i] ?? ''}
               onChange={(e) => setBlank(i, e.target.value)}
               placeholder={`(${i + 1})`}
-              className="border-brand/50 focus:border-brand text-fg bg-brand/5 mx-1.5 inline-block w-32 rounded-md border-b-2 px-2 py-1 text-center text-[15px] outline-none focus-visible:shadow-none"
+              className="border-brand/50 focus:border-brand text-fg bg-brand/5 mx-1.5 inline-block w-32 rounded-md border-b-2 px-2 py-1 text-center text-[15px] outline-none"
             />
           )}
         </Fragment>
@@ -166,7 +166,7 @@ export function QuestionCard({
               onChange={(e) => onChange(e.target.value)}
               rows={2}
               placeholder="답안을 입력하세요"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-xl border px-4 py-3 text-[15px] outline-none focus-visible:shadow-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full rounded-xl border px-4 py-3 text-[15px] outline-none"
             />
           )}
         </>

@@ -49,14 +49,18 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
             )}
           >
             <Avatar name={nameOf(m.userId, m.name)} tone={m.avatarTone} />
+            {/* 고정 w-40 칸 — 배지는 줄이지 않고 이름·역할만 말줄임한다 */}
             <div className="flex w-40 flex-col gap-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-fg text-[13px] font-bold">
+                <span
+                  className="text-fg truncate text-[13px] font-bold"
+                  title={nameOf(m.userId, m.name)}
+                >
                   {nameOf(m.userId, m.name)}
                 </span>
                 <span
                   className={cn(
-                    'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                    'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold',
                     m.kind === 'PM'
                       ? 'bg-accent-bg text-accent-strong'
                       : 'bg-surface-muted text-fg-muted',
@@ -65,12 +69,17 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
                   {m.kind}
                 </span>
                 {i === SELF_INDEX && (
-                  <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
+                  <span className="bg-brand/10 text-brand shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold">
                     본인
                   </span>
                 )}
               </div>
-              <span className="text-fg-subtle text-[11px]">{m.role}</span>
+              <span
+                className="text-fg-subtle truncate text-[11px]"
+                title={m.role}
+              >
+                {m.role}
+              </span>
             </div>
             <div className="flex-1" />
             <div className="flex shrink-0 items-center gap-2">

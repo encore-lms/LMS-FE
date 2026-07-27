@@ -128,7 +128,7 @@ export function AttendanceFormTab() {
     {
       key: 'leave',
       header: '공가',
-      className: 'w-16',
+      className: 'w-20',
       cell: (r) => (
         <span className="text-fg-muted text-xs">
           {r.officialLeaveUsed ? '사용' : '미사용'}
@@ -145,7 +145,7 @@ export function AttendanceFormTab() {
       header: '제출 시각',
       className: 'w-32',
       cell: (r) => (
-        <span className="text-fg-subtle text-xs tabular-nums">
+        <span className="text-fg-subtle text-xs tabular-nums whitespace-nowrap">
           {formatDateTime(r.submittedAt)}
         </span>
       ),

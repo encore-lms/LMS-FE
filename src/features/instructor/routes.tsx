@@ -8,6 +8,9 @@ const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
 const InstructorEducationPage = lazy(
   () => import('./education/InstructorEducationPage'),
 )
+const InstructorResumeDetailPage = lazy(
+  () => import('./education/ResumeDetailPage'),
+)
 const ProjectReviewPage = lazy(() => import('./reviews/ProjectReviewPage'))
 const TsReviewPage = lazy(() => import('./reviews/TsReviewPage'))
 const EndorsementHistoryPage = lazy(
@@ -52,6 +55,11 @@ export const instructorRoutes: RouteObject[] = [
       {
         path: 'cohorts/:cohortId/education',
         element: <InstructorEducationPage />,
+      },
+      // 이력서 상세 — 허브 '이력서' 탭에서 진입(문서 뷰 + 피드백 작성).
+      {
+        path: 'cohorts/:cohortId/resumes/:resumeId',
+        element: <InstructorResumeDetailPage />,
       },
       // 수강생 목록·상세 단독 화면은 폐기 — 허브 '수강생' 탭(StudentsPane)으로 일원화.
       // 검토 2종 (§14~§15) — 사이드바 '검토' 묶음. 학습 기록 조회는 허브 '기록실' 탭으로 이관.

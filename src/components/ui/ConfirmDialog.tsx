@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { cn } from '@/shared/lib/cn'
+import { Button } from './Button'
 import { Modal } from './Modal'
 
 interface ConfirmDialogProps {
@@ -44,24 +44,16 @@ export function ConfirmDialog({
       title={title}
       footer={
         <>
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
-          >
+          <Button variant="secondary" onClick={onClose}>
             {cancelLabel}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={tone === 'danger' ? 'danger' : 'primary'}
             onClick={onConfirm}
             disabled={confirmDisabled}
-            className={cn(
-              'h-10 rounded-[10px] px-[18px] text-[14px] font-semibold text-white disabled:opacity-60',
-              tone === 'danger' ? 'bg-danger' : 'bg-brand-deep',
-            )}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </>
       }
     >

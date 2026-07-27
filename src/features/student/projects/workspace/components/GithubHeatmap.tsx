@@ -79,7 +79,7 @@ export function GithubHeatmap({
       {/* 월 라벨 행 (요일 라벨 폭만큼 들여쓰기) */}
       <div className="text-fg-subtle flex gap-[3px] pl-[22px] text-[9px] leading-none">
         {monthLabels.map((label, i) => (
-          <span key={i} className="w-[13px] shrink-0">
+          <span key={i} className="w-[13px] shrink-0 whitespace-nowrap">
             {label}
           </span>
         ))}

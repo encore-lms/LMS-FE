@@ -192,7 +192,7 @@ export function Step3(p: {
               }}
               placeholder="도메인을 직접 입력하고 추가하세요"
               aria-label="기타 도메인 직접 입력"
-              className="border-border focus:border-brand flex-1 rounded-lg border px-3.5 py-2 text-[12px] outline-none focus-visible:shadow-none"
+              className="border-border focus:border-brand flex-1 rounded-lg border px-3.5 py-2 text-[12px] outline-none"
             />
             <button
               type="button"

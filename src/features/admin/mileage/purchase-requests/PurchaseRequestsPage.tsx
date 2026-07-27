@@ -307,7 +307,7 @@ export default function PurchaseRequestsPage() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="수강생·상품명·키워드 검색"
             aria-label="수강생·상품명·키워드 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
           />
         </div>
 

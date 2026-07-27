@@ -95,7 +95,7 @@ export function AddMenteesModal({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="이름 검색"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border pr-3 pl-9 text-sm outline-none focus-visible:shadow-none"
+            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border pr-3 pl-9 text-sm outline-none"
           />
         </div>
         <div className="border-border max-h-64 overflow-y-auto rounded-lg border">

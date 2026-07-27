@@ -145,7 +145,7 @@ export function AttendanceFormTab() {
       header: '제출 시각',
       className: 'w-32',
       cell: (r) => (
-        <span className="text-fg-subtle text-xs tabular-nums whitespace-nowrap">
+        <span className="text-fg-subtle text-xs whitespace-nowrap tabular-nums">
           {formatDateTime(r.submittedAt)}
         </span>
       ),
@@ -266,7 +266,7 @@ export function AttendanceFormTab() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="이름·생년월일·사유 검색"
                 aria-label="출결 폼 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
               />
             </div>
 

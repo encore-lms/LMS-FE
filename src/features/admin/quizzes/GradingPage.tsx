@@ -378,7 +378,7 @@ export default function GradingPage() {
                         rows={2}
                         placeholder="(피드백 미입력)"
                         aria-label={`문항 ${it.questionNo} 피드백`}
-                        className="border-border bg-surface-muted focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-md border p-3 text-sm outline-none focus-visible:shadow-none"
+                        className="border-border bg-surface-muted focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-md border p-3 text-sm outline-none"
                       />
                     </label>
                   </div>

@@ -297,7 +297,10 @@ export default function AccountsPage() {
                           ? `${a.name} 계정을 비활성화합니다. 로그인이 차단됩니다.`
                           : `${a.name} 계정을 활성화합니다. 로그인이 다시 허용됩니다.`,
                         rows: [
-                          { label: '계정', value: `${a.name} · ${ROLE_LABEL[a.role]}` },
+                          {
+                            label: '계정',
+                            value: `${a.name} · ${ROLE_LABEL[a.role]}`,
+                          },
                           {
                             label: '처리',
                             value: isActive
@@ -503,7 +506,7 @@ export default function AccountsPage() {
                 }}
                 placeholder="이메일, 이름, 담당 과정 검색"
                 aria-label="운영 계정 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface ml-auto h-9 w-72 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface ml-auto h-9 w-72 rounded-lg border px-3 text-sm outline-none"
               />
             </div>
 

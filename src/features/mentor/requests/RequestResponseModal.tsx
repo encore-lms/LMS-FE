@@ -64,7 +64,7 @@ const MODE_META: Record<
 
 const FIELD_LABEL = 'text-fg-subtle text-[11px] font-medium tracking-[0.66px]'
 const INPUT_CLASS =
-  'border-accent-strong/60 bg-surface text-fg placeholder:text-fg-subtle h-[38px] w-full rounded-lg border px-3 text-[13px] font-medium outline-none focus:border-accent-strong focus-visible:shadow-none'
+  'border-accent-strong/60 bg-surface text-fg placeholder:text-fg-subtle h-[38px] w-full rounded-lg border px-3 text-[13px] font-medium outline-none focus:border-accent-strong'
 const SAVE_BTN =
   'bg-accent-strong text-on-color hover:bg-accent-strong/90 flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-bold whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50'
 

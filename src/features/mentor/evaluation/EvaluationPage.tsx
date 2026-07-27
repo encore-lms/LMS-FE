@@ -608,7 +608,7 @@ function MemberEvalCard({
             placeholder={EVALUATION_COMMENT_PLACEHOLDER}
             rows={3}
             className={cn(
-              'text-fg placeholder:text-fg-subtle w-full resize-y rounded-lg px-3.5 py-2.5 text-[13px] leading-5 outline-none focus-visible:shadow-none',
+              'text-fg placeholder:text-fg-subtle w-full resize-y rounded-lg px-3.5 py-2.5 text-[13px] leading-5 outline-none',
               state === 'active'
                 ? 'border-brand border-[1.5px]'
                 : 'border-border focus:border-brand border',

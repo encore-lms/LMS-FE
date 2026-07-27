@@ -37,7 +37,7 @@ function fmtDateTime(d: Date) {
 
 // 공통 컴팩트 입력 스타일 — 페이지 전역 Input(h-[52px])보다 작게.
 const FIELD =
-  'border-border focus:border-brand text-fg placeholder:text-fg-subtle h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none'
+  'border-border focus:border-brand text-fg placeholder:text-fg-subtle h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none'
 
 function FieldLabel({
   children,

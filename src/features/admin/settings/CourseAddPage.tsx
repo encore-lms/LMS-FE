@@ -246,7 +246,7 @@ export default function CourseAddPage() {
               value={form.org}
               onChange={(e) => setForm((f) => ({ ...f, org: e.target.value }))}
               aria-label="훈련기관명"
-              className="border-border text-fg focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+              className="border-border text-fg focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -258,7 +258,7 @@ export default function CourseAddPage() {
               }
               aria-label="훈련과정명"
               placeholder="예: AI 캠프 (비워두면 전체)"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
             />
           </label>
           {/* 공통 DateTimePicker(date 모드) — 조회기간 범위. 시작≤종료 자동 제약. */}

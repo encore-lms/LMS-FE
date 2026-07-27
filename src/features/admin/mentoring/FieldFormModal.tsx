@@ -112,7 +112,7 @@ function TypePicker({
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="border-border bg-surface text-fg focus:border-brand flex h-10 w-52 items-center justify-between gap-2 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
+        className="border-border bg-surface text-fg focus:border-brand flex h-10 w-52 items-center justify-between gap-2 rounded-lg border px-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
       >
         <span className="flex items-center gap-2">
           <SelIcon className="text-fg-muted h-4 w-4" />

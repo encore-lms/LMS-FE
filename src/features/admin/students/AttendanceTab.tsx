@@ -285,7 +285,7 @@ export function AttendanceTab() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="이름·출결 상태 검색"
                 aria-label="출결 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
               />
             </div>
 

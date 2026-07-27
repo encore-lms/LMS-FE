@@ -4,14 +4,8 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { SkeletonListPage, SkeletonText } from '@/components/ui/Skeleton'
 import { cn } from '@/shared/lib/cn'
-import type {
-  HrdAttendanceStatus,
-  StudentAttendanceRow,
-} from '@/shared/types'
-import {
-  useInstructorAttendance,
-  useInstructorAttendanceSummary,
-} from './api'
+import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
+import { useInstructorAttendance, useInstructorAttendanceSummary } from './api'
 
 const HRD_META: Record<HrdAttendanceStatus, { label: string; cls: string }> = {
   normal: { label: '정상', cls: 'text-success' },
@@ -202,7 +196,7 @@ function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
           aria-label="출석 조회 일자"
           value={date || data?.date || ''}
           onChange={(e) => setDate(e.target.value)}
-          className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none"
+          className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
         />
       </div>
       <DataBoundary

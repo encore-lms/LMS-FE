@@ -102,10 +102,11 @@ export default function CohortsPage() {
     {
       key: 'period',
       header: '운영 기간',
-      className: 'w-44',
+      // 날짜 범위(2026.03.02 ~ 2026.08.28)가 한 줄에 들어갈 폭.
+      className: 'w-48',
       cell: (r) => (
         <div>
-          <p className="text-fg-muted text-sm">{r.period}</p>
+          <p className="text-fg-muted text-sm whitespace-nowrap">{r.period}</p>
           <p className="text-accent-strong text-xs font-bold">{r.dday}</p>
         </div>
       ),
@@ -124,12 +125,15 @@ export default function CohortsPage() {
     {
       key: 'students',
       header: '수강생',
-      className: 'w-28',
+      // "24명 + 위험 N" 칩이 한 줄에 나란히 놓이는 폭.
+      className: 'w-32',
       cell: (r) => (
         <div className="flex items-center gap-1.5">
-          <span className="text-fg text-sm font-medium">{r.students}명</span>
+          <span className="text-fg shrink-0 text-sm font-medium whitespace-nowrap">
+            {r.students}명
+          </span>
           {r.riskCount > 0 && (
-            <span className="bg-danger-bg text-danger rounded px-1.5 py-px text-[10px] font-bold">
+            <span className="bg-danger-bg text-danger shrink-0 rounded px-1.5 py-px text-[10px] font-bold whitespace-nowrap">
               위험 {r.riskCount}
             </span>
           )}

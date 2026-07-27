@@ -74,6 +74,12 @@ export const instructorRoutes: RouteObject[] = [
         path: 'endorsements',
         element: <Navigate to="/instructor/cohorts" replace />,
       },
+      // 폐기된 전체 보기 URL(북마크·기존 링크) — :endorsementId 가 'history'를 ID로 잡아
+      // 빈 상세 화면이 뜨는 것을 막는다. 정적 경로라 :endorsementId 보다 먼저 매칭된다.
+      {
+        path: 'endorsements/history',
+        element: <Navigate to="/instructor/cohorts" replace />,
+      },
       {
         path: 'endorsements/:endorsementId',
         element: <EndorsementDetailPage />,

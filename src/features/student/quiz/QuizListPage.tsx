@@ -13,6 +13,7 @@ import { OtherStatusRow } from './list/OtherStatusRow'
 
 const STATUS_LABEL: Record<QuizStatus, string> = {
   available: '응시 가능',
+  scheduled: '응시 예정',
   completed: '완료',
   pending_manual: '채점 대기',
   closed: '기간 종료',
@@ -20,7 +21,7 @@ const STATUS_LABEL: Record<QuizStatus, string> = {
 
 /**
  * 수강생 퀴즈 목록 (/student/quizzes) — 나의 과정 '퀴즈' 탭. Figma 226:27.
- * 상태 칩(응시가능/완료/채점대기/기간종료) + 검색. 응시가능 뷰는 카드 2개(응시가능 + 다른 상태 미리보기).
+ * 상태 칩(응시가능/응시예정/완료/채점대기/기간종료) + 검색. 응시가능 뷰는 카드 2개(응시가능 + 다른 상태 미리보기).
  */
 export default function QuizListPage() {
   const navigate = useNavigate()
@@ -33,6 +34,7 @@ export default function QuizListPage() {
   const items = (data as StudentQuizListItem[]) ?? []
   const counts: Record<QuizStatus, number> = {
     available: items.filter((q) => q.state === 'available').length,
+    scheduled: items.filter((q) => q.state === 'scheduled').length,
     completed: items.filter((q) => q.state === 'completed').length,
     pending_manual: items.filter((q) => q.state === 'pending_manual').length,
     closed: items.filter((q) => q.state === 'closed').length,
@@ -133,7 +135,7 @@ export default function QuizListPage() {
                       다른 상태 미리보기
                     </h2>
                     <span className="text-fg-muted text-[11px]">
-                      완료·채점 대기·기간 종료
+                      응시 예정·완료·채점 대기·기간 종료
                     </span>
                   </div>
                   <span className="text-brand text-[12px] font-semibold">

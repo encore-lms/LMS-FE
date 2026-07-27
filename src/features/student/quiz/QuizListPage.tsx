@@ -71,7 +71,7 @@ export default function QuizListPage() {
             active={status}
             onChange={setStatus}
           />
-          <div className="border-border bg-surface flex h-[38px] w-[260px] items-center gap-2 rounded-[10px] border px-3.5">
+          <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-[260px] items-center gap-2 rounded-[10px] border px-3.5">
             <svg
               viewBox="0 0 24 24"
               className="text-fg-subtle size-4 shrink-0"
@@ -86,7 +86,7 @@ export default function QuizListPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="퀴즈명 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none"
+              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none focus-visible:shadow-none"
             />
           </div>
         </div>

@@ -240,7 +240,7 @@ export default function ReviewQueuePage() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="이름·UUID·과정 검색"
             aria-label="검토 큐 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
           />
         </div>
 

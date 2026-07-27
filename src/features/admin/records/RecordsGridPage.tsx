@@ -120,7 +120,7 @@ export default function RecordsGridPage({
             onChange={(e) => setQ(e.target.value)}
             placeholder="이름으로 검색"
             aria-label="수강생 이름 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
           />
         </div>
         <div className="bg-surface-muted order-1 flex gap-1 rounded-lg p-1">

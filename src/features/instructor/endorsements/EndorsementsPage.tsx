@@ -156,7 +156,7 @@ export default function EndorsementsPage({
       })
       localStorage.removeItem(draftKey(id))
       toast.success(
-        `추천서 제출 — ${name} · 24h 내 수정 가능 · 인증 완료 후 최신화 시 공개 스냅샷 반영`,
+        `추천서 제출 — ${name} · 24시간 내 수정 가능 · 인증 완료 후 최신화 시 외부 공개에 반영`,
       )
       reset({ comment: '' })
       // 제출한 학생은 작성 대기에서 빠지므로 선택 해제 → 다음 대기 학생 자동 선택.
@@ -290,7 +290,7 @@ export default function EndorsementsPage({
               </p>
               <p className="text-fg-muted mt-0.5 text-xs">
                 작성한 추천서는 긍정 추천이 있을 때만 저장되며, 인증 완료 후
-                증명서 최신화 작업을 거쳐 공개 스냅샷에 반영됩니다.
+                증명서 최신화 작업을 거쳐 외부 공개에 반영됩니다.
               </p>
             </div>
           </div>

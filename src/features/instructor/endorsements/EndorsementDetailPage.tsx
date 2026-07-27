@@ -185,7 +185,7 @@ export default function EndorsementDetailPage() {
                   추천할 내용이 없으면 추천서를 작성하지 않습니다.
                 </p>
                 <p className="text-fg-muted mt-1 text-xs">
-                  수정 내용은 다음 증명서 최신화 작업 이후 공개 스냅샷에
+                  수정 내용은 다음 증명서 최신화 작업 이후 외부 공개에
                   반영됩니다.
                 </p>
               </div>

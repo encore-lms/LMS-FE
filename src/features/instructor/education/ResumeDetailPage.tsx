@@ -1,15 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, MessageSquarePlus } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { ArrowLeft } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { usePageHeader, useAuth } from '@/shared/store'
 import { formatDateTime } from '@/shared/lib/date'
 import { ResumeContentView } from '@/features/student/resume/ResumeDocView'
+import { ResumeFeedbackSection } from '@/features/student/resume/ResumeFeedbackSection'
 import { useCohortRoster } from '../api/console'
-import { useAddInstructorResumeFeedback, useInstructorResume } from './api'
+import {
+  useAddInstructorResumeFeedback,
+  useDeleteInstructorResumeFeedback,
+  useInstructorResume,
+} from './api'
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
@@ -31,7 +35,10 @@ export default function InstructorResumeDetailPage() {
   )
   const { data: roster } = useCohortRoster(cohortId)
   const addFeedback = useAddInstructorResumeFeedback()
+  const deleteFeedback = useDeleteInstructorResumeFeedback()
+  const { user } = useAuth()
   const [body, setBody] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const studentName = useMemo(() => {
     const s = (roster ?? []).find((x) => x.userId === data?.studentUserId)
@@ -56,6 +63,18 @@ export default function InstructorResumeDetailPage() {
           setBody('')
         },
         onError: () => toast.danger('피드백 등록에 실패했어요'),
+      },
+    )
+  }
+
+  const onDelete = (feedbackId: string) => {
+    setDeletingId(feedbackId)
+    deleteFeedback.mutate(
+      { cohortId, resumeId, feedbackId },
+      {
+        onSuccess: () => toast.success('피드백을 삭제했어요'),
+        onError: () => toast.danger('피드백 삭제에 실패했어요'),
+        onSettled: () => setDeletingId(null),
       },
     )
   }
@@ -94,42 +113,16 @@ export default function InstructorResumeDetailPage() {
 
           <ResumeContentView content={data.content} bordered={false} />
 
-          <section className="border-border bg-surface rounded-xl border p-5">
-            <p className="text-fg mb-3 text-sm font-semibold">
-              피드백 {data.feedbacks.length}건
-            </p>
-            <div className="mb-3 flex flex-col gap-2">
-              {data.feedbacks.length === 0 ? (
-                <p className="text-fg-subtle text-xs">아직 피드백이 없어요.</p>
-              ) : (
-                data.feedbacks.map((f) => (
-                  <div
-                    key={f.id}
-                    className="bg-surface-muted rounded-lg px-3 py-2"
-                  >
-                    <p className="text-fg text-[13px] whitespace-pre-wrap">
-                      {f.body}
-                    </p>
-                    <p className="text-fg-subtle mt-1 text-[11px] tabular-nums">
-                      {fmt(f.createdAt)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="flex items-start gap-2">
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="피드백을 입력하세요"
-                rows={2}
-                className="border-border focus:border-brand text-fg bg-surface flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
-              />
-              <Button onClick={onSubmit} disabled={addFeedback.isPending}>
-                <MessageSquarePlus className="h-4 w-4" /> 등록
-              </Button>
-            </div>
-          </section>
+          <ResumeFeedbackSection
+            feedbacks={data.feedbacks}
+            value={body}
+            onChange={setBody}
+            onSubmit={onSubmit}
+            submitting={addFeedback.isPending}
+            onDelete={onDelete}
+            deletingId={deletingId}
+            canDelete={(f) => f.authorUserId === user?.id}
+          />
         </div>
       )}
     </DataBoundary>

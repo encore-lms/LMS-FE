@@ -138,19 +138,25 @@ export default function ProjectReviewPage({
     {
       key: 'team',
       header: '팀',
-      className: 'w-32',
+      // "5명 (PM 박지훈)"이 줄바꿈되지 않도록 여유 폭 확보.
+      className: 'w-40',
       cell: (r) => <span className="text-fg-muted text-sm">{r.team}</span>,
     },
     {
       key: 'stack',
       header: '기술 스택',
       className: 'w-44',
-      cell: (r) => <span className="text-fg-muted text-sm">{r.stack}</span>,
+      cell: (r) => (
+        <span title={r.stack} className="text-fg-muted block truncate text-sm">
+          {r.stack}
+        </span>
+      ),
     },
     {
       key: 'artifacts',
       header: '산출물',
-      className: 'w-36',
+      // StatusBadge는 nowrap — "GitHub · 발표 · 영상"이 들어갈 폭.
+      className: 'w-44',
       cell: (r) =>
         r.artifacts === null ? (
           <span className="text-fg-muted text-sm">-</span>

@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { formatDateTime } from '@/shared/lib/date'
+import { ResumeContentView } from '@/features/student/resume/ResumeDocView'
 import type { ResumeRow } from '@/features/admin/education/types'
 import { useCohortRoster } from '../api/console'
 import { useInstructorResume, useInstructorResumes } from './api'
@@ -66,14 +67,9 @@ function ResumeDetailModal({
               <p className="text-fg-muted mt-1 text-sm">{studentName}</p>
             </header>
 
-            <div className="text-fg py-5 text-[15px] leading-7 break-words whitespace-pre-wrap">
-              {data.content && data.content.trim() ? (
-                data.content
-              ) : (
-                <span className="text-fg-subtle italic">
-                  아직 작성된 내용이 없습니다.
-                </span>
-              )}
+            {/* content는 문서 구조 JSON — 공용 문서 뷰로 렌더한다(운영 상세와 동일). */}
+            <div className="py-5">
+              <ResumeContentView content={data.content} bordered={false} />
             </div>
 
             <div className="border-divider border-t pt-4">

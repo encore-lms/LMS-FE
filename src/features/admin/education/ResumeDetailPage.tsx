@@ -8,10 +8,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { formatDateTime } from '@/shared/lib/date'
 import { useStudentAccounts } from '../api/students'
-import {
-  ResumeDocView,
-  type ResumeDocData,
-} from '@/features/student/resume/ResumeDocView'
+import { ResumeContentView } from '@/features/student/resume/ResumeDocView'
 import { useAddResumeFeedback, useResume } from './api'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -19,15 +16,6 @@ const STATUS_LABEL: Record<string, string> = {
   COMPLETED: '작성 완료',
 }
 const fmt = (iso: string | null) => (iso ? formatDateTime(iso) : '-')
-
-function parseResumeContent(content: string | null): Partial<ResumeDocData> {
-  if (!content) return {}
-  try {
-    return JSON.parse(content) as Partial<ResumeDocData>
-  } catch {
-    return {}
-  }
-}
 
 // 운영 이력서 상세(페이지) — 과정·기수·교과목 이력서 탭에서 진입. content 문서 뷰 + 피드백.
 // courseId/cohortId는 목록(ResumePane)에서 쿼리로 전달.
@@ -112,10 +100,7 @@ export default function ResumeDetailPage() {
           </div>
 
           {/* 이력서 본문 — 학생 문서 뷰와 동일 렌더(상세 페이지는 외곽선 없이) */}
-          <ResumeDocView
-            data={parseResumeContent(data.content)}
-            bordered={false}
-          />
+          <ResumeContentView content={data.content} bordered={false} />
 
           {/* 피드백 */}
           <section className="border-border bg-surface rounded-xl border p-5">

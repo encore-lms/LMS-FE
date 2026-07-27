@@ -110,7 +110,7 @@ export function ResumeViewPane({ cohortId }: { cohortId: string }) {
               onChange={(e) => setQ(e.target.value)}
               placeholder="수강생·제목 검색"
               aria-label="이력서 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none"
+              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
             />
           </div>
         </div>

@@ -138,7 +138,8 @@ export default function ChangeRequestsPage() {
     {
       key: 'actions',
       header: '액션',
-      className: 'w-24',
+      // [검토] 버튼(좌우 패딩 포함)이 잘리지 않을 폭.
+      className: 'w-28',
       cell: (r) => (
         <button
           type="button"
@@ -146,7 +147,7 @@ export default function ChangeRequestsPage() {
             e.stopPropagation()
             setSelectedId(r.id)
           }}
-          className="border-border text-fg hover:bg-surface-muted rounded-lg border bg-white px-3.5 py-2 text-xs font-semibold"
+          className="border-border text-fg hover:bg-surface-muted rounded-lg border bg-white px-3.5 py-2 text-xs font-semibold whitespace-nowrap"
         >
           검토
         </button>

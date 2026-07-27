@@ -429,7 +429,7 @@ export function LogComposeForm({
               rows={field.charLimit != null && field.charLimit > 1000 ? 10 : 5}
               {...register(`answers.${field.fieldSnapshotId}` as const)}
               placeholder={field.description}
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-y rounded-[10px] border px-4 py-3 text-[13px] leading-5 font-medium outline-none focus-visible:shadow-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-y rounded-[10px] border px-4 py-3 text-[13px] leading-5 font-medium outline-none"
             />
             {error && (
               <p className="text-danger text-[11px]">{String(error.message)}</p>

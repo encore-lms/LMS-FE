@@ -416,7 +416,7 @@ export function MaterialsPane({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="예: 1주차 강의자료"
-              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+              className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
             />
 
             <label
@@ -431,7 +431,7 @@ export function MaterialsPane({
               onChange={(e) => setBody(e.target.value)}
               placeholder="자료 안내·설명을 입력하세요"
               rows={4}
-              className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
+              className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
             />
 
             {/* 유형 토글 */}
@@ -459,7 +459,7 @@ export function MaterialsPane({
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://..."
-                className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none focus-visible:shadow-none"
+                className="border-border focus:border-brand text-fg bg-surface h-10 rounded-lg border px-3 text-sm outline-none"
               />
             ) : (
               <input

@@ -19,8 +19,13 @@ export const buttonSizes: Record<ButtonSize, string> = {
 }
 
 // display 제외 공통 스타일 — <Button>은 flex, buttonClass(비-button 요소)는 inline-flex로 합성.
+//
+// whitespace-nowrap: 좁은 flex 컨테이너(테이블 액션 열 등)에서 버튼이 내용폭 아래로 압축되면
+//   라벨이 줄바꿈된다. nowrap이면 min-content = 라벨 전체 폭이라 축소 자체가 불가능해진다.
+//   ※ cn()은 tailwind-merge가 아닌 단순 join이고 whitespace-normal이 CSS상 먼저 방출되므로
+//     호출부에서 되돌릴 수 없다. 여러 줄 라벨이 필요하면 whitespace-normal! (important)을 쓸 것.
 export const buttonBase =
-  'focus-visible:ring-brand items-center justify-center gap-2 transition-colors outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50'
+  'focus-visible:ring-brand items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50'
 
 interface ButtonClassOptions {
   variant?: ButtonVariant

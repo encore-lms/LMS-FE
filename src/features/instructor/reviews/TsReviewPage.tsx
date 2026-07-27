@@ -121,7 +121,11 @@ export default function TsReviewPage() {
     {
       key: 'title',
       header: '사례 제목',
-      cell: (r) => <StatusBadge label={r.title} tone="neutral" />,
+      cell: (r) => (
+        <span className="text-fg block max-w-[280px] truncate text-sm font-medium">
+          {r.title}
+        </span>
+      ),
     },
     {
       key: 'category',
@@ -168,9 +172,9 @@ export default function TsReviewPage() {
     {
       key: 'actions',
       header: '액션',
-      className: 'w-40',
+      className: 'w-56',
       cell: (r) => (
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap justify-end gap-1.5 whitespace-nowrap">
           {r.status === 'pending' ? (
             <>
               <Button

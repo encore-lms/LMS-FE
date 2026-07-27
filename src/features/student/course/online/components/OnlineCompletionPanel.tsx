@@ -91,9 +91,11 @@ function Stat({
   return (
     <div className="bg-surface-muted flex flex-col gap-1 rounded-xl p-3">
       <span className="text-fg-subtle text-[11px]">{label}</span>
-      <span className="text-fg flex items-baseline gap-1 text-[18px] font-bold tabular-nums">
-        {value}
-        <span className="text-fg-subtle text-[11px] font-medium">{unit}</span>
+      <span className="text-fg flex flex-wrap items-baseline gap-x-1 text-[16px] font-bold tabular-nums">
+        <span className="whitespace-nowrap">{value}</span>
+        <span className="text-fg-subtle text-[11px] font-medium whitespace-nowrap">
+          {unit}
+        </span>
       </span>
     </div>
   )

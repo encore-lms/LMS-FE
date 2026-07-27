@@ -169,8 +169,8 @@ export function VerifyPublicView({
         }
       >
         <div className="flex items-center gap-4 px-6 py-[18px]">
-          <span className="bg-brand text-on-color flex size-[84px] shrink-0 items-center justify-center rounded-full text-lg font-bold">
-            {p.student.nameKo}
+          <span className="bg-brand text-on-color flex size-[84px] shrink-0 items-center justify-center rounded-full text-[32px] font-bold">
+            {p.student.nameKo.charAt(0)}
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <div className="flex items-baseline gap-2">
@@ -310,7 +310,7 @@ export function VerifyPublicView({
             { label: 'publicToken', value: publicToken },
             { label: '발급 시점', value: p.issuedAt },
           ].map((field) => (
-            <div key={field.label} className="flex flex-1 flex-col gap-1.5">
+            <div key={field.label} className="flex min-w-0 flex-1 flex-col gap-1.5">
               <span className="text-fg-subtle text-[10px] font-medium tracking-[0.6px]">
                 {field.label}
               </span>

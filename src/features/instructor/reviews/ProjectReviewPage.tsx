@@ -172,9 +172,9 @@ export default function ProjectReviewPage({
     {
       key: 'actions',
       header: '액션',
-      className: 'w-40',
+      className: 'w-56',
       cell: (r) => (
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap justify-end gap-1.5 whitespace-nowrap">
           {r.status === 'requested' ? (
             <>
               <Button

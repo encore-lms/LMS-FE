@@ -94,8 +94,9 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
       screen.getByText('이 증명서는 정식으로 발급된 진본입니다'),
     ).toBeInTheDocument()
     expect(screen.getByText('certified · 진본 검증 완료')).toBeInTheDocument()
-    // 핵심 정보 — 아바타와 이름 행에 같은 한글명이 2회.
-    expect(screen.getAllByText('이서연')).toHaveLength(2)
+    // 핵심 정보 — 이름은 이름 행에만 전체로, 아바타는 이니셜(84px 원을 넘기지 않게).
+    expect(screen.getAllByText('이서연')).toHaveLength(1)
+    expect(screen.getByText('이')).toBeInTheDocument()
     expect(screen.getByText('Lee Seoyeon')).toBeInTheDocument()
     expect(screen.getByText('DA 5기')).toBeInTheDocument()
     expect(screen.getByText('96.2%')).toBeInTheDocument()

@@ -98,7 +98,11 @@ export default function EndorsementHistoryPage() {
     {
       key: 'summary',
       header: '코멘트 (요약)',
-      cell: (e) => <span className="text-fg-muted text-sm">{e.summary}</span>,
+      cell: (e) => (
+        <span className="text-fg-muted block max-w-[360px] truncate text-sm">
+          {e.summary}
+        </span>
+      ),
     },
     {
       key: 'createdAt',
@@ -123,9 +127,9 @@ export default function EndorsementHistoryPage() {
       key: 'action',
       header: '액션',
       align: 'right',
-      className: 'w-32',
+      className: 'w-40',
       cell: (e) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-1 whitespace-nowrap">
           <Button
             size="sm"
             onClick={() => navigate(`/instructor/endorsements/${e.id}`)}

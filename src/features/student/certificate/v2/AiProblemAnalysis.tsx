@@ -268,7 +268,7 @@ export function AiProblemAnalysis({
             data-problem-narrative="collaboration"
             className="border-info/20 bg-info-bg/25 min-w-0 rounded-xl border p-4 sm:p-5"
           >
-            <div className="grid gap-4 lg:grid-cols-[minmax(12rem,0.7fr)_minmax(0,2.3fr)] lg:items-start">
+            <div className="grid gap-4 lg:grid-cols-[minmax(15rem,0.95fr)_minmax(0,2.05fr)] lg:items-start">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span className="bg-info/10 text-info flex size-8 shrink-0 items-center justify-center rounded-lg">
@@ -278,7 +278,7 @@ export function AiProblemAnalysis({
                     <span className="text-fg-subtle block text-[9px] font-semibold">
                       협업 스타일
                     </span>
-                    <h3 className="text-fg text-[14px] font-bold">
+                    <h3 className="text-fg text-[14px] leading-snug font-bold">
                       {collaboration.label}
                     </h3>
                   </div>

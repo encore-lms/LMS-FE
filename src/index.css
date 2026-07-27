@@ -59,6 +59,12 @@
 :root {
   line-height: 1.5;
   color: var(--color-fg);
+  /* 한국어 어절 중간 개행 방지 — 좁은 칸에서 '보기'가 '보/기'로 쪼개지던 문제.
+     한글은 기본값(normal)에서 글자 단위 개행이 허용돼 버튼·배지 라벨이 음절로 갈라진다.
+     수강생·매니저 대시보드에 부분 적용돼 있던 break-keep을 전역 기본값으로 승격. */
+  word-break: keep-all;
+  /* keep-all은 긴 URL·식별자를 끊지 못해 넘치므로 그 경우만 어디서든 끊게 둔다. */
+  overflow-wrap: break-word;
 }
 
 body {

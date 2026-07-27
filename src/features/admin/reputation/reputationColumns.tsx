@@ -189,7 +189,7 @@ export function buildReputationColumns({
           <button
             type="button"
             onClick={() => onDetail(s)}
-            className="text-brand ml-auto text-[13px] font-semibold hover:underline"
+            className="text-brand ml-auto shrink-0 text-[13px] font-semibold whitespace-nowrap hover:underline"
           >
             상세
           </button>

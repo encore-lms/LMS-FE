@@ -360,7 +360,7 @@ export default function GradingPage() {
                           inputMode="numeric"
                           placeholder="—"
                           aria-label={`문항 ${it.questionNo} 점수`}
-                          className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm font-bold outline-none"
+                          className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm font-bold outline-none focus-visible:shadow-none"
                         />
                         <span className="text-fg-subtle shrink-0 text-xs">
                           / {it.maxPoints}점

@@ -275,7 +275,7 @@ export function QuestionWorkbench({
                   onChange={(e) => setDraft({ ...draft, body: e.target.value })}
                   rows={3}
                   aria-label="문제 본문"
-                  className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none focus-visible:shadow-none"
+                  className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
@@ -292,7 +292,7 @@ export function QuestionWorkbench({
                   }
                   rows={3}
                   aria-label="모범 답안"
-                  className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none focus-visible:shadow-none"
+                  className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
@@ -307,7 +307,7 @@ export function QuestionWorkbench({
                   }
                   rows={2}
                   aria-label="해설"
-                  className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none focus-visible:shadow-none"
+                  className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none"
                 />
               </label>
             </div>
@@ -343,7 +343,7 @@ export function QuestionWorkbench({
                   value={draft.points}
                   onChange={(points) => setDraft({ ...draft, points })}
                   aria-label="배점"
-                  className="border-border focus:border-brand text-fg h-9 w-24 rounded-lg border bg-white px-3 text-sm outline-none focus-visible:shadow-none"
+                  className="border-border focus:border-brand text-fg h-9 w-24 rounded-lg border bg-white px-3 text-sm outline-none"
                 />
                 <span className="text-fg-muted text-xs">점</span>
               </label>

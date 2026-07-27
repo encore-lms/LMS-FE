@@ -186,7 +186,7 @@ function SubmissionsModal({
                         onChange={(e) => setFeedback(e.target.value)}
                         placeholder="피드백(선택) 입력 후 상태 변경"
                         rows={2}
-                        className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
+                        className="border-border focus:border-brand text-fg bg-surface rounded-lg border px-3 py-2 text-sm outline-none"
                       />
                       <div className="flex justify-end gap-2">
                         <Button

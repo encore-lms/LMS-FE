@@ -18,7 +18,7 @@ import { AutoLockChip } from './logComposeAtoms'
 
 const FIELD_LABEL = 'text-fg-subtle text-[11px] font-medium tracking-[0.66px]'
 const INPUT_BOX =
-  'border-border bg-surface text-fg placeholder:text-fg-subtle h-[46px] rounded-[10px] border px-3.5 text-sm font-medium outline-none focus:border-brand focus-visible:shadow-none'
+  'border-border bg-surface text-fg placeholder:text-fg-subtle h-[46px] rounded-[10px] border px-3.5 text-sm font-medium outline-none focus:border-brand'
 
 export type ComposeMode = 'new' | 'draft' | 'resubmit'
 

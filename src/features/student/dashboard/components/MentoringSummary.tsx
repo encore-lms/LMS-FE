@@ -35,7 +35,7 @@ export function MentoringSummary({
         </Link>
       }
     >
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         {mentoring.stats.map((s) => (
           <div
             key={s.key}
@@ -59,11 +59,12 @@ export function MentoringSummary({
             </span>
           </div>
         ))}
-        <div className="col-span-2 flex flex-col justify-center px-4 py-3.5 lg:col-span-1">
-          <span className="text-fg-muted text-xs font-semibold">
+        {/* 안내 셀은 문구가 길어 1트랙(107px)에 안 들어간다 — 2트랙 차지 + 말줄임. */}
+        <div className="col-span-2 flex min-w-0 flex-col justify-center px-4 py-3.5">
+          <span className="text-fg-muted truncate text-xs font-semibold">
             {mentoring.note.title}
           </span>
-          <span className="text-fg-subtle text-[11px]">
+          <span className="text-fg-subtle truncate text-[11px]">
             {mentoring.note.caption}
           </span>
         </div>

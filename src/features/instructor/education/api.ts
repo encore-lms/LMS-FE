@@ -153,3 +153,24 @@ export function useAddInstructorResumeFeedback() {
     },
   })
 }
+
+// 이력서 탭 — 피드백 삭제. BE는 작성자 본인·운영자만 허용(그 외 403).
+export function useDeleteInstructorResumeFeedback() {
+  const qc = useQueryClient()
+  return useMutation<
+    void,
+    Error,
+    { cohortId: string; resumeId: string; feedbackId: string }
+  >({
+    mutationFn: ({ cohortId, resumeId, feedbackId }) =>
+      apiClient
+        .delete<void>(
+          `/instructor/cohorts/${cohortId}/resumes/${resumeId}/feedback/${feedbackId}`,
+        )
+        .then(() => undefined),
+    onSuccess: (_d, { cohortId, resumeId }) => {
+      qc.invalidateQueries({ queryKey: keys.resume(cohortId, resumeId) })
+      qc.invalidateQueries({ queryKey: keys.resumes(cohortId) })
+    },
+  })
+}

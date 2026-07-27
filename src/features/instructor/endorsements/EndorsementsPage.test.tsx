@@ -155,6 +155,23 @@ describe('EndorsementsPage', () => {
     expect(vi.mocked(useCohortRoster)).toHaveBeenLastCalledWith('co1')
   })
 
+  // 작성 폼은 행의 '추천서 작성'을 눌러야 그 행 아래에서 열린다(자동 선택 없음).
+  it('행에서 추천서 작성을 눌러야 폼이 열린다', async () => {
+    mockQueue({ data: queue, isPending: false, isError: false })
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <EndorsementsPage />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByLabelText('추천 코멘트')).toBeNull()
+    await user.click(screen.getAllByRole('button', { name: '추천서 작성' })[0])
+    expect(screen.getByLabelText('추천 코멘트')).toBeInTheDocument()
+    // 같은 버튼이 '접기'로 바뀌고, 다시 누르면 닫힌다.
+    await user.click(screen.getByRole('button', { name: '접기' }))
+    expect(screen.queryByLabelText('추천 코멘트')).toBeNull()
+  })
+
   it('코멘트 없이 제출하면 검증 에러를 표시한다', async () => {
     mockQueue({ data: queue, isPending: false, isError: false })
     const user = userEvent.setup()
@@ -163,6 +180,7 @@ describe('EndorsementsPage', () => {
         <EndorsementsPage />
       </MemoryRouter>,
     )
+    await user.click(screen.getAllByRole('button', { name: '추천서 작성' })[0])
     await user.click(screen.getByRole('button', { name: '제출' }))
     expect(
       await screen.findByText('추천 코멘트를 입력해주세요'),

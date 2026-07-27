@@ -8,6 +8,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
+import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
@@ -23,7 +24,8 @@ const draftKey = (studentId: string) => `endorsement-draft:${studentId}`
 
 // 강사 추천서 — 긍정 추천서(코멘트) 작성 화면.
 // 교육 과정 허브 '코멘트/추천' 탭에 임베드가 정본(embedded=true, 허브 기수 스코프).
-// 수강생 명단 세로 리스트 → 행의 '추천서 작성' → 코멘트 작성 → 제출. 하단에 최근 작성 + 전체 보기.
+// 수강생 명단 세로 리스트 → 행의 '추천서 작성' → 그 행 바로 아래가 슬라이드로 열려 작성 → 제출.
+// 하단에 최근 작성 + 전체 보기.
 export default function EndorsementsPage({
   embedded = false,
   cohortId: cohortIdProp,
@@ -35,7 +37,11 @@ export default function EndorsementsPage({
   const navigate = useNavigate()
   const toast = useToast()
   const submit = useSubmitEndorsement()
-  usePageHeader('강사 추천서', '담당 수강생을 위한 추천서를 작성합니다', !embedded)
+  usePageHeader(
+    '강사 추천서',
+    '담당 수강생을 위한 추천서를 작성합니다',
+    !embedded,
+  )
 
   // 강사는 기수를 여러 개 담당한다 — 큐·명단·작성이 같은 기수를 보도록 하나로 묶는다.
   // (기수를 안 맞추면 다른 기수 학생이 대상일 때 이름이 '(이름 미확인)'이 된다.)
@@ -114,11 +120,6 @@ export default function EndorsementsPage({
     defaultValues: { comment: '' },
   })
 
-  // 첫 로드/목록 변경 시 첫 대기 학생을 기본 선택.
-  useEffect(() => {
-    if (!studentId && pending.length > 0) setStudentId(pending[0].student.id)
-  }, [pending, studentId])
-
   // 학생이 바뀌면 그 학생의 임시 저장 초안을 복원(없으면 비움 — 다른 학생에게 새어 들어가지 않게).
   useEffect(() => {
     if (!studentId) {
@@ -128,8 +129,20 @@ export default function EndorsementsPage({
     reset({ comment: localStorage.getItem(draftKey(studentId)) ?? '' })
   }, [studentId, reset])
 
-  const selected =
-    pending.find((p) => p.student.id === studentId) ?? pending[0] ?? null
+  // 행에서 '추천서 작성'을 눌러야만 선택된다(자동 선택 없음 — 폼이 행 아래 인라인이라).
+  const selected = pending.find((p) => p.student.id === studentId) ?? null
+
+  // 열림 트랜지션 — 마운트 직후 0fr → 1fr 로 바꿔 슬라이드다운을 만든다.
+  const [formOpen, setFormOpen] = useState(false)
+  useEffect(() => {
+    if (!studentId) {
+      setFormOpen(false)
+      return
+    }
+    setFormOpen(false)
+    const id = requestAnimationFrame(() => setFormOpen(true))
+    return () => cancelAnimationFrame(id)
+  }, [studentId])
 
   const onSubmit = async (input: EndorsementInput) => {
     if (!selected) return
@@ -164,6 +177,76 @@ export default function EndorsementsPage({
     localStorage.setItem(draftKey(selected.student.id), comment)
     toast.info(`임시 저장 — ${selected.student.name}`)
   }
+
+  // 작성 폼 — 선택된 행 바로 아래에 인라인으로 펼친다(별도 섹션 아님).
+  const composeForm = selected && (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="border-divider bg-surface-muted border-t px-5 py-5"
+    >
+      {/* 작성 기준 */}
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="text-fg text-[13px] font-bold">
+            추천서 작성 기준
+          </span>
+          <span className="text-fg-subtle text-xs">
+            · 긍정 추천이 있을 때만 작성합니다
+          </span>
+        </div>
+        <div className="border-border bg-surface mt-2 rounded-lg border p-4">
+          <p className="text-fg text-sm font-bold">
+            추천할 내용이 없으면 추천서를 작성하지 않습니다.
+          </p>
+          <p className="text-fg-muted mt-1 text-xs">
+            외부 공개는 학생의 개별 토글이 아니라 인증 완료 + 증명서 최신화 작업
+            결과로 결정됩니다.
+          </p>
+        </div>
+      </div>
+
+      {/* 코멘트 */}
+      <div className="mt-5">
+        <div className="flex items-center gap-2">
+          <span className="text-fg text-[13px] font-bold">추천 코멘트</span>
+          <span className="text-fg-subtle text-xs">
+            · 구체적 사례 기반 서술 권장 (필수 · 길이 무제한)
+          </span>
+        </div>
+        <textarea
+          {...register('comment')}
+          rows={4}
+          aria-label="추천 코멘트"
+          aria-invalid={errors.comment ? true : undefined}
+          placeholder="구체적 사례를 함께 적어 주세요. (예: 데이터 분석 프로젝트에서 가설 수립부터 검증까지 본인 언어로 설계 근거를 정리한 점이 인상적)"
+          className={`text-fg placeholder:text-fg-subtle mt-2 w-full rounded-lg border-2 bg-white p-3 text-sm transition-colors outline-none ${
+            errors.comment
+              ? 'border-danger'
+              : 'focus:border-brand border-border'
+          }`}
+        />
+        {errors.comment && (
+          <p role="alert" className="text-danger mt-1 text-[13px]">
+            {errors.comment.message}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <span className="text-fg-subtle text-xs">
+          제출 후 24시간 내 수정 가능 · 외부 공개는 증명서 최신화 작업 이후 반영
+        </span>
+        <div className="flex gap-2">
+          <Button type="button" variant="secondary" onClick={onDraft}>
+            임시 저장
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            제출
+          </Button>
+        </div>
+      </div>
+    </form>
+  )
 
   return (
     <DataBoundary
@@ -226,38 +309,55 @@ export default function EndorsementsPage({
               return (
                 <div
                   key={s.userId}
-                  className={`border-divider flex items-center gap-3 border-b px-5 py-3 transition-colors first:rounded-t-xl last:rounded-b-xl last:border-b-0 ${
-                    active ? 'bg-surface-muted' : 'bg-surface'
-                  }`}
+                  className="border-divider overflow-hidden border-b first:rounded-t-xl last:rounded-b-xl last:border-b-0"
                 >
-                  <Avatar name={s.name} size={36} />
-                  <div className="flex min-w-0 flex-col">
-                    <span className="text-fg text-sm font-bold">{s.name}</span>
-                    <span className="text-fg-subtle text-xs">
-                      {data.cohort}
-                    </span>
-                  </div>
-                  {endorsementId ? (
-                    <div className="ml-auto flex items-center gap-2">
-                      <StatusBadge label="작성됨" tone="success" />
-                      <button
-                        type="button"
-                        onClick={() => navigate(detailPath(endorsementId))}
-                        className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-1.5 text-xs font-medium"
-                      >
-                        보기
-                      </button>
+                  <div
+                    className={`flex items-center gap-3 px-5 py-3 transition-colors ${
+                      active ? 'bg-surface-muted' : 'bg-surface'
+                    }`}
+                  >
+                    <Avatar name={s.name} size={36} />
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-fg text-sm font-bold">
+                        {s.name}
+                      </span>
+                      <span className="text-fg-subtle text-xs">
+                        {data.cohort}
+                      </span>
                     </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={active ? 'primary' : 'secondary'}
-                      className="ml-auto"
-                      onClick={() => setStudentId(s.userId)}
+                    {endorsementId ? (
+                      <div className="ml-auto flex items-center gap-2">
+                        <StatusBadge label="작성됨" tone="success" />
+                        <button
+                          type="button"
+                          onClick={() => navigate(detailPath(endorsementId))}
+                          className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-1.5 text-xs font-medium"
+                        >
+                          보기
+                        </button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={active ? 'primary' : 'secondary'}
+                        className="ml-auto"
+                        onClick={() => setStudentId(active ? null : s.userId)}
+                      >
+                        {active ? '접기' : '추천서 작성'}
+                      </Button>
+                    )}
+                  </div>
+                  {/* 이 행의 작성 폼 — grid-rows 0fr↔1fr 로 높이를 모르는 채 슬라이드시킨다. */}
+                  {active && (
+                    <div
+                      className={cn(
+                        'grid transition-[grid-template-rows] duration-300 ease-out',
+                        formOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                      )}
                     >
-                      {active ? '작성 중' : '추천서 작성'}
-                    </Button>
+                      <div className="overflow-hidden">{composeForm}</div>
+                    </div>
                   )}
                 </div>
               )
@@ -268,108 +368,6 @@ export default function EndorsementsPage({
               </p>
             )}
           </div>
-
-          {/* 작성 폼 */}
-          {selected && (
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="border-border bg-surface mt-6 rounded-xl border p-6"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar name={selected.student.name} size={36} />
-                <div className="flex flex-col">
-                  <span className="text-fg text-sm font-bold">
-                    {selected.student.name}
-                  </span>
-                  <span className="text-fg-subtle text-xs">
-                    {selected.student.cohort}
-                    {selected.student.track
-                      ? ` · ${selected.student.track}`
-                      : ''}
-                  </span>
-                </div>
-                {pending.length > 1 && (
-                  <label className="ml-auto flex items-center gap-1.5 text-xs">
-                    <span className="text-fg-subtle">학생 변경</span>
-                    <Select
-                      value={selected.student.id}
-                      onChange={(v) => setStudentId(v)}
-                      aria-label="학생 변경"
-                      options={pending.map((p) => ({
-                        value: p.student.id,
-                        label: p.student.name,
-                      }))}
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* 작성 기준 */}
-              <div className="mt-5">
-                <div className="flex items-center gap-2">
-                  <span className="text-fg text-[13px] font-bold">
-                    추천서 작성 기준
-                  </span>
-                  <span className="text-fg-subtle text-xs">
-                    · 긍정 추천이 있을 때만 작성합니다
-                  </span>
-                </div>
-                <div className="border-border bg-surface-muted mt-2 rounded-lg border p-4">
-                  <p className="text-fg text-sm font-bold">
-                    추천할 내용이 없으면 추천서를 작성하지 않습니다.
-                  </p>
-                  <p className="text-fg-muted mt-1 text-xs">
-                    외부 공개는 학생의 개별 토글이 아니라 인증 완료 + 증명서
-                    최신화 작업 결과로 결정됩니다.
-                  </p>
-                </div>
-              </div>
-
-              {/* 코멘트 */}
-              <div className="mt-5">
-                <div className="flex items-center gap-2">
-                  <span className="text-fg text-[13px] font-bold">
-                    추천 코멘트
-                  </span>
-                  <span className="text-fg-subtle text-xs">
-                    · 구체적 사례 기반 서술 권장 (필수 · 길이 무제한)
-                  </span>
-                </div>
-                <textarea
-                  {...register('comment')}
-                  rows={4}
-                  aria-label="추천 코멘트"
-                  aria-invalid={errors.comment ? true : undefined}
-                  placeholder="구체적 사례를 함께 적어 주세요. (예: 데이터 분석 프로젝트에서 가설 수립부터 검증까지 본인 언어로 설계 근거를 정리한 점이 인상적)"
-                  className={`text-fg placeholder:text-fg-subtle mt-2 w-full rounded-lg border-2 bg-white p-3 text-sm transition-colors outline-none ${
-                    errors.comment
-                      ? 'border-danger'
-                      : 'focus:border-brand border-border'
-                  }`}
-                />
-                {errors.comment && (
-                  <p role="alert" className="text-danger mt-1 text-[13px]">
-                    {errors.comment.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-fg-subtle text-xs">
-                  제출 후 24시간 내 수정 가능 · 외부 공개는 증명서 최신화 작업
-                  이후 반영
-                </span>
-                <div className="flex gap-2">
-                  <Button type="button" variant="secondary" onClick={onDraft}>
-                    임시 저장
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    제출
-                  </Button>
-                </div>
-              </div>
-            </form>
-          )}
 
           {/* 최근 작성한 추천서 */}
           <div className="mt-8 flex items-center justify-between">
@@ -427,4 +425,3 @@ export default function EndorsementsPage({
     </DataBoundary>
   )
 }
-

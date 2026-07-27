@@ -4,9 +4,13 @@ import type { MentoringActiveRequest, MentoringSlot } from '../types'
 // 진행 중 요청(조정 제안) 카드 — 희망 일정(수강생) vs 멘토 제안 + 응답 액션.
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-fg-muted text-[11px] font-medium">{label}</span>
-      <span className="text-fg text-right text-[12px] font-bold">{value}</span>
+    <div className="flex items-start justify-between gap-2">
+      <span className="text-fg-muted shrink-0 text-[11px] font-medium whitespace-nowrap">
+        {label}
+      </span>
+      <span className="text-fg min-w-0 text-right text-[12px] font-bold break-words">
+        {value}
+      </span>
     </div>
   )
 }

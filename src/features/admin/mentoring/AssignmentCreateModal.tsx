@@ -371,7 +371,7 @@ export function AssignmentCreateModal({
     if (!mentorId) return setError('멘토를 선택해 주세요.')
     const h = Number(hours)
     if (!Number.isFinite(h) || h <= 0)
-      return setError('배정 N시간은 0보다 커야 합니다.')
+      return setError('배정 시간은 0보다 커야 합니다.')
     // 일지 템플릿은 필수 — 템플릿 없이는 배정 불가(§31 정책).
     if (!templateId)
       return setError(
@@ -502,7 +502,7 @@ export function AssignmentCreateModal({
         {/* 배정 N시간 */}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="create-hours" className={FIELD_LABEL}>
-            배정 N시간 *
+            배정 시간 *
           </label>
           <input
             id="create-hours"

@@ -53,9 +53,9 @@ describe('LogDetailModal', () => {
     expect(
       screen.getByText('필수 항목 3 / 3 작성 완료 · 인정 시간 1.5h 자동 산정'),
     ).toBeInTheDocument()
-    // 활동 기록 타임스탬프 + 기록 ID
+    // 활동 기록 타임스탬프 — 기록 ID(UUID)는 사용자에게 의미가 없어 노출하지 않는다
     expect(screen.getByText('2장 · 타임스탬프 확인됨')).toBeInTheDocument()
-    expect(screen.getByText('log_rec_4')).toBeInTheDocument()
+    expect(screen.queryByText('log_rec_4')).not.toBeInTheDocument()
     // 제출 즉시 자동 유효 — 유효 일지엔 수정 진입 없음(정책)
     expect(screen.queryByText('일지 수정')).not.toBeInTheDocument()
     // 비용·정산·매출 표현 금지

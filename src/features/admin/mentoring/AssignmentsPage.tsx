@@ -205,10 +205,7 @@ function MentoringCard({
 // 멘토 배정 관리 (/admin/mentors/assignments) — 운영(MANAGER/ADMIN).
 // 반/기수별 팀 배정 · N시간 · 일지 템플릿 관리. (Figma "운영 — 멘토 배정 관리" 2744:7725)
 export default function AssignmentsPage() {
-  usePageHeader(
-    '멘토 배정 관리',
-    '반/기수별 멘토 팀 배정 · 배정 시간 N · 일지 템플릿 · 한 반에 한 팀만',
-  )
+  usePageHeader('멘토 배정 관리')
   // 과정·기수는 한 번의 setSearchParams로 갱신한다 — setCourse/setCohort를 연속 호출하면
   // 두 갱신이 각자 현재 URL을 기준으로 덮어써 뒤 호출이 앞 호출을 지운다(과정이 초기화되는 버그).
   const [searchParams, setSearchParams] = useSearchParams()
@@ -368,6 +365,20 @@ export default function AssignmentsPage() {
       >
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <Select
+            value={mentorFilter}
+            onChange={(v) => setMentorFilter(v)}
+            aria-label="멘토 필터"
+            disabled={!data}
+            options={[
+              { value: 'all', label: '멘토 전체' },
+              ...(data?.mentors ?? []).map((m) => ({
+                value: m.mentorId,
+                label: m.name,
+              })),
+            ]}
+            className="h-9"
+          />
+          <Select
             aria-label="교육과정 선택"
             value={course}
             onChange={(v) => pickCourse(v)}
@@ -390,20 +401,6 @@ export default function AssignmentsPage() {
               ...(courseConfig.data?.cohorts ?? []).map((c) => ({
                 value: c.id,
                 label: `${c.cohortNo}기`,
-              })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            value={mentorFilter}
-            onChange={(v) => setMentorFilter(v)}
-            aria-label="멘토 필터"
-            disabled={!data}
-            options={[
-              { value: 'all', label: '멘토 전체' },
-              ...(data?.mentors ?? []).map((m) => ({
-                value: m.mentorId,
-                label: m.name,
               })),
             ]}
             className="h-9"

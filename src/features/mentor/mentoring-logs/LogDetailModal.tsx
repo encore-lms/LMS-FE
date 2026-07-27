@@ -368,9 +368,6 @@ export default function LogDetailModal() {
           <MetaItem label="제출" value={data.submittedAtLabel ?? '제출 전'} />
           <MetaItem label="유효 처리" value="매니저 승인 후 인정" />
           <MetaItem label="수정" value="수정 요청 시 전체 수정 후 재제출" />
-          <span className="ml-auto">
-            <MetaItem label="기록 ID" value={data.logId} />
-          </span>
         </div>
       </div>
     </Modal>

@@ -9,8 +9,8 @@ export const assignmentSchema = z.object({
   teamId: z.string().min(1, '팀을 선택해주세요'),
   mentorId: z.string().min(1, '멘토를 선택해주세요'),
   allocatedHours: z.coerce
-    .number({ invalid_type_error: '배정 N시간을 숫자로 입력해주세요' })
-    .positive('배정 N시간은 0보다 커야 합니다'),
+    .number({ invalid_type_error: '배정 시간을 숫자로 입력해주세요' })
+    .positive('배정 시간은 0보다 커야 합니다'),
   logTemplateId: z.string().min(1, '일지 템플릿을 선택해주세요'),
 })
 

@@ -1,16 +1,14 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { formatDateTime } from '@/shared/lib/date'
-import { ResumeContentView } from '@/features/student/resume/ResumeDocView'
 import type { ResumeRow } from '@/features/admin/education/types'
 import { useCohortRoster } from '../api/console'
-import { useInstructorResume, useInstructorResumes } from './api'
+import { useInstructorResumes } from './api'
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
@@ -18,100 +16,17 @@ const STATUS_LABEL: Record<string, string> = {
 }
 const fmt = (iso: string | null) => (iso ? formatDateTime(iso) : '-')
 
-// 이력서 상세(조회 전용) — 본문 + 피드백 목록. 피드백 작성은 운영자 전용이라 여기선 표시만.
-function ResumeDetailModal({
-  cohortId,
-  resumeId,
-  studentName,
-  onClose,
-}: {
-  cohortId: string
-  resumeId: string
-  studentName: string
-  onClose: () => void
-}) {
-  const { data, isPending, isError, refetch } = useInstructorResume(
-    cohortId,
-    resumeId,
-  )
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      size="lg"
-      footer={
-        <Button variant="secondary" onClick={onClose}>
-          닫기
-        </Button>
-      }
-    >
-      <DataBoundary
-        isPending={isPending}
-        isError={isError || !data}
-        onRetry={() => refetch()}
-        errorTitle="이력서를 불러오지 못했어요"
-      >
-        {data && (
-          <div>
-            <header className="border-divider border-b pb-4">
-              <div className="mb-2 flex items-center gap-2">
-                <StatusBadge
-                  label={STATUS_LABEL[data.status] ?? data.status}
-                  tone={data.status === 'COMPLETED' ? 'success' : 'neutral'}
-                />
-                <span className="text-fg-subtle text-xs">
-                  수정 {fmt(data.updatedAt)}
-                </span>
-              </div>
-              <h1 className="text-fg text-xl font-bold">{data.title}</h1>
-              <p className="text-fg-muted mt-1 text-sm">{studentName}</p>
-            </header>
-
-            {/* content는 문서 구조 JSON — 공용 문서 뷰로 렌더한다(운영 상세와 동일). */}
-            <div className="py-5">
-              <ResumeContentView content={data.content} bordered={false} />
-            </div>
-
-            <div className="border-divider border-t pt-4">
-              <p className="text-fg-muted mb-3 text-sm font-semibold">
-                피드백 {data.feedbacks.length}건
-              </p>
-              {data.feedbacks.length === 0 ? (
-                <p className="text-fg-subtle text-sm">
-                  등록된 피드백이 없습니다.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-3">
-                  {data.feedbacks.map((f) => (
-                    <li
-                      key={f.id}
-                      className="bg-surface-muted rounded-lg p-3 text-sm"
-                    >
-                      <p className="text-fg break-words whitespace-pre-wrap">
-                        {f.body}
-                      </p>
-                      <p className="text-fg-subtle mt-1.5 text-xs">
-                        {fmt(f.createdAt)}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
-      </DataBoundary>
-    </Modal>
-  )
-}
-
-// 이력서 탭(강사 조회 전용) — 기수 이력서 현황(수강생명 join) + 검색 + 상세 팝업. 피드백 작성 없음.
+// 이력서 탭(강사) — 기수 이력서 현황(수강생명 join) + 검색. 상세·피드백은 별도 페이지로 이동.
 export function ResumeViewPane({ cohortId }: { cohortId: string }) {
   const { data, isPending, isError, refetch } = useInstructorResumes(cohortId)
   // 학생명 join — 로스터 정본은 auth(/users/cohort-students). 추천서 화면과 동일 관례.
   const { data: roster } = useCohortRoster(cohortId)
   const [q, setQ] = useState('')
-  const [open, setOpen] = useState<ResumeRow | null>(null)
+  const navigate = useNavigate()
+
+  // 상세는 페이지 전환 — 모달은 이력서 문서를 담기에 좁고 피드백 작성 흐름과도 맞지 않는다.
+  const openDetail = (resumeId: string) =>
+    navigate(`/instructor/cohorts/${cohortId}/resumes/${resumeId}`)
 
   const nameOf = useMemo(() => {
     const map = new Map<string, string>()
@@ -204,22 +119,13 @@ export function ResumeViewPane({ cohortId }: { cohortId: string }) {
           columns={columns}
           rows={filtered}
           rowKey={(r) => r.id}
-          onRowClick={(r) => setOpen(r)}
+          onRowClick={(r) => openDetail(r.id)}
           empty={
             (data?.length ?? 0) === 0
               ? '등록된 이력서가 없어요'
               : '조건에 맞는 이력서가 없어요'
           }
         />
-
-        {open && (
-          <ResumeDetailModal
-            cohortId={cohortId}
-            resumeId={open.id}
-            studentName={nameOf(open.studentUserId)}
-            onClose={() => setOpen(null)}
-          />
-        )}
       </div>
     </DataBoundary>
   )

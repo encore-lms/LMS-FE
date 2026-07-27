@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import type { AnswerPayload } from '@/shared/types'
@@ -45,7 +46,8 @@ export default function QuizTakePage() {
   const submitQuiz = useSubmitQuiz(quizId)
   const toast = useToast()
 
-  const quiz = list?.find((it) => it.quiz.id === quizId)?.quiz
+  const listItem = list?.find((it) => it.quiz.id === quizId)
+  const quiz = listItem?.quiz
   const [idx, setIdx] = useState(0)
   // maxReached: 순차 진행으로 도달한 최대 문항 인덱스. "한 문제 풀고 다음" 잠금/네비 제한의 기준.
   const [maxReached, setMaxReached] = useState(0)
@@ -212,6 +214,23 @@ export default function QuizTakePage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [lock.phase, isLast, currentAnswered, idx])
+
+  // 0) 시작일시 전 — URL 직접 진입 대비. BE도 문항 조회를 400으로 막지만,
+  //    "불러오지 못했어요" 대신 시작 시각을 안내한다.
+  if (listItem?.state === 'scheduled') {
+    return (
+      <div className="p-8">
+        <Empty
+          title="아직 응시 시작 전이에요"
+          description={
+            quiz?.startsAt
+              ? `${new Date(quiz.startsAt).toLocaleString('ko-KR')}부터 응시할 수 있어요.`
+              : '응시 시작 시각을 확인해 주세요.'
+          }
+        />
+      </div>
+    )
+  }
 
   // 1) 인트로 — 규칙 안내 + 시작(전체화면 진입은 사용자 클릭에서만 가능).
   if (lock.phase === 'intro') {

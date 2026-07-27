@@ -58,7 +58,9 @@ export function ResumeFeedbackSection({
                   </button>
                 )}
               </div>
-              <p className="text-fg text-[13px] whitespace-pre-wrap">{f.body}</p>
+              <p className="text-fg text-[13px] whitespace-pre-wrap">
+                {f.body}
+              </p>
             </div>
           ))
         )}
@@ -69,7 +71,7 @@ export function ResumeFeedbackSection({
           onChange={(e) => onChange(e.target.value)}
           placeholder="피드백을 입력하세요"
           rows={2}
-          className="border-border focus:border-brand text-fg bg-surface flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus-visible:shadow-none"
+          className="border-border focus:border-brand text-fg bg-surface flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
         />
         <Button onClick={onSubmit} disabled={submitting}>
           <MessageSquarePlus className="h-4 w-4" /> 등록

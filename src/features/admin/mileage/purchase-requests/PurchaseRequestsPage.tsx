@@ -178,7 +178,7 @@ export default function PurchaseRequestsPage() {
     {
       key: 'qty',
       header: '수량',
-      className: 'w-14',
+      className: 'w-16',
       cell: (r) => <span className="text-fg text-[13px]">{r.qty}개</span>,
     },
     {

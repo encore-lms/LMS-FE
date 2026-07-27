@@ -163,7 +163,12 @@ export function AiProfile({
                 </span>
                 <div className="flex min-w-0 items-center gap-1">
                   {r.confidence && (
-                    <span className="bg-surface-muted text-fg-subtle max-w-[74px] truncate rounded px-1.5 py-0.5 text-[9px] font-semibold sm:max-w-[92px] xl:max-w-[74px]">
+                    // 74px에서는 '근거 충분도 높음'(약 81px)이 잘려 정보가 사라졌다 —
+                    // 라벨 전체가 들어가는 92px로 통일(xl 5열에서도 축 라벨 폭이 남는다).
+                    <span
+                      className="bg-surface-muted text-fg-subtle max-w-[92px] truncate rounded px-1.5 py-0.5 text-[9px] font-semibold"
+                      title={`근거 충분도 ${CONFIDENCE_LABEL[r.confidence]}`}
+                    >
                       근거 충분도 {CONFIDENCE_LABEL[r.confidence]}
                     </span>
                   )}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Info } from 'lucide-react'
@@ -18,14 +18,20 @@ import {
 import { SNAPSHOT_META, formatRemaining } from './meta'
 import { endorsementSchema, type EndorsementInput } from './endorsement.schema'
 
-// 단독 목록 폐기(허브 탭 이관) — 복귀는 이력 화면으로.
-const LIST = '/instructor/endorsements/history'
+// 단독 목록 폐기(허브 탭 이관). 복귀는 진입한 화면으로 —
+// 허브 탭에서 들어왔으면 ?cohortId= 가 붙어 있고, 없으면 이력 화면이 기본.
+const HISTORY = '/instructor/endorsements/history'
 
 // 강사 추천서 상세/수정 (/instructor/endorsements/:endorsementId).
 // 24h 수정 창 안에서만 기존 row 수정. 이후 변경은 신규 row. 삭제는 확인 모달.
 // (Figma "강사 — 강사 추천서 상세/수정" 2141:14681)
 export default function EndorsementDetailPage() {
   const { endorsementId = '' } = useParams()
+  const [params] = useSearchParams()
+  const fromCohortId = params.get('cohortId')
+  const LIST = fromCohortId
+    ? `/instructor/cohorts/${fromCohortId}/education?tab=endorsements`
+    : HISTORY
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useEndorsement(endorsementId)
@@ -99,9 +105,9 @@ export default function EndorsementDetailPage() {
           </div>
 
           {/* 메타 strip */}
-          <div className="border-border bg-surface mt-4 flex items-center gap-4 rounded-xl border p-5">
+          <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-4 rounded-xl border p-5">
             <Avatar name={data.student.name} size={48} />
-            <div className="flex flex-col">
+            <div className="flex min-w-0 flex-col">
               <span className="text-fg text-sm font-bold">
                 {data.student.name}
               </span>
@@ -116,12 +122,12 @@ export default function EndorsementDetailPage() {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <StatusBadge label="추천서" tone="info" />
               <StatusBadge label={meta.label} tone={meta.tone} />
             </div>
             <span
-              className={`ml-auto text-xs font-medium ${
+              className={`ml-auto shrink-0 text-xs font-medium whitespace-nowrap ${
                 editable ? 'text-warning' : 'text-fg-subtle'
               }`}
             >
@@ -130,14 +136,14 @@ export default function EndorsementDetailPage() {
             <button
               type="button"
               onClick={() => navigate(LIST)}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-3 py-2 text-xs font-medium"
+              className="border-border text-fg-muted hover:bg-surface-muted shrink-0 rounded-md border px-3 py-2 text-xs font-medium whitespace-nowrap"
             >
               ← 목록
             </button>
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-3 py-2 text-xs font-medium"
+              className="border-danger/40 text-danger hover:bg-danger-bg shrink-0 rounded-md border px-3 py-2 text-xs font-medium whitespace-nowrap"
             >
               삭제
             </button>

@@ -85,8 +85,7 @@ export function LogBasicInfoSection({
           {target && (
             <span className={HELPER}>
               {target.nextRound}회차 멘토링 · 누적 {target.accumulatedHours}h /
-              배정 N시간 {target.allocatedHours}h · 잔여 {target.remainingHours}
-              h
+              배정 {target.allocatedHours}h · 잔여 {target.remainingHours}h
             </span>
           )}
           {errors.teamId && (

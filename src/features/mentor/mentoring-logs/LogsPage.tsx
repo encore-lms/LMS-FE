@@ -373,7 +373,7 @@ export default function LogsPage() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="팀명·일지 요지 검색"
               aria-label="팀명·일지 요지 검색"
-              className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none"
+              className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none focus-visible:shadow-none"
             />
           </label>
           <Link

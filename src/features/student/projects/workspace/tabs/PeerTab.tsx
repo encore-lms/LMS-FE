@@ -133,7 +133,7 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
           onChange={(e) => setSelfReview(e.target.value)}
           placeholder="예: 로그인·회원가입 API 구현, 팀 일정 관리, 발표 자료 제작 등"
           aria-label="본인 수행 내용"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-24 resize-none rounded-lg border px-3 py-2 text-[12px] focus:outline-none focus-visible:shadow-none"
+          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-24 resize-none rounded-lg border px-3 py-2 text-[12px] focus:outline-none"
         />
       </section>
       {d.peerTargets.map((t) => (
@@ -186,7 +186,7 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
                 setComments((prev) => ({ ...prev, [t.name]: e.target.value }))
               }
               placeholder="선택 코멘트: 프로젝트에서 드러난 협업/기여 근거를 적어주세요."
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-10 flex-1 resize-none rounded-lg border px-3 py-2 text-[11px] focus:outline-none focus-visible:shadow-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-10 flex-1 resize-none rounded-lg border px-3 py-2 text-[11px] focus:outline-none"
             />
           </div>
         </section>

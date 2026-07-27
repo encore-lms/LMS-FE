@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import type {
   CohortMaterialItem,
@@ -119,7 +119,7 @@ export function useInstructorResumes(cohortId: string | null) {
   })
 }
 
-// 이력서 탭 — 이력서 상세 + 피드백(조회 전용).
+// 이력서 탭 — 이력서 상세 + 피드백.
 export function useInstructorResume(
   cohortId: string | null,
   resumeId: string | null,
@@ -133,5 +133,23 @@ export function useInstructorResume(
           `/instructor/cohorts/${cohortId}/resumes/${resumeId}`,
         )
         .then((r) => r.data),
+  })
+}
+
+// 이력서 탭 — 피드백 작성(담당 기수 강사). BE는 requireCohortReviewer로 타 기수를 403 처리.
+export function useAddInstructorResumeFeedback() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, { cohortId: string; resumeId: string; body: string }>({
+    mutationFn: ({ cohortId, resumeId, body }) =>
+      apiClient
+        .post<void>(
+          `/instructor/cohorts/${cohortId}/resumes/${resumeId}/feedback`,
+          { body },
+        )
+        .then(() => undefined),
+    onSuccess: (_d, { cohortId, resumeId }) => {
+      qc.invalidateQueries({ queryKey: keys.resume(cohortId, resumeId) })
+      qc.invalidateQueries({ queryKey: keys.resumes(cohortId) })
+    },
   })
 }

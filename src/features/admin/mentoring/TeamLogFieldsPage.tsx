@@ -105,7 +105,7 @@ export default function TeamLogFieldsPage() {
           <Empty
             icon={<UserPlus />}
             title="멘토 배정 전 팀이에요"
-            description="멘토 배정(N시간·기본 템플릿) 후 팀별 일지 항목을 설정할 수 있어요."
+            description="멘토 배정(배정 시간·기본 템플릿) 후 팀별 일지 항목을 설정할 수 있어요."
             action={
               <Link to="/admin/mentors/assignments" className={buttonClass()}>
                 멘토 배정 관리로

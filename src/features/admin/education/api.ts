@@ -216,6 +216,31 @@ export function useAddResumeFeedback() {
   })
 }
 
+// 이력서 피드백 삭제 — BE는 작성자 본인·운영자만 허용.
+export function useDeleteResumeFeedback() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    void,
+    Error,
+    { courseId: string; cohortId: string; resumeId: string; feedbackId: string }
+  >({
+    mutationFn: ({ courseId, cohortId, resumeId, feedbackId }) =>
+      apiClient
+        .delete<void>(
+          `/admin/courses/${courseId}/cohorts/${cohortId}/resumes/${resumeId}/feedback/${feedbackId}`,
+        )
+        .then(() => undefined),
+    onSuccess: (_d, { courseId, cohortId, resumeId }) => {
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.resumeDetail(courseId, cohortId, resumeId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.resumes(courseId, cohortId),
+      })
+    },
+  })
+}
+
 // 기수 프로젝트 목록(정본 §42·§43) — 운영 조회
 export function useCohortProjects(
   courseId?: string | null,

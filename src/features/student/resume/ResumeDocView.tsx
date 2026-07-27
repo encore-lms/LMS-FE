@@ -256,3 +256,49 @@ export function ResumeDocView({
     </div>
   )
 }
+
+/**
+ * 저장된 이력서 content(JSON 문자열) → 문서 데이터.
+ * JSON 객체가 아니면 null — 호출 측에서 평문으로 처리한다. 빈 값은 빈 문서.
+ */
+export function parseResumeDoc(
+  content: string | null,
+): Partial<ResumeDocData> | null {
+  if (!content || !content.trim()) return {}
+  try {
+    const parsed: unknown = JSON.parse(content)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Partial<ResumeDocData>)
+      : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 이력서 content를 화면에 렌더하는 정본 — 운영·강사 상세에서 공용.
+ * content는 문서 구조 JSON이라 그대로 출력하면 원문이 노출된다(강사 이력서 탭 결함).
+ * JSON이 아닌 레거시 평문은 본문을 잃지 않도록 그대로 보여준다.
+ */
+export function ResumeContentView({
+  content,
+  bordered = true,
+}: {
+  content: string | null
+  bordered?: boolean
+}) {
+  const doc = parseResumeDoc(content)
+  if (doc) return <ResumeDocView data={doc} bordered={bordered} />
+  return (
+    <div
+      className={
+        'resume-print rounded-2xl bg-white p-10' +
+        (bordered ? ' border-border border' : '')
+      }
+    >
+      <p className="text-fg text-[14px] leading-7 break-words whitespace-pre-wrap">
+        {content}
+      </p>
+    </div>
+  )
+}

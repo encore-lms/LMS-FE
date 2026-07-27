@@ -66,7 +66,7 @@ const FIELD_LABEL = 'text-fg-subtle text-[11px] font-medium tracking-[0.66px]'
 const INPUT_CLASS =
   'border-accent-strong/60 bg-surface text-fg placeholder:text-fg-subtle h-[38px] w-full rounded-lg border px-3 text-[13px] font-medium outline-none focus:border-accent-strong focus-visible:shadow-none'
 const SAVE_BTN =
-  'bg-accent-strong text-on-color hover:bg-accent-strong/90 flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-bold disabled:cursor-not-allowed disabled:opacity-50'
+  'bg-accent-strong text-on-color hover:bg-accent-strong/90 flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-bold whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50'
 
 /** 희망/확정 일정 상세 박스 — 모달 변형(일시 15px Bold + 장소·예상 행 + 요청 메모 중첩 박스). */
 function DetailScheduleBox({
@@ -484,7 +484,7 @@ export default function RequestResponseModal() {
       footer={
         <>
           {actionable && (
-            <p className="text-fg-subtle mr-auto self-center text-[11px]">
+            <p className="text-fg-subtle mr-auto min-w-0 self-center text-[11px]">
               확정은 예약 확정, 조정 제안은 수강생 응답 대기, 거절은 요청 종료로
               저장됩니다
             </p>
@@ -492,7 +492,7 @@ export default function RequestResponseModal() {
           <button
             type="button"
             onClick={close}
-            className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
+            className="border-border text-fg-muted hover:bg-surface-muted shrink-0 rounded-lg border px-3.5 py-2 text-[13px] font-semibold whitespace-nowrap"
           >
             닫기
           </button>

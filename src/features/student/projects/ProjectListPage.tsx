@@ -172,7 +172,7 @@ export default function ProjectListPage() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="프로젝트명·스택 검색"
-                className="placeholder:text-fg-subtle text-fg w-44 bg-transparent outline-none"
+                className="placeholder:text-fg-subtle text-fg w-44 bg-transparent outline-none focus-visible:shadow-none"
               />
             </label>
             <button

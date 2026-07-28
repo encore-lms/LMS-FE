@@ -146,6 +146,43 @@ describe('DashboardPage (§1)', () => {
     expect(urgentBtn.className).not.toContain('bg-brand-deep')
     expect(urgentBtn.className).toContain('font-bold')
   })
+
+  it('긴급도순은 서버 순서 그대로, 마감일순은 마감 실재 항목만 임박순으로 앞세운다', async () => {
+    const user = userEvent.setup()
+    mockAll()
+    // 서버 산출 순서(긴급도순): 대기 인증 → 여유 퀴즈 → 마감 퀴즈.
+    vi.mocked(useInstructorDashboard).mockReturnValue(
+      ok({
+        ...dashboard,
+        priorities: [
+          { id: 'w1', type: 'project_cert', title: '대기 인증', subtitle: '4기 · 3명', dday: '대기 5일', urgent: true, actionLabel: '검토하기', to: '/instructor/projects/review' },
+          { id: 'q1', type: 'manual_grading', title: '여유 퀴즈', subtitle: '채점 대기 3건', dday: 'D-3', urgent: false, actionLabel: '채점하기', to: '/instructor/quizzes/q1/submissions' },
+          { id: 'q2', type: 'manual_grading', title: '마감 퀴즈', subtitle: '채점 대기 2건', dday: '마감', urgent: true, actionLabel: '채점하기', to: '/instructor/quizzes/q2/submissions' },
+        ],
+      }) as unknown as ReturnType<typeof useInstructorDashboard>,
+    )
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/instructor']}>
+          <Routes>
+            <Route path="/instructor" element={<DashboardPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>,
+    )
+
+    const titlesInOrder = () =>
+      screen
+        .getAllByText(/^(대기 인증|여유 퀴즈|마감 퀴즈)$/)
+        .map((el) => el.textContent)
+    expect(titlesInOrder()).toEqual(['대기 인증', '여유 퀴즈', '마감 퀴즈'])
+
+    await user.click(
+      screen.getByRole('button', { name: '우선 처리 목록 정렬' }),
+    )
+    await user.click(screen.getByText('정렬: 마감일'))
+    expect(titlesInOrder()).toEqual(['마감 퀴즈', '여유 퀴즈', '대기 인증'])
+  })
 })
 
 describe('CohortsPage (§2)', () => {

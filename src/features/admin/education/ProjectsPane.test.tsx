@@ -80,6 +80,20 @@ describe('ProjectsPane 동료 평가 토글', () => {
   })
 
   // 서버도 422로 막지만, 눌러보고 실패하는 대신 이유를 먼저 보여준다.
+  // 동료 평가는 프로젝트가 끝난 뒤 하는 활동 — 진행 중에 열면 아직 하지 않은 협업을 평가하게 된다.
+  it('진행 중 프로젝트는 시작 버튼이 비활성이고 이유를 안내한다', () => {
+    renderPane([{ ...team, status: 'IN_PROGRESS', statusLabel: '진행 중' }])
+    expect(screen.getByRole('button', { name: /평가 시작/ })).toBeDisabled()
+    expect(screen.getByText(/아직 진행 중이라 시작할 수 없어요/)).toBeInTheDocument()
+  })
+
+  it('진행 중이어도 이미 개시된 것은 중단할 수 있다', () => {
+    renderPane([
+      { ...team, status: 'IN_PROGRESS', statusLabel: '진행 중', peerEvalEnabled: true },
+    ])
+    expect(screen.getByRole('button', { name: /중단/ })).toBeEnabled()
+  })
+
   it('팀원이 1명이면 시작 버튼이 비활성이고 이유를 안내한다', () => {
     renderPane([solo])
     expect(screen.getByRole('button', { name: /평가 시작/ })).toBeDisabled()

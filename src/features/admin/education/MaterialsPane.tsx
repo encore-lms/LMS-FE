@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Download, ExternalLink, Plus, Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
@@ -16,7 +16,11 @@ import {
   useOpsAccounts,
 } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
-import { ArticleView } from './ArticleView'
+import { ArticleView } from '@/components/data/ArticleView'
+import {
+  AttachmentFileCard,
+  AttachmentLinkCard,
+} from '@/components/data/MaterialAttachment'
 
 const TYPE_LABEL: Record<string, string> = {
   link: '링크',
@@ -315,9 +319,22 @@ export function MaterialsPane({
           onClose={() => setDetail(null)}
           size="lg"
           footer={
-            <Button variant="secondary" onClick={() => setDetail(null)}>
-              닫기
-            </Button>
+            <>
+              {detail && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setDeleteTarget(detail)
+                    setDetail(null)
+                  }}
+                >
+                  삭제
+                </Button>
+              )}
+              <Button variant="secondary" onClick={() => setDetail(null)}>
+                닫기
+              </Button>
+            </>
           }
         >
           {detail && (
@@ -337,42 +354,13 @@ export function MaterialsPane({
               bodyEmptyText="본문 없이 등록된 자료입니다."
               footer={
                 detail.hasFile ? (
-                  <button
-                    type="button"
-                    onClick={() => onDownload(detail)}
-                    className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
-                  >
-                    <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
-                      <Download className="h-5 w-5" />
-                    </span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="text-fg truncate text-sm font-semibold">
-                        {detail.fileName}
-                      </span>
-                      <span className="text-fg-subtle text-xs">
-                        {fmtSize(detail.fileSize)} · 클릭하여 다운로드
-                      </span>
-                    </span>
-                  </button>
+                  <AttachmentFileCard
+                    fileName={detail.fileName ?? '첨부 파일'}
+                    fileSize={detail.fileSize}
+                    onDownload={() => onDownload(detail)}
+                  />
                 ) : detail.url ? (
-                  <a
-                    href={detail.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="border-border hover:border-brand hover:bg-info-bg/40 flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
-                  >
-                    <span className="bg-info-bg text-info flex size-10 shrink-0 items-center justify-center rounded-lg">
-                      <ExternalLink className="h-5 w-5" />
-                    </span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="text-fg text-sm font-semibold">
-                        링크 열기
-                      </span>
-                      <span className="text-info truncate text-xs">
-                        {detail.url}
-                      </span>
-                    </span>
-                  </a>
+                  <AttachmentLinkCard url={detail.url} />
                 ) : null
               }
             />

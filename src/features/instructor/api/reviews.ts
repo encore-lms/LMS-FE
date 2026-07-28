@@ -107,6 +107,43 @@ export function useRequestProjectChanges() {
   })
 }
 
+/**
+ * 프로젝트 인증 취소 — 인증된 것만. 사유 필수(되돌릴 수 없는 조작이라 이유가 남아야 한다).
+ * 인증 이력(누가·언제)이 지워지고 상태는 다시 검토 대기로 돌아간다.
+ */
+export function useRevokeProjectCertification() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, RequestChangesInput>({
+    mutationFn: ({ id, reason }) =>
+      apiClient
+        .patch<void>(`/instructor/projects/review/${id}`, {
+          action: 'revoke',
+          reason,
+        })
+        .then(() => undefined),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: instructorKeys.projectReviews() })
+    },
+  })
+}
+
+/** 트러블슈팅 인증 취소 — 인증된 것만. 사유 필수. */
+export function useRevokeTsCertification() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, RequestChangesInput>({
+    mutationFn: ({ id, reason }) =>
+      apiClient
+        .patch<void>(`/instructor/troubleshooting/review/${id}`, {
+          action: 'revoke',
+          reason,
+        })
+        .then(() => undefined),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: instructorKeys.tsReviews() })
+    },
+  })
+}
+
 // §15 트러블슈팅 인증 — status pending → certified. TroubleshootingCertification 생성.
 export function useCertifyTroubleshooting() {
   const qc = useQueryClient()

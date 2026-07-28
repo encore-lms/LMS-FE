@@ -52,7 +52,6 @@ export interface SaveQuizTemplateInput {
   resultReveal: ResultRevealPolicy
   shuffleQuestions: boolean
   shuffleChoices: boolean
-  totalPoints: number
   defaultTimeLimitMin: number
 }
 // 생성(POST) 또는 수정(PUT, templateId 지정) — 갱신된 상세를 반환.

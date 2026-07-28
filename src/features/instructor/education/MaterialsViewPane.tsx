@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Download, ExternalLink, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
@@ -9,7 +9,12 @@ import { useToast } from '@/components/ui/use-toast'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type { CohortMaterialItem } from '@/shared/types'
 import { formatDate } from '@/shared/lib/date'
-import { ArticleView } from '@/features/admin/education/ArticleView'
+import { ArticleView } from '@/components/data/ArticleView'
+import { useCohortRoster } from '../api/console'
+import {
+  AttachmentFileCard,
+  AttachmentLinkCard,
+} from '@/components/data/MaterialAttachment'
 import { downloadInstructorMaterialFile, useInstructorMaterials } from './api'
 
 const TYPE_LABEL: Record<string, string> = {
@@ -28,6 +33,15 @@ const fmtSize = (n: number | null) => {
 export function MaterialsViewPane({ cohortId }: { cohortId: string }) {
   const { data, isPending, isError, refetch } = useInstructorMaterials(cohortId)
   const toast = useToast()
+  // 작성자 이름 — 강사는 계정 목록(/users/students)이 막혀 있어(403) 담당 기수 로스터를 쓴다.
+  // 로스터에 없는 사람(운영·타 강사)은 '운영자'로 둔다.
+  const { data: roster } = useCohortRoster(cohortId)
+  const nameOf = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const r of roster ?? []) map.set(r.userId, r.name)
+    return (userId: string | null | undefined) =>
+      (userId && map.get(userId)) || '운영자'
+  }, [roster])
   const [detail, setDetail] = useState<CohortMaterialItem | null>(null)
   const [q, setQ] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -188,28 +202,22 @@ export function MaterialsViewPane({ cohortId }: { cohortId: string }) {
                 },
               ]}
               title={detail.title}
-              metaItems={[formatDate(detail.createdAt) || '-']}
+              // 누가 올렸는지가 빠져 있었다 — 매니저·수강생 화면과 같은 정보를 보여준다.
+              metaItems={[
+                nameOf(detail.uploadedByUserId),
+                formatDate(detail.createdAt) || '-',
+              ]}
               body={detail.body}
               bodyEmptyText="본문 없이 등록된 자료입니다."
               footer={
-                detail.materialType === 'link' && detail.url ? (
-                  <a
-                    href={detail.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-info inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
-                  >
-                    <ExternalLink className="h-4 w-4" /> 링크 열기
-                  </a>
-                ) : detail.hasFile ? (
-                  <button
-                    type="button"
-                    onClick={() => onDownload(detail)}
-                    className="text-info inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
-                  >
-                    <Download className="h-4 w-4" />{' '}
-                    {detail.fileName ?? '첨부 파일'}
-                  </button>
+                detail.hasFile ? (
+                  <AttachmentFileCard
+                    fileName={detail.fileName ?? '첨부 파일'}
+                    fileSize={detail.fileSize}
+                    onDownload={() => onDownload(detail)}
+                  />
+                ) : detail.url ? (
+                  <AttachmentLinkCard url={detail.url} />
                 ) : null
               }
             />

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -24,13 +23,10 @@ import { REVIEW_TABS, RouteTabBar } from '../components/RouteTabBar'
 
 type StatusFilter = 'all' | TsReviewStatus
 
-const STATUS_META: Record<
-  TsReviewStatus,
-  { label: string; tone: BadgeTone; action: string }
-> = {
-  pending: { label: '검토 대기', tone: 'warning', action: '인증' },
-  supplementing: { label: '보완 중', tone: 'danger', action: '확인' },
-  certified: { label: '인증 완료', tone: 'success', action: '결과' },
+const STATUS_META: Record<TsReviewStatus, { label: string; tone: BadgeTone }> = {
+  pending: { label: '검토 대기', tone: 'warning' },
+  supplementing: { label: '보완 중', tone: 'danger' },
+  certified: { label: '인증 완료', tone: 'success' },
 }
 
 // 트러블슈팅 검토 (/instructor/troubleshooting/review) — §15. (Figma 1422:10543)
@@ -52,7 +48,8 @@ export default function TsReviewPage() {
   const [localStatus, setLocalStatus] = useState<
     Record<string, TsReviewStatus>
   >({})
-  // 상세 패널 대상 — 상세/결과/확인 버튼에서 오픈.
+  // 상세 패널 대상 — 행을 클릭하면 열린다(액션 컬럼은 없앴다: '결과'·'확인'·'상세'가
+  // 모두 같은 상세를 열어 무엇이 다른지 알 수 없었다). 인증·보완 요청은 상세 안에서 한다.
   const [detailTarget, setDetailTarget] = useState<ReviewDetailTarget>(null)
   usePageHeader(
     '트러블슈팅 검토',
@@ -79,6 +76,12 @@ export default function TsReviewPage() {
       return true
     })
   }, [data, q, status, cohort, localStatus])
+
+  // 상세 패널이 띄운 행 — 액션 노출 여부(pending)와 보완 요청 대상 판단에 쓴다.
+  const detailRow =
+    detailTarget?.kind === 'ts'
+      ? (filtered.find((r) => r.id === detailTarget.id) ?? null)
+      : null
 
   const onCertify = (row: TsReviewRow) => {
     certify.mutate(
@@ -169,63 +172,6 @@ export default function TsReviewPage() {
         />
       ),
     },
-    {
-      key: 'actions',
-      header: '액션',
-      className: 'w-56',
-      cell: (r) => (
-        <div className="flex flex-wrap justify-end gap-1.5 whitespace-nowrap">
-          {r.status === 'pending' ? (
-            <>
-              <Button
-                size="sm"
-                disabled={certify.isPending}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onCertify(r)
-                }}
-              >
-                인증
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={requestChanges.isPending}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSupplementTarget(r)
-                }}
-              >
-                보완 요청
-              </Button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setDetailTarget({ kind: 'ts', id: r.id })
-              }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
-            >
-              {STATUS_META[r.status].action}
-            </button>
-          )}
-          {!(r.status === 'certified' && r.solvedBy === null) && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setDetailTarget({ kind: 'ts', id: r.id })
-              }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium"
-            >
-              상세
-            </button>
-          )}
-        </div>
-      ),
-    },
   ]
 
   return (
@@ -279,6 +225,7 @@ export default function TsReviewPage() {
               columns={columns}
               rows={filtered}
               rowKey={(r) => r.id}
+              onRowClick={(r) => setDetailTarget({ kind: 'ts', id: r.id })}
               empty="조건에 맞는 사례가 없어요"
             />
           </div>
@@ -286,6 +233,19 @@ export default function TsReviewPage() {
           <ReviewDetailPanel
             target={detailTarget}
             onClose={() => setDetailTarget(null)}
+            actions={
+              detailRow
+                ? {
+                    pending: detailRow.status === 'pending',
+                    busy: certify.isPending || requestChanges.isPending,
+                    onCertify: () => {
+                      onCertify(detailRow)
+                      setDetailTarget(null)
+                    },
+                    onRequestChanges: () => setSupplementTarget(detailRow),
+                  }
+                : undefined
+            }
           />
           <SupplementRequestModal
             open={supplementTarget !== null}

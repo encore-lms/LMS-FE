@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { ExternalLink, Paperclip, X } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { Button } from '@/components/ui/Button'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { useCohortRoster } from '../api/console'
 import type {
@@ -12,7 +13,9 @@ import type {
 import { useProjectReviewDetail, useTsReviewDetail } from '../api/reviews'
 
 // 검토 상세 — 우측 슬라이드 패널(프로젝트·트러블슈팅 공용, RecordDetailPanel 패턴).
-// 인증/보완 판단 근거를 확인하는 조회 전용 화면 — 액션은 목록 행 버튼이 담당.
+// 인증/보완 판단 근거를 확인하고 <b>그 자리에서 처리</b>하는 상세 화면.
+// 목록에 '결과'·'확인'·'상세' 버튼이 나란히 있던 시절에는 셋이 모두 같은 상세를 열어
+// 무엇이 다른지 알 수 없었다. 이제 행을 누르면 상세가 열리고 액션은 여기 한 곳에만 둔다.
 export type ReviewDetailTarget = { kind: 'project' | 'ts'; id: string } | null
 
 const PROJECT_STATUS: Record<
@@ -40,12 +43,23 @@ interface ReviewDetailPanelProps {
   /** 담당 기수 UUID — 학생 이름 join용 로스터 조회 키(허브 임베드 시 전달, 단독 라우트는 null). */
   cohortId?: string | null
   onClose: () => void
+  /** 검토 액션 — 인증 대기 상태에서만 노출. 미전달 시 조회 전용(허브 임베드 등). */
+  actions?: ReviewPanelActions
+}
+
+/** 상세에서 바로 처리하는 검토 액션. pending 이 아니면 버튼을 숨긴다. */
+export interface ReviewPanelActions {
+  pending: boolean
+  onCertify: () => void
+  onRequestChanges: () => void
+  busy?: boolean
 }
 
 export function ReviewDetailPanel({
   target,
   cohortId = null,
   onClose,
+  actions,
 }: ReviewDetailPanelProps) {
   const projectQ = useProjectReviewDetail(
     target?.kind === 'project' ? target.id : null,
@@ -136,6 +150,22 @@ export function ReviewDetailPanel({
             <TsBody detail={tsQ.data} nameOf={nameOf} />
           )}
         </div>
+
+        {/* 액션 푸터 — 내용을 읽은 뒤 같은 화면에서 처리한다. */}
+        {actions?.pending && (
+          <div className="border-divider flex justify-end gap-2 border-t px-5 py-4">
+            <Button
+              variant="secondary"
+              disabled={actions.busy}
+              onClick={actions.onRequestChanges}
+            >
+              보완 요청
+            </Button>
+            <Button disabled={actions.busy} onClick={actions.onCertify}>
+              인증
+            </Button>
+          </div>
+        )}
       </aside>
     </div>
   )

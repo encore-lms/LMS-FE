@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -293,15 +293,17 @@ describe('RecordReviewPage (§13)', () => {
 })
 
 describe('ProjectReviewPage (§14)', () => {
-  it('인증 요청 행은 primary [인증], 완료 행은 [결과]를 보여준다', () => {
+  it('목록에는 액션 버튼을 두지 않는다', () => {
     renderWith(<ProjectReviewPage />)
     expect(screen.getByText('팀 Nexus · 데이터 파이프라인')).toBeInTheDocument()
-    const certifyBtn = screen.getByRole('button', { name: '인증' })
-    expect(certifyBtn.className).toContain('bg-brand-deep')
-    expect(screen.getByRole('button', { name: '결과' })).toBeInTheDocument()
+    // '결과'·'확인'·'상세'가 모두 같은 상세를 열어 구분이 되지 않았다 —
+    // 액션은 상세 안 한 곳으로 모으고 목록에서는 없앴다.
+    expect(screen.queryByRole('button', { name: '결과' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '상세' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '인증' })).toBeNull()
   })
 
-  it('상세 버튼 클릭 시 검토 상세 패널이 열린다', async () => {
+  it('행을 클릭하면 검토 상세 패널이 열리고 인증 액션이 그 안에 있다', async () => {
     const detail: ProjectReviewDetail = {
       id: 'pr-1',
       name: '팀 Nexus · 데이터 파이프라인',
@@ -332,9 +334,13 @@ describe('ProjectReviewPage (§14)', () => {
       isError: false,
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useProjectReviewDetail>)
-    await user.click(screen.getAllByRole('button', { name: '상세' })[0])
+    await user.click(screen.getByText('팀 Nexus · 데이터 파이프라인'))
+    const dialog = screen.getByRole('dialog', { name: '검토 상세' })
+    expect(dialog).toBeInTheDocument()
+    // 인증 대기(requested) 행이므로 처리 액션이 상세 안에 노출된다.
+    expect(within(dialog).getByRole('button', { name: '인증' })).toBeInTheDocument()
     expect(
-      screen.getByRole('dialog', { name: '검토 상세' }),
+      within(dialog).getByRole('button', { name: '보완 요청' }),
     ).toBeInTheDocument()
     // 팀원 이름은 계정 join(stu-1 → 박지훈), 산출물·기술 스택 렌더 확인.
     expect(screen.getByText('박지훈')).toBeInTheDocument()
@@ -359,5 +365,16 @@ describe('TsReviewPage (§15)', () => {
     expect(
       screen.queryByText('Airflow DAG 메모리 누수 추적'),
     ).not.toBeInTheDocument()
+  })
+
+  it('목록에는 액션 버튼을 두지 않고 행 클릭으로 상세를 연다', async () => {
+    const user = userEvent.setup()
+    renderWith(<TsReviewPage />)
+    // '결과'·'확인'·'상세'가 모두 같은 상세를 열던 중복을 없앴다.
+    expect(screen.queryByRole('button', { name: '결과' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '상세' })).toBeNull()
+
+    await user.click(screen.getByText('Airflow DAG 메모리 누수 추적'))
+    expect(screen.getByRole('dialog', { name: '검토 상세' })).toBeInTheDocument()
   })
 })

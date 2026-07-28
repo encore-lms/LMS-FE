@@ -39,6 +39,8 @@ const fmtSize = (bytes: number) =>
     : `${Math.max(1, Math.round(bytes / 1024))} KB`
 
 interface ShareFile {
+  /** 실제 업로드 대상 — 예전엔 이름·크기만 들고 있어 파일이 전송되지 않았다. */
+  file?: File
   id: string
   name: string
   size: string
@@ -57,9 +59,8 @@ export function ShareMaterialModal({
   const [tab, setTab] = useState<'file' | 'link'>('file')
   const [title, setTitle] = useState('')
   const [link, setLink] = useState('')
-  const [files, setFiles] = useState<ShareFile[]>([
-    { id: 'seed', name: 'jpa-n-plus-one-note.pdf', size: '1.1 MB' },
-  ])
+  // 초기값은 비어 있어야 한다 — 예전엔 mock 파일이 하나 박혀 있어, 올리지도 않은 자료가 공유됐다.
+  const [files, setFiles] = useState<ShareFile[]>([])
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const idRef = useRef(0)
@@ -68,11 +69,14 @@ export function ShareMaterialModal({
   const handleShare = () => {
     if (tab === 'file') {
       const first = files[0]
+      if (!first?.file) return // 파일 없이 공유하면 다운로드할 게 없다
       onShared({
-        title: title.trim() || first?.name || '제목 없는 자료',
-        fileType: first ? fileTypeFromName(first.name) : 'DOC',
-        sizeLabel: first?.size,
+        title: title.trim() || first.name,
+        fileType: fileTypeFromName(first.name),
+        sizeLabel: first.size,
+        file: first.file,
       })
+      setFiles([])
     } else {
       onShared({
         title: title.trim() || '공유 링크',
@@ -90,6 +94,7 @@ export function ShareMaterialModal({
       id: `f${idRef.current++}`,
       name: f.name,
       size: fmtSize(f.size),
+      file: f,
     }))
     setFiles((prev) => [...prev, ...added])
   }

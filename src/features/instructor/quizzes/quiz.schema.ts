@@ -15,10 +15,6 @@ export const quizSchema = z
       .number({ invalid_type_error: '제한 시간을 분 단위 숫자로 입력해주세요' })
       .int('제한 시간은 분 단위 정수로 입력해주세요')
       .min(1, '제한 시간은 1분 이상이어야 해요'),
-    totalPoints: z.coerce
-      .number({ invalid_type_error: '총점을 숫자로 입력해주세요' })
-      .int('총점은 정수로 입력해주세요')
-      .min(1, '총점은 1점 이상이어야 해요'),
   })
   .refine((v) => v.startAt < v.endAt, {
     path: ['endAt'],

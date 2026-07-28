@@ -17,7 +17,6 @@ vi.mock('../../../api/course', () => ({
 const base: MaterialItem = {
   id: 'm1',
   fileType: 'DOC',
-  category: 'shared',
   title: 'JPA N+1 정리',
   body: '조회 로그와 함께 정리했습니다.',
   author: '박수진',
@@ -137,11 +136,10 @@ describe('MaterialDetailModal', () => {
     expect(onEdit).toHaveBeenCalledWith(base)
   })
 
-  it('설명과 주차를 상세에 보여준다', () => {
-    renderModal({ ...base, week: '9주차 · Spring Boot' })
-    // 공유 폼의 설명·주차가 서버에 저장되지 않아 늘 비어 있던 자리다.
+  it('설명을 상세에 보여준다', () => {
+    renderModal(base)
+    // 공유 폼의 설명이 서버에 저장되지 않아 늘 비어 있던 자리다.
     expect(screen.getByText('조회 로그와 함께 정리했습니다.')).toBeInTheDocument()
-    expect(screen.getByText('9주차 · Spring Boot')).toBeInTheDocument()
   })
 })
 

@@ -1,7 +1,12 @@
 // 과제/실습 도메인 계약 — 기능 로컬(공유 파일 미오염). BE 합류 시 페어가 정합.
 // 목록(/student/course/assignments) + 상세·제출(/…/:id)이 소비하는 모델.
 
-export type AssignmentStatus = 'not_submitted' | 'submitted' | 'reviewed'
+export type AssignmentStatus =
+  | 'not_submitted'
+  | 'submitted'
+  // 강사가 보완을 요청한 상태 — 목록에서 '제출 완료'와 구분되어야 학생이 재제출 필요를 안다.
+  | 'supplement_requested'
+  | 'reviewed'
 
 /** 마감 표시 톤 — 임박(앰버)/일반/종료(회색) */
 export type DueTone = 'soon' | 'normal' | 'ended'

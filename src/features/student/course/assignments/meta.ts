@@ -8,5 +8,9 @@ export const STATUS_BADGE: Record<
 > = {
   not_submitted: { cls: 'bg-warning-bg text-warning', label: '미제출' },
   submitted: { cls: 'bg-brand/10 text-brand', label: '제출 완료' },
+  supplement_requested: {
+    cls: 'bg-danger-bg text-danger',
+    label: '보완 요청',
+  },
   reviewed: { cls: 'bg-info-bg text-info', label: '검토 완료' },
 }

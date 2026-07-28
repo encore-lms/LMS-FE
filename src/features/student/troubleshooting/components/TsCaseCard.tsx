@@ -18,6 +18,7 @@ export function TsCaseCard({
   actionLabel,
   onRemove,
   removeLabel = '연결 해제',
+  removeDisabledReason = null,
   connection,
   onShowReason,
 }: {
@@ -28,6 +29,11 @@ export function TsCaseCard({
   /** 지정 시 우상단 보조 버튼을 노출 — 목록은 사례 삭제, 워크스페이스는 연결 해제(removeLabel로 구분). */
   onRemove?: () => void
   removeLabel?: string
+  /**
+   * 값이 있으면 버튼을 비활성으로 두고 그 이유를 툴팁으로 알린다.
+   * 버튼을 아예 숨기면 "왜 못 지우지"를 알 수 없고, 그대로 두면 눌러 보고 실패한다.
+   */
+  removeDisabledReason?: string | null
   /** 헤더에 프로젝트 연결 상태 칩 — 인증 완료 사례에 연결됨(프로젝트명)/연결 필요 표시. */
   connection?: { label: string; ok: boolean }
   /** 강사 반려 사례 — '반려 사유' 버튼 클릭 시 호출(사유 모달 열기). */
@@ -90,9 +96,13 @@ export function TsCaseCard({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
+                  if (removeDisabledReason) return
                   onRemove()
                 }}
-                className="border-border text-fg-muted hover:border-danger hover:text-danger inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-[12px] font-semibold"
+                disabled={!!removeDisabledReason}
+                title={removeDisabledReason ?? undefined}
+                aria-disabled={!!removeDisabledReason}
+                className="border-border text-fg-muted hover:border-danger hover:text-danger inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--color-border)] disabled:hover:text-[color:var(--color-fg-muted)]"
               >
                 <X className="size-3" />
                 {removeLabel}

@@ -16,6 +16,8 @@ import {
   useRequestProjectChanges,
   useCertifyTroubleshooting,
   useRequestTsChanges,
+  useRevokeProjectCertification,
+  useRevokeTsCertification,
 } from '../api/reviews'
 import type {
   InstructorRecordReviewData,
@@ -242,6 +244,12 @@ function renderWith(ui: React.ReactElement) {
   )
   vi.mocked(useRequestTsChanges).mockReturnValue(
     mutationStub() as unknown as ReturnType<typeof useRequestTsChanges>,
+  )
+  vi.mocked(useRevokeProjectCertification).mockReturnValue(
+    mutationStub() as unknown as ReturnType<typeof useRevokeProjectCertification>,
+  )
+  vi.mocked(useRevokeTsCertification).mockReturnValue(
+    mutationStub() as unknown as ReturnType<typeof useRevokeTsCertification>,
   )
   return render(
     <ToastProvider>

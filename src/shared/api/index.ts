@@ -11,4 +11,5 @@ export {
   useRoleNotifications,
   useMarkNotificationsRead,
   useMarkNotificationRead,
+  useNotificationInbox,
 } from './notifications'

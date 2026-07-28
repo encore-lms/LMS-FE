@@ -32,7 +32,12 @@ function PeerEvalToggle({
   const toast = useToast()
   const toggle = usePeerEvalToggle(courseId, cohortId)
   const tooFewMembers = project.memberCount < 2
+  // 동료 평가는 프로젝트가 끝난 뒤 하는 활동 — 진행 중에 열면 아직 하지 않은 협업을 평가하게 된다.
+  // 서버도 같은 조건으로 막지만, 눌러보고 실패하는 대신 이유를 먼저 보여준다.
+  const notCompleted = project.status !== 'COMPLETED'
   const on = project.peerEvalEnabled
+  // 이미 켜진 것을 '중단'하는 건 언제나 가능해야 한다 — 잘못 연 경우를 되돌릴 수 있어야 하기 때문.
+  const blocked = !on && (tooFewMembers || notCompleted)
 
   const change = () => {
     toggle.mutate(
@@ -60,25 +65,29 @@ function PeerEvalToggle({
         <p
           className={cn(
             'text-xs',
-            tooFewMembers ? 'text-warning font-medium' : 'text-fg-subtle',
+            blocked ? 'text-warning font-medium' : 'text-fg-subtle',
           )}
         >
-          {tooFewMembers
+          {tooFewMembers && !on
             ? `팀원이 ${project.memberCount}명이라 시작할 수 없어요 — 2명 이상 필요합니다`
-            : on
-              ? '팀원이 서로 평가할 수 있어요'
-              : '프로젝트가 끝나면 시작하세요'}
+            : notCompleted && !on
+              ? `아직 ${project.statusLabel}이라 시작할 수 없어요 — 프로젝트를 완료로 바꿔주세요`
+              : on
+                ? '팀원이 서로 평가할 수 있어요'
+                : '프로젝트가 끝났어요. 지금 시작할 수 있습니다'}
         </p>
       </div>
       <button
         type="button"
         onClick={change}
-        disabled={toggle.isPending || tooFewMembers}
+        disabled={toggle.isPending || blocked}
         aria-pressed={on}
         title={
-          tooFewMembers
+          tooFewMembers && !on
             ? `팀원이 ${project.memberCount}명입니다. 동료 평가는 서로 평가할 대상이 있어야 하므로 2명 이상일 때 시작할 수 있어요.`
-            : undefined
+            : notCompleted && !on
+              ? '동료 평가는 프로젝트가 끝난 뒤에 진행합니다. 프로젝트 상태를 완료로 바꾸면 시작할 수 있어요.'
+              : undefined
         }
         className={cn(
           'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50',

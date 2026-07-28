@@ -56,9 +56,15 @@ function PeerEvalToggle({
     <div className="border-border mt-3 flex items-center justify-between gap-2 border-t pt-3">
       <div className="min-w-0">
         <p className="text-fg text-[13px] font-semibold">동료 평가</p>
-        <p className="text-fg-subtle text-xs">
+        {/* 시작이 막힌 이유는 회색 보조문구로 두면 놓치기 쉽다 — 경고 톤으로 올려 버튼 비활성 이유를 드러낸다. */}
+        <p
+          className={cn(
+            'text-xs',
+            tooFewMembers ? 'text-warning font-medium' : 'text-fg-subtle',
+          )}
+        >
           {tooFewMembers
-            ? '팀원이 2명 이상이어야 시작할 수 있어요'
+            ? `팀원이 ${project.memberCount}명이라 시작할 수 없어요 — 2명 이상 필요합니다`
             : on
               ? '팀원이 서로 평가할 수 있어요'
               : '프로젝트가 끝나면 시작하세요'}
@@ -69,6 +75,11 @@ function PeerEvalToggle({
         onClick={change}
         disabled={toggle.isPending || tooFewMembers}
         aria-pressed={on}
+        title={
+          tooFewMembers
+            ? `팀원이 ${project.memberCount}명입니다. 동료 평가는 서로 평가할 대상이 있어야 하므로 2명 이상일 때 시작할 수 있어요.`
+            : undefined
+        }
         className={cn(
           'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
           on

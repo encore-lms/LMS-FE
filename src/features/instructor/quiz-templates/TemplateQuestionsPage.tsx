@@ -233,7 +233,6 @@ export default function TemplateQuestionsPage() {
             subjectName={data.templateName}
             gradingMode={data.gradingMode}
             totalPoints={totalPoints}
-            targetPoints={data.targetPoints}
             questions={questions}
             listTitle="템플릿 문항 목록"
             itemNoun="문항"

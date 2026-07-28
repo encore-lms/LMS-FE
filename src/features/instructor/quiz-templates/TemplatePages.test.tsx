@@ -93,6 +93,8 @@ const questions: TemplateQuestionsData = {
       respondedCount: 0,
       totalCount: 0,
       avgScore: null,
+      choices: ['베이스 케이스', '반복문 탈출', '스택 초기화'],
+      answerKey: '0',
     },
     {
       id: 'tq-3',
@@ -129,17 +131,20 @@ function mockAll() {
     ok(questions) as unknown as ReturnType<typeof useTemplateQuestions>,
   )
   // 뮤테이션 훅 기본 스텁 — onSuccess 콜백을 즉시 호출해 토스트/로컬 갱신을 검증 가능하게.
-  const mut = () =>
+  // 문항 저장/삭제는 갱신된 문항 풀(TemplateQuestionsData)을 돌려준다(실 BE 계약).
+  const mut = (result: unknown) =>
     ({
-      mutate: (_vars: unknown, opts?: { onSuccess?: (d: unknown) => void }) =>
-        opts?.onSuccess?.(detail),
+      mutate: vi.fn(
+        (_vars: unknown, opts?: { onSuccess?: (d: unknown) => void }) =>
+          opts?.onSuccess?.(result),
+      ),
       mutateAsync: vi.fn().mockResolvedValue(undefined),
       isPending: false,
     }) as unknown as never
-  vi.mocked(useSaveQuizTemplate).mockReturnValue(mut())
-  vi.mocked(useDeleteQuizTemplate).mockReturnValue(mut())
-  vi.mocked(useSaveTemplateQuestion).mockReturnValue(mut())
-  vi.mocked(useDeleteTemplateQuestion).mockReturnValue(mut())
+  vi.mocked(useSaveQuizTemplate).mockReturnValue(mut(detail))
+  vi.mocked(useDeleteQuizTemplate).mockReturnValue(mut(detail))
+  vi.mocked(useSaveTemplateQuestion).mockReturnValue(mut(questions))
+  vi.mocked(useDeleteTemplateQuestion).mockReturnValue(mut(questions))
 }
 
 function renderAt(path: string, overrideMocks?: () => void) {
@@ -227,10 +232,57 @@ describe('TemplateQuestionsPage (§10 문항 관리)', () => {
     expect(screen.getByText('알고리즘 기초 템플릿')).toBeInTheDocument()
     expect(screen.getByText('· 사용 횟수: 2회')).toBeInTheDocument()
     expect(screen.getByText('· 파생 활성 퀴즈: 3건')).toBeInTheDocument()
-    // 주관식 선택 시 템플릿 전용 수동 채점 안내
+    // 주관식 선택 시 템플릿 전용 수동 채점 안내 + 채점 기준 입력
     await user.click(screen.getByText('DP vs 메모이제이션'))
     expect(
       screen.getByText('복제된 퀴즈에서 수동 채점으로 연결'),
     ).toBeInTheDocument()
+    expect(
+      screen.getByText(/채점 기준 \/ 모범답안 \(선택\)/),
+    ).toBeInTheDocument()
+  })
+
+  it('객관식 문항은 보기·정답 라디오를 렌더하고, 저장 시 PUT 페이로드에 정답을 담는다', async () => {
+    const user = userEvent.setup()
+    renderAt('/instructor/quiz-templates/tpl-algo/questions')
+    // 첫 문항(객관식) 기본 선택 — 저장된 보기와 정답 라디오가 채워져 있다.
+    expect(screen.getByDisplayValue('베이스 케이스')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('반복문 탈출')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '정답 1' })).toBeChecked()
+
+    await user.click(screen.getByRole('button', { name: '저장' }))
+    // 훅 스텁은 테스트마다 재설정 — 마지막 호출 결과가 이 테스트의 인스턴스.
+    const { mutate } = vi.mocked(useSaveTemplateQuestion).mock.results.at(-1)!
+      .value as { mutate: ReturnType<typeof vi.fn> }
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        questionId: 'tq-1',
+        input: expect.objectContaining({
+          type: 'multiple_choice',
+          choices: ['베이스 케이스', '반복문 탈출', '스택 초기화'],
+          answerIndex: 0,
+        }),
+      }),
+      expect.anything(),
+    )
+    expect(
+      await screen.findByText('템플릿 문항 저장됨 — 다음 복제부터 반영'),
+    ).toBeInTheDocument()
+  })
+
+  it('추가는 미저장 드래프트를 만들고, 본문 없이 저장하면 검증 에러를 띄운다', async () => {
+    const user = userEvent.setup()
+    renderAt('/instructor/quiz-templates/tpl-algo/questions')
+    await user.click(screen.getByRole('button', { name: '추가' }))
+    expect(screen.getByText('미저장')).toBeInTheDocument()
+    expect(screen.getByText('새 문항')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '저장' }))
+    expect(
+      await screen.findByText('문항 내용을 입력해 주세요'),
+    ).toBeInTheDocument()
+    const { mutate } = vi.mocked(useSaveTemplateQuestion).mock.results.at(-1)!
+      .value as { mutate: ReturnType<typeof vi.fn> }
+    expect(mutate).not.toHaveBeenCalled()
   })
 })

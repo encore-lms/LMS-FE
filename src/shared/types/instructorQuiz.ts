@@ -36,6 +36,8 @@ export interface QuizFormDetail {
   title: string
   cohortOption: string // 기수 라벨
   description: string
+  /** 퀴즈 분류 태그(예: 빅데이터). 자유 입력이라 빈 문자열일 수 있다. */
+  category: string
   startAt: string // 'YYYY-MM-DD HH:mm'
   endAt: string
   timeLimitMin: number

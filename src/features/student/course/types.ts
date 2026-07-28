@@ -119,6 +119,8 @@ export interface ShareMaterialInput {
   fileType: MaterialFileType
   sizeLabel?: string // 파일 업로드일 때 표시 크기
   fileUrl?: string // 링크 공유일 때 외부 URL
+  /** 업로드할 실제 파일 — 있으면 multipart 로 전송한다(없으면 링크 공유). */
+  file?: File
 }
 
 /** 카테고리 칩 1개 (전체 + 4분류) */

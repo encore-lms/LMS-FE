@@ -8,6 +8,7 @@ import type { AttendanceFormPayload, AttendanceFormSubmission } from '../types'
 import {
   useAttendanceFormMeta,
   useSubmitAttendanceForm,
+  useUploadAttendanceAttachments,
 } from '../../api/attendance'
 import { InfoBanner } from '../components/InfoBanner'
 import {

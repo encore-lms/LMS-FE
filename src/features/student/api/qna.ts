@@ -64,7 +64,11 @@ export function useCreateAnswer(questionId: string) {
   const base = useQnaBase()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { content: string; authorName?: string }) =>
+    mutationFn: (input: {
+      content: string
+      mentions: string[]
+      authorName?: string
+    }) =>
       apiClient
         .post<QnaDetail>(`${base}/${questionId}/answers`, input)
         .then((r) => r.data),

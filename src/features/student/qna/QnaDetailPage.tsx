@@ -188,7 +188,7 @@ function AnswerItem({
         </div>
       </div>
 
-      <Markdown>{answer.content}</Markdown>
+      <Markdown mentions={answer.mentions}>{answer.content}</Markdown>
 
       <div className="flex items-center justify-between">
         <button
@@ -300,6 +300,8 @@ export default function QnaDetailPage() {
   const acceptAnswer = useAcceptAnswer(id)
   const deleteQuestion = useDeleteQuestion()
   const [draft, setDraft] = useState('')
+  // 답변에도 댓글과 같은 @멘션 — 예전에는 답변 작성기에 멘션이 없어 @이름을 써도 알림이 가지 않았다.
+  const [mentions, setMentions] = useState<string[]>([])
   // 질문 삭제는 답변·댓글까지 연쇄 삭제라 인라인 확인 대신 모달로 무게를 준다(답변·댓글은 인라인 유지).
   const [deleteOpen, setDeleteOpen] = useState(false)
   usePageHeader('QnA 게시판', '질문 상세')
@@ -308,11 +310,12 @@ export default function QnaDetailPage() {
   const submitAnswer = () => {
     if (!draft.trim() || createAnswer.isPending) return
     createAnswer.mutate(
-      { content: draft.trim(), authorName: selfName },
+      { content: draft.trim(), mentions, authorName: selfName },
       {
         onSuccess: () => {
           toast.success('답변을 등록했어요')
           setDraft('')
+          setMentions([])
         },
         onError: () => toast.danger('답변 등록에 실패했어요'),
       },
@@ -501,12 +504,16 @@ export default function QnaDetailPage() {
                 onChange={setDraft}
                 minHeight={120}
                 maxLength={2000}
-                placeholder="도움이 될 만한 답변을 남겨주세요. 코드 블록·이미지 지원."
+                placeholder="도움이 될 만한 답변을 남겨주세요. @로 멘션하면 알림이 가요."
+                mentionNames={threadMentionNames(data, selfName)}
+                onMentionsChange={setMentions}
                 onImageRejected={(msg) => toast.danger(msg)}
               />
               <div className="flex items-center justify-end gap-2">
                 <span className="text-fg-subtle mr-auto text-[11px]">
-                  마크다운·코드 블록·이미지 지원
+                  {mentions.length > 0
+                    ? `멘션: @${mentions.join(', @')}`
+                    : '마크다운·코드 블록·이미지·@멘션 지원'}
                 </span>
                 <button
                   type="button"

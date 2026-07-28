@@ -81,6 +81,7 @@ export interface QnaAnswer {
   authorRole: string // "수강생" | "멘토" | "강사"
   isAccepted: boolean // 질문자 채택 답변
   createdAt: string
+  mentions: string[] // 본문에서 @지명된 이름들(알림·강조용) — 댓글과 같은 계약
   comments: QnaComment[] // 답변 스레드
   canDelete: boolean // 요청자가 작성자면 true
 }

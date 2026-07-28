@@ -26,6 +26,7 @@ import {
   type CategoryKey,
 } from './components/MaterialCategoryChips'
 import { MaterialRow } from './components/MaterialRow'
+import { MaterialDetailModal } from './components/MaterialDetailModal'
 import { MaterialPagination } from './components/MaterialPagination'
 import { ShareMaterialModal } from './components/ShareMaterialModal'
 
@@ -38,6 +39,8 @@ export default function MaterialsPage() {
   const shareMutation = useShareMaterial()
   const deleteMutation = useDeleteMaterial()
   const [deleteTarget, setDeleteTarget] = useState<MaterialItem | null>(null)
+  // 상세 모달 대상 — 행을 클릭하면 열리고, 다운로드·링크 열기·삭제를 그 안에서 한다.
+  const [detailTarget, setDetailTarget] = useState<MaterialItem | null>(null)
   usePageHeader('자료실')
   const [category, setCategory] = useState<CategoryKey>('all')
   const [query, setQuery] = useState('')
@@ -211,7 +214,7 @@ export default function MaterialsPage() {
                     <MaterialRow
                       item={it}
                       onToggleFavorite={toggleFavorite}
-                      onDelete={setDeleteTarget}
+                      onOpen={setDetailTarget}
                     />
                   </Fragment>
                 ))}
@@ -245,6 +248,12 @@ export default function MaterialsPage() {
             },
           })
         }}
+      />
+
+      <MaterialDetailModal
+        item={detailTarget}
+        onClose={() => setDetailTarget(null)}
+        onDelete={setDeleteTarget}
       />
 
       <ConfirmDialog

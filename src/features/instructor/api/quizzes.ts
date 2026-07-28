@@ -53,7 +53,6 @@ export interface SaveQuizInput {
   allowRetake: boolean
   shuffleQuestions: boolean
   shuffleChoices: boolean
-  totalPoints: number
   visibility: string
   startAt?: string
   endAt?: string

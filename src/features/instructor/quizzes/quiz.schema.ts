@@ -7,6 +7,8 @@ export const quizSchema = z
     title: z.string().trim().min(1, '제목을 입력해주세요'),
     cohortId: z.string().min(1, '대상 과정/기수를 선택해주세요'),
     description: z.string().trim().optional(),
+    // 분류 태그(예: 빅데이터) — 자유 입력, 선택. 목록 검색·필터의 단위가 된다.
+    category: z.string().trim().max(50, '카테고리는 50자 이내로 입력해주세요').optional(),
     startAt: z.string().trim().min(1, '시작일을 입력해주세요'),
     endAt: z.string().trim().min(1, '종료일을 입력해주세요'),
     timeLimitMin: z.coerce

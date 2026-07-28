@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -29,6 +29,7 @@ import { RequestStatusChip, RoleBadge, SlotLabelChip } from './RequestChips'
 import type { RequestRespondedState } from './RequestRespondedPage'
 import {
   composeScheduleLabel,
+  minutesBetween,
   parseScheduleLabel,
   proposalSchema,
   type ProposalInput,
@@ -132,6 +133,20 @@ function ProposalForm({
     defaultValues: defaults,
   })
   const placeType = watch('placeType')
+  const startTime = watch('startTime')
+  const endTime = watch('endTime')
+  // 예상 시간은 시작·종료 시각에서 파생한다 — 지금까지는 시각을 바꿔도 그대로 남아
+  // 실제 일정과 어긋난 값이 그대로 제안됐다. 계산 후에도 직접 고칠 수 있게 입력은 열어 둔다
+  // (이동·준비 시간을 얹는 경우가 있다).
+  // 열릴 때의 값은 기존 제안이므로 건드리지 않고, 시각을 실제로 바꾼 뒤부터 반영한다.
+  const initialSlot = useRef(`${defaults.startTime}~${defaults.endTime}`)
+  useEffect(() => {
+    if (`${startTime}~${endTime}` === initialSlot.current) return
+    const minutes = minutesBetween(startTime, endTime)
+    if (minutes > 0) {
+      setValue('expectedMinutes', minutes, { shouldValidate: true })
+    }
+  }, [startTime, endTime, setValue])
   return (
     <form
       id="proposal-form"

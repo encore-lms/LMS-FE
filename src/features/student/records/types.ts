@@ -40,6 +40,8 @@ export interface BlogRecord {
   category: RecordCategory // 탭 구분
   weekLabel: string // "10주차"
   dateRange: string // "5/6 ~ 5/12"
+  /** 정렬 기준 활동 일자(ISO). 블로그=주차 시작일, 스터디=활동일, 자격증=취득일. */
+  activityDate?: string | null
   status: RecordStatus
   statusLabel: string // "승인" | "검토 중" | "반려"
   title: string

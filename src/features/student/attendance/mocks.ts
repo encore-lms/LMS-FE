@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw'
 import type {
-  AttendanceAttachment,
   AttendanceOverview,
   AttendanceFormMeta,
   AttendanceFormSubmission,
@@ -56,7 +55,7 @@ const mockAttendanceSubmissions: AttendanceFormSubmission[] = [
     officialLeaveType: 'SICK',
     note: '감기 몸살로 결석',
     attachments: [
-      { id: 'att-seed-1', fileName: '진단서.pdf', size: 0, contentType: '' },
+      { id: 'att-seed-1', fileName: '진단서.pdf', fileSize: 24_000 },
     ],
   },
   // 페이지네이션 데모용 과거 제출 — 예전 기록도 넘겨 볼 수 있게 보강.
@@ -228,15 +227,6 @@ const mockAttendanceFormMeta: AttendanceFormMeta = {
 }
 
 // 첨부 파일명(string[]) → 첨부 메타(AttendanceAttachment[]). mock은 파일명만 보존.
-let attachmentSeq = 0
-const toAttachments = (names: string[] = []): AttendanceAttachment[] =>
-  names.map((fileName) => ({
-    id: `att-${attachmentSeq++}`,
-    fileName,
-    size: 0,
-    contentType: '',
-  }))
-
 let submissionSeq = 0
 
 // 출결 폼(me — 메타/제출/증빙)은 VITE_REAL_AUTH=true면 learning-service 실연동(이 mock 미등록 → proxy).
@@ -276,7 +266,7 @@ export const handlers = [
               officialLeaveType: body.officialLeaveType ?? null,
               officialLeaveOtherReason: body.officialLeaveOtherReason ?? null,
               note: body.note ?? null,
-              attachments: toAttachments(body.attachmentNames),
+              attachments: [],
             }
             // 제출 이력: 같은 대상일자 기존 1건은 덮어쓰고 최신을 맨 앞에 둔다.
             const prevIdx = mockAttendanceSubmissions.findIndex(
@@ -298,23 +288,5 @@ export const handlers = [
           },
         ),
 
-        // 증빙 첨부만 따로 수정 — 제출 이력에서 사후 증빙 추가/교체(다른 항목은 불변).
-        http.patch(
-          '/api/student/attendance-forms/:cohortId/submissions/:id/attachments',
-          async ({ request, params }) => {
-            const body = (await request.json()) as { attachmentNames: string[] }
-            const target = mockAttendanceSubmissions.find(
-              (s) => s.id === String(params.id),
-            )
-            if (!target) {
-              return HttpResponse.json(
-                { message: '제출 이력을 찾을 수 없습니다.' },
-                { status: 404 },
-              )
-            }
-            target.attachments = toAttachments(body.attachmentNames)
-            return ok<AttendanceFormSubmission>(target)
-          },
-        ),
       ]),
 ]

@@ -9,6 +9,7 @@ import {
   useCertifyProject,
   useProjectReviews,
   useRequestProjectChanges,
+  useRevokeProjectCertification,
 } from '../api/reviews'
 import { SupplementRequestModal } from '../assignments/SupplementRequestModal'
 import { COHORT_ALL, cohortOptions } from './cohort'
@@ -19,6 +20,7 @@ import {
 } from '../cohortContext'
 import { QueueFilterBar, QueueStats } from './QueueShell'
 import { ReviewDetailPanel, type ReviewDetailTarget } from './ReviewDetailPanel'
+import { RevokeCertificationModal } from './RevokeCertificationModal'
 import { REVIEW_TABS, RouteTabBar } from '../components/RouteTabBar'
 
 type StatusFilter = 'all' | ProjectCertReviewStatus
@@ -59,6 +61,9 @@ export default function ProjectReviewPage({
   >({})
   // 상세 패널 대상 — 행을 클릭하면 열린다(액션 컬럼은 없앴다: '결과'·'확인'·'상세'가
   // 모두 같은 상세를 열어 무엇이 다른지 알 수 없었다). 인증·보완 요청은 상세 안에서 한다.
+  const revoke = useRevokeProjectCertification()
+  // 인증 취소 대상 — 확인 문구를 입력받는 모달을 거친다.
+  const [revokeTarget, setRevokeTarget] = useState<typeof detailRow>(null)
   const [detailTarget, setDetailTarget] = useState<ReviewDetailTarget>(null)
   usePageHeader(
     '프로젝트 검토',
@@ -247,7 +252,9 @@ export default function ProjectReviewPage({
               detailRow
                 ? {
                     pending: detailRow.status === 'requested',
-                    busy: certify.isPending || requestChanges.isPending,
+                    certified: detailRow.status === 'certified',
+                    onRevoke: () => setRevokeTarget(detailRow),
+                    busy: certify.isPending || requestChanges.isPending || revoke.isPending,
                     onCertify: () => {
                       onCertify(detailRow)
                       setDetailTarget(null)
@@ -256,6 +263,28 @@ export default function ProjectReviewPage({
                   }
                 : undefined
             }
+          />
+          <RevokeCertificationModal
+            open={revokeTarget !== null}
+            targetName={revokeTarget?.name ?? ''}
+            busy={revoke.isPending}
+            onClose={() => setRevokeTarget(null)}
+            onConfirm={(reason) => {
+              const target = revokeTarget
+              if (!target) return
+              revoke.mutate(
+                { id: target.id, reason },
+                {
+                  onSuccess: () => {
+                    setLocalStatus((m) => ({ ...m, [target.id]: 'requested' }))
+                    setRevokeTarget(null)
+                    setDetailTarget(null)
+                    toast.success(`${target.name} 인증을 취소했어요`)
+                  },
+                  onError: () => toast.danger('인증을 취소하지 못했어요'),
+                },
+              )
+            }}
           />
           <SupplementRequestModal
             open={supplementTarget !== null}

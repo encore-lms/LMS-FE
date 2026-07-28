@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import TemplateListPage from './TemplateListPage'
 import TemplateFormPage from './TemplateFormPage'
@@ -147,6 +147,12 @@ function mockAll() {
   vi.mocked(useDeleteTemplateQuestion).mockReturnValue(mut(questions))
 }
 
+// 복제 네비게이션 프로브 — 퀴즈 생성 진입 시 쿼리 파라미터를 노출한다.
+function QuizNewProbe() {
+  const location = useLocation()
+  return <div>QUIZ_NEW{location.search}</div>
+}
+
 function renderAt(path: string, overrideMocks?: () => void) {
   mockAll()
   overrideMocks?.()
@@ -158,6 +164,7 @@ function renderAt(path: string, overrideMocks?: () => void) {
             path="/instructor/quiz-templates"
             element={<TemplateListPage />}
           />
+          <Route path="/instructor/quizzes/new" element={<QuizNewProbe />} />
           <Route
             path="/instructor/quiz-templates/new"
             element={<TemplateFormPage />}
@@ -185,6 +192,17 @@ describe('TemplateListPage (§10 목록)', () => {
     expect(screen.getByText('NEW')).toBeInTheDocument()
     expect(
       screen.getByText(/총 5개 템플릿 · 누적 사용 10회/),
+    ).toBeInTheDocument()
+  })
+
+  it('새 퀴즈로 복제는 templateId를 붙여 퀴즈 생성으로 이동한다', async () => {
+    const user = userEvent.setup()
+    renderAt('/instructor/quiz-templates')
+    await user.click(
+      screen.getAllByRole('button', { name: '새 퀴즈로 복제' })[0],
+    )
+    expect(
+      await screen.findByText('QUIZ_NEW?templateId=tpl-algo'),
     ).toBeInTheDocument()
   })
 

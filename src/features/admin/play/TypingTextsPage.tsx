@@ -251,24 +251,6 @@ export default function TypingTextsPage() {
         errorTitle="PLAY 제시문을 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >
-        {/* 노출 조건 배너 */}
-        <div className="border-warning/30 bg-warning-bg/50 mt-4 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-warning text-sm font-bold">
-              노출 조건: CourseFeatureConfig.playEnabled = true
-            </p>
-            <p className="text-warning/90 mt-1 text-xs leading-relaxed">
-              PLAY 기능이 꺼진 과정은 운영 메뉴와 수강생 PLAY 화면 모두
-              숨겨집니다. 기능을 켜기 전에는 제시문을 등록해도 수강생에게
-              노출되지 않습니다.
-            </p>
-          </div>
-          <StatusBadge
-            label={`비활성 과정 ${summary.disabledCourses}개`}
-            tone="warning"
-          />
-        </div>
-
         {/* 필터 — 타자 제시문은 언어·난이도 기준 전역 카탈로그(기수 무관) */}
         <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border p-3.5">
           <Select
@@ -339,15 +321,6 @@ export default function TypingTextsPage() {
                   </div>
                 ))}
               </dl>
-              <div className="border-warning/30 bg-warning-bg/50 mt-4 rounded-lg border p-3.5">
-                <p className="text-warning text-sm font-bold">
-                  활성 변경 확인 필요
-                </p>
-                <p className="text-warning/90 mt-1 text-xs leading-relaxed">
-                  진행 중 세션에는 기존 제시문을 유지하고, 새 세션부터 변경된
-                  활성 상태를 적용합니다.
-                </p>
-              </div>
             </div>
           </aside>
         </div>

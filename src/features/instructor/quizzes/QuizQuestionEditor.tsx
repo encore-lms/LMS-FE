@@ -5,6 +5,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
+import { SuggestInput } from '@/components/ui/SuggestInput'
 import type { InstructorQuestion } from '@/shared/types'
 import {
   useDeleteQuizQuestion,
@@ -40,12 +41,15 @@ interface DraftState extends AnswerDraft {
   type: SaveQuizQuestionInput['type']
   prompt: string
   points: number
+  /** 기술 카테고리(예: Spark) — 선택. 수강생 결과 화면의 카테고리별 정답률 집계 단위. */
+  category: string
 }
 
 const EMPTY_DRAFT: DraftState = {
   type: 'multiple_choice',
   prompt: '',
   points: 10,
+  category: '',
   ...emptyAnswer(),
 }
 
@@ -55,6 +59,7 @@ function toDraft(q: InstructorQuestion): DraftState {
     type,
     prompt: q.body ?? '',
     points: q.points ?? 10,
+    category: q.category ?? '',
     ...parseAnswerDraft(type, q.choices, q.answerKey),
   }
 }
@@ -65,6 +70,7 @@ function QuestionForm({
   questionId,
   initial,
   order,
+  categorySuggestions,
   onClose,
 }: {
   quizId: string
@@ -72,6 +78,8 @@ function QuestionForm({
   initial: DraftState
   /** 생성 시 삽입 위치(0-based). 미지정이면 맨 뒤. */
   order?: number
+  /** 카테고리 자유 입력 추천 — 같은 기수·퀴즈에서 이미 쓴 값. */
+  categorySuggestions: string[]
   onClose: () => void
 }) {
   const save = useSaveQuizQuestion(quizId, questionId)
@@ -93,6 +101,8 @@ function QuestionForm({
       type: d.type,
       prompt: d.prompt.trim(),
       points: d.points,
+      // 빈 문자열도 그대로 보낸다 — BE가 '해제'로 해석한다(미전달=기존 유지와 구분).
+      category: d.category.trim(),
       ...answer.fields,
     }
     // 생성 시에만 삽입 위치를 전달(수정은 위치 유지).
@@ -163,8 +173,22 @@ function QuestionForm({
         essayNote="서술형은 자동 채점되지 않고, 제출 후 수동 채점 화면에서 점수를 매깁니다."
       />
 
-      {/* 배점 + 액션 */}
+      {/* 카테고리 + 배점 + 액션 */}
       <div className="flex items-end justify-between gap-3">
+        <div className="w-44">
+          <span className="text-fg-muted mb-1 block text-xs font-semibold">
+            카테고리
+          </span>
+          <SuggestInput
+            value={d.category}
+            onChange={(category) => set({ category })}
+            suggestions={categorySuggestions}
+            placeholder="예: Spark (선택)"
+            aria-label="문항 카테고리"
+            maxLength={50}
+            className={FIELD}
+          />
+        </div>
         <div className="w-28">
           <span className="text-fg-muted mb-1 block text-xs font-semibold">
             배점
@@ -222,10 +246,13 @@ function InsertZone({
 export function QuizQuestionEditor({
   quizId,
   defaultAdding = false,
+  categorySuggestions = [],
 }: {
   quizId: string
   /** 생성 직후 진입 시 문항 추가 폼을 맨 아래에 펼침 */
   defaultAdding?: boolean
+  /** 기수 범위 문항 카테고리 추천(폼에서 주입). 이 퀴즈에 이미 쓴 값과 합쳐 제안한다. */
+  categorySuggestions?: string[]
 }) {
   const { data, isPending, isError, refetch } = useQuizQuestions(quizId)
   const deleteQ = useDeleteQuizQuestion(quizId)
@@ -241,6 +268,13 @@ export function QuizQuestionEditor({
 
   const questions = data?.questions ?? []
   const totalScore = questions.reduce((s, q) => s + (q.points ?? 0), 0)
+  // 이 퀴즈에 이미 쓴 카테고리를 앞에 둔다 — 같은 퀴즈 안에서 표기가 갈라지는 게 제일 잦다.
+  const suggestions = [
+    ...new Set([
+      ...questions.map((q) => q.category ?? '').filter(Boolean),
+      ...categorySuggestions,
+    ]),
+  ]
 
   // 드롭 확정 — 순서 배열을 만들어 재정렬 저장(낙관적).
   const commitReorder = () => {
@@ -312,6 +346,7 @@ export function QuizQuestionEditor({
                         quizId={quizId}
                         initial={EMPTY_DRAFT}
                         order={p}
+                        categorySuggestions={suggestions}
                         onClose={() => setInsertAt(null)}
                       />
                     </div>
@@ -358,6 +393,11 @@ export function QuizQuestionEditor({
                         <span className="bg-info-bg text-info shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold">
                           {TYPE_LABEL[q.type] ?? q.type}
                         </span>
+                        {q.category && (
+                          <span className="bg-brand/10 text-brand shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold">
+                            {q.category}
+                          </span>
+                        )}
                         <span className="text-fg min-w-0 flex-1 truncate text-sm">
                           {q.body || '(내용 없음)'}
                         </span>
@@ -400,6 +440,7 @@ export function QuizQuestionEditor({
                             quizId={quizId}
                             questionId={q.id}
                             initial={toDraft(q)}
+                            categorySuggestions={suggestions}
                             onClose={() => setEditingId(null)}
                           />
                         </div>

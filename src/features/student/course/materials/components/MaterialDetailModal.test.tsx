@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MaterialDetailModal } from './MaterialDetailModal'
 import { MaterialRow } from './MaterialRow'
+import { EditMaterialModal } from './EditMaterialModal'
 import { ToastProvider } from '@/components/ui/Toast'
 import type { MaterialItem } from '../../types'
 
@@ -10,6 +11,7 @@ import type { MaterialItem } from '../../types'
 // 행 클릭으로 상세를 열고, 다운로드·링크 열기·삭제는 상세 안에서만 한다.
 vi.mock('../../../api/course', () => ({
   downloadCourseMaterialFile: vi.fn().mockResolvedValue(undefined),
+  useUpdateMaterial: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 
 const base: MaterialItem = {
@@ -140,5 +142,51 @@ describe('MaterialDetailModal', () => {
     // 공유 폼의 설명·주차가 서버에 저장되지 않아 늘 비어 있던 자리다.
     expect(screen.getByText('조회 로그와 함께 정리했습니다.')).toBeInTheDocument()
     expect(screen.getByText('9주차 · Spring Boot')).toBeInTheDocument()
+  })
+})
+
+describe('EditMaterialModal', () => {
+  it('파일 자료는 첨부 교체만, 링크 입력은 보이지 않는다', () => {
+    render(
+      <ToastProvider>
+        <EditMaterialModal item={base} onClose={vi.fn()} />
+      </ToastProvider>,
+    )
+    // 형식 전환을 허용하면 목록 배지·아이콘·다운로드 경로와 어긋난다.
+    expect(screen.getByText('파일 업로드')).toBeInTheDocument()
+    expect(screen.getByText('공유 형식은 바꿀 수 없어요')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText(/github.com/)).toBeNull()
+  })
+
+  it('링크 자료는 링크 입력만, 파일 드롭존은 보이지 않는다', () => {
+    render(
+      <ToastProvider>
+        <EditMaterialModal
+          item={{
+            ...base,
+            fileType: 'LINK',
+            isExternalLink: true,
+            hasFile: false,
+            fileUrl: 'https://example.com/doc',
+          }}
+          onClose={vi.fn()}
+        />
+      </ToastProvider>,
+    )
+    expect(screen.getByText('링크 공유')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/github.com/)).toBeInTheDocument()
+    expect(screen.queryByText(/드래그하거나 클릭/)).toBeNull()
+  })
+
+  it('현재 첨부를 보여주고 바꾸지 않으면 유지된다고 알린다', () => {
+    render(
+      <ToastProvider>
+        <EditMaterialModal item={base} onClose={vi.fn()} />
+      </ToastProvider>,
+    )
+    expect(screen.getByText('jpa.txt')).toBeInTheDocument()
+    expect(
+      screen.getByText(/바꾸지 않으면 그대로 유지/),
+    ).toBeInTheDocument()
   })
 })

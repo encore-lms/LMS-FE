@@ -23,15 +23,16 @@ export default function QnaListPage() {
   useEffect(() => {
     setPage(1)
   }, [active, query])
-  usePageHeader(
-    'QnA 게시판',
-    '강의·과제·환경설정·진로 궁금증을 동료·멘토·강사와 함께 풀어요.',
-  )
-
-  // 운영(/admin/qna)에서도 같은 화면을 쓴다 — 이동 경로는 마운트 위치를 따르고,
-  // 질문 작성은 수강생 전용이라 운영에선 숨긴다(BE도 /admin/qna에 작성 엔드포인트 없음).
+  // 운영(/admin/qna)·강사(/instructor/qna)에서도 같은 화면을 쓴다 — 이동 경로는 마운트 위치를 따르고,
+  // 질문 작성은 수강생 전용이라 나머지 역할에선 숨긴다(BE도 작성 엔드포인트를 열지 않는다).
   const base = useQnaBase()
   const canAsk = base === '/student/qna'
+  usePageHeader(
+    'QnA 게시판',
+    base === '/instructor/qna'
+      ? '담당 기수 수강생이 올린 질문을 확인하고 답변해 주세요.'
+      : '강의·과제·환경설정·진로 궁금증을 동료·멘토·강사와 함께 풀어요.',
+  )
 
   const open = (q: QnaQuestion) => navigate(`${base}/${q.id}`)
 

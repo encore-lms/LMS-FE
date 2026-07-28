@@ -47,11 +47,16 @@ interface ReviewDetailPanelProps {
   actions?: ReviewPanelActions
 }
 
-/** 상세에서 바로 처리하는 검토 액션. pending 이 아니면 버튼을 숨긴다. */
+/** 상세에서 바로 처리하는 검토 액션. 상태에 따라 노출되는 버튼이 다르다. */
 export interface ReviewPanelActions {
+  /** 인증 대기 — 인증·보완 요청 노출 */
   pending: boolean
+  /** 이미 인증됨 — 인증 취소 노출 */
+  certified?: boolean
   onCertify: () => void
   onRequestChanges: () => void
+  /** 인증 취소 — 확인 문구 입력을 거친다. */
+  onRevoke?: () => void
   busy?: boolean
 }
 
@@ -163,6 +168,21 @@ export function ReviewDetailPanel({
             </Button>
             <Button disabled={actions.busy} onClick={actions.onCertify}>
               인증
+            </Button>
+          </div>
+        )}
+        {/* 인증을 되돌리는 길 — 잘못 인증한 것을 고칠 수 없으면 인증 자체를 주저하게 된다. */}
+        {actions?.certified && actions.onRevoke && (
+          <div className="border-divider flex items-center justify-between gap-3 border-t px-5 py-4">
+            <p className="text-fg-subtle text-xs">
+              잘못 인증했다면 취소할 수 있어요
+            </p>
+            <Button
+              variant="secondary"
+              disabled={actions.busy}
+              onClick={actions.onRevoke}
+            >
+              인증 취소
             </Button>
           </div>
         )}

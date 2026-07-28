@@ -11,7 +11,9 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useLocalNotificationStore } from './localNotifications'
 
-// 헤더 알림 벨 — 전 역할 공통. 알림 데이터를 드롭다운으로 노출. 미확인 수 배지 + 모두 읽기.
+// 헤더 알림 벨 — 전 역할 공통. 최신 몇 건만 드롭다운으로 노출하고(BE가 10건으로 제한),
+// 나머지는 '전체 보기'로 알림 화면(/notifications)에서 스크롤로 본다.
+// 미확인 수 배지 + 모두 읽기.
 // 서버 알림은 PATCH /notifications/read(전체)·/notifications/{id}/read(클릭 1건)로 영속 읽음 처리,
 // 멘션 등 FE 발생 알림(localNotifications)은 로컬 스토어에서 읽음 처리한다.
 export function NotificationBell() {
@@ -168,6 +170,18 @@ export function NotificationBell() {
               })}
             </ul>
           )}
+
+          <div className="bg-divider mx-1 h-px" />
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false)
+              navigate('/notifications')
+            }}
+            className="text-fg-muted hover:bg-surface-muted hover:text-fg w-full rounded-lg px-3 py-2 text-center text-xs font-medium"
+          >
+            전체 보기
+          </button>
         </div>
       )}
     </div>

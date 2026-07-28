@@ -26,10 +26,7 @@ import { EvidenceUploadStep } from './steps/EvidenceUploadStep'
 import { NoteStep } from './steps/NoteStep'
 
 // 폼 값 → 제출 페이로드. 선택한 유형에 해당하는 조건부 필드만 담고, 공가 미사용 시 공가 필드는 비운다.
-function toPayload(
-  values: AttendanceFormValues,
-  attachmentNames: string[],
-): AttendanceFormPayload {
+function toPayload(values: AttendanceFormValues): AttendanceFormPayload {
   const payload: AttendanceFormPayload = {
     attendanceType: values.attendanceType,
     officialLeaveUsed: values.officialLeaveUsed,
@@ -41,7 +38,6 @@ function toPayload(
         ? values.officialLeaveOtherReason
         : null,
     note: values.note ? values.note : null,
-    attachmentNames,
   }
   if (values.attendanceType === 'LATE') {
     payload.expectedArrivalTime = values.expectedArrivalTime
@@ -65,7 +61,8 @@ export default function AttendanceFormPage() {
   const navigate = useNavigate()
   const { data: meta, isPending, isError, refetch } = useAttendanceFormMeta()
   const submitMutation = useSubmitAttendanceForm()
-  const [attachments, setAttachments] = useState<string[]>([])
+  const uploadAttachments = useUploadAttendanceAttachments()
+  const [attachments, setAttachments] = useState<File[]>([])
   const [submitted, setSubmitted] = useState<AttendanceFormSubmission | null>(
     null,
   )
@@ -85,8 +82,14 @@ export default function AttendanceFormPage() {
   })
 
   const onSubmit = methods.handleSubmit((values) => {
-    submitMutation.mutate(toPayload(values, attachments), {
-      onSuccess: (submission) => setSubmitted(submission),
+    submitMutation.mutate(toPayload(values), {
+      onSuccess: (submission) => {
+        setSubmitted(submission)
+        // 증빙은 제출이 만들어진 뒤에야 붙일 수 있다(첨부는 제출 id에 매인다).
+        if (attachments.length > 0 && submission?.id) {
+          uploadAttachments.mutate({ id: submission.id, files: attachments })
+        }
+      },
     })
   })
 

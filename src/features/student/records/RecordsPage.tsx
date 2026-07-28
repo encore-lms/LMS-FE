@@ -135,15 +135,22 @@ function RecordsView({ data }: { data: RecordsOverview }) {
     toast.success(msg)
   }, [params, toast])
 
-  // 탭(카테고리) + 상태 필터 + 정렬(주차 번호 기준).
-  const weekNo = (r: BlogRecord) => parseInt(r.weekLabel, 10) || 0
+  // 탭(카테고리) + 상태 필터 + 정렬.
+  // 정렬은 **활동 일자** 기준 — 예전에는 주차 번호(weekLabel)를 파싱했는데, 스터디·자격증은
+  // 라벨이 "스터디"·"자격증"이라 전부 0이 되어 정렬이 통째로 무효였다(제출 순서가 그대로 남았다).
+  // 과거 날짜로 올린 기록이 과거로 가야 직관과 맞는다.
+  const activityKey = (r: BlogRecord) => r.activityDate ?? ''
   const visible = useMemo(() => {
     let list = records.filter((r) => r.category === activeTab)
     if (statusFilter !== 'all')
       list = list.filter((r) => r.status === statusFilter)
-    return [...list].sort((a, b) =>
-      sort === 'latest' ? weekNo(b) - weekNo(a) : weekNo(a) - weekNo(b),
-    )
+    return [...list].sort((a, b) => {
+      const av = activityKey(a)
+      const bv = activityKey(b)
+      // 활동 일자가 없는 기록은 항상 뒤로 — 정렬 방향과 무관하게 끝에 모은다.
+      if (!av || !bv) return av ? -1 : bv ? 1 : 0
+      return sort === 'latest' ? bv.localeCompare(av) : av.localeCompare(bv)
+    })
   }, [records, activeTab, statusFilter, sort])
 
   // 페이지네이션 — 현재 필터 결과(visible)를 PAGE_SIZE 단위로 나눠 표시.

@@ -106,8 +106,39 @@ describe('MaterialDetailModal', () => {
     expect(screen.getByRole('button', { name: '링크 열기' })).toBeInTheDocument()
   })
 
-  it('본인 자료가 아니면 삭제를 노출하지 않는다', () => {
-    renderModal({ ...base, ownedByMe: false })
+  it('본인 자료가 아니면 수정·삭제를 노출하지 않는다', () => {
+    render(
+      <ToastProvider>
+        <MaterialDetailModal
+          item={{ ...base, ownedByMe: false }}
+          onClose={vi.fn()}
+          onDelete={vi.fn()}
+          onEdit={vi.fn()}
+        />
+      </ToastProvider>,
+    )
     expect(screen.queryByRole('button', { name: '삭제' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '수정' })).toBeNull()
+  })
+
+  it('본인 자료면 수정을 열 수 있다', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    render(
+      <ToastProvider>
+        <MaterialDetailModal item={base} onClose={vi.fn()} onEdit={onEdit} />
+      </ToastProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: '수정' }))
+
+    expect(onEdit).toHaveBeenCalledWith(base)
+  })
+
+  it('설명과 주차를 상세에 보여준다', () => {
+    renderModal({ ...base, week: '9주차 · Spring Boot' })
+    // 공유 폼의 설명·주차가 서버에 저장되지 않아 늘 비어 있던 자리다.
+    expect(screen.getByText('조회 로그와 함께 정리했습니다.')).toBeInTheDocument()
+    expect(screen.getByText('9주차 · Spring Boot')).toBeInTheDocument()
   })
 })

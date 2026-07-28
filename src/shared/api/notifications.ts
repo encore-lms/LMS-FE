@@ -25,14 +25,14 @@ export function useNotificationInbox(category: string | null) {
     queryKey: notificationKeys.inbox(category),
     enabled: !!role,
     initialPageParam: null as string | null,
+    // apiClient.get 의 두 번째 인자는 쿼리 파라미터 <b>그 자체</b>다 — { params: … } 로 감싸면
+    // 한 겹 더 들어가 필터도 커서도 서버에 닿지 않는다(목록이 늘 첫 페이지 전체로 보인다).
     queryFn: ({ pageParam }) =>
       apiClient
         .get<NotificationInboxPage>('/notifications/inbox', {
-          params: {
-            category: category ?? undefined,
-            cursor: pageParam ?? undefined,
-            size: 20,
-          },
+          category: category ?? undefined,
+          cursor: pageParam ?? undefined,
+          size: 20,
         })
         .then((r) => r.data),
     getNextPageParam: (last) => last.nextCursor,

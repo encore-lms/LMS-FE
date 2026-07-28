@@ -61,7 +61,12 @@ export default function TroubleshootingListPage() {
     if (!delTarget) return
     deleteMutation.mutate(delTarget.id, {
       onSuccess: () => toast.success('사례를 삭제했어요'),
-      onError: () => toast.danger('삭제에 실패했어요'),
+      onError: (e) => {
+        const message = (
+          e as { response?: { data?: { message?: string } } }
+        )?.response?.data?.message
+        toast.danger(message || '삭제에 실패했어요')
+      },
     })
     setDelTarget(null)
   }
@@ -209,12 +214,15 @@ export default function TroubleshootingListPage() {
                           : { label: '연결 필요', ok: false }
                         : undefined
                     }
-                    onRemove={
-                      c.status === 'certified'
-                        ? undefined
-                        : () => setDelTarget(c)
-                    }
+                    onRemove={() => setDelTarget(c)}
                     removeLabel="삭제"
+                    // 인증 완료 사례는 서버가 409로 막는다 — 버튼을 숨기면 이유를 알 수 없어
+                    // 비활성으로 두고 무엇을 해야 하는지 알린다.
+                    removeDisabledReason={
+                      c.status === 'certified'
+                        ? '인증 완료된 사례는 삭제할 수 없어요 — 변경 제안을 이용하세요'
+                        : null
+                    }
                     onShowReason={() => setReasonTarget(c)}
                   />
                 </Fragment>

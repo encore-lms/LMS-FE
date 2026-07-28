@@ -6,6 +6,7 @@ import type {
   CourseMaterials,
   MaterialItem,
   ShareMaterialInput,
+  UpdateMaterialInput,
 } from '../course/types'
 import type {
   AssignmentDetail,
@@ -69,6 +70,8 @@ export function useShareMaterial() {
         const form = new FormData()
         form.append('title', input.title)
         form.append('fileType', input.fileType)
+        if (input.body) form.append('body', input.body)
+        if (input.week) form.append('week', input.week)
         form.append('file', input.file)
         return apiClient
           .postForm<MaterialItem>('/student/course/materials/file', form)
@@ -83,6 +86,30 @@ export function useShareMaterial() {
 }
 
 /** 자료 삭제 — 본인 공유 자료만 삭제(서버에서도 검증) 후 목록 갱신 */
+/**
+ * 자료 수정 — PATCH /student/course/materials/{id} (multipart).
+ * 파일 교체와 글 수정이 한 폼에서 일어나 multipart 하나로 보낸다.
+ * 넘기지 않은 항목은 서버가 기존 값을 유지하므로, 안 고친 칸을 빈 값으로 밀지 않는다.
+ */
+export function useUpdateMaterial() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: UpdateMaterialInput) => {
+      const form = new FormData()
+      if (input.title !== undefined) form.append('title', input.title)
+      if (input.body !== undefined) form.append('body', input.body)
+      if (input.week !== undefined) form.append('week', input.week)
+      if (input.fileUrl) form.append('fileUrl', input.fileUrl)
+      if (input.file) form.append('file', input.file)
+      return apiClient.patchForm<void>(
+        `/student/course/materials/${input.id}`,
+        form,
+      )
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: courseKeys.materials() }),
+  })
+}
+
 export function useDeleteMaterial() {
   const qc = useQueryClient()
   return useMutation({

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, Search, User } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, useAuthActions, usePageHeaderStore } from '@/shared/store'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { PROFILE_PATH } from '@/features/profile/paths'
 
 // 헤더 — 콘텐츠 영역 상단 바. 좌측: 페이지 제목·설명(usePageHeader로 각 페이지가 등록),
-// 우측 클러스터: 검색 · 알림 · 프로필. 구분선 없이 본문과 이어지는 통합형(Figma 기준).
-// 검색(전역) · 알림 목록은 BE 데이터 연동 후속이라 현재는 UI까지. 프로필은 로그아웃까지 실동작.
+// 우측 클러스터: 알림 · 프로필. 구분선 없이 본문과 이어지는 통합형(Figma 기준).
+// 전역 검색란은 비기능 UI(BE 엔드포인트 없음)라 제거(2026-07-28). 프로필은 로그아웃까지 실동작.
 export function Header() {
   const navigate = useNavigate()
   const { user, role } = useAuth()
@@ -49,17 +49,6 @@ export function Header() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        {/* 검색 — UI(전역 검색 연동은 후속) */}
-        <div className="relative hidden sm:block">
-          <Search className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <input
-            type="search"
-            aria-label="검색"
-            placeholder="검색"
-            className="border-border bg-surface-muted/60 text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-[240px] rounded-lg border pr-3 pl-9 text-[13px] focus:bg-white focus:outline-none"
-          />
-        </div>
-
         {/* 알림 — 전 역할 공통 드롭다운(서버 알림은 역할별로 useRoleNotifications가 분기) */}
         <NotificationBell />
 

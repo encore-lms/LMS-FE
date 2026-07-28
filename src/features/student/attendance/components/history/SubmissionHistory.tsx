@@ -4,7 +4,7 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { AttendanceActionButton } from '../AttendanceActionButton'
 import type { AttendanceFormSubmission } from '../../types'
-import { useUpdateAttendanceAttachments } from '../../../api/attendance'
+import { useUploadAttendanceAttachments } from '../../../api/attendance'
 import { EvidenceUploadStep } from '../../form/steps/EvidenceUploadStep'
 import { SubmissionHistoryTable } from './SubmissionHistoryTable'
 
@@ -20,11 +20,12 @@ export function SubmissionHistory({
   submissions: AttendanceFormSubmission[]
   onWriteForm: () => void
 }) {
-  const updateMutation = useUpdateAttendanceAttachments()
+  const uploadMutation = useUploadAttendanceAttachments()
   const [editTarget, setEditTarget] = useState<AttendanceFormSubmission | null>(
     null,
   )
-  const [files, setFiles] = useState<string[]>([])
+  // 사후 증빙은 '추가'다 — 기존 첨부는 서버에 그대로 두고 새로 고른 파일만 올린다.
+  const [files, setFiles] = useState<File[]>([])
   const [page, setPage] = useState(1)
 
   const totalPages = Math.max(1, Math.ceil(submissions.length / PAGE_SIZE))
@@ -36,12 +37,15 @@ export function SubmissionHistory({
 
   const openEdit = (submission: AttendanceFormSubmission) => {
     setEditTarget(submission)
-    setFiles((submission.attachments ?? []).map((a) => a.fileName))
+    setFiles([])
   }
   const saveEdit = () => {
-    if (!editTarget) return
-    updateMutation.mutate(
-      { id: editTarget.id, attachmentNames: files },
+    if (!editTarget || files.length === 0) {
+      setEditTarget(null)
+      return
+    }
+    uploadMutation.mutate(
+      { id: editTarget.id, files },
       { onSuccess: () => setEditTarget(null) },
     )
   }
@@ -132,9 +136,9 @@ export function SubmissionHistory({
             </button>
             <AttendanceActionButton
               onClick={saveEdit}
-              disabled={updateMutation.isPending}
+              disabled={uploadMutation.isPending}
             >
-              {updateMutation.isPending ? '저장 중…' : '저장'}
+              {uploadMutation.isPending ? '저장 중…' : '저장'}
             </AttendanceActionButton>
           </>
         }

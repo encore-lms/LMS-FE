@@ -24,6 +24,7 @@ import {
 } from '../api/quizzes'
 import { useAssignmentCohortOptions } from '../api/assignments'
 import { useQuizTemplateDetail } from '../api/quizTemplates'
+import { cloneTemplateQuestions } from './cloneTemplateQuestions'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { QuizQuestionEditor } from './QuizQuestionEditor'
 import { quizSchema, type QuizInput } from './quiz.schema'
@@ -239,7 +240,7 @@ export default function QuizFormPage() {
     setValue('timeLimitMin', 60)
   }, [isEdit, setValue])
 
-  // 생성 모드 — 템플릿 프리필(cohortId 보존).
+  // 생성 모드 — 템플릿 프리필(cohortId 보존). 문항은 저장 시 복제된다.
   const prefilledRef = useRef<string | null>(null)
   useEffect(() => {
     if (isEdit || !template) return
@@ -247,17 +248,39 @@ export default function QuizFormPage() {
     prefilledRef.current = template.id
     setValue('title', template.name)
     setValue('description', template.description)
+    setValue('category', template.category)
     setValue('timeLimitMin', template.defaultTimeLimitMin)
     setGradingMode(template.gradingMode)
     setResultReveal(template.resultReveal)
     setShuffleQuestions(template.shuffleQuestions)
     setShuffleChoices(template.shuffleChoices)
     toast.info(
-      `'${template.name}' 템플릿을 불러왔어요 (문항 ${template.questionCount}개)`,
+      `'${template.name}' 템플릿을 불러왔어요 — 저장하면 문항 ${template.questionCount}개가 복제돼요`,
     )
   }, [isEdit, template, setValue, toast])
 
   const hasSubmissions = isEdit && (data?.submittedCount ?? 0) > 0
+
+  // 생성 완료 후속 — 템플릿 복제면 문항까지 복사(+사용 마킹)하고 편집 화면으로.
+  const afterCreate = async (savedId: string, openAdd: boolean) => {
+    if (templateId) {
+      const r = await cloneTemplateQuestions(templateId, savedId).catch(
+        () => null,
+      )
+      if (!r || (r.total > 0 && r.copied === 0)) {
+        toast.danger(
+          '템플릿 문항 복제에 실패했어요 — 문항을 직접 추가해 주세요',
+        )
+      } else if (r.copied > 0) {
+        toast.success(
+          `템플릿 문항 ${r.copied}개 복제됨${
+            r.skipped ? ` · ${r.skipped}개 제외(정답 미보관)` : ''
+          }`,
+        )
+      }
+    }
+    navigate(editUrl(savedId, openAdd))
+  }
 
   const save = (input: QuizInput, vis: QuizVisibility, openAdd = false) => {
     saveQuiz.mutate(
@@ -282,8 +305,9 @@ export default function QuizFormPage() {
           // 생성 직후엔 같은 폼의 수정 화면으로 — 문항 섹션이 인라인으로 함께 보인다.
           // 여기서 목록으로 내보내면 문항 0개짜리 퀴즈가 남는다.
           // openAdd면 문항 추가 폼을 바로 펼친다(임시저장 따로 누를 필요 없음).
+          // 템플릿 복제 진입이면 문항 복사까지 끝낸 뒤 이동한다.
           if (!isEdit) {
-            navigate(editUrl(saved.id, openAdd))
+            void afterCreate(saved.id, openAdd)
             return
           }
           // 수정 저장은 편집을 마쳤다는 뜻 — 목록(허브 퀴즈 탭)으로 복귀한다.
@@ -324,7 +348,7 @@ export default function QuizFormPage() {
       {
         onSuccess: (saved) => {
           toast.success('임시저장했어요 — 문항을 추가하세요')
-          navigate(editUrl(saved.id, true))
+          void afterCreate(saved.id, true)
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },
@@ -526,7 +550,9 @@ export default function QuizFormPage() {
                 className={`${FIELD} text-fg-muted bg-surface-muted flex cursor-not-allowed items-center`}
                 aria-label="총점(자동 계산)"
               >
-                {isEdit ? `${data?.totalPoints ?? 0}점` : '문항 추가 시 자동 계산'}
+                {isEdit
+                  ? `${data?.totalPoints ?? 0}점`
+                  : '문항 추가 시 자동 계산'}
               </div>
               <span className="text-fg-subtle mt-1 block text-xs">
                 문항 배점 합계로 자동 계산됩니다

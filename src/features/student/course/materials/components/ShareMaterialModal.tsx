@@ -3,40 +3,13 @@ import type { ChangeEvent, DragEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { cn } from '@/shared/lib/cn'
-import type { MaterialFileType, ShareMaterialInput } from '../../types'
-
-// 첨부 파일명 확장자 → 자료 형식(MaterialFileType). 목록 배지/아이콘과 맞춘다.
-function fileTypeFromName(name: string): MaterialFileType {
-  const ext = name.split('.').pop()?.toLowerCase() ?? ''
-  if (ext === 'pdf') return 'PDF'
-  if (ext === 'zip') return 'ZIP'
-  if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return 'IMG'
-  return 'DOC'
-}
-
-// 확장자 → 파일 형식 배지(라벨·색)
-const EXT_BADGE: Record<string, { label: string; cls: string }> = {
-  pdf: { label: 'PDF', cls: 'bg-danger-bg text-danger' },
-  doc: { label: 'DOC', cls: 'bg-info-bg text-info' },
-  docx: { label: 'DOC', cls: 'bg-info-bg text-info' },
-  ppt: { label: 'PPT', cls: 'bg-accent-bg text-accent-strong' },
-  pptx: { label: 'PPT', cls: 'bg-accent-bg text-accent-strong' },
-  zip: { label: 'ZIP', cls: 'bg-warning-bg text-warning' },
-  png: { label: 'IMG', cls: 'bg-success-bg text-success' },
-  jpg: { label: 'IMG', cls: 'bg-success-bg text-success' },
-  jpeg: { label: 'IMG', cls: 'bg-success-bg text-success' },
-  gif: { label: 'IMG', cls: 'bg-success-bg text-success' },
-  webp: { label: 'IMG', cls: 'bg-success-bg text-success' },
-}
-const badgeFor = (name: string) =>
-  EXT_BADGE[name.split('.').pop()?.toLowerCase() ?? ''] ?? {
-    label: 'FILE',
-    cls: 'bg-surface-muted text-fg-muted',
-  }
-const fmtSize = (bytes: number) =>
-  bytes >= 1024 * 1024
-    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
-    : `${Math.max(1, Math.round(bytes / 1024))} KB`
+import type { ShareMaterialInput } from '../../types'
+import {
+  badgeFor,
+  fileTypeFromName,
+  fmtSize,
+  UPLOAD_HINT,
+} from './materialForm'
 
 interface ShareFile {
   /** 실제 업로드 대상 — 예전엔 이름·크기만 들고 있어 파일이 전송되지 않았다. */
@@ -263,7 +236,7 @@ export function ShareMaterialModal({
                 파일을 드래그하거나 클릭하여 업로드
               </span>
               <span className="text-fg-subtle text-[11px]">
-                PDF, DOC, PPT, ZIP, 이미지, TXT/LOG/MD · 파일당 20MB
+                {UPLOAD_HINT}
               </span>
             </div>
             {files.map((f) => {

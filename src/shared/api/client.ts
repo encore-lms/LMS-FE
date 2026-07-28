@@ -80,6 +80,7 @@ export interface ApiClient {
   postNoContent(url: string, body?: unknown): Promise<void>
   // multipart/form-data 전송(파일 업로드). Content-Type을 비워 axios가 boundary를 자동 설정.
   postForm<T>(url: string, form: FormData): Promise<ApiResponse<T>>
+  patchForm<T>(url: string, form: FormData): Promise<ApiResponse<T>>
   put<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
   // PATCH — 부분 갱신(운영 수동 채점 grade 계약). 기존 메서드 시그니처는 불변(추가만).
   patch<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
@@ -103,6 +104,13 @@ export const apiClient: ApiClient = {
   async postForm<T>(url: string, form: FormData) {
     // Content-Type을 undefined로 두면 브라우저/axios가 boundary 포함 multipart 헤더를 채운다.
     const res = await instance.post<ApiResponse<T>>(url, form, {
+      headers: { 'Content-Type': undefined },
+    })
+    return res.data
+  },
+  async patchForm<T>(url: string, form: FormData) {
+    // Content-Type을 undefined로 두면 브라우저/axios가 boundary 포함 multipart 헤더를 채운다.
+    const res = await instance.patch<ApiResponse<T>>(url, form, {
       headers: { 'Content-Type': undefined },
     })
     return res.data

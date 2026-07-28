@@ -206,7 +206,6 @@ export default function QuizFormPage() {
       startAt: data.startAt,
       endAt: data.endAt,
       timeLimitMin: data.timeLimitMin,
-      totalPoints: data.totalPoints,
     })
     setGradingMode(data.gradingMode)
     setResultReveal(data.resultReveal)
@@ -249,13 +248,12 @@ export default function QuizFormPage() {
     setValue('title', template.name)
     setValue('description', template.description)
     setValue('timeLimitMin', template.defaultTimeLimitMin)
-    setValue('totalPoints', template.totalPoints)
     setGradingMode(template.gradingMode)
     setResultReveal(template.resultReveal)
     setShuffleQuestions(template.shuffleQuestions)
     setShuffleChoices(template.shuffleChoices)
     toast.info(
-      `'${template.name}' 템플릿을 불러왔어요 (문항 ${template.questionCount} · 만점 ${template.totalPoints})`,
+      `'${template.name}' 템플릿을 불러왔어요 (문항 ${template.questionCount}개)`,
     )
   }, [isEdit, template, setValue, toast])
 
@@ -274,7 +272,6 @@ export default function QuizFormPage() {
         allowRetake,
         shuffleQuestions,
         shuffleChoices,
-        totalPoints: input.totalPoints,
         visibility: vis,
         startAt: input.startAt,
         endAt: input.endAt,
@@ -314,7 +311,6 @@ export default function QuizFormPage() {
         allowRetake,
         shuffleQuestions,
         shuffleChoices,
-        totalPoints: Number(v.totalPoints) || 0,
         visibility,
         startAt: v.startAt || undefined,
         endAt: v.endAt || undefined,
@@ -519,17 +515,16 @@ export default function QuizFormPage() {
             </div>
             <div>
               <FieldLabel>총점</FieldLabel>
-              <input
-                type="number"
-                className={FIELD}
-                placeholder="100"
-                {...register('totalPoints')}
-              />
-              {errors.totalPoints && (
-                <span className="text-danger mt-1 block text-xs">
-                  {errors.totalPoints.message}
-                </span>
-              )}
+              {/* 총점은 문항 배점 합계에서 자동 계산된다 — 직접 수정하지 않는다(서버가 문항 CRUD 때 동기화). */}
+              <div
+                className={`${FIELD} text-fg-muted bg-surface-muted flex cursor-not-allowed items-center`}
+                aria-label="총점(자동 계산)"
+              >
+                {isEdit ? `${data?.totalPoints ?? 0}점` : '문항 추가 시 자동 계산'}
+              </div>
+              <span className="text-fg-subtle mt-1 block text-xs">
+                문항 배점 합계로 자동 계산됩니다
+              </span>
             </div>
           </div>
 

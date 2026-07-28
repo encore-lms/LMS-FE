@@ -16,23 +16,26 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: '전체' },
   { key: 'not_submitted', label: '미제출' },
   { key: 'submitted', label: '제출 완료' },
+  { key: 'supplement_requested', label: '보완 요청' },
   { key: 'reviewed', label: '검토 완료' },
 ]
 
-// 제출 상태 배지(공통 StatusBadge 톤) — 미제출/제출 완료/검토 완료.
+// 제출 상태 배지(공통 StatusBadge 톤) — 미제출/제출 완료/보완 요청/검토 완료.
 const STATUS_META: Record<
   AssignmentStatus,
   { label: string; tone: BadgeTone }
 > = {
   not_submitted: { label: '미제출', tone: 'neutral' },
   submitted: { label: '제출 완료', tone: 'info' },
+  supplement_requested: { label: '보완 요청', tone: 'danger' },
   reviewed: { label: '검토 완료', tone: 'success' },
 }
 
-// 상태별 액션 — 미제출은 주요 CTA, 그 외는 보조.
+// 상태별 액션 — 미제출·보완 요청은 학생이 손대야 하므로 주요 CTA, 그 외는 보조.
 const CTA: Record<AssignmentStatus, { label: string; primary: boolean }> = {
   not_submitted: { label: '제출하기', primary: true },
   submitted: { label: '제출 보기', primary: false },
+  supplement_requested: { label: '보완 후 재제출', primary: true },
   reviewed: { label: '피드백 보기', primary: false },
 }
 

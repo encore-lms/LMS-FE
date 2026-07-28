@@ -21,6 +21,27 @@ export function useInstructorQuizzes(cohortId?: string | null) {
   })
 }
 
+export interface QuizCategoryOptions {
+  quizCategories: string[]
+  questionCategories: string[]
+}
+/**
+ * 카테고리 추천 목록(기수 범위) — 자유 입력 폼의 datalist 소스.
+ * 고정 카탈로그가 없어 표기가 갈라지면 결과 화면의 카테고리별 정답률이 쪼개진다. 이미 쓴 값을 제안해 줄인다.
+ */
+export function useQuizCategoryOptions(cohortId?: string) {
+  return useQuery({
+    queryKey: instructorKeys.quizCategoryOptions(cohortId ?? ''),
+    queryFn: () =>
+      apiClient
+        .get<QuizCategoryOptions>(
+          `/instructor/quizzes/category-options?cohortId=${cohortId}`,
+        )
+        .then((r) => r.data),
+    enabled: !!cohortId,
+  })
+}
+
 export interface SaveQuizInput {
   cohortId: string
   title: string
@@ -86,6 +107,8 @@ export interface SaveQuizQuestionInput {
   answers?: string[]
   blankScores?: number[]
   explanation?: string
+  /** 기술 카테고리(예: Spark). 선택 — 결과 화면의 카테고리별 정답률 집계 단위. */
+  category?: string
   points: number
   /** 삽입 위치(0-based). 생성 시에만 사용, 미지정이면 맨 뒤. */
   order?: number

@@ -16,6 +16,7 @@ import {
   useSaveGrading,
   useSaveQuiz,
   useDeleteQuiz,
+  useQuizCategoryOptions,
 } from '../api/quizzes'
 import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
 import { useAssignmentCohortOptions } from '../api/assignments'
@@ -72,6 +73,7 @@ const quizDetail: QuizFormDetail = {
   title: '알고리즘 기초 #3',
   cohortOption: 'DA 4기 · 알고리즘',
   description: '재귀·동적 계획법·그리디 기본 개념 확인.',
+  category: '알고리즘',
   startAt: '2026-05-12 09:00',
   endAt: '2026-05-18 23:59',
   timeLimitMin: 90,
@@ -250,6 +252,12 @@ function mockAll() {
   // 템플릿 프리필 — 기본은 미선택(데이터 없음)
   vi.mocked(useQuizTemplateDetail).mockReturnValue(
     ok(undefined) as unknown as ReturnType<typeof useQuizTemplateDetail>,
+  )
+  vi.mocked(useQuizCategoryOptions).mockReturnValue(
+    ok({
+      quizCategories: ['빅데이터'],
+      questionCategories: ['Spark', 'DataFrame'],
+    }) as unknown as ReturnType<typeof useQuizCategoryOptions>,
   )
   vi.mocked(useAssignmentCohortOptions).mockReturnValue(
     ok([{ cohortId: 'c1', label: 'DA 4기' }]) as unknown as ReturnType<

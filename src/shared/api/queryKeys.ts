@@ -109,6 +109,8 @@ export const instructorKeys = {
   endorsementDetail: (endorsementId: string) =>
     [...instructorKeys.all, 'endorsements', endorsementId] as const,
   quizzes: () => [...instructorKeys.all, 'quizzes'] as const,
+  quizCategoryOptions: (cohortId: string) =>
+    [...instructorKeys.all, 'quizzes', 'category-options', cohortId] as const,
   quizDetail: (quizId: string) =>
     [...instructorKeys.all, 'quizzes', quizId] as const,
   quizQuestions: (quizId: string) =>

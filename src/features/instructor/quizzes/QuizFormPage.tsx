@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
+import { SuggestInput } from '@/components/ui/SuggestInput'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -16,7 +17,11 @@ import type {
   QuizVisibility,
   ResultRevealPolicy,
 } from '@/shared/types'
-import { useInstructorQuizDetail, useSaveQuiz } from '../api/quizzes'
+import {
+  useInstructorQuizDetail,
+  useQuizCategoryOptions,
+  useSaveQuiz,
+} from '../api/quizzes'
 import { useAssignmentCohortOptions } from '../api/assignments'
 import { useQuizTemplateDetail } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
@@ -180,11 +185,15 @@ export default function QuizFormPage() {
     reset,
     setValue,
     getValues,
+    watch,
     formState: { errors },
   } = useForm<QuizInput>({
     resolver: zodResolver(quizSchema),
     defaultValues: { cohortId: '', startAt: '', endAt: '' },
   })
+
+  // 카테고리 추천 — 선택된 기수 범위에서 이미 쓰인 값. 기수를 바꾸면 제안도 따라간다.
+  const { data: categoryOptions } = useQuizCategoryOptions(watch('cohortId'))
 
   // 수정 모드 — 상세 도착 시 폼·라디오·토글 동기화.
   useEffect(() => {
@@ -193,6 +202,7 @@ export default function QuizFormPage() {
       title: data.title,
       cohortId: data.cohortId,
       description: data.description,
+      category: data.category,
       startAt: data.startAt,
       endAt: data.endAt,
       timeLimitMin: data.timeLimitMin,
@@ -257,6 +267,7 @@ export default function QuizFormPage() {
         cohortId: input.cohortId,
         title: input.title,
         description: input.description,
+        category: input.category,
         gradingMode,
         resultReveal,
         timeLimitMin: input.timeLimitMin,
@@ -396,6 +407,29 @@ export default function QuizFormPage() {
               className={`${FIELD} h-auto py-2`}
               {...register('description')}
             />
+          </div>
+          <div className="mt-3 sm:max-w-xs">
+            <FieldLabel>카테고리</FieldLabel>
+            <Controller
+              control={control}
+              name="category"
+              render={({ field }) => (
+                <SuggestInput
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  suggestions={categoryOptions?.quizCategories}
+                  placeholder="예: 빅데이터 (선택)"
+                  aria-label="퀴즈 카테고리"
+                  maxLength={50}
+                  className={FIELD}
+                />
+              )}
+            />
+            {errors.category?.message && (
+              <p className="text-danger mt-1 text-[12px]">
+                {errors.category.message}
+              </p>
+            )}
           </div>
         </section>
 
@@ -537,6 +571,7 @@ export default function QuizFormPage() {
           <p className="text-fg mb-3 text-sm font-bold">문항</p>
           {isEdit && quizId ? (
             <QuizQuestionEditor
+              categorySuggestions={categoryOptions?.questionCategories ?? []}
               quizId={quizId}
               defaultAdding={searchParams.get('add') === '1'}
             />

@@ -1,12 +1,42 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { apiClient } from './client'
 import { useAuth } from '@/shared/store'
-import type { AppNotification } from '@/shared/types'
+import type { AppNotification, NotificationInboxPage } from '@/shared/types'
 
 // 알림 훅 — 헤더 알림 벨(features/notifications)과 수강생 대시보드 알림 목록이 함께 쓰므로
 // feature api 레이어가 아닌 shared로 승격했다(교차 사용 규칙, shared/api/students.ts와 동일 취지).
 export const notificationKeys = {
   all: ['notifications'] as const,
+  inbox: (category: string | null) =>
+    ['notifications', 'inbox', category ?? 'ALL'] as const,
+}
+
+// 알림 전체 화면 — GET /notifications/inbox?category&cursor&size.
+// 커서 페이지네이션이라 스크롤로 계속 이어 받는다. 분류 필터는 서버에서 걸어야
+// 페이지마다 남는 개수가 달라지지 않는다(클라이언트 필터는 무한 스크롤이 끊긴다).
+export function useNotificationInbox(category: string | null) {
+  const { role } = useAuth()
+  return useInfiniteQuery({
+    queryKey: notificationKeys.inbox(category),
+    enabled: !!role,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      apiClient
+        .get<NotificationInboxPage>('/notifications/inbox', {
+          params: {
+            category: category ?? undefined,
+            cursor: pageParam ?? undefined,
+            size: 20,
+          },
+        })
+        .then((r) => r.data),
+    getNextPageParam: (last) => last.nextCursor,
+  })
 }
 
 // 헤더 알림 벨 데이터 — 역할 무관 서버 알림(GET /notifications).

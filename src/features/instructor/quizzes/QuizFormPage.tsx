@@ -280,8 +280,14 @@ export default function QuizFormPage() {
         onSuccess: (saved) => {
           toast.success(`${input.title} 저장 — ${VISIBILITY_META[vis].label}`)
           // 생성 직후엔 같은 폼의 수정 화면으로 — 문항 섹션이 인라인으로 함께 보인다.
+          // 여기서 목록으로 내보내면 문항 0개짜리 퀴즈가 남는다.
           // openAdd면 문항 추가 폼을 바로 펼친다(임시저장 따로 누를 필요 없음).
-          if (!isEdit) navigate(editUrl(saved.id, openAdd))
+          if (!isEdit) {
+            navigate(editUrl(saved.id, openAdd))
+            return
+          }
+          // 수정 저장은 편집을 마쳤다는 뜻 — 목록(허브 퀴즈 탭)으로 복귀한다.
+          navigate(backTo)
         },
         onError: () => toast.danger('저장에 실패했어요'),
       },

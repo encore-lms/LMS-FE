@@ -5,13 +5,14 @@ export function EvidenceUploadStep({
   files,
   onChange,
 }: {
-  files: string[]
-  onChange: (files: string[]) => void
+  files: File[]
+  onChange: (files: File[]) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const onPick = (e: ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(e.target.files ?? []).map((f) => f.name)
+    // 파일명만 들고 있으면 서버에 바이트가 가지 않는다 — 실제 File 을 보관한다.
+    const picked = Array.from(e.target.files ?? [])
     if (picked.length) onChange([...files, ...picked])
     e.target.value = '' // 같은 파일 재선택 허용
   }
@@ -40,12 +41,12 @@ export function EvidenceUploadStep({
       />
       {files.length > 0 && (
         <ul className="flex flex-col gap-1">
-          {files.map((name, i) => (
+          {files.map((f, i) => (
             <li
-              key={`${name}-${i}`}
+              key={`${f.name}-${i}`}
               className="bg-surface-muted text-fg flex items-center justify-between rounded-md px-3 py-2 text-sm"
             >
-              <span className="truncate">{name}</span>
+              <span className="truncate">{f.name}</span>
               <button
                 type="button"
                 onClick={() => onChange(files.filter((_, idx) => idx !== i))}

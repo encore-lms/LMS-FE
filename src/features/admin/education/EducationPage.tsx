@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { BookOpen, FolderOpen, ListChecks, Lock } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -14,6 +15,7 @@ import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
+import { readLastCohort, writeLastCohort } from './lastCohort'
 import { SkeletonText } from '@/components/ui/Skeleton'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
@@ -158,12 +160,23 @@ export default function EducationPage() {
   const courseId = courseParam || courses?.[0]?.courseId || null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [cohortParam, setCohortParam] = useSearchParamState('cohort')
-  // 기본 기수는 '내가 담당하는 기수'부터 — 목록 첫 행은 최신 기수라 아직 프로젝트·수강생이 없는 경우가 많고,
-  // 기수가 전부 '운영 중'이라 상태만으로는 가릴 수 없다(그 상태로 열리면 탭이 비어 보인다).
   const cohorts = courseConfig?.cohorts ?? []
+  // 기본 기수 우선순위: 지난번에 본 기수 → 내가 담당하는 기수 → 목록 첫 기수.
+  // 목록 첫 행은 최신 기수라 아직 프로젝트·수강생이 없는 경우가 많고, 기수가 전부 '운영 중'이라
+  // 상태만으로는 가릴 수 없다. 담당 기수가 여럿이면 어느 쪽을 주로 보는지는 사람마다 달라
+  // 마지막 선택을 기억해 그대로 연다.
+  const remembered = readLastCohort(courseId)
   const defaultCohortId =
-    cohorts.find((c) => c.assigned)?.id ?? cohorts[0]?.id ?? null
+    (remembered && cohorts.some((c) => c.id === remembered) ? remembered : null) ??
+    cohorts.find((c) => c.assigned)?.id ??
+    cohorts[0]?.id ??
+    null
   const cohortId = cohortParam || defaultCohortId
+
+  // 선택이 확정될 때마다 기억해 둔다(URL 파라미터로 들어온 딥링크도 포함).
+  useEffect(() => {
+    if (courseId && cohortId) writeLastCohort(courseId, cohortId)
+  }, [courseId, cohortId])
 
   const [tab, setTab] = useSearchParamState('tab', 'materials')
 

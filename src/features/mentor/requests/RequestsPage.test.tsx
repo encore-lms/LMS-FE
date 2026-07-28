@@ -40,6 +40,31 @@ beforeEach(() => {
 })
 
 describe('RequestsPage', () => {
+  // QA: "요청대기·조정제안·확정·완료·거절·취소가 시간순으로 뜨도록 필요."
+  // BE는 요청 일시 하나로만 정렬해 내려주므로 '확정' 탭도 확정 일시 순이 아니었다.
+  it('탭 안에서 활동 시각 최신순으로 정렬한다', () => {
+    const base = buildMentoringRequestsData()
+    const [first, second] = base.requests.filter((r) => r.status === 'requested')
+    // 서버 순서를 일부러 역순으로 준다 — FE 정렬이 없으면 그대로 렌더된다.
+    mockList({
+      data: {
+        ...base,
+        requests: [
+          { ...first, activityAt: '2026-05-18T09:00' },
+          { ...second, activityAt: '2026-05-20T09:00' },
+        ],
+      },
+      isPending: false,
+      isError: false,
+    })
+    renderPage()
+
+    const rendered = screen.getAllByText(/팀$/).map((el) => el.textContent)
+    expect(rendered.indexOf(second.teamName)).toBeLessThan(
+      rendered.indexOf(first.teamName),
+    )
+  })
+
   it('KPI·필터 탭·진행 중 요청 카드를 렌더한다', () => {
     mockList({
       data: buildMentoringRequestsData(),
@@ -64,9 +89,10 @@ describe('RequestsPage', () => {
     expect(screen.getByRole('link', { name: '제안 수정' })).toBeInTheDocument()
     // 요청 대기 카드 액션 — 모달 오픈 링크(모드 프리셀렉트)
     expect(screen.getAllByRole('link', { name: '확정' })).toHaveLength(2)
+    // 활동 시각 최신순 — req_ts_4(05-27 10:15)가 req_rec_6(05-26 19:42)보다 앞선다
     expect(screen.getAllByRole('link', { name: '거절' })[0]).toHaveAttribute(
       'href',
-      '/mentor/mentoring-requests/req_rec_6?mode=reject',
+      '/mentor/mentoring-requests/req_ts_4?mode=reject',
     )
   })
 

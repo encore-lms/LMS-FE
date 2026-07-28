@@ -139,6 +139,19 @@ describe('DashboardPage (§1)', () => {
     expect(screen.getByText('퀴즈 관리')).toBeInTheDocument()
   })
 
+  // QA: "수강생 목록 API 미연동" — 실제로는 폐기된 /instructor/cohorts/all/students 로 이동해
+  // 매칭되는 라우트가 없어 아무 화면도 뜨지 않았다. 허브 '수강생' 탭으로 보낸다.
+  it('수강생 목록 바로가기는 등록된 라우트로 이동한다', async () => {
+    const user = userEvent.setup()
+    renderAt('/instructor')
+
+    await user.click(screen.getByText('수강생 목록'))
+
+    // 기수 미선택(전체)이면 담당 과정 목록 — 퀴즈 관리와 같은 규칙.
+    // 예전 경로는 라우터에 없어 이 화면이 뜨지 않았다.
+    expect(await screen.findByText('진행 중 과정')).toBeInTheDocument()
+  })
+
   it('긴급 행은 D+N 빨강 칩 강조, 액션 버튼은 흰 outline (Figma 실측)', () => {
     renderAt('/instructor')
     expect(screen.getByText('D+5').className).toContain('bg-danger-bg')

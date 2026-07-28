@@ -35,6 +35,18 @@ function normalizeTime(t: string): string {
 }
 
 /**
+ * 'HH:mm' 두 개의 분 차이 — 예상 시간 자동 계산용.
+ * 형식이 어긋나거나 종료가 시작보다 이르면 0(호출부에서 자동 반영을 건너뛴다).
+ */
+export function minutesBetween(startTime: string, endTime: string): number {
+  const s = normalizeTime(startTime ?? '')
+  const e = normalizeTime(endTime ?? '')
+  if (!s || !e) return 0
+  const toMinutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5))
+  return Math.max(0, toMinutes(e) - toMinutes(s))
+}
+
+/**
  * 폼 분해값(날짜 'YYYY-MM-DD' + 시작/종료 'HH:mm') → 표기 라벨 'M/D(요일) HH:mm ~ HH:mm'.
  * 요일은 실제 날짜에서 계산(완료 예약 파생 deriveCompletedRequests 와 동일 규칙).
  */

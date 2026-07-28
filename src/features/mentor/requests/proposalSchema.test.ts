@@ -1,9 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import {
   composeScheduleLabel,
+  minutesBetween,
   parseScheduleLabel,
   proposalSchema,
 } from './proposalSchema'
+
+// QA: "예약 요청 작성 시 예상 시간이 자동으로 바뀌지 않는다."
+// 시각을 바꿔도 예상 시간이 그대로여서 실제 일정과 어긋난 값이 제안됐다.
+describe('minutesBetween', () => {
+  it('시작·종료 시각의 분 차이를 계산한다', () => {
+    expect(minutesBetween('14:00', '16:00')).toBe(120)
+    expect(minutesBetween('9:30', '10:15')).toBe(45)
+  })
+
+  it('값이 비었거나 종료가 시작보다 이르면 0 — 자동 반영을 건너뛴다', () => {
+    expect(minutesBetween('', '16:00')).toBe(0)
+    expect(minutesBetween('14:00', '')).toBe(0)
+    expect(minutesBetween('16:00', '14:00')).toBe(0)
+  })
+})
 
 describe('composeScheduleLabel', () => {
   it('분해값을 M/D(요일) HH:mm ~ HH:mm 로 합성하고 요일은 실제 날짜에서 계산한다', () => {

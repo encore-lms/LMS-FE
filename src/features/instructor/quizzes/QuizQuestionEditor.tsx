@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, GripVertical, Plus, Trash2, X } from 'lucide-react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { ChevronDown, GripVertical, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { NumberInput } from '@/components/ui/NumberInput'
@@ -13,6 +13,14 @@ import {
   useSaveQuizQuestion,
   type SaveQuizQuestionInput,
 } from '../api/quizzes'
+import { AnswerFields } from './AnswerFields'
+import {
+  buildAnswerPayload,
+  emptyAnswer,
+  parseAnswerDraft,
+  FIELD,
+  type AnswerDraft,
+} from './answerDraft'
 
 // 이전 LMS 문제 생성 방식 — 객관식/주관식/빈칸. (코드블록·엑셀 임포트는 후속)
 const TYPES: { value: SaveQuizQuestionInput['type']; label: string }[] = [
@@ -28,79 +36,28 @@ const TYPE_LABEL: Record<string, string> = {
   essay: '서술형',
 }
 
-interface DraftState {
+interface DraftState extends AnswerDraft {
   type: SaveQuizQuestionInput['type']
   prompt: string
-  choices: string[]
-  answerIndex: number
-  answerText: string
-  answers: string[]
-  blankScores: number[]
   points: number
 }
 
 const EMPTY_DRAFT: DraftState = {
   type: 'multiple_choice',
   prompt: '',
-  choices: ['', ''],
-  answerIndex: 0,
-  answerText: '',
-  answers: [],
-  blankScores: [],
   points: 10,
+  ...emptyAnswer(),
 }
 
 function toDraft(q: InstructorQuestion): DraftState {
   const type = (q.type as SaveQuizQuestionInput['type']) ?? 'multiple_choice'
-  const fb = type === 'fill_blank' ? parseFillBlank(q.answerKey) : null
   return {
     type,
     prompt: q.body ?? '',
-    choices: q.choices && q.choices.length >= 2 ? q.choices : ['', ''],
-    answerIndex: type === 'multiple_choice' ? Number(q.answerKey ?? 0) || 0 : 0,
-    answerText:
-      type === 'short_answer' || type === 'essay' ? (q.answerKey ?? '') : '',
-    answers: fb ? fb.answers : [],
-    blankScores: fb ? fb.scores : [],
     points: q.points ?? 10,
+    ...parseAnswerDraft(type, q.choices, q.answerKey),
   }
 }
-// fill_blank answerKey = {"answers":[...],"scores":[...]} (구버전 배열도 허용)
-function parseFillBlank(json?: string): {
-  answers: string[]
-  scores: number[]
-} {
-  if (!json) return { answers: [], scores: [] }
-  try {
-    const v = JSON.parse(json)
-    if (Array.isArray(v)) return { answers: v.map(String), scores: [] }
-    return {
-      answers: (v.answers ?? []).map(String),
-      scores: (v.scores ?? []).map(Number),
-    }
-  } catch {
-    return { answers: [], scores: [] }
-  }
-}
-// 빈칸 내용의 ___ 개수만큼 정답 칸 동기화.
-function countBlanks(prompt: string) {
-  const m = prompt.match(/___/g)
-  return m ? m.length : 0
-}
-// 배점 자동 분배(이전 LMS): 균등 + 나머지는 뒤 칸에 +1. (10,3)→[3,3,4]
-function distributeBlankScores(points: number, blanks: number): number[] {
-  if (blanks <= 0) return []
-  if (points < blanks) return Array.from({ length: blanks }, () => 1)
-  const base = Math.floor(points / blanks)
-  const rem = points - base * blanks
-  return Array.from({ length: blanks }, (_, i) =>
-    i >= blanks - rem ? base + 1 : base,
-  )
-}
-
-const FIELD_BASE =
-  'border-border focus:border-brand text-fg placeholder:text-fg-subtle rounded-lg border bg-white px-3 py-2 text-sm outline-none'
-const FIELD = `${FIELD_BASE} w-full`
 
 // 인라인 문항 폼 — 추가/편집 공용.
 function QuestionForm({
@@ -122,73 +79,24 @@ function QuestionForm({
   const [d, setD] = useState<DraftState>(initial)
   const set = (patch: Partial<DraftState>) => setD((p) => ({ ...p, ...patch }))
 
-  const blanks = d.type === 'fill_blank' ? countBlanks(d.prompt) : 0
-  // 빈칸 수에 맞춰 정답 배열 동기화
-  const answers = useMemo(() => {
-    const a = [...d.answers]
-    a.length = blanks
-    return Array.from({ length: blanks }, (_, i) => a[i] ?? '')
-  }, [blanks, d.answers])
-  // 빈칸 수가 바뀌면 배점 자동 분배, 사용자가 직접 고친 값은 유지
-  const scores = useMemo(
-    () =>
-      d.blankScores.length === blanks
-        ? d.blankScores
-        : distributeBlankScores(d.points, blanks),
-    [blanks, d.blankScores, d.points],
-  )
-  const scoreSum = scores.reduce((s, v) => s + (v || 0), 0)
-
   const submit = () => {
     if (!d.prompt.trim()) {
       toast.danger('문항 내용을 입력해 주세요')
+      return
+    }
+    const answer = buildAnswerPayload(d.type, d.prompt, d.points, d)
+    if (!answer.ok) {
+      toast.danger(answer.error)
       return
     }
     const payload: SaveQuizQuestionInput = {
       type: d.type,
       prompt: d.prompt.trim(),
       points: d.points,
+      ...answer.fields,
     }
     // 생성 시에만 삽입 위치를 전달(수정은 위치 유지).
     if (!questionId && order != null) payload.order = order
-    if (d.type === 'multiple_choice') {
-      const valid = d.choices.filter((c) => c.trim() !== '')
-      if (valid.length < 2) {
-        toast.danger('보기를 2개 이상 입력해 주세요')
-        return
-      }
-      if (!d.choices[d.answerIndex]?.trim()) {
-        toast.danger('정답으로 선택한 보기의 내용을 입력해 주세요')
-        return
-      }
-      payload.choices = d.choices
-      payload.answerIndex = d.answerIndex
-    } else if (d.type === 'short_answer') {
-      if (!d.answerText.trim()) {
-        toast.danger('정답을 입력해 주세요')
-        return
-      }
-      payload.answerText = d.answerText
-    } else if (d.type === 'essay') {
-      // 서술형 — 수동 채점. 채점 기준(선택)만 보관.
-      payload.answerText = d.answerText
-    } else {
-      if (blanks === 0) {
-        toast.danger('문항 내용에 빈칸(___)을 넣어 주세요')
-        return
-      }
-      const emptyIdx = answers.findIndex((a) => a.trim() === '')
-      if (emptyIdx >= 0) {
-        toast.danger(`빈칸 ${emptyIdx + 1} 정답을 입력해 주세요`)
-        return
-      }
-      if (scoreSum !== d.points) {
-        toast.danger(`빈칸 배점 합(${scoreSum})이 배점(${d.points})과 달라요`)
-        return
-      }
-      payload.answers = answers
-      payload.blankScores = scores
-    }
     save.mutate(payload, {
       onSuccess: () => {
         toast.success(questionId ? '문항을 수정했어요' : '문항을 추가했어요')
@@ -245,170 +153,15 @@ function QuestionForm({
         />
       </div>
 
-      {/* 유형별 정답 입력 */}
-      {d.type === 'multiple_choice' && (
-        <div>
-          <span className="text-fg-muted mb-1 block text-xs font-semibold">
-            보기 · 정답(라디오 선택)
-          </span>
-          <div className="flex flex-col gap-1.5">
-            {d.choices.map((c, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="answer"
-                  checked={d.answerIndex === i}
-                  onChange={() => set({ answerIndex: i })}
-                  aria-label={`정답 ${i + 1}`}
-                />
-                <input
-                  value={c}
-                  onChange={(e) =>
-                    set({
-                      choices: d.choices.map((x, j) =>
-                        j === i ? e.target.value : x,
-                      ),
-                    })
-                  }
-                  placeholder={`보기 ${i + 1}`}
-                  className={FIELD}
-                />
-                {d.choices.length > 2 && (
-                  <button
-                    type="button"
-                    aria-label={`보기 ${i + 1} 삭제`}
-                    onClick={() =>
-                      set({
-                        choices: d.choices.filter((_, j) => j !== i),
-                        answerIndex: Math.max(
-                          0,
-                          d.answerIndex >= i
-                            ? d.answerIndex - 1
-                            : d.answerIndex,
-                        ),
-                      })
-                    }
-                    className="text-fg-subtle hover:text-danger shrink-0 p-1"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          {d.choices.length < 5 && (
-            <button
-              type="button"
-              onClick={() => set({ choices: [...d.choices, ''] })}
-              className="border-border text-fg-muted hover:bg-surface-muted mt-2 inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold"
-            >
-              <Plus className="h-3.5 w-3.5" /> 보기 추가
-            </button>
-          )}
-        </div>
-      )}
-
-      {d.type === 'short_answer' && (
-        <div>
-          <span className="text-fg-muted mb-1 block text-xs font-semibold">
-            정답
-          </span>
-          <input
-            value={d.answerText}
-            onChange={(e) => set({ answerText: e.target.value })}
-            placeholder="정답 텍스트"
-            className={FIELD}
-          />
-        </div>
-      )}
-
-      {d.type === 'essay' && (
-        <div>
-          <span className="text-fg-muted mb-1 block text-xs font-semibold">
-            채점 기준 / 모범답안 (선택) — 학생에게 비공개
-          </span>
-          <textarea
-            rows={3}
-            value={d.answerText}
-            onChange={(e) => set({ answerText: e.target.value })}
-            placeholder="강사 채점 시 참고할 기준이나 모범답안을 적어두세요"
-            className={`${FIELD} h-auto py-2`}
-          />
-          <p className="text-fg-subtle mt-1 text-xs">
-            서술형은 자동 채점되지 않고, 제출 후 수동 채점 화면에서 점수를
-            매깁니다.
-          </p>
-        </div>
-      )}
-
-      {d.type === 'fill_blank' && (
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <span className="text-fg-muted text-xs font-semibold">
-              빈칸 정답·배점 ({blanks}개)
-            </span>
-            {blanks > 0 && (
-              <button
-                type="button"
-                onClick={() =>
-                  set({ blankScores: distributeBlankScores(d.points, blanks) })
-                }
-                className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-2.5 py-1 text-xs font-semibold"
-              >
-                배점 자동 분배
-              </button>
-            )}
-          </div>
-          {blanks === 0 ? (
-            <p className="text-fg-subtle text-xs">
-              문항 내용에 ___ 를 넣으면 빈칸 정답 칸이 생겨요.
-            </p>
-          ) : (
-            <>
-              <div className="flex flex-col gap-1.5">
-                {answers.map((a, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input
-                      value={a}
-                      onChange={(e) =>
-                        set({
-                          answers: answers.map((x, j) =>
-                            j === i ? e.target.value : x,
-                          ),
-                        })
-                      }
-                      placeholder={`빈칸 ${i + 1} 정답`}
-                      className={`${FIELD_BASE} min-w-0 flex-1`}
-                    />
-                    <NumberInput
-                      min={1}
-                      aria-label={`빈칸 ${i + 1} 배점`}
-                      value={scores[i] ?? 0}
-                      onChange={(score) =>
-                        set({
-                          blankScores: scores.map((x, j) =>
-                            j === i ? score : x,
-                          ),
-                        })
-                      }
-                      className={`${FIELD_BASE} w-20 shrink-0 text-center`}
-                    />
-                  </div>
-                ))}
-              </div>
-              <p
-                className={cn(
-                  'mt-1 text-xs',
-                  scoreSum === d.points ? 'text-fg-subtle' : 'text-warning',
-                )}
-              >
-                배점 합 {scoreSum} / {d.points}
-                {scoreSum !== d.points && ' · 배점과 일치해야 저장돼요'}
-              </p>
-            </>
-          )}
-        </div>
-      )}
+      {/* 유형별 정답 입력 — 템플릿 워크벤치와 공용(answerFields). */}
+      <AnswerFields
+        type={d.type}
+        text={d.prompt}
+        points={d.points}
+        value={d}
+        onChange={set}
+        essayNote="서술형은 자동 채점되지 않고, 제출 후 수동 채점 화면에서 점수를 매깁니다."
+      />
 
       {/* 배점 + 액션 */}
       <div className="flex items-end justify-between gap-3">

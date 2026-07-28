@@ -81,20 +81,21 @@ describe('MaterialRow', () => {
 
 describe('MaterialDetailModal', () => {
   it('상세 내용과 파일 정보를 보여준다', () => {
-    renderModal(base)
+    // 강사·매니저와 같은 게시글형(ArticleView) — 제목·작성자·본문 + 첨부 카드.
+    renderModal({ ...base, fileSize: 12_288 })
     expect(screen.getByText('조회 로그와 함께 정리했습니다.')).toBeInTheDocument()
     expect(screen.getByText('박수진')).toBeInTheDocument()
     expect(screen.getByText('jpa.txt')).toBeInTheDocument()
-    expect(screen.getByText('12KB')).toBeInTheDocument()
+    expect(screen.getByText(/12KB/)).toBeInTheDocument()
   })
 
-  it('파일 자료는 다운로드, 링크 자료는 링크 열기를 노출한다', () => {
+  it('파일 자료는 첨부 카드, 링크 자료는 링크 카드를 노출한다', () => {
     const { unmount } = render(
       <ToastProvider>
         <MaterialDetailModal item={base} onClose={vi.fn()} />
       </ToastProvider>,
     )
-    expect(screen.getByRole('button', { name: '다운로드' })).toBeInTheDocument()
+    expect(screen.getByText(/클릭하여 다운로드/)).toBeInTheDocument()
     unmount()
 
     renderModal({
@@ -104,7 +105,9 @@ describe('MaterialDetailModal', () => {
       hasFile: false,
       fileUrl: 'https://example.com/doc',
     })
-    expect(screen.getByRole('button', { name: '링크 열기' })).toBeInTheDocument()
+    // 링크는 주소를 함께 보여줘야 어디로 가는지 알 수 있다.
+    expect(screen.getByText('링크 열기')).toBeInTheDocument()
+    expect(screen.getByText('https://example.com/doc')).toBeInTheDocument()
   })
 
   it('본인 자료가 아니면 수정·삭제를 노출하지 않는다', () => {

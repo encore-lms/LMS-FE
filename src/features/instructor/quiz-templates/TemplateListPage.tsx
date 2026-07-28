@@ -138,8 +138,8 @@ export default function TemplateListPage() {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation()
-                toast.success(`${t.name} → 새 퀴즈로 복제`)
-                navigate('/instructor/quizzes/new')
+                // 퀴즈 생성 폼이 templateId로 설정 프리필 + 저장 시 문항 복제까지 수행.
+                navigate(`/instructor/quizzes/new?templateId=${t.id}`)
               }}
             >
               새 퀴즈로 복제

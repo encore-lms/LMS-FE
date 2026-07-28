@@ -298,6 +298,11 @@ function renderAt(path: string, overrideMocks?: () => void) {
             path="/instructor/quizzes/:quizId/submissions/:submissionId/grade"
             element={<GradingPage />}
           />
+          {/* 퀴즈 목록은 교육 과정 허브의 퀴즈 탭 — 저장 후 복귀 대상 */}
+          <Route
+            path="/instructor/cohorts/:cohortId/education"
+            element={<div>허브 퀴즈 탭</div>}
+          />
         </Routes>
       </MemoryRouter>
     </ToastProvider>,
@@ -342,6 +347,20 @@ describe('QuizFormPage (§6)', () => {
     expect(
       await screen.findByText('문항 배점 합계로 자동 계산됩니다'),
     ).toBeInTheDocument()
+  })
+
+  it('수정 저장 후 허브 퀴즈 탭으로 돌아간다', async () => {
+    const user = userEvent.setup()
+    // 허브에서 진입한 경우(cohortId 쿼리) 저장 후 그 허브로 복귀한다.
+    const mut = { mutate: vi.fn(), isPending: false }
+    renderAt('/instructor/quizzes/quiz-algo-3/edit?cohortId=c1', () => {
+      vi.mocked(useSaveQuiz).mockReturnValue(mut as unknown as never)
+    })
+    await user.click(screen.getByRole('button', { name: /^저장 / }))
+    // mutate의 onSuccess를 직접 호출해 저장 성공 흐름을 재현한다.
+    const [, opts] = mut.mutate.mock.calls[0]
+    opts.onSuccess({ id: 'quiz-algo-3' })
+    expect(await screen.findByText('허브 퀴즈 탭')).toBeInTheDocument()
   })
 
   it('생성 모드 빈 제출은 검증 에러를 보여준다', async () => {

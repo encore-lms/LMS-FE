@@ -10,6 +10,8 @@ import type {
   InstructorQuestion,
   QuestionDifficulty,
 } from '@/shared/types'
+import { AnswerFields } from './AnswerFields'
+import { emptyAnswer, parseAnswerDraft, type AnswerDraft } from './answerDraft'
 import { DIFFICULTY_LABEL, QUESTION_TYPE_LABEL } from './meta'
 
 export interface QuestionWorkbenchProps {
@@ -29,23 +31,34 @@ export interface QuestionWorkbenchProps {
   /** 본문/해설 보조 문구 — 퀴즈와 템플릿이 노출 시점 표현이 다름 */
   bodyHint: string
   explanationHint: string
-  modelAnswerHint: string
   /** 주관식 수동 채점 안내 보조 문구 */
   manualHint: string
   saveToastMessage: string
   /** 우측 메타 카드 항목 — 화면별 구성(응답·평균 vs 사용·파생) */
   metaItems: (draft: InstructorQuestion) => string[]
-  // ── 액션 콜백(선택) — 미지정 시 기존 mock 토스트 동작 유지(§7 퀴즈는 미지정). ──
-  /** 새 문항 추가 — mock 변형 후 목록 갱신 */
+  /** 선택 문항 제어 — 지정 시 controlled(저장 후 신규 선택 유지 등 호출부가 관리) */
+  activeId?: string | null
+  onActiveIdChange?: (id: string) => void
+  /** 미저장(로컬 드래프트) 표시 — true면 목록에 미저장 칩 */
+  isUnsaved?: (q: InstructorQuestion) => boolean
+  // ── 액션 콜백(선택) — 미지정 시 기존 mock 토스트 동작 유지. ──
+  /** 새 문항 추가 */
   onAddQuestion?: () => void
-  /** 현재 편집 중 draft 저장 — 신규/수정 모두 draft로 전달 */
-  onSaveQuestion?: (draft: InstructorQuestion) => void
+  /** 현재 편집 중 draft 저장 — 신규/수정 모두 draft + 유형별 정답으로 전달 */
+  onSaveQuestion?: (draft: InstructorQuestion, answer: AnswerDraft) => void
   /** 문항 삭제 */
   onDeleteQuestion?: (id: string) => void
   /** 문항 복제 */
   onCopyQuestion?: (id: string) => void
   /** 미리보기 진입 */
   onPreview?: () => void
+}
+
+// 저장된 문항 → 편집용 정답 상태. 템플릿 서술형 채점 기준은 modelAnswer 컬럼에 보관.
+function toAnswerDraft(q: InstructorQuestion): AnswerDraft {
+  const a = parseAnswerDraft(q.type, q.choices, q.answerKey)
+  if (q.type === 'essay' && !a.answerText) a.answerText = q.modelAnswer
+  return a
 }
 
 // 문항 편집 워크벤치 — §7 문제 관리(1341:9831)와 §10 템플릿 문항(3547:2247) 공용 3-column.
@@ -63,10 +76,12 @@ export function QuestionWorkbench({
   previewLabel,
   bodyHint,
   explanationHint,
-  modelAnswerHint,
   manualHint,
   saveToastMessage,
   metaItems,
+  activeId,
+  onActiveIdChange,
+  isUnsaved,
   onAddQuestion,
   onSaveQuestion,
   onDeleteQuestion,
@@ -74,22 +89,30 @@ export function QuestionWorkbench({
   onPreview,
 }: QuestionWorkbenchProps) {
   const toast = useToast()
-  const [activeId, setActiveId] = useState<string | null>(null)
-  // 편집 폼 로컬 상태 — mock 저장 전 미리보기 (선택 문항 변경 시 재초기화).
+  const [internalActiveId, setInternalActiveId] = useState<string | null>(null)
+  const currentId = activeId !== undefined ? activeId : internalActiveId
+  // 편집 폼 로컬 상태 — 저장 전 미리보기 (선택 문항 변경 시 재초기화).
   const [draft, setDraft] = useState<InstructorQuestion | null>(null)
+  const [answer, setAnswer] = useState<AnswerDraft>(emptyAnswer())
 
   const active = useMemo(
-    () => questions.find((q) => q.id === activeId) ?? questions[0] ?? null,
-    [questions, activeId],
+    () => questions.find((q) => q.id === currentId) ?? questions[0] ?? null,
+    [questions, currentId],
   )
 
   useEffect(() => {
     setDraft(active ? { ...active } : null)
+    setAnswer(active ? toAnswerDraft(active) : emptyAnswer())
   }, [active])
+
+  const selectQuestion = (id: string) => {
+    onActiveIdChange?.(id)
+    if (activeId === undefined) setInternalActiveId(id)
+  }
 
   const pointsOk = totalPoints === targetPoints
 
-  // 콜백 미지정 시 = 기존 mock 토스트(§7 퀴즈는 실 BE라 콜백을 넘기지 않음).
+  // 콜백 미지정 시 = 기존 mock 토스트 동작 유지.
   const handleAdd = () =>
     onAddQuestion ? onAddQuestion() : toast.success(`새 ${itemNoun} 추가`)
   const handleCopy = () =>
@@ -106,7 +129,7 @@ export function QuestionWorkbench({
       : undefined
   const handleSave = () =>
     draft && onSaveQuestion
-      ? onSaveQuestion(draft)
+      ? onSaveQuestion(draft, answer)
       : toast.success(saveToastMessage)
   const handlePreview = () =>
     onPreview
@@ -182,7 +205,7 @@ export function QuestionWorkbench({
               <button
                 key={q.id}
                 type="button"
-                onClick={() => setActiveId(q.id)}
+                onClick={() => selectQuestion(q.id)}
                 className={cn(
                   'border-divider relative flex w-full items-center gap-2 border-t px-3 py-3 text-left',
                   isActive ? 'bg-accent-bg/40' : 'hover:bg-surface-muted',
@@ -204,6 +227,11 @@ export function QuestionWorkbench({
                     <span className="text-fg-subtle text-[11px]">
                       {q.points}점
                     </span>
+                    {isUnsaved?.(q) && (
+                      <span className="bg-warning-bg text-warning rounded px-1.5 py-px text-[10px] font-bold">
+                        미저장
+                      </span>
+                    )}
                   </span>
                   <span className="text-fg mt-0.5 block truncate text-xs font-medium">
                     {q.summary}
@@ -269,32 +297,31 @@ export function QuestionWorkbench({
                 <span className="text-fg text-[13px] font-bold">
                   문제 본문 <span className="text-danger">*</span>
                 </span>
-                <span className="text-fg-subtle text-xs">{bodyHint}</span>
+                <span className="text-fg-subtle text-xs">
+                  {bodyHint}
+                  {draft.type === 'fill_blank' && ' — 빈칸은 ___ (밑줄 3개)'}
+                </span>
                 <textarea
                   value={draft.body}
                   onChange={(e) => setDraft({ ...draft, body: e.target.value })}
                   rows={3}
                   aria-label="문제 본문"
-                  className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none"
-                />
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="text-fg text-[13px] font-bold">
-                  모범 답안 / 채점 기준
-                </span>
-                <span className="text-fg-subtle text-xs">
-                  {modelAnswerHint}
-                </span>
-                <textarea
-                  value={draft.modelAnswer}
-                  onChange={(e) =>
-                    setDraft({ ...draft, modelAnswer: e.target.value })
+                  placeholder={
+                    draft.type === 'fill_blank'
+                      ? '예: ___는 후입선출, ___는 선입선출 자료구조다'
+                      : undefined
                   }
-                  rows={3}
-                  aria-label="모범 답안"
                   className="border-border focus:border-accent-strong text-fg w-full rounded-lg border bg-white p-3 text-sm outline-none"
                 />
               </label>
+              {/* 유형별 정답 입력 — §7 퀴즈 문항 폼과 공용(answerFields). */}
+              <AnswerFields
+                type={draft.type}
+                text={draft.body}
+                points={draft.points}
+                value={answer}
+                onChange={(patch) => setAnswer((p) => ({ ...p, ...patch }))}
+              />
               <label className="flex flex-col gap-1.5">
                 <span className="text-fg text-[13px] font-bold">해설</span>
                 <span className="text-fg-subtle text-xs">

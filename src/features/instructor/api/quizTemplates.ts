@@ -43,8 +43,7 @@ export function useTemplateQuestions(templateId: string) {
   })
 }
 
-// ── 템플릿 생성/수정/삭제 (mutations) — mock 백엔드. 실 BE 계약 확정 시 페어가 shared PR로 교체. ──
-// ⚠️ 퀴즈(quizzes)·과제(assignments)는 실 BE라 여기서 건드리지 않는다(템플릿 전용).
+// ── 템플릿 생성/수정/삭제 (mutations) — 실 BE(InstructorQuizTemplateController). ──
 export interface SaveQuizTemplateInput {
   name: string
   category: string
@@ -93,7 +92,7 @@ export function useDeleteQuizTemplate() {
   })
 }
 
-// ── 템플릿 문항 추가/수정/삭제 (mutations) — mock 백엔드. ──
+// ── 템플릿 문항 추가/수정/삭제 (mutations) — 실 BE. ──
 export interface SaveTemplateQuestionInput {
   type: InstructorQuestion['type']
   points: number
@@ -102,15 +101,22 @@ export interface SaveTemplateQuestionInput {
   explanation: string
   category: string
   difficulty: InstructorQuestion['difficulty']
+  // 유형별 정답 — 퀴즈 문항(SaveQuizQuestionInput)과 동일 계약.
+  choices?: string[]
+  answerIndex?: number
+  answerText?: string
+  answers?: string[]
+  blankScores?: number[]
 }
 // 문항 추가(POST) 또는 수정(PUT, questionId 지정) — 갱신된 문항 풀을 반환.
-export function useSaveTemplateQuestion(
-  templateId: string,
-  questionId?: string,
-) {
+export function useSaveTemplateQuestion(templateId: string) {
   const qc = useQueryClient()
-  return useMutation<TemplateQuestionsData, Error, SaveTemplateQuestionInput>({
-    mutationFn: (input) =>
+  return useMutation<
+    TemplateQuestionsData,
+    Error,
+    { questionId?: string; input: SaveTemplateQuestionInput }
+  >({
+    mutationFn: ({ questionId, input }) =>
       (questionId
         ? apiClient.put<TemplateQuestionsData>(
             `/instructor/quiz-templates/${templateId}/questions/${questionId}`,

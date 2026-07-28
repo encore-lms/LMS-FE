@@ -26,6 +26,8 @@ export const instructorMenu: MenuItem[] = [
     match: ['/instructor/troubleshooting'],
   },
   // 재인증 통합 검토는 별도 메뉴 없이 같은 항목 하위(Figma 2750:2202 sidebar active 동일).
+  // QnA 게시판 — 담당 기수 수강생 질문 열람·답변. 상세(qna/:id) 진입 시에도 활성 유지.
+  { label: 'QnA 게시판', to: '/instructor/qna', match: ['/instructor/qna'] },
   {
     label: '인증 후 변경 제안',
     to: '/instructor/change-requests',

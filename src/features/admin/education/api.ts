@@ -263,6 +263,39 @@ export function useCohortProjects(
  * 동료 평가는 프로젝트가 끝난 뒤 진행하므로, 켜는 행위가 개시 신호다(팀원 2명 미만이면 서버가 거부).
  * 경로가 /instructor/* 인 이유는 그쪽만 강사·운영을 함께 허용하기 때문이다(/admin/* 은 강사 배제).
  */
+/**
+ * 프로젝트 종료/재개 — 매니저·강사 공용. 인증 승인과 별개로 상태만 바꾼다.
+ *
+ * <p>동료 평가는 완료된 프로젝트에서만 열 수 있는데, 완료로 가는 길이 강사의 인증 승인뿐이라
+ * 인증할 산출물이 아직 없으면 기간이 끝나도 평가를 열 수 없었다.</p>
+ */
+export function useProjectCompletion(
+  courseId?: string | null,
+  cohortId?: string | null,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      completed,
+    }: {
+      projectId: string
+      completed: boolean
+    }) =>
+      apiClient
+        .patch<{
+          projectId: string
+          projectStatus: string
+        }>(`/instructor/projects/${projectId}/completion`, { completed })
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.projects(courseId ?? '', cohortId ?? ''),
+      })
+    },
+  })
+}
+
 export function usePeerEvalToggle(
   courseId?: string | null,
   cohortId?: string | null,

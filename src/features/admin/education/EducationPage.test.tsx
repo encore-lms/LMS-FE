@@ -87,6 +87,32 @@ describe('EducationPage (과정·기수·교과목)', () => {
 
   // 목록 첫 행은 최신 기수라 프로젝트·수강생이 아직 없는 경우가 많다.
   // 그 상태로 열리면 프로젝트 탭이 비어 보여 "동료 평가를 시작할 수 없다"로 오인된다.
+  it('지난번에 본 기수가 있으면 그 기수로 연다', () => {
+    localStorage.setItem(
+      'lms-admin-last-cohort',
+      JSON.stringify({ 'course-sk': 'cohort-32' }),
+    )
+    renderPage([
+      { id: 'cohort-35', cohortNo: '35', assigned: true },
+      { id: 'cohort-32', cohortNo: '32', assigned: true },
+    ])
+    expect(screen.getByLabelText('기수 선택')).toHaveTextContent('32기')
+    localStorage.clear()
+  })
+
+  it('기억한 기수가 목록에 없으면 담당 기수로 떨어진다', () => {
+    localStorage.setItem(
+      'lms-admin-last-cohort',
+      JSON.stringify({ 'course-sk': 'cohort-999' }),
+    )
+    renderPage([
+      { id: 'cohort-35', cohortNo: '35', assigned: false },
+      { id: 'cohort-32', cohortNo: '32', assigned: true },
+    ])
+    expect(screen.getByLabelText('기수 선택')).toHaveTextContent('32기')
+    localStorage.clear()
+  })
+
   it('기본 기수는 목록 첫 행이 아니라 내가 담당하는 기수를 고른다', () => {
     renderPage([
       { id: 'cohort-35', cohortNo: '35', assigned: false },

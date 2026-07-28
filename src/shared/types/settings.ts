@@ -129,6 +129,8 @@ export interface CourseCohort {
   status: CourseOperationStatus
   mileageEnabled: boolean
   playEnabled: boolean
+  /** 요청자에게 배정된 기수인지 — 운영 화면의 기본 기수 선택 근거. */
+  assigned?: boolean
 }
 
 // 기수 자료 1건(자료실 — 관리자/강사 관리). 링크/문서형.

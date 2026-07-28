@@ -1,9 +1,5 @@
 import { cn } from '@/shared/lib/cn'
-import type {
-  MaterialCategory,
-  MaterialFileType,
-  MaterialItem,
-} from '../../types'
+import type { MaterialFileType, MaterialItem } from '../../types'
 import { FileTypeIcon } from './FileTypeIcon'
 
 // 자료 한 줄 — 형식 아이콘 · 제목/형식·분류 배지 · 메타(작성자·시각·다운로드·용량) · 즐겨찾기.
@@ -17,14 +13,6 @@ const TYPE_PILL: Record<MaterialFileType, string> = {
   IMG: 'bg-success-bg text-success',
   VIDEO: 'bg-accent-bg text-accent-strong',
 }
-
-const CATEGORY_PILL: Record<MaterialCategory, { cls: string; label: string }> =
-  {
-    lecture: { cls: 'bg-brand/10 text-brand', label: '강의 자료' },
-    practice: { cls: 'bg-success-bg text-success', label: '실습' },
-    reference: { cls: 'bg-info-bg text-info', label: '참고' },
-    shared: { cls: 'bg-accent-bg text-accent-strong', label: '학생 공유' },
-  }
 
 function Sep() {
   return <span className="bg-border h-3 w-px shrink-0" />
@@ -57,7 +45,6 @@ export function MaterialRow({
   /** 행 클릭 — 상세 모달을 연다. */
   onOpen: (item: MaterialItem) => void
 }) {
-  const cat = CATEGORY_PILL[item.category]
 
   return (
     <div
@@ -85,14 +72,6 @@ export function MaterialRow({
             )}
           >
             {item.fileType}
-          </span>
-          <span
-            className={cn(
-              'rounded-[4px] px-1.5 py-px text-[10px] font-bold',
-              cat.cls,
-            )}
-          >
-            {cat.label}
           </span>
         </div>
         {item.body && (

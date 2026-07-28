@@ -81,6 +81,14 @@ describe('NotificationsPage', () => {
     expect(screen.getByText(/미확인 2건/)).toBeInTheDocument()
   })
 
+  it('첫 페이지는 커서 없이 요청한다', async () => {
+    renderPage()
+    await screen.findByText('과제 검토가 완료됐어요')
+    const first = vi.mocked(apiClient.get).mock.calls[0]
+    expect(first?.[1]).toMatchObject({ size: 20 })
+    expect((first?.[1] as { cursor?: string }).cursor).toBeUndefined()
+  })
+
   it('분류 칩을 고르면 category 를 실어 다시 조회한다', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -88,10 +96,10 @@ describe('NotificationsPage', () => {
 
     await user.click(screen.getByRole('button', { name: /과제 2/ }))
 
+    // apiClient.get 의 두 번째 인자는 쿼리 파라미터 그 자체다 — { params: … } 로 감싸면
+    // 한 겹 더 들어가 서버에 닿지 않는다. 그 계약을 여기서 고정한다.
     const last = vi.mocked(apiClient.get).mock.calls.at(-1)
     expect(last?.[0]).toBe('/notifications/inbox')
-    expect((last?.[1] as { params: { category?: string } }).params.category).toBe(
-      'ASSIGNMENT',
-    )
+    expect(last?.[1]).toMatchObject({ category: 'ASSIGNMENT', size: 20 })
   })
 })

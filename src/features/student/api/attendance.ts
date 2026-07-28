@@ -54,25 +54,58 @@ export function useSubmitAttendanceForm() {
   })
 }
 
-/** 제출 이력의 증빙 첨부만 사후 수정 — 성공 시 출결 캐시 무효화 */
-export function useUpdateAttendanceAttachments() {
+/**
+ * 출결 폼 증빙 업로드 — POST …/submissions/{id}/attachments (multipart).
+ *
+ * 예전에는 파일명 배열만 PATCH 로 보냈고 서버는 빈 스텁이라 아무것도 저장되지 않았다.
+ * 증빙은 매니저가 실제로 열어봐야 하는 파일이라 바이트를 실어 보낸다.
+ */
+export function useUploadAttendanceAttachments() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      attachmentNames,
-    }: {
-      id: string
-      attachmentNames: string[]
-    }) =>
-      apiClient
-        .patch<AttendanceFormSubmission>(
-          `/student/attendance-forms/me/submissions/${id}/attachments`,
-          { attachmentNames },
-        )
-        .then((r) => r.data),
+    mutationFn: ({ id, files }: { id: string; files: File[] }) => {
+      const form = new FormData()
+      for (const f of files) form.append('files', f)
+      return apiClient.postForm<void>(
+        `/student/attendance-forms/me/submissions/${id}/attachments`,
+        form,
+      )
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all })
     },
   })
 }
+
+/** 증빙 삭제 — 본인 제출의 첨부만. */
+export function useDeleteAttendanceAttachment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, attachmentId }: { id: string; attachmentId: string }) =>
+      apiClient.delete<void>(
+        `/student/attendance-forms/me/submissions/${id}/attachments/${attachmentId}`,
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all })
+    },
+  })
+}
+
+/** 증빙 다운로드 — 본인 또는 담당 기수 운영·강사. */
+export async function downloadAttendanceAttachment(
+  attachmentId: string,
+  fileName: string,
+) {
+  const blob = await apiClient.getBlob(
+    `/student/attendance-forms/attachments/${attachmentId}/file`,
+  )
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+

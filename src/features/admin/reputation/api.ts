@@ -48,13 +48,42 @@ export type ReputationPushInput =
   | { kind: 'single'; studentId: string; target: PushTarget; memo?: string }
   | { kind: 'bulk'; memo?: string }
 
-// 평판 요청 푸시 훅 — 성공 시 푸시한 대상을 목록에서 제거하고 강사 추천서를 '요청 중'으로 전이 + 누락 카운트 재계산.
-// BE 계약(P0_25 LMS 알림) 미확정 → 네트워크 없이 클라이언트 낙관 반영으로 시뮬레이션한다.
-// 계약 확정 시 mutationFn 을 apiClient.post('/admin/reputation/push', input) 로 교체한다.
+/**
+ * 평판 요청 푸시 — POST /admin/reputation/push.
+ *
+ * 대상(instructor|mentor|peer)마다 수신자가 다르다 — 강사 추천서는 담당 강사,
+ * 멘토 평가는 배정 멘토, 동료 5축은 아직 평가하지 않은 같은 팀 동료.
+ * 예전에는 네트워크 요청 없이 화면에서만 반영해 새로고침하면 되돌아갔고 알림도 가지 않았다.
+ *
+ * 일괄(bulk)은 대상이 여럿이라 요청을 나눠 보낸다 — 서버는 1건씩 받는다.
+ */
 export function useReputationPush() {
   const queryClient = useQueryClient()
   return useMutation<void, Error, ReputationPushInput>({
-    mutationFn: async () => {},
+    mutationFn: async (input) => {
+      const push = (studentId: string, target: PushTarget) =>
+        apiClient.post<{ studentId: string; target: string; recipientCount: number }>(
+          '/admin/reputation/push',
+          { studentId, target, memo: input.memo },
+        )
+      if (input.kind === 'single') {
+        await push(input.studentId, input.target)
+        return
+      }
+      // 일괄 — 화면이 알고 있는 누락 대상을 그대로 보낸다.
+      const overview = queryClient.getQueriesData<ReputationOverview>({
+        queryKey: adminReputationKeys.all,
+      })
+      const pending = new Map<string, PushTarget[]>()
+      for (const [, data] of overview) {
+        for (const s of data?.students ?? []) {
+          if (s.pushTargets.length > 0) pending.set(s.id, s.pushTargets)
+        }
+      }
+      for (const [studentId, targets] of pending) {
+        for (const t of targets) await push(studentId, t)
+      }
+    },
     onSuccess: (_result, input) => {
       // 기수 범위별로 캐시가 나뉘므로 평판 조회 캐시 전체에 반영한다.
       queryClient.setQueriesData<ReputationOverview>(

@@ -81,7 +81,19 @@ export default function RequestsPage() {
     })
   }, [requests, periodDays, q, anchorMs])
 
-  const visible = searched.filter((r) => matchRequestTab(r, tab))
+  // 탭 안에서는 활동 시각 최신순 — BE는 요청 일시 하나로만 정렬해 내려주므로
+  // '확정' 탭에서도 확정 일시가 아닌 요청 순으로 섞여 보였다. activityAt 은 상태별로
+  // 의미 있는 시각(확정=확정 일시, 조정 제안=제안 일시, 그 외=요청 일시)이다.
+  const visible = useMemo(
+    () =>
+      searched
+        .filter((r) => matchRequestTab(r, tab))
+        .sort(
+          (a, b) =>
+            new Date(b.activityAt).getTime() - new Date(a.activityAt).getTime(),
+        ),
+    [searched, tab],
+  )
 
   // KPI — 상태 집계(완료만 캡션과 동일한 '최근 30일' 고정 창 기준).
   const kpis = {

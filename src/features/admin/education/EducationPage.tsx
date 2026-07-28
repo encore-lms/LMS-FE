@@ -158,11 +158,11 @@ export default function EducationPage() {
   const courseId = courseParam || courses?.[0]?.courseId || null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [cohortParam, setCohortParam] = useSearchParamState('cohort')
-  // 기본 기수는 '운영 중'인 것부터 — 목록 첫 행은 최신 기수라 아직 프로젝트·수강생이 없는 경우가 많다.
-  // (그 상태로 열리면 프로젝트 탭이 비어 보여 "동료 평가를 시작할 수 없다"로 오인된다.)
+  // 기본 기수는 '내가 담당하는 기수'부터 — 목록 첫 행은 최신 기수라 아직 프로젝트·수강생이 없는 경우가 많고,
+  // 기수가 전부 '운영 중'이라 상태만으로는 가릴 수 없다(그 상태로 열리면 탭이 비어 보인다).
   const cohorts = courseConfig?.cohorts ?? []
   const defaultCohortId =
-    cohorts.find((c) => c.status === 'operating')?.id ?? cohorts[0]?.id ?? null
+    cohorts.find((c) => c.assigned)?.id ?? cohorts[0]?.id ?? null
   const cohortId = cohortParam || defaultCohortId
 
   const [tab, setTab] = useSearchParamState('tab', 'materials')

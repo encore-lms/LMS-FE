@@ -2,10 +2,16 @@ import { cn } from '@/shared/lib/cn'
 import type { AnswerPayload, QuizAnswer } from '@/shared/types'
 
 // 퀴즈 결과 문제별 행 — 좌측 상태 스트립 + 번호/유형 + 발문 + 내 답안/정답 + 점수(+강사 피드백).
-function answerText(a: AnswerPayload): string {
-  if (a.kind === 'multiple_choice') return a.selectedChoiceId
-  if (a.kind === 'short_answer') return a.text
-  return a.answers.join(', ')
+//
+// kind 가 유니온의 어느 갈래에도 맞지 않을 때(계약 위반·구 데이터) 화면 전체가 죽지 않도록 방어한다.
+// 예전 BE 는 객관식에만 kind 를 붙여 주관식이 빈칸 분기로 떨어졌고 undefined.join() 으로 결과 화면이
+// 통째로 렌더되지 않았다. BE 는 고쳤지만 답안 한 줄 때문에 페이지가 죽는 구조 자체를 남겨두지 않는다.
+function answerText(a: AnswerPayload | undefined): string {
+  if (!a) return '—'
+  if (a.kind === 'multiple_choice') return a.selectedChoiceId ?? '—'
+  if (a.kind === 'short_answer') return a.text ?? '—'
+  if (a.kind === 'fill_blank') return (a.answers ?? []).join(', ') || '—'
+  return '—'
 }
 
 const KIND_LABEL: Record<AnswerPayload['kind'], string> = {
@@ -52,29 +58,29 @@ export function QuestionResultRow({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <span className="bg-surface-muted border-border text-fg-muted w-fit rounded-[10px] border px-2.5 py-1 text-[10px] font-semibold">
-            {KIND_LABEL[answer.answer.kind]}
+            {KIND_LABEL[answer.answer?.kind] ?? '문항'}
           </span>
           <p className="text-fg text-[14px] leading-[22px] font-semibold">
             {answer.prompt}
           </p>
-          {answer.answer.kind === 'fill_blank' ? (
+          {answer.answer?.kind === 'fill_blank' ? (
             // 빈칸별 내 답안/정답 격자(이전 LMS 방식)
             <div className="mt-1 flex flex-col gap-1.5">
-              {answer.answer.answers.map((mine, i) => {
+              {(answer.answer.answers ?? []).map((mine, i) => {
                 const correctArr = Array.isArray(answer.correctAnswerKey)
                   ? answer.correctAnswerKey
                   : []
                 const correct = correctArr[i] ?? ''
                 const okBlank =
-                  mine.trim().toLowerCase() === correct.trim().toLowerCase() &&
-                  correct !== ''
+                  (mine ?? '').trim().toLowerCase() ===
+                    correct.trim().toLowerCase() && correct !== ''
                 return (
                   <div key={i} className="flex items-center gap-2 text-[13px]">
                     <span className="text-fg-subtle w-12 shrink-0 text-[11px] font-medium">
                       빈칸 {i + 1}
                     </span>
                     <span className={okBlank ? 'text-fg' : 'text-danger'}>
-                      {mine.trim() || '미입력'}
+                      {(mine ?? '').trim() || '미입력'}
                     </span>
                     {correct !== '' && (
                       <>

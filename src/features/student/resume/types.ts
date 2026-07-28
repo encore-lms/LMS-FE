@@ -1,3 +1,4 @@
+import type { ResumeFeedbackItem } from '@/features/admin/education/types'
 // 수강생 이력서 도메인 계약 — 기능 로컬(공유 파일 미오염). BE 합류 시 페어가 정합.
 // 상태·섹션명은 한글 문자열 그대로 값으로 사용(팀 결정 B안). 섹션 목록은 ./constants 의 SECTIONS.
 
@@ -56,6 +57,8 @@ export interface ResumeDetail {
   // 파생(서버 계산, 읽기 전용)
   doneSections: string[]
   updatedAt: string
+  /** 강사·운영이 남긴 피드백 — 수강생은 읽기 전용. */
+  feedbacks?: ResumeFeedbackItem[]
 }
 
 /** 목록 응답 — 이력서 + KPI(누적 피드백) */

@@ -16,6 +16,7 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateResume, useResume, useUpdateResume } from '../api/resume'
+import { ResumeFeedbackSection } from './ResumeFeedbackSection'
 import { ResumeDocView } from './ResumeDocView'
 import { SECTIONS, computeDoneSections, missingSections } from './constants'
 import type { ResumeStatus, ResumeUpdatePayload } from './types'
@@ -247,7 +248,12 @@ export default function ResumeEditorPage() {
         )}
       </div>
 
-      <div className="mx-auto w-full max-w-[1040px] px-8 py-8">
+      <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-8 py-8">
+        {/* 받은 피드백 — 목록 KPI('누적 피드백')만 있고 볼 곳이 없어 내용을 확인할 수 없었다.
+            알림('이력서 피드백')도 이 화면으로 오므로 여기서 바로 읽고 고칠 수 있게 둔다. */}
+        {(detail?.feedbacks?.length ?? 0) > 0 && (
+          <ResumeFeedbackSection feedbacks={detail?.feedbacks ?? []} />
+        )}
         {!form ? (
           <div className="text-fg-muted p-8">이력서를 불러오는 중…</div>
         ) : mode === 'doc' ? (

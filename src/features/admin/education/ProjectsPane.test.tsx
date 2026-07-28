@@ -84,7 +84,7 @@ describe('ProjectsPane 동료 평가 토글', () => {
     renderPane([solo])
     expect(screen.getByRole('button', { name: /평가 시작/ })).toBeDisabled()
     expect(
-      screen.getByText('팀원이 2명 이상이어야 시작할 수 있어요'),
+      screen.getByText(/팀원이 1명이라 시작할 수 없어요/),
     ).toBeInTheDocument()
   })
 })

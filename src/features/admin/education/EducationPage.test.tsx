@@ -42,7 +42,11 @@ function ok(data: unknown) {
   return { data, isPending: false, isError: false }
 }
 
-function renderPage() {
+type CohortStub = { id: string; cohortNo: string; status?: 'operating' | 'ended' }
+
+function renderPage(
+  cohorts: CohortStub[] = [{ id: 'cohort-34', cohortNo: '34' }],
+) {
   vi.mocked(useCourseList).mockReturnValue(
     ok([
       { courseId: 'course-sk', title: 'SK네트웍스 Family AI 캠프' },
@@ -51,7 +55,7 @@ function renderPage() {
   vi.mocked(useCourseConfig).mockReturnValue(
     ok({
       courseId: 'course-sk',
-      cohorts: [{ id: 'cohort-34', cohortNo: '34' }],
+      cohorts,
     }) as unknown as ReturnType<typeof useCourseConfig>,
   )
   vi.mocked(useCourseDetail).mockReturnValue(
@@ -79,6 +83,24 @@ describe('EducationPage (과정·기수·교과목)', () => {
     ]) {
       expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()
     }
+  })
+
+  // 목록 첫 행은 최신 기수라 프로젝트·수강생이 아직 없는 경우가 많다.
+  // 그 상태로 열리면 프로젝트 탭이 비어 보여 "동료 평가를 시작할 수 없다"로 오인된다.
+  it('기본 기수는 목록 첫 행이 아니라 운영 중인 기수를 고른다', () => {
+    renderPage([
+      { id: 'cohort-35', cohortNo: '35', status: 'ended' },
+      { id: 'cohort-32', cohortNo: '32', status: 'operating' },
+    ])
+    expect(screen.getByLabelText('기수 선택')).toHaveTextContent('32기')
+  })
+
+  it('운영 중 기수가 없으면 첫 기수로 떨어진다', () => {
+    renderPage([
+      { id: 'cohort-35', cohortNo: '35', status: 'ended' },
+      { id: 'cohort-31', cohortNo: '31', status: 'ended' },
+    ])
+    expect(screen.getByLabelText('기수 선택')).toHaveTextContent('35기')
   })
 
   it('이력서 탭 = 실 BE 이력서 패널(현황·상세·피드백)', async () => {

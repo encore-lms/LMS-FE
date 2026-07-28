@@ -20,7 +20,6 @@ export interface QuestionWorkbenchProps {
   subjectName: string
   gradingMode: GradingMode
   totalPoints: number
-  targetPoints: number
   questions: InstructorQuestion[]
   /** 좌측 목록 제목 — 문제 목록 | 템플릿 문항 목록 */
   listTitle: string
@@ -68,7 +67,6 @@ export function QuestionWorkbench({
   subjectName,
   gradingMode,
   totalPoints,
-  targetPoints,
   questions,
   listTitle,
   itemNoun,
@@ -110,7 +108,6 @@ export function QuestionWorkbench({
     if (activeId === undefined) setInternalActiveId(id)
   }
 
-  const pointsOk = totalPoints === targetPoints
 
   // 콜백 미지정 시 = 기존 mock 토스트 동작 유지.
   const handleAdd = () =>
@@ -153,15 +150,8 @@ export function QuestionWorkbench({
         </div>
         <div className="bg-divider h-8 w-px" />
         <div>
-          <p className="text-fg-subtle text-xs">총점 합계</p>
-          <p
-            className={cn(
-              'text-sm font-bold',
-              pointsOk ? 'text-fg' : 'text-warning',
-            )}
-          >
-            {totalPoints} / {targetPoints}
-          </p>
+          <p className="text-fg-subtle text-xs">총점</p>
+          <p className="text-fg text-sm font-bold">{totalPoints}점</p>
         </div>
         <div className="bg-divider h-8 w-px" />
         <div>
@@ -430,16 +420,9 @@ export function QuestionWorkbench({
 
       {/* 푸터 */}
       <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border px-5 py-4">
-        <p
-          className={cn(
-            'text-xs',
-            pointsOk ? 'text-fg-subtle' : 'text-warning font-medium',
-          )}
-        >
-          총점 합계 {totalPoints} / {targetPoints} ·{' '}
-          {pointsOk
-            ? `모든 ${itemNoun} 작성 완료`
-            : '배점 합계가 총점과 달라요'}
+        {/* 총점은 문항 배점 합계에서 파생된다 — 목표치와 어긋날 수 없어 경고를 두지 않는다. */}
+        <p className="text-fg-subtle text-xs">
+          {itemNoun} {questions.length}개 · 총점 {totalPoints}점
         </p>
         <div className="ml-auto flex gap-2">
           <Button type="button" variant="secondary" onClick={handlePreview}>

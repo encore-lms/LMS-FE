@@ -335,6 +335,15 @@ describe('QuizFormPage (§6)', () => {
     expect(screen.getByRole('button', { name: /MIXED/ })).toBeDisabled()
   })
 
+  it('총점은 입력이 아니라 문항 합계로 자동 계산되는 읽기 전용 표시다', async () => {
+    renderAt('/instructor/quizzes/quiz-algo-3/edit')
+    // 총점은 문항 배점 합계에서 파생되므로 폼 입력이 아니다.
+    expect(screen.queryByRole('spinbutton', { name: '총점' })).toBeNull()
+    expect(
+      await screen.findByText('문항 배점 합계로 자동 계산됩니다'),
+    ).toBeInTheDocument()
+  })
+
   it('생성 모드 빈 제출은 검증 에러를 보여준다', async () => {
     const user = userEvent.setup()
     // 생성 모드는 상세 데이터가 없어야 폼이 비어 있다 (mockAll 기본값 덮어쓰기).

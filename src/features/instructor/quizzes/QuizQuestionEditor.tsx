@@ -311,14 +311,9 @@ export function QuizQuestionEditor({
       {data && (
         <div>
           <div className="mb-1 flex items-center justify-between">
+            {/* 총점은 문항 배점 합계에서 파생된다 — 설정값과 어긋날 수 없어 경고를 두지 않는다. */}
             <p className="text-fg-muted text-sm">
               {questions.length}문항 · 총점 {totalScore}점
-              {data.targetPoints > 0 && totalScore !== data.targetPoints && (
-                <span className="text-warning">
-                  {' '}
-                  · 설정 총점 {data.targetPoints}점과 다름
-                </span>
-              )}
             </p>
             {/* 버튼 추가는 항상 맨 아래에 폼을 연다(요청). */}
             {!adding && (

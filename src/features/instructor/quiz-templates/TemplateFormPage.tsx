@@ -111,7 +111,6 @@ export default function TemplateFormPage() {
       name: data.name,
       category: data.category,
       description: data.description,
-      totalPoints: data.totalPoints,
       defaultTimeLimitMin: data.defaultTimeLimitMin,
     })
     setGradingMode(data.gradingMode)
@@ -130,7 +129,6 @@ export default function TemplateFormPage() {
         resultReveal,
         shuffleQuestions,
         shuffleChoices,
-        totalPoints: input.totalPoints,
         defaultTimeLimitMin: input.defaultTimeLimitMin,
       },
       {
@@ -299,17 +297,16 @@ export default function TemplateFormPage() {
               onChange={() => setShuffleChoices((v) => !v)}
             />
           </div>
-          <div className="mt-4 flex items-end gap-3">
-            <div className="w-40">
-              <Input
-                label="총점"
-                placeholder="100"
-                error={errors.totalPoints?.message}
-                {...register('totalPoints')}
-              />
-            </div>
+          {/* 총점은 문항 배점 합계에서 자동 계산된다 — 직접 수정하지 않는다(서버가 문항 CRUD 때 동기화). */}
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-fg-muted text-sm">
+              총점{' '}
+              <span className="text-fg font-semibold">
+                {isEdit && data ? `${data.totalPoints}점` : '문항 추가 시 자동 계산'}
+              </span>
+            </span>
             {isEdit && data && (
-              <span className="text-fg-subtle pb-4 text-xs">
+              <span className="text-fg-subtle text-xs">
                 · 문제 {data.questionCount}개 · 평균 배점{' '}
                 {data.questionCount > 0
                   ? Math.round(data.totalPoints / data.questionCount)

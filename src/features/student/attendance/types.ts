@@ -21,12 +21,13 @@ export type HrdAttendanceStatus =
   | 'OUTING'
   | 'ABSENT'
 
-/** 증빙 첨부 메타 — 실제 저장 위치는 BE 결정 보류, mock 단계는 파일 메타만 */
+/** 증빙 첨부 메타 — 실제 바이트는 다운로드 엔드포인트로 받는다. */
 export interface AttendanceAttachment {
   id: string
   fileName: string
-  size: number
-  contentType: string
+  /** 바이트 수. 예전 mock 은 size 였다. */
+  fileSize?: number | null
+  contentType?: string | null
 }
 
 /** 출결 폼 제출 1건 — 같은 cohort에서 마지막 제출 1건만 유효(재제출 시 덮어쓰기) */
@@ -107,5 +108,4 @@ export interface AttendanceFormPayload {
   officialLeaveType?: OfficialLeaveType | null
   officialLeaveOtherReason?: string | null
   note?: string | null
-  attachmentNames?: string[]
 }

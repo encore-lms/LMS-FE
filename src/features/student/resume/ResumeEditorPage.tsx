@@ -39,6 +39,8 @@ export default function ResumeEditorPage() {
   const { resumeId } = useParams()
   const toast = useToast()
   const { data: detail } = useResume(resumeId)
+  // 받은 피드백이 있을 때만 우측 영역을 연다 — 없으면 작성 영역이 기존 폭을 그대로 쓴다.
+  const hasFeedback = (detail?.feedbacks?.length ?? 0) > 0
   const createResume = useCreateResume()
   const updateResume = useUpdateResume()
   const submitting = createResume.isPending || updateResume.isPending
@@ -248,12 +250,18 @@ export default function ResumeEditorPage() {
         )}
       </div>
 
-      <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-8 py-8">
-        {/* 받은 피드백 — 목록 KPI('누적 피드백')만 있고 볼 곳이 없어 내용을 확인할 수 없었다.
-            알림('이력서 피드백')도 이 화면으로 오므로 여기서 바로 읽고 고칠 수 있게 둔다. */}
-        {(detail?.feedbacks?.length ?? 0) > 0 && (
-          <ResumeFeedbackSection feedbacks={detail?.feedbacks ?? []} />
+      {/* 작성 영역 | 피드백 영역 — 피드백을 보면서 고칠 수 있게 좌우로 나눈다.
+          위아래로 쌓으면 피드백을 확인하려고 매번 위로 올라가야 한다.
+          피드백이 없으면 작성 영역만 기존 폭(1040px)으로 둔다. */}
+      <div
+        className={cn(
+          'mx-auto grid w-full gap-6 px-8 py-8',
+          hasFeedback
+            ? 'max-w-[1440px] lg:grid-cols-[minmax(0,1fr)_360px]'
+            : 'max-w-[1040px]',
         )}
+      >
+        <div className="flex min-w-0 flex-col gap-6">
         {!form ? (
           <div className="text-fg-muted p-8">이력서를 불러오는 중…</div>
         ) : mode === 'doc' ? (
@@ -383,6 +391,14 @@ export default function ResumeEditorPage() {
               onRemove={removeCover}
             />
           </div>
+        )}
+        </div>
+
+        {hasFeedback && (
+          // 긴 이력서를 스크롤해도 피드백이 따라오도록 고정한다(뷰포트가 좁으면 위쪽에 한 번만 쌓인다).
+          <aside className="lg:sticky lg:top-[76px] lg:max-h-[calc(100vh-100px)] lg:self-start lg:overflow-y-auto">
+            <ResumeFeedbackSection feedbacks={detail?.feedbacks ?? []} />
+          </aside>
         )}
       </div>
     </div>

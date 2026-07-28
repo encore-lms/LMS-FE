@@ -98,15 +98,21 @@ export default function DashboardPage() {
   const activeCohortLabel =
     cohortTabs.find((c) => c.id === activeCohortId)?.label.split(' · ')[0] ?? ''
 
-  // 우선 처리 목록 정렬 — 긴급도순(긴급 먼저 + 지연 큰 순) / 마감일순(D-day 작은 순).
-  const ddayNum = (d: string) => parseInt(d.replace(/[^0-9+-]/g, ''), 10) || 0
-  const sortedPriorities = [...data.priorities].sort((a, b) => {
-    if (sort === 'urgent') {
-      if (a.urgent !== b.urgent) return a.urgent ? -1 : 1
-      return ddayNum(b.dday) - ddayNum(a.dday)
-    }
-    return ddayNum(a.dday) - ddayNum(b.dday)
-  })
+  // 우선 처리 목록 정렬 — 긴급도순은 서버 산출 순서 그대로(긴급 먼저 → 마감 경과·대기 경과 큰 순).
+  // 마감일순은 마감이 실재하는 칩("마감"/"D-Day"/"D-N")만 임박순으로 앞세우고,
+  // 마감 없는 대기 항목(인증·트러블슈팅)은 서버 순서를 유지한 채 뒤에 둔다.
+  const deadlineRank = (dday: string) => {
+    if (dday === '마감') return -1
+    if (dday === 'D-Day') return 0
+    const match = /^D-(\d+)$/.exec(dday)
+    return match ? Number(match[1]) : Number.POSITIVE_INFINITY
+  }
+  const sortedPriorities =
+    sort === 'urgent'
+      ? data.priorities
+      : [...data.priorities].sort(
+          (a, b) => deadlineRank(a.dday) - deadlineRank(b.dday),
+        )
 
   // 아이콘 박스는 Figma처럼 기능별 틴트 배경 (노랑·파랑·보라)
   const shortcuts = [
@@ -225,7 +231,7 @@ export default function DashboardPage() {
               >
                 {p.dday}
               </span>
-              {/* 액션 버튼은 긴급 여부와 무관하게 흰 outline — 긴급 강조는 D+N 칩이 담당 (Figma 실측) */}
+              {/* 액션 버튼은 긴급 여부와 무관하게 흰 outline — 긴급 강조는 마감·대기 칩이 담당 (Figma 실측) */}
               <button
                 type="button"
                 onClick={() => navigate(p.to)}

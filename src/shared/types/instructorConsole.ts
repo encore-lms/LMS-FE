@@ -18,8 +18,8 @@ export interface PriorityItem {
   type: PriorityType
   title: string // '점수 재검토 보완 응답'
   subtitle: string // '박지훈 · FE 7기'
-  dday: string // 'D+5'
-  urgent: boolean // D+N 클수록 긴급 — 행 강조·primary 버튼
+  dday: string // 마감 축 '마감'|'D-Day'|'D-N' 또는 대기 축 '오늘 요청'|'대기 N일' (없으면 '')
+  urgent: boolean // 마감 D-1 이하·경과 또는 대기 3일 이상 — 칩 빨강 강조
   actionLabel: string // 확인 / 채점 시작 / 검토
   to: string // 이동 라우트
 }

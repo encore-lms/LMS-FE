@@ -16,6 +16,7 @@ import {
   externalRoutes,
   externalPublicRoutes,
 } from '@/features/external/routes'
+import { notificationRoutes } from '@/features/notifications/routes'
 import type { Role } from '@/shared/types'
 
 // 역할 가드로 감싼 라우트 그룹 — 가드는 여기(취합층)서 중앙 적용해 역할 routes.tsx는 순수하게 둔다.
@@ -62,6 +63,8 @@ export const router = createBrowserRouter([
               guarded(['INSTRUCTOR'], instructorRoutes),
               guarded(['MENTOR'], mentorRoutes),
               guarded(['MANAGER', 'ADMIN'], adminRoutes),
+              // 알림 전체 화면 — 전 역할 공용이라 가드 없이 로그인 사용자 모두에게 연다.
+              ...notificationRoutes,
               ...externalRoutes,
             ],
           },

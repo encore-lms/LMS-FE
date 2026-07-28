@@ -8,4 +8,22 @@ export interface AppNotification {
   unread: boolean
   /** 클릭 시 이동할 상대 경로(예: /student/qna/{id}). 없으면 비네비게이션 알림. */
   link?: string | null
+  /** 분류 키(ASSIGNMENT·QUIZ·RECORD…) — 알림 화면 필터·배지에 쓴다. BE가 source에서 유도해 내려준다. */
+  category?: string
+  categoryLabel?: string
+}
+
+/** 알림 화면 필터 칩 1개. key 가 null 이면 '전체'. */
+export interface NotificationCategoryCount {
+  key: string | null
+  label: string
+  count: number
+}
+
+/** 알림 수신함 한 페이지 — nextCursor 가 null 이면 더 없다. */
+export interface NotificationInboxPage {
+  items: AppNotification[]
+  nextCursor: string | null
+  categories: NotificationCategoryCount[]
+  unreadTotal: number
 }

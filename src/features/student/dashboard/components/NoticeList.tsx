@@ -6,19 +6,23 @@ import { Chip } from './Chip'
 import { EmptyState } from './EmptyState'
 
 // 공지 — 운영/강사 공지(기수 단위). 태그(색) + 날짜 + 제목 + 상대시간.
+// 대시보드는 요약이므로 최신 5건까지만 — 전체는 '전체' 링크로 공지 목록에서 본다.
+const DASHBOARD_LIMIT = 5
+
 export function NoticeList({ notices }: { notices: DashboardNotice[] }) {
+  const visible = notices.slice(0, DASHBOARD_LIMIT)
   return (
     <SectionCard
       icon={Megaphone}
       title="공지"
-      subtitle="총 12건 · 최근 30일"
+      subtitle={`총 ${notices.length}건`}
       action={<MoreLink to="/student/notices" label="전체" />}
     >
-      {notices.length === 0 ? (
+      {visible.length === 0 ? (
         <EmptyState icon={Megaphone} title="새 공지가 없어요" />
       ) : (
         <ul className="flex flex-col">
-          {notices.map((n) => (
+          {visible.map((n) => (
             <li
               key={n.id}
               className="flex items-center justify-between gap-3 py-2"

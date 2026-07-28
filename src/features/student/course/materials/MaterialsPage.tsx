@@ -27,6 +27,7 @@ import {
 } from './components/MaterialCategoryChips'
 import { MaterialRow } from './components/MaterialRow'
 import { MaterialDetailModal } from './components/MaterialDetailModal'
+import { EditMaterialModal } from './components/EditMaterialModal'
 import { MaterialPagination } from './components/MaterialPagination'
 import { ShareMaterialModal } from './components/ShareMaterialModal'
 
@@ -41,6 +42,7 @@ export default function MaterialsPage() {
   const [deleteTarget, setDeleteTarget] = useState<MaterialItem | null>(null)
   // 상세 모달 대상 — 행을 클릭하면 열리고, 다운로드·링크 열기·삭제를 그 안에서 한다.
   const [detailTarget, setDetailTarget] = useState<MaterialItem | null>(null)
+  const [editTarget, setEditTarget] = useState<MaterialItem | null>(null)
   usePageHeader('자료실')
   const [category, setCategory] = useState<CategoryKey>('all')
   const [query, setQuery] = useState('')
@@ -254,6 +256,13 @@ export default function MaterialsPage() {
         item={detailTarget}
         onClose={() => setDetailTarget(null)}
         onDelete={setDeleteTarget}
+        onEdit={setEditTarget}
+      />
+
+      <EditMaterialModal
+        item={editTarget}
+        onClose={() => setEditTarget(null)}
+        onUpdated={() => setToast('자료를 수정했습니다')}
       />
 
       <ConfirmDialog

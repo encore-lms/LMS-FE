@@ -58,6 +58,9 @@ export function ShareMaterialModal({
 }) {
   const [tab, setTab] = useState<'file' | 'link'>('file')
   const [title, setTitle] = useState('')
+  // 설명·주차는 예전엔 화면에만 있고 서버로 가지 않아 늘 비어 있었다 — 상태에 묶어 함께 보낸다.
+  const [body, setBody] = useState('')
+  const [week, setWeek] = useState('')
   const [link, setLink] = useState('')
   // 초기값은 비어 있어야 한다 — 예전엔 mock 파일이 하나 박혀 있어, 올리지도 않은 자료가 공유됐다.
   const [files, setFiles] = useState<ShareFile[]>([])
@@ -75,6 +78,8 @@ export function ShareMaterialModal({
         fileType: fileTypeFromName(first.name),
         sizeLabel: first.size,
         file: first.file,
+        body: body.trim() || undefined,
+        week: week.trim() || undefined,
       })
       setFiles([])
     } else {
@@ -82,10 +87,14 @@ export function ShareMaterialModal({
         title: title.trim() || '공유 링크',
         fileType: 'LINK',
         fileUrl: link.trim() || undefined,
+        body: body.trim() || undefined,
+        week: week.trim() || undefined,
       })
     }
     setTitle('')
     setLink('')
+    setBody('')
+    setWeek('')
   }
 
   const addFiles = (list: FileList | null) => {
@@ -186,19 +195,20 @@ export function ShareMaterialModal({
           />
         </Field>
 
-        {/* 주차/과목 + 카테고리 */}
+        {/* 주차/과목 + 카테고리 — 카테고리는 서버가 '학생 공유'로 고정하므로 읽기 전용 안내로 둔다. */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="관련 주차/과목">
             <input
-              defaultValue="9주차 · Spring Boot"
-              className="border-border text-fg focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
+              value={week}
+              onChange={(e) => setWeek(e.target.value)}
+              placeholder="예) 9주차 · Spring Boot"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
             />
           </Field>
           <Field label="카테고리">
-            <input
-              defaultValue="학생 공유"
-              className="border-border text-fg focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
-            />
+            <div className="border-border bg-surface-muted text-fg-muted flex h-11 w-full items-center rounded-[10px] border px-3.5 text-[13px]">
+              학생 공유
+            </div>
           </Field>
         </div>
 
@@ -206,6 +216,8 @@ export function ShareMaterialModal({
         <Field label="설명">
           <textarea
             rows={3}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
             placeholder="자료를 보는 사람이 알면 좋은 맥락을 짧게 적어 주세요."
             className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-[88px] w-full rounded-[10px] border p-3.5 text-[13px] outline-none"
           />

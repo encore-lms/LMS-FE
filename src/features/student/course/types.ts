@@ -102,13 +102,15 @@ export interface MaterialItem {
   author: string // "강사 박지수" | "김수강"
   timeAgo: string // "2일 전"
   downloadCount?: number // LINK는 없음
-  sizeLabel?: string // "2.4MB" — LINK는 없음
+  sizeLabel?: string // "2.4MB" — 서버가 포맷해 줄 때만. 없으면 fileSize로 만든다
+  fileSize?: number | null // 첨부 파일 바이트 수(서버 원본 값)
   favorited: boolean
   canPreview: boolean // PDF/이미지면 '미리보기' 노출
   isExternalLink?: boolean // LINK면 '다운로드' 대신 '링크 열기'
   fileUrl?: string // 파일 URL(다운로드/미리보기) 또는 외부 링크 주소. 없으면 버튼 비활성
   ownedByMe?: boolean // 본인이 올린 학생 공유 자료(수정·삭제 가능). 공식 자료는 false/미설정.
   body?: string | null // 게시글 본문(자료 설명)
+  week?: string | null // 관련 주차/과목
   hasFile?: boolean // 업로드 파일 첨부 — 다운로드 엔드포인트로 받음
   fileName?: string | null // 첨부 파일 원본명
 }
@@ -120,6 +122,22 @@ export interface ShareMaterialInput {
   sizeLabel?: string // 파일 업로드일 때 표시 크기
   fileUrl?: string // 링크 공유일 때 외부 URL
   /** 업로드할 실제 파일 — 있으면 multipart 로 전송한다(없으면 링크 공유). */
+  file?: File
+  /** 설명 — 상세에서 보여준다. 예전엔 입력란이 서버로 연결돼 있지 않아 늘 비었다. */
+  body?: string
+  /** 관련 주차/과목 — "9주차 · Spring Boot" 같은 자유 텍스트 */
+  week?: string
+}
+
+/** 자료 수정 — 본인이 올린 자료만. 넘기지 않은 항목은 서버가 기존 값을 유지한다. */
+export interface UpdateMaterialInput {
+  id: string
+  title?: string
+  body?: string
+  week?: string
+  /** 링크로 교체할 때 */
+  fileUrl?: string
+  /** 파일로 교체할 때 */
   file?: File
 }
 

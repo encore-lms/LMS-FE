@@ -3,11 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { downloadCourseMaterialFile } from '../../../api/course'
-import type {
-  MaterialCategory,
-  MaterialFileType,
-  MaterialItem,
-} from '../../types'
+import type { MaterialFileType, MaterialItem } from '../../types'
 import { FileTypeIcon } from './FileTypeIcon'
 
 // 자료 상세 — 목록 행을 클릭하면 열린다.
@@ -20,13 +16,6 @@ const TYPE_PILL: Record<MaterialFileType, string> = {
   LINK: 'bg-accent-bg text-accent-strong',
   IMG: 'bg-success-bg text-success',
   VIDEO: 'bg-accent-bg text-accent-strong',
-}
-
-const CATEGORY_LABEL: Record<MaterialCategory, string> = {
-  lecture: '강의 자료',
-  practice: '실습',
-  reference: '참고',
-  shared: '학생 공유',
 }
 
 const FILE_EXT: Record<MaterialFileType, string> = {
@@ -148,9 +137,6 @@ export function MaterialDetailModal({
               >
                 {item.fileType}
               </span>
-              <span className="text-fg-muted rounded-[4px] bg-white px-1.5 py-px text-[10px] font-bold">
-                {CATEGORY_LABEL[item.category]}
-              </span>
               {sizeLabel && (
                 <span className="text-fg-subtle text-[11px]">{sizeLabel}</span>
               )}
@@ -168,7 +154,6 @@ export function MaterialDetailModal({
         <dl className="flex flex-col gap-2.5">
           <Meta label="공유한 사람" value={item.author} />
           <Meta label="올린 시각" value={item.timeAgo} />
-          <Meta label="주차·과목" value={item.week} />
           <Meta label="파일명" value={item.fileName} breakAll />
           <Meta
             label="링크"

@@ -21,10 +21,6 @@ const SORTS = [
 ] as const
 type SortKey = (typeof SORTS)[number]['key']
 const PAGE_SIZE = 8
-import {
-  MaterialCategoryChips,
-  type CategoryKey,
-} from './components/MaterialCategoryChips'
 import { MaterialRow } from './components/MaterialRow'
 import { MaterialDetailModal } from './components/MaterialDetailModal'
 import { EditMaterialModal } from './components/EditMaterialModal'
@@ -44,7 +40,6 @@ export default function MaterialsPage() {
   const [detailTarget, setDetailTarget] = useState<MaterialItem | null>(null)
   const [editTarget, setEditTarget] = useState<MaterialItem | null>(null)
   usePageHeader('자료실')
-  const [category, setCategory] = useState<CategoryKey>('all')
   const [query, setQuery] = useState('')
   const [favOverride, setFavOverride] = useState<Record<string, boolean>>({})
   const [page, setPage] = useState(1)
@@ -68,7 +63,6 @@ export default function MaterialsPage() {
   const q = query.trim().toLowerCase()
   const items = (data?.items ?? [])
     .map((it) => ({ ...it, favorited: favOverride[it.id] ?? it.favorited }))
-    .filter((it) => category === 'all' || it.category === category)
     .filter((it) => q === '' || it.title.toLowerCase().includes(q))
 
   const toggleFavorite = (id: string) =>
@@ -111,16 +105,8 @@ export default function MaterialsPage() {
       >
         {data && (
           <>
-            {/* 필터 행 — 카테고리 칩 + 검색/공유 */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <MaterialCategoryChips
-                categories={data.categories}
-                active={category}
-                onChange={(k) => {
-                  setCategory(k)
-                  setPage(1)
-                }}
-              />
+            {/* 필터 행 — 검색/공유. 분류 칩은 없앴다(자료를 나누는 기준이 되지 못해 늘 한 칸에 몰렸다). */}
+            <div className="flex flex-wrap items-center justify-end gap-3">
               <div className="flex items-center gap-2">
                 <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-60 items-center gap-2 rounded-[10px] border px-3.5">
                   <svg
@@ -156,11 +142,7 @@ export default function MaterialsPage() {
             {/* 리스트 헤더 — 제목/건수 + 정렬 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-fg text-[16px] font-bold">
-                  {category === 'all'
-                    ? '전체 자료'
-                    : data.categories.find((c) => c.key === category)?.label}
-                </h2>
+                <h2 className="text-fg text-[16px] font-bold">전체 자료</h2>
                 <span className="bg-surface-muted text-fg-muted rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
                   {items.length}건
                 </span>
@@ -240,9 +222,8 @@ export default function MaterialsPage() {
         onShared={(payload) => {
           shareMutation.mutate(payload, {
             onSuccess: () => {
-              // 새 자료(학생 공유)가 맨 앞에 보이도록 필터·정렬·페이지를 초기화한다.
+              // 새 자료가 맨 앞에 보이도록 정렬·페이지를 초기화한다.
               setShareOpen(false)
-              setCategory('all')
               setSort('latest')
               setPage(1)
               setToast('자료가 공유되었습니다')

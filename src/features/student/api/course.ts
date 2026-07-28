@@ -71,7 +71,6 @@ export function useShareMaterial() {
         form.append('title', input.title)
         form.append('fileType', input.fileType)
         if (input.body) form.append('body', input.body)
-        if (input.week) form.append('week', input.week)
         form.append('file', input.file)
         return apiClient
           .postForm<MaterialItem>('/student/course/materials/file', form)
@@ -98,7 +97,6 @@ export function useUpdateMaterial() {
       const form = new FormData()
       if (input.title !== undefined) form.append('title', input.title)
       if (input.body !== undefined) form.append('body', input.body)
-      if (input.week !== undefined) form.append('week', input.week)
       if (input.fileUrl) form.append('fileUrl', input.fileUrl)
       if (input.file) form.append('file', input.file)
       return apiClient.patchForm<void>(

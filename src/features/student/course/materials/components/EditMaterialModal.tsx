@@ -25,7 +25,6 @@ export function EditMaterialModal({
   const fileRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
-  const [week, setWeek] = useState('')
   const [link, setLink] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -35,7 +34,6 @@ export function EditMaterialModal({
     if (!item) return
     setTitle(item.title)
     setBody(item.body ?? '')
-    setWeek(item.week ?? '')
     setLink(item.isExternalLink ? (item.fileUrl ?? '') : '')
     setFile(null)
     setDragOver(false)
@@ -65,7 +63,6 @@ export function EditMaterialModal({
         id: item.id,
         title: title.trim(),
         body,
-        week,
         // 첨부는 바꾼 것만 보낸다 — 비워 두면 기존 첨부를 그대로 둔다.
         ...(!isLink && file ? { file } : {}),
         ...(isLink && link.trim() && link.trim() !== item.fileUrl
@@ -137,22 +134,6 @@ export function EditMaterialModal({
             className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
           />
         </Field>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="관련 주차/과목">
-            <input
-              value={week}
-              onChange={(e) => setWeek(e.target.value)}
-              placeholder="예) 9주차 · Spring Boot"
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
-            />
-          </Field>
-          <Field label="카테고리">
-            <div className="border-border bg-surface-muted text-fg-muted flex h-11 w-full items-center rounded-[10px] border px-3.5 text-[13px]">
-              학생 공유
-            </div>
-          </Field>
-        </div>
 
         <Field label="설명">
           <textarea

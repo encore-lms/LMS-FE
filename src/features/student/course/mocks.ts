@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import type { CourseMaterials, MaterialCategory, MaterialItem } from './types'
+import type { CourseMaterials, MaterialItem } from './types'
 
 // "나의 과정" mock — 기능 로컬. 자동 수집 규약: `export const handlers`
 // (mocks/handlers.ts 가 import.meta.glob 으로 자동 등록 → handlers.ts 안 건드림).
@@ -12,7 +12,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm1',
     fileType: 'PDF',
-    category: 'lecture',
     title: 'JPA 영속성 컨텍스트 슬라이드',
     author: '강사 박지수',
     timeAgo: '2일 전',
@@ -25,7 +24,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm2',
     fileType: 'DOC',
-    category: 'lecture',
     title: '트랜잭션 매니저 설명 노트',
     author: '강사 박지수',
     timeAgo: '2일 전',
@@ -38,7 +36,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm3',
     fileType: 'ZIP',
-    category: 'practice',
     title: '9주차 실습 정답 코드',
     author: '강사 박지수',
     timeAgo: '3일 전',
@@ -51,7 +48,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm4',
     fileType: 'LINK',
-    category: 'reference',
     title: 'Spring 공식 트랜잭션 가이드 (외부)',
     author: '강사 박지수',
     timeAgo: '1주 전',
@@ -64,7 +60,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm5',
     fileType: 'PDF',
-    category: 'lecture',
     title: '9주차 연관관계 매핑 슬라이드',
     author: '강사 박지수',
     timeAgo: '1주 전',
@@ -77,7 +72,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm6',
     fileType: 'PDF',
-    category: 'shared',
     title: '내가 겪었던 JPA N+1 문제 해결 경험',
     author: '김수강',
     timeAgo: '2일 전',
@@ -91,7 +85,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm7',
     fileType: 'DOC',
-    category: 'shared',
     title: '토픽 정리 — Spring Boot 시큐리티 토킹',
     author: '오태원',
     timeAgo: '3일 전',
@@ -104,7 +97,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm8',
     fileType: 'LINK',
-    category: 'reference',
     title: '백엔드 로드맵 (Roadmap.sh)',
     author: '오영빈',
     timeAgo: '2주 전',
@@ -116,7 +108,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm9',
     fileType: 'PDF',
-    category: 'lecture',
     title: '스프링 트랜잭션 전파 옵션 정리',
     author: '강사 박지수',
     timeAgo: '4일 전',
@@ -129,7 +120,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm10',
     fileType: 'PDF',
-    category: 'lecture',
     title: 'AOP와 프록시 동작 원리',
     author: '강사 박지수',
     timeAgo: '5일 전',
@@ -142,7 +132,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm11',
     fileType: 'DOC',
-    category: 'lecture',
     title: 'JPA 영속성 전이·고아 객체 노트',
     author: '강사 박지수',
     timeAgo: '5일 전',
@@ -155,7 +144,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm12',
     fileType: 'PDF',
-    category: 'lecture',
     title: 'QueryDSL 동적 쿼리 작성법',
     author: '강사 박지수',
     timeAgo: '1주 전',
@@ -168,7 +156,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm13',
     fileType: 'PDF',
-    category: 'lecture',
     title: '스프링 시큐리티 인증 흐름 슬라이드',
     author: '강사 박지수',
     timeAgo: '1주 전',
@@ -181,7 +168,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm14',
     fileType: 'DOC',
-    category: 'lecture',
     title: '테스트 코드 작성 가이드',
     author: '강사 박지수',
     timeAgo: '2주 전',
@@ -194,7 +180,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm15',
     fileType: 'ZIP',
-    category: 'practice',
     title: '10주차 실습 스켈레톤 코드',
     author: '강사 박지수',
     timeAgo: '3일 전',
@@ -207,7 +192,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm16',
     fileType: 'ZIP',
-    category: 'practice',
     title: '11주차 QueryDSL 실습 과제',
     author: '강사 박지수',
     timeAgo: '6일 전',
@@ -220,7 +204,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm17',
     fileType: 'PDF',
-    category: 'practice',
     title: '실습 환경 세팅 가이드',
     author: '강사 박지수',
     timeAgo: '2주 전',
@@ -233,7 +216,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm18',
     fileType: 'LINK',
-    category: 'reference',
     title: 'Baeldung Spring 튜토리얼 (외부)',
     author: '강사 박지수',
     timeAgo: '2주 전',
@@ -245,7 +227,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm19',
     fileType: 'PDF',
-    category: 'reference',
     title: '백엔드 면접 예상 질문 모음',
     author: '강사 박지수',
     timeAgo: '3주 전',
@@ -258,7 +239,6 @@ const materialItems: MaterialItem[] = [
   {
     id: 'm20',
     fileType: 'DOC',
-    category: 'shared',
     title: '내가 정리한 Git 협업 플로우',
     author: '오영빈',
     timeAgo: '4일 전',
@@ -270,20 +250,10 @@ const materialItems: MaterialItem[] = [
   },
 ]
 
-// 카테고리 칩 카운트는 항목에서 파생 — 자료가 늘면 칩 숫자·페이지 수가 자동 반영(불일치 방지).
 function buildMaterials(): CourseMaterials {
-  const count = (k: MaterialCategory) =>
-    materialItems.filter((it) => it.category === k).length
   return {
     totalCount: materialItems.length,
     shownCount: Math.min(8, materialItems.length),
-    categories: [
-      { key: 'all', label: '전체', count: materialItems.length },
-      { key: 'lecture', label: '강의 자료', count: count('lecture') },
-      { key: 'practice', label: '실습', count: count('practice') },
-      { key: 'reference', label: '참고', count: count('reference') },
-      { key: 'shared', label: '학생 공유', count: count('shared') },
-    ],
     items: materialItems,
   }
 }

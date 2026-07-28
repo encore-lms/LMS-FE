@@ -91,13 +91,11 @@ export interface CourseHome {
 export type MaterialFileType = 'PDF' | 'DOC' | 'ZIP' | 'LINK' | 'IMG' | 'VIDEO'
 
 /** 자료 분류 — 카테고리 칩/배지 */
-export type MaterialCategory = 'lecture' | 'practice' | 'reference' | 'shared'
 
 /** 자료 한 건 */
 export interface MaterialItem {
   id: string
   fileType: MaterialFileType
-  category: MaterialCategory
   title: string
   author: string // "강사 박지수" | "김수강"
   timeAgo: string // "2일 전"
@@ -110,7 +108,6 @@ export interface MaterialItem {
   fileUrl?: string // 파일 URL(다운로드/미리보기) 또는 외부 링크 주소. 없으면 버튼 비활성
   ownedByMe?: boolean // 본인이 올린 학생 공유 자료(수정·삭제 가능). 공식 자료는 false/미설정.
   body?: string | null // 게시글 본문(자료 설명)
-  week?: string | null // 관련 주차/과목
   hasFile?: boolean // 업로드 파일 첨부 — 다운로드 엔드포인트로 받음
   fileName?: string | null // 첨부 파일 원본명
 }
@@ -125,8 +122,6 @@ export interface ShareMaterialInput {
   file?: File
   /** 설명 — 상세에서 보여준다. 예전엔 입력란이 서버로 연결돼 있지 않아 늘 비었다. */
   body?: string
-  /** 관련 주차/과목 — "9주차 · Spring Boot" 같은 자유 텍스트 */
-  week?: string
 }
 
 /** 자료 수정 — 본인이 올린 자료만. 넘기지 않은 항목은 서버가 기존 값을 유지한다. */
@@ -134,24 +129,15 @@ export interface UpdateMaterialInput {
   id: string
   title?: string
   body?: string
-  week?: string
   /** 링크로 교체할 때 */
   fileUrl?: string
   /** 파일로 교체할 때 */
   file?: File
 }
 
-/** 카테고리 칩 1개 (전체 + 4분류) */
-export interface MaterialCategoryCount {
-  key: 'all' | MaterialCategory
-  label: string
-  count: number
-}
-
 /** 자료실 전체 응답 */
 export interface CourseMaterials {
   totalCount: number
   shownCount: number // "24건 중 8건 표시"
-  categories: MaterialCategoryCount[]
   items: MaterialItem[]
 }

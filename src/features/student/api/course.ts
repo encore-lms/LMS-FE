@@ -63,10 +63,21 @@ export async function downloadCourseMaterialFile(id: string, fileName: string) {
 export function useShareMaterial() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: ShareMaterialInput) =>
-      apiClient
+    mutationFn: (input: ShareMaterialInput) => {
+      // 파일이 있으면 multipart 로 보낸다 — JSON 으로는 바이트가 실리지 않아 다운로드가 404였다.
+      if (input.file) {
+        const form = new FormData()
+        form.append('title', input.title)
+        form.append('fileType', input.fileType)
+        form.append('file', input.file)
+        return apiClient
+          .postForm<MaterialItem>('/student/course/materials/file', form)
+          .then((r) => r.data)
+      }
+      return apiClient
         .post<MaterialItem>('/student/course/materials', input)
-        .then((r) => r.data),
+        .then((r) => r.data)
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: courseKeys.materials() }),
   })
 }

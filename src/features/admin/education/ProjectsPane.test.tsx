@@ -3,7 +3,11 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ProjectsPane } from './ProjectsPane'
-import { useCohortProjects, usePeerEvalToggle } from './api'
+import {
+  useCohortProjects,
+  usePeerEvalToggle,
+  useProjectCompletion,
+} from './api'
 import { useStudentAccounts } from '../api/students'
 import type { CohortProject } from './types'
 
@@ -34,7 +38,11 @@ const solo: CohortProject = {
   members: [{ userId: 'u1', role: 'OWNER' }],
 }
 
-function renderPane(projects: CohortProject[], mutate = vi.fn()) {
+function renderPane(
+  projects: CohortProject[],
+  mutate = vi.fn(),
+  completeMutate = vi.fn(),
+) {
   vi.mocked(useCohortProjects).mockReturnValue({
     data: projects,
     isPending: false,
@@ -48,17 +56,50 @@ function renderPane(projects: CohortProject[], mutate = vi.fn()) {
     mutate,
     isPending: false,
   } as unknown as ReturnType<typeof usePeerEvalToggle>)
+  vi.mocked(useProjectCompletion).mockReturnValue({
+    mutate: completeMutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useProjectCompletion>)
   render(
     <ToastProvider>
       <ProjectsPane courseId="c1" cohortId="co1" />
     </ToastProvider>,
   )
-  return mutate
+  return { mutate, completeMutate }
 }
+
+describe('ProjectsPane 프로젝트 종료 처리', () => {
+  it('진행 중이면 [종료 처리]로 완료로 바꾼다', async () => {
+    const user = userEvent.setup()
+    // 완료로 가는 길이 강사 인증뿐이면 기간이 끝나도 평가를 못 연다 — 여기서 직접 닫는다.
+    const { completeMutate } = renderPane([
+      { ...team, status: 'IN_PROGRESS', statusLabel: '진행 중' },
+    ])
+
+    await user.click(screen.getByRole('button', { name: '종료 처리' }))
+
+    expect(completeMutate).toHaveBeenCalledWith(
+      { projectId: 'p1', completed: true },
+      expect.anything(),
+    )
+  })
+
+  it('완료된 프로젝트는 [진행 중으로] 되돌릴 수 있다', async () => {
+    const user = userEvent.setup()
+    const { completeMutate } = renderPane([team])
+
+    await user.click(screen.getByRole('button', { name: '진행 중으로' }))
+
+    expect(completeMutate).toHaveBeenCalledWith(
+      { projectId: 'p1', completed: false },
+      expect.anything(),
+    )
+  })
+})
 
 describe('ProjectsPane 동료 평가 토글', () => {
   it('팀원 2명 이상이면 평가를 시작할 수 있다', async () => {
-    const mutate = renderPane([team])
+    const { mutate } = renderPane([team])
     const user = userEvent.setup()
     const card = screen.getByText('팀 프로젝트 A').closest('div')
       ?.parentElement as HTMLElement
@@ -70,7 +111,7 @@ describe('ProjectsPane 동료 평가 토글', () => {
   })
 
   it('이미 개시된 프로젝트는 중단할 수 있다', async () => {
-    const mutate = renderPane([{ ...team, peerEvalEnabled: true }])
+    const { mutate } = renderPane([{ ...team, peerEvalEnabled: true }])
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /중단/ }))
     expect(mutate).toHaveBeenCalledWith(

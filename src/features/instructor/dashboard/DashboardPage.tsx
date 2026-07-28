@@ -136,8 +136,13 @@ export default function DashboardPage() {
       title: '수강생 목록',
       badge: 0,
       hint: data.shortcuts.students.hint,
-      // 수강생 목록은 공용 선택 기수(컨텍스트)로 필터되므로 라우트 기수는 고정.
-      to: '/instructor/cohorts/all/students',
+      // 수강생 목록 단독 화면은 폐기되고 교육 과정 허브 '수강생' 탭으로 이관됐다(routes.tsx).
+      // 이전 경로 /instructor/cohorts/all/students 는 라우터에 없어 클릭하면 아무 화면도 뜨지 않았다.
+      // 퀴즈 관리와 같은 규칙 — 기수가 선택돼 있으면 그 허브로, 전체면 과정 목록으로.
+      to:
+        activeCohortId !== COHORT_ALL
+          ? `/instructor/cohorts/${activeCohortId}/education?tab=students`
+          : '/instructor/cohorts',
     },
     {
       key: 'reviews',

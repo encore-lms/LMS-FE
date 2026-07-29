@@ -12,7 +12,12 @@ export type ProjectPhase = 'active' | 'completed' | 'reviewing' | 'certified'
 // 인증 완료 후 "수정 권한 요청" 서브상태 — certified 단계에서만 의미를 가진다(생애주기와 분리).
 // none(수정 잠금) → requested(강사 승인 대기) → approved(시한부 수정 가능)
 //   → submitted(강사 최종 확인 대기) → (최종 확인 시 none 으로 복귀).
-export type EditRequestStatus = 'none' | 'requested' | 'approved' | 'submitted'
+export type EditRequestStatus =
+  | 'none'
+  | 'requested'
+  | 'approved'
+  | 'submitted'
+  | 'rejected'
 
 // 원본↔현재 비교(보조)에 쓰는 프로젝트 핵심 콘텐츠 — 목에서는 대표 2개 필드만.
 export interface ProjectContent {
@@ -35,6 +40,8 @@ export interface EditRequestState {
   editAllowedUntil?: string
   /** 수정 완료 제출 시 작성한 변경 요약 */
   changeSummary?: string
+  /** 강사가 승인·반려하며 남긴 사유. 반려됐을 때 무엇이 부족했는지 알려준다. */
+  decisionReason?: string
   /**
    * 승인 시점 원본 스냅샷 — 서버가 내려주는 '변경 전'(label·before).
    * 예전에는 프론트가 하드코딩한 예시 문구를 모든 프로젝트에 똑같이 보여줬다.

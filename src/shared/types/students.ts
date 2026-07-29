@@ -13,6 +13,7 @@ export interface StudentAccount {
   lastLoginAt: string | null // '오늘 09:18' | '7일 전' 표기 (null = 미접속)
   trainingStatus: StudentTrainingStatus
   loginBlocked: boolean
+  isTest: boolean // 시연·검증용으로 만든 계정 — 운영 화면에서만 보이고 삭제할 수 있다
 }
 
 export interface StudentAccountsSummary {

@@ -29,6 +29,17 @@ export function SubmissionSummary({
         </div>
       </div>
 
+      {/* 본문 — 제출한 내용을 그대로 보여준다. 예전에는 URL·첨부만 그려서
+          글로 낸 제출은 요약에서 아무것도 보이지 않았다. */}
+      {submitted.body.trim() && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-fg text-[13px] font-semibold">본문</p>
+          <p className="text-fg-muted text-[13px] leading-6 whitespace-pre-wrap">
+            {submitted.body}
+          </p>
+        </div>
+      )}
+
       {submitted.url && (
         <div className="flex flex-col gap-1.5">
           <p className="text-fg text-[13px] font-semibold">제출 URL</p>

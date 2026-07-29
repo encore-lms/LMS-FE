@@ -17,6 +17,7 @@ interface RawStudent {
   status: string // ACTIVE | INACTIVE | BLOCKED
   lastLoginAt: string | null
   createdAt: string
+  test: boolean
 }
 interface RawStudentPage {
   content: RawStudent[]
@@ -33,6 +34,7 @@ function toAccount(s: RawStudent): StudentAccount {
     lastLoginAt: s.lastLoginAt ? s.lastLoginAt.slice(0, 10) : null,
     trainingStatus: s.status === 'INACTIVE' ? 'dropout' : 'active',
     loginBlocked: s.status === 'BLOCKED',
+    isTest: s.test ?? false,
   }
 }
 

@@ -100,10 +100,10 @@ const mockCommitActivity = [
 
 const mockOverview: CertificateOverview = {
   header: {
-    studentName: '박준서',
-    courseName: 'SKN LLM·AI 개발자 과정',
-    cohortName: 'SKN 4기',
-    periodLabel: '2024.03.11 — 2024.09.08',
+    studentName: '박수진',
+    courseName: 'SK네트웍스 Family AI 캠프',
+    cohortName: 'SKN 32기',
+    periodLabel: '2026.04.28 — 2026.10.26',
     certId: 'abc-1234',
     isPublic: false,
     status: 'changes_requested',

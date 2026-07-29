@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Award } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -23,10 +24,11 @@ const STATUS_META: Record<
   CompetencyCertStatus,
   { label: string; tone: BadgeTone }
 > = {
-  draft: { label: '작성 중', tone: 'neutral' },
-  reviewing: { label: '검토 중', tone: 'info' },
-  changes_requested: { label: '보완 요청', tone: 'warning' },
-  certified: { label: '인증 완료', tone: 'success' },
+  cohort_open: { label: '기수 미종료', tone: 'neutral' },
+  data_pending: { label: '데이터 미준비', tone: 'warning' },
+  data_ready: { label: '데이터 준비', tone: 'info' },
+  issued: { label: '증명서 완료', tone: 'success' },
+  data_rebuilding: { label: '재 데이터 준비', tone: 'accent' },
 }
 
 export default function CompetencyCertificatesPage() {
@@ -35,6 +37,7 @@ export default function CompetencyCertificatesPage() {
     '과정·기수별 수강생의 역량 증명서를 확인하고 공개를 관리합니다',
   )
 
+  const navigate = useNavigate()
   const { data: courses } = useCourseList()
   // 과정·기수를 URL 에 둔다 — 새로고침·상세 왕복에서 보던 기수가 유지된다.
   const [courseParam, setCourseParam] = useSearchParamState('course')
@@ -62,10 +65,11 @@ export default function CompetencyCertificatesPage() {
   const [q, setQ] = useSearchParamState('q')
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
 
-  const cohortLabel = useMemo(() => {
-    const found = cohorts.find((c) => c.id === cohortId)
-    return found ? `${found.cohortNo}기` : ''
-  }, [cohorts, cohortId])
+  const cohort = useMemo(
+    () => cohorts.find((c) => c.id === cohortId) ?? null,
+    [cohorts, cohortId],
+  )
+  const cohortLabel = cohort ? `${cohort.cohortNo}기` : ''
 
   const rows = useMemo(() => {
     const items = data?.items ?? []
@@ -73,22 +77,22 @@ export default function CompetencyCertificatesPage() {
     return items
       // 시연용 테스트 계정은 증명서 대상이 아니다.
       .filter((s) => !s.isTest)
-      .map((s) => toCertRow(s, cohortLabel))
+      .map((s) => toCertRow(s, cohortLabel, cohort?.endDate))
       .filter(
         (r) =>
           !needle ||
           r.studentName.toLowerCase().includes(needle) ||
           r.studentUuid.toLowerCase().includes(needle),
       )
-  }, [data, q, cohortLabel])
+  }, [data, q, cohortLabel, cohort])
 
   const summary = useMemo(() => {
     const by = (s: CompetencyCertStatus) =>
       rows.filter((r) => r.status === s).length
     return {
       total: rows.length,
-      certified: by('certified'),
-      reviewing: by('reviewing') + by('changes_requested'),
+      issued: by('issued'),
+      preparing: by('data_pending') + by('data_ready') + by('data_rebuilding'),
       published: rows.filter((r) => r.published).length,
     }
   }, [rows])
@@ -120,13 +124,15 @@ export default function CompetencyCertificatesPage() {
     {
       key: 'overallScore',
       header: '종합 점수',
-      cell: (r: CompetencyCertRow) => (
-        <span className="text-fg text-[13px] font-semibold tabular-nums">
-          {r.overallScore}
-        </span>
-      ),
+      cell: (r: CompetencyCertRow) =>
+        r.overallScore === null ? (
+          <span className="text-fg-subtle text-[13px]">—</span>
+        ) : (
+          <span className="text-fg text-[13px] font-semibold tabular-nums">
+            {r.overallScore}
+          </span>
+        ),
     },
-    { key: 'profileLabel', header: '프로필', cell: (r: CompetencyCertRow) => r.profileLabel },
     {
       key: 'published',
       header: '공개',
@@ -180,13 +186,13 @@ export default function CompetencyCertificatesPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="대상 수강생" value={`${summary.total}명`} />
         <KpiCard
-          label="인증 완료"
-          value={`${summary.certified}명`}
+          label="증명서 완료"
+          value={`${summary.issued}명`}
           tone="success"
         />
         <KpiCard
-          label="검토 중·보완"
-          value={`${summary.reviewing}명`}
+          label="준비 중"
+          value={`${summary.preparing}명`}
           tone="warning"
         />
         <KpiCard
@@ -221,6 +227,16 @@ export default function CompetencyCertificatesPage() {
             columns={columns}
             rows={rows}
             rowKey={(r) => r.studentId}
+            // 증명서가 나온 건만 상세로 들어간다 — 준비 중인 행은 열어도 볼 게 없다.
+            onRowClick={(r) =>
+              r.openable &&
+              navigate(
+                `/admin/certificates/${r.studentId}?demo=${r.demoStudentId}`,
+              )
+            }
+            rowClassName={(r) =>
+              r.openable ? 'cursor-pointer' : 'cursor-default'
+            }
           />
         )}
       </DataBoundary>

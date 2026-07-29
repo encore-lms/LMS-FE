@@ -25,6 +25,9 @@ const EducationResumeDetailPage = lazy(
 const CompetencyCertificatesPage = lazy(
   () => import('./certificates-competency/CompetencyCertificatesPage'),
 )
+const CompetencyCertificateDetailPage = lazy(
+  () => import('./certificates-competency/CompetencyCertificateDetailPage'),
+)
 // CSV 매핑·업로드 (운영 전용 신설 — features/admin/csv, Figma 1521:10678)
 const CsvMappingPage = lazy(() => import('./csv/CsvMappingPage'))
 // 인입 격리 큐 (운영 전용 신설 — features/admin/ingestion, Figma 1185:6029)
@@ -118,6 +121,10 @@ export const adminRoutes: RouteObject[] = [
         element: <EducationResumeDetailPage />,
       },
       { path: 'certificates', element: <CompetencyCertificatesPage /> },
+      {
+        path: 'certificates/:studentId',
+        element: <CompetencyCertificateDetailPage />,
+      },
       { path: 'csv-mapping', element: <CsvMappingPage /> },
       { path: 'ingestion/quarantine', element: <IngestionQueuePage /> },
       { path: 'reputation', element: <ReputationPage /> },

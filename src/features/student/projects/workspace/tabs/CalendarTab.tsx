@@ -52,7 +52,9 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
   })
   const [events, setEvents] = useState<CalItem[]>(() => [
     ...d.calEvents.map((e) => ({
-      date: `${CAL_BASE}-${pad2(e.day)}`,
+      // 서버가 실제 날짜를 준다. 예전에는 고정 월(CAL_BASE)에 일(day)만 붙여
+      // 다른 달 일정이 엉뚱한 날에 붙고, 탭을 다시 열면 위치가 어긋났다.
+      date: e.date ?? `${CAL_BASE}-${pad2(e.day)}`,
       label: e.label,
       tone: e.tone,
       type: TONE_TYPE[e.tone],

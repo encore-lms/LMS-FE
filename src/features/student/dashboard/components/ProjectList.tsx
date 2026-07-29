@@ -8,13 +8,25 @@ import { Chip } from './Chip'
 import { EmptyState } from './EmptyState'
 import { TONE_SOLID } from './tone'
 
+// 부제는 실제 목록에서 센다 — 예전에는 "3건 진행 · 1건 인증 완료" 가 박혀 있어,
+// 목록이 비어 있어도 자료가 있는 것처럼 보였다.
+function summarize(projects: DashboardProject[]) {
+  if (projects.length === 0) return '아직 등록한 프로젝트가 없어요'
+  const certified = projects.filter((p) => p.status.tone === 'success').length
+  const ongoing = projects.length - certified
+  const parts = []
+  if (ongoing > 0) parts.push(`${ongoing}건 진행`)
+  if (certified > 0) parts.push(`${certified}건 인증 완료`)
+  return parts.join(' · ')
+}
+
 // 진행 중 프로젝트 — 좌측 액센트 바 + 제목/역할·주차 + 진행률 바 + 상태 칩. 클릭 시 프로젝트로.
 export function ProjectList({ projects }: { projects: DashboardProject[] }) {
   return (
     <SectionCard
       icon={FolderKanban}
       title="진행 중 프로젝트"
-      subtitle="3건 진행 · 1건 인증 완료"
+      subtitle={summarize(projects)}
       action={<MoreLink to="/student/projects" label="프로젝트" />}
     >
       {projects.length === 0 ? (

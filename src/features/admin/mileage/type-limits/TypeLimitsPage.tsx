@@ -192,25 +192,6 @@ export default function TypeLimitsPage() {
           </div>
         </div>
 
-        {/* 타입 한도 사용자 안내 — 스펙 '완료 기준' 카피를 운영자 관점 설명으로 재작성 */}
-        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-          <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
-            <Info className="h-4 w-4" />
-            타입 한도 안내
-          </p>
-          <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-            <li>
-              한도를 수정하면 카드에 &lsquo;변경됨&rsquo; 표시가 붙고, 저장하기
-              전까지는 실제로 반영되지 않습니다
-            </li>
-            <li>저장하면 같은 타입의 모든 상품에 새 한도가 적용됩니다</li>
-            <li>
-              구매 요청을 승인할 때 수강생별 누적 사용액을 검사해, 타입 한도를
-              초과하는 요청은 자동으로 차단됩니다
-            </li>
-          </ul>
-        </div>
-
         {/* 저장 확인 모달 — 운영 액션 모달 공통 재사용 */}
         <ActionModal
           spec={confirm}

@@ -21,9 +21,9 @@ const AssignmentFormPage = lazy(
 const EducationResumeDetailPage = lazy(
   () => import('./education/ResumeDetailPage'),
 )
-// 증명서 템플릿 (운영 전용 신설 — features/admin/certificate-template, Figma 1521:10895)
-const CertificateTemplatePage = lazy(
-  () => import('./certificate-template/CertificateTemplatePage'),
+// 역량 증명서 관리 — 과정·기수별 수강생 증명서 현황(증명서 템플릿 대체).
+const CompetencyCertificatesPage = lazy(
+  () => import('./certificates-competency/CompetencyCertificatesPage'),
 )
 // CSV 매핑·업로드 (운영 전용 신설 — features/admin/csv, Figma 1521:10678)
 const CsvMappingPage = lazy(() => import('./csv/CsvMappingPage'))
@@ -117,7 +117,7 @@ export const adminRoutes: RouteObject[] = [
         path: 'education/resume/:resumeId',
         element: <EducationResumeDetailPage />,
       },
-      { path: 'certificate-template', element: <CertificateTemplatePage /> },
+      { path: 'certificates', element: <CompetencyCertificatesPage /> },
       { path: 'csv-mapping', element: <CsvMappingPage /> },
       { path: 'ingestion/quarantine', element: <IngestionQueuePage /> },
       { path: 'reputation', element: <ReputationPage /> },

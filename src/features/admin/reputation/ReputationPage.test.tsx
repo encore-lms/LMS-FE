@@ -267,6 +267,23 @@ describe('ReputationPage (평판 관리)', () => {
     expect(within(dialog).getByText('abc-1234')).toBeInTheDocument()
   })
 
+  it('평판 상세 — 행 아무 곳(이름 셀)을 클릭해도 상세 모달이 열린다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getByText('김민준'))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('김민준 평판 상세')).toBeInTheDocument()
+  })
+
+  it('평판 행 클릭 — 액션 셀의 푸시 버튼 클릭은 상세를 함께 열지 않는다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '강사 푸시 요청' })[0])
+    // 푸시 확인 모달만 열리고 평판 상세 제목은 없어야 한다.
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).queryByText(/평판 상세/)).toBeNull()
+  })
+
   it('평판 상세 — 멘토가 남긴 5축 점수·코멘트·추천 사유를 보여준다', async () => {
     renderPage()
     const user = userEvent.setup()

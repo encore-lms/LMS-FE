@@ -156,6 +156,7 @@ describe('RecordsPage', () => {
         screen.queryByRole('button', { name: '블로그 상세 닫기' }),
       ).not.toBeInTheDocument(),
     )
-    expect(document.body.style.overflow).toBe('')
+    // 스크롤 잠금 해제는 passive effect cleanup이라 DOM 제거보다 늦게 올 수 있다 — 폴링으로 대기
+    await waitFor(() => expect(document.body.style.overflow).toBe(''))
   })
 })

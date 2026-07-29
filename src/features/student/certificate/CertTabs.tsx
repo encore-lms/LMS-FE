@@ -20,11 +20,15 @@ const AI_TAB: { key: CertTab; label: string } = {
 export function CertTabs({
   active,
   onChange,
+  only,
 }: {
   active: CertTab
   onChange: (t: CertTab) => void
+  /** 노출할 탭을 좁힌다 — 매니저 열람처럼 일부 탭의 데이터 소스가 없는 화면용. */
+  only?: CertTab[]
 }) {
-  const tabs = CERT_V2 ? [...CERT_TABS, AI_TAB] : CERT_TABS
+  const all = CERT_V2 ? [...CERT_TABS, AI_TAB] : CERT_TABS
+  const tabs = only ? all.filter((t) => only.includes(t.key)) : all
   return (
     <nav className="bg-surface flex w-full gap-1 rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       {tabs.map((t) => {

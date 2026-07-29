@@ -9,6 +9,7 @@ import {
   useCancelMileageOrder,
   type MileageOrderRow,
 } from '../api/mileage'
+import { OrderReviseCard } from './components/OrderReviseCard'
 
 // 구매 요청 뷰 — 내 마일리지 구매 요청(주문)의 처리 상태와 취소(대기 건). 마일리지 허브의 한 뷰.
 const STATUS_TONE: Record<MileageOrderRow['status'], string> = {
@@ -16,6 +17,7 @@ const STATUS_TONE: Record<MileageOrderRow['status'], string> = {
   approved: 'bg-success-bg text-success',
   rejected: 'bg-danger-bg text-danger',
   canceled: 'bg-surface-muted text-fg-muted',
+  revision: 'bg-warning-bg text-warning',
 }
 
 export function OrdersView({ onView }: { onView: (v: string) => void }) {
@@ -52,8 +54,9 @@ export function OrdersView({ onView }: { onView: (v: string) => void }) {
             {data.orders.map((o) => (
               <section
                 key={o.id}
-                className="bg-surface flex items-center gap-4 rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]"
+                className="bg-surface flex flex-col gap-4 rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]"
               >
+                <div className="flex items-center gap-4">
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex items-center gap-2">
                     <span className="text-fg truncate text-[14px] font-bold">
@@ -73,7 +76,8 @@ export function OrdersView({ onView }: { onView: (v: string) => void }) {
                 <span className="text-fg shrink-0 text-[15px] font-bold tabular-nums">
                   -{o.amount.toLocaleString()}M
                 </span>
-                {o.status === 'pending' && (
+                {/* 수정 요청을 받은 건도 취소할 수 있어야 한다 — 갇히면 되돌릴 길이 없다. */}
+                {(o.status === 'pending' || o.status === 'revision') && (
                   <button
                     type="button"
                     disabled={cancel.isPending}
@@ -91,6 +95,8 @@ export function OrdersView({ onView }: { onView: (v: string) => void }) {
                     구매 취소
                   </button>
                 )}
+                </div>
+                {o.status === 'revision' && <OrderReviseCard order={o} />}
               </section>
             ))}
           </div>

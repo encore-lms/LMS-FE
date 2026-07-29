@@ -36,13 +36,22 @@ export function useMileageHistory() {
   })
 }
 
+/** 주문 한 줄. 수정 요청을 받았으면 사유(reviewNote)와 원본 항목(lines)이 함께 온다. */
 export interface MileageOrderRow {
   id: string
   product: string
   amount: number
-  status: 'pending' | 'approved' | 'rejected' | 'canceled'
+  status: 'pending' | 'approved' | 'rejected' | 'canceled' | 'revision'
   statusLabel: string
   date: string
+  reviewNote?: string | null
+  lines?: {
+    productId: string
+    productName: string
+    quantity: number
+    unitPrice: number
+    link?: string | null
+  }[]
 }
 export interface MileageOrdersData {
   balance: string
@@ -76,6 +85,25 @@ export function useCreateMileageOrder() {
         link?: string
       }[]
     }) => apiClient.post('/student/mileage/orders', input),
+    onSuccess: () => invalidateMileage(qc),
+  })
+}
+/** 수정 요청받은 주문을 고쳐 다시 낸다 — 상품·수량·링크 교체 후 검토 대기로 돌아간다. */
+export function useReviseMileageOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      ...input
+    }: {
+      orderId: string
+      items: {
+        productId: string
+        quantity: number
+        requestedPrice?: number
+        link?: string
+      }[]
+    }) => apiClient.patch(`/student/mileage/orders/${orderId}`, input),
     onSuccess: () => invalidateMileage(qc),
   })
 }

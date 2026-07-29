@@ -116,6 +116,8 @@ export interface TsCaseDetail {
   // 강사 반려 사유(있으면 반려 안내 모달 노출). 인증 요청/변경 제안 반려 시 설정.
   rejectionReason?: string
   rejectionFrom?: 'cert' | 'change'
+  /** 강사가 보완 요청·인증 취소하며 남긴 사유. 무엇을 고쳐야 하는지 알려준다. */
+  reviewComment?: string | null
 }
 
 /**

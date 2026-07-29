@@ -47,6 +47,10 @@ const HEADER: Record<EditRequestStatus, [string, string]> = {
     '수정 완료 제출됨',
     '강사가 변경 요약과 현재 프로젝트 내용을 확인하는 중이에요.',
   ],
+  rejected: [
+    '수정 권한 요청 반려됨',
+    '강사가 남긴 반려 사유를 확인하고, 보완해서 다시 요청할 수 있어요.',
+  ],
 }
 
 export default function ChangeRequestPage() {
@@ -74,6 +78,8 @@ export default function ChangeRequestPage() {
   const status: EditRequestStatus = expired
     ? 'none'
     : (editRequest?.status ?? 'none')
+  // 아직 안 냈거나 반려됐으면 사유를 적어 (다시) 요청할 수 있다.
+  const canRequest = status === 'none' || status === 'rejected'
 
   useEffect(() => {
     if (expired) {
@@ -161,6 +167,18 @@ export default function ChangeRequestPage() {
           body="강사가 변경 요약과 현재 프로젝트 내용을 확인한 뒤 최종 확인 처리합니다."
         />
       )}
+      {/* 반려는 사유가 전부다 — 이 배너가 없으면 무엇이 부족했는지 알 길이 없다. */}
+      {status === 'rejected' && (
+        <StatusBanner
+          tone="danger"
+          icon={<Lock className="size-3.5" aria-hidden="true" />}
+          title="수정 권한 요청이 반려됐어요"
+          body={
+            editRequest?.decisionReason?.trim() ||
+            '강사가 반려 사유를 남기지 않았어요. 담당 강사에게 확인해 주세요.'
+          }
+        />
+      )}
 
       {/* 프로젝트 정보 (공통) */}
       <section className={cn(card, 'flex flex-col gap-2')}>
@@ -178,8 +196,8 @@ export default function ChangeRequestPage() {
         </span>
       </section>
 
-      {/* none — 수정 사유 입력 */}
-      {status === 'none' && (
+      {/* none·rejected — 수정 사유 입력(반려됐으면 보완해서 다시 낸다) */}
+      {canRequest && (
         <>
           <section className={cn(card, 'flex flex-col gap-3')}>
             <div className="flex items-center gap-1.5">
@@ -270,10 +288,10 @@ export default function ChangeRequestPage() {
           onClick={() => navigate(-1)}
           className="border-border text-fg rounded-lg border px-4 py-2.5 text-[13px] font-semibold"
         >
-          {status === 'none' || status === 'approved' ? '취소' : '닫기'}
+          {canRequest || status === 'approved' ? '취소' : '닫기'}
         </button>
         <div className="flex items-center gap-4">
-          {status === 'none' && (
+          {canRequest && (
             <>
               <span className="text-fg-subtle text-[12px]">
                 승인되면 수정 권한이 열려요
@@ -283,7 +301,7 @@ export default function ChangeRequestPage() {
                 onClick={requestEdit}
                 className={buttonClass({ size: 'md' })}
               >
-                수정 권한 요청
+                {status === 'rejected' ? '수정 권한 다시 요청' : '수정 권한 요청'}
               </button>
             </>
           )}
@@ -332,7 +350,7 @@ function StatusBanner({
   title,
   body,
 }: {
-  tone: 'info' | 'warning' | 'success'
+  tone: 'info' | 'warning' | 'success' | 'danger'
   icon: React.ReactNode
   title: string
   body: string
@@ -341,6 +359,7 @@ function StatusBanner({
     info: 'bg-info-bg/60 text-info',
     warning: 'bg-warning-bg/70 text-warning',
     success: 'bg-success-bg/70 text-success',
+    danger: 'bg-danger-bg/70 text-danger',
   }[tone]
   return (
     <div className={cn('flex flex-col gap-1 rounded-xl p-4', toneCls)}>

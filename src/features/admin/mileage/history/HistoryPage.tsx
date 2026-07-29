@@ -97,7 +97,7 @@ export default function HistoryPage() {
             AMOUNT_COLOR[r.amountSign],
           )}
         >
-          {r.amount} <span className="text-fg-subtle font-normal">M</span>
+          {r.amount}
         </span>
       ),
     },
@@ -118,7 +118,7 @@ export default function HistoryPage() {
       className: 'w-24',
       cell: (r) => (
         <span className="text-fg-muted text-[13px] tabular-nums">
-          {r.balance} M
+          {r.balance}
         </span>
       ),
     },
@@ -174,19 +174,19 @@ export default function HistoryPage() {
           <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <KpiCard
               label="총 지급"
-              value={`${summary.granted} M`}
+              value={summary.granted}
               hint={summary.grantedHint}
               tone="success"
             />
             <KpiCard
               label="총 차감"
-              value={`${summary.deducted} M`}
+              value={summary.deducted}
               hint={summary.deductedHint}
               tone="danger"
             />
             <KpiCard
               label="순증감"
-              value={`${summary.net} M`}
+              value={summary.net}
               hint={summary.netHint}
               tone="info"
             />

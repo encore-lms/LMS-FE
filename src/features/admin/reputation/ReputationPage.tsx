@@ -243,6 +243,8 @@ export default function ReputationPage() {
                 columns={columns}
                 rows={filtered}
                 rowKey={(s) => s.id}
+                // 행 어디를 눌러도 상세 — '상세' 버튼만이 진입점이면 클릭 타깃이 너무 좁다.
+                onRowClick={setDetailStudent}
                 empty="조건에 맞는 수강생이 없어요"
               />
               <div className="text-fg-subtle mt-3 text-xs">

@@ -5,6 +5,8 @@ import {
   useState,
   type ClipboardEvent,
   type DragEvent,
+  type KeyboardEvent,
+  type ReactNode,
 } from 'react'
 import { Bold, Code, Image as ImageIcon, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
@@ -45,6 +47,13 @@ export function MarkdownEditor({
   const pendingCaret = useRef<number | null>(null)
   // 멘션 자동완성 상태 — 활성 토큰 시작 위치 + 후보.
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  // 제안 리스트 키보드 포커스(↑↓ 이동·Enter/Tab 선택) — 쿼리가 바뀌면 첫 항목으로.
+  const [activeIdx, setActiveIdx] = useState(0)
+  useEffect(() => {
+    setActiveIdx(0)
+  }, [mentionQuery])
+  // 하이라이트 백드롭 스크롤 동기화용.
+  const backdropRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     if (pendingCaret.current != null && ref.current) {
@@ -172,6 +181,65 @@ export function MarkdownEditor({
           .slice(0, 6)
       : []
 
+  // 제안 리스트가 떠 있는 동안의 키보드 조작 — ↑↓ 이동, Enter/Tab 선택, Esc 닫기.
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (suggestions.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIdx((i) => (i + 1) % suggestions.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIdx((i) => (i - 1 + suggestions.length) % suggestions.length)
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      applyMention(suggestions[Math.min(activeIdx, suggestions.length - 1)])
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setMentionQuery(null)
+    }
+  }
+
+  // 입력창 멘션 하이라이트 — textarea 글자는 투명(캐럿만 보임)하게 두고, 뒤의 백드롭이
+  // 같은 타이포그래피로 전체 텍스트를 그리면서 @이름 토큰만 액센트 칩으로 표시한다.
+  const highlightable = !!mentionNames && mentionNames.length > 0
+  const renderHighlighted = (): ReactNode[] => {
+    const names = [...(mentionNames ?? [])].sort((a, b) => b.length - a.length)
+    const out: ReactNode[] = []
+    let plain = ''
+    let i = 0
+    const flush = () => {
+      if (plain) {
+        out.push(plain)
+        plain = ''
+      }
+    }
+    while (i < value.length) {
+      if (value[i] === '@') {
+        const name = names.find((n) => value.startsWith(n, i + 1))
+        if (name) {
+          flush()
+          out.push(
+            <span
+              key={`m-${i}`}
+              data-testid="mention-highlight"
+              className="bg-accent-bg text-accent-strong rounded-[4px]"
+            >
+              @{name}
+            </span>,
+          )
+          i += name.length + 1
+          continue
+        }
+      }
+      plain += value[i]
+      i += 1
+    }
+    flush()
+    // 말미 개행이 접히지 않게 zero-width 문자로 마지막 줄을 유지한다.
+    out.push('​')
+    return out
+  }
+
   const toolBtn =
     'text-fg-muted hover:text-fg hover:bg-surface-muted flex size-7 items-center justify-center rounded-md'
 
@@ -251,29 +319,57 @@ export function MarkdownEditor({
       {/* 본문 */}
       {tab === 'write' ? (
         <div className="relative">
+          {/* 멘션 하이라이트 백드롭 — textarea와 동일 박스/타이포, 스크롤 동기화 */}
+          {highlightable && (
+            <div
+              ref={backdropRef}
+              aria-hidden
+              className="text-fg pointer-events-none absolute inset-0 overflow-hidden rounded-b-[10px] px-4 py-3 text-[14px] leading-6 break-words whitespace-pre-wrap"
+              style={{ height: minHeight }}
+            >
+              {renderHighlighted()}
+            </div>
+          )}
           <textarea
             ref={ref}
             value={value}
             maxLength={maxLength}
             onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={onKeyDown}
             onPaste={onPaste}
             onDrop={onDrop}
+            onScroll={(e) => {
+              if (backdropRef.current)
+                backdropRef.current.scrollTop = e.currentTarget.scrollTop
+            }}
             onBlur={() => setTimeout(() => setMentionQuery(null), 120)}
             placeholder={placeholder}
             style={{ height: minHeight }}
-            className="text-fg placeholder:text-fg-subtle block w-full resize-none rounded-b-[10px] bg-transparent px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none"
+            className={cn(
+              'placeholder:text-fg-subtle relative block w-full resize-none rounded-b-[10px] bg-transparent px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none',
+              // 하이라이트 모드에선 글자는 백드롭이 그린다 — textarea는 캐럿·선택 영역만.
+              highlightable ? 'caret-fg text-transparent' : 'text-fg',
+            )}
           />
           {suggestions.length > 0 && (
-            <ul className="border-border absolute bottom-2 left-3 z-20 w-52 overflow-hidden rounded-lg border bg-white shadow-[0px_8px_24px_0px_rgba(18,23,38,0.16)]">
-              {suggestions.map((n) => (
-                <li key={n}>
+            <ul
+              role="listbox"
+              aria-label="멘션 대상 선택"
+              className="border-border absolute bottom-2 left-3 z-20 w-52 overflow-hidden rounded-lg border bg-white shadow-[0px_8px_24px_0px_rgba(18,23,38,0.16)]"
+            >
+              {suggestions.map((n, idx) => (
+                <li key={n} role="option" aria-selected={idx === activeIdx}>
                   <button
                     type="button"
                     onMouseDown={(e) => {
                       e.preventDefault()
                       applyMention(n)
                     }}
-                    className="hover:bg-surface-muted text-fg flex w-full items-center gap-2 px-3 py-2 text-left text-[13px]"
+                    onMouseEnter={() => setActiveIdx(idx)}
+                    className={cn(
+                      'text-fg flex w-full items-center gap-2 px-3 py-2 text-left text-[13px]',
+                      idx === activeIdx && 'bg-surface-muted',
+                    )}
                   >
                     <span className="text-brand font-bold">@</span>
                     {n}

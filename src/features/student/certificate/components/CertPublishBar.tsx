@@ -1,0 +1,96 @@
+import { useNavigate } from 'react-router-dom'
+import { Globe, Lock } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
+import { useToast } from '@/components/ui/use-toast'
+import { useCertFlow } from '../useCertFlow'
+
+/**
+ * 증명서 화면 하단 공개 바.
+ *
+ * <p>외부 검증 URL 을 열고 닫는 스위치다. 공개하면 채용 담당자 같은 외부 검증자가
+ * 링크로 증명서를 확인할 수 있고, 끄면 링크를 열어도 비공개 안내만 보인다.</p>
+ *
+ * <p>정식 인증 전에는 켤 수 없다 — 검증되지 않은 증명서를 밖에 내보내면 안 된다.</p>
+ */
+export function CertPublishBar() {
+  const navigate = useNavigate()
+  const toast = useToast()
+  const status = useCertFlow((s) => s.status)
+  const published = useCertFlow((s) => s.published)
+  const setPublished = useCertFlow((s) => s.setPublished)
+
+  const certified = status === 'issued'
+
+  const toggle = () => {
+    if (!certified) {
+      toast.info('정식 인증이 끝난 뒤에 공개할 수 있어요')
+      return
+    }
+    const next = !published
+    setPublished(next)
+    toast.success(
+      next
+        ? '외부 검증 URL 을 공개했어요'
+        : '외부 검증 URL 을 비공개로 바꿨어요',
+    )
+  }
+
+  return (
+    <div className="bg-brand-deep fixed right-8 bottom-6 left-[232px] z-30 flex items-center justify-between gap-4 rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-full',
+            published ? 'bg-white/20' : 'bg-white/10',
+          )}
+          aria-hidden="true"
+        >
+          {published ? (
+            <Globe className="size-4.5" />
+          ) : (
+            <Lock className="size-4.5" />
+          )}
+        </span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[13px] font-bold">
+            외부 검증 URL · {published ? '공개 중' : '비공개'}
+          </span>
+          <span className="text-[11px] text-white/70">
+            {certified
+              ? published
+                ? '검증자가 링크로 증명서를 확인할 수 있어요 · 동료 평판·코멘트는 공개 설정에서 따로 켜요'
+                : '지금은 링크를 열어도 비공개 안내만 보여요 · 공개하면 검증자가 확인할 수 있어요'
+              : '정식 인증이 끝나면 공개할 수 있어요'}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigate('/student/certificate/publication')}
+          className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold text-white"
+        >
+          공개 설정
+        </button>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={published}
+          aria-label="외부 검증 URL 공개"
+          disabled={!certified}
+          onClick={toggle}
+          className={cn(
+            'rounded-lg px-5 py-2.5 text-[13px] font-bold transition-colors',
+            published
+              ? 'bg-white/15 text-white hover:bg-white/25'
+              : 'bg-brand text-white hover:bg-brand/90',
+            !certified && 'cursor-not-allowed opacity-50',
+          )}
+        >
+          {published ? '비공개로 전환' : '공개하기'}
+        </button>
+      </div>
+    </div>
+  )
+}

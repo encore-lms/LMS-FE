@@ -98,7 +98,8 @@ const mockCommitActivity = [
   ),
 ]
 
-const mockOverview: CertificateOverview = {
+/** 증명서 화면 기본 데이터 — 매니저 상세도 이 값을 데모 인물로 덮어 쓴다. */
+export const mockOverview: CertificateOverview = {
   header: {
     studentName: '박수진',
     courseName: 'SK네트웍스 Family AI 캠프',

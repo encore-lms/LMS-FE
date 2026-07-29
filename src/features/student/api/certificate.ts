@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { certKeys } from '../certificate/queryKeys'
 import type {
@@ -53,5 +53,46 @@ export function useAnalyzeSentiment() {
       apiClient
         .post<CertSentiment>('/student/certificate/sentiment/analyze', payload)
         .then((r) => r.data),
+  })
+}
+
+// ── 외부 공개 설정(실 BE) ──
+// 공개 여부는 서버가 정본이다 — 검증 페이지는 다른 탭·다른 기기에서 열리므로
+// 프론트 상태로는 전달할 수 없다.
+
+export interface CertPublicationSettings {
+  publicToken: string
+  publicUrl: string
+  published: boolean
+  peerReputationPublic: boolean
+  shortCommentPublic: boolean
+}
+
+export function useCertPublicationSettings() {
+  return useQuery({
+    queryKey: [...certKeys.publication(), 'settings'],
+    queryFn: () =>
+      apiClient
+        .get<CertPublicationSettings>('/student/certificate/publication-settings')
+        .then((r) => r.data),
+  })
+}
+
+export function useUpdateCertPublication() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      published?: boolean
+      peerReputationPublic?: boolean
+      shortCommentPublic?: boolean
+    }) =>
+      apiClient
+        .patch<CertPublicationSettings>(
+          '/student/certificate/publication-settings',
+          input,
+        )
+        .then((r) => r.data),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: certKeys.publication() }),
   })
 }

@@ -3,6 +3,10 @@ import { Globe, Lock } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
 import { useCertFlow } from '../useCertFlow'
+import {
+  useCertPublicationSettings,
+  useUpdateCertPublication,
+} from '../../api/certificate'
 
 /**
  * 증명서 화면 하단 공개 바.
@@ -16,8 +20,10 @@ export function CertPublishBar() {
   const navigate = useNavigate()
   const toast = useToast()
   const status = useCertFlow((s) => s.status)
-  const published = useCertFlow((s) => s.published)
-  const setPublished = useCertFlow((s) => s.setPublished)
+  // 공개 여부는 서버가 정본 — 검증 페이지는 다른 기기에서 열리므로 프론트 상태로는 못 넘긴다.
+  const { data: settings } = useCertPublicationSettings()
+  const updatePublication = useUpdateCertPublication()
+  const published = settings?.published ?? false
 
   const certified = status === 'issued'
 
@@ -26,12 +32,17 @@ export function CertPublishBar() {
       toast.info('정식 인증이 끝난 뒤에 공개할 수 있어요')
       return
     }
-    const next = !published
-    setPublished(next)
-    toast.success(
-      next
-        ? '외부 검증 URL 을 공개했어요'
-        : '외부 검증 URL 을 비공개로 바꿨어요',
+    updatePublication.mutate(
+      { published: !published },
+      {
+        onSuccess: (next) =>
+          toast.success(
+            next.published
+              ? '외부 검증 URL 을 공개했어요'
+              : '외부 검증 URL 을 비공개로 바꿨어요',
+          ),
+        onError: () => toast.danger('공개 설정을 저장하지 못했어요'),
+      },
     )
   }
 

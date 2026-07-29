@@ -103,15 +103,15 @@ function growthTimeline(
 export const CERTIFICATE_DEMO_STUDENTS: CertificateDemoStudent[] = [
   {
     id: DEFAULT_CERTIFICATE_DEMO_STUDENT_ID,
-    name: '박준서',
-    cohortName: 'SKN 4기',
-    periodLabel: '2024.03.11 — 2024.09.08',
+    name: '박수진',
+    cohortName: 'SKN 32기',
+    periodLabel: '2026.04.28 — 2026.10.26',
     overallScore: 78.4,
     profileLabel: '기존 기준형',
     profileSummary: '기술은 매우 강하고 협업 역량은 보완 중인 기준 프로필',
     recommendationState: 'BOTH',
     highlights: ['기술 95.4', '출석 91.7%', '프로젝트 인증 5건'],
-    timeline: growthTimeline('2024-03-11', [64, 65, 72, 74, 75, 78.4]),
+    timeline: growthTimeline('2026-04-28', [64, 65, 72, 74, 75, 78.4]),
     reputation: [
       { key: '기술기여', score: 4.7, detail: '동료평가 기술기여 평균' },
       { key: '책임감', score: 3.8, detail: '마감·테스트 수행 평가' },
@@ -133,11 +133,11 @@ export const CERTIFICATE_DEMO_STUDENTS: CertificateDemoStudent[] = [
     ],
     recommendations: [
       instructorRecommendation(
-        '박준서',
+        '박수진',
         '“성취도 평가와 인증 문제해결에서 높은 기술 깊이를 일관되게 확인했습니다.”',
       ),
       mentorRecommendation(
-        '박준서',
+        '박수진',
         '“초반보다 후반에 근거와 로그를 함께 제시하며 팀 의사결정에 기여했습니다.”',
       ),
     ],

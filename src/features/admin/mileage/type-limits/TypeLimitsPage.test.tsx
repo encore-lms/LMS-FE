@@ -58,7 +58,7 @@ describe('TypeLimitsPage (마일리지 타입 한도)', () => {
     renderPage()
     expect(screen.getByText('기프티콘')).toBeInTheDocument()
     expect(screen.getByText('도서')).toBeInTheDocument()
-    expect(screen.getByText(/타입별 누적 사용 한도 검증/)).toBeInTheDocument()
+    expect(screen.getByText(/타입 한도를 초과하는 요청은 자동으로 차단/)).toBeInTheDocument()
     // 변경 0건 → 저장 비활성
     expect(
       screen.getByRole('button', { name: /한도 저장 — 변경 0건/ }),
@@ -68,7 +68,7 @@ describe('TypeLimitsPage (마일리지 타입 한도)', () => {
   it('값 변경 → 저장 활성화 → 저장 모달 → 확인 시 토스트', async () => {
     renderPage()
     const user = userEvent.setup()
-    const input = screen.getByLabelText('도서 새 maxPerUser')
+    const input = screen.getByLabelText('도서 새 한도')
     await user.clear(input)
     await user.type(input, '150000')
     // 변경됨 배지 + diff + 저장 1건 활성

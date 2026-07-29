@@ -7,12 +7,11 @@ import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
-  DEFAULT_PROJECT_CONTENT,
   formatEditUntil,
   isEditWindowExpired,
   useProjectFlow,
+  type ChangeDiff,
   type EditRequestStatus,
-  type ProjectContent,
 } from './workspace/useProjectFlow'
 import {
   useCancelProjectChange,
@@ -58,9 +57,6 @@ export default function ChangeRequestPage() {
   const editRequest = useProjectFlow((s) => s.editRequests[projectId])
   const setEditRequest = useProjectFlow((s) => s.setEditRequest)
   const resetEditRequest = useProjectFlow((s) => s.resetEditRequest)
-  const content =
-    useProjectFlow((s) => s.projectContent[projectId]) ??
-    DEFAULT_PROJECT_CONTENT
 
   // 서버가 상태 정본 — 강사 승인/반려가 여기로 반영된다. zustand 는 화면 공용 미러라 동기화.
   const { data: serverStatus } = useProjectChangeStatus(projectId)
@@ -231,7 +227,7 @@ export default function ChangeRequestPage() {
               <ArrowRight className="size-4" aria-hidden="true" />
             </button>
           </section>
-          <BeforeAfterAux snapshot={editRequest?.snapshot} current={content} />
+          <BeforeAfterAux changes={editRequest?.changes} />
           <section className={cn(card, 'flex flex-col gap-3')}>
             <div className="flex items-center gap-1.5">
               <span className="text-fg text-[13px] font-bold">변경 요약</span>
@@ -264,7 +260,7 @@ export default function ChangeRequestPage() {
         </section>
       )}
       {status === 'submitted' && (
-        <BeforeAfterAux snapshot={editRequest?.snapshot} current={content} />
+        <BeforeAfterAux changes={editRequest?.changes} />
       )}
 
       {/* 하단 액션바 */}
@@ -358,66 +354,29 @@ function StatusBanner({
 }
 
 // 원본↔현재 비교 — '변경 전/후 비교'를 제거 대신 보조 수준으로 축소(승인 후/제출에서만).
-function BeforeAfterAux({
-  snapshot,
-  current,
-}: {
-  snapshot?: ProjectContent
-  current: ProjectContent
-}) {
-  const before = snapshot ?? current
-  const fields: (keyof ProjectContent)[] = ['설명', '산출물']
+function BeforeAfterAux({ changes }: { changes?: ChangeDiff[] }) {
+  // 승인 시점 스냅샷은 서버가 준다. 승인 전에는 비교할 원본이 없어 아무것도 그리지 않는다.
+  if (!changes || changes.length === 0) return null
   return (
     <section className="bg-surface-muted/30 flex flex-col gap-3 rounded-2xl p-5">
       <div className="flex items-center gap-1.5">
-        <span className="text-fg-muted text-[12px] font-bold">
-          변경 전 / 후
-        </span>
+        <span className="text-fg-muted text-[12px] font-bold">승인 시점 원본</span>
         <span className="text-fg-subtle text-[11px]">
-          참고 · 원본↔현재 비교
+          참고 · 수정 전 내용
         </span>
       </div>
-      {fields.map((f) => {
-        const changed = before[f] !== current[f]
-        return (
-          <div key={f} className="flex flex-col gap-1.5">
-            <span className="text-fg-subtle text-[11px] font-semibold">
-              {f}
-              {changed && <span className="text-brand"> · 변경됨</span>}
+      {changes.map((c) => (
+        <div key={c.label} className="flex flex-col gap-1.5">
+          <span className="text-fg-subtle text-[11px] font-semibold">
+            {c.label}
+          </span>
+          <div className="border-border bg-surface rounded-[10px] border p-3">
+            <span className="text-fg-muted text-[12px] leading-5">
+              {c.before?.trim() || '없음'}
             </span>
-            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-              <div className="border-border bg-surface flex flex-col gap-1 rounded-[10px] border p-3">
-                <span className="text-fg-subtle text-[10px]">
-                  변경 전 (원본)
-                </span>
-                <span className="text-fg-muted text-[12px] leading-5">
-                  {before[f]}
-                </span>
-              </div>
-              <div
-                className={cn(
-                  'flex flex-col gap-1 rounded-[10px] border p-3',
-                  changed
-                    ? 'border-brand/40 bg-brand/5'
-                    : 'border-border bg-surface',
-                )}
-              >
-                <span
-                  className={cn(
-                    'text-[10px]',
-                    changed ? 'text-brand font-semibold' : 'text-fg-subtle',
-                  )}
-                >
-                  변경 후 (현재)
-                </span>
-                <span className="text-fg text-[12px] leading-5">
-                  {current[f]}
-                </span>
-              </div>
-            </div>
           </div>
-        )
-      })}
+        </div>
+      ))}
     </section>
   )
 }

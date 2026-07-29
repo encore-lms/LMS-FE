@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Download, Info } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
-import { downloadAttendanceAttachment } from '@/features/student/api/attendance'
+import { downloadAttendanceAttachment } from '@/shared/api/attendance'
 import type { AttendanceIssue } from '@/shared/types'
 
 // 출결 이슈 칸 — 유형은 바로 보이고, 사유·증빙은 아이콘에 마우스를 올리면 편다.

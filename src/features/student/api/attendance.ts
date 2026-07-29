@@ -91,21 +91,6 @@ export function useDeleteAttendanceAttachment() {
   })
 }
 
-/** 증빙 다운로드 — 본인 또는 담당 기수 운영·강사. */
-export async function downloadAttendanceAttachment(
-  attachmentId: string,
-  fileName: string,
-) {
-  const blob = await apiClient.getBlob(
-    `/student/attendance-forms/attachments/${attachmentId}/file`,
-  )
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}
+// 증빙 다운로드는 운영 화면도 써서 shared 로 승격했다 — 기존 호출부를 위해 재수출한다.
+export { downloadAttendanceAttachment } from '@/shared/api/attendance'
 

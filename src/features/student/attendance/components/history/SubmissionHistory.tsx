@@ -4,7 +4,13 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { AttendanceActionButton } from '../AttendanceActionButton'
 import type { AttendanceFormSubmission } from '../../types'
-import { useUploadAttendanceAttachments } from '../../../api/attendance'
+import {
+  downloadAttendanceAttachment,
+  useDeleteAttendanceAttachment,
+  useUploadAttendanceAttachments,
+} from '../../../api/attendance'
+import { useToast } from '@/components/ui/use-toast'
+import { Download, Trash2 } from 'lucide-react'
 import { EvidenceUploadStep } from '../../form/steps/EvidenceUploadStep'
 import { SubmissionHistoryTable } from './SubmissionHistoryTable'
 
@@ -20,7 +26,9 @@ export function SubmissionHistory({
   submissions: AttendanceFormSubmission[]
   onWriteForm: () => void
 }) {
+  const toast = useToast()
   const uploadMutation = useUploadAttendanceAttachments()
+  const deleteMutation = useDeleteAttendanceAttachment()
   const [editTarget, setEditTarget] = useState<AttendanceFormSubmission | null>(
     null,
   )
@@ -34,6 +42,13 @@ export function SubmissionHistory({
     (curPage - 1) * PAGE_SIZE,
     curPage * PAGE_SIZE,
   )
+
+  // 모달 대상은 id 로만 들고 있고 내용은 항상 최신 목록에서 읽는다 —
+  // 업로드·삭제 후 캐시가 갱신돼도 모달이 옛 스냅샷을 보여주지 않게.
+  const editing = editTarget
+    ? (submissions.find((s) => s.id === editTarget.id) ?? editTarget)
+    : null
+  const attachments = editing?.attachments ?? []
 
   const openEdit = (submission: AttendanceFormSubmission) => {
     setEditTarget(submission)
@@ -144,8 +159,58 @@ export function SubmissionHistory({
         }
       >
         <p className="text-fg-muted mb-3 text-sm">
-          제출한 출결 내용은 그대로 두고 증빙 파일만 추가·교체합니다.
+          제출한 출결 내용은 그대로 두고 증빙 파일만 추가·삭제합니다.
         </p>
+
+        {/* 이미 올린 증빙 — 그동안 목록이 없어 확인도 삭제도 할 수 없었다. */}
+        {attachments.length > 0 && (
+          <div className="mb-4 flex flex-col gap-2">
+            <p className="text-fg text-[13px] font-semibold">
+              올린 증빙 {attachments.length}개
+            </p>
+            {attachments.map((a) => (
+              <div
+                key={a.id}
+                className="border-border flex items-center gap-2 rounded-lg border px-3 py-2"
+              >
+                <span className="text-fg min-w-0 flex-1 truncate text-[13px]">
+                  {a.fileName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadAttendanceAttachment(a.id, a.fileName).catch(() =>
+                      toast.danger('증빙을 내려받지 못했어요'),
+                    )
+                  }
+                  className="text-fg-muted hover:text-fg flex items-center gap-1 text-[12px] font-semibold"
+                >
+                  <Download className="size-3.5" />
+                  받기
+                </button>
+                <button
+                  type="button"
+                  disabled={deleteMutation.isPending}
+                  onClick={() =>
+                    editing &&
+                    deleteMutation.mutate(
+                      { id: editing.id, attachmentId: a.id },
+                      {
+                        onSuccess: () => toast.success('증빙을 삭제했어요'),
+                        onError: () => toast.danger('증빙 삭제에 실패했어요'),
+                      },
+                    )
+                  }
+                  className="text-danger flex items-center gap-1 text-[12px] font-semibold disabled:opacity-50"
+                >
+                  <Trash2 className="size-3.5" />
+                  삭제
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <EvidenceUploadStep files={files} onChange={setFiles} />
       </Modal>
     </section>

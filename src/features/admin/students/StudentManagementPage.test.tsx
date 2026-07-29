@@ -102,11 +102,13 @@ function ok(data: unknown) {
   return { data, isPending: false, isError: false }
 }
 
-// 테스트 계정 삭제 mutate 호출을 따로 확인하려고 스텁을 분리해 둔다.
+// 테스트 계정 생성·삭제 mutate 호출을 따로 확인하려고 스텁을 분리해 둔다.
 const deleteTestStub = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }
+const createTestStub = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }
 
 function renderPage(queue: StudentAccountQueue = accounts) {
   deleteTestStub.mutate.mockClear()
+  createTestStub.mutate.mockClear()
   vi.mocked(useStudentAccounts).mockReturnValue(
     ok(queue) as unknown as ReturnType<typeof useStudentAccounts>,
   )
@@ -158,7 +160,7 @@ function renderPage(queue: StudentAccountQueue = accounts) {
     mutationStub as unknown as ReturnType<typeof useSyncStudents>,
   )
   vi.mocked(useCreateTestStudent).mockReturnValue(
-    mutationStub as unknown as ReturnType<typeof useCreateTestStudent>,
+    createTestStub as unknown as ReturnType<typeof useCreateTestStudent>,
   )
   vi.mocked(useDeleteTestStudent).mockReturnValue(
     deleteTestStub as unknown as ReturnType<typeof useDeleteTestStudent>,
@@ -219,6 +221,35 @@ describe('StudentManagementPage', () => {
     expect(
       screen.getByRole('button', { name: /테스트 계정 생성/ }),
     ).toBeInTheDocument()
+  })
+
+  // 로그인 ID·비밀번호는 운영자가 직접 정한다 — 규칙에 안 맞으면 서버까지 가지 않는다.
+  it('생성 모달은 이름·로그인 ID·비밀번호를 모두 갖춰야 제출된다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: /테스트 계정 생성/ }))
+
+    const submit = screen.getByRole('button', { name: '계정 만들기' })
+    expect(submit).toBeDisabled()
+
+    await user.type(screen.getByPlaceholderText('예: 촬영용 수강생'), '촬영용')
+    await user.type(screen.getByPlaceholderText('예: demo-student'), 'demo-student')
+    // 8자 미만이면 아직 막힌다
+    await user.type(screen.getByPlaceholderText('예: demo1234'), 'short')
+    expect(submit).toBeDisabled()
+
+    await user.type(screen.getByPlaceholderText('예: demo1234'), '123')
+    expect(submit).toBeEnabled()
+
+    await user.click(submit)
+    expect(createTestStub.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: '촬영용',
+        loginId: 'demo-student',
+        password: 'short123',
+      }),
+      expect.anything(),
+    )
   })
 
   it('계정 탭에 HRD 동기화 hero와 학생 목록을 렌더한다', () => {

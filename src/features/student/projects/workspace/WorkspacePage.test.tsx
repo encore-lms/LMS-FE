@@ -21,7 +21,6 @@ import {
   useRemoveMember,
 } from '../../api/projects'
 import { tsKeys } from '../../troubleshooting/queryKeys'
-import { useProjectTsLinks } from '../../troubleshooting/projectLinks'
 import { usePeers } from '../../api/peers'
 import type { TsListData } from '../../troubleshooting/types'
 import { mockWorkspace, mockWorkspaceP3 } from '../mocks'
@@ -141,8 +140,6 @@ function renderPage(
 describe('WorkspacePage home', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // 프로젝트↔트러블슈팅 연결 스토어 초기화(테스트 간 누수 방지).
-    useProjectTsLinks.setState({ links: { p1: ['ts1'] } })
   })
 
   it('홈 배너와 지표 카드 액션으로 관련 탭으로 이동한다', async () => {
@@ -248,8 +245,7 @@ describe('WorkspacePage home', () => {
 
   it('이슈 탭에서 인증 완료 트러블슈팅만 연결 후보로 뜨고 연결할 수 있다', async () => {
     const user = userEvent.setup()
-    // 연결 없이 시작 — 빈 상태부터 검증.
-    useProjectTsLinks.setState({ links: { p1: [] } })
+    // 연결 없이 시작 — 워크스페이스 응답(troubleshootingCaseIds)이 빈 목록이라 그대로 빈 상태다.
     renderPage('/student/projects/p1?tab=issues')
 
     expect(

@@ -83,6 +83,28 @@ export function useUpdateTsCase() {
   })
 }
 
+/**
+ * 프로젝트 연결 변경(PATCH) — projectId 가 null 이면 해제.
+ *
+ * 본문 수정(PUT)과 분리된 경로다. 상세 화면은 태그·근거 링크를 들고 있지 않아
+ * PUT 을 재사용하면 그 값들이 빈 값으로 덮인다.
+ */
+export function useLinkTsProject(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (projectId: string | null) =>
+      apiClient
+        .patch<TsCaseDetail>(`/student/troubleshooting/${id}/project`, {
+          projectId,
+        })
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      qc.setQueryData(tsKeys.case(detail.id), detail)
+      qc.invalidateQueries({ queryKey: tsKeys.list() })
+    },
+  })
+}
+
 /** 사례 삭제(DELETE) — 인증 완료 전만(BE 게이트). */
 export function useDeleteTsCase() {
   const qc = useQueryClient()

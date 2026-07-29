@@ -35,10 +35,15 @@ export type WeekStatus = 'done' | 'learning' | 'upcoming'
 /** 주차별 학습 한 줄 */
 export interface CourseWeek {
   weekNo: number
+  /** 커리큘럼이 설정돼 있으면 교과목명, 아니면 "N주차". */
   title: string
   periodStart: string // "2026-04-22"
   periodEnd: string // "2026-04-28"
   status: WeekStatus
+  /** 그 주 교과목 — 커리큘럼 미설정이면 빈 목록. */
+  subjects?: string[]
+  /** 그 주 세부 주제. */
+  topics?: string[]
 }
 
 /** 사이드 미니 리스트(미응시 퀴즈/마감 임박 과제/새 자료) 공통 행 */

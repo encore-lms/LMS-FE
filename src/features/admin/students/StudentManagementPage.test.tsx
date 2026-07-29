@@ -5,6 +5,8 @@ import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import StudentManagementPage from './StudentManagementPage'
 import {
+  useCreateTestStudent,
+  useDeleteTestStudent,
   useStudentAccounts,
   useStudentAttendance,
   useStudentAttendanceForms,
@@ -44,6 +46,7 @@ const accounts: StudentAccountQueue = {
       lastLoginAt: '오늘 09:18',
       trainingStatus: 'active',
       loginBlocked: false,
+    isTest: false,
     },
     {
       id: 'stu-0031',
@@ -54,6 +57,7 @@ const accounts: StudentAccountQueue = {
       lastLoginAt: '05-12 16:08',
       trainingStatus: 'active',
       loginBlocked: true,
+    isTest: false,
     },
   ],
 }
@@ -98,9 +102,15 @@ function ok(data: unknown) {
   return { data, isPending: false, isError: false }
 }
 
-function renderPage() {
+// 테스트 계정 생성·삭제 mutate 호출을 따로 확인하려고 스텁을 분리해 둔다.
+const deleteTestStub = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }
+const createTestStub = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }
+
+function renderPage(queue: StudentAccountQueue = accounts) {
+  deleteTestStub.mutate.mockClear()
+  createTestStub.mutate.mockClear()
   vi.mocked(useStudentAccounts).mockReturnValue(
-    ok(accounts) as unknown as ReturnType<typeof useStudentAccounts>,
+    ok(queue) as unknown as ReturnType<typeof useStudentAccounts>,
   )
   vi.mocked(useStudentAttendance).mockReturnValue(
     ok(attendance) as unknown as ReturnType<typeof useStudentAttendance>,
@@ -149,6 +159,12 @@ function renderPage() {
   vi.mocked(useSyncStudents).mockReturnValue(
     mutationStub as unknown as ReturnType<typeof useSyncStudents>,
   )
+  vi.mocked(useCreateTestStudent).mockReturnValue(
+    createTestStub as unknown as ReturnType<typeof useCreateTestStudent>,
+  )
+  vi.mocked(useDeleteTestStudent).mockReturnValue(
+    deleteTestStub as unknown as ReturnType<typeof useDeleteTestStudent>,
+  )
   vi.mocked(useResetAccountPassword).mockReturnValue({
     mutate: vi.fn(),
     mutateAsync: vi.fn().mockResolvedValue({
@@ -168,6 +184,74 @@ function renderPage() {
 }
 
 describe('StudentManagementPage', () => {
+  // 시연용 테스트 계정 — 목록에서 칩으로 구분되고, 차단 대신 삭제가 뜬다.
+  it('테스트 계정은 칩과 삭제 버튼으로 구분해 보여준다', async () => {
+    const user = userEvent.setup()
+    renderPage({
+      ...accounts,
+      items: [
+        ...accounts.items,
+        {
+          id: 'stu-test-1',
+          name: '촬영용 수강생',
+          studentUuid: 'test-1a2b3c4d',
+          birthDate: '-',
+          joinedAt: '07-29',
+          lastLoginAt: null,
+          trainingStatus: 'active',
+          loginBlocked: false,
+          isTest: true,
+        },
+      ],
+    })
+
+    expect(screen.getByText('촬영용 수강생')).toBeInTheDocument()
+    expect(screen.getByText('테스트')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '삭제' }))
+
+    expect(deleteTestStub.mutate).toHaveBeenCalledWith(
+      'stu-test-1',
+      expect.anything(),
+    )
+  })
+
+  it('계정 탭 헤더에 테스트 계정 생성 버튼이 있다', () => {
+    renderPage()
+    expect(
+      screen.getByRole('button', { name: /테스트 계정 생성/ }),
+    ).toBeInTheDocument()
+  })
+
+  // 로그인 ID·비밀번호는 운영자가 직접 정한다 — 규칙에 안 맞으면 서버까지 가지 않는다.
+  it('생성 모달은 이름·로그인 ID·비밀번호를 모두 갖춰야 제출된다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: /테스트 계정 생성/ }))
+
+    const submit = screen.getByRole('button', { name: '계정 만들기' })
+    expect(submit).toBeDisabled()
+
+    await user.type(screen.getByPlaceholderText('예: 촬영용 수강생'), '촬영용')
+    await user.type(screen.getByPlaceholderText('예: demo-student'), 'demo-student')
+    // 8자 미만이면 아직 막힌다
+    await user.type(screen.getByPlaceholderText('예: demo1234'), 'short')
+    expect(submit).toBeDisabled()
+
+    await user.type(screen.getByPlaceholderText('예: demo1234'), '123')
+    expect(submit).toBeEnabled()
+
+    await user.click(submit)
+    expect(createTestStub.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: '촬영용',
+        loginId: 'demo-student',
+        password: 'short123',
+      }),
+      expect.anything(),
+    )
+  })
+
   it('계정 탭에 HRD 동기화 hero와 학생 목록을 렌더한다', () => {
     renderPage()
     expect(

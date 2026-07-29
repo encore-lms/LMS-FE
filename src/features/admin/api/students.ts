@@ -93,3 +93,44 @@ export function useStudentAttendanceForms(
         .then((r) => r.data),
   })
 }
+
+// ── 시연용 테스트 계정(POST/DELETE /users/students/test) ──
+// 촬영 중 수강생 계정이 하나 더 필요할 때 매니저가 직접 만든다.
+// 로그인 ID·비밀번호는 운영자가 정한다 — 바로 로그인해야 해서 기억할 수 있는 값이 낫다.
+export interface TestStudentAccount {
+  userId: string
+  loginId: string
+  name: string
+  cohortId: string
+}
+
+export function useCreateTestStudent() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    TestStudentAccount,
+    Error,
+    { name: string; loginId: string; password: string; cohortId: string }
+  >({
+    mutationFn: (input) =>
+      apiClient
+        .post<TestStudentAccount>('/users/students/test', input)
+        .then((r) => r.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey.includes('students'),
+      }),
+  })
+}
+
+// 테스트 표식이 없는 계정은 서버가 403으로 거절한다(실제 수강생 오삭제 방지).
+export function useDeleteTestStudent() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (userId) =>
+      apiClient.delete(`/users/students/test/${userId}`).then(() => undefined),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey.includes('students'),
+      }),
+  })
+}

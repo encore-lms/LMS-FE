@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Download, KeyRound, RefreshCw } from 'lucide-react'
+import { Download, KeyRound, RefreshCw, Trash2, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
@@ -13,12 +13,14 @@ import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { StudentAccount } from '@/shared/types'
 import {
   fetchHrdTrainees,
+  useDeleteTestStudent,
   useStudentAccounts,
   useSyncStudents,
 } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { TempPasswordModal } from '../settings/TempPasswordModal'
 import { StudentDetailModal } from './StudentDetailModal'
+import { TestStudentModal } from './TestStudentModal'
 
 type StatusFilter = 'all' | 'normal' | 'blocked'
 
@@ -58,6 +60,9 @@ export function AccountsTab() {
   // 선택 기수의 배정 학생만 조회 — 기수 변경 시 목록 자동 갱신.
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
   const syncStudents = useSyncStudents()
+  // 시연·검증용 계정 — 촬영 중 수강생 계정이 하나 더 필요할 때 만들고, 끝나면 지운다.
+  const [testOpen, setTestOpen] = useState(false)
+  const deleteTestStudent = useDeleteTestStudent()
   const [syncResult, setSyncResult] = useState<{
     created: number
     updated: number
@@ -145,6 +150,11 @@ export function AccountsTab() {
         <div className="flex items-center gap-2.5">
           <Avatar name={a.name} size={30} />
           <span className="text-fg font-medium">{a.name}</span>
+          {a.isTest && (
+            <span className="bg-accent-bg text-accent-strong rounded-full px-1.5 py-0.5 text-[10px] font-bold">
+              테스트
+            </span>
+          )}
         </div>
       ),
     },
@@ -204,6 +214,27 @@ export function AccountsTab() {
       align: 'right',
       className: 'w-28',
       cell: (a) => {
+        // 테스트 계정은 차단 대신 삭제 — 시연이 끝나면 흔적 없이 치우는 것이 목적이다.
+        if (a.isTest) {
+          return (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (deleteTestStudent.isPending) return
+                deleteTestStudent.mutate(a.id, {
+                  onSuccess: () => toast.success(`${a.name} 계정을 삭제했어요`),
+                  onError: () => toast.danger('테스트 계정 삭제에 실패했어요'),
+                })
+              }}
+              disabled={deleteTestStudent.isPending}
+              className="border-danger text-danger hover:bg-danger-bg flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-50"
+            >
+              <Trash2 className="h-3 w-3" />
+              삭제
+            </button>
+          )
+        }
         const blocked = isBlocked(a)
         return (
           <button
@@ -285,6 +316,13 @@ export function AccountsTab() {
               </Button>
               <Button
                 variant="secondary"
+                onClick={() => setTestOpen(true)}
+                disabled={!cohortId}
+              >
+                <UserPlus className="h-4 w-4" /> 테스트 계정 생성
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={onRefresh}
                 disabled={syncStudents.isPending}
               >
@@ -360,6 +398,20 @@ export function AccountsTab() {
               </div>
             </>
           )}
+
+          <TestStudentModal
+            open={testOpen}
+            cohortId={cohortId}
+            cohortLabel={
+              (() => {
+                const no = courseConfig?.cohorts?.find(
+                  (c) => c.id === cohortId,
+                )?.cohortNo
+                return no ? `${no}기` : '선택 기수'
+              })()
+            }
+            onClose={() => setTestOpen(false)}
+          />
 
           <StudentDetailModal
             account={modal?.account ?? null}

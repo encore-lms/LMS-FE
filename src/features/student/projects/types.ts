@@ -151,8 +151,22 @@ export interface WsPeerTarget {
   memberId?: string
   name: string
   role: string
+  /** 팀에서 받은 평균 점수(표시용). 내가 준 점수는 myEval 을 쓴다. */
   axes: { key: string; score: number }[]
   tags: Badge[]
+  /** 내가 이 팀원에게 남긴 점수·코멘트(없으면 null) — 화면 복원용. */
+  myEval?: MyPeerEval | null
+}
+
+/** 내가 남긴 상호평가. draft 면 임시저장본. */
+export interface MyPeerEval {
+  collaboration: number
+  communication: number
+  responsibility: number
+  problemSolving: number
+  technicalContribution: number
+  comment: string | null
+  draft: boolean
 }
 export interface WsCheck {
   label: string

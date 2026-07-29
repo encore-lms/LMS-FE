@@ -45,25 +45,27 @@ export function useBlogRecord(recordId: string) {
   })
 }
 
-/** 스터디 수정 폼 — 기존 기록 프리필 */
-export function useStudyRecord(recordId: string) {
+/** 스터디 수정 폼 — 기존 기록 프리필. 상세 모달도 같은 응답을 쓴다(닫혀 있으면 안 부른다). */
+export function useStudyRecord(recordId: string, enabled = true) {
   return useQuery({
     queryKey: recordKeys.study(recordId),
     queryFn: () =>
       apiClient
         .get<StudyFormData>(`/student/records/study/${recordId}`)
         .then((r) => r.data),
+    enabled,
   })
 }
 
 /** 자격증 수정 폼 — 기존 기록 프리필 */
-export function useCertRecord(recordId: string) {
+export function useCertRecord(recordId: string, enabled = true) {
   return useQuery({
     queryKey: recordKeys.cert(recordId),
     queryFn: () =>
       apiClient
         .get<CertFormData>(`/student/records/certificate/${recordId}`)
         .then((r) => r.data),
+    enabled,
   })
 }
 
@@ -190,14 +192,17 @@ export function useDeleteRecordAttachment() {
   })
 }
 
+/** 증빙 원본 — 상세 모달이 이미지 미리보기를 만들 때 쓴다. */
+export function fetchRecordAttachment(attachmentId: string) {
+  return apiClient.getBlob(`/student/records/attachments/${attachmentId}/file`)
+}
+
 /** 증빙 내려받기 — 본인 또는 담당 기수 운영·강사. */
 export async function downloadRecordAttachment(
   attachmentId: string,
   fileName: string,
 ) {
-  const blob = await apiClient.getBlob(
-    `/student/records/attachments/${attachmentId}/file`,
-  )
+  const blob = await fetchRecordAttachment(attachmentId)
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

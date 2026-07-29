@@ -71,17 +71,7 @@ export function CertForm({
   )
   const [title, setTitle] = useState(initial?.title ?? '')
   // 단일 첨부 — 수정 시 기존 파일로 시드.
-  const { files, replace, remove } = useFileUpload(
-    initial?.fileName
-      ? [
-          {
-            id: 'existing',
-            name: initial.fileName,
-            size: initial.fileSize ?? '',
-          },
-        ]
-      : [],
-  )
+  const { files, replace, remove } = useFileUpload(initial?.files ?? [])
   usePageHeader(c.title, c.sub)
 
   const file = files[0]

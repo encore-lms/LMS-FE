@@ -37,6 +37,8 @@ export const adminMenu: MenuNode[] = [
         to: '/admin/certificates/reviews',
         // 검토 상세(reviews/:id)·스냅샷(:id/snapshot)·감사 로그(:id/audit) 진입 시에도 활성 유지
         match: ['/admin/certificates'],
+        // BE 엔드포인트 미구현(404) — 오픈 시 comingSoon 제거.
+        comingSoon: true,
       },
       { label: '평판 관리', to: '/admin/reputation' },
     ],
@@ -47,7 +49,8 @@ export const adminMenu: MenuNode[] = [
       // 퀴즈 운영은 과정·기수·교과목 '퀴즈' 탭으로 흡수(메뉴 제거).
       { label: 'PLAY 관리', to: '/admin/play/typing-texts' },
       { label: '마일리지', to: '/admin/mileage' },
-      { label: '증명서 템플릿', to: '/admin/certificate-template' },
+      // BE 엔드포인트 미구현(404) — 오픈 시 comingSoon 제거.
+      { label: '증명서 템플릿', to: '/admin/certificate-template', comingSoon: true },
     ],
   },
   // 데이터·연동 — 준비 중. 항목 클릭 시 이동 없이 '준비중' 토스트만. 정식 오픈 시 comingSoon 제거.

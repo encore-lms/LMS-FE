@@ -65,11 +65,10 @@ export default function CompetencyCertificatesPage() {
   const [q, setQ] = useSearchParamState('q')
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
 
-  const cohort = useMemo(
-    () => cohorts.find((c) => c.id === cohortId) ?? null,
-    [cohorts, cohortId],
-  )
-  const cohortLabel = cohort ? `${cohort.cohortNo}기` : ''
+  const cohortLabel = useMemo(() => {
+    const found = cohorts.find((c) => c.id === cohortId)
+    return found ? `${found.cohortNo}기` : ''
+  }, [cohorts, cohortId])
 
   const rows = useMemo(() => {
     const items = data?.items ?? []
@@ -77,14 +76,14 @@ export default function CompetencyCertificatesPage() {
     return items
       // 시연용 테스트 계정은 증명서 대상이 아니다.
       .filter((s) => !s.isTest)
-      .map((s) => toCertRow(s, cohortLabel, cohort?.endDate))
+      .map((s) => toCertRow(s, cohortLabel))
       .filter(
         (r) =>
           !needle ||
           r.studentName.toLowerCase().includes(needle) ||
           r.studentUuid.toLowerCase().includes(needle),
       )
-  }, [data, q, cohortLabel, cohort])
+  }, [data, q, cohortLabel])
 
   const summary = useMemo(() => {
     const by = (s: CompetencyCertStatus) =>

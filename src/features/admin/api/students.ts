@@ -95,12 +95,11 @@ export function useStudentAttendanceForms(
 }
 
 // ── 시연용 테스트 계정(POST/DELETE /users/students/test) ──
-// 촬영 중 수강생 계정이 하나 더 필요할 때 매니저가 직접 만든다. 로그인 ID·비밀번호는
-// 서버가 만들어 응답으로만 평문으로 내려주므로, 화면이 그 값을 보여줘야 한다.
+// 촬영 중 수강생 계정이 하나 더 필요할 때 매니저가 직접 만든다.
+// 로그인 ID·비밀번호는 운영자가 정한다 — 바로 로그인해야 해서 기억할 수 있는 값이 낫다.
 export interface TestStudentAccount {
   userId: string
   loginId: string
-  password: string
   name: string
   cohortId: string
 }
@@ -110,7 +109,7 @@ export function useCreateTestStudent() {
   return useMutation<
     TestStudentAccount,
     Error,
-    { name: string; cohortId: string }
+    { name: string; loginId: string; password: string; cohortId: string }
   >({
     mutationFn: (input) =>
       apiClient

@@ -23,7 +23,7 @@
     "@hookform/resolvers": "^5.4.0",
     "@tanstack/react-query": "^5.100.14",
     "@tanstack/react-query-devtools": "^5.100.14",
-    "axios": "^1.16.1",
+    "axios": "^1.18.1",
     "chart.js": "^4.5.1",
     "highlight.js": "^11.11.1",
     "lucide-react": "^1.16.0",
@@ -82,7 +82,10 @@
     "overrides": {
       "vite": "$vite",
       "form-data": "^4.0.6",
-      "js-yaml": "^4.3.0"
+      "js-yaml": "^4.3.0",
+      "postcss": "^8.5.18",
+      "brace-expansion@1": "^1.1.16",
+      "brace-expansion@5": "^5.0.7"
     }
   },
   "msw": {

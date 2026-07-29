@@ -4,6 +4,7 @@ import { usePageHeader } from '@/shared/store'
 import { useCertificateOverview } from '../api/certificate'
 import { CertHero } from './components/CertHero'
 import { CertificateDemoStudentFab } from './components/CertificateDemoStudentFab'
+import { CertPublishBar } from './components/CertPublishBar'
 import { CertTabs } from './CertTabs'
 import { SummaryTab } from './tabs/SummaryTab'
 import { TechTab } from './tabs/TechTab'
@@ -56,7 +57,7 @@ export default function CertificatePage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 p-8">
+    <div className="flex flex-col gap-5 p-8 pb-28">
       {/* 히어로는 데이터 의존 → 있을 때만. 탭 네비(CertTabs)는 항상 유지. */}
       {certificateData && (
         <CertHero header={certificateData.header} status={status} />
@@ -108,6 +109,9 @@ export default function CertificatePage() {
           onSelect={selectDemoStudent}
         />
       )}
+
+      {/* 외부 검증 URL 공개 스위치 — 화면을 벗어나지 않고 바로 켜고 끈다. */}
+      <CertPublishBar />
     </div>
   )
 }

@@ -47,7 +47,8 @@ export const adminMenu: MenuNode[] = [
     label: '학습·보상',
     children: [
       // 퀴즈 운영은 과정·기수·교과목 '퀴즈' 탭으로 흡수(메뉴 제거).
-      { label: 'PLAY 관리', to: '/admin/play/typing-texts' },
+      // PLAY 운영은 시연 범위 밖 — 준비 중 처리(2026-07-29 지정). 오픈 시 comingSoon 제거.
+      { label: 'PLAY 관리', to: '/admin/play/typing-texts', comingSoon: true },
       { label: '마일리지', to: '/admin/mileage' },
       // BE 엔드포인트 미구현(404) — 오픈 시 comingSoon 제거.
       { label: '증명서 템플릿', to: '/admin/certificate-template', comingSoon: true },

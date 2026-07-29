@@ -264,19 +264,21 @@ export default function ReviewQueuePage() {
           보완 {byStatus.changes_requested} · 완료 {byStatus.certified}
         </div>
 
+        {/* 검토 큐 사용자 안내 — 스펙 '완료 기준' 카피를 운영자 관점 설명으로 재작성 */}
         <div className="border-border bg-info-bg mt-8 rounded-xl border p-5">
-          <p className="text-fg text-sm font-bold">큐 운영 원칙 · 완료 기준</p>
+          <p className="text-fg text-sm font-bold">검토 큐 안내</p>
           <ul className="text-fg-muted mt-2 flex flex-col gap-1 text-xs">
             <li>
-              • 기본 노출: certification_requested · reviewing ·
-              changes_requested (완료된 건은 별도 탭)
+              • 기본으로 진행 중인 건(요청·검토 중·보완 요청)만 보여주고, 완료된
+              건은 별도 탭에서 확인합니다
             </li>
             <li>
-              • 정렬: 위험 플래그 많은 순 · 결측이 많거나 위험 ≥ 2건은 행 강조
+              • 위험 플래그가 많은 건이 위로 정렬되고, 결측이 많거나 위험이 2건
+              이상이면 행이 강조됩니다
             </li>
             <li>
-              • 미배정 행 → 담당자 지정 후 reviewing 전이 · 행 클릭 시 검토 상세
-              진입
+              • 담당자가 없는 건은 담당자를 지정하면 검토 중으로 바뀌며, 행을
+              클릭하면 검토 상세로 이동합니다
             </li>
           </ul>
         </div>

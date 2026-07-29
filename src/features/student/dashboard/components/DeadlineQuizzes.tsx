@@ -18,7 +18,11 @@ export function DeadlineQuizzes({
     <SectionCard
       icon={AlarmClock}
       title="마감 임박 퀴즈"
-      subtitle="Top 3 · 응시 가능 기간 임박"
+      subtitle={
+        quizzes.length === 0
+          ? '응시 가능 기간 임박'
+          : `${quizzes.length}건 · 응시 가능 기간 임박`
+      }
       action={<MoreLink to="/student/quizzes" label="퀴즈 목록" />}
     >
       {quizzes.length === 0 ? (

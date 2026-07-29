@@ -4,7 +4,7 @@ import type { MenuNode } from '@/components/layout'
 // 항목이 16개로 많아 2026-06-25 업무 기준 4개 대분류(드롭다운)로 묶음(B안). 라벨·라우트는 기존 정합 유지.
 //   - 대시보드(상단)·설정(하단)은 진입/탈출점이라 그룹에 넣지 않고 leaf로 고정.
 //   - 검토·심사 = 매니저 일과의 중심(학습기록·인증·이력서·평판).
-//   - 학습·보상 = 매니저 제작 → 수강생 노출 콘텐츠(퀴즈·PLAY) + 마일리지·증명서 템플릿.
+//   - 학습·보상 = 매니저 제작 → 수강생 노출 콘텐츠(퀴즈·PLAY) + 마일리지·역량 증명서.
 //   - 데이터·연동 = 백오피스 플러밍(CSV·격리 큐·외부 연동).
 //
 // '외부 연동'은 Figma 사이드바에 없던 화면이라 진입점 확보를 위해 추가(2026-06-15) — URL 직접 입력 제거.
@@ -50,8 +50,7 @@ export const adminMenu: MenuNode[] = [
       // PLAY 운영은 시연 범위 밖 — 준비 중 처리(2026-07-29 지정). 오픈 시 comingSoon 제거.
       { label: 'PLAY 관리', to: '/admin/play/typing-texts', comingSoon: true },
       { label: '마일리지', to: '/admin/mileage' },
-      // BE 엔드포인트 미구현(404) — 오픈 시 comingSoon 제거.
-      { label: '증명서 템플릿', to: '/admin/certificate-template', comingSoon: true },
+      { label: '역량 증명서 관리', to: '/admin/certificates' },
     ],
   },
   // 데이터·연동 — 준비 중. 항목 클릭 시 이동 없이 '준비중' 토스트만. 정식 오픈 시 comingSoon 제거.

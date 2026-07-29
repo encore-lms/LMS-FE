@@ -20,7 +20,7 @@ describe('certificate demo students', () => {
       new Set(CERTIFICATE_DEMO_STUDENTS.map((student) => student.id)).size,
     ).toBe(5)
     expect(CERTIFICATE_DEMO_STUDENTS.map((student) => student.name)).toEqual([
-      '박준서',
+      '박수진',
       '박채원',
       '강다은',
       '황하은',

@@ -1,7 +1,6 @@
-import { useContext, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import { ToastContext } from '@/components/ui/use-toast'
 import {
   isMenuGroup,
   type MenuGroup,
@@ -71,8 +70,6 @@ export function Sidebar({
   items: MenuNode[]
 }) {
   const { pathname } = useLocation()
-  // 준비 중 메뉴의 '준비중' 안내용. Provider 없는 렌더(테스트)에서도 안전하게 optional.
-  const toast = useContext(ToastContext)
   // 모든 leaf(그룹 안 항목 포함) — 첫 leaf=역할 홈, prefix 겹침 판정용.
   const leaves = items.flatMap((node) =>
     isMenuGroup(node) ? node.children : [node],
@@ -93,18 +90,19 @@ export function Sidebar({
   }
 
   const renderLeaf = (item: MenuItem, nested = false): ReactNode => {
-    // 준비 중 메뉴 — 이동 없이 '준비중' 토스트만. Link 대신 버튼으로 렌더.
+    // 준비 중 메뉴 — 진입 전 앞단에서 명시: 비활성 버튼 + '(준비 중)' 표기(이동·클릭 반응 없음).
     if (item.comingSoon) {
       return (
         <button
           key={item.to}
           type="button"
-          onClick={() => toast?.info('준비 중인 기능입니다.')}
-          className={`text-fg hover:bg-divider rounded-md py-2 text-left text-[13px] font-medium ${
+          disabled
+          className={`text-fg-subtle cursor-not-allowed rounded-md py-2 text-left text-[13px] font-medium ${
             nested ? 'pr-3 pl-7' : 'px-3'
           }`}
         >
-          {item.label}
+          {item.label}{' '}
+          <span className="text-[11px] font-normal">(준비 중)</span>
         </button>
       )
     }

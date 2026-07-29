@@ -25,19 +25,14 @@ const isExpanded = (name: string) =>
   group(name).getAttribute('aria-expanded') === 'true'
 
 describe('adminMenu 사이드바 active highlight', () => {
-  it('인증 검토 큐에서 인증 검토가 활성', () => {
-    renderAt('/admin/certificates/reviews')
-    expect(isActive('인증 검토')).toBe(true)
-  })
-
-  it('감사 로그(:id/audit)에서 인증 검토가 활성', () => {
-    renderAt('/admin/certificates/cert-1842/audit')
-    expect(isActive('인증 검토')).toBe(true)
-  })
-
-  it('스냅샷 상세(:id/snapshot)에서 인증 검토가 활성', () => {
-    renderAt('/admin/certificates/cert-1842/snapshot')
-    expect(isActive('인증 검토')).toBe(true)
+  // 인증 검토·증명서 템플릿은 BE 미구현(404)으로 comingSoon(비활성 버튼) 처리 —
+  // 하위 경로(reviews/:id·audit·snapshot) 활성 매칭 테스트는 오픈 시 복원.
+  it('인증 검토는 (준비 중) 비활성 버튼으로 렌더된다', () => {
+    renderAt('/admin/reputation') // 검토·심사 그룹 펼침(평판 관리 활성)
+    expect(
+      screen.getByRole('button', { name: /인증 검토.*\(준비 중\)/ }),
+    ).toBeDisabled()
+    expect(screen.queryByRole('link', { name: /인증 검토/ })).toBeNull()
   })
 
   it('인입 격리 큐 경로에서는 인증 검토가 비활성', () => {
@@ -71,10 +66,10 @@ describe('adminMenu 사이드바 active highlight', () => {
 
 describe('adminMenu 사이드바 대분류 드롭다운', () => {
   it('활성 자식이 있는 그룹은 자동 펼침, 없는 그룹은 접힘', () => {
-    renderAt('/admin/certificates/reviews')
-    // 인증 검토 = 검토·심사 그룹 → 자동 펼침 + 자식 링크 노출
+    renderAt('/admin/reputation')
+    // 평판 관리 = 검토·심사 그룹 → 자동 펼침 + 자식 노출(인증 검토는 준비 중 버튼)
     expect(isExpanded('검토·심사')).toBe(true)
-    expect(screen.queryByRole('link', { name: '인증 검토' })).not.toBeNull()
+    expect(screen.queryByRole('link', { name: '평판 관리' })).not.toBeNull()
     // 데이터·연동 임시 숨김 — 그룹 부재. 재활성화 시 아래 복원.
     // expect(isExpanded('데이터·연동')).toBe(false)
     // expect(screen.queryByRole('link', { name: '인입 격리 큐' })).toBeNull()

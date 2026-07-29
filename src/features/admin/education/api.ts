@@ -10,6 +10,7 @@ import type {
   ResumeDetail,
   ResumeRow,
   CohortProject,
+  PeerEvalResults,
 } from './types'
 
 // 설명 탭 — HRD-Net 과정 상세(learning-service). 과정/기수 둘 다 있어야 조회.
@@ -320,5 +321,20 @@ export function usePeerEvalToggle(
         queryKey: adminEducationKeys.projects(courseId ?? '', cohortId ?? ''),
       })
     },
+  })
+}
+
+/**
+ * 동료 평가 결과 — 누가 누구를 어떻게 평가했는지, 아직 안 낸 사람은 누구인지.
+ * 여닫는 버튼만 있고 안을 볼 수단이 없으면 운영자는 평가가 되고 있는지조차 모른다.
+ */
+export function usePeerEvaluations(projectId: string | null) {
+  return useQuery({
+    queryKey: adminEducationKeys.peerEvaluations(projectId ?? ''),
+    queryFn: () =>
+      apiClient
+        .get<PeerEvalResults>(`/instructor/projects/${projectId}/peer-evaluations`)
+        .then((r) => r.data),
+    enabled: !!projectId,
   })
 }

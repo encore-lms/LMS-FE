@@ -44,4 +44,38 @@ describe('MarkdownEditor 멘션 파싱', () => {
     await user.type(screen.getByRole('textbox'), '@김강사 확인 부탁드려요')
     expect(screen.getByTestId('mentions').textContent).toBe('김강사')
   })
+
+  it('제안 리스트를 ↓로 이동해 Enter로 선택할 수 있다', async () => {
+    const user = userEvent.setup()
+    render(<Harness spy={vi.fn()} />)
+    const box = screen.getByRole('textbox')
+    await user.type(box, '@')
+    // 제안 리스트 노출 + 첫 항목 활성
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('option')[0].getAttribute('aria-selected'),
+    ).toBe('true')
+    await user.keyboard('{ArrowDown}{Enter}')
+    // 두 번째 후보(박수진)가 본문에 삽입되고 리스트는 닫힌다
+    expect((box as HTMLTextAreaElement).value).toBe('@박수진 ')
+    expect(screen.queryByRole('listbox')).toBeNull()
+  })
+
+  it('Tab으로도 활성 후보를 선택할 수 있다', async () => {
+    const user = userEvent.setup()
+    render(<Harness spy={vi.fn()} />)
+    const box = screen.getByRole('textbox')
+    await user.type(box, '@김')
+    await user.keyboard('{Tab}')
+    expect((box as HTMLTextAreaElement).value).toBe('@김강사 ')
+  })
+
+  it('멘션된 토큰은 입력창 백드롭에 하이라이트로 표시된다', async () => {
+    const user = userEvent.setup()
+    render(<Harness spy={vi.fn()} />)
+    await user.type(screen.getByRole('textbox'), '@김강사 진행 상황 공유해요')
+    const chips = screen.getAllByTestId('mention-highlight')
+    expect(chips).toHaveLength(1)
+    expect(chips[0].textContent).toBe('@김강사')
+  })
 })

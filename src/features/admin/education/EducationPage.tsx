@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { BookOpen, FolderOpen, ListChecks, Lock } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -6,6 +6,7 @@ import { Empty } from '@/components/ui/Empty'
 import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
+import { CurriculumModal } from './CurriculumModal'
 import { usePageHeader } from '@/shared/store'
 import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
@@ -74,6 +75,8 @@ function DescriptionPane({
     cohortId,
   )
   const toast = useToast()
+  // 커리큘럼 설정 — 엑셀을 올리면 수강생 주차별 학습에 배우는 내용이 채워진다.
+  const [curriculumOpen, setCurriculumOpen] = useState(false)
 
   const rows: { label: string; value: string }[] = data
     ? [
@@ -134,13 +137,22 @@ function DescriptionPane({
             </button>
             <button
               type="button"
-              // TODO: 커리큘럼 설정 화면(BE 커리큘럼/교과목 계약 확정 후)
-              onClick={() => toast.info('커리큘럼 설정 화면은 준비 중입니다.')}
+              onClick={() => setCurriculumOpen(true)}
+              disabled={!cohortId}
               className="bg-info-bg text-info border-border hover:bg-info-bg/70 inline-flex h-9 items-center gap-1.5 rounded-md border px-4 text-[13px] font-semibold transition-colors"
             >
               <BookOpen className="h-4 w-4" /> 커리큘럼 설정
             </button>
           </div>
+
+          {curriculumOpen && (
+            <CurriculumModal
+              open
+              cohortId={cohortId}
+              cohortLabel={data.title}
+              onClose={() => setCurriculumOpen(false)}
+            />
+          )}
         </div>
       )}
     </DataBoundary>

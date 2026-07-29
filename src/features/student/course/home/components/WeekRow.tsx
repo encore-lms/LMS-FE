@@ -11,6 +11,9 @@ const STATUS: Record<WeekStatus, { label: string; badge: string }> = {
 export function WeekRow({ week }: { week: CourseWeek }) {
   const active = week.status === 'learning'
   const status = STATUS[week.status]
+  const topics = week.topics ?? []
+  // 커리큘럼이 있으면 제목이 "N주차"가 아니라 교과목이므로 주차 번호를 기간 줄에 남긴다.
+  const hasCurriculum = (week.subjects ?? []).length > 0
   return (
     <div
       className={cn(
@@ -41,9 +44,16 @@ export function WeekRow({ week }: { week: CourseWeek }) {
           {week.weekNo}
         </span>
       </div>
-      <div className="flex flex-1 flex-col gap-0.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-fg text-[14px] font-semibold">{week.title}</span>
-        <span className="text-fg-muted text-[11px]">
+        {/* 커리큘럼이 설정된 주차는 제목이 교과목이라, 그 주 세부 주제를 한 줄 더 보여준다. */}
+        {topics.length > 0 && (
+          <span className="text-fg-muted truncate text-[12px]">
+            {topics.join(' · ')}
+          </span>
+        )}
+        <span className="text-fg-subtle text-[11px]">
+          {hasCurriculum && `${week.weekNo}주차 · `}
           {week.periodStart} — {week.periodEnd}
         </span>
       </div>

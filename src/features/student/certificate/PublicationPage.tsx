@@ -5,8 +5,12 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useCertPublication } from '../api/certificate'
-import { useCertFlow } from './useCertFlow'
+import {
+  useCertPublication,
+  useCertPublicationSettings,
+  useUpdateCertPublication,
+} from '../api/certificate'
+import { useCertQrDownload } from './components/CertQrCode'
 
 // 공개 설정 (/student/certificate/publication) — Figma 255:27.
 const card =
@@ -52,10 +56,29 @@ export default function PublicationPage() {
   const isOn = (id: string, def: boolean) => over[id] ?? def
   const set = (id: string, def: boolean) =>
     setOver((p) => ({ ...p, [id]: !isOn(id, def) }))
-  // 외부 검증 URL 공개는 증명서 화면 하단 바와 같은 값을 본다 —
-  // 화면마다 따로 들고 있으면 한쪽에서 켜도 다른 쪽은 꺼진 채로 보인다.
-  const urlOn = useCertFlow((s) => s.published)
-  const setUrlOn = useCertFlow((s) => s.setPublished)
+  // 공개 여부는 서버가 정본 — 검증 페이지는 다른 탭·다른 기기에서 열리므로
+  // 프론트 상태로는 전달할 수 없다.
+  const { data: settings } = useCertPublicationSettings()
+  const updatePublication = useUpdateCertPublication()
+  const urlOn = settings?.published ?? false
+  const publicUrl = settings?.publicUrl ?? ''
+  const verifyPath = settings ? `/verify/${settings.publicToken}` : ''
+  const qr = useCertQrDownload(publicUrl)
+
+  const toggleUrl = () =>
+    updatePublication.mutate(
+      { published: !urlOn },
+      {
+        onSuccess: (next) => {
+          toast.success(
+            next.published
+              ? '외부 검증 URL 을 공개했어요'
+              : '외부 검증 URL 을 비공개로 바꿨어요',
+          )
+        },
+        onError: () => toast.danger('공개 설정을 저장하지 못했어요'),
+      },
+    )
 
   return (
     <DataBoundary
@@ -121,7 +144,7 @@ export default function PublicationPage() {
                   {data.urlToggle.sub}
                 </span>
               </div>
-              <Toggle on={urlOn} onClick={() => setUrlOn(!urlOn)} />
+              <Toggle on={urlOn} onClick={toggleUrl} />
             </div>
             <div className="bg-surface-muted/40 text-fg-muted mx-6 mb-5 flex items-start gap-2 rounded-xl px-3.5 py-3 text-[12px] leading-5">
               <span className={cn(urlOn ? 'text-success' : 'text-fg-subtle')}>
@@ -192,12 +215,12 @@ export default function PublicationPage() {
               <span className="text-fg-subtle text-[11px]">공개 URL</span>
               <div className="border-border flex items-center gap-2 rounded-lg border px-3 py-2.5">
                 <span className="text-fg truncate text-[12px]">
-                  {data.publicUrl}
+                  {publicUrl}
                 </span>
                 <button
                   type="button"
                   onClick={() => {
-                    void navigator.clipboard?.writeText(data.publicUrl)
+                    void navigator.clipboard?.writeText(publicUrl)
                     toast.success('검증 URL이 복사됐어요')
                   }}
                   className="text-brand ml-auto flex shrink-0 items-center gap-1 text-[11px] font-bold"
@@ -206,18 +229,7 @@ export default function PublicationPage() {
                 </button>
               </div>
               <div className="flex items-center gap-5 pt-1">
-                <span className="bg-fg grid size-[140px] shrink-0 grid-cols-[repeat(14,1fr)] gap-[1px] rounded-lg p-2">
-                  {Array.from({ length: 196 }, (_, i) => (
-                    <span
-                      key={i}
-                      className={
-                        (i * 7 + (i % 5) * 3) % 3 === 0
-                          ? 'bg-surface rounded-[0.5px]'
-                          : 'bg-transparent'
-                      }
-                    />
-                  ))}
-                </span>
+                {qr.node}
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col">
                     <span className="text-fg text-[12px] font-bold">
@@ -234,14 +246,20 @@ export default function PublicationPage() {
                   <div className="flex items-center gap-2 pt-0.5">
                     <button
                       type="button"
-                      onClick={() => toast.info('PNG를 내려받았어요')}
+                      onClick={() => {
+                        if (qr.downloadPng()) toast.success('PNG를 내려받았어요')
+                        else toast.danger('QR을 만들지 못했어요')
+                      }}
                       className={buttonClass({ size: 'sm' })}
                     >
                       PNG 다운로드
                     </button>
                     <button
                       type="button"
-                      onClick={() => toast.info('SVG를 내려받았어요')}
+                      onClick={() => {
+                        if (qr.downloadSvg()) toast.success('SVG를 내려받았어요')
+                        else toast.danger('QR을 만들지 못했어요')
+                      }}
                       className="border-border text-fg rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
                     >
                       SVG
@@ -269,7 +287,7 @@ export default function PublicationPage() {
                     <span className="bg-success/60 size-2 rounded-full" />
                   </span>
                   <span className="text-fg-subtle text-[11px]">
-                    {data.publicUrl.replace(/^https?:\/\//, '')}
+                    {publicUrl.replace(/^https?:\/\//, '')}
                   </span>
                 </div>
                 <div className="bg-surface flex flex-col gap-3 p-4">
@@ -403,7 +421,7 @@ export default function PublicationPage() {
               <button
                 type="button"
                 onClick={() =>
-                  window.open(data.verifyUrl, '_blank', 'noopener')
+                  window.open(verifyPath, '_blank', 'noopener')
                 }
                 className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold"
               >

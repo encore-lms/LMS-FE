@@ -20,9 +20,11 @@ export interface ProjectContent {
   산출물: string
 }
 
-export const DEFAULT_PROJECT_CONTENT: ProjectContent = {
-  설명: '주문·결제·재고 도메인을 분리한 MSA 구조의 백엔드 프로젝트입니다.',
-  산출물: 'API 명세서 v1.pdf',
+/** 변경 전/후 한 줄 — 서버 응답 그대로(label·before·after). */
+export interface ChangeDiff {
+  label: string
+  before: string | null
+  after: string | null
 }
 
 export interface EditRequestState {
@@ -33,8 +35,11 @@ export interface EditRequestState {
   editAllowedUntil?: string
   /** 수정 완료 제출 시 작성한 변경 요약 */
   changeSummary?: string
-  /** 승인 시점 원본 스냅샷 — '변경 전' (원본↔현재 보조 비교용). */
-  snapshot?: ProjectContent
+  /**
+   * 승인 시점 원본 스냅샷 — 서버가 내려주는 '변경 전'(label·before).
+   * 예전에는 프론트가 하드코딩한 예시 문구를 모든 프로젝트에 똑같이 보여줬다.
+   */
+  changes?: ChangeDiff[]
 }
 
 // approved 상태인데 만료 시각이 지났는지 — true면 잠금(none)으로 자동 복귀시킨다.
@@ -68,9 +73,6 @@ interface ProjectFlowState {
   editRequests: Record<string, EditRequestState>
   setEditRequest: (projectId: string, patch: Partial<EditRequestState>) => void
   resetEditRequest: (projectId: string) => void
-  // 프로젝트별 현재 콘텐츠(미설정이면 DEFAULT_PROJECT_CONTENT). 원본↔현재 비교의 '변경 후'.
-  projectContent: Record<string, ProjectContent>
-  setProjectContent: (projectId: string, patch: Partial<ProjectContent>) => void
 }
 
 export const useProjectFlow = create<ProjectFlowState>((set) => ({
@@ -91,15 +93,4 @@ export const useProjectFlow = create<ProjectFlowState>((set) => ({
     set((s) => ({
       editRequests: { ...s.editRequests, [projectId]: { status: 'none' } },
     })),
-  projectContent: {},
-  setProjectContent: (projectId, patch) =>
-    set((s) => {
-      const prev = s.projectContent[projectId] ?? DEFAULT_PROJECT_CONTENT
-      return {
-        projectContent: {
-          ...s.projectContent,
-          [projectId]: { ...prev, ...patch },
-        },
-      }
-    }),
 }))

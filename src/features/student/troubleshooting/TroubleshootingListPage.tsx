@@ -7,11 +7,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useDeleteTsCase, useTsList } from '../api/troubleshooting'
-import { useProjectTsLinks } from './projectLinks'
 import { TsCaseCard } from './components/TsCaseCard'
 import { RejectNoticeModal } from './components/RejectNoticeModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { TS_LINKABLE_PROJECTS, type TsCase } from './types'
+import { type TsCase } from './types'
 import { TONE_SOLID } from '@/shared/lib/tone'
 
 // 목록 카드 우상단 버튼 라벨 — 상태/작성완료 기준.
@@ -30,7 +29,6 @@ export default function TroubleshootingListPage() {
   const navigate = useNavigate()
   const toast = useToast()
   // 프로젝트 연결 상태(인증완료 카드 표시) — 스토어 전체 구독으로 연결 변경 시 즉시 반영.
-  const projectLinks = useProjectTsLinks()
   const { data, isPending, isError, refetch } = useTsList()
   const [active, setActive] = useState('all')
   const [query, setQuery] = useState('')
@@ -198,9 +196,8 @@ export default function TroubleshootingListPage() {
             )}
             {pageItems.map((c) => {
               // 인증 완료 사례만 프로젝트 연결 칩 — 연결됨(프로젝트명)/연결 필요.
-              const proj = TS_LINKABLE_PROJECTS.find(
-                (p) => p.id === projectLinks.projectIdFor(c.id),
-              )
+              // 연결은 서버(사례의 projectId)가 정본이라 목록 응답에서 그대로 읽는다.
+              const proj = c.projectLink
               return (
                 <Fragment key={c.id}>
                   <TsCaseCard
@@ -210,7 +207,7 @@ export default function TroubleshootingListPage() {
                     connection={
                       c.status === 'certified'
                         ? proj
-                          ? { label: proj.title, ok: true }
+                          ? { label: proj.projectTitle, ok: true }
                           : { label: '연결 필요', ok: false }
                         : undefined
                     }

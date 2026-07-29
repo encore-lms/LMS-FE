@@ -1,0 +1,90 @@
+// 강사 콘솔 골격 (P0 36) — 대시보드(§1)·담당 과정/기수(§2)·수강생 목록(§3).
+// 공유 읽기전용 계약. 퀴즈 계약(instructorQuiz.ts)과 분리.
+
+// ── §1 강사 대시보드 (Figma 1268:7456) ──
+export interface InstructorCohortChip {
+  id: string
+  label: string // 'DA 4기 · 진행 중'
+}
+
+export type PriorityType =
+  | 'supplement' // 보완
+  | 'manual_grading' // 수동 채점
+  | 'project_cert' // 프로젝트 인증
+  | 'ts_review' // 트러블슈팅 검토
+
+export interface PriorityItem {
+  id: string
+  type: PriorityType
+  title: string // '점수 재검토 보완 응답'
+  subtitle: string // '박지훈 · FE 7기'
+  dday: string // 마감 축 '마감'|'D-Day'|'D-N' 또는 대기 축 '오늘 요청'|'대기 N일' (없으면 '')
+  urgent: boolean // 마감 D-1 이하·경과 또는 대기 3일 이상 — 칩 빨강 강조
+  actionLabel: string // 확인 / 채점 시작 / 검토
+  to: string // 이동 라우트
+}
+
+export interface DashboardKpi {
+  value: number
+  hint: string // '수동 채점 9 · 자동 재검토 5'
+  /** 우상단 보조 배지 — '오늘 +3' | '긴급' (없으면 미노출) */
+  badge?: string
+}
+
+export interface InstructorDashboardData {
+  instructorName: string
+  cohortCount: number
+  cohorts: InstructorCohortChip[]
+  kpiGrading: DashboardKpi
+  kpiProjects: DashboardKpi
+  kpiSupplements: DashboardKpi
+  priorities: PriorityItem[]
+  shortcuts: {
+    quizzes: { badge: number; hint: string }
+    students: { hint: string }
+    reviews: { badge: number; hint: string }
+  }
+}
+
+// ── §2 담당 과정/기수 (Figma 1324:9636) ──
+export type CohortStatus = 'operating' | 'upcoming' | 'ended' // 진행 중 / 예정 / 종료
+export type InstructorRole = 'lead' | 'assist' | 'mentor' // 강사 / 보조 강사 / 멘토
+
+export interface InstructorCohortRow {
+  id: string
+  name: string // 'DA 4기'
+  subtitle: string // '데이터 분석 · 4회차'
+  period: string // '2026.03.01 ~ 2026.05.31'
+  dday: string // 'D-12'
+  role: InstructorRole
+  students: number
+  riskCount: number
+  evalSummary: string // '미응시 3 · 제출 18'
+  evalPending: string // '채점 대기 9'
+  reviewSummary: string // '기록 4 · 프로젝트 2 · 트러블 1'
+  reviewPending: string // '대기 7건'
+  status: CohortStatus
+}
+
+export interface InstructorCohortsData {
+  total: number
+  operating: number
+  upcoming: number
+  ended: number
+  summary: {
+    operatingCourses: { value: number; hint: string }
+    students: { value: number; hint: string }
+    gradingPending: { value: number; hint: string }
+    reviewPending: { value: number; hint: string }
+  }
+  rows: InstructorCohortRow[]
+}
+
+// ── §3 수강생 목록 (Figma 1330:9675) ──
+// 증명서 상태 pill 5종 — CERT_STATUS_META(cohorts/meta.ts)가 사용. 수강생 목록 화면 폐기 후에도 유지.
+export type StudentCertStatus =
+  | 'requested' // 요청됨
+  | 'reviewing' // 검토 중
+  | 'changes_requested' // 보완 요청
+  | 'certified' // 인증 완료
+  | 'drafting' // 작성 중

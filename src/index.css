@@ -21,15 +21,284 @@
   --color-danger-bg: #fce3e3;
   --color-warning: #b27300;
   --color-warning-bg: #fff2c7;
+
+  --color-accent: #6b5cff;
+  --color-accent-bg: #f0eafe;
+  --color-accent-strong: #5c4fd9;
+
+  --color-success: #0ab080;
+  --color-success-bg: #e6f7f0;
+  --color-info: #3b82f5;
+  --color-info-bg: #e9f1fe;
+
+  --color-surface: #ffffff;
+  --color-on-color: #ffffff; /* 컬러/딥 배경 위 전경(텍스트·아이콘) 흰색. 배경엔 surface 사용 */
+
+  /* 다크 패널 컨텍스트 — 라이트용 시맨틱(warning #b27300 등)은 다크 배경 위 대비 부족.
+     운영 대시보드 '오늘 인사이트'(2026-07-08) 발원, 혼용값은 다수결 정규화(2026-07-08 감사). */
+  --color-surface-inverse: #181a20;
+  --color-danger-inverse: #ff8787;
+  --color-warning-inverse: #ffd43b;
+  --color-info-inverse: #74c0fc;
+  --color-success-inverse: #69db7c;
+  --color-accent-inverse: #b197fc;
+
+  /* 라이트 배경 차트·게이지 팔레트 — SVG fill/stroke·인라인 style 등 리터럴 색이 필요한 지점 전용.
+     텍스트·배지는 기존 시맨틱 토큰을 그대로 쓴다. */
+  --color-chart-positive: #40c057;
+  --color-chart-caution: #fab005;
+  --color-chart-negative: #ff6b6b;
+  --color-chart-neutral: #adb5bd;
+  --color-chart-info: #4dabf7;
+  --color-chart-accent: #7048e8;
+
+  /* 운영 히어로 카드 공통 그림자 — 여러 화면에 중복되던 rgba 그림자를 토큰화(shadow-hero). */
+  --shadow-hero: 0 8px 22px rgba(18, 23, 38, 0.18);
 }
 
 :root {
   line-height: 1.5;
   color: var(--color-fg);
+  /* 한국어 어절 중간 개행 방지 — 좁은 칸에서 '보기'가 '보/기'로 쪼개지던 문제.
+     한글은 기본값(normal)에서 글자 단위 개행이 허용돼 버튼·배지 라벨이 음절로 갈라진다.
+     수강생·매니저 대시보드에 부분 적용돼 있던 break-keep을 전역 기본값으로 승격. */
+  word-break: keep-all;
+  /* keep-all은 긴 URL·식별자를 끊지 못해 넘치므로 그 경우만 어디서든 끊게 둔다. */
+  overflow-wrap: break-word;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-sans);
+}
+
+/* 폼 컨트롤 포커스 표시 정본 — **테두리 색 변화 + 안쪽 1px 강조(합쳐서 시각적 2px)**.
+   WCAG 2.4.11(Focus Appearance)의 최소 두께 권고 대응이며, 링이 아니라 테두리를 키우는 방식이라
+   좁은 칸에서도 레이아웃이 흔들리지 않는다.
+
+   여기서 일괄 보장하므로 개별 컨트롤은 테두리 색만 바꾸면 된다(focus:border-brand /
+   래퍼는 focus-within:border-brand). box-shadow 를 직접 끄는 것은
+   `bg-transparent` + 테두리 래퍼 조합처럼 래퍼가 강조를 대신 그리는 경우로 한정한다. */
+@layer base {
+  /* 정본 포커스 표시 — 테두리 안쪽 1px. 컨트롤의 1px 테두리와 합쳐 시각적 2px 이 된다.
+     inset 이라 박스 크기·내용 위치가 움직이지 않는다. */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--color-brand);
+  }
+  /* 오류 상태는 테두리도 danger 이므로 강조 색을 맞춘다. */
+  input[aria-invalid='true']:focus-visible,
+  select[aria-invalid='true']:focus-visible,
+  textarea[aria-invalid='true']:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--color-danger);
+  }
+
+  /* 포커스 테두리 강조 — 투명 컨트롤을 감싼 테두리 래퍼(검색바 등)는 래퍼가 테두리를 그리므로
+     inputClass 와 같은 방식으로 안쪽 1px 을 덧그려 시각적 2px 을 만든다. inset 이라 레이아웃 불변.
+     래퍼는 focus-within:border-brand 로 색을 바꾸고 있어 색이 어긋나지 않는다. */
+  :where(.border):has(> input:focus-visible),
+  :where(.border):has(> textarea:focus-visible) {
+    box-shadow: inset 0 0 0 1px var(--color-brand);
+  }
+}
+
+/* Tailwind v4는 v3와 달리 button에 cursor:pointer를 기본 적용하지 않는다(브라우저 기본 default).
+   클릭 가능한 요소에 포인터 커서를 일괄 복원한다. disabled는 제외해 not-allowed/default 유지. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  label:has(> input[type='checkbox']:not(:disabled)),
+  label:has(> input[type='radio']:not(:disabled)),
+  summary {
+    cursor: pointer;
+  }
+}
+
+/* 모션 감쇠 선호 시 전환·애니메이션·스무스 스크롤을 일괄 최소화 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 마크다운 본문(.markdown-body) — QnA 질문·답변·댓글 렌더. LMS 토큰 기반 최소 규칙.
+   (@tailwindcss/typography 미도입 — 수동.) 코드 하이라이트 테마는 Markdown.tsx에서 import. */
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-fg);
+  word-break: break-word;
+}
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+.markdown-body > :last-child {
+  margin-bottom: 0;
+}
+.markdown-body p {
+  margin: 0 0 0.75em;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin: 1.2em 0 0.5em;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.markdown-body h1 {
+  font-size: 1.4em;
+}
+.markdown-body h2 {
+  font-size: 1.25em;
+}
+.markdown-body h3 {
+  font-size: 1.1em;
+}
+.markdown-body a {
+  color: var(--color-brand);
+  text-decoration: underline;
+}
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 0.75em;
+  padding-left: 1.4em;
+}
+.markdown-body li {
+  margin: 0.2em 0;
+}
+.markdown-body blockquote {
+  margin: 0 0 0.75em;
+  padding: 0.2em 0.9em;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-fg-muted);
+}
+.markdown-body :not(pre) > code {
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  background: var(--color-surface-muted);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.875em;
+}
+.markdown-body pre {
+  margin: 0 0 0.75em;
+  padding: 0.9em 1em;
+  border-radius: 10px;
+  background: #f6f8fa;
+  overflow-x: auto;
+}
+.markdown-body pre code {
+  padding: 0;
+  background: transparent;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+.markdown-body img {
+  /* 원본 해상도(세로 폰 사진 등)가 본문을 꽉 채워 레이아웃을 망치지 않도록
+     너비·높이 모두 상한을 두고 비율은 유지. */
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  margin: 0.4em 0;
+}
+.markdown-body table {
+  margin: 0 0 0.75em;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92em;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--color-border);
+  padding: 0.45em 0.7em;
+  text-align: left;
+}
+.markdown-body th {
+  background: var(--color-surface-muted);
+  font-weight: 700;
+}
+.markdown-body hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: 1em 0;
+}
+/* 멘션 토큰 강조 */
+.markdown-body .qna-mention {
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+/* 수강생 대시보드 출결 캘린더 셀 — 호버 시 흔들리며 떠오르고, 떼면 탁 떨어진다.
+   해제 시 애니메이션이 제거되며 transform이 즉시 0으로 스냅 → '탁' 낙하감.
+   그림자만 트랜지션으로 부드럽게 걷힌다. */
+@keyframes cal-wiggle-rise {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-6px) rotate(-4deg);
+  }
+  55% {
+    transform: translateY(-7px) rotate(3.5deg);
+  }
+  78% {
+    transform: translateY(-7px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(-7px) rotate(0deg);
+  }
+}
+.cal-cell-hover {
+  transition: box-shadow 0.18s ease;
+}
+.cal-cell-hover:hover {
+  position: relative;
+  z-index: 1;
+  animation: cal-wiggle-rise 0.8s ease-out forwards;
+  box-shadow: 0 10px 16px -6px rgba(18, 23, 38, 0.28);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal-cell-hover:hover {
+    animation: none;
+    transform: translateY(-2px);
+  }
+}
+
+/* 인쇄(브라우저 'PDF로 저장') — 이력서 문서(.resume-print)만 출력하고 앱 셸은 숨김 */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .resume-print,
+  .resume-print * {
+    visibility: visible;
+  }
+  .resume-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    /* 배경색·칩 색이 인쇄에 그대로 나오도록 */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    margin: 16mm;
+  }
 }

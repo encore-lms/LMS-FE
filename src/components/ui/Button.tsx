@@ -1,24 +1,43 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
+import { cn } from '@/shared/lib/cn'
+import {
+  buttonBase,
+  buttonSizes,
+  buttonVariants,
+  type ButtonSize,
+  type ButtonVariant,
+} from './buttonClass'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary'
-}
-
-const variants = {
-  primary: 'bg-brand-deep text-white hover:bg-brand-deep/90',
-  secondary: 'bg-white text-fg border border-border hover:bg-surface-muted',
+  /** primary=주요 CTA(딥 브랜드) · secondary=보조(테두리) · danger=파괴적 · ghost=3차(배경 없음) */
+  variant?: ButtonVariant
+  /** sm=조밀한 인라인 액션 · md=기본(목록 헤더·모달 등) · lg=히어로 CTA(로그인 등) */
+  size?: ButtonSize
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
-    { variant = 'primary', className = '', children, type = 'button', ...rest },
+    {
+      variant = 'primary',
+      size = 'md',
+      className,
+      children,
+      type = 'button',
+      ...rest
+    },
     ref,
   ) {
     return (
       <button
         ref={ref}
         type={type}
-        className={`flex h-14 items-center justify-center gap-2 rounded-[11px] px-5 py-4 text-[15px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+        className={cn(
+          'flex',
+          buttonBase,
+          buttonSizes[size],
+          buttonVariants[variant],
+          className,
+        )}
         {...rest}
       >
         {children}

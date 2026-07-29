@@ -50,6 +50,9 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
   1. `src/index.css` `@theme`에 `--color-X: #...` 추가
   2. `src/features/styleguide/StyleGuidePage.tsx`의 `TOKEN_NAMES` 배열에 `'X'` 한 줄 추가
   3. PR 머지 후 `use_figma`로 Figma `LMS Design Tokens` collection에 `Color/X` variable 추가 (Claude 자동화)
+- **폰트 토큰·정합성**: 폰트도 `Typography/*` 토큰으로 Figma에 sync한다(현재 `--font-sans` ↔ `Typography/font-sans` FONT*FAMILY). Figma 시안은 **Pretendard만** 사용한다 — `Icons` 페이지 디바이스 목업의 Apple SF/New York만 예외. Figma↔코드 폰트·토큰 드리프트는 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 스킬로 점검한다(배경: LMS-DOCS `디자인*토큰.md` §Figma 폰트 정합).
+
+- **색 정합·가드레일**: Figma 시안 색은 raw hex가 아니라 `LMS Design Tokens`(`Color/*`) 변수에 바인딩한다(코드 `@theme`에서 단방향 sync). 시안 작성 스킬 `lms-page-figma`(v0.8.0+)가 모든 fill/stroke를 변수로 그리도록 전환됐고(raw RGB 상수 폐기), 토큰과 불일치하는 raw 색은 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 색 census로 탐지·무손실 교정한다. 새 색이 필요하면 위 절차로 토큰을 먼저 추가한다(raw hex 금지).
 
 ### Figma sync 절차 (코드 ↔ 디자인 상태 추적)
 
@@ -57,6 +60,18 @@ commitlint 자동 강제는 1주차 보류(회고 이후 도입 여부 결정).
 - 작업 자동화: Claude + Figma MCP(`use_figma`)로 일괄 처리 가능.
 - 버전 표기: 머지 시점이 아닌 **다음 release 버전 기준** (예: 1주차 작업 → `v0.2`). Release PR(`chore(release):`)에서 한 번에 확정 권장.
 - 디자이너가 시안을 수정해야 할 때는 Section 밖으로 다시 이동해서 작업, 완료 후 재이동.
+- **정합성 점검(Release 전)**: 주차 Release PR 전 [`figma-consistency-checks`](https://github.com/encore-lms/LMS-AGENT-SKILLS) 스킬을 실행해 ① 전 페이지 비-Pretendard 0(Icons 예외), ② 색 census `rawSolids` 0(`Color/*` 미바인딩 fill 없음, Icons 예외)을 확인하고, Release PR 본문 체크리스트에 `□ figma-consistency-checks 통과(폰트 비-Pretendard 0 · 색 미바인딩 0, Icons 예외)` 1줄을 남긴다.
+- **개발메타 표기 제거 (코드 + Figma)**: 문서 섹션 참조 마커(`§N 정본`·`§N 정책`·`§N 완료 기준` 등)는 개발/스펙용 메타 표기이므로 **제품 UI 텍스트(코드·Figma 양쪽)에서 제거**한다. `§N` 토큰만 떼고 정책 카피는 보존하며(`검토 정책 · 완료 기준`), `정본` 부제처럼 마커 전용 줄은 통째 삭제한다. **예외(보존)**: 설계 전용 주석 보드·프레임 라벨(화면이 아닌 문서성 아트보드, 예: `공통` 페이지 첨부정책 보드)과 코드 주석(`//`). Figma census는 `get_metadata`/`findAllWithCriteria(['TEXT'])` + `characters.includes('§')`로 점검. (개정 배경: LMS-DOCS [`황설현_보고서/2026-06-30 §N·정본 개발메타 표기 전수 제거`](../LMS-DOCS/황설현_보고서/) — 구 "Figma는 dev참조 유지" 방침을 supersede)
+
+## 병렬 작업 규칙 (2인 결합 해소)
+
+도메인 화면은 각자 `src/features/<역할>/` 폴더를 **독점 소유**해 병렬 작업한다. 서로 코드를 건드리지 않게 하는 3가지 규칙:
+
+- **공유 계약은 읽기전용**: `src/shared/{types,constants,api,store}`와 `src/components/{ui,layout}`은 둘 다 **import만** 한다. 변경이 필요하면 도메인 PR에 섞지 말고 별도 `shared` PR로 페어가 합의해 바꾼다.
+- **라우트·메뉴는 자기 feature에서만**: 라우트는 `src/features/<역할>/routes.tsx`, 사이드바 메뉴는 `src/features/<역할>/menu.ts`에 정의한다. 취합 파일 `src/app/router.tsx`와 셸 `src/components/layout`은 새 shell 추가 같은 구조 변경 때만 페어로 손댄다.
+- **공유 컴포넌트·모델은 단일 소유**: 여러 역할이 쓰는 것(예: 증명서 미리보기, 퀴즈 응시 컴포넌트, `MentorTeamAssignment` 타입)은 한 명이 만들고 다른 쪽은 import한다(중복 구현 금지).
+
+폴더 소유·분담은 LMS-DOCS `WBS_FE.md` 주차 회고에서 재배치한다.
 
 ## 로컬 검증
 

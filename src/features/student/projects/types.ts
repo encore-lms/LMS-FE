@@ -1,0 +1,224 @@
+// 수강생 프로젝트 도메인 계약 — 기능 로컬(공유 파일 미오염). Figma 337:930 외.
+// 프로젝트 목록 · 생성 4단계 마법사 · 워크스페이스(10탭) · 변경 제안.
+
+import type { Tone } from '@/shared/lib/tone'
+export type { Tone }
+
+export type ProjectStatus = 'certified' | 'reviewing' | 'draft'
+export type ProjectKind = 'team' | 'personal'
+
+/** 목록 상단 통계 카드 */
+export interface ProjectStat {
+  key: string
+  label: string
+  value: string
+  unit: string
+  sub: string
+  tone: Tone
+}
+
+/** 목록 필터 탭 */
+export interface ProjectFilter {
+  key: string
+  label: string
+  count: number
+}
+
+/** 목록 프로젝트 카드 */
+export interface ProjectSummary {
+  id: string
+  kind: ProjectKind
+  kindLabel: string // "팀" | "개인"
+  status: ProjectStatus
+  statusLabel: string // "인증 완료" | "검토 중" | "작성 중"
+  representative: boolean // 대표 후보
+  accentTone: Tone // 좌측 바 색
+  title: string
+  pm: string // "예칼 PM"
+  teamLabel: string // "팀 4명" | "개인 프로젝트"
+  period: string // "2026-04-01 ~ 2026-05-30 · 80일 · 종료"
+  tags: string[]
+  outcomes: string[]
+  actionLabel: string // "워크스페이스 열기" | "검토 상태 보기"
+}
+
+export interface ProjectListData {
+  headerTitle: string // "프로젝트 — 백엔드 부트캠프 · 3기"
+  headerSub: string
+  stats: ProjectStat[]
+  filters: ProjectFilter[]
+  projects: ProjectSummary[]
+  shownLabel: string
+}
+
+// ── 생성 마법사 카탈로그(정적) — catalog.ts로 분리, 기존 import 경로 호환용 재수출 ──
+export { STACK_CATALOG, DOMAINS, DELIVERABLES } from './catalog'
+export type { StackGroup } from './catalog'
+
+/** 팀원 초대 후보 */
+export interface TeamCandidate {
+  id: string
+  name: string
+  meta: string // "백엔드 · 3팀"
+  avatarTone: Tone
+}
+export interface ProjectWizardData {
+  cohortLabel: string // "백엔드 부트캠프 3기"
+  pmName: string // "김수강"
+  pmMeta: string
+  candidates: TeamCandidate[]
+}
+
+// ── 워크스페이스(10탭) ──
+export type WsTab =
+  | 'home'
+  | 'board'
+  | 'calendar'
+  | 'meetings'
+  | 'docs'
+  | 'issues'
+  | 'outcomes'
+  | 'peer-evaluation'
+  | 'certification'
+  | 'settings'
+
+export interface Badge {
+  label: string
+  tone: Tone
+}
+export interface WsTask {
+  id?: string
+  title: string
+  assignee: string
+  due: string // "D-1"
+  startDate?: string | null // YYYY-MM-DD(캘린더 반영)
+  endDate?: string | null
+  assigneeMemberIds?: string[] // 담당자(멀티) ProjectMember.id
+  tags: Badge[]
+}
+export interface WsColumn {
+  key: string
+  label: string
+  tasks: WsTask[]
+}
+export interface WsCalEvent {
+  day: number
+  label: string
+  tone: Tone
+}
+export interface WsUpcoming {
+  date: string
+  label: string
+  tone: Tone
+}
+export interface WsMeeting {
+  title: string
+  meta: string
+  summary: string
+  status: Badge
+}
+export interface WsDoc {
+  title: string
+  meta: string
+  status: Badge
+  category: string // docCategories('API 명세'·'설계 문서'·'발표 자료'·'첨부 파일'·'위키') 중 하나
+  url?: string | null
+  downloadUrl?: string | null // 파일 산출물 다운로드 경로(blob)
+}
+export interface WsIssue {
+  id?: string
+  title: string
+  meta: string
+  priority: Badge
+  status: Badge
+}
+export interface WsMember {
+  memberId?: string // ProjectMember.id(담당자 지정용)
+  userId?: string
+  name: string
+  role: string // "백엔드·인프라"
+  kind: 'PM' | '팀원'
+  avatarTone: Tone
+}
+export interface WsMetric {
+  label: string
+  before: string
+  after: string
+  delta: string
+  good: boolean
+}
+export interface WsPeerTarget {
+  memberId?: string
+  name: string
+  role: string
+  axes: { key: string; score: number }[]
+  tags: Badge[]
+}
+export interface WsCheck {
+  label: string
+  status: Badge
+}
+export interface WsActivity {
+  who: string
+  action: string
+  when: string
+  kind?: '작업' | '회의록' | '산출물' | '이슈' // 활동 종류 칩/아이콘
+}
+export interface WorkspaceData {
+  id: string
+  title: string
+  meta: string // "팀 프로젝트 · 4명 · 2026-04-01 ~ 2026-05-30 · PM 김민웅"
+  /** 프로젝트 라이프사이클 — 완료 배너·상호평가·인증 UI 게이트. draft=작성 중(완료 확정 전) */
+  status: ProjectStatus
+  banner?: string // 완료 확정 이후 상단 안내(상호평가 등)
+  // home
+  stats: {
+    label: string
+    value: string
+    unit: string
+    sub: string
+    tone: Tone
+  }[]
+  myTasks: WsTask[]
+  activities: WsActivity[]
+  // board
+  columns: WsColumn[]
+  // calendar
+  calMonth: string
+  calEvents: WsCalEvent[]
+  upcoming: WsUpcoming[]
+  // meetings
+  meetings: WsMeeting[]
+  // docs
+  docCategories: string[]
+  docs: WsDoc[]
+  // issues
+  issues: WsIssue[]
+  // team
+  members: WsMember[]
+  rolePolicy: string[]
+  // outcomes
+  metrics: WsMetric[]
+  stack: string[]
+  // peer
+  peerDue: string
+  peerMyStatus: Badge
+  peerTeamStatus: Badge
+  peerTargets: WsPeerTarget[]
+  /** 동료 평가 개시 여부 — 꺼져 있으면 서버가 제출을 막으므로 폼 대신 안내를 띄운다 */
+  peerEvalEnabled: boolean
+  /** 상호평가 화면 '본인 수행 내용' — 내가 저장한 자기 업무 요약(없으면 null) */
+  selfReview?: string | null
+  /** 요청자가 이 프로젝트의 OWNER(PM)인지 — 설정 탭 등 PM 전용 게이팅용 */
+  isOwner?: boolean
+  /** 설정 탭 편집 폼 채우기용 — '프로젝트 기간' 시작·종료(YYYY-MM-DD, 없으면 null) */
+  startDate?: string | null
+  endDate?: string | null
+  // certification
+  certChecklist: WsCheck[]
+  certStatus: Badge
+  certRecentChange: { label: string; status: Badge; date: string }
+  /** 인증 요청 진행 정보(검토 중일 때) — 홈 인증 상태 카드. 없으면 최근 변경 제안으로 폴백. */
+  certInfo?: { requestedAt: string; reviewer: string; eta: string }
+  troubleshootingCaseIds?: string[] // §52 BE 연결 사례 id
+}

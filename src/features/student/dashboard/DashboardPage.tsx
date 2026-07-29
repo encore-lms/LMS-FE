@@ -1,0 +1,114 @@
+import { DataBoundary } from '@/components/ui/DataBoundary'
+import { usePageHeader } from '@/shared/store'
+import { useStudentDashboard } from '../api/dashboard'
+import { useMentoringAssigned } from '../api/mentoring'
+import { HeroBanner } from './components/HeroBanner'
+import { ProfileCard } from './components/ProfileCard'
+import { KpiCards } from './components/KpiCards'
+import { TodoList } from './components/TodoList'
+import { DeadlineQuizzes } from './components/DeadlineQuizzes'
+import { MentoringSummary } from './components/MentoringSummary'
+import { AttendanceCalendar } from './components/AttendanceCalendar'
+import { AttendanceSummary } from './components/AttendanceSummary'
+import { WeeklyStreak } from './components/WeeklyStreak'
+import { NoticeList } from './components/NoticeList'
+import { NotificationList } from './components/NotificationList'
+import { ProjectList } from './components/ProjectList'
+import { TroubleshootingList } from './components/TroubleshootingList'
+import { SkeletonDashboard } from '@/components/ui/Skeleton'
+import type { DashboardAttendance } from './types'
+
+const pad = (value: number) => String(value).padStart(2, '0')
+
+function createEmptyAttendance(): DashboardAttendance {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth() + 1
+  const todayLabel = `${year}-${pad(month)}-${pad(today.getDate())}`
+
+  return {
+    calendar: {
+      year,
+      month,
+      today: todayLabel,
+      days: [],
+    },
+    summary: {
+      presentDays: 0,
+      totalDays: 0,
+      attendanceRate: 0,
+      streakDays: 0,
+      lateCount: 0,
+      absentCount: 0,
+      earlyLeaveCount: 0,
+      outingCount: 0,
+    },
+    trend: [],
+  }
+}
+
+/**
+ * 수강생 대시보드 (/student 인덱스) — 오늘 할 일·평가·출결·알림·프로젝트를 한 화면에 요약.
+ * 데이터/상태만 여기서 다루고 각 영역은 components/* 가 그린다(영역별 격리).
+ * §2 정책상 증명서 위젯·6축 역량·강의 진도율·채점 대기·랭킹은 노출하지 않는다.
+ */
+export default function DashboardPage() {
+  const { data, isPending, isError, refetch } = useStudentDashboard()
+  // 멘토링 요약은 매니저가 멘토를 배정한 수강생에게만(미배정 확정 시 숨김).
+  const mentoringAssigned = useMentoringAssigned().data
+  usePageHeader('대시보드')
+
+  const attendance = data?.attendance ?? createEmptyAttendance()
+
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError}
+      onRetry={() => refetch()}
+      // 스켈레톤 자체 기본 p-8과 겹치지 않게 여백은 DataBoundary className에서만 부여.
+      skeleton={<SkeletonDashboard kpis={4} panels={4} className="" />}
+      errorTitle="대시보드를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+      className="p-8"
+    >
+      {data && (
+        // 배경은 헤더(흰색)와 같은 톤으로 이어지게 무지 — 카드 구분은 보더+소프트 섀도.
+        // break-keep: 한국어 어절 중간 개행 방지(좁은 카드·모바일).
+        <div className="flex min-h-full flex-col gap-6 p-4 break-keep sm:p-8">
+          <HeroBanner hero={data.hero} attendance={attendance} />
+
+          {/* 3섹션: (사이드바) · 메인(실행 콘텐츠) · 우측 레일(개인 현황) */}
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+            {/* 메인 — 오늘 처리할 학습 활동. 알림·공지는 하단 2열로 메인에 둬 레일과 높이 균형. */}
+            <div className="flex min-w-0 flex-col gap-6">
+              <KpiCards kpis={data.kpis} />
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <TodoList todos={data.todos} />
+                <DeadlineQuizzes quizzes={data.deadlineQuizzes} />
+              </div>
+              {mentoringAssigned !== false && (
+                <MentoringSummary mentoring={data.mentoring} />
+              )}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <ProjectList projects={data.projects} />
+                <TroubleshootingList items={data.troubleshooting} />
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <NotificationList notifications={data.notifications} />
+                <NoticeList notices={data.notices} />
+              </div>
+            </div>
+
+            {/* 우측 레일 — 개인 현황(프로필·스트릭·출결) */}
+            <aside className="flex flex-col gap-6">
+              <ProfileCard hero={data.hero} attendance={attendance} />
+              <WeeklyStreak attendance={attendance} />
+              <AttendanceCalendar attendance={attendance} />
+              <AttendanceSummary attendance={attendance} />
+            </aside>
+          </div>
+        </div>
+      )}
+    </DataBoundary>
+  )
+}

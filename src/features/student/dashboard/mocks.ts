@@ -1,0 +1,356 @@
+import { http, HttpResponse } from 'msw'
+import type {
+  StudentDashboardSummary,
+  DashboardAttendanceDay,
+  DashboardNotification,
+} from './types'
+
+// 대시보드 mock — 기능 로컬. mocks/handlers.ts에서 import 후 spread로 등록(공유 최소 터치).
+// 데이터는 Figma 시안(140:5)을 재현.
+const ok = <T>(data: T) => HttpResponse.json({ data })
+
+// 5월 평일 출결(주말은 컴포넌트가 휴일로 자동 처리). 13일이 오늘.
+const calendarDays: DashboardAttendanceDay[] = [
+  { date: '2026-05-01', status: 'PRESENT' },
+  { date: '2026-05-04', status: 'PRESENT' },
+  { date: '2026-05-05', status: 'PRESENT' },
+  { date: '2026-05-06', status: 'PRESENT' },
+  { date: '2026-05-07', status: 'PRESENT' },
+  { date: '2026-05-08', status: 'PRESENT' },
+  { date: '2026-05-11', status: 'PRESENT' },
+  { date: '2026-05-12', status: 'LATE' },
+  { date: '2026-05-13', status: 'PRESENT' },
+]
+
+const mockDashboard: StudentDashboardSummary = {
+  hero: {
+    studentName: '김수강',
+    courseName: '백엔드 부트캠프',
+    cohortName: '5기',
+    totalWeeks: 24,
+    currentWeek: 16,
+    progressPct: 67,
+    todayLabel: 'MONDAY · 2026.05.13',
+  },
+  kpis: {
+    items: [
+      {
+        key: 'attendance',
+        label: '출석률',
+        value: '92',
+        unit: '%',
+        tone: 'brand',
+        barPct: 92,
+        delta: { label: '▲ +2%p', tone: 'success' },
+        caption: '132 / 144 시간 · 지각 2회 · 결석 1회',
+      },
+      {
+        key: 'quizzes',
+        label: '이번 주 퀴즈',
+        value: '2',
+        unit: '건',
+        tone: 'warning',
+        barPct: 30,
+        delta: { label: 'D-1', tone: 'warning' },
+        caption: '마감 임박 1건 — 오늘 23:59',
+      },
+      {
+        key: 'records',
+        label: '응시 대기',
+        value: '3',
+        unit: '건',
+        tone: 'accent',
+        barPct: 25,
+        caption: '블로그 1 · 스터디 2 · 검토 대기 중',
+      },
+      {
+        key: 'changes',
+        label: '보완 요청',
+        value: '0',
+        unit: '건',
+        tone: 'success',
+        barPct: 0,
+        delta: { label: '✓ 클리어', tone: 'success' },
+        caption: '현재 처리할 항목 없음',
+      },
+    ],
+  },
+  todos: [
+    {
+      id: 't1',
+      category: '퀴즈',
+      categoryTone: 'brand',
+      title: 'Spring Security 기초 퀴즈 응시',
+      due: 'D-DAY',
+      dueKind: 'today',
+      to: '/student/quizzes',
+    },
+    {
+      id: 't2',
+      category: '과제',
+      categoryTone: 'neutral',
+      title: '블로그 보완 — 운영자 코멘트 1건',
+      due: 'D-1 · 5/14',
+      dueKind: 'soon',
+      to: '/student/records',
+    },
+    {
+      id: 't3',
+      category: '프로젝트',
+      categoryTone: 'accent',
+      title: 'WeatherAPI 프로젝트 인증 요청',
+      due: 'D-3 · 5/16',
+      dueKind: 'soon',
+      to: '/student/projects',
+    },
+    {
+      id: 't4',
+      category: '학습',
+      categoryTone: 'success',
+      title: '주간 학습 멀티터 도전',
+      due: '이번 주말',
+      dueKind: 'week',
+      to: '/student/course',
+    },
+  ],
+  deadlineQuizzes: [
+    {
+      id: 'q1',
+      category: 'BACKEND',
+      categoryTone: 'success',
+      title: 'Spring Security 기초',
+      meta: '30분 · 15문항',
+      due: 'D-1',
+      dueTone: 'danger',
+      to: '/student/quizzes',
+    },
+    {
+      id: 'q2',
+      category: 'BACKEND',
+      categoryTone: 'success',
+      title: 'REST API 설계 패턴',
+      meta: '40분 · 20문항',
+      due: 'D-3',
+      dueTone: 'warning',
+      to: '/student/quizzes',
+    },
+    {
+      id: 'q3',
+      category: 'DATABASE',
+      categoryTone: 'info',
+      title: 'JPA 영속성 컨텍스트',
+      meta: '25분 · 15문항',
+      due: 'D-5',
+      dueTone: 'neutral',
+      to: '/student/quizzes',
+    },
+  ],
+  mentoring: {
+    stats: [
+      {
+        key: 'waiting',
+        label: '요청 대기',
+        caption: '팀 요청 후 미응답',
+        value: 0,
+        tone: 'neutral',
+      },
+      {
+        key: 'proposed',
+        label: '조정 제안',
+        caption: '멘토 일정·장소 제안',
+        value: 1,
+        tone: 'warning',
+      },
+      {
+        key: 'reserved',
+        label: '확정 예약',
+        caption: '3/26(목) 18:30',
+        value: 1,
+        tone: 'success',
+      },
+      {
+        key: 'completed',
+        label: '최근 완료',
+        caption: '일지 상세 비공개',
+        value: 3,
+        tone: 'info',
+      },
+    ],
+    note: {
+      title: '상세 기능은 멘토링 화면에서',
+      caption: '완료 기록은 일정·장소·완료 여부만',
+    },
+  },
+  attendance: {
+    calendar: { year: 2026, month: 5, today: '2026-05-13', days: calendarDays },
+    summary: {
+      presentDays: 73,
+      totalDays: 76,
+      attendanceRate: 92,
+      streakDays: 8,
+      lateCount: 2,
+      absentCount: 1,
+      earlyLeaveCount: 0,
+      outingCount: 3,
+    },
+    trend: [
+      { week: 'W1', rate: 86 },
+      { week: 'W2', rate: 90 },
+      { week: 'W3', rate: 88 },
+      { week: 'W4', rate: 94 },
+      { week: 'W5', rate: 92 },
+      { week: 'W6', rate: 96 },
+      { week: 'W7', rate: 90 },
+      { week: 'W8', rate: 92 },
+    ],
+  },
+  notices: [
+    {
+      id: 'n1',
+      tag: '긴급',
+      tagTone: 'danger',
+      dateLabel: '5/20',
+      title: '시스템 점검 안내 (09:00-10:00)',
+      relativeTime: '1시간 전',
+    },
+    {
+      id: 'n2',
+      tag: '공지',
+      tagTone: 'info',
+      dateLabel: '5/12',
+      title: '다음 주 프로젝트 발표 — 발표 자료 5/19까지',
+      relativeTime: '2일 전',
+    },
+    {
+      id: 'n3',
+      tag: '공지',
+      tagTone: 'info',
+      dateLabel: '5/10',
+      title: '16주차 학습 가이드 문서 업데이트',
+      relativeTime: '4일 전',
+    },
+    {
+      id: 'n4',
+      tag: '일반',
+      tagTone: 'neutral',
+      dateLabel: '5/8',
+      title: '퀴즈 채점 정책 변경 안내',
+      relativeTime: '6일 전',
+    },
+  ],
+  notifications: [
+    {
+      id: 'a1',
+      title: '블로그 보완 요청 — 운영자 코멘트 확인',
+      source: '운영자 박지수',
+      relativeTime: '1시간 전',
+      unread: true,
+    },
+    {
+      id: 'a2',
+      title: '프로젝트 팀원 상호평가 작성',
+      source: '프로젝트 상호평가',
+      relativeTime: '3시간 전',
+      unread: true,
+    },
+    {
+      id: 'a3',
+      title: '프로젝트 카드 인증 승인 — WeatherAPI 분석',
+      source: '강사 이정훈',
+      relativeTime: '어제',
+      unread: true,
+    },
+    {
+      id: 'a4',
+      title: '멤버 박정희가 평가 카드 도착',
+      source: '평판 시스템',
+      relativeTime: '2일 전',
+      unread: true,
+    },
+  ],
+  projects: [
+    {
+      id: 'p1',
+      title: 'WeatherAPI 분석 서비스',
+      subtitle: 'PM · 백엔드 2주차',
+      accentTone: 'success',
+      progressPct: 70,
+      status: { label: '인증 중', tone: 'warning' },
+      to: '/student/projects',
+    },
+    {
+      id: 'p2',
+      title: 'AI에 회의 도구 자동화',
+      subtitle: '개인 · 1주차',
+      accentTone: 'accent',
+      progressPct: 35,
+      status: { label: '검토 중', tone: 'accent' },
+      to: '/student/projects',
+    },
+    {
+      id: 'p3',
+      title: '주말 알고리즘 PoC',
+      subtitle: '팀 · 1주차 · 3인',
+      accentTone: 'info',
+      progressPct: 45,
+      status: { label: '인증', tone: 'success' },
+      to: '/student/projects',
+    },
+  ],
+  troubleshooting: [
+    {
+      id: 'ts1',
+      tag: 'BACKEND',
+      tagTone: 'success',
+      title: 'JWT 토큰 만료 시 무한 호출 디버깅',
+      resolved: true,
+      dayLabel: '3일',
+      to: '/student/troubleshooting',
+    },
+    {
+      id: 'ts2',
+      tag: 'DEPLOY',
+      tagTone: 'accent',
+      title: 'Docker Compose 네트워크 충돌 해결',
+      resolved: true,
+      dayLabel: '2일',
+      to: '/student/troubleshooting',
+    },
+    {
+      id: 'ts3',
+      tag: 'PERF',
+      tagTone: 'warning',
+      title: 'Spring Batch 진행 사이즈 튜닝',
+      resolved: true,
+      dayLabel: '1일',
+      to: '/student/troubleshooting',
+    },
+    {
+      id: 'ts4',
+      tag: 'BACKEND',
+      tagTone: 'success',
+      title: '멤버 백포워드 평가 카드 도착 처리',
+      resolved: false,
+      dayLabel: '2일',
+      to: '/student/troubleshooting',
+    },
+  ],
+}
+
+// 자동 수집 규약: features/**/mocks.ts 는 `handlers`를 내보낸다(mocks/handlers.ts가 glob으로 등록).
+export const handlers = [
+  http.get('/api/student/dashboard', () =>
+    ok<StudentDashboardSummary>(mockDashboard),
+  ),
+  // 역할 무관 알림 벨(전 역할) — 벨은 /notifications 를 호출한다. 로컬에선 대시보드 알림과 동일 데이터.
+  // (구 /student/notifications 핸들러는 벨이 /notifications 로 이관되며 호출부가 사라져 제거됨.)
+  http.get('/api/notifications', () =>
+    ok<DashboardNotification[]>(mockDashboard.notifications),
+  ),
+  http.patch('/api/notifications/read', () => {
+    mockDashboard.notifications.forEach((notification) => {
+      notification.unread = false
+    })
+    return ok<DashboardNotification[]>(mockDashboard.notifications)
+  }),
+]

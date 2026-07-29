@@ -1,0 +1,261 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Check, X } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
+import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
+import { useToast } from '@/components/ui/use-toast'
+import { useAuth } from '@/shared/store'
+import { useCreateQuestion, useUpdateQuestion } from '../../api/qna'
+import { MarkdownEditor } from './MarkdownEditor'
+import { QNA_CATEGORIES } from '../types'
+import { TONE_SOLID } from '@/shared/lib/tone'
+
+const card =
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+const input = inputClass({ size: 'md' })
+
+/** 수정 모드 초기값 — 전달되면 기존 질문을 수정한다. */
+export interface QuestionFormInitial {
+  id: string
+  title: string
+  categoryKey: string
+  content: string
+  tags: string[]
+}
+
+// 새 질문 작성/수정 폼 — 제목·카테고리·내용·태그. 트러블슈팅 CaseContentForm 패턴(축약).
+export function QuestionForm({ initial }: { initial?: QuestionFormInitial }) {
+  const navigate = useNavigate()
+  const toast = useToast()
+  const { user } = useAuth()
+  const createQuestion = useCreateQuestion()
+  const updateQuestion = useUpdateQuestion(initial?.id ?? '')
+  const editing = !!initial
+  const isPending = editing
+    ? updateQuestion.isPending
+    : createQuestion.isPending
+
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [categoryKey, setCategoryKey] = useState(
+    initial?.categoryKey ?? 'lecture',
+  )
+  const [content, setContent] = useState(initial?.content ?? '')
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? [])
+  const [tagInput, setTagInput] = useState('')
+
+  const addTag = (raw: string) => {
+    const body = raw.trim().replace(/^#+/, '')
+    if (!body) return
+    const tag = `#${body}`
+    if (tags.includes(tag) || tags.length >= 5) return
+    setTags((p) => [...p, tag])
+  }
+  const removeTag = (tag: string) => setTags((p) => p.filter((t) => t !== tag))
+
+  const canSubmit = title.trim().length > 0 && content.trim().length > 0
+  const submit = () => {
+    if (!canSubmit || isPending) return
+    const payload = {
+      title: title.trim(),
+      content: content.trim(),
+      categoryKey,
+      tags,
+    }
+    if (editing) {
+      updateQuestion.mutate(payload, {
+        onSuccess: (detail) => {
+          toast.success('질문을 수정했어요')
+          navigate(`/student/qna/${detail.id}`)
+        },
+        onError: () => toast.danger('질문 수정에 실패했어요'),
+      })
+      return
+    }
+    createQuestion.mutate(
+      { ...payload, authorName: user?.name },
+      {
+        onSuccess: (detail) => {
+          toast.success('질문을 등록했어요')
+          navigate(`/student/qna/${detail.id}`)
+        },
+        onError: () => toast.danger('질문 등록에 실패했어요'),
+      },
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-5 p-8">
+      <section className={cn(card, 'flex flex-col gap-4')}>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-fg text-[15px] font-bold">
+            {editing ? '질문 수정' : '질문 작성'}
+          </span>
+          <span className="text-fg-subtle text-[11px]">
+            구체적으로 적을수록 좋은 답변을 받을 수 있어요
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-fg text-[13px] font-bold">
+            제목 <span className="text-danger">*</span>
+          </span>
+          <input
+            className={input}
+            value={title}
+            maxLength={80}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="궁금한 점을 한 줄로 요약해 주세요"
+          />
+          <div className="flex justify-end">
+            <span className="text-fg-subtle text-[11px]">
+              {title.length} / 80
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-fg text-[13px] font-bold">
+            카테고리 <span className="text-danger">*</span>
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {QNA_CATEGORIES.map((c) => {
+              const on = c.key === categoryKey
+              return (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => setCategoryKey(c.key)}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold',
+                    on
+                      ? 'border-brand bg-brand text-white'
+                      : 'border-border text-fg-muted hover:border-brand/50',
+                  )}
+                >
+                  {on ? (
+                    <Check className="size-3" />
+                  ) : (
+                    <span
+                      className={cn(
+                        'size-1.5 rounded-full',
+                        TONE_SOLID[c.tone],
+                      )}
+                    />
+                  )}
+                  {c.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-fg text-[13px] font-bold">
+            내용 <span className="text-danger">*</span>
+          </span>
+          <MarkdownEditor
+            value={content}
+            onChange={setContent}
+            maxLength={2000}
+            minHeight={200}
+            placeholder="상황·시도해 본 것·기대한 결과를 적어 주세요. 코드 블록(```)·이미지 붙여넣기 지원."
+            onImageRejected={(msg) => toast.danger(msg)}
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-fg-subtle text-[11px]">
+              마크다운·코드 블록·이미지 지원
+            </span>
+            <span className="text-fg-subtle text-[11px]">
+              {content.length} / 2000
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-fg text-[13px] font-bold">태그</span>
+            <span className="bg-brand/10 text-brand rounded-full px-3 py-1 text-[11px] font-bold">
+              {tags.length} / 5
+            </span>
+          </div>
+          {/* 칩이 입력 필드 안에 들어있는 패턴 — 떠 있는 입력 + 전역 포커스 링이 어색하던 것을
+              하나의 테두리 필드로 통합. 포커스 링은 index.css 규칙이 래퍼(.border)로 옮겨 준다. */}
+          <div className="border-border focus-within:border-brand flex min-h-12 flex-wrap items-center gap-1.5 rounded-[10px] border px-3 py-2">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="bg-brand flex items-center gap-2 rounded-full py-1 pr-1 pl-3 text-[12px] font-semibold text-white"
+              >
+                {t}
+                <button
+                  type="button"
+                  onClick={() => removeTag(t)}
+                  aria-label={`${t} 제거`}
+                  className="text-brand flex size-4 items-center justify-center rounded-full bg-white"
+                >
+                  <X className="size-2.5" strokeWidth={3} />
+                </button>
+              </span>
+            ))}
+            {tags.length < 5 && (
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  // 한글 IME 조합 중 Enter는 무시 — 조합 확정 이벤트에 태그가 잘려 들어가는 것 방지.
+                  if (e.nativeEvent.isComposing) return
+                  if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault()
+                    addTag(tagInput)
+                    setTagInput('')
+                  }
+                  // 빈 입력에서 백스페이스 → 마지막 태그 삭제(칩-인-필드 관례).
+                  if (e.key === 'Backspace' && tagInput === '' && tags.length) {
+                    removeTag(tags[tags.length - 1])
+                  }
+                }}
+                onBlur={() => {
+                  if (tagInput.trim()) {
+                    addTag(tagInput)
+                    setTagInput('')
+                  }
+                }}
+                placeholder={
+                  tags.length === 0 ? '태그 입력 후 Enter (예: Kafka)' : ''
+                }
+                aria-label="태그 입력"
+                className="text-fg placeholder:text-fg-subtle min-w-28 flex-1 bg-transparent py-1 text-[13px] outline-none"
+              />
+            )}
+          </div>
+          <span className="text-fg-subtle text-[11px]">
+            {tags.length >= 5
+              ? '최대 5개를 모두 사용했어요 · ×로 삭제하면 다시 추가할 수 있어요'
+              : 'Enter 또는 쉼표로 추가 · 빈 칸에서 Backspace로 마지막 태그 삭제'}
+          </span>
+        </div>
+      </section>
+
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            navigate(editing ? `/student/qna/${initial.id}` : '/student/qna')
+          }
+          className="border-border text-fg h-11 rounded-[10px] border px-5 text-[14px] font-semibold"
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!canSubmit || isPending}
+          className={buttonClass({ size: 'md' })}
+        >
+          {isPending ? '저장 중…' : editing ? '수정 완료' : '질문 등록'}
+        </button>
+      </div>
+    </div>
+  )
+}

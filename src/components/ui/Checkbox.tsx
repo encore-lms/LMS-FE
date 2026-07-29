@@ -28,7 +28,7 @@ export function Checkbox({
       />
       <span
         aria-hidden
-        className={`peer-focus-visible:ring-brand flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 ${
+        className={`peer-focus-visible:ring-brand flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 ${
           checked ? 'border-brand bg-brand' : 'border-border bg-white'
         }`}
       >

@@ -30,3 +30,8 @@ dist-ssr
 
 # Test
 coverage
+
+.mcp.json
+
+# AI 분석 로컬 데이터 (원본 CSV·수집 인덱스·가공물 — 커밋 안 함, 로컬 전용)
+/ai-analysis-data/

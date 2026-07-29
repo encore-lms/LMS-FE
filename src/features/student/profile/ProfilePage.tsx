@@ -1,0 +1,39 @@
+import { DataBoundary } from '@/components/ui/DataBoundary'
+import { usePageHeader } from '@/shared/store'
+import { PasswordChangeCard } from '@/features/profile/ProfilePage'
+import { useStudentProfile } from '../api/profile'
+import { ProfileForm } from './components/ProfileForm'
+import { GithubConnectionCard } from './components/GithubConnectionCard'
+
+/**
+ * 마이 프로필 (/student/profile) — 증명서·외부 공개용 기본 정보·이미지·URL·스킬·공개 설정 관리.
+ * 데이터/상태만 여기서 다루고, 편집 폼/영역은 components/* 가 그린다(영역별 격리).
+ */
+export default function ProfilePage() {
+  const { data, isPending, isError, refetch } = useStudentProfile()
+  usePageHeader('마이 프로필')
+
+  return (
+    <>
+      <DataBoundary
+        isPending={isPending}
+        isError={isError}
+        onRetry={refetch}
+        loadingText="프로필을 불러오는 중…"
+        errorTitle="프로필을 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+        className="p-8"
+      >
+        {data && <ProfileForm profile={data} />}
+      </DataBoundary>
+      {/* 외부 연동·계정 보안 — 공개 프로필 폼과 별개 도메인이라 폼 밖 독립 섹션(중첩 form 방지),
+          공개 프로필 조회 실패/로딩과 무관하게 항상 렌더한다.
+          · GitHub 계정 연결: 증명서 개인 기여도 확인용 외부 연동
+          · 비밀번호 변경: 매니저 발급 임시 비밀번호(1회 표시) 수령 후 자가 변경 경로(#374) */}
+      <div className="grid grid-cols-1 gap-6 px-8 pb-8 lg:grid-cols-2">
+        <GithubConnectionCard />
+        <PasswordChangeCard />
+      </div>
+    </>
+  )
+}

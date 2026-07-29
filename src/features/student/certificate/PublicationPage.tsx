@@ -6,6 +6,7 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useCertPublication } from '../api/certificate'
+import { useCertFlow } from './useCertFlow'
 
 // 공개 설정 (/student/certificate/publication) — Figma 255:27.
 const card =
@@ -51,7 +52,10 @@ export default function PublicationPage() {
   const isOn = (id: string, def: boolean) => over[id] ?? def
   const set = (id: string, def: boolean) =>
     setOver((p) => ({ ...p, [id]: !isOn(id, def) }))
-  const urlOn = data ? isOn(data.urlToggle.id, data.urlToggle.on) : false
+  // 외부 검증 URL 공개는 증명서 화면 하단 바와 같은 값을 본다 —
+  // 화면마다 따로 들고 있으면 한쪽에서 켜도 다른 쪽은 꺼진 채로 보인다.
+  const urlOn = useCertFlow((s) => s.published)
+  const setUrlOn = useCertFlow((s) => s.setPublished)
 
   return (
     <DataBoundary
@@ -117,10 +121,7 @@ export default function PublicationPage() {
                   {data.urlToggle.sub}
                 </span>
               </div>
-              <Toggle
-                on={urlOn}
-                onClick={() => set(data.urlToggle.id, data.urlToggle.on)}
-              />
+              <Toggle on={urlOn} onClick={() => setUrlOn(!urlOn)} />
             </div>
             <div className="bg-surface-muted/40 text-fg-muted mx-6 mb-5 flex items-start gap-2 rounded-xl px-3.5 py-3 text-[12px] leading-5">
               <span className={cn(urlOn ? 'text-success' : 'text-fg-subtle')}>

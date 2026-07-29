@@ -17,12 +17,13 @@ function hash(value: string) {
   return Math.abs(h)
 }
 
-const STATUS_CYCLE: CompetencyCertStatus[] = [
-  'certified',
-  'reviewing',
-  'draft',
-  'certified',
-  'changes_requested',
+/** 기수가 끝난 뒤의 상태들 — 재료 수집 → 발급 흐름. */
+const AFTER_COHORT: CompetencyCertStatus[] = [
+  'issued',
+  'data_ready',
+  'data_pending',
+  'issued',
+  'data_rebuilding',
 ]
 
 export function demoOf(studentId: string): CertificateDemoStudent {
@@ -30,29 +31,43 @@ export function demoOf(studentId: string): CertificateDemoStudent {
   return list[hash(studentId) % list.length]
 }
 
+/** 기수 종료일이 지났는지 — 안 지났으면 증명서를 만들 시점이 아니다. */
+export function isCohortEnded(endDate: string | null | undefined, now = new Date()) {
+  if (!endDate) return false
+  const end = new Date(endDate)
+  if (Number.isNaN(end.getTime())) return false
+  return end.getTime() < now.getTime()
+}
+
 /**
  * 로스터 한 명 → 증명서 목록 한 줄.
  *
- * 인증 완료(certified)인 사람만 공개될 수 있다 — 검토가 끝나지 않은 증명서를
- * 외부에 여는 일은 없어야 한다.
+ * 기수가 안 끝났으면 전원 '기수 미종료'다 — 실제 종료일을 쓰므로 진행 중인 기수가
+ * 발급된 것처럼 보이는 일은 없다. 그 뒤 상태와 점수는 아직 데모 값이다.
  */
 export function toCertRow(
   student: StudentAccount,
   cohortLabel: string,
+  cohortEndDate: string | null | undefined,
+  now = new Date(),
 ): CompetencyCertRow {
   const demo = demoOf(student.id)
   const seed = hash(student.id)
-  const status = STATUS_CYCLE[seed % STATUS_CYCLE.length]
+  const status: CompetencyCertStatus = isCohortEnded(cohortEndDate, now)
+    ? AFTER_COHORT[seed % AFTER_COHORT.length]
+    : 'cohort_open'
+  const issued = status === 'issued'
   return {
     studentId: student.id,
     studentName: student.name,
     studentUuid: student.studentUuid,
     cohortLabel,
     status,
-    // 공개는 인증 완료 건에서만 켜진다.
-    published: status === 'certified' && seed % 3 === 0,
-    overallScore: demo.overallScore,
-    profileLabel: demo.profileLabel,
-    updatedAt: demo.periodLabel.split('—')[1]?.trim() ?? '',
+    // 공개는 증명서가 나온 뒤에만 켜진다.
+    published: issued && seed % 3 === 0,
+    // 발급 전에는 보여줄 점수가 없다.
+    overallScore: issued ? demo.overallScore : null,
+    openable: issued,
+    demoStudentId: demo.id,
   }
 }

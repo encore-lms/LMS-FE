@@ -96,8 +96,12 @@ export default function CaseDetailPage() {
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data?.id}/change-requests/new`)
 
-  // 프로젝트 연결 — 서버 값 그대로.
-  const link: TsProjectLink | null = data?.projectLink ?? null
+  // 프로젝트 연결 — 서버 값 그대로. 단 신규 초안(ts_…)은 BE에 사례가 아직 없어
+  // 연결 선택을 로컬에 들고 있다가 저장(create) 바디의 projectId로 함께 보낸다.
+  const [draftLink, setDraftLink] = useState<TsProjectLink | null>(null)
+  const link: TsProjectLink | null = isNew
+    ? draftLink
+    : (data?.projectLink ?? null)
   const projectLinked = !!link
   // 연결 후보 — 수강생 본인 프로젝트(팀·개인 모두). 작성 중 프로젝트에도 미리 연결할 수 있다.
   const linkableProjects: TsLinkableProject[] = (
@@ -109,6 +113,17 @@ export default function CaseDetailPage() {
     desc: p.teamLabel,
   }))
   const onLinkChange = (next: TsProjectLink | null) => {
+    // 신규 초안 — BE 호출 없이 로컬 보관. 임시 저장/작성 완료(create) 시 projectId로 반영된다.
+    if (isNew) {
+      setDraftLink(next)
+      setLinkModal(false)
+      toast.success(
+        next
+          ? `프로젝트에 연결했어요 — ${next.projectTitle} (저장 시 반영)`
+          : '프로젝트 연결을 해제했어요.',
+      )
+      return
+    }
     if (linkProject.isPending) return
     linkProject.mutate(next?.projectId ?? null, {
       onSuccess: () => {
@@ -445,17 +460,6 @@ export default function CaseDetailPage() {
             </div>
           )}
 
-          {!viewOnly && (
-            <ProjectLinkModal
-              projects={linkableProjects}
-              pending={linkProject.isPending}
-              open={linkModal}
-              current={link}
-              onClose={() => setLinkModal(false)}
-              onLink={onLinkChange}
-            />
-          )}
-
           {certModal && (
             <CertifyModal
               data={data}
@@ -465,6 +469,19 @@ export default function CaseDetailPage() {
             />
           )}
         </div>
+      )}
+
+      {/* 연결 모달은 신규 초안(작성 폼)에서도 열려야 하므로 분기 밖 공통 렌더 —
+          예전엔 기존 사례 분기 안에만 있어 초안에서 버튼을 눌러도 무반응이었다. */}
+      {!viewOnly && (
+        <ProjectLinkModal
+          projects={linkableProjects}
+          pending={linkProject.isPending}
+          open={linkModal}
+          current={link}
+          onClose={() => setLinkModal(false)}
+          onLink={onLinkChange}
+        />
       )}
     </DataBoundary>
   )

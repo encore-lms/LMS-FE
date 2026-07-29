@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import { Sidebar } from './Sidebar'
@@ -54,7 +54,7 @@ describe('Sidebar 준비 중(comingSoon) 메뉴', () => {
     { label: 'PLAY', to: '/student/play', comingSoon: true },
   ]
 
-  it('comingSoon 항목은 링크가 아니라 버튼으로 렌더된다(이동 없음)', () => {
+  it('comingSoon 항목은 링크가 아니라 비활성 버튼으로 렌더된다(이동 없음)', () => {
     render(
       <ToastProvider>
         <MemoryRouter initialEntries={['/student']}>
@@ -62,11 +62,12 @@ describe('Sidebar 준비 중(comingSoon) 메뉴', () => {
         </MemoryRouter>
       </ToastProvider>,
     )
-    expect(screen.queryByRole('link', { name: 'PLAY' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'PLAY' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /PLAY/ })).toBeNull()
+    const btn = screen.getByRole('button', { name: /PLAY/ })
+    expect(btn).toBeDisabled()
   })
 
-  it('comingSoon 항목 클릭 시 준비중 토스트가 뜬다', () => {
+  it("comingSoon 항목에 '(준비 중)' 표기가 붙는다", () => {
     render(
       <ToastProvider>
         <MemoryRouter initialEntries={['/student']}>
@@ -74,7 +75,8 @@ describe('Sidebar 준비 중(comingSoon) 메뉴', () => {
         </MemoryRouter>
       </ToastProvider>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'PLAY' }))
-    expect(screen.getByText('준비 중인 기능입니다.')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /PLAY.*\(준비 중\)/ }),
+    ).toBeInTheDocument()
   })
 })

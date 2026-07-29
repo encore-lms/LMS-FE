@@ -49,6 +49,25 @@ export interface StudentAttendanceRow {
   checkOut: string | null // '17:51'
   hrdStatus: HrdAttendanceStatus
   hrdStatusLabel: string // HRD 원본 상태명('출석'·'지각'…)
+  /** 그 날 낸 출결 폼(없으면 null) — 목록의 '이슈사항' 칸. */
+  issue?: AttendanceIssue | null
+}
+
+/** 출결 이슈 — 수강생이 낸 출결 폼 요약. 유형은 칸에 보이고 사유·증빙은 호버로 편다. */
+export interface AttendanceIssue {
+  submissionId: string
+  type: string // late | early_leave | outing | absent
+  typeLabel: string // 지각 | 조퇴 | 외출 | 결석
+  officialLeaveUsed: boolean
+  reason: string | null
+  submittedAt: string
+  attachments: AttendanceIssueAttachment[]
+}
+
+export interface AttendanceIssueAttachment {
+  id: string
+  fileName: string
+  fileSize: number
 }
 
 export interface AttendanceSummary {

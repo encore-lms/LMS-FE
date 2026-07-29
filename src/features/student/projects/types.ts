@@ -105,6 +105,8 @@ export interface WsCalEvent {
   day: number
   label: string
   tone: Tone
+  /** 실제 일정 날짜(YYYY-MM-DD). day 만으로는 다른 달 일정을 가릴 수 없다. */
+  date?: string
 }
 export interface WsUpcoming {
   date: string

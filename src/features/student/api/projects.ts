@@ -183,6 +183,26 @@ export function useSubmitPeerEval(projectId: string) {
     projectId,
   )
 }
+/** 상호평가 임시저장 — 자기 수행 내용 + 팀원별 점수·코멘트를 함께 보관(제출로 세지 않음). */
+export function useSavePeerEvalDraft(projectId: string) {
+  return useWsMutation<{
+    selfReview: string
+    evaluations: {
+      targetMemberId: string
+      collaboration: number
+      communication: number
+      responsibility: number
+      problemSolving: number
+      technicalContribution: number
+      comment?: string
+    }[]
+  }>(
+    (id, v) =>
+      apiClient.post(`/student/projects/${id}/peer-evaluations/draft`, v),
+    projectId,
+  )
+}
+
 export function useSaveSelfReview(projectId: string) {
   return useWsMutation<{ content: string }>(
     (id, v) => apiClient.put(`/student/projects/${id}/self-review`, v),

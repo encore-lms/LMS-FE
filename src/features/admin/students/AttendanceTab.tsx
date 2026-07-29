@@ -6,6 +6,7 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
+import { AttendanceIssueCell } from './AttendanceIssueCell'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
@@ -160,6 +161,13 @@ export function AttendanceTab() {
           {r.hrdStatusLabel || HRD_META[r.hrdStatus].label}
         </span>
       ),
+    },
+    {
+      // 그 날 낸 출결 폼 — 유형은 바로 보이고 사유·증빙은 아이콘 호버로 편다.
+      key: 'issue',
+      header: '이슈사항',
+      className: 'w-44',
+      cell: (r) => <AttendanceIssueCell issue={r.issue} />,
     },
   ]
 

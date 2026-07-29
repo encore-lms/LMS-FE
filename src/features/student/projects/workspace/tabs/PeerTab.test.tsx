@@ -6,6 +6,7 @@ import type { WorkspaceData } from '../../types'
 vi.mock('../../../api/projects', () => ({
   useSubmitPeerEval: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSaveSelfReview: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useSavePeerEvalDraft: () => ({ mutateAsync: vi.fn(), isPending: false }),
   wsWriteError: (_e: unknown, fallback: string) => fallback,
 }))
 vi.mock('@/components/ui/use-toast', () => ({

@@ -87,6 +87,8 @@ export type {
   StudentAccountQueue,
   HrdAttendanceStatus,
   StudentAttendanceRow,
+  AttendanceIssue,
+  AttendanceIssueAttachment,
   AttendanceSummary,
   StudentAttendanceData,
   AttendanceFormType,

@@ -57,6 +57,8 @@ export interface TsCase {
   result: string
   tags: string[]
   actionLabel: string // "사례 열기" | "이어 작성"
+  // 연결된 프로젝트(없으면 null) — 목록 카드의 연결 칩. 정본은 서버(사례의 projectId).
+  projectLink?: TsProjectLink | null
   // 검토 출처 — 검토 중(reviewing) 진입이 인증 요청인지 변경 제안인지. 반려 시 모달 종류 결정.
   reviewFrom?: 'cert' | 'change'
   // 강사 반려 — 인증 요청/변경 제안이 반려되면 사유를 보관하고 '이어 작성'으로 되돌린다.
@@ -132,27 +134,6 @@ export interface TsLinkableProject {
   kindLabel: string // "팀" | "개인"
   desc: string // 짧은 설명(부제)
 }
-export const TS_LINKABLE_PROJECTS: TsLinkableProject[] = [
-  {
-    id: 'p1',
-    title: '주문 관리 MSA 백엔드',
-    kindLabel: '팀',
-    desc: '주문·결제 도메인 마이크로서비스',
-  },
-  {
-    id: 'p2',
-    title: '실시간 채팅 서버',
-    kindLabel: '팀',
-    desc: 'WebSocket 기반 실시간 채팅 인프라',
-  },
-  {
-    id: 'p3',
-    title: '포트폴리오 REST API',
-    kindLabel: '개인',
-    desc: '개인 포트폴리오 백엔드 API',
-  },
-]
-
 /** 변경 제안 변경 항목 */
 export const TS_CHANGE_ITEMS = [
   '제목',

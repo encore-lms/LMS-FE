@@ -7,6 +7,7 @@ import type { CertFormData, CertType } from '../types'
 import { useCreateCertRecord, useUpdateCertRecord } from '../../api/records'
 import { Crumbs, FieldLabel, FormatRow, FormBar, TextInput } from './FormParts'
 import { useFileUpload } from './useFileUpload'
+import { useUploadRecordAttachments } from '../../api/records'
 
 const TYPES: { key: CertType; name: string; sub: string }[] = [
   { key: 'PCCE', name: 'PCCE', sub: 'Python 기초' },
@@ -51,6 +52,17 @@ export function CertForm({
   const c = COPY[mode]
   const createMutation = useCreateCertRecord()
   const updateMutation = useUpdateCertRecord(recordId ?? '')
+  // 새로 고른 파일만 올린다 — 기존 첨부(서버 저장분)는 file 이 없다.
+  const uploadMutation = useUploadRecordAttachments()
+  const pendingFiles = () =>
+    files.map((f) => f.file).filter((f): f is File => !!f)
+  const uploadThen = async (id: string, done: () => void) => {
+    const list = pendingFiles()
+    if (list.length > 0) {
+      await uploadMutation.mutateAsync({ id, files: list }).catch(() => {})
+    }
+    done()
+  }
   const [certType, setCertType] = useState<CertType>(
     initial?.certType ?? 'PCCP',
   )
@@ -85,13 +97,23 @@ export function CertForm({
     if (mode === 'edit') {
       updateMutation.mutate(
         { certType, title, otherCertName: otherName, draft: false },
-        { onSuccess: () => navigate('/student/records?toast=cert-updated') },
+        {
+          onSuccess: () =>
+            uploadThen(recordId ?? '', () =>
+              navigate('/student/records?toast=cert-updated'),
+            ),
+        },
       )
       return
     }
     createMutation.mutate(
       { certType, title, otherCertName: otherName, draft: false },
-      { onSuccess: () => navigate('/student/records?toast=cert-created') },
+      {
+        onSuccess: (created) =>
+          uploadThen(created.id, () =>
+            navigate('/student/records?toast=cert-created'),
+          ),
+      },
     )
   }
 
@@ -101,13 +123,23 @@ export function CertForm({
     if (mode === 'edit') {
       updateMutation.mutate(
         { certType, title, otherCertName: otherName, draft: true },
-        { onSuccess: () => navigate('/student/records?toast=cert-saved') },
+        {
+          onSuccess: () =>
+            uploadThen(recordId ?? '', () =>
+              navigate('/student/records?toast=cert-saved'),
+            ),
+        },
       )
       return
     }
     createMutation.mutate(
       { certType, title, otherCertName: otherName, draft: true },
-      { onSuccess: () => navigate('/student/records?toast=cert-saved') },
+      {
+        onSuccess: (created) =>
+          uploadThen(created.id, () =>
+            navigate('/student/records?toast=cert-saved'),
+          ),
+      },
     )
   }
   // 임시저장은 등록·수정(반려 재제출 포함) 어디서든 가능.

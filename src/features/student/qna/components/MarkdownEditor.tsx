@@ -56,13 +56,19 @@ export function MarkdownEditor({
   })
 
   // 본문 → 멘션 이름 파싱(전달된 명단 중 @이름 으로 등장한 것).
+  // 직전 발행값과 같으면 콜백을 생략한다 — 부모가 mentionNames를 렌더마다 새 배열로 주면
+  // (파싱 결과가 같아도) setState 새 배열 → 리렌더 → effect 재실행의 무한 루프가 되고,
+  // 이 루프가 라우터 전환(transition)을 굶겨 사이드바 내비가 멈춘다(2026-07-29 운영 QnA 상세).
+  const lastEmittedMentions = useRef<string | null>(null)
   useEffect(() => {
     if (!onMentionsChange) return
-    if (!mentionNames || mentionNames.length === 0) {
-      onMentionsChange([])
-      return
-    }
-    const hit = mentionNames.filter((n) => value.includes(`@${n}`))
+    const hit =
+      !mentionNames || mentionNames.length === 0
+        ? []
+        : mentionNames.filter((n) => value.includes(`@${n}`))
+    const key = hit.join('\n')
+    if (lastEmittedMentions.current === key) return
+    lastEmittedMentions.current = key
     onMentionsChange(hit)
   }, [value, mentionNames, onMentionsChange])
 

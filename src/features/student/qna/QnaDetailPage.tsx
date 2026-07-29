@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Eye, MessageSquare } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { Avatar } from '@/components/ui/Avatar'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -154,6 +155,7 @@ function AnswerItem({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <Avatar name={answer.authorName} size={24} />
           <span className="text-fg text-[13px] font-bold">
             {answer.authorName}
           </span>
@@ -217,6 +219,7 @@ function AnswerItem({
           {answer.comments.map((c) => (
             <div key={c.id} className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
+                <Avatar name={c.authorName} size={20} />
                 <span className="text-fg text-[12px] font-bold">
                   {c.authorName}
                 </span>
@@ -400,8 +403,11 @@ export default function QnaDetailPage() {
               </h1>
 
               <div className="text-fg-subtle flex items-center gap-3 text-[12px]">
-                <span className="text-fg-muted font-semibold">
-                  {data.authorName}
+                <span className="flex items-center gap-2">
+                  <Avatar name={data.authorName} size={24} />
+                  <span className="text-fg-muted font-semibold">
+                    {data.authorName}
+                  </span>
                 </span>
                 <span>{data.createdAt}</span>
                 <span className="flex items-center gap-1">

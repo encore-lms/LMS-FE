@@ -77,10 +77,14 @@ describe('adminMenu 사이드바 대분류 드롭다운', () => {
 
   it('접힌 그룹 헤더를 클릭하면 자식 링크가 펼쳐진다', () => {
     renderAt('/admin') // 어떤 그룹도 활성 아님 → 전부 접힘
-    expect(screen.queryByRole('link', { name: 'PLAY 관리' })).toBeNull()
+    expect(screen.queryByRole('link', { name: '마일리지' })).toBeNull()
     fireEvent.click(group('학습·보상'))
     expect(isExpanded('학습·보상')).toBe(true)
-    expect(screen.queryByRole('link', { name: 'PLAY 관리' })).not.toBeNull()
+    expect(screen.queryByRole('link', { name: '마일리지' })).not.toBeNull()
+    // PLAY 관리는 준비 중 — 링크가 아닌 비활성 버튼으로 렌더
+    expect(
+      screen.getByRole('button', { name: /PLAY 관리.*\(준비 중\)/ }),
+    ).toBeDisabled()
   })
 
   it('대시보드·설정은 그룹이 아니라 항상 보이는 leaf 항목', () => {

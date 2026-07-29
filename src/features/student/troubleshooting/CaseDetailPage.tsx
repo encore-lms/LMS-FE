@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileText, Link2 } from 'lucide-react'
+import { AlertTriangle, FileText, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -230,6 +230,20 @@ export default function CaseDetailPage() {
               </button>
             </div>
           </div>
+
+          {/* 보완 요청은 사유가 전부다 — 무엇을 고쳐야 하는지 모르면 다시 낼 수 없다. */}
+          {data?.statusLabel === '보완 요청' && (
+            <section className="bg-warning-bg/70 flex flex-col gap-1 rounded-xl p-4">
+              <span className="text-warning flex items-center gap-1.5 text-[12px] font-bold">
+                <AlertTriangle className="size-3.5" aria-hidden="true" />
+                강사가 보완을 요청했어요
+              </span>
+              <span className="text-fg-muted text-[12px] leading-5">
+                {data.reviewComment?.trim() ||
+                  '강사가 사유를 남기지 않았어요. 담당 강사에게 확인해 주세요.'}
+              </span>
+            </section>
+          )}
 
           {editing ? (
             <CaseContentForm

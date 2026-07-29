@@ -4,32 +4,66 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import {
+  useSavePeerEvalDraft,
   useSaveSelfReview,
   useSubmitPeerEval,
   wsWriteError,
 } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
-import type { WorkspaceData } from '../../types'
+import type { WorkspaceData, WsPeerTarget } from '../../types'
 import { Chip } from '../components/ws-shared'
 import { card } from '../components/ws-style'
 import { useMemberNames } from '../components/useMemberNames'
+
+/** 내가 그 팀원에게 준 축 점수(없으면 null). BE 한글 축 key 를 그대로 쓴다. */
+function myScoreOf(target: WsPeerTarget, axisKey: string): number | null {
+  const mine = target.myEval
+  if (!mine) return null
+  switch (axisKey) {
+    case '협업':
+      return mine.collaboration
+    case '소통':
+      return mine.communication
+    case '책임감':
+      return mine.responsibility
+    case '문제해결':
+      return mine.problemSolving
+    case '기술기여':
+      return mine.technicalContribution
+    default:
+      return null
+  }
+}
 
 export function PeerTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
   const nameOf = useMemberNames()
   const [submitted, setSubmitted] = useState(false)
+  // 초기값은 '내가 준 평가'(myEval)다 — axes 는 팀에서 받은 평균이라 내 입력값이 아니다.
+  // 서버가 내 평가를 돌려주지 않던 때는 코멘트가 늘 빈 칸이라 저장이 안 된 것처럼 보였다.
   const [scores, setScores] = useState<Record<string, number>>(() =>
     Object.fromEntries(
       d.peerTargets.flatMap((target) =>
-        target.axes.map((axis) => [`${target.name}:${axis.key}`, axis.score]),
+        target.axes.map((axis) => [
+          `${target.name}:${axis.key}`,
+          myScoreOf(target, axis.key) ?? axis.score,
+        ]),
       ),
     ),
   )
-  const [comments, setComments] = useState<Record<string, string>>({})
+  const [comments, setComments] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      d.peerTargets
+        .filter((t) => t.myEval?.comment)
+        .map((t) => [t.name, t.myEval!.comment!]),
+    ),
+  )
   const [selfReview, setSelfReview] = useState(d.selfReview ?? '')
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const submitPeerM = useSubmitPeerEval(d.id)
   const saveSelfM = useSaveSelfReview(d.id)
+  // 임시저장은 자기 수행 내용만이 아니라 점수·코멘트까지 함께 보관한다.
+  const saveDraftM = useSavePeerEvalDraft(d.id)
   // 축 라벨(BE 한글 key) → 제출 필드 매핑
   const AXIS_KEYS = ['협업', '소통', '책임감', '문제해결', '기술기여']
   const submitAll = () => {
@@ -200,14 +234,27 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
           <button
             type="button"
             onClick={() =>
-              saveSelfM
-                .mutateAsync({ content: selfReview })
+              saveDraftM
+                .mutateAsync({
+                  selfReview,
+                  evaluations: d.peerTargets
+                    .filter((t) => t.memberId)
+                    .map((t) => ({
+                      targetMemberId: t.memberId!,
+                      collaboration: scores[`${t.name}:협업`] ?? 0,
+                      communication: scores[`${t.name}:소통`] ?? 0,
+                      responsibility: scores[`${t.name}:책임감`] ?? 0,
+                      problemSolving: scores[`${t.name}:문제해결`] ?? 0,
+                      technicalContribution: scores[`${t.name}:기술기여`] ?? 0,
+                      comment: comments[t.name] ?? '',
+                    })),
+                })
                 .then(() => toast.info('상호평가를 임시 저장했습니다'))
                 .catch((e) =>
                   toast.danger(wsWriteError(e, '임시 저장에 실패했어요.')),
                 )
             }
-            disabled={saveSelfM.isPending}
+            disabled={saveDraftM.isPending}
             className="border-border text-fg rounded-lg border px-4 py-2.5 text-[13px] font-semibold"
           >
             임시 저장

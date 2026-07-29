@@ -519,3 +519,49 @@ export function useDeleteCourseRegistration() {
       }),
   })
 }
+
+// ── 기수 커리큘럼(learning-service) ──
+// 운영자가 엑셀을 올리면 수강생 강의 홈의 '주차별 학습'에 배우는 내용이 채워진다.
+export interface CurriculumWeekPlan {
+  weekNo: number
+  subjects: string[]
+  topics: string[]
+}
+export interface CurriculumSummary {
+  dayCount: number
+  subjects: string[]
+  startDate: string | null
+  endDate: string | null
+  weeks: CurriculumWeekPlan[]
+}
+
+export function useCurriculum(cohortId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'curriculum', cohortId],
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<CurriculumSummary>(`/admin/cohorts/${cohortId}/curriculum`)
+        .then((r) => r.data),
+  })
+}
+
+// 업로드는 전체 교체 — 성공 시 요약을 그대로 보여주고 캐시를 갱신한다.
+export function useUploadCurriculum(cohortId: string | null) {
+  const queryClient = useQueryClient()
+  return useMutation<CurriculumSummary, Error, File>({
+    mutationFn: (file) => {
+      const form = new FormData()
+      form.append('file', file)
+      return apiClient
+        .postForm<CurriculumSummary>(
+          `/admin/cohorts/${cohortId}/curriculum`,
+          form,
+        )
+        .then((r) => r.data)
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['admin', 'curriculum', cohortId], data)
+    },
+  })
+}

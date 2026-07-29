@@ -20,6 +20,7 @@ import {
   TextInput,
 } from './FormParts'
 import { useFileUpload } from './useFileUpload'
+import { useUploadRecordAttachments } from '../../api/records'
 
 const COPY = {
   create: {
@@ -100,6 +101,15 @@ export function StudyForm({
   const [body, setBody] = useState(initial?.body ?? '')
   const { files, add, remove } = useFileUpload(initial?.files ?? [])
   const [touched, setTouched] = useState(false)
+  // 새로 고른 파일만 올린다 — 기존 첨부(서버 저장분)는 file 이 없다.
+  const uploadMutation = useUploadRecordAttachments()
+  const uploadThen = async (id: string, done: () => void) => {
+    const list = files.map((f) => f.file).filter((f): f is File => !!f)
+    if (list.length > 0) {
+      await uploadMutation.mutateAsync({ id, files: list }).catch(() => {})
+    }
+    done()
+  }
   usePageHeader(c.title, c.sub)
 
   // 전체 일시로 비교 → 자정을 넘겨도 정확(예: 22:00~다음날 01:00은 정상).
@@ -122,8 +132,13 @@ export function StudyForm({
     // 제출은 검토 중으로 전환(등록·수정 공통). 수정은 변경 반영.
     if (mode === 'edit') {
       updateMutation.mutate(
-        { title, date, draft: false },
-        { onSuccess: () => navigate('/student/records?toast=study-updated') },
+        { title, date, startTime, endTime, body, draft: false },
+        {
+          onSuccess: () =>
+            uploadThen(recordId ?? '', () =>
+              navigate('/student/records?toast=study-updated'),
+            ),
+        },
       )
       return
     }
@@ -136,7 +151,12 @@ export function StudyForm({
         fileCount: files.length,
         draft: false,
       },
-      { onSuccess: () => navigate('/student/records?toast=study-created') },
+      {
+        onSuccess: (created) =>
+          uploadThen(created.id, () =>
+            navigate('/student/records?toast=study-created'),
+          ),
+      },
     )
   }
 
@@ -148,14 +168,24 @@ export function StudyForm({
     }
     if (mode === 'edit') {
       updateMutation.mutate(
-        { title, date, draft: true },
-        { onSuccess: () => navigate('/student/records?toast=study-saved') },
+        { title, date, startTime, endTime, body, draft: true },
+        {
+          onSuccess: () =>
+            uploadThen(recordId ?? '', () =>
+              navigate('/student/records?toast=study-saved'),
+            ),
+        },
       )
       return
     }
     createMutation.mutate(
       { title, date, startTime, endTime, fileCount: files.length, draft: true },
-      { onSuccess: () => navigate('/student/records?toast=study-saved') },
+      {
+        onSuccess: (created) =>
+          uploadThen(created.id, () =>
+            navigate('/student/records?toast=study-saved'),
+          ),
+      },
     )
   }
   // 임시저장은 등록·수정(반려 재제출 포함) 어디서든 가능.

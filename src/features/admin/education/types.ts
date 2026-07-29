@@ -171,3 +171,45 @@ export interface CohortProject {
   /** 동료 평가 개시 여부 — 프로젝트 종료 후 매니저·강사가 켠다(켜야 팀원이 제출 가능) */
   peerEvalEnabled: boolean
 }
+
+/** 동료 평가 결과 — 프로젝트 한 건의 진행 현황과 내용(매니저·강사 조회 전용). */
+export interface PeerEvalResults {
+  projectId: string
+  projectTitle: string
+  peerEvalEnabled: boolean
+  memberCount: number
+  /** 제출 완료 건수(임시저장 제외) */
+  submitted: number
+  /** 팀원이 서로를 모두 평가했을 때의 건수 — n명이면 n*(n-1) */
+  expected: number
+  members: PeerEvalMemberProgress[]
+  evaluations: PeerEvaluation[]
+}
+
+export interface PeerEvalMemberProgress {
+  userId: string | null
+  name: string
+  role: string
+  givenSubmitted: number
+  givenExpected: number
+  receivedSubmitted: number
+  /** 받은 평가 5축 평균(제출본만). 받은 게 없으면 null */
+  receivedAverage: number | null
+}
+
+export interface PeerEvaluation {
+  raterUserId: string | null
+  raterName: string
+  targetUserId: string | null
+  targetName: string
+  collaboration: number
+  communication: number
+  responsibility: number
+  problemSolving: number
+  technicalContribution: number
+  average: number
+  comment: string | null
+  /** 임시저장 — 아직 제출되지 않았다 */
+  draft: boolean
+  submittedAt: string | null
+}

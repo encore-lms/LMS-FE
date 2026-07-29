@@ -19,11 +19,11 @@ const overview: MileageHistoryData = {
   course: 'AI 캠프',
   cohortLabel: '22기',
   summary: {
-    granted: '+312,500',
+    granted: '+312,500M',
     grantedHint: '이번 기수 누적',
-    deducted: '-187,200',
+    deducted: '-187,200M',
     deductedHint: '구매 사용 + 회수',
-    net: '+125,300',
+    net: '+125,300M',
     netHint: '지급 - 차감',
     count: 482,
     countHint: '이번 기수 거래',
@@ -34,10 +34,10 @@ const overview: MileageHistoryData = {
       date: '05-19 14:32',
       studentName: '김민준',
       reason: '중간 발표 우수상 지급',
-      amount: '+50,000',
+      amount: '+50,000M',
       amountSign: 'plus',
       txType: 'grant',
-      balance: '82,500',
+      balance: '82,500M',
       handler: '이매니저',
       handlerNote: '직접 지급',
     },
@@ -46,10 +46,10 @@ const overview: MileageHistoryData = {
       date: '05-19 11:08',
       studentName: '이서연',
       reason: '문화상품권 5만원권 구매',
-      amount: '-50,000',
+      amount: '-50,000M',
       amountSign: 'minus',
       txType: 'deduct',
-      balance: '24,200',
+      balance: '24,200M',
       handler: '시스템',
       handlerNote: '구매 승인 → 차감',
     },
@@ -75,7 +75,7 @@ function renderPage() {
 describe('HistoryPage (마일리지 지급 내역)', () => {
   it('KPI·원장 표·구분 배지를 렌더한다', () => {
     renderPage()
-    expect(screen.getByText('+312,500 M')).toBeInTheDocument()
+    expect(screen.getByText('+312,500M')).toBeInTheDocument()
     expect(screen.getByText('중간 발표 우수상 지급')).toBeInTheDocument()
     expect(screen.getByText('구매 승인 → 차감')).toBeInTheDocument()
     expect(

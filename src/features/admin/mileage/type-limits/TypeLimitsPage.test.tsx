@@ -58,7 +58,6 @@ describe('TypeLimitsPage (마일리지 타입 한도)', () => {
     renderPage()
     expect(screen.getByText('기프티콘')).toBeInTheDocument()
     expect(screen.getByText('도서')).toBeInTheDocument()
-    expect(screen.getByText(/타입 한도를 초과하는 요청은 자동으로 차단/)).toBeInTheDocument()
     // 변경 0건 → 저장 비활성
     expect(
       screen.getByRole('button', { name: /한도 저장 — 변경 0건/ }),

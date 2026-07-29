@@ -5,7 +5,7 @@ import {
   formatSubmittedAt,
 } from '../../attendanceConstants'
 
-// 제출 이력 단일 행 — 제출 일시 / 출결 유형(배지) / 공가 사용 / 공가 유형 / 비고 / 증빙(+수정).
+// 제출 이력 단일 행 — 출결 일자 / 제출 일시 / 출결 유형(배지) / 공가 사용 / 공가 유형 / 비고 / 증빙(+수정).
 export function SubmissionHistoryRow({
   submission,
   onEditAttachments,
@@ -15,6 +15,7 @@ export function SubmissionHistoryRow({
   onEditAttachments: (submission: AttendanceFormSubmission) => void
 }) {
   const {
+    targetDate,
     submittedAt,
     attendanceType,
     officialLeaveUsed,
@@ -25,7 +26,10 @@ export function SubmissionHistoryRow({
   const fileCount = attachments?.length ?? 0
   return (
     <tr className="border-divider border-t">
-      <td className="text-fg px-4 py-3 text-sm">
+      <td className="text-fg px-4 py-3 text-sm font-medium whitespace-nowrap">
+        {targetDate}
+      </td>
+      <td className="text-fg-muted px-4 py-3 text-sm whitespace-nowrap">
         {formatSubmittedAt(submittedAt)}
       </td>
       <td className="px-4 py-3">

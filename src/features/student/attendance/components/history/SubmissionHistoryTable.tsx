@@ -2,7 +2,10 @@ import type { AttendanceFormSubmission } from '../../types'
 import { SubmissionHistoryRow } from './SubmissionHistoryRow'
 
 // 제출 이력 테이블 — 헤더 + 행. 행 렌더는 SubmissionHistoryRow에 위임.
+// 출결 일자가 먼저다 — 어느 날 출결인지가 언제 냈는지보다 중요하다.
+// 예전에는 제출 일시만 보여줘서, 지난 날짜를 뒤늦게 낸 건이 같은 날 중복 제출처럼 보였다.
 const COLUMNS = [
+  '출결 일자',
   '제출 일시',
   '출결 유형',
   '공가 사용',

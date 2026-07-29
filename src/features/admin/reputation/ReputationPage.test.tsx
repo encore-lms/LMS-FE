@@ -52,6 +52,7 @@ const overview: ReputationOverview = {
       uuid: 'abc-1234',
       endorsementStatus: 'collected',
       endorsementBy: '김지훈 강사',
+      endorsementComment: '현업 기준으로도 손색없는 문제 해결력을 보여줬습니다.',
       mentorEvalStatus: 'recommended',
       mentorBy: '김효원',
       mentorScores: [5, 4, 5, 4, 5],
@@ -265,6 +266,19 @@ describe('ReputationPage (평판 관리)', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText('김민준 평판 상세')).toBeInTheDocument()
     expect(within(dialog).getByText('abc-1234')).toBeInTheDocument()
+  })
+
+  it('평판 상세 — 수집된 강사 추천서 문구를 보여준다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '상세' })[0])
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('강사 추천서 내용')).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(
+        '현업 기준으로도 손색없는 문제 해결력을 보여줬습니다.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('평판 상세 — 행 아무 곳(이름 셀)을 클릭해도 상세 모달이 열린다', async () => {

@@ -93,7 +93,9 @@ export function CertTab({ d }: { d: WorkspaceData }) {
                     ? '수정 권한 요청이 강사 승인 대기 중이에요.'
                     : editStatus === 'submitted'
                       ? '수정 완료를 제출했어요. 강사 최종 확인을 기다리는 중이에요.'
-                      : '인증이 완료된 프로젝트입니다. 원본 수정은 강사에게 수정 권한을 요청한 뒤 가능합니다.'
+                      : editStatus === 'rejected'
+                        ? '수정 권한 요청이 반려됐어요. 사유를 확인하고 다시 요청할 수 있어요.'
+                        : '인증이 완료된 프로젝트입니다. 원본 수정은 강사에게 수정 권한을 요청한 뒤 가능합니다.'
                 : phase === 'reviewing'
                   ? '담당 강사가 산출물과 발표 내용을 검토하고 있어요. 승인되면 인증이 완료됩니다.'
                   : phase === 'completed'
@@ -131,6 +133,18 @@ export function CertTab({ d }: { d: WorkspaceData }) {
                     수정 가능 ~ {formatEditUntil(editRequest.editAllowedUntil)}
                   </div>
                 )}
+                {/* 반려는 사유가 전부다 — 무엇이 부족했는지 모르면 다시 요청할 수 없다. */}
+                {editStatus === 'rejected' && (
+                  <div className="bg-danger-bg/60 flex flex-col gap-1 rounded-lg px-3 py-2.5">
+                    <span className="text-danger text-[12px] font-bold">
+                      수정 권한 요청 반려
+                    </span>
+                    <span className="text-fg-muted text-[12px] leading-5">
+                      {editRequest?.decisionReason?.trim() ||
+                        '강사가 사유를 남기지 않았어요.'}
+                    </span>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() =>
@@ -149,7 +163,9 @@ export function CertTab({ d }: { d: WorkspaceData }) {
                       ? '승인 대기 중 — 요청 보기'
                       : editStatus === 'approved'
                         ? '수정 진행 · 완료 제출'
-                        : '최종 확인 대기 — 제출 보기'}
+                        : editStatus === 'rejected'
+                          ? '수정 권한 다시 요청'
+                          : '최종 확인 대기 — 제출 보기'}
                 </button>
               </>
             )}

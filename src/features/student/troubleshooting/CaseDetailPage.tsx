@@ -8,14 +8,18 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
 import { apiClient } from '@/shared/api'
-import { useRequestTsCertification, useTsCase } from '../api/troubleshooting'
+import {
+  useLinkTsProject,
+  useRequestTsCertification,
+  useTsCase,
+} from '../api/troubleshooting'
+import { useProjectList } from '../api/projects'
 import { useToast } from '@/components/ui/use-toast'
 import { tsKeys } from './queryKeys'
-import { useProjectTsLinks } from './projectLinks'
 import {
-  TS_LINKABLE_PROJECTS,
   type TsAttachment,
   type TsCaseDetail,
+  type TsLinkableProject,
   type TsListData,
   type TsProjectLink,
 } from './types'
@@ -42,10 +46,10 @@ export default function CaseDetailPage() {
   const { data, isPending, isError, refetch } = useTsCase(id)
   const [linkModal, setLinkModal] = useState(false)
   const [certModal, setCertModal] = useState(false)
-  // 프로젝트 연결은 projectLinks 스토어(사례↔프로젝트 단일 소스) — 워크스페이스와 동기.
-  const connectedPid = useProjectTsLinks((s) => s.projectIdFor(id))
-  const connectCase = useProjectTsLinks((s) => s.connectCase)
-  const disconnectCase = useProjectTsLinks((s) => s.disconnectCase)
+  // 프로젝트 연결은 사례의 projectId(BE) 가 정본 — 증명서 추적도 이 값을 쓴다.
+  // 예전에는 zustand 스토어 + 하드코딩 목록이라 새로고침하면 사라졌다.
+  const { data: projectList } = useProjectList()
+  const linkProject = useLinkTsProject(id)
   const toast = useToast()
   // 프로젝트 연결 사례에서 들어오면 보기 전용 — 편집/요청/FAB를 모두 숨긴다.
   const viewOnly = params.get('view') === '1'
@@ -92,25 +96,36 @@ export default function CaseDetailPage() {
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data?.id}/change-requests/new`)
 
-  // 프로젝트 연결 — projectLinks 스토어에서 파생(사례가 연결된 프로젝트).
-  const link: TsProjectLink | null = connectedPid
-    ? {
-        projectId: connectedPid,
-        projectTitle:
-          TS_LINKABLE_PROJECTS.find((p) => p.id === connectedPid)?.title ??
-          connectedPid,
-      }
-    : null
+  // 프로젝트 연결 — 서버 값 그대로.
+  const link: TsProjectLink | null = data?.projectLink ?? null
   const projectLinked = !!link
+  // 연결 후보 — 수강생 본인 프로젝트(팀·개인 모두). 작성 중 프로젝트에도 미리 연결할 수 있다.
+  const linkableProjects: TsLinkableProject[] = (
+    projectList?.projects ?? []
+  ).map((p) => ({
+    id: p.id,
+    title: p.title,
+    kindLabel: p.kindLabel,
+    desc: p.teamLabel,
+  }))
   const onLinkChange = (next: TsProjectLink | null) => {
-    if (next) connectCase(next.projectId, id)
-    else disconnectCase(id)
-    setLinkModal(false)
-    toast.success(
-      next
-        ? `프로젝트에 연결했어요 — ${next.projectTitle}`
-        : '프로젝트 연결을 해제했어요.',
-    )
+    if (linkProject.isPending) return
+    linkProject.mutate(next?.projectId ?? null, {
+      onSuccess: () => {
+        setLinkModal(false)
+        toast.success(
+          next
+            ? `프로젝트에 연결했어요 — ${next.projectTitle}`
+            : '프로젝트 연결을 해제했어요.',
+        )
+      },
+      onError: () =>
+        toast.danger(
+          next
+            ? '프로젝트 연결에 실패했어요'
+            : '프로젝트 연결 해제에 실패했어요',
+        ),
+    })
   }
 
   // 인증 요청(검토 중 전환) — 실 API(POST /{id}/certification-request). SUBMITTED + REQUESTED.
@@ -418,6 +433,8 @@ export default function CaseDetailPage() {
 
           {!viewOnly && (
             <ProjectLinkModal
+              projects={linkableProjects}
+              pending={linkProject.isPending}
               open={linkModal}
               current={link}
               onClose={() => setLinkModal(false)}

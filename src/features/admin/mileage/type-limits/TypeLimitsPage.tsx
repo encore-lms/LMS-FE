@@ -21,7 +21,7 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 export default function TypeLimitsPage() {
   usePageHeader(
     '마일리지 타입 한도 설정',
-    '상품 타입별 수강생 1인 누적 사용 한도(maxPerUser) 관리',
+    '상품 타입별 수강생 1인 누적 사용 한도 관리',
   )
   const { data, isPending, isError, refetch } = useTypeLimits()
   const toast = useToast()
@@ -46,7 +46,7 @@ export default function TypeLimitsPage() {
   const openSave = () => {
     setConfirm({
       title: '마일리지 타입 한도 저장',
-      subtitle: `변경된 ${changeCount}개 타입의 maxPerUser를 일괄 반영합니다.`,
+      subtitle: `변경된 ${changeCount}개 타입의 한도를 일괄 반영합니다.`,
       rows: changed.map((l) => ({
         label: l.label,
         value: `${savedFor(l).toLocaleString()}M → ${draftFor(l).toLocaleString()}M`,
@@ -84,19 +84,8 @@ export default function TypeLimitsPage() {
         errorTitle="타입 한도를 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >
-        {/* 안내 — maxPerUser */}
-        <div className="border-border bg-surface mt-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border p-4">
-          <p className="text-fg inline-flex items-center gap-1.5 text-sm font-bold">
-            <Info className="text-info h-4 w-4" />
-            타입 한도 설정 — maxPerUser
-          </p>
-          <code className="text-fg-subtle text-[11px]">
-            GET · PATCH /api/admin/mileage/product-type-limits
-          </code>
-        </div>
-
         {/* 타입 3카드 */}
-        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3">
           {limits.map((l) => {
             const cur = savedFor(l)
             const nv = draftFor(l)
@@ -132,15 +121,13 @@ export default function TypeLimitsPage() {
                   </div>
                 </dl>
 
-                <p className="text-fg-subtle mt-3 text-[11px]">
-                  현재 maxPerUser
-                </p>
+                <p className="text-fg-subtle mt-3 text-[11px]">현재 한도</p>
                 <p className="text-fg text-[15px] font-bold tabular-nums">
                   {cur.toLocaleString()} M
                 </p>
 
                 <label className="text-fg mt-3 text-[13px] font-semibold">
-                  새 maxPerUser <span className="text-danger">*</span>
+                  새 한도 <span className="text-danger">*</span>
                 </label>
                 <div className="border-border focus-within:border-brand bg-surface mt-1.5 flex items-center rounded-lg border px-3">
                   <input
@@ -152,7 +139,7 @@ export default function TypeLimitsPage() {
                       )
                     }
                     inputMode="numeric"
-                    aria-label={`${l.label} 새 maxPerUser`}
+                    aria-label={`${l.label} 새 한도`}
                     className="text-fg h-10 flex-1 bg-transparent text-[15px] font-bold outline-none focus-visible:shadow-none"
                   />
                   <span className="text-fg-subtle text-sm">M</span>
@@ -182,7 +169,7 @@ export default function TypeLimitsPage() {
               변경 {changeCount}건 — 저장 대기
             </p>
             <p className="text-on-color/70 mt-1 text-xs">
-              저장 시 PATCH 요청으로 일괄 반영 · 변경된 타입만 갱신
+              저장하면 변경된 타입만 일괄 반영됩니다
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -205,21 +192,21 @@ export default function TypeLimitsPage() {
           </div>
         </div>
 
-        {/* 타입 한도 정책 §21 */}
+        {/* 타입 한도 사용자 안내 — 스펙 '완료 기준' 카피를 운영자 관점 설명으로 재작성 */}
         <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
           <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
             <Info className="h-4 w-4" />
-            타입 한도 정책 · 완료 기준
+            타입 한도 안내
           </p>
           <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-            <li>현재 한도와 변경값을 카드 안에서 구분 (변경됨 AMBER 배지)</li>
             <li>
-              저장 후 같은 타입 상품 전체에 즉시 반영 (PATCH
-              /api/admin/mileage/product-type-limits)
+              한도를 수정하면 카드에 &lsquo;변경됨&rsquo; 표시가 붙고, 저장하기
+              전까지는 실제로 반영되지 않습니다
             </li>
+            <li>저장하면 같은 타입의 모든 상품에 새 한도가 적용됩니다</li>
             <li>
-              구매 요청 승인 시 타입별 누적 사용 한도 검증 — 한도 초과 시 자동
-              차단
+              구매 요청을 승인할 때 수강생별 누적 사용액을 검사해, 타입 한도를
+              초과하는 요청은 자동으로 차단됩니다
             </li>
           </ul>
         </div>

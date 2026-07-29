@@ -17,13 +17,22 @@ function hash(value: string) {
   return Math.abs(h)
 }
 
-/** 기수가 끝난 뒤의 상태들 — 재료 수집 → 발급 흐름. */
-const AFTER_COHORT: CompetencyCertStatus[] = [
+/**
+ * 다섯 상태를 고르게 뿌린다.
+ *
+ * <p>기수 종료일로 '기수 미종료'를 가리던 방식은 뺐다 — 등록된 기수가 모두 진행 중이라
+ * 어느 기수를 열어도 전원 '기수 미종료'가 되어 나머지 네 상태를 확인할 수 없었다.
+ * BE 가 붙으면 이 배분을 실제 준비 상태로 바꾼다.</p>
+ */
+const STATUS_CYCLE: CompetencyCertStatus[] = [
   'issued',
   'data_ready',
-  'data_pending',
+  'cohort_open',
   'issued',
+  'data_pending',
   'data_rebuilding',
+  'issued',
+  'cohort_open',
 ]
 
 export function demoOf(studentId: string): CertificateDemoStudent {
@@ -31,31 +40,19 @@ export function demoOf(studentId: string): CertificateDemoStudent {
   return list[hash(studentId) % list.length]
 }
 
-/** 기수 종료일이 지났는지 — 안 지났으면 증명서를 만들 시점이 아니다. */
-export function isCohortEnded(endDate: string | null | undefined, now = new Date()) {
-  if (!endDate) return false
-  const end = new Date(endDate)
-  if (Number.isNaN(end.getTime())) return false
-  return end.getTime() < now.getTime()
-}
-
 /**
  * 로스터 한 명 → 증명서 목록 한 줄.
  *
- * 기수가 안 끝났으면 전원 '기수 미종료'다 — 실제 종료일을 쓰므로 진행 중인 기수가
- * 발급된 것처럼 보이는 일은 없다. 그 뒤 상태와 점수는 아직 데모 값이다.
+ * 증명서가 나온 건에서만 점수·공개·상세 열람이 열린다 — 준비 중인 사람에게
+ * 없는 점수를 붙이거나 빈 상세를 열어 주지 않는다.
  */
 export function toCertRow(
   student: StudentAccount,
   cohortLabel: string,
-  cohortEndDate: string | null | undefined,
-  now = new Date(),
 ): CompetencyCertRow {
   const demo = demoOf(student.id)
   const seed = hash(student.id)
-  const status: CompetencyCertStatus = isCohortEnded(cohortEndDate, now)
-    ? AFTER_COHORT[seed % AFTER_COHORT.length]
-    : 'cohort_open'
+  const status = STATUS_CYCLE[seed % STATUS_CYCLE.length]
   const issued = status === 'issued'
   return {
     studentId: student.id,

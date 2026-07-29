@@ -13,9 +13,11 @@ import { PublicSettingsSection } from './PublicSettingsSection'
 import { ProfileFooter } from './ProfileFooter'
 
 // 저장 완료 토스트 — 체크 원 + 라벨 + 제목 + 보조설명의 리치 배너(Toast 박스 안에 렌더).
+// success 토스트 박스가 진보라(bg-accent-strong)라 전경은 전부 on-color(흰색) 계열 —
+// 밝은 배경용 fg·success 토큰을 쓰면 글자가 배경에 묻힌다(2026-07-29 시연 QA).
 const SAVED_TOAST = (
   <span className="flex min-w-[300px] items-center gap-3">
-    <span className="border-success text-success flex size-9 shrink-0 items-center justify-center rounded-full border-2">
+    <span className="border-on-color text-on-color flex size-9 shrink-0 items-center justify-center rounded-full border-2">
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -27,11 +29,13 @@ const SAVED_TOAST = (
       </svg>
     </span>
     <span className="flex flex-col gap-0.5">
-      <span className="text-success/70 text-[11px] font-bold tracking-wider uppercase">
+      <span className="text-on-color/70 text-[11px] font-bold tracking-wider uppercase">
         SAVED
       </span>
-      <span className="text-fg text-[15px] font-bold">저장되었습니다</span>
-      <span className="text-fg-muted text-xs font-normal">
+      <span className="text-on-color text-[15px] font-bold">
+        저장되었습니다
+      </span>
+      <span className="text-on-color/80 text-xs font-normal">
         변경사항이 즉시 반영되었습니다.
       </span>
     </span>

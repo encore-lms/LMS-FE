@@ -7,6 +7,7 @@ import { OnboardingGate } from './onboarding/OnboardingGate'
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const CourseHomePage = lazy(() => import('./course/home/CourseHomePage'))
 const MaterialsPage = lazy(() => import('./course/materials/MaterialsPage'))
+const CourseNoticesPage = lazy(() => import('./course/notices/NoticesPage'))
 const AssignmentsPage = lazy(
   () => import('./course/assignments/AssignmentsPage'),
 )
@@ -76,6 +77,7 @@ export const studentRoutes: RouteObject[] = [
       { path: 'dashboard', element: <DashboardPage /> },
       // 사이드바 '나의 과정' → /student/course (강의 홈). 자료실은 하위 탭.
       { path: 'course', element: <CourseHomePage /> },
+      { path: 'course/notices', element: <CourseNoticesPage /> },
       { path: 'course/materials', element: <MaterialsPage /> },
       { path: 'course/assignments', element: <AssignmentsPage /> },
       {

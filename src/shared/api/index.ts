@@ -13,3 +13,10 @@ export {
   useMarkNotificationRead,
   useNotificationInbox,
 } from './notifications'
+export {
+  useCourseNotices,
+  useStaffCourseNotices,
+  useWriteCourseNotice,
+  useDeleteCourseNotice,
+} from './notices'
+export type { NoticePost, NoticePostList } from './notices'

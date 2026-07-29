@@ -4,7 +4,12 @@ import { useCourseHome } from '../api/course'
 import type { CourseHome } from './types'
 
 // 나의 과정 탭바 — Figma 강의 홈(165:27) 정합: 박스형(활성 탭 연한 brand 배경) + 서브(오늘/카운트).
-export type CourseTabKey = 'home' | 'quizzes' | 'materials' | 'assignments'
+export type CourseTabKey =
+  | 'home'
+  | 'notices'
+  | 'quizzes'
+  | 'materials'
+  | 'assignments'
 
 type CountKey = keyof CourseHome['tabCounts']
 
@@ -24,6 +29,11 @@ const TABS: TabDef[] = [
     to: '/student/course',
     end: true,
     staticSub: '오늘',
+  },
+  {
+    key: 'notices',
+    label: '공지',
+    to: '/student/course/notices',
   },
   {
     key: 'quizzes',

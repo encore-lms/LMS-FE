@@ -41,7 +41,7 @@ afterEach(() => {
 })
 
 describe('fetchCertificateScore', () => {
-  it('발급 조건을 충족하는 박준서를 기본 시연 수강생으로 사용한다', () => {
+  it('발급 조건을 충족하는 박수진를 기본 시연 수강생으로 사용한다', () => {
     expect(CERTIFICATE_MOCK_STUDENT_ID).toBe(
       'd9552119-7a27-5be5-b2a4-1d82a709cfb9',
     )

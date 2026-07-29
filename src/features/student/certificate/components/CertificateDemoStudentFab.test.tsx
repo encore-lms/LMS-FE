@@ -16,7 +16,7 @@ describe('CertificateDemoStudentFab', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '시연 수강생 선택 · 현재 박준서',
+        name: '시연 수강생 선택 · 현재 박수진',
       }),
     )
 
@@ -41,7 +41,7 @@ describe('CertificateDemoStudentFab', () => {
       />,
     )
     const button = getByRole('button', {
-      name: '시연 수강생 선택 · 현재 박준서',
+      name: '시연 수강생 선택 · 현재 박수진',
     })
     const beforeLeft = button.style.left
     const beforeTop = button.style.top

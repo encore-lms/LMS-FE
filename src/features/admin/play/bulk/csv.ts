@@ -52,7 +52,7 @@ function parseCsvText(text: string): string[][] {
   let field = ''
   let row: string[] = []
   let inQuotes = false
-  const src = text.replace(/^﻿/, '') // BOM 제거
+  const src = text.replace(/^\uFEFF/, '') // BOM 제거
   for (let i = 0; i < src.length; i++) {
     const ch = src[i]
     if (inQuotes) {

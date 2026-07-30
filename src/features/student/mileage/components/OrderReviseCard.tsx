@@ -40,13 +40,22 @@ export function OrderReviseCard({ order }: { order: MileageOrderRow }) {
         items: lines.map((l) => ({
           productId: l.productId,
           quantity: l.quantity,
+          // 도서·인터넷 강의는 고정가가 없어 수강생이 넣은 값을 서버가 받아야 한다.
+          // 이걸 빼고 보내던 동안 그 두 종류는 재요청이 422('가격을 입력해 주세요')로
+          // 조용히 실패했다 — 화면에는 금액이 보이는데 서버로는 안 갔다.
+          requestedPrice: l.unitPrice,
           link: l.link.trim() || undefined,
         })),
         memo: memo.trim() || undefined,
       },
       {
         onSuccess: () => toast.success('수정해서 다시 요청했어요'),
-        onError: () => toast.danger('다시 요청하지 못했어요'),
+        // 서버가 이유를 준다(가격 누락·잔액 부족·한도 초과 등) — 일반 문구로 덮지 않는다.
+        onError: (err) =>
+          toast.danger(
+            (err as { response?: { data?: { message?: string } } } | undefined)
+              ?.response?.data?.message ?? '다시 요청하지 못했어요',
+          ),
       },
     )
   }

@@ -128,4 +128,7 @@ export const handlers = [
       content: body.content,
     })
   }),
+  http.delete('/api/admin/play/typing-texts/:id', () =>
+    new HttpResponse(null, { status: 204 }),
+  ),
 ]

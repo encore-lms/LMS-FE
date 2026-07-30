@@ -29,7 +29,7 @@ function SectionHead({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="bg-brand-bg text-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+      <div className="bg-success-bg text-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
         {icon}
       </div>
       <div>
@@ -55,7 +55,7 @@ function SettingRow({
   return (
     <div className="border-divider flex flex-wrap items-center justify-between gap-4 border-b py-4 last:border-b-0">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="bg-brand-bg text-brand flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+        <div className="bg-success-bg text-brand flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
           {icon}
         </div>
         <div className="min-w-0">

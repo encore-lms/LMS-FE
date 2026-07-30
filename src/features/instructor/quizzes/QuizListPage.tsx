@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuizBasePath } from './useQuizBasePath'
+import {
+  useQuizBasePath,
+  useQuizTemplateBasePath,
+} from './useQuizBasePath'
 import { FileText, Plus, Search, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -37,6 +40,7 @@ export default function QuizListPage({
 }) {
   const navigate = useNavigate()
   const base = useQuizBasePath()
+  const templateBase = useQuizTemplateBasePath()
   const toast = useToast()
   // 허브(퀴즈 탭) 진입이면 폼·제출현황에 cohortId를 넘겨 저장·취소 후 허브로 복귀·기수 고정.
   const hubQs = embedded && cohortId ? `?cohortId=${cohortId}` : ''
@@ -300,7 +304,7 @@ export default function QuizListPage({
               {/* 템플릿 관리 — 전역 자산이라 별도 메뉴 없이 퀴즈 영역에서 진입(생성·편집·삭제). */}
               <Button
                 variant="secondary"
-                onClick={() => navigate('/instructor/quiz-templates')}
+                onClick={() => navigate(templateBase)}
               >
                 <Settings2 className="h-4 w-4" /> 템플릿 관리
               </Button>

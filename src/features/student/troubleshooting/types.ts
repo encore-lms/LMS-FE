@@ -112,6 +112,8 @@ export interface TsCaseDetail {
   situation: string
   resolution: string
   result: string
+  /** 자유 태그 — 저장 직후 폼을 다시 그릴 때 복원에 쓴다. */
+  tags?: string[]
   attachments: TsAttachment[]
   checklist: TsCheck[]
   timeline: TsTimeline[]

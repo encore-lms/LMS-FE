@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
+import { cn } from '@/shared/lib/cn'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { useToast } from '@/components/ui/use-toast'
 import { useReviseMileageOrder, type MileageOrderRow } from '../../api/mileage'
@@ -21,6 +22,9 @@ export function OrderReviseCard({ order }: { order: MileageOrderRow }) {
     })),
   )
 
+  // 무엇을 고쳤는지 적어 보내지 않으면 매니저는 같은 화면을 다시 보고 또 판단해야 한다.
+  const [memo, setMemo] = useState('')
+
   const total = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0)
   const setLine = (i: number, patch: Partial<(typeof lines)[number]>) =>
     setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)))
@@ -38,6 +42,7 @@ export function OrderReviseCard({ order }: { order: MileageOrderRow }) {
           quantity: l.quantity,
           link: l.link.trim() || undefined,
         })),
+        memo: memo.trim() || undefined,
       },
       {
         onSuccess: () => toast.success('수정해서 다시 요청했어요'),
@@ -84,6 +89,19 @@ export function OrderReviseCard({ order }: { order: MileageOrderRow }) {
           />
         </div>
       ))}
+
+      <label className="flex flex-col gap-1.5">
+        <span className="text-fg text-[12px] font-semibold">
+          매니저에게 남길 메모
+        </span>
+        <textarea
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          rows={2}
+          placeholder="무엇을 고쳤는지 적어 주세요 (예: 수량 2개로 줄이고 구매 링크를 교체했습니다)"
+          className={cn(inputClass({ size: 'sm' }), 'h-auto resize-y py-2')}
+        />
+      </label>
 
       <div className="flex items-center justify-between">
         <span className="text-fg-subtle text-[12px]">

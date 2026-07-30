@@ -103,6 +103,8 @@ export function useReviseMileageOrder() {
         requestedPrice?: number
         link?: string
       }[]
+      /** 무엇을 고쳤는지 매니저에게 전하는 메모. */
+      memo?: string
     }) => apiClient.patch(`/student/mileage/orders/${orderId}`, input),
     onSuccess: () => invalidateMileage(qc),
   })

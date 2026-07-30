@@ -57,6 +57,14 @@ export function CartView({ onView }: { onView: (v: string | null) => void }) {
       return next
     })
 
+  // 서버 오류 메시지 추출(타입 한도 초과·잔액 부족 등) — 없으면 일반 안내.
+  const checkoutErrorMessage = (err: unknown) => {
+    const msg = (
+      err as { response?: { data?: { message?: string } } } | undefined
+    )?.response?.data?.message
+    return msg ?? '결제에 실패했어요.'
+  }
+
   const checkout = () => {
     if (selectedItems.length === 0 || over || create.isPending) return
     create.mutate(
@@ -77,7 +85,9 @@ export function CartView({ onView }: { onView: (v: string | null) => void }) {
           )
           onView(null)
         },
-        onError: () => toast.danger('결제에 실패했어요.'),
+        // 타입 한도 초과처럼 서버가 이유를 알려 주는 경우가 있다 —
+        // '결제에 실패했어요'만 띄우면 수강생은 무엇을 고쳐야 할지 모른다.
+        onError: (err) => toast.danger(checkoutErrorMessage(err)),
       },
     )
   }

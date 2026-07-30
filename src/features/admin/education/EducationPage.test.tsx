@@ -75,6 +75,8 @@ function renderHub(search = '') {
           courseId: 'course-sk',
           name: 'SK네트웍스 Family AI 캠프 34기',
           subtitle: 'SK네트웍스 Family AI 캠프 · 34회차',
+          courseTitle: 'SK네트웍스 Family AI 캠프',
+          cohortLabel: '34기',
           period: '2026.04.28 ~ 2026.10.26',
           dday: 'D-88',
           instructors: [],
@@ -110,27 +112,43 @@ function renderHub(search = '') {
 }
 
 describe('EducationPage (기수 허브)', () => {
-  it('9개 탭(자료실/과제/퀴즈/프로젝트/이력서/기록실/수강생/멘토링/QnA)을 렌더한다', () => {
+  it('11개 탭을 렌더한다', () => {
     renderHub()
     for (const label of [
-      '자료실',
-      '과제',
+      '과정 홈',
+      '수강생',
+      '기록실',
       '퀴즈',
       '프로젝트',
+      '과제',
       '이력서',
-      '기록실',
-      '수강생',
       '멘토링',
       'QnA',
+      '자료실',
+      '설정',
     ]) {
       expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()
     }
   })
 
-  // 설정은 목록의 [설정] 버튼으로 들어온다 — 탭에 두면 기수를 고른 뒤 한 번 더 찾아야 한다.
-  it('설정은 탭 바에 없다', () => {
+  // 탭 순서는 운영 요구 — 기수를 열어 먼저 보는 것이 앞, 설정이 맨 뒤.
+  it('탭 순서가 과정 홈 → … → 설정 이다', () => {
     renderHub()
-    expect(screen.queryByRole('tab', { name: '설정' })).not.toBeInTheDocument()
+    expect(
+      screen.getAllByRole('tab').map((el) => el.textContent),
+    ).toEqual([
+      '과정 홈',
+      '수강생',
+      '기록실',
+      '퀴즈',
+      '프로젝트',
+      '과제',
+      '이력서',
+      '멘토링',
+      'QnA',
+      '자료실',
+      '설정',
+    ])
   })
 
   it('목록으로 돌아가는 링크가 있다', () => {
@@ -155,8 +173,7 @@ describe('EducationPage (기수 허브)', () => {
     expect(screen.getByText('기록실 임베드')).toBeInTheDocument()
   })
 
-  // 목록 [설정] 버튼이 ?tab=settings 로 보낸다 — 탭 바에 없어도 본문은 그려져야 한다.
-  it('?tab=settings 로 들어오면 HRD 과정 상세를 보여준다', () => {
+  it('설정 탭은 HRD 과정 상세를 보여준다', () => {
     renderHub('?tab=settings')
     expect(screen.getByText('K-디지털트레이닝')).toBeInTheDocument()
     expect(screen.getByText('17,424,000원')).toBeInTheDocument()

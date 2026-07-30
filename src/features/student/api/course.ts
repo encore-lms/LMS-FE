@@ -36,6 +36,28 @@ export function useOnlineCourse() {
   })
 }
 
+/**
+ * 자료 즐겨찾기 표시/해제.
+ *
+ * <p>예전에는 화면 상태로만 별을 켜 새로고침하면 사라졌다. 서버에 남기고 목록 캐시를 무효화해
+ * 다시 들어와도 표시가 유지된다.</p>
+ */
+export function useToggleMaterialFavorite() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (materialId: string) =>
+      apiClient
+        .post<{ favorited: boolean }>(
+          `/student/course/materials/${materialId}/favorite`,
+          {},
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: courseKeys.materials() })
+    },
+  })
+}
+
 /** 강의 자료실 — /student/course/materials */
 export function useCourseMaterials() {
   return useQuery({

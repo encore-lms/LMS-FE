@@ -10,6 +10,7 @@ import {
   useCourseMaterials,
   useShareMaterial,
   useDeleteMaterial,
+  useToggleMaterialFavorite,
 } from '../../api/course'
 import type { MaterialItem } from '../types'
 import { CourseTabs } from '../CourseTabs'
@@ -41,7 +42,9 @@ export default function MaterialsPage() {
   const [editTarget, setEditTarget] = useState<MaterialItem | null>(null)
   usePageHeader('자료실')
   const [query, setQuery] = useState('')
+  // 서버 응답이 돌아오기 전까지만 쓰는 낙관적 표시 — 별을 누른 즉시 화면이 반응해야 한다.
   const [favOverride, setFavOverride] = useState<Record<string, boolean>>({})
+  const toggleFavoriteMutation = useToggleMaterialFavorite()
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState<SortKey>('latest')
   const [sortOpen, setSortOpen] = useState(false)
@@ -65,18 +68,26 @@ export default function MaterialsPage() {
     .map((it) => ({ ...it, favorited: favOverride[it.id] ?? it.favorited }))
     .filter((it) => q === '' || it.title.toLowerCase().includes(q))
 
-  const toggleFavorite = (id: string) =>
-    setFavOverride((prev) => {
-      const current =
-        prev[id] ?? data?.items.find((it) => it.id === id)?.favorited ?? false
-      return { ...prev, [id]: !current }
+  const toggleFavorite = (id: string) => {
+    const current =
+      favOverride[id] ?? data?.items.find((it) => it.id === id)?.favorited ?? false
+    setFavOverride((prev) => ({ ...prev, [id]: !current }))
+    toggleFavoriteMutation.mutate(id, {
+      // 서버가 확정한 값으로 맞춘다. 실패하면 눌렀던 것을 되돌린다.
+      onSuccess: (res) =>
+        setFavOverride((prev) => ({ ...prev, [id]: res.favorited })),
+      onError: () => setFavOverride((prev) => ({ ...prev, [id]: current })),
     })
+  }
 
   // 정렬(최신=기본 순서 / 오래된=역순 / 이름=가나다) → 페이지 슬라이싱
   const sorted = [...items]
   if (sort === 'oldest') sorted.reverse()
   else if (sort === 'title')
     sorted.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+  // 즐겨찾기는 어떤 정렬에서도 맨 위로. 표시해 둔 자료를 페이지를 넘겨 가며 찾게 두면
+  // 표시하는 의미가 없다. 같은 그룹 안에서는 위에서 정한 순서를 지킨다(안정 정렬).
+  sorted.sort((a, b) => Number(b.favorited) - Number(a.favorited))
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
   const curPage = Math.min(page, pageCount)
   const pageItems = sorted.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE)

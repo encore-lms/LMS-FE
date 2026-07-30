@@ -112,8 +112,9 @@ export function AttendanceIssueCell({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
-                    downloadAttendanceAttachment(f.id, f.fileName).catch(() =>
-                      toast.danger('증빙을 내려받지 못했어요'),
+                    // 운영 경로로 — 수강생 경로는 BE 가 STUDENT 로 잠가 둬 403 이 난다.
+                    downloadAttendanceAttachment(f.id, f.fileName, 'admin').catch(
+                      () => toast.danger('증빙을 내려받지 못했어요'),
                     )
                   }}
                   className="text-info flex items-center gap-1 text-left text-[11px] font-semibold hover:underline"

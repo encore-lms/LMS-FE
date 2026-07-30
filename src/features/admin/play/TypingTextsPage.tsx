@@ -136,8 +136,30 @@ export default function TypingTextsPage() {
           </button>
           <button
             type="button"
-            // TODO: 제시문 복제(P0_15)
-            onClick={() => toast.info(`${p.title} 복제는 준비 중입니다.`)}
+            // 복제 — 같은 내용으로 새 행 생성. 실수 노출 방지를 위해 비활성으로 시작한다.
+            onClick={() =>
+              upsert.mutate(
+                {
+                  id: null,
+                  body: {
+                    title: `${p.title} 복사본`.slice(0, 80),
+                    content: p.content ?? '',
+                    language: p.language,
+                    level: p.level,
+                    order: p.order,
+                    active: false,
+                  },
+                },
+                {
+                  onSuccess: () =>
+                    toast.success(
+                      `"${p.title}" 복사본을 만들었습니다 (비활성).`,
+                    ),
+                  onError: () =>
+                    toast.danger('복제에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+                },
+              )
+            }
             className="text-accent-strong text-[12px] font-semibold hover:underline"
           >
             복제

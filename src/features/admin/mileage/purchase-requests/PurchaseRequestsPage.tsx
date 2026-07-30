@@ -172,6 +172,24 @@ export default function PurchaseRequestsPage() {
               <p className="text-warning text-[11px]">구매 링크 미제출</p>
             )
           )}
+          {/* 수정 요청을 받고 다시 낸 건은 무엇이 바뀌었는지 알아야 다시 판단할 수 있다. */}
+          {r.studentNote && (
+            <p
+              className="bg-info-bg/60 text-fg-muted mt-1.5 max-w-[320px] rounded-md px-2 py-1 text-[11px] leading-4"
+              title={r.studentNote}
+            >
+              <span className="text-info font-bold">수강생 메모</span>{' '}
+              {r.studentNote}
+            </p>
+          )}
+          {r.reviewNote && (
+            <p
+              className="text-fg-subtle mt-1 max-w-[320px] truncate text-[11px]"
+              title={r.reviewNote}
+            >
+              내 수정 요청: {r.reviewNote}
+            </p>
+          )}
         </div>
       ),
     },

@@ -54,7 +54,7 @@ describe('Sidebar 준비 중(comingSoon) 메뉴', () => {
     { label: 'PLAY', to: '/student/play', comingSoon: true },
   ]
 
-  it('comingSoon 항목은 링크가 아니라 비활성 버튼으로 렌더된다(이동 없음)', () => {
+  it("comingSoon 항목은 '(준비 중)' 표기가 붙은 이동 가능한 링크로 렌더된다", () => {
     render(
       <ToastProvider>
         <MemoryRouter initialEntries={['/student']}>
@@ -62,21 +62,20 @@ describe('Sidebar 준비 중(comingSoon) 메뉴', () => {
         </MemoryRouter>
       </ToastProvider>,
     )
-    expect(screen.queryByRole('link', { name: /PLAY/ })).toBeNull()
-    const btn = screen.getByRole('button', { name: /PLAY/ })
-    expect(btn).toBeDisabled()
+    const link = screen.getByRole('link', { name: /PLAY.*\(준비 중\)/ })
+    expect(link).toHaveAttribute('href', '/student/play')
   })
 
-  it("comingSoon 항목에 '(준비 중)' 표기가 붙는다", () => {
+  it('comingSoon 항목도 해당 경로에서 활성 표시된다', () => {
     render(
       <ToastProvider>
-        <MemoryRouter initialEntries={['/student']}>
+        <MemoryRouter initialEntries={['/student/play']}>
           <Sidebar label="수강생" items={menu} />
         </MemoryRouter>
       </ToastProvider>,
     )
     expect(
-      screen.getByRole('button', { name: /PLAY.*\(준비 중\)/ }),
-    ).toBeInTheDocument()
+      screen.getByRole('link', { name: /PLAY.*\(준비 중\)/ }),
+    ).toHaveAttribute('aria-current', 'page')
   })
 })

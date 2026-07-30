@@ -34,6 +34,7 @@ export function CohortDirectory<T, S extends string>({
   q,
   onQChange,
   searchPlaceholder = '과정명·기수명으로 검색',
+  errorTitle = '과정·기수를 불러오지 못했어요',
   scopeSummary,
   cards,
   columns,
@@ -52,6 +53,7 @@ export function CohortDirectory<T, S extends string>({
   q: string
   onQChange: (next: string) => void
   searchPlaceholder?: string
+  errorTitle?: string
   /** 필터 줄 오른쪽 요약 문구(예: '담당 2개 (진행 중 2 · 예정 0 · 종료 0)'). */
   scopeSummary?: string
   cards: CohortDirectoryCard[]
@@ -70,12 +72,12 @@ export function CohortDirectory<T, S extends string>({
       isPending={isPending}
       isError={isError}
       onRetry={onRetry}
-      errorTitle="과정·기수를 불러오지 못했어요"
+      errorTitle={errorTitle}
       errorDescription="잠시 후 다시 시도해 주세요."
       className="p-8"
       skeleton={
         <div className="flex flex-col gap-3 p-8">
-          <div className="bg-surface-muted h-9 w-72 animate-pulse rounded-lg" />
+          <div className="bg-surface-muted h-9 w-80 animate-pulse rounded-lg" />
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }, (_, i) => (
               <div
@@ -98,7 +100,7 @@ export function CohortDirectory<T, S extends string>({
               onChange={(e) => onQChange(e.target.value)}
               placeholder={searchPlaceholder}
               aria-label={searchPlaceholder}
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-72 rounded-lg border pr-3 pl-9 text-sm outline-none"
+              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-80 rounded-lg border pr-3 pl-9 text-sm outline-none focus-visible:shadow-none"
             />
           </div>
           {tabs.map((t) => (

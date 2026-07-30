@@ -115,6 +115,11 @@ export default function PlaySelectPage() {
               <span className="text-fg text-[15px] font-bold">
                 최근 게임 기록
               </span>
+              {data.records.length === 0 && (
+                <span className="text-fg-subtle text-[13px]">
+                  아직 기록이 없어요 — 첫 플레이 결과가 여기에 쌓여요.
+                </span>
+              )}
               {data.records.map((r, i) => (
                 <div
                   key={i}
@@ -142,6 +147,11 @@ export default function PlaySelectPage() {
               <span className="text-fg text-[15px] font-bold">
                 기수 랭킹 Top 5
               </span>
+              {data.ranking.length === 0 && (
+                <span className="text-fg-subtle text-[13px]">
+                  기록 저장 후 집계돼요.
+                </span>
+              )}
               {data.ranking.map((r) => (
                 <div key={r.rank} className="flex items-center gap-3">
                   <span

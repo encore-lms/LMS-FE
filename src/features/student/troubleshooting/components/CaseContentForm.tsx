@@ -61,13 +61,22 @@ export function CaseContentForm({
   const uploadMutation = useUploadTsAttachment()
   // 신규(임시 id ts_…)는 create(POST), 기존은 update(PUT).
   const isNew = caseId.startsWith('ts_')
-  const existing = queryClient
-    .getQueryData<TsListData>(tsKeys.list())
-    ?.cases.find((c) => c.id === caseId)
   // 기존 사례 수정 시 서버 첨부(링크·파일)를 폼에 로드 — update 가 링크를 교체하므로 로드 필수.
   const detailCache = queryClient.getQueryData<TsCaseDetail>(
     tsKeys.case(caseId),
   )
+  const listCache = queryClient
+    .getQueryData<TsListData>(tsKeys.list())
+    ?.cases.find((c) => c.id === caseId)
+  /**
+   * 폼 초기값의 출처.
+   *
+   * <p>임시 저장하면 신규 임시 id(ts_…) 에서 실 id 로 주소가 바뀌고, 그때 이 폼이 통째로
+   * 다시 만들어진다. 목록 캐시만 보면 방금 만든 사례는 아직 목록에 없어 전부 빈 값으로
+   * 초기화되고, 이어서 '작성 완료'를 누르면 빈 내용이 그대로 덮어써졌다.
+   * 저장 응답이 들어 있는 상세 캐시를 먼저 본다.</p>
+   */
+  const existing = detailCache ?? listCache
 
   const [title, setTitle] = useState(existing?.title ?? '')
   const [category, setCategory] = useState(existing?.category ?? 'DB')

@@ -14,7 +14,12 @@ import { TONE_SOLID } from '@/shared/lib/tone'
 const PAGE_SIZE = 4
 
 // 수강생 QnA 게시판 목록 (/student/qna) — 트러블슈팅 목록 패턴 차용(검색·필터·페이지네이션).
-export default function QnaListPage() {
+// embedded=true 면 기수 허브의 'QnA' 탭에 임베드(자체 헤더·바깥 패딩 생략).
+export default function QnaListPage({
+  embedded = false,
+}: {
+  embedded?: boolean
+} = {}) {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useQnaList()
   const [active, setActive] = useState('all')
@@ -32,6 +37,7 @@ export default function QnaListPage() {
     base === '/instructor/qna'
       ? '담당 기수 수강생이 올린 질문을 확인하고 답변해 주세요.'
       : '강의·과제·환경설정·진로 궁금증을 동료·멘토·강사와 함께 풀어요.',
+    !embedded,
   )
 
   const open = (q: QnaQuestion) => navigate(`${base}/${q.id}`)
@@ -62,10 +68,14 @@ export default function QnaListPage() {
       skeleton={<SkeletonListPage columns={4} className="" />}
       errorTitle="불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
       {data && (
-        <div className="flex flex-col gap-5 p-8">
+        <div
+          className={
+            embedded ? 'flex flex-col gap-5' : 'flex flex-col gap-5 p-8'
+          }
+        >
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2">
               <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>

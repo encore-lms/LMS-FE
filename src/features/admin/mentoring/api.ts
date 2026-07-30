@@ -280,12 +280,18 @@ export function useDeleteAssignment() {
 }
 
 /** GET /admin/mentoring/logs — 일지 목록(KPI·요약 포함). */
-export function useAdminMentoringLogs() {
+/**
+ * 일지 목록. cohortId 를 주면 그 기수(기수 허브 탭), 없으면 요청자 담당/폴백 기수.
+ */
+export function useAdminMentoringLogs(cohortId?: string | null) {
+  const scope = cohortId && cohortId !== 'all' ? cohortId : null
   return useQuery({
-    queryKey: adminMentoringKeys.logs(),
+    queryKey: [...adminMentoringKeys.logs(), scope ?? ''],
     queryFn: () =>
       apiClient
-        .get<AdminMentoringLogsData>('/admin/mentoring/logs')
+        .get<AdminMentoringLogsData>('/admin/mentoring/logs', {
+          cohortId: scope ?? undefined,
+        })
         .then((r) => r.data),
   })
 }

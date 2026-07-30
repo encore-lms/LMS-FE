@@ -25,14 +25,20 @@ const isExpanded = (name: string) =>
   group(name).getAttribute('aria-expanded') === 'true'
 
 describe('adminMenu 사이드바 active highlight', () => {
-  // 인증 검토·증명서 템플릿은 BE 미구현(404)으로 comingSoon(비활성 버튼) 처리 —
-  // 하위 경로(reviews/:id·audit·snapshot) 활성 매칭 테스트는 오픈 시 복원.
-  it('인증 검토는 (준비 중) 비활성 버튼으로 렌더된다', () => {
+  // 인증 검토·증명서 템플릿은 BE 미구현(404)으로 comingSoon —
+  // '(준비 중)' 표기를 붙이되 내부 확인·작업을 위해 이동은 허용한다.
+  it("인증 검토는 '(준비 중)' 표기가 붙은 이동 가능한 링크로 렌더된다", () => {
     renderAt('/admin/reputation') // 검토·심사 그룹 펼침(평판 관리 활성)
     expect(
-      screen.getByRole('button', { name: /인증 검토.*\(준비 중\)/ }),
-    ).toBeDisabled()
-    expect(screen.queryByRole('link', { name: /인증 검토/ })).toBeNull()
+      screen.getByRole('link', { name: /인증 검토.*\(준비 중\)/ }),
+    ).toHaveAttribute('href', '/admin/certificates/reviews')
+  })
+
+  it('인증 검토 큐 경로에서 인증 검토가 활성', () => {
+    renderAt('/admin/certificates/reviews')
+    expect(
+      screen.getByRole('link', { name: /인증 검토.*\(준비 중\)/ }),
+    ).toHaveAttribute('aria-current', 'page')
   })
 
   it('인입 격리 큐 경로에서는 인증 검토가 비활성', () => {
@@ -81,10 +87,10 @@ describe('adminMenu 사이드바 대분류 드롭다운', () => {
     fireEvent.click(group('학습·보상'))
     expect(isExpanded('학습·보상')).toBe(true)
     expect(screen.queryByRole('link', { name: '마일리지' })).not.toBeNull()
-    // PLAY 관리는 준비 중 — 링크가 아닌 비활성 버튼으로 렌더
+    // PLAY 관리는 준비 중 — '(준비 중)' 표기가 붙은 이동 가능한 링크
     expect(
-      screen.getByRole('button', { name: /PLAY 관리.*\(준비 중\)/ }),
-    ).toBeDisabled()
+      screen.getByRole('link', { name: /PLAY 관리.*\(준비 중\)/ }),
+    ).toHaveAttribute('href', '/admin/play/typing-texts')
   })
 
   it('대시보드·설정은 그룹이 아니라 항상 보이는 leaf 항목', () => {

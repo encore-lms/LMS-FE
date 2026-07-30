@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Download, Info } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
@@ -21,6 +21,27 @@ export function AttendanceIssueCell({
 }) {
   const toast = useToast()
   const [open, setOpen] = useState(false)
+  /**
+   * 닫기를 잠깐 미룬다.
+   *
+   * <p>아이콘과 말풍선 사이에는 빈 공간이 있어서, 증빙을 내려받으려고 마우스를 내리는 순간
+   * 아이콘을 벗어나며 말풍선이 닫혀 버렸다. 그 사이를 지나갈 시간을 준다.</p>
+   */
+  const closeTimer = useRef<number | null>(null)
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }, [])
+  const scheduleClose = useCallback(() => {
+    cancelClose()
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null
+      setOpen(false)
+    }, 220)
+  }, [cancelClose])
+  useEffect(() => cancelClose, [cancelClose])
 
   if (!issue) return <span className="text-fg-subtle">-</span>
 
@@ -44,10 +65,16 @@ export function AttendanceIssueCell({
       <button
         type="button"
         aria-label="출결 폼 상세"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        onMouseEnter={() => {
+          cancelClose()
+          setOpen(true)
+        }}
+        onMouseLeave={scheduleClose}
+        onFocus={() => {
+          cancelClose()
+          setOpen(true)
+        }}
+        onBlur={scheduleClose}
         onClick={(e) => {
           e.stopPropagation()
           setOpen((v) => !v)
@@ -60,9 +87,10 @@ export function AttendanceIssueCell({
       {open && (
         <span
           role="tooltip"
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-          className="border-border bg-surface absolute top-6 left-0 z-20 flex w-72 flex-col gap-2 rounded-[10px] border p-3 text-left shadow-[0px_8px_24px_0px_rgba(18,23,38,0.14)]"
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+          // 아이콘 바로 아래에 붙이고 위쪽에 투명 여백을 둬, 마우스가 빈 공간을 지나지 않게 한다.
+          className="border-border bg-surface absolute top-full left-0 z-20 mt-1 flex w-72 flex-col gap-2 rounded-[10px] border p-3 text-left shadow-[0px_8px_24px_0px_rgba(18,23,38,0.14)] before:absolute before:-top-2 before:left-0 before:h-2 before:w-full before:content-['']"
         >
           <span className="text-fg-subtle text-[11px]">
             제출 {issue.submittedAt.slice(0, 16).replace('T', ' ')}

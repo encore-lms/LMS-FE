@@ -21,6 +21,17 @@ vi.mock('./api/changeRequests', () => ({
       opts?.onSuccess?.(),
   }),
 }))
+// 어느 프로젝트인지 화면에 보여 주려고 워크스페이스를 읽는다 — 테스트에선 제목만 준다.
+vi.mock('../api/projects', () => ({
+  useProjectWorkspace: () => ({
+    data: {
+      id: 'p1',
+      title: 'Encore Mart — 마이크로서비스 백엔드',
+      meta: '팀 프로젝트 · 5명 · 2026-06-01 ~ 2026-07-21',
+      status: 'certified',
+    },
+  }),
+}))
 import { useProjectFlow } from './workspace/useProjectFlow'
 
 function renderPage() {
@@ -57,7 +68,7 @@ describe('ChangeRequestPage', () => {
     renderPage()
 
     await user.clear(
-      screen.getByPlaceholderText('왜 다시 수정해야 하는지 적어주세요'),
+      screen.getByPlaceholderText(/왜 다시 수정해야 하는지 적어주세요/),
     )
     await user.click(screen.getByRole('button', { name: '수정 권한 요청' }))
 
@@ -70,6 +81,11 @@ describe('ChangeRequestPage', () => {
     const user = userEvent.setup()
     renderPage()
 
+    // 예시 문구는 placeholder 로만 보여 준다 — 사유는 수강생이 직접 적는다.
+    await user.type(
+      screen.getByPlaceholderText(/왜 다시 수정해야 하는지 적어주세요/),
+      '산출물 링크가 만료되어 최신 문서로 교체하려 합니다.',
+    )
     await user.click(screen.getByRole('button', { name: '수정 권한 요청' }))
 
     expect(

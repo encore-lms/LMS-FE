@@ -1,27 +1,21 @@
-import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { BookOpen, ChevronLeft, FolderOpen, ListChecks, Lock } from 'lucide-react'
-import { DataBoundary } from '@/components/ui/DataBoundary'
+import { ChevronLeft, FolderOpen } from 'lucide-react'
 import { Empty } from '@/components/ui/Empty'
 import { Tabs } from '@/components/ui/Tabs'
-import { useToast } from '@/components/ui/use-toast'
-import { CurriculumModal } from './CurriculumModal'
 import { usePageHeader } from '@/shared/store'
 import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import QnaListPage from '@/features/student/qna/QnaListPage'
 import { StudentsPane } from '../students/StudentsPane'
 import { MentoringPane } from '../mentoring/MentoringPane'
-import { useCourseDetail } from './api'
 import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
-import { FeatureTogglePane } from './FeatureTogglePane'
 import { CourseHomePane } from './CourseHomePane'
+import { SettingsPane } from './SettingsPane'
 import { useAdminCohorts } from './cohortRows'
-import { SkeletonText } from '@/components/ui/Skeleton'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
 // 이력서=실 BE(ResumePane), 기록실=검토·심사 흡수(RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
@@ -73,103 +67,6 @@ function PlaceholderPane({ label }: { label: string }) {
       title={`${label} 설정 준비 중`}
       description="이 탭은 과정·기수별 설정 화면으로 곧 연결됩니다."
     />
-  )
-}
-
-// 설명 탭 — HRD-Net 과정 상세 카드(이전 LMS CohortDetailsCard 재현).
-function DescriptionPane({
-  courseId,
-  cohortId,
-}: {
-  courseId: string | null
-  cohortId: string | null
-}) {
-  const { data, isPending, isError, refetch } = useCourseDetail(
-    courseId,
-    cohortId,
-  )
-  const toast = useToast()
-  // 커리큘럼 설정 — 엑셀을 올리면 수강생 주차별 학습에 배우는 내용이 채워진다.
-  const [curriculumOpen, setCurriculumOpen] = useState(false)
-
-  const rows: { label: string; value: string }[] = data
-    ? [
-        { label: '훈련과정 구분', value: data.trainingType },
-        { label: 'NCS 분류', value: data.ncsName },
-        { label: '훈련기관', value: data.institution },
-        { label: '소재지', value: data.address },
-        { label: '지원 금액', value: data.supportAmount },
-        { label: '담당자', value: data.manager },
-        {
-          label: '훈련기간',
-          value: `~ (총 ${data.trainingDays}일 / ${data.trainingHours}시간)`,
-        },
-      ]
-    : []
-
-  return (
-    <DataBoundary
-      isPending={isPending}
-      isError={isError || !data}
-      onRetry={() => refetch()}
-      skeleton={
-        <div className="py-6">
-          <SkeletonText lines={8} />
-        </div>
-      }
-      errorTitle="과정 설명을 불러오지 못했어요"
-      errorDescription="HRD 훈련과정ID가 없는 기수이거나 HRD-Net 연결을 확인해 주세요."
-    >
-      {data && (
-        <div className="border-border bg-surface rounded-xl border p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-fg text-lg font-bold">{data.title}</h3>
-            <span className="text-info flex items-center gap-1 text-xs font-medium">
-              <Lock className="h-3 w-3" /> HRD-Net 원본
-            </span>
-          </div>
-          <dl className="mt-5 flex flex-col gap-3">
-            {rows.map((r) => (
-              <div key={r.label} className="flex gap-4 text-sm">
-                <dt className="text-fg-muted w-24 shrink-0 font-medium">
-                  {r.label}
-                </dt>
-                <dd className="text-fg">{r.value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          {/* 하단 설정 버튼 — 단위 기간/커리큘럼(이전 LMS '단위 기간 설정' 재현 + 커리큘럼 신규) */}
-          <div className="border-divider mt-6 flex flex-wrap gap-2 border-t pt-5">
-            <button
-              type="button"
-              // TODO: 단위 기간 설정 모달(BE 단위기간 계약 확정 후)
-              onClick={() => toast.info('단위 기간 설정 화면은 준비 중입니다.')}
-              className="bg-brand hover:bg-brand/90 text-on-color inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors"
-            >
-              <ListChecks className="h-4 w-4" /> 단위 기간 설정
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurriculumOpen(true)}
-              disabled={!cohortId}
-              className="bg-info-bg text-info border-border hover:bg-info-bg/70 inline-flex h-9 items-center gap-1.5 rounded-md border px-4 text-[13px] font-semibold transition-colors"
-            >
-              <BookOpen className="h-4 w-4" /> 커리큘럼 설정
-            </button>
-          </div>
-
-          {curriculumOpen && (
-            <CurriculumModal
-              open
-              cohortId={cohortId}
-              cohortLabel={data.title}
-              onClose={() => setCurriculumOpen(false)}
-            />
-          )}
-        </div>
-      )}
-    </DataBoundary>
   )
 }
 
@@ -279,11 +176,7 @@ export default function EducationPage() {
           !courseId || !cohortId ? (
             <NeedCourse />
           ) : (
-            <div className="flex flex-col gap-5">
-              <DescriptionPane courseId={courseId} cohortId={cohortId} />
-              {/* 운영 설정의 '교육 과정 설정'에서 옮겨 온 마일리지·PLAY 사용 여부. */}
-              <FeatureTogglePane courseId={courseId} cohortId={cohortId} />
-            </div>
+            <SettingsPane courseId={courseId} cohortId={cohortId} />
           )
         ) : (
           <PlaceholderPane

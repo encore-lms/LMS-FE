@@ -151,6 +151,9 @@ export interface CourseDetail {
   manager: string // 담당자
   trainingDays: string // 훈련 일수
   trainingHours: string // 훈련 시간
+  // HRD 상세엔 날짜가 없어 BE 가 LMS 기수 운영 기간을 채워 준다.
+  trainingStart?: string
+  trainingEnd?: string
 }
 
 // 기수 프로젝트(정본 §42 Project·§43 ProjectMember) — 운영 조회

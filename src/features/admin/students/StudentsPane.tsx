@@ -17,6 +17,10 @@ const TABS: { key: TabKey; label: string }[] = [
 /**
  * 학생 관리 본문 — 출결·출결 폼·계정 3탭.
  *
+ * <p>탭 모양은 어디에 놓이느냐로 갈린다. 단독 화면(/admin/students)에서는 이 탭이 1차라
+ * 밑줄이고, 기수 허브 안에서는 바깥 탭이 이미 밑줄이라 알약형을 쓴다 — 같은 줄이 두 번
+ * 겹치면 어느 쪽이 상위인지 읽히지 않는다.</p>
+ *
  * <p>단독 화면(/admin/students)과 기수 허브의 '수강생' 탭이 같은 본문을 쓴다. 두 자리에서
  * 화면이 갈라지지 않도록 본문을 여기 한 벌만 두고, 다른 것은 {@link CohortScope} 유무뿐이다 —
  * 허브에서는 기수를 골라 들어왔으니 과정·기수 선택 컨트롤이 사라진다.</p>
@@ -36,7 +40,7 @@ export function StudentsPane({
   return (
     <div>
       <Tabs
-        variant="underline"
+        variant={scope ? 'pill' : 'underline'}
         aria-label="학생 관리 탭"
         value={tab}
         onChange={setTab}

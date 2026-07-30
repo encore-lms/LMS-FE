@@ -246,12 +246,30 @@ export default function CaseDetailPage() {
             </div>
           </div>
 
-          {/* 보완 요청은 사유가 전부다 — 무엇을 고쳐야 하는지 모르면 다시 낼 수 없다. */}
-          {data?.statusLabel === '보완 요청' && (
-            <section className="bg-warning-bg/70 flex flex-col gap-1 rounded-xl p-4">
-              <span className="text-warning flex items-center gap-1.5 text-[12px] font-bold">
+          {/* 강사가 돌려보낸 사례는 사유가 전부다 — 무엇을 고쳐야 하는지 모르면 다시 낼 수 없다.
+              인증 취소도 같은 자리에 띄운다. 이 상태에서는 편집 폼이 뜨고 상태 이력 영역이
+              렌더되지 않아, 이 배너 말고는 사유를 볼 곳이 없다. */}
+          {data?.reviewStatus && (
+            <section
+              className={cn(
+                'flex flex-col gap-1 rounded-xl p-4',
+                data.reviewStatus === 'revoked'
+                  ? 'bg-danger-bg/70'
+                  : 'bg-warning-bg/70',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex items-center gap-1.5 text-[12px] font-bold',
+                  data.reviewStatus === 'revoked'
+                    ? 'text-danger'
+                    : 'text-warning',
+                )}
+              >
                 <AlertTriangle className="size-3.5" aria-hidden="true" />
-                강사가 보완을 요청했어요
+                {data.reviewStatus === 'revoked'
+                  ? '강사가 인증을 취소했어요'
+                  : '강사가 보완을 요청했어요'}
               </span>
               <span className="text-fg-muted text-[12px] leading-5">
                 {data.reviewComment?.trim() ||

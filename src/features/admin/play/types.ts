@@ -17,6 +17,8 @@ export interface TypingPassage {
   /** 정렬 순서 */
   order: number
   status: PassageStatus
+  /** 본문 원문 — 수정 폼 프리필용. BE 계약 확정 전 클라이언트 보존(목록 응답에 없으면 undefined). */
+  content?: string
 }
 
 // 일괄 업로드 검증 결과 한 행.

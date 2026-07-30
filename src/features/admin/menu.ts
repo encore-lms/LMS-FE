@@ -15,7 +15,7 @@ export const adminMenu: MenuNode[] = [
   {
     label: '기수 설계·운영',
     children: [
-      { label: '과정·기수·교과목', to: '/admin/education' },
+      { label: '담당 과정/기수', to: '/admin/education' },
       { label: '학생 관리', to: '/admin/students' },
       {
         label: '멘토링 관리',

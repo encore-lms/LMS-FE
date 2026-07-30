@@ -169,6 +169,7 @@ export default function CohortsPage() {
       q={q}
       onQChange={setQ}
       searchPlaceholder="과정명·기수명·회차로 검색"
+      errorTitle="담당 과정을 불러오지 못했어요"
       scopeSummary={
         data
           ? `담당 ${data.total}개 (진행 중 ${data.operating} · 예정 ${data.upcoming} · 종료 ${data.ended})`

@@ -63,7 +63,7 @@ export const adminMenu: MenuNode[] = [
       { label: '외부 연동', to: '/admin/integrations', comingSoon: true },
     ],
   },
-  // 설정 — 랜딩(/admin/settings)이 계정 관리이며, 하위 탭(hrd-api-key·course-config·
+  // 설정 — 랜딩(/admin/settings)이 계정 관리이며, 하위 탭(hrd-api-key·
   // courses/new)은 prefix 매칭으로 활성 유지. 운영 계정·권한 메뉴는 설정으로 통합되어 폐지.
   { label: '설정', to: '/admin/settings' },
 ]

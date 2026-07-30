@@ -18,6 +18,7 @@ import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
+import { FeatureTogglePane } from './FeatureTogglePane'
 import { useAdminCohorts } from './cohortRows'
 import { SkeletonText } from '@/components/ui/Skeleton'
 
@@ -283,7 +284,11 @@ export default function EducationPage() {
           !courseId || !cohortId ? (
             <NeedCourse />
           ) : (
-            <DescriptionPane courseId={courseId} cohortId={cohortId} />
+            <div className="flex flex-col gap-5">
+              <DescriptionPane courseId={courseId} cohortId={cohortId} />
+              {/* 운영 설정의 '교육 과정 설정'에서 옮겨 온 마일리지·PLAY 사용 여부. */}
+              <FeatureTogglePane courseId={courseId} cohortId={cohortId} />
+            </div>
           )
         ) : (
           <PlaceholderPane

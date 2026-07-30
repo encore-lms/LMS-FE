@@ -36,6 +36,9 @@ vi.mock('../mentoring/MentoringPane', () => ({
 vi.mock('@/features/student/qna/QnaListPage', () => ({
   default: () => <div>QnA 임베드</div>,
 }))
+vi.mock('./FeatureTogglePane', () => ({
+  FeatureTogglePane: () => <div>기능 사용 여부 패널</div>,
+}))
 
 // 기수 허브 — URL 의 :cohortId 하나를 탭으로 파고든다.
 // 기수 고르기·기본 기수 판정은 담당 과정/기수 목록(CohortListPage)으로 옮겼다.
@@ -173,10 +176,12 @@ describe('EducationPage (기수 허브)', () => {
     expect(screen.getByText('기록실 임베드')).toBeInTheDocument()
   })
 
-  it('설정 탭은 HRD 과정 상세를 보여준다', () => {
+  it('설정 탭은 HRD 과정 상세와 기능 사용 여부를 함께 보여준다', () => {
     renderHub('?tab=settings')
     expect(screen.getByText('K-디지털트레이닝')).toBeInTheDocument()
     expect(screen.getByText('17,424,000원')).toBeInTheDocument()
+    // 운영 설정의 '교육 과정 설정'에서 옮겨 온 마일리지·PLAY 토글.
+    expect(screen.getByText('기능 사용 여부 패널')).toBeInTheDocument()
   })
 
   // 사이드바 단독 메뉴에서 옮겨 온 셋 — 기수를 고른 뒤에 하는 일이라 허브 안이 제자리다.

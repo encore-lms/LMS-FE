@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   BookOpen,
   Check,
-  ClipboardCheck,
   Coins,
   FileSpreadsheet,
   Gamepad2,
@@ -35,12 +34,11 @@ interface QuickLinkDef {
 // 추가 가능한 화면 카탈로그 — 운영 메뉴의 주요 목적지.
 const CATALOG: QuickLinkDef[] = [
   { to: '/admin/students', label: '학생 관리', icon: Users, tone: 'bg-info-bg text-info' },
-  { to: '/admin/education', label: '과정·기수·교과목', icon: BookOpen, tone: 'bg-success-bg text-success' },
+  { to: '/admin/education', label: '담당 과정/기수', icon: BookOpen, tone: 'bg-success-bg text-success' },
   { to: '/admin/mentors/assignments', label: '멘토링 관리', icon: HeartHandshake, tone: 'bg-accent-bg text-accent-strong' },
   { to: '/admin/mileage', label: '마일리지', icon: Coins, tone: 'bg-warning-bg text-warning' },
   { to: '/admin/mentoring/logs', label: '멘토링 일지', icon: NotebookPen, tone: 'bg-accent-bg text-accent-strong' },
   { to: '/admin/reputation', label: '평판 관리', icon: Star, tone: 'bg-warning-bg text-warning' },
-  { to: '/admin/education?tab=records', label: '학습 기록', icon: ClipboardCheck, tone: 'bg-success-bg text-success' },
   { to: '/admin/certificates/reviews', label: '인증 검토', icon: BadgeCheck, tone: 'bg-success-bg text-success' },
   { to: '/admin/quizzes', label: '퀴즈 관리', icon: PenSquare, tone: 'bg-info-bg text-info' },
   { to: '/admin/csv-mapping', label: 'CSV 매핑', icon: FileSpreadsheet, tone: 'bg-info-bg text-info' },
@@ -59,9 +57,11 @@ const DEFAULTS = [
 ]
 
 // 낡은 경로 → 새 경로 마이그레이션. 카탈로그 재정비 시 기존 저장값이 사라지지 않게.
-// 학습 기록: 단독 라우트 제거 → 과정·기수·교과목 기록실 탭으로 흡수.
+// 학습 기록: 단독 라우트 제거 → 기수 허브 기록실 탭으로 흡수. 탭은 기수를 고른 뒤라야 열려
+// 바로가기는 담당 과정/기수 목록까지만 데려간다.
 const MIGRATE: Record<string, string> = {
-  '/admin/records/review': '/admin/education?tab=records',
+  '/admin/records/review': '/admin/education',
+  '/admin/education?tab=records': '/admin/education',
 }
 
 function loadLinks(): string[] {
@@ -123,7 +123,7 @@ export function QuickLinks() {
       {/* 옅은 배경 컨테이너 — 다크 인사이트에서 본문으로 넘어가는 시각적 브릿지 */}
       <div className="bg-surface-muted/50 flex flex-wrap items-start gap-4 rounded-2xl px-5 py-4">
         {items.map(({ to, label, icon: Icon, tone }) => (
-          // 타일 폭은 가장 긴 라벨('과정·기수·교과목')이 한 줄에 들어가는 값.
+          // 타일 폭은 가장 긴 라벨('담당 과정/기수')이 한 줄에 들어가는 값.
           <Link
             key={to}
             to={to}

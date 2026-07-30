@@ -19,6 +19,7 @@ import {
   useRequestProjectChange,
   useSubmitProjectRevision,
 } from './api/changeRequests'
+import { useProjectWorkspace } from '../api/projects'
 
 // 프로젝트 수정 권한 요청 (/student/projects/:projectId/change-requests/new)
 // — Figma 4859:6731(요청·locked) · 4857:6654(승인 후·editing).
@@ -64,6 +65,8 @@ export default function ChangeRequestPage() {
 
   // 서버가 상태 정본 — 강사 승인/반려가 여기로 반영된다. zustand 는 화면 공용 미러라 동기화.
   const { data: serverStatus } = useProjectChangeStatus(projectId)
+  // 제목·메타는 워크스페이스 조회에서 — 목록을 거치지 않고 URL 로 바로 들어와도 맞아야 한다.
+  const { data: project } = useProjectWorkspace(projectId)
   const requestMutation = useRequestProjectChange(projectId)
   const submitMutation = useSubmitProjectRevision(projectId)
   const cancelMutation = useCancelProjectChange(projectId)
@@ -88,9 +91,8 @@ export default function ChangeRequestPage() {
     }
   }, [expired, projectId, resetEditRequest, toast])
 
-  const [reason, setReason] = useState(
-    editRequest?.requestReason ?? EXAMPLE_REASON,
-  )
+  // 예시 문구를 값으로 채워 두면 수강생이 지우지 않고 그대로 내, 남의 프로젝트 사유가 강사에게 간다.
+  const [reason, setReason] = useState(editRequest?.requestReason ?? '')
   const [summary, setSummary] = useState(editRequest?.changeSummary ?? '')
 
   usePageHeader(HEADER[status][0], HEADER[status][1])
@@ -180,20 +182,23 @@ export default function ChangeRequestPage() {
         />
       )}
 
-      {/* 프로젝트 정보 (공통) */}
+      {/* 프로젝트 정보 (공통) — 어느 프로젝트를 고치겠다는 요청인지 여기서 확인한다.
+          예전에는 이 카드가 통째로 하드코딩('주문 관리 MSA 백엔드')이라, 어떤 프로젝트에서
+          들어와도 남의 프로젝트가 적혀 있었다. */}
       <section className={cn(card, 'flex flex-col gap-2')}>
         <div className="flex items-center gap-2">
           <span className="text-fg text-[15px] font-bold">
-            주문 관리 MSA 백엔드
+            {project?.title ?? '프로젝트'}
           </span>
-          <span className="bg-success-bg text-success rounded px-1.5 py-0.5 text-[10px] font-bold">
-            인증 완료
-          </span>
+          {project?.status === 'certified' && (
+            <span className="bg-success-bg text-success rounded px-1.5 py-0.5 text-[10px] font-bold">
+              인증 완료
+            </span>
+          )}
         </div>
-        <span className="text-fg-subtle text-[11px]">
-          역할 PM · 팀 프로젝트 4명 · 2026-04-01 ~ 2026-05-30 · 인증일
-          2026-05-08
-        </span>
+        {project?.meta && (
+          <span className="text-fg-subtle text-[11px]">{project.meta}</span>
+        )}
       </section>
 
       {/* none·rejected — 수정 사유 입력(반려됐으면 보완해서 다시 낸다) */}
@@ -207,7 +212,7 @@ export default function ChangeRequestPage() {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="왜 다시 수정해야 하는지 적어주세요"
+              placeholder={`왜 다시 수정해야 하는지 적어주세요 (예: ${EXAMPLE_REASON})`}
               className={inputClass({
                 size: 'md',
                 className: 'min-h-[100px] resize-none leading-6',

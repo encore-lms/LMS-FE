@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
 import { adminKeys } from './queryKeys'
 import type { StudentAccount, StudentAccountQueue } from '@/shared/types'
@@ -67,5 +67,22 @@ export function useStudentAccounts(cohortId?: string | null) {
           }
           return queue
         }),
+  })
+}
+
+/**
+ * 수강생 로그인 차단/해제.
+ *
+ * <p>예전에는 화면 state 만 바꿔, 차단해 놓고 새로고침하면 풀린 것처럼 보였다.
+ * 서버 status(ACTIVE/BLOCKED)가 정본이고 로그인 검사도 그 값을 본다.</p>
+ */
+export function useChangeLoginBlock() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, blocked }: { userId: string; blocked: boolean }) =>
+      apiClient.patch(`/users/students/${userId}/login-block`, { blocked }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.studentAccounts() })
+    },
   })
 }

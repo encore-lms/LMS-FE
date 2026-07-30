@@ -1,30 +1,29 @@
 import { XCircle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { buttonClass } from '@/components/ui/buttonClass'
+import type { TsReviewStatus } from '../types'
 
-// 강사 반려 안내 — 인증 요청/변경 제안이 반려됐을 때 사유(코멘트)를 회신으로 보여준다.
-// '이어 작성'으로 사유를 반영해 보완할 수 있다. Figma 인증/변경 반려 모달과 대응.
+// 강사가 돌려보낸 사례의 사유를 보여준다 — 보완 요청과 인증 취소 두 경우.
+// '이어 작성'으로 사유를 반영해 보완한 뒤 다시 요청할 수 있다.
 interface RejectNoticeModalProps {
-  kind: 'cert' | 'change'
-  reviewer: string
+  kind: TsReviewStatus
   reason: string
   onClose: () => void
 }
 
 export function RejectNoticeModal({
   kind,
-  reviewer,
   reason,
   onClose,
 }: RejectNoticeModalProps) {
-  const isCert = kind === 'cert'
-  const title = isCert ? '인증 요청 반려' : '변경 제안 반려'
-  const bannerText = isCert
-    ? '강사가 인증 요청을 반려했어요'
-    : '강사가 변경 제안을 반려했어요'
-  const infoText = isCert
+  const revoked = kind === 'revoked'
+  const title = revoked ? '인증 취소' : '보완 요청'
+  const bannerText = revoked
+    ? '강사가 인증을 취소했어요'
+    : '강사가 보완을 요청했어요'
+  const infoText = revoked
     ? '사유를 반영해 내용을 보완한 뒤 다시 인증을 요청할 수 있어요.'
-    : '사유를 반영해 보완한 뒤 다시 제안할 수 있어요.'
+    : '사유를 반영해 보완한 뒤 다시 인증을 요청할 수 있어요.'
   return (
     <Modal
       open
@@ -49,13 +48,9 @@ export function RejectNoticeModal({
           </span>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">검토자</span>
-          <span className="border-border bg-surface text-fg rounded-[10px] border px-3.5 py-3 text-[13px]">
-            {reviewer}
+          <span className="text-fg text-[12px] font-bold">
+            {revoked ? '인증 취소 사유' : '보완 요청 사유'}
           </span>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-fg text-[12px] font-bold">반려 사유</span>
           <p className="border-border text-fg-muted rounded-[10px] border px-3.5 py-3 text-[13px] leading-5">
             {reason}
           </p>

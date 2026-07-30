@@ -100,6 +100,11 @@ export default function GradingPage() {
   const total = data?.totalManualCount ?? 0
   const allEntered = gradedCount >= total
   const pct = total > 0 ? Math.round((gradedCount / total) * 100) : 0
+  // 서버 기준 확정 여부 — 수동 문항이 없거나 전부 채점 완료면 총점은 확정이다.
+  // (입력 중 드래프트가 아니라 저장된 상태 기준이라 채점 도중에는 임시로 남는다)
+  const scoreConfirmed =
+    (data?.items ?? []).length === 0 ||
+    (data?.items ?? []).every((it) => it.status === 'done')
   // 학생명 — BE는 studentUserId만 주므로 로스터 join(없으면 BE studentName/대체).
   const studentName =
     (roster ?? []).find((s) => s.userId === data?.studentUserId)?.name ||
@@ -150,14 +155,18 @@ export default function GradingPage() {
               </div>
               <div className="bg-divider h-9 w-px" />
               <div>
-                <p className="text-fg-subtle text-xs">채점 진행률</p>
+                <p className="text-fg-subtle text-xs">수동 채점 진행률</p>
                 <p className="text-fg text-sm font-bold">
-                  {gradedCount} / {total} 문항 · {pct}%
+                  {total > 0
+                    ? `${gradedCount} / ${total} 문항 · ${pct}%`
+                    : '대상 문항 없음 · 자동 채점'}
                 </p>
               </div>
               <div className="bg-divider h-9 w-px" />
               <div>
-                <p className="text-fg-subtle text-xs">임시 점수</p>
+                <p className="text-fg-subtle text-xs">
+                  {scoreConfirmed ? '확정 점수' : '임시 점수'}
+                </p>
                 <p className="text-fg text-lg font-bold">
                   {provisional}{' '}
                   <span className="text-fg-subtle text-xs font-medium">
@@ -175,12 +184,14 @@ export default function GradingPage() {
                 ← 제출 현황으로
               </button>
             </div>
-            <div className="bg-surface-muted mt-3 h-2 w-40 overflow-hidden rounded-full">
-              <div
-                className="bg-accent-strong h-full rounded-full transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
+            {total > 0 && (
+              <div className="bg-surface-muted mt-3 h-2 w-40 overflow-hidden rounded-full">
+                <div
+                  className="bg-accent-strong h-full rounded-full transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            )}
           </div>
 
           {/* 수동 문항 없음(자동 완료) — 결과 보기에서만 도달 */}

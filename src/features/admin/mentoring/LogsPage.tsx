@@ -20,10 +20,16 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 // 검토 모달에서 매니저 승인(POST .../approve)·수정 요청(.../change-requests) 가능,
 // 직접 수정·폐기·반려는 없음(반려 KPI·버튼은 시안 단계라 제외).
 // 상태 = 초안/승인 대기/유효/수정 요청/재제출 후 유효.
-export default function LogsPage() {
+// embedded=true 면 기수 허브의 '멘토링' 탭에 임베드(자체 헤더·바깥 패딩 생략).
+export default function LogsPage({
+  embedded = false,
+}: {
+  embedded?: boolean
+} = {}) {
   usePageHeader(
     '멘토링 일지 관리',
     '운영자 조회·수정 요청 · 직접 수정 불가 · 최종 유효본 기준 인정 시간 계산',
+    !embedded,
   )
   const { data, isPending, isError, refetch } = useAdminMentoringLogs()
   const [status, setStatus] = useSearchParamState('status', 'all')
@@ -119,7 +125,7 @@ export default function LogsPage() {
   ]
 
   return (
-    <div className="p-8">
+    <div className={embedded ? '' : 'p-8'}>
       {/* 돌아가기 — 멘토 배정 관리로 */}
       <Link
         to="/admin/mentors/assignments"

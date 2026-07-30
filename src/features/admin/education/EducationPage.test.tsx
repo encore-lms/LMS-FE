@@ -5,12 +5,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import EducationPage from './EducationPage'
 import { useCourseDetail } from './api'
-import { useCourseList } from '../api/settings'
-import { useAllCourseCohorts } from './cohortRows'
+import { useAdminCohorts } from './cohortRows'
 import type { CourseDetail } from './types'
 
 vi.mock('./api')
-vi.mock('../api/settings')
 vi.mock('./cohortRows')
 // 각 패널은 자체 데이터/훅이 많아 탭 분기 검증에선 스텁으로 대체.
 vi.mock('../records/RecordsGridPage', () => ({
@@ -46,30 +44,41 @@ function ok(data: unknown) {
 }
 
 function renderHub(search = '') {
-  vi.mocked(useCourseList).mockReturnValue(
-    ok([
-      { courseId: 'course-sk', title: 'SK네트웍스 Family AI 캠프' },
-    ]) as unknown as ReturnType<typeof useCourseList>,
-  )
-  vi.mocked(useAllCourseCohorts).mockReturnValue({
-    rows: [
-      {
-        cohortId: 'cohort-34',
-        courseId: 'course-sk',
-        courseTitle: 'SK네트웍스 Family AI 캠프',
-        cohortNo: '34',
-        cohortLabel: '34기',
-        startDate: '2026-04-28',
-        endDate: '2026-10-26',
-        hrdTrprId: 'AIG2026-0001',
-        status: 'ongoing' as const,
-        dDayLabel: 'D-88',
+  vi.mocked(useAdminCohorts).mockReturnValue({
+    data: {
+      total: 1,
+      operating: 1,
+      upcoming: 0,
+      ended: 0,
+      summary: {
+        operatingCourses: { value: 1, hint: '' },
+        students: { value: 0, hint: '' },
+        gradingPending: { value: 0, hint: '' },
+        reviewPending: { value: 0, hint: '' },
       },
-    ],
+      rows: [
+        {
+          id: 'cohort-34',
+          courseId: 'course-sk',
+          name: 'SK네트웍스 Family AI 캠프 34기',
+          subtitle: 'SK네트웍스 Family AI 캠프 · 34회차',
+          period: '2026.04.28 ~ 2026.10.26',
+          dday: 'D-88',
+          instructors: [],
+          hrdTrprId: 'AIG2026-0001',
+          students: 0,
+          evalSummary: '미응시 0 · 제출 0',
+          evalPending: '채점 대기 0',
+          reviewSummary: '기록 0 · 프로젝트 0 · 트러블 0',
+          reviewPending: '대기 0건',
+          status: 'operating' as const,
+        },
+      ],
+    },
     isPending: false,
     isError: false,
     refetch: vi.fn(),
-  })
+  } as unknown as ReturnType<typeof useAdminCohorts>)
   vi.mocked(useCourseDetail).mockReturnValue(
     ok(detail) as unknown as ReturnType<typeof useCourseDetail>,
   )

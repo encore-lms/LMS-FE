@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CohortDirectory } from '@/components/data/CohortDirectory'
-import { type Column } from '@/components/data/DataTable'
+import {
+  cohortColumns,
+  type CohortDirectoryRow,
+} from '@/components/data/cohortColumns'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { usePageHeader } from '@/shared/store'
-import type {
-  CohortStatus,
-  InstructorCohortRow,
-  InstructorRole,
-} from '@/shared/types'
+import type { CohortStatus, InstructorRole } from '@/shared/types'
 import { useInstructorCohorts } from '../api/console'
 
 const ROLE_META: Record<InstructorRole, { label: string; tone: BadgeTone }> = {
@@ -85,84 +84,29 @@ export default function CohortsPage() {
       ]
     : []
 
-  const columns: Column<InstructorCohortRow>[] = [
-    {
-      key: 'cohort',
-      header: '과정/기수',
-      cell: (r) => (
-        <div>
-          <p className="text-fg text-sm font-medium">{r.name}</p>
-          <p className="text-fg-subtle text-xs">{r.subtitle}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'period',
-      header: '운영 기간',
-      // 날짜 범위(2026.03.02 ~ 2026.08.28)가 한 줄에 들어갈 폭.
-      className: 'w-48',
-      cell: (r) => (
-        <div>
-          <p className="text-fg-muted text-sm whitespace-nowrap">{r.period}</p>
-          <p className="text-accent-strong text-xs font-bold">{r.dday}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'role',
-      header: '담당 역할',
-      className: 'w-28',
-      cell: (r) => (
-        <StatusBadge
-          label={ROLE_META[r.role].label}
-          tone={ROLE_META[r.role].tone}
-        />
-      ),
-    },
-    {
-      key: 'students',
-      header: '수강생',
-      // "24명 + 위험 N" 칩이 한 줄에 나란히 놓이는 폭.
-      className: 'w-32',
-      cell: (r) => (
-        <div className="flex items-center gap-1.5">
-          <span className="text-fg shrink-0 text-sm font-medium whitespace-nowrap">
-            {r.students}명
-          </span>
-          {r.riskCount > 0 && (
-            <span className="bg-danger-bg text-danger shrink-0 rounded px-1.5 py-px text-[10px] font-bold whitespace-nowrap">
-              위험 {r.riskCount}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'eval',
-      header: '평가',
-      className: 'w-40',
-      cell: (r) => (
-        <div>
-          <p className="text-fg-subtle text-xs">{r.evalSummary}</p>
-          <p className="text-warning text-sm font-medium">{r.evalPending}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'review',
-      header: '검토',
-      className: 'w-44',
-      cell: (r) => (
-        <div>
-          <p className="text-fg-subtle text-xs">{r.reviewSummary}</p>
-          <p className="text-info text-sm font-medium">{r.reviewPending}</p>
-        </div>
-      ),
-    },
-  ]
+  // 공용 컬럼이 읽는 형태로 맞춘다 — 세 번째 칸은 강사 본인의 역할 배지.
+  const rows: CohortDirectoryRow[] = filtered.map((r) => ({
+    id: r.id,
+    name: r.name,
+    subtitle: r.subtitle,
+    period: r.period,
+    dday: r.dday,
+    lead: (
+      <StatusBadge
+        label={ROLE_META[r.role].label}
+        tone={ROLE_META[r.role].tone}
+      />
+    ),
+    students: r.students,
+    riskCount: r.riskCount,
+    evalSummary: r.evalSummary,
+    evalPending: r.evalPending,
+    reviewSummary: r.reviewSummary,
+    reviewPending: r.reviewPending,
+  }))
 
   return (
-    <CohortDirectory<InstructorCohortRow, CohortStatus>
+    <CohortDirectory<CohortDirectoryRow, CohortStatus>
       tabs={statusTabs}
       status={status}
       onStatusChange={setStatus}
@@ -183,8 +127,8 @@ export default function CohortsPage() {
         dot: c.dot,
         hintColor: c.hintColor,
       }))}
-      columns={columns}
-      rows={filtered}
+      columns={cohortColumns('담당 역할')}
+      rows={rows}
       rowKey={(r) => r.id}
       onRowClick={(r) => navigate(`/instructor/cohorts/${r.id}/education`)}
       footnote={

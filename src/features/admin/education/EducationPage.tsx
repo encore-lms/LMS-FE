@@ -10,13 +10,12 @@ import { CurriculumModal } from './CurriculumModal'
 import { usePageHeader } from '@/shared/store'
 import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
-import { useCourseList } from '../api/settings'
 import { useCourseDetail } from './api'
 import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
-import { useAllCourseCohorts } from './cohortRows'
+import { useAdminCohorts } from './cohortRows'
 import { SkeletonText } from '@/components/ui/Skeleton'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
@@ -165,15 +164,14 @@ function DescriptionPane({
 // 드러나지 않았다. 선택은 목록 화면(CohortListPage)이 맡는다.
 export default function EducationPage() {
   const { cohortId = '' } = useParams()
-  const { data: courses } = useCourseList()
-  const { rows } = useAllCourseCohorts(courses)
-  const row = rows.find((r) => r.cohortId === cohortId) ?? null
+  const { data } = useAdminCohorts()
+  const row = data?.rows.find((r) => r.id === cohortId) ?? null
   const courseId = row?.courseId ?? null
 
   usePageHeader(
-    row ? `${row.courseTitle} ${row.cohortLabel}` : '과정/기수',
+    row ? row.name : '과정/기수',
     row
-      ? `${row.startDate} ~ ${row.endDate} · 학습 자료와 활동을 한 곳에서 관리합니다`
+      ? `${row.period} · 학습 자료와 활동을 한 곳에서 관리합니다`
       : '학습 자료와 활동을 한 곳에서 관리합니다',
   )
 

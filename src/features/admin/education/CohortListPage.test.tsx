@@ -3,47 +3,57 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import CohortListPage from './CohortListPage'
-import { useCourseList } from '../api/settings'
-import { useAllCourseCohorts, type AdminCohortRow } from './cohortRows'
+import { useAdminCohorts, type AdminCohortRow } from './cohortRows'
 
-vi.mock('../api/settings')
 vi.mock('./cohortRows')
 
 // 담당 과정/기수 목록 — 기수를 골라 허브로 들어가고, 설정은 여기서 바로 진입한다.
+// 표는 강사 목록과 같은 컬럼을 쓰고, 세 번째 칸만 담당 강사로 다르다.
 
 function row(over: Partial<AdminCohortRow> = {}): AdminCohortRow {
   return {
-    cohortId: 'c-32',
+    id: 'c-32',
     courseId: 'course-sk',
-    courseTitle: 'SK네트웍스 Family AI 캠프',
-    cohortNo: '32',
-    cohortLabel: '32기',
-    startDate: '2026-04-28',
-    endDate: '2026-10-26',
+    name: 'SK네트웍스 Family AI 캠프 32기',
+    subtitle: 'SK네트웍스 Family AI 캠프 · 32회차',
+    period: '2026.04.28 ~ 2026.10.26',
+    dday: 'D-88',
+    instructors: ['김강사'],
     hrdTrprId: 'AIG2026-0001',
-    status: 'ongoing',
-    dDayLabel: 'D-88',
+    students: 22,
+    evalSummary: '미응시 3 · 제출 18',
+    evalPending: '채점 대기 2',
+    reviewSummary: '기록 4 · 프로젝트 1 · 트러블 0',
+    reviewPending: '대기 5건',
+    status: 'operating',
     ...over,
   }
 }
 
-/** KPI 카드 힌트에도 같은 과정명이 나와, 검증은 표 안으로 범위를 좁힌다. */
+/** KPI 카드 힌트에도 같은 문구가 나와, 검증은 표 안으로 범위를 좁힌다. */
 function table() {
   return within(screen.getByRole('table'))
 }
 
 function renderList(rows: AdminCohortRow[] = [row()]) {
-  vi.mocked(useCourseList).mockReturnValue({
-    data: [{ courseId: 'course-sk', title: 'SK네트웍스 Family AI 캠프' }],
-    isPending: false,
-    isError: false,
-  } as unknown as ReturnType<typeof useCourseList>)
-  vi.mocked(useAllCourseCohorts).mockReturnValue({
-    rows,
+  vi.mocked(useAdminCohorts).mockReturnValue({
+    data: {
+      total: rows.length,
+      operating: rows.filter((r) => r.status === 'operating').length,
+      upcoming: rows.filter((r) => r.status === 'upcoming').length,
+      ended: rows.filter((r) => r.status === 'ended').length,
+      summary: {
+        operatingCourses: { value: 1, hint: '등록 과정 1개' },
+        students: { value: 22, hint: '전체 기수 합계' },
+        gradingPending: { value: 2, hint: '수동 채점 2건' },
+        reviewPending: { value: 5, hint: '검토 대기 5건' },
+      },
+      rows,
+    },
     isPending: false,
     isError: false,
     refetch: vi.fn(),
-  })
+  } as unknown as ReturnType<typeof useAdminCohorts>)
   return render(
     <MemoryRouter initialEntries={['/admin/education']}>
       <Routes>
@@ -55,12 +65,29 @@ function renderList(rows: AdminCohortRow[] = [row()]) {
 }
 
 describe('CohortListPage (담당 과정/기수)', () => {
-  it('진행 중 기수를 표로 보여준다', () => {
+  it('진행 중 기수를 강사와 같은 컬럼으로 보여준다', () => {
     renderList()
     expect(
       table().getByText('SK네트웍스 Family AI 캠프 32기'),
     ).toBeInTheDocument()
     expect(table().getByText('D-88')).toBeInTheDocument()
+    expect(table().getByText('22명')).toBeInTheDocument()
+    expect(table().getByText('미응시 3 · 제출 18')).toBeInTheDocument()
+    expect(table().getByText('대기 5건')).toBeInTheDocument()
+  })
+
+  // 매니저는 자기 역할이 아니라 누가 맡은 기수인지를 봐야 한다.
+  it('강사 화면의 역할 배지 자리에 담당 강사 이름이 온다', () => {
+    renderList([row({ instructors: ['김강사', '이멘토'] })])
+    expect(
+      screen.getByRole('columnheader', { name: '담당 강사' }),
+    ).toBeInTheDocument()
+    expect(table().getByText('김강사, 이멘토')).toBeInTheDocument()
+  })
+
+  it('배정된 강사가 없으면 - 로 둔다', () => {
+    renderList([row({ instructors: [] })])
+    expect(table().getByText('-')).toBeInTheDocument()
   })
 
   it('행을 누르면 그 기수 허브로 들어간다', async () => {
@@ -82,7 +109,11 @@ describe('CohortListPage (담당 과정/기수)', () => {
     const user = userEvent.setup()
     renderList([
       row(),
-      row({ cohortId: 'c-30', cohortLabel: '30기', status: 'ended' }),
+      row({
+        id: 'c-30',
+        name: 'SK네트웍스 Family AI 캠프 30기',
+        status: 'ended',
+      }),
     ])
     expect(table().getByText(/32기/)).toBeInTheDocument()
     expect(table().queryByText(/30기/)).not.toBeInTheDocument()
@@ -95,7 +126,11 @@ describe('CohortListPage (담당 과정/기수)', () => {
     const user = userEvent.setup()
     renderList([
       row(),
-      row({ cohortId: 'c-31', cohortLabel: '31기', courseTitle: '데이터 분석' }),
+      row({
+        id: 'c-31',
+        name: '데이터 분석 31기',
+        subtitle: '데이터 분석 · 31회차',
+      }),
     ])
     await user.type(screen.getByLabelText(/검색/), '데이터')
     expect(await table().findByText(/데이터 분석 31기/)).toBeInTheDocument()

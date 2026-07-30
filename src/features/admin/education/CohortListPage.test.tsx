@@ -16,6 +16,8 @@ function row(over: Partial<AdminCohortRow> = {}): AdminCohortRow {
     courseId: 'course-sk',
     name: 'SK네트웍스 Family AI 캠프 32기',
     subtitle: 'SK네트웍스 Family AI 캠프 · 32회차',
+    courseTitle: 'SK네트웍스 Family AI 캠프',
+    cohortLabel: '32기',
     period: '2026.04.28 ~ 2026.10.26',
     dday: 'D-88',
     instructors: ['김강사'],
@@ -97,12 +99,15 @@ describe('CohortListPage (담당 과정/기수)', () => {
     expect(await screen.findByText('허브')).toBeInTheDocument()
   })
 
-  // 설정을 허브 탭에 두면 기수를 고른 뒤 한 번 더 찾아야 한다 — 목록에서 바로 간다.
-  it('설정 버튼은 행 클릭을 가로채고 설정 탭으로 보낸다', async () => {
-    const user = userEvent.setup()
+  // 설정은 기수 허브의 탭으로 옮겼다 — 목록은 강사 화면과 같은 6컬럼만 남는다.
+  it('목록에는 설정 버튼이 없다', () => {
     renderList()
-    await user.click(screen.getByRole('button', { name: '설정' }))
-    expect(await screen.findByText('허브')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '설정' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('columnheader', { name: '설정' }),
+    ).not.toBeInTheDocument()
   })
 
   it('상태 탭은 해당 상태만 남긴다', async () => {

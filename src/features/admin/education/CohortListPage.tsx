@@ -1,12 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings2 } from 'lucide-react'
 import { CohortDirectory } from '@/components/data/CohortDirectory'
 import {
   cohortColumns,
   type CohortDirectoryRow,
 } from '@/components/data/cohortColumns'
-import { type Column } from '@/components/data/DataTable'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { useAdminCohorts } from './cohortRows'
@@ -58,29 +56,6 @@ export default function CohortListPage() {
         reviewPending: r.reviewPending,
       }))
   }, [data, status, q])
-
-  const columns: Column<CohortDirectoryRow>[] = [
-    ...cohortColumns<CohortDirectoryRow>('담당 강사'),
-    {
-      key: 'settings',
-      header: '설정',
-      className: 'w-24',
-      // 설정은 허브 탭이 아니라 목록에서 바로 — 기수를 고르는 자리에서 곧장 손볼 수 있다.
-      cell: (r) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            navigate(`/admin/education/${r.id}?tab=settings`)
-          }}
-          className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold"
-        >
-          <Settings2 className="size-3.5" aria-hidden="true" />
-          설정
-        </button>
-      ),
-    },
-  ]
 
   const summary = data?.summary
 
@@ -135,12 +110,12 @@ export default function CohortListPage() {
             ]
           : []
       }
-      columns={columns}
+      columns={cohortColumns<CohortDirectoryRow>('담당 강사')}
       rows={rows}
       rowKey={(r) => r.id}
       onRowClick={(r) => navigate(`/admin/education/${r.id}`)}
       emptyText="조건에 맞는 기수가 없어요"
-      footnote="기수를 클릭하면 자료실·과제·퀴즈·프로젝트·이력서·기록실을 한 곳에서 확인 · [설정]은 목록에서 바로 진입"
+      footnote="기수를 클릭하면 과정 홈·수강생·기록실·퀴즈·프로젝트·과제·이력서·멘토링·QnA·자료실·설정을 한 곳에서 확인"
       isPending={isPending}
       isError={isError}
       onRetry={refetch}

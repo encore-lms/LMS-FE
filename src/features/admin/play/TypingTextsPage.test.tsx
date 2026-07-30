@@ -70,6 +70,9 @@ const overview: PlayOverview = {
 const deleteMutateSpy = vi.fn(
   (_id: unknown, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.(),
 )
+const upsertMutateSpy = vi.fn(
+  (_vars: unknown, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.(),
+)
 
 function renderPage() {
   vi.mocked(usePlayTypingTexts).mockReturnValue({
@@ -78,8 +81,7 @@ function renderPage() {
     isError: false,
   } as unknown as ReturnType<typeof usePlayTypingTexts>)
   vi.mocked(useUpsertPassage).mockReturnValue({
-    mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) =>
-      opts?.onSuccess?.(),
+    mutate: upsertMutateSpy,
   } as unknown as ReturnType<typeof useUpsertPassage>)
   vi.mocked(useDeletePassage).mockReturnValue({
     mutate: deleteMutateSpy,
@@ -150,6 +152,26 @@ describe('TypingTextsPage (PLAY 타자 관리)', () => {
     await user.click(screen.getAllByRole('button', { name: '수정' })[0])
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText('제시문 수정')).toBeInTheDocument()
+  })
+
+  it('복제 — 같은 내용으로 비활성 복사본 생성을 호출한다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '복제' })[0])
+    expect(upsertMutateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: null,
+        body: expect.objectContaining({
+          title: '리팩터링 원칙 복사본',
+          content: '중복을 제거하고 의도를 드러내는 이름을 붙인다.',
+          active: false,
+        }),
+      }),
+      expect.anything(),
+    )
+    expect(
+      await screen.findByText(/복사본을 만들었습니다/),
+    ).toBeInTheDocument()
   })
 
   it('삭제 — 확인 다이얼로그를 거쳐 삭제를 호출한다', async () => {

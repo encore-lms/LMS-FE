@@ -87,9 +87,9 @@ describe('adminMenu 사이드바 대분류 드롭다운', () => {
     fireEvent.click(group('학습·보상'))
     expect(isExpanded('학습·보상')).toBe(true)
     expect(screen.queryByRole('link', { name: '마일리지' })).not.toBeNull()
-    // PLAY 관리는 준비 중 — '(준비 중)' 표기가 붙은 이동 가능한 링크
+    // PLAY 관리 — 실기능 완결로 준비 중 해제(일반 링크)
     expect(
-      screen.getByRole('link', { name: /PLAY 관리.*\(준비 중\)/ }),
+      screen.getByRole('link', { name: 'PLAY 관리' }),
     ).toHaveAttribute('href', '/admin/play/typing-texts')
   })
 

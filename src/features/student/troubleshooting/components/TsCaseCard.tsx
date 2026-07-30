@@ -12,6 +12,11 @@ const STATUS: Record<TsStatus, Tone> = {
   draft: 'accent',
 }
 
+// 보완 요청·인증 취소는 status 가 draft 라, 톤까지 '작성 중'과 같으면 목록에서 구분되지 않는다.
+function statusTone(c: TsCase): Tone {
+  return c.reviewStatus ? 'danger' : STATUS[c.status]
+}
+
 export function TsCaseCard({
   c,
   onOpen,
@@ -63,7 +68,7 @@ export function TsCaseCard({
           <span
             className={cn(
               'rounded px-2 py-0.5 text-[11px] font-bold',
-              TONE_SOFT[STATUS[c.status]],
+              TONE_SOFT[statusTone(c)],
             )}
           >
             {c.statusLabel}
@@ -125,8 +130,9 @@ export function TsCaseCard({
               <ArrowRight className="size-3" />
             </button>
           </div>
-          {/* 강사 반려 사례 — 메인 버튼 아래에 '반려 사유' 노출. 클릭=사유 모달, 호버=사유 미리보기. */}
-          {c.rejectionReason && onShowReason && (
+          {/* 강사가 돌려보낸 사례 — 사유를 목록에서 바로 본다. 클릭=사유 모달, 호버=미리보기.
+              예전에는 상세로 들어가야만 무엇을 고쳐야 하는지 알 수 있었다. */}
+          {c.reviewComment && onShowReason && (
             <div className="group/rj relative">
               <button
                 type="button"
@@ -137,13 +143,15 @@ export function TsCaseCard({
                 className="text-danger inline-flex items-center gap-1 text-[11px] font-semibold"
               >
                 <AlertCircle className="size-3" />
-                반려 사유
+                {c.reviewStatus === 'revoked' ? '취소 사유' : '보완 사유'}
               </button>
               <div className="border-border bg-surface text-fg-muted invisible absolute top-full right-0 z-20 mt-1 w-64 rounded-lg border p-3 text-left text-[11px] leading-4 opacity-0 shadow-lg transition group-hover/rj:visible group-hover/rj:opacity-100">
                 <span className="text-danger mb-1 block text-[10px] font-bold">
-                  강사 반려 사유
+                  {c.reviewStatus === 'revoked'
+                    ? '강사 인증 취소 사유'
+                    : '강사 보완 요청 사유'}
                 </span>
-                {c.rejectionReason}
+                {c.reviewComment}
               </div>
             </div>
           )}

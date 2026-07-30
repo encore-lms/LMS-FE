@@ -25,6 +25,17 @@ import type {
 
 vi.mock('../api/students')
 vi.mock('../api/settings')
+// 차단은 서버에 남는다 — 테스트에서는 호출만 확인하고 성공으로 흘린다.
+vi.mock('@/shared/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/shared/api')>()),
+  useChangeLoginBlock: () => ({
+    mutate: (
+      _input: { userId: string; blocked: boolean },
+      opts?: { onSuccess?: () => void },
+    ) => opts?.onSuccess?.(),
+    isPending: false,
+  }),
+}))
 
 const accounts: StudentAccountQueue = {
   cohortLabel: 'AI 캠프 22기',

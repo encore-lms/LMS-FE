@@ -7,7 +7,7 @@ import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/shared/store'
 import { useCreateQuestion, useUpdateQuestion } from '../../api/qna'
-import { MarkdownEditor } from './MarkdownEditor'
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
 import { QNA_CATEGORIES } from '../types'
 import { TONE_SOLID } from '@/shared/lib/tone'
 

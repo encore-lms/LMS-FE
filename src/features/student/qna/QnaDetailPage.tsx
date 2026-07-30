@@ -19,7 +19,7 @@ import {
   useQnaDetail,
 } from '../api/qna'
 import { useQnaBase } from './useQnaBase'
-import { MarkdownEditor } from './components/MarkdownEditor'
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
 import type { QnaAnswer, QnaDetail, Tone } from './types'
 
 // 상세는 클릭 대상이 아닌 읽기 컨테이너라 그림자 없이 flat(간격만으로 구분).

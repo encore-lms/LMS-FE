@@ -5,6 +5,7 @@ import { AlertTriangle, FileText, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { Markdown } from '@/components/ui/Markdown'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
 import { apiClient } from '@/shared/api'
@@ -306,9 +307,8 @@ export default function CaseDetailPage() {
                     <span className="text-fg text-[14px] font-bold">
                       {b.label}
                     </span>
-                    <p className="text-fg-muted text-[13px] leading-6">
-                      {b.text}
-                    </p>
+                    {/* 작성은 마크다운으로 받는다 — 원문 그대로 찍으면 문법이 글자로 보인다. */}
+                    <Markdown className="text-[13px]">{b.text}</Markdown>
                   </div>
                 ))}
                 <div className="border-divider flex items-center gap-2 border-t pt-4">

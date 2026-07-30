@@ -78,6 +78,16 @@ const QnaListPage = lazy(() => import('@/features/student/qna/QnaListPage'))
 const QnaDetailPage = lazy(() => import('@/features/student/qna/QnaDetailPage'))
 // 정답 관리 (운영 전용 신설 — features/admin/quizzes, Figma 1515:10493)
 const QuizAnswersPage = lazy(() => import('./quizzes/AnswersPage'))
+// 퀴즈 템플릿 — 강사 화면 재사용(운영 전용 화면 없음).
+const QuizTemplateListPage = lazy(
+  () => import('@/features/instructor/quiz-templates/TemplateListPage'),
+)
+const QuizTemplateFormPage = lazy(
+  () => import('@/features/instructor/quiz-templates/TemplateFormPage'),
+)
+const QuizTemplateQuestionsPage = lazy(
+  () => import('@/features/instructor/quiz-templates/TemplateQuestionsPage'),
+)
 // 수동 채점 (운영 전용 신설 B안 — 강사 GradingPage 대체, Figma 1515:10710)
 const QuizGradingPage = lazy(() => import('./quizzes/GradingPage'))
 // 멘토링 관리 (운영 전용 신설 — features/admin/mentoring,
@@ -184,6 +194,18 @@ export const adminRoutes: RouteObject[] = [
       {
         path: 'quizzes/:quizId/submissions/:submissionId/grade',
         element: <QuizGradingPage />,
+      },
+      // 퀴즈 템플릿 운영 — 강사와 같은 화면. 없으면 '템플릿 관리'가 강사 경로로 나가
+      // 역할 가드에 막혀 대시보드로 튕긴다. /new 는 :templateId 보다 먼저(정적 우선).
+      { path: 'quiz-templates', element: <QuizTemplateListPage /> },
+      { path: 'quiz-templates/new', element: <QuizTemplateFormPage /> },
+      {
+        path: 'quiz-templates/:templateId/edit',
+        element: <QuizTemplateFormPage />,
+      },
+      {
+        path: 'quiz-templates/:templateId/questions',
+        element: <QuizTemplateQuestionsPage />,
       },
       // QnA 운영 — 'QnA 질문' 알림(매니저 브로드캐스트) 목적지. 수강생 화면 재사용.
       { path: 'qna', element: <QnaListPage /> },

@@ -153,7 +153,7 @@ describe('EducationPage (기수 허브)', () => {
 
   it('목록으로 돌아가는 링크가 있다', () => {
     renderHub()
-    expect(screen.getByRole('link', { name: /담당 과정\/기수/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /교육과정/ })).toHaveAttribute(
       'href',
       '/admin/education',
     )

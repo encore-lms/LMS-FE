@@ -9,7 +9,7 @@ import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { useAdminCohorts } from './cohortRows'
 
-// 담당 과정/기수 (/admin/education) — 기수를 골라 허브로 들어가는 1단계 화면.
+// 교육과정 (/admin/education) — 기수를 골라 허브로 들어가는 1단계 화면.
 // 예전에는 한 화면에서 과정·기수 드롭다운을 갈아 끼워, 지금 어느 기수를 보고 있는지 드러나지
 // 않고 기수끼리 비교도 안 됐다. 강사 화면과 같은 골격·같은 컬럼을 쓴다.
 
@@ -18,7 +18,7 @@ type StatusFilter = 'operating' | 'upcoming' | 'ended'
 export default function CohortListPage() {
   const navigate = useNavigate()
   usePageHeader(
-    '담당 과정/기수',
+    '교육과정',
     '과정과 기수를 선택해 학습 자료와 활동을 관리합니다',
   )
 

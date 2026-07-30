@@ -17,6 +17,7 @@ import {
   useSaveQuiz,
   useDeleteQuiz,
   useQuizCategoryOptions,
+  useRemindSubmission,
 } from '../api/quizzes'
 import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
 import { useAssignmentCohortOptions } from '../api/assignments'
@@ -268,6 +269,7 @@ function mockAll() {
   vi.mocked(useSaveQuiz).mockReturnValue(mut())
   vi.mocked(useDeleteQuiz).mockReturnValue(mut())
   vi.mocked(useSaveGrading).mockReturnValue(mut())
+  vi.mocked(useRemindSubmission).mockReturnValue(mut())
   vi.mocked(useCohortRoster).mockReturnValue(
     ok([
       { userId: 'u-1', name: '박지훈' },
@@ -411,6 +413,26 @@ describe('SubmissionsPage (§8)', () => {
     await user.click(screen.getByRole('button', { name: /수동 대기 \(9\)/ }))
     expect(screen.getByText('박지훈')).toBeInTheDocument()
     expect(screen.queryByText('김민준')).not.toBeInTheDocument()
+  })
+
+  it('재독촉 알림은 대상 수강생에게 발송 후 전송됨으로 잠긴다', async () => {
+    const user = userEvent.setup()
+    const mutate = vi.fn(
+      (_id: string, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.(),
+    )
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions', () => {
+      vi.mocked(useRemindSubmission).mockReturnValue({
+        mutate,
+        isPending: false,
+      } as unknown as ReturnType<typeof useRemindSubmission>)
+    })
+    await user.click(screen.getByRole('button', { name: '재독촉 알림' }))
+    // 미제출 행(u-6, 송하늘)의 studentUserId로 발송된다.
+    expect(mutate).toHaveBeenCalledWith('u-6', expect.anything())
+    expect(
+      await screen.findByText(/송하늘 님에게 제출 독촉 알림을 보냈어요/),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '알림 전송됨' })).toBeDisabled()
   })
 })
 

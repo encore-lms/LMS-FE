@@ -202,6 +202,16 @@ export function useQuizSubmissions(quizId: string) {
   })
 }
 
+/** 미제출 재독촉 — 대상 수강생에게 개인 알림을 발행한다(POST). */
+export function useRemindSubmission(quizId: string) {
+  return useMutation<unknown, Error, string>({
+    mutationFn: (studentUserId) =>
+      apiClient.post(`/instructor/quizzes/${quizId}/submissions/remind`, {
+        studentUserId,
+      }),
+  })
+}
+
 export interface SaveGradingInput {
   items: {
     questionId: string

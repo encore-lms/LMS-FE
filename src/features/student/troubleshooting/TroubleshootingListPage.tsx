@@ -286,12 +286,11 @@ export default function TroubleshootingListPage() {
             </ConfirmDialog>
           )}
 
-          {/* 강사 반려 사유 — 카드 '반려 사유' 클릭 시 코멘트 회신을 보여준다(확인 후 페이지에서 보완). */}
-          {reasonTarget?.rejectionReason && (
+          {/* 강사가 돌려보낸 사유 — 카드에서 클릭하면 전문을 띄운다(확인 후 이어 작성으로 보완). */}
+          {reasonTarget?.reviewComment && (
             <RejectNoticeModal
-              kind={reasonTarget.rejectionFrom ?? 'cert'}
-              reviewer={`${reasonTarget.category} · 임수현 강사`}
-              reason={reasonTarget.rejectionReason}
+              kind={reasonTarget.reviewStatus ?? 'changes_requested'}
+              reason={reasonTarget.reviewComment}
               onClose={() => setReasonTarget(null)}
             />
           )}

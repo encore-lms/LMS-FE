@@ -7,6 +7,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
+import { downloadCsv } from '@/shared/lib/downloadCsv'
 import type { CohortScope } from './scope'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -76,6 +77,37 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
 
   const isBlocked = (a: StudentAccount) =>
     blockedOverride[a.id] ?? a.loginBlocked
+
+  // 파일 이름에 쓸 기수 표기 — 어느 기수를 받은 건지 파일만 봐도 알 수 있어야 한다.
+  const cohortNo = courseConfig?.cohorts?.find((c) => c.id === cohortId)?.cohortNo
+  const cohortLabel = cohortNo ? `${cohortNo}기` : ''
+
+  /**
+   * 계정 정보 내려받기 — 화면에 보이는 것과 같은 범위(검색·상태 필터 적용)를 담는다.
+   *
+   * <p>목록을 그대로 받아 가면 필터를 걸어 둔 뜻이 사라지고, 받은 파일과 화면이 달라 어느
+   * 쪽이 맞는지 알 수 없다.</p>
+   */
+  const downloadAccounts = () => {
+    if (filtered.length === 0) {
+      toast.info('내려받을 계정이 없어요')
+      return
+    }
+    downloadCsv(
+      `계정정보_${cohortLabel || '전체'}_${new Date().toISOString().slice(0, 10)}.csv`,
+      ['이름', '학생 UUID', '생년월일', '가입일', '마지막 로그인', '훈련 상태', '로그인 차단'],
+      filtered.map((a) => [
+        a.name,
+        a.studentUuid,
+        a.birthDate,
+        a.joinedAt,
+        a.lastLoginAt ?? '미접속',
+        a.trainingStatus === 'dropout' ? '중도탈락' : '정상',
+        isBlocked(a) ? '차단' : '해제',
+      ]),
+    )
+    toast.success(`계정 ${filtered.length}건을 내려받았어요`)
+  }
 
   const filtered = useMemo(() => {
     const items = data?.items ?? []
@@ -329,9 +361,7 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
             <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="secondary"
-                onClick={() =>
-                  toast.info('계정 정보 내려받기는 준비 중입니다.')
-                }
+                onClick={downloadAccounts}
               >
                 <Download className="h-4 w-4" /> 계정 정보 다운로드
               </Button>

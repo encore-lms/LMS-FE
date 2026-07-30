@@ -11,6 +11,7 @@ import type {
   TsReviewStatus,
 } from '@/shared/types'
 import { useProjectReviewDetail, useTsReviewDetail } from '../api/reviews'
+import { Markdown } from '@/components/ui/Markdown'
 
 // 검토 상세 — 우측 슬라이드 패널(프로젝트·트러블슈팅 공용, RecordDetailPanel 패턴).
 // 인증/보완 판단 근거를 확인하고 <b>그 자리에서 처리</b>하는 상세 화면.
@@ -370,9 +371,14 @@ function TsBody({
 
       {star.map((s) => (
         <Section key={s.title} title={s.title}>
-          <p className="bg-surface-muted text-fg rounded-lg px-3 py-2.5 text-sm whitespace-pre-wrap">
-            {s.body || '작성된 내용이 없어요'}
-          </p>
+          {/* 수강생이 마크다운으로 쓴다 — 검토자가 원문 기호를 읽게 두면 안 된다. */}
+          <div className="bg-surface-muted text-fg rounded-lg px-3 py-2.5 text-sm">
+            {s.body ? (
+              <Markdown className="text-sm">{s.body}</Markdown>
+            ) : (
+              '작성된 내용이 없어요'
+            )}
+          </div>
         </Section>
       ))}
 

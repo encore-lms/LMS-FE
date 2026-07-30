@@ -14,6 +14,8 @@ export const quizKeys = {
 export const adminKeys = {
   all: ['admin'] as const,
   dashboard: () => [...adminKeys.all, 'dashboard'] as const,
+  /** 담당 과정/기수 목록(집계 포함). */
+  cohorts: () => [...adminKeys.all, 'cohorts'] as const,
   reviewQueue: (filter?: { status?: string }) =>
     [...adminKeys.all, 'reviews', { filter: filter ?? {} }] as const,
   reviewDetail: (reviewId: string) =>

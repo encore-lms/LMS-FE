@@ -11,7 +11,8 @@ const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
 const StudentManagementPage = lazy(
   () => import('./students/StudentManagementPage'),
 )
-// 과정·기수·교과목 통합 관리 (운영 전용 신설 — features/admin/education, Figma 1543:11011)
+// 담당 과정/기수 — 목록에서 기수를 고르고(CohortListPage) 허브로 들어간다(EducationPage).
+const CohortListPage = lazy(() => import('./education/CohortListPage'))
 const EducationPage = lazy(() => import('./education/EducationPage'))
 // 과제 등록·수정 — 강사·운영 공용 폼(첨부 포함). 운영은 ?course&cohort로 진입.
 const AssignmentFormPage = lazy(
@@ -116,7 +117,7 @@ export const adminRoutes: RouteObject[] = [
       // 실 auth 로그인 nextRoute(/admin/dashboard) 별칭 — index(/admin)와 같은 화면 (멘토 라우트 패턴)
       { path: 'dashboard', element: <AdminDashboard /> },
       { path: 'profile', element: <ProfilePage /> },
-      { path: 'education', element: <EducationPage /> },
+      { path: 'education', element: <CohortListPage /> },
       // 과제 등록·수정 — 강사·운영 공용 폼(첨부 포함). /new 는 :assignmentId보다 먼저(정적 우선).
       {
         path: 'education/assignments/new',
@@ -130,6 +131,8 @@ export const adminRoutes: RouteObject[] = [
         path: 'education/resume/:resumeId',
         element: <EducationResumeDetailPage />,
       },
+      // 기수 허브 — 정적 세그먼트(assignments·resume)를 동적 :cohortId 앞에 두는 컨벤션.
+      { path: 'education/:cohortId', element: <EducationPage /> },
       { path: 'certificates', element: <CompetencyCertificatesPage /> },
       {
         path: 'certificates/:studentId',

@@ -206,7 +206,7 @@ export default function EducationPage() {
         to="/admin/education"
         className="text-fg-muted hover:text-fg inline-flex items-center gap-1 text-[13px] font-medium"
       >
-        <ChevronLeft className="h-4 w-4" /> 담당 과정/기수
+        <ChevronLeft className="h-4 w-4" /> 교육과정
       </Link>
 
       {/* 탭 */}

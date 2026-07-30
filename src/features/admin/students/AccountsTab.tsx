@@ -7,6 +7,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
+import type { CohortScope } from './scope'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
@@ -36,7 +37,7 @@ function accountBadge(
 }
 
 // 계정 탭 — HRD 동기화 + 계정 관제 테이블 + 학생 계정 상세 모달. (Figma 1457:10648)
-export function AccountsTab() {
+export function AccountsTab({ scope }: { scope?: CohortScope }) {
   const toast = useToast()
   const [status, setStatus] = useSearchParamState('status', 'all')
   const [q, setQ] = useSearchParamState('q')
@@ -55,10 +56,12 @@ export function AccountsTab() {
   // HRD 동기화 — 과정/기수 선택 + 마지막 동기화 결과.
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const courseId =
+    scope?.courseId ?? selectedCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
-  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const cohortId =
+    scope?.cohortId ?? selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
   // 선택 기수의 배정 학생만 조회 — 기수 변경 시 목록 자동 갱신.
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
   const syncStudents = useSyncStudents()
@@ -290,7 +293,10 @@ export function AccountsTab() {
               <p className="text-lg font-bold">
                 HRD-Net 명단 동기화로 학생 계정을 일괄 관리합니다
               </p>
+              {/* 임베드(기수 허브)에선 상위가 정한 기수로 동기화한다 — 선택을 또 시키지 않는다. */}
               <div className="mt-3 flex flex-wrap gap-2">
+                {!scope && (
+                  <>
                 <Select
                   aria-label="과정 선택"
                   value={courseId}
@@ -316,6 +322,8 @@ export function AccountsTab() {
                   placeholder="기수 없음"
                   className="h-9"
                 />
+                  </>
+                )}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">

@@ -41,8 +41,13 @@ const RECOMMEND_FILTER_LABEL: Record<StatRecommendationState, string> = {
 // embedded=true 면 기수 허브의 '멘토링' 탭에 임베드(자체 헤더·sub-nav·바깥 패딩 생략).
 export default function StatisticsPage({
   embedded = false,
+  scopeCourseName,
+  scopeCohortLabel,
 }: {
   embedded?: boolean
+  /** 임베드 시 이 과정·기수 행만. 통계 응답엔 cohortId 가 없어 표시 라벨로 맞춘다. */
+  scopeCourseName?: string
+  scopeCohortLabel?: string
 } = {}) {
   usePageHeader(
     '멘토 통계',
@@ -60,7 +65,19 @@ export default function StatisticsPage({
   )
   const [q, setQ] = useSearchParamState('q')
 
-  const rows = useMemo(() => data?.rows ?? [], [data])
+  const allRows = useMemo(() => data?.rows ?? [], [data])
+  // 허브 탭은 그 기수만 — 배정·일지가 한 기수인데 통계만 전체면 같은 화면에서 수가 어긋난다.
+  const rows = useMemo(
+    () =>
+      scopeCourseName && scopeCohortLabel
+        ? allRows.filter(
+            (r) =>
+              r.courseName === scopeCourseName &&
+              r.cohortLabel === scopeCohortLabel,
+          )
+        : allRows,
+    [allRows, scopeCourseName, scopeCohortLabel],
+  )
   const courses = useMemo(
     () => [...new Set(rows.map((r) => r.courseName))],
     [rows],
@@ -196,16 +213,19 @@ export default function StatisticsPage({
             {/* 필터 — 과정/기수 · 멘토 · 팀 상태 · 평가 상태 · 추천 상태 · 팀/멘토 검색 */}
             <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
               <div className="flex flex-wrap items-center gap-2">
-                <Select
-                  value={course}
-                  onChange={(v) => setCourse(v)}
-                  aria-label="과정/기수 필터"
-                  options={[
-                    { value: 'all', label: '과정 전체' },
-                    ...courses.map((c) => ({ value: c, label: c })),
-                  ]}
-                  className="h-9"
-                />
+                {/* 허브 탭은 기수가 이미 정해져 들어온다 — 같은 선택을 또 시키지 않는다. */}
+                {!embedded && (
+                  <Select
+                    value={course}
+                    onChange={(v) => setCourse(v)}
+                    aria-label="과정/기수 필터"
+                    options={[
+                      { value: 'all', label: '과정 전체' },
+                      ...courses.map((c) => ({ value: c, label: c })),
+                    ]}
+                    className="h-9"
+                  />
+                )}
                 <Select
                   value={mentor}
                   onChange={(v) => setMentor(v)}

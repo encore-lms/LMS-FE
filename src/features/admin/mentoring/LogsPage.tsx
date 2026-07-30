@@ -23,15 +23,18 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 // embedded=true 면 기수 허브의 '멘토링' 탭에 임베드(자체 헤더·바깥 패딩 생략).
 export default function LogsPage({
   embedded = false,
+  scopeCohortId,
 }: {
   embedded?: boolean
+  scopeCohortId?: string
 } = {}) {
   usePageHeader(
     '멘토링 일지 관리',
     '운영자 조회·수정 요청 · 직접 수정 불가 · 최종 유효본 기준 인정 시간 계산',
     !embedded,
   )
-  const { data, isPending, isError, refetch } = useAdminMentoringLogs()
+  const { data, isPending, isError, refetch } =
+    useAdminMentoringLogs(scopeCohortId)
   const [status, setStatus] = useSearchParamState('status', 'all')
   const [q, setQ] = useSearchParamState('q')
   const [reviewId, setReviewId] = useState<string | null>(null)
@@ -126,14 +129,17 @@ export default function LogsPage({
 
   return (
     <div className={embedded ? '' : 'p-8'}>
-      {/* 돌아가기 — 멘토 배정 관리로 */}
-      <Link
-        to="/admin/mentors/assignments"
-        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        멘토 배정 관리로 돌아가기
-      </Link>
+      {/* 돌아가기 — 멘토 배정 관리로. 허브 탭에선 위에 sub-nav 가 있어 필요 없고,
+          누르면 허브 밖으로 나가 버린다. */}
+      {!embedded && (
+        <Link
+          to="/admin/mentors/assignments"
+          className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          멘토 배정 관리로 돌아가기
+        </Link>
+      )}
 
       <DataBoundary
         isPending={isPending}

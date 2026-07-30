@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Eye, MessageSquare } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Avatar } from '@/components/ui/Avatar'
@@ -295,6 +295,10 @@ export default function QnaDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const base = useQnaBase()
+  // 기수 허브의 QnA 탭에서 왔으면 그 탭으로 돌려보낸다 — 목록이 허브 안에 있어서
+  // base 로 돌아가면 방금 있던 화면이 아니라 단독 게시판으로 튄다.
+  const [detailParams] = useSearchParams()
+  const backTo = detailParams.get('from') ?? base
   const toast = useToast()
   const { user } = useAuth()
   const selfName = user?.name ?? '나'
@@ -337,7 +341,7 @@ export default function QnaDetailPage() {
     <div className="flex flex-col gap-5 p-8">
       <button
         type="button"
-        onClick={() => navigate(base)}
+        onClick={() => navigate(backTo)}
         className="text-fg-muted hover:text-fg flex w-fit items-center gap-1.5 text-[13px] font-semibold"
       >
         <ArrowLeft className="size-4" />
@@ -445,7 +449,7 @@ export default function QnaDetailPage() {
                   onSuccess: () => {
                     setDeleteOpen(false)
                     toast.success('질문을 삭제했어요')
-                    navigate(base)
+                    navigate(backTo)
                   },
                   onError: () => toast.danger('질문 삭제에 실패했어요'),
                 })

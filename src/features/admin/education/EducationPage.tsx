@@ -24,30 +24,32 @@ import { SkeletonText } from '@/components/ui/Skeleton'
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
 // 이력서=실 BE(ResumePane), 기록실=검토·심사 흡수(RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
 type TabKey =
-  | 'materials'
-  | 'assignments'
+  | 'home'
+  | 'students'
+  | 'records'
   | 'quizzes'
   | 'projects'
+  | 'assignments'
   | 'resume'
-  | 'records'
-  | 'students'
   | 'mentoring'
   | 'qna'
+  | 'materials'
   | 'settings'
 
+// 운영 요구 순서 — 기수를 열어 가장 먼저 보는 것(홈·수강생·기록실)이 앞, 설정이 맨 뒤.
+// 수강생·멘토링·QnA 는 사이드바 단독 메뉴에서 옮겨 왔다(기수를 고른 뒤 다루는 일이라 여기가 제자리).
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'materials', label: '자료실' },
-  { key: 'assignments', label: '과제' },
+  { key: 'home', label: '과정 홈' },
+  { key: 'students', label: '수강생' },
+  { key: 'records', label: '기록실' },
   { key: 'quizzes', label: '퀴즈' },
   { key: 'projects', label: '프로젝트' },
+  { key: 'assignments', label: '과제' },
   { key: 'resume', label: '이력서' },
-  { key: 'records', label: '기록실' },
-  // 아래 셋은 사이드바 단독 메뉴에서 옮겨 왔다 — 기수를 고른 뒤 다루는 일이라 허브 안이 제자리다.
-  { key: 'students', label: '수강생' },
   { key: 'mentoring', label: '멘토링' },
   { key: 'qna', label: 'QnA' },
-  // 설정은 탭에서 뺐다 — 담당 과정/기수 목록의 [설정] 버튼으로 바로 들어온다.
-  // (?tab=settings 로 진입하면 아래 본문이 그대로 그려진다.)
+  { key: 'materials', label: '자료실' },
+  { key: 'settings', label: '설정' },
 ]
 
 // 과정/기수 미선택 안내(자료실·설정 탭 공용).
@@ -61,13 +63,24 @@ function NeedCourse() {
   )
 }
 
-// 아직 별도 흡수 대상이 없는 탭(과제) — 준비 중 안내.
+// 아직 별도 흡수 대상이 없는 탭 — 준비 중 안내.
 function PlaceholderPane({ label }: { label: string }) {
   return (
     <Empty
       icon={<FolderOpen className="h-6 w-6" />}
       title={`${label} 설정 준비 중`}
       description="이 탭은 과정·기수별 설정 화면으로 곧 연결됩니다."
+    />
+  )
+}
+
+// 과정 홈 — 무엇을 보여 줄지 아직 정해지지 않았다. 내용이 정해지면 이 자리를 채운다.
+function CourseHomePane() {
+  return (
+    <Empty
+      icon={<FolderOpen className="h-6 w-6" />}
+      title="과정 홈 준비 중"
+      description="기수를 열었을 때 가장 먼저 보이는 화면입니다. 담을 내용이 정해지면 연결됩니다."
     />
   )
 }
@@ -185,7 +198,7 @@ export default function EducationPage() {
       : '학습 자료와 활동을 한 곳에서 관리합니다',
   )
 
-  const [tab, setTab] = useSearchParamState('tab', 'materials')
+  const [tab, setTab] = useSearchParamState('tab', 'home')
 
   return (
     <div className="p-8">
@@ -200,14 +213,16 @@ export default function EducationPage() {
       <Tabs
         variant="underline"
         aria-label="교육 관리 탭"
-        value={tab === 'settings' ? '' : tab}
+        value={tab}
         onChange={setTab}
         items={TABS.map((t) => ({ value: t.key, label: t.label }))}
         className="mt-5"
       />
 
       <div className="mt-6">
-        {tab === 'resume' ? (
+        {tab === 'home' ? (
+          <CourseHomePane />
+        ) : tab === 'resume' ? (
           // 이력서 현황·상세·피드백(실 BE, 정본 §32).
           !courseId || !cohortId ? (
             <NeedCourse />
@@ -229,11 +244,19 @@ export default function EducationPage() {
           !courseId || !cohortId ? (
             <NeedCourse />
           ) : (
-            <MentoringPane courseId={courseId} cohortId={cohortId} />
+            <MentoringPane
+              courseId={courseId}
+              cohortId={cohortId}
+              courseName={row?.courseTitle}
+              cohortLabel={row?.cohortLabel}
+            />
           )
         ) : tab === 'qna' ? (
           // 사이드바 'QnA 게시판' 흡수 — 열람·답변(작성은 수강생 전용).
-          <QnaListPage embedded />
+          <QnaListPage
+            embedded
+            backTo={`/admin/education/${cohortId}?tab=qna`}
+          />
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />

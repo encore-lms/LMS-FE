@@ -17,8 +17,11 @@ const PAGE_SIZE = 4
 // embedded=true 면 기수 허브의 'QnA' 탭에 임베드(자체 헤더·바깥 패딩 생략).
 export default function QnaListPage({
   embedded = false,
+  backTo,
 }: {
   embedded?: boolean
+  /** 임베드 시 상세에서 돌아올 곳. 없으면 상세가 자기 마운트 위치의 목록으로 돌아간다. */
+  backTo?: string
 } = {}) {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useQnaList()
@@ -40,7 +43,13 @@ export default function QnaListPage({
     !embedded,
   )
 
-  const open = (q: QnaQuestion) => navigate(`${base}/${q.id}`)
+  // 상세는 허브 밖 라우트라, 허브에서 열었으면 돌아올 곳을 들려 보낸다.
+  const open = (q: QnaQuestion) =>
+    navigate(
+      backTo
+        ? `${base}/${q.id}?from=${encodeURIComponent(backTo)}`
+        : `${base}/${q.id}`,
+    )
 
   const q = query.trim().toLowerCase()
   const visible = (data?.questions ?? []).filter((item) => {

@@ -101,4 +101,31 @@ const overview: PlayOverview = {
 
 export const handlers = [
   http.get('/api/admin/play/typing-texts', () => ok<PlayOverview>(overview)),
+  // 실 API(POST/PATCH) 계약과 동일한 카드 응답 — dev mock 모드에서 저장 흐름이 살아있게 한다.
+  http.post('/api/admin/play/typing-texts', async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>
+    return ok({
+      id: crypto.randomUUID(),
+      title: body.title,
+      previewNote: String(body.content ?? '').replace(/\s+/g, ' ').slice(0, 80),
+      language: body.language,
+      level: body.level,
+      order: body.order ?? 0,
+      status: body.active === false ? 'inactive' : 'active',
+      content: body.content,
+    })
+  }),
+  http.patch('/api/admin/play/typing-texts/:id', async ({ request, params }) => {
+    const body = (await request.json()) as Record<string, unknown>
+    return ok({
+      id: params.id,
+      title: body.title,
+      previewNote: String(body.content ?? '').replace(/\s+/g, ' ').slice(0, 80),
+      language: body.language,
+      level: body.level,
+      order: body.order ?? 0,
+      status: body.active === false ? 'inactive' : 'active',
+      content: body.content,
+    })
+  }),
 ]

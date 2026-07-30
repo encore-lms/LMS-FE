@@ -124,14 +124,13 @@ describe('VerifyPage — certified_private(비공개 안내)', () => {
       messageCode: 'CERTIFICATE_PRIVATE',
     })
     renderPage('vfy_private_demo')
-    expect(screen.getByText('certified · isPublic = false')).toBeInTheDocument()
+    expect(screen.getByText('비공개 증명서')).toBeInTheDocument()
     expect(
       screen.getByText('이 증명서는 비공개 상태입니다'),
     ).toBeInTheDocument()
-    expect(screen.getByText('certified — 정식 인증 완료')).toBeInTheDocument()
-    expect(
-      screen.getByText('없음 (요청자 식별 불가하게 상세 비표시)'),
-    ).toBeInTheDocument()
+    // 내부 표현(isPublic·payload)은 외부 검증자에게 보여 주지 않는다.
+    expect(screen.queryByText(/isPublic/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/외부 검증 페이지 정책/)).not.toBeInTheDocument()
     // 수강생 이름·점수 등 상세 비노출(명세).
     expect(screen.queryByText('이서연')).not.toBeInTheDocument()
   })
@@ -191,7 +190,7 @@ describe('VerifyPage — 비공개 안내 변형 2종(문서 기반, Figma 변�
     expect(
       screen.getByText('증명서 공개를 준비하고 있습니다'),
     ).toBeInTheDocument()
-    expect(screen.getByText('certified · 공개 준비 중')).toBeInTheDocument()
+    expect(screen.getByText('공개 준비 중')).toBeInTheDocument()
   })
 
   it('verification_disabled이면 검증 불가 안내를 렌더한다', () => {
@@ -203,7 +202,7 @@ describe('VerifyPage — 비공개 안내 변형 2종(문서 기반, Figma 변�
     expect(
       screen.getByText('이 증명서는 검증이 불가합니다'),
     ).toBeInTheDocument()
-    expect(screen.getByText('publicToken 폐기 · 검증 불가')).toBeInTheDocument()
+    expect(screen.getByText('검증 불가')).toBeInTheDocument()
   })
 })
 

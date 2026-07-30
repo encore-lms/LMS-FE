@@ -258,11 +258,11 @@ export default function TypingTextsPage() {
         </button>
         <button
           type="button"
-          // CSV/Excel 일괄 업로드 — BE 미구현(404)이라 '(준비 중)' 표기 유지, 내부 확인용 이동은 허용.
+          // CSV/Excel 일괄 업로드 — 실동작(검증 미리보기 → 정상 행 일괄 등록).
           onClick={() => navigate('/admin/play/typing-texts/bulk')}
           className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
         >
-          일괄 업로드 (준비 중)
+          일괄 업로드
         </button>
         <button
           type="button"

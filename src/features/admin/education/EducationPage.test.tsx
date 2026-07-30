@@ -23,6 +23,19 @@ vi.mock('./MaterialsPane', () => ({
 vi.mock('./ResumePane', () => ({
   ResumePane: () => <div>이력서 패널</div>,
 }))
+vi.mock('../students/StudentsPane', () => ({
+  StudentsPane: ({ scope }: { scope?: { cohortId: string } }) => (
+    <div>수강생 패널 {scope?.cohortId}</div>
+  ),
+}))
+vi.mock('../mentoring/MentoringPane', () => ({
+  MentoringPane: ({ cohortId }: { cohortId: string }) => (
+    <div>멘토링 패널 {cohortId}</div>
+  ),
+}))
+vi.mock('@/features/student/qna/QnaListPage', () => ({
+  default: () => <div>QnA 임베드</div>,
+}))
 
 // 기수 허브 — URL 의 :cohortId 하나를 탭으로 파고든다.
 // 기수 고르기·기본 기수 판정은 담당 과정/기수 목록(CohortListPage)으로 옮겼다.
@@ -97,7 +110,7 @@ function renderHub(search = '') {
 }
 
 describe('EducationPage (기수 허브)', () => {
-  it('6개 탭(자료실/과제/퀴즈/프로젝트/이력서/기록실)을 렌더한다', () => {
+  it('9개 탭(자료실/과제/퀴즈/프로젝트/이력서/기록실/수강생/멘토링/QnA)을 렌더한다', () => {
     renderHub()
     for (const label of [
       '자료실',
@@ -106,6 +119,9 @@ describe('EducationPage (기수 허브)', () => {
       '프로젝트',
       '이력서',
       '기록실',
+      '수강생',
+      '멘토링',
+      'QnA',
     ]) {
       expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()
     }
@@ -144,5 +160,27 @@ describe('EducationPage (기수 허브)', () => {
     renderHub('?tab=settings')
     expect(screen.getByText('K-디지털트레이닝')).toBeInTheDocument()
     expect(screen.getByText('17,424,000원')).toBeInTheDocument()
+  })
+
+  // 사이드바 단독 메뉴에서 옮겨 온 셋 — 기수를 고른 뒤에 하는 일이라 허브 안이 제자리다.
+  it('수강생 탭은 허브가 고른 기수로 스코프된다', async () => {
+    const user = userEvent.setup()
+    renderHub()
+    await user.click(screen.getByRole('tab', { name: '수강생' }))
+    expect(screen.getByText('수강생 패널 cohort-34')).toBeInTheDocument()
+  })
+
+  it('멘토링 탭도 같은 기수로 스코프된다', async () => {
+    const user = userEvent.setup()
+    renderHub()
+    await user.click(screen.getByRole('tab', { name: '멘토링' }))
+    expect(screen.getByText('멘토링 패널 cohort-34')).toBeInTheDocument()
+  })
+
+  it('QnA 탭은 게시판을 임베드한다', async () => {
+    const user = userEvent.setup()
+    renderHub()
+    await user.click(screen.getByRole('tab', { name: 'QnA' }))
+    expect(screen.getByText('QnA 임베드')).toBeInTheDocument()
   })
 })

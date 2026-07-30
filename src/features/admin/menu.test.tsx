@@ -54,8 +54,8 @@ describe('adminMenu 사이드바 active highlight', () => {
     expect(isActive('설정')).toBe(true)
   })
 
-  it('설정 하위(course-config)에서 설정이 활성', () => {
-    renderAt('/admin/settings/course-config')
+  it('설정 하위(hrd-api-key)에서 설정이 활성', () => {
+    renderAt('/admin/settings/hrd-api-key')
     expect(isActive('설정')).toBe(true)
   })
 

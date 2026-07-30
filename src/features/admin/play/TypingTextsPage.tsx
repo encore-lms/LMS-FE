@@ -374,34 +374,34 @@ export default function TypingTextsPage() {
         passage={formPassage}
         onClose={() => setFormOpen(false)}
         onSubmit={(mode, values) => {
-          const status: PassageStatus = values.active ? 'active' : 'inactive'
-          const next: TypingPassage = {
-            id: formPassage?.id ?? crypto.randomUUID(),
-            title: values.title,
-            previewNote: values.content
-              ? values.content.replace(/\s+/g, ' ').slice(0, 80)
-              : (formPassage?.previewNote ?? ''),
-            language: values.language,
-            level: values.level,
-            order: values.order,
-            status,
-            // 본문 원문 보존 — 다음 수정 때 폼에 그대로 프리필된다.
-            content: values.content || (formPassage?.content ?? ''),
-          }
-          upsert.mutate(next, {
-            onSuccess: () => {
-              toast.success(
-                mode === 'edit'
-                  ? '제시문을 수정했습니다.'
-                  : '제시문을 추가했습니다.',
-              )
-              setFormOpen(false)
+          // 실 API — 신규는 POST, 수정은 PATCH. 미리보기·상태는 서버가 산출해 내려준다.
+          upsert.mutate(
+            {
+              id: formPassage?.id ?? null,
+              body: {
+                title: values.title,
+                content: values.content,
+                language: values.language,
+                level: values.level,
+                order: values.order,
+                active: values.active,
+              },
             },
-            onError: () =>
-              toast.danger(
-                '제시문 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
-              ),
-          })
+            {
+              onSuccess: () => {
+                toast.success(
+                  mode === 'edit'
+                    ? '제시문을 수정했습니다.'
+                    : '제시문을 추가했습니다.',
+                )
+                setFormOpen(false)
+              },
+              onError: () =>
+                toast.danger(
+                  '제시문 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+                ),
+            },
+          )
         }}
       />
     </div>

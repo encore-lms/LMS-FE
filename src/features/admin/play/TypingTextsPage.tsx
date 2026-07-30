@@ -385,6 +385,8 @@ export default function TypingTextsPage() {
             level: values.level,
             order: values.order,
             status,
+            // 본문 원문 보존 — 다음 수정 때 폼에 그대로 프리필된다.
+            content: values.content || (formPassage?.content ?? ''),
           }
           upsert.mutate(next, {
             onSuccess: () => {

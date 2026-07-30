@@ -26,6 +26,7 @@ const overview: PlayOverview = {
       level: '보통',
       order: 10,
       status: 'active',
+      content: '중복을 제거하고 의도를 드러내는 이름을 붙인다.',
     },
     {
       id: 'p4',
@@ -141,6 +142,19 @@ describe('TypingTextsPage (PLAY 타자 관리)', () => {
     await user.click(screen.getAllByRole('button', { name: '수정' })[0])
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText('제시문 수정')).toBeInTheDocument()
+  })
+
+  it('수정 — 기존 제시문 본문이 폼에 프리필된다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: '수정' })[0])
+    const dialog = screen.getByRole('dialog')
+    expect(
+      within(dialog).getByDisplayValue(
+        '중복을 제거하고 의도를 드러내는 이름을 붙인다.',
+      ),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByDisplayValue('리팩터링 원칙')).toBeInTheDocument()
   })
 
   it('샘플 다운로드 — 성공 토스트를 띄운다', async () => {

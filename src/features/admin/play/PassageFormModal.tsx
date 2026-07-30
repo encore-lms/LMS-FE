@@ -45,11 +45,12 @@ export function PassageFormModal({
   const [active, setActive] = useState(true)
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({})
 
-  // 모달이 열릴 때 대상 값으로 초기화(본문은 목록에 없어 빈값 — 수정 시 BE 로드 TODO).
+  // 모달이 열릴 때 대상 값으로 초기화 — 본문은 행에 보존된 원문으로 프리필한다.
+  // (예전에는 항상 빈값으로 초기화해 수정 시 기존 제시문이 사라져 보였다.)
   useEffect(() => {
     if (!open) return
     setTitle(passage?.title ?? '')
-    setContent('')
+    setContent(passage?.content ?? '')
     setLanguage(passage?.language ?? LANGUAGES[0])
     setLevel(passage?.level ?? LEVELS[1])
     setOrder(String(passage?.order ?? 0))

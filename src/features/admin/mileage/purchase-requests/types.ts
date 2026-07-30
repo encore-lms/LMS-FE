@@ -29,6 +29,10 @@ export interface PurchaseRequest {
   date: string
   /** 타입 한도 초과 — 승인 차단 */
   limitExceeded?: boolean
+  /** 수강생이 요청·재요청하며 남긴 메모. 재요청 건에서 무엇이 바뀌었는지 알려준다. */
+  studentNote?: string | null
+  /** 매니저가 앞서 남긴 수정 요청·반려 사유. */
+  reviewNote?: string | null
 }
 
 // 상단 상태 KPI 한 칸.

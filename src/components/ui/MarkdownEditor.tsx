@@ -10,7 +10,7 @@ import {
 } from 'react'
 import { Bold, Code, Image as ImageIcon, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { Markdown } from '@/components/ui/Markdown'
+import { Markdown } from './Markdown'
 import { putImage } from '@/components/ui/markdownImages'
 
 // 이미지 인라인 가드 — 이미지 타입만, 2MB 이하(프로토타입 base64 인라인이라 과대 방지).

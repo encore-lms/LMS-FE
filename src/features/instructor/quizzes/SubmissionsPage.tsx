@@ -28,6 +28,8 @@ export default function SubmissionsPage() {
   // 허브 진입이면 목록으로 = 허브 퀴즈 탭. 채점 진입에도 cohortId를 이어붙인다.
   const fromCohortId = searchParams.get('cohortId')
   const hubQs = fromCohortId ? `?cohortId=${fromCohortId}` : ''
+  // 결과·답안 보기 — 채점 화면을 읽기 전용(view=1)으로 연다.
+  const viewQs = fromCohortId ? `${hubQs}&view=1` : '?view=1'
   const backTo = fromCohortId
     ? `/instructor/cohorts/${fromCohortId}/education?tab=quizzes`
     : base
@@ -201,7 +203,9 @@ export default function SubmissionsPage() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  toast.info(`답안 보기는 준비 중입니다.`)
+                  navigate(
+                    `${base}/${quizId}/submissions/${r.id}/grade${viewQs}`,
+                  )
                 }}
                 className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
               >
@@ -214,7 +218,7 @@ export default function SubmissionsPage() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              toast.info(`결과 보기는 준비 중입니다.`)
+              navigate(`${base}/${quizId}/submissions/${r.id}/grade${viewQs}`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
           >

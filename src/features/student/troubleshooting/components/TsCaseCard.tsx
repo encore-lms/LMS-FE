@@ -3,6 +3,7 @@ import { cn } from '@/shared/lib/cn'
 import { InteractiveCard } from '@/components/ui/InteractiveCard'
 import type { TsCase, TsStatus, Tone } from '../types'
 import { TONE_SOFT } from '@/shared/lib/tone'
+import { markdownToText } from '@/components/ui/markdownText'
 
 // 트러블슈팅 사례 카드 — 목록 화면과 프로젝트 워크스페이스(연결된 사례)에서 공용으로 쓴다.
 // 표시는 동일하고, 우상단 액션(라벨/동작)만 사용처가 주입한다.
@@ -163,9 +164,11 @@ export function TsCaseCard({
       </span>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         {[
-          { label: '상황', text: c.situation },
-          { label: '해결', text: c.resolution },
-          { label: '결과', text: c.result },
+          // 카드는 3줄 요약 — 마크다운을 렌더하면 제목이 카드보다 커지고 목록 마커가 줄을
+          // 먹는다. 기호만 걷어내고 내용을 남긴다.
+          { label: '상황', text: markdownToText(c.situation) },
+          { label: '해결', text: markdownToText(c.resolution) },
+          { label: '결과', text: markdownToText(c.result) },
         ].map((b) => (
           <div
             key={b.label}

@@ -11,7 +11,7 @@ import {
   type ActionModalSpec,
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
-import { useTypeLimits } from './api'
+import { useSaveTypeLimits, useTypeLimits } from './api'
 import type { LimitType, TypeLimit } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
@@ -24,6 +24,7 @@ export default function TypeLimitsPage() {
     '상품 타입별 수강생 1인 누적 사용 한도 관리',
   )
   const { data, isPending, isError, refetch } = useTypeLimits()
+  const saveLimits = useSaveTypeLimits()
   const toast = useToast()
   const [saved, setSaved] = useState<Record<string, number>>({})
   const [draft, setDraft] = useState<Record<string, number>>({})
@@ -56,16 +57,28 @@ export default function TypeLimitsPage() {
   }
 
   const save = () => {
-    // TODO: PATCH /api/admin/mileage/product-type-limits — 변경된 타입만 일괄 반영(P0_16)
-    setSaved((prev) => {
-      const next = { ...prev }
-      changed.forEach((l) => {
-        next[l.type] = draftFor(l)
-      })
-      return next
-    })
-    setConfirm(null)
-    toast.success(`타입 한도 ${changeCount}건 저장됨`)
+    // 서버에 저장돼야 수강생 구매가 실제로 막힌다 — 예전에는 화면 상태만 바꿔
+    // '저장됨' 토스트가 떠도 한도는 계속 0 이었다.
+    saveLimits.mutate(
+      changed.map((l) => ({ type: l.type, limit: draftFor(l) })),
+      {
+        onSuccess: () => {
+          setSaved((prev) => {
+            const next = { ...prev }
+            changed.forEach((l) => {
+              next[l.type] = draftFor(l)
+            })
+            return next
+          })
+          setConfirm(null)
+          toast.success(`타입 한도 ${changeCount}건 저장됨`)
+        },
+        onError: () => {
+          setConfirm(null)
+          toast.danger('타입 한도를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+        },
+      },
+    )
   }
 
   return (

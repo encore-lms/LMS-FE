@@ -463,6 +463,32 @@ describe('GradingPage (§9)', () => {
     expect(screen.getByText(/읽기 전용/)).toBeInTheDocument()
   })
 
+  it('진행률은 수동 채점 기준 라벨이고 미확정이면 임시 점수다', () => {
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade')
+    expect(screen.getByText('수동 채점 진행률')).toBeInTheDocument()
+    // q-3가 pending이라 총점은 아직 임시.
+    expect(screen.getByText('임시 점수')).toBeInTheDocument()
+  })
+
+  it('자동 채점 전용 제출은 대상 없음 표기와 확정 점수를 보여준다', () => {
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade?view=1', () => {
+      vi.mocked(useGradingDetail).mockReturnValue(
+        ok({
+          ...grading,
+          items: [],
+          totalManualCount: 0,
+          provisionalScore: 20,
+          totalScore: 20,
+        }) as unknown as ReturnType<typeof useGradingDetail>,
+      )
+    })
+    expect(
+      screen.getByText('대상 문항 없음 · 자동 채점'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('확정 점수')).toBeInTheDocument()
+    expect(screen.queryByText('임시 점수')).toBeNull()
+  })
+
   it('제출 현황의 [결과 보기]가 읽기 전용 채점 결과를 연다', async () => {
     const user = userEvent.setup()
     renderAt('/instructor/quizzes/quiz-algo-3/submissions')

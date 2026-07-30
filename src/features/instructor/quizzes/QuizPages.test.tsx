@@ -430,6 +430,24 @@ describe('GradingPage (§9)', () => {
     await user.type(screen.getByLabelText('문제 2 점수'), '20')
     expect(completeBtn).toBeEnabled()
   })
+
+  it('읽기 전용(view=1) — 입력 비활성·저장 버튼 없이 목록 복귀만', () => {
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade?view=1')
+    expect(screen.getByLabelText('문제 2 점수')).toBeDisabled()
+    expect(screen.getByLabelText('문제 2 피드백')).toBeDisabled()
+    expect(screen.queryByRole('button', { name: '채점 완료' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '임시 저장' })).toBeNull()
+    expect(screen.getByRole('button', { name: '목록으로' })).toBeInTheDocument()
+    expect(screen.getByText(/읽기 전용/)).toBeInTheDocument()
+  })
+
+  it('제출 현황의 [결과 보기]가 읽기 전용 채점 결과를 연다', async () => {
+    const user = userEvent.setup()
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions')
+    await user.click(screen.getByRole('button', { name: '결과 보기' }))
+    expect(await screen.findByText(/읽기 전용/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '채점 완료' })).toBeNull()
+  })
 })
 
 describe('운영(/admin/quizzes) 마운트 — 강사 컴포넌트 재사용 (P0)', () => {

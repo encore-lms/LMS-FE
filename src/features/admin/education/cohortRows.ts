@@ -10,6 +10,9 @@ export interface AdminCohortRow {
   name: string
   /** '과정명 · 32회차' */
   subtitle: string
+  /** 과정명·기수 라벨 원본 — 화면이 name/subtitle 을 쪼개 쓰지 않게 BE 가 따로 내려준다. */
+  courseTitle: string
+  cohortLabel: string
   /** '2026.04.28 ~ 2026.10.26' */
   period: string
   dday: string

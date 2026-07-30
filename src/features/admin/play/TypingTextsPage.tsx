@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -44,6 +45,7 @@ export default function TypingTextsPage() {
   const { data, isPending, isError, refetch } = usePlayTypingTexts()
   const upsert = useUpsertPassage()
   const toast = useToast()
+  const navigate = useNavigate()
   const [language, setLanguage] = useSearchParamState('language', 'all')
   const [level, setLevel] = useSearchParamState('level', 'all')
   const [status, setStatus] = useSearchParamState('status', 'all')
@@ -223,9 +225,9 @@ export default function TypingTextsPage() {
         </button>
         <button
           type="button"
-          // CSV/Excel 일괄 업로드 — BE 미구현(404)이라 비활성. 오픈 시 disabled 제거하고 /bulk 이동 복원.
-          disabled
-          className="bg-brand/40 text-on-color h-9 cursor-not-allowed rounded-lg px-4 text-[13px] font-semibold"
+          // CSV/Excel 일괄 업로드 — BE 미구현(404)이라 '(준비 중)' 표기 유지, 내부 확인용 이동은 허용.
+          onClick={() => navigate('/admin/play/typing-texts/bulk')}
+          className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
         >
           일괄 업로드 (준비 중)
         </button>

@@ -90,22 +90,6 @@ export function Sidebar({
   }
 
   const renderLeaf = (item: MenuItem, nested = false): ReactNode => {
-    // 준비 중 메뉴 — 진입 전 앞단에서 명시: 비활성 버튼 + '(준비 중)' 표기(이동·클릭 반응 없음).
-    if (item.comingSoon) {
-      return (
-        <button
-          key={item.to}
-          type="button"
-          disabled
-          className={`text-fg-subtle cursor-not-allowed rounded-md py-2 text-left text-[13px] font-medium ${
-            nested ? 'pr-3 pl-7' : 'px-3'
-          }`}
-        >
-          {item.label}{' '}
-          <span className="text-[11px] font-normal">(준비 중)</span>
-        </button>
-      )
-    }
     const active = isActive(item)
     return (
       <Link
@@ -117,13 +101,19 @@ export function Sidebar({
         } ${
           active
             ? 'bg-accent-bg text-accent-strong font-semibold'
-            : 'text-fg hover:bg-divider font-medium'
+            : item.comingSoon
+              ? 'text-fg-subtle hover:bg-divider font-medium'
+              : 'text-fg hover:bg-divider font-medium'
         }`}
       >
         {active && (
           <span className="bg-accent absolute top-1/2 left-0 h-[18px] w-[3px] -translate-y-1/2 rounded-full" />
         )}
         {item.label}
+        {/* 준비 중 표기 — 내부 확인·작업을 위해 이동은 허용하고 상태만 명시한다. */}
+        {item.comingSoon && (
+          <span className="text-[11px] font-normal"> (준비 중)</span>
+        )}
       </Link>
     )
   }

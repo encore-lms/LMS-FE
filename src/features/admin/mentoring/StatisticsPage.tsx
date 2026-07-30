@@ -38,10 +38,16 @@ const RECOMMEND_FILTER_LABEL: Record<StatRecommendationState, string> = {
 // 평가·추천 원문 수정, 변경 요청, 직접 보정 액션 미제공(403 MENTORING_STATISTICS_READ_ONLY)
 // — mutation 버튼·훅 자체가 없다. 데이터는 A1 배정·일지 mock 상태에서 파생(즉시 반영).
 // (Figma 3206:3024 — 본문 정식 스펙은 오버레이 패널 3206:3440, 평판 관리 잔재 본문 제외)
-export default function StatisticsPage() {
+// embedded=true 면 기수 허브의 '멘토링' 탭에 임베드(자체 헤더·sub-nav·바깥 패딩 생략).
+export default function StatisticsPage({
+  embedded = false,
+}: {
+  embedded?: boolean
+} = {}) {
   usePageHeader(
     '멘토 통계',
     '멘토/팀별 N시간 · 일지 · 평가·추천 · 증명서 반영 상태 조회',
+    !embedded,
   )
   const { data, isPending, isError, refetch } = useMentoringStatistics()
   const [course, setCourse] = useSearchParamState('course', 'all')
@@ -163,8 +169,8 @@ export default function StatisticsPage() {
   ]
 
   return (
-    <div className="p-8">
-      <MentoringTabs />
+    <div className={embedded ? '' : 'p-8'}>
+      {!embedded && <MentoringTabs />}
       {/* 접근 경계 + 조회 전용 안내 칩 */}
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <span className="bg-info-bg text-info inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">

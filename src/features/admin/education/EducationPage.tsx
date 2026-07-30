@@ -1,22 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { BookOpen, FolderOpen, ListChecks, Lock } from 'lucide-react'
+import { BookOpen, ChevronLeft, FolderOpen, ListChecks, Lock } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { CurriculumModal } from './CurriculumModal'
 import { usePageHeader } from '@/shared/store'
 import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
-import { useCourseConfig, useCourseList } from '../api/settings'
+import { useCourseList } from '../api/settings'
 import { useCourseDetail } from './api'
 import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
-import { readLastCohort, writeLastCohort } from './lastCohort'
+import { useAllCourseCohorts } from './cohortRows'
 import { SkeletonText } from '@/components/ui/Skeleton'
 
 // 과정·기수·교과목 탭 — 자료실/과제/퀴즈/이력서/기록실/설정.
@@ -37,7 +37,8 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'projects', label: '프로젝트' },
   { key: 'resume', label: '이력서' },
   { key: 'records', label: '기록실' },
-  { key: 'settings', label: '설정' },
+  // 설정은 탭에서 뺐다 — 담당 과정/기수 목록의 [설정] 버튼으로 바로 들어온다.
+  // (?tab=settings 로 진입하면 아래 본문이 그대로 그려진다.)
 ]
 
 // 과정/기수 미선택 안내(자료실·설정 탭 공용).
@@ -159,75 +160,39 @@ function DescriptionPane({
   )
 }
 
-// 과정·기수·교과목 (/admin/education). 과정/기수 선택 + 6탭(자료실/과제/퀴즈/이력서/기록실/설정).
+// 기수 허브 (/admin/education/:cohortId) — 목록에서 고른 기수 하나를 탭으로 파고든다.
+// 예전에는 이 화면 안에서 과정·기수 드롭다운을 갈아 끼웠는데, 지금 어느 기수를 보는지
+// 드러나지 않았다. 선택은 목록 화면(CohortListPage)이 맡는다.
 export default function EducationPage() {
-  usePageHeader(
-    '과정·기수·교과목',
-    '과정·기수별 학습 자료와 활동을 한 곳에서 관리합니다',
-  )
-
+  const { cohortId = '' } = useParams()
   const { data: courses } = useCourseList()
-  // 과정·기수·탭을 URL에 반영 — 새로고침·이력서 상세 왕복에서 컨텍스트 유지(딥링크).
-  const [courseParam, setCourseParam] = useSearchParamState('course')
-  const courseId = courseParam || courses?.[0]?.courseId || null
-  const { data: courseConfig } = useCourseConfig(courseId)
-  const [cohortParam, setCohortParam] = useSearchParamState('cohort')
-  const cohorts = courseConfig?.cohorts ?? []
-  // 기본 기수 우선순위: 지난번에 본 기수 → 내가 담당하는 기수 → 목록 첫 기수.
-  // 목록 첫 행은 최신 기수라 아직 프로젝트·수강생이 없는 경우가 많고, 기수가 전부 '운영 중'이라
-  // 상태만으로는 가릴 수 없다. 담당 기수가 여럿이면 어느 쪽을 주로 보는지는 사람마다 달라
-  // 마지막 선택을 기억해 그대로 연다.
-  const remembered = readLastCohort(courseId)
-  const defaultCohortId =
-    (remembered && cohorts.some((c) => c.id === remembered) ? remembered : null) ??
-    cohorts.find((c) => c.assigned)?.id ??
-    cohorts[0]?.id ??
-    null
-  const cohortId = cohortParam || defaultCohortId
+  const { rows } = useAllCourseCohorts(courses)
+  const row = rows.find((r) => r.cohortId === cohortId) ?? null
+  const courseId = row?.courseId ?? null
 
-  // 선택이 확정될 때마다 기억해 둔다(URL 파라미터로 들어온 딥링크도 포함).
-  useEffect(() => {
-    if (courseId && cohortId) writeLastCohort(courseId, cohortId)
-  }, [courseId, cohortId])
+  usePageHeader(
+    row ? `${row.courseTitle} ${row.cohortLabel}` : '과정/기수',
+    row
+      ? `${row.startDate} ~ ${row.endDate} · 학습 자료와 활동을 한 곳에서 관리합니다`
+      : '학습 자료와 활동을 한 곳에서 관리합니다',
+  )
 
   const [tab, setTab] = useSearchParamState('tab', 'materials')
 
   return (
     <div className="p-8">
-      {/* 과정/기수 선택 — 공용 Select(커스텀 listbox)로 브라우저 기본 옵션 팝업 대체 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select
-          aria-label="과정 선택"
-          value={courseId}
-          onChange={(v) => {
-            setCourseParam(v)
-            setCohortParam('')
-          }}
-          options={(courses ?? []).map((c) => ({
-            value: c.courseId,
-            label: c.title,
-          }))}
-          placeholder="등록 과정 없음"
-          className="h-11"
-        />
-        <Select
-          aria-label="기수 선택"
-          value={cohortId}
-          onChange={(v) => setCohortParam(v)}
-          options={(courseConfig?.cohorts ?? []).map((c) => ({
-            value: c.id,
-            label: `${c.cohortNo}기`,
-          }))}
-          placeholder="기수 없음"
-          className="h-11"
-        />
-      </div>
+      <Link
+        to="/admin/education"
+        className="text-fg-muted hover:text-fg inline-flex items-center gap-1 text-[13px] font-medium"
+      >
+        <ChevronLeft className="h-4 w-4" /> 담당 과정/기수
+      </Link>
 
       {/* 탭 */}
       <Tabs
         variant="underline"
         aria-label="교육 관리 탭"
-        value={tab}
+        value={tab === 'settings' ? '' : tab}
         onChange={setTab}
         items={TABS.map((t) => ({ value: t.key, label: t.label }))}
         className="mt-5"

@@ -15,17 +15,14 @@ export const adminMenu: MenuNode[] = [
   {
     label: '기수 설계·운영',
     children: [
-      { label: '담당 과정/기수', to: '/admin/education' },
-      { label: '학생 관리', to: '/admin/students' },
+      // 학생 관리·멘토링 관리·QnA 게시판은 기수 허브(/admin/education/:cohortId)의
+      // 수강생·멘토링·QnA 탭으로 옮겼다 — 셋 다 기수를 고른 뒤에 하는 일이라 단독 메뉴로 두면
+      // 화면에 들어가서 기수를 또 골라야 했다. 단독 라우트는 딥링크·알림 목적지로 남겨 둔다.
       {
-        label: '멘토링 관리',
-        to: '/admin/mentors/assignments',
-        // 배정(/admin/mentors/*) + 일지·템플릿·통계(/admin/mentoring/*) 진입 시 활성 유지
-        match: ['/admin/mentoring', '/admin/mentors'],
+        label: '담당 과정/기수',
+        to: '/admin/education',
+        match: ['/admin/students', '/admin/mentoring', '/admin/mentors', '/admin/qna'],
       },
-      // QnA 게시판 — 수강생 질문 열람·답변('QnA 질문' 알림 목적지). 상세(qna/:id) 진입 시에도 활성 유지.
-      // 심사(인증·평판)가 아니라 기수 운영 중 학생 응대라 '기수 설계·운영'에 둔다.
-      { label: 'QnA 게시판', to: '/admin/qna', match: ['/admin/qna'] },
     ],
   },
   {

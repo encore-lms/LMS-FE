@@ -10,6 +10,9 @@ import { CurriculumModal } from './CurriculumModal'
 import { usePageHeader } from '@/shared/store'
 import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
+import QnaListPage from '@/features/student/qna/QnaListPage'
+import { StudentsPane } from '../students/StudentsPane'
+import { MentoringPane } from '../mentoring/MentoringPane'
 import { useCourseDetail } from './api'
 import { MaterialsPane } from './MaterialsPane'
 import { AssignmentsPane } from './AssignmentsPane'
@@ -27,6 +30,9 @@ type TabKey =
   | 'projects'
   | 'resume'
   | 'records'
+  | 'students'
+  | 'mentoring'
+  | 'qna'
   | 'settings'
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -36,6 +42,10 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'projects', label: '프로젝트' },
   { key: 'resume', label: '이력서' },
   { key: 'records', label: '기록실' },
+  // 아래 셋은 사이드바 단독 메뉴에서 옮겨 왔다 — 기수를 고른 뒤 다루는 일이라 허브 안이 제자리다.
+  { key: 'students', label: '수강생' },
+  { key: 'mentoring', label: '멘토링' },
+  { key: 'qna', label: 'QnA' },
   // 설정은 탭에서 뺐다 — 담당 과정/기수 목록의 [설정] 버튼으로 바로 들어온다.
   // (?tab=settings 로 진입하면 아래 본문이 그대로 그려진다.)
 ]
@@ -207,6 +217,23 @@ export default function EducationPage() {
         ) : tab === 'records' ? (
           // 검토·심사 '학습 기록 검토' 흡수.
           <RecordsGridPage cohortId={cohortId} />
+        ) : tab === 'students' ? (
+          // 사이드바 '학생 관리' 흡수 — 출결·출결 폼·계정. 기수는 이미 정해졌으니 셀렉터는 없다.
+          !courseId || !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <StudentsPane scope={{ courseId, cohortId }} paramKey="stab" />
+          )
+        ) : tab === 'mentoring' ? (
+          // 사이드바 '멘토링 관리' 흡수 — 배정·일지·일지 템플릿·통계.
+          !courseId || !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <MentoringPane courseId={courseId} cohortId={cohortId} />
+          )
+        ) : tab === 'qna' ? (
+          // 사이드바 'QnA 게시판' 흡수 — 열람·답변(작성은 수강생 전용).
+          <QnaListPage embedded />
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />

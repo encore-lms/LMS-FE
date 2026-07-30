@@ -204,13 +204,23 @@ function MentoringCard({
 
 // 멘토 배정 관리 (/admin/mentors/assignments) — 운영(MANAGER/ADMIN).
 // 반/기수별 팀 배정 · N시간 · 일지 템플릿 관리. (Figma "운영 — 멘토 배정 관리" 2744:7725)
-export default function AssignmentsPage() {
-  usePageHeader('멘토 배정 관리')
+// embedded=true 면 기수 허브의 '멘토링' 탭에 임베드 — 자체 헤더·바깥 패딩과
+// 과정·기수 셀렉터를 생략하고, 상위가 정한 기수({@code scopeCohortId})로 조회한다.
+export default function AssignmentsPage({
+  embedded = false,
+  scopeCohortId,
+  scopeCourseId,
+}: {
+  embedded?: boolean
+  scopeCohortId?: string
+  scopeCourseId?: string
+} = {}) {
+  usePageHeader('멘토 배정 관리', undefined, !embedded)
   // 과정·기수는 한 번의 setSearchParams로 갱신한다 — setCourse/setCohort를 연속 호출하면
   // 두 갱신이 각자 현재 URL을 기준으로 덮어써 뒤 호출이 앞 호출을 지운다(과정이 초기화되는 버그).
   const [searchParams, setSearchParams] = useSearchParams()
-  const course = searchParams.get('course') ?? 'all' // 'all' | courseId
-  const cohort = searchParams.get('cohort') ?? 'all' // 'all' | cohortId
+  const course = scopeCourseId ?? searchParams.get('course') ?? 'all' // 'all' | courseId
+  const cohort = scopeCohortId ?? searchParams.get('cohort') ?? 'all' // 'all' | cohortId
   // 보드는 상단 선택 기수 기준으로 조회(선택 없으면 담당/폴백 기수).
   const { data, isPending, isError, refetch } = useMentorAssignments(cohort)
   const logs = useAdminMentoringLogs()
@@ -248,6 +258,11 @@ export default function AssignmentsPage() {
   const didDefaultCohort = useRef(false)
   useEffect(() => {
     if (didDefaultCohort.current) return
+    // 임베드는 기수가 이미 정해져 들어온다 — URL 을 건드리면 바깥 탭 상태와 부딪친다.
+    if (scopeCohortId) {
+      didDefaultCohort.current = true
+      return
+    }
     if (searchParams.get('course')) {
       didDefaultCohort.current = true // 딥링크/직접 선택은 존중
       return
@@ -267,7 +282,7 @@ export default function AssignmentsPage() {
       },
       { replace: true },
     )
-  }, [data?.cohorts, myCohorts.data, searchParams, setSearchParams])
+  }, [data?.cohorts, myCohorts.data, searchParams, setSearchParams, scopeCohortId])
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [q, setQ] = useSearchParamState('q')
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
@@ -356,7 +371,7 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className={embedded ? '' : 'p-8'}>
       {/* 과정·기수·멘토·검색·액션을 한 곳에 모은 관리 툴바 */}
       <div
         role="region"
@@ -378,6 +393,8 @@ export default function AssignmentsPage() {
             ]}
             className="h-9"
           />
+          {!embedded && (
+            <>
           <Select
             aria-label="교육과정 선택"
             value={course}
@@ -405,6 +422,8 @@ export default function AssignmentsPage() {
             ]}
             className="h-9"
           />
+            </>
+          )}
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}

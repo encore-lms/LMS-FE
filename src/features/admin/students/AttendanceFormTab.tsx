@@ -7,6 +7,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
+import type { CohortScope } from './scope'
 import { cn } from '@/shared/lib/cn'
 import { formatDateTime } from '@/shared/lib/date'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
@@ -36,13 +37,15 @@ function today() {
 }
 
 // 출결 폼 탭 — 수강생 제출 출결 폼 조회(조회 전용). 과정/기수 필터. (Figma 1457:10955)
-export function AttendanceFormTab() {
+export function AttendanceFormTab({ scope }: { scope?: CohortScope }) {
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const courseId =
+    scope?.courseId ?? selectedCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
-  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const cohortId =
+    scope?.cohortId ?? selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
 
   const { data, isPending, isError, refetch } = useStudentAttendanceForms(
     courseId,
@@ -158,8 +161,8 @@ export function AttendanceFormTab() {
     { key: 'pick', label: '날짜 선택' },
   ]
 
-  // 과정/기수 선택 컨트롤 — 항상 표시.
-  const controls = (
+  // 과정/기수 선택 컨트롤. 임베드(기수 허브)에선 상위가 정한 기수를 쓰므로 감춘다.
+  const controls = scope ? null : (
     <div className="flex flex-wrap items-center gap-2">
       <Select
         aria-label="과정 선택"

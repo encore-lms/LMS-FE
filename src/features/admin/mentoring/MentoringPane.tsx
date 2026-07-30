@@ -17,19 +17,24 @@ const TABS: { key: TabKey; label: string }[] = [
 /**
  * 멘토링 본문 — 배정·일지·일지 템플릿·통계.
  *
- * <p>기수 허브의 '멘토링' 탭에 들어간다. 배정 보드는 허브가 정한 기수로 고정하고 과정·기수
- * 셀렉터를 감춘다. 일지·템플릿·통계는 기수 단위 필드가 없어(과정명·상태 기준) 자체 필터를
- * 그대로 두고 화면만 임베드한다.</p>
+ * <p>기수 허브의 '멘토링' 탭에 들어간다. 배정·일지는 허브가 정한 기수로 조회하고, 통계는
+ * 응답에 cohortId 가 없어 과정명+기수 라벨로 걸러낸다. 셋 다 같은 기수를 봐야 한 화면 안에서
+ * 수가 어긋나지 않는다. 일지 템플릿만 기수 개념이 없어 그대로 둔다.</p>
  *
  * @param paramKey 하위 탭을 담는 쿼리 파라미터. 바깥 탭이 {@code tab} 을 쓰므로 겹치지 않게 받는다.
  */
 export function MentoringPane({
   courseId,
   cohortId,
+  courseName,
+  cohortLabel,
   paramKey = 'mtab',
 }: {
   courseId: string
   cohortId: string
+  /** 통계 응답엔 cohortId 가 없어 표시 라벨로 맞춘다. */
+  courseName?: string
+  cohortLabel?: string
   paramKey?: string
 }) {
   const [tab, setTab] = useSearchParamState(paramKey, 'assignments')
@@ -52,9 +57,15 @@ export function MentoringPane({
             scopeCohortId={cohortId}
           />
         )}
-        {tab === 'logs' && <LogsPage embedded />}
+        {tab === 'logs' && <LogsPage embedded scopeCohortId={cohortId} />}
         {tab === 'templates' && <LogTemplatesPage embedded />}
-        {tab === 'statistics' && <StatisticsPage embedded />}
+        {tab === 'statistics' && (
+          <StatisticsPage
+            embedded
+            scopeCourseName={courseName}
+            scopeCohortLabel={cohortLabel}
+          />
+        )}
       </div>
     </div>
   )

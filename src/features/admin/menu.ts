@@ -12,17 +12,17 @@ import type { MenuNode } from '@/components/layout'
 export const adminMenu: MenuNode[] = [
   // 로그인 nextRoute가 /admin/dashboard라 to=/admin(정확 일치)만으론 활성이 풀린다 → match로 묶는다.
   { label: '대시보드', to: '/admin', match: ['/admin/dashboard'] },
+  // 학생 관리·멘토링 관리·QnA 게시판은 기수 허브(/admin/education/:cohortId)의 탭으로 옮겼다 —
+  // 셋 다 기수를 고른 뒤에 하는 일이라 단독 메뉴로 두면 화면에 들어가서 기수를 또 골라야 했다.
+  // 남은 항목이 하나뿐이라 그룹을 풀고 leaf 로 둔다. 단독 라우트는 딥링크·알림 목적지로 유지.
   {
-    label: '기수 설계·운영',
-    children: [
-      // 학생 관리·멘토링 관리·QnA 게시판은 기수 허브(/admin/education/:cohortId)의
-      // 수강생·멘토링·QnA 탭으로 옮겼다 — 셋 다 기수를 고른 뒤에 하는 일이라 단독 메뉴로 두면
-      // 화면에 들어가서 기수를 또 골라야 했다. 단독 라우트는 딥링크·알림 목적지로 남겨 둔다.
-      {
-        label: '담당 과정/기수',
-        to: '/admin/education',
-        match: ['/admin/students', '/admin/mentoring', '/admin/mentors', '/admin/qna'],
-      },
+    label: '교육과정',
+    to: '/admin/education',
+    match: [
+      '/admin/students',
+      '/admin/mentoring',
+      '/admin/mentors',
+      '/admin/qna',
     ],
   },
   {

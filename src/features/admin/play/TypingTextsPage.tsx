@@ -8,7 +8,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { usePlayTypingTexts, useUpsertPassage } from './api'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useDeletePassage, usePlayTypingTexts, useUpsertPassage } from './api'
 import { PassageFormModal } from './PassageFormModal'
 import { downloadTypingSampleCsv } from './sampleCsv'
 import type { PassageStatus, TypingPassage, UploadValidationRow } from './types'
@@ -52,6 +53,9 @@ export default function TypingTextsPage() {
   // 제시문 추가·수정 폼 모달(formPassage=null → 추가).
   const [formOpen, setFormOpen] = useState(false)
   const [formPassage, setFormPassage] = useState<TypingPassage | null>(null)
+  // 삭제 확인 대상 — 하드 삭제라 다이얼로그로 한 번 확인한다.
+  const [deleteTarget, setDeleteTarget] = useState<TypingPassage | null>(null)
+  const deletePassage = useDeletePassage()
 
   const passages = useMemo(() => data?.passages ?? [], [data])
   const filtered = useMemo(
@@ -117,7 +121,7 @@ export default function TypingTextsPage() {
     {
       key: 'action',
       header: '액션',
-      className: 'w-24',
+      className: 'w-32',
       cell: (p) => (
         <div className="flex items-center gap-3">
           <button
@@ -137,6 +141,13 @@ export default function TypingTextsPage() {
             className="text-accent-strong text-[12px] font-semibold hover:underline"
           >
             복제
+          </button>
+          <button
+            type="button"
+            onClick={() => setDeleteTarget(p)}
+            className="text-danger text-[12px] font-semibold hover:underline"
+          >
+            삭제
           </button>
         </div>
       ),
@@ -367,6 +378,32 @@ export default function TypingTextsPage() {
           </div>
         </div>
       </DataBoundary>
+
+      {/* 제시문 삭제 확인 — 하드 삭제라 danger 톤으로 한 번 확인 */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="제시문 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        confirmDisabled={deletePassage.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          deletePassage.mutate(deleteTarget.id, {
+            onSuccess: () => {
+              toast.success('제시문을 삭제했습니다.')
+              setDeleteTarget(null)
+            },
+            onError: () =>
+              toast.danger('제시문 삭제에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+          })
+        }}
+      >
+        <p className="text-fg-muted text-sm leading-6">
+          “{deleteTarget?.title}” 제시문을 삭제합니다. 삭제하면 복구할 수
+          없어요.
+        </p>
+      </ConfirmDialog>
 
       {/* 제시문 추가·수정 폼 모달 (Figma 1557:11159) */}
       <PassageFormModal

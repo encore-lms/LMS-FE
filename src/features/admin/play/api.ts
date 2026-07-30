@@ -39,3 +39,14 @@ export function useUpsertPassage() {
       queryClient.invalidateQueries({ queryKey: adminPlayKeys.overview() }),
   })
 }
+
+// 제시문 삭제 — DELETE /{id}(204). 세션·기록과 연결 없는 카탈로그 행이라 하드 삭제.
+export function useDeletePassage() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (id) =>
+      apiClient.delete(`/admin/play/typing-texts/${id}`).then(() => undefined),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminPlayKeys.overview() }),
+  })
+}

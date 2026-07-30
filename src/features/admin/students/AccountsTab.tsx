@@ -17,6 +17,7 @@ import {
   useStudentAccounts,
   useSyncStudents,
 } from '../api/students'
+import { useChangeLoginBlock } from '@/shared/api'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { TempPasswordModal } from '../settings/TempPasswordModal'
 import { StudentDetailModal } from './StudentDetailModal'
@@ -45,7 +46,8 @@ export function AccountsTab() {
   } | null>(null)
   // 비밀번호 초기화 모달 대상 계정 — non-null이면 TempPasswordModal이 열린다(설정 탭과 동일 UX).
   const [pwTarget, setPwTarget] = useState<StudentAccount | null>(null)
-  // 차단/해제 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
+  const changeBlock = useChangeLoginBlock()
+  // 서버 반영 전 잠깐 쓰는 낙관적 표시 — 정본은 서버 status 다.
   const [blockedOverride, setBlockedOverride] = useState<
     Record<string, boolean>
   >({})
@@ -97,8 +99,19 @@ export function AccountsTab() {
     if (!modal) return
     const { account, action } = modal
     if (action === '로그인 차단' || action === '로그인 차단 해제') {
-      setBlockedOverride((p) => ({ ...p, [account.id]: !isBlocked(account) }))
-      toast.success(`${account.name} · ${action} 적용 — 감사 로그 기록`)
+      const next = !isBlocked(account)
+      // 서버에 남겨야 새로고침해도 유지되고, 실제 로그인도 막힌다.
+      changeBlock.mutate(
+        { userId: account.id, blocked: next },
+        {
+          onSuccess: () => {
+            setBlockedOverride((p) => ({ ...p, [account.id]: next }))
+            toast.success(`${account.name} · ${action} 적용 — 감사 로그 기록`)
+          },
+          onError: () =>
+            toast.danger(`${action}에 실패했어요. 잠시 후 다시 시도해 주세요.`),
+        },
+      )
     } else {
       toast.success(`${account.name} · 변경 저장 — 감사 로그 기록`)
     }

@@ -34,7 +34,7 @@ interface QuickLinkDef {
 // 추가 가능한 화면 카탈로그 — 운영 메뉴의 주요 목적지.
 const CATALOG: QuickLinkDef[] = [
   { to: '/admin/students', label: '학생 관리', icon: Users, tone: 'bg-info-bg text-info' },
-  { to: '/admin/education', label: '담당 과정/기수', icon: BookOpen, tone: 'bg-success-bg text-success' },
+  { to: '/admin/education', label: '교육과정', icon: BookOpen, tone: 'bg-success-bg text-success' },
   { to: '/admin/mentors/assignments', label: '멘토링 관리', icon: HeartHandshake, tone: 'bg-accent-bg text-accent-strong' },
   { to: '/admin/mileage', label: '마일리지', icon: Coins, tone: 'bg-warning-bg text-warning' },
   { to: '/admin/mentoring/logs', label: '멘토링 일지', icon: NotebookPen, tone: 'bg-accent-bg text-accent-strong' },
@@ -123,7 +123,7 @@ export function QuickLinks() {
       {/* 옅은 배경 컨테이너 — 다크 인사이트에서 본문으로 넘어가는 시각적 브릿지 */}
       <div className="bg-surface-muted/50 flex flex-wrap items-start gap-4 rounded-2xl px-5 py-4">
         {items.map(({ to, label, icon: Icon, tone }) => (
-          // 타일 폭은 가장 긴 라벨('담당 과정/기수')이 한 줄에 들어가는 값.
+          // 타일 폭은 가장 긴 라벨('인입 격리 큐')이 한 줄에 들어가는 값.
           <Link
             key={to}
             to={to}

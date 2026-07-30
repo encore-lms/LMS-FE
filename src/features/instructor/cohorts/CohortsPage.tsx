@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Info, Search } from 'lucide-react'
-import { DataBoundary } from '@/components/ui/DataBoundary'
-import { DataTable, type Column } from '@/components/data/DataTable'
+import { CohortDirectory } from '@/components/data/CohortDirectory'
+import { type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type {
   CohortStatus,
@@ -12,7 +10,6 @@ import type {
   InstructorRole,
 } from '@/shared/types'
 import { useInstructorCohorts } from '../api/console'
-import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const ROLE_META: Record<InstructorRole, { label: string; tone: BadgeTone }> = {
   lead: { label: '강사', tone: 'accent' },
@@ -165,95 +162,38 @@ export default function CohortsPage() {
   ]
 
   return (
-    <DataBoundary
+    <CohortDirectory<InstructorCohortRow, CohortStatus>
+      tabs={statusTabs}
+      status={status}
+      onStatusChange={setStatus}
+      q={q}
+      onQChange={setQ}
+      searchPlaceholder="과정명·기수명·회차로 검색"
+      scopeSummary={
+        data
+          ? `담당 ${data.total}개 (진행 중 ${data.operating} · 예정 ${data.upcoming} · 종료 ${data.ended})`
+          : undefined
+      }
+      cards={summaryCards.map((c) => ({
+        label: c.label,
+        value: c.value,
+        unit: c.unit,
+        hint: c.hint,
+        dot: c.dot,
+        hintColor: c.hintColor,
+      }))}
+      columns={columns}
+      rows={filtered}
+      rowKey={(r) => r.id}
+      onRowClick={(r) => navigate(`/instructor/cohorts/${r.id}/education`)}
+      footnote={
+        data
+          ? `종료 과정 ${data.ended}개는 [종료] 탭에서 조회 · 과정을 클릭하면 자료실·과제·퀴즈·프로젝트·이력서·기록실·설정을 한 곳에서 확인`
+          : undefined
+      }
       isPending={isPending}
       isError={isError || !data}
       onRetry={() => refetch()}
-      skeleton={<SkeletonListPage columns={5} className="" />}
-      errorTitle="담당 과정을 불러오지 못했어요"
-      errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
-    >
-      {data && (
-        <div className="p-8">
-          {/* 필터 바 */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="border-border focus-within:border-brand flex h-9 w-80 items-center gap-2 rounded-lg border bg-white px-3">
-              <Search className="text-fg-subtle h-4 w-4" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="과정명·기수명·회차로 검색"
-                aria-label="과정 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
-            {/* 활성 탭은 brand 채움 (Figma 1324:9636) */}
-            {statusTabs.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setStatus(t.key)}
-                className={cn(
-                  'rounded-lg px-3.5 py-1.5 text-sm font-medium',
-                  status === t.key
-                    ? 'bg-brand font-bold text-white'
-                    : 'border-border text-fg-muted hover:bg-surface-muted border',
-                )}
-              >
-                {t.label} ({t.count})
-              </button>
-            ))}
-            <span className="text-fg-subtle ml-auto text-xs">
-              담당 {data.total}개 (진행 중 {data.operating} · 예정{' '}
-              {data.upcoming} · 종료 {data.ended})
-            </span>
-          </div>
-
-          {/* 요약 카드 4 */}
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {summaryCards.map((card) => (
-              <div
-                key={card.label}
-                className="border-border bg-surface rounded-xl border p-4.5"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-fg-muted text-sm font-medium">
-                    {card.label}
-                  </p>
-                  <span className={cn('h-2 w-2 rounded-full', card.dot)} />
-                </div>
-                <p className="text-fg mt-2 text-3xl font-bold">
-                  {card.value}{' '}
-                  <span className="text-fg-subtle text-base font-medium">
-                    {card.unit}
-                  </span>
-                </p>
-                <p className={cn('mt-1.5 text-xs', card.hintColor)}>
-                  {card.hint}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <DataTable
-              columns={columns}
-              rows={filtered}
-              rowKey={(r) => r.id}
-              onRowClick={(r) =>
-                navigate(`/instructor/cohorts/${r.id}/education`)
-              }
-              empty="조건에 맞는 과정이 없어요"
-            />
-          </div>
-          <p className="text-fg-subtle mt-3 flex items-center gap-1.5 text-xs">
-            <Info className="h-3 w-3" />
-            종료 과정 {data.ended}개는 [종료] 탭에서 조회 · 과정을 클릭하면
-            자료실·과제·퀴즈·프로젝트·이력서·기록실·설정을 한 곳에서 확인
-          </p>
-        </div>
-      )}
-    </DataBoundary>
+    />
   )
 }

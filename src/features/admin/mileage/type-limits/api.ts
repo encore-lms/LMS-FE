@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { mileageTypeLimitsKeys } from './queryKeys'
 import type { TypeLimitsData } from './types'
@@ -12,5 +12,19 @@ export function useTypeLimits() {
       apiClient
         .get<TypeLimitsData>('/admin/mileage/type-limits')
         .then((r) => r.data),
+  })
+}
+
+/** 타입 한도 저장 — 변경된 타입만 보낸다. 저장돼야 수강생 구매가 실제로 막힌다. */
+export function useSaveTypeLimits() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (limits: { type: string; limit: number }[]) =>
+      apiClient
+        .put<TypeLimitsData>('/admin/mileage/type-limits', { limits })
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mileageTypeLimitsKeys.config() })
+    },
   })
 }

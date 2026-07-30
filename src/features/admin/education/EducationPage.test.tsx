@@ -39,6 +39,11 @@ vi.mock('@/features/student/qna/QnaListPage', () => ({
 vi.mock('./FeatureTogglePane', () => ({
   FeatureTogglePane: () => <div>기능 사용 여부 패널</div>,
 }))
+vi.mock('./CourseHomePane', () => ({
+  CourseHomePane: ({ cohortId }: { cohortId: string }) => (
+    <div>과정 홈 패널 {cohortId}</div>
+  ),
+}))
 
 // 기수 허브 — URL 의 :cohortId 하나를 탭으로 파고든다.
 // 기수 고르기·기본 기수 판정은 담당 과정/기수 목록(CohortListPage)으로 옮겼다.
@@ -204,5 +209,11 @@ describe('EducationPage (기수 허브)', () => {
     renderHub()
     await user.click(screen.getByRole('tab', { name: 'QnA' }))
     expect(screen.getByText('QnA 임베드')).toBeInTheDocument()
+  })
+
+  // 과정 홈은 수강생 강의 홈과 같은 집계 — 이 기수 기준으로 부른다.
+  it('과정 홈 탭은 그 기수의 강의 홈을 보여준다', () => {
+    renderHub()
+    expect(screen.getByText('과정 홈 패널 cohort-34')).toBeInTheDocument()
   })
 })

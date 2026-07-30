@@ -19,6 +19,7 @@ import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
 import { FeatureTogglePane } from './FeatureTogglePane'
+import { CourseHomePane } from './CourseHomePane'
 import { useAdminCohorts } from './cohortRows'
 import { SkeletonText } from '@/components/ui/Skeleton'
 
@@ -71,17 +72,6 @@ function PlaceholderPane({ label }: { label: string }) {
       icon={<FolderOpen className="h-6 w-6" />}
       title={`${label} 설정 준비 중`}
       description="이 탭은 과정·기수별 설정 화면으로 곧 연결됩니다."
-    />
-  )
-}
-
-// 과정 홈 — 무엇을 보여 줄지 아직 정해지지 않았다. 내용이 정해지면 이 자리를 채운다.
-function CourseHomePane() {
-  return (
-    <Empty
-      icon={<FolderOpen className="h-6 w-6" />}
-      title="과정 홈 준비 중"
-      description="기수를 열었을 때 가장 먼저 보이는 화면입니다. 담을 내용이 정해지면 연결됩니다."
     />
   )
 }
@@ -222,7 +212,12 @@ export default function EducationPage() {
 
       <div className="mt-6">
         {tab === 'home' ? (
-          <CourseHomePane />
+          // 이 기수 수강생이 보는 강의 홈 그대로 — 주차별 학습·공지·진도.
+          !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <CourseHomePane cohortId={cohortId} />
+          )
         ) : tab === 'resume' ? (
           // 이력서 현황·상세·피드백(실 BE, 정본 §32).
           !courseId || !cohortId ? (

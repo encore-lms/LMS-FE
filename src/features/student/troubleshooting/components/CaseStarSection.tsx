@@ -1,7 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { card, input, STAR } from './caseFormConstants'
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
+import { card, STAR } from './caseFormConstants'
 
 interface CaseStarSectionProps {
   star: Record<string, string>
@@ -34,25 +35,15 @@ export function CaseStarSection({ star, setStar }: CaseStarSectionProps) {
               </span>
             )}
           </div>
-          <textarea
-            className={cn(input, 'min-h-[120px] resize-none leading-6')}
-            value={star[s.key]}
+          {/* 'Markdown 지원'이라고 안내만 하고 실제로는 평문 textarea 였다 —
+              작성·미리보기 탭과 툴바가 있는 공용 편집기로 바꾼다. */}
+          <MarkdownEditor
+            value={star[s.key] ?? ''}
+            onChange={(v) => setStar((p) => ({ ...p, [s.key]: v }))}
+            minHeight={120}
             maxLength={500}
-            onChange={(e) =>
-              setStar((p) => ({ ...p, [s.key]: e.target.value }))
-            }
+            placeholder={s.sub}
           />
-          <div className="flex items-center justify-between">
-            <div className="text-fg-subtle flex items-center gap-3 text-[11px]">
-              <span>Markdown 지원</span>
-              <span className="bg-surface-muted rounded px-1.5 py-0.5 font-mono">
-                ` ` 인라인 코드
-              </span>
-            </div>
-            <span className="text-fg-subtle text-[11px]">
-              {star[s.key]?.length ?? 0} / 500
-            </span>
-          </div>
         </section>
       ))}
     </>

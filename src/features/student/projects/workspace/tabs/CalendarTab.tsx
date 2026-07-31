@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
@@ -58,7 +58,10 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
     y: today.getFullYear(),
     m: today.getMonth(),
   })
-  const [events, setEvents] = useState<CalItem[]>(() => [
+  // 서버 데이터에서 곧장 파생한다. 예전에는 추가한 항목을 로컬 배열에 밀어 넣었는데,
+  // 그 항목엔 서버 id 가 없어 새로고침 전까지 수정·삭제가 잠겨 있었다.
+  const events: CalItem[] = useMemo(
+    () => [
     ...d.calEvents.map((e) => ({
       // 서버가 실제 날짜를 준다. 예전에는 고정 월(CAL_BASE)에 일(day)만 붙여
       // 다른 달 일정이 엉뚱한 날에 붙고, 탭을 다시 열면 위치가 어긋났다.
@@ -78,7 +81,9 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
         tone: 'brand' as const,
         type: '작업',
       })),
-  ])
+    ],
+    [d.calEvents, d.columns],
+  )
   // null = 닫힘, 그 외 = 해당 날짜(YYYY-MM-DD)로 일정 추가 모달 열림.
   const [addDate, setAddDate] = useState<string | null>(null)
   const addScheduleM = useAddSchedule(d.id)
@@ -256,9 +261,6 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
               },
               {
                 onSuccess: () => {
-                  setEvents((prev) =>
-                    prev.map((e) => (e.id === editing.id ? { ...item, id: e.id } : e)),
-                  )
                   setEditing(null)
                   toast.success('일정을 수정했습니다')
                 },
@@ -281,7 +283,6 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
             { scheduleId: deleting.id },
             {
               onSuccess: () => {
-                setEvents((prev) => prev.filter((e) => e.id !== deleting.id))
                 setDeleting(null)
                 toast.success('일정을 삭제했습니다')
               },
@@ -304,7 +305,6 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
               { title: item.label, date: item.date },
               {
                 onSuccess: () => {
-                  setEvents((prev) => [...prev, item])
                   setCursor({
                     y: Number(item.date.slice(0, 4)),
                     m: Number(item.date.slice(5, 7)) - 1,

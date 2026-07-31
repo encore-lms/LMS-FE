@@ -62,9 +62,14 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
         </section>
         <div className="grid flex-1 grid-cols-1 content-start gap-3 sm:grid-cols-2">
           {visibleDocs.map((doc, i) => (
-            <div key={i} className={cn(card, 'flex flex-col gap-2')}>
-              <span className="text-fg text-[14px] font-bold">{doc.title}</span>
-              <span className="text-fg-subtle text-[11px]">{doc.meta}</span>
+            <div key={i} className={cn(card, 'flex min-w-0 flex-col gap-2')}>
+              {/* 제목·링크는 자유 입력 — 칸 안에서 접고, 끊을 데가 없으면 어디서든 끊는다. */}
+              <span className="text-fg text-[14px] font-bold [overflow-wrap:anywhere]">
+                {doc.title}
+              </span>
+              <span className="text-fg-subtle text-[11px] [overflow-wrap:anywhere]">
+                {doc.meta}
+              </span>
               <div className="mt-auto flex items-center justify-between gap-2 pt-1">
                 <Chip badge={doc.status} />
                 <div className="flex shrink-0 items-center gap-1">

@@ -56,7 +56,9 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
               )}
             >
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-fg text-[14px] font-bold">{m.title}</span>
+                <span className="text-fg text-[14px] font-bold [overflow-wrap:anywhere]">
+                  {m.title}
+                </span>
                 <span className="text-fg-subtle text-[11px]">{m.meta}</span>
               </div>
               {/* 요약은 길이 제한이 없어 제목·액션을 밀어낸다 — 남는 폭 안에서 말줄임 */}

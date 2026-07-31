@@ -36,10 +36,13 @@ export function OutcomesTab({ d }: { d: WorkspaceData }) {
         {metrics.map((m) => (
           <section
             key={m.id ?? m.label}
-            className={cn(card, 'group flex flex-col gap-3')}
+            className={cn(card, 'group flex min-w-0 flex-col gap-3')}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="text-fg text-[14px] font-bold">{m.label}</span>
+              {/* 지표명은 자유 입력이라 길 수 있다 — 칸 안에서 접고, 끊을 데가 없으면 어디서든 끊는다. */}
+              <span className="text-fg min-w-0 text-[14px] font-bold [overflow-wrap:anywhere]">
+                {m.label}
+              </span>
               {m.id && (
                 <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                   <button
@@ -61,23 +64,24 @@ export function OutcomesTab({ d }: { d: WorkspaceData }) {
                 </div>
               )}
             </div>
-            <div className="flex items-end gap-6">
-              <div className="flex flex-col">
+            {/* 값도 자유 입력 — 길면 아래로 접히게 두고, 각 칸은 스스로 줄바꿈한다. */}
+            <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+              <div className="flex min-w-0 flex-col">
                 <span className="text-fg-subtle text-[11px]">Before</span>
-                <span className="text-fg-muted text-[20px] font-bold">
+                <span className="text-fg-muted min-w-0 text-[20px] font-bold [overflow-wrap:anywhere]">
                   {m.before}
                 </span>
               </div>
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 <span className="text-fg-subtle text-[11px]">After</span>
-                <span className="text-brand text-[20px] font-bold">
+                <span className="text-brand min-w-0 text-[20px] font-bold [overflow-wrap:anywhere]">
                   {m.after}
                 </span>
               </div>
             </div>
             <span
               className={cn(
-                'w-fit rounded px-1.5 py-0.5 text-[11px] font-bold',
+                'w-fit max-w-full rounded px-1.5 py-0.5 text-[11px] font-bold [overflow-wrap:anywhere]',
                 m.good
                   ? 'bg-success-bg text-success'
                   : 'bg-danger-bg text-danger',

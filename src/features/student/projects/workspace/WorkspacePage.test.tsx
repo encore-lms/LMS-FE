@@ -307,12 +307,16 @@ describe('WorkspacePage home', () => {
     expect(await screen.findByText('지표를 추가했습니다')).toBeInTheDocument()
   })
 
-  it('상호평가 점수와 코멘트를 입력하고 제출한다', async () => {
+  // 미평가 상태에서 잠기는지는 PeerTab 단위 테스트에서 본다 —
+  // 이 목은 이미 내 평가(myEval)가 채워져 있어 빈 상태를 만들 수 없다.
+  it('모든 팀원의 모든 축을 매기면 제출된다', async () => {
     const user = userEvent.setup()
     renderPage('/student/projects/p1?tab=peer-evaluation')
 
-    const score = screen.getByRole('slider', { name: /박지호 협업 점수/ })
-    fireEvent.change(score, { target: { value: '5' } })
+    // 화면에 그려진 점수 슬라이더를 전부 채운다.
+    for (const s of screen.getAllByRole('slider')) {
+      fireEvent.change(s, { target: { value: '5' } })
+    }
     await user.type(
       screen.getAllByPlaceholderText(/선택 코멘트/)[0],
       '협업 근거를 확인했습니다.',

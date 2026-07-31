@@ -3,10 +3,13 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import {
   useAddTask,
+  useEditTask,
+  useDeleteTask,
   useUpdateTaskStatus,
   wsWriteError,
 } from '../../../api/projects'
@@ -21,8 +24,15 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
   const [addCol, setAddCol] = useState<number | null>(null)
   const drag = useRef<{ col: number; task: number } | null>(null)
   const addTaskM = useAddTask(d.id)
+  const editTaskM = useEditTask(d.id)
+  const deleteTaskM = useDeleteTask(d.id)
   const updateStatusM = useUpdateTaskStatus(d.id)
   const nameOf = useMemberNames()
+  // 수정 중인 작업(열 위치까지 알아야 상태를 유지한 채 저장한다).
+  const [editing, setEditing] = useState<{ col: number; task: WsTask } | null>(
+    null,
+  )
+  const [deleting, setDeleting] = useState<WsTask | null>(null)
 
   const drop = (toCol: number) => {
     const from = drag.current
@@ -82,7 +92,13 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
                 }}
                 className="cursor-grab active:cursor-grabbing"
               >
-                <TaskCard t={t} />
+                <TaskCard
+                  t={t}
+                  onEdit={
+                    t.id ? () => setEditing({ col: ci, task: t }) : undefined
+                  }
+                  onDelete={t.id ? () => setDeleting(t) : undefined}
+                />
               </div>
             ))}
             {col.tasks.length === 0 && (
@@ -121,16 +137,72 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
           }}
         />
       )}
+      {editing && (
+        <AddTaskModal
+          columns={columns}
+          initialCol={editing.col}
+          members={d.members}
+          nameOf={nameOf}
+          editing={editing.task}
+          onClose={() => setEditing(null)}
+          onAdd={(colIdx, task, startAt, endAt, assigneeMemberIds) => {
+            editTaskM.mutate(
+              {
+                taskId: editing.task.id!,
+                title: task.title,
+                status: columns[colIdx].key,
+                startAt,
+                dueAt: endAt,
+                assigneeMemberIds,
+              },
+              {
+                onSuccess: () => {
+                  toast.success('작업을 수정했습니다')
+                  setEditing(null)
+                },
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '작업 수정에 실패했어요.')),
+              },
+            )
+          }}
+        />
+      )}
+      <ConfirmDialog
+        open={!!deleting}
+        title="작업 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting?.id) return
+          deleteTaskM.mutate(
+            { taskId: deleting.id },
+            {
+              onSuccess: () => {
+                toast.success('작업을 삭제했습니다')
+                setDeleting(null)
+              },
+              onError: (e) =>
+                toast.danger(wsWriteError(e, '작업 삭제에 실패했어요.')),
+            },
+          )
+        }}
+      >
+        <p className="text-fg-muted text-[13px]">
+          '{deleting?.title ?? ''}' 작업을 삭제할까요? 되돌릴 수 없어요.
+        </p>
+      </ConfirmDialog>
     </div>
   )
 }
 
-/* ── 작업 추가 모달 ── */
+/* ── 작업 추가·수정 모달 ── */
 function AddTaskModal({
   columns,
   initialCol,
   members,
   nameOf,
+  editing,
   onClose,
   onAdd,
 }: {
@@ -138,6 +210,8 @@ function AddTaskModal({
   initialCol: number
   members: WsMember[]
   nameOf: (userId: string | undefined, fallback: string) => string
+  /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
+  editing?: WsTask
   onClose: () => void
   onAdd: (
     colIdx: number,
@@ -148,17 +222,21 @@ function AddTaskModal({
   ) => void
 }) {
   const [colIdx, setColIdx] = useState(initialCol)
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(editing?.title ?? '')
   // 담당자(멀티) — 현재 프로젝트 팀원 중 선택(ProjectMember.id 집합)
-  const [assigneeIds, setAssigneeIds] = useState<string[]>([])
+  const [assigneeIds, setAssigneeIds] = useState<string[]>(
+    editing?.assigneeMemberIds ?? [],
+  )
   const toggleAssignee = (id: string) =>
     setAssigneeIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   // 시작일 기본=오늘, 종료일 기본=시작일 다음날.
   const today = todayISO()
-  const [startAt, setStartAt] = useState(today)
-  const [endAt, setEndAt] = useState(nextDayISO(today))
+  const [startAt, setStartAt] = useState(editing?.startDate ?? today)
+  const [endAt, setEndAt] = useState(
+    editing?.endDate ?? editing?.due ?? nextDayISO(today),
+  )
   const field = inputClass()
 
   const submit = () => {
@@ -189,7 +267,7 @@ function AddTaskModal({
     <Modal
       open
       onClose={onClose}
-      title="작업 추가"
+      title={editing ? '작업 수정' : '작업 추가'}
       footer={
         <>
           <button

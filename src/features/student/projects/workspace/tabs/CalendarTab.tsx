@@ -7,7 +7,13 @@ import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddSchedule, wsWriteError } from '../../../api/projects'
+import {
+  useAddSchedule,
+  useEditSchedule,
+  useDeleteSchedule,
+  wsWriteError,
+} from '../../../api/projects'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { Tone, WorkspaceData } from '../../types'
 import { Chip, SectionHead } from '../components/ws-shared'
 import { card, dateStr, formatKoreanDate, pad2 } from '../components/ws-style'
@@ -31,6 +37,8 @@ const SCHEDULE_TYPES: { v: string; label: string; tone: Tone }[] = [
 ]
 
 interface CalItem {
+  /** 일정 id — 이 화면에서 만든 일정만 갖는다. 보드 작업에서 끌어온 항목은 없다(보드에서 고친다). */
+  id?: string
   date: string // YYYY-MM-DD
   label: string // 일정명
   tone: Tone
@@ -54,6 +62,7 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
     ...d.calEvents.map((e) => ({
       // 서버가 실제 날짜를 준다. 예전에는 고정 월(CAL_BASE)에 일(day)만 붙여
       // 다른 달 일정이 엉뚱한 날에 붙고, 탭을 다시 열면 위치가 어긋났다.
+      id: e.id,
       date: e.date ?? `${CAL_BASE}-${pad2(e.day)}`,
       label: e.label,
       tone: e.tone,
@@ -73,6 +82,10 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
   // null = 닫힘, 그 외 = 해당 날짜(YYYY-MM-DD)로 일정 추가 모달 열림.
   const [addDate, setAddDate] = useState<string | null>(null)
   const addScheduleM = useAddSchedule(d.id)
+  const editScheduleM = useEditSchedule(d.id)
+  const deleteScheduleM = useDeleteSchedule(d.id)
+  const [editing, setEditing] = useState<CalItem | null>(null)
+  const [deleting, setDeleting] = useState<CalItem | null>(null)
 
   const offset = (new Date(cursor.y, cursor.m, 1).getDay() + 6) % 7
   const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate()
@@ -144,13 +157,21 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                   const ds = dateStr(cursor.y, cursor.m, day)
                   const isToday = ds === todayStr
                   return (
-                    <button
+                    // 칸 안에 일정별 버튼을 두어야 해서 칸 자체는 div — 버튼 안에 버튼은 둘 수 없다.
+                    <div
                       key={i}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setAddDate(ds)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setAddDate(ds)
+                        }
+                      }}
                       aria-label={`${cursor.m + 1}월 ${day}일 일정 추가`}
                       className={cn(
-                        'flex min-h-[78px] flex-col items-start gap-1 rounded-lg border p-1.5 text-left transition-colors',
+                        'flex min-h-[78px] cursor-pointer flex-col items-start gap-1 rounded-lg border p-1.5 text-left transition-colors',
                         isToday
                           ? 'border-brand bg-brand/5'
                           : 'border-border hover:border-brand/50 hover:bg-surface-muted/60',
@@ -169,17 +190,27 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                       {/* items-start 컨테이너라 폭이 max-content로 벌어진다 —
                           w-full·min-w-0으로 일자 칸(~104px) 안에 가둬야 line-clamp가 먹는다 */}
                       {eventsOf(day).map((ev, idx) => (
-                        <span
-                          key={idx}
-                          className="flex w-full min-w-0 flex-col items-start gap-0.5"
+                        <button
+                          key={ev.id ?? idx}
+                          type="button"
+                          // 칸을 누르면 '추가'라, 일정 자체를 누른 것은 전파를 끊어야 한다.
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (ev.id) setEditing(ev)
+                          }}
+                          disabled={!ev.id}
+                          title={
+                            ev.id ? `${ev.label} 수정` : '보드에서 만든 작업이에요'
+                          }
+                          className="hover:bg-surface-muted flex w-full min-w-0 flex-col items-start gap-0.5 rounded p-0.5 text-left disabled:cursor-default disabled:hover:bg-transparent"
                         >
                           <Chip badge={{ label: ev.type, tone: ev.tone }} />
                           <span className="text-fg-muted line-clamp-1 w-full text-[10px]">
                             {ev.label}
                           </span>
-                        </span>
+                        </button>
                       ))}
-                    </button>
+                    </div>
                   )
                 })()
               ),
@@ -207,6 +238,63 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
           )}
         </section>
       </div>
+      {editing && (
+        <AddScheduleModal
+          initialDate={editing.date}
+          editing={editing}
+          onClose={() => setEditing(null)}
+          onDelete={() => {
+            setDeleting(editing)
+            setEditing(null)
+          }}
+          onAdd={(item) => {
+            editScheduleM.mutate(
+              {
+                scheduleId: editing.id!,
+                title: item.label,
+                startsAt: item.date,
+              },
+              {
+                onSuccess: () => {
+                  setEvents((prev) =>
+                    prev.map((e) => (e.id === editing.id ? { ...item, id: e.id } : e)),
+                  )
+                  setEditing(null)
+                  toast.success('일정을 수정했습니다')
+                },
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '일정 수정에 실패했어요.')),
+              },
+            )
+          }}
+        />
+      )}
+      <ConfirmDialog
+        open={!!deleting}
+        title="일정 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting?.id) return
+          deleteScheduleM.mutate(
+            { scheduleId: deleting.id },
+            {
+              onSuccess: () => {
+                setEvents((prev) => prev.filter((e) => e.id !== deleting.id))
+                setDeleting(null)
+                toast.success('일정을 삭제했습니다')
+              },
+              onError: (e) =>
+                toast.danger(wsWriteError(e, '일정 삭제에 실패했어요.')),
+            },
+          )
+        }}
+      >
+        <p className="text-fg-muted text-[13px]">
+          '{deleting?.label ?? ''}' 일정을 삭제할까요? 되돌릴 수 없어요.
+        </p>
+      </ConfirmDialog>
       {addDate !== null && (
         <AddScheduleModal
           initialDate={addDate}
@@ -237,16 +325,22 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
 
 function AddScheduleModal({
   initialDate,
+  editing,
   onClose,
+  onDelete,
   onAdd,
 }: {
   initialDate: string
+  /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
+  editing?: CalItem
   onClose: () => void
+  /** 수정 모드에서만 — 모달 안에서 바로 지울 수 있게. */
+  onDelete?: () => void
   onAdd: (item: CalItem) => void
 }) {
   const [date, setDate] = useState(initialDate)
-  const [label, setLabel] = useState('')
-  const [typeKey, setTypeKey] = useState('brand')
+  const [label, setLabel] = useState(editing?.label ?? '')
+  const [typeKey, setTypeKey] = useState<string>(editing?.tone ?? 'brand')
   const [customType, setCustomType] = useState('')
   const field = inputClass()
   const isEtc = typeKey === 'etc'
@@ -263,9 +357,18 @@ function AddScheduleModal({
     <Modal
       open
       onClose={onClose}
-      title="일정 추가"
+      title={editing ? '일정 수정' : '일정 추가'}
       footer={
         <>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="text-danger hover:bg-danger-bg mr-auto rounded-lg px-3 py-1.5 text-[13px] font-semibold"
+            >
+              삭제
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -279,7 +382,7 @@ function AddScheduleModal({
             disabled={!label.trim()}
             className={buttonClass({ size: 'sm' })}
           >
-            추가
+            {editing ? '저장' : '추가'}
           </button>
         </>
       }

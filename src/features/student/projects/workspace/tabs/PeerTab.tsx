@@ -64,12 +64,29 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
   const saveSelfM = useSaveSelfReview(d.id)
   // 임시저장은 자기 수행 내용만이 아니라 점수·코멘트까지 함께 보관한다.
   const saveDraftM = useSavePeerEvalDraft(d.id)
-  // 축 라벨(BE 한글 key) → 제출 필드 매핑
-  const AXIS_KEYS = ['협업', '소통', '책임감', '문제해결', '기술기여']
+  /**
+   * 아직 점수를 안 매긴 팀원 — 화면에 그려진 축이 모두 채워져야 평가한 것으로 본다.
+   *
+   * <p>기준을 고정 목록이 아니라 t.axes 로 두는 이유: 축 이름이 BE 에서 오고 표기가 조금씩
+   * 다르다(예: '기술 기여' / '기술기여'). 화면이 그린 축을 그대로 세야 어긋나지 않는다.</p>
+   */
+  const unscored = d.peerTargets
+    .filter((t) => t.memberId)
+    .filter((t) => t.axes.some((a) => !scores[`${t.name}:${a.key}`]))
+    .map((t) => t.name)
+
   const submitAll = () => {
     const targets = d.peerTargets.filter((t) => t.memberId)
     if (targets.length === 0) {
       toast.danger('평가할 팀원이 없어요.')
+      return
+    }
+    // 빈 축을 0 점으로 채워 보내면 '안 매긴 것'과 '1점 미만'을 구분할 수 없고,
+    // 증명서에는 매기지도 않은 점수가 반영된다. 제출 전에 막는다.
+    if (unscored.length > 0) {
+      toast.danger(
+        `점수를 매기지 않은 팀원이 있어요 — ${unscored.join(', ')} (5개 항목 모두 필요)`,
+      )
       return
     }
     Promise.all([
@@ -94,7 +111,6 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
         toast.danger(wsWriteError(e, '상호평가 제출에 실패했어요.')),
       )
   }
-  void AXIS_KEYS
   const setScore = (name: string, key: string, score: number) =>
     setScores((prev) => ({ ...prev, [`${name}:${key}`]: score }))
 
@@ -262,8 +278,16 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
           <button
             type="button"
             onClick={submitAll}
-            disabled={submitPeerM.isPending}
-            className={buttonClass({ size: 'md' })}
+            disabled={submitPeerM.isPending || unscored.length > 0}
+            title={
+              unscored.length > 0
+                ? `${unscored.join(', ')} 님의 점수가 남았어요`
+                : undefined
+            }
+            className={cn(
+              buttonClass({ size: 'md' }),
+              unscored.length > 0 && 'cursor-not-allowed opacity-50',
+            )}
           >
             {submitPeerM.isPending ? '제출 중…' : '제출'}
           </button>

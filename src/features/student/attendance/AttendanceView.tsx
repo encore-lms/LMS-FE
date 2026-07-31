@@ -35,6 +35,8 @@ export default function AttendanceView() {
           <HrdAttendanceCalendar
             calendar={data.calendar}
             onMove={(year, month) => setView({ year, month })}
+            // 폼은 HRD 출결과 별개 데이터라, 낸 날짜를 캘린더에 겹쳐 보여 준다.
+            formDates={new Set(data.submissions.map((s) => s.targetDate))}
           />
           <SubmissionHistory
             submissions={data.submissions}

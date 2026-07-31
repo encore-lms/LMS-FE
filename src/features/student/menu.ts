@@ -21,7 +21,7 @@ export const studentMenu: MenuItem[] = [
   { label: '멘토링', to: '/student/mentoring', featureKey: 'mentoring' },
   // 과정 기능 토글(정본 CohortFeatureConfig: mileage·play)로 노출 제어.
   { label: '마일리지', to: '/student/mileage', featureKey: 'mileage' },
-  // PLAY — 준비 중. 클릭 시 이동 없이 '준비중' 토스트만. 정식 오픈 시 comingSoon 제거하고
-  // featureKey: 'play'로 과정 토글 제어 복원.
-  { label: 'PLAY', to: '/student/play', comingSoon: true },
+  // PLAY — 마일리지와 같이 과정 토글로 제어한다. 매니저가 끄면 메뉴에서 사라져야 하는데,
+  // comingSoon 만 걸려 있어 토글을 아예 보지 않았다(꺼도 '준비 중'으로 계속 보임).
+  { label: 'PLAY', to: '/student/play', featureKey: 'play', comingSoon: true },
 ]

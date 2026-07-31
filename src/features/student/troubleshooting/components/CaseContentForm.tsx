@@ -87,7 +87,9 @@ export function CaseContentForm({
       : [],
   )
   const [customInput, setCustomInput] = useState('')
-  const [date, setDate] = useState('2026-04-22')
+  // 기본값은 오늘 — 겪은 날을 쓰는 칸이라 대개 오늘이거나 며칠 전이다.
+  // 예전에는 특정 날짜가 박혀 있어 모든 사례가 그 날짜로 저장됐다.
+  const [date, setDate] = useState(() => new Date().toLocaleDateString('sv-SE'))
   // 해결 소요 — 숫자만 입력받고 '일'은 고정 단위. 기존 값(예 "3일")에서 숫자만 추출.
   const [dayCount, setDayCount] = useState(
     () => existing?.days?.match(/\d+/)?.[0] ?? '',

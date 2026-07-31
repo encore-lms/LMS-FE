@@ -47,6 +47,7 @@ function currentValue(c: TsCaseDetail | undefined, item: string): string {
   }
 }
 import { TS_CHANGE_ITEMS, type TsCase, type TsCaseDetail } from '../types'
+import { markdownToText } from '@/components/ui/markdownText'
 
 // 트러블슈팅 변경 제안 (/student/troubleshooting/:id/change-requests/new) — Figma 362:1348.
 const card =
@@ -274,21 +275,29 @@ export default function ChangeRequestPage() {
         </div>
       </div>
 
-      {/* 원본 사례 카드 */}
+      {/* 원본 사례 카드 — 지금 고치려는 그 사례. 예전에는 예시 문구가 박혀 있어
+          어느 사례를 고치는지 화면만 봐서는 알 수 없었다. */}
       <section className={cn(card, 'flex flex-col gap-3')}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="bg-info-bg text-info rounded px-2 py-0.5 text-[11px] font-bold">
-              DB
-            </span>
+            {tsCase?.category && (
+              <span className="bg-info-bg text-info rounded px-2 py-0.5 text-[11px] font-bold">
+                {tsCase.category}
+              </span>
+            )}
             <span className="bg-success-bg text-success flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
-              <Check className="size-3" /> 인증 완료
+              <Check className="size-3" /> {tsCase?.statusLabel ?? '인증 완료'}
             </span>
-            <span className="bg-brand/10 text-brand flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
-              <Flag className="size-3" /> 독립 해결
-            </span>
+            {tsCase?.independent && (
+              <span className="bg-brand/10 text-brand flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">
+                <Flag className="size-3" /> 독립 해결
+              </span>
+            )}
             <span className="text-fg-subtle flex items-center gap-1 text-[11px]">
-              <Send className="size-3" /> 프로젝트 연결
+              <Send className="size-3" />
+              {tsCase?.projectLink
+                ? tsCase.projectLink.projectTitle
+                : '프로젝트 미연결'}
             </span>
           </div>
           <span className="text-fg-subtle flex shrink-0 items-center gap-1 text-[11px]">
@@ -297,26 +306,19 @@ export default function ChangeRequestPage() {
         </div>
         <div className="flex flex-col gap-0.5">
           <h2 className="text-fg text-[15px] font-bold">
-            Kafka 컨슈머 리밸런싱으로 메시지 중복 처리
+            {tsCase?.title || '제목 없는 사례'}
           </h2>
-          <span className="text-fg-subtle text-[11px]">
-            작성 2026-04-22 · 인증 2026-05-08 · 검토자 임수현 강사
-          </span>
+          {tsCase?.certReviewer && (
+            <span className="text-fg-subtle text-[11px]">
+              {tsCase.certReviewer}
+            </span>
+          )}
         </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           {[
-            {
-              label: '상황',
-              text: '스케일아웃 시 컨슈머 리밸런싱이 발생하면서 동일 주문 이벤트가 두 번 처리.',
-            },
-            {
-              label: '해결',
-              text: '멱등성 키와 dedup 테이블을 추가하고 ack 정책과 격리 수준을 재정리.',
-            },
-            {
-              label: '결과',
-              text: '중복 0건/주 · 결제 실패율 8% → 0.4%.',
-            },
+            { label: '상황', text: tsCase?.situation },
+            { label: '해결', text: tsCase?.resolution },
+            { label: '결과', text: tsCase?.result },
           ].map((b) => (
             <div
               key={b.label}
@@ -325,19 +327,22 @@ export default function ChangeRequestPage() {
               <span className="text-fg-subtle text-[11px] font-bold">
                 {b.label}
               </span>
-              <span className="text-fg-muted text-[12px] leading-5">
-                {b.text}
+              {/* 카드 요약은 마크다운 기호를 걷어낸 평문으로 — 3줄 안에 내용만 보여야 한다. */}
+              <span className="text-fg-muted line-clamp-3 text-[12px] leading-5">
+                {markdownToText(b.text) || '작성된 내용이 없어요'}
               </span>
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {['#Kafka', '#이벤트소싱', '#멱등성'].map((t) => (
-            <span key={t} className="text-fg-muted text-[11px]">
-              {t}
-            </span>
-          ))}
-        </div>
+        {(tsCase?.tags?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {tsCase!.tags!.map((t) => (
+              <span key={t} className="text-fg-muted text-[11px]">
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 변경 항목 선택 */}

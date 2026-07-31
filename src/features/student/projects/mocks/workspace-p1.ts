@@ -395,7 +395,7 @@ export const mockWorkspace: WorkspaceData = {
         { key: '소통', score: 4.5 },
         { key: '책임감', score: 4.5 },
         { key: '문제해결', score: 4.5 },
-        { key: '기술 기여', score: 4.0 },
+        { key: '기술기여', score: 4.0 },
       ],
       tags: [
         { label: '일정 준수', tone: 'info' },
@@ -411,7 +411,7 @@ export const mockWorkspace: WorkspaceData = {
         { key: '소통', score: 4.5 },
         { key: '책임감', score: 4.5 },
         { key: '문제해결', score: 4.5 },
-        { key: '기술 기여', score: 4.0 },
+        { key: '기술기여', score: 4.0 },
       ],
       tags: [
         { label: '문제해결', tone: 'brand' },
@@ -426,11 +426,11 @@ export const mockWorkspace: WorkspaceData = {
         { key: '소통', score: 4.5 },
         { key: '책임감', score: 4.5 },
         { key: '문제해결', score: 4.5 },
-        { key: '기술 기여', score: 4.0 },
+        { key: '기술기여', score: 4.0 },
       ],
       tags: [
         { label: '협업', tone: 'success' },
-        { label: '기술 기여', tone: 'accent' },
+        { label: '기술기여', tone: 'accent' },
       ],
     },
   ],

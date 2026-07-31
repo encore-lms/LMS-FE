@@ -9,9 +9,12 @@ import { CalendarGrid } from './CalendarGrid'
 export function HrdAttendanceCalendar({
   calendar,
   onMove,
+  formDates,
 }: {
   calendar: HrdAttendanceCalendarData
   onMove: (year: number, month: number) => void
+  /** 출결 폼을 낸 날짜들 — 사유가 필요한 날에 제출 여부를 표시한다. */
+  formDates?: Set<string>
 }) {
   const move = (delta: number) => {
     const m0 = calendar.month - 1 + delta
@@ -31,13 +34,15 @@ export function HrdAttendanceCalendar({
         <CalendarLegend />
       </div>
       <InfoBanner>
-        HRD-Net 원본 출결 데이터입니다. 이 화면에서는 수정할 수 없습니다.
+        HRD-Net 원본 출결 데이터입니다. 이 화면에서는 수정할 수 없습니다. 지각·결석·조퇴·외출인
+        날에는 출결 폼 제출 여부를 함께 표시합니다.
       </InfoBanner>
       <CalendarGrid
         year={calendar.year}
         month={calendar.month}
         days={calendar.days}
         today={calendar.today}
+        formDates={formDates}
       />
     </section>
   )

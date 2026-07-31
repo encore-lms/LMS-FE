@@ -78,9 +78,11 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
   const isBlocked = (a: StudentAccount) =>
     blockedOverride[a.id] ?? a.loginBlocked
 
-  // 파일 이름에 쓸 기수 표기 — 어느 기수를 받은 건지 파일만 봐도 알 수 있어야 한다.
+  // 파일 이름·안내 문구에 쓸 과정·기수 표기 — 받는 사람이 무엇에 대한 계정인지 알아야 한다.
   const cohortNo = courseConfig?.cohorts?.find((c) => c.id === cohortId)?.cohortNo
   const cohortLabel = cohortNo ? `${cohortNo}기` : ''
+  const courseTitle =
+    courses?.find((c) => c.courseId === courseId)?.title ?? '교육과정'
 
   /**
    * 계정 정보 내려받기 — 화면에 보이는 것과 같은 범위(검색·상태 필터 적용)를 담는다.
@@ -95,29 +97,24 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
     }
     const today = new Date().toISOString().slice(0, 10)
     try {
-      await downloadExcel(
-        `계정정보_${cohortLabel || '전체'}_${today}.xlsx`,
-        [
-          { header: '이름', width: 12 },
-          // UUID·생년월일은 글자로 — 그냥 두면 엑셀이 숫자·날짜로 바꿔 값이 뒤틀린다.
-          { header: '학생 UUID', width: 18 },
-          { header: '생년월일', width: 14 },
-          { header: '가입일', width: 12 },
-          { header: '마지막 로그인', width: 16 },
-          { header: '훈련 상태', width: 12 },
-          { header: '로그인 차단', width: 12 },
+      await downloadExcel(`계정정보_${cohortLabel || '전체'}_${today}.xlsx`, {
+        title: 'PLAYDATA LMS',
+        notice: [
+          `안녕하세요, ${courseTitle} ${cohortLabel} 수강생 여러분.`,
+          '아래는 학습에 사용할 LMS 계정 정보입니다. 아이디와 생년월일로 로그인해 주세요.',
+          { text: '반드시 첫 로그인 후에 비밀번호를 변경해 주세요!', emphasis: true },
         ],
-        filtered.map((a) => [
-          a.name,
-          a.studentUuid,
-          a.birthDate,
-          a.joinedAt,
-          a.lastLoginAt ?? '미접속',
-          a.trainingStatus === 'dropout' ? '중도탈락' : '정상',
-          isBlocked(a) ? '차단' : '해제',
-        ]),
-        cohortLabel ? `${cohortLabel} 계정` : '계정',
-      )
+        tableTitle: '계정 정보',
+        // 수강생에게 그대로 나눠 주는 문서라 로그인에 필요한 것만 담는다.
+        // 아이디·생년월일은 글자로 — 그냥 두면 엑셀이 숫자·날짜로 바꿔 값이 뒤틀린다.
+        columns: [
+          { header: '이름', width: 14 },
+          { header: '아이디', width: 20 },
+          { header: '생년월일', width: 16 },
+        ],
+        rows: filtered.map((a) => [a.name, a.studentUuid, a.birthDate]),
+        sheetName: cohortLabel ? `${cohortLabel} 계정` : '계정',
+      })
       toast.success(`계정 ${filtered.length}건을 내려받았어요`)
     } catch {
       toast.danger('계정 정보를 내려받지 못했어요')

@@ -57,10 +57,51 @@ export function Avatar({ name, tone }: { name: string; tone: Tone }) {
   )
 }
 
-export function TaskCard({ t }: { t: WsTask }) {
+export function TaskCard({
+  t,
+  onEdit,
+  onDelete,
+}: {
+  t: WsTask
+  onEdit?: () => void
+  onDelete?: () => void
+}) {
   return (
-    <div className="border-border bg-surface flex flex-col gap-2 rounded-[12px] border p-3.5">
-      <span className="text-fg text-[13px] font-bold">{t.title}</span>
+    <div className="border-border bg-surface group flex flex-col gap-2 rounded-[12px] border p-3.5">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-fg text-[13px] font-bold">{t.title}</span>
+        {(onEdit || onDelete) && (
+          // 카드가 드래그 대상이라, 액션은 눌렀을 때만 동작하도록 이벤트 전파를 끊는다.
+          <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            {onEdit && (
+              <button
+                type="button"
+                aria-label={`${t.title} 수정`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit()
+                }}
+                className="text-fg-subtle hover:text-fg hover:bg-surface-muted rounded px-1.5 py-0.5 text-[11px] font-semibold"
+              >
+                수정
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                aria-label={`${t.title} 삭제`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete()
+                }}
+                className="text-danger hover:bg-danger-bg rounded px-1.5 py-0.5 text-[11px] font-semibold"
+              >
+                삭제
+              </button>
+            )}
+          </div>
+        )}
+      </div>
       <div className="flex items-center gap-1.5">
         <span
           className={cn(

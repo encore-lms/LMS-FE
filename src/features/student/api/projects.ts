@@ -267,6 +267,113 @@ export function useAddMetric(projectId: string) {
     changeDirection?: string
   }>((id, v) => apiClient.post(`/student/projects/${id}/metrics`, v), projectId)
 }
+
+// ── 워크스페이스 항목 수정·삭제 ──────────────────────────────────────────
+// 추가만 있던 탓에 오타 하나도 고칠 수 없었다. 권한은 추가와 같은 기준(참여 멤버·인증 전).
+
+export function useEditTask(projectId: string) {
+  return useWsMutation<{
+    taskId: string
+    title: string
+    description?: string
+    status?: string
+    startAt?: string
+    dueAt?: string
+    assigneeMemberIds?: string[]
+  }>(
+    (id, { taskId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/tasks/${taskId}`, body),
+    projectId,
+  )
+}
+export function useDeleteTask(projectId: string) {
+  return useWsMutation<{ taskId: string }>(
+    (id, v) => apiClient.delete(`/student/projects/${id}/tasks/${v.taskId}`),
+    projectId,
+  )
+}
+export function useEditMeeting(projectId: string) {
+  return useWsMutation<{
+    meetingId: string
+    title: string
+    body?: string
+    heldAt?: string
+  }>(
+    (id, { meetingId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/meetings/${meetingId}`, body),
+    projectId,
+  )
+}
+export function useDeleteMeeting(projectId: string) {
+  return useWsMutation<{ meetingId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/meetings/${v.meetingId}`),
+    projectId,
+  )
+}
+export function useEditArtifact(projectId: string) {
+  return useWsMutation<{
+    artifactId: string
+    artifactType?: string
+    title: string
+    url?: string
+  }>(
+    (id, { artifactId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/artifacts/${artifactId}`, body),
+    projectId,
+  )
+}
+export function useDeleteArtifact(projectId: string) {
+  return useWsMutation<{ artifactId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/artifacts/${v.artifactId}`),
+    projectId,
+  )
+}
+export function useEditSchedule(projectId: string) {
+  return useWsMutation<{
+    scheduleId: string
+    title: string
+    description?: string
+    startsAt: string
+    /** 비우면 하루짜리 일정으로 저장된다. */
+    endsAt?: string
+  }>(
+    (id, { scheduleId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/schedules/${scheduleId}`, body),
+    projectId,
+  )
+}
+export function useDeleteSchedule(projectId: string) {
+  return useWsMutation<{ scheduleId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/schedules/${v.scheduleId}`),
+    projectId,
+  )
+}
+export function useEditMetric(projectId: string) {
+  return useWsMutation<{
+    metricId: string
+    label: string
+    description?: string
+    beforeValue?: string
+    afterValue?: string
+    changeLabel?: string
+    changeDirection?: string
+  }>(
+    (id, { metricId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/metrics/${metricId}`, body),
+    projectId,
+  )
+}
+export function useDeleteMetric(projectId: string) {
+  return useWsMutation<{ metricId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/metrics/${v.metricId}`),
+    projectId,
+  )
+}
+
 // 트러블슈팅 연결/해제(§52)
 export function useLinkTroubleshooting(projectId: string) {
   return useWsMutation<{ troubleshootingCaseId: string }>(

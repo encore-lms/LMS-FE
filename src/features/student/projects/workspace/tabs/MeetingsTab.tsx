@@ -7,7 +7,13 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddMeeting, wsWriteError } from '../../../api/projects'
+import {
+  useAddMeeting,
+  useEditMeeting,
+  useDeleteMeeting,
+  wsWriteError,
+} from '../../../api/projects'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { WorkspaceData, WsMeeting, WsMember } from '../../types'
 import { Avatar, Chip, SectionHead } from '../components/ws-shared'
 import {
@@ -23,6 +29,10 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
   const [adding, setAdding] = useState(false)
   const [openMeeting, setOpenMeeting] = useState<WsMeeting | null>(null)
   const addMeetingM = useAddMeeting(d.id)
+  const editMeetingM = useEditMeeting(d.id)
+  const deleteMeetingM = useDeleteMeeting(d.id)
+  const [editing, setEditing] = useState<WsMeeting | null>(null)
+  const [deleting, setDeleting] = useState<WsMeeting | null>(null)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -73,8 +83,68 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
           meeting={openMeeting}
           members={d.members}
           onClose={() => setOpenMeeting(null)}
+          onEdit={
+            openMeeting.id
+              ? () => {
+                  setEditing(openMeeting)
+                  setOpenMeeting(null)
+                }
+              : undefined
+          }
+          onDelete={
+            openMeeting.id
+              ? () => {
+                  setDeleting(openMeeting)
+                  setOpenMeeting(null)
+                }
+              : undefined
+          }
         />
       )}
+      {editing && (
+        <AddMeetingModal
+          editing={editing}
+          onClose={() => setEditing(null)}
+          onAdd={(meeting, body, heldAt) => {
+            editMeetingM.mutate(
+              { meetingId: editing.id!, title: meeting.title, body, heldAt },
+              {
+                onSuccess: () => {
+                  toast.success('회의록을 수정했습니다')
+                  setEditing(null)
+                },
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '회의록 수정에 실패했어요.')),
+              },
+            )
+          }}
+        />
+      )}
+      <ConfirmDialog
+        open={!!deleting}
+        title="회의록 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting?.id) return
+          deleteMeetingM.mutate(
+            { meetingId: deleting.id },
+            {
+              onSuccess: () => {
+                toast.success('회의록을 삭제했습니다')
+                setDeleting(null)
+              },
+              onError: (e) =>
+                toast.danger(wsWriteError(e, '회의록 삭제에 실패했어요.')),
+            },
+          )
+        }}
+      >
+        <p className="text-fg-muted text-[13px]">
+          '{deleting?.title ?? ''}' 회의록을 삭제할까요? 되돌릴 수 없어요.
+        </p>
+      </ConfirmDialog>
       {adding && (
         <AddMeetingModal
           onClose={() => setAdding(false)}
@@ -98,18 +168,22 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
 }
 
 function AddMeetingModal({
+  editing,
   onClose,
   onAdd,
 }: {
+  /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
+  editing?: WsMeeting
   onClose: () => void
   onAdd: (meeting: WsMeeting, body: string, heldAt: string) => void
 }) {
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(editing?.title ?? '')
   const now = new Date()
   const [date, setDate] = useState(
-    dateStr(now.getFullYear(), now.getMonth(), now.getDate()),
+    parseMeetingMeta(editing?.meta ?? '').date ??
+      dateStr(now.getFullYear(), now.getMonth(), now.getDate()),
   )
-  const [summary, setSummary] = useState('')
+  const [summary, setSummary] = useState(editing?.summary ?? '')
   const field = inputClass()
   const submit = () => {
     if (!title.trim() || !summary.trim()) return
@@ -129,7 +203,7 @@ function AddMeetingModal({
     <Modal
       open
       onClose={onClose}
-      title="회의록 작성"
+      title={editing ? '회의록 수정' : '회의록 작성'}
       footer={
         <>
           <button
@@ -196,10 +270,14 @@ function MeetingDetailModal({
   meeting,
   members,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   meeting: WsMeeting
   members: WsMember[]
   onClose: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }) {
   const { date, attendees } = parseMeetingMeta(meeting.meta)
   const attendList = attendees != null ? members.slice(0, attendees) : members
@@ -213,13 +291,33 @@ function MeetingDetailModal({
       onClose={onClose}
       title="회의록 상세"
       footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className={buttonClass({ variant: 'secondary', size: 'sm' })}
-        >
-          닫기
-        </button>
+        <>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="text-danger hover:bg-danger-bg mr-auto rounded-lg px-3 py-1.5 text-[13px] font-semibold"
+            >
+              삭제
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
+          >
+            닫기
+          </button>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className={buttonClass({ size: 'sm' })}
+            >
+              수정
+            </button>
+          )}
+        </>
       }
     >
       <div className="flex flex-col gap-4">

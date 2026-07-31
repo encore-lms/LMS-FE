@@ -102,6 +102,8 @@ export interface WsColumn {
   tasks: WsTask[]
 }
 export interface WsCalEvent {
+  /** 일정 id — 수정·삭제 대상 지목용. 예전 응답엔 없어 optional. */
+  id?: string
   day: number
   label: string
   tone: Tone
@@ -114,12 +116,14 @@ export interface WsUpcoming {
   tone: Tone
 }
 export interface WsMeeting {
+  id?: string
   title: string
   meta: string
   summary: string
   status: Badge
 }
 export interface WsDoc {
+  id?: string
   title: string
   meta: string
   status: Badge
@@ -143,6 +147,7 @@ export interface WsMember {
   avatarTone: Tone
 }
 export interface WsMetric {
+  id?: string
   label: string
   before: string
   after: string

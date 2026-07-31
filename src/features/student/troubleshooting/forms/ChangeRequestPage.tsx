@@ -232,7 +232,10 @@ export default function ChangeRequestPage() {
             ← 트러블슈팅 목록
           </button>
           <span className="text-fg-subtle">›</span>
-          <span className="text-fg-muted">Kafka 컨슈머 리밸런싱…</span>
+          {/* 지금 고치는 사례 제목 — 예시 문구가 박혀 있어 어느 사례인지 헷갈렸다. */}
+          <span className="text-fg-muted max-w-[220px] truncate">
+            {tsCase?.title || '사례'}
+          </span>
           <span className="text-fg-subtle">›</span>
           <span className="text-fg font-semibold">변경 제안</span>
         </nav>

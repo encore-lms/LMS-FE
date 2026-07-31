@@ -216,7 +216,7 @@ function AddMetricModal({
             }
             className={buttonClass({ size: 'sm' })}
           >
-            추가
+            {editing ? '저장' : '추가'}
           </button>
         </>
       }

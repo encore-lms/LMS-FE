@@ -7,7 +7,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
-import { downloadCsv } from '@/shared/lib/downloadCsv'
+import { downloadExcel } from '@/shared/lib/downloadExcel'
 import type { CohortScope } from './scope'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -88,25 +88,40 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
    * <p>목록을 그대로 받아 가면 필터를 걸어 둔 뜻이 사라지고, 받은 파일과 화면이 달라 어느
    * 쪽이 맞는지 알 수 없다.</p>
    */
-  const downloadAccounts = () => {
+  const downloadAccounts = async () => {
     if (filtered.length === 0) {
       toast.info('내려받을 계정이 없어요')
       return
     }
-    downloadCsv(
-      `계정정보_${cohortLabel || '전체'}_${new Date().toISOString().slice(0, 10)}.csv`,
-      ['이름', '학생 UUID', '생년월일', '가입일', '마지막 로그인', '훈련 상태', '로그인 차단'],
-      filtered.map((a) => [
-        a.name,
-        a.studentUuid,
-        a.birthDate,
-        a.joinedAt,
-        a.lastLoginAt ?? '미접속',
-        a.trainingStatus === 'dropout' ? '중도탈락' : '정상',
-        isBlocked(a) ? '차단' : '해제',
-      ]),
-    )
-    toast.success(`계정 ${filtered.length}건을 내려받았어요`)
+    const today = new Date().toISOString().slice(0, 10)
+    try {
+      await downloadExcel(
+        `계정정보_${cohortLabel || '전체'}_${today}.xlsx`,
+        [
+          { header: '이름', width: 12 },
+          // UUID·생년월일은 글자로 — 그냥 두면 엑셀이 숫자·날짜로 바꿔 값이 뒤틀린다.
+          { header: '학생 UUID', width: 18 },
+          { header: '생년월일', width: 14 },
+          { header: '가입일', width: 12 },
+          { header: '마지막 로그인', width: 16 },
+          { header: '훈련 상태', width: 12 },
+          { header: '로그인 차단', width: 12 },
+        ],
+        filtered.map((a) => [
+          a.name,
+          a.studentUuid,
+          a.birthDate,
+          a.joinedAt,
+          a.lastLoginAt ?? '미접속',
+          a.trainingStatus === 'dropout' ? '중도탈락' : '정상',
+          isBlocked(a) ? '차단' : '해제',
+        ]),
+        cohortLabel ? `${cohortLabel} 계정` : '계정',
+      )
+      toast.success(`계정 ${filtered.length}건을 내려받았어요`)
+    } catch {
+      toast.danger('계정 정보를 내려받지 못했어요')
+    }
   }
 
   const filtered = useMemo(() => {
@@ -361,7 +376,7 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
             <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="secondary"
-                onClick={downloadAccounts}
+                onClick={() => void downloadAccounts()}
               >
                 <Download className="h-4 w-4" /> 계정 정보 다운로드
               </Button>

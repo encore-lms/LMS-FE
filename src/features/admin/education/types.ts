@@ -47,34 +47,14 @@ export interface AssignmentItem {
   createdAt: string
 }
 
-// 이력서(Resume, learning-service /resumes). 정본 §32 lean.
-export type ResumeStatusCode = 'DRAFT' | 'COMPLETED'
-export interface ResumeRow {
-  id: string
-  studentUserId: string
-  title: string
-  status: ResumeStatusCode
-  feedbackCount: number
-  updatedAt: string
-}
-export interface ResumeFeedbackItem {
-  id: string
-  authorUserId: string
-  /** BE가 auth에서 해석한 작성자 실명 — 조회 실패 시 null */
-  authorName: string | null
-  body: string
-  createdAt: string
-}
-export interface ResumeDetail {
-  id: string
-  studentUserId: string
-  title: string
-  status: ResumeStatusCode
-  content: string | null
-  createdAt: string
-  updatedAt: string
-  feedbacks: ResumeFeedbackItem[]
-}
+// 이력서 타입은 3역할(운영·강사·수강생) 교차 계약이라 shared 로 승격(2026-08-01).
+// admin 내부 임포트 표면 유지를 위한 재수출 — 신규 코드는 '@/shared/types'에서 직접 가져온다.
+export type {
+  ResumeStatusCode,
+  ResumeRow,
+  ResumeFeedbackItem,
+  ResumeDetail,
+} from '@/shared/types'
 
 // 강사/운영 공용 과제(/instructor/assignments) — 실 BE. 과제 탭이 선택 기수로 스코프.
 export interface AssignmentCounts {

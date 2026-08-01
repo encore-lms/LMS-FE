@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { formatDateTime } from '@/shared/lib/date'
-import type { ResumeRow } from '@/features/admin/education/types'
+import type { ResumeRow } from '@/shared/types'
 import { useCohortRoster } from '../api/console'
 import { useInstructorResumes } from './api'
 

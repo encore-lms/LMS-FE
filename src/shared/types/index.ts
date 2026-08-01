@@ -7,6 +7,12 @@ export type {
 } from './notification'
 export type { ApiResponse, ApiError } from './api'
 export type {
+  ResumeStatusCode,
+  ResumeRow,
+  ResumeFeedbackItem,
+  ResumeDetail,
+} from './resume'
+export type {
   GradingMode,
   QuestionType,
   GradingType,

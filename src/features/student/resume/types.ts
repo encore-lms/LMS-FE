@@ -1,4 +1,4 @@
-import type { ResumeFeedbackItem } from '@/features/admin/education/types'
+import type { ResumeFeedbackItem } from '@/shared/types'
 // 수강생 이력서 도메인 계약 — 기능 로컬(공유 파일 미오염). BE 합류 시 페어가 정합.
 // 상태·섹션명은 한글 문자열 그대로 값으로 사용(팀 결정 B안). 섹션 목록은 ./constants 의 SECTIONS.
 

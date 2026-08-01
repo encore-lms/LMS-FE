@@ -32,8 +32,10 @@ export const adminMenu: MenuNode[] = [
       {
         label: '인증 검토',
         to: '/admin/certificates/reviews',
-        // 검토 상세(reviews/:id)·스냅샷(:id/snapshot)·감사 로그(:id/audit) 진입 시에도 활성 유지
-        match: ['/admin/certificates'],
+        // 검토 상세(reviews/:id)는 to prefix 매칭으로 활성 유지.
+        // match: ['/admin/certificates']는 역량 증명서 관리(목록·상세)까지 잡아 이중 active를
+        // 만들어 제거(2026-08-01). 스냅샷·감사 로그(certificates/:id/*)의 활성 유지는
+        // 경로가 관리 상세(:studentId)와 prefix 를 공유해 라우트 재설계 전엔 표현 불가 — 보류.
         // BE 엔드포인트 미구현(404) — 오픈 시 comingSoon 제거.
         comingSoon: true,
       },

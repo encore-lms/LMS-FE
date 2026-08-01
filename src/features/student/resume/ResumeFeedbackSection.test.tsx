@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import type { ResumeFeedbackItem } from '@/features/admin/education/types'
+import type { ResumeFeedbackItem } from '@/shared/types'
 import { ResumeFeedbackSection } from './ResumeFeedbackSection'
 
 // 수강생은 받은 피드백을 읽기만 한다 — 작성·삭제는 강사·운영만 BE가 허용한다.

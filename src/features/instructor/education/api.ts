@@ -3,11 +3,9 @@ import { apiClient } from '@/shared/api'
 import type {
   CohortMaterialItem,
   StudentAttendanceData,
-} from '@/shared/types'
-import type {
   ResumeDetail,
   ResumeRow,
-} from '@/features/admin/education/types'
+} from '@/shared/types'
 
 // 수강생 탭 출석 현황 요약(BE CohortAttendanceSummaryResponse 미러).
 export interface CohortAttendanceSummary {
@@ -139,7 +137,11 @@ export function useInstructorResume(
 // 이력서 탭 — 피드백 작성(담당 기수 강사). BE는 requireCohortReviewer로 타 기수를 403 처리.
 export function useAddInstructorResumeFeedback() {
   const qc = useQueryClient()
-  return useMutation<void, Error, { cohortId: string; resumeId: string; body: string }>({
+  return useMutation<
+    void,
+    Error,
+    { cohortId: string; resumeId: string; body: string }
+  >({
     mutationFn: ({ cohortId, resumeId, body }) =>
       apiClient
         .post<void>(

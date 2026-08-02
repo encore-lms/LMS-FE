@@ -96,6 +96,7 @@ export interface AttendanceFormRow {
   officialLeaveUsed: boolean // 공가 사용 여부
   reason: string // 신청 사유(세부 시간·공가 합성)
   submittedAt: string // 제출 시각(ISO)
+  attachments: AttendanceIssueAttachment[] // 수강생이 올린 증빙(진단서 등)
 }
 
 export interface AttendanceFormSummary {

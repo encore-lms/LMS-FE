@@ -24,6 +24,8 @@ const notice = (over: Partial<NoticePost> = {}): NoticePost => ({
   createdAt: '2026.07.29',
   timeAgo: '2시간 전',
   canDelete: false,
+  links: [],
+  files: [],
   ...over,
 })
 
@@ -78,5 +80,33 @@ describe('강의 홈 공지', () => {
     renderPage([])
 
     expect(screen.getByText('등록된 공지가 없어요')).toBeInTheDocument()
+  })
+
+  // 공지에 담을 수 있는 게 제목·본문뿐이라 자료 링크나 안내문을 붙일 자리가 없었다.
+  it('붙은 링크와 파일을 함께 보여준다', () => {
+    renderPage([
+      notice({
+        links: [{ id: 'l1', url: 'https://playdata.io/guide' }],
+        files: [{ id: 'f1', fileName: '특강 안내문.pdf', fileSize: 2048 }],
+      }),
+    ])
+
+    expect(screen.getByText('https://playdata.io/guide')).toBeInTheDocument()
+    expect(screen.getByText('특강 안내문.pdf')).toBeInTheDocument()
+    expect(screen.getByText('2KB')).toBeInTheDocument()
+  })
+
+  // 수강생은 첨부를 지울 수 없다.
+  it('수강생 화면에는 첨부 삭제 버튼이 없다', () => {
+    renderPage([
+      notice({
+        canDelete: false,
+        files: [{ id: 'f1', fileName: '안내문.pdf', fileSize: 100 }],
+      }),
+    ])
+
+    expect(
+      screen.queryByRole('button', { name: '안내문.pdf 첨부 삭제' }),
+    ).not.toBeInTheDocument()
   })
 })

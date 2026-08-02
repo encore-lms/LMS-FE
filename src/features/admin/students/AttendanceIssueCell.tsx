@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Download, Info } from 'lucide-react'
+import { Info } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { useToast } from '@/components/ui/use-toast'
-import { downloadAttendanceAttachment } from '@/shared/api/attendance'
 import type { AttendanceIssue } from '@/shared/types'
+import { AttendanceAttachmentLinks } from './AttendanceAttachmentLinks'
 
 // 출결 이슈 칸 — 유형은 바로 보이고, 사유·증빙은 아이콘에 마우스를 올리면 편다.
 // 그동안 운영 화면에는 수강생이 낸 출결 폼과 증빙을 볼 자리가 아예 없었다.
@@ -19,7 +18,6 @@ export function AttendanceIssueCell({
 }: {
   issue?: AttendanceIssue | null
 }) {
-  const toast = useToast()
   const [open, setOpen] = useState(false)
   /**
    * 닫기를 잠깐 미룬다.
@@ -103,27 +101,7 @@ export function AttendanceIssueCell({
             <span className="text-fg-subtle text-[11px] font-semibold">
               증빙 {files.length}개
             </span>
-            {files.length === 0 ? (
-              <span className="text-fg-subtle text-[11px]">첨부 없음</span>
-            ) : (
-              files.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    // 운영 경로로 — 수강생 경로는 BE 가 STUDENT 로 잠가 둬 403 이 난다.
-                    downloadAttendanceAttachment(f.id, f.fileName, 'admin').catch(
-                      () => toast.danger('증빙을 내려받지 못했어요'),
-                    )
-                  }}
-                  className="text-info flex items-center gap-1 text-left text-[11px] font-semibold hover:underline"
-                >
-                  <Download className="size-3 shrink-0" />
-                  <span className="truncate">{f.fileName}</span>
-                </button>
-              ))
-            )}
+            <AttendanceAttachmentLinks files={files} emptyText="첨부 없음" />
           </span>
         </span>
       )}

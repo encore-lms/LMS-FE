@@ -18,5 +18,12 @@ export {
   useStaffCourseNotices,
   useWriteCourseNotice,
   useDeleteCourseNotice,
+  useDeleteNoticeAttachment,
+  downloadNoticeAttachment,
 } from './notices'
-export type { NoticePost, NoticePostList } from './notices'
+export type {
+  NoticePost,
+  NoticePostList,
+  NoticeLink,
+  NoticeFile,
+} from './notices'

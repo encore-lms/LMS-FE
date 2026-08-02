@@ -5,6 +5,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -63,6 +64,10 @@ function NoticeCard({
       <p className="text-fg-muted text-[13px] leading-6 whitespace-pre-wrap">
         {notice.content}
       </p>
+      <NoticeAttachmentList
+        links={notice.links ?? []}
+        files={notice.files ?? []}
+      />
     </article>
   )
 }

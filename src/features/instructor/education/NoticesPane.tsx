@@ -1,16 +1,18 @@
-import { useState } from 'react'
-import { Megaphone, Pin, Trash2 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Megaphone, Paperclip, Pin, Plus, Trash2, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Modal } from '@/components/ui/Modal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import {
   useDeleteCourseNotice,
+  useDeleteNoticeAttachment,
   useStaffCourseNotices,
   useWriteCourseNotice,
   type NoticePost,
@@ -22,23 +24,43 @@ import {
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
+const MAX_URLS = 5
+const MAX_FILES = 5
+
 export function NoticesPane({ cohortId }: { cohortId: string }) {
   const toast = useToast()
   const { data, isPending, isError, refetch } = useStaffCourseNotices(cohortId)
   const write = useWriteCourseNotice(cohortId)
   const remove = useDeleteCourseNotice()
+  const removeAttachment = useDeleteNoticeAttachment()
 
   const [composing, setComposing] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [pinned, setPinned] = useState(false)
+  // 링크는 칸을 눌러 늘린다 — 대부분 하나도 안 붙이므로 처음엔 한 칸만 둔다.
+  const [urls, setUrls] = useState<string[]>([''])
+  const [files, setFiles] = useState<File[]>([])
+  const filePicker = useRef<HTMLInputElement>(null)
   const [target, setTarget] = useState<NoticePost | null>(null)
 
   const reset = () => {
     setTitle('')
     setContent('')
     setPinned(false)
+    setUrls([''])
+    setFiles([])
     setComposing(false)
+  }
+
+  const pickFiles = (picked: FileList | null) => {
+    if (!picked || picked.length === 0) return
+    if (files.length + picked.length > MAX_FILES) {
+      toast.danger(`파일은 ${MAX_FILES}개까지 붙일 수 있어요`)
+    }
+    setFiles([...files, ...Array.from(picked)].slice(0, MAX_FILES))
+    // 같은 파일을 다시 고를 수 있게 비운다(값이 같으면 change 가 안 뜬다).
+    if (filePicker.current) filePicker.current.value = ''
   }
 
   const submit = () => {
@@ -51,10 +73,23 @@ export function NoticesPane({ cohortId }: { cohortId: string }) {
       return
     }
     write.mutate(
-      { title: title.trim(), content: content.trim(), pinned },
       {
-        onSuccess: () => {
-          toast.success('공지를 올렸어요')
+        title: title.trim(),
+        content: content.trim(),
+        pinned,
+        urls: urls.map((u) => u.trim()).filter(Boolean),
+        files,
+      },
+      {
+        onSuccess: ({ failedFiles }) => {
+          // 공지는 이미 올라갔다 — 파일만 실패했으면 그렇게 말해야 다시 붙일 수 있다.
+          if (failedFiles.length > 0) {
+            toast.danger(
+              `공지는 올렸지만 ${failedFiles.join(', ')}은(는) 붙이지 못했어요`,
+            )
+          } else {
+            toast.success('공지를 올렸어요')
+          }
           reset()
         },
         onError: () => toast.danger('공지를 올리지 못했어요'),
@@ -130,6 +165,25 @@ export function NoticesPane({ cohortId }: { cohortId: string }) {
                   <p className="text-fg-muted text-[13px] leading-6 whitespace-pre-wrap">
                     {n.content}
                   </p>
+                  <NoticeAttachmentList
+                    links={n.links ?? []}
+                    files={n.files ?? []}
+                    scope="staff"
+                    onRemove={
+                      n.canDelete
+                        ? (attachmentId) =>
+                            removeAttachment.mutate(
+                              { noticeId: n.id, attachmentId },
+                              {
+                                onSuccess: () =>
+                                  toast.success('첨부를 지웠어요'),
+                                onError: () =>
+                                  toast.danger('첨부를 지우지 못했어요'),
+                              },
+                            )
+                        : undefined
+                    }
+                  />
                 </article>
               ))}
             </div>
@@ -179,6 +233,92 @@ export function NoticesPane({ cohortId }: { cohortId: string }) {
               className: 'min-h-[160px] resize-none leading-6',
             })}
           />
+
+          <div className="flex flex-col gap-2">
+            <span className="text-fg text-[13px] font-semibold">
+              링크 <span className="text-fg-subtle font-medium">(선택)</span>
+            </span>
+            {urls.map((url, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={url}
+                  onChange={(e) =>
+                    setUrls(urls.map((u, j) => (j === i ? e.target.value : u)))
+                  }
+                  placeholder="https://"
+                  aria-label={`링크 ${i + 1}`}
+                  className={inputClass({ size: 'md', className: 'flex-1' })}
+                />
+                {urls.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setUrls(urls.filter((_, j) => j !== i))}
+                    aria-label={`링크 ${i + 1} 삭제`}
+                    className="text-fg-subtle hover:text-danger shrink-0"
+                  >
+                    <X className="size-4" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {urls.length < MAX_URLS && (
+              <button
+                type="button"
+                onClick={() => setUrls([...urls, ''])}
+                className="text-fg-muted hover:text-fg flex w-fit items-center gap-1 text-[12px] font-semibold"
+              >
+                <Plus className="size-3.5" aria-hidden="true" />
+                링크 추가
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-fg text-[13px] font-semibold">
+              첨부 파일{' '}
+              <span className="text-fg-subtle font-medium">
+                (선택 · 최대 {MAX_FILES}개)
+              </span>
+            </span>
+            {files.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {files.map((f, i) => (
+                  <span
+                    key={`${f.name}-${i}`}
+                    className="border-border text-fg flex max-w-full items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold"
+                  >
+                    <span className="truncate">{f.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                      aria-label={`${f.name} 빼기`}
+                      className="text-fg-subtle hover:text-danger shrink-0"
+                    >
+                      <X className="size-3.5" aria-hidden="true" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <input
+              ref={filePicker}
+              type="file"
+              multiple
+              onChange={(e) => pickFiles(e.target.files)}
+              className="hidden"
+              aria-label="첨부 파일 선택"
+            />
+            <button
+              type="button"
+              onClick={() => filePicker.current?.click()}
+              disabled={files.length >= MAX_FILES}
+              className="border-border text-fg-muted hover:text-fg flex w-fit items-center gap-1 rounded-lg border border-dashed px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+            >
+              <Paperclip className="size-3.5" aria-hidden="true" />
+              파일 선택
+            </button>
+          </div>
+
           <label className="text-fg-muted flex items-center gap-2 text-[13px]">
             <input
               type="checkbox"

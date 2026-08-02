@@ -14,6 +14,7 @@ import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { AttendanceFormRow, AttendanceFormType } from '@/shared/types'
 import { useStudentAccounts, useStudentAttendanceForms } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
+import { AttendanceAttachmentLinks } from './AttendanceAttachmentLinks'
 
 const TYPE_META: Record<
   AttendanceFormType,
@@ -142,6 +143,13 @@ export function AttendanceFormTab({ scope }: { scope?: CohortScope }) {
       key: 'reason',
       header: '신청 사유',
       cell: (r) => <span className="text-fg text-sm">{r.reason}</span>,
+    },
+    {
+      // 진단서·경조사 증빙은 매니저가 실제로 열어봐야 하는 자료다.
+      key: 'attachments',
+      header: '증빙',
+      className: 'w-44',
+      cell: (r) => <AttendanceAttachmentLinks files={r.attachments ?? []} />,
     },
     {
       key: 'submittedAt',

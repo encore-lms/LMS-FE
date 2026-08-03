@@ -32,27 +32,11 @@ export function useInstructorCohorts() {
   })
 }
 
-/** 담당 기수 수강생 1명 — 이름 join·작성 대기 계산용. */
-export interface CohortStudent {
-  userId: string
-  name: string
-}
-
-/**
- * 담당 기수 수강생 로스터 — auth-user-service의 기수 스코프 명단(강사 허용).
- * learning 응답(이력서·추천서)은 studentUserId만 주므로 화면이 여기서 이름을 join 한다.
- * (구 /instructor/cohorts/{id}/students는 BE 미구현 404라 폐기 — 로스터 정본은 auth.)
- */
-export function useCohortRoster(cohortId?: string | null) {
-  return useQuery({
-    queryKey: [...instructorKeys.all, 'cohort-roster', cohortId ?? ''],
-    enabled: !!cohortId,
-    queryFn: () =>
-      apiClient
-        .get<{ items: CohortStudent[] }>('/users/cohort-students', { cohortId })
-        .then((r) => r.data.items),
-  })
-}
+// 로스터는 shared 로 승격(2026-08-03) — 임포트 표면 유지를 위한 재수출.
+// 신규 코드는 '@/shared/api/students'에서 직접 가져온다.
+export { useCohortRoster } from '@/shared/api/students'
+export type { CohortStudent } from '@/shared/api/students'
+import type { CohortStudent } from '@/shared/api/students'
 
 /**
  * 담당 전 기수 통합 로스터 → userId→이름 조회 함수.

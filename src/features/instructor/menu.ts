@@ -14,11 +14,13 @@ export const instructorMenu: MenuItem[] = [
   {
     label: TERMS.educationCourse,
     to: '/instructor/cohorts',
+    // QnA 게시판은 기수 허브 탭으로 흡수(2026-08-03) — 단독 라우트는 딥링크·알림 목적지로 유지.
     match: [
       '/instructor/quizzes',
       '/instructor/assignments',
       '/instructor/quiz-templates',
       '/instructor/endorsements',
+      '/instructor/qna',
     ],
   },
   // 검토 = 프로젝트 검토 + 트러블슈팅 검토. 학습 기록 조회는 교육 과정 허브 '기록실' 탭으로 이관(진입은 프로젝트).
@@ -29,7 +31,6 @@ export const instructorMenu: MenuItem[] = [
   },
   // 재인증 통합 검토는 별도 메뉴 없이 같은 항목 하위(Figma 2750:2202 sidebar active 동일).
   // QnA 게시판 — 담당 기수 수강생 질문 열람·답변. 상세(qna/:id) 진입 시에도 활성 유지.
-  { label: TERMS.qnaBoard, to: '/instructor/qna', match: ['/instructor/qna'] },
   {
     label: roleTag('인증 후 변경 제안', '강사'),
     to: '/instructor/change-requests',

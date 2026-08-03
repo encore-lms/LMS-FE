@@ -10,6 +10,7 @@ import { QnaQuestionCard } from './components/QnaQuestionCard'
 import type { QnaQuestion } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { TONE_SOLID } from '@/shared/lib/tone'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const PAGE_SIZE = 4
 
@@ -93,24 +94,13 @@ export default function QnaListPage({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative hidden sm:block">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3-3" strokeLinecap="round" />
-                </svg>
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="제목·내용·태그 검색"
-                  className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
-                />
-              </div>
+              <SearchInput
+                value={query}
+                onChange={setQuery}
+                placeholder="제목·내용·태그 검색"
+                ariaLabel="질문 검색"
+                className="hidden w-[220px] sm:flex"
+              />
               {canAsk && (
                 <button
                   type="button"

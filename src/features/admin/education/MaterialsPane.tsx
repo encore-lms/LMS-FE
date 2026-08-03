@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
-import { SearchInput } from '@/components/ui/SearchInput'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Select } from '@/components/ui/Select'
@@ -22,6 +21,7 @@ import {
   AttachmentFileCard,
   AttachmentLinkCard,
 } from '@/components/data/MaterialAttachment'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const TYPE_LABEL: Record<string, string> = {
   link: '링크',

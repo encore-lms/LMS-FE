@@ -25,6 +25,7 @@ import { CohortChip, TeamStatusChip, TeamSubTag } from '../components/chips'
 import { TeamActionLink } from '../components/TeamActionLink'
 import { TeamSummaryCard } from '../components/TeamSummaryCard'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type StatusFilter = 'all' | 'action' | MentorTeamStatus
 
@@ -239,12 +240,12 @@ export default function TeamsPage() {
             />
             <label className="border-border focus-within:border-brand bg-surface flex h-10 flex-1 items-center gap-2 rounded-[10px] border px-3.5">
               <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="팀명·반/기수 검색"
-                aria-label="팀명·반/기수 검색"
-                className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none focus-visible:shadow-none"
+                ariaLabel="팀명·반/기수 검색"
+                className="min-w-0 flex-1"
               />
             </label>
           </section>

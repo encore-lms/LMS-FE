@@ -1,14 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import {
-  Check,
-  ChevronDown,
-  FileText,
-  FileWarning,
-  Plus,
-  Search,
-} from 'lucide-react'
+import { Check, ChevronDown, FileText, FileWarning, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
@@ -21,6 +14,7 @@ import {
   useCreateMentorAssignmentFromStudents,
 } from './api'
 import type { AdminLogTemplateOption, AdminMentorLoadOption } from './types'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const FIELD_LABEL = 'text-fg-muted text-xs font-bold'
 const INPUT_CLASS = inputClass()
@@ -440,12 +434,12 @@ export function AssignmentCreateModal({
             수강생 선택 * ({selectedIds.length}명 선택됨)
           </label>
           <div className="relative">
-            <Search className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <input
+            <SearchInput
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={setQ}
               placeholder="이름 검색"
-              className={`${INPUT_CLASS} pl-9`}
+              ariaLabel="수강생 이름 검색"
+              className="h-10 w-full"
             />
           </div>
           <div className="border-border max-h-56 overflow-y-auto rounded-lg border">

@@ -19,6 +19,7 @@ import type {
 import { useCohortRoster } from '../api/console'
 import { useRecordReviews } from '../api/reviews'
 import { RecordDetailPanel, type RecordPanelData } from './RecordDetailPanel'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 학습 기록 조회 (/instructor/records/review) — §13. 강사 조회 전용 그리드.
 // 블로그·스터디 = 수강생×주차 히트맵(셀 클릭 상세), 자격증 = 종류별 매트릭스.
@@ -236,12 +237,12 @@ export default function RecordReviewPage({
 
       {/* 검색 + 카테고리 토글 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <input
+        <SearchInput
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={setQ}
           placeholder="이름으로 검색"
-          aria-label="수강생 이름 검색"
-          className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-9 w-64 rounded-lg border bg-white px-3 text-sm outline-none"
+          ariaLabel="수강생 이름 검색"
+          className="w-64"
         />
         <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
           {CATEGORY_TABS.map((t) => (

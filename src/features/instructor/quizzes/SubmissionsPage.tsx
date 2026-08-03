@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
-import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -14,6 +13,7 @@ import type { QuizSubmissionRow } from '@/shared/types'
 import { useCohortRoster } from '../api/console'
 import { useQuizSubmissions, useRemindSubmission } from '../api/quizzes'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type StatusFilter = 'all' | 'manual_pending' | 'not_submitted' | 'done'
 
@@ -282,16 +282,13 @@ export default function SubmissionsPage() {
 
           {/* 검색 + 상태 탭 */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <div className="border-border focus-within:border-brand flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
-              <Search className="text-fg-subtle h-4 w-4" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="이름으로 검색"
-                aria-label="수강생 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder="이름으로 검색"
+              ariaLabel="수강생 검색"
+              className="w-64"
+            />
             {statusTabs.map((t) => (
               <button
                 key={t.key}

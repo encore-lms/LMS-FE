@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { apiErrorOf, useAddTeamMembers, useCohortStudents } from './api'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 interface AddMenteesModalProps {
   open: boolean
@@ -90,12 +90,12 @@ export function AddMenteesModal({
           수강생 선택 ({selected.length}명 선택됨)
         </p>
         <div className="relative">
-          <Search className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <input
+          <SearchInput
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
             placeholder="이름 검색"
-            className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand h-10 w-full rounded-lg border pr-3 pl-9 text-sm outline-none"
+            ariaLabel="수강생 이름 검색"
+            className="h-10 w-full"
           />
         </div>
         <div className="border-border max-h-64 overflow-y-auto rounded-lg border">

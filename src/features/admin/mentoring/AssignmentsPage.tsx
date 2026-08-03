@@ -21,6 +21,7 @@ import { AssignmentFormModal } from './AssignmentFormModal'
 import { AssignmentCreateModal } from './AssignmentCreateModal'
 import type { MentorAssignmentRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 /** 멘토링 카드 — 멘토·멘티·진행/잔여 시간·일지(총·미인증). 기수 그룹 안에 팀 단위로 노출. */
 function MentoringCard({
@@ -282,7 +283,13 @@ export default function AssignmentsPage({
       },
       { replace: true },
     )
-  }, [data?.cohorts, myCohorts.data, searchParams, setSearchParams, scopeCohortId])
+  }, [
+    data?.cohorts,
+    myCohorts.data,
+    searchParams,
+    setSearchParams,
+    scopeCohortId,
+  ])
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [q, setQ] = useSearchParamState('q')
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
@@ -395,41 +402,41 @@ export default function AssignmentsPage({
           />
           {!embedded && (
             <>
-          <Select
-            aria-label="교육과정 선택"
-            value={course}
-            onChange={(v) => pickCourse(v)}
-            options={[
-              { value: 'all', label: '교육과정 전체' },
-              ...(courseList.data ?? []).map((c) => ({
-                value: c.courseId,
-                label: c.title,
-              })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            aria-label="기수 선택"
-            value={cohort}
-            onChange={(v) => pickCohort(v)}
-            disabled={course === 'all'}
-            options={[
-              { value: 'all', label: '기수 전체' },
-              ...(courseConfig.data?.cohorts ?? []).map((c) => ({
-                value: c.id,
-                label: `${c.cohortNo}기`,
-              })),
-            ]}
-            className="h-9"
-          />
+              <Select
+                aria-label="교육과정 선택"
+                value={course}
+                onChange={(v) => pickCourse(v)}
+                options={[
+                  { value: 'all', label: '교육과정 전체' },
+                  ...(courseList.data ?? []).map((c) => ({
+                    value: c.courseId,
+                    label: c.title,
+                  })),
+                ]}
+                className="h-9"
+              />
+              <Select
+                aria-label="기수 선택"
+                value={cohort}
+                onChange={(v) => pickCohort(v)}
+                disabled={course === 'all'}
+                options={[
+                  { value: 'all', label: '기수 전체' },
+                  ...(courseConfig.data?.cohorts ?? []).map((c) => ({
+                    value: c.id,
+                    label: `${c.cohortNo}기`,
+                  })),
+                ]}
+                className="h-9"
+              />
             </>
           )}
-          <input
+          <SearchInput
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
             placeholder="팀명·멘토명 검색"
-            aria-label="팀명·멘토명 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-full rounded-lg border px-3 text-sm outline-none sm:w-60"
+            ariaLabel="팀명·멘토명 검색"
+            className="w-full sm:w-60"
           />
         </div>
 

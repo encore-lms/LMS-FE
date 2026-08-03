@@ -33,6 +33,7 @@ import {
   LOG_SUBMITTED_TOAST,
   PLACE_TYPE_ICON,
 } from './logMeta'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const PERIOD_OPTIONS = [
   { value: '7', label: '최근 7일' },
@@ -368,12 +369,12 @@ export default function LogsPage() {
           />
           <label className="border-border focus-within:border-brand bg-surface flex h-10 w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
             <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
-            <input
+            <SearchInput
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={setQ}
               placeholder="팀명·일지 요지 검색"
-              aria-label="팀명·일지 요지 검색"
-              className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none focus-visible:shadow-none"
+              ariaLabel="팀명·일지 요지 검색"
+              className="min-w-0 flex-1"
             />
           </label>
           <Link

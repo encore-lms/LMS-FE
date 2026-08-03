@@ -1,8 +1,9 @@
 import { type ReactNode } from 'react'
-import { Info, Search } from 'lucide-react'
+import { Info } from 'lucide-react'
 import { DataTable, type Column } from './DataTable'
 import { DataBoundary } from '../ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 /**
  * 과정/기수 디렉터리 — 기수를 골라 허브로 들어가는 목록 화면의 공용 골격.
@@ -93,16 +94,13 @@ export function CohortDirectory<T, S extends string>({
       <div className="p-8">
         {/* 검색 + 상태 탭 */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Search className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <input
-              value={q}
-              onChange={(e) => onQChange(e.target.value)}
-              placeholder={searchPlaceholder}
-              aria-label={searchPlaceholder}
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-80 rounded-lg border pr-3 pl-9 text-sm outline-none focus-visible:shadow-none"
-            />
-          </div>
+          <SearchInput
+            value={q}
+            onChange={onQChange}
+            placeholder={searchPlaceholder}
+            ariaLabel={searchPlaceholder}
+            className="w-80"
+          />
           {tabs.map((t) => (
             <button
               key={t.key}
@@ -155,7 +153,12 @@ export function CohortDirectory<T, S extends string>({
                     {card.unit}
                   </span>
                 </p>
-                <p className={cn('mt-1.5 text-xs', card.hintColor ?? 'text-info')}>
+                <p
+                  className={cn(
+                    'mt-1.5 text-xs',
+                    card.hintColor ?? 'text-info',
+                  )}
+                >
                   {card.hint}
                 </p>
               </div>

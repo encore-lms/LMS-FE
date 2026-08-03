@@ -27,6 +27,7 @@ import { MaterialDetailModal } from './components/MaterialDetailModal'
 import { EditMaterialModal } from './components/EditMaterialModal'
 import { MaterialPagination } from './components/MaterialPagination'
 import { ShareMaterialModal } from './components/ShareMaterialModal'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 /**
  * 강의 자료실 (/student/course/materials) — 나의 과정 자료실 탭.
@@ -70,7 +71,9 @@ export default function MaterialsPage() {
 
   const toggleFavorite = (id: string) => {
     const current =
-      favOverride[id] ?? data?.items.find((it) => it.id === id)?.favorited ?? false
+      favOverride[id] ??
+      data?.items.find((it) => it.id === id)?.favorited ??
+      false
     setFavOverride((prev) => ({ ...prev, [id]: !current }))
     toggleFavoriteMutation.mutate(id, {
       // 서버가 확정한 값으로 맞춘다. 실패하면 눌렀던 것을 되돌린다.
@@ -119,27 +122,16 @@ export default function MaterialsPage() {
             {/* 필터 행 — 검색/공유. 분류 칩은 없앴다(자료를 나누는 기준이 되지 못해 늘 한 칸에 몰렸다). */}
             <div className="flex flex-wrap items-center justify-end gap-3">
               <div className="flex items-center gap-2">
-                <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-60 items-center gap-2 rounded-[10px] border px-3.5">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="text-fg-subtle size-4 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3-3" strokeLinecap="round" />
-                  </svg>
-                  <input
-                    value={query}
-                    onChange={(e) => {
-                      setQuery(e.target.value)
-                      setPage(1)
-                    }}
-                    placeholder="자료 제목·키워드 검색"
-                    className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none focus-visible:shadow-none"
-                  />
-                </div>
+                <SearchInput
+                  value={query}
+                  onChange={(v) => {
+                    setQuery(v)
+                    setPage(1)
+                  }}
+                  placeholder="자료 제목·키워드 검색"
+                  ariaLabel="자료 검색"
+                  className="h-[38px] w-60 rounded-[10px] px-3.5"
+                />
                 <button
                   type="button"
                   onClick={() => setShareOpen(true)}

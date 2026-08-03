@@ -1,6 +1,6 @@
-import { Search } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { ReviewStat } from '@/shared/types'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 검토 3종(§13~§15) 공용 골격 — KPI 스탯 4 + 검색·상태 탭 줄. (Figma 1422:10009 외)
 
@@ -76,16 +76,13 @@ export function QueueFilterBar<K extends string>({
         </div>
       )}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="border-border focus-within:border-brand flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
-          <input
-            value={q}
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder={searchPlaceholder}
-            aria-label={searchPlaceholder}
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-          />
-        </div>
+        <SearchInput
+          value={q}
+          onChange={onSearch}
+          placeholder={searchPlaceholder}
+          ariaLabel={searchPlaceholder}
+          className="w-64"
+        />
         {tabs.map((t) => (
           <button
             key={t.key}

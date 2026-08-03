@@ -15,6 +15,7 @@ import type { AttendanceFormRow, AttendanceFormType } from '@/shared/types'
 import { useStudentAccounts, useStudentAttendanceForms } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { AttendanceAttachmentLinks } from './AttendanceAttachmentLinks'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const TYPE_META: Record<
   AttendanceFormType,
@@ -46,7 +47,10 @@ export function AttendanceFormTab({ scope }: { scope?: CohortScope }) {
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   const cohortId =
-    scope?.cohortId ?? selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+    scope?.cohortId ??
+    selectedCohortId ??
+    courseConfig?.cohorts?.[0]?.id ??
+    null
 
   const { data, isPending, isError, refetch } = useStudentAttendanceForms(
     courseId,
@@ -272,12 +276,11 @@ export function AttendanceFormTab({ scope }: { scope?: CohortScope }) {
                   </div>
                 )}
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="이름·생년월일·사유 검색"
-                aria-label="출결 폼 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="출결 폼 검색"
               />
             </div>
 

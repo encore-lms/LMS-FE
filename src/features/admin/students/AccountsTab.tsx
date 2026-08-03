@@ -24,6 +24,7 @@ import { useCourseConfig, useCourseList } from '../api/settings'
 import { TempPasswordModal } from '../settings/TempPasswordModal'
 import { StudentDetailModal } from './StudentDetailModal'
 import { TestStudentModal } from './TestStudentModal'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type StatusFilter = 'all' | 'normal' | 'blocked'
 
@@ -62,7 +63,10 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   const cohortId =
-    scope?.cohortId ?? selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+    scope?.cohortId ??
+    selectedCohortId ??
+    courseConfig?.cohorts?.[0]?.id ??
+    null
   // 선택 기수의 배정 학생만 조회 — 기수 변경 시 목록 자동 갱신.
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
   const syncStudents = useSyncStudents()
@@ -79,7 +83,9 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
     blockedOverride[a.id] ?? a.loginBlocked
 
   // 파일 이름·안내 문구에 쓸 과정·기수 표기 — 받는 사람이 무엇에 대한 계정인지 알아야 한다.
-  const cohortNo = courseConfig?.cohorts?.find((c) => c.id === cohortId)?.cohortNo
+  const cohortNo = courseConfig?.cohorts?.find(
+    (c) => c.id === cohortId,
+  )?.cohortNo
   const cohortLabel = cohortNo ? `${cohortNo}기` : ''
   const courseTitle =
     courses?.find((c) => c.courseId === courseId)?.title ?? '교육과정'
@@ -102,7 +108,10 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
         notice: [
           `안녕하세요, ${courseTitle} ${cohortLabel} 수강생 여러분.`,
           '아래는 학습에 사용할 LMS 계정 정보입니다. 아이디와 생년월일로 로그인해 주세요.',
-          { text: '반드시 첫 로그인 후에 비밀번호를 변경해 주세요!', emphasis: true },
+          {
+            text: '반드시 첫 로그인 후에 비밀번호를 변경해 주세요!',
+            emphasis: true,
+          },
         ],
         tableTitle: '계정 정보',
         // 수강생에게 그대로 나눠 주는 문서라 로그인에 필요한 것만 담는다.
@@ -341,31 +350,31 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
               <div className="mt-3 flex flex-wrap gap-2">
                 {!scope && (
                   <>
-                <Select
-                  aria-label="과정 선택"
-                  value={courseId}
-                  onChange={(v) => {
-                    setSelectedCourseId(v)
-                    setSelectedCohortId(null)
-                  }}
-                  options={(courses ?? []).map((c) => ({
-                    value: c.courseId,
-                    label: c.title,
-                  }))}
-                  placeholder="등록 과정 없음"
-                  className="h-9"
-                />
-                <Select
-                  aria-label="기수 선택"
-                  value={cohortId}
-                  onChange={(v) => setSelectedCohortId(v)}
-                  options={(courseConfig?.cohorts ?? []).map((c) => ({
-                    value: c.id,
-                    label: `${c.cohortNo}기`,
-                  }))}
-                  placeholder="기수 없음"
-                  className="h-9"
-                />
+                    <Select
+                      aria-label="과정 선택"
+                      value={courseId}
+                      onChange={(v) => {
+                        setSelectedCourseId(v)
+                        setSelectedCohortId(null)
+                      }}
+                      options={(courses ?? []).map((c) => ({
+                        value: c.courseId,
+                        label: c.title,
+                      }))}
+                      placeholder="등록 과정 없음"
+                      className="h-9"
+                    />
+                    <Select
+                      aria-label="기수 선택"
+                      value={cohortId}
+                      onChange={(v) => setSelectedCohortId(v)}
+                      options={(courseConfig?.cohorts ?? []).map((c) => ({
+                        value: c.id,
+                        label: `${c.cohortNo}기`,
+                      }))}
+                      placeholder="기수 없음"
+                      className="h-9"
+                    />
                   </>
                 )}
               </div>
@@ -437,12 +446,12 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
                     </button>
                   ))}
                 </div>
-                <input
+                <SearchInput
                   value={q}
-                  onChange={(e) => setQ(e.target.value)}
+                  onChange={setQ}
                   placeholder="이름·UUID·생년월일 검색"
-                  aria-label="학생 계정 검색"
-                  className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
+                  ariaLabel="학생 계정 검색"
+                  className="w-64"
                 />
               </div>
 
@@ -465,14 +474,12 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
           <TestStudentModal
             open={testOpen}
             cohortId={cohortId}
-            cohortLabel={
-              (() => {
-                const no = courseConfig?.cohorts?.find(
-                  (c) => c.id === cohortId,
-                )?.cohortNo
-                return no ? `${no}기` : '선택 기수'
-              })()
-            }
+            cohortLabel={(() => {
+              const no = courseConfig?.cohorts?.find(
+                (c) => c.id === cohortId,
+              )?.cohortNo
+              return no ? `${no}기` : '선택 기수'
+            })()}
             onClose={() => setTestOpen(false)}
           />
 

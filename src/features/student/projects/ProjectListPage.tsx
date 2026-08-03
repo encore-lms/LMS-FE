@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -18,6 +18,7 @@ import {
   useProjectFlow,
   type ProjectPhase,
 } from './workspace/useProjectFlow'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 생애주기 단계 → 상태 필터 키(작성 중=active는 draft 키 재사용).
 const phaseFilterKey = (phase: ProjectPhase): string =>
@@ -165,16 +166,13 @@ export default function ProjectListPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <label className="border-border text-fg-subtle focus-within:border-brand hidden h-9 items-center gap-2 rounded-lg border bg-white px-3 text-[12px] sm:inline-flex">
-              <Search className="size-3.5 shrink-0" strokeWidth={2} />
-              <input
-                aria-label="프로젝트명·스택 검색"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="프로젝트명·스택 검색"
-                className="placeholder:text-fg-subtle text-fg w-44 bg-transparent outline-none focus-visible:shadow-none"
-              />
-            </label>
+            <SearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="프로젝트명·스택 검색"
+              ariaLabel="프로젝트명·스택 검색"
+              className="hidden w-56 sm:flex"
+            />
             <button
               type="button"
               onClick={() => navigate('/student/projects/new')}

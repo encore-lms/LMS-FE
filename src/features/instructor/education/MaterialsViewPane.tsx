@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { SearchInput } from '@/components/ui/SearchInput'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
@@ -16,6 +15,7 @@ import {
   AttachmentLinkCard,
 } from '@/components/data/MaterialAttachment'
 import { downloadInstructorMaterialFile, useInstructorMaterials } from './api'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const TYPE_LABEL: Record<string, string> = {
   link: '링크',

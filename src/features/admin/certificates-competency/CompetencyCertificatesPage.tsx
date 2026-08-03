@@ -8,7 +8,6 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { inputClass } from '@/components/ui/inputClass'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { useStudentAccounts } from '@/shared/api'
@@ -17,6 +16,7 @@ import { readLastCohort, writeLastCohort } from '../education/lastCohort'
 import { toCertRow } from './mocks'
 import type { CompetencyCertRow, CompetencyCertStatus } from './types'
 import { TERMS } from '@/shared/constants'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 역량 증명서 관리 (/admin/certificates) — 과정·기수별 수강생 증명서 현황.
 // 명단은 실제 로스터, 증명서 값은 아직 목데이터(BE 연동은 후속).
@@ -180,12 +180,12 @@ export default function CompetencyCertificatesPage() {
           placeholder="기수 없음"
           className="h-11"
         />
-        <input
+        <SearchInput
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={setQ}
           placeholder="이름·수강생 코드 검색"
-          aria-label="수강생 검색"
-          className={inputClass({ size: 'md', className: 'ml-auto w-64' })}
+          ariaLabel="수강생 검색"
+          className="ml-auto w-64"
         />
       </div>
 

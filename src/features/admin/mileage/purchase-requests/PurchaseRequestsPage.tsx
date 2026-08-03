@@ -20,6 +20,7 @@ import { CohortScopeSelect } from '../CohortScope'
 import { usePurchaseProcess, usePurchaseQueue } from './api'
 import type { PurchaseRequest, PurchaseStatus, PurchaseType } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const STATUS_META: Record<
   PurchaseStatus,
@@ -320,12 +321,12 @@ export default function PurchaseRequestsPage() {
             ]}
             className="h-9"
           />
-          <input
+          <SearchInput
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
             placeholder="수강생·상품명·키워드 검색"
-            aria-label="수강생·상품명·키워드 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
+            ariaLabel="수강생·상품명·키워드 검색"
+            className="w-64"
           />
         </div>
 

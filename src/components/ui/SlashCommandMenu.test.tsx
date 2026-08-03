@@ -84,6 +84,33 @@ describe('슬래시 명령', () => {
     expect(screen.queryByText('제목1')).not.toBeInTheDocument()
   })
 
+  // 메뉴에 보이는 이름을 그대로 치는 사람이 많다 — 공백에서 끊으면 아무것도 못 고른다.
+  it('공백이 든 이름을 그대로 쳐도 찾는다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/할 일 목록')
+
+    await waitFor(() =>
+      expect(screen.getByText('할 일 목록')).toBeInTheDocument(),
+    )
+    expect(screen.queryByText('제목1')).not.toBeInTheDocument()
+  })
+
+  // 문장을 계속 훑으면 글을 쓰는 내내 메뉴가 따라다닌다.
+  it('한 줄짜리 문장이 되면 메뉴가 닫힌다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/')
+    await waitFor(() => expect(menu()).toBeVisible())
+    await user.keyboard('오늘 공지드립니다 아래 내용을 꼭 확인해 주세요')
+
+    await waitFor(() => expect(menu()).not.toBeInTheDocument())
+  })
+
   it('영문 별칭으로도 찾는다', async () => {
     const user = userEvent.setup()
     render(<Editor />)

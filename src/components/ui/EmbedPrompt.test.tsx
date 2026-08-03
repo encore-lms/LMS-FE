@@ -211,6 +211,62 @@ describe('본문 임베드', () => {
     expect(md()).not.toContain('upload:')
   })
 
+  // 일반 문구로 덮으면 왜 안 되는지 알 수 없어 같은 파일을 계속 다시 올리게 된다.
+  it('서버가 말한 이유를 그대로 알린다', async () => {
+    const user = userEvent.setup()
+    const onError = vi.fn()
+    vi.mocked(uploadEditorFile).mockRejectedValue({
+      response: { data: { message: '이미지는 5MB 이하만 올릴 수 있습니다.' } },
+    })
+    render(<Editor onError={onError} />)
+
+    await pick(user, '이미지')
+    await user.upload(
+      screen.getByLabelText('이미지 파일 선택'),
+      new File(['x'], '큰.png', { type: 'image/png' }),
+    )
+
+    await waitFor(() =>
+      expect(onError).toHaveBeenCalledWith(
+        '이미지는 5MB 이하만 올릴 수 있습니다.',
+      ),
+    )
+  })
+
+  it('서버가 말이 없으면 무엇을 올리려 했는지로 알린다', async () => {
+    const user = userEvent.setup()
+    const onError = vi.fn()
+    vi.mocked(uploadEditorFile).mockRejectedValue(new Error('네트워크'))
+    render(<Editor onError={onError} />)
+
+    await pick(user, '이미지')
+    await user.upload(
+      screen.getByLabelText('이미지 파일 선택'),
+      new File(['x'], 'a.png', { type: 'image/png' }),
+    )
+
+    await waitFor(() =>
+      expect(onError).toHaveBeenCalledWith('이미지를 올리지 못했어요'),
+    )
+  })
+
+  it('북마크 실패도 서버 사유를 그대로 알린다', async () => {
+    const user = userEvent.setup()
+    const onError = vi.fn()
+    vi.mocked(fetchLinkPreview).mockRejectedValue({
+      response: { data: { message: '내부 주소는 미리 볼 수 없습니다.' } },
+    })
+    render(<Editor onError={onError} />)
+
+    await pick(user, '웹 북마크')
+    await user.type(screen.getByLabelText('북마크 주소'), 'http://127.0.0.1/')
+    await user.click(screen.getByRole('button', { name: '북마크 생성' }))
+
+    await waitFor(() =>
+      expect(onError).toHaveBeenCalledWith('내부 주소는 미리 볼 수 없습니다.'),
+    )
+  })
+
   // 고른 순간 `/파일` 같은 찌꺼기가 본문에 남으면 안 된다.
   it('고르면 친 슬래시 토큰은 지워진다', async () => {
     const user = userEvent.setup()

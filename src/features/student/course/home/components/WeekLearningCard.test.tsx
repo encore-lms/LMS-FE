@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
 import { WeekLearningCard } from './WeekLearningCard'
 import type { CourseWeek } from '../../types'
 
@@ -23,14 +22,7 @@ const baseProps = {
 
 describe('WeekLearningCard', () => {
   it('현재 주차 ±2 범위만 보여준다', () => {
-    render(
-      <MemoryRouter>
-        <WeekLearningCard
-          {...baseProps}
-          allWeeksHref="/student/course/materials"
-        />
-      </MemoryRouter>,
-    )
+    render(<WeekLearningCard {...baseProps} />)
 
     expect(screen.getByText('3주차')).toBeInTheDocument()
     expect(screen.getByText('7주차')).toBeInTheDocument()
@@ -38,23 +30,7 @@ describe('WeekLearningCard', () => {
     expect(screen.queryByText('8주차')).not.toBeInTheDocument()
   })
 
-  it('allWeeksHref가 있으면(수강생) 링크로 이동한다', () => {
-    render(
-      <MemoryRouter>
-        <WeekLearningCard
-          {...baseProps}
-          allWeeksHref="/student/course/materials"
-        />
-      </MemoryRouter>,
-    )
-
-    expect(
-      screen.getByRole('link', { name: '전체 주차 보기 →' }),
-    ).toHaveAttribute('href', '/student/course/materials')
-  })
-
-  // 강사·운영 허브 — 수강생 라우트로 이동할 수 없으니 카드 안에서 전체 주차를 펼친다.
-  it('allWeeksHref가 없으면 버튼으로 전체 주차를 펼치고 다시 접는다', async () => {
+  it('전체 주차 보기 버튼으로 전체 주차를 펼치고 다시 접는다', async () => {
     const user = userEvent.setup()
     render(<WeekLearningCard {...baseProps} />)
 

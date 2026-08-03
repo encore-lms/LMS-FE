@@ -4,9 +4,14 @@ import { ArrowLeft } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { usePageHeader, useAuth } from '@/shared/store'
 import { formatDateTime } from '@/shared/lib/date'
-import { useStudentAccounts } from '../api/students'
+import { useStudentAccounts, useCohortRoster } from '@/shared/api/students'
+import {
+  useAddInstructorResumeFeedback,
+  useDeleteInstructorResumeFeedback,
+  useInstructorResume,
+} from '@/features/instructor/education/api'
 import { ResumeContentView } from '@/features/student/resume/ResumeDocView'
 import { ResumeFeedbackSection } from '@/features/student/resume/ResumeFeedbackSection'
 import { useAddResumeFeedback, useDeleteResumeFeedback, useResume } from './api'
@@ -17,35 +22,59 @@ const STATUS_LABEL: Record<string, string> = {
 }
 const fmt = (iso: string | null) => (iso ? formatDateTime(iso) : '-')
 
-// 운영 이력서 상세(페이지) — 과정·기수·교과목 이력서 탭에서 진입. content 문서 뷰 + 피드백.
-// courseId/cohortId는 목록(ResumePane)에서 쿼리로 전달.
-export default function ResumeDetailPage() {
-  const { resumeId = '' } = useParams()
+// 이력서 상세(페이지) — 교육과정 허브 이력서 탭에서 진입. content 문서 뷰 + 피드백.
+// source: 매니저(admin, 기본)·강사(instructor) 공용. 매니저는 courseId/cohortId를 쿼리로,
+// 강사는 /instructor/cohorts/:cohortId/resumes/:resumeId 경로 파라미터로 받는다.
+export default function ResumeDetailPage({
+  source = 'admin',
+}: {
+  source?: 'admin' | 'instructor'
+}) {
+  const isAdmin = source === 'admin'
+  const { resumeId = '', cohortId: cohortIdParam = '' } = useParams()
   const [params] = useSearchParams()
   const courseId = params.get('courseId') ?? ''
-  const cohortId = params.get('cohortId') ?? ''
+  const cohortId = isAdmin ? (params.get('cohortId') ?? '') : cohortIdParam
   const navigate = useNavigate()
   const toast = useToast()
-  const { data, isPending, isError, refetch } = useResume(
-    courseId,
-    cohortId,
-    resumeId,
+  const adminQuery = useResume(courseId, cohortId, isAdmin ? resumeId : null)
+  const instructorQuery = useInstructorResume(
+    isAdmin ? null : cohortId,
+    isAdmin ? null : resumeId,
   )
-  const { data: students } = useStudentAccounts(cohortId)
+  const { data, isPending, isError, refetch } = isAdmin
+    ? adminQuery
+    : instructorQuery
+  // 수강생명 join — 매니저는 계정 목록, 강사는 담당 기수 로스터(계정 목록 403).
+  const { data: students } = useStudentAccounts(cohortId, isAdmin)
+  const { data: roster } = useCohortRoster(isAdmin ? null : cohortId)
   const addFeedback = useAddResumeFeedback()
   const deleteFeedback = useDeleteResumeFeedback()
+  const addInstructorFeedback = useAddInstructorResumeFeedback()
+  const deleteInstructorFeedback = useDeleteInstructorResumeFeedback()
+  const { user } = useAuth()
   const [body, setBody] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const studentName = useMemo(() => {
-    const s = (students?.items ?? []).find((x) => x.id === data?.studentUserId)
-    return s?.name ?? '(이름 미확인)'
-  }, [students, data])
+    if (isAdmin) {
+      const s = (students?.items ?? []).find(
+        (x) => x.id === data?.studentUserId,
+      )
+      return s?.name ?? '(이름 미확인)'
+    }
+    const r = (roster ?? []).find((x) => x.userId === data?.studentUserId)
+    return r?.name ?? '(이름 미확인)'
+  }, [isAdmin, students, roster, data])
 
   usePageHeader('이력서 상세', '수강생 이력서 본문 확인 · 피드백 작성')
 
-  // 진입 시 과정·기수 컨텍스트를 유지해 이력서 탭으로 복귀(EducationPage가 URL로 상태 복원).
+  // 진입 시 과정·기수 컨텍스트를 유지해 이력서 탭으로 복귀(허브가 URL로 상태 복원).
   const goList = () => {
+    if (!isAdmin) {
+      navigate(`/instructor/cohorts/${cohortId}/education?tab=resume`)
+      return
+    }
     const back = new URLSearchParams({ tab: 'resume' })
     if (courseId) back.set('course', courseId)
     if (cohortId) back.set('cohort', cohortId)
@@ -57,28 +86,36 @@ export default function ResumeDetailPage() {
       toast.danger('피드백 내용을 입력해 주세요')
       return
     }
-    addFeedback.mutate(
-      { courseId, cohortId, resumeId, body: body.trim() },
-      {
-        onSuccess: () => {
-          toast.success('피드백을 등록했어요')
-          setBody('')
-        },
-        onError: () => toast.danger('피드백 등록에 실패했어요'),
+    const opts = {
+      onSuccess: () => {
+        toast.success('피드백을 등록했어요')
+        setBody('')
       },
-    )
+      onError: () => toast.danger('피드백 등록에 실패했어요'),
+    }
+    if (isAdmin)
+      addFeedback.mutate(
+        { courseId, cohortId, resumeId, body: body.trim() },
+        opts,
+      )
+    else
+      addInstructorFeedback.mutate(
+        { cohortId, resumeId, body: body.trim() },
+        opts,
+      )
   }
 
   const onDelete = (feedbackId: string) => {
     setDeletingId(feedbackId)
-    deleteFeedback.mutate(
-      { courseId, cohortId, resumeId, feedbackId },
-      {
-        onSuccess: () => toast.success('피드백을 삭제했어요'),
-        onError: () => toast.danger('피드백 삭제에 실패했어요'),
-        onSettled: () => setDeletingId(null),
-      },
-    )
+    const opts = {
+      onSuccess: () => toast.success('피드백을 삭제했어요'),
+      onError: () => toast.danger('피드백 삭제에 실패했어요'),
+      onSettled: () => setDeletingId(null),
+    }
+    if (isAdmin)
+      deleteFeedback.mutate({ courseId, cohortId, resumeId, feedbackId }, opts)
+    else
+      deleteInstructorFeedback.mutate({ cohortId, resumeId, feedbackId }, opts)
   }
 
   return (
@@ -116,16 +153,18 @@ export default function ResumeDetailPage() {
           {/* 이력서 본문 — 학생 문서 뷰와 동일 렌더(상세 페이지는 외곽선 없이) */}
           <ResumeContentView content={data.content} bordered={false} />
 
-          {/* 피드백 — 운영자는 모든 코멘트를 지울 수 있다(BE 동일 정책). */}
+          {/* 피드백 — 운영자는 모든 코멘트 삭제, 강사는 본인 것만(BE 동일 정책). */}
           <ResumeFeedbackSection
             feedbacks={data.feedbacks}
             value={body}
             onChange={setBody}
             onSubmit={onSubmit}
-            submitting={addFeedback.isPending}
+            submitting={
+              isAdmin ? addFeedback.isPending : addInstructorFeedback.isPending
+            }
             onDelete={onDelete}
             deletingId={deletingId}
-            canDelete={() => true}
+            canDelete={(f) => isAdmin || f.authorUserId === user?.id}
           />
         </div>
       )}

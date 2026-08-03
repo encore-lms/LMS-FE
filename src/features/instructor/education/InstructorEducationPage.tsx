@@ -13,7 +13,7 @@ import ProjectReviewPage from '../reviews/ProjectReviewPage'
 import RecordReviewPage from '../reviews/RecordReviewPage'
 import { useInstructorCohorts } from '../api/console'
 import { MaterialsPane } from '@/features/admin/education/MaterialsPane'
-import { ResumeViewPane } from './ResumeViewPane'
+import { ResumePane } from '@/features/admin/education/ResumePane'
 import { NoticesPane } from './NoticesPane'
 import { StudentsPane } from './StudentsPane'
 import { CourseHomePane } from '@/features/admin/education/CourseHomePane'
@@ -103,7 +103,7 @@ export default function InstructorEducationPage() {
         ) : tab === 'projects' ? (
           <ProjectReviewPage embedded cohortId={cohortId} />
         ) : tab === 'resume' ? (
-          <ResumeViewPane cohortId={cohortId} />
+          <ResumePane cohortId={cohortId} source="instructor" />
         ) : tab === 'records' ? (
           <RecordReviewPage embedded cohortId={cohortId} />
         ) : tab === 'qna' ? (

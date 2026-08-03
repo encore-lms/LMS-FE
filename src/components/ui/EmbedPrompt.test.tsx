@@ -32,11 +32,23 @@ function Editor({ onError }: { onError?: (m: string) => void } = {}) {
 const body = () => screen.getByRole('textbox', { name: '본문' })
 const md = () => screen.getByTestId('md').textContent ?? ''
 
-async function pick(user: ReturnType<typeof userEvent.setup>, label: string) {
+// 블록을 고르면 자리만 잡히고, 그 줄을 눌러야 고르는 칸이 펼쳐진다.
+const 자리 = {
+  image: '이미지 업로드 또는 임베드',
+  file: '파일 업로드 또는 임베드',
+  bookmark: '웹 북마크 추가',
+} as const
+
+async function pick(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+  kind: keyof typeof 자리 = 'file',
+) {
   await user.click(body())
   await user.keyboard('/')
   await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument())
   await user.click(screen.getByText(label))
+  await user.click(await screen.findByText(자리[kind]))
 }
 
 beforeEach(() => {
@@ -60,7 +72,7 @@ describe('본문 임베드', () => {
     })
     render(<Editor />)
 
-    await pick(user, '이미지')
+    await pick(user, '이미지', 'image')
     await user.upload(
       screen.getByLabelText('이미지 파일 선택'),
       new File(['x'], '사진.png', { type: 'image/png' }),
@@ -158,7 +170,7 @@ describe('본문 임베드', () => {
     })
     render(<Editor />)
 
-    await pick(user, '웹 북마크')
+    await pick(user, '웹 북마크', 'bookmark')
     await user.type(
       screen.getByLabelText('북마크 주소'),
       'https://www.naver.com',
@@ -184,7 +196,7 @@ describe('본문 임베드', () => {
     })
     render(<Editor />)
 
-    await pick(user, '웹 북마크')
+    await pick(user, '웹 북마크', 'bookmark')
     await user.type(screen.getByLabelText('북마크 주소'), 'https://example.com')
     await user.click(screen.getByRole('button', { name: '북마크 생성' }))
 
@@ -284,11 +296,56 @@ describe('본문 임베드', () => {
     const user = userEvent.setup()
     render(<Editor />)
 
-    await pick(user, '이미지')
-    expect(screen.getByText('이미지 추가')).toBeInTheDocument()
+    await pick(user, '이미지', 'image')
+    expect(
+      screen.getByRole('button', { name: '파일을 선택하세요' }),
+    ).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: '취소' }))
 
-    expect(screen.queryByText('이미지 추가')).not.toBeInTheDocument()
+    expect(screen.queryByText(자리.image)).not.toBeInTheDocument()
+  })
+
+  // 처음부터 큰 상자가 열리면 쓰던 글이 밀려 흐름이 끊긴다.
+  it('블록을 고르면 자리만 잡고 고르는 칸은 접혀 있다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/파')
+    await waitFor(() => expect(screen.getByText('파일')).toBeInTheDocument())
+    await user.click(screen.getByText('파일'))
+
+    // 자리만 잡힌 한 줄 — 아직 탭도 버튼도 없다.
+    expect(await screen.findByText(자리.file)).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: '파일을 선택하세요' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '업로드' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByText(자리.file))
+
+    expect(
+      await screen.findByRole('button', { name: '파일을 선택하세요' }),
+    ).toBeVisible()
+  })
+
+  it('접힌 자리에서 Esc 를 누르면 사라진다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/파')
+    await waitFor(() => expect(screen.getByText('파일')).toBeInTheDocument())
+    await user.click(screen.getByText('파일'))
+    await screen.findByText(자리.file)
+
+    await user.keyboard('{Escape}')
+
+    await waitFor(() =>
+      expect(screen.queryByText(자리.file)).not.toBeInTheDocument(),
+    )
   })
 })

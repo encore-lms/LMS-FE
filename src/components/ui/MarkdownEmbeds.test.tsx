@@ -74,6 +74,29 @@ describe('본문 렌더', () => {
     expect(screen.getByText('https://www.naver.com')).toBeInTheDocument()
   })
 
+  // 본문 이미지용 CSS(원본 크기까지 허용)가 카드 안까지 덮으면 파비콘이 부풀어 카드가 무너진다.
+  it('북마크 카드 안 그림은 본문 이미지 규칙에서 빠진다', () => {
+    const md = `[네이버](https://www.naver.com "${bookmarkTitle({
+      description: '검색 포털',
+      image: 'https://img/thumb.png',
+      favicon: 'https://img/ico.png',
+    })}")`
+    render(<Markdown>{md}</Markdown>)
+
+    const imgs = [...document.querySelectorAll('a img')]
+    expect(imgs).toHaveLength(2)
+    expect(imgs.every((i) => i.hasAttribute('data-embed'))).toBe(true)
+  })
+
+  it('카드 높이를 못으로 박아 남의 그림에 늘어나지 않는다', () => {
+    const md = `[네이버](https://www.naver.com "${bookmarkTitle({ image: 'https://img/t.png' })}")`
+    render(<Markdown>{md}</Markdown>)
+
+    expect(screen.getByRole('link', { name: /네이버/ }).className).toContain(
+      'h-[108px]',
+    )
+  })
+
   it('파일은 이름과 크기가 있는 칩으로 그려진다', () => {
     render(
       <Markdown>{`[안내문.pdf](upload:abc "${fileTitle(2048)}")`}</Markdown>,

@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Megaphone, Paperclip, Pin, Plus, Trash2, X } from 'lucide-react'
+import { Megaphone, Pin, Trash2 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Empty } from '@/components/ui/Empty'
@@ -27,9 +27,6 @@ import { SearchInput } from '@/components/ui/SearchInput'
 // 강사 허브와 운영 기수 허브가 이 한 벌을 함께 쓴다 — 같은 글을 다루는 화면이 둘로 갈라지면
 // 한쪽만 고쳐지기 때문이다. 역할 차이는 서버가 canDelete 로 내려주는 것뿐이다.
 
-const MAX_URLS = 5
-const MAX_FILES = 5
-
 export function NoticesPane({
   cohortId,
   detailPathOf,
@@ -48,10 +45,6 @@ export function NoticesPane({
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [pinned, setPinned] = useState(false)
-  // 링크는 칸을 눌러 늘린다 — 대부분 하나도 안 붙이므로 처음엔 한 칸만 둔다.
-  const [urls, setUrls] = useState<string[]>([''])
-  const [files, setFiles] = useState<File[]>([])
-  const filePicker = useRef<HTMLInputElement>(null)
   const [target, setTarget] = useState<NoticePost | null>(null)
   // 검색어는 주소에 남긴다 — 상세를 보고 뒤로 오면 찾던 목록이 그대로 있어야 한다.
   const [q, setQ] = useSearchParamState('nq')
@@ -68,19 +61,7 @@ export function NoticesPane({
     setTitle('')
     setContent('')
     setPinned(false)
-    setUrls([''])
-    setFiles([])
     setComposing(false)
-  }
-
-  const pickFiles = (picked: FileList | null) => {
-    if (!picked || picked.length === 0) return
-    if (files.length + picked.length > MAX_FILES) {
-      toast.danger(`파일은 ${MAX_FILES}개까지 붙일 수 있어요`)
-    }
-    setFiles([...files, ...Array.from(picked)].slice(0, MAX_FILES))
-    // 같은 파일을 다시 고를 수 있게 비운다(값이 같으면 change 가 안 뜬다).
-    if (filePicker.current) filePicker.current.value = ''
   }
 
   const submit = () => {
@@ -93,23 +74,10 @@ export function NoticesPane({
       return
     }
     write.mutate(
+      { title: title.trim(), content: content.trim(), pinned },
       {
-        title: title.trim(),
-        content: content.trim(),
-        pinned,
-        urls: urls.map((u) => u.trim()).filter(Boolean),
-        files,
-      },
-      {
-        onSuccess: ({ failedFiles }) => {
-          // 공지는 이미 올라갔다 — 파일만 실패했으면 그렇게 말해야 다시 붙일 수 있다.
-          if (failedFiles.length > 0) {
-            toast.danger(
-              `공지는 올렸지만 ${failedFiles.join(', ')}은(는) 붙이지 못했어요`,
-            )
-          } else {
-            toast.success('공지를 올렸어요')
-          }
+        onSuccess: () => {
+          toast.success('공지를 올렸어요')
           reset()
         },
         onError: () => toast.danger('공지를 올리지 못했어요'),
@@ -117,7 +85,7 @@ export function NoticesPane({
     )
   }
 
-  // 자료실과 같은 표 — 제목·첨부·작성자·등록일. 본문은 제목 아래 한 줄 요약으로만 보이고,
+  // 자료실과 같은 표 — 제목·작성자·등록일. 본문은 제목 아래 한 줄 요약으로만 보이고,
   // 전문과 첨부 내려받기는 상세에서 한다(목록에서 카드가 길어지면 훑기가 어렵다).
   const columns: Column<NoticePost>[] = [
     {
@@ -142,22 +110,6 @@ export function NoticesPane({
           )}
         </div>
       ),
-    },
-    {
-      key: 'attachments',
-      header: '첨부',
-      className: 'w-28',
-      cell: (n) => {
-        const parts = [
-          (n.links?.length ?? 0) > 0 ? `링크 ${n.links.length}` : null,
-          (n.files?.length ?? 0) > 0 ? `파일 ${n.files.length}` : null,
-        ].filter(Boolean)
-        return (
-          <span className="text-fg-muted text-xs">
-            {parts.length > 0 ? parts.join(' · ') : '-'}
-          </span>
-        )
-      },
     },
     {
       key: 'author',
@@ -292,91 +244,6 @@ export function NoticesPane({
             placeholder="공지 내용을 적어주세요 · 빈 줄에서 / 를 누르면 제목·목록·표·이미지·파일·북마크를 넣을 수 있어요"
             onError={(m) => toast.danger(m)}
           />
-
-          <div className="flex flex-col gap-2">
-            <span className="text-fg text-[13px] font-semibold">
-              링크 <span className="text-fg-subtle font-medium">(선택)</span>
-            </span>
-            {urls.map((url, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  value={url}
-                  onChange={(e) =>
-                    setUrls(urls.map((u, j) => (j === i ? e.target.value : u)))
-                  }
-                  placeholder="https://"
-                  aria-label={`링크 ${i + 1}`}
-                  className={inputClass({ size: 'md', className: 'flex-1' })}
-                />
-                {urls.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setUrls(urls.filter((_, j) => j !== i))}
-                    aria-label={`링크 ${i + 1} 삭제`}
-                    className="text-fg-subtle hover:text-danger shrink-0"
-                  >
-                    <X className="size-4" aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-            ))}
-            {urls.length < MAX_URLS && (
-              <button
-                type="button"
-                onClick={() => setUrls([...urls, ''])}
-                className="text-fg-muted hover:text-fg flex w-fit items-center gap-1 text-[12px] font-semibold"
-              >
-                <Plus className="size-3.5" aria-hidden="true" />
-                링크 추가
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <span className="text-fg text-[13px] font-semibold">
-              첨부 파일{' '}
-              <span className="text-fg-subtle font-medium">
-                (선택 · 최대 {MAX_FILES}개)
-              </span>
-            </span>
-            {files.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {files.map((f, i) => (
-                  <span
-                    key={`${f.name}-${i}`}
-                    className="border-border text-fg flex max-w-full items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold"
-                  >
-                    <span className="truncate">{f.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setFiles(files.filter((_, j) => j !== i))}
-                      aria-label={`${f.name} 빼기`}
-                      className="text-fg-subtle hover:text-danger shrink-0"
-                    >
-                      <X className="size-3.5" aria-hidden="true" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <input
-              ref={filePicker}
-              type="file"
-              multiple
-              onChange={(e) => pickFiles(e.target.files)}
-              className="hidden"
-              aria-label="첨부 파일 선택"
-            />
-            <button
-              type="button"
-              onClick={() => filePicker.current?.click()}
-              disabled={files.length >= MAX_FILES}
-              className="border-border text-fg-muted hover:text-fg flex w-fit items-center gap-1 rounded-lg border border-dashed px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
-            >
-              <Paperclip className="size-3.5" aria-hidden="true" />
-              파일 선택
-            </button>
-          </div>
 
           <label className="text-fg-muted flex items-center gap-2 text-[13px]">
             <input

@@ -124,8 +124,10 @@ export function FileChip({
       )}
     </>
   )
+  // 테두리 없이 한 줄을 다 쓴다 — 본문 안에 놓이는 블록이라 상자로 가두지 않고,
+  // 가리키는 동안만 바탕이 들어와 누를 수 있는 자리임을 알린다.
   const chip =
-    'border-border hover:bg-surface-muted my-1 inline-flex max-w-full cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 no-underline'
+    'hover:bg-surface-muted my-0.5 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left no-underline transition-colors'
 
   // 올린 파일이 아니면(밖에서 붙여 넣은 주소) 평범한 링크 그대로 둔다.
   if (!upload) {

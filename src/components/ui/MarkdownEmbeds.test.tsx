@@ -83,6 +83,17 @@ describe('본문 렌더', () => {
     expect(screen.getByText('2KB')).toBeInTheDocument()
   })
 
+  // 본문 안에 놓이는 블록이라 상자로 가두지 않는다 — 한 줄을 다 쓴다.
+  it('파일 칩은 테두리 없이 한 줄을 다 쓴다', () => {
+    render(
+      <Markdown>{`[안내문.pdf](upload:abc "${fileTitle(2048)}")`}</Markdown>,
+    )
+
+    const chip = screen.getByRole('button', { name: '안내문.pdf 내려받기' })
+    expect(chip.className).toContain('w-full')
+    expect(chip.className).not.toMatch(/(^|\s)border($|\s)/)
+  })
+
   // 주소를 그대로 걸면 401 이 난다 — 브라우저가 스스로 부르는 요청에는 토큰이 붙지 않는다.
   it('파일 칩을 누르면 받아서 내려준다', async () => {
     const user = userEvent.setup()

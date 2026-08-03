@@ -56,10 +56,11 @@ function toOpsAccount(u: RawOpsUser, selfId: string | null): OpsAccount {
   }
 }
 
-export function useOpsAccounts() {
+export function useOpsAccounts(enabled = true) {
   const selfId = useAuthStore.getState().user?.id ?? null
   return useQuery({
     queryKey: adminKeys.settingsAccounts(),
+    enabled,
     queryFn: () =>
       apiClient.get<RawOpsPage>('/auth/accounts', { size: 100 }).then((r) => {
         const items = (r.data.content ?? []).map((u) => toOpsAccount(u, selfId))

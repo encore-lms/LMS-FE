@@ -5,7 +5,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Modal } from '@/components/ui/Modal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { buttonClass } from '@/components/ui/buttonClass'
@@ -282,17 +282,14 @@ export function NoticesPane({
             aria-label="공지 제목"
             className={inputClass({ size: 'md' })}
           />
-          {/* 공지는 목록·제목만으로 전달되지 않는 안내가 많다 — 제목·목록·표를 쓸 수 있게
-              마크다운 에디터를 붙였다. 빈 줄에서 `/` 를 치면 블록을 고른다. */}
-          <MarkdownEditor
+          {/* 공지는 목록·제목만으로 전달되지 않는 안내가 많다 — 쓰는 대로 보이는 편집기로
+              제목·목록·표를 넣는다. 빈 문단에서 `/` 를 치면 블록을 고른다. */}
+          <RichTextEditor
             value={content}
             onChange={setContent}
-            slashCommands
             ariaLabel="공지 내용"
             minHeight={220}
-            maxLength={5000}
             placeholder="공지 내용을 적어주세요 · 빈 줄에서 / 를 누르면 제목·목록·표를 넣을 수 있어요"
-            onImageRejected={(reason) => toast.danger(reason)}
           />
 
           <div className="flex flex-col gap-2">

@@ -97,8 +97,8 @@ export default function CohortListPage() {
                 value: summary.gradingPending.value,
                 unit: '건',
                 hint: summary.gradingPending.hint,
+                // hint 색은 기본(text-info)으로 카드 4종 통일 — 강사 CohortsPage와 정합(2026-08-03).
                 dot: 'bg-warning',
-                hintColor: 'text-warning',
               },
               {
                 label: '검토 대기',

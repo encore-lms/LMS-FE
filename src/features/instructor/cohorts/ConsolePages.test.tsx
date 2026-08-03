@@ -149,7 +149,7 @@ describe('DashboardPage (§1)', () => {
 
     // 기수 미선택(전체)이면 담당 과정 목록 — 퀴즈 관리와 같은 규칙.
     // 예전 경로는 라우터에 없어 이 화면이 뜨지 않았다.
-    expect(await screen.findByText('진행 중 과정')).toBeInTheDocument()
+    expect(await screen.findByText('진행 중 기수')).toBeInTheDocument()
   })
 
   it('긴급 행은 D+N 빨강 칩 강조, 액션 버튼은 흰 outline (Figma 실측)', () => {
@@ -168,9 +168,36 @@ describe('DashboardPage (§1)', () => {
       ok({
         ...dashboard,
         priorities: [
-          { id: 'w1', type: 'project_cert', title: '대기 인증', subtitle: '4기 · 3명', dday: '대기 5일', urgent: true, actionLabel: '검토하기', to: '/instructor/projects/review' },
-          { id: 'q1', type: 'manual_grading', title: '여유 퀴즈', subtitle: '채점 대기 3건', dday: 'D-3', urgent: false, actionLabel: '채점하기', to: '/instructor/quizzes/q1/submissions' },
-          { id: 'q2', type: 'manual_grading', title: '마감 퀴즈', subtitle: '채점 대기 2건', dday: '마감', urgent: true, actionLabel: '채점하기', to: '/instructor/quizzes/q2/submissions' },
+          {
+            id: 'w1',
+            type: 'project_cert',
+            title: '대기 인증',
+            subtitle: '4기 · 3명',
+            dday: '대기 5일',
+            urgent: true,
+            actionLabel: '검토하기',
+            to: '/instructor/projects/review',
+          },
+          {
+            id: 'q1',
+            type: 'manual_grading',
+            title: '여유 퀴즈',
+            subtitle: '채점 대기 3건',
+            dday: 'D-3',
+            urgent: false,
+            actionLabel: '채점하기',
+            to: '/instructor/quizzes/q1/submissions',
+          },
+          {
+            id: 'q2',
+            type: 'manual_grading',
+            title: '마감 퀴즈',
+            subtitle: '채점 대기 2건',
+            dday: '마감',
+            urgent: true,
+            actionLabel: '채점하기',
+            to: '/instructor/quizzes/q2/submissions',
+          },
         ],
       }) as unknown as ReturnType<typeof useInstructorDashboard>,
     )
@@ -199,9 +226,9 @@ describe('DashboardPage (§1)', () => {
 })
 
 describe('CohortsPage (§2)', () => {
-  it('요약 카드 4와 진행 중 과정 테이블을 렌더한다', () => {
+  it('요약 카드 4와 진행 중 기수 테이블을 렌더한다', () => {
     renderAt('/instructor/cohorts')
-    expect(screen.getByText('진행 중 과정')).toBeInTheDocument()
+    expect(screen.getByText('진행 중 기수')).toBeInTheDocument()
     expect(screen.getByText('DA 24 + FE 18 · 위험 3')).toBeInTheDocument()
     expect(screen.getByText('DA 4기')).toBeInTheDocument()
     expect(screen.getByText('위험 2')).toBeInTheDocument()
@@ -217,4 +244,3 @@ describe('CohortsPage (§2)', () => {
     expect(screen.queryByText('DA 4기')).not.toBeInTheDocument()
   })
 })
-

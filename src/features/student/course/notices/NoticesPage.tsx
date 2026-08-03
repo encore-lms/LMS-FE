@@ -5,6 +5,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { Markdown } from '@/components/ui/Markdown'
 import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -61,9 +62,10 @@ function NoticeCard({
           </button>
         )}
       </div>
-      <p className="text-fg-muted text-[13px] leading-6 whitespace-pre-wrap">
+      {/* 본문은 마크다운으로 저장된다 — 강사·매니저가 제목·목록·표로 쓴 그대로 보여준다. */}
+      <Markdown className="text-fg-muted text-[13px]">
         {notice.content}
-      </p>
+      </Markdown>
       <NoticeAttachmentList
         links={notice.links ?? []}
         files={notice.files ?? []}

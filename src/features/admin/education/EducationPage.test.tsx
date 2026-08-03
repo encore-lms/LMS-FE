@@ -126,19 +126,20 @@ function renderHub(search = '') {
   )
 }
 
+// 공통 탭(수강생~기록실)은 강사 허브와 상대 순서 동일, 매니저 전용 탭은 roleTag 접미(2026-08-03).
 const TAB_ORDER = [
-  '과정 홈',
-  '공지',
+  '과정 홈(매니저)',
   '수강생',
-  '기록실',
+  '공지',
+  '자료실',
+  '과제',
   '퀴즈',
   '프로젝트',
-  '과제',
   '이력서',
-  '멘토링',
-  'QnA',
-  '자료실',
-  '설정',
+  '기록실',
+  'QnA 게시판',
+  '멘토링(매니저)',
+  '설정(매니저)',
 ]
 
 describe('EducationPage (기수 허브)', () => {
@@ -149,8 +150,8 @@ describe('EducationPage (기수 허브)', () => {
     }
   })
 
-  // 탭 순서는 운영 요구 — 기수를 열어 먼저 보는 것이 앞, 설정이 맨 뒤.
-  it('탭 순서가 과정 홈 → … → 설정 이다', () => {
+  // 탭 순서 — 공통 구간은 강사 허브와 동일, 전용 탭(과정 홈·멘토링·설정)이 앞뒤.
+  it('탭 순서가 과정 홈(매니저) → … → 설정(매니저) 이다', () => {
     renderHub()
     expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual(
       TAB_ORDER,
@@ -196,14 +197,14 @@ describe('EducationPage (기수 허브)', () => {
   it('멘토링 탭도 같은 기수로 스코프된다', async () => {
     const user = userEvent.setup()
     renderHub()
-    await user.click(screen.getByRole('tab', { name: '멘토링' }))
+    await user.click(screen.getByRole('tab', { name: '멘토링(매니저)' }))
     expect(screen.getByText('멘토링 패널 cohort-34')).toBeInTheDocument()
   })
 
   it('QnA 탭은 게시판을 임베드한다', async () => {
     const user = userEvent.setup()
     renderHub()
-    await user.click(screen.getByRole('tab', { name: 'QnA' }))
+    await user.click(screen.getByRole('tab', { name: 'QnA 게시판' }))
     expect(screen.getByText('QnA 임베드')).toBeInTheDocument()
   })
 

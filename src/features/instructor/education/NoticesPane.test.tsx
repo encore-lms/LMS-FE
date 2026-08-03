@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import { NoticesPane } from './NoticesPane'
 import {
@@ -61,7 +62,20 @@ function renderPane(notices: NoticePost[] = []) {
   } as unknown as ReturnType<typeof useDeleteNoticeAttachment>)
   render(
     <ToastProvider>
-      <NoticesPane cohortId="cohort-32" />
+      <MemoryRouter initialEntries={['/hub?tab=notices']}>
+        <Routes>
+          <Route
+            path="/hub"
+            element={
+              <NoticesPane
+                cohortId="cohort-32"
+                detailPathOf={(id) => `/notices/${id}`}
+              />
+            }
+          />
+          <Route path="/notices/:noticeId" element={<div>공지 상세 화면</div>} />
+        </Routes>
+      </MemoryRouter>
     </ToastProvider>,
   )
 }
@@ -165,6 +179,45 @@ describe('강사·매니저 공지 관리', () => {
       { noticeId: 'n1', attachmentId: 'f1' },
       expect.anything(),
     )
+  })
+
+  // 카드를 눌러 전문을 본다 — 목록은 본문을 두 줄까지만 보여준다.
+  it('카드를 누르면 상세로 이동한다', async () => {
+    const user = userEvent.setup()
+    renderPane([notice()])
+
+    await user.click(
+      screen.getByRole('button', { name: '2주차 특강 안내 상세 보기' }),
+    )
+
+    expect(screen.getByText('공지 상세 화면')).toBeInTheDocument()
+  })
+
+  // 카드가 상세로 가는 버튼이라, 안쪽 액션이 거기까지 번지면 안 된다.
+  it('삭제 버튼을 눌러도 상세로 넘어가지 않는다', async () => {
+    const user = userEvent.setup()
+    renderPane([notice({ canDelete: true })])
+
+    await user.click(
+      screen.getByRole('button', { name: '2주차 특강 안내 삭제' }),
+    )
+
+    expect(screen.queryByText('공지 상세 화면')).not.toBeInTheDocument()
+    expect(screen.getByText('공지를 삭제할까요?')).toBeInTheDocument()
+  })
+
+  it('첨부를 지워도 상세로 넘어가지 않는다', async () => {
+    const user = userEvent.setup()
+    renderPane([
+      notice({ files: [{ id: 'f1', fileName: '안내문.pdf', fileSize: 100 }] }),
+    ])
+
+    await user.click(
+      screen.getByRole('button', { name: '안내문.pdf 첨부 삭제' }),
+    )
+
+    expect(screen.queryByText('공지 상세 화면')).not.toBeInTheDocument()
+    expect(removeAttachment).toHaveBeenCalled()
   })
 
   // 남의 글은 첨부도 손대지 못한다.

@@ -5,11 +5,13 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
 import { Modal } from '@/components/ui/Modal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
+import { markdownToText } from '@/components/ui/markdownText'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import {
   useDeleteCourseNotice,
@@ -132,9 +134,10 @@ export function NoticesPane({
             )}
             <span className="text-fg truncate font-medium">{n.title}</span>
           </div>
+          {/* 본문은 마크다운이라 `#`·`-` 기호가 그대로 보이지 않게 평문으로 줄여 보여준다. */}
           {n.content && (
             <span className="text-fg-subtle line-clamp-1 text-xs">
-              {n.content}
+              {markdownToText(n.content)}
             </span>
           )}
         </div>
@@ -279,15 +282,17 @@ export function NoticesPane({
             aria-label="공지 제목"
             className={inputClass({ size: 'md' })}
           />
-          <textarea
+          {/* 공지는 목록·제목만으로 전달되지 않는 안내가 많다 — 제목·목록·표를 쓸 수 있게
+              마크다운 에디터를 붙였다. 빈 줄에서 `/` 를 치면 블록을 고른다. */}
+          <MarkdownEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="공지 내용을 적어주세요"
-            aria-label="공지 내용"
-            className={inputClass({
-              size: 'md',
-              className: 'min-h-[160px] resize-none leading-6',
-            })}
+            onChange={setContent}
+            slashCommands
+            ariaLabel="공지 내용"
+            minHeight={220}
+            maxLength={5000}
+            placeholder="공지 내용을 적어주세요 · 빈 줄에서 / 를 누르면 제목·목록·표를 넣을 수 있어요"
+            onImageRejected={(reason) => toast.danger(reason)}
           />
 
           <div className="flex flex-col gap-2">

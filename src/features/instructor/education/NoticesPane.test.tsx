@@ -220,6 +220,35 @@ describe('강사·매니저 공지 관리', () => {
     expect(screen.getByText('공지를 삭제할까요?')).toBeInTheDocument()
   })
 
+  // 공지가 쌓이면 훑어서 찾기 어렵다 — 자료실과 같은 검색 칸을 둔다.
+  it('제목·본문·작성자로 걸러낸다', async () => {
+    const user = userEvent.setup()
+    renderPane([
+      notice({ id: 'n1', title: '2주차 특강 안내' }),
+      notice({ id: 'n2', title: '휴강 안내', content: '8월 18일 휴강' }),
+      notice({ id: 'n3', title: '과제 공지', authorName: '박매니저' }),
+    ])
+    const table = () => within(screen.getByRole('table'))
+
+    await user.type(screen.getByLabelText('공지 검색'), '휴강')
+    expect(table().getByText('휴강 안내')).toBeInTheDocument()
+    expect(table().queryByText('2주차 특강 안내')).not.toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText('공지 검색'))
+    await user.type(screen.getByLabelText('공지 검색'), '박매니저')
+    expect(table().getByText('과제 공지')).toBeInTheDocument()
+    expect(table().queryByText('휴강 안내')).not.toBeInTheDocument()
+  })
+
+  it('걸러낸 결과가 없으면 없다고 알린다', async () => {
+    const user = userEvent.setup()
+    renderPane([notice()])
+
+    await user.type(screen.getByLabelText('공지 검색'), '없는말')
+
+    expect(screen.getByText('조건에 맞는 공지가 없어요')).toBeInTheDocument()
+  })
+
   // 남의 글은 지울 수 없다.
   it('지울 수 없는 공지에는 삭제 버튼이 없다', () => {
     renderPane([notice({ canDelete: false })])

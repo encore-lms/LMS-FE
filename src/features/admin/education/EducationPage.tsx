@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
+import { TERMS, roleTag } from '@/shared/constants'
 import { ChevronLeft, FolderOpen } from 'lucide-react'
 import { Empty } from '@/components/ui/Empty'
 import { Tabs } from '@/components/ui/Tabs'
@@ -34,22 +35,21 @@ type TabKey =
   | 'materials'
   | 'settings'
 
-// 운영 요구 순서 — 기수를 열어 가장 먼저 보는 것(홈·공지·수강생·기록실)이 앞, 설정이 맨 뒤.
-// 수강생·멘토링·QnA 는 사이드바 단독 메뉴에서 옮겨 왔다(기수를 고른 뒤 다루는 일이라 여기가 제자리).
-// 공지는 홈 바로 뒤 — 홈에서 본 공지를 여기서 바로 쓰고 지운다.
+// 탭 순서 — 강사 허브와 공통 탭(수강생~기록실)의 상대 순서를 동일하게 유지한다(2026-08-03 통일).
+// 매니저 전용 탭(과정 홈·멘토링·설정)은 roleTag 접미로 명시하고 공통 구간의 앞·뒤에 배치.
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'home', label: '과정 홈' },
-  { key: 'notices', label: '공지' },
-  { key: 'students', label: '수강생' },
-  { key: 'records', label: '기록실' },
+  { key: 'home', label: roleTag('과정 홈', '매니저') },
+  { key: 'students', label: TERMS.student },
+  { key: 'notices', label: TERMS.notice },
+  { key: 'materials', label: '자료실' },
+  { key: 'assignments', label: '과제' },
   { key: 'quizzes', label: '퀴즈' },
   { key: 'projects', label: '프로젝트' },
-  { key: 'assignments', label: '과제' },
   { key: 'resume', label: '이력서' },
-  { key: 'mentoring', label: '멘토링' },
-  { key: 'qna', label: 'QnA' },
-  { key: 'materials', label: '자료실' },
-  { key: 'settings', label: '설정' },
+  { key: 'records', label: '기록실' },
+  { key: 'qna', label: TERMS.qnaBoard },
+  { key: 'mentoring', label: roleTag('멘토링', '매니저') },
+  { key: 'settings', label: roleTag('설정', '매니저') },
 ]
 
 // 과정/기수 미선택 안내(자료실·설정 탭 공용).
@@ -84,7 +84,7 @@ export default function EducationPage() {
   const courseId = row?.courseId ?? null
 
   usePageHeader(
-    row ? row.name : '과정/기수',
+    row ? row.name : TERMS.educationCourse,
     row
       ? `${row.period} · 학습 자료와 활동을 한 곳에서 관리합니다`
       : '학습 자료와 활동을 한 곳에서 관리합니다',

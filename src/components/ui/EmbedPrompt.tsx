@@ -1,0 +1,177 @@
+import { useRef, useState } from 'react'
+import { Bookmark, FileUp, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
+import { buttonClass } from './buttonClass'
+import { inputClass } from './inputClass'
+
+export type EmbedKind = 'image' | 'file' | 'bookmark'
+
+export interface EmbedResult {
+  kind: EmbedKind
+  /** 업로드한 파일(이미지·파일) */
+  file?: File
+  /** 붙여 넣은 주소(북마크·이미지 링크) */
+  url?: string
+}
+
+const META: Record<
+  EmbedKind,
+  { icon: typeof ImageIcon; label: string; tabs: ('upload' | 'link')[] }
+> = {
+  image: { icon: ImageIcon, label: '이미지 추가', tabs: ['upload', 'link'] },
+  file: {
+    icon: FileUp,
+    label: '파일 업로드 또는 임베드',
+    tabs: ['upload', 'link'],
+  },
+  bookmark: { icon: Bookmark, label: '북마크 추가', tabs: ['link'] },
+}
+
+/**
+ * 본문에 넣을 값을 그 자리에서 받는 상자.
+ *
+ * <p>이미지·파일·북마크는 고르는 것만으로 끝나지 않는다 — 파일을 올리거나 주소를 받아야 한다.
+ * 폼 아래에 따로 칸을 두지 않고 본문 흐름 안에서 받는다.</p>
+ */
+export function EmbedPrompt({
+  kind,
+  busy,
+  onSubmit,
+  onCancel,
+}: {
+  kind: EmbedKind
+  /** 올리는 중 — 두 번 눌러 같은 파일이 두 번 올라가지 않게 잠근다. */
+  busy?: boolean
+  onSubmit: (result: EmbedResult) => void
+  onCancel: () => void
+}) {
+  const meta = META[kind]
+  const [tab, setTab] = useState<'upload' | 'link'>(meta.tabs[0])
+  const [url, setUrl] = useState('')
+  const filePicker = useRef<HTMLInputElement>(null)
+
+  const submitUrl = () => {
+    const v = url.trim()
+    if (!v) return
+    onSubmit({ kind, url: v })
+  }
+
+  return (
+    <div
+      className="border-border bg-surface my-2 flex flex-col gap-3 rounded-xl border p-3"
+      // 편집기 키 처리(슬래시 메뉴 등)가 이 안의 입력까지 가로채지 않게 한다.
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <div className="text-fg-muted flex items-center gap-2 text-[13px] font-medium">
+        <meta.icon className="size-4 shrink-0" aria-hidden="true" />
+        {meta.label}
+      </div>
+
+      {meta.tabs.length > 1 && (
+        <div className="border-border flex items-center gap-1 border-b">
+          {meta.tabs.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={cn(
+                '-mb-px border-b-2 px-2.5 pb-1.5 text-[13px] font-semibold',
+                tab === t
+                  ? 'border-brand text-fg'
+                  : 'text-fg-subtle hover:text-fg border-transparent',
+              )}
+            >
+              {t === 'upload' ? '업로드' : '링크'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === 'upload' ? (
+        <>
+          <input
+            ref={filePicker}
+            type="file"
+            accept={kind === 'image' ? 'image/*' : undefined}
+            className="hidden"
+            aria-label={
+              kind === 'image' ? '이미지 파일 선택' : '첨부 파일 선택'
+            }
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              e.target.value = ''
+              if (f) onSubmit({ kind, file: f })
+            }}
+          />
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => filePicker.current?.click()}
+            className={buttonClass({
+              size: 'md',
+              className: 'w-full justify-center',
+            })}
+          >
+            {busy ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                올리는 중…
+              </>
+            ) : (
+              '파일을 선택하세요'
+            )}
+          </button>
+        </>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                submitUrl()
+              }
+            }}
+            placeholder="URL을 붙여넣으세요(https://...)"
+            aria-label={kind === 'bookmark' ? '북마크 주소' : '링크 주소'}
+            className={inputClass({ size: 'md' })}
+          />
+          <button
+            type="button"
+            disabled={busy || !url.trim()}
+            onClick={submitUrl}
+            className={buttonClass({
+              size: 'md',
+              className: 'w-full justify-center',
+            })}
+          >
+            {busy ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                불러오는 중…
+              </>
+            ) : kind === 'bookmark' ? (
+              '북마크 생성'
+            ) : (
+              '넣기'
+            )}
+          </button>
+          {kind === 'bookmark' && (
+            <span className="text-fg-subtle text-center text-[12px]">
+              링크로 시각적 북마크 생성
+            </span>
+          )}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onCancel}
+        className="text-fg-subtle hover:text-fg self-start text-[12px] font-medium"
+      >
+        취소
+      </button>
+    </div>
+  )
+}

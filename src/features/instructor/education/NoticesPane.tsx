@@ -289,7 +289,8 @@ export function NoticesPane({
             onChange={setContent}
             ariaLabel="공지 내용"
             minHeight={220}
-            placeholder="공지 내용을 적어주세요 · 빈 줄에서 / 를 누르면 제목·목록·표를 넣을 수 있어요"
+            placeholder="공지 내용을 적어주세요 · 빈 줄에서 / 를 누르면 제목·목록·표·이미지·파일·북마크를 넣을 수 있어요"
+            onError={(m) => toast.danger(m)}
           />
 
           <div className="flex flex-col gap-2">

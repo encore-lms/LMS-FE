@@ -70,9 +70,11 @@ function renderPane(notices: NoticePost[] = []) {
               <NoticesPane
                 cohortId="cohort-32"
                 detailPathOf={(id) => `/notices/${id}`}
+                newPath="/notices/new"
               />
             }
           />
+          <Route path="/notices/new" element={<div>공지 작성 화면</div>} />
           <Route
             path="/notices/:noticeId"
             element={<div>공지 상세 화면</div>}
@@ -163,31 +165,13 @@ describe('강사·매니저 공지 관리', () => {
     ).not.toBeInTheDocument()
   })
 
-  // 파일·북마크는 본문 안에 넣는다 — 폼 아래 따로 붙이는 칸은 없앴다.
-  it('작성 모달에 별도 링크·첨부 칸이 없다', async () => {
+  // 작성은 모달이 아니라 별도 페이지다 — 본문이 길어지면 좁은 상자에서 쓰기 어렵다.
+  it('공지 작성은 작성 페이지로 보낸다', async () => {
     const user = userEvent.setup()
     renderPane()
 
-    await user.click(screen.getByRole('button', { name: '공지 작성' }))
+    await user.click(screen.getByRole('link', { name: '공지 작성' }))
 
-    expect(screen.queryByLabelText('링크 1')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('첨부 파일 선택')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('공지 내용')).toBeInTheDocument()
-  })
-
-  it('제목·본문만으로 올린다', async () => {
-    const user = userEvent.setup()
-    renderPane()
-
-    await user.click(screen.getByRole('button', { name: '공지 작성' }))
-    await user.type(screen.getByLabelText('공지 제목'), '2주차 특강')
-    await user.click(screen.getByLabelText('공지 내용'))
-    await user.keyboard('금요일 19시')
-    await user.click(screen.getByRole('button', { name: '올리기' }))
-
-    expect(write).toHaveBeenCalledWith(
-      expect.objectContaining({ title: '2주차 특강' }),
-      expect.anything(),
-    )
+    expect(screen.getByText('공지 작성 화면')).toBeInTheDocument()
   })
 })

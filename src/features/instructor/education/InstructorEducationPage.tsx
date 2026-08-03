@@ -93,6 +93,7 @@ export default function InstructorEducationPage() {
             detailPathOf={(id) =>
               `/instructor/cohorts/${cohortId}/notices/${id}`
             }
+            newPath={`/instructor/cohorts/${cohortId}/notices/new`}
           />
         ) : tab === 'materials' ? (
           <MaterialsPane cohortId={cohortId} source="instructor" />

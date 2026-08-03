@@ -1,22 +1,18 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Megaphone, Pin, Trash2 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { Modal } from '@/components/ui/Modal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { markdownToText } from '@/components/ui/markdownText'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import {
   useDeleteCourseNotice,
   useStaffCourseNotices,
-  useWriteCourseNotice,
   type NoticePost,
 } from '@/shared/api'
 import { SearchInput } from '@/components/ui/SearchInput'
@@ -30,21 +26,19 @@ import { SearchInput } from '@/components/ui/SearchInput'
 export function NoticesPane({
   cohortId,
   detailPathOf,
+  newPath,
 }: {
   cohortId: string
   /** 카드를 눌렀을 때 갈 상세 경로 — 강사와 운영이 라우트가 달라 호출부가 정한다. */
   detailPathOf: (noticeId: string) => string
+  /** '공지 작성' 을 눌렀을 때 갈 경로. */
+  newPath: string
 }) {
   const toast = useToast()
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useStaffCourseNotices(cohortId)
-  const write = useWriteCourseNotice(cohortId)
   const remove = useDeleteCourseNotice()
 
-  const [composing, setComposing] = useState(false)
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [pinned, setPinned] = useState(false)
   const [target, setTarget] = useState<NoticePost | null>(null)
   // 검색어는 주소에 남긴다 — 상세를 보고 뒤로 오면 찾던 목록이 그대로 있어야 한다.
   const [q, setQ] = useSearchParamState('nq')
@@ -56,34 +50,6 @@ export function NoticesPane({
       `${n.title} ${n.content} ${n.authorName}`.toLowerCase().includes(needle),
     )
   }, [data, q])
-
-  const reset = () => {
-    setTitle('')
-    setContent('')
-    setPinned(false)
-    setComposing(false)
-  }
-
-  const submit = () => {
-    if (!title.trim()) {
-      toast.danger('제목을 입력해 주세요')
-      return
-    }
-    if (!content.trim()) {
-      toast.danger('내용을 입력해 주세요')
-      return
-    }
-    write.mutate(
-      { title: title.trim(), content: content.trim(), pinned },
-      {
-        onSuccess: () => {
-          toast.success('공지를 올렸어요')
-          reset()
-        },
-        onError: () => toast.danger('공지를 올리지 못했어요'),
-      },
-    )
-  }
 
   // 자료실과 같은 표 — 제목·작성자·등록일. 본문은 제목 아래 한 줄 요약으로만 보이고,
   // 전문과 첨부 내려받기는 상세에서 한다(목록에서 카드가 길어지면 훑기가 어렵다).
@@ -166,13 +132,9 @@ export function NoticesPane({
           placeholder="제목·내용·작성자 검색"
           ariaLabel="공지 검색"
         />
-        <button
-          type="button"
-          onClick={() => setComposing(true)}
-          className={buttonClass({ size: 'sm' })}
-        >
+        <Link to={newPath} className={buttonClass({ size: 'sm' })}>
           공지 작성
-        </button>
+        </Link>
       </div>
 
       <DataBoundary
@@ -200,61 +162,6 @@ export function NoticesPane({
             />
           ))}
       </DataBoundary>
-
-      <Modal
-        open={composing}
-        onClose={reset}
-        size="md"
-        title="공지 작성"
-        footer={
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={reset}
-              className="border-border text-fg rounded-lg border px-4 py-2.5 text-[13px] font-semibold"
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              onClick={submit}
-              disabled={write.isPending}
-              className={buttonClass({ size: 'md' })}
-            >
-              올리기
-            </button>
-          </div>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="제목"
-            aria-label="공지 제목"
-            className={inputClass({ size: 'md' })}
-          />
-          {/* 공지는 목록·제목만으로 전달되지 않는 안내가 많다 — 쓰는 대로 보이는 편집기로
-              제목·목록·표를 넣는다. 빈 문단에서 `/` 를 치면 블록을 고른다. */}
-          <RichTextEditor
-            value={content}
-            onChange={setContent}
-            ariaLabel="공지 내용"
-            minHeight={220}
-            placeholder="공지 내용을 적어주세요 · 빈 줄에서 / 를 누르면 제목·목록·표·이미지·파일·북마크를 넣을 수 있어요"
-            onError={(m) => toast.danger(m)}
-          />
-
-          <label className="text-fg-muted flex items-center gap-2 text-[13px]">
-            <input
-              type="checkbox"
-              checked={pinned}
-              onChange={(e) => setPinned(e.target.checked)}
-            />
-            목록 맨 위에 고정
-          </label>
-        </div>
-      </Modal>
 
       <ConfirmDialog
         open={!!target}

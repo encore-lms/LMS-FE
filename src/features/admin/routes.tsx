@@ -28,6 +28,7 @@ const EducationResumeDetailPage = lazy(
 )
 // 공지 상세 — 허브 '공지' 탭에서 카드를 눌러 진입(강사와 같은 화면).
 const NoticeDetailPage = lazy(() => import('./education/NoticeDetailPage'))
+const NoticeFormPage = lazy(() => import('./education/NoticeFormPage'))
 // 역량 증명서 관리 — 과정·기수별 수강생 증명서 현황(증명서 템플릿 대체).
 const CompetencyCertificatesPage = lazy(
   () => import('./certificates-competency/CompetencyCertificatesPage'),
@@ -139,6 +140,11 @@ export const adminRoutes: RouteObject[] = [
       {
         path: 'education/resume/:resumeId',
         element: <EducationResumeDetailPage />,
+      },
+      // 정적 세그먼트를 :noticeId 앞에 둬 'new' 가 id 로 잡히지 않게 한다.
+      {
+        path: 'education/notices/new',
+        element: <NoticeFormPage />,
       },
       {
         path: 'education/notices/:noticeId',

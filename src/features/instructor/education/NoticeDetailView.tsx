@@ -89,7 +89,7 @@ export function NoticeDetailView({
               <div className="bg-divider mt-4 h-px w-full" />
 
               <div className="py-7">
-                <Markdown className="text-[14px] leading-7">
+                <Markdown uploadScope="staff" className="text-[14px] leading-7">
                   {notice.content}
                 </Markdown>
               </div>

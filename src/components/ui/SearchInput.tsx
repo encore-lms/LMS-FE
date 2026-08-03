@@ -24,10 +24,19 @@ export function SearchInput({
   ariaLabel: string
   className?: string
 }) {
+  // cn 은 단순 join 이라 기본 크기와 넘겨받은 크기가 함께 남는다. 그러면 어느 쪽이 이길지는
+  // Tailwind 가 유틸리티를 찍어낸 순서에 달려 — w-52 를 넘겨도 기본 w-56 이 이겨 무시됐다.
+  // 호출부가 크기를 정했으면 기본값을 아예 빼서, 순서에 기대지 않게 한다.
+  const sized = className ?? ''
+  const hasWidth = /(^|\s)(w-|max-w-|min-w-|flex-1)/.test(sized)
+  const hasHeight = /(^|\s)h-/.test(sized)
+
   return (
     <div
       className={cn(
-        'border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3',
+        'border-border focus-within:border-brand bg-surface flex items-center gap-2 rounded-lg border px-3',
+        !hasWidth && 'w-56',
+        !hasHeight && 'h-9',
         className,
       )}
     >

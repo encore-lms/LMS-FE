@@ -1,12 +1,15 @@
 import type { ChainedCommands } from '@tiptap/react'
 import {
+  Bookmark,
   Code,
+  Image,
   Heading1,
   Heading2,
   Heading3,
   Heading4,
   List,
   ListOrdered,
+  Paperclip,
   ListTodo,
   Minus,
   Quote,
@@ -30,8 +33,15 @@ export interface SlashCommand {
   icon: LucideIcon
   /** 검색어 — 라벨 외에 영문·별칭으로도 찾을 수 있게. */
   keywords: string[]
-  /** 고른 블록으로 바꾸는 편집 명령. */
-  apply: (chain: ChainedCommands) => ChainedCommands
+  /**
+   * 고른 블록으로 바꾸는 편집 명령. 넣자마자 완성되는 블록만 갖는다.
+   *
+   * <p>이미지·파일·북마크처럼 파일을 고르거나 주소를 받아야 하는 것은 여기서 끝나지 않아
+   * {@link prompt} 로 표시하고, 편집기가 그 자리에 입력 상자를 띄운다.</p>
+   */
+  apply?: (chain: ChainedCommands) => ChainedCommands
+  /** 값을 더 받아야 완성되는 블록. */
+  prompt?: 'image' | 'file' | 'bookmark'
 }
 
 export const SLASH_COMMANDS: SlashCommand[] = [
@@ -122,6 +132,30 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     icon: Table,
     keywords: ['table', '표', '테이블'],
     apply: (c) => c.insertTable({ rows: 3, cols: 2, withHeaderRow: true }),
+  },
+  {
+    key: 'image',
+    label: '이미지',
+    hint: '',
+    icon: Image,
+    keywords: ['image', 'img', '이미지', '사진', '그림'],
+    prompt: 'image',
+  },
+  {
+    key: 'file',
+    label: '파일',
+    hint: '',
+    icon: Paperclip,
+    keywords: ['file', '파일', '첨부', '자료'],
+    prompt: 'file',
+  },
+  {
+    key: 'bookmark',
+    label: '웹 북마크',
+    hint: '',
+    icon: Bookmark,
+    keywords: ['bookmark', 'link', '북마크', '링크', '주소'],
+    prompt: 'bookmark',
   },
   {
     key: 'divider',

@@ -1,0 +1,157 @@
+import { useState } from 'react'
+import { ChevronLeft, Pin, Trash2 } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { cn } from '@/shared/lib/cn'
+import { DataBoundary } from '@/components/ui/DataBoundary'
+import { Empty } from '@/components/ui/Empty'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
+import { useToast } from '@/components/ui/use-toast'
+import { usePageHeader } from '@/shared/store'
+import {
+  useDeleteCourseNotice,
+  useDeleteNoticeAttachment,
+  useStaffCourseNotices,
+} from '@/shared/api'
+
+// 공지 상세 — 강사 허브와 운영 기수 허브가 같은 한 벌을 쓴다. 라우트만 역할별로 다르다.
+//
+// 단건 조회 API 를 따로 두지 않고 기수 목록에서 찾는다 — 목록 응답이 이미 본문·첨부까지
+// 담고 있고, 목록에서 눌러 들어오는 흐름이라 캐시가 그대로 재사용된다.
+
+const card =
+  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+
+export function NoticeDetailView({
+  cohortId,
+  noticeId,
+  backTo,
+}: {
+  cohortId: string
+  noticeId: string
+  /** 목록으로 돌아갈 경로 — 삭제 후에도 여기로 보낸다. */
+  backTo: string
+}) {
+  usePageHeader('공지', '수강생 강의 홈에 보이는 공지입니다')
+  const toast = useToast()
+  const navigate = useNavigate()
+  const { data, isPending, isError, refetch } = useStaffCourseNotices(cohortId)
+  const remove = useDeleteCourseNotice()
+  const removeAttachment = useDeleteNoticeAttachment()
+  const [confirming, setConfirming] = useState(false)
+
+  const notice = data?.notices.find((n) => n.id === noticeId) ?? null
+
+  return (
+    <div className="p-8">
+      <Link
+        to={backTo}
+        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1 text-[13px] font-medium"
+      >
+        <ChevronLeft className="h-4 w-4" /> 공지 목록
+      </Link>
+
+      <DataBoundary
+        isPending={isPending}
+        isError={isError || !data}
+        onRetry={refetch}
+        skeleton={<SkeletonListPage columns={1} className="" />}
+        errorTitle="공지를 불러오지 못했어요"
+        errorDescription="잠시 후 다시 시도해 주세요."
+      >
+        {data &&
+          (!notice ? (
+            // 다른 사람이 지웠거나 주소를 직접 고쳐 들어온 경우.
+            <Empty
+              title="공지를 찾을 수 없어요"
+              description="이미 삭제됐거나 다른 기수의 공지일 수 있어요."
+            />
+          ) : (
+            <article className={cn(card, 'flex flex-col gap-4')}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {notice.pinned && (
+                      <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                        <Pin className="size-3" aria-hidden="true" />
+                        고정
+                      </span>
+                    )}
+                    <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 text-[10px] font-bold">
+                      {notice.roleLabel}
+                    </span>
+                  </div>
+                  <h2 className="text-fg text-[20px] font-bold [overflow-wrap:anywhere]">
+                    {notice.title}
+                  </h2>
+                  <span className="text-fg-subtle text-[12px]">
+                    {notice.authorName} · {notice.createdAt} · {notice.timeAgo}
+                  </span>
+                </div>
+                {notice.canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(true)}
+                    aria-label={`${notice.title} 삭제`}
+                    className="border-danger/40 text-danger shrink-0 rounded-md border px-2.5 py-1.5 text-[12px] font-semibold"
+                  >
+                    <Trash2 className="size-3.5" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+
+              <div className="bg-divider h-px w-full" />
+
+              <p className="text-fg text-[14px] leading-7 whitespace-pre-wrap [overflow-wrap:anywhere]">
+                {notice.content}
+              </p>
+
+              <NoticeAttachmentList
+                links={notice.links ?? []}
+                files={notice.files ?? []}
+                scope="staff"
+                onRemove={
+                  notice.canDelete
+                    ? (attachmentId) =>
+                        removeAttachment.mutate(
+                          { noticeId: notice.id, attachmentId },
+                          {
+                            onSuccess: () => toast.success('첨부를 지웠어요'),
+                            onError: () =>
+                              toast.danger('첨부를 지우지 못했어요'),
+                          },
+                        )
+                    : undefined
+                }
+              />
+            </article>
+          ))}
+      </DataBoundary>
+
+      <ConfirmDialog
+        open={confirming}
+        title="공지를 삭제할까요?"
+        confirmLabel="삭제"
+        tone="danger"
+        onClose={() => setConfirming(false)}
+        onConfirm={() => {
+          if (!notice) return
+          remove.mutate(notice.id, {
+            onSuccess: () => {
+              toast.success('공지를 삭제했어요')
+              // 지운 글의 상세에 남아 있으면 '찾을 수 없어요'만 보인다 — 목록으로 돌려보낸다.
+              navigate(backTo, { replace: true })
+            },
+            onError: () => toast.danger('공지를 삭제하지 못했어요'),
+          })
+          setConfirming(false)
+        }}
+      >
+        <p className="text-fg-muted text-[13px] leading-6">
+          {notice ? `'${notice.title}' 공지가 사라져요.` : ''}
+        </p>
+      </ConfirmDialog>
+    </div>
+  )
+}

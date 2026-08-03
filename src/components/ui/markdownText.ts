@@ -30,7 +30,25 @@ export function markdownToText(src: string | null | undefined): string {
       // 표 구분선(| --- |)만 지우고 셀 구분자는 공백으로 바꿔 내용을 잇는다.
       .replace(/^\s*\|?[\s:|-]*\|[\s:|-]*$/gm, ' ')
       .replace(/\|/g, ' ')
+      // 편집기가 저장할 때 씌운 껍데기를 벗긴다 — 요약은 렌더러를 거치지 않아
+      // 그냥 두면 `&lt;`, `\_` 가 글자 그대로 목록에 보인다.
+      .replace(/\\([\\`*_{}[\]()#+\-.!>|~])/g, '$1')
+      .replace(
+        /&(lt|gt|amp|quot|apos|nbsp|#39|#x27);/gi,
+        (_, e: string) => ENTITIES[e.toLowerCase()] ?? _,
+      )
       .replace(/\s+/g, ' ')
       .trim()
   )
+}
+
+const ENTITIES: Record<string, string> = {
+  lt: '<',
+  gt: '>',
+  amp: '&',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  '#39': "'",
+  '#x27': "'",
 }

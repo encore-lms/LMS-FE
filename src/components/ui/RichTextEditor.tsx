@@ -19,6 +19,22 @@ import { TableToolbar } from './TableToolbar'
 import { fetchLinkPreview, uploadEditorFile } from '@/shared/api'
 import { filterSlashCommands, type SlashCommand } from './slashCommands'
 
+/** 서버가 돌려준 사유. 없으면 null. */
+function serverMessage(err: unknown): string | null {
+  const msg = (
+    err as { response?: { data?: { message?: string } } } | undefined
+  )?.response?.data?.message
+  return typeof msg === 'string' && msg.trim() ? msg : null
+}
+
+/** 서버가 말이 없을 때(연결 끊김 등) 대신 쓰는 문구. */
+function fallbackMessage(kind: EmbedKind): string {
+  if (kind === 'bookmark') return '링크를 불러오지 못했어요'
+  return kind === 'image'
+    ? '이미지를 올리지 못했어요'
+    : '파일을 올리지 못했어요'
+}
+
 /**
  * 글 쓰는 대로 보이는 편집기.
  *
@@ -129,11 +145,17 @@ export function RichTextEditor({
     editor.commands.setContent(value)
   }, [editor, value])
 
-  /** 커서 앞의 `/검색어` 를 찾는다 — 빈 문단에서만 연다. */
+  /**
+   * 커서 앞의 `/검색어` 를 찾는다 — 빈 문단에서만 연다.
+   *
+   * <p>검색어에 공백을 허용한다 — 메뉴에 보이는 이름을 그대로 치는 사람이 많은데
+   * (`/할 일`, `/코드 블록`) 공백에서 끊으면 메뉴가 사라져 아무것도 고를 수 없었다.
+   * 걸리는 게 없으면 메뉴가 알아서 닫히므로, 길이만 막아 문장을 계속 훑지 않게 한다.</p>
+   */
   const readSlashToken = (ed: Editor) => {
     const { $from } = ed.state.selection
     const before = $from.parent.textBetween(0, $from.parentOffset, '\n', '\n')
-    const m = /^\/(\S*)$/.exec(before)
+    const m = /^\/(.{0,20})$/.exec(before)
     return m ? { length: before.length, query: m[1] } : null
   }
 
@@ -245,12 +267,10 @@ export function RichTextEditor({
         }
       }
       setPrompt(null)
-    } catch {
-      onError?.(
-        result.kind === 'bookmark'
-          ? '링크를 불러오지 못했어요'
-          : '파일을 올리지 못했어요',
-      )
+    } catch (err) {
+      // 서버가 이유를 말해 준다(용량 한도·내부 주소 차단 등) — 일반 문구로 덮으면
+      // 왜 안 되는지 알 수 없어 같은 파일을 계속 다시 올리게 된다.
+      onError?.(serverMessage(err) ?? fallbackMessage(result.kind))
     } finally {
       setBusy(false)
     }

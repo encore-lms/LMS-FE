@@ -293,6 +293,14 @@ export function RichTextEditor({
       // 캡처 단계에서 먼저 가로챈다 — 버블을 기다리면 ProseMirror 가 Enter·화살표를
       // 이미 처리해(문단이 새로 생겨) 고르려던 블록이 사라진다.
       onKeyDownCapture={(e) => {
+        // 자리만 잡아 둔 블록은 Esc 로 물린다 — 고르고 나면 초점이 본문으로 돌아가 있어
+        // 그 줄을 다시 눌러 초점을 옮기지 않고도 지울 수 있어야 한다.
+        if (prompt && e.key === 'Escape') {
+          e.preventDefault()
+          e.stopPropagation()
+          setPrompt(null)
+          return
+        }
         if (matches.length === 0) return
         const handled = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape']
         if (!handled.includes(e.key)) return

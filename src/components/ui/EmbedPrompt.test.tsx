@@ -42,6 +42,9 @@ async function pick(user: ReturnType<typeof userEvent.setup>, label: string) {
 beforeEach(() => {
   vi.mocked(uploadEditorFile).mockReset()
   vi.mocked(fetchLinkPreview).mockReset()
+  // jsdom 에는 없는 API — 편집기가 방금 고른 그림을 그 자리에 보여 줄 때 쓴다.
+  URL.createObjectURL = vi.fn(() => 'blob:preview-1')
+  URL.revokeObjectURL = vi.fn()
 })
 
 describe('본문 임베드', () => {
@@ -63,7 +66,61 @@ describe('본문 임베드', () => {
       new File(['x'], '사진.png', { type: 'image/png' }),
     )
 
+    // 편집기에는 방금 고른 파일을 그대로 보여 주고(blob:), 저장할 값은 참조로 되돌린다 —
+    // `upload:` 는 브라우저가 모르는 주소라 그 자리에 깨진 그림이 남는다.
     await waitFor(() => expect(md()).toContain('![사진.png](upload:u1)'))
+    expect(body().querySelector('img')?.getAttribute('src')).toBe(
+      'blob:preview-1',
+    )
+  })
+
+  // 스크린샷을 '파일'로 올렸다면 그림이 아니라 받을 거리로 쓰겠다는 뜻이다.
+  it('그림 파일도 파일로 올리면 이름표로 들어간다', async () => {
+    const user = userEvent.setup()
+    vi.mocked(uploadEditorFile).mockResolvedValue({
+      id: 'u3',
+      fileName: '스크린샷.png',
+      contentType: 'image/png',
+      fileSize: 4096,
+      image: true,
+      url: 'upload:u3',
+    })
+    render(<Editor />)
+
+    await pick(user, '파일')
+    await user.upload(
+      screen.getByLabelText('첨부 파일 선택'),
+      new File(['x'], '스크린샷.png', { type: 'image/png' }),
+    )
+
+    await waitFor(() =>
+      expect(md()).toContain('[스크린샷.png](upload:u3 "file::4096")'),
+    )
+    expect(md()).not.toContain('![')
+  })
+
+  // 주소가 지워지면 저장한 글에서 받을 길이 사라진다.
+  it('파일 링크의 주소가 살아 있다', async () => {
+    const user = userEvent.setup()
+    vi.mocked(uploadEditorFile).mockResolvedValue({
+      id: 'u4',
+      fileName: '자료.txt',
+      contentType: 'text/plain',
+      fileSize: 10,
+      image: false,
+      url: 'upload:u4',
+    })
+    render(<Editor />)
+
+    await pick(user, '파일')
+    await user.upload(
+      screen.getByLabelText('첨부 파일 선택'),
+      new File(['x'], '자료.txt', { type: 'text/plain' }),
+    )
+
+    await waitFor(() =>
+      expect(body().querySelector('a')?.getAttribute('href')).toBe('upload:u4'),
+    )
   })
 
   it('파일을 올리면 이름·크기를 담은 링크가 들어간다', async () => {

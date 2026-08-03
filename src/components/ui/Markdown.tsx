@@ -6,41 +6,40 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import 'highlight.js/styles/github.css'
 import { getImage } from './markdownImages'
-import { BookmarkCard, FileChip } from './MarkdownEmbeds'
+import { BookmarkCard, FileChip, UploadImage } from './MarkdownEmbeds'
 import { parseEmbedTitle } from './embedMeta'
+import type { UploadScope } from '@/shared/api'
 
 // react-markdown 기본 urlTransform 은 data: URL 을 제거한다(보안 기본값).
 // 추가 허용: (1) 에디터가 붙인 `attachment:id` → 세션 저장소의 base64 로 해석,
 //           (2) base64 인라인 이미지(data:image/*),
-//           (3) 본문 업로드 참조 `upload:id` → 역할별 실제 경로.
+//           (3) 본문 업로드 참조 `upload:id` → 그대로 통과.
 // 그 외는 기본 정책 유지.
-function makeUrlTransform(uploadScope: UploadScope) {
+//
+// `upload:id` 를 여기서 실제 경로로 바꾸지 않는다 — 그 경로는 로그인을 요구하는데
+// 브라우저가 스스로 부르는 요청(img src·a download)에는 토큰이 붙지 않아 401 이 된다.
+// 참조를 그대로 넘겨 두고, 아래 컴포넌트가 토큰을 붙여 받아 온다.
+function makeUrlTransform() {
   return (url: string): string => {
     if (url.startsWith('attachment:')) {
       const resolved = getImage(url.slice('attachment:'.length))
       return resolved && resolved.startsWith('data:image/') ? resolved : ''
     }
-    if (url.startsWith('upload:')) {
-      return uploadUrl(url.slice('upload:'.length), uploadScope)
-    }
+    if (url.startsWith('upload:')) return url
     if (url.startsWith('data:image/')) return url
     return defaultUrlTransform(url)
   }
 }
 
 /**
- * 업로드 참조를 실제 경로로 바꾼다.
+ * 본문에 박힌 업로드를 어느 경로로 받을지 — 읽는 사람의 역할.
  *
  * <p>본문에는 접두사 없는 `upload:{id}` 만 담긴다 — 같은 글을 수강생과 강사가 함께 보는데
  * BE 가 경로 앞머리로 역할을 가르기 때문이다(한쪽 경로를 박으면 다른 역할은 403).</p>
  */
-export type UploadScope = 'student' | 'staff'
+export type { UploadScope }
 
-function uploadUrl(id: string, scope: UploadScope): string {
-  const base = import.meta.env.VITE_API_BASE_URL ?? ''
-  const prefix = scope === 'staff' ? '/instructor' : '/student'
-  return `${base}${prefix}/editor/uploads/${encodeURIComponent(id)}/file`
-}
+const UPLOAD = 'upload:'
 
 // sanitize 스키마 확장 — raw HTML은 비허용 유지. 추가로 허용하는 것:
 //  · 코드 하이라이트(hljs-*) className (code·span·pre)
@@ -113,8 +112,21 @@ export function Markdown({
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, [rehypeSanitize, schema]]}
-        urlTransform={makeUrlTransform(uploadScope)}
+        urlTransform={makeUrlTransform()}
         components={{
+          // 올린 이미지는 토큰이 필요해 src 에 주소를 그대로 걸 수 없다.
+          img({ src, alt, ...rest }: ComponentPropsWithoutRef<'img'>) {
+            if (typeof src === 'string' && src.startsWith(UPLOAD)) {
+              return (
+                <UploadImage
+                  id={src.slice(UPLOAD.length)}
+                  scope={uploadScope}
+                  alt={alt ?? ''}
+                />
+              )
+            }
+            return <img src={src} alt={alt ?? ''} {...rest} />
+          },
           a({ href, children, title, ...rest }: ComponentPropsWithoutRef<'a'>) {
             if (typeof href === 'string' && href.startsWith('#mention-')) {
               return <span className="qna-mention">{children}</span>
@@ -134,6 +146,7 @@ export function Markdown({
               return (
                 <FileChip
                   href={href}
+                  scope={uploadScope}
                   label={String(children)}
                   size={embed.size}
                 />

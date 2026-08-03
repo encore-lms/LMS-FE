@@ -20,5 +20,10 @@ export {
   useDeleteCourseNotice,
 } from './notices'
 export type { NoticePost, NoticePostList } from './notices'
-export { uploadEditorFile, fetchLinkPreview } from './editor'
-export type { UploadedFile, LinkPreview } from './editor'
+export {
+  uploadEditorFile,
+  fetchLinkPreview,
+  fetchEditorUpload,
+  uploadPath,
+} from './editor'
+export type { UploadedFile, LinkPreview, UploadScope } from './editor'

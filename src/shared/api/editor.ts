@@ -33,6 +33,29 @@ export async function uploadEditorFile(file: File): Promise<UploadedFile> {
   return res.data
 }
 
+/** 본문 안 업로드를 읽는 사람의 역할로 받는다. */
+export type UploadScope = 'student' | 'staff'
+
+/** 본문에 담긴 `upload:{id}` → 역할별 실제 경로. */
+export function uploadPath(id: string, scope: UploadScope): string {
+  const prefix = scope === 'staff' ? '/instructor' : '/student'
+  return `${prefix}/editor/uploads/${encodeURIComponent(id)}/file`
+}
+
+/**
+ * 올린 파일을 내려받는다.
+ *
+ * <p>주소를 그대로 &lt;a download&gt;·&lt;img src&gt; 에 걸 수 없다 — 이 경로는 로그인을
+ * 요구하는데 브라우저가 스스로 부르는 요청에는 토큰이 붙지 않아 401 이 된다. 여기서 받아
+ * 온 blob 을 화면이 쓴다.</p>
+ */
+export async function fetchEditorUpload(
+  id: string,
+  scope: UploadScope,
+): Promise<Blob> {
+  return apiClient.getBlob(uploadPath(id, scope))
+}
+
 export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
   const res = await apiClient.get<LinkPreview>(
     '/instructor/editor/link-preview',

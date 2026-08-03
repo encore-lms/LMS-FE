@@ -235,6 +235,7 @@ body {
   color: var(--color-fg);
   text-decoration: none;
   font-weight: 500;
+  cursor: pointer;
 }
 .ProseMirror a[title^='bookmark::']::before {
   content: '🔖';

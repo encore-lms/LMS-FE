@@ -60,11 +60,24 @@ export function RichTextEditor({
   // 값을 더 받아야 하는 블록(이미지·파일·북마크)을 고른 상태.
   const [prompt, setPrompt] = useState<EmbedKind | null>(null)
   const [busy, setBusy] = useState(false)
+  // 편집기에 보여 준 미리보기(blob:) → 저장할 참조(upload:id).
+  const previews = useRef(new Map<string, string>())
+
+  // 화면을 떠날 때 브라우저가 들고 있던 사본을 놓아 준다.
+  useEffect(() => {
+    const held = previews.current
+    return () => {
+      for (const url of held.keys()) URL.revokeObjectURL(url)
+      held.clear()
+    }
+  }, [])
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ link: false }),
-      Link.configure({ openOnClick: false }),
+      // upload 를 허용하지 않으면 파일 칩의 주소를 지워 버려(href="") 저장한 글에서
+      // 받을 길이 사라진다.
+      Link.configure({ openOnClick: false, protocols: ['upload'] }),
       Image,
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -83,9 +96,13 @@ export function RichTextEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      const md = (
+      let md = (
         editor.storage as unknown as MarkdownStorage
       ).markdown.getMarkdown()
+      // 보여 주기용 미리보기 주소는 이 브라우저에서만 통한다 — 저장 전에 참조로 되돌린다.
+      for (const [preview, ref] of previews.current) {
+        md = md.split(preview).join(ref)
+      }
       lastEmitted.current = md
       onChange(md)
       // 키 이벤트만 보면 한글 조합·붙여넣기로 들어온 글자를 놓쳐 검색어가 갱신되지 않는다.
@@ -193,11 +210,17 @@ export function RichTextEditor({
         editor.chain().focus().setImage({ src: result.url }).run()
       } else if (result.file) {
         const up = await uploadEditorFile(result.file)
-        if (up.image) {
+        // 그림으로 펼칠지 이름표로 접을지는 고른 블록이 정한다 — 서버가 본 파일 종류가
+        // 아니라. 스크린샷을 '파일'로 올렸다면 그림이 아니라 받을 거리로 쓰겠다는 뜻이다.
+        if (result.kind === 'image') {
+          // 편집기에서는 방금 고른 파일을 그대로 보여 준다 — `upload:` 는 브라우저가 모르는
+          // 주소라 그 자리에 깨진 그림이 남는다. 저장할 때 참조로 되돌린다.
+          const preview = URL.createObjectURL(result.file)
+          previews.current.set(preview, up.url)
           editor
             .chain()
             .focus()
-            .setImage({ src: up.url, alt: up.fileName })
+            .setImage({ src: preview, alt: up.fileName })
             .run()
         } else {
           editor

@@ -16,6 +16,9 @@ const ResumeDetailPage = lazy(
 const InstructorNoticeDetailPage = lazy(
   () => import('./education/NoticeDetailPage'),
 )
+const InstructorNoticeFormPage = lazy(
+  () => import('./education/NoticeFormPage'),
+)
 const ProjectReviewPage = lazy(() => import('./reviews/ProjectReviewPage'))
 const TsReviewPage = lazy(() => import('./reviews/TsReviewPage'))
 const EndorsementDetailPage = lazy(
@@ -66,6 +69,11 @@ export const instructorRoutes: RouteObject[] = [
       {
         path: 'cohorts/:cohortId/resumes/:resumeId',
         element: <ResumeDetailPage source="instructor" />,
+      },
+      // 공지 작성 — 정적 세그먼트를 :noticeId 앞에 둬 'new' 가 id 로 잡히지 않게 한다.
+      {
+        path: 'cohorts/:cohortId/notices/new',
+        element: <InstructorNoticeFormPage />,
       },
       // 공지 상세 — 허브 '공지' 탭에서 카드 클릭으로 진입.
       {

@@ -9,6 +9,7 @@ import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { usePageHeader } from '@/shared/store'
 import type { CohortStatus, InstructorRole } from '@/shared/types'
 import { useInstructorCohorts } from '../api/console'
+import { TERMS } from '@/shared/constants'
 
 const ROLE_META: Record<InstructorRole, { label: string; tone: BadgeTone }> = {
   lead: { label: '강사', tone: 'accent' },
@@ -23,7 +24,7 @@ export default function CohortsPage() {
   const { data, isPending, isError, refetch } = useInstructorCohorts()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<CohortStatus>('operating')
-  usePageHeader('담당 과정/기수', '담당하는 과정과 기수를 확인합니다')
+  usePageHeader(TERMS.educationCourse, '담당하는 과정과 기수를 확인합니다')
 
   const filtered = useMemo(() => {
     const items = data?.rows ?? []

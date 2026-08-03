@@ -6,7 +6,6 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { NoticeDetailView } from './NoticeDetailView'
 import {
   useDeleteCourseNotice,
-  useDeleteNoticeAttachment,
   useStaffCourseNotices,
   type NoticePost,
 } from '@/shared/api'
@@ -15,8 +14,6 @@ vi.mock('@/shared/api', async (orig) => ({
   ...(await orig<typeof import('@/shared/api')>()),
   useStaffCourseNotices: vi.fn(),
   useDeleteCourseNotice: vi.fn(),
-  useDeleteNoticeAttachment: vi.fn(),
-  downloadNoticeAttachment: vi.fn().mockResolvedValue(undefined),
 }))
 
 // 공지 상세 — 목록 카드를 눌러 들어와 전문·첨부를 본다.
@@ -35,8 +32,6 @@ const notice = (over: Partial<NoticePost> = {}): NoticePost => ({
   createdAt: '2026.08.03',
   timeAgo: '2시간 전',
   canDelete: true,
-  links: [],
-  files: [],
   ...over,
 })
 
@@ -51,10 +46,6 @@ function renderDetail(notices: NoticePost[], noticeId = 'n1') {
     mutate: remove,
     isPending: false,
   } as unknown as ReturnType<typeof useDeleteCourseNotice>)
-  vi.mocked(useDeleteNoticeAttachment).mockReturnValue({
-    mutate: vi.fn(),
-    isPending: false,
-  } as unknown as ReturnType<typeof useDeleteNoticeAttachment>)
   render(
     <ToastProvider>
       <MemoryRouter initialEntries={['/detail']}>
@@ -99,14 +90,6 @@ describe('공지 상세', () => {
     expect(screen.getByText('안내문.pdf')).toBeInTheDocument()
     expect(screen.getByText('2KB')).toBeInTheDocument()
     expect(screen.getByText('검색 포털')).toBeInTheDocument()
-  })
-
-  it('별도 첨부 섹션은 없다', () => {
-    renderDetail([
-      notice({ files: [{ id: 'f1', fileName: '옛첨부.pdf', fileSize: 10 }] }),
-    ])
-
-    expect(screen.queryByText('첨부')).not.toBeInTheDocument()
   })
 
   it('목록으로 돌아가는 링크가 있다', () => {
@@ -161,5 +144,13 @@ describe('공지 상세', () => {
 
     expect(remove).toHaveBeenCalledWith('n1', expect.anything())
     expect(screen.getByText('공지 목록 화면')).toBeInTheDocument()
+  })
+
+  // 한 줄짜리 공지에서 제목과 꼬리말이 붙어 본문이 어디까지인지 읽히지 않았다.
+  it('짧은 글이어도 본문 자리를 넉넉히 잡는다', () => {
+    renderDetail([notice({ content: '한 줄 공지' })])
+
+    const body = screen.getByText('한 줄 공지').closest('div')?.parentElement
+    expect(body?.className).toContain('min-h-[320px]')
   })
 })

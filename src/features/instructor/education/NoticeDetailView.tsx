@@ -84,7 +84,9 @@ export function NoticeDetailView({
 
               <div className="bg-divider mt-4 h-px w-full" />
 
-              <div className="py-7">
+              {/* 짧은 글이라도 본문 자리를 넉넉히 잡는다 — 한 줄짜리 공지에서 제목과 꼬리말이
+                  붙어 버려 본문이 어디까지인지 읽히지 않았다. */}
+              <div className="min-h-[320px] py-7">
                 <Markdown uploadScope="staff" className="text-[14px] leading-7">
                   {notice.content}
                 </Markdown>

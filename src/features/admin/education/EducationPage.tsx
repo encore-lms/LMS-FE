@@ -124,7 +124,10 @@ export default function EducationPage() {
           !cohortId ? (
             <NeedCourse />
           ) : (
-            <NoticesPane cohortId={cohortId} />
+            <NoticesPane
+              cohortId={cohortId}
+              detailPathOf={(id) => `/admin/education/notices/${id}?cohortId=${cohortId}`}
+            />
           )
         ) : tab === 'resume' ? (
           // 이력서 현황·상세·피드백(실 BE, 정본 §32).

@@ -11,6 +11,10 @@ const InstructorEducationPage = lazy(
 const InstructorResumeDetailPage = lazy(
   () => import('./education/ResumeDetailPage'),
 )
+// 공지 상세 — 허브 '공지' 탭에서 카드를 눌러 진입(운영과 같은 화면).
+const InstructorNoticeDetailPage = lazy(
+  () => import('./education/NoticeDetailPage'),
+)
 const ProjectReviewPage = lazy(() => import('./reviews/ProjectReviewPage'))
 const TsReviewPage = lazy(() => import('./reviews/TsReviewPage'))
 const EndorsementDetailPage = lazy(
@@ -61,6 +65,11 @@ export const instructorRoutes: RouteObject[] = [
       {
         path: 'cohorts/:cohortId/resumes/:resumeId',
         element: <InstructorResumeDetailPage />,
+      },
+      // 공지 상세 — 허브 '공지' 탭에서 카드 클릭으로 진입.
+      {
+        path: 'cohorts/:cohortId/notices/:noticeId',
+        element: <InstructorNoticeDetailPage />,
       },
       // 수강생 목록·상세 단독 화면은 폐기 — 허브 '수강생' 탭(StudentsPane)으로 일원화.
       // 검토 2종 (§14~§15) — 사이드바 '검토' 묶음. 학습 기록 조회는 허브 '기록실' 탭으로 이관.

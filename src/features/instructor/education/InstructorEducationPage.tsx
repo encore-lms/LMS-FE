@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { Tabs } from '@/components/ui/Tabs'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
+import { TERMS, roleTag } from '@/shared/constants'
 import { usePageHeader } from '@/shared/store'
 import QuizListPage from '../quizzes/QuizListPage'
 import EndorsementsPage from '../endorsements/EndorsementsPage'
@@ -28,17 +29,18 @@ type TabKey =
   | 'records'
   | 'endorsements'
 
+// 공통 탭(수강생~기록실) 순서는 매니저 허브(EducationPage)와 동일 유지(2026-08-03 통일 기준측).
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'students', label: '수강생' },
-  { key: 'notices', label: '공지' },
+  { key: 'students', label: TERMS.student },
+  { key: 'notices', label: TERMS.notice },
   { key: 'materials', label: '자료실' },
   { key: 'assignments', label: '과제' },
   { key: 'quizzes', label: '퀴즈' },
   { key: 'projects', label: '프로젝트' },
   { key: 'resume', label: '이력서' },
   { key: 'records', label: '기록실' },
-  // 강사 추천서 이관(2026-07-24) — 단독 화면 폐기, 허브 마지막 탭으로 일원화.
-  { key: 'endorsements', label: '코멘트/추천' },
+  // 강사 추천서 이관(2026-07-24) — 단독 화면 폐기, 허브 마지막 탭으로 일원화. 강사 전용이라 roleTag.
+  { key: 'endorsements', label: roleTag('코멘트/추천', '강사') },
 ]
 
 export default function InstructorEducationPage() {
@@ -49,8 +51,8 @@ export default function InstructorEducationPage() {
     [data, cohortId],
   )
   usePageHeader(
-    row?.name ?? '과정·기수',
-    row?.subtitle ?? '과정·기수별 학습 자료와 활동을 확인합니다',
+    row?.name ?? TERMS.educationCourse,
+    row?.subtitle ?? `${TERMS.educationCourse}별 학습 자료와 활동을 확인합니다`,
   )
 
   const [tab, setTab] = useSearchParamState('tab', 'students')

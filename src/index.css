@@ -221,6 +221,28 @@ body {
 .ProseMirror ul[data-type='taskList'] input[type='checkbox'] {
   accent-color: var(--color-brand);
 }
+/* 편집기 안의 카드형 링크 — 읽는 화면과 같은 모양으로 보이게 한다.
+   (읽는 화면은 컴포넌트로 그리지만, 편집기에서는 링크 그대로라 CSS 로 맞춘다.) */
+.ProseMirror a[title^='bookmark::'],
+.ProseMirror a[title^='file::'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  max-width: 100%;
+  padding: 0.5em 0.8em;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-fg);
+  text-decoration: none;
+  font-weight: 500;
+}
+.ProseMirror a[title^='bookmark::']::before {
+  content: '🔖';
+}
+.ProseMirror a[title^='file::']::before {
+  content: '📎';
+}
+
 .ProseMirror table {
   table-layout: fixed;
   position: relative;

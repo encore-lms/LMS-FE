@@ -9,6 +9,22 @@ export type { Tone }
 export type ProjectStatus = 'certified' | 'reviewing' | 'completed' | 'draft'
 export type ProjectKind = 'team' | 'personal'
 
+/**
+ * 내가 받은 프로젝트 초대.
+ *
+ * <p>초대는 제안이라 받아들이기 전에는 프로젝트 목록에 나타나지 않는다 — 아직 팀이 아니다.
+ * 어느 프로젝트인지·누가 불렀는지가 판단의 전부라 그 둘을 함께 받는다.</p>
+ */
+export interface ProjectInvitation {
+  projectId: string
+  title: string
+  /** 부른 사람(PM) 이름 — 모르면 빈 문자열. */
+  invitedBy: string
+  /** 이미 팀이 된 사람 수(초대자 포함). */
+  memberCount: number
+  invitedAt: string
+}
+
 /** 목록 상단 통계 카드 */
 export interface ProjectStat {
   key: string

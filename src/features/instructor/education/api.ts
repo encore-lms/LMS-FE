@@ -86,6 +86,52 @@ export function useInstructorMaterials(cohortId: string | null) {
   })
 }
 
+// 자료실 탭 — 자료 등록(강사 담당 기수, 2026-08-03 개방). 운영 훅과 같은 multipart 계약.
+export function useCreateInstructorMaterial(cohortId: string) {
+  const qc = useQueryClient()
+  return useMutation<
+    CohortMaterialItem,
+    Error,
+    {
+      title: string
+      body?: string
+      materialType: string
+      url?: string
+      file?: File
+    }
+  >({
+    mutationFn: ({ title, body, materialType, url, file }) => {
+      const form = new FormData()
+      form.append('title', title)
+      form.append('materialType', materialType)
+      if (body) form.append('body', body)
+      if (url) form.append('url', url)
+      if (file) form.append('file', file)
+      return apiClient
+        .post<CohortMaterialItem>(
+          `/instructor/cohorts/${cohortId}/materials`,
+          form,
+        )
+        .then((r) => r.data)
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: keys.materials(cohortId) }),
+  })
+}
+
+// 자료실 탭 — 자료 삭제(강사는 본인 등록분만, BE 가드).
+export function useDeleteInstructorMaterial(cohortId: string) {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (materialId) =>
+      apiClient
+        .delete<void>(`/instructor/cohorts/${cohortId}/materials/${materialId}`)
+        .then(() => undefined),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: keys.materials(cohortId) }),
+  })
+}
+
 // 자료실 탭 — 파일형 자료 다운로드(브라우저 앵커).
 export async function downloadInstructorMaterialFile(
   cohortId: string,

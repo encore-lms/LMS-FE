@@ -17,8 +17,11 @@ import {
 } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import { useCohortRoster } from '@/shared/api/students'
+import { useAuth } from '@/shared/store'
 import {
   downloadInstructorMaterialFile,
+  useCreateInstructorMaterial,
+  useDeleteInstructorMaterial,
   useInstructorMaterials,
 } from '@/features/instructor/education/api'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
@@ -42,7 +45,8 @@ const fmtSize = (n: number | null) => {
 }
 
 // 자료실 탭 — 게시글형 기수 자료(본문·링크/파일·작성자) 조회·등록·삭제 + 상세 팝업(실 BE).
-// source: 매니저(admin, 기본)·강사(instructor) 공용 — 강사는 조회 전용(등록·삭제는 운영자만, BE 가드와 동일).
+// source: 매니저(admin, 기본)·강사(instructor) 공용 — 등록은 양 역할(2026-08-03 개방, 공지와 동일 정책),
+// 삭제는 매니저=전체·강사=본인 등록분만(BE 가드와 동일 판정).
 // 데이터 소스만 역할별 미러 훅으로 갈리고 화면은 한 코드다(CourseHomePane과 같은 규약).
 export function MaterialsPane({
   courseId,
@@ -68,6 +72,12 @@ export function MaterialsPane({
   const { data: roster } = useCohortRoster(isAdmin ? null : cohortId)
   const createMaterial = useCreateCohortMaterial()
   const deleteMaterial = useDeleteCohortMaterial()
+  const createInstructorMaterial = useCreateInstructorMaterial(cohortId)
+  const deleteInstructorMaterial = useDeleteInstructorMaterial(cohortId)
+  const { user } = useAuth()
+  // 삭제 가능 판정 — 매니저는 전체, 강사는 본인 등록분만(BE와 동일).
+  const canDelete = (m: CohortMaterialItem) =>
+    isAdmin || m.uploadedByUserId === user?.id
   const toast = useToast()
 
   const nameOf = useMemo(() => {
@@ -125,25 +135,27 @@ export function MaterialsPane({
       toast.danger('업로드할 파일을 선택해 주세요')
       return
     }
-    createMaterial.mutate(
-      {
-        courseId: courseId ?? '',
-        cohortId,
-        title: title.trim(),
-        body: body.trim() || undefined,
-        materialType: kind === 'file' ? 'file' : 'link',
-        url: kind === 'link' ? url.trim() : undefined,
-        file: kind === 'file' ? (file ?? undefined) : undefined,
+    const input = {
+      title: title.trim(),
+      body: body.trim() || undefined,
+      materialType: kind === 'file' ? 'file' : 'link',
+      url: kind === 'link' ? url.trim() : undefined,
+      file: kind === 'file' ? (file ?? undefined) : undefined,
+    }
+    const opts = {
+      onSuccess: () => {
+        toast.success(`자료 등록 — ${input.title}`)
+        setAddOpen(false)
+        resetForm()
       },
-      {
-        onSuccess: () => {
-          toast.success(`자료 등록 — ${title.trim()}`)
-          setAddOpen(false)
-          resetForm()
-        },
-        onError: () => toast.danger('자료 등록에 실패했어요'),
-      },
-    )
+      onError: () => toast.danger('자료 등록에 실패했어요'),
+    }
+    if (isAdmin)
+      createMaterial.mutate(
+        { courseId: courseId ?? '', cohortId, ...input },
+        opts,
+      )
+    else createInstructorMaterial.mutate(input, opts)
   }
 
   const onDownload = async (m: CohortMaterialItem) => {
@@ -187,14 +199,17 @@ export function MaterialsPane({
   const onDelete = () => {
     if (!deleteTarget) return
     const m = deleteTarget
-    deleteMaterial.mutate(
-      { courseId: courseId ?? '', cohortId, materialId: m.id },
-      {
-        onSuccess: () => toast.success(`삭제 — ${m.title}`),
-        onError: () => toast.danger('삭제에 실패했어요'),
-        onSettled: () => setDeleteTarget(null),
-      },
-    )
+    const opts = {
+      onSuccess: () => toast.success(`삭제 — ${m.title}`),
+      onError: () => toast.danger('삭제에 실패했어요'),
+      onSettled: () => setDeleteTarget(null),
+    }
+    if (isAdmin)
+      deleteMaterial.mutate(
+        { courseId: courseId ?? '', cohortId, materialId: m.id },
+        opts,
+      )
+    else deleteInstructorMaterial.mutate(m.id, opts)
   }
 
   const columns: Column<CohortMaterialItem>[] = [
@@ -245,9 +260,9 @@ export function MaterialsPane({
     },
     {
       key: 'action',
-      header: isAdmin ? '액션' : '',
+      header: '액션',
       align: 'right',
-      className: isAdmin ? 'w-32' : 'w-24',
+      className: 'w-32',
       cell: (m) => (
         <div className="flex justify-end gap-1.5">
           <button
@@ -260,7 +275,7 @@ export function MaterialsPane({
           >
             상세
           </button>
-          {isAdmin && (
+          {canDelete(m) && (
             <button
               type="button"
               onClick={(e) => {
@@ -313,11 +328,9 @@ export function MaterialsPane({
                 { value: 'file', label: '파일' },
               ]}
             />
-            {isAdmin && (
-              <Button onClick={() => setAddOpen(true)}>
-                <Plus className="h-4 w-4" /> 자료 등록
-              </Button>
-            )}
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" /> 자료 등록
+            </Button>
           </div>
         </div>
 
@@ -338,7 +351,11 @@ export function MaterialsPane({
           spec={deleteSpec}
           onClose={() => setDeleteTarget(null)}
           onConfirm={onDelete}
-          pending={deleteMaterial.isPending}
+          pending={
+            isAdmin
+              ? deleteMaterial.isPending
+              : deleteInstructorMaterial.isPending
+          }
         />
 
         {/* 상세 팝업 — 블로그 포스트형 */}
@@ -348,7 +365,7 @@ export function MaterialsPane({
           size="lg"
           footer={
             <>
-              {isAdmin && detail && (
+              {detail && canDelete(detail) && (
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -414,7 +431,14 @@ export function MaterialsPane({
               >
                 취소
               </Button>
-              <Button onClick={onAdd} disabled={createMaterial.isPending}>
+              <Button
+                onClick={onAdd}
+                disabled={
+                  isAdmin
+                    ? createMaterial.isPending
+                    : createInstructorMaterial.isPending
+                }
+              >
                 등록
               </Button>
             </>

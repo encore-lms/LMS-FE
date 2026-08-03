@@ -19,6 +19,8 @@ interface CaseBasicInfoSectionProps {
   setDate: Dispatch<SetStateAction<string>>
   dayCount: string
   setDayCount: Dispatch<SetStateAction<string>>
+  /** 발생일과 소요 일수가 앞뒤가 안 맞을 때의 문구(없으면 null). */
+  daysError: string | null
   independent: boolean
   setIndependent: Dispatch<SetStateAction<boolean>>
 }
@@ -36,6 +38,7 @@ export function CaseBasicInfoSection({
   setDate,
   dayCount,
   setDayCount,
+  daysError,
   independent,
   setIndependent,
 }: CaseBasicInfoSectionProps) {
@@ -150,7 +153,11 @@ export function CaseBasicInfoSection({
             <div className="relative">
               <Clock className="text-fg-subtle pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2" />
               <input
-                className={cn(input, 'pr-9 pl-10')}
+                className={cn(
+                  input,
+                  'pr-9 pl-10',
+                  daysError && 'border-danger focus:border-danger',
+                )}
                 value={dayCount}
                 inputMode="numeric"
                 onChange={(e) =>
@@ -158,6 +165,8 @@ export function CaseBasicInfoSection({
                 }
                 placeholder="예) 3"
                 aria-label="해결 소요 일수"
+                aria-invalid={daysError ? true : undefined}
+                aria-describedby={daysError ? 'ts-days-error' : undefined}
               />
               <span className="text-fg-muted pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-[13px]">
                 일
@@ -165,9 +174,19 @@ export function CaseBasicInfoSection({
             </div>
           </div>
         </div>
-        <span className="text-fg-subtle text-[11px]">
-          실제 문제가 발생한 일자와 해결까지 소요된 영업일
-        </span>
+        {daysError ? (
+          <span
+            id="ts-days-error"
+            role="alert"
+            className="text-danger text-[11px]"
+          >
+            {daysError}
+          </span>
+        ) : (
+          <span className="text-fg-subtle text-[11px]">
+            실제 문제가 발생한 일자와 해결까지 소요된 영업일
+          </span>
+        )}
       </div>
       <button
         type="button"

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -9,6 +8,7 @@ import { formatDateTime } from '@/shared/lib/date'
 import type { ResumeRow } from '@/shared/types'
 import { useCohortRoster } from '../api/console'
 import { useInstructorResumes } from './api'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
@@ -103,16 +103,12 @@ export function ResumeViewPane({ cohortId }: { cohortId: string }) {
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <p className="text-fg-muted text-sm">총 {filtered.length}명</p>
-          <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-            <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="수강생·제목 검색"
-              aria-label="이력서 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-            />
-          </div>
+          <SearchInput
+            value={q}
+            onChange={setQ}
+            placeholder="수강생·제목 검색"
+            ariaLabel="이력서 검색"
+          />
         </div>
 
         <DataTable

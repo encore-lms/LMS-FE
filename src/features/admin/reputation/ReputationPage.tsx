@@ -17,6 +17,7 @@ import { buildReputationColumns } from './reputationColumns'
 import { ReputationHero } from './ReputationHero'
 import { ReputationDetailModal } from './ReputationDetailModal'
 import type { ReputationStudent } from './types'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 평판 관리 (/admin/reputation) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1193:6267. 수강생별 평판 수집 현황(강사 추천서·멘토 평가·동료 5축) + 요청 푸시.
@@ -228,12 +229,12 @@ export default function ReputationPage() {
                   className="h-9"
                 />
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="수강생 검색"
-                aria-label="수강생 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="수강생 검색"
+                className="w-52"
               />
             </div>
 

@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  useQuizBasePath,
-  useQuizTemplateBasePath,
-} from './useQuizBasePath'
-import { FileText, Plus, Search, Settings2 } from 'lucide-react'
+import { useQuizBasePath, useQuizTemplateBasePath } from './useQuizBasePath'
+import { FileText, Plus, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
@@ -23,6 +20,7 @@ import { useDeleteQuiz, useInstructorQuizzes } from '../api/quizzes'
 import { useQuizTemplates } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type ModeFilter = 'all' | GradingMode
 type VisibilityFilter = 'all' | QuizVisibility
@@ -251,16 +249,12 @@ export default function QuizListPage({
               총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
             </span>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-                <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="퀴즈명·과목으로 검색"
-                  aria-label="퀴즈 검색"
-                  className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-                />
-              </div>
+              <SearchInput
+                value={q}
+                onChange={setQ}
+                placeholder="퀴즈명·과목으로 검색"
+                ariaLabel="퀴즈 검색"
+              />
               {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
               {!embedded && (
                 <label className="flex items-center gap-2 text-xs">
@@ -385,16 +379,13 @@ function TemplatePickerModal({
     >
       <div className="flex flex-col gap-3">
         {/* 검색 */}
-        <div className="border-border focus-within:border-brand flex h-10 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
-          <input
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="템플릿명·분류로 검색"
-            aria-label="템플릿 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-          />
-        </div>
+        <SearchInput
+          value={query}
+          onChange={onQueryChange}
+          placeholder="템플릿명·분류로 검색"
+          ariaLabel="템플릿 검색"
+          className="h-10"
+        />
 
         {/* 목록 */}
         <div className="flex max-h-[360px] flex-col gap-2 overflow-y-auto">

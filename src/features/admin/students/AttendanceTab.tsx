@@ -13,6 +13,7 @@ import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
 import { useStudentAttendance } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 출결 필터(이전 LMS 기준). 미입실=입실 없음, 미퇴실=퇴실 없음.
 type AttendanceFilter = 'all' | 'late' | 'absent' | 'no_checkin' | 'no_checkout'
@@ -51,7 +52,8 @@ function defaultDate(start: string | null, end: string | null): string {
 export function AttendanceTab({ scope }: { scope?: CohortScope }) {
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = scope?.courseId ?? selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const courseId =
+    scope?.courseId ?? selectedCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   // 기본 기수 = 오늘이 기간에 포함된 운영 기수(없으면 첫 기수). 시작일 DESC라 [0]은 최신(미개강일 수 있음).
@@ -179,35 +181,35 @@ export function AttendanceTab({ scope }: { scope?: CohortScope }) {
     <div className="flex flex-wrap items-center gap-2">
       {!scope && (
         <>
-      <Select
-        aria-label="과정 선택"
-        value={courseId}
-        onChange={(v) => {
-          setSelectedCourseId(v)
-          setSelectedCohortId(null)
-          setSelectedDate(null)
-        }}
-        options={(courses ?? []).map((c) => ({
-          value: c.courseId,
-          label: c.title,
-        }))}
-        placeholder="등록 과정 없음"
-        className="h-11"
-      />
-      <Select
-        aria-label="기수 선택"
-        value={cohortId}
-        onChange={(v) => {
-          setSelectedCohortId(v)
-          setSelectedDate(null)
-        }}
-        options={(courseConfig?.cohorts ?? []).map((c) => ({
-          value: c.id,
-          label: `${c.cohortNo}기`,
-        }))}
-        placeholder="기수 없음"
-        className="h-11"
-      />
+          <Select
+            aria-label="과정 선택"
+            value={courseId}
+            onChange={(v) => {
+              setSelectedCourseId(v)
+              setSelectedCohortId(null)
+              setSelectedDate(null)
+            }}
+            options={(courses ?? []).map((c) => ({
+              value: c.courseId,
+              label: c.title,
+            }))}
+            placeholder="등록 과정 없음"
+            className="h-11"
+          />
+          <Select
+            aria-label="기수 선택"
+            value={cohortId}
+            onChange={(v) => {
+              setSelectedCohortId(v)
+              setSelectedDate(null)
+            }}
+            options={(courseConfig?.cohorts ?? []).map((c) => ({
+              value: c.id,
+              label: `${c.cohortNo}기`,
+            }))}
+            placeholder="기수 없음"
+            className="h-11"
+          />
         </>
       )}
       {/* DateTimePicker 루트가 w-full이라 폭 고정 래퍼로 한 줄 유지(좁아지면 wrap). */}
@@ -295,12 +297,11 @@ export function AttendanceTab({ scope }: { scope?: CohortScope }) {
                   </button>
                 ))}
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="이름·출결 상태 검색"
-                aria-label="출결 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="출결 검색"
               />
             </div>
 

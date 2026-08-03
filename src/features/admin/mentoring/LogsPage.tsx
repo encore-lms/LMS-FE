@@ -15,6 +15,7 @@ import { LOG_STATUS_META, logDisplayStatus } from './statusMeta'
 import { LogReviewModal } from './LogReviewModal'
 import type { AdminMentoringLogRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 멘토링 일지 관리 (/admin/mentoring/logs) — 운영(MANAGER/ADMIN) 승인·수정 요청 전용.
 // 검토 모달에서 매니저 승인(POST .../approve)·수정 요청(.../change-requests) 가능,
@@ -195,12 +196,11 @@ export default function LogsPage({
                   className="h-9"
                 />
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="팀·멘토 검색"
-                aria-label="팀·멘토 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="팀·멘토 검색"
               />
             </div>
 

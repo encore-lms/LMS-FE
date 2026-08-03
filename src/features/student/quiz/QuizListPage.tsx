@@ -10,6 +10,7 @@ import type { StudentQuizListItem } from './types'
 import { QuizStatusChips, type QuizStatus } from './list/QuizStatusChips'
 import { AvailableQuizRow } from './list/AvailableQuizRow'
 import { OtherStatusRow } from './list/OtherStatusRow'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const STATUS_LABEL: Record<QuizStatus, string> = {
   available: '응시 가능',
@@ -71,24 +72,13 @@ export default function QuizListPage() {
             active={status}
             onChange={setStatus}
           />
-          <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-[260px] items-center gap-2 rounded-[10px] border px-3.5">
-            <svg
-              viewBox="0 0 24 24"
-              className="text-fg-subtle size-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3-3" strokeLinecap="round" />
-            </svg>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="퀴즈명 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none focus-visible:shadow-none"
-            />
-          </div>
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="퀴즈명 검색"
+            ariaLabel="퀴즈 검색"
+            className="h-[38px] w-[260px] rounded-[10px] px-3.5"
+          />
         </div>
 
         {status === 'available' ? (

@@ -6,7 +6,6 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Modal } from '@/components/ui/Modal'
-import { SearchInput } from '@/components/ui/SearchInput'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
@@ -18,6 +17,7 @@ import {
   useWriteCourseNotice,
   type NoticePost,
 } from '@/shared/api'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 담당 기수 공지 — 강사·매니저가 쓰고 지운다.
 // 삭제 버튼은 서버가 canDelete 로 허락한 글에만 나온다(강사는 본인 글만).
@@ -162,9 +162,7 @@ export function NoticesPane({
       className: 'w-32',
       cell: (n) => (
         <div className="flex min-w-0 flex-col">
-          <span className="text-fg-muted truncate text-xs">
-            {n.authorName}
-          </span>
+          <span className="text-fg-muted truncate text-xs">{n.authorName}</span>
           <span className="text-fg-subtle text-[11px]">{n.roleLabel}</span>
         </div>
       ),

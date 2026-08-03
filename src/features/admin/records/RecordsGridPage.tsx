@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, Search } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
@@ -20,6 +20,7 @@ import {
 } from './api'
 import { useStudentAccounts } from '../api/students'
 import { SkeletonCards } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 운영 기록실 — 수강생 × 주차 제출 현황 그리드(이전 LMS RecordsGridView).
 // 블로그/스터디/자격증 탭, 셀(dot) 클릭 시 해당 제출을 검토(승인/보완/반려)한다.
@@ -113,16 +114,13 @@ export default function RecordsGridPage({
     <div>
       {/* 탭 공통 필터 바 규격 — 좌: 카테고리 세그먼트 / 우: 검색(아이콘·w-56) */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="border-border focus-within:border-brand bg-surface order-2 flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-          <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="이름으로 검색"
-            aria-label="수강생 이름 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-          />
-        </div>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="이름으로 검색"
+          ariaLabel="수강생 이름 검색"
+          className="order-2"
+        />
         <div className="bg-surface-muted order-1 flex gap-1 rounded-lg p-1">
           {CATEGORY_TABS.map((t) => (
             <button

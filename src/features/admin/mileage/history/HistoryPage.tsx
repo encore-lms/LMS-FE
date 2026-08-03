@@ -16,6 +16,7 @@ import { CohortScopeSelect } from '../CohortScope'
 import { useMileageHistory } from './api'
 import type { AmountSign, MileageTxRow, TxType } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const TX_META: Record<TxType, { label: string; tone: BadgeTone }> = {
   grant: { label: '지급', tone: 'success' },
@@ -213,12 +214,11 @@ export default function HistoryPage() {
             ]}
             className="h-9"
           />
-          <input
+          <SearchInput
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
             placeholder="수강생 이름·사유 검색"
-            aria-label="수강생 이름·사유 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+            ariaLabel="수강생 이름·사유 검색"
           />
           <button
             type="button"

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Info, Plus, Search } from 'lucide-react'
+import { Info, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -13,6 +13,7 @@ import { usePageHeader } from '@/shared/store'
 import type { QuizTemplateRow } from '@/shared/types'
 import { useDeleteQuizTemplate, useQuizTemplates } from '../api/quizTemplates'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const CATEGORIES = [
   '전체',
@@ -205,16 +206,13 @@ export default function TemplateListPage() {
         <div className="p-8">
           {/* 필터 바 */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="border-border focus-within:border-brand flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
-              <Search className="text-fg-subtle h-4 w-4" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="템플릿명·카테고리로 검색"
-                aria-label="템플릿 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder="템플릿명·카테고리로 검색"
+              ariaLabel="템플릿 검색"
+              className="w-72"
+            />
             <label className="flex items-center gap-2 text-xs">
               <span className="text-fg-subtle">카테고리</span>
               <Select

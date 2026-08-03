@@ -25,6 +25,7 @@ import { AccountDetailModal } from './AccountDetailModal'
 import { ActionModal, type ActionModalSpec } from './ActionModal'
 import { SettingsTabs } from './SettingsTabs'
 import { TempPasswordModal } from './TempPasswordModal'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type RoleFilter = 'all' | OpsRole
 type StatusFilter = 'all' | 'active' | 'invited' | 'inactive'
@@ -498,15 +499,15 @@ export default function AccountsPage() {
                   className="h-9"
                 />
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => {
-                  setQ(e.target.value)
+                onChange={(v) => {
+                  setQ(v)
                   setPage(1)
                 }}
                 placeholder="이메일, 이름, 담당 과정 검색"
-                aria-label="운영 계정 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface ml-auto h-9 w-72 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="운영 계정 검색"
+                className="ml-auto w-72"
               />
             </div>
 

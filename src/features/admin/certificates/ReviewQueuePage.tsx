@@ -11,6 +11,7 @@ import { usePageHeader } from '@/shared/store'
 import type { CertReviewListItem, CertReviewStatus } from '@/shared/types'
 import { useReviewQueue } from './api'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const STATUS_META: Record<
   CertReviewStatus,
@@ -235,12 +236,12 @@ export default function ReviewQueuePage() {
               </button>
             ))}
           </div>
-          <input
+          <SearchInput
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
             placeholder="이름·UUID·과정 검색"
-            aria-label="검토 큐 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
+            ariaLabel="검토 큐 검색"
+            className="w-64"
           />
         </div>
 

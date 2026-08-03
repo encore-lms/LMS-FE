@@ -21,6 +21,7 @@ import type {
   StatEvaluationState,
   StatRecommendationState,
 } from './types'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const EVAL_FILTER_LABEL: Record<StatEvaluationState, string> = {
   submitted: '평가 완료',
@@ -285,12 +286,12 @@ export default function StatisticsPage({
                   className="h-9"
                 />
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="팀/멘토 검색"
-                aria-label="팀/멘토 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="팀/멘토 검색"
+                className="w-52"
               />
             </div>
 

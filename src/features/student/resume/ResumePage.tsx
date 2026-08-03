@@ -276,7 +276,7 @@ export default function ResumePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
-  usePageHeader('이력서 관리', '이력서 작성 현황과 피드백을 관리합니다.')
+  usePageHeader('이력서', '이력서 작성 현황과 피드백을 관리합니다.')
 
   // 필터 팝오버 — 바깥 클릭 시 닫기.
   useEffect(() => {

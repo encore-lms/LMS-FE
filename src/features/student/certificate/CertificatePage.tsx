@@ -21,6 +21,7 @@ import {
 } from './demoStudents'
 import { useCertFlow } from './useCertFlow'
 import type { CertTab } from './types'
+import { TERMS } from '@/shared/constants'
 
 const CERTIFICATE_DEMO_MODE =
   import.meta.env.DEV && import.meta.env.VITE_CERTIFICATE_DEMO_MODE === 'true'
@@ -34,7 +35,7 @@ export default function CertificatePage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useCertificateOverview()
   const status = useCertFlow((s) => s.status)
-  usePageHeader('수강 역량 증명서')
+  usePageHeader(TERMS.certificate)
 
   // ?tab 없으면 종합요약 탭 기본. AI 탭은 CERT_V2 플래그 ON일 때만.
   const tab = (params.get('tab') as CertTab | null) ?? 'summary'

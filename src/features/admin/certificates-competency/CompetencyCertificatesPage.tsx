@@ -16,6 +16,7 @@ import { useCourseConfig, useCourseList } from '../api/settings'
 import { readLastCohort, writeLastCohort } from '../education/lastCohort'
 import { toCertRow } from './mocks'
 import type { CompetencyCertRow, CompetencyCertStatus } from './types'
+import { TERMS } from '@/shared/constants'
 
 // 역량 증명서 관리 (/admin/certificates) — 과정·기수별 수강생 증명서 현황.
 // 명단은 실제 로스터, 증명서 값은 아직 목데이터(BE 연동은 후속).
@@ -33,8 +34,8 @@ const STATUS_META: Record<
 
 export default function CompetencyCertificatesPage() {
   usePageHeader(
-    '역량 증명서 관리',
-    '과정·기수별 수강생의 역량 증명서를 확인하고 공개를 관리합니다',
+    TERMS.certificate,
+    `${TERMS.educationCourse}별 수강생의 역량 증명서를 확인하고 공개를 관리합니다`,
   )
 
   const navigate = useNavigate()
@@ -73,16 +74,18 @@ export default function CompetencyCertificatesPage() {
   const rows = useMemo(() => {
     const items = data?.items ?? []
     const needle = q.trim().toLowerCase()
-    return items
-      // 시연용 테스트 계정은 증명서 대상이 아니다.
-      .filter((s) => !s.isTest)
-      .map((s) => toCertRow(s, cohortLabel))
-      .filter(
-        (r) =>
-          !needle ||
-          r.studentName.toLowerCase().includes(needle) ||
-          r.studentUuid.toLowerCase().includes(needle),
-      )
+    return (
+      items
+        // 시연용 테스트 계정은 증명서 대상이 아니다.
+        .filter((s) => !s.isTest)
+        .map((s) => toCertRow(s, cohortLabel))
+        .filter(
+          (r) =>
+            !needle ||
+            r.studentName.toLowerCase().includes(needle) ||
+            r.studentUuid.toLowerCase().includes(needle),
+        )
+    )
   }, [data, q, cohortLabel])
 
   const summary = useMemo(() => {
@@ -109,7 +112,11 @@ export default function CompetencyCertificatesPage() {
         </div>
       ),
     },
-    { key: 'cohortLabel', header: '기수', cell: (r: CompetencyCertRow) => r.cohortLabel },
+    {
+      key: 'cohortLabel',
+      header: '기수',
+      cell: (r: CompetencyCertRow) => r.cohortLabel,
+    },
     {
       key: 'status',
       header: '증명서 상태',
@@ -194,11 +201,7 @@ export default function CompetencyCertificatesPage() {
           value={`${summary.preparing}명`}
           tone="warning"
         />
-        <KpiCard
-          label="공개 중"
-          value={`${summary.published}명`}
-          tone="info"
-        />
+        <KpiCard label="공개 중" value={`${summary.published}명`} tone="info" />
       </div>
 
       <DataBoundary

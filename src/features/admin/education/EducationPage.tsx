@@ -36,9 +36,10 @@ type TabKey =
   | 'settings'
 
 // 탭 순서 — 강사 허브와 공통 탭(수강생~기록실)의 상대 순서를 동일하게 유지한다(2026-08-03 통일).
-// 매니저 전용 탭(과정 홈·멘토링·설정)은 roleTag 접미로 명시하고 공통 구간의 앞·뒤에 배치.
+// 매니저 전용 탭(멘토링·설정)은 roleTag 접미로 명시하고 공통 구간의 뒤에 배치.
+// 과정 홈은 강사 허브에도 열려 공용 탭 — 접미 없음(2026-08-03).
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'home', label: roleTag('과정 홈', '매니저') },
+  { key: 'home', label: '과정 홈' },
   { key: 'students', label: TERMS.student },
   { key: 'notices', label: TERMS.notice },
   { key: 'materials', label: '자료실' },
@@ -126,7 +127,9 @@ export default function EducationPage() {
           ) : (
             <NoticesPane
               cohortId={cohortId}
-              detailPathOf={(id) => `/admin/education/notices/${id}?cohortId=${cohortId}`}
+              detailPathOf={(id) =>
+                `/admin/education/notices/${id}?cohortId=${cohortId}`
+              }
             />
           )
         ) : tab === 'resume' ? (

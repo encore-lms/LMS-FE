@@ -13,6 +13,7 @@ import { Markdown } from 'tiptap-markdown'
 type MarkdownStorage = { markdown: { getMarkdown: () => string } }
 import { cn } from '@/shared/lib/cn'
 import { SlashCommandMenu } from './SlashCommandMenu'
+import { TableToolbar } from './TableToolbar'
 import { filterSlashCommands, type SlashCommand } from './slashCommands'
 
 /**
@@ -46,6 +47,8 @@ export function RichTextEditor({
   const lastEmitted = useRef(value)
   // 닫은 검색어를 기억한다 — 닫자마자 keyup 이 같은 `/` 를 보고 다시 열어 버리기 때문이다.
   const dismissed = useRef<string | null>(null)
+  // 커서가 표 안에 있는지 — 표 조작 막대를 그때만 띄운다.
+  const [inTable, setInTable] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -54,7 +57,7 @@ export function RichTextEditor({
       Image,
       TaskList,
       TaskItem.configure({ nested: true }),
-      TableKit.configure({ table: { resizable: false } }),
+      TableKit.configure({ table: { resizable: true } }),
       Placeholder.configure({ placeholder: placeholder ?? '' }),
       Markdown.configure({ transformPastedText: true }),
     ],
@@ -76,6 +79,18 @@ export function RichTextEditor({
       onChange(md)
     },
   })
+
+  // 커서가 표 안팎을 오갈 때만 막대를 여닫는다.
+  useEffect(() => {
+    if (!editor) return
+    const sync = () => setInTable(editor.isActive('table'))
+    editor.on('selectionUpdate', sync)
+    editor.on('transaction', sync)
+    return () => {
+      editor.off('selectionUpdate', sync)
+      editor.off('transaction', sync)
+    }
+  }, [editor])
 
   // 밖에서 값을 갈아끼운 경우(폼 초기화 등)만 문서를 다시 세운다.
   useEffect(() => {
@@ -158,6 +173,7 @@ export function RichTextEditor({
         }
       }}
     >
+      {inTable && <TableToolbar editor={editor} />}
       <EditorContent
         editor={editor}
         onKeyUp={() => syncSlash(editor)}

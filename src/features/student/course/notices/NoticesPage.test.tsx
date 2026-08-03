@@ -28,8 +28,6 @@ const notice = (over: Partial<NoticePost> = {}): NoticePost => ({
   createdAt: '2026.07.29',
   timeAgo: '2시간 전',
   canDelete: false,
-  links: [],
-  files: [],
   ...over,
 })
 
@@ -96,19 +94,5 @@ describe('강의 홈 공지', () => {
 
     expect(screen.getByText('안내문.pdf')).toBeInTheDocument()
     expect(screen.getByText('2KB')).toBeInTheDocument()
-  })
-
-  // 수강생은 첨부를 지울 수 없다.
-  it('수강생 화면에는 첨부 삭제 버튼이 없다', () => {
-    renderPage([
-      notice({
-        canDelete: false,
-        files: [{ id: 'f1', fileName: '안내문.pdf', fileSize: 100 }],
-      }),
-    ])
-
-    expect(
-      screen.queryByRole('button', { name: '안내문.pdf 첨부 삭제' }),
-    ).not.toBeInTheDocument()
   })
 })

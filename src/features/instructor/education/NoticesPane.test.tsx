@@ -6,7 +6,6 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { NoticesPane } from './NoticesPane'
 import {
   useDeleteCourseNotice,
-  useDeleteNoticeAttachment,
   useStaffCourseNotices,
   useWriteCourseNotice,
   type NoticePost,
@@ -17,8 +16,6 @@ vi.mock('@/shared/api', async (orig) => ({
   useStaffCourseNotices: vi.fn(),
   useWriteCourseNotice: vi.fn(),
   useDeleteCourseNotice: vi.fn(),
-  useDeleteNoticeAttachment: vi.fn(),
-  downloadNoticeAttachment: vi.fn().mockResolvedValue(undefined),
 }))
 
 // 공지에 담을 수 있는 게 제목·본문뿐이라 자료 링크나 안내문 파일을 붙일 자리가 없었다.
@@ -36,8 +33,6 @@ const notice = (over: Partial<NoticePost> = {}): NoticePost => ({
   createdAt: '2026.07.29',
   timeAgo: '2시간 전',
   canDelete: true,
-  links: [],
-  files: [],
   ...over,
 })
 
@@ -56,10 +51,6 @@ function renderPane(notices: NoticePost[] = []) {
     mutate: vi.fn(),
     isPending: false,
   } as unknown as ReturnType<typeof useDeleteCourseNotice>)
-  vi.mocked(useDeleteNoticeAttachment).mockReturnValue({
-    mutate: removeAttachment,
-    isPending: false,
-  } as unknown as ReturnType<typeof useDeleteNoticeAttachment>)
   render(
     <ToastProvider>
       <MemoryRouter initialEntries={['/hub?tab=notices']}>

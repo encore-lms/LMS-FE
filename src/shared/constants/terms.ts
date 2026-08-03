@@ -18,5 +18,7 @@ export const TERMS = {
 
 // 역할 전용 기능 표기 — 공통 개념 라벨의 수식어 금지 원칙과 별개로, 특정 역할에만 있는
 // 메뉴·탭은 `라벨(역할)` 접미로 명시한다(2026-08-03 확정). 그룹 전체가 전용이면 그룹명에만 붙인다.
-export const roleTag = (label: string, role: '매니저' | '강사') =>
-  `${label}(${role})`
+export const roleTag = (
+  label: string,
+  role: '매니저' | '강사' | '멘토' | '수강생',
+) => `${label}(${role})`

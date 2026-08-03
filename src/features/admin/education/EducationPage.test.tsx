@@ -46,6 +46,11 @@ vi.mock('./CourseHomePane', () => ({
     <div>과정 홈 패널 {cohortId}</div>
   ),
 }))
+vi.mock('@/features/instructor/education/NoticesPane', () => ({
+  NoticesPane: ({ cohortId }: { cohortId: string }) => (
+    <div>공지 패널 {cohortId}</div>
+  ),
+}))
 
 // 기수 허브 — URL 의 :cohortId 하나를 탭으로 파고든다.
 // 기수 고르기·기본 기수 판정은 담당 과정/기수 목록(CohortListPage)으로 옮겼다.
@@ -121,22 +126,25 @@ function renderHub(search = '') {
   )
 }
 
+const TAB_ORDER = [
+  '과정 홈',
+  '공지',
+  '수강생',
+  '기록실',
+  '퀴즈',
+  '프로젝트',
+  '과제',
+  '이력서',
+  '멘토링',
+  'QnA',
+  '자료실',
+  '설정',
+]
+
 describe('EducationPage (기수 허브)', () => {
-  it('11개 탭을 렌더한다', () => {
+  it('12개 탭을 렌더한다', () => {
     renderHub()
-    for (const label of [
-      '과정 홈',
-      '수강생',
-      '기록실',
-      '퀴즈',
-      '프로젝트',
-      '과제',
-      '이력서',
-      '멘토링',
-      'QnA',
-      '자료실',
-      '설정',
-    ]) {
+    for (const label of TAB_ORDER) {
       expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()
     }
   })
@@ -144,21 +152,9 @@ describe('EducationPage (기수 허브)', () => {
   // 탭 순서는 운영 요구 — 기수를 열어 먼저 보는 것이 앞, 설정이 맨 뒤.
   it('탭 순서가 과정 홈 → … → 설정 이다', () => {
     renderHub()
-    expect(
-      screen.getAllByRole('tab').map((el) => el.textContent),
-    ).toEqual([
-      '과정 홈',
-      '수강생',
-      '기록실',
-      '퀴즈',
-      '프로젝트',
-      '과제',
-      '이력서',
-      '멘토링',
-      'QnA',
-      '자료실',
-      '설정',
-    ])
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual(
+      TAB_ORDER,
+    )
   })
 
   it('목록으로 돌아가는 링크가 있다', () => {
@@ -215,5 +211,18 @@ describe('EducationPage (기수 허브)', () => {
   it('과정 홈 탭은 그 기수의 강의 홈을 보여준다', () => {
     renderHub()
     expect(screen.getByText('과정 홈 패널 cohort-34')).toBeInTheDocument()
+  })
+
+  // 공지는 강사 허브와 같은 한 벌을 쓴다 — 그동안 운영에는 공지를 쓸 자리가 없었다.
+  it('공지 탭은 강사 허브와 같은 패널을 그 기수로 보여준다', async () => {
+    const user = userEvent.setup()
+    renderHub()
+    await user.click(screen.getByRole('tab', { name: '공지' }))
+    expect(screen.getByText('공지 패널 cohort-34')).toBeInTheDocument()
+  })
+
+  it('URL 로 바로 공지 탭에 들어올 수 있다', () => {
+    renderHub('?tab=notices')
+    expect(screen.getByText('공지 패널 cohort-34')).toBeInTheDocument()
   })
 })

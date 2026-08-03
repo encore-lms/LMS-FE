@@ -6,6 +6,7 @@ import { Tabs } from '@/components/ui/Tabs'
 import { usePageHeader } from '@/shared/store'
 import RecordsGridPage from '../records/RecordsGridPage'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
+import { NoticesPane } from '@/features/instructor/education/NoticesPane'
 import QnaListPage from '@/features/student/qna/QnaListPage'
 import { StudentsPane } from '../students/StudentsPane'
 import { MentoringPane } from '../mentoring/MentoringPane'
@@ -21,6 +22,7 @@ import { useAdminCohorts } from './cohortRows'
 // 이력서=실 BE(ResumePane), 기록실=검토·심사 흡수(RecordReviewQueuePage 임베드). 설정=HRD 과정 상세.
 type TabKey =
   | 'home'
+  | 'notices'
   | 'students'
   | 'records'
   | 'quizzes'
@@ -32,10 +34,12 @@ type TabKey =
   | 'materials'
   | 'settings'
 
-// 운영 요구 순서 — 기수를 열어 가장 먼저 보는 것(홈·수강생·기록실)이 앞, 설정이 맨 뒤.
+// 운영 요구 순서 — 기수를 열어 가장 먼저 보는 것(홈·공지·수강생·기록실)이 앞, 설정이 맨 뒤.
 // 수강생·멘토링·QnA 는 사이드바 단독 메뉴에서 옮겨 왔다(기수를 고른 뒤 다루는 일이라 여기가 제자리).
+// 공지는 홈 바로 뒤 — 홈에서 본 공지를 여기서 바로 쓰고 지운다.
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'home', label: '과정 홈' },
+  { key: 'notices', label: '공지' },
   { key: 'students', label: '수강생' },
   { key: 'records', label: '기록실' },
   { key: 'quizzes', label: '퀴즈' },
@@ -114,6 +118,13 @@ export default function EducationPage() {
             <NeedCourse />
           ) : (
             <CourseHomePane cohortId={cohortId} />
+          )
+        ) : tab === 'notices' ? (
+          // 강사 허브와 같은 한 벌 — 매니저는 어떤 글이든 지울 수 있다(서버 canDelete 판정).
+          !cohortId ? (
+            <NeedCourse />
+          ) : (
+            <NoticesPane cohortId={cohortId} />
           )
         ) : tab === 'resume' ? (
           // 이력서 현황·상세·피드백(실 BE, 정본 §32).

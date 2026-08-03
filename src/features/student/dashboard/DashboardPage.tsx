@@ -90,7 +90,10 @@ export default function DashboardPage() {
                 <MentoringSummary mentoring={data.mentoring} />
               )}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <ProjectList projects={data.projects} />
+                <ProjectList
+                  projects={data.projects}
+                  counts={data.projectCounts}
+                />
                 <TroubleshootingList items={data.troubleshooting} />
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

@@ -1,3 +1,4 @@
+import type { ChainedCommands } from '@tiptap/react'
 import {
   Code,
   Heading1,
@@ -29,17 +30,9 @@ export interface SlashCommand {
   icon: LucideIcon
   /** 검색어 — 라벨 외에 영문·별칭으로도 찾을 수 있게. */
   keywords: string[]
-  /** 줄 맨 앞에 넣을 문자열. */
-  block: string
-  /**
-   * 넣은 뒤 캐럿이 갈 위치(block 안 오프셋). 없으면 block 끝.
-   * 코드 블록·표처럼 여러 줄짜리는 사람이 바로 이어 쓸 자리로 보낸다.
-   */
-  caret?: number
+  /** 고른 블록으로 바꾸는 편집 명령. */
+  apply: (chain: ChainedCommands) => ChainedCommands
 }
-
-const TABLE_BLOCK = '| 항목 | 내용 |\n| --- | --- |\n|  |  |\n'
-const CODE_BLOCK = '```\n\n```\n'
 
 export const SLASH_COMMANDS: SlashCommand[] = [
   {
@@ -48,7 +41,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '',
     icon: Type,
     keywords: ['text', '본문', '문단', '일반'],
-    block: '',
+    apply: (c) => c.setParagraph(),
   },
   {
     key: 'h1',
@@ -56,7 +49,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '#',
     icon: Heading1,
     keywords: ['h1', 'heading', '제목', '머리말'],
-    block: '# ',
+    apply: (c) => c.setNode('heading', { level: 1 }),
   },
   {
     key: 'h2',
@@ -64,7 +57,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '##',
     icon: Heading2,
     keywords: ['h2', 'heading', '제목', '머리말'],
-    block: '## ',
+    apply: (c) => c.setNode('heading', { level: 2 }),
   },
   {
     key: 'h3',
@@ -72,7 +65,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '###',
     icon: Heading3,
     keywords: ['h3', 'heading', '제목', '머리말'],
-    block: '### ',
+    apply: (c) => c.setNode('heading', { level: 3 }),
   },
   {
     key: 'h4',
@@ -80,7 +73,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '####',
     icon: Heading4,
     keywords: ['h4', 'heading', '제목', '머리말'],
-    block: '#### ',
+    apply: (c) => c.setNode('heading', { level: 4 }),
   },
   {
     key: 'ul',
@@ -88,7 +81,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '-',
     icon: List,
     keywords: ['ul', 'list', '목록', '불릿', '리스트'],
-    block: '- ',
+    apply: (c) => c.toggleBulletList(),
   },
   {
     key: 'ol',
@@ -96,7 +89,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '1.',
     icon: ListOrdered,
     keywords: ['ol', 'list', '번호', '순서', '리스트'],
-    block: '1. ',
+    apply: (c) => c.toggleOrderedList(),
   },
   {
     key: 'todo',
@@ -104,7 +97,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '[]',
     icon: ListTodo,
     keywords: ['todo', 'task', 'check', '체크', '할일', '점검'],
-    block: '- [ ] ',
+    apply: (c) => c.toggleTaskList(),
   },
   {
     key: 'quote',
@@ -112,7 +105,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '>',
     icon: Quote,
     keywords: ['quote', '인용', '강조'],
-    block: '> ',
+    apply: (c) => c.toggleBlockquote(),
   },
   {
     key: 'code',
@@ -120,8 +113,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '```',
     icon: Code,
     keywords: ['code', '코드', '소스'],
-    block: CODE_BLOCK,
-    caret: 4,
+    apply: (c) => c.toggleCodeBlock(),
   },
   {
     key: 'table',
@@ -129,8 +121,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '| |',
     icon: Table,
     keywords: ['table', '표', '테이블'],
-    block: TABLE_BLOCK,
-    caret: 2,
+    apply: (c) => c.insertTable({ rows: 3, cols: 2, withHeaderRow: true }),
   },
   {
     key: 'divider',
@@ -138,7 +129,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: '---',
     icon: Minus,
     keywords: ['divider', 'hr', '구분', '선'],
-    block: '---\n',
+    apply: (c) => c.setHorizontalRule(),
   },
 ]
 

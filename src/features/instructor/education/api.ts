@@ -107,8 +107,9 @@ export function useCreateInstructorMaterial(cohortId: string) {
       if (body) form.append('body', body)
       if (url) form.append('url', url)
       if (file) form.append('file', file)
+      // multipart 전송은 postForm — Content-Type을 비워 boundary를 자동 설정(운영 훅과 동일).
       return apiClient
-        .post<CohortMaterialItem>(
+        .postForm<CohortMaterialItem>(
           `/instructor/cohorts/${cohortId}/materials`,
           form,
         )

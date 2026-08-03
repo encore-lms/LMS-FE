@@ -10,15 +10,38 @@ import type {
 
 // 강사 검토 3종 (§13~§15) 데이터. baseURL이 /api라 경로 앞에 안 붙임.
 // §13은 조회 전용 그리드 — 과정(courseId)·기수(cohortId)별 조회.
-export function useRecordReviews(courseId: string, cohortId: string) {
+// source='admin'이면 운영 미러(/admin/records/review-grid)로 부른다 — 응답 그리드는 한 계약이고
+// 과정 탭 메타(courses/active*)만 없어서 빈 값으로 채운다(운영 임베드는 기수가 prop으로 고정).
+export function useRecordReviews(
+  courseId: string,
+  cohortId: string,
+  source: 'instructor' | 'admin' = 'instructor',
+) {
   return useQuery({
-    queryKey: instructorKeys.recordReviews(courseId, cohortId),
+    queryKey: [...instructorKeys.recordReviews(courseId, cohortId), source],
     queryFn: () =>
-      apiClient
-        .get<InstructorRecordReviewData>(
-          `/instructor/records/review?courseId=${encodeURIComponent(courseId)}&cohortId=${encodeURIComponent(cohortId)}`,
-        )
-        .then((r) => r.data),
+      source === 'admin'
+        ? apiClient
+            .get<
+              Omit<
+                InstructorRecordReviewData,
+                'courses' | 'activeCourseId' | 'activeCohortId'
+              >
+            >('/admin/records/review-grid', { cohortId })
+            .then(
+              (r): InstructorRecordReviewData => ({
+                courses: [],
+                activeCourseId: courseId,
+                activeCohortId: cohortId,
+                ...r.data,
+              }),
+            )
+        : apiClient
+            .get<InstructorRecordReviewData>(
+              `/instructor/records/review?courseId=${encodeURIComponent(courseId)}&cohortId=${encodeURIComponent(cohortId)}`,
+            )
+            .then((r) => r.data),
+    enabled: source === 'instructor' || cohortId !== 'none',
   })
 }
 

@@ -51,22 +51,22 @@ describe('adminMenu 사이드바 active highlight', () => {
   // 설정 하위 화면 — 계정 관리가 설정 랜딩이 되며 하위 탭은 prefix 매칭으로 '설정' 활성 유지.
   it('설정 하위(hrd-api-key)에서 설정이 활성', () => {
     renderAt('/admin/settings/hrd-api-key')
-    expect(isActive('설정')).toBe(true)
+    expect(isActive('설정(매니저)')).toBe(true)
   })
 
   it('설정 하위(hrd-api-key)에서 설정이 활성', () => {
     renderAt('/admin/settings/hrd-api-key')
-    expect(isActive('설정')).toBe(true)
+    expect(isActive('설정(매니저)')).toBe(true)
   })
 
   it('설정 하위(courses/new)에서 설정이 활성', () => {
     renderAt('/admin/settings/courses/new')
-    expect(isActive('설정')).toBe(true)
+    expect(isActive('설정(매니저)')).toBe(true)
   })
 
   it('설정 랜딩(/admin/settings = 계정 관리)에서 설정이 활성', () => {
     renderAt('/admin/settings')
-    expect(isActive('설정')).toBe(true)
+    expect(isActive('설정(매니저)')).toBe(true)
   })
 })
 
@@ -74,7 +74,7 @@ describe('adminMenu 사이드바 대분류 드롭다운', () => {
   it('활성 자식이 있는 그룹은 자동 펼침, 없는 그룹은 접힘', () => {
     renderAt('/admin/reputation')
     // 평판 관리 = 검토·심사 그룹 → 자동 펼침 + 자식 노출(인증 검토는 준비 중 버튼)
-    expect(isExpanded('검토·심사')).toBe(true)
+    expect(isExpanded('검토·심사(매니저)')).toBe(true)
     expect(screen.queryByRole('link', { name: '평판 관리' })).not.toBeNull()
     // 데이터·연동 임시 숨김 — 그룹 부재. 재활성화 시 아래 복원.
     // expect(isExpanded('데이터·연동')).toBe(false)
@@ -84,18 +84,19 @@ describe('adminMenu 사이드바 대분류 드롭다운', () => {
   it('접힌 그룹 헤더를 클릭하면 자식 링크가 펼쳐진다', () => {
     renderAt('/admin') // 어떤 그룹도 활성 아님 → 전부 접힘
     expect(screen.queryByRole('link', { name: '마일리지' })).toBeNull()
-    fireEvent.click(group('학습·보상'))
-    expect(isExpanded('학습·보상')).toBe(true)
+    fireEvent.click(group('학습·보상(매니저)'))
+    expect(isExpanded('학습·보상(매니저)')).toBe(true)
     expect(screen.queryByRole('link', { name: '마일리지' })).not.toBeNull()
     // PLAY 관리 — 실기능 완결로 준비 중 해제(일반 링크)
-    expect(
-      screen.getByRole('link', { name: 'PLAY 관리' }),
-    ).toHaveAttribute('href', '/admin/play/typing-texts')
+    expect(screen.getByRole('link', { name: 'PLAY 관리' })).toHaveAttribute(
+      'href',
+      '/admin/play/typing-texts',
+    )
   })
 
   it('대시보드·설정은 그룹이 아니라 항상 보이는 leaf 항목', () => {
     renderAt('/admin')
     expect(screen.queryByRole('link', { name: '대시보드' })).not.toBeNull()
-    expect(screen.queryByRole('link', { name: '설정' })).not.toBeNull()
+    expect(screen.queryByRole('link', { name: '설정(매니저)' })).not.toBeNull()
   })
 })

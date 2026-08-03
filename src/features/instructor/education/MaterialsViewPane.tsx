@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
@@ -147,16 +147,12 @@ export function MaterialsViewPane({ cohortId }: { cohortId: string }) {
               ` (전체 ${data.length})`}
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-              <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="제목·내용 검색"
-                aria-label="자료 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder="제목·내용 검색"
+              ariaLabel="자료 검색"
+            />
             <Select
               aria-label="유형 필터"
               value={typeFilter}

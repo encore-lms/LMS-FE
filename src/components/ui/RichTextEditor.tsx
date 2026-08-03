@@ -12,8 +12,11 @@ import { Markdown } from 'tiptap-markdown'
 // tiptap-markdown 은 storage 타입을 넓혀 주지 않아 여기서 좁혀 쓴다.
 type MarkdownStorage = { markdown: { getMarkdown: () => string } }
 import { cn } from '@/shared/lib/cn'
+import { EmbedPrompt, type EmbedKind, type EmbedResult } from './EmbedPrompt'
+import { bookmarkTitle, fileTitle } from './embedMeta'
 import { SlashCommandMenu } from './SlashCommandMenu'
 import { TableToolbar } from './TableToolbar'
+import { fetchLinkPreview, uploadEditorFile } from '@/shared/api'
 import { filterSlashCommands, type SlashCommand } from './slashCommands'
 
 /**
@@ -32,6 +35,7 @@ export function RichTextEditor({
   minHeight = 220,
   ariaLabel,
   className,
+  onError,
 }: {
   value: string
   onChange: (markdown: string) => void
@@ -39,6 +43,8 @@ export function RichTextEditor({
   minHeight?: number
   ariaLabel?: string
   className?: string
+  /** 업로드·미리보기 실패를 사람이 읽는 말로 알린다. */
+  onError?: (message: string) => void
 }) {
   // 슬래시 메뉴 — 열려 있으면 검색어(빈 문자열 포함), 닫혀 있으면 null.
   const [slashQuery, setSlashQuery] = useState<string | null>(null)
@@ -49,6 +55,9 @@ export function RichTextEditor({
   const dismissed = useRef<string | null>(null)
   // 커서가 표 안에 있는지 — 표 조작 막대를 그때만 띄운다.
   const [inTable, setInTable] = useState(false)
+  // 값을 더 받아야 하는 블록(이미지·파일·북마크)을 고른 상태.
+  const [prompt, setPrompt] = useState<EmbedKind | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -130,14 +139,92 @@ export function RichTextEditor({
     const token = readSlashToken(editor)
     if (!token) return
     const to = editor.state.selection.from
-    // 친 `/검색어` 를 지우고 그 문단을 고른 블록으로 바꾼다.
-    const chain = editor
+    // 친 `/검색어` 는 어느 쪽이든 지운다 — 남으면 본문에 `/이미` 같은 찌꺼기가 된다.
+    editor
       .chain()
       .focus()
       .deleteRange({ from: to - token.length, to })
-    command.apply(chain).run()
+      .run()
     dismissed.current = null
     setSlashQuery(null)
+    if (command.prompt) {
+      setPrompt(command.prompt)
+      return
+    }
+    command.apply?.(editor.chain().focus()).run()
+  }
+
+  /** 고른 값을 본문에 넣는다 — 업로드·미리보기는 여기서 한 번에 끝낸다. */
+  const insertEmbed = async (result: EmbedResult) => {
+    if (!editor) return
+    setBusy(true)
+    try {
+      if (result.kind === 'bookmark') {
+        const meta = await fetchLinkPreview(result.url!)
+        // 제목을 못 읽어 온 사이트도 있다 — 주소라도 보이게 한다.
+        const label = meta.title ?? meta.siteName ?? result.url!
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: label,
+                marks: [
+                  {
+                    type: 'link',
+                    attrs: { href: meta.url, title: bookmarkTitle(meta) },
+                  },
+                ],
+              },
+            ],
+          })
+          .run()
+      } else if (result.url) {
+        // 링크로 넣는 이미지 — 남의 서버 주소를 그대로 쓴다.
+        editor.chain().focus().setImage({ src: result.url }).run()
+      } else if (result.file) {
+        const up = await uploadEditorFile(result.file)
+        if (up.image) {
+          editor
+            .chain()
+            .focus()
+            .setImage({ src: up.url, alt: up.fileName })
+            .run()
+        } else {
+          editor
+            .chain()
+            .focus()
+            .insertContent({
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: up.fileName,
+                  marks: [
+                    {
+                      type: 'link',
+                      attrs: { href: up.url, title: fileTitle(up.fileSize) },
+                    },
+                  ],
+                },
+              ],
+            })
+            .run()
+        }
+      }
+      setPrompt(null)
+    } catch {
+      onError?.(
+        result.kind === 'bookmark'
+          ? '링크를 불러오지 못했어요'
+          : '파일을 올리지 못했어요',
+      )
+    } finally {
+      setBusy(false)
+    }
   }
 
   const matches = slashQuery != null ? filterSlashCommands(slashQuery) : []
@@ -174,6 +261,14 @@ export function RichTextEditor({
       }}
     >
       {inTable && <TableToolbar editor={editor} />}
+      {prompt && (
+        <EmbedPrompt
+          kind={prompt}
+          busy={busy}
+          onSubmit={(r) => void insertEmbed(r)}
+          onCancel={() => setPrompt(null)}
+        />
+      )}
       <EditorContent
         editor={editor}
         onKeyUp={() => syncSlash(editor)}

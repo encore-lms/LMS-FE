@@ -197,6 +197,33 @@ body {
   border: 0;
   border-top: 1px solid var(--color-border);
 }
+/* 위지윅 편집기 — 본문은 읽는 화면과 같은 .markdown-body 규칙을 쓰고,
+   편집할 때만 필요한 것(빈 문단 안내·할 일 체크박스 정렬)을 여기서 더한다. */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-fg-subtle);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0.2em;
+}
+.ProseMirror ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45em;
+}
+.ProseMirror ul[data-type='taskList'] li > label {
+  margin-top: 0.15em;
+}
+.ProseMirror ul[data-type='taskList'] input[type='checkbox'] {
+  accent-color: var(--color-brand);
+}
+.ProseMirror table {
+  table-layout: fixed;
+}
 .markdown-body a {
   color: var(--color-brand);
   text-decoration: underline;

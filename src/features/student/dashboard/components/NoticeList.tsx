@@ -16,7 +16,7 @@ export function NoticeList({ notices }: { notices: DashboardNotice[] }) {
       icon={Megaphone}
       title="공지"
       subtitle={`총 ${notices.length}건`}
-      action={<MoreLink to="/student/notices" label="전체" />}
+      action={<MoreLink to="/student/course/notices" label="전체" />}
     >
       {visible.length === 0 ? (
         <EmptyState icon={Megaphone} title="새 공지가 없어요" />

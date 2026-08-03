@@ -84,14 +84,15 @@ export default function MileagePage() {
                 <div className="absolute top-0 bottom-0 left-1/2 w-px bg-black/15" />
               </div>
             </div>
-            {/* 중앙: 포인트 */}
+            {/* 중앙: 잔여 마일리지 */}
             <div className="flex flex-col gap-1">
               <span className="text-[11px] font-semibold tracking-wider text-white/50">
-                TOTAL POINTS
+                TOTAL MILEAGE
               </span>
               <span className="text-[38px] leading-none font-bold">
                 {balance.toLocaleString()}
-                <small className="ml-1 text-[17px] font-semibold">P</small>
+                {/* 단위는 M — 운영 화면(직접 지급·구매 요청·한도)이 전부 M 이라 맞춘다. */}
+                <small className="ml-1 text-[17px] font-semibold">M</small>
               </span>
             </div>
             {/* 하단: 만료 + 별 */}
@@ -161,7 +162,7 @@ export default function MileagePage() {
 
       {/* 하단 안내(이전 LMS 3줄) */}
       <div className="text-fg-subtle flex w-full flex-col gap-1.5 text-[12px] leading-5">
-        <p>· 마일리지 관련 내용은 현재 순으로 조회가 되고 있습니다.</p>
+        <p>· 마일리지 관련 내용은 최신순으로 조회가 되고 있습니다.</p>
         <p>
           · 마일리지는{' '}
           <strong className="text-fg-muted font-semibold">

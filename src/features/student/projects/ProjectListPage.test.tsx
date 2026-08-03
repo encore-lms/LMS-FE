@@ -4,7 +4,12 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
 import ProjectListPage from './ProjectListPage'
-import { useDeleteProject, useProjectList } from '../api/projects'
+import {
+  useAnswerInvitation,
+  useDeleteProject,
+  useProjectInvitations,
+  useProjectList,
+} from '../api/projects'
 import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
 import type { ProjectListData, ProjectSummary } from './types'
 
@@ -102,6 +107,14 @@ function renderPage(listData: ProjectListData = data) {
     mutate: vi.fn(),
     isPending: false,
   } as unknown as ReturnType<typeof useDeleteProject>)
+  // 목록 위 '받은 초대' — 여기서는 초대가 없는 상태만 본다(초대 카드는 자기 테스트에서).
+  vi.mocked(useProjectInvitations).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useProjectInvitations>)
+  vi.mocked(useAnswerInvitation).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useAnswerInvitation>)
 
   render(
     <ToastProvider>

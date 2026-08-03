@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useDeleteProject, useProjectList } from '../api/projects'
+import { InvitationCard } from './components/InvitationCard'
 import { ProjectCard } from './components/ProjectCard'
 import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
 import { SkeletonCards } from '@/components/ui/Skeleton'
@@ -164,6 +165,9 @@ export default function ProjectListPage() {
       className="p-8"
     >
       <div className="flex flex-col gap-5 p-8">
+        {/* 받은 초대 — 아직 팀이 아니라 아래 목록에는 없다. 답해야 목록으로 넘어온다. */}
+        <InvitationCard />
+
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
             <h2 className="text-fg text-[16px] font-bold">참여 프로젝트</h2>

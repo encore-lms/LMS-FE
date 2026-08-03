@@ -55,7 +55,7 @@ export default function CohortsPage() {
   const summaryCards = data
     ? [
         {
-          label: '진행 중 과정',
+          label: '진행 중 기수',
           unit: '개',
           dot: 'bg-info',
           hintColor: 'text-info',

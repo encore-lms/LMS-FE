@@ -223,15 +223,52 @@ body {
 }
 .ProseMirror table {
   table-layout: fixed;
+  position: relative;
+}
+.ProseMirror th,
+.ProseMirror td {
+  position: relative;
+}
+/* 열 경계선을 끌어 너비를 조절한다 — 잡을 수 있는 곳임을 색으로 알린다. */
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--color-brand);
+  pointer-events: none;
+}
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+/* 선택한 칸 표시 — 어느 행·열에 작업하는지 보이게. */
+.ProseMirror .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+  pointer-events: none;
 }
 .markdown-body a {
   color: var(--color-brand);
   text-decoration: underline;
 }
+/* Tailwind preflight 가 ol·ul 의 list-style 을 없애 두므로 본문에서는 되살린다.
+   (되살리지 않으면 글머리 점도 번호도 없이 들여쓰기만 된 문단처럼 보인다.) */
 .markdown-body ul,
 .markdown-body ol {
   margin: 0 0 0.75em;
   padding-left: 1.4em;
+}
+.markdown-body ul {
+  list-style: disc;
+}
+.markdown-body ul ul {
+  list-style: circle;
+}
+.markdown-body ol {
+  list-style: decimal;
 }
 .markdown-body li {
   margin: 0.2em 0;

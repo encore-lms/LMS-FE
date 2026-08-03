@@ -78,7 +78,12 @@ export default function InstructorEducationPage() {
         {tab === 'students' ? (
           <StudentsPane cohortId={cohortId} />
         ) : tab === 'notices' ? (
-          <NoticesPane cohortId={cohortId} />
+          <NoticesPane
+            cohortId={cohortId}
+            detailPathOf={(id) =>
+              `/instructor/cohorts/${cohortId}/notices/${id}`
+            }
+          />
         ) : tab === 'materials' ? (
           <MaterialsViewPane cohortId={cohortId} />
         ) : tab === 'assignments' ? (

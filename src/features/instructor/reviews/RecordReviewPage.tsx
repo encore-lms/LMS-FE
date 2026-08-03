@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
@@ -16,7 +16,7 @@ import type {
   RecordWeek,
   StudyGridRow,
 } from '@/shared/types'
-import { useCohortRoster } from '../api/console'
+import { useCohortRoster, useStudentAccounts } from '@/shared/api/students'
 import { useRecordReviews } from '../api/reviews'
 import { RecordDetailPanel, type RecordPanelData } from './RecordDetailPanel'
 import { SearchInput } from '@/components/ui/SearchInput'
@@ -48,13 +48,26 @@ const CELL_TITLE: Record<RecordCellStatus, string> = {
 }
 
 // embedded=true면 과정·기수·교과목 '기록실' 탭에 임베드(자체 헤더·탭·과정/기수 선택 생략, 선택 기수로 고정).
+// source='admin'이면 매니저 공용 소비(2026-08-03) — 데이터는 운영 미러, 이름은 계정 목록,
+// 셀 클릭 상세에 reviewActionsFor(검토 액션)를 주입해 승인·보완·반려까지 이 화면에서 처리한다.
+export type ReviewActionsFor = (ctx: {
+  recordId: string
+  kind: InstructorRecordCategory
+  close: () => void
+}) => ReactNode
+
 export default function RecordReviewPage({
   embedded = false,
   cohortId: propCohortId = null,
+  source = 'instructor',
+  reviewActionsFor,
 }: {
   embedded?: boolean
   cohortId?: string | null
+  source?: 'instructor' | 'admin'
+  reviewActionsFor?: ReviewActionsFor
 } = {}) {
+  const isAdmin = source === 'admin'
   const [courseId, setCourseId] = useState('none')
   const [cohortId, setCohortId] = useState(propCohortId ?? 'none')
   const [category, setCategory] = useState<InstructorRecordCategory>('blog')
@@ -72,13 +85,24 @@ export default function RecordReviewPage({
     isPending,
     isError,
     refetch,
-  } = useRecordReviews(courseId, cohortId)
-  // 강사는 계정 목록(/users/students) 조회가 막혀 있어(403) 담당 기수 로스터를 쓴다.
-  // 그리드 행은 매니저 기록실(RecordsGridPage)과 동일하게 이 로스터(수강생 명단)를 뼈대로
-  // 만든다 — 기록이 없어도 수강생 행 + 주차 열이 서고, BE 기록은 셀에 얹는다(아래 rows 참조).
-  const { data: roster, isLoading: rosterLoading } = useCohortRoster(
-    cohortId === 'none' ? null : cohortId,
+  } = useRecordReviews(courseId, cohortId, source)
+  // 명단 뼈대 — 강사는 계정 목록(/users/students)이 403이라 담당 기수 로스터, 매니저는 계정 목록.
+  // 기록이 없어도 수강생 행 + 주차 열이 서고, BE 기록은 셀에 얹는다(아래 rows 참조).
+  const { data: rosterRaw, isLoading: rosterQueryLoading } = useCohortRoster(
+    isAdmin || cohortId === 'none' ? null : cohortId,
   )
+  const { data: students, isLoading: studentsLoading } = useStudentAccounts(
+    cohortId === 'none' ? null : cohortId,
+    isAdmin,
+  )
+  const roster = useMemo(
+    () =>
+      isAdmin
+        ? (students?.items ?? []).map((a) => ({ userId: a.id, name: a.name }))
+        : (rosterRaw ?? []),
+    [isAdmin, students, rosterRaw],
+  )
+  const rosterLoading = isAdmin ? studentsLoading : rosterQueryLoading
   // 상세 패널 본문은 studentUserId만 오므로 로스터로 실명 치환(rows 이름은 로스터에서 직접).
   const data = useMemo(() => {
     if (!raw) return raw
@@ -108,17 +132,22 @@ export default function RecordReviewPage({
   }, [raw, roster])
 
   // 임베드 — 선택 기수(실 UUID)를 포함한 과정으로 고정. 일반 자동 선택 효과보다 우선.
+  // 매니저 소비는 과정 탭 메타가 없어(courses=[]) 기수 고정만 하면 된다.
   useEffect(() => {
+    if (isAdmin) {
+      if (propCohortId && cohortId !== propCohortId) setCohortId(propCohortId)
+      return
+    }
     if (!embedded || !propCohortId || !data) return
     const owner = data.courses.find((c) =>
       c.cohorts.some((ch) => ch.id === propCohortId),
     )
     if (owner && courseId !== owner.id) setCourseId(owner.id)
     if (cohortId !== propCohortId) setCohortId(propCohortId)
-  }, [embedded, propCohortId, data, courseId, cohortId])
+  }, [isAdmin, embedded, propCohortId, data, courseId, cohortId])
 
   useEffect(() => {
-    if (embedded) return
+    if (embedded || isAdmin) return
     if (!data) return
 
     const courseExists = data.courses.some((c) => c.id === courseId)
@@ -133,7 +162,7 @@ export default function RecordReviewPage({
     if (!cohortExists && data.activeCohortId !== cohortId) {
       setCohortId(data.activeCohortId)
     }
-  }, [data, courseId, cohortId])
+  }, [data, courseId, cohortId, isAdmin])
 
   // 담당 과정/기수 라벨(단일 고정 표시용).
   const cohortTabs =
@@ -282,7 +311,8 @@ export default function RecordReviewPage({
                 onOpen={(row, type) => {
                   const id = row.submissionIds[type]
                   const detail = id ? data.certDetails[id] : undefined
-                  if (detail) setPanel({ kind: 'cert', detail })
+                  if (detail && id)
+                    setPanel({ kind: 'cert', recordId: id, detail })
                 }}
               />
             )
@@ -295,7 +325,7 @@ export default function RecordReviewPage({
                 rows={studyRows}
                 onOpen={(id) => {
                   const detail = data.studyDetails[id]
-                  if (detail) setPanel({ kind: 'study', detail })
+                  if (detail) setPanel({ kind: 'study', recordId: id, detail })
                 }}
               />
             )
@@ -307,17 +337,34 @@ export default function RecordReviewPage({
               rows={blogRows}
               onOpen={(id) => {
                 const detail = data.blogDetails[id]
-                if (detail) setPanel({ kind: 'blog', detail })
+                if (detail) setPanel({ kind: 'blog', recordId: id, detail })
               }}
             />
           ))}
       </DataBoundary>
 
-      <p className="text-fg-subtle mt-3 text-xs">
-        조회 전용 — 승인·반려·보완 요청은 운영 매니저가 처리합니다.
-      </p>
+      {!isAdmin && (
+        <p className="text-fg-subtle mt-3 text-xs">
+          조회 전용 — 승인·반려·보완 요청은 운영 매니저가 처리합니다.
+        </p>
+      )}
 
-      <RecordDetailPanel data={panel} onClose={() => setPanel(null)} />
+      <RecordDetailPanel
+        data={panel}
+        onClose={() => setPanel(null)}
+        extraFooter={
+          panel && reviewActionsFor
+            ? reviewActionsFor({
+                recordId: panel.recordId,
+                kind: panel.kind,
+                close: () => {
+                  setPanel(null)
+                  refetch()
+                },
+              })
+            : undefined
+        }
+      />
     </div>
   )
 }

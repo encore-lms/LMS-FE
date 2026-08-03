@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Megaphone, Paperclip, Pin, Plus, Trash2, X } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -6,10 +6,12 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Modal } from '@/components/ui/Modal'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
+import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import {
   useDeleteCourseNotice,
   useStaffCourseNotices,
@@ -49,6 +51,16 @@ export function NoticesPane({
   const [files, setFiles] = useState<File[]>([])
   const filePicker = useRef<HTMLInputElement>(null)
   const [target, setTarget] = useState<NoticePost | null>(null)
+  // 검색어는 주소에 남긴다 — 상세를 보고 뒤로 오면 찾던 목록이 그대로 있어야 한다.
+  const [q, setQ] = useSearchParamState('nq')
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    if (!needle) return data?.notices ?? []
+    return (data?.notices ?? []).filter((n) =>
+      `${n.title} ${n.content} ${n.authorName}`.toLowerCase().includes(needle),
+    )
+  }, [data, q])
 
   const reset = () => {
     setTitle('')
@@ -194,10 +206,13 @@ export function NoticesPane({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <span className="text-fg-muted text-[13px]">
-          수강생 강의 홈에 바로 보입니다
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="제목·내용·작성자 검색"
+          ariaLabel="공지 검색"
+        />
         <button
           type="button"
           onClick={() => setComposing(true)}
@@ -225,10 +240,10 @@ export function NoticesPane({
           ) : (
             <DataTable
               columns={columns}
-              rows={data.notices}
+              rows={filtered}
               rowKey={(n) => n.id}
               onRowClick={(n) => navigate(detailPathOf(n.id))}
-              empty="등록된 공지가 없어요"
+              empty="조건에 맞는 공지가 없어요"
             />
           ))}
       </DataBoundary>

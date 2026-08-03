@@ -6,6 +6,7 @@ import { Empty } from '@/components/ui/Empty'
 import { Tabs } from '@/components/ui/Tabs'
 import { usePageHeader } from '@/shared/store'
 import RecordReviewPage from '@/features/instructor/reviews/RecordReviewPage'
+import AssignmentsPage from '@/features/instructor/assignments/AssignmentsPage'
 import { RecordReviewActions } from '../records/RecordReviewActions'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { NoticesPane } from '@/features/instructor/education/NoticesPane'
@@ -13,7 +14,6 @@ import QnaListPage from '@/features/student/qna/QnaListPage'
 import { StudentsPane } from '../students/StudentsPane'
 import { MentoringPane } from '../mentoring/MentoringPane'
 import { MaterialsPane } from './MaterialsPane'
-import { AssignmentsPane } from './AssignmentsPane'
 import { ProjectsPane } from './ProjectsPane'
 import { ResumePane } from './ResumePane'
 import { CourseHomePane } from './CourseHomePane'
@@ -200,7 +200,12 @@ export default function EducationPage() {
           !courseId || !cohortId ? (
             <NeedCourse />
           ) : (
-            <AssignmentsPane courseId={courseId} cohortId={cohortId} />
+            <AssignmentsPage
+              embedded
+              source="admin"
+              cohortId={cohortId}
+              courseId={courseId ?? undefined}
+            />
           )
         ) : tab === 'settings' ? (
           !courseId || !cohortId ? (

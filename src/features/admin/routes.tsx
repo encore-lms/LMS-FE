@@ -18,6 +18,10 @@ const EducationPage = lazy(() => import('./education/EducationPage'))
 const AssignmentFormPage = lazy(
   () => import('../instructor/assignments/AssignmentFormPage'),
 )
+// 제출 현황도 강사 페이지 공용(2026-08-03) — 구 운영 제출 현황 모달을 대체.
+const AssignmentSubmissionsPage = lazy(
+  () => import('../instructor/assignments/SubmissionsPage'),
+)
 // 과정·기수·교과목 이력서 상세(실 BE, 페이지 전환) — ResumePane에서 진입
 const EducationResumeDetailPage = lazy(
   () => import('./education/ResumeDetailPage'),
@@ -123,6 +127,10 @@ export const adminRoutes: RouteObject[] = [
       {
         path: 'education/assignments/new',
         element: <AssignmentFormPage />,
+      },
+      {
+        path: 'education/assignments/:assignmentId/submissions',
+        element: <AssignmentSubmissionsPage />,
       },
       {
         path: 'education/assignments/:assignmentId',

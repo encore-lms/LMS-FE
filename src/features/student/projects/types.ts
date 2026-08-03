@@ -4,7 +4,9 @@
 import type { Tone } from '@/shared/lib/tone'
 export type { Tone }
 
-export type ProjectStatus = 'certified' | 'reviewing' | 'draft'
+// BE 가 보내는 목록 상태 — 'completed'(기간이 끝났을 뿐 인증 요청 전)를 빠뜨리면
+// 그 프로젝트가 전부 '작성 중'으로 떨어진다.
+export type ProjectStatus = 'certified' | 'reviewing' | 'completed' | 'draft'
 export type ProjectKind = 'team' | 'personal'
 
 /** 목록 상단 통계 카드 */
@@ -30,7 +32,7 @@ export interface ProjectSummary {
   kind: ProjectKind
   kindLabel: string // "팀" | "개인"
   status: ProjectStatus
-  statusLabel: string // "인증 완료" | "검토 중" | "작성 중"
+  statusLabel: string // "인증 완료" | "검토 중" | "작성 완료" | "보완 요청" | "작성 중"
   representative: boolean // 대표 후보
   accentTone: Tone // 좌측 바 색
   title: string

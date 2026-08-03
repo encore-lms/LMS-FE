@@ -131,6 +131,7 @@ export default function EducationPage() {
               detailPathOf={(id) =>
                 `/admin/education/notices/${id}?cohortId=${cohortId}`
               }
+              newPath={`/admin/education/notices/new?cohortId=${cohortId}`}
             />
           )
         ) : tab === 'resume' ? (

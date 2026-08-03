@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Megaphone, Paperclip, Pin, Plus, Trash2, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { InteractiveCard } from '@/components/ui/InteractiveCard'
 import { Modal } from '@/components/ui/Modal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
@@ -30,8 +32,16 @@ const card =
 const MAX_URLS = 5
 const MAX_FILES = 5
 
-export function NoticesPane({ cohortId }: { cohortId: string }) {
+export function NoticesPane({
+  cohortId,
+  detailPathOf,
+}: {
+  cohortId: string
+  /** 카드를 눌렀을 때 갈 상세 경로 — 강사와 운영이 라우트가 달라 호출부가 정한다. */
+  detailPathOf: (noticeId: string) => string
+}) {
   const toast = useToast()
+  const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useStaffCourseNotices(cohortId)
   const write = useWriteCourseNotice(cohortId)
   const remove = useDeleteCourseNotice()
@@ -133,7 +143,12 @@ export function NoticesPane({ cohortId }: { cohortId: string }) {
           ) : (
             <div className="flex flex-col gap-3">
               {data.notices.map((n) => (
-                <article key={n.id} className={cn(card, 'flex flex-col gap-2')}>
+                <InteractiveCard
+                  key={n.id}
+                  onOpen={() => navigate(detailPathOf(n.id))}
+                  ariaLabel={`${n.title} 상세 보기`}
+                  className={cn(card, 'flex flex-col gap-2')}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -157,7 +172,11 @@ export function NoticesPane({ cohortId }: { cohortId: string }) {
                     {n.canDelete && (
                       <button
                         type="button"
-                        onClick={() => setTarget(n)}
+                        // 카드는 상세로 가는 버튼이라, 안쪽 액션은 거기까지 번지면 안 된다.
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setTarget(n)
+                        }}
                         aria-label={`${n.title} 삭제`}
                         className="border-danger/40 text-danger shrink-0 rounded-md border px-2.5 py-1.5 text-[12px] font-semibold"
                       >
@@ -165,29 +184,32 @@ export function NoticesPane({ cohortId }: { cohortId: string }) {
                       </button>
                     )}
                   </div>
-                  <p className="text-fg-muted text-[13px] leading-6 whitespace-pre-wrap">
+                  {/* 목록에서는 본문을 두 줄까지만 — 전문은 상세에서 본다. */}
+                  <p className="text-fg-muted line-clamp-2 text-[13px] leading-6 whitespace-pre-wrap">
                     {n.content}
                   </p>
-                  <NoticeAttachmentList
-                    links={n.links ?? []}
-                    files={n.files ?? []}
-                    scope="staff"
-                    onRemove={
-                      n.canDelete
-                        ? (attachmentId) =>
-                            removeAttachment.mutate(
-                              { noticeId: n.id, attachmentId },
-                              {
-                                onSuccess: () =>
-                                  toast.success('첨부를 지웠어요'),
-                                onError: () =>
-                                  toast.danger('첨부를 지우지 못했어요'),
-                              },
-                            )
-                        : undefined
-                    }
-                  />
-                </article>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <NoticeAttachmentList
+                      links={n.links ?? []}
+                      files={n.files ?? []}
+                      scope="staff"
+                      onRemove={
+                        n.canDelete
+                          ? (attachmentId) =>
+                              removeAttachment.mutate(
+                                { noticeId: n.id, attachmentId },
+                                {
+                                  onSuccess: () =>
+                                    toast.success('첨부를 지웠어요'),
+                                  onError: () =>
+                                    toast.danger('첨부를 지우지 못했어요'),
+                                },
+                              )
+                          : undefined
+                      }
+                    />
+                  </div>
+                </InteractiveCard>
               ))}
             </div>
           ))}

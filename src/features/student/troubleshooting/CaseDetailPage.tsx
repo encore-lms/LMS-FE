@@ -72,11 +72,11 @@ export default function CaseDetailPage() {
       : status === 'certified'
         ? '트러블슈팅 사례 상세'
         : status === 'reviewing'
-          ? '트러블슈팅 사례 검토중'
+          ? '트러블슈팅 사례 검토 중'
           : completed
-            ? '트러블슈팅 사례 인증요청'
+            ? '트러블슈팅 사례 인증 요청'
             : inList
-              ? '트러블슈팅 사례 이어작성'
+              ? '트러블슈팅 사례 이어 작성'
               : '새 트러블슈팅 사례',
     viewOnly
       ? '연결된 트러블슈팅 사례의 내용을 확인합니다.'

@@ -65,10 +65,11 @@ export function formatEditUntil(iso?: string) {
   return formatDateTime(iso) || iso
 }
 
-// 목록의 정적 상태(draft/reviewing/certified) → 시작 단계.
+// 목록의 정적 상태(draft/completed/reviewing/certified) → 시작 단계.
 export function statusToPhase(status: ProjectStatus): ProjectPhase {
   if (status === 'certified') return 'certified'
   if (status === 'reviewing') return 'reviewing'
+  if (status === 'completed') return 'completed'
   return 'active' // draft = 작성 중
 }
 

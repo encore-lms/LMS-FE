@@ -51,11 +51,17 @@ export default function ProjectListPage() {
   // 각 프로젝트의 현재 단계·대표 후보 여부 — 단계는 진행 단계 우선, 대표 후보는 스토어 기준.
   const projects = useMemo(
     () =>
-      (data?.projects ?? []).map((p) => ({
-        ...p,
-        representative: repIds.includes(p.id),
-        phase: phases[p.id] ?? statusToPhase(p.status),
-      })),
+      (data?.projects ?? []).map((p) => {
+        // 워크스페이스에서 단계를 진행시켰다면 그 단계가 최신이다 — 그때는 서버 이름을 쓰지
+        // 않는다(방금 '작성 완료'로 넘겼는데 카드가 '작성 중'이라고 우기게 된다).
+        const moved = phases[p.id]
+        return {
+          ...p,
+          representative: repIds.includes(p.id),
+          phase: moved ?? statusToPhase(p.status),
+          labelOverride: moved ? undefined : p.statusLabel,
+        }
+      }),
     [data, phases, repIds],
   )
 
@@ -252,6 +258,7 @@ export default function ProjectListPage() {
                 <ProjectCard
                   project={p}
                   phase={p.phase}
+                  statusLabel={p.labelOverride}
                   onOpen={open}
                   onDelete={setPendingDelete}
                   onToggleRep={onToggleRep}

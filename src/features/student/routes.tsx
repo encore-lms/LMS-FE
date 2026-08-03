@@ -89,6 +89,10 @@ export const studentRoutes: RouteObject[] = [
       { path: 'certificate/changes-requested', element: <CertChangesPage /> },
       { path: 'certificate/publication', element: <CertPublicationPage /> },
       { path: 'quizzes', element: <QuizListPage /> },
+      // 대시보드가 퀴즈 하나를 짚어 보낸다(/student/quizzes/{id}) — 그 퀴즈만 여는 화면은
+      // 없으므로 목록이 받아 해당 줄로 데려간다. 눌렀을 뿐인데 시험이 시작되면 안 되므로
+      // 응시(take)로 바로 보내지 않는다.
+      { path: 'quizzes/:quizId', element: <QuizListPage /> },
       // 이력서 관리 — 목록/작성 현황 + 편집기(Doc/Edit). 셸 안(사이드바 '이력서 관리' 유지).
       { path: 'resume', element: <ResumePage /> },
       { path: 'resume/new', element: <ResumeEditorPage /> },

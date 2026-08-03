@@ -43,12 +43,20 @@ const PHASE: Record<
 export function ProjectCard({
   project,
   phase,
+  statusLabel,
   onOpen,
   onDelete,
   onToggleRep,
 }: {
   project: ProjectSummary
   phase: ProjectPhase
+  /**
+   * 서버가 붙인 상태 이름 — 단계만으로는 갈리지 않는 구분을 담고 있다.
+   *
+   * <p>'보완 요청'은 다시 고칠 수 있으니 단계로는 작성 중과 같지만, 강사가 되돌려보낸
+   * 것이라 사람에게는 전혀 다른 상태다. 없으면 단계 이름을 쓴다.</p>
+   */
+  statusLabel?: string
   onOpen: (project: ProjectSummary) => void
   onDelete?: (project: ProjectSummary) => void
   /** 대표 후보 토글 — 인증 완료 프로젝트에서만 별(★)로 노출. */
@@ -79,7 +87,7 @@ export function ProjectCard({
             )}
           >
             <StatusIcon className="size-3" strokeWidth={2.3} />
-            {st.label}
+            {statusLabel ?? st.label}
           </span>
           {project.representative && (
             <span className="bg-brand/10 text-brand inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold">

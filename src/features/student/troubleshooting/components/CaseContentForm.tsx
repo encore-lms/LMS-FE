@@ -28,6 +28,7 @@ import {
   type UploadFile,
 } from './caseFormConstants'
 import { CaseBasicInfoSection } from './CaseBasicInfoSection'
+import { resolutionDaysError } from '../resolutionDays'
 import { CaseStarSection } from './CaseStarSection'
 import { CaseTagsAttachments } from './CaseTagsAttachments'
 
@@ -94,6 +95,8 @@ export function CaseContentForm({
   const [dayCount, setDayCount] = useState(
     () => existing?.days?.match(/\d+/)?.[0] ?? '',
   )
+  // 발생일과 소요 일수가 앞뒤가 맞는지 — 아직 오지 않은 날을 소요로 적을 수는 없다.
+  const daysError = resolutionDaysError(date, dayCount)
   const [independent, setIndependent] = useState(existing?.independent ?? true)
   const [star, setStar] = useState<Record<string, string>>({
     situation: existing?.situation ?? '',
@@ -198,6 +201,10 @@ export function CaseContentForm({
   // 저장 — 신규는 create(POST, BE 발급 id 반환), 기존은 update(PUT). 저장 후 신규 선택 파일을
   // 실 id 로 업로드(multipart)하고 onDone 에 확정 id 전달.
   const persist = (completed: boolean, onDone?: (id: string) => void) => {
+    if (daysError) {
+      toast.danger(daysError)
+      return
+    }
     const body = buildBody(completed)
     const pending = files.filter((f) => f.file)
     const afterSave = (id: string) => {
@@ -280,6 +287,7 @@ export function CaseContentForm({
             setDate={setDate}
             dayCount={dayCount}
             setDayCount={setDayCount}
+            daysError={daysError}
             independent={independent}
             setIndependent={setIndependent}
           />

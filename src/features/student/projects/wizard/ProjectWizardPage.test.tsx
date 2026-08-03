@@ -103,6 +103,41 @@ describe('ProjectWizardPage', () => {
     expect(screen.getByText('초대 0 / 6명')).toBeInTheDocument()
   })
 
+  // 검색 칸을 공용 SearchInput 으로 바꾸면서 register 스프레드를 걷어냈다.
+  // 값이 폼 상태에 그대로 남는지 — 단계를 오가도 지워지지 않아야 한다.
+  it('2단계 검색어가 단계를 오가도 남는다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+    const search = screen.getByLabelText('팀원 검색')
+    await user.type(search, '최하늘')
+    expect(search).toHaveValue('최하늘')
+
+    await user.click(screen.getByRole('button', { name: /이전.*기본 정보/ }))
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+
+    expect(screen.getByLabelText('팀원 검색')).toHaveValue('최하늘')
+    expect(screen.getByText('검색 결과 (1명)')).toBeInTheDocument()
+  })
+
+  // 지웠을 때도 폼에 반영돼야 빈 상태 안내로 돌아간다.
+  it('검색어를 지우면 안내 문구로 돌아간다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+    const search = screen.getByLabelText('팀원 검색')
+    await user.type(search, '최하늘')
+    expect(screen.getByText('검색 결과 (1명)')).toBeInTheDocument()
+
+    await user.clear(search)
+
+    expect(
+      screen.getByText('이름이나 영문 닉네임으로 검색해 동료를 초대하세요'),
+    ).toBeInTheDocument()
+  })
+
   it('3단계 직접 추가로 입력한 커스텀 스택을 해당 그룹과 요약에 칩으로 추가한다', async () => {
     const user = userEvent.setup()
     renderPage()

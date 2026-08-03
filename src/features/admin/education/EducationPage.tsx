@@ -5,7 +5,8 @@ import { ChevronLeft, FolderOpen } from 'lucide-react'
 import { Empty } from '@/components/ui/Empty'
 import { Tabs } from '@/components/ui/Tabs'
 import { usePageHeader } from '@/shared/store'
-import RecordsGridPage from '../records/RecordsGridPage'
+import RecordReviewPage from '@/features/instructor/reviews/RecordReviewPage'
+import { RecordReviewActions } from '../records/RecordReviewActions'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { NoticesPane } from '@/features/instructor/education/NoticesPane'
 import QnaListPage from '@/features/student/qna/QnaListPage'
@@ -141,7 +142,19 @@ export default function EducationPage() {
           )
         ) : tab === 'records' ? (
           // 검토·심사 '학습 기록 검토' 흡수.
-          <RecordsGridPage cohortId={cohortId} />
+          // 기록실 — 강사 정본 그리드를 공용 소비(2026-08-03). 셀 상세 패널에 검토 액션 주입.
+          <RecordReviewPage
+            embedded
+            source="admin"
+            cohortId={cohortId}
+            reviewActionsFor={({ recordId, kind, close }) => (
+              <RecordReviewActions
+                recordId={recordId}
+                kind={kind}
+                onDone={close}
+              />
+            )}
+          />
         ) : tab === 'students' ? (
           // 사이드바 '학생 관리' 흡수 — 출결·출결 폼·계정. 기수는 이미 정해졌으니 셀렉터는 없다.
           !courseId || !cohortId ? (

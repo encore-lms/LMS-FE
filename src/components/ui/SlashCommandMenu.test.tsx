@@ -171,3 +171,44 @@ describe('마크다운 왕복', () => {
     ).not.toBeInTheDocument()
   })
 })
+
+// Tailwind preflight 가 ol·ul 의 list-style 을 없애 둬서, 목록을 넣어도 글머리 점도
+// 번호도 없이 들여쓰기만 된 문단처럼 보였다.
+describe('목록 블록', () => {
+  const cases = [
+    { label: '글머리 기호 목록', tag: 'UL', md: '- 노트북' },
+    { label: '번호 매기기 목록', tag: 'OL', md: '1. 노트북' },
+  ]
+  for (const c of cases) {
+    it(`${c.label} — 목록 요소로 그려지고 마크다운도 맞다`, async () => {
+      const user = userEvent.setup()
+      render(<Editor />)
+
+      await user.click(body())
+      await user.keyboard('/')
+      await waitFor(() => expect(menu()).toBeVisible())
+      await user.click(screen.getByText(c.label))
+      await user.keyboard('노트북')
+
+      const list = await screen.findByRole('list')
+      expect(list.tagName).toBe(c.tag)
+      expect(markdown()).toContain(c.md)
+    })
+  }
+
+  it('인용 — blockquote 로 그려진다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/')
+    await waitFor(() => expect(menu()).toBeVisible())
+    await user.click(screen.getByText('인용'))
+    await user.keyboard('참고')
+
+    await waitFor(() =>
+      expect(body().querySelector('blockquote')).toBeInTheDocument(),
+    )
+    expect(markdown()).toContain('> 참고')
+  })
+})

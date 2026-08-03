@@ -32,11 +32,23 @@ function Editor({ onError }: { onError?: (m: string) => void } = {}) {
 const body = () => screen.getByRole('textbox', { name: '본문' })
 const md = () => screen.getByTestId('md').textContent ?? ''
 
-async function pick(user: ReturnType<typeof userEvent.setup>, label: string) {
+// 블록을 고르면 자리만 잡히고, 그 줄을 눌러야 고르는 칸이 펼쳐진다.
+// 고른 블록 이름에서 어느 자리인지 끌어낸다 — 인자로 따로 받으면 둘이 어긋난 채 통과한다.
+const 자리 = {
+  이미지: '이미지 업로드 또는 임베드',
+  파일: '파일 업로드 또는 임베드',
+  '웹 북마크': '웹 북마크 추가',
+} as const
+
+async function pick(
+  user: ReturnType<typeof userEvent.setup>,
+  label: keyof typeof 자리,
+) {
   await user.click(body())
   await user.keyboard('/')
   await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument())
   await user.click(screen.getByText(label))
+  await user.click(await screen.findByText(자리[label]))
 }
 
 beforeEach(() => {
@@ -285,10 +297,55 @@ describe('본문 임베드', () => {
     render(<Editor />)
 
     await pick(user, '이미지')
-    expect(screen.getByText('이미지 추가')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '파일을 선택하세요' }),
+    ).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: '취소' }))
 
-    expect(screen.queryByText('이미지 추가')).not.toBeInTheDocument()
+    expect(screen.queryByText(자리['이미지'])).not.toBeInTheDocument()
+  })
+
+  // 처음부터 큰 상자가 열리면 쓰던 글이 밀려 흐름이 끊긴다.
+  it('블록을 고르면 자리만 잡고 고르는 칸은 접혀 있다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/파')
+    await waitFor(() => expect(screen.getByText('파일')).toBeInTheDocument())
+    await user.click(screen.getByText('파일'))
+
+    // 자리만 잡힌 한 줄 — 아직 탭도 버튼도 없다.
+    expect(await screen.findByText(자리['파일'])).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: '파일을 선택하세요' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '업로드' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByText(자리['파일']))
+
+    expect(
+      await screen.findByRole('button', { name: '파일을 선택하세요' }),
+    ).toBeVisible()
+  })
+
+  it('접힌 자리에서 Esc 를 누르면 사라진다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/파')
+    await waitFor(() => expect(screen.getByText('파일')).toBeInTheDocument())
+    await user.click(screen.getByText('파일'))
+    await screen.findByText(자리['파일'])
+
+    await user.keyboard('{Escape}')
+
+    await waitFor(() =>
+      expect(screen.queryByText(자리['파일'])).not.toBeInTheDocument(),
+    )
   })
 })

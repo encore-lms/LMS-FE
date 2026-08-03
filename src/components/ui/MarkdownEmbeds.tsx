@@ -21,22 +21,28 @@ export function BookmarkCard({
       target="_blank"
       rel="noopener noreferrer"
       // a 를 그대로 카드로 만든다 — 문단(<p>) 안에 블록 요소를 넣지 않기 위해서다.
-      className="border-border hover:bg-surface-muted my-2 flex w-full overflow-hidden rounded-xl border no-underline transition-colors"
+      //
+      // 높이를 못으로 박는다 — 안에 들어오는 건 남의 사이트 그림이라, 두지 않으면 세로로
+      // 긴 이미지 하나가 카드를 화면만큼 늘려 버린다.
+      className="border-border hover:bg-surface-muted my-2 flex h-[108px] w-full overflow-hidden rounded-xl border no-underline transition-colors"
     >
-      <span className="flex min-w-0 flex-1 flex-col gap-1 p-4">
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-3.5 py-3">
         <span className="flex items-center gap-1.5">
           {meta.favicon && (
             <img
               src={meta.favicon}
               alt=""
-              className="size-4 shrink-0 rounded-[3px]"
+              // data-embed: 본문 이미지용 CSS(최대 360px 블록)에서 빼 달라는 표시.
+              // 그 규칙이 카드 안까지 덮으면 파비콘이 원본 크기로 부풀어 카드를 무너뜨린다.
+              data-embed=""
+              className="size-4 shrink-0 rounded-[3px] object-contain"
               // 파비콘이 없어진 사이트가 흔하다 — 깨진 그림 자리를 남기지 않는다.
               onError={(e) => {
                 e.currentTarget.style.display = 'none'
               }}
             />
           )}
-          <span className="text-fg truncate text-[14px] font-bold">
+          <span className="text-fg truncate text-[14px] font-semibold">
             {label}
           </span>
         </span>
@@ -45,14 +51,17 @@ export function BookmarkCard({
             {meta.description}
           </span>
         )}
-        <span className="text-fg-subtle mt-1 truncate text-[12px]">{href}</span>
+        <span className="text-fg-subtle mt-0.5 truncate text-[12px]">
+          {href}
+        </span>
       </span>
       {meta.image && (
-        <span className="hidden w-40 shrink-0 sm:block">
+        <span className="hidden h-full w-[180px] shrink-0 sm:block">
           <img
             src={meta.image}
             alt=""
-            className="h-full w-full object-cover"
+            data-embed=""
+            className="size-full object-cover"
             onError={(e) => {
               e.currentTarget.parentElement!.style.display = 'none'
             }}

@@ -1,6 +1,6 @@
-import { type UseFormRegisterReturn } from 'react-hook-form'
 import { Search, Send, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { type TeamCandidate, type Tone } from '../../types'
 import { Avatar } from '../wizardShared'
 import { card } from '../wizardConstants'
@@ -12,7 +12,9 @@ export function Step2(p: {
   cohortLabel: string
   candidates: TeamCandidate[]
   searchQuery: string
-  searchInput: UseFormRegisterReturn
+  /** 검색 칸에 그대로 보일 값 — searchQuery 는 걸러내기용이라 공백이 잘려 있다. */
+  search: string
+  onSearchChange: (value: string) => void
   invited: string[]
   team: {
     id: string
@@ -52,14 +54,13 @@ export function Step2(p: {
             초대 {p.invited.length} / 6명
           </span>
         </div>
-        <label className="border-border text-fg-subtle focus-within:border-brand flex items-center gap-2 rounded-[10px] border px-4 py-3 text-[13px]">
-          <Search className="size-4 shrink-0" aria-hidden="true" />
-          <input
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent focus:outline-none focus-visible:shadow-none"
-            placeholder="이름이나 영문 닉네임으로 검색"
-            {...p.searchInput}
-          />
-        </label>
+        <SearchInput
+          value={p.search}
+          onChange={p.onSearchChange}
+          placeholder="이름이나 영문 닉네임으로 검색"
+          ariaLabel="팀원 검색"
+          className="w-full rounded-[10px] px-4 py-3"
+        />
         {p.searchQuery === '' ? (
           <div className="border-border text-fg-subtle flex flex-col items-center gap-1.5 rounded-xl border border-dashed px-4 py-8 text-center">
             <Search className="size-5" aria-hidden="true" />

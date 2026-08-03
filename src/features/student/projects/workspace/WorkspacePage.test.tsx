@@ -273,7 +273,8 @@ describe('WorkspacePage home', () => {
     await user.click(screen.getByRole('button', { name: '완료' }))
   })
 
-  it('팀원 초대 모달로 새 팀원을 추가한다', async () => {
+  // 부르는 것까지가 초대다 — 팀이 되는 건 상대가 받아들였을 때다.
+  it('팀원 초대 모달로 초대를 보낸다', async () => {
     const user = userEvent.setup()
     // 팀 관리는 설정 탭으로 이관됨 — 설정 탭에서 팀원 초대 확인
     renderPage('/student/projects/p1?tab=settings')
@@ -289,7 +290,7 @@ describe('WorkspacePage home', () => {
     await user.click(screen.getByRole('button', { name: '초대' }))
 
     expect(
-      await screen.findByText('오세훈 님을 초대했습니다'),
+      await screen.findByText(/오세훈 님에게 초대를 보냈어요/),
     ).toBeInTheDocument()
   })
 

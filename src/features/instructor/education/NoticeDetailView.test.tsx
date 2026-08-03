@@ -87,16 +87,26 @@ describe('공지 상세', () => {
     expect(screen.getByText(/김강사/)).toBeInTheDocument()
   })
 
-  it('붙은 링크와 파일을 보여준다', () => {
+  // 첨부는 따로 모으지 않는다 — 파일·북마크는 본문 안에 있어 글의 흐름대로 읽힌다.
+  it('본문에 넣은 파일·북마크를 그 자리에서 보여준다', () => {
     renderDetail([
       notice({
-        links: [{ id: 'l1', url: 'https://playdata.io/guide' }],
-        files: [{ id: 'f1', fileName: '안내문.pdf', fileSize: 1024 }],
+        content:
+          '준비물\n\n[안내문.pdf](upload:u1 "file::2048")\n\n[네이버](https://naver.com "bookmark::검색 포털::::")',
       }),
     ])
 
-    expect(screen.getByText('https://playdata.io/guide')).toBeInTheDocument()
     expect(screen.getByText('안내문.pdf')).toBeInTheDocument()
+    expect(screen.getByText('2KB')).toBeInTheDocument()
+    expect(screen.getByText('검색 포털')).toBeInTheDocument()
+  })
+
+  it('별도 첨부 섹션은 없다', () => {
+    renderDetail([
+      notice({ files: [{ id: 'f1', fileName: '옛첨부.pdf', fileSize: 10 }] }),
+    ])
+
+    expect(screen.queryByText('첨부')).not.toBeInTheDocument()
   })
 
   it('목록으로 돌아가는 링크가 있다', () => {

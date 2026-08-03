@@ -6,16 +6,13 @@ import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { Markdown } from '@/components/ui/Markdown'
-import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import {
-  useDeleteCourseNotice,
-  useDeleteNoticeAttachment,
-  useStaffCourseNotices,
-} from '@/shared/api'
+import { useDeleteCourseNotice, useStaffCourseNotices } from '@/shared/api'
 
 // 공지 상세 — 강사 허브와 운영 기수 허브가 같은 한 벌을 쓴다. 라우트만 역할별로 다르다.
+//
+// 첨부는 따로 모아 두지 않는다 — 파일·북마크는 본문 안에 넣어 글의 흐름대로 읽힌다.
 //
 // 단건 조회 API 를 따로 두지 않고 기수 목록에서 찾는다 — 목록 응답이 이미 본문·첨부까지
 // 담고 있고, 목록에서 눌러 들어오는 흐름이라 캐시가 그대로 재사용된다.
@@ -35,7 +32,6 @@ export function NoticeDetailView({
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useStaffCourseNotices(cohortId)
   const remove = useDeleteCourseNotice()
-  const removeAttachment = useDeleteNoticeAttachment()
   const [confirming, setConfirming] = useState(false)
 
   const notice = data?.notices.find((n) => n.id === noticeId) ?? null
@@ -93,33 +89,6 @@ export function NoticeDetailView({
                   {notice.content}
                 </Markdown>
               </div>
-
-              {(notice.links?.length > 0 || notice.files?.length > 0) && (
-                <div className="border-divider flex flex-col gap-2 border-t pt-5">
-                  <span className="text-fg-subtle text-[12px] font-semibold">
-                    첨부
-                  </span>
-                  <NoticeAttachmentList
-                    links={notice.links ?? []}
-                    files={notice.files ?? []}
-                    scope="staff"
-                    onRemove={
-                      notice.canDelete
-                        ? (attachmentId) =>
-                            removeAttachment.mutate(
-                              { noticeId: notice.id, attachmentId },
-                              {
-                                onSuccess: () =>
-                                  toast.success('첨부를 지웠어요'),
-                                onError: () =>
-                                  toast.danger('첨부를 지우지 못했어요'),
-                              },
-                            )
-                        : undefined
-                    }
-                  />
-                </div>
-              )}
 
               {/* 꼬리말 — 왼쪽에 목록으로, 오른쪽에 이 글에 대한 액션. */}
               <div className="border-divider mt-6 flex items-center justify-between gap-3 border-t pt-5">

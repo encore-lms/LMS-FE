@@ -9,7 +9,11 @@ import {
   type NoticePost,
 } from '@/shared/api'
 
-vi.mock('@/shared/api', async (orig) => ({ ...(await orig()), useCourseNotices: vi.fn(), useDeleteCourseNotice: vi.fn() }))
+vi.mock('@/shared/api', async (orig) => ({
+  ...(await orig()),
+  useCourseNotices: vi.fn(),
+  useDeleteCourseNotice: vi.fn(),
+}))
 vi.mock('../CourseTabs', () => ({ CourseTabs: () => null }))
 
 // 수강생은 공지를 읽기만 한다 — 삭제 버튼은 서버가 canDelete 로 허락한 글에만 나온다.
@@ -82,17 +86,15 @@ describe('강의 홈 공지', () => {
     expect(screen.getByText('등록된 공지가 없어요')).toBeInTheDocument()
   })
 
-  // 공지에 담을 수 있는 게 제목·본문뿐이라 자료 링크나 안내문을 붙일 자리가 없었다.
-  it('붙은 링크와 파일을 함께 보여준다', () => {
+  // 파일·북마크는 본문 안에 있다 — 카드로 그려진다.
+  it('본문 안의 파일·북마크를 카드로 보여준다', () => {
     renderPage([
       notice({
-        links: [{ id: 'l1', url: 'https://playdata.io/guide' }],
-        files: [{ id: 'f1', fileName: '특강 안내문.pdf', fileSize: 2048 }],
+        content: '[안내문.pdf](upload:u1 "file::2048")',
       }),
     ])
 
-    expect(screen.getByText('https://playdata.io/guide')).toBeInTheDocument()
-    expect(screen.getByText('특강 안내문.pdf')).toBeInTheDocument()
+    expect(screen.getByText('안내문.pdf')).toBeInTheDocument()
     expect(screen.getByText('2KB')).toBeInTheDocument()
   })
 

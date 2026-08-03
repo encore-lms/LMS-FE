@@ -6,7 +6,6 @@ import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { Markdown } from '@/components/ui/Markdown'
-import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
@@ -66,10 +65,6 @@ function NoticeCard({
       <Markdown className="text-fg-muted text-[13px]">
         {notice.content}
       </Markdown>
-      <NoticeAttachmentList
-        links={notice.links ?? []}
-        files={notice.files ?? []}
-      />
     </article>
   )
 }

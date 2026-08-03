@@ -101,10 +101,28 @@ describe('공지 상세', () => {
 
   it('목록으로 돌아가는 링크가 있다', () => {
     renderDetail([notice()])
-    expect(screen.getByRole('link', { name: /공지 목록/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /목록으로/ })).toHaveAttribute(
       'href',
       '/hub?tab=notices',
     )
+  })
+
+  // 본문은 마크다운으로 저장된다 — 기호가 글자로 남지 않고 실제 블록으로 그려져야 한다.
+  it('마크다운 본문을 블록으로 그린다', () => {
+    renderDetail([
+      notice({
+        content:
+          '## 준비물\n\n- 노트북\n- 충전기\n\n| 일시 | 장소 |\n| --- | --- |\n| 금요일 | 3강의실 |',
+      }),
+    ])
+
+    expect(
+      screen.getByRole('heading', { name: '준비물', level: 2 }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    // 기호가 그대로 남아 있으면 렌더가 아니라 평문이다.
+    expect(screen.queryByText(/^## /)).not.toBeInTheDocument()
   })
 
   // 다른 사람이 지웠거나 주소를 직접 고쳐 들어온 경우.

@@ -11,6 +11,8 @@ import {
 import { Bold, Code, Image as ImageIcon, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Markdown } from './Markdown'
+import { SlashCommandMenu } from './SlashCommandMenu'
+import { filterSlashCommands, type SlashCommand } from './slashCommands'
 import { putImage } from '@/components/ui/markdownImages'
 
 // 이미지 인라인 가드 — 이미지 타입만, 2MB 이하(프로토타입 base64 인라인이라 과대 방지).
@@ -27,6 +29,25 @@ interface MarkdownEditorProps {
   /** 본문에서 파싱된 멘션 이름들 콜백 */
   onMentionsChange?: (names: string[]) => void
   onImageRejected?: (reason: string) => void
+  /** 켜면 빈 줄에서 `/` 를 쳤을 때 블록 고르기 메뉴가 뜬다. */
+  slashCommands?: boolean
+  /** 입력창의 스크린리더 이름 — 폼에 라벨이 따로 없을 때 준다. */
+  ariaLabel?: string
+}
+
+/**
+ * 커서 앞에서 열려 있는 슬래시 토큰을 찾는다.
+ *
+ * <p>줄 맨 앞(앞에 공백만)에서만 연다. 문장 중간에서 열면 고른 블록을 어디에 넣을지가
+ * 모호해진다 — 줄 앞에 붙이면 이미 쓴 글이 제목이 돼 버린다.</p>
+ */
+function findSlashToken(upto: string): { start: number; query: string } | null {
+  const m = /(?:^|\n)([ \t]*)\/([^\n]*)$/.exec(upto)
+  if (!m) return null
+  // 검색어에 공백이 들어가면 메뉴를 닫는다 — 날짜(`9/1 안내`)처럼 슬래시로 시작하는 평범한
+  // 문장을 계속 가로채지 않도록.
+  if (/\s/.test(m[2])) return null
+  return { start: upto.length - m[2].length - 1, query: m[2] }
 }
 
 // 마크다운 작성기 — 작성/미리보기 탭 + 툴바(굵게·코드·링크·이미지) + 이미지 base64 + @멘션.
@@ -40,8 +61,13 @@ export function MarkdownEditor({
   mentionNames,
   onMentionsChange,
   onImageRejected,
+  slashCommands = false,
+  ariaLabel,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<'write' | 'preview'>('write')
+  // 슬래시 메뉴 상태 — 열려 있으면 검색어(빈 문자열 포함), 닫혀 있으면 null.
+  const [slashQuery, setSlashQuery] = useState<string | null>(null)
+  const [slashIdx, setSlashIdx] = useState(0)
   const ref = useRef<HTMLTextAreaElement>(null)
   // insertAtCursor 후 복원할 캐럿 위치(렌더 후 적용).
   const pendingCaret = useRef<number | null>(null)
@@ -52,6 +78,9 @@ export function MarkdownEditor({
   useEffect(() => {
     setActiveIdx(0)
   }, [mentionQuery])
+  useEffect(() => {
+    setSlashIdx(0)
+  }, [slashQuery])
   // 하이라이트 백드롭 스크롤 동기화용.
   const backdropRef = useRef<HTMLDivElement>(null)
 
@@ -149,17 +178,33 @@ export function MarkdownEditor({
     }
   }
 
-  // 입력 변화 시 @멘션 토큰 감지(커서 직전 @비공백 연속).
+  // 입력 변화 시 @멘션 토큰 감지(커서 직전 @비공백 연속) + 슬래시 토큰 감지.
   const handleChange = (next: string) => {
     setValue(next)
-    if (!mentionNames || mentionNames.length === 0) return
     const el = ref.current
     const caret = el
       ? el.selectionStart + (next.length - value.length)
       : next.length
     const upto = next.slice(0, caret)
+    if (slashCommands) {
+      const slash = findSlashToken(upto)
+      setSlashQuery(slash ? slash.query : null)
+    }
+    if (!mentionNames || mentionNames.length === 0) return
     const m = /(?:^|\s)@([^\s@]*)$/.exec(upto)
     setMentionQuery(m ? m[1] : null)
+  }
+
+  /** 고른 블록을 넣는다 — `/검색어` 를 지우고 그 자리에 마크다운을 남긴다. */
+  const applySlash = (command: SlashCommand) => {
+    const el = ref.current
+    const caret = el ? el.selectionStart : value.length
+    const token = findSlashToken(value.slice(0, caret))
+    if (!token) return
+    const next =
+      value.slice(0, token.start) + command.block + value.slice(caret)
+    setValue(next, token.start + (command.caret ?? command.block.length))
+    setSlashQuery(null)
   }
 
   const applyMention = (name: string) => {
@@ -181,8 +226,28 @@ export function MarkdownEditor({
           .slice(0, 6)
       : []
 
+  const slashMatches =
+    slashCommands && slashQuery != null ? filterSlashCommands(slashQuery) : []
+
   // 제안 리스트가 떠 있는 동안의 키보드 조작 — ↑↓ 이동, Enter/Tab 선택, Esc 닫기.
+  // 슬래시 메뉴가 먼저다 — 둘이 동시에 뜨는 일은 없지만, 뜬다면 방금 친 `/` 쪽이 의도다.
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (slashMatches.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSlashIdx((i) => (i + 1) % slashMatches.length)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSlashIdx((i) => (i - 1 + slashMatches.length) % slashMatches.length)
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        applySlash(slashMatches[Math.min(slashIdx, slashMatches.length - 1)])
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        setSlashQuery(null)
+      }
+      return
+    }
     if (suggestions.length === 0) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
@@ -342,8 +407,14 @@ export function MarkdownEditor({
               if (backdropRef.current)
                 backdropRef.current.scrollTop = e.currentTarget.scrollTop
             }}
-            onBlur={() => setTimeout(() => setMentionQuery(null), 120)}
+            onBlur={() =>
+              setTimeout(() => {
+                setMentionQuery(null)
+                setSlashQuery(null)
+              }, 120)
+            }
             placeholder={placeholder}
+            aria-label={ariaLabel}
             style={{ height: minHeight }}
             className={cn(
               'placeholder:text-fg-subtle relative block w-full resize-none rounded-b-[10px] bg-transparent px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none',
@@ -351,6 +422,15 @@ export function MarkdownEditor({
               highlightable ? 'caret-fg text-transparent' : 'text-fg',
             )}
           />
+          {slashMatches.length > 0 && (
+            <SlashCommandMenu
+              commands={slashMatches}
+              activeIdx={Math.min(slashIdx, slashMatches.length - 1)}
+              onPick={applySlash}
+              onHover={setSlashIdx}
+              onClose={() => setSlashQuery(null)}
+            />
+          )}
           {suggestions.length > 0 && (
             <ul
               role="listbox"
@@ -381,7 +461,10 @@ export function MarkdownEditor({
         </div>
       ) : (
         // 작성/미리보기 탭 전환 시 높이가 흔들리지 않게 둘 다 같은 고정 높이 + 내부 스크롤.
-        <div className="overflow-y-auto px-4 py-3" style={{ height: minHeight }}>
+        <div
+          className="overflow-y-auto px-4 py-3"
+          style={{ height: minHeight }}
+        >
           {value.trim() ? (
             <Markdown mentions={mentionNames}>{value}</Markdown>
           ) : (

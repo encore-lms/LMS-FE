@@ -39,14 +39,14 @@ describe('MenteeDetailPage', () => {
       data: buildMenteeDetail('stu_han_y'),
     })
     renderPage('stu_han_y')
-    expect(usePageHeaderStore.getState().title).toBe('학생 상세')
+    expect(usePageHeaderStore.getState().title).toBe('수강생 상세')
     // 히어로 + 권한 칩
     expect(screen.getByText('한예린')).toBeInTheDocument()
     expect(screen.getByText('STUDENT DETAIL · 멘토 관점')).toBeInTheDocument()
     expect(screen.getByText('배정 팀 팀원 한정 조회')).toBeInTheDocument()
     // 노출 범위 안내 원문
     expect(
-      screen.getByText('멘토에게 노출되는 학생 정보 범위'),
+      screen.getByText('멘토에게 노출되는 수강생 정보 범위'),
     ).toBeInTheDocument()
     expect(screen.getByText(/HRD-Net 출결/)).toBeInTheDocument()
     // 평가 5축 — 고정 축 + 평균
@@ -60,7 +60,7 @@ describe('MenteeDetailPage', () => {
     expect(screen.getByText('추천 확정')).toBeInTheDocument()
     expect(
       screen.getByText(
-        '팀당 1명 추천 정책에 따라 본 학생이 추천 대상으로 선정됨',
+        '팀당 1명 추천 정책에 따라 본 수강생이 추천 대상으로 선정됨',
       ),
     ).toBeInTheDocument()
     // 참석 이력 — 제출 일지 파생(인정 완료 칩)
@@ -69,7 +69,7 @@ describe('MenteeDetailPage', () => {
     // 하단 액션 — 평가·추천 페이지로 이동(조회 전용 화면)
     expect(
       screen.getByText(
-        '학생 상세는 조회 전용 화면이며, 변경은 평가/추천 단계에서 처리합니다',
+        '수강생 상세는 조회 전용 화면이며, 변경은 평가/추천 단계에서 처리합니다',
       ),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /평가로 이동/ })).toHaveAttribute(

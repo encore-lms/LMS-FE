@@ -40,9 +40,10 @@ function toAccount(s: RawStudent): StudentAccount {
 
 // 수강생 계정 목록 — /users/students 실연동(StudentAccountQueue로 매핑해 기존 화면 유지).
 // cohortId가 있으면 해당 기수 배정 학생만 조회(선택 즉시 목록 갱신).
-export function useStudentAccounts(cohortId?: string | null) {
+export function useStudentAccounts(cohortId?: string | null, enabled = true) {
   return useQuery({
     queryKey: adminKeys.studentAccounts({ cohortId: cohortId ?? undefined }),
+    enabled,
     queryFn: () =>
       apiClient
         .get<RawStudentPage>('/users/students', {

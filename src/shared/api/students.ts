@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
-import { adminKeys } from './queryKeys'
+import { adminKeys, instructorKeys } from './queryKeys'
 import type { StudentAccount, StudentAccountQueue } from '@/shared/types'
 
 // 수강생 계정(auth-user-service /users/students) 목록 — 운영·강사 화면이 공유하는 읽기 훅.
@@ -84,5 +84,28 @@ export function useChangeLoginBlock() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.studentAccounts() })
     },
+  })
+}
+
+/** 담당 기수 수강생 1명 — 이름 join·작성 대기 계산용. */
+export interface CohortStudent {
+  userId: string
+  name: string
+}
+
+/**
+ * 기수 수강생 로스터 — auth-user-service의 기수 스코프 명단(강사 허용, 운영도 사용 가능).
+ * learning 응답(이력서·자료실·추천서)은 userId만 주므로 화면이 여기서 이름을 join 한다.
+ * 강사 다수 화면 + 공용 MaterialsPane이 함께 써 shared 로 승격(2026-08-03, 구 위치:
+ * features/instructor/api/console.ts). 캐시 키는 기존 instructorKeys 기반을 그대로 유지.
+ */
+export function useCohortRoster(cohortId?: string | null) {
+  return useQuery({
+    queryKey: [...instructorKeys.all, 'cohort-roster', cohortId ?? ''],
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<{ items: CohortStudent[] }>('/users/cohort-students', { cohortId })
+        .then((r) => r.data.items),
   })
 }

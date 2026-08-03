@@ -12,7 +12,7 @@ import AssignmentsPage from '../assignments/AssignmentsPage'
 import ProjectReviewPage from '../reviews/ProjectReviewPage'
 import RecordReviewPage from '../reviews/RecordReviewPage'
 import { useInstructorCohorts } from '../api/console'
-import { MaterialsViewPane } from './MaterialsViewPane'
+import { MaterialsPane } from '@/features/admin/education/MaterialsPane'
 import { ResumeViewPane } from './ResumeViewPane'
 import { NoticesPane } from './NoticesPane'
 import { StudentsPane } from './StudentsPane'
@@ -95,7 +95,7 @@ export default function InstructorEducationPage() {
             }
           />
         ) : tab === 'materials' ? (
-          <MaterialsViewPane cohortId={cohortId} />
+          <MaterialsPane cohortId={cohortId} source="instructor" />
         ) : tab === 'assignments' ? (
           <AssignmentsPage embedded cohortId={cohortId} />
         ) : tab === 'quizzes' ? (

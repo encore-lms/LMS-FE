@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -165,35 +165,49 @@ describe('강사·매니저 공지 관리', () => {
     expect(screen.queryByText('안내문.pdf')).not.toBeInTheDocument()
   })
 
-  it('올라간 공지의 첨부를 지운다', async () => {
-    const user = userEvent.setup()
-    renderPane([
-      notice({ files: [{ id: 'f1', fileName: '안내문.pdf', fileSize: 100 }] }),
-    ])
+  // 자료실과 같은 표 — 훑어보고 눌러 들어가는 흐름이라 카드를 표로 바꿨다.
+  it('제목·첨부·작성자·등록일 열을 보여준다', () => {
+    renderPane([notice()])
 
-    await user.click(
-      screen.getByRole('button', { name: '안내문.pdf 첨부 삭제' }),
-    )
-
-    expect(removeAttachment).toHaveBeenCalledWith(
-      { noticeId: 'n1', attachmentId: 'f1' },
-      expect.anything(),
-    )
+    const table = within(screen.getByRole('table'))
+    expect(
+      screen.getAllByRole('columnheader').map((el) => el.textContent),
+    ).toEqual(['제목', '첨부', '작성자', '등록일', ''])
+    expect(table.getByText('2주차 특강 안내')).toBeInTheDocument()
+    expect(table.getByText('김강사')).toBeInTheDocument()
+    expect(table.getByText('2026.07.29')).toBeInTheDocument()
   })
 
-  // 카드를 눌러 전문을 본다 — 목록은 본문을 두 줄까지만 보여준다.
-  it('카드를 누르면 상세로 이동한다', async () => {
+  it('첨부 개수를 링크·파일로 나눠 센다', () => {
+    renderPane([
+      notice({
+        links: [{ id: 'l1', url: 'https://playdata.io' }],
+        files: [
+          { id: 'f1', fileName: '안내문.pdf', fileSize: 100 },
+          { id: 'f2', fileName: '서식.docx', fileSize: 200 },
+        ],
+      }),
+    ])
+
+    expect(screen.getByText('링크 1 · 파일 2')).toBeInTheDocument()
+  })
+
+  it('첨부가 없으면 빈 칸으로 둔다', () => {
+    renderPane([notice()])
+    expect(within(screen.getByRole('table')).getByText('-')).toBeInTheDocument()
+  })
+
+  // 행을 눌러 전문을 본다 — 목록은 본문을 한 줄 요약으로만 보여준다.
+  it('행을 누르면 상세로 이동한다', async () => {
     const user = userEvent.setup()
     renderPane([notice()])
 
-    await user.click(
-      screen.getByRole('button', { name: '2주차 특강 안내 상세 보기' }),
-    )
+    await user.click(screen.getByText('2주차 특강 안내'))
 
     expect(screen.getByText('공지 상세 화면')).toBeInTheDocument()
   })
 
-  // 카드가 상세로 가는 버튼이라, 안쪽 액션이 거기까지 번지면 안 된다.
+  // 행 전체가 상세로 가는 버튼이라, 안쪽 액션이 거기까지 번지면 안 된다.
   it('삭제 버튼을 눌러도 상세로 넘어가지 않는다', async () => {
     const user = userEvent.setup()
     renderPane([notice({ canDelete: true })])
@@ -206,31 +220,12 @@ describe('강사·매니저 공지 관리', () => {
     expect(screen.getByText('공지를 삭제할까요?')).toBeInTheDocument()
   })
 
-  it('첨부를 지워도 상세로 넘어가지 않는다', async () => {
-    const user = userEvent.setup()
-    renderPane([
-      notice({ files: [{ id: 'f1', fileName: '안내문.pdf', fileSize: 100 }] }),
-    ])
-
-    await user.click(
-      screen.getByRole('button', { name: '안내문.pdf 첨부 삭제' }),
-    )
-
-    expect(screen.queryByText('공지 상세 화면')).not.toBeInTheDocument()
-    expect(removeAttachment).toHaveBeenCalled()
-  })
-
-  // 남의 글은 첨부도 손대지 못한다.
-  it('지울 수 없는 공지에는 첨부 삭제 버튼이 없다', () => {
-    renderPane([
-      notice({
-        canDelete: false,
-        files: [{ id: 'f1', fileName: '안내문.pdf', fileSize: 100 }],
-      }),
-    ])
+  // 남의 글은 지울 수 없다.
+  it('지울 수 없는 공지에는 삭제 버튼이 없다', () => {
+    renderPane([notice({ canDelete: false })])
 
     expect(
-      screen.queryByRole('button', { name: '안내문.pdf 첨부 삭제' }),
+      screen.queryByRole('button', { name: '2주차 특강 안내 삭제' }),
     ).not.toBeInTheDocument()
   })
 })

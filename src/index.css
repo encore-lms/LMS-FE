@@ -276,6 +276,11 @@ body {
   color: var(--color-brand);
   text-decoration: underline;
 }
+/* 카드형 링크(북마크·파일)는 글자가 아니라 상자로 읽힌다 — 밑줄·링크색을 걷는다. */
+.markdown-body a.no-underline,
+.markdown-body a.no-underline * {
+  text-decoration: none;
+}
 /* Tailwind preflight 가 ol·ul 의 list-style 을 없애 두므로 본문에서는 되살린다.
    (되살리지 않으면 글머리 점도 번호도 없이 들여쓰기만 된 문단처럼 보인다.) */
 .markdown-body ul,

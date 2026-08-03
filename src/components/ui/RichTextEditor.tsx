@@ -53,6 +53,8 @@ export function RichTextEditor({
   const lastEmitted = useRef(value)
   // 닫은 검색어를 기억한다 — 닫자마자 keyup 이 같은 `/` 를 보고 다시 열어 버리기 때문이다.
   const dismissed = useRef<string | null>(null)
+  // onUpdate 는 editor 를 만들 때 고정되므로, 그 안에서 최신 동기화 함수를 꺼내 쓴다.
+  const syncSlashRef = useRef<((ed: Editor) => void) | null>(null)
   // 커서가 표 안에 있는지 — 표 조작 막대를 그때만 띄운다.
   const [inTable, setInTable] = useState(false)
   // 값을 더 받아야 하는 블록(이미지·파일·북마크)을 고른 상태.
@@ -86,6 +88,8 @@ export function RichTextEditor({
       ).markdown.getMarkdown()
       lastEmitted.current = md
       onChange(md)
+      // 키 이벤트만 보면 한글 조합·붙여넣기로 들어온 글자를 놓쳐 검색어가 갱신되지 않는다.
+      syncSlashRef.current?.(editor)
     },
   })
 
@@ -128,6 +132,8 @@ export function RichTextEditor({
     dismissed.current = null
     setSlashQuery(token.query)
   }
+
+  syncSlashRef.current = syncSlash
 
   const closeSlash = () => {
     dismissed.current = slashQuery

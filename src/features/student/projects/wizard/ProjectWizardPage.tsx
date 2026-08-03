@@ -320,7 +320,15 @@ export default function ProjectWizardPage() {
               cohortLabel={data.cohortLabel}
               candidates={candidates}
               searchQuery={teamSearch.trim()}
-              searchInput={register('teamSearch')}
+              search={teamSearch}
+              // register 스프레드 대신 값·핸들러로 넘긴다 — 검색 칸을 공용 컴포넌트로 쓰려면
+              // (value, onChange) 계약이어야 한다. mode:'onChange' 라 검증도 함께 돌린다.
+              onSearchChange={(v) =>
+                setValue('teamSearch', v, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
               invited={invited}
               team={team}
               onToggle={(id) => updateArrayField('invited', id)}

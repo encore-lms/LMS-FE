@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { ChevronLeft, Pin, Trash2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { Markdown } from '@/components/ui/Markdown'
 import { NoticeAttachmentList } from '@/components/ui/NoticeAttachmentList'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
@@ -19,9 +19,6 @@ import {
 //
 // 단건 조회 API 를 따로 두지 않고 기수 목록에서 찾는다 — 목록 응답이 이미 본문·첨부까지
 // 담고 있고, 목록에서 눌러 들어오는 흐름이라 캐시가 그대로 재사용된다.
-
-const card =
-  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 export function NoticeDetailView({
   cohortId,
@@ -45,13 +42,6 @@ export function NoticeDetailView({
 
   return (
     <div className="p-8">
-      <Link
-        to={backTo}
-        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1 text-[13px] font-medium"
-      >
-        <ChevronLeft className="h-4 w-4" /> 공지 목록
-      </Link>
-
       <DataBoundary
         isPending={isPending}
         isError={isError || !data}
@@ -68,63 +58,90 @@ export function NoticeDetailView({
               description="이미 삭제됐거나 다른 기수의 공지일 수 있어요."
             />
           ) : (
-            <article className={cn(card, 'flex flex-col gap-4')}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {notice.pinned && (
-                      <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold">
-                        <Pin className="size-3" aria-hidden="true" />
-                        고정
-                      </span>
-                    )}
-                    <span className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 text-[10px] font-bold">
-                      {notice.roleLabel}
-                    </span>
-                  </div>
-                  <h2 className="text-fg text-[20px] font-bold [overflow-wrap:anywhere]">
-                    {notice.title}
-                  </h2>
-                  <span className="text-fg-subtle text-[12px]">
-                    {notice.authorName} · {notice.createdAt} · {notice.timeAgo}
+            // 읽는 글이라 카드로 띄우지 않는다 — 배경과 같은 면 위에 머리말·본문·꼬리말을
+            // 가는 선으로만 나눈다(그림자·테두리 없음).
+            <article className="mx-auto flex w-full max-w-[880px] flex-col">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px]">
+                <span className="bg-accent-bg text-accent-strong rounded px-1.5 py-0.5 text-[11px] font-bold">
+                  공지
+                </span>
+                {notice.pinned && (
+                  <span className="bg-warning-bg text-warning inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-bold">
+                    <Pin className="size-3" aria-hidden="true" />
+                    고정
                   </span>
+                )}
+                <span className="text-fg-muted font-medium">
+                  {notice.authorName}
+                </span>
+                <span className="text-fg-subtle">·</span>
+                <span className="text-fg-subtle">{notice.roleLabel}</span>
+                <span className="text-fg-subtle">·</span>
+                <span className="text-fg-subtle tabular-nums">
+                  {notice.createdAt}
+                </span>
+              </div>
+
+              <h2 className="text-fg mt-2 text-[22px] font-bold [overflow-wrap:anywhere]">
+                {notice.title}
+              </h2>
+
+              <div className="bg-divider mt-4 h-px w-full" />
+
+              <div className="py-7">
+                <Markdown className="text-[14px] leading-7">
+                  {notice.content}
+                </Markdown>
+              </div>
+
+              {(notice.links?.length > 0 || notice.files?.length > 0) && (
+                <div className="border-divider flex flex-col gap-2 border-t pt-5">
+                  <span className="text-fg-subtle text-[12px] font-semibold">
+                    첨부
+                  </span>
+                  <NoticeAttachmentList
+                    links={notice.links ?? []}
+                    files={notice.files ?? []}
+                    scope="staff"
+                    onRemove={
+                      notice.canDelete
+                        ? (attachmentId) =>
+                            removeAttachment.mutate(
+                              { noticeId: notice.id, attachmentId },
+                              {
+                                onSuccess: () =>
+                                  toast.success('첨부를 지웠어요'),
+                                onError: () =>
+                                  toast.danger('첨부를 지우지 못했어요'),
+                              },
+                            )
+                        : undefined
+                    }
+                  />
                 </div>
+              )}
+
+              {/* 꼬리말 — 왼쪽에 목록으로, 오른쪽에 이 글에 대한 액션. */}
+              <div className="border-divider mt-6 flex items-center justify-between gap-3 border-t pt-5">
+                <Link
+                  to={backTo}
+                  className="border-border text-fg hover:bg-surface-muted inline-flex items-center gap-1 rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
+                >
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                  목록으로
+                </Link>
                 {notice.canDelete && (
                   <button
                     type="button"
                     onClick={() => setConfirming(true)}
                     aria-label={`${notice.title} 삭제`}
-                    className="border-danger/40 text-danger shrink-0 rounded-md border px-2.5 py-1.5 text-[12px] font-semibold"
+                    className="border-danger/40 text-danger hover:bg-danger-bg inline-flex items-center gap-1 rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
                   >
                     <Trash2 className="size-3.5" aria-hidden="true" />
+                    삭제
                   </button>
                 )}
               </div>
-
-              <div className="bg-divider h-px w-full" />
-
-              <p className="text-fg text-[14px] leading-7 whitespace-pre-wrap [overflow-wrap:anywhere]">
-                {notice.content}
-              </p>
-
-              <NoticeAttachmentList
-                links={notice.links ?? []}
-                files={notice.files ?? []}
-                scope="staff"
-                onRemove={
-                  notice.canDelete
-                    ? (attachmentId) =>
-                        removeAttachment.mutate(
-                          { noticeId: notice.id, attachmentId },
-                          {
-                            onSuccess: () => toast.success('첨부를 지웠어요'),
-                            onError: () =>
-                              toast.danger('첨부를 지우지 못했어요'),
-                          },
-                        )
-                    : undefined
-                }
-              />
             </article>
           ))}
       </DataBoundary>

@@ -27,3 +27,5 @@ export type {
   NoticeLink,
   NoticeFile,
 } from './notices'
+export { uploadEditorFile, fetchLinkPreview } from './editor'
+export type { UploadedFile, LinkPreview } from './editor'

@@ -16,6 +16,12 @@ import {
   useOpsAccounts,
 } from '../api/settings'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
+import { useCohortRoster } from '@/shared/api/students'
+import {
+  downloadInstructorMaterialFile,
+  useInstructorMaterials,
+} from '@/features/instructor/education/api'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { ArticleView } from '@/components/data/ArticleView'
 import {
   AttachmentFileCard,
@@ -36,27 +42,40 @@ const fmtSize = (n: number | null) => {
 }
 
 // 자료실 탭 — 게시글형 기수 자료(본문·링크/파일·작성자) 조회·등록·삭제 + 상세 팝업(실 BE).
+// source: 매니저(admin, 기본)·강사(instructor) 공용 — 강사는 조회 전용(등록·삭제는 운영자만, BE 가드와 동일).
+// 데이터 소스만 역할별 미러 훅으로 갈리고 화면은 한 코드다(CourseHomePane과 같은 규약).
 export function MaterialsPane({
   courseId,
   cohortId,
+  source = 'admin',
 }: {
-  courseId: string
+  /** 매니저(source='admin')만 필요 — 강사 미러는 서버가 기수에서 과정을 해석한다. */
+  courseId?: string
   cohortId: string
+  source?: 'admin' | 'instructor'
 }) {
-  const { data, isPending, isError, refetch } = useCohortMaterials(
-    courseId,
-    cohortId,
+  const isAdmin = source === 'admin'
+  const adminQuery = useCohortMaterials(
+    isAdmin ? (courseId ?? null) : null,
+    isAdmin ? cohortId : null,
   )
-  const { data: ops } = useOpsAccounts()
+  const instructorQuery = useInstructorMaterials(isAdmin ? null : cohortId)
+  const { data, isPending, isError, refetch } = isAdmin
+    ? adminQuery
+    : instructorQuery
+  // 작성자 이름 — 매니저는 운영 계정 목록, 강사는 계정 목록이 403이라 담당 기수 로스터를 쓴다.
+  const { data: ops } = useOpsAccounts(isAdmin)
+  const { data: roster } = useCohortRoster(isAdmin ? null : cohortId)
   const createMaterial = useCreateCohortMaterial()
   const deleteMaterial = useDeleteCohortMaterial()
   const toast = useToast()
 
   const nameOf = useMemo(() => {
     const map = new Map<string, string>()
-    for (const o of ops?.items ?? []) map.set(o.id, o.name)
+    if (isAdmin) for (const o of ops?.items ?? []) map.set(o.id, o.name)
+    else for (const r of roster ?? []) map.set(r.userId, r.name)
     return (userId: string) => map.get(userId) ?? '운영자'
-  }, [ops])
+  }, [isAdmin, ops, roster])
 
   const [detail, setDetail] = useState<CohortMaterialItem | null>(null)
   // 목록 필터 — 제목·본문 검색 + 유형(문서/링크/파일)으로 좁힌다(탭 공통 필터 바 규격).
@@ -108,7 +127,7 @@ export function MaterialsPane({
     }
     createMaterial.mutate(
       {
-        courseId,
+        courseId: courseId ?? '',
         cohortId,
         title: title.trim(),
         body: body.trim() || undefined,
@@ -129,12 +148,20 @@ export function MaterialsPane({
 
   const onDownload = async (m: CohortMaterialItem) => {
     try {
-      await downloadCohortMaterialFile(
-        courseId,
-        cohortId,
-        m.id,
-        m.fileName ?? 'download',
-      )
+      if (isAdmin) {
+        await downloadCohortMaterialFile(
+          courseId ?? '',
+          cohortId,
+          m.id,
+          m.fileName ?? 'download',
+        )
+      } else {
+        await downloadInstructorMaterialFile(
+          cohortId,
+          m.id,
+          m.fileName ?? 'download',
+        )
+      }
     } catch {
       toast.danger('파일 다운로드에 실패했어요')
     }
@@ -161,7 +188,7 @@ export function MaterialsPane({
     if (!deleteTarget) return
     const m = deleteTarget
     deleteMaterial.mutate(
-      { courseId, cohortId, materialId: m.id },
+      { courseId: courseId ?? '', cohortId, materialId: m.id },
       {
         onSuccess: () => toast.success(`삭제 — ${m.title}`),
         onError: () => toast.danger('삭제에 실패했어요'),
@@ -218,9 +245,9 @@ export function MaterialsPane({
     },
     {
       key: 'action',
-      header: '액션',
+      header: isAdmin ? '액션' : '',
       align: 'right',
-      className: 'w-32',
+      className: isAdmin ? 'w-32' : 'w-24',
       cell: (m) => (
         <div className="flex justify-end gap-1.5">
           <button
@@ -233,16 +260,18 @@ export function MaterialsPane({
           >
             상세
           </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setDeleteTarget(m)
-            }}
-            className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
-          >
-            삭제
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setDeleteTarget(m)
+              }}
+              className="border-danger/40 text-danger hover:bg-danger-bg rounded-md border px-2 py-1 text-xs font-medium"
+            >
+              삭제
+            </button>
+          )}
         </div>
       ),
     },
@@ -253,7 +282,7 @@ export function MaterialsPane({
       isPending={isPending}
       isError={isError || !data}
       onRetry={() => refetch()}
-      loadingText="불러오는 중…"
+      skeleton={<SkeletonListPage columns={4} className="" />}
       errorTitle="자료실을 불러오지 못했어요"
       errorDescription="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
     >
@@ -284,9 +313,11 @@ export function MaterialsPane({
                 { value: 'file', label: '파일' },
               ]}
             />
-            <Button onClick={() => setAddOpen(true)}>
-              <Plus className="h-4 w-4" /> 자료 등록
-            </Button>
+            {isAdmin && (
+              <Button onClick={() => setAddOpen(true)}>
+                <Plus className="h-4 w-4" /> 자료 등록
+              </Button>
+            )}
           </div>
         </div>
 
@@ -317,7 +348,7 @@ export function MaterialsPane({
           size="lg"
           footer={
             <>
-              {detail && (
+              {isAdmin && detail && (
                 <Button
                   variant="secondary"
                   onClick={() => {

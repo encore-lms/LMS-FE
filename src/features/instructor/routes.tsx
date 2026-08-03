@@ -8,8 +8,9 @@ const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
 const InstructorEducationPage = lazy(
   () => import('./education/InstructorEducationPage'),
 )
-const InstructorResumeDetailPage = lazy(
-  () => import('./education/ResumeDetailPage'),
+// 이력서 상세는 운영과 공용(source='instructor') — 사본 통합(2026-08-03).
+const ResumeDetailPage = lazy(
+  () => import('@/features/admin/education/ResumeDetailPage'),
 )
 // 공지 상세 — 허브 '공지' 탭에서 카드를 눌러 진입(운영과 같은 화면).
 const InstructorNoticeDetailPage = lazy(
@@ -64,7 +65,7 @@ export const instructorRoutes: RouteObject[] = [
       // 이력서 상세 — 허브 '이력서' 탭에서 진입(문서 뷰 + 피드백 작성).
       {
         path: 'cohorts/:cohortId/resumes/:resumeId',
-        element: <InstructorResumeDetailPage />,
+        element: <ResumeDetailPage source="instructor" />,
       },
       // 공지 상세 — 허브 '공지' 탭에서 카드 클릭으로 진입.
       {

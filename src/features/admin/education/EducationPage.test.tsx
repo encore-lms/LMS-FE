@@ -128,7 +128,7 @@ function renderHub(search = '') {
 
 // 공통 탭(수강생~기록실)은 강사 허브와 상대 순서 동일, 매니저 전용 탭은 roleTag 접미(2026-08-03).
 const TAB_ORDER = [
-  '과정 홈(매니저)',
+  '과정 홈',
   '수강생',
   '공지',
   '자료실',
@@ -151,7 +151,7 @@ describe('EducationPage (기수 허브)', () => {
   })
 
   // 탭 순서 — 공통 구간은 강사 허브와 동일, 전용 탭(과정 홈·멘토링·설정)이 앞뒤.
-  it('탭 순서가 과정 홈(매니저) → … → 설정(매니저) 이다', () => {
+  it('탭 순서가 과정 홈 → … → 설정(매니저) 이다', () => {
     renderHub()
     expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual(
       TAB_ORDER,

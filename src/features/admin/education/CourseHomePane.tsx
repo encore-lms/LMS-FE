@@ -19,12 +19,22 @@ import type { CourseHome } from '@/features/student/course/types'
  *
  * <p>수강생 화면의 탭바는 빼 둔다. 여기서는 바깥 허브 탭이 그 역할을 한다.</p>
  */
-export function CourseHomePane({ cohortId }: { cohortId: string }) {
+// source: 어느 역할의 미러 엔드포인트로 부를지 — admin(기본)·instructor 둘 다 BE CourseHomeService 한 코드다.
+export function CourseHomePane({
+  cohortId,
+  source = 'admin',
+}: {
+  cohortId: string
+  source?: 'admin' | 'instructor'
+}) {
   const { data, isPending, isError, refetch } = useQuery({
-    queryKey: adminKeys.cohortHome(cohortId),
+    queryKey:
+      source === 'admin'
+        ? adminKeys.cohortHome(cohortId)
+        : (['instructor', 'education', 'home', cohortId] as const),
     queryFn: () =>
       apiClient
-        .get<CourseHome>(`/admin/cohorts/${cohortId}/home`)
+        .get<CourseHome>(`/${source}/cohorts/${cohortId}/home`)
         .then((r) => r.data),
   })
 

@@ -15,10 +15,12 @@ import { MaterialsViewPane } from './MaterialsViewPane'
 import { ResumeViewPane } from './ResumeViewPane'
 import { NoticesPane } from './NoticesPane'
 import { StudentsPane } from './StudentsPane'
+import { CourseHomePane } from '@/features/admin/education/CourseHomePane'
 
 // 강사 과정·기수 허브 — 운영 EducationPage와 같은 탭 구성(설정 탭은 강사에서 제외).
 // 수강생·자료실·이력서 = 조회 전용(강사 /instructor 미러). 과제·퀴즈·프로젝트·기록 = 기존 강사 기능 화면 임베드(기수 스코프).
 type TabKey =
+  | 'home'
   | 'students'
   | 'notices'
   | 'materials'
@@ -29,8 +31,10 @@ type TabKey =
   | 'records'
   | 'endorsements'
 
-// 공통 탭(수강생~기록실) 순서는 매니저 허브(EducationPage)와 동일 유지(2026-08-03 통일 기준측).
+// 공통 탭(과정 홈~기록실) 순서는 매니저 허브(EducationPage)와 동일 유지(2026-08-03 통일 기준측).
+// 과정 홈은 공용 탭 승격(2026-08-03) — 운영 CourseHomePane을 /instructor 미러로 소비.
 const TABS: { key: TabKey; label: string }[] = [
+  { key: 'home', label: '과정 홈' },
   { key: 'students', label: TERMS.student },
   { key: 'notices', label: TERMS.notice },
   { key: 'materials', label: '자료실' },
@@ -55,7 +59,7 @@ export default function InstructorEducationPage() {
     row?.subtitle ?? `${TERMS.educationCourse}별 학습 자료와 활동을 확인합니다`,
   )
 
-  const [tab, setTab] = useSearchParamState('tab', 'students')
+  const [tab, setTab] = useSearchParamState('tab', 'home')
 
   return (
     <div className="p-8">
@@ -63,7 +67,7 @@ export default function InstructorEducationPage() {
         to="/instructor/cohorts"
         className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1 text-sm font-medium"
       >
-        <ChevronLeft className="h-4 w-4" /> 담당 과정/기수
+        <ChevronLeft className="h-4 w-4" /> {TERMS.educationCourse}
       </Link>
 
       <Tabs
@@ -75,7 +79,9 @@ export default function InstructorEducationPage() {
       />
 
       <div className="mt-6">
-        {tab === 'students' ? (
+        {tab === 'home' ? (
+          <CourseHomePane cohortId={cohortId} source="instructor" />
+        ) : tab === 'students' ? (
           <StudentsPane cohortId={cohortId} />
         ) : tab === 'notices' ? (
           <NoticesPane

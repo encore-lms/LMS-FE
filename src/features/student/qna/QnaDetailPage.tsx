@@ -33,12 +33,6 @@ const CHIP: Record<Tone, string> = {
   accent: 'bg-accent-bg text-accent-strong',
   success: 'bg-success-bg text-success',
 }
-const ROLE_CHIP: Record<string, string> = {
-  강사: 'bg-brand/10 text-brand',
-  멘토: 'bg-accent-bg text-accent-strong',
-  수강생: 'bg-surface-muted text-fg-muted',
-}
-
 // 멘션 자동완성 후보 — 이 스레드의 실제 참여자(질문 작성자·답변자·댓글 작성자). 현재 사용자 제외.
 // BE가 멘션 이름을 스레드 참여자로만 해석해 알림을 보내므로(이름만으론 임의 사용자를 특정 불가),
 // 후보도 동일 범위여야 실제로 알림이 간다.
@@ -146,36 +140,28 @@ function AnswerItem({
   }
 
   return (
-    <section
-      className={cn(
-        card,
-        'flex flex-col gap-3',
-        answer.isAccepted && 'border-success ring-success/20 ring-1',
-      )}
-    >
+    // 답변은 카드로 가두지 않는다 — 글이 이어지는 자리라 얇은 구분선으로만 나눈다.
+    // 채택은 테두리·링이 아니라 이름 옆 칩 하나로 알린다.
+    <section className="border-divider flex flex-col gap-3 border-b pb-7 last:border-b-0 last:pb-0">
       {/* 채택 칩이 붙으면 한 줄이 모자라 날짜가 잘렸다 — 이름만 줄이고 나머지는 지킨다. */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Avatar name={answer.authorName} size={24} />
-          <span className="text-fg truncate text-[13px] font-bold">
+        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+          <Avatar name={answer.authorName} size={40} />
+          <span className="text-fg truncate text-[15px] font-bold">
             {answer.authorName}
           </span>
-          <span
-            className={cn(
-              'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap',
-              ROLE_CHIP[answer.authorRole] ?? 'bg-surface-muted text-fg-muted',
-            )}
-          >
+          {/* 역할은 칩이 아니라 이름 옆 곁말 — 칩이 늘어서면 누가 말했는지가 묻힌다. */}
+          <span className="text-fg-subtle shrink-0 text-[12px] whitespace-nowrap">
             {answer.authorRole}
           </span>
           {answer.isAccepted && (
-            <span className="bg-success-bg text-success flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap">
-              <CheckCircle2 className="size-3" /> 채택됨
+            <span className="bg-success-bg text-success shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold whitespace-nowrap">
+              채택됨
             </span>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="text-fg-subtle text-[11px] whitespace-nowrap">
+          <span className="text-fg-subtle text-[12px] whitespace-nowrap">
             {answer.createdAt}
           </span>
           {answer.canDelete && (
@@ -193,7 +179,9 @@ function AnswerItem({
         </div>
       </div>
 
-      <Markdown mentions={answer.mentions}>{answer.content}</Markdown>
+      <div className="text-[14px] leading-7">
+        <Markdown mentions={answer.mentions}>{answer.content}</Markdown>
+      </div>
 
       <div className="flex items-center justify-between">
         <button
@@ -218,23 +206,19 @@ function AnswerItem({
 
       {/* 댓글 스레드 — 1단 들여쓰기 */}
       {(open || answer.comments.length > 0) && (
-        <div className="border-border ml-1 flex flex-col gap-3 border-l-2 pl-4">
+        // 세로선을 걷어내고 여백으로만 들여쓴다 — 선이 있으면 답변과 댓글이 다른 글처럼 갈린다.
+        <div className="flex flex-col gap-4 pl-7">
           {answer.comments.map((c) => (
-            <div key={c.id} className="flex flex-col gap-1">
+            <div key={c.id} className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2">
-                <Avatar name={c.authorName} size={20} />
-                <span className="text-fg text-[12px] font-bold">
+                <Avatar name={c.authorName} size={32} />
+                <span className="text-fg text-[13px] font-bold">
                   {c.authorName}
                 </span>
-                <span
-                  className={cn(
-                    'rounded-full px-1.5 py-0.5 text-[10px] font-bold',
-                    ROLE_CHIP[c.authorRole] ?? 'bg-surface-muted text-fg-muted',
-                  )}
-                >
+                <span className="text-fg-subtle text-[12px]">
                   {c.authorRole}
                 </span>
-                <span className="text-fg-subtle text-[10px]">
+                <span className="text-fg-subtle text-[12px]">
                   {c.createdAt}
                 </span>
                 {c.canDelete && (
@@ -252,7 +236,8 @@ function AnswerItem({
                   </span>
                 )}
               </div>
-              <div className="text-[13px]">
+              {/* 이름줄 아래로 아바타 폭만큼 들여 써 누구의 말인지 이어 보인다. */}
+              <div className="pl-10 text-[14px] leading-7">
                 <Markdown mentions={c.mentions}>{c.content}</Markdown>
               </div>
             </div>
@@ -261,6 +246,7 @@ function AnswerItem({
           {/* 댓글 작성기(멘션) */}
           <div className="flex flex-col gap-2 pt-1">
             <MarkdownEditor
+              flat
               value={draft}
               onChange={setDraft}
               minHeight={72}
@@ -274,7 +260,7 @@ function AnswerItem({
               <span className="text-fg-subtle text-[11px]">
                 {mentions.length > 0
                   ? `멘션: @${mentions.join(', @')}`
-                  : '마크다운·@멘션 지원'}
+                  : '마크다운·코드 블록·이미지 삽입 지원'}
               </span>
               <button
                 type="button"
@@ -488,7 +474,7 @@ export default function QnaDetailPage() {
               </span>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-7">
               {data.answers.length === 0 && (
                 <div className="text-fg-subtle rounded-2xl p-10 text-center text-[13px]">
                   아직 답변이 없어요. 첫 답변을 남겨보세요.
@@ -513,6 +499,7 @@ export default function QnaDetailPage() {
             <section className={cn(card, 'flex flex-col gap-3')}>
               <span className="text-fg text-[14px] font-bold">답변 작성</span>
               <MarkdownEditor
+                flat
                 value={draft}
                 onChange={setDraft}
                 minHeight={120}

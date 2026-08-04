@@ -1,9 +1,8 @@
 import { Suspense, useMemo, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Calendar, Check, CheckCircle2, Search, Timer } from 'lucide-react'
+import { Calendar, Check, CheckCircle2, Timer } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
@@ -24,6 +23,8 @@ import {
   type MentoringRequestTab,
 } from './requestMeta'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { FilterSelect } from '@/components/ui/FilterSelect'
+import RequestResponseModal from './RequestResponseModal'
 
 const PERIOD_OPTIONS = [
   { value: '7', label: '최근 7일' },
@@ -60,6 +61,11 @@ export default function RequestsPage({
   // '제안 취소' — 카드에서 즉시 처리(명세 cancel 재사용은 mock 한정 가정, mockDb 주석 참조).
   const cancelMutation = useMentoringRequestAction()
 
+  // 팀 안에서 그 자리에 띄운 응답 화면 — 라우트 대신 값으로 연다.
+  const [openRequest, setOpenRequest] = useState<{
+    id: string
+    mode: string
+  } | null>(null)
   const [tab, setTab] = useState<MentoringRequestTab>('open')
   // 팀 상세에 얹힐 때는 기간을 자르지 않는다 — 그 팀 것이 몇 건 안 되는데 최근 30일로
   // 잘리면 홈에서 센 건수와 어긋나 보인다.
@@ -184,26 +190,21 @@ export default function RequestsPage({
             }))}
           />
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="text-fg-muted h-3 w-3 shrink-0" />
-              <Select
-                aria-label="기간 필터"
-                value={period}
-                onChange={setPeriod}
-                options={[...PERIOD_OPTIONS]}
-                className="h-[34px]"
-              />
-            </div>
-            <label className="border-border focus-within:border-brand bg-surface flex h-[34px] w-[220px] items-center gap-2 rounded-lg border px-3">
-              <Search className="text-fg-subtle h-3 w-3 shrink-0" />
-              <SearchInput
-                value={q}
-                onChange={setQ}
-                placeholder="팀명·요청자 검색"
-                ariaLabel="팀명·요청자 검색"
-                className="min-w-0 flex-1"
-              />
-            </label>
+            <FilterSelect
+              icon={<Calendar className="text-fg-muted h-3 w-3 shrink-0" />}
+              label="기간"
+              value={period}
+              onChange={setPeriod}
+              options={PERIOD_OPTIONS}
+              className="h-[34px]"
+            />
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder="팀명·요청자 검색"
+              ariaLabel="팀명·요청자 검색"
+              className="h-[34px] w-[220px]"
+            />
           </div>
         </section>
 
@@ -214,12 +215,27 @@ export default function RequestsPage({
             request={request}
             onCancelProposal={onCancelProposal}
             cancelPending={cancelMutation.isPending}
+            onOpen={
+              embedded
+                ? (mode) => setOpenRequest({ id: request.requestId, mode })
+                : undefined
+            }
           />
         ))}
         {visible.length === 0 && <Empty title="조건에 맞는 요청이 없어요" />}
 
         {/* /:requestId 응답 모달 — 목록 상태(탭·검색) 유지한 채 오버레이 */}
         <Suspense fallback={null}>
+          {/* 팀 안에서 연 응답 화면 — 같은 화면 위에 그대로 띄운다 */}
+          {embedded && openRequest && (
+            <RequestResponseModal
+              requestId={openRequest.id}
+              mode={openRequest.mode}
+              onClose={() => setOpenRequest(null)}
+              onResponded={() => setOpenRequest(null)}
+            />
+          )}
+
           <Outlet />
         </Suspense>
       </div>

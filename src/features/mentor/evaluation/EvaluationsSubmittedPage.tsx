@@ -73,7 +73,7 @@ export default function EvaluationsSubmittedPage() {
             <SuccessHero
               eyebrow="MENTOR EVALUATION · 제출 완료"
               title="평가가 제출되었습니다"
-              description={`팀원 ${submission.targetCount}명 5축 점수와 줄글 평가 코멘트가 저장되었습니다. 다음 단계로 추천 선택이 활성됩니다.`}
+              description={`팀원 ${submission.targetCount}명 5축 점수와 줄글 평가 코멘트가 저장되었습니다. 제출 후에도 재제출로 언제든 수정할 수 있습니다.`}
             />
             <SubmitSummaryCard
               submittedAtLabel={submission.submittedAtLabel}
@@ -93,17 +93,19 @@ export default function EvaluationsSubmittedPage() {
                     .join(' · '),
                 },
                 { label: '코멘트', value: submission.commentsLabel },
-                // 확정 정책(05-29·05-31: 최종 제출 후 수정 불가) 정합 — Figma '24시간 수정 마감' 행은
-                // 정책 충돌 카피라 교체(Figma 동반 정정 2026-06-13).
+                // 정책 완화(2026-08-04) — 상시 재제출 가능, 마지막 제출본 유효.
                 {
                   label: '수정 가능 여부',
-                  value: '최종 제출 완료 — 수정 불가',
+                  value: '상시 수정 가능 — 재제출 시 갱신',
                 },
               ]}
             />
-            {/* '평가 목록' 화면 미설계 — 팀별 평가 진입 목록 역할인 내 배정 팀으로 연결(기록). */}
+            {/* 팀원별 점수·코멘트 자세히 보기 = 평가 작성 화면 재진입(값 프리필). */}
             <NextStepBar
-              secondary={{ label: '평가 목록', to: '/mentor/teams' }}
+              secondary={{
+                label: '평가 자세히 보기 · 수정',
+                to: `/mentor/teams/${submission.teamId}/evaluation`,
+              }}
               primary={{
                 label: '추천 선택 단계로 이동',
                 to: `/mentor/teams/${submission.teamId}/recommendation`,

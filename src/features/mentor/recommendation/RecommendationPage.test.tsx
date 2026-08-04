@@ -120,7 +120,7 @@ describe('RecommendationPage', () => {
     expect(submitButton).toBeEnabled()
     await user.click(submitButton)
 
-    expect(screen.getByText('추천 선택을 최종 제출할까요?')).toBeInTheDocument()
+    expect(screen.getByText('추천 선택을 제출할까요?')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '최종 제출' }))
     expect(submitAsync).toHaveBeenCalledWith({
       teamId: 'team_nlp',
@@ -155,26 +155,28 @@ describe('RecommendationPage', () => {
     })
   })
 
-  it('잠금 — 평가 미제출 팀은 추천 대신 평가 작성 이동 안내를 표시한다', () => {
-    // 데이터마트 팀 — 본 테스트 파일 모듈 상태에선 평가 미제출(잠금)
+  // 정책 완화(2026-08-04) — 평가 선행 게이트 폐기, 평가 미작성이어도 폼이 열린다.
+  it('상시 추천 — 평가 미제출 팀도 폼이 열리고 후보 점수는 미작성으로 표시한다', () => {
+    // 데이터마트 팀 — 본 테스트 파일 모듈 상태에선 평가 미제출(점수 없음)
     mockSheet(buildTeamRecommendationSheet('team_dm'))
     renderPage('team_dm')
+    expect(screen.getByText('추천 모드 선택')).toBeInTheDocument()
+    expect(screen.getAllByText('평가 미작성').length).toBeGreaterThan(0)
     expect(
-      screen.getByText('평가 제출 후 추천을 선택할 수 있어요'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: '평가 작성으로 이동' }),
-    ).toHaveAttribute('href', '/mentor/teams/team_dm/evaluation')
+      screen.queryByText('평가 제출 후 추천을 선택할 수 있어요'),
+    ).not.toBeInTheDocument()
   })
 
-  it('제출 후 수정 불가 — 재진입 시 제출 요약 안내만 노출한다', () => {
+  // 정책 완화(2026-08-04) — 제출본은 값이 채워진 폼으로 열려 자세히 보기 · 재제출을 겸한다.
+  it('제출본 재진입 — 선택값 채워진 폼 + 수정 재제출 CTA를 노출한다', () => {
     mockSheet(buildTeamRecommendationSheet('team_nlp'))
     renderPage('team_nlp')
-    expect(screen.getByText('추천이 이미 제출되었습니다')).toBeInTheDocument()
+    expect(screen.getByText(/제출됨 · /)).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: '제출 요약 보기' }),
-    ).toHaveAttribute('href', '/mentor/recommendations?teamId=team_nlp')
-    expect(screen.queryByRole('button', { name: /추천 제출/ })).toBeNull()
+      screen.getByRole('button', { name: /수정 재제출/ }),
+    ).toBeInTheDocument()
+    // 제출본의 추천 대상(한예린)이 라디오에 선택된 채 열린다.
+    expect(screen.getByRole('radio', { name: '한예린 추천' })).toBeChecked()
   })
 })
 
@@ -214,8 +216,8 @@ describe('RecommendationsSubmittedPage', () => {
       screen.getByText('증명서 전체 공개 + 인증 완료 + 최신화 스냅샷 기준'),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: '평가·추천 목록' }),
-    ).toHaveAttribute('href', '/mentor/evaluations')
+      screen.getByRole('link', { name: '추천 자세히 보기 · 수정' }),
+    ).toHaveAttribute('href', '/mentor/teams/team_nlp/recommendation')
     expect(screen.getByRole('link', { name: /멘토 대시보드/ })).toHaveAttribute(
       'href',
       '/mentor',

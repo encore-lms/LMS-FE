@@ -40,11 +40,19 @@ describe('TeamDetailPage', () => {
     expect(screen.getByText('김수강')).toBeInTheDocument()
     expect(screen.getByText('송하늘')).toBeInTheDocument()
     expect(screen.getByText('PM')).toBeInTheDocument()
-    // 평가·추천 — N시간 미완료라 잠금 사유 표시
-    expect(screen.getByText('N시간 완료 후 활성')).toBeInTheDocument()
+    // 평가·추천 — 상시 작성 가능(2026-08-04 완화): 잠금 칩 없이 작성 화면 링크가 열린다.
+    expect(screen.queryByText('N시간 완료 후 활성')).not.toBeInTheDocument()
     expect(
-      screen.getByText('팀원 5명 평가 · N시간 완료 시 가능'),
+      screen.getByText('팀원 5명 평가 · 상시 작성·재제출 가능'),
     ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /평가 작성/ })).toHaveAttribute(
+      'href',
+      '/mentor/teams/team_rec/evaluation',
+    )
+    expect(screen.getByRole('link', { name: /추천 선택/ })).toHaveAttribute(
+      'href',
+      '/mentor/teams/team_rec/recommendation',
+    )
     // 다음 확정 예약 + 일지 4건
     expect(screen.getByText('예상 90분 · 요청자 김수강')).toBeInTheDocument()
     expect(

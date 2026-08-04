@@ -323,7 +323,7 @@ function TeamDetailBody({
           </Link>
         </section>
 
-        {/* 평가 · 추천 — N시간 완료/조기 종료 전 잠금 + 사유 표시 */}
+        {/* 평가 · 추천 — 상시 작성·재제출 가능(2026-08-04 완화). 진행률은 정보로만 남긴다. */}
         <section className={cn(CARD_SHELL, 'flex flex-col gap-3.5 p-5')}>
           <header className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -362,14 +362,16 @@ function TeamDetailBody({
             <EvalItem
               icon={Star}
               title="평가 작성"
-              description={`팀원 ${team.memberCount}명 평가 · N시간 완료 시 가능`}
+              description={`팀원 ${team.memberCount}명 평가 · 상시 작성·재제출 가능`}
               statusLabel={data.evaluation.evaluationStatusLabel}
+              to={`/mentor/teams/${team.teamId}/evaluation`}
             />
             <EvalItem
               icon={Flag}
               title="추천 선택"
-              description="팀원 중 1명 또는 추천 안 함"
+              description="팀원 중 1명 또는 추천 안 함 · 평가와 독립"
               statusLabel={data.evaluation.recommendationStatusLabel}
+              to={`/mentor/teams/${team.teamId}/recommendation`}
             />
           </ul>
         </section>
@@ -452,27 +454,36 @@ function StatTile({
   )
 }
 
+// 상시 작성 정책(2026-08-04) — 행 전체를 작성 화면으로 연결해 팀 상세에서 바로 진입한다.
 function EvalItem({
   icon: Icon,
   title,
   description,
   statusLabel,
+  to,
 }: {
   icon: LucideIcon
   title: string
   description: string
   statusLabel: string
+  to: string
 }) {
   return (
-    <li className="flex items-center gap-3">
-      <span className="bg-surface-muted border-border text-fg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-fg text-xs font-semibold">{title}</span>
-        <span className="text-fg-muted text-[11px]">{description}</span>
-      </div>
-      <StatusBadge label={statusLabel} />
+    <li>
+      <Link
+        to={to}
+        className="hover:bg-surface-muted -m-1 flex items-center gap-3 rounded-lg p-1"
+      >
+        <span className="bg-surface-muted border-border text-fg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-fg text-xs font-semibold">{title}</span>
+          <span className="text-fg-muted text-[11px]">{description}</span>
+        </div>
+        <StatusBadge label={statusLabel} />
+        <ArrowRight className="text-fg-subtle h-3 w-3 shrink-0" />
+      </Link>
     </li>
   )
 }

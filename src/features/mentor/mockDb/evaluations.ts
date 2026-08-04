@@ -10,7 +10,7 @@ import type {
 } from '../types'
 import { EVALUATION_AXIS_LABELS, mentorDb } from './db'
 import type { MentorMockEvaluation, MentorMockTeam } from './db'
-import { DOW_LABELS, nowStamp, round1, toAssignment } from './shared'
+import { nowStamp, round1, toAssignment } from './shared'
 // ───────────────────────── 평가 · 추천 (M4) ─────────────────────────
 
 export const EMPTY_SCORES: EvaluationScoreTuple = [null, null, null, null, null]
@@ -28,20 +28,10 @@ const isCompleteEvaluationEntry = (entry: {
   entry.comment.trim().length > 0 &&
   entry.comment.length <= 500
 
-/** 평가 가능 게이트 — N시간 완료 또는 운영자 조기 종료(P0_35 · 03_멘토.md §6). */
-const isEvaluationEligible = (team: MentorMockTeam) =>
-  toAssignment(team).nHoursDone || team.status === 'early_ended'
+// 정책 완화(2026-08-04) — N시간 게이트 제거, 배정 즉시 상시 평가 가능(BE 계약 정합).
 
 export const avgOf = (scores: number[]) =>
   round1(scores.reduce((sum, s) => sum + s, 0) / scores.length)
-
-/** '2026-03-19 21:14' + 24h → '2026-03-20(금) 21:14 까지' (Figma 원문 행 표기 전용). */
-export function plus24hLabel(stamp: string) {
-  const d = new Date(stamp.replace(' ', 'T'))
-  d.setDate(d.getDate() + 1)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}(${DOW_LABELS[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())} 까지`
-}
 
 /** 팀원 + 초안/제출본 병합 — 평가 카드 행(read model). */
 function evaluationEntriesOf(
@@ -72,15 +62,12 @@ export function buildTeamEvaluationSheet(
   if (!team) return null
   const assignment = toAssignment(team)
   const submitted = mentorDb.evaluations.find((e) => e.teamId === teamId)
-  const eligible = isEvaluationEligible(team)
   const members = evaluationEntriesOf(team)
   const status: MentorEvaluationStatus = submitted
     ? 'submitted'
-    : !eligible
-      ? 'not_eligible'
-      : members.every(isCompleteEvaluationEntry)
-        ? 'ready_to_submit'
-        : 'draft'
+    : members.every(isCompleteEvaluationEntry)
+      ? 'ready_to_submit'
+      : 'draft'
   return {
     teamId,
     cohortLabel: team.cohortLabel,
@@ -88,16 +75,14 @@ export function buildTeamEvaluationSheet(
     memberCount: team.members.length,
     allocatedHours: assignment.allocatedHours,
     recognizedHours: assignment.recognizedHours,
-    eligible,
+    eligible: true,
     eligibleLabel:
       team.status === 'early_ended'
         ? '조기 종료 · 평가 가능'
         : assignment.nHoursDone
           ? 'N시간 완료 · 평가 가능'
-          : 'N시간 미완료 · 평가 잠금',
-    lockReasonLabel: eligible
-      ? null
-      : `N시간 완료 후 활성 — 인정 ${assignment.recognizedHours}h / 배정 ${assignment.allocatedHours}h`,
+          : '상시 평가 가능',
+    lockReasonLabel: null,
     status,
     submittedAtLabel:
       submitted?.submittedAtLabel ?? submitted?.writtenAtLabel ?? null,
@@ -136,8 +121,8 @@ function normalizeEvaluationPayload(
   }
 }
 
-/** 평가 공통 guard — 미배정 403 · 제출 후 수정 불가 409 · 게이트 422. */
-function guardEvaluation(
+/** 팀 스코프 guard — 미배정 403(정책 완화로 N시간 422 게이트는 폐기). */
+function guardTeam(
   teamId: string,
 ): { team: MentorMockTeam } | MentorEvaluationMutationResult {
   const team = mentorDb.teams.find((t) => t.teamId === teamId)
@@ -147,29 +132,25 @@ function guardEvaluation(
       'MENTOR_SCOPE_FORBIDDEN',
       '본인에게 배정된 팀이 아닙니다.',
     )
-  if (mentorDb.evaluations.some((e) => e.teamId === teamId))
-    // 최종 제출 후 PATCH/DELETE endpoint 없음(05-31 확정) — 코드명은 명세 대조 전 추정 TODO.
-    return evalError(
-      409,
-      'MENTOR_EVALUATION_ALREADY_SUBMITTED',
-      '제출된 평가는 수정할 수 없습니다.',
-    )
-  if (!isEvaluationEligible(team))
-    return evalError(
-      422,
-      'MENTOR_EVALUATION_NOT_ELIGIBLE',
-      'N시간 완료 또는 조기 종료 후에 평가할 수 있습니다.',
-    )
   return { team }
 }
 
-/** PUT /mentor/v1/teams/{teamId}/evaluation/draft — 부분 입력 그대로 보관(자동/임시 저장). */
+/**
+ * PUT /mentor/v1/teams/{teamId}/evaluation/draft — 부분 입력 그대로 보관(자동/임시 저장).
+ * 제출본의 draft 덮어쓰기는 409 — 수정은 재제출로만(BE 규약 정합).
+ */
 export function saveEvaluationDraft(
   teamId: string,
   payload: MentorEvaluationDraftPayload,
 ): MentorEvaluationMutationResult {
-  const guarded = guardEvaluation(teamId)
+  const guarded = guardTeam(teamId)
   if ('ok' in guarded) return guarded
+  if (mentorDb.evaluations.some((e) => e.teamId === teamId))
+    return evalError(
+      409,
+      'MENTOR_EVALUATION_ALREADY_SUBMITTED',
+      '제출된 평가는 재제출로만 수정할 수 있습니다.',
+    )
   mentorDb.evaluationDrafts[teamId] = normalizeEvaluationPayload(
     guarded.team,
     payload,
@@ -178,8 +159,8 @@ export function saveEvaluationDraft(
 }
 
 /**
- * POST /mentor/v1/teams/{teamId}/evaluation/submit — 최종 제출(submittedAt/lockedAt).
- * 전원 5축 점수 + 줄글 코멘트 필수(미충족 422), 제출 후 수정·삭제 불가(409).
+ * POST /mentor/v1/teams/{teamId}/evaluation/submit — 제출·재제출(상시 수정, 마지막 제출본 유효).
+ * 전원 5축 점수 + 줄글 코멘트 필수(미충족 422).
  * 제출 후에도 팀 상태는 evaluation_needed 유지 — 추천 제출까지 완료해야 completed
  * (활동 인정 요건 = 평가 + 추천 제출 완료, P0_32).
  */
@@ -187,9 +168,14 @@ export function submitEvaluation(
   teamId: string,
   payload?: MentorEvaluationDraftPayload,
 ): MentorEvaluationMutationResult {
-  const guarded = guardEvaluation(teamId)
+  const guarded = guardTeam(teamId)
   if ('ok' in guarded) return guarded
   const { team } = guarded
+  // 재제출 — 기존 제출본을 잠시 걷어내야 draft/제출 병합(evaluationEntriesOf)이 새 payload를 본다.
+  // 검증 실패 시 원복해 마지막 제출본을 보존한다.
+  const prevIndex = mentorDb.evaluations.findIndex((e) => e.teamId === teamId)
+  const prev = prevIndex >= 0 ? mentorDb.evaluations[prevIndex] : null
+  if (prevIndex >= 0) mentorDb.evaluations.splice(prevIndex, 1)
   if (payload)
     mentorDb.evaluationDrafts[teamId] = normalizeEvaluationPayload(
       team,
@@ -197,13 +183,15 @@ export function submitEvaluation(
     )
   const entries = evaluationEntriesOf(team)
   const missing = entries.filter((e) => !isCompleteEvaluationEntry(e)).length
-  if (missing > 0)
+  if (missing > 0) {
+    if (prev) mentorDb.evaluations.push(prev)
     // 코드명은 명세 에러 22종 대조 전 추정(MENTOR_EVALUATION_* 계열) — BE 확정 시 정합 TODO.
     return evalError(
       422,
       'MENTOR_EVALUATION_REQUIRED_FIELD_MISSING',
       `팀원 전체 5축 점수와 줄글 평가 코멘트를 입력해 주세요 (${missing}명 미완료).`,
     )
+  }
   const stamp = nowStamp().replace('T', ' ')
   mentorDb.evaluations.push({
     teamId,
@@ -252,7 +240,8 @@ function toEvaluationSubmission(
       commentCount === entries.length
         ? `${entries.length}명 모두 작성`
         : `${commentCount} / ${entries.length}명 작성`,
-    editDeadlineLabel: plus24hLabel(submittedAtLabel),
+    // 정책 완화(2026-08-04) — 24h 마감 폐기(BE 계약 정합).
+    editDeadlineLabel: '상시 수정 가능',
   }
 }
 

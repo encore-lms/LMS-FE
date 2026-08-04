@@ -86,6 +86,8 @@ function RecommendationForm({
   const submitted =
     sheet.status === 'submitted_recommended' ||
     sheet.status === 'submitted_not_recommended'
+  // 계약 종료 마감 — 저장·제출 전부 잠금, 화면은 읽기 전용으로 열어 자세히 보기만 허용.
+  const closed = sheet.submissionClosed
 
   const [mode, setMode] = useState<MentorRecommendationMode | null>(
     sheet.draft.mode,
@@ -131,10 +133,10 @@ function RecommendationForm({
       skipFirstAutosave.current = false
       return
     }
-    if (submitted) return
+    if (submitted || closed) return
     const timer = setTimeout(() => autosaveRef.current(), AUTOSAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [payload, submitted])
+  }, [payload, submitted, closed])
 
   const onConfirmSubmit = async () => {
     try {
@@ -177,11 +179,13 @@ function RecommendationForm({
         <span className="text-fg text-xs font-medium">추천 선택</span>
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
-          {submitted
-            ? `제출됨 · ${sheet.submittedAtLabel ?? ''} — 수정 후 재제출`
-            : savedLabel
-              ? `자동 저장 · ${savedLabel}`
-              : '저장 전 — 자동 저장 대기'}
+          {closed
+            ? `제출 마감 — 계약 종료 (${sheet.submissionDeadlineLabel ?? ''})`
+            : submitted
+              ? `제출됨 · ${sheet.submittedAtLabel ?? ''} — 수정 후 재제출`
+              : savedLabel
+                ? `자동 저장 · ${savedLabel}`
+                : '저장 전 — 자동 저장 대기'}
         </span>
       </div>
 
@@ -202,6 +206,8 @@ function RecommendationForm({
             <span className="text-xs font-medium">
               {sheet.cohortLabel} · {sheet.memberCount}명 평가 평균{' '}
               {sheet.teamAverage ?? '-'} / 5.0
+              {sheet.submissionDeadlineLabel &&
+                ` · 제출 마감 ${sheet.submissionDeadlineLabel}`}
             </span>
           </div>
         </div>
@@ -246,6 +252,7 @@ function RecommendationForm({
         >
           <ModeCard
             selected={mode === 'recommend'}
+            disabled={closed}
             onSelect={() => setMode('recommend')}
             icon={<Star className="h-6 w-6" />}
             title={RECOMMENDATION_MODE_CARDS.recommend.title}
@@ -253,6 +260,7 @@ function RecommendationForm({
           />
           <ModeCard
             selected={mode === 'none'}
+            disabled={closed}
             onSelect={() => setMode('none')}
             icon={<XCircle className="h-6 w-6" />}
             title={RECOMMENDATION_MODE_CARDS.none.title}
@@ -288,7 +296,7 @@ function RecommendationForm({
               candidate={candidate}
               index={index}
               selected={recommendMode && selectedId === candidate.studentId}
-              disabled={!recommendMode}
+              disabled={!recommendMode || closed}
               onSelect={() => setSelectedId(candidate.studentId)}
             />
           ))}
@@ -334,6 +342,7 @@ function RecommendationForm({
             aria-label="증명서용 간략 요약"
             value={summary}
             maxLength={RECOMMENDATION_SUMMARY_LIMIT}
+            readOnly={closed}
             onChange={(e) => setSummary(e.target.value)}
             placeholder={RECOMMENDATION_SUMMARY_SUBTITLE}
             className="border-brand text-fg placeholder:text-fg-subtle h-[140px] w-full resize-y rounded-[10px] border px-3.5 py-3 text-[13px] leading-5 outline-none"
@@ -392,6 +401,7 @@ function RecommendationForm({
               role="switch"
               aria-checked={notify}
               aria-label="수강생에게 즉시 알림 발송"
+              disabled={closed}
               onClick={() => setNotify((v) => !v)}
               className={cn(
                 'relative h-[26px] w-11 shrink-0 rounded-full transition-colors',
@@ -429,15 +439,19 @@ function RecommendationForm({
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            disabled={!canSubmit || submitMutation.isPending}
+            disabled={closed || !canSubmit || submitMutation.isPending}
             className={cn(
               'flex items-center gap-1.5 rounded-[10px] px-5 py-2.5 text-[13px] font-bold',
-              canSubmit
+              !closed && canSubmit
                 ? 'bg-brand text-on-color hover:bg-brand/90'
                 : 'bg-fg-subtle text-on-color cursor-not-allowed',
             )}
           >
-            {submitted ? '수정 재제출' : '추천 제출'}
+            {closed
+              ? '제출 마감 — 계약 종료'
+              : submitted
+                ? '수정 재제출'
+                : '추천 제출'}
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -458,12 +472,15 @@ function RecommendationForm({
 
 function ModeCard({
   selected,
+  disabled = false,
   onSelect,
   icon,
   title,
   desc,
 }: {
   selected: boolean
+  /** 계약 종료 마감 — 선택 잠금(자세히 보기 전용). */
+  disabled?: boolean
   onSelect: () => void
   icon: React.ReactNode
   title: string
@@ -474,6 +491,7 @@ function ModeCard({
       type="button"
       role="radio"
       aria-checked={selected}
+      disabled={disabled}
       onClick={onSelect}
       className={cn(
         'flex flex-1 basis-64 items-center gap-3.5 rounded-[14px] p-[18px] text-left',

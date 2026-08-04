@@ -23,18 +23,28 @@ export interface LinkPreview {
   siteName: string | null
 }
 
-export async function uploadEditorFile(file: File): Promise<UploadedFile> {
+/** 본문 안 업로드를 읽고 쓰는 사람의 역할. */
+export type UploadScope = 'student' | 'staff'
+
+/**
+ * 본문에 넣을 파일을 올린다.
+ *
+ * <p>올리는 경로도 역할별로 갈린다 — BE 가 경로 앞머리로 역할을 가르기 때문에 강사 경로를
+ * 수강생이 부르면 서비스 로직에 닿기도 전에 403 이 된다.</p>
+ */
+export async function uploadEditorFile(
+  file: File,
+  scope: UploadScope = 'staff',
+): Promise<UploadedFile> {
   const form = new FormData()
   form.append('file', file)
+  const prefix = scope === 'staff' ? '/instructor' : '/student'
   const res = await apiClient.postForm<UploadedFile>(
-    '/instructor/editor/uploads',
+    `${prefix}/editor/uploads`,
     form,
   )
   return res.data
 }
-
-/** 본문 안 업로드를 읽는 사람의 역할로 받는다. */
-export type UploadScope = 'student' | 'staff'
 
 /** 본문에 담긴 `upload:{id}` → 역할별 실제 경로. */
 export function uploadPath(id: string, scope: UploadScope): string {

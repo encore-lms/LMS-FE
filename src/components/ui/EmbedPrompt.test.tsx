@@ -43,11 +43,16 @@ const md = () => screen.getByTestId('md').textContent ?? ''
 // 블록을 고르면 자리만 잡히고, 그 줄을 눌러야 고르는 칸이 펼쳐진다.
 // 고른 블록 이름에서 어느 자리인지 끌어낸다 — 인자로 따로 받으면 둘이 어긋난 채 통과한다.
 const 자리 = {
-  이미지: '이미지 업로드 또는 임베드',
+  이미지: '이미지 업로드',
   파일: '파일 업로드 또는 임베드',
   '웹 북마크': '웹 북마크 추가',
 } as const
 
+/**
+ * 블록을 고르고 값을 받는 자리까지 연다.
+ *
+ * <p>이미지는 올릴 길밖에 없어 자리를 누르면 곧바로 파일 창이 열린다 — 펼쳐지는 칸이 없다.</p>
+ */
 async function pick(
   user: ReturnType<typeof userEvent.setup>,
   label: keyof typeof 자리,
@@ -56,7 +61,8 @@ async function pick(
   await user.keyboard('/')
   await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument())
   await user.click(screen.getByText(label))
-  await user.click(await screen.findByText(자리[label]))
+  const 줄 = await screen.findByText(자리[label])
+  if (label !== '이미지') await user.click(줄)
 }
 
 beforeEach(() => {
@@ -306,14 +312,44 @@ describe('본문 임베드', () => {
     const user = userEvent.setup()
     render(<Editor />)
 
-    await pick(user, '이미지')
+    await pick(user, '파일')
     expect(
       screen.getByRole('button', { name: '파일을 선택하세요' }),
     ).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: '취소' }))
 
-    expect(screen.queryByText(자리['이미지'])).not.toBeInTheDocument()
+    expect(screen.queryByText(자리['파일'])).not.toBeInTheDocument()
+  })
+
+  // 올릴 길밖에 없는 블록에서 한 단계를 더 누르게 하면 같은 말을 두 번 시키는 셈이다.
+  it('이미지는 고르면 곧바로 파일 창이 열린다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await user.click(body())
+    await user.keyboard('/이미지')
+    await waitFor(() => expect(screen.getByText('이미지')).toBeInTheDocument())
+    await user.click(screen.getByText('이미지'))
+
+    // 자리는 잡히되 고르는 칸(탭·버튼)은 펼쳐지지 않는다 — 파일 창이 그 자리를 대신한다.
+    expect(await screen.findByText('이미지 업로드')).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: '파일을 선택하세요' }),
+    ).not.toBeInTheDocument()
+    // 그래도 파일 입력은 살아 있어 바로 고를 수 있다.
+    expect(screen.getByLabelText('이미지 파일 선택')).toBeInTheDocument()
+  })
+
+  it('이미지는 링크로 넣을 수 없다', async () => {
+    const user = userEvent.setup()
+    render(<Editor />)
+
+    await pick(user, '이미지')
+
+    expect(
+      screen.queryByRole('button', { name: '링크' }),
+    ).not.toBeInTheDocument()
   })
 
   // 처음부터 큰 상자가 열리면 쓰던 글이 밀려 흐름이 끊긴다.

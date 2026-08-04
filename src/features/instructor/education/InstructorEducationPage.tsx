@@ -9,7 +9,7 @@ import QuizListPage from '../quizzes/QuizListPage'
 import QnaListPage from '@/features/student/qna/QnaListPage'
 import EndorsementsPage from '../endorsements/EndorsementsPage'
 import AssignmentsPage from '../assignments/AssignmentsPage'
-import ProjectReviewPage from '../reviews/ProjectReviewPage'
+import { ProjectsPane } from '@/features/admin/education/ProjectsPane'
 import RecordReviewPage from '../reviews/RecordReviewPage'
 import { useInstructorCohorts } from '../api/console'
 import { MaterialsPane } from '@/features/admin/education/MaterialsPane'
@@ -102,7 +102,19 @@ export default function InstructorEducationPage() {
         ) : tab === 'quizzes' ? (
           <QuizListPage embedded cohortId={cohortId} />
         ) : tab === 'projects' ? (
-          <ProjectReviewPage embedded cohortId={cohortId} />
+          // 기수 프로젝트 현황(운영 ProjectsPane 공용, 조회 전용) — 카드에서 워크스페이스 열람.
+          // 인증 검토 큐는 기존 단독 화면으로 안내(2026-08-05, ProjectsPane 공용화 결정).
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-end">
+              <Link
+                to="/instructor/projects/review"
+                className="text-brand text-[13px] font-semibold"
+              >
+                인증 검토 바로가기 →
+              </Link>
+            </div>
+            <ProjectsPane cohortId={cohortId} source="instructor" />
+          </div>
         ) : tab === 'resume' ? (
           <ResumePane cohortId={cohortId} source="instructor" />
         ) : tab === 'records' ? (

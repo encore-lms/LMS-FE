@@ -1,6 +1,10 @@
 import { useEffect } from 'react'
-import { useNavigate, useRouteError } from 'react-router-dom'
-import { AlertTriangle } from 'lucide-react'
+import {
+  isRouteErrorResponse,
+  useNavigate,
+  useRouteError,
+} from 'react-router-dom'
+import { AlertTriangle, Compass } from 'lucide-react'
 import { Empty } from '@/components/ui/Empty'
 import { Button } from '@/components/ui/Button'
 import { isChunkLoadError, reloadForStaleChunk } from './staleChunk'
@@ -19,6 +23,21 @@ export function RouteErrorBoundary() {
     // 재배포로 옛 청크가 사라진 경우 최신 빌드로 1회 자동 새로고침해 복구한다.
     if (stale) reloadForStaleChunk()
   }, [error, stale])
+
+  // 없는 주소는 오류가 아니다 — '다시 시도'하라고 하면 새로고침하면 될 것처럼 읽힌다.
+  // (옮겨 가거나 걷어낸 화면의 옛 주소를 북마크로 들고 오는 경우가 대부분이다.)
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return (
+      <div className="p-8">
+        <Empty
+          icon={<Compass />}
+          title="찾을 수 없는 주소예요"
+          description="주소가 바뀌었거나 없어진 화면일 수 있어요. 메뉴에서 다시 찾아 주세요."
+          action={<Button onClick={() => navigate('/')}>홈으로</Button>}
+        />
+      </div>
+    )
+  }
 
   if (stale) {
     return (

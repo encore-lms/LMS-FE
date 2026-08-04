@@ -8,6 +8,9 @@ const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const CourseHomePage = lazy(() => import('./course/home/CourseHomePage'))
 const MaterialsPage = lazy(() => import('./course/materials/MaterialsPage'))
 const CourseNoticesPage = lazy(() => import('./course/notices/NoticesPage'))
+const CourseNoticeDetailPage = lazy(
+  () => import('./course/notices/NoticeDetailPage'),
+)
 const AssignmentsPage = lazy(
   () => import('./course/assignments/AssignmentsPage'),
 )
@@ -78,6 +81,11 @@ export const studentRoutes: RouteObject[] = [
       // 사이드바 '나의 과정' → /student/course (강의 홈). 자료실은 하위 탭.
       { path: 'course', element: <CourseHomePage /> },
       { path: 'course/notices', element: <CourseNoticesPage /> },
+      // 공지 상세 — 스태프 상세와 같은 한 벌(읽기 전용, 2026-08-05).
+      {
+        path: 'course/notices/:noticeId',
+        element: <CourseNoticeDetailPage />,
+      },
       { path: 'course/materials', element: <MaterialsPage /> },
       { path: 'course/assignments', element: <AssignmentsPage /> },
       {

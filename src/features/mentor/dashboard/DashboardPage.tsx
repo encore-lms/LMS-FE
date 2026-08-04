@@ -61,16 +61,18 @@ export default function DashboardPage() {
   usePageHeader('대시보드', MENTOR_FLOW_CAPTION)
   const { data, isPending, isError, refetch } = useMentorDashboard()
 
-  // 해야 할 일 링크 목적지 — 평가는 평가 필요 팀으로 직행, 나머지는 canonical 목록 경로.
+  // 해야 할 일 링크 목적지 — 전부 팀 안으로 보낸다(2026-08-04 예약·일지·평가 탭 이관).
+  // 팀을 특정할 수 있으면 그 팀 탭으로, 아니면 배정 팀 목록에서 고르게 한다.
   const evalTeam = data?.teamCards.find((t) => t.status === 'evaluation_needed')
+  const logTeam = data?.teamCards.find((t) => t.status === 'log_needed')
+  const fixTeam = data?.teamCards.find((t) => t.status === 'change_requested')
+  const teamTab = (teamId: string | undefined, tab: string) =>
+    teamId ? `/mentor/teams/${teamId}?tab=${tab}` : '/mentor/teams'
   const todoTo: Record<MentorTodoType, string> = {
-    log_write: '/mentor/mentoring-logs',
-    evaluation: evalTeam
-      ? `/mentor/teams/${evalTeam.teamId}/evaluation`
-      : '/mentor/evaluations',
-    // 추천 대상 팀 직행 라우팅은 추천 PR에서 확정 — 우선 제출 완료 페이지 경로.
-    recommendation: '/mentor/recommendations',
-    change_response: '/mentor/mentoring-logs',
+    log_write: teamTab(logTeam?.teamId, 'logs'),
+    evaluation: teamTab(evalTeam?.teamId, 'evaluation'),
+    recommendation: teamTab(evalTeam?.teamId, 'evaluation'),
+    change_response: teamTab(fixTeam?.teamId, 'logs'),
   }
 
   const teamColumns: Column<MentorTeamAssignment>[] = [

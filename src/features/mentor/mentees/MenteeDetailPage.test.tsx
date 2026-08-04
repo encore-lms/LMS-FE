@@ -74,11 +74,11 @@ describe('MenteeDetailPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /평가로 이동/ })).toHaveAttribute(
       'href',
-      '/mentor/teams/team_nlp/evaluation',
+      '/mentor/teams/team_nlp?tab=evaluation',
     )
     expect(screen.getByRole('link', { name: /추천으로 이동/ })).toHaveAttribute(
       'href',
-      '/mentor/teams/team_nlp/recommendation',
+      '/mentor/teams/team_nlp?tab=evaluation',
     )
   })
 

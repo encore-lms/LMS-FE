@@ -432,14 +432,14 @@ function MenteeDetailBody({
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to={`/mentor/teams/${student.teamId}/evaluation`}
+            to={`/mentor/teams/${student.teamId}?tab=evaluation`}
             className="border-on-color/70 text-on-color hover:bg-on-color/10 flex items-center gap-1.5 rounded-[9px] border px-3.5 py-2 text-xs font-medium"
           >
             평가로 이동
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
           <Link
-            to={`/mentor/teams/${student.teamId}/recommendation`}
+            to={`/mentor/teams/${student.teamId}?tab=evaluation`}
             className="bg-success text-on-color hover:bg-success/90 flex items-center gap-1.5 rounded-[9px] px-4 py-2 text-xs font-bold"
           >
             추천으로 이동

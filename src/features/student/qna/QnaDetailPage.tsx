@@ -18,6 +18,8 @@ import {
   useDeleteComment,
   useDeleteQuestion,
   useQnaDetail,
+  useUpdateAnswer,
+  useUpdateComment,
 } from '../api/qna'
 import { useQnaBase } from './useQnaBase'
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
@@ -93,6 +95,82 @@ function DeleteButton({
   )
 }
 
+/** 글 옆 '수정' — 삭제와 나란히 두는 잔글씨 버튼. */
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-fg-subtle hover:text-fg text-[11px] font-semibold transition-colors"
+    >
+      수정
+    </button>
+  )
+}
+
+/**
+ * 쓴 자리에서 고쳐 쓰기 — 답변·댓글 공용.
+ *
+ * <p>따로 페이지로 보내지 않는다. 앞뒤 글이 보이는 채로 고쳐야 무엇을 고치는지 알 수 있다.</p>
+ */
+function InlineEditor({
+  initial,
+  mentionNames,
+  uploadScope,
+  minHeight,
+  maxLength,
+  pending,
+  onCancel,
+  onSave,
+}: {
+  initial: string
+  mentionNames: string[]
+  uploadScope: UploadScope
+  minHeight: number
+  maxLength: number
+  pending: boolean
+  onCancel: () => void
+  onSave: (content: string, mentions: string[]) => void
+}) {
+  const toast = useToast()
+  const [value, setValue] = useState(initial)
+  const [mentions, setMentions] = useState<string[]>([])
+  const unchanged = value.trim() === initial.trim()
+  return (
+    <div className="flex flex-col gap-2">
+      <MarkdownEditor
+        flat
+        uploadScope={uploadScope}
+        value={value}
+        onChange={setValue}
+        minHeight={minHeight}
+        maxLength={maxLength}
+        ariaLabel="내용 수정"
+        mentionNames={mentionNames}
+        onMentionsChange={setMentions}
+        onImageRejected={(msg) => toast.danger(msg)}
+      />
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-fg-subtle hover:text-fg text-[12px] font-semibold transition-colors"
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={() => onSave(value.trim(), mentions)}
+          disabled={!value.trim() || unchanged || pending}
+          className={buttonClass({ size: 'sm' })}
+        >
+          {pending ? '저장 중…' : '저장'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // 답변 1건 + 댓글 스레드 + 댓글 작성기(멘션). 답변별 작성 상태를 자체 보유.
 function AnswerItem({
   answer,
@@ -122,9 +200,14 @@ function AnswerItem({
   const createComment = useCreateComment(questionId, answer.id)
   const deleteAnswer = useDeleteAnswer(questionId)
   const deleteComment = useDeleteComment(questionId, answer.id)
+  const updateAnswer = useUpdateAnswer(questionId)
+  const updateComment = useUpdateComment(questionId, answer.id)
   const [draft, setDraft] = useState('')
   const [mentions, setMentions] = useState<string[]>([])
   const [open, setOpen] = useState(false)
+  // 고쳐 쓰는 중인 글 — 답변은 boolean, 댓글은 어느 댓글인지.
+  const [editingAnswer, setEditingAnswer] = useState(false)
+  const [editingComment, setEditingComment] = useState<string | null>(null)
 
   const submit = () => {
     if (!draft.trim() || createComment.isPending) return
@@ -168,26 +251,54 @@ function AnswerItem({
           <span className="text-fg-subtle text-[12px] whitespace-nowrap">
             {answer.createdAt}
           </span>
-          {answer.canDelete && (
-            <DeleteButton
-              pending={deleteAnswer.isPending}
-              confirmText="답변·댓글 삭제?"
-              onConfirm={() =>
-                deleteAnswer.mutate(answer.id, {
-                  onSuccess: () => toast.success('답변을 삭제했어요'),
-                  onError: () => toast.danger('답변 삭제에 실패했어요'),
-                })
-              }
-            />
+          {/* canDelete 는 곧 '내가 쓴 글' — 수정도 작성자만 할 수 있다(BE 소유자 가드). */}
+          {answer.canDelete && !editingAnswer && (
+            <>
+              <EditButton onClick={() => setEditingAnswer(true)} />
+              <DeleteButton
+                pending={deleteAnswer.isPending}
+                confirmText="답변·댓글 삭제?"
+                onConfirm={() =>
+                  deleteAnswer.mutate(answer.id, {
+                    onSuccess: () => toast.success('답변을 삭제했어요'),
+                    onError: () => toast.danger('답변 삭제에 실패했어요'),
+                  })
+                }
+              />
+            </>
           )}
         </div>
       </div>
 
-      <div className="text-[14px] leading-7">
-        <Markdown mentions={answer.mentions} uploadScope={uploadScope}>
-          {answer.content}
-        </Markdown>
-      </div>
+      {editingAnswer ? (
+        <InlineEditor
+          initial={answer.content}
+          mentionNames={mentionNames}
+          uploadScope={uploadScope}
+          minHeight={120}
+          maxLength={2000}
+          pending={updateAnswer.isPending}
+          onCancel={() => setEditingAnswer(false)}
+          onSave={(content, mts) =>
+            updateAnswer.mutate(
+              { answerId: answer.id, input: { content, mentions: mts } },
+              {
+                onSuccess: () => {
+                  setEditingAnswer(false)
+                  toast.success('답변을 수정했어요')
+                },
+                onError: () => toast.danger('답변 수정에 실패했어요'),
+              },
+            )
+          }
+        />
+      ) : (
+        <div className="text-[14px] leading-7">
+          <Markdown mentions={answer.mentions} uploadScope={uploadScope}>
+            {answer.content}
+          </Markdown>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <button
@@ -227,8 +338,9 @@ function AnswerItem({
                 <span className="text-fg-subtle text-[12px]">
                   {c.createdAt}
                 </span>
-                {c.canDelete && (
-                  <span className="ml-auto">
+                {c.canDelete && editingComment !== c.id && (
+                  <span className="ml-auto flex items-center gap-3">
+                    <EditButton onClick={() => setEditingComment(c.id)} />
                     <DeleteButton
                       pending={deleteComment.isPending}
                       confirmText="삭제?"
@@ -244,9 +356,33 @@ function AnswerItem({
               </div>
               {/* 이름줄 아래로 아바타 폭만큼 들여 써 누구의 말인지 이어 보인다. */}
               <div className="pl-10 text-[14px] leading-7">
-                <Markdown mentions={c.mentions} uploadScope={uploadScope}>
-                  {c.content}
-                </Markdown>
+                {editingComment === c.id ? (
+                  <InlineEditor
+                    initial={c.content}
+                    mentionNames={mentionNames}
+                    uploadScope={uploadScope}
+                    minHeight={72}
+                    maxLength={1000}
+                    pending={updateComment.isPending}
+                    onCancel={() => setEditingComment(null)}
+                    onSave={(content, mts) =>
+                      updateComment.mutate(
+                        { commentId: c.id, input: { content, mentions: mts } },
+                        {
+                          onSuccess: () => {
+                            setEditingComment(null)
+                            toast.success('댓글을 수정했어요')
+                          },
+                          onError: () => toast.danger('댓글 수정에 실패했어요'),
+                        },
+                      )
+                    }
+                  />
+                ) : (
+                  <Markdown mentions={c.mentions} uploadScope={uploadScope}>
+                    {c.content}
+                  </Markdown>
+                )}
               </div>
             </div>
           ))}

@@ -115,8 +115,8 @@ describe('EvaluationPage', () => {
     expect(submitButton).toBeEnabled()
     await user.click(submitButton)
 
-    // 최종 제출 확인 모달 — 제출 후 수정 불가 + 운영자 조회 전용 안내
-    expect(screen.getByText('평가를 최종 제출할까요?')).toBeInTheDocument()
+    // 제출 확인 모달 — 상시 재제출 안내 + 운영자 조회 전용 안내
+    expect(screen.getByText('평가를 제출할까요?')).toBeInTheDocument()
     expect(
       screen.getByText(
         '운영자는 통계 및 평가 결과만 조회할 수 있으며, 제출된 평가·추천을 수정하거나 반려하지 않습니다.',
@@ -139,24 +139,25 @@ describe('EvaluationPage', () => {
     expect(await screen.findByText('평가 제출 완료 페이지')).toBeInTheDocument()
   })
 
-  it('잠금 — N시간 미완료 팀은 작성 폼 대신 잠금 사유를 표시한다', () => {
+  // 정책 완화(2026-08-04) — N시간 미완료여도 상시 작성 폼이 열린다.
+  it('상시 작성 — N시간 미완료 팀도 작성 폼과 상시 라벨을 보여준다', () => {
     mockSheet(buildTeamEvaluationSheet('team_rec'))
     renderPage('team_rec')
-    expect(screen.getByText('아직 평가를 시작할 수 없어요')).toBeInTheDocument()
+    expect(screen.getByText('상시 평가 가능')).toBeInTheDocument()
+    expect(screen.getByText('평가 기준 · 5축 고정')).toBeInTheDocument()
     expect(
-      screen.getByText(/N시간 완료 후 활성 — 인정 8h \/ 배정 12h/),
-    ).toBeInTheDocument()
-    expect(screen.queryByText('평가 기준 · 5축 고정')).not.toBeInTheDocument()
+      screen.queryByText('아직 평가를 시작할 수 없어요'),
+    ).not.toBeInTheDocument()
   })
 
-  it('제출 후 수정 불가 — 재진입 시 안내와 추천 단계 링크만 노출한다', () => {
+  // 정책 완화(2026-08-04) — 제출본은 값이 채워진 폼으로 열려 자세히 보기 · 재제출을 겸한다.
+  it('제출본 재진입 — 값 채워진 폼 + 수정 재제출 CTA, 임시 저장은 숨긴다', () => {
     mockSheet(buildTeamEvaluationSheet('team_nlp'))
     renderPage('team_nlp')
-    expect(screen.getByText('평가가 이미 제출되었습니다')).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: '추천 선택 단계로 이동' }),
-    ).toHaveAttribute('href', '/mentor/teams/team_nlp/recommendation')
-    expect(screen.queryByRole('button', { name: /평가 제출/ })).toBeNull()
+    expect(screen.getByText(/제출됨 · /)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /수정 재제출/ })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: '임시 저장' })).toBeNull()
+    expect(screen.getByText('평가 기준 · 5축 고정')).toBeInTheDocument()
   })
 })
 
@@ -199,11 +200,12 @@ describe('EvaluationsSubmittedPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('5명 모두 작성')).toBeInTheDocument()
     expect(screen.getByText('수정 가능 여부')).toBeInTheDocument()
-    expect(screen.getByText('최종 제출 완료 — 수정 불가')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '평가 목록' })).toHaveAttribute(
-      'href',
-      '/mentor/teams',
-    )
+    expect(
+      screen.getByText('상시 수정 가능 — 재제출 시 갱신'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: '평가 자세히 보기 · 수정' }),
+    ).toHaveAttribute('href', '/mentor/teams/team_nlp/evaluation')
     expect(
       screen.getByRole('link', { name: /추천 선택 단계로 이동/ }),
     ).toHaveAttribute('href', '/mentor/teams/team_nlp/recommendation')

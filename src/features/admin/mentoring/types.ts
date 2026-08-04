@@ -54,6 +54,8 @@ export interface MentorAssignmentRow {
   /** 'N시간 완료' — 상태가 아닌 보조 라벨(05-26 결정) */
   nHoursDone: boolean
   logTemplateId: string | null
+  /** 계약 종료일 'yyyy-MM-dd' — null 이면 마감 없음(평가·추천 제출 마감 기준). */
+  contractEndDate?: string | null
 }
 
 export interface MentorAssignmentsData {
@@ -149,6 +151,8 @@ export interface MentorAssignmentFromStudentsRequest {
   mentorId: string
   allocatedHours: number
   logTemplateId?: string
+  /** 계약 종료일 'yyyy-MM-dd'(선택) — 미지정 시 마감 없음. */
+  contractEndDate?: string | null
 }
 
 // ───────────────────────── 멘토링 일지 관리 (§30) ─────────────────────────

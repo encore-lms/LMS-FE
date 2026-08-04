@@ -15,7 +15,14 @@ import type { WorkspaceData } from '../../types'
 import { SectionHead } from '../components/ws-shared'
 import { card } from '../components/ws-style'
 
-export function OutcomesTab({ d }: { d: WorkspaceData }) {
+export function OutcomesTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 지표 추가·수정·삭제 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const metrics = d.metrics
   const [adding, setAdding] = useState(false)
@@ -29,8 +36,8 @@ export function OutcomesTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="성과 지표"
-        action="지표 추가"
-        onAction={() => setAdding(true)}
+        action={readOnly ? undefined : '지표 추가'}
+        onAction={readOnly ? undefined : () => setAdding(true)}
       />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {metrics.map((m) => (
@@ -43,7 +50,7 @@ export function OutcomesTab({ d }: { d: WorkspaceData }) {
               <span className="text-fg min-w-0 text-[14px] font-bold [overflow-wrap:anywhere]">
                 {m.label}
               </span>
-              {m.id && (
+              {!readOnly && m.id && (
                 <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                   <button
                     type="button"

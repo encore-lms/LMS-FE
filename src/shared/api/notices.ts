@@ -29,10 +29,11 @@ const noticeKeys = {
     ['course', 'notices', 'staff', cohortId] as const,
 }
 
-/** 수강생 — 본인 기수 공지. */
-export function useCourseNotices() {
+/** 수강생 — 본인 기수 공지. enabled=false 로 끄면 스태프 소비 화면에서 /student/** 403을 피한다. */
+export function useCourseNotices(enabled = true) {
   return useQuery({
     queryKey: noticeKeys.all,
+    enabled,
     queryFn: () =>
       apiClient
         .get<NoticePostList>('/student/course/notices')

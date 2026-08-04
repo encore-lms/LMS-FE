@@ -1,22 +1,27 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import NoticesPage from './NoticesPage'
-import {
-  useCourseNotices,
-  useDeleteCourseNotice,
-  type NoticePost,
-} from '@/shared/api'
+import { useCourseNotices, type NoticePost } from '@/shared/api'
 
+// 2026-08-05 — 매니저·강사 공지 한 벌(NoticesPane)을 읽기 전용으로 소비.
+// 목록은 테이블(제목+평문 요약), 본문 전문·첨부는 상세 라우트가 담당한다.
 vi.mock('@/shared/api', async (orig) => ({
   ...(await orig()),
   useCourseNotices: vi.fn(),
-  useDeleteCourseNotice: vi.fn(),
+  // 스태프 미러 — 수강생 경로에선 꺼진 채 선언만 된다.
+  useStaffCourseNotices: () => ({
+    data: undefined,
+    isPending: false,
+    isError: false,
+    refetch: () => {},
+  }),
+  useDeleteCourseNotice: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 vi.mock('../CourseTabs', () => ({ CourseTabs: () => null }))
 
-// 수강생은 공지를 읽기만 한다 — 삭제 버튼은 서버가 canDelete 로 허락한 글에만 나온다.
 const notice = (over: Partial<NoticePost> = {}): NoticePost => ({
   id: 'n1',
   title: '2주차 특강 안내',
@@ -38,61 +43,60 @@ function renderPage(notices: NoticePost[]) {
     isError: false,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useCourseNotices>)
-  vi.mocked(useDeleteCourseNotice).mockReturnValue({
-    mutate: vi.fn(),
-    isPending: false,
-  } as unknown as ReturnType<typeof useDeleteCourseNotice>)
   render(
     <ToastProvider>
-      <MemoryRouter>
-        <NoticesPage />
+      <MemoryRouter initialEntries={['/student/course/notices']}>
+        <Routes>
+          <Route path="/student/course/notices" element={<NoticesPage />} />
+          <Route
+            path="/student/course/notices/:noticeId"
+            element={<div>공지 상세 화면</div>}
+          />
+        </Routes>
       </MemoryRouter>
     </ToastProvider>,
   )
 }
 
-describe('강의 홈 공지', () => {
-  it('공지 제목과 본문을 보여준다', () => {
+describe('교육과정 공지(수강생 읽기 전용)', () => {
+  it('제목·요약·작성자를 표로 보여준다', () => {
     renderPage([notice()])
 
     expect(screen.getByText('2주차 특강 안내')).toBeInTheDocument()
     expect(
       screen.getByText('금요일 19시, 3강의실에서 진행합니다.'),
     ).toBeInTheDocument()
+    expect(screen.getByText('김강사')).toBeInTheDocument()
     expect(screen.getByText('강사')).toBeInTheDocument()
   })
 
-  it('지울 수 없는 공지에는 삭제 버튼이 없다', () => {
-    renderPage([notice({ canDelete: false })])
-
-    expect(
-      screen.queryByRole('button', { name: /삭제/ }),
-    ).not.toBeInTheDocument()
-  })
-
-  it('지울 수 있는 공지에만 삭제 버튼이 나온다', () => {
+  it('읽기 전용 — 서버가 삭제를 허락해도 작성·삭제 UI가 없다', () => {
     renderPage([notice({ canDelete: true })])
 
-    expect(
-      screen.getByRole('button', { name: '2주차 특강 안내 삭제' }),
-    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /삭제/ })).toBeNull()
+    expect(screen.queryByText('공지 작성')).toBeNull()
+  })
+
+  it('행을 누르면 상세로 이동한다', async () => {
+    const user = userEvent.setup()
+    renderPage([notice()])
+
+    await user.click(screen.getByText('2주차 특강 안내'))
+    expect(await screen.findByText('공지 상세 화면')).toBeInTheDocument()
   })
 
   it('공지가 없으면 없다고 알려준다', () => {
     renderPage([])
 
     expect(screen.getByText('등록된 공지가 없어요')).toBeInTheDocument()
+    expect(
+      screen.getByText('새 공지가 올라오면 여기에서 확인할 수 있어요.'),
+    ).toBeInTheDocument()
   })
 
-  // 파일·북마크는 본문 안에 있다 — 카드로 그려진다.
-  it('본문 안의 파일·북마크를 카드로 보여준다', () => {
-    renderPage([
-      notice({
-        content: '[안내문.pdf](upload:u1 "file::2048")',
-      }),
-    ])
+  it('검색 입력이 있다', () => {
+    renderPage([notice()])
 
-    expect(screen.getByText('안내문.pdf')).toBeInTheDocument()
-    expect(screen.getByText('2KB')).toBeInTheDocument()
+    expect(screen.getByLabelText('공지 검색')).toBeInTheDocument()
   })
 })

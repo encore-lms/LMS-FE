@@ -23,7 +23,14 @@ import {
   parseMeetingMeta,
 } from '../components/ws-style'
 
-export function MeetingsTab({ d }: { d: WorkspaceData }) {
+export function MeetingsTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 작성·수정·삭제 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const meetings = d.meetings
   const [adding, setAdding] = useState(false)
@@ -37,13 +44,15 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="회의록"
-        action="회의록 작성"
-        onAction={() => setAdding(true)}
+        action={readOnly ? undefined : '회의록 작성'}
+        onAction={readOnly ? undefined : () => setAdding(true)}
       />
       {meetings.length === 0 ? (
         <Empty
           title="아직 작성된 회의록이 없어요"
-          description="‘회의록 작성’으로 첫 회의록을 남겨보세요."
+          description={
+            readOnly ? undefined : '‘회의록 작성’으로 첫 회의록을 남겨보세요.'
+          }
         />
       ) : (
         <section className={cn(card, 'flex flex-col')}>
@@ -86,7 +95,7 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
           members={d.members}
           onClose={() => setOpenMeeting(null)}
           onEdit={
-            openMeeting.id
+            !readOnly && openMeeting.id
               ? () => {
                   setEditing(openMeeting)
                   setOpenMeeting(null)
@@ -94,7 +103,7 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
               : undefined
           }
           onDelete={
-            openMeeting.id
+            !readOnly && openMeeting.id
               ? () => {
                   setDeleting(openMeeting)
                   setOpenMeeting(null)

@@ -6,7 +6,12 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import 'highlight.js/styles/github.css'
 import { getImage } from './markdownImages'
-import { BookmarkCard, FileChip, UploadImage } from './MarkdownEmbeds'
+import {
+  BodyImage,
+  BookmarkCard,
+  FileChip,
+  UploadImage,
+} from './MarkdownEmbeds'
 import { parseEmbedTitle } from './embedMeta'
 import type { UploadScope } from '@/shared/api'
 
@@ -125,7 +130,8 @@ export function Markdown({
                 />
               )
             }
-            return <img src={src} alt={alt ?? ''} {...rest} />
+            // 남의 서버 그림은 언제든 사라질 수 있다 — 빈 상자만 남기지 않는다.
+            return <BodyImage src={src} alt={alt ?? ''} {...rest} />
           },
           a({ href, children, title, ...rest }: ComponentPropsWithoutRef<'a'>) {
             if (typeof href === 'string' && href.startsWith('#mention-')) {

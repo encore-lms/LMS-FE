@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { FileUp, Loader2 } from 'lucide-react'
+import { useEffect, useState, type ComponentPropsWithoutRef } from 'react'
+import { FileUp, ImageOff, Loader2 } from 'lucide-react'
 import { formatBytes, type EmbedMeta } from './embedMeta'
 import { fetchEditorUpload, type UploadScope } from '@/shared/api'
 
@@ -195,13 +195,7 @@ export function UploadImage({
   }, [id, scope])
 
   if (failed) {
-    // 깨진 그림 자리 대신 무슨 파일이었는지 남긴다.
-    return (
-      <span className="text-fg-subtle inline-flex items-center gap-1.5 text-[13px]">
-        <FileUp className="size-4 shrink-0" aria-hidden="true" />
-        {alt || '이미지'} — 불러오지 못했어요
-      </span>
-    )
+    return <BrokenImage alt={alt} reason="지워졌거나 볼 권한이 없어요" />
   }
   if (!src) {
     return (
@@ -209,6 +203,38 @@ export function UploadImage({
     )
   }
   return <img src={src} alt={alt} />
+}
+
+/**
+ * 본문에 그대로 걸린 그림(남의 서버 주소).
+ *
+ * <p>주소가 죽거나 핫링크가 막히면 브라우저는 아무 말 없이 빈 상자만 남긴다 — 테두리와
+ * 둥근 모서리는 본문 이미지 규칙 그대로라, 쓰는 사람은 무엇이 있었는지도 모른다.</p>
+ */
+export function BodyImage({
+  src,
+  alt,
+  ...rest
+}: ComponentPropsWithoutRef<'img'>) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return <BrokenImage alt={alt ?? ''} reason="주소를 확인해 주세요" />
+  }
+  return (
+    <img src={src} alt={alt ?? ''} onError={() => setFailed(true)} {...rest} />
+  )
+}
+
+/** 못 그린 그림 자리 — 무엇이 있었고 왜 안 보이는지 남긴다. */
+function BrokenImage({ alt, reason }: { alt: string; reason: string }) {
+  return (
+    <span className="border-border text-fg-subtle bg-surface-muted/50 my-2 flex items-center gap-2 rounded-lg border border-dashed px-3.5 py-3 text-[13px]">
+      <ImageOff className="size-4 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 truncate">
+        {alt || '이미지'}를 불러오지 못했어요 — {reason}
+      </span>
+    </span>
+  )
 }
 
 /** 받아 온 파일을 원래 이름으로 저장한다. */

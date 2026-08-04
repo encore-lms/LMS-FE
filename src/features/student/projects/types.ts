@@ -137,7 +137,10 @@ export interface WsMeeting {
   id?: string
   title: string
   meta: string
+  /** 목록 카드용 — 80자에서 잘린 값. 상세에서는 body 를 쓴다. */
   summary: string
+  /** 회의록 원문. 예전 응답에는 없다 — 없으면 summary 로 물러난다. */
+  body?: string
   status: Badge
 }
 export interface WsDoc {

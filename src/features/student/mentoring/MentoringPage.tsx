@@ -21,6 +21,7 @@ import { MentoringHistorySection } from './components/MentoringHistorySection'
 import { CoMenteesPanel } from './components/CoMenteesPanel'
 import { CancelRequestModal } from './components/CancelRequestModal'
 import { MentoringProgressSummary } from './components/MentoringProgressSummary'
+import { CourseTabs } from '../course/CourseTabs'
 import type {
   MentoringActiveRequest,
   MentoringData,
@@ -251,6 +252,7 @@ function MentoringView({ data }: { data: MentoringData }) {
 
   return (
     <div className="flex flex-col gap-5 p-8">
+      <CourseTabs />
       <MentoringHero data={display} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">

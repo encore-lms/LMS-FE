@@ -48,7 +48,7 @@ export default function LogDetailModal({
   const close = useCallback(() => {
     // 팀 안에서 열었으면 팀 안에서 닫는다 — 목록 페이지로 튕겨 나가지 않는다.
     if (onClose) onClose()
-    else navigate('/mentor/mentoring-logs')
+    else navigate('/mentor/teams')
   }, [navigate, onClose])
   const [showTemplate, setShowTemplate] = useState(false)
 

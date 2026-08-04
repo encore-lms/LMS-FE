@@ -11,16 +11,10 @@ export const mentorMenu: MenuItem[] = [
   // prefix 전용이라 suffix(:teamId/evaluation) 매칭 불가 — '내 배정 팀' 활성을 허용한다(결정 기록).
   // 예약·일지·평가·추천은 팀 상세(/mentor/teams/:teamId)의 탭으로 옮겼다(2026-08-04).
   // 멘토가 하는 일은 늘 '어느 팀의' 무엇이라, 사이드바에서 연 뒤 다시 팀을 고르게 하지 않는다.
-  // 경로는 그대로 살아 있어 기존 링크·딥링크·완료 화면 복귀는 계속 열린다.
   {
     label: roleTag('내 배정 팀', '멘토'),
     to: '/mentor/teams',
-    match: [
-      '/mentor/mentees',
-      '/mentor/mentoring-requests',
-      '/mentor/mentoring-logs',
-      '/mentor/evaluations',
-      '/mentor/recommendations',
-    ],
+    // 일지 작성 폼은 팀에서 진입하는 전체 화면이라 여기서도 활성으로 둔다.
+    match: ['/mentor/mentees', '/mentor/mentoring-logs'],
   },
 ]

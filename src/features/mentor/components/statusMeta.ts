@@ -97,19 +97,22 @@ export function teamAction(
   team: MentorTeamAssignment,
   context: TeamActionContext,
 ): TeamAction {
+  // 목적지는 전부 팀 안이다 — 예약·일지·평가는 팀 상세 탭으로 옮겼다(2026-08-04).
+  // 옛 독립 화면 주소로 보내면 '찾을 수 없는 주소'로 떨어진다.
+  const tab = (name: string) => `/mentor/teams/${team.teamId}?tab=${name}`
   switch (team.status) {
     case 'evaluation_needed':
       return {
         label: '평가 작성',
         variant: 'warning',
-        to: `/mentor/teams/${team.teamId}/evaluation`,
+        to: tab('evaluation'),
       }
     case 'change_requested':
-      // 수정 대상 logId 직행 라우팅은 일지 PR에서 확정 — 우선 팀 필터 일지 목록으로.
+      // 수정 대상 logId 직행 라우팅은 일지 PR에서 확정 — 우선 그 팀 일지 탭으로.
       return {
         label: '일지 수정',
         variant: 'danger',
-        to: `/mentor/mentoring-logs?teamId=${team.teamId}`,
+        to: tab('logs'),
       }
     case 'completed':
     case 'early_ended':
@@ -128,7 +131,7 @@ export function teamAction(
         : {
             label: '예약 보기',
             variant: 'outline',
-            to: `/mentor/mentoring-requests?teamId=${team.teamId}`,
+            to: tab('requests'),
           }
   }
 }

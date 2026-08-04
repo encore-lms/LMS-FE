@@ -26,8 +26,6 @@ export const RECOMMENDATION_SUMMARY_SUBTITLE =
   '팀에 어떤 기여를 했는지, 어떤 강점이 돋보였는지 구체적으로 작성'
 export const RECOMMENDATION_MEMBER_SECTION_CAPTION =
   '팀당 1명만 선택 가능 · 평가 점수와 무관하게 증명서용 간략 요약을 직접 작성합니다'
-export const RECOMMENDATION_PUBLISH_CAPTION =
-  '수강생 노출: 추천 여부만 (원문 평가는 비공개) · 외부 공개는 증명서 전체 공개 토글 + 인증 완료 + 최신화 스냅샷 기준'
 export const RECOMMENDATION_ACTION_CAPTION =
   '상시 재제출 가능 · 추천 없음은 사유 없이 제출 · 팀당 1명만 추천'
 export const RECOMMENDATION_CONFIRM_EYEBROW = 'MENTOR RECOMMENDATION'

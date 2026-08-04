@@ -128,7 +128,8 @@ describe('RecommendationPage', () => {
         mode: 'recommend',
         studentId: 'stu_han_y',
         summary: '분석 파이프라인 전 구간을 주도한 핵심 기여자입니다.',
-        notify: true,
+        // 추천 알림은 발송하지 않는다(2026-08-04) — 초안에 true 가 남아 있어도 꺼서 보낸다.
+        notify: false,
       },
     })
     expect(await screen.findByText('추천 제출 완료 페이지')).toBeInTheDocument()
@@ -151,7 +152,7 @@ describe('RecommendationPage', () => {
     await user.click(screen.getByRole('button', { name: '최종 제출' }))
     expect(submitAsync).toHaveBeenCalledWith({
       teamId: 'team_nlp',
-      payload: { mode: 'none', studentId: null, summary: '', notify: true },
+      payload: { mode: 'none', studentId: null, summary: '', notify: false },
     })
   })
 
@@ -241,5 +242,16 @@ describe('RecommendationsSubmittedPage', () => {
       'href',
       '/mentor',
     )
+  })
+
+  it('증명서 반영·공개 기준과 알림 토글을 두지 않는다', () => {
+    // 알림을 보내지 않기로 해(2026-08-04) 토글과 그 설명 블록을 화면에서 걷어냈다.
+    renderPage('team_nlp')
+    expect(
+      screen.queryByText('증명서 반영 · 공개 기준'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('switch', { name: '수강생에게 즉시 알림 발송' }),
+    ).not.toBeInTheDocument()
   })
 })

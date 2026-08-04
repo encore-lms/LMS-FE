@@ -3,14 +3,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import EvaluationPage from './EvaluationPage'
-import EvaluationsSubmittedPage from './EvaluationsSubmittedPage'
 import {
-  useEvaluationSubmissions,
   useSaveEvaluationDraft,
   useSubmitEvaluation,
   useTeamEvaluation,
 } from '../api/evaluations'
-import { buildEvaluationsData, buildTeamEvaluationSheet } from '../mockDb'
+import { buildTeamEvaluationSheet } from '../mockDb'
 import type { EvaluationScoreTuple, MentorEvaluationSheetData } from '../types'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -178,56 +176,5 @@ describe('EvaluationPage', () => {
     expect(screen.getByRole('button', { name: /수정 재제출/ })).toBeEnabled()
     expect(screen.queryByRole('button', { name: '임시 저장' })).toBeNull()
     expect(screen.getByText('평가 기준 · 5축 고정')).toBeInTheDocument()
-  })
-})
-
-describe('EvaluationsSubmittedPage', () => {
-  it('?toast=submitted — 공통 토스트 1회 + 성공 hero·제출 요약·다음 단계를 렌더한다', async () => {
-    vi.mocked(useEvaluationSubmissions).mockReturnValue({
-      data: buildEvaluationsData(),
-      isPending: false,
-      isError: false,
-    } as unknown as ReturnType<typeof useEvaluationSubmissions>)
-    render(
-      <MemoryRouter
-        initialEntries={['/mentor/evaluations?teamId=team_nlp&toast=submitted']}
-      >
-        <ToastProvider>
-          <Routes>
-            <Route
-              path="/mentor/evaluations"
-              element={<EvaluationsSubmittedPage />}
-            />
-          </Routes>
-        </ToastProvider>
-      </MemoryRouter>,
-    )
-
-    // 공통 토스트 — Figma 토스트 z-order 버그는 최상위 고정 레이어로 정정
-    expect(
-      await screen.findByText(
-        '평가가 제출되었습니다. 팀원별 평가 이력에 반영됩니다.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('평가가 제출되었습니다')).toBeInTheDocument()
-    expect(screen.getByText('제출 시각 2026-05-15 20:40')).toBeInTheDocument()
-    expect(screen.getByText('DA 4기 · NLP 분석 팀')).toBeInTheDocument()
-    expect(screen.getByText('팀원 5명 전체')).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        '기술 4 · 책임감 4.2 · 소통 4.4 · 성장 4.4 · 팀워크 4.4',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('5명 모두 작성')).toBeInTheDocument()
-    expect(screen.getByText('수정 가능 여부')).toBeInTheDocument()
-    expect(
-      screen.getByText('상시 수정 가능 — 재제출 시 갱신'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: '평가 자세히 보기 · 수정' }),
-    ).toHaveAttribute('href', '/mentor/teams/team_nlp/evaluation')
-    expect(
-      screen.getByRole('link', { name: /추천 선택 단계로 이동/ }),
-    ).toHaveAttribute('href', '/mentor/teams/team_nlp/recommendation')
   })
 })

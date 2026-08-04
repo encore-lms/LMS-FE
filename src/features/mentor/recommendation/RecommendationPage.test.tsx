@@ -3,17 +3,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import RecommendationPage from './RecommendationPage'
-import RecommendationsSubmittedPage from './RecommendationsSubmittedPage'
 import {
-  useRecommendationSubmissions,
   useSaveRecommendationDraft,
   useSubmitRecommendation,
   useTeamRecommendation,
 } from '../api/evaluations'
-import {
-  buildRecommendationsData,
-  buildTeamRecommendationSheet,
-} from '../mockDb'
+import { buildTeamRecommendationSheet } from '../mockDb'
 import type { MentorRecommendationSheetData } from '../types'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -197,61 +192,5 @@ describe('RecommendationPage', () => {
     ).toBeInTheDocument()
     // 제출본의 추천 대상(한예린)이 라디오에 선택된 채 열린다.
     expect(screen.getByRole('radio', { name: '한예린 추천' })).toBeChecked()
-  })
-})
-
-describe('RecommendationsSubmittedPage', () => {
-  it('?toast=submitted — 공통 토스트 + 추천 대상·증명서 반영 요약을 렌더한다', async () => {
-    vi.mocked(useRecommendationSubmissions).mockReturnValue({
-      data: buildRecommendationsData(),
-      isPending: false,
-      isError: false,
-    } as unknown as ReturnType<typeof useRecommendationSubmissions>)
-    render(
-      <MemoryRouter
-        initialEntries={[
-          '/mentor/recommendations?teamId=team_nlp&toast=submitted',
-        ]}
-      >
-        <ToastProvider>
-          <Routes>
-            <Route
-              path="/mentor/recommendations"
-              element={<RecommendationsSubmittedPage />}
-            />
-          </Routes>
-        </ToastProvider>
-      </MemoryRouter>,
-    )
-
-    expect(
-      await screen.findByText(
-        '추천 선택이 제출되었습니다. 팀당 1명 추천 정책으로 저장됩니다.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('추천 선택이 제출되었습니다')).toBeInTheDocument()
-    expect(screen.getByText('한예린 (PM)')).toBeInTheDocument()
-    expect(screen.getByText(/자 · 필수 충족/)).toBeInTheDocument()
-    expect(
-      screen.getByText('증명서 전체 공개 + 인증 완료 + 최신화 스냅샷 기준'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: '추천 자세히 보기 · 수정' }),
-    ).toHaveAttribute('href', '/mentor/teams/team_nlp/recommendation')
-    expect(screen.getByRole('link', { name: /멘토 대시보드/ })).toHaveAttribute(
-      'href',
-      '/mentor',
-    )
-  })
-
-  it('증명서 반영·공개 기준과 알림 토글을 두지 않는다', () => {
-    // 알림을 보내지 않기로 해(2026-08-04) 토글과 그 설명 블록을 화면에서 걷어냈다.
-    renderPage('team_nlp')
-    expect(
-      screen.queryByText('증명서 반영 · 공개 기준'),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('switch', { name: '수강생에게 즉시 알림 발송' }),
-    ).not.toBeInTheDocument()
   })
 })

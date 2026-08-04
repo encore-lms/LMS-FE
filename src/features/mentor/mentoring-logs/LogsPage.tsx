@@ -148,10 +148,17 @@ export default function LogsPage({
     fixedTeamId ?? searchParams.get('teamId') ?? 'all',
   )
   const [status, setStatus] = useState<MentoringLogStatus | 'all'>('all')
-  const [period, setPeriod] = useState<string>('30')
+  // 팀 상세에 얹힐 때는 기간을 자르지 않는다 — 그 팀 것이 몇 건 안 되는데 최근 30일로
+  // 잘리면 홈에서 센 건수와 어긋나 보인다.
+  const [period, setPeriod] = useState<string>(fixedTeamId ? 'all' : '30')
   const [q, setQ] = useState('')
 
-  const logs = useMemo(() => data?.logs ?? [], [data])
+  // 팀 상세에 얹힐 때는 그 팀 것만이 이 화면의 전부다 — KPI·팀 목록까지 함께 좁힌다.
+  // (목록만 걸렀더니 '총 일지 8건'인데 표는 0줄이라 수가 어긋나 보였다.)
+  const logs = useMemo(() => {
+    const all = data?.logs ?? []
+    return fixedTeamId ? all.filter((l) => l.teamId === fixedTeamId) : all
+  }, [data, fixedTeamId])
 
   // 기간 기준일 — 목록 내 최근 진행 일시 기준 상대 계산(M2 선례 — mock 더미 보존,
   // 실서버 연동 시 서버 필터로 대체 TODO).

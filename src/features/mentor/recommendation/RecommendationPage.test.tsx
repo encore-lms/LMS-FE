@@ -167,6 +167,25 @@ describe('RecommendationPage', () => {
     ).not.toBeInTheDocument()
   })
 
+  // 계약 종료 마감 — 선택값은 보이되 입력·제출 전부 잠금.
+  it('계약 종료 마감 — 읽기 전용 폼 + 제출 마감 CTA·칩을 보여준다', () => {
+    const base = buildTeamRecommendationSheet('team_nlp')!
+    mockSheet({
+      ...base,
+      submissionClosed: true,
+      submissionDeadlineLabel: '2026-08-01 까지',
+    })
+    renderPage('team_nlp')
+    expect(
+      screen.getByText('제출 마감 — 계약 종료 (2026-08-01 까지)'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /제출 마감 — 계약 종료/ }),
+    ).toBeDisabled()
+    expect(screen.getByRole('radio', { name: /팀원 1명 추천/ })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: '한예린 추천' })).toBeDisabled()
+  })
+
   // 정책 완화(2026-08-04) — 제출본은 값이 채워진 폼으로 열려 자세히 보기 · 재제출을 겸한다.
   it('제출본 재진입 — 선택값 채워진 폼 + 수정 재제출 CTA를 노출한다', () => {
     mockSheet(buildTeamRecommendationSheet('team_nlp'))

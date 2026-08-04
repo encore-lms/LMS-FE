@@ -5,14 +5,12 @@ import {
   Check,
   Flag,
   Info,
-  Lock,
   Pencil,
   Star,
   Timer,
   XCircle,
 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -55,7 +53,8 @@ const isComplete = (entry: { scores: EvaluationScoreTuple; comment: string }) =>
 type CardState = 'done' | 'active' | 'waiting'
 
 // 멘토 평가 작성 (/mentor/teams/:teamId/evaluation) — Figma 2553:4279.
-// 게이트: N시간 완료 또는 조기 종료 시에만 활성(잠금 사유 표시) · 제출 후 수정 불가.
+// 정책 완화(2026-08-04): 멘토링 시작부터 상시 작성 · 제출 후에도 재제출로 수정 가능(마지막 제출본 유효).
+// 제출본은 draft 저장이 409라 자동 저장을 멈추고 '수정 재제출'만 연다(반쪽 상태 노출 방지).
 // 팀원 전체 카드형 — 고정 5축(1~5 세그먼트) + 수강생별 줄글 필수, 전원 입력 시 제출 활성.
 export default function EvaluationPage() {
   usePageHeader('평가 작성', MENTOR_FLOW_CAPTION)
@@ -72,52 +71,9 @@ export default function EvaluationPage() {
       errorDescription="잠시 후 다시 시도해 주세요."
       className="p-8"
     >
-      {data &&
-        (data.status === 'submitted' ? (
-          // 제출 후 수정 불가(PATCH/DELETE 없음) — 작성 화면 재진입은 안내로 차단.
-          <div className="p-8">
-            <Empty
-              icon={<Lock />}
-              title="평가가 이미 제출되었습니다"
-              description={`최종 제출(${data.submittedAtLabel}) 후에는 수정할 수 없어요. 다음 단계로 추천 선택을 진행해 주세요.`}
-              action={
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={`/mentor/evaluations?teamId=${data.teamId}`}
-                    className="border-border text-fg-muted hover:bg-surface-muted rounded-[10px] border px-4 py-2.5 text-[13px] font-medium"
-                  >
-                    제출 요약 보기
-                  </Link>
-                  <Link
-                    to={`/mentor/teams/${data.teamId}/recommendation`}
-                    className="bg-success text-on-color hover:bg-success/90 rounded-[10px] px-4 py-2.5 text-[13px] font-bold"
-                  >
-                    추천 선택 단계로 이동
-                  </Link>
-                </div>
-              }
-            />
-          </div>
-        ) : !data.eligible ? (
-          // 잠금 — N시간 미완료 + 조기 종료 아님(422 MENTOR_EVALUATION_NOT_ELIGIBLE 선차단).
-          <div className="p-8">
-            <Empty
-              icon={<Lock />}
-              title="아직 평가를 시작할 수 없어요"
-              description={`${data.lockReasonLabel ?? 'N시간 완료 후 활성'} · 잔여 시간을 채우거나 운영자 조기 종료 후 평가할 수 있습니다.`}
-              action={
-                <Link
-                  to={`/mentor/teams/${data.teamId}`}
-                  className="border-border text-fg hover:bg-surface-muted rounded-[10px] border bg-white px-4 py-2.5 text-[13px] font-bold"
-                >
-                  팀 상세로 돌아가기
-                </Link>
-              }
-            />
-          </div>
-        ) : (
-          <EvaluationForm sheet={data} />
-        ))}
+      {/* 정책 완화(2026-08-04) — 상시 작성·재제출 가능이라 잠금·차단 분기 없이 항상 폼을 연다.
+          제출된 평가도 값이 채워진 폼으로 열려 '자세히 보기'를 겸한다. */}
+      {data && <EvaluationForm sheet={data} />}
     </DataBoundary>
   )
 }
@@ -127,6 +83,8 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
   const toast = useToast()
   const draftMutation = useSaveEvaluationDraft()
   const submitMutation = useSubmitEvaluation()
+  // 제출본 편집 모드 — draft 저장은 BE가 409로 막으므로(반쪽 상태 노출 방지) 재제출만 허용.
+  const submitted = sheet.status === 'submitted'
 
   const [entries, setEntries] = useState<MentorEvaluationDraftEntry[]>(() =>
     sheet.members.map((m) => ({
@@ -182,9 +140,10 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
       skipFirstAutosave.current = false
       return
     }
+    if (submitted) return
     const timer = setTimeout(() => autosaveRef.current(), AUTOSAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [entries])
+  }, [entries, submitted])
 
   // 임시 저장 — 수동 버튼(자동 저장과 동일 draft endpoint, 토스트 안내만 추가).
   const onSaveDraft = () => {
@@ -236,9 +195,11 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
         <span className="text-fg text-xs font-medium">평가 작성</span>
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
-          {savedLabel
-            ? `자동 저장 · ${savedLabel}`
-            : '저장 전 — 자동 저장 대기'}
+          {submitted
+            ? `제출됨 · ${sheet.submittedAtLabel ?? ''} — 수정 후 재제출`
+            : savedLabel
+              ? `자동 저장 · ${savedLabel}`
+              : '저장 전 — 자동 저장 대기'}
         </span>
       </div>
 
@@ -348,14 +309,17 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
           </span>
         </div>
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={onSaveDraft}
-            disabled={saving}
-            className="border-on-color/70 text-on-color hover:bg-on-color/10 rounded-[10px] border px-4 py-2.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            임시 저장
-          </button>
+          {/* 제출본은 draft 저장이 409 — 임시 저장 대신 재제출만 연다. */}
+          {!submitted && (
+            <button
+              type="button"
+              onClick={onSaveDraft}
+              disabled={saving}
+              className="border-on-color/70 text-on-color hover:bg-on-color/10 rounded-[10px] border px-4 py-2.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              임시 저장
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
@@ -370,7 +334,7 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
             {canSubmit ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                평가 제출
+                {submitted ? '수정 재제출' : '평가 제출'}
               </>
             ) : (
               <>

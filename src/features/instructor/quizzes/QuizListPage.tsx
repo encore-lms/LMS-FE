@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, type Column } from '@/components/data/DataTable'
-import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -21,6 +20,7 @@ import { useQuizTemplates } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { FilterSelect } from '@/components/ui/FilterSelect'
 
 type ModeFilter = 'all' | GradingMode
 type VisibilityFilter = 'all' | QuizVisibility
@@ -257,44 +257,35 @@ export default function QuizListPage({
               />
               {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
               {!embedded && (
-                <label className="flex items-center gap-2 text-xs">
-                  <span className="text-fg-subtle">기수</span>
-                  <Select
-                    value={cohort}
-                    onChange={(v) => setCohort(v)}
-                    aria-label="기수 필터"
-                    options={cohortOpts.map((c) => ({ value: c, label: c }))}
-                  />
-                </label>
+                <FilterSelect
+                  label="기수"
+                  value={cohort}
+                  onChange={setCohort}
+                  options={cohortOpts.map((c) => ({ value: c, label: c }))}
+                />
               )}
-              <label className="flex items-center gap-2 text-xs">
-                <span className="text-fg-subtle">채점 모드</span>
-                <Select
-                  value={mode}
-                  onChange={(v) => setMode(v as ModeFilter)}
-                  aria-label="채점 모드 필터"
-                  options={[
-                    { value: 'all', label: '전체' },
-                    { value: 'AUTO', label: 'AUTO' },
-                    { value: 'MANUAL', label: 'MANUAL' },
-                    { value: 'MIXED', label: 'MIXED' },
-                  ]}
-                />
-              </label>
-              <label className="flex items-center gap-2 text-xs">
-                <span className="text-fg-subtle">공개 상태</span>
-                <Select
-                  value={visibility}
-                  onChange={(v) => setVisibility(v as VisibilityFilter)}
-                  aria-label="공개 상태 필터"
-                  options={[
-                    { value: 'all', label: '전체' },
-                    { value: 'draft', label: '임시저장' },
-                    { value: 'published', label: '공개' },
-                    { value: 'closed', label: '종료' },
-                  ]}
-                />
-              </label>
+              <FilterSelect
+                label="채점 모드"
+                value={mode}
+                onChange={(v) => setMode(v as ModeFilter)}
+                options={[
+                  { value: 'all', label: '전체' },
+                  { value: 'AUTO', label: 'AUTO' },
+                  { value: 'MANUAL', label: 'MANUAL' },
+                  { value: 'MIXED', label: 'MIXED' },
+                ]}
+              />
+              <FilterSelect
+                label="공개 상태"
+                value={visibility}
+                onChange={(v) => setVisibility(v as VisibilityFilter)}
+                options={[
+                  { value: 'all', label: '전체' },
+                  { value: 'draft', label: '임시저장' },
+                  { value: 'published', label: '공개' },
+                  { value: 'closed', label: '종료' },
+                ]}
+              />
               {/* 템플릿 관리 — 전역 자산이라 별도 메뉴 없이 퀴즈 영역에서 진입(생성·편집·삭제). */}
               <Button
                 variant="secondary"

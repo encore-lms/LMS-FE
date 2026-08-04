@@ -144,6 +144,7 @@ function MentoringCard({
           {team.allocatedHours !== null && (
             <span className="text-fg-subtle tabular-nums">
               배정 {team.allocatedHours}h{pct !== null && ` · ${pct}%`}
+              {team.contractEndDate && ` · 계약 ~${team.contractEndDate}`}
             </span>
           )}
         </div>

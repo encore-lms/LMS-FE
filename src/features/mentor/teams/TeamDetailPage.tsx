@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   ArrowRight,
@@ -19,8 +20,12 @@ import { HeroBanner } from '@/components/data/HeroBanner'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { useMentorTeamDetail } from '../api/mentor'
+import { useTeamEvaluation, useTeamRecommendation } from '../api/evaluations'
 import { ProgressBar } from '../components/ProgressBar'
+import EvaluationPage from '../evaluation/EvaluationPage'
+import RecommendationPage from '../recommendation/RecommendationPage'
 import RequestsPage from '../requests/RequestsPage'
 import LogsPage from '../mentoring-logs/LogsPage'
 
@@ -99,7 +104,7 @@ export default function TeamDetailPage() {
               // 사이드바 '멘토링 일지' 흡수 — 팀이 정해졌으니 팀 고르는 칸은 없다.
               <LogsPage embedded teamId={teamId} />
             ) : tab === 'evaluation' ? (
-              <EvaluationPane data={data} />
+              <EvaluationPane teamId={teamId} />
             ) : (
               <HomePane data={data} onTab={setTab} />
             )}
@@ -118,6 +123,7 @@ function HomePane({
   data: Detail
   onTab: (next: string) => void
 }) {
+  const goEvaluation = () => onTab('evaluation')
   const team = data.assignment
   const pct =
     team.allocatedHours > 0
@@ -195,7 +201,7 @@ function HomePane({
           )}
         </section>
 
-        <EvaluationCard data={data} />
+        <EvaluationCard data={data} onOpen={goEvaluation} />
       </div>
 
       {/* 최근 일지 — 몇 건인지와 바로 쓰기. 목록은 일지 탭에 */}
@@ -263,16 +269,122 @@ function MembersPane({ data }: { data: Detail }) {
   )
 }
 
-function EvaluationPane({ data }: { data: Detail }) {
+/**
+ * 평가·추천 탭 — 링크 두 개가 아니라 순서대로 하는 일 그 자체를 연다.
+ *
+ * <p>평가 → 추천 → 완료. 들어오면 지금 해야 할 단계가 바로 열린다. 평가를 이미 냈으면
+ * 추천부터, 둘 다 냈으면 완료 안내다. 예전에는 '평가 작성 →' 링크를 눌러 다른 페이지로
+ * 나갔다가 돌아와야 했고, 돌아오면 또 같은 링크 화면이었다.</p>
+ */
+function EvaluationPane({ teamId }: { teamId: string }) {
+  const evaluation = useTeamEvaluation(teamId)
+  const recommendation = useTeamRecommendation(teamId)
+  // 제출을 마친 직후 서버 상태를 다시 읽기 전까지 잠깐 어긋나는 것을 막는다.
+  const [justSubmitted, setJustSubmitted] = useState<'eval' | 'rec' | null>(
+    null,
+  )
+  // 다시 열어 고치는 중 — 자동 판정(완료·추천)으로 튕기지 않게 붙잡아 둔다.
+  const [reopen, setReopen] = useState<'eval' | 'rec' | null>(null)
+
+  const evalDone =
+    justSubmitted !== null || evaluation.data?.status === 'submitted'
+  const recDone =
+    justSubmitted === 'rec' ||
+    (recommendation.data?.status?.startsWith('submitted') ?? false)
+
+  if (evaluation.isPending || recommendation.isPending) {
+    return <SkeletonListPage kpis={3} columns={4} className="" />
+  }
+
+  const step =
+    reopen ?? (evalDone && recDone ? 'done' : evalDone ? 'rec' : 'eval')
+
+  if (step === 'done') {
+    return (
+      <DonePane
+        onEditEvaluation={() => {
+          setJustSubmitted(null)
+          setReopen('eval')
+        }}
+        onEditRecommendation={() => setReopen('rec')}
+      />
+    )
+  }
+
+  if (step === 'rec') {
+    return (
+      <RecommendationPage
+        embedded
+        teamId={teamId}
+        onSubmitted={() => {
+          setReopen(null)
+          setJustSubmitted('rec')
+        }}
+        onBack={() => setReopen('eval')}
+      />
+    )
+  }
+
   return (
-    <div className="lg:max-w-[560px]">
-      <EvaluationCard data={data} />
-    </div>
+    <EvaluationPage
+      embedded
+      teamId={teamId}
+      onSubmitted={() => {
+        // 평가를 냈으니 다음은 추천이다 — 붙잡아 둔 단계를 놓아 자동 판정에 맡긴다.
+        setReopen(null)
+        setJustSubmitted('eval')
+      }}
+    />
+  )
+}
+
+// 둘 다 끝났을 때 — 더 할 일이 없다는 것을 말해 주고, 고치고 싶으면 그 자리에서 연다.
+function DonePane({
+  onEditEvaluation,
+  onEditRecommendation,
+}: {
+  onEditEvaluation: () => void
+  onEditRecommendation: () => void
+}) {
+  return (
+    <section
+      className={cn(CARD_SHELL, 'flex flex-col items-center gap-3 px-6 py-12')}
+    >
+      <span className="bg-success-bg text-success flex size-12 items-center justify-center rounded-full">
+        <Check className="size-6" />
+      </span>
+      <h3 className="text-fg text-lg font-bold">평가와 추천을 모두 마쳤어요</h3>
+      <p className="text-fg-muted text-[13px]">
+        이 팀에 남은 일이 없습니다. 내용을 고치려면 아래에서 다시 열 수 있어요.
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onEditEvaluation}
+          className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3.5 py-2 text-xs font-semibold"
+        >
+          평가 수정
+        </button>
+        <button
+          type="button"
+          onClick={onEditRecommendation}
+          className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3.5 py-2 text-xs font-semibold"
+        >
+          추천 수정
+        </button>
+      </div>
+    </section>
   )
 }
 
 // 평가 · 추천 — 상시 작성·재제출 가능(2026-08-04 완화). 진행률은 정보로만 남긴다.
-function EvaluationCard({ data }: { data: Detail }) {
+function EvaluationCard({
+  data,
+  onOpen,
+}: {
+  data: Detail
+  onOpen?: () => void
+}) {
   const team = data.assignment
   return (
     <section className={cn(CARD_SHELL, 'flex flex-col gap-3.5 p-5')}>
@@ -281,6 +393,7 @@ function EvaluationCard({ data }: { data: Detail }) {
           <Star className="text-fg h-4 w-4" />
           <h3 className="text-fg text-sm font-bold">평가 · 추천</h3>
         </div>
+        {onOpen && <TabLink label="평가·추천 전체" onClick={onOpen} />}
         {data.evaluation.locked && (
           <span className="bg-surface-muted text-fg-subtle flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">
             <XCircle className="h-[11px] w-[11px]" />

@@ -52,9 +52,23 @@ import {
 // 제출 후에도 재제출로 수정 가능(마지막 제출본 유효). 제출본은 draft 저장이 409라
 // 자동 저장을 멈추고 '수정 재제출'만 연다. 팀당 1명 라디오 또는 '추천 안 함' 명시 선택 ·
 // 추천 시 증명서용 간략 요약 필수 · 최종 제출 확인 모달.
-export default function RecommendationPage() {
-  usePageHeader('추천 선택', MENTOR_FLOW_CAPTION)
-  const { teamId = '' } = useParams()
+export default function RecommendationPage({
+  embedded = false,
+  teamId: fixedTeamId,
+  onSubmitted,
+  onBack,
+}: {
+  /** 팀 상세 '평가·추천' 탭에 얹을 때 — 자체 헤더·브레드크럼·바깥 여백을 생략한다. */
+  embedded?: boolean
+  teamId?: string
+  /** 제출이 끝났을 때 — 탭 안에서는 완료 안내로 이어야 해서 페이지를 옮기지 않는다. */
+  onSubmitted?: () => void
+  /** 앞 단계(평가)로 되돌아가기 — 탭 안에서만 쓴다. */
+  onBack?: () => void
+} = {}) {
+  usePageHeader('추천 선택', MENTOR_FLOW_CAPTION, !embedded)
+  const { teamId: paramTeamId = '' } = useParams()
+  const teamId = fixedTeamId ?? paramTeamId
   const { data, isPending, isError, refetch } = useTeamRecommendation(teamId)
 
   return (
@@ -65,18 +79,31 @@ export default function RecommendationPage() {
       skeleton={<SkeletonListPage kpis={3} columns={4} className="" />}
       errorTitle="추천 정보를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
       {/* 정책 완화(2026-08-04) — 잠금·차단 분기 없이 항상 폼. 제출본도 값 채워진 폼으로 열린다. */}
-      {data && <RecommendationForm sheet={data} />}
+      {data && (
+        <RecommendationForm
+          sheet={data}
+          embedded={embedded}
+          onSubmitted={onSubmitted}
+          onBack={onBack}
+        />
+      )}
     </DataBoundary>
   )
 }
 
 function RecommendationForm({
   sheet,
+  embedded = false,
+  onSubmitted,
+  onBack,
 }: {
   sheet: MentorRecommendationSheetData
+  embedded?: boolean
+  onSubmitted?: () => void
+  onBack?: () => void
 }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -141,7 +168,12 @@ function RecommendationForm({
   const onConfirmSubmit = async () => {
     try {
       await submitMutation.mutateAsync({ teamId: sheet.teamId, payload })
-      navigate(`/mentor/recommendations?teamId=${sheet.teamId}&toast=submitted`)
+      // 탭 안에서는 화면을 옮기지 않는다 — 바로 완료 안내로 이어진다.
+      if (embedded) onSubmitted?.()
+      else
+        navigate(
+          `/mentor/recommendations?teamId=${sheet.teamId}&toast=submitted`,
+        )
     } catch {
       setConfirmOpen(false)
       toast.danger('추천 제출에 실패했어요. 잠시 후 다시 시도해 주세요.')
@@ -163,20 +195,33 @@ function RecommendationForm({
   const teamLabel = `${sheet.cohortLabel} · ${sheet.teamName}`
 
   return (
-    <div className="flex flex-col gap-5 p-8">
-      {/* 브레드크럼 + 자동 저장 칩 */}
+    <div className={cn('flex flex-col gap-5', !embedded && 'p-8')}>
+      {/* 브레드크럼 + 자동 저장 칩 — 탭 안에서는 앞 단계로 돌아가는 버튼만 남긴다. */}
       <div className="flex flex-wrap items-center gap-2">
-        <Link
-          to={`/mentor/teams/${sheet.teamId}/evaluation`}
-          className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          평가 작성
-        </Link>
-        <span className="text-fg-subtle text-[13px]">›</span>
-        <span className="text-fg-subtle text-[13px]">{teamLabel}</span>
-        <span className="text-fg-subtle text-[13px]">›</span>
-        <span className="text-fg text-xs font-medium">추천 선택</span>
+        {embedded ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            평가 다시 보기
+          </button>
+        ) : (
+          <>
+            <Link
+              to={`/mentor/teams/${sheet.teamId}/evaluation`}
+              className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
+            >
+              <ArrowLeft className="h-3 w-3" />
+              평가 작성
+            </Link>
+            <span className="text-fg-subtle text-[13px]">›</span>
+            <span className="text-fg-subtle text-[13px]">{teamLabel}</span>
+            <span className="text-fg-subtle text-[13px]">›</span>
+            <span className="text-fg text-xs font-medium">추천 선택</span>
+          </>
+        )}
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
           {closed

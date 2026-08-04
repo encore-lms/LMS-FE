@@ -8,13 +8,15 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react'
-import { Bold, Code, Image as ImageIcon, Link2 } from 'lucide-react'
+import { Bold, Code, Image as ImageIcon, Link2, Paperclip } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Markdown } from './Markdown'
-import { putImage } from '@/components/ui/markdownImages'
+import { fileTitle } from './embedMeta'
+import { uploadEditorFile, type UploadScope } from '@/shared/api'
 
-// 이미지 인라인 가드 — 이미지 타입만, 2MB 이하(프로토타입 base64 인라인이라 과대 방지).
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024
+// BE 가 받아 주는 한도와 같게 둔다 — 넘으면 올려 보내고 나서야 400 을 받는다.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_FILE_BYTES = 20 * 1024 * 1024
 
 interface MarkdownEditorProps {
   value: string
@@ -35,6 +37,13 @@ interface MarkdownEditorProps {
    * <p>탭·툴바는 배경 위에 그대로 얹고 입력칸만 옅은 바탕으로 구분한다.</p>
    */
   flat?: boolean
+  /**
+   * 올린 파일을 어느 경로로 주고받을지 — 쓰는 사람의 역할.
+   *
+   * <p>BE 가 경로 앞머리로 역할을 가른다. 수강생이 강사 경로를 부르면 403 이라 화면이
+   * 자기 역할을 알려 줘야 한다.</p>
+   */
+  uploadScope?: UploadScope
 }
 
 // 마크다운 작성기 — 작성/미리보기 탭 + 툴바(굵게·코드·링크·이미지) + 이미지 base64 + @멘션.
@@ -50,6 +59,7 @@ export function MarkdownEditor({
   onImageRejected,
   ariaLabel,
   flat = false,
+  uploadScope = 'student',
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<'write' | 'preview'>('write')
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -64,6 +74,10 @@ export function MarkdownEditor({
   }, [mentionQuery])
   // 하이라이트 백드롭 스크롤 동기화용.
   const backdropRef = useRef<HTMLDivElement>(null)
+  // 올리는 중 표시 — 큰 파일은 시간이 걸려 아무 반응이 없으면 안 된 줄 안다.
+  const [uploading, setUploading] = useState(0)
+  // 파일을 끌어다 올린 상태(놓을 자리 표시).
+  const [dragging, setDragging] = useState(false)
 
   useLayoutEffect(() => {
     if (pendingCaret.current != null && ref.current) {
@@ -91,6 +105,11 @@ export function MarkdownEditor({
     onMentionsChange(hit)
   }, [value, mentionNames, onMentionsChange])
 
+  // 업로드는 몇 초가 걸린다. 그 사이 사용자가 더 친 글자가 있으면 클로저가 붙든 옛 본문에
+  // 덮어써 방금 친 글이 사라진다 — 삽입은 늘 최신값 위에서 한다.
+  const valueRef = useRef(value)
+  valueRef.current = value
+
   const setValue = (next: string, caret?: number) => {
     if (caret != null) pendingCaret.current = caret
     onChange(next.slice(0, maxLength))
@@ -109,54 +128,79 @@ export function MarkdownEditor({
   }
 
   const insert = (text: string) => {
+    const cur = valueRef.current
     const el = ref.current
-    const at = el ? el.selectionStart : value.length
-    const next = value.slice(0, at) + text + value.slice(at)
+    const at = el ? Math.min(el.selectionStart, cur.length) : cur.length
+    const next = cur.slice(0, at) + text + cur.slice(at)
     setValue(next, at + text.length)
   }
 
-  const addImageFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      onImageRejected?.('이미지 파일만 첨부할 수 있어요')
+  /**
+   * 고른 파일을 서버에 올리고 본문에 참조를 넣는다.
+   *
+   * <p>예전엔 base64 를 브라우저 메모리에만 담아 뒀다. 글은 저장돼도 그림은 새로고침하면
+   * 사라져 "첨부가 안 된다"로 보였다. 이제 본문에는 `upload:{id}` 만 남고 읽는 화면이
+   * 자기 역할 경로로 받아 온다.</p>
+   */
+  const addFile = async (file: File) => {
+    const image = file.type.startsWith('image/')
+    const limit = image ? MAX_IMAGE_BYTES : MAX_FILE_BYTES
+    if (file.size > limit) {
+      onImageRejected?.(
+        `${image ? '이미지' : '파일'}는 ${limit / 1024 / 1024}MB 이하만 첨부할 수 있어요`,
+      )
       return
     }
-    if (file.size > MAX_IMAGE_BYTES) {
-      onImageRejected?.('이미지는 2MB 이하만 첨부할 수 있어요')
-      return
+    setUploading((n) => n + 1)
+    try {
+      const up = await uploadEditorFile(file, uploadScope)
+      const name = up.fileName || file.name || '첨부파일'
+      // 이미지는 본문에 그대로 그려지고, 그 밖의 파일은 내려받는 카드로 그려진다.
+      insert(
+        up.image
+          ? `\n![${name}](${up.url})\n`
+          : `\n[${name}](${up.url} "${fileTitle(up.fileSize)}")\n`,
+      )
+    } catch {
+      onImageRejected?.('파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요')
+    } finally {
+      setUploading((n) => n - 1)
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = String(reader.result)
-      // 거대한 base64 를 본문에 직접 넣지 않고 짧은 attachment 참조로 삽입(렌더 시 해석).
-      const id = putImage(dataUrl)
-      insert(`\n![${file.name}](attachment:${id})\n`)
-      // 첨부 직후 결과를 바로 확인할 수 있게 미리보기로 전환.
-      setTab('preview')
-    }
-    reader.readAsDataURL(file)
+  }
+
+  const addFiles = (files: File[]) => {
+    for (const f of files) void addFile(f)
   }
 
   const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
-    const img = Array.from(e.clipboardData.items).find((i) =>
-      i.type.startsWith('image/'),
-    )
-    if (img) {
-      const file = img.getAsFile()
-      if (file) {
-        e.preventDefault()
-        addImageFile(file)
-      }
+    const files = Array.from(e.clipboardData.files)
+    if (files.length > 0) {
+      e.preventDefault()
+      addFiles(files)
     }
   }
 
-  const onDrop = (e: DragEvent<HTMLTextAreaElement>) => {
-    const file = Array.from(e.dataTransfer.files).find((f) =>
-      f.type.startsWith('image/'),
-    )
-    if (file) {
-      e.preventDefault()
-      addImageFile(file)
-    }
+  // 끌어다 놓기 — 상자 어디에 놓아도 받는다(예전엔 입력칸 위 이미지 한 장만 받았다).
+  const hasFiles = (e: DragEvent<HTMLElement>) =>
+    Array.from(e.dataTransfer.types).includes('Files')
+
+  const onDragOver = (e: DragEvent<HTMLElement>) => {
+    if (!hasFiles(e)) return
+    e.preventDefault()
+    setDragging(true)
+  }
+
+  const onDragLeave = (e: DragEvent<HTMLElement>) => {
+    // 자식으로 옮겨 가는 것도 leave 로 잡혀 표시가 깜빡인다 — 상자 밖으로 나갈 때만 끈다.
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+    setDragging(false)
+  }
+
+  const onDrop = (e: DragEvent<HTMLElement>) => {
+    if (!hasFiles(e)) return
+    e.preventDefault()
+    setDragging(false)
+    addFiles(Array.from(e.dataTransfer.files))
   }
 
   // 입력 변화 시 @멘션 토큰 감지(커서 직전 @비공백 연속) + 슬래시 토큰 감지.
@@ -255,10 +299,15 @@ export function MarkdownEditor({
 
   return (
     <div
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
       className={cn(
+        'relative',
         flat
           ? ''
           : 'border-border focus-within:border-brand rounded-[10px] border',
+        dragging && 'border-brand',
       )}
     >
       {/* 탭 + 툴바 */}
@@ -331,10 +380,22 @@ export function MarkdownEditor({
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) addImageFile(f)
+                  addFiles(Array.from(e.target.files ?? []))
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            <label className={cn(toolBtn, 'cursor-pointer')} title="파일 첨부">
+              <Paperclip className="size-3.5" />
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  addFiles(Array.from(e.target.files ?? []))
                   e.target.value = ''
                 }}
               />
@@ -343,9 +404,16 @@ export function MarkdownEditor({
         )}
       </div>
 
+      {/* 끌어다 놓는 중 — 어디에 놓아도 된다는 것을 상자 전체로 알린다. */}
+      {dragging && (
+        <div className="border-brand bg-surface/90 text-brand pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-[10px] border-2 border-dashed text-[13px] font-semibold">
+          여기에 놓으면 첨부돼요
+        </div>
+      )}
+
       {/* 본문 */}
       {tab === 'write' ? (
-        <div className="relative">
+        <div className={cn('relative', flat && 'bg-surface-muted rounded-xl')}>
           {/* 멘션 하이라이트 백드롭 — textarea와 동일 박스/타이포, 스크롤 동기화 */}
           {highlightable && (
             <div
@@ -367,7 +435,6 @@ export function MarkdownEditor({
             onChange={(e) => handleChange(e.target.value)}
             onKeyDown={onKeyDown}
             onPaste={onPaste}
-            onDrop={onDrop}
             onScroll={(e) => {
               if (backdropRef.current)
                 backdropRef.current.scrollTop = e.currentTarget.scrollTop
@@ -378,13 +445,22 @@ export function MarkdownEditor({
             style={{ height: minHeight }}
             className={cn(
               'placeholder:text-fg-subtle relative block w-full resize-none px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none',
-              flat
-                ? 'bg-surface-muted rounded-xl'
-                : 'rounded-b-[10px] bg-transparent',
+              // 배경은 감싸는 칸이 깔았다 — 여기에 불투명 배경을 주면 글자를 그리는
+              // 백드롭이 가려져 타자를 쳐도 아무것도 안 보인다.
+              flat ? 'bg-transparent' : 'rounded-b-[10px] bg-transparent',
               // 하이라이트 모드에선 글자는 백드롭이 그린다 — textarea는 캐럿·선택 영역만.
               highlightable ? 'caret-fg text-transparent' : 'text-fg',
             )}
           />
+          {uploading > 0 && (
+            <div
+              role="status"
+              className="text-fg-subtle absolute right-3 bottom-2 flex items-center gap-1.5 text-[11px]"
+            >
+              <span className="border-brand size-3 animate-spin rounded-full border-2 border-t-transparent" />
+              올리는 중…
+            </div>
+          )}
           {suggestions.length > 0 && (
             <ul
               role="listbox"

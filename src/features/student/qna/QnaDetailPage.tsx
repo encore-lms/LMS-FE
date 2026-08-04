@@ -7,6 +7,7 @@ import { buttonClass } from '@/components/ui/buttonClass'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Markdown } from '@/components/ui/Markdown'
+import type { UploadScope } from '@/shared/api'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader, useAuth } from '@/shared/store'
 import {
@@ -102,6 +103,7 @@ function AnswerItem({
   acceptPending,
   selfName,
   mentionNames,
+  uploadScope,
 }: {
   answer: QnaAnswer
   questionId: string
@@ -113,6 +115,8 @@ function AnswerItem({
   selfName: string
   /** 멘션 후보 — 스레드 실제 참여자(부모가 전체 스레드 기준으로 계산). */
   mentionNames: string[]
+  /** 본문에 박힌 첨부를 어느 경로로 주고받을지 — 보는 사람의 역할. */
+  uploadScope: UploadScope
 }) {
   const toast = useToast()
   const createComment = useCreateComment(questionId, answer.id)
@@ -180,7 +184,9 @@ function AnswerItem({
       </div>
 
       <div className="text-[14px] leading-7">
-        <Markdown mentions={answer.mentions}>{answer.content}</Markdown>
+        <Markdown mentions={answer.mentions} uploadScope={uploadScope}>
+          {answer.content}
+        </Markdown>
       </div>
 
       <div className="flex items-center justify-between">
@@ -238,7 +244,9 @@ function AnswerItem({
               </div>
               {/* 이름줄 아래로 아바타 폭만큼 들여 써 누구의 말인지 이어 보인다. */}
               <div className="pl-10 text-[14px] leading-7">
-                <Markdown mentions={c.mentions}>{c.content}</Markdown>
+                <Markdown mentions={c.mentions} uploadScope={uploadScope}>
+                  {c.content}
+                </Markdown>
               </div>
             </div>
           ))}
@@ -291,6 +299,9 @@ export default function QnaDetailPage() {
   const toast = useToast()
   const { user } = useAuth()
   const selfName = user?.name ?? '나'
+  // 첨부 경로는 역할별로 갈린다 — 같은 글을 수강생과 운영이 함께 본다.
+  const uploadScope: UploadScope =
+    user?.role === 'STUDENT' ? 'student' : 'staff'
   const { data, isPending, isError, refetch } = useQnaDetail(id)
   const createAnswer = useCreateAnswer(id)
   const acceptAnswer = useAcceptAnswer(id)
@@ -347,8 +358,13 @@ export default function QnaDetailPage() {
       >
         {data && (
           <>
-            {/* 질문 본문 */}
-            <section className={cn(card, 'flex flex-col gap-4')}>
+            {/* 질문 본문 — 아래 '답변 작성'과 얇은 선으로만 나눈다(카드 없이 한 흐름). */}
+            <section
+              className={cn(
+                card,
+                'border-divider flex flex-col gap-4 border-b pb-7',
+              )}
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={cn(
@@ -413,7 +429,7 @@ export default function QnaDetailPage() {
                 </span>
               </div>
 
-              <Markdown>{data.content}</Markdown>
+              <Markdown uploadScope={uploadScope}>{data.content}</Markdown>
 
               {data.tags.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -466,6 +482,39 @@ export default function QnaDetailPage() {
               </div>
             </ConfirmDialog>
 
+            {/* 답변 작성 — 목록 위에 둔다. 답변이 쌓일수록 아래로 밀려 글을 다 지나쳐야
+                쓸 수 있었다. 질문을 읽은 자리에서 바로 쓰게 한다. */}
+            <section className="border-divider flex flex-col gap-3 border-b pb-7">
+              <span className="text-fg text-[15px] font-bold">답변 작성</span>
+              <MarkdownEditor
+                flat
+                uploadScope={uploadScope}
+                value={draft}
+                onChange={setDraft}
+                minHeight={120}
+                maxLength={2000}
+                placeholder="도움이 될 만한 답변을 남겨주세요. @로 멘션하면 알림이 가요."
+                mentionNames={threadMentionNames(data, selfName)}
+                onMentionsChange={setMentions}
+                onImageRejected={(msg) => toast.danger(msg)}
+              />
+              <div className="flex items-center justify-end gap-2">
+                <span className="text-fg-subtle mr-auto text-[11px]">
+                  {mentions.length > 0
+                    ? `멘션: @${mentions.join(', @')}`
+                    : '마크다운·코드 블록·이미지 삽입 지원'}
+                </span>
+                <button
+                  type="button"
+                  onClick={submitAnswer}
+                  disabled={!draft.trim() || createAnswer.isPending}
+                  className={buttonClass({ size: 'md' })}
+                >
+                  {createAnswer.isPending ? '등록 중…' : '답변 등록'}
+                </button>
+              </div>
+            </section>
+
             {/* 답변 목록 */}
             <div className="flex items-center gap-2 pt-1">
               <h2 className="text-fg text-[16px] font-bold">답변</h2>
@@ -491,40 +540,10 @@ export default function QnaDetailPage() {
                   acceptPending={acceptAnswer.isPending}
                   selfName={selfName}
                   mentionNames={threadMentionNames(data, selfName)}
+                  uploadScope={uploadScope}
                 />
               ))}
             </div>
-
-            {/* 답변 작성 */}
-            <section className={cn(card, 'flex flex-col gap-3')}>
-              <span className="text-fg text-[14px] font-bold">답변 작성</span>
-              <MarkdownEditor
-                flat
-                value={draft}
-                onChange={setDraft}
-                minHeight={120}
-                maxLength={2000}
-                placeholder="도움이 될 만한 답변을 남겨주세요. @로 멘션하면 알림이 가요."
-                mentionNames={threadMentionNames(data, selfName)}
-                onMentionsChange={setMentions}
-                onImageRejected={(msg) => toast.danger(msg)}
-              />
-              <div className="flex items-center justify-end gap-2">
-                <span className="text-fg-subtle mr-auto text-[11px]">
-                  {mentions.length > 0
-                    ? `멘션: @${mentions.join(', @')}`
-                    : '마크다운·코드 블록·이미지·@멘션 지원'}
-                </span>
-                <button
-                  type="button"
-                  onClick={submitAnswer}
-                  disabled={!draft.trim() || createAnswer.isPending}
-                  className={buttonClass({ size: 'md' })}
-                >
-                  {createAnswer.isPending ? '등록 중…' : '답변 등록'}
-                </button>
-              </div>
-            </section>
           </>
         )}
       </DataBoundary>

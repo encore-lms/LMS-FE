@@ -7,14 +7,11 @@ import {
   CheckCircle2,
   Eye,
   Info,
-  Lock,
   Pencil,
   Star,
   XCircle,
 } from 'lucide-react'
-import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
@@ -51,9 +48,10 @@ import {
 } from './recommendationMeta'
 
 // 멘토 추천 선택 (/mentor/teams/:teamId/recommendation) — Figma 2553:4425.
-// 진입 조건: 팀원 전체 평가 최종 제출 완료(locked_until_evaluation 잠금 안내).
-// 팀당 1명 라디오 또는 '추천 안 함' 명시 선택 · 추천 시 증명서용 간략 요약 필수 ·
-// 최종 제출 확인 모달 → 제출 후 수정 불가.
+// 정책 완화(2026-08-04): 평가 선행 게이트 제거 — 멘토링 시작부터 평가와 독립적으로 상시 작성,
+// 제출 후에도 재제출로 수정 가능(마지막 제출본 유효). 제출본은 draft 저장이 409라
+// 자동 저장을 멈추고 '수정 재제출'만 연다. 팀당 1명 라디오 또는 '추천 안 함' 명시 선택 ·
+// 추천 시 증명서용 간략 요약 필수 · 최종 제출 확인 모달.
 export default function RecommendationPage() {
   usePageHeader('추천 선택', MENTOR_FLOW_CAPTION)
   const { teamId = '' } = useParams()
@@ -69,43 +67,8 @@ export default function RecommendationPage() {
       errorDescription="잠시 후 다시 시도해 주세요."
       className="p-8"
     >
-      {data &&
-        (data.status === 'locked_until_evaluation' ? (
-          <div className="p-8">
-            <Empty
-              icon={<Lock />}
-              title="평가 제출 후 추천을 선택할 수 있어요"
-              description="팀원 전체 평가를 최종 제출하면 추천 선택 단계가 활성됩니다."
-              action={
-                <Link
-                  to={`/mentor/teams/${data.teamId}/evaluation`}
-                  className={buttonClass()}
-                >
-                  평가 작성으로 이동
-                </Link>
-              }
-            />
-          </div>
-        ) : data.status === 'submitted_recommended' ||
-          data.status === 'submitted_not_recommended' ? (
-          <div className="p-8">
-            <Empty
-              icon={<Lock />}
-              title="추천이 이미 제출되었습니다"
-              description={`최종 제출(${data.submittedAtLabel}) 후에는 수정할 수 없어요. 제출 요약에서 선택 내용을 확인할 수 있습니다.`}
-              action={
-                <Link
-                  to={`/mentor/recommendations?teamId=${data.teamId}`}
-                  className="border-border text-fg hover:bg-surface-muted rounded-[10px] border bg-white px-4 py-2.5 text-[13px] font-bold"
-                >
-                  제출 요약 보기
-                </Link>
-              }
-            />
-          </div>
-        ) : (
-          <RecommendationForm sheet={data} />
-        ))}
+      {/* 정책 완화(2026-08-04) — 잠금·차단 분기 없이 항상 폼. 제출본도 값 채워진 폼으로 열린다. */}
+      {data && <RecommendationForm sheet={data} />}
     </DataBoundary>
   )
 }
@@ -119,6 +82,10 @@ function RecommendationForm({
   const toast = useToast()
   const draftMutation = useSaveRecommendationDraft()
   const submitMutation = useSubmitRecommendation()
+  // 제출본 편집 모드 — draft 저장은 BE가 409로 막으므로(반쪽 상태 노출 방지) 재제출만 허용.
+  const submitted =
+    sheet.status === 'submitted_recommended' ||
+    sheet.status === 'submitted_not_recommended'
 
   const [mode, setMode] = useState<MentorRecommendationMode | null>(
     sheet.draft.mode,
@@ -164,9 +131,10 @@ function RecommendationForm({
       skipFirstAutosave.current = false
       return
     }
+    if (submitted) return
     const timer = setTimeout(() => autosaveRef.current(), AUTOSAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [payload])
+  }, [payload, submitted])
 
   const onConfirmSubmit = async () => {
     try {
@@ -209,9 +177,11 @@ function RecommendationForm({
         <span className="text-fg text-xs font-medium">추천 선택</span>
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
-          {savedLabel
-            ? `자동 저장 · ${savedLabel}`
-            : '저장 전 — 자동 저장 대기'}
+          {submitted
+            ? `제출됨 · ${sheet.submittedAtLabel ?? ''} — 수정 후 재제출`
+            : savedLabel
+              ? `자동 저장 · ${savedLabel}`
+              : '저장 전 — 자동 저장 대기'}
         </span>
       </div>
 
@@ -227,11 +197,11 @@ function RecommendationForm({
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="bg-surface text-success flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold">
               <Check className="h-[11px] w-[11px]" />
-              평가 완료 · 추천 단계
+              상시 추천 가능 · 평가와 독립
             </span>
             <span className="text-xs font-medium">
               {sheet.cohortLabel} · {sheet.memberCount}명 평가 평균{' '}
-              {sheet.teamAverage} / 5.0
+              {sheet.teamAverage ?? '-'} / 5.0
             </span>
           </div>
         </div>
@@ -467,7 +437,7 @@ function RecommendationForm({
                 : 'bg-fg-subtle text-on-color cursor-not-allowed',
             )}
           >
-            추천 제출
+            {submitted ? '수정 재제출' : '추천 제출'}
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -607,8 +577,12 @@ function CandidateCard({
       </span>
       <span className="flex items-baseline gap-1">
         <span className="text-fg-subtle text-[11px]">평가 평균</span>
-        <span className="text-fg text-lg font-bold">{candidate.average}</span>
-        <span className="text-fg-subtle text-[11px]">/ 5.0</span>
+        <span className="text-fg text-lg font-bold">
+          {candidate.average ?? '-'}
+        </span>
+        <span className="text-fg-subtle text-[11px]">
+          {candidate.average == null ? '평가 미작성' : '/ 5.0'}
+        </span>
       </span>
       <span className="flex w-full flex-col gap-1">
         {EVALUATION_AXES.map((axis, axisIndex) => {

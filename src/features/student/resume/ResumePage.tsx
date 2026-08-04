@@ -24,6 +24,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useDeleteResume, useResumes } from '../api/resume'
 import { SECTIONS, completionOf } from './constants'
 import type { ResumeSummary } from './types'
+import { CourseTabs } from '../course/CourseTabs'
 
 // 상태 필터 옵션 — '전체' + ResumeStatus. 필터 버튼 팝오버에서 선택.
 const STATUS_FILTERS = ['전체', '작성 중', '작성 완료'] as const
@@ -329,6 +330,7 @@ export default function ResumePage() {
       className="p-8"
     >
       <div className="flex flex-col gap-5 p-8">
+        <CourseTabs />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard
             icon={<FileText />}

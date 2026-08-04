@@ -1,4 +1,4 @@
-import { type ComponentPropsWithoutRef, useMemo } from 'react'
+import { memo, type ComponentPropsWithoutRef, useMemo } from 'react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
@@ -24,16 +24,14 @@ import type { UploadScope } from '@/shared/api'
 // `upload:id` 를 여기서 실제 경로로 바꾸지 않는다 — 그 경로는 로그인을 요구하는데
 // 브라우저가 스스로 부르는 요청(img src·a download)에는 토큰이 붙지 않아 401 이 된다.
 // 참조를 그대로 넘겨 두고, 아래 컴포넌트가 토큰을 붙여 받아 온다.
-function makeUrlTransform() {
-  return (url: string): string => {
-    if (url.startsWith('attachment:')) {
-      const resolved = getImage(url.slice('attachment:'.length))
-      return resolved && resolved.startsWith('data:image/') ? resolved : ''
-    }
-    if (url.startsWith('upload:')) return url
-    if (url.startsWith('data:image/')) return url
-    return defaultUrlTransform(url)
+const urlTransform = (url: string): string => {
+  if (url.startsWith('attachment:')) {
+    const resolved = getImage(url.slice('attachment:'.length))
+    return resolved && resolved.startsWith('data:image/') ? resolved : ''
   }
+  if (url.startsWith('upload:')) return url
+  if (url.startsWith('data:image/')) return url
+  return defaultUrlTransform(url)
 }
 
 /**
@@ -102,7 +100,10 @@ interface MarkdownProps {
 }
 
 // QnA 질문·답변·댓글 본문 공용 렌더러. 마크다운 + GFM + 코드 하이라이트 + sanitize.
-export function Markdown({
+//
+// memo 로 감싼다 — 같은 글 아래 댓글창에 한 글자 칠 때마다 부모가 다시 그려지는데, 그때마다
+// 본문까지 다시 그리면 그림이 깜빡인다(재마운트 → 다시 내려받기).
+export const Markdown = memo(function Markdown({
   children,
   mentions,
   uploadScope = 'student',
@@ -112,67 +113,64 @@ export function Markdown({
     () => linkifyMentions(children, mentions),
     [children, mentions],
   )
+  // 렌더마다 새 객체를 넘기면 react-markdown 이 요소 타입이 바뀐 줄 알고 자식을 통째로
+  // 다시 만든다 — 그림이 매번 처음부터 그려진다. 역할이 그대로면 같은 객체를 쓴다.
+  const components = useMemo(
+    () => ({
+      // 올린 이미지는 토큰이 필요해 src 에 주소를 그대로 걸 수 없다.
+      img({ src, alt, ...rest }: ComponentPropsWithoutRef<'img'>) {
+        if (typeof src === 'string' && src.startsWith(UPLOAD)) {
+          return (
+            <UploadImage
+              id={src.slice(UPLOAD.length)}
+              scope={uploadScope}
+              alt={alt ?? ''}
+            />
+          )
+        }
+        // 남의 서버 그림은 언제든 사라질 수 있다 — 빈 상자만 남기지 않는다.
+        return <BodyImage src={src} alt={alt ?? ''} {...rest} />
+      },
+      a({ href, children, title, ...rest }: ComponentPropsWithoutRef<'a'>) {
+        if (typeof href === 'string' && href.startsWith('#mention-')) {
+          return <span className="qna-mention">{children}</span>
+        }
+        // 카드로 그릴 링크인지 title 로 가린다 — 마크다운을 유지한 채 표현을 넓히는 방법이다.
+        const embed = parseEmbedTitle(title)
+        if (embed?.kind === 'bookmark' && href) {
+          return (
+            <BookmarkCard href={href} label={String(children)} meta={embed} />
+          )
+        }
+        if (embed?.kind === 'file' && href) {
+          return (
+            <FileChip
+              href={href}
+              scope={uploadScope}
+              label={String(children)}
+              size={embed.size}
+            />
+          )
+        }
+        return (
+          <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+            {children}
+          </a>
+        )
+      },
+    }),
+    [uploadScope],
+  )
   return (
     <div className={`markdown-body ${className ?? ''}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, [rehypeSanitize, schema]]}
-        urlTransform={makeUrlTransform()}
-        components={{
-          // 올린 이미지는 토큰이 필요해 src 에 주소를 그대로 걸 수 없다.
-          img({ src, alt, ...rest }: ComponentPropsWithoutRef<'img'>) {
-            if (typeof src === 'string' && src.startsWith(UPLOAD)) {
-              return (
-                <UploadImage
-                  id={src.slice(UPLOAD.length)}
-                  scope={uploadScope}
-                  alt={alt ?? ''}
-                />
-              )
-            }
-            // 남의 서버 그림은 언제든 사라질 수 있다 — 빈 상자만 남기지 않는다.
-            return <BodyImage src={src} alt={alt ?? ''} {...rest} />
-          },
-          a({ href, children, title, ...rest }: ComponentPropsWithoutRef<'a'>) {
-            if (typeof href === 'string' && href.startsWith('#mention-')) {
-              return <span className="qna-mention">{children}</span>
-            }
-            // 카드로 그릴 링크인지 title 로 가린다 — 마크다운을 유지한 채 표현을 넓히는 방법이다.
-            const embed = parseEmbedTitle(title)
-            if (embed?.kind === 'bookmark' && href) {
-              return (
-                <BookmarkCard
-                  href={href}
-                  label={String(children)}
-                  meta={embed}
-                />
-              )
-            }
-            if (embed?.kind === 'file' && href) {
-              return (
-                <FileChip
-                  href={href}
-                  scope={uploadScope}
-                  label={String(children)}
-                  size={embed.size}
-                />
-              )
-            }
-            return (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...rest}
-              >
-                {children}
-              </a>
-            )
-          },
-        }}
+        urlTransform={urlTransform}
+        components={components}
       >
         {source}
       </ReactMarkdown>
     </div>
   )
-}
+})

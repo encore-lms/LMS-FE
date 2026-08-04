@@ -144,6 +144,8 @@ export function BlogForm({
       <WeekPicker
         cohortLabel={data.cohortLabel}
         weeks={data.weeks}
+        // 서버가 주는 기본 선택이 곧 현재 주차다 — 그 뒤는 아직 오지 않았다.
+        maxNo={mode === 'edit' ? undefined : data.selectedNo}
         moreLabel={data.moreLabel}
         selectedNo={selectedNo}
         onSelect={setSelectedNo}

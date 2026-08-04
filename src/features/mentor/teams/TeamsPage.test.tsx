@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import TeamsPage from './TeamsPage'
@@ -24,7 +24,7 @@ function renderPage() {
 }
 
 describe('TeamsPage', () => {
-  it('KPI·팀 카드·배정 팀 전체 테이블을 렌더한다', () => {
+  it('요약 카드와 배정 팀 목록을 렌더한다', () => {
     mockHook({ data: buildTeamsData(), isPending: false, isError: false })
     renderPage()
     expect(usePageHeaderStore.getState().title).toBe('내 배정 팀')
@@ -33,9 +33,11 @@ describe('TeamsPage', () => {
     expect(screen.getByText('요청 확인 필요')).toBeInTheDocument()
     expect(screen.getByText('N시간 완료 또는 조기 종료')).toBeInTheDocument()
     expect(screen.getByText('운영자 보강 요청')).toBeInTheDocument()
-    // 테이블엔 완료 팀(NLP 분석) 포함 4팀 전부, 카드는 액션 필요 3팀만
-    expect(screen.getByText('배정 팀 전체 (4팀)')).toBeInTheDocument()
-    expect(screen.getByText('NLP 분석 팀')).toBeInTheDocument()
+    // 목록은 한 벌 — 완료 팀(NLP 분석)까지 4팀 전부가 표에만 나온다.
+    expect(
+      screen.getByText('배정 4팀 (진행 중 2 · 평가 필요 1 · 완료 1)'),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('NLP 분석 팀')).toHaveLength(1)
     // 보조 태그 — 상태가 아닌 부가 라벨
     expect(screen.getByText('✓ N시간 완료')).toBeInTheDocument()
     expect(screen.getByText('초과 멘토링 1.5h')).toBeInTheDocument()
@@ -44,22 +46,28 @@ describe('TeamsPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('검색·상태 필터로 카드와 테이블을 거른다', async () => {
+  it('검색과 상태 탭으로 목록을 거른다', async () => {
     mockHook({ data: buildTeamsData(), isPending: false, isError: false })
     const user = userEvent.setup()
     renderPage()
     await user.type(screen.getByLabelText('팀명·반/기수 검색'), '트러블')
-    expect(screen.getAllByText('트러블슈팅 팀').length).toBeGreaterThan(0)
+    expect(screen.getByText('트러블슈팅 팀')).toBeInTheDocument()
     expect(screen.queryByText('NLP 분석 팀')).not.toBeInTheDocument()
     await user.clear(screen.getByLabelText('팀명·반/기수 검색'))
-    await user.click(screen.getByLabelText('상태 필터'))
-    await user.click(
-      within(screen.getByRole('listbox')).getByRole('button', {
-        name: '완료',
-      }),
-    )
+    // 상태는 할 일 기준으로 묶인 탭 — 완료(조기 종료 포함)만 남긴다.
+    await user.click(screen.getByRole('button', { name: '완료 (1)' }))
     expect(screen.getByText('NLP 분석 팀')).toBeInTheDocument()
     expect(screen.queryByText('트러블슈팅 팀')).not.toBeInTheDocument()
+  })
+
+  it('진행 중 탭은 예약 대기·일지 필요·수정 요청까지 묶어 보여 준다', async () => {
+    mockHook({ data: buildTeamsData(), isPending: false, isError: false })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: '진행 중 (2)' }))
+    expect(screen.getByText('추천시스템 팀')).toBeInTheDocument()
+    expect(screen.getByText('트러블슈팅 팀')).toBeInTheDocument()
+    expect(screen.queryByText('NLP 분석 팀')).not.toBeInTheDocument()
   })
 
   it('비용·정산·매출 표현이 없다', () => {

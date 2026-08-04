@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import {
   useMentoringRequestAction,
@@ -44,8 +45,16 @@ const withinDays = (
 // 멘토링 예약 요청 (/mentor/mentoring-requests) — Figma 2553:3820.
 // KPI 4 · 필터 툴바(상태 탭 6 + 기간 + 검색) · 요청 카드 · 예약 정책 요약 배너.
 // :requestId 응답 모달은 중첩 라우트(Outlet)로 목록 위에 오버레이.
-export default function RequestsPage() {
-  usePageHeader('멘토링 예약 요청', MENTOR_FLOW_CAPTION)
+export default function RequestsPage({
+  embedded = false,
+  teamId,
+}: {
+  /** 팀 상세 '예약' 탭에 얹을 때 — 자체 헤더·바깥 여백을 생략한다. */
+  embedded?: boolean
+  /** 주면 그 팀 요청만 — 팀 상세에서는 다른 팀 요청이 섞이면 안 된다. */
+  teamId?: string
+} = {}) {
+  usePageHeader('멘토링 예약 요청', MENTOR_FLOW_CAPTION, !embedded)
   const { data, isPending, isError, refetch } = useMentoringRequests()
   const toast = useToast()
   // '제안 취소' — 카드에서 즉시 처리(명세 cancel 재사용은 mock 한정 가정, mockDb 주석 참조).
@@ -55,7 +64,10 @@ export default function RequestsPage() {
   const [period, setPeriod] = useState<string>('30')
   const [q, setQ] = useState('')
 
-  const requests = useMemo(() => data?.requests ?? [], [data])
+  const requests = useMemo(() => {
+    const all = data?.requests ?? []
+    return teamId ? all.filter((r) => r.teamId === teamId) : all
+  }, [data, teamId])
 
   // 기간 필터 기준일 — D-day·기간 기준 규칙 BE 확정 대기(openQuestion). mock 더미 보존을 위해
   // 목록 내 최근 활동 시각을 기준으로 상대 계산한다(실서버 연동 시 서버 필터로 대체 TODO).
@@ -125,9 +137,9 @@ export default function RequestsPage() {
       skeleton={<SkeletonListPage kpis={3} columns={5} className="" />}
       errorTitle="예약 요청을 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
-      <div className="flex flex-col gap-5 p-8">
+      <div className={cn('flex flex-col gap-5', !embedded && 'p-8')}>
         {/* KPI 4 — 우상단 아이콘은 Figma KPI 카드 정합(멘토링 예약 2553:3820) */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard

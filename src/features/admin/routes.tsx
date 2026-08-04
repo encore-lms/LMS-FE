@@ -14,6 +14,9 @@ const StudentManagementPage = lazy(
 // 담당 과정/기수 — 목록에서 기수를 고르고(CohortListPage) 허브로 들어간다(EducationPage).
 const CohortListPage = lazy(() => import('./education/CohortListPage'))
 const EducationPage = lazy(() => import('./education/EducationPage'))
+const ProjectWorkspaceViewPage = lazy(
+  () => import('./education/ProjectWorkspaceViewPage'),
+)
 // 과제 등록·수정 — 강사·운영 공용 폼(첨부 포함). 운영은 ?course&cohort로 진입.
 const AssignmentFormPage = lazy(
   () => import('../instructor/assignments/AssignmentFormPage'),
@@ -152,6 +155,11 @@ export const adminRoutes: RouteObject[] = [
       },
       // 기수 허브 — 정적 세그먼트(assignments·resume)를 동적 :cohortId 앞에 두는 컨벤션.
       { path: 'education/:cohortId', element: <EducationPage /> },
+      // 프로젝트 워크스페이스 열람(읽기 전용) — 허브 프로젝트 탭 카드에서 진입.
+      {
+        path: 'education/:cohortId/projects/:projectId',
+        element: <ProjectWorkspaceViewPage source="admin" />,
+      },
       { path: 'certificates', element: <CompetencyCertificatesPage /> },
       {
         path: 'certificates/:studentId',

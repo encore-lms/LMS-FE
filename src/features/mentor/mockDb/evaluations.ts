@@ -84,6 +84,9 @@ export function buildTeamEvaluationSheet(
           : '상시 평가 가능',
     lockReasonLabel: null,
     status,
+    // 계약 종료 마감 — mock 팀엔 종료일 미설정(무기한). 마감 화면은 페이지 테스트가 시트 직접 mock.
+    submissionClosed: false,
+    submissionDeadlineLabel: null,
     submittedAtLabel:
       submitted?.submittedAtLabel ?? submitted?.writtenAtLabel ?? null,
     members,

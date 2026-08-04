@@ -150,6 +150,26 @@ describe('EvaluationPage', () => {
     ).not.toBeInTheDocument()
   })
 
+  // 계약 종료 마감 — 값은 보이되(자세히 보기) 입력·제출 전부 잠금.
+  it('계약 종료 마감 — 읽기 전용 폼 + 제출 마감 CTA·칩을 보여준다', () => {
+    const base = buildTeamEvaluationSheet('team_nlp')!
+    mockSheet({
+      ...base,
+      submissionClosed: true,
+      submissionDeadlineLabel: '2026-08-01 까지',
+    })
+    renderPage('team_nlp')
+    expect(
+      screen.getByText('제출 마감 — 계약 종료 (2026-08-01 까지)'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /제출 마감 — 계약 종료/ }),
+    ).toBeDisabled()
+    expect(screen.queryByRole('button', { name: '임시 저장' })).toBeNull()
+    // 점수 버튼 잠금 — 자세히 보기 전용
+    expect(screen.getAllByRole('radio', { name: '5점' })[0]).toBeDisabled()
+  })
+
   // 정책 완화(2026-08-04) — 제출본은 값이 채워진 폼으로 열려 자세히 보기 · 재제출을 겸한다.
   it('제출본 재진입 — 값 채워진 폼 + 수정 재제출 CTA, 임시 저장은 숨긴다', () => {
     mockSheet(buildTeamEvaluationSheet('team_nlp'))

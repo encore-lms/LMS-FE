@@ -235,6 +235,31 @@ export function useUpdateAllocatedHours() {
   })
 }
 
+/** PATCH /admin/mentors/assignments/{id}/contract-end — 계약 종료일 설정·수정·해제(null). */
+export function useUpdateContractEnd() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      assignmentId,
+      contractEndDate,
+    }: {
+      assignmentId: string
+      contractEndDate: string | null
+    }) =>
+      apiClient
+        .patch<MentorAssignmentRow>(
+          `/admin/mentors/assignments/${assignmentId}/contract-end`,
+          { contractEndDate },
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
 /** POST /admin/mentors/assignments/{id}/early-end — 조기 종료(사유 필수 422). */
 export function useEarlyEndAssignment() {
   const queryClient = useQueryClient()

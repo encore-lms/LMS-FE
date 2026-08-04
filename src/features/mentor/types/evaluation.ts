@@ -64,6 +64,10 @@ export interface MentorEvaluationSheetData {
   status: MentorEvaluationStatus
   /** 최종 제출 시각 — 미제출이면 null('2026-03-19 21:14') */
   submittedAtLabel: string | null
+  /** 계약 종료 마감 — 경과 시 제출·재제출 잠금(읽기 전용) */
+  submissionClosed: boolean
+  /** 마감 라벨 '2026-12-28 까지' — 마감 없으면 null */
+  submissionDeadlineLabel: string | null
   members: MentorEvaluationMemberEntry[]
 }
 

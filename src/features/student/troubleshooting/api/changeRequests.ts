@@ -22,6 +22,8 @@ export type TsChangeStatus =
   | 'approved'
   | 'revision_submitted'
   | 'rejected'
+  /** 강사가 승인해 원본에 반영까지 끝난 상태. */
+  | 'applied'
 
 export interface TsChangeState {
   status: TsChangeStatus

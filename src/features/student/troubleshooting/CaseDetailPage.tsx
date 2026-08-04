@@ -446,6 +446,23 @@ export default function CaseDetailPage() {
                           수 있어요.
                         </span>
                       </>
+                    ) : changeState === 'applied' ? (
+                      <>
+                        <span className="bg-success-bg text-success w-fit rounded px-2 py-0.5 text-[11px] font-bold">
+                          변경 제안 반영됨
+                        </span>
+                        <span className="text-fg-subtle text-[11px]">
+                          강사가 승인해 사례에 반영했어요. 더 고칠 게 있으면
+                          다시 제안할 수 있어요.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goChangeRequest}
+                          className={buttonClass({ size: 'sm' })}
+                        >
+                          다시 변경 제안
+                        </button>
+                      </>
                     ) : changeState === 'rejected' ? (
                       <>
                         <span className="bg-danger-bg text-danger w-fit rounded px-2 py-0.5 text-[11px] font-bold">

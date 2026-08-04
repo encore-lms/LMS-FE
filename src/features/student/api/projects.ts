@@ -4,6 +4,7 @@ import { apiClient } from '@/shared/api'
 import { useAuth } from '@/shared/store/auth'
 import { projectKeys } from '../projects/queryKeys'
 import type {
+  ProjectInvitation,
   ProjectListData,
   ProjectSummary,
   ProjectWizardData,
@@ -28,6 +29,45 @@ export function useProjectList() {
     queryKey: projectKeys.list(),
     queryFn: () =>
       apiClient.get<ProjectListData>('/student/projects').then((r) => r.data),
+  })
+}
+
+/**
+ * 내가 받은 초대 — 아직 답하지 않은 것만.
+ *
+ * <p>받아들이기 전에는 프로젝트 목록에도 워크스페이스에도 없다(팀이 아니니까). 알림을
+ * 지우면 초대받은 사실로 가는 길이 끊기므로 목록 화면이 따로 들고 있어야 한다.</p>
+ */
+export function useProjectInvitations() {
+  return useQuery({
+    queryKey: projectKeys.invitations(),
+    queryFn: () =>
+      apiClient
+        .get<{
+          invitations: ProjectInvitation[]
+        }>('/student/projects/invitations')
+        .then((r) => r.data.invitations),
+  })
+}
+
+/** 초대에 답한다 — 수락하면 그때부터 팀원, 거절하면 목록에서 사라진다. */
+export function useAnswerInvitation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      answer,
+    }: {
+      projectId: string
+      answer: 'accept' | 'decline'
+    }) => apiClient.post(`/student/projects/${projectId}/invitation/${answer}`),
+    onSuccess: () => {
+      // 수락하면 프로젝트가 하나 늘어난다 — 목록도 함께 새로 받는다.
+      void queryClient.invalidateQueries({
+        queryKey: projectKeys.invitations(),
+      })
+      void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+    },
   })
 }
 

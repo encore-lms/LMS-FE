@@ -119,7 +119,7 @@ export function Step2(p: {
           <div className="flex flex-col">
             <span className="text-fg text-[15px] font-bold">현재 팀 구성</span>
             <span className="text-fg-subtle text-[11px]">
-              PM 1명 + 최대 팀원 6명 · 최대 7명까지
+              PM 1명 + 최대 팀원 6명 · 초대한 동료는 수락해야 팀원이 됩니다
             </span>
           </div>
           <span className="text-brand flex items-center gap-1 text-[12px] font-bold">
@@ -137,15 +137,16 @@ export function Step2(p: {
               <span className="text-fg-subtle text-[11px]">{m.meta}</span>
             </div>
             <div className="flex items-center gap-2">
+              {/* 고른 것만으로 팀원이 되지는 않는다 — 상대가 받아들여야 한다. */}
               <span
                 className={cn(
                   'rounded px-2 py-0.5 text-[10px] font-bold',
                   m.pm
                     ? 'bg-accent-strong text-white'
-                    : 'bg-surface-muted text-fg-muted',
+                    : 'bg-warning-bg text-warning',
                 )}
               >
-                {m.pm ? 'PM' : '팀원'}
+                {m.pm ? 'PM' : '초대 대기'}
               </span>
               {!m.pm && (
                 <button
@@ -162,8 +163,8 @@ export function Step2(p: {
         ))}
         <div className="bg-info-bg/60 text-fg-muted flex items-center gap-2 rounded-xl p-3 text-[11px]">
           <Send className="text-info size-4 shrink-0" aria-hidden="true" />
-          초대된 팀원에게 알림이 발송됩니다. 수락 시점부터 워크스페이스에 참여할
-          수 있습니다.
+          초대한 동료에게 알림이 갑니다. 상대가 수락한 시점부터 팀원이 되고
+          워크스페이스에 참여할 수 있습니다.
         </div>
       </section>
     </div>

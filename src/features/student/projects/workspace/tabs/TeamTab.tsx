@@ -209,7 +209,9 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
               {
                 onSuccess: () => {
                   setInviting(false)
-                  toast.success(`${label} 님을 초대했습니다`)
+                  toast.success(
+                    `${label} 님에게 초대를 보냈어요 · 수락하면 팀원이 됩니다`,
+                  )
                 },
                 onError: (e) =>
                   toast.danger(wsWriteError(e, '팀원 초대에 실패했어요.')),

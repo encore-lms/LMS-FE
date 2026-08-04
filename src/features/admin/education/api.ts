@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { adminEducationKeys } from './queryKeys'
+import type { WorkspaceData } from '@/features/student/projects/types'
 import type {
   AssignmentFormDetail,
   AssignmentItem,
@@ -243,6 +244,21 @@ export function useDeleteResumeFeedback() {
 }
 
 // 기수 프로젝트 목록(정본 §42·§43) — 운영 조회
+/**
+ * 검토자 프로젝트 워크스페이스 상세(운영) — GET /admin/projects/{id}/workspace.
+ * 응답은 수강생 워크스페이스(WorkspaceData)와 한 계약 — 화면을 읽기 전용으로 재사용한다.
+ */
+export function useAdminProjectWorkspace(projectId?: string | null) {
+  return useQuery({
+    queryKey: [...adminEducationKeys.all, 'project-workspace', projectId ?? ''],
+    enabled: !!projectId,
+    queryFn: () =>
+      apiClient
+        .get<WorkspaceData>(`/admin/projects/${projectId}/workspace`)
+        .then((r) => r.data),
+  })
+}
+
 export function useCohortProjects(
   courseId?: string | null,
   cohortId?: string | null,
@@ -333,7 +349,9 @@ export function usePeerEvaluations(projectId: string | null) {
     queryKey: adminEducationKeys.peerEvaluations(projectId ?? ''),
     queryFn: () =>
       apiClient
-        .get<PeerEvalResults>(`/instructor/projects/${projectId}/peer-evaluations`)
+        .get<PeerEvalResults>(
+          `/instructor/projects/${projectId}/peer-evaluations`,
+        )
         .then((r) => r.data),
     enabled: !!projectId,
   })

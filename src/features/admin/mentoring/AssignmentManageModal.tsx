@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
@@ -49,6 +49,11 @@ export function AssignmentManageModal({
   const [mentorId, setMentorId] = useState(row.mentor?.mentorId ?? '')
   const [templateId, setTemplateId] = useState(row.logTemplateId ?? '')
   const [contractEnd, setContractEnd] = useState(row.contractEndDate ?? '')
+  // 기존 계약 종료일을 폼에서 바로 보이게 — 모달이 열려 있는 동안 저장·보드 갱신으로
+  // row가 바뀌어도 입력값을 최신 설정값과 동기화한다(2026-08-04 QA).
+  useEffect(() => {
+    setContractEnd(row.contractEndDate ?? '')
+  }, [row.contractEndDate])
   // 409 MENTOR_ASSIGNMENT_HAS_LOGS 수신 후 새 배정 생성 안내 노출
   const [replaceGuide, setReplaceGuide] = useState(false)
   // 배정 삭제 인라인 확인(파괴적이라 즉시 삭제 방지)
@@ -296,8 +301,11 @@ export function AssignmentManageModal({
             </Button>
           </div>
           <p className="text-fg-subtle text-xs">
-            종료일 당일까지 멘토가 평가·추천을 제출·수정할 수 있어요 · 비우고
-            저장하면 마감 해제(무기한)
+            {row.contractEndDate
+              ? `현재 설정 — ${row.contractEndDate} 까지 제출 가능`
+              : '현재 설정 — 마감 없음(무기한)'}
+            {' · '}종료일 당일까지 멘토가 평가·추천을 제출·수정할 수 있어요 ·
+            비우고 저장하면 마감 해제
           </p>
         </section>
 

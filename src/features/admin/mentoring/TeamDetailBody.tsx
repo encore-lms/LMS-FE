@@ -8,6 +8,7 @@ import { cn } from '@/shared/lib/cn'
 import { useMentorAssignments } from './api'
 import {
   ASSIGNMENT_STATUS_META,
+  nHoursDoneLabel,
   progressFillClass,
   type AssignmentDisplayStatus,
 } from './statusMeta'
@@ -39,6 +40,11 @@ export function TeamDetailBody({ d }: { d: AdminMentoringTeamDetail }) {
         ? 'n_hours_done'
         : 'in_progress'
   const statusMeta = ASSIGNMENT_STATUS_META[displayStatus]
+  // 'N시간 완료'는 실제 배정 시간으로 표기(2026-08-04 QA).
+  const statusLabel =
+    displayStatus === 'n_hours_done'
+      ? nHoursDoneLabel(d.allocatedHours)
+      : statusMeta.label
   const progress = d.recognizedHours ?? 0
   const remaining =
     d.allocatedHours !== null ? Math.max(0, d.allocatedHours - progress) : null
@@ -55,7 +61,7 @@ export function TeamDetailBody({ d }: { d: AdminMentoringTeamDetail }) {
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-fg text-xl font-bold">{d.teamName}</h1>
-            <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
+            <StatusBadge label={statusLabel} tone={statusMeta.tone} />
           </div>
           <p className="text-fg-subtle mt-1 text-[13px]">
             멘티 {d.members.length}명

@@ -14,6 +14,7 @@ import { useMyCohorts } from '../api/dashboard'
 import { useAdminMentoringLogs, useMentorAssignments } from './api'
 import {
   ASSIGNMENT_STATUS_META,
+  nHoursDoneLabel,
   assignmentDisplayStatus,
   progressFillClass,
 } from './statusMeta'
@@ -36,7 +37,13 @@ function MentoringCard({
   onAssign: () => void
 }) {
   const navigate = useNavigate()
-  const meta = ASSIGNMENT_STATUS_META[assignmentDisplayStatus(team)]
+  const displayStatus = assignmentDisplayStatus(team)
+  const meta = ASSIGNMENT_STATUS_META[displayStatus]
+  // 'N시간 완료'는 실제 배정 시간으로 표기(2026-08-04 QA).
+  const statusLabel =
+    displayStatus === 'n_hours_done'
+      ? nHoursDoneLabel(team.allocatedHours)
+      : meta.label
   const progress = team.recognizedHours ?? 0
   const remaining =
     team.allocatedHours !== null
@@ -78,7 +85,7 @@ function MentoringCard({
             멘티 {team.memberCount}명
           </p>
         </div>
-        <StatusBadge label={meta.label} tone={meta.tone} />
+        <StatusBadge label={statusLabel} tone={meta.tone} />
       </div>
 
       {/* 멘토 */}

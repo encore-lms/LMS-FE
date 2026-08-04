@@ -14,6 +14,13 @@ import {
 vi.mock('@/shared/api', async (orig) => ({
   ...(await orig<typeof import('@/shared/api')>()),
   useStaffCourseNotices: vi.fn(),
+  // 수강생 미러(2026-08-05 source='student' 추가) — 스태프 경로 테스트에선 꺼진 채 선언만 된다.
+  useCourseNotices: () => ({
+    data: undefined,
+    isPending: false,
+    isError: false,
+    refetch: () => {},
+  }),
   useWriteCourseNotice: vi.fn(),
   useDeleteCourseNotice: vi.fn(),
 }))

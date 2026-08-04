@@ -13,6 +13,9 @@ import {
 import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
 import type { ProjectListData, ProjectSummary } from './types'
 
+// 교육과정 허브 탭바(2026-08-05) — 페이지 본문 테스트에 집중하도록 껍데기만 둔다.
+vi.mock('../course/CourseTabs', () => ({ CourseTabs: () => null }))
+
 vi.mock('../api/projects')
 
 const data: ProjectListData = {

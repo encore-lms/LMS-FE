@@ -10,6 +10,12 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { usePageHeaderStore } from '@/shared/store'
 
 vi.mock('../api/logs')
+// 상세 모달 자체는 여기서 검증하지 않는다 — '어디에' 열리는지만 본다.
+vi.mock('./LogDetailModal', () => ({
+  default: ({ logId }: { logId?: string }) => (
+    <div>그 자리 상세 모달 {logId}</div>
+  ),
+}))
 
 type ListHook = ReturnType<typeof useMentoringLogs>
 
@@ -149,5 +155,47 @@ describe('LogsPage', () => {
     expect(
       screen.getByRole('button', { name: '다시 시도' }),
     ).toBeInTheDocument()
+  })
+
+  it('팀 안에서는 열기가 페이지를 옮기지 않고 그 자리에 상세를 띄운다', async () => {
+    // 예전에는 /mentor/mentoring-logs/:logId 로 나가, 사이드바에서 사라진 전체 목록 위에
+    // 모달이 떴다 — 팀 밖으로 튕겨 나가고 배경도 다른 팀 일지였다.
+    mockList({
+      data: buildMentoringLogsData(),
+      isPending: false,
+      isError: false,
+    })
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/mentor/teams/team_ts?tab=logs']}>
+        <ToastProvider>
+          <LogsPage embedded teamId="team_ts" />
+        </ToastProvider>
+      </MemoryRouter>,
+    )
+    const open = screen.getAllByRole('button', { name: /열기/ })[0]
+    await user.click(open)
+    expect(screen.getByText(/그 자리 상세 모달/)).toBeInTheDocument()
+  })
+
+  it('팀 안의 새 일지 작성은 돌아올 팀 주소를 달고 나간다', () => {
+    mockList({
+      data: buildMentoringLogsData(),
+      isPending: false,
+      isError: false,
+    })
+    render(
+      <MemoryRouter initialEntries={['/mentor/teams/team_ts?tab=logs']}>
+        <ToastProvider>
+          <LogsPage embedded teamId="team_ts" />
+        </ToastProvider>
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('link', { name: /새 일지 작성/ })).toHaveAttribute(
+      'href',
+      expect.stringContaining(
+        `from=${encodeURIComponent('/mentor/teams/team_ts?tab=logs')}`,
+      ),
+    )
   })
 })

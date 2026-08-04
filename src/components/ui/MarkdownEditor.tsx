@@ -29,6 +29,12 @@ interface MarkdownEditorProps {
   onImageRejected?: (reason: string) => void
   /** 입력창의 스크린리더 이름 — 폼에 라벨이 따로 없을 때 준다. */
   ariaLabel?: string
+  /**
+   * 테두리 없이 — 글이 이어지는 자리(답변·댓글)에서 상자로 가두지 않는다.
+   *
+   * <p>탭·툴바는 배경 위에 그대로 얹고 입력칸만 옅은 바탕으로 구분한다.</p>
+   */
+  flat?: boolean
 }
 
 // 마크다운 작성기 — 작성/미리보기 탭 + 툴바(굵게·코드·링크·이미지) + 이미지 base64 + @멘션.
@@ -43,6 +49,7 @@ export function MarkdownEditor({
   onMentionsChange,
   onImageRejected,
   ariaLabel,
+  flat = false,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<'write' | 'preview'>('write')
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -247,17 +254,31 @@ export function MarkdownEditor({
     'text-fg-muted hover:text-fg hover:bg-surface-muted flex size-7 items-center justify-center rounded-md'
 
   return (
-    <div className="border-border focus-within:border-brand rounded-[10px] border">
+    <div
+      className={cn(
+        flat
+          ? ''
+          : 'border-border focus-within:border-brand rounded-[10px] border',
+      )}
+    >
       {/* 탭 + 툴바 */}
-      <div className="border-border flex items-center justify-between border-b px-2 py-1.5">
+      <div
+        className={cn(
+          'flex items-center justify-between py-1.5',
+          flat ? 'px-0' : 'border-border border-b px-2',
+        )}
+      >
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setTab('write')}
             className={cn(
-              'h-7 rounded-md px-2.5 text-[12px] font-semibold',
+              'h-7 rounded-md text-[13px] font-semibold',
+              flat ? 'px-0 pr-4' : 'px-2.5',
               tab === 'write'
-                ? 'bg-surface-muted text-fg'
+                ? flat
+                  ? 'text-fg'
+                  : 'bg-surface-muted text-fg'
                 : 'text-fg-subtle hover:text-fg',
             )}
           >
@@ -267,9 +288,12 @@ export function MarkdownEditor({
             type="button"
             onClick={() => setTab('preview')}
             className={cn(
-              'h-7 rounded-md px-2.5 text-[12px] font-semibold',
+              'h-7 rounded-md text-[13px] font-semibold',
+              flat ? 'px-0' : 'px-2.5',
               tab === 'preview'
-                ? 'bg-surface-muted text-fg'
+                ? flat
+                  ? 'text-fg'
+                  : 'bg-surface-muted text-fg'
                 : 'text-fg-subtle hover:text-fg',
             )}
           >
@@ -327,7 +351,10 @@ export function MarkdownEditor({
             <div
               ref={backdropRef}
               aria-hidden
-              className="text-fg pointer-events-none absolute inset-0 overflow-hidden rounded-b-[10px] px-4 py-3 text-[14px] leading-6 break-words whitespace-pre-wrap"
+              className={cn(
+                'text-fg pointer-events-none absolute inset-0 overflow-hidden px-4 py-3 text-[14px] leading-6 break-words whitespace-pre-wrap',
+                flat ? 'rounded-xl' : 'rounded-b-[10px]',
+              )}
               style={{ height: minHeight }}
             >
               {renderHighlighted()}
@@ -350,7 +377,10 @@ export function MarkdownEditor({
             aria-label={ariaLabel}
             style={{ height: minHeight }}
             className={cn(
-              'placeholder:text-fg-subtle relative block w-full resize-none rounded-b-[10px] bg-transparent px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none',
+              'placeholder:text-fg-subtle relative block w-full resize-none px-4 py-3 text-[14px] leading-6 focus:outline-none focus-visible:shadow-none',
+              flat
+                ? 'bg-surface-muted rounded-xl'
+                : 'rounded-b-[10px] bg-transparent',
               // 하이라이트 모드에선 글자는 백드롭이 그린다 — textarea는 캐럿·선택 영역만.
               highlightable ? 'caret-fg text-transparent' : 'text-fg',
             )}

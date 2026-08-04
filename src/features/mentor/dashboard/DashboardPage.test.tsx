@@ -5,6 +5,7 @@ import DashboardPage from './DashboardPage'
 import { useMentorDashboard } from '../api/mentor'
 import { buildDashboardData } from '../mockDb'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/mentor')
 
@@ -70,5 +71,17 @@ describe('DashboardPage', () => {
     expect(
       screen.getByRole('button', { name: '다시 시도' }),
     ).toBeInTheDocument()
+  })
+
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', () => {
+    // 예약·일지를 팀 탭으로 옮기며 독립 화면을 걷어냈을 때(2026-08-04), 이 화면의 섹션
+    // 링크와 최근 일지 '일지 보기'가 옛 주소를 계속 가리켜 '찾을 수 없는 주소'로 떨어졌다.
+    mockHook({ data: buildDashboardData(), isPending: false, isError: false })
+    const { container } = renderPage()
+    const dead = [...container.querySelectorAll('a')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => href.startsWith('/mentor'))
+      .filter((href) => !reachable(href))
+    expect(dead).toEqual([])
   })
 })

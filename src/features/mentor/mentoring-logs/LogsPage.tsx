@@ -9,12 +9,10 @@ import {
   Clock3,
   FileText,
   Info,
-  Search,
   Send,
 } from 'lucide-react'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Select } from '@/components/ui/Select'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { Pagination } from '@/components/data/Pagination'
@@ -35,6 +33,7 @@ import {
   PLACE_TYPE_ICON,
 } from './logMeta'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { FilterSelect } from '@/components/ui/FilterSelect'
 
 const PERIOD_OPTIONS = [
   { value: '7', label: '최근 7일' },
@@ -408,16 +407,13 @@ export default function LogsPage({
             onChange={setPeriod}
             options={PERIOD_OPTIONS}
           />
-          <label className="border-border focus-within:border-brand bg-surface flex h-10 w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
-            <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
-            <SearchInput
-              value={q}
-              onChange={setQ}
-              placeholder="팀명·일지 요지 검색"
-              ariaLabel="팀명·일지 요지 검색"
-              className="min-w-0 flex-1"
-            />
-          </label>
+          <SearchInput
+            value={q}
+            onChange={setQ}
+            placeholder="팀명·일지 요지 검색"
+            ariaLabel="팀명·일지 요지 검색"
+            className="h-10 w-[240px]"
+          />
           <Link
             to={
               backTo
@@ -511,36 +507,6 @@ export default function LogsPage({
         </Suspense>
       </div>
     </DataBoundary>
-  )
-}
-
-// 드롭다운 트리거 — [아이콘 | 라벨 | 값 캐럿] (Figma 필터 문법)
-function FilterSelect({
-  icon,
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  onChange: (value: string) => void
-  options: readonly { value: string; label: string }[]
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      {icon}
-      <span className="text-fg-subtle text-[11px] font-medium whitespace-nowrap">
-        {label}
-      </span>
-      <Select
-        aria-label={`${label} 필터`}
-        value={value}
-        onChange={onChange}
-        options={[...options]}
-      />
-    </div>
   )
 }
 

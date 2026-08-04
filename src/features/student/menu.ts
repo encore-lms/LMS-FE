@@ -2,12 +2,12 @@ import type { MenuItem } from '@/components/layout'
 import { TERMS, roleTag } from '@/shared/constants'
 
 // 수강생 사이드바 1차 메뉴 — 정본: LMS-DOCS 화면_IA.md §수강생 포털.
-// 수강생 고유 과업(수강·제출·응시·신청) 메뉴는 roleTag('수강생') 접미(2026-08-03, 과업 기준).
-// 대시보드(전 역할 공통 개념)·QnA 게시판(3역할 공용 화면)만 무접미.
+// 2026-08-05 재편: 매니저·강사 허브와 같은 구조로 통일 — '강의 홈'을 '교육과정'으로 바꾸고
+// 출결·프로젝트·이력서·기록실·QnA·멘토링을 교육과정 허브 탭(CourseTabs)으로 흡수했다.
+// 라우트 URL은 그대로(알림 딥링크·북마크 무회귀) — 진입 동선만 사이드바 → 허브 탭.
+// 교육과정은 3역할 공통 개념이 되어 무접미(원칙 5), 수강생 고유 과업 메뉴만 접미 유지.
 // (마이프로필·설정은 헤더 아바타 드롭다운. 동료평가→프로젝트 상호평가 흡수, 기수게시판 폐기)
-// 하위 라우트/화면은 소유자가 features/student/에 추가한다.
 export const studentMenu: MenuItem[] = [
-  // 마이 프로필(헤더 드롭다운 진입, 사이드바 항목 없음)은 홈=대시보드 강조 유지.
   // 로그인 직후 실제 경로는 /student/dashboard 라, match 에 없으면 첫 화면에서 메뉴가
   // 아무것도 켜지지 않는다(어디에 있는지 표시가 사라짐).
   {
@@ -15,27 +15,23 @@ export const studentMenu: MenuItem[] = [
     to: '/student',
     match: ['/student/dashboard', '/student/profile'],
   },
-  // 나의 과정 = 강의홈·자료실·과제(/student/course/*) + 퀴즈(/student/quizzes)
+  // 교육과정 허브 — 과정 홈·출결/태도·공지·자료실·과제·퀴즈·프로젝트·이력서·기록실·
+  // QnA 게시판·멘토링(배정 시) 탭. 흡수된 라우트 전부를 match 로 묶어 활성 표시를 유지한다.
   {
-    label: roleTag(TERMS.lectureHome, '수강생'),
+    label: TERMS.educationCourse,
     to: '/student/course',
-    match: ['/student/quizzes'],
+    match: [
+      '/student/quizzes',
+      '/student/attendance',
+      '/student/projects',
+      '/student/resume',
+      '/student/records',
+      '/student/qna',
+      '/student/mentoring',
+    ],
   },
-  { label: roleTag('출결/태도', '수강생'), to: '/student/attendance' },
-  { label: roleTag('기록실', '수강생'), to: '/student/records' },
   { label: roleTag(TERMS.certificate, '수강생'), to: '/student/certificate' },
-  { label: roleTag('이력서', '수강생'), to: '/student/resume' },
-  { label: roleTag('프로젝트', '수강생'), to: '/student/projects' },
   { label: roleTag('트러블슈팅', '수강생'), to: '/student/troubleshooting' },
-  // QnA 게시판 — FE 선반영(기수 게시판 폐기 2026-05-21 이후 재도입 프로토타입). 정식화 시 재합의 필요.
-  { label: TERMS.qnaBoard, to: '/student/qna' },
-  // 멘토링 — 운영 매니저가 멘토를 배정한 수강생에게만 노출(AppShellWithMenu에서
-  // /student/mentoring의 mentor.assigned를 features.mentoring으로 합성).
-  {
-    label: roleTag('멘토링', '수강생'),
-    to: '/student/mentoring',
-    featureKey: 'mentoring',
-  },
   // 과정 기능 토글(정본 CohortFeatureConfig: mileage·play)로 노출 제어.
   {
     label: roleTag('마일리지', '수강생'),

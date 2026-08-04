@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, Info, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { MAX_STACKS } from '../ProjectWizardPage'
 import { DELIVERABLES, DOMAINS, STACK_CATALOG, type Tone } from '../../types'
 import { TONE_SOLID } from '@/shared/lib/tone'
 import { card, CHIP_ON, DOMAIN_ICON } from '../wizardConstants'
@@ -45,7 +46,7 @@ export function Step3(p: {
             기술 스택 <span className="text-danger text-[11px]">필수</span>
           </span>
           <span className="bg-brand/10 text-brand rounded-full px-3 py-1 text-[12px] font-bold">
-            선택 {p.stacks.length} / 12
+            선택 {p.stacks.length} / {MAX_STACKS}
           </span>
         </div>
         {p.stacks.length > 0 && (

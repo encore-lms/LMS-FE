@@ -153,28 +153,31 @@ function AnswerItem({
         answer.isAccepted && 'border-success ring-success/20 ring-1',
       )}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      {/* 채택 칩이 붙으면 한 줄이 모자라 날짜가 잘렸다 — 이름만 줄이고 나머지는 지킨다. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Avatar name={answer.authorName} size={24} />
-          <span className="text-fg text-[13px] font-bold">
+          <span className="text-fg truncate text-[13px] font-bold">
             {answer.authorName}
           </span>
           <span
             className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-bold',
+              'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap',
               ROLE_CHIP[answer.authorRole] ?? 'bg-surface-muted text-fg-muted',
             )}
           >
             {answer.authorRole}
           </span>
           {answer.isAccepted && (
-            <span className="bg-success-bg text-success flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold">
+            <span className="bg-success-bg text-success flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap">
               <CheckCircle2 className="size-3" /> 채택됨
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-fg-subtle text-[11px]">{answer.createdAt}</span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-fg-subtle text-[11px] whitespace-nowrap">
+            {answer.createdAt}
+          </span>
           {answer.canDelete && (
             <DeleteButton
               pending={deleteAnswer.isPending}

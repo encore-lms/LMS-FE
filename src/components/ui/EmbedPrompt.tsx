@@ -18,11 +18,9 @@ const META: Record<
   EmbedKind,
   { icon: typeof ImageIcon; label: string; tabs: ('upload' | 'link')[] }
 > = {
-  image: {
-    icon: ImageIcon,
-    label: '이미지 업로드 또는 임베드',
-    tabs: ['upload', 'link'],
-  },
+  // 이미지는 올리기만 — 남의 서버 주소를 걸면 그 주소가 죽는 순간 본문이 비고,
+  // 쓰는 사람은 왜 사라졌는지 알 수 없다.
+  image: { icon: ImageIcon, label: '이미지 업로드', tabs: ['upload'] },
   file: {
     icon: FileUp,
     label: '파일 업로드 또는 임베드',
@@ -80,12 +78,35 @@ export function EmbedPrompt({
     </span>
   )
 
+  const 파일칸 = (
+    <input
+      ref={filePicker}
+      type="file"
+      accept={kind === 'image' ? 'image/*' : undefined}
+      className="hidden"
+      aria-label={kind === 'image' ? '이미지 파일 선택' : '첨부 파일 선택'}
+      onChange={(e) => {
+        const f = e.target.files?.[0]
+        e.target.value = ''
+        if (f) onSubmit({ kind, file: f })
+      }}
+    />
+  )
+
+  // 올릴 길밖에 없는 블록은 한 단계를 건너뛴다 — 눌러 놓고 또 '파일을 선택하세요'를
+  // 누르게 하면 같은 말을 두 번 시키는 셈이다.
+  const 곧바로열기 = meta.tabs.length === 1 && meta.tabs[0] === 'upload'
+
   // 아직 자리만 잡은 상태 — 한 줄짜리 회색 띠로 눕혀 둔다.
   if (!open) {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          // 파일 창은 누른 그 순간에 열어야 브라우저가 막지 않는다(state 를 거치면 늦다).
+          if (곧바로열기) filePicker.current?.click()
+          else setOpen(true)
+        }}
         onKeyDown={(e) => {
           e.stopPropagation()
           if (e.key === 'Escape') onCancel()
@@ -93,6 +114,7 @@ export function EmbedPrompt({
         className="bg-surface-muted hover:bg-surface-muted/70 my-1 flex w-full items-center rounded-lg px-3 py-3 text-left transition-colors"
       >
         {머리}
+        {파일칸}
       </button>
     )
   }

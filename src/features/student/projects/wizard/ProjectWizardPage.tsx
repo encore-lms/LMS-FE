@@ -14,6 +14,9 @@ import { Step2 } from './steps/Step2'
 import { Step3 } from './steps/Step3'
 import { Step4 } from './steps/Step4'
 
+/** 기술 스택 상한 — 고르는 자리와 검증이 같은 숫자를 보게 한곳에 둔다. */
+export const MAX_STACKS = 12
+
 const DEFAULT_WIZARD_VALUES = {
   name: 'Encore Mart — 마이크로서비스 백엔드',
   desc: '주문/결제 도메인을 마이크로서비스로 분리하고 Kafka 이벤트 라우팅으로 결제 실패율을 안정화하는 백엔드 프로젝트.',
@@ -35,7 +38,7 @@ const wizardSchema = z
     end: z.string().min(1),
     invited: z.array(z.string()).max(6),
     teamSearch: z.string().max(60),
-    stacks: z.array(z.string()).min(1).max(12),
+    stacks: z.array(z.string()).min(1).max(MAX_STACKS),
     domain: z.string().min(1),
     deliverables: z.array(z.string()).min(1),
     checks: z.array(z.boolean()).length(3),
@@ -118,7 +121,14 @@ export default function ProjectWizardPage() {
 
   // 스택 토글 — 커스텀 스택을 해제하면 그룹 칩 목록에서도 제거.
   const onStackToggle = (value: string) => {
-    const next = toggleString(watch('stacks'), value)
+    const current = watch('stacks')
+    // 상한을 넘어서도 계속 켜지면 "선택 16 / 12" 처럼 지킬 수 없는 숫자가 남고,
+    // 다음 단계에서야 막혀 무엇을 빼야 하는지 알 수 없다. 직접 추가와 같은 규칙.
+    if (!current.includes(value) && current.length >= MAX_STACKS) {
+      toast.info(`기술 스택은 ${MAX_STACKS}개까지 고를 수 있어요`)
+      return
+    }
+    const next = toggleString(current, value)
     setValue('stacks', next, { shouldDirty: true, shouldValidate: true })
     if (!next.includes(value)) {
       setCustomStacksByGroup((prev) => {
@@ -149,7 +159,7 @@ export default function ProjectWizardPage() {
       }))
     }
     const current = watch('stacks')
-    if (!current.includes(value) && current.length < 12) {
+    if (!current.includes(value) && current.length < MAX_STACKS) {
       setValue('stacks', [...current, value], {
         shouldDirty: true,
         shouldValidate: true,

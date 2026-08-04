@@ -340,8 +340,10 @@ function MeetingDetailModal({
           <span className="text-fg-subtle text-[11px] font-semibold">
             핵심 요약
           </span>
-          <span className="text-fg text-[13px] font-semibold">
-            {meeting.summary}
+          {/* 상세는 원문을 통째로 — 목록용으로 자른 값(summary)을 쓰면 "…" 로 끝나 끝까지
+              읽을 수 없다. 줄바꿈도 쓴 대로 살린다. */}
+          <span className="text-fg text-[13px] leading-6 font-medium whitespace-pre-wrap">
+            {meeting.body ?? meeting.summary}
           </span>
         </div>
 

@@ -44,6 +44,9 @@ const COPY = {
 }
 
 // 스터디 등록 기본값 — 오늘 날짜 / 현재 시각(5분 슬롯에 맞춰 floor) / 시작+1시간.
+/** 오늘(YYYY-MM-DD, 로컬) — 아직 오지 않은 날을 막는 기준. */
+const 오늘 = () => new Date().toLocaleDateString('sv-SE')
+
 // DateTimePicker 포맷: date='YYYY-MM-DD', time='HH:mm'(24시간제).
 const pad2 = (n: number) => String(n).padStart(2, '0')
 const toDateValue = (d: Date) =>
@@ -233,6 +236,8 @@ export function StudyForm({
             onChange={setStartAt}
             placeholder="시작 (월/일 시각)"
             ariaLabel="스터디 시작 일시"
+            // 이미 한 활동을 적는 칸이다 — 아직 오지 않은 날은 고를 수 없다.
+            max={오늘()}
           />
           <DateTimePicker
             mode="datetime"
@@ -240,6 +245,7 @@ export function StudyForm({
             onChange={setEndAt}
             placeholder="종료 (월/일 시각)"
             ariaLabel="스터디 종료 일시"
+            max={오늘()}
           />
         </div>
         {touched && timeError && (

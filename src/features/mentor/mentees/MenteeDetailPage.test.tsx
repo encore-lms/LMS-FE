@@ -5,6 +5,7 @@ import MenteeDetailPage from './MenteeDetailPage'
 import { useMenteeDetail } from '../api/mentees'
 import { buildMenteeDetail } from '../mockDb'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/mentees')
 
@@ -114,5 +115,20 @@ describe('MenteeDetailPage', () => {
     expect(
       screen.getByText('배정 팀의 팀원만 조회할 수 있어요.'),
     ).toBeInTheDocument()
+  })
+
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', () => {
+    // 화면을 걷어낼 때 링크를 함께 훑지 않으면 '찾을 수 없는 주소'로 떨어진다(2026-08-04).
+    mockDetail({
+      isPending: false,
+      isError: false,
+      data: buildMenteeDetail('stu_han_y'),
+    })
+    const { container } = renderPage('stu_han_y')
+    const dead = [...container.querySelectorAll('a')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => href.startsWith('/mentor'))
+      .filter((href) => !reachable(href))
+    expect(dead).toEqual([])
   })
 })

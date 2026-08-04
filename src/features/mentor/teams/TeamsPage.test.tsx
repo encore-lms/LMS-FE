@@ -6,6 +6,7 @@ import TeamsPage from './TeamsPage'
 import { useMentorTeams } from '../api/mentor'
 import { buildTeamsData } from '../mockDb'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/mentor')
 
@@ -86,5 +87,16 @@ describe('TeamsPage', () => {
     expect(
       screen.getByRole('button', { name: '다시 시도' }),
     ).toBeInTheDocument()
+  })
+
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', () => {
+    // 화면을 걷어낼 때 링크를 함께 훑지 않으면 '찾을 수 없는 주소'로 떨어진다(2026-08-04).
+    mockHook({ data: buildTeamsData(), isPending: false, isError: false })
+    const { container } = renderPage()
+    const dead = [...container.querySelectorAll('a')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => href.startsWith('/mentor'))
+      .filter((href) => !reachable(href))
+    expect(dead).toEqual([])
   })
 })

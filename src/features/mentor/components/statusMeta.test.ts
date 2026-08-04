@@ -1,27 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { mentorRoutes } from '../routes'
+import { reachable } from '../routeReach'
 import { teamAction } from './statusMeta'
 import { buildTeamsData } from '../mockDb'
 import type { MentorTeamAssignment } from '../types'
-
-/** 라우트 트리에 실제로 있는 경로들 — '/mentor/…' 형태로 펼친다. */
-const KNOWN = new Set(
-  (mentorRoutes[0].children ?? []).map((r) =>
-    r.index ? '/mentor' : `/mentor/${r.path}`,
-  ),
-)
-
-/** 링크가 살아 있는 라우트를 가리키는지 — 쿼리·동적 조각을 걷어내고 대조한다. */
-function reachable(to: string) {
-  const path = to.split('?')[0]
-  for (const known of KNOWN) {
-    const pattern = new RegExp(
-      '^' + known.replace(/:[^/]+/g, '[^/]+').replace(/\//g, '\\/') + '$',
-    )
-    if (pattern.test(path)) return true
-  }
-  return false
-}
 
 describe('teamAction', () => {
   // 예약·일지·평가를 팀 탭으로 옮기며 독립 화면을 걷어냈다(2026-08-04). 그때 이 링크들이

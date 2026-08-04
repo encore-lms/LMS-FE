@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import TeamDetailPage from './TeamDetailPage'
 import { useMentorTeamDetail } from '../api/mentor'
@@ -25,21 +26,17 @@ function renderPage() {
 }
 
 describe('TeamDetailPage', () => {
-  it('팀 헤더·팀원·예약·평가 잠금·팀 최근 일지를 렌더한다', () => {
+  it('홈 탭에 히어로·예약 요약·평가·추천을 렌더한다', () => {
     mockHook({
       data: buildTeamDetailData('team_rec')!,
       isPending: false,
       isError: false,
     })
     renderPage()
-    // 헤더 타이틀은 고정 '팀 상세' — 팀명은 본문 카드에만
-    expect(usePageHeaderStore.getState().title).toBe('팀 상세')
-    expect(screen.getByText('추천시스템 팀')).toBeInTheDocument()
+    // 헤더는 지금 보고 있는 팀 — 운영 과정 상세와 같은 방식(제목=대상 이름)
+    expect(usePageHeaderStore.getState().title).toBe('추천시스템 팀')
+    expect(screen.getByText(/추천시스템 팀 · /)).toBeInTheDocument()
     expect(screen.getByText('담당 멘토 임수현')).toBeInTheDocument()
-    // 팀원 5명 + PM 태그
-    expect(screen.getByText('김수강')).toBeInTheDocument()
-    expect(screen.getByText('송하늘')).toBeInTheDocument()
-    expect(screen.getByText('PM')).toBeInTheDocument()
     // 평가·추천 — 상시 작성 가능(2026-08-04 완화): 잠금 칩 없이 작성 화면 링크가 열린다.
     expect(screen.queryByText('N시간 완료 후 활성')).not.toBeInTheDocument()
     expect(
@@ -53,12 +50,37 @@ describe('TeamDetailPage', () => {
       'href',
       '/mentor/teams/team_rec/recommendation',
     )
-    // 다음 확정 예약 + 일지 4건
+    // 다음 확정 예약 + 일지 건수(목록은 일지 탭에)
     expect(screen.getByText('예상 90분 · 요청자 김수강')).toBeInTheDocument()
-    expect(
-      screen.getByText('추천 모델 v2 평가 지표 검토 + 다음 액션 정리'),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/팀 일지 \d+건/)).toBeInTheDocument()
     expect(screen.getByText('새 일지 작성')).toBeInTheDocument()
+  })
+
+  it('팀원은 팀원 탭에서 본다', async () => {
+    mockHook({
+      data: buildTeamDetailData('team_rec')!,
+      isPending: false,
+      isError: false,
+    })
+    const user = userEvent.setup()
+    renderPage()
+    // 홈에는 팀원 명단이 없다 — 화면을 두 번 읽지 않게 탭으로 나눴다.
+    expect(screen.queryByText('김수강')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: '팀원' }))
+    expect(screen.getByText('김수강')).toBeInTheDocument()
+    expect(screen.getByText('송하늘')).toBeInTheDocument()
+    expect(screen.getByText('PM')).toBeInTheDocument()
+  })
+
+  it('예약·일지·평가·추천 탭이 팀 안에 있다', () => {
+    mockHook({
+      data: buildTeamDetailData('team_rec')!,
+      isPending: false,
+      isError: false,
+    })
+    renderPage()
+    for (const label of ['홈', '팀원', '예약', '일지', '평가·추천'])
+      expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()
   })
 
   it('비용·정산·매출 표현이 없다', () => {

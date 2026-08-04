@@ -8,7 +8,11 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { Markdown } from '@/components/ui/Markdown'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { useDeleteCourseNotice, useStaffCourseNotices } from '@/shared/api'
+import {
+  useCourseNotices,
+  useDeleteCourseNotice,
+  useStaffCourseNotices,
+} from '@/shared/api'
 
 // 공지 상세 — 강사 허브와 운영 기수 허브가 같은 한 벌을 쓴다. 라우트만 역할별로 다르다.
 //
@@ -21,16 +25,30 @@ export function NoticeDetailView({
   cohortId,
   noticeId,
   backTo,
+  source = 'staff',
 }: {
-  cohortId: string
+  /** 스태프(source='staff')만 필요 — 수강생 미러는 서버가 본인 기수를 해석한다. */
+  cohortId?: string
   noticeId: string
   /** 목록으로 돌아갈 경로 — 삭제 후에도 여기로 보낸다. */
   backTo: string
+  /** 수강생(source='student')은 같은 상세를 읽기 전용으로 소비(2026-08-05). */
+  source?: 'staff' | 'student'
 }) {
-  usePageHeader('공지', '수강생 강의 홈에 보이는 공지입니다')
+  const readOnly = source === 'student'
+  usePageHeader(
+    '공지',
+    readOnly
+      ? '과정 운영 공지를 확인하세요'
+      : '수강생 강의 홈에 보이는 공지입니다',
+  )
   const toast = useToast()
   const navigate = useNavigate()
-  const { data, isPending, isError, refetch } = useStaffCourseNotices(cohortId)
+  const staffQuery = useStaffCourseNotices(readOnly ? undefined : cohortId)
+  const studentQuery = useCourseNotices(readOnly)
+  const { data, isPending, isError, refetch } = readOnly
+    ? studentQuery
+    : staffQuery
   const remove = useDeleteCourseNotice()
   const [confirming, setConfirming] = useState(false)
 
@@ -101,7 +119,7 @@ export function NoticeDetailView({
                   <ChevronLeft className="size-4" aria-hidden="true" />
                   목록으로
                 </Link>
-                {notice.canDelete && (
+                {!readOnly && notice.canDelete && (
                   <button
                     type="button"
                     onClick={() => setConfirming(true)}

@@ -19,10 +19,17 @@ import { SectionHead } from '../components/ws-shared'
 // 이슈 탭 — 프로젝트(워크스페이스)에서 해결한 트러블슈팅 중 "인증 완료" 사례만 연결해
 // 트러블슈팅 목록 화면과 같은 카드로 보여준다(연결 방향: 프로젝트 → 사례, 보기 전용).
 // 카드를 누르면 공용 사례 상세를 보기 전용(?view=1)으로 연다.
-export function IssuesTab({ d }: { d: WorkspaceData }) {
+export function IssuesTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 연결 관리 미노출. 사례 목록은 수강생 API라 조회하지 않는다. */
+  readOnly?: boolean
+}) {
   const navigate = useNavigate()
   const toast = useToast()
-  const { data, isPending } = useTsList()
+  const { data, isPending } = useTsList(!readOnly)
   const linkedIds = d.troubleshootingCaseIds ?? []
   const unlinkM = useUnlinkTroubleshooting(d.id)
   const [picking, setPicking] = useState(false)
@@ -37,14 +44,24 @@ export function IssuesTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="연결된 트러블슈팅"
-        action="트러블슈팅 관리"
-        onAction={() => setPicking(true)}
+        action={readOnly ? undefined : '트러블슈팅 관리'}
+        onAction={readOnly ? undefined : () => setPicking(true)}
       />
       <p className="text-fg-subtle -mt-2 text-[12px]">
         이 프로젝트에서 해결한 트러블슈팅 중 인증 완료된 사례만 연결해 보여줘요.
         카드를 누르면 사례 내용을 자세히 볼 수 있어요.
       </p>
-      {isPending ? (
+      {readOnly ? (
+        // 사례 원문은 수강생 소유 API(/student/troubleshooting)라 검토자는 연결 현황만 본다.
+        <Empty
+          title={
+            linkedIds.length === 0
+              ? '연결된 인증 트러블슈팅이 없어요'
+              : `연결된 인증 트러블슈팅 ${linkedIds.length}건`
+          }
+          description="사례 원문은 수강생 트러블슈팅 화면에서 확인할 수 있어요."
+        />
+      ) : isPending ? (
         <div className="text-fg-muted p-6 text-[13px]">
           트러블슈팅을 불러오는 중…
         </div>

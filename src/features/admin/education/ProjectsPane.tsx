@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, ClipboardList, Users } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, ClipboardList, ExternalLink, Users } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
@@ -11,6 +12,8 @@ import {
   useProjectCompletion,
 } from './api'
 import { useStudentAccounts } from '../api/students'
+import { useCohortRoster } from '@/shared/api/students'
+import { useInstructorCohortProjects } from '@/features/instructor/education/api'
 import type { CohortProject } from './types'
 import { PeerEvalResultsModal } from './PeerEvalResultsModal'
 
@@ -122,52 +125,72 @@ function PeerEvalToggle({
               ? '종료 처리'
               : '진행 중으로'}
         </button>
-      <button
-        type="button"
-        onClick={change}
-        disabled={toggle.isPending || blocked}
-        aria-pressed={on}
-        title={
-          tooFewMembers && !on
-            ? `팀원이 ${project.memberCount}명입니다. 동료 평가는 서로 평가할 대상이 있어야 하므로 2명 이상일 때 시작할 수 있어요.`
-            : notCompleted && !on
-              ? '동료 평가는 프로젝트가 끝난 뒤에 진행합니다. 프로젝트 상태를 완료로 바꾸면 시작할 수 있어요.'
-              : undefined
-        }
-        className={cn(
-          'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-          on
-            ? 'border-success/40 text-success bg-success-bg'
-            : 'border-border text-fg-muted hover:bg-surface-muted bg-surface',
-        )}
-      >
-        <Users className="h-3.5 w-3.5" />
-        {toggle.isPending ? '적용 중…' : on ? '진행 중 · 중단' : '평가 시작'}
-      </button>
+        <button
+          type="button"
+          onClick={change}
+          disabled={toggle.isPending || blocked}
+          aria-pressed={on}
+          title={
+            tooFewMembers && !on
+              ? `팀원이 ${project.memberCount}명입니다. 동료 평가는 서로 평가할 대상이 있어야 하므로 2명 이상일 때 시작할 수 있어요.`
+              : notCompleted && !on
+                ? '동료 평가는 프로젝트가 끝난 뒤에 진행합니다. 프로젝트 상태를 완료로 바꾸면 시작할 수 있어요.'
+                : undefined
+          }
+          className={cn(
+            'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+            on
+              ? 'border-success/40 text-success bg-success-bg'
+              : 'border-border text-fg-muted hover:bg-surface-muted bg-surface',
+          )}
+        >
+          <Users className="h-3.5 w-3.5" />
+          {toggle.isPending ? '적용 중…' : on ? '진행 중 · 중단' : '평가 시작'}
+        </button>
       </div>
     </div>
   )
 }
 
+// source: 매니저(admin, 기본)·강사(instructor) 공용 — 데이터만 역할별 미러로 갈리고 화면은
+// 한 코드다(MaterialsPane 규약). 강사는 조회 전용 — 종료·동료평가 토글은 운영 액션이라 숨긴다.
 export function ProjectsPane({
   courseId,
   cohortId,
+  source = 'admin',
 }: {
-  courseId: string | null
+  /** 매니저(source='admin')만 필요 — 강사 미러는 서버가 기수에서 과정을 해석한다. */
+  courseId?: string | null
   cohortId: string | null
+  source?: 'admin' | 'instructor'
 }) {
-  const { data, isPending, isError, refetch } = useCohortProjects(
-    courseId,
-    cohortId,
+  const isAdmin = source === 'admin'
+  const navigate = useNavigate()
+  const adminQuery = useCohortProjects(
+    isAdmin ? courseId : null,
+    isAdmin ? cohortId : null,
   )
-  const { data: students } = useStudentAccounts(cohortId)
+  const instructorQuery = useInstructorCohortProjects(isAdmin ? null : cohortId)
+  const { data, isPending, isError, refetch } = isAdmin
+    ? adminQuery
+    : instructorQuery
+  // 멤버 이름 — 매니저는 수강생 계정 목록, 강사는 계정 목록이 403이라 담당 기수 로스터(MaterialsPane 선례).
+  const { data: students } = useStudentAccounts(isAdmin ? cohortId : null)
+  const { data: roster } = useCohortRoster(isAdmin ? null : cohortId)
   const [resultsOf, setResultsOf] = useState<CohortProject | null>(null)
 
   const nameOf = useMemo(() => {
     const m = new Map<string, string>()
-    for (const s of students?.items ?? []) m.set(s.id, s.name)
+    if (isAdmin) for (const s of students?.items ?? []) m.set(s.id, s.name)
+    else for (const r of roster ?? []) m.set(r.userId, r.name)
     return (id: string) => m.get(id) || '(이름 미확인)'
-  }, [students])
+  }, [isAdmin, students, roster])
+
+  // 상세(워크스페이스 읽기 전용) 진입 — 역할별 라우트.
+  const workspacePath = (projectId: string) =>
+    isAdmin
+      ? `/admin/education/${cohortId}/projects/${projectId}`
+      : `/instructor/cohorts/${cohortId}/projects/${projectId}`
 
   return (
     <DataBoundary
@@ -252,12 +275,23 @@ export function ProjectsPane({
                     <div className="text-fg-subtle mt-2 text-xs">
                       생성 {formatDate(p.createdAt) || p.createdAt}
                     </div>
-                    <PeerEvalToggle
-                      project={p}
-                      courseId={courseId}
-                      cohortId={cohortId}
-                      onOpenResults={setResultsOf}
-                    />
+                    {/* 워크스페이스 읽기 전용 열람 — 홈·보드·캘린더·회의록·문서·이슈·성과 7탭 */}
+                    <button
+                      type="button"
+                      onClick={() => navigate(workspacePath(p.id))}
+                      className="border-border text-fg-muted hover:bg-surface-muted bg-surface mt-3 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition-colors"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      워크스페이스 보기
+                    </button>
+                    {isAdmin && (
+                      <PeerEvalToggle
+                        project={p}
+                        courseId={courseId ?? null}
+                        cohortId={cohortId}
+                        onOpenResults={setResultsOf}
+                      />
+                    )}
                   </div>
                 )
               })}

@@ -18,7 +18,14 @@ import { SectionHead, TaskCard } from '../components/ws-shared'
 import { card } from '../components/ws-style'
 import { useMemberNames } from '../components/useMemberNames'
 
-export function BoardTab({ d }: { d: WorkspaceData }) {
+export function BoardTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 추가·수정·삭제·드래그 이동 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const columns = d.columns
   const [addCol, setAddCol] = useState<number | null>(null)
@@ -57,8 +64,8 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="보드"
-        action="작업 추가"
-        onAction={() => setAddCol(0)}
+        action={readOnly ? undefined : '작업 추가'}
+        onAction={readOnly ? undefined : () => setAddCol(0)}
       />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {columns.map((col, ci) => (
@@ -75,35 +82,44 @@ export function BoardTab({ d }: { d: WorkspaceData }) {
                   {col.tasks.length}
                 </span>
               </span>
-              <button
-                type="button"
-                onClick={() => setAddCol(ci)}
-                className="text-fg-muted hover:bg-surface-muted rounded-md px-2 py-1 text-[12px] font-semibold"
-              >
-                + 작업
-              </button>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => setAddCol(ci)}
+                  className="text-fg-muted hover:bg-surface-muted rounded-md px-2 py-1 text-[12px] font-semibold"
+                >
+                  + 작업
+                </button>
+              )}
             </div>
             {col.tasks.map((t, ti) => (
               <div
                 key={t.id ?? ti}
-                draggable
+                draggable={!readOnly}
                 onDragStart={() => {
+                  if (readOnly) return
                   drag.current = { col: ci, task: ti }
                 }}
-                className="cursor-grab active:cursor-grabbing"
+                className={cn(
+                  !readOnly && 'cursor-grab active:cursor-grabbing',
+                )}
               >
                 <TaskCard
                   t={t}
                   onEdit={
-                    t.id ? () => setEditing({ col: ci, task: t }) : undefined
+                    !readOnly && t.id
+                      ? () => setEditing({ col: ci, task: t })
+                      : undefined
                   }
-                  onDelete={t.id ? () => setDeleting(t) : undefined}
+                  onDelete={
+                    !readOnly && t.id ? () => setDeleting(t) : undefined
+                  }
                 />
               </div>
             ))}
             {col.tasks.length === 0 && (
               <div className="border-border text-fg-subtle rounded-[12px] border border-dashed py-6 text-center text-[11px]">
-                여기로 드래그
+                {readOnly ? '작업 없음' : '여기로 드래그'}
               </div>
             )}
           </section>

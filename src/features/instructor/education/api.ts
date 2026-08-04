@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
+import type { CohortProject } from '@/features/admin/education/types'
+import type { WorkspaceData } from '@/features/student/projects/types'
 import type {
   CohortMaterialItem,
   StudentAttendanceData,
@@ -221,5 +223,35 @@ export function useDeleteInstructorResumeFeedback() {
       qc.invalidateQueries({ queryKey: keys.resume(cohortId, resumeId) })
       qc.invalidateQueries({ queryKey: keys.resumes(cohortId) })
     },
+  })
+}
+
+/**
+ * 강사 기수 프로젝트 목록 미러 — GET /instructor/cohorts/{cohortId}/projects.
+ * 운영 목록(CohortProject)과 한 계약 — ProjectsPane이 양 역할을 한 화면으로 서빙(2026-08-05).
+ */
+export function useInstructorCohortProjects(cohortId?: string | null) {
+  return useQuery({
+    queryKey: ['instructor', 'education', 'projects', cohortId ?? ''],
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<CohortProject[]>(`/instructor/cohorts/${cohortId}/projects`)
+        .then((r) => r.data),
+  })
+}
+
+/**
+ * 강사 프로젝트 워크스페이스 상세 미러 — GET /instructor/projects/{id}/workspace.
+ * 담당 기수만(BE requireCohortReviewer, 타 기수 403). 응답은 수강생 워크스페이스와 한 계약.
+ */
+export function useInstructorProjectWorkspace(projectId?: string | null) {
+  return useQuery({
+    queryKey: ['instructor', 'education', 'project-workspace', projectId ?? ''],
+    enabled: !!projectId,
+    queryFn: () =>
+      apiClient
+        .get<WorkspaceData>(`/instructor/projects/${projectId}/workspace`)
+        .then((r) => r.data),
   })
 }

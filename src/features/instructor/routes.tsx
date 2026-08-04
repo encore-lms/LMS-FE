@@ -8,6 +8,10 @@ const CohortsPage = lazy(() => import('./cohorts/CohortsPage'))
 const InstructorEducationPage = lazy(
   () => import('./education/InstructorEducationPage'),
 )
+// 프로젝트 워크스페이스 열람 — 운영 소유 화면을 강사 미러로 소비(CourseHomePane 규약).
+const ProjectWorkspaceViewPage = lazy(
+  () => import('@/features/admin/education/ProjectWorkspaceViewPage'),
+)
 // 이력서 상세는 운영과 공용(source='instructor') — 사본 통합(2026-08-03).
 const ResumeDetailPage = lazy(
   () => import('@/features/admin/education/ResumeDetailPage'),
@@ -66,6 +70,11 @@ export const instructorRoutes: RouteObject[] = [
         element: <InstructorEducationPage />,
       },
       // 이력서 상세 — 허브 '이력서' 탭에서 진입(문서 뷰 + 피드백 작성).
+      {
+        // 프로젝트 워크스페이스 열람(읽기 전용) — 허브 프로젝트 탭 카드에서 진입(담당 기수만).
+        path: 'cohorts/:cohortId/projects/:projectId',
+        element: <ProjectWorkspaceViewPage source="instructor" />,
+      },
       {
         path: 'cohorts/:cohortId/resumes/:resumeId',
         element: <ResumeDetailPage source="instructor" />,

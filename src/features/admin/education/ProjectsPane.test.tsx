@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ProjectsPane } from './ProjectsPane'
@@ -9,6 +10,21 @@ import {
   useProjectCompletion,
 } from './api'
 import { useStudentAccounts } from '../api/students'
+
+// 공용화(2026-08-05)로 추가된 강사 미러·로스터 훅 — 매니저 경로 테스트에선 조회가 꺼져 있어 빈 값 mock.
+vi.mock('@/features/instructor/education/api', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useInstructorCohortProjects: () => ({
+    data: undefined,
+    isPending: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
+}))
+vi.mock('@/shared/api/students', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useCohortRoster: () => ({ data: undefined }),
+}))
 import type { CohortProject } from './types'
 
 vi.mock('./api')
@@ -61,9 +77,11 @@ function renderPane(
     isPending: false,
   } as unknown as ReturnType<typeof useProjectCompletion>)
   render(
-    <ToastProvider>
-      <ProjectsPane courseId="c1" cohortId="co1" />
-    </ToastProvider>,
+    <MemoryRouter>
+      <ToastProvider>
+        <ProjectsPane courseId="c1" cohortId="co1" />
+      </ToastProvider>
+    </MemoryRouter>,
   )
   return { mutate, completeMutate }
 }
@@ -125,12 +143,19 @@ describe('ProjectsPane 동료 평가 토글', () => {
   it('진행 중 프로젝트는 시작 버튼이 비활성이고 이유를 안내한다', () => {
     renderPane([{ ...team, status: 'IN_PROGRESS', statusLabel: '진행 중' }])
     expect(screen.getByRole('button', { name: /평가 시작/ })).toBeDisabled()
-    expect(screen.getByText(/아직 진행 중이라 시작할 수 없어요/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/아직 진행 중이라 시작할 수 없어요/),
+    ).toBeInTheDocument()
   })
 
   it('진행 중이어도 이미 개시된 것은 중단할 수 있다', () => {
     renderPane([
-      { ...team, status: 'IN_PROGRESS', statusLabel: '진행 중', peerEvalEnabled: true },
+      {
+        ...team,
+        status: 'IN_PROGRESS',
+        statusLabel: '진행 중',
+        peerEvalEnabled: true,
+      },
     ])
     expect(screen.getByRole('button', { name: /중단/ })).toBeEnabled()
   })

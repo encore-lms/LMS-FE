@@ -19,7 +19,14 @@ import type { WorkspaceData, WsDoc } from '../../types'
 import { Chip, DetailRow, SectionHead } from '../components/ws-shared'
 import { card, parseDocMeta } from '../components/ws-style'
 
-export function DocsTab({ d }: { d: WorkspaceData }) {
+export function DocsTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 추가·수정·삭제·업로드 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const [activeCategory, setActiveCategory] = useState('전체')
   const docs = d.docs
@@ -39,8 +46,8 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="문서·파일·위키"
-        action="문서 추가"
-        onAction={() => setAdding(true)}
+        action={readOnly ? undefined : '문서 추가'}
+        onAction={readOnly ? undefined : () => setAdding(true)}
       />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex flex-col gap-1.5 lg:w-[180px]')}>
@@ -73,7 +80,7 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
               <div className="mt-auto flex items-center justify-between gap-2 pt-1">
                 <Chip badge={doc.status} />
                 <div className="flex shrink-0 items-center gap-1">
-                  {doc.id && (
+                  {!readOnly && doc.id && (
                     <>
                       <button
                         type="button"

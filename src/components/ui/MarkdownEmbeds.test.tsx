@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Markdown } from './Markdown'
+import { clearUploadCache } from './uploadCache'
 import { bookmarkTitle, fileTitle, parseEmbedTitle } from './embedMeta'
 import { fetchEditorUpload } from '@/shared/api'
 
@@ -18,6 +20,9 @@ beforeEach(() => {
   // jsdom 에는 없는 API — 받아 온 파일을 화면에 물리는 통로다.
   URL.createObjectURL = vi.fn(() => 'blob:fake')
   URL.revokeObjectURL = vi.fn()
+  // 사본 캐시는 세션 동안 유지된다 — 테스트끼리 새어 나가지 않게 비우고 시작한다.
+  clearUploadCache()
+  vi.mocked(URL.revokeObjectURL).mockClear()
 })
 
 // 본문은 마크다운으로 저장하고, 카드형 블록은 링크 title 에 메타를 담아 표현한다.
@@ -207,5 +212,37 @@ describe('본문 렌더', () => {
     const link = screen.getByRole('link', { name: '문서' })
     expect(link).toHaveAttribute('target', '_blank')
     expect(link.className).not.toContain('rounded-xl')
+  })
+})
+
+// 회귀: 같은 글 아래 댓글창에 한 글자만 쳐도 본문이 다시 그려졌고, 그때마다 그림을 새로
+// 받느라 깜빡였다. 부모가 몇 번을 다시 그려도 그림 요청은 한 번이어야 한다.
+function TypingHarness() {
+  const [draft, setDraft] = useState('')
+  return (
+    <>
+      <Markdown>{'![설계도](upload:same-id)'}</Markdown>
+      <textarea
+        aria-label="댓글"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+      />
+    </>
+  )
+}
+
+describe('본문 그림 유지', () => {
+  it('댓글을 타이핑해도 그림을 다시 받지 않는다', async () => {
+    const user = userEvent.setup()
+    render(<TypingHarness />)
+    await screen.findByAltText('설계도')
+    expect(upload).toHaveBeenCalledTimes(1)
+
+    await user.type(screen.getByLabelText('댓글'), '타이핑')
+
+    // 그림은 그대로 붙어 있고(빈 자리로 돌아가지 않고), 요청도 늘지 않는다.
+    expect(screen.getByAltText('설계도')).toBeInTheDocument()
+    expect(upload).toHaveBeenCalledTimes(1)
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled()
   })
 })

@@ -28,6 +28,12 @@ export const ASSIGNMENT_STATUS_META: Record<
   n_hours_done: { label: 'N시간 완료', tone: 'success' },
 }
 
+/** 'N시간 완료'의 N을 실제 배정 시간으로 — 10 → '10시간 완료', 1.5 → '1.5시간 완료'(2026-08-04 QA). */
+export function nHoursDoneLabel(allocatedHours: number | null): string {
+  if (allocatedHours == null || allocatedHours <= 0) return '배정 시간 완료'
+  return `${allocatedHours}시간 완료`
+}
+
 export function assignmentDisplayStatus(
   row: MentorAssignmentRow,
 ): AssignmentDisplayStatus {

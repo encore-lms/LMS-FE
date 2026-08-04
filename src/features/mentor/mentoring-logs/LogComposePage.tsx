@@ -15,6 +15,10 @@ export default function LogComposePage() {
   const [searchParams] = useSearchParams()
   const logId = searchParams.get('logId') ?? ''
   const presetTeamId = searchParams.get('teamId') ?? ''
+  // 팀 상세에서 왔으면 그 주소로 돌려보낸다 — 사이드바에서 사라진 목록으로 내보내지 않는다.
+  // 우리 화면 안 경로만 받는다(바깥 주소로 튕겨 보내지 못하게).
+  const fromParam = searchParams.get('from') ?? ''
+  const backTo = fromParam.startsWith('/mentor/') ? fromParam : undefined
   const targetsQuery = useMentoringLogTargets()
   const detailQuery = useMentoringLogDetail(logId)
 
@@ -56,6 +60,7 @@ export default function LogComposePage() {
             targets={targetsQuery.data.targets}
             detail={detail}
             presetTeamId={presetTeamId}
+            backTo={backTo}
           />
         ))}
     </DataBoundary>

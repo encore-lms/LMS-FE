@@ -40,10 +40,13 @@ export function LogComposeForm({
   targets,
   detail,
   presetTeamId,
+  backTo,
 }: {
   targets: MentoringLogTarget[]
   detail: MentoringLogDetailData | null
   presetTeamId: string
+  /** 팀 상세에서 왔으면 그 팀 주소 — 취소·제출 후 그리로 돌아간다. */
+  backTo?: string
 }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -210,6 +213,7 @@ export function LogComposeForm({
             submittedAtLabel: '방금',
             resubmit: mode === 'resubmit',
             rows: summaryRows,
+            backTo: backTo ?? undefined,
           } satisfies LogSubmittedState,
         })
       } catch {
@@ -258,11 +262,11 @@ export function LogComposeForm({
       {/* 브레드크럼 + 저장 상태 칩 */}
       <div className="flex flex-wrap items-center gap-2">
         <Link
-          to="/mentor/mentoring-logs"
+          to={backTo ?? '/mentor/mentoring-logs'}
           className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
         >
           <ArrowLeft className="h-3 w-3" />
-          멘토링 일지
+          {backTo ? '팀 상세' : '멘토링 일지'}
         </Link>
         <span className="text-fg-subtle text-[13px]">›</span>
         <span className="text-fg text-xs font-medium">

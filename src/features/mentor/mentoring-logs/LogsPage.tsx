@@ -21,6 +21,7 @@ import { Pagination } from '@/components/data/Pagination'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import LogDetailModal from './LogDetailModal'
 import { useMentoringLogs } from '../api/logs'
 import { MENTOR_FLOW_CAPTION } from '../constants'
 import { CohortChip } from '../components/chips'
@@ -53,16 +54,19 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 // 행별 액션 — 상태 연동 변형: 승인 대기·유효=열기(상세 모달) / 수정 요청=수정(재제출 폼).
 // 수정은 작성 화면 ?logId= 딥링크.
-function rowAction(log: MentoringLogListItem) {
+function rowAction(log: MentoringLogListItem, backTo?: string) {
+  const from = backTo ? `&from=${encodeURIComponent(backTo)}` : ''
   switch (log.status) {
     case 'change_requested':
       return {
+        kind: 'edit' as const,
         label: '수정',
-        to: `/mentor/mentoring-logs/new?logId=${log.logId}`,
+        to: `/mentor/mentoring-logs/new?logId=${log.logId}${from}`,
         className: 'bg-danger text-on-color hover:bg-danger/90 font-bold',
       }
     default:
       return {
+        kind: 'open' as const,
         label: '열기',
         to: `/mentor/mentoring-logs/${log.logId}`,
         className:
@@ -147,6 +151,12 @@ export default function LogsPage({
   const [teamId, setTeamId] = useState(
     fixedTeamId ?? searchParams.get('teamId') ?? 'all',
   )
+  // 팀 안에서 그 자리에 띄운 상세 — 라우트 대신 값으로 연다.
+  const [openLogId, setOpenLogId] = useState<string | null>(null)
+  // 팀 안에 얹혀 있으면 작성 화면에서 돌아올 곳은 그 팀이다.
+  const backTo = fixedTeamId
+    ? `/mentor/teams/${fixedTeamId}?tab=logs`
+    : undefined
   const [status, setStatus] = useState<MentoringLogStatus | 'all'>('all')
   // 팀 상세에 얹힐 때는 기간을 자르지 않는다 — 그 팀 것이 몇 건 안 되는데 최근 30일로
   // 잘리면 홈에서 센 건수와 어긋나 보인다.
@@ -334,15 +344,26 @@ export default function LogsPage({
       align: 'right',
       className: 'w-[110px]',
       cell: (l) => {
-        const action = rowAction(l)
+        const action = rowAction(l, backTo)
+        const cls = cn(
+          'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] whitespace-nowrap',
+          action.className,
+        )
+        // 팀 안에서 연 상세는 팀 안에 머문다 — 라우트로 나가면 팀 밖 전체 목록 위에 뜬다.
+        if (embedded && action.kind === 'open') {
+          return (
+            <button
+              type="button"
+              onClick={() => setOpenLogId(l.logId)}
+              className={cls}
+            >
+              {action.label}
+              <ArrowRight className="h-2.5 w-2.5" />
+            </button>
+          )
+        }
         return (
-          <Link
-            to={action.to}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] whitespace-nowrap',
-              action.className,
-            )}
-          >
+          <Link to={action.to} className={cls}>
             {action.label}
             <ArrowRight className="h-2.5 w-2.5" />
           </Link>
@@ -398,7 +419,11 @@ export default function LogsPage({
             />
           </label>
           <Link
-            to="/mentor/mentoring-logs/new"
+            to={
+              backTo
+                ? `/mentor/mentoring-logs/new?teamId=${fixedTeamId}&from=${encodeURIComponent(backTo)}`
+                : '/mentor/mentoring-logs/new'
+            }
             className={buttonClass({ className: 'ml-auto whitespace-nowrap' })}
           >
             <Check className="h-3.5 w-3.5" />새 일지 작성
@@ -469,6 +494,14 @@ export default function LogsPage({
             totalCount={visible.length}
             shownCount={paged.length}
             onPage={setPage}
+          />
+        )}
+
+        {/* 팀 안에서 연 상세 — 같은 화면 위에 그대로 띄운다 */}
+        {embedded && openLogId && (
+          <LogDetailModal
+            logId={openLogId}
+            onClose={() => setOpenLogId(null)}
           />
         )}
 

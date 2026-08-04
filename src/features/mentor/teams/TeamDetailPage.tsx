@@ -219,7 +219,7 @@ function HomePane({
         <div className="ml-auto flex items-center gap-2">
           <TabLink label="일지 전체" onClick={() => onTab('logs')} />
           <Link
-            to={`/mentor/mentoring-logs/new?teamId=${team.teamId}`}
+            to={`/mentor/mentoring-logs/new?teamId=${team.teamId}&from=${encodeURIComponent(`/mentor/teams/${team.teamId}?tab=logs`)}`}
             className={buttonClass({ size: 'sm' })}
           >
             <Check className="h-3 w-3" />새 일지 작성

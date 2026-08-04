@@ -33,14 +33,23 @@ const META_LABEL = 'text-fg-subtle text-[10px] font-medium tracking-[0.6px]'
 // 수정 버튼은 초안(이어 작성)·수정 요청(일지 수정 — 재제출)에만 노출:
 // 제출 즉시 자동 유효 + 제출 후 임의 수정·삭제 불가 정책(05-31 확정)이라 Figma 의
 // '유효 일지 24h 수정 가능' 표기는 채택하지 않는다(결정 기록).
-export default function LogDetailModal() {
-  const { logId = '' } = useParams()
+export default function LogDetailModal({
+  logId: fixedLogId,
+  onClose,
+}: {
+  /** 팀 상세 '일지' 탭처럼 라우트 없이 그 자리에서 열 때 — 주소 대신 값으로 받는다. */
+  logId?: string
+  onClose?: () => void
+} = {}) {
+  const { logId: paramLogId = '' } = useParams()
+  const logId = fixedLogId ?? paramLogId
   const navigate = useNavigate()
   const { data, isPending, isError } = useMentoringLogDetail(logId)
-  const close = useCallback(
-    () => navigate('/mentor/mentoring-logs'),
-    [navigate],
-  )
+  const close = useCallback(() => {
+    // 팀 안에서 열었으면 팀 안에서 닫는다 — 목록 페이지로 튕겨 나가지 않는다.
+    if (onClose) onClose()
+    else navigate('/mentor/mentoring-logs')
+  }, [navigate, onClose])
   const [showTemplate, setShowTemplate] = useState(false)
 
   if (!data) {

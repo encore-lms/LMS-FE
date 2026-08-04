@@ -34,6 +34,7 @@ export function CohortDirectory<T, S extends string>({
   onStatusChange,
   q,
   onQChange,
+  toolbar,
   searchPlaceholder = '과정명·기수명으로 검색',
   errorTitle = '과정·기수를 불러오지 못했어요',
   scopeSummary,
@@ -54,6 +55,8 @@ export function CohortDirectory<T, S extends string>({
   q: string
   onQChange: (next: string) => void
   searchPlaceholder?: string
+  /** 표 오른쪽 위에 붙일 도구(내보내기 같은 것). 없으면 자리도 없다. */
+  toolbar?: ReactNode
   errorTitle?: string
   /** 필터 줄 오른쪽 요약 문구(예: '담당 2개 (진행 중 2 · 예정 0 · 종료 0)'). */
   scopeSummary?: string
@@ -77,7 +80,7 @@ export function CohortDirectory<T, S extends string>({
       errorDescription="잠시 후 다시 시도해 주세요."
       className="p-8"
       skeleton={
-        <div className="flex flex-col gap-3 p-8">
+        <div className="flex flex-col gap-3 p-8" aria-busy="true">
           <div className="bg-surface-muted h-9 w-80 animate-pulse rounded-lg" />
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }, (_, i) => (
@@ -164,6 +167,10 @@ export function CohortDirectory<T, S extends string>({
               </div>
             ))}
           </div>
+        )}
+
+        {toolbar && (
+          <div className="mt-4 flex items-center justify-end">{toolbar}</div>
         )}
 
         <div className="mt-4">

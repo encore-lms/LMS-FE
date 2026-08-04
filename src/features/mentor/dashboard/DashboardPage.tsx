@@ -267,7 +267,7 @@ export default function DashboardPage() {
                     {data.upcoming.confirmedCount}건 확정
                   </span>
                 </div>
-                <SectionLink to="/mentor/mentoring-requests" label="예약" />
+                <SectionLink to="/mentor/teams" label="배정 팀" />
               </header>
               <ul className="border-divider divide-divider divide-y border-t">
                 {data.upcoming.sessions.map((session, index) => (
@@ -360,7 +360,7 @@ export default function DashboardPage() {
                   최근 7일
                 </span>
               </div>
-              <SectionLink to="/mentor/mentoring-logs" label="멘토링 일지" />
+              <SectionLink to="/mentor/teams" label="배정 팀" />
             </header>
             <ul className="border-divider divide-divider divide-y border-t">
               {data.recentLogs.map((log) => (
@@ -400,8 +400,9 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <LogStatusChip status={log.status} note={log.statusNote} />
+                  {/* 일지는 그 팀 안에서 본다 — 독립 목록은 팀 탭 이관과 함께 걷어냈다. */}
                   <SectionLink
-                    to={`/mentor/mentoring-logs/${log.logId}`}
+                    to={`/mentor/teams/${log.teamId}?tab=logs`}
                     label="일지 보기"
                   />
                 </li>

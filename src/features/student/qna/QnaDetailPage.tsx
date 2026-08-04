@@ -255,6 +255,7 @@ function AnswerItem({
           <div className="flex flex-col gap-2 pt-1">
             <MarkdownEditor
               flat
+              uploadScope={uploadScope}
               value={draft}
               onChange={setDraft}
               minHeight={72}

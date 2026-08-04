@@ -155,6 +155,7 @@ export function QuestionForm({ initial }: { initial?: QuestionFormInitial }) {
             내용 <span className="text-danger">*</span>
           </span>
           <MarkdownEditor
+            uploadScope="student"
             value={content}
             onChange={setContent}
             maxLength={2000}

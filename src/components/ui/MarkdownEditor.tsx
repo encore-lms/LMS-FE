@@ -41,9 +41,10 @@ interface MarkdownEditorProps {
    * 올린 파일을 어느 경로로 주고받을지 — 쓰는 사람의 역할.
    *
    * <p>BE 가 경로 앞머리로 역할을 가른다. 수강생이 강사 경로를 부르면 403 이라 화면이
-   * 자기 역할을 알려 줘야 한다.</p>
+   * 자기 역할을 알려 줘야 한다. 기본값을 두지 않는다 — 한쪽으로 기울여 두면 빠뜨린
+   * 화면이 조용히 403 을 받고 첨부만 안 되는 채로 지나간다(운영 QnA 댓글에서 겪었다).</p>
    */
-  uploadScope?: UploadScope
+  uploadScope: UploadScope
 }
 
 // 마크다운 작성기 — 작성/미리보기 탭 + 툴바(굵게·코드·링크·이미지) + 이미지 base64 + @멘션.
@@ -59,7 +60,7 @@ export function MarkdownEditor({
   onImageRejected,
   ariaLabel,
   flat = false,
-  uploadScope = 'student',
+  uploadScope,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<'write' | 'preview'>('write')
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -161,8 +162,17 @@ export function MarkdownEditor({
           ? `\n![${name}](${up.url})\n`
           : `\n[${name}](${up.url} "${fileTitle(up.fileSize)}")\n`,
       )
-    } catch {
-      onImageRejected?.('파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요')
+    } catch (err) {
+      // 서버가 이유를 말해 주면 그대로 보여 준다 — "올리지 못했어요"만 뜨면 무엇을 고쳐야
+      // 할지 알 수 없다.
+      const said = (
+        err as { response?: { data?: { message?: string } } } | undefined
+      )?.response?.data?.message
+      onImageRejected?.(
+        typeof said === 'string' && said.trim()
+          ? said
+          : `${image ? '이미지' : '파일'}를 올리지 못했어요. 잠시 후 다시 시도해 주세요`,
+      )
     } finally {
       setUploading((n) => n - 1)
     }

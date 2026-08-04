@@ -318,6 +318,7 @@ export function AssignmentCreateModal({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [mentorId, setMentorId] = useState('')
   const [hours, setHours] = useState('')
+  const [contractEnd, setContractEnd] = useState('')
   const [templateId, setTemplateId] = useState('')
   const [q, setQ] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -352,6 +353,7 @@ export function AssignmentCreateModal({
     setSelectedIds([])
     setMentorId('')
     setHours('')
+    setContractEnd('')
     setTemplateId('')
     setQ('')
     setError(null)
@@ -381,6 +383,7 @@ export function AssignmentCreateModal({
         mentorId,
         allocatedHours: h,
         logTemplateId: templateId,
+        contractEndDate: contractEnd || null,
       },
       {
         onSuccess: (row) => {
@@ -508,6 +511,24 @@ export function AssignmentCreateModal({
             value={hours}
             onChange={(e) => setHours(e.target.value)}
           />
+        </div>
+
+        {/* 계약 종료일 — 선택. 지나면 멘토 평가·추천 제출 마감(당일까지 제출 가능). */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="create-contract-end" className={FIELD_LABEL}>
+            계약 종료일 (선택)
+          </label>
+          <input
+            id="create-contract-end"
+            type="date"
+            className={INPUT_CLASS}
+            value={contractEnd}
+            onChange={(e) => setContractEnd(e.target.value)}
+          />
+          <p className="text-fg-subtle text-xs">
+            종료일 당일까지 멘토가 평가·추천을 제출·수정할 수 있어요 · 비워 두면
+            마감 없음
+          </p>
         </div>
 
         {/* 기본 일지 템플릿 — 필수(§31): 템플릿 없이는 배정 불가 */}

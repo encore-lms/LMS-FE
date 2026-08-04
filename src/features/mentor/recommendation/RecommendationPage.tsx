@@ -4,8 +4,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle2,
-  Eye,
   Info,
   Pencil,
   Star,
@@ -42,7 +40,6 @@ import {
   RECOMMENDATION_MEMBER_SECTION_CAPTION,
   RECOMMENDATION_MODE_CARDS,
   RECOMMENDATION_POLICY_ITEMS,
-  RECOMMENDATION_PUBLISH_CAPTION,
   RECOMMENDATION_SUMMARY_LIMIT,
   RECOMMENDATION_SUMMARY_SUBTITLE,
 } from './recommendationMeta'
@@ -123,7 +120,9 @@ function RecommendationForm({
     sheet.draft.studentId,
   )
   const [summary, setSummary] = useState(sheet.draft.summary)
-  const [notify, setNotify] = useState(sheet.draft.notify)
+  // 추천 알림은 발송하지 않기로 했다(2026-08-04) — 화면에서 토글을 걷어내고 늘 꺼서 보낸다.
+  // BE 계약에 필드가 남아 있어 값 자체는 계속 실어 보낸다.
+  const notify = false
   const [savedLabel, setSavedLabel] = useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -402,68 +401,6 @@ function RecommendationForm({
           </div>
         </section>
       )}
-
-      {/* 증명서 반영 · 공개 기준 */}
-      <section className="bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
-        <header className="flex flex-col gap-0.5 px-[22px] pt-5 pb-3">
-          <h3 className="text-fg text-sm font-bold">증명서 반영 · 공개 기준</h3>
-          <span className="text-fg-subtle text-[11px]">
-            {RECOMMENDATION_PUBLISH_CAPTION}
-          </span>
-        </header>
-        <div className="divide-divider flex flex-col divide-y">
-          <div className="flex items-center gap-3 px-[22px] py-3">
-            <span className="bg-success-bg text-success flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-              <CheckCircle2 className="h-4 w-4" />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="text-fg text-[13px] font-semibold">
-                수강생 증명서에 추천 여부 반영
-              </span>
-              <span className="text-fg-muted text-[11px]">
-                멘토 5축 평균과 추천 여부, 증명서용 간략 요약 반영 · 외부 공개는
-                증명서 전체 공개 + 인증 완료 + 최신화 스냅샷 기준
-              </span>
-            </div>
-            <span className="bg-success-bg text-success rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap">
-              정책 고정
-            </span>
-          </div>
-          <div className="flex items-center gap-3 px-[22px] py-3">
-            <span className="bg-info-bg text-info flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-              <Eye className="h-4 w-4" />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="text-fg text-[13px] font-semibold">
-                수강생에게 즉시 알림 발송
-              </span>
-              <span className="text-fg-muted text-[11px]">
-                추천 알림 메시지 (원문 평가 미포함)
-              </span>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={notify}
-              aria-label="수강생에게 즉시 알림 발송"
-              disabled={closed}
-              onClick={() => setNotify((v) => !v)}
-              className={cn(
-                'relative h-[26px] w-11 shrink-0 rounded-full transition-colors',
-                notify ? 'bg-brand' : 'bg-surface-muted border-border border',
-              )}
-            >
-              <span
-                className={cn(
-                  'bg-surface absolute top-[3px] h-5 w-5 rounded-full shadow transition-[left]',
-                  notify ? 'left-[21px]' : 'left-[3px]',
-                )}
-                aria-hidden
-              />
-            </button>
-          </div>
-        </div>
-      </section>
 
       {/* 하단 액션바 — brand-deep. CTA raw #29b5b0 은 brand 토큰으로 conform. */}
       <section className="bg-brand-deep text-on-color flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-[18px] shadow-[0_8px_24px_rgba(18,23,38,0.18)]">

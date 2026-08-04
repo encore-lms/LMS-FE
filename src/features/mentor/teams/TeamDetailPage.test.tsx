@@ -4,15 +4,36 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import TeamDetailPage from './TeamDetailPage'
 import { useMentorTeamDetail } from '../api/mentor'
+import { useTeamEvaluation, useTeamRecommendation } from '../api/evaluations'
 import { buildTeamDetailData } from '../mockDb'
 import { usePageHeaderStore } from '@/shared/store'
 
 vi.mock('../api/mentor')
+// 평가·추천 탭은 작성 화면을 그대로 얹는다 — 여기서는 '어느 단계가 열리는지'만 본다.
+vi.mock('../api/evaluations')
+vi.mock('../evaluation/EvaluationPage', () => ({
+  default: () => <div>평가 작성 폼</div>,
+}))
+vi.mock('../recommendation/RecommendationPage', () => ({
+  default: () => <div>추천 선택 폼</div>,
+}))
 
 type Hook = ReturnType<typeof useMentorTeamDetail>
 
 function mockHook(v: Partial<Hook>) {
   vi.mocked(useMentorTeamDetail).mockReturnValue(v as unknown as Hook)
+}
+
+// 평가·추천 단계 — 제출 여부만 세워 준다.
+function mockStages(evalStatus: string, recStatus: string) {
+  vi.mocked(useTeamEvaluation).mockReturnValue({
+    data: { status: evalStatus },
+    isPending: false,
+  } as unknown as ReturnType<typeof useTeamEvaluation>)
+  vi.mocked(useTeamRecommendation).mockReturnValue({
+    data: { status: recStatus },
+    isPending: false,
+  } as unknown as ReturnType<typeof useTeamRecommendation>)
 }
 
 function renderPage() {
@@ -103,5 +124,48 @@ describe('TeamDetailPage', () => {
     expect(
       screen.getByText('본인에게 배정된 팀만 열람할 수 있어요.'),
     ).toBeInTheDocument()
+  })
+
+  it('평가·추천 탭은 아직 안 낸 평가 작성부터 연다', async () => {
+    mockHook({
+      data: buildTeamDetailData('team_rec')!,
+      isPending: false,
+      isError: false,
+    })
+    mockStages('draft', 'not_started')
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('tab', { name: '평가·추천' }))
+    expect(screen.getByText('평가 작성 폼')).toBeInTheDocument()
+  })
+
+  it('평가를 이미 냈으면 추천 선택으로 바로 넘어간다', async () => {
+    mockHook({
+      data: buildTeamDetailData('team_rec')!,
+      isPending: false,
+      isError: false,
+    })
+    mockStages('submitted', 'not_started')
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('tab', { name: '평가·추천' }))
+    expect(screen.getByText('추천 선택 폼')).toBeInTheDocument()
+    expect(screen.queryByText('평가 작성 폼')).not.toBeInTheDocument()
+  })
+
+  it('둘 다 냈으면 모두 마쳤다고 알린다', async () => {
+    mockHook({
+      data: buildTeamDetailData('team_rec')!,
+      isPending: false,
+      isError: false,
+    })
+    mockStages('submitted', 'submitted_recommended')
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('tab', { name: '평가·추천' }))
+    expect(screen.getByText('평가와 추천을 모두 마쳤어요')).toBeInTheDocument()
+    // 고치고 싶으면 그 자리에서 다시 연다 — 다른 화면으로 내보내지 않는다.
+    await user.click(screen.getByRole('button', { name: '평가 수정' }))
+    expect(screen.getByText('평가 작성 폼')).toBeInTheDocument()
   })
 })

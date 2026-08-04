@@ -61,7 +61,9 @@ export default function RequestsPage({
   const cancelMutation = useMentoringRequestAction()
 
   const [tab, setTab] = useState<MentoringRequestTab>('open')
-  const [period, setPeriod] = useState<string>('30')
+  // 팀 상세에 얹힐 때는 기간을 자르지 않는다 — 그 팀 것이 몇 건 안 되는데 최근 30일로
+  // 잘리면 홈에서 센 건수와 어긋나 보인다.
+  const [period, setPeriod] = useState<string>(teamId ? 'all' : '30')
   const [q, setQ] = useState('')
 
   const requests = useMemo(() => {

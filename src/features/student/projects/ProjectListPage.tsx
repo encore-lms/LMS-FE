@@ -20,6 +20,7 @@ import {
   type ProjectPhase,
 } from './workspace/useProjectFlow'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { CourseTabs } from '../course/CourseTabs'
 
 // 생애주기 단계 → 상태 필터 키(작성 중=active는 draft 키 재사용).
 const phaseFilterKey = (phase: ProjectPhase): string =>
@@ -165,6 +166,7 @@ export default function ProjectListPage() {
       className="p-8"
     >
       <div className="flex flex-col gap-5 p-8">
+        <CourseTabs />
         {/* 받은 초대 — 아직 팀이 아니라 아래 목록에는 없다. 답해야 목록으로 넘어온다. */}
         <InvitationCard />
 

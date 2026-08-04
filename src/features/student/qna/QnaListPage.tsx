@@ -11,6 +11,7 @@ import type { QnaQuestion } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { TONE_SOLID } from '@/shared/lib/tone'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { CourseTabs } from '../course/CourseTabs'
 
 const PAGE_SIZE = 4
 
@@ -86,6 +87,8 @@ export default function QnaListPage({
             embedded ? 'flex flex-col gap-5' : 'flex flex-col gap-5 p-8'
           }
         >
+          {/* 교육과정 허브 탭바 — 수강생 단독 화면에서만(허브 임베드는 바깥 탭이 담당). */}
+          {!embedded && <CourseTabs />}
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2">
               <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>

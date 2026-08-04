@@ -10,6 +10,9 @@ import {
   useMentoring,
 } from '../api/mentoring'
 import MentoringPage from './MentoringPage'
+
+// 교육과정 허브 탭바(2026-08-05) — 페이지 본문 테스트에 집중하도록 껍데기만 둔다.
+vi.mock('../course/CourseTabs', () => ({ CourseTabs: () => null }))
 import type {
   MentoringActiveRequest,
   MentoringData,

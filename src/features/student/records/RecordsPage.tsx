@@ -10,6 +10,7 @@ import { usePageHeader } from '@/shared/store'
 import { useRecordsOverview, useDeleteRecord } from '../api/records'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
+import { CourseTabs } from '../course/CourseTabs'
 import type {
   BlogRecord,
   RecordCategory,
@@ -233,6 +234,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
 
   return (
     <div className="flex flex-col gap-5 p-8">
+      <CourseTabs />
       {/* 필터 탭 */}
       <Tabs
         aria-label="기록 카테고리"

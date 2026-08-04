@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { NavLink } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 
 export interface TabItem {
@@ -11,12 +12,20 @@ export interface TabItem {
   /** 라벨 앞 상태 점 색 className(비활성일 때만 표시). 예: 'bg-warning' */
   dot?: string
   disabled?: boolean
+  /**
+   * 라우트 링크 모드 — 주면 버튼 대신 NavLink로 렌더하고 활성은 라우터가 판정한다.
+   * 탭이 화면 전환(?tab=)이 아니라 별도 라우트로 이어질 때(수강생 교육과정 허브) 쓴다.
+   */
+  to?: string
+  /** 링크 모드에서 NavLink end(정확히 일치할 때만 활성 — 허브 홈 탭용). */
+  end?: boolean
 }
 
 interface TabsProps {
   items: TabItem[]
-  value: string
-  onChange: (value: string) => void
+  /** 링크 모드(items[].to)만 쓰면 생략 가능 — 활성은 라우터가 판정. */
+  value?: string
+  onChange?: (value: string) => void
   /** pill=알약형 칩(정본) · underline=밑줄(콘텐츠 전환 탭) */
   variant?: 'pill' | 'underline'
   'aria-label'?: string
@@ -53,37 +62,31 @@ export function Tabs({
     >
       {items.map((t) => {
         const active = t.value === value
-        return (
-          <button
-            key={t.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            disabled={t.disabled}
-            onClick={() => onChange(t.value)}
-            className={cn(
-              'focus-visible:ring-brand inline-flex items-center gap-1.5 text-[13px] whitespace-nowrap transition-colors outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40',
-              pill
-                ? cn(
-                    'h-8 rounded-full px-3.5 font-semibold',
-                    active
-                      ? 'bg-brand-deep text-white'
-                      : 'border-border text-fg-muted hover:bg-surface-muted border',
-                  )
-                : cn(
-                    '-mb-px border-b-2 px-3 py-2',
-                    active
-                      ? 'border-brand text-brand font-bold'
-                      : 'text-fg-muted hover:text-fg border-transparent font-medium',
-                  ),
-            )}
-          >
+        const itemClass = (isActive: boolean) =>
+          cn(
+            'focus-visible:ring-brand inline-flex items-center gap-1.5 text-[13px] whitespace-nowrap transition-colors outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40',
+            pill
+              ? cn(
+                  'h-8 rounded-full px-3.5 font-semibold',
+                  isActive
+                    ? 'bg-brand-deep text-white'
+                    : 'border-border text-fg-muted hover:bg-surface-muted border',
+                )
+              : cn(
+                  '-mb-px border-b-2 px-3 py-2',
+                  isActive
+                    ? 'border-brand text-brand font-bold'
+                    : 'text-fg-muted hover:text-fg border-transparent font-medium',
+                ),
+          )
+        const inner = (isActive: boolean) => (
+          <>
             {t.icon && (
               <span aria-hidden="true" className="inline-flex">
                 {t.icon}
               </span>
             )}
-            {t.dot && !active && (
+            {t.dot && !isActive && (
               <span
                 aria-hidden="true"
                 className={cn('h-1.5 w-1.5 rounded-full', t.dot)}
@@ -96,7 +99,7 @@ export function Tabs({
                 <span
                   className={cn(
                     'text-[12px] tabular-nums',
-                    active ? 'text-white/70' : 'text-fg-subtle',
+                    isActive ? 'text-white/70' : 'text-fg-subtle',
                   )}
                 >
                   {t.count}
@@ -105,7 +108,7 @@ export function Tabs({
                 <span
                   className={cn(
                     'ml-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold tabular-nums',
-                    active
+                    isActive
                       ? 'text-on-color bg-white/20'
                       : 'bg-surface-muted text-fg-subtle',
                   )}
@@ -113,6 +116,32 @@ export function Tabs({
                   {t.count}
                 </span>
               ))}
+          </>
+        )
+        // 링크 모드 — 활성 판정을 라우터에 위임(NavLink isActive), 나머지 룩은 동일.
+        if (t.to) {
+          return (
+            <NavLink
+              key={t.value}
+              to={t.to}
+              end={t.end}
+              className={({ isActive }) => itemClass(isActive)}
+            >
+              {({ isActive }) => inner(isActive)}
+            </NavLink>
+          )
+        }
+        return (
+          <button
+            key={t.value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            disabled={t.disabled}
+            onClick={() => onChange?.(t.value)}
+            className={itemClass(active)}
+          >
+            {inner(active)}
           </button>
         )
       })}

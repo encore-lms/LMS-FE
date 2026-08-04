@@ -45,7 +45,14 @@ interface CalItem {
   type: string // 유형명(작업/회의/…/직접 입력)
 }
 
-export function CalendarTab({ d }: { d: WorkspaceData }) {
+export function CalendarTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 일정 추가·수정·삭제 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const today = new Date()
   const todayStr = dateStr(
@@ -62,25 +69,25 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
   // 그 항목엔 서버 id 가 없어 새로고침 전까지 수정·삭제가 잠겨 있었다.
   const events: CalItem[] = useMemo(
     () => [
-    ...d.calEvents.map((e) => ({
-      // 서버가 실제 날짜를 준다. 예전에는 고정 월(CAL_BASE)에 일(day)만 붙여
-      // 다른 달 일정이 엉뚱한 날에 붙고, 탭을 다시 열면 위치가 어긋났다.
-      id: e.id,
-      date: e.date ?? `${CAL_BASE}-${pad2(e.day)}`,
-      label: e.label,
-      tone: e.tone,
-      type: TONE_TYPE[e.tone],
-    })),
-    // 보드 작업(시작일 기준)을 캘린더에 함께 표시.
-    ...d.columns
-      .flatMap((col) => col.tasks)
-      .filter((t) => t.startDate)
-      .map((t) => ({
-        date: t.startDate as string,
-        label: t.title,
-        tone: 'brand' as const,
-        type: '작업',
+      ...d.calEvents.map((e) => ({
+        // 서버가 실제 날짜를 준다. 예전에는 고정 월(CAL_BASE)에 일(day)만 붙여
+        // 다른 달 일정이 엉뚱한 날에 붙고, 탭을 다시 열면 위치가 어긋났다.
+        id: e.id,
+        date: e.date ?? `${CAL_BASE}-${pad2(e.day)}`,
+        label: e.label,
+        tone: e.tone,
+        type: TONE_TYPE[e.tone],
       })),
+      // 보드 작업(시작일 기준)을 캘린더에 함께 표시.
+      ...d.columns
+        .flatMap((col) => col.tasks)
+        .filter((t) => t.startDate)
+        .map((t) => ({
+          date: t.startDate as string,
+          label: t.title,
+          tone: 'brand' as const,
+          type: '작업',
+        })),
     ],
     [d.calEvents, d.columns],
   )
@@ -121,8 +128,8 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="캘린더"
-        action="일정 추가"
-        onAction={() => setAddDate(todayStr)}
+        action={readOnly ? undefined : '일정 추가'}
+        onAction={readOnly ? undefined : () => setAddDate(todayStr)}
       />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex-1')}>
@@ -165,21 +172,30 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                     // 칸 안에 일정별 버튼을 두어야 해서 칸 자체는 div — 버튼 안에 버튼은 둘 수 없다.
                     <div
                       key={i}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setAddDate(ds)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          setAddDate(ds)
-                        }
-                      }}
-                      aria-label={`${cursor.m + 1}월 ${day}일 일정 추가`}
+                      {...(readOnly
+                        ? {}
+                        : {
+                            role: 'button',
+                            tabIndex: 0,
+                            onClick: () => setAddDate(ds),
+                            onKeyDown: (e: React.KeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                setAddDate(ds)
+                              }
+                            },
+                            'aria-label': `${cursor.m + 1}월 ${day}일 일정 추가`,
+                          })}
                       className={cn(
-                        'flex min-h-[78px] cursor-pointer flex-col items-start gap-1 rounded-lg border p-1.5 text-left transition-colors',
+                        'flex min-h-[78px] flex-col items-start gap-1 rounded-lg border p-1.5 text-left transition-colors',
+                        !readOnly && 'cursor-pointer',
                         isToday
                           ? 'border-brand bg-brand/5'
-                          : 'border-border hover:border-brand/50 hover:bg-surface-muted/60',
+                          : cn(
+                              'border-border',
+                              !readOnly &&
+                                'hover:border-brand/50 hover:bg-surface-muted/60',
+                            ),
                       )}
                     >
                       <span
@@ -201,11 +217,15 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                           // 칸을 누르면 '추가'라, 일정 자체를 누른 것은 전파를 끊어야 한다.
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (ev.id) setEditing(ev)
+                            if (!readOnly && ev.id) setEditing(ev)
                           }}
-                          disabled={!ev.id}
+                          disabled={readOnly || !ev.id}
                           title={
-                            ev.id ? `${ev.label} 수정` : '보드에서 만든 작업이에요'
+                            readOnly
+                              ? ev.label
+                              : ev.id
+                                ? `${ev.label} 수정`
+                                : '보드에서 만든 작업이에요'
                           }
                           className="hover:bg-surface-muted flex w-full min-w-0 flex-col items-start gap-0.5 rounded p-0.5 text-left disabled:cursor-default disabled:hover:bg-transparent"
                         >

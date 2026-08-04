@@ -85,6 +85,8 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
   const submitMutation = useSubmitEvaluation()
   // 제출본 편집 모드 — draft 저장은 BE가 409로 막으므로(반쪽 상태 노출 방지) 재제출만 허용.
   const submitted = sheet.status === 'submitted'
+  // 계약 종료 마감 — 저장·제출 전부 잠금, 화면은 읽기 전용으로 열어 자세히 보기만 허용.
+  const closed = sheet.submissionClosed
 
   const [entries, setEntries] = useState<MentorEvaluationDraftEntry[]>(() =>
     sheet.members.map((m) => ({
@@ -140,10 +142,10 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
       skipFirstAutosave.current = false
       return
     }
-    if (submitted) return
+    if (submitted || closed) return
     const timer = setTimeout(() => autosaveRef.current(), AUTOSAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [entries, submitted])
+  }, [entries, submitted, closed])
 
   // 임시 저장 — 수동 버튼(자동 저장과 동일 draft endpoint, 토스트 안내만 추가).
   const onSaveDraft = () => {
@@ -195,11 +197,13 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
         <span className="text-fg text-xs font-medium">평가 작성</span>
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
-          {submitted
-            ? `제출됨 · ${sheet.submittedAtLabel ?? ''} — 수정 후 재제출`
-            : savedLabel
-              ? `자동 저장 · ${savedLabel}`
-              : '저장 전 — 자동 저장 대기'}
+          {closed
+            ? `제출 마감 — 계약 종료 (${sheet.submissionDeadlineLabel ?? ''})`
+            : submitted
+              ? `제출됨 · ${sheet.submittedAtLabel ?? ''} — 수정 후 재제출`
+              : savedLabel
+                ? `자동 저장 · ${savedLabel}`
+                : '저장 전 — 자동 저장 대기'}
         </span>
       </div>
 
@@ -220,6 +224,8 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
             <span className="text-xs font-medium">
               {teamLabel} · 인정 {sheet.recognizedHours}h / 배정{' '}
               {sheet.allocatedHours}h
+              {sheet.submissionDeadlineLabel &&
+                ` · 제출 마감 ${sheet.submissionDeadlineLabel}`}
             </span>
           </div>
         </div>
@@ -278,6 +284,7 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
           index={index}
           entry={entries[index]}
           state={cardStateOf(index)}
+          readOnly={closed}
           onScore={setScore}
           onComment={setComment}
         />
@@ -309,8 +316,8 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
           </span>
         </div>
         <div className="flex items-center gap-2.5">
-          {/* 제출본은 draft 저장이 409 — 임시 저장 대신 재제출만 연다. */}
-          {!submitted && (
+          {/* 제출본은 draft 저장이 409 — 임시 저장 대신 재제출만 연다. 마감 시 전부 잠금. */}
+          {!submitted && !closed && (
             <button
               type="button"
               onClick={onSaveDraft}
@@ -323,15 +330,20 @@ function EvaluationForm({ sheet }: { sheet: MentorEvaluationSheetData }) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            disabled={!canSubmit || saving}
+            disabled={closed || !canSubmit || saving}
             className={cn(
               'flex items-center gap-1.5 rounded-[10px] px-[18px] py-2.5 text-[13px] font-bold',
-              canSubmit
+              !closed && canSubmit
                 ? 'bg-brand text-on-color hover:bg-brand/90'
                 : 'bg-fg-subtle text-on-color cursor-not-allowed',
             )}
           >
-            {canSubmit ? (
+            {closed ? (
+              <>
+                <XCircle className="h-3.5 w-3.5" />
+                제출 마감 — 계약 종료
+              </>
+            ) : canSubmit ? (
               <>
                 <Check className="h-3.5 w-3.5" />
                 {submitted ? '수정 재제출' : '평가 제출'}
@@ -381,6 +393,7 @@ function MemberEvalCard({
   index,
   entry,
   state,
+  readOnly = false,
   onScore,
   onComment,
 }: {
@@ -388,6 +401,8 @@ function MemberEvalCard({
   index: number
   entry: MentorEvaluationDraftEntry
   state: CardState
+  /** 계약 종료 마감 — 점수·코멘트 입력 잠금(자세히 보기 전용). */
+  readOnly?: boolean
   onScore: (studentId: string, axisIndex: number, value: number) => void
   onComment: (studentId: string, comment: string) => void
 }) {
@@ -507,6 +522,7 @@ function MemberEvalCard({
                       role="radio"
                       aria-checked={score === value}
                       aria-label={`${value}점`}
+                      disabled={readOnly}
                       onClick={() =>
                         onScore(member.studentId, axisIndex, value)
                       }
@@ -568,6 +584,7 @@ function MemberEvalCard({
             id={`eval-comment-${member.studentId}`}
             value={entry.comment}
             maxLength={EVALUATION_COMMENT_LIMIT}
+            readOnly={readOnly}
             onChange={(e) => onComment(member.studentId, e.target.value)}
             placeholder={EVALUATION_COMMENT_PLACEHOLDER}
             rows={3}

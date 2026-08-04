@@ -98,9 +98,12 @@ const COMPLETION_BANNER = {
 export function HomeTab({
   d,
   onTab,
+  readOnly = false,
 }: {
   d: WorkspaceData
   onTab: (t: WsTab) => void
+  /** 검토자(매니저·강사) 열람 — 쓰기 동작·수강생 전용 CTA 미노출(2026-08-04). */
+  readOnly?: boolean
 }) {
   const phase = useProjectFlow((s) => s.phases[d.id]) ?? statusToPhase(d.status)
   const toast = useToast()
@@ -133,7 +136,7 @@ export function HomeTab({
   return (
     <div className="flex flex-col gap-4">
       {/* 완료·상호평가 안내 배너 — 종료(완료 확정 이후, active 아님)면 모든 프로젝트에 동일 노출. 상호평가 탭과 동일 조건. */}
-      {phase !== 'active' && (
+      {phase !== 'active' && !readOnly && (
         <div className="bg-brand/10 border-brand/20 flex items-center justify-between gap-4 rounded-2xl border p-5">
           <div className="flex items-center gap-3.5">
             <span className="bg-brand flex size-11 shrink-0 items-center justify-center rounded-full text-white">
@@ -245,19 +248,33 @@ export function HomeTab({
                     i > 0 && 'border-divider border-t',
                   )}
                 >
-                  <button
-                    type="button"
-                    onClick={() => completeTask(t)}
-                    aria-label={`${t.title} 완료 처리`}
-                    className={cn(
-                      'flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold transition-colors',
-                      done
-                        ? 'bg-success border-success text-white'
-                        : 'border-border text-fg-subtle',
-                    )}
-                  >
-                    {done ? '✓' : ''}
-                  </button>
+                  {readOnly ? (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold',
+                        done
+                          ? 'bg-success border-success text-white'
+                          : 'border-border text-fg-subtle',
+                      )}
+                    >
+                      {done ? '✓' : ''}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => completeTask(t)}
+                      aria-label={`${t.title} 완료 처리`}
+                      className={cn(
+                        'flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold transition-colors',
+                        done
+                          ? 'bg-success border-success text-white'
+                          : 'border-border text-fg-subtle',
+                      )}
+                    >
+                      {done ? '✓' : ''}
+                    </button>
+                  )}
                   {category && <Chip badge={category} />}
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span
@@ -340,8 +357,8 @@ export function HomeTab({
             })}
           </section>
 
-          {/* GitHub 기여도 — 미연동 프로젝트면 컴포넌트가 스스로 숨김 */}
-          <GithubContributionSection projectId={d.id} />
+          {/* GitHub 기여도 — 미연동이면 스스로 숨김. 데이터가 수강생 소유 API라 검토자는 미노출. */}
+          {!readOnly && <GithubContributionSection projectId={d.id} />}
         </div>
 
         {/* 우측: 인증 상태 · 팀원 · 성과 지표 · 기술 스택 */}
@@ -412,14 +429,16 @@ export function HomeTab({
                 </span>
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => onTab('certification')}
-              className="border-border text-fg hover:border-brand/50 flex items-center justify-center gap-1 rounded-lg border py-2.5 text-[12px] font-semibold transition-colors"
-            >
-              인증 요청 탭 보기
-              <ArrowRight className="size-3.5" aria-hidden="true" />
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => onTab('certification')}
+                className="border-border text-fg hover:border-brand/50 flex items-center justify-center gap-1 rounded-lg border py-2.5 text-[12px] font-semibold transition-colors"
+              >
+                인증 요청 탭 보기
+                <ArrowRight className="size-3.5" aria-hidden="true" />
+              </button>
+            )}
           </section>
 
           <section className={cn(card, 'flex flex-col gap-2.5')}>
@@ -436,7 +455,7 @@ export function HomeTab({
                 <div className="flex flex-1 flex-col">
                   <span className="text-fg text-[12px] font-bold">
                     {m.name}
-                    {m.kind === 'PM' && ' (본인)'}
+                    {!readOnly && m.kind === 'PM' && ' (본인)'}
                   </span>
                   <span className="text-fg-subtle text-[11px]">{m.role}</span>
                 </div>

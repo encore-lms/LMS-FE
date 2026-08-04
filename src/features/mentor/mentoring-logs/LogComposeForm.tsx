@@ -262,11 +262,11 @@ export function LogComposeForm({
       {/* 브레드크럼 + 저장 상태 칩 */}
       <div className="flex flex-wrap items-center gap-2">
         <Link
-          to={backTo ?? '/mentor/mentoring-logs'}
+          to={backTo ?? '/mentor/teams'}
           className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
         >
           <ArrowLeft className="h-3 w-3" />
-          {backTo ? '팀 상세' : '멘토링 일지'}
+          {backTo ? '팀 상세' : '배정 팀'}
         </Link>
         <span className="text-fg-subtle text-[13px]">›</span>
         <span className="text-fg text-xs font-medium">

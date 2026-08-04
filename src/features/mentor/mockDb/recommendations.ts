@@ -65,6 +65,9 @@ export function buildTeamRecommendationSheet(
         }
       : (draft ?? { mode: null, studentId: null, summary: '', notify: true }),
     submittedAtLabel: submitted?.submittedAtLabel ?? null,
+    // 계약 종료 마감 — mock 팀엔 종료일 미설정(무기한). 마감 화면은 페이지 테스트가 시트 직접 mock.
+    submissionClosed: false,
+    submissionDeadlineLabel: null,
   }
 }
 

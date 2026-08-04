@@ -88,17 +88,19 @@ export default function RecommendationsSubmittedPage() {
                 { label: '추천 대상', value: submission.targetLabel },
                 { label: '추천 사유 작성', value: submission.summaryLabel },
                 { label: '증명서 반영', value: submission.certificateLabel },
-                // 확정 정책(05-29·05-31: 최종 제출 후 수정 불가) 정합 — Figma '24시간 수정 마감' 행은
-                // 정책 충돌 카피라 교체(Figma 동반 정정 2026-06-13).
+                // 정책 완화(2026-08-04) — 상시 재제출 가능, 마지막 제출본 유효.
                 {
                   label: '수정 가능 여부',
-                  value: '최종 제출 완료 — 수정 불가',
+                  value: '상시 수정 가능 — 재제출 시 갱신',
                 },
               ]}
             />
-            {/* '평가·추천 목록' = 사이드바 평가·추천 진입 화면(/mentor/evaluations)으로 연결. */}
+            {/* 선택 내용 자세히 보기 = 추천 선택 화면 재진입(값 프리필). */}
             <NextStepBar
-              secondary={{ label: '평가·추천 목록', to: '/mentor/evaluations' }}
+              secondary={{
+                label: '추천 자세히 보기 · 수정',
+                to: `/mentor/teams/${submission.teamId}/recommendation`,
+              }}
               primary={{ label: '멘토 대시보드', to: '/mentor' }}
             />
             <InfoNotice>

@@ -115,8 +115,16 @@ function exportCsv(rows: MentoringLogListItem[]) {
 // 목록 페이지당 일지 수 — 표가 길어지지 않게 페이지네이션(공통 Pagination).
 const LOG_PAGE_SIZE = 8
 
-export default function LogsPage() {
-  usePageHeader('멘토링 일지', MENTOR_FLOW_CAPTION)
+export default function LogsPage({
+  embedded = false,
+  teamId: fixedTeamId,
+}: {
+  /** 팀 상세 '일지' 탭에 얹을 때 — 자체 헤더·바깥 여백을 생략한다. */
+  embedded?: boolean
+  /** 주면 그 팀 일지만 — 팀이 이미 정해졌으니 팀 고르는 칸도 없앤다. */
+  teamId?: string
+} = {}) {
+  usePageHeader('멘토링 일지', MENTOR_FLOW_CAPTION, !embedded)
   const { data, isPending, isError, refetch } = useMentoringLogs()
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -134,8 +142,11 @@ export default function LogsPage() {
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams, toast])
 
-  // 팀 필터 — ?teamId= 딥링크 지원(M1 팀 카드 '일지 수정' 진입 경로)
-  const [teamId, setTeamId] = useState(searchParams.get('teamId') ?? 'all')
+  // 팀 필터 — ?teamId= 딥링크 지원(M1 팀 카드 '일지 수정' 진입 경로).
+  // 팀 상세에 얹힐 때는 그 팀으로 고정한다(고르는 칸도 감춘다).
+  const [teamId, setTeamId] = useState(
+    fixedTeamId ?? searchParams.get('teamId') ?? 'all',
+  )
   const [status, setStatus] = useState<MentoringLogStatus | 'all'>('all')
   const [period, setPeriod] = useState<string>('30')
   const [q, setQ] = useState('')
@@ -341,18 +352,20 @@ export default function LogsPage() {
       skeleton={<SkeletonListPage kpis={4} columns={5} className="" />}
       errorTitle="멘토링 일지를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
-      <div className="flex flex-col gap-5 p-8">
+      <div className={cn('flex flex-col gap-5', !embedded && 'p-8')}>
         {/* 필터 행 — 팀/상태/기간 드롭다운 + 검색 + 새 일지 작성 */}
         <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
-            icon={<Send className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
-            label="팀"
-            value={teamId}
-            onChange={setTeamId}
-            options={[{ value: 'all', label: '전체' }, ...teamOptions]}
-          />
+          {!fixedTeamId && (
+            <FilterSelect
+              icon={<Send className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
+              label="팀"
+              value={teamId}
+              onChange={setTeamId}
+              options={[{ value: 'all', label: '전체' }, ...teamOptions]}
+            />
+          )}
           <FilterSelect
             icon={<Info className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
             label="상태"

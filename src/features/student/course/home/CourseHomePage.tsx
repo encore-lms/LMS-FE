@@ -1,5 +1,6 @@
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader, useAuth } from '@/shared/store'
+import { TERMS } from '@/shared/constants'
 import { useCourseHome } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import { OnlineCoursePage } from '../online/OnlineCoursePage'
@@ -23,7 +24,8 @@ export default function CourseHomePage() {
  */
 function KdtCourseHome() {
   const { data, isPending, isError, refetch } = useCourseHome()
-  usePageHeader('강의 홈')
+  // 사이드바 라벨과 정합(원칙 1) — 2026-08-05 재편으로 '강의 홈' → '교육과정'.
+  usePageHeader(TERMS.educationCourse)
 
   return (
     <div className="flex flex-col gap-5 p-8">

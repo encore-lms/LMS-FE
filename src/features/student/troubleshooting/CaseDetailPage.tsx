@@ -24,6 +24,7 @@ import {
   type TsListData,
   type TsProjectLink,
 } from './types'
+import { useTsChangeState } from './api/changeRequests'
 import { ProjectLinkModal } from './components/ProjectLinkModal'
 import { CaseContentForm } from './components/CaseContentForm'
 import { TONE_SOFT } from '@/shared/lib/tone'
@@ -90,6 +91,12 @@ export default function CaseDetailPage() {
   )
 
   const isCertified = data?.status === 'certified'
+  // 낸 제안의 지금 상태 — 이걸 보지 않으면 반려돼도 화면이 그대로라 같은 제안을 다시 낸다.
+  const { data: change } = useTsChangeState(
+    data?.id ?? '',
+    !!data?.id && data.status === 'certified',
+  )
+  const changeState = change?.status ?? 'none'
   const isReviewing = data?.status === 'reviewing'
   const isDraft = data?.status === 'draft'
   // draft(작성 중·작성 완료)는 항상 편집 가능. 인증 요청(검토 중)부터 잠금, 인증 완료는 변경 제안만.
@@ -422,23 +429,59 @@ export default function CaseDetailPage() {
                   </section>
                 )}
 
-                {/* 인증 완료 — 잠금, 변경 제안만 */}
+                {/* 인증 완료 — 잠금, 변경 제안만. 낸 제안이 있으면 그 상태를 먼저 말한다. */}
                 {!viewOnly && isCertified && (
                   <section className={cn(card, 'flex flex-col gap-3')}>
                     <span className="text-success text-[14px] font-bold">
                       ✓ 인증 완료
                     </span>
-                    <span className="text-fg-subtle text-[11px]">
-                      인증이 완료된 사례예요. 내용은 잠겨 있고, 수정하려면 변경
-                      제안으로 요청하세요.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={goChangeRequest}
-                      className={buttonClass({ size: 'sm' })}
-                    >
-                      변경 제안
-                    </button>
+                    {changeState === 'requested' ||
+                    changeState === 'revision_submitted' ? (
+                      <>
+                        <span className="bg-warning-bg text-warning w-fit rounded px-2 py-0.5 text-[11px] font-bold">
+                          변경 제안 검토 중
+                        </span>
+                        <span className="text-fg-subtle text-[11px]">
+                          강사가 검토하고 있어요. 결과가 나오면 여기에서 확인할
+                          수 있어요.
+                        </span>
+                      </>
+                    ) : changeState === 'rejected' ? (
+                      <>
+                        <span className="bg-danger-bg text-danger w-fit rounded px-2 py-0.5 text-[11px] font-bold">
+                          변경 제안 반려됨
+                        </span>
+                        {change?.decisionReason && (
+                          <span className="text-fg-muted text-[12px] leading-5">
+                            {change.decisionReason}
+                          </span>
+                        )}
+                        <span className="text-fg-subtle text-[11px]">
+                          사유를 반영해 다시 제안할 수 있어요.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goChangeRequest}
+                          className={buttonClass({ size: 'sm' })}
+                        >
+                          다시 변경 제안
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-fg-subtle text-[11px]">
+                          인증이 완료된 사례예요. 내용은 잠겨 있고, 수정하려면
+                          변경 제안으로 요청하세요.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goChangeRequest}
+                          className={buttonClass({ size: 'sm' })}
+                        >
+                          변경 제안
+                        </button>
+                      </>
+                    )}
                   </section>
                 )}
 

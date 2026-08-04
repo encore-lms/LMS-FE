@@ -1,21 +1,29 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { RichTextEditor } from './RichTextEditor'
-import { fetchLinkPreview, uploadEditorFile } from '@/shared/api'
+import {
+  fetchEditorUpload,
+  fetchLinkPreview,
+  uploadEditorFile,
+} from '@/shared/api'
 
 vi.mock('@/shared/api', async (orig) => ({
   ...(await orig<typeof import('@/shared/api')>()),
   uploadEditorFile: vi.fn(),
   fetchLinkPreview: vi.fn(),
+  fetchEditorUpload: vi.fn(),
 }))
 
 // 이미지·파일·북마크는 고르는 것만으로 끝나지 않는다 — 올리거나 주소를 받아야 한다.
 // 폼 아래 따로 칸을 두지 않고 본문 흐름 안에서 받는다.
 
-function Editor({ onError }: { onError?: (m: string) => void } = {}) {
-  const [v, setV] = useState('')
+function Editor({
+  onError,
+  initial = '',
+}: { onError?: (m: string) => void; initial?: string } = {}) {
+  const [v, setV] = useState(initial)
   return (
     <>
       <RichTextEditor
@@ -54,6 +62,8 @@ async function pick(
 beforeEach(() => {
   vi.mocked(uploadEditorFile).mockReset()
   vi.mocked(fetchLinkPreview).mockReset()
+  vi.mocked(fetchEditorUpload).mockReset()
+  vi.mocked(fetchEditorUpload).mockResolvedValue(new Blob(['x']))
   // jsdom 에는 없는 API — 편집기가 방금 고른 그림을 그 자리에 보여 줄 때 쓴다.
   URL.createObjectURL = vi.fn(() => 'blob:preview-1')
   URL.revokeObjectURL = vi.fn()
@@ -330,6 +340,38 @@ describe('본문 임베드', () => {
     expect(
       await screen.findByRole('button', { name: '파일을 선택하세요' }),
     ).toBeVisible()
+  })
+
+  // 다른 글의 본문을 복사해 붙이면 `upload:` 참조가 그대로 들어온다 — 브라우저가 모르는
+  // 주소라 예전에는 빈 상자만 남았다.
+  it('붙여넣은 업로드 참조를 그림으로 되살린다', async () => {
+    render(<Editor initial="![사진](upload:u9)" />)
+
+    await waitFor(() =>
+      expect(fetchEditorUpload).toHaveBeenCalledWith('u9', 'staff'),
+    )
+    await waitFor(() =>
+      expect(body().querySelector('img')?.getAttribute('src')).toBe(
+        'blob:preview-1',
+      ),
+    )
+    // 저장할 값은 참조 그대로다 — 미리보기 주소는 이 브라우저에서만 통한다.
+    await waitFor(() => expect(md()).toContain('upload:u9'))
+    expect(md()).not.toContain('blob:')
+  })
+
+  it('되살리지 못한 그림은 자리에 이유를 남긴다', async () => {
+    render(<Editor initial="![](https://img.example/x.png)" />)
+
+    const img = await waitFor(() => {
+      const el = body().querySelector('img')
+      if (!el) throw new Error('아직')
+      return el
+    })
+    fireEvent.error(img)
+
+    expect(img.dataset.broken).toBe('true')
+    expect(img.alt).toContain('불러오지 못했어요')
   })
 
   it('접힌 자리에서 Esc 를 누르면 사라진다', async () => {

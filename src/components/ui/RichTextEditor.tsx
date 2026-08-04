@@ -16,8 +16,15 @@ import { EmbedPrompt, type EmbedKind, type EmbedResult } from './EmbedPrompt'
 import { bookmarkTitle, fileTitle } from './embedMeta'
 import { SlashCommandMenu } from './SlashCommandMenu'
 import { TableToolbar } from './TableToolbar'
-import { fetchLinkPreview, uploadEditorFile } from '@/shared/api'
+import {
+  fetchEditorUpload,
+  fetchLinkPreview,
+  uploadEditorFile,
+  type UploadScope,
+} from '@/shared/api'
 import { filterSlashCommands, type SlashCommand } from './slashCommands'
+
+const UPLOAD = 'upload:'
 
 /** 서버가 돌려준 사유. 없으면 null. */
 function serverMessage(err: unknown): string | null {
@@ -51,6 +58,7 @@ export function RichTextEditor({
   minHeight = 220,
   ariaLabel,
   className,
+  uploadScope = 'staff',
   onError,
 }: {
   value: string
@@ -59,6 +67,8 @@ export function RichTextEditor({
   minHeight?: number
   ariaLabel?: string
   className?: string
+  /** 본문에 담긴 업로드를 어느 경로로 받을지 — 쓰는 사람의 역할. */
+  uploadScope?: UploadScope
   /** 업로드·미리보기 실패를 사람이 읽는 말로 알린다. */
   onError?: (message: string) => void
 }) {
@@ -78,6 +88,8 @@ export function RichTextEditor({
   const [busy, setBusy] = useState(false)
   // 편집기에 보여 준 미리보기(blob:) → 저장할 참조(upload:id).
   const previews = useRef(new Map<string, string>())
+  // 지금 받아 오는 중인 업로드 — 같은 그림을 두 번 받지 않게.
+  const resolving = useRef(new Set<string>())
 
   // 화면을 떠날 때 브라우저가 들고 있던 사본을 놓아 준다.
   useEffect(() => {
@@ -125,6 +137,60 @@ export function RichTextEditor({
       syncSlashRef.current?.(editor)
     },
   })
+
+  /**
+   * 본문에 들어온 `upload:{id}` 를 실제 그림으로 되살린다.
+   *
+   * <p>다른 글의 본문을 복사해 붙이면 `![사진](upload:…)` 가 그대로 들어온다. 그 주소는
+   * 브라우저가 모르는 말이라 편집기에는 빈 상자만 남았다. 받아서 미리보기로 바꿔 준다 —
+   * 저장할 때는 {@link previews} 를 거쳐 다시 참조로 돌아간다.</p>
+   */
+  useEffect(() => {
+    if (!editor) return
+    const held = previews.current
+    let alive = true
+    const resolve = () => {
+      const 남은: { pos: number; id: string }[] = []
+      editor.state.doc.descendants((node, pos) => {
+        const src = typeof node.attrs.src === 'string' ? node.attrs.src : ''
+        if (node.type.name === 'image' && src.startsWith(UPLOAD)) {
+          남은.push({ pos, id: src.slice(UPLOAD.length) })
+        }
+      })
+      for (const { id } of 남은) {
+        if (resolving.current.has(id)) continue
+        resolving.current.add(id)
+        fetchEditorUpload(id, uploadScope)
+          .then((blob) => {
+            if (!alive) return
+            const preview = URL.createObjectURL(blob)
+            held.set(preview, UPLOAD + id)
+            // 위치는 그 사이 밀렸을 수 있다 — 지금 문서에서 다시 찾는다.
+            editor.state.doc.descendants((node, pos) => {
+              if (
+                node.type.name === 'image' &&
+                node.attrs.src === UPLOAD + id
+              ) {
+                editor.view.dispatch(
+                  editor.state.tr.setNodeMarkup(pos, undefined, {
+                    ...node.attrs,
+                    src: preview,
+                  }),
+                )
+              }
+            })
+          })
+          // 못 받아도 그대로 둔다 — 아래 error 처리가 이유를 남긴다.
+          .catch(() => resolving.current.delete(id))
+      }
+    }
+    resolve()
+    editor.on('update', resolve)
+    return () => {
+      alive = false
+      editor.off('update', resolve)
+    }
+  }, [editor, uploadScope])
 
   // 커서가 표 안팎을 오갈 때만 막대를 여닫는다.
   useEffect(() => {
@@ -330,6 +396,15 @@ export function RichTextEditor({
         editor={editor}
         onKeyUp={() => syncSlash(editor)}
         onClick={() => syncSlash(editor)}
+        // 그림 로드 실패는 버블하지 않는다 — 캡처로 받아 자리에 이유를 남긴다.
+        // (빈 상자만 남으면 무엇이 있었는지도, 지워야 하는지도 알 수 없다.)
+        onErrorCapture={(e) => {
+          const el = e.target as HTMLElement
+          if (!(el instanceof HTMLImageElement)) return
+          el.dataset.broken = 'true'
+          if (!el.alt)
+            el.alt = '이미지를 불러오지 못했어요 — 주소를 확인해 주세요'
+        }}
       />
       {matches.length > 0 && (
         <SlashCommandMenu

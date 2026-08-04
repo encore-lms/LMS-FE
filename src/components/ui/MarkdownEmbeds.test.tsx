@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Markdown } from './Markdown'
 import { bookmarkTitle, fileTitle, parseEmbedTitle } from './embedMeta'
@@ -169,11 +169,37 @@ describe('본문 렌더', () => {
     await waitFor(() => expect(upload).toHaveBeenCalledWith('img-1', 'staff'))
   })
 
-  it('불러오지 못한 이미지는 깨진 그림 대신 이름을 남긴다', async () => {
+  it('불러오지 못한 업로드는 깨진 그림 대신 이유를 남긴다', async () => {
     upload.mockRejectedValue(new Error('404'))
     render(<Markdown>![사진](upload:img-1)</Markdown>)
 
-    expect(await screen.findByText(/사진 — 불러오지 못했어요/)).toBeVisible()
+    expect(
+      await screen.findByText(
+        /사진를 불러오지 못했어요 — 지워졌거나 볼 권한이 없어요/,
+      ),
+    ).toBeVisible()
+  })
+
+  // 남의 서버 그림은 언제든 사라진다 — 빈 상자만 남으면 무엇이 있었는지도 모른다.
+  it('본문 그림이 깨지면 그 자리에 이유를 남긴다', () => {
+    render(<Markdown>![캡처](https://img.example/a.png)</Markdown>)
+
+    const img = screen.getByRole('img', { name: '캡처' })
+    fireEvent.error(img)
+
+    expect(
+      screen.getByText(/캡처를 불러오지 못했어요 — 주소를 확인해 주세요/),
+    ).toBeVisible()
+    expect(screen.queryByRole('img', { name: '캡처' })).not.toBeInTheDocument()
+  })
+
+  it('멀쩡한 본문 그림은 그대로 둔다', () => {
+    render(<Markdown>![캡처](https://img.example/a.png)</Markdown>)
+
+    expect(screen.getByRole('img', { name: '캡처' })).toHaveAttribute(
+      'src',
+      'https://img.example/a.png',
+    )
   })
 
   it('카드가 아닌 링크는 그대로 둔다', () => {

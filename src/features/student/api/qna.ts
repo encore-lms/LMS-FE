@@ -128,6 +128,53 @@ export function useDeleteQuestion() {
   })
 }
 
+// 답변 고쳐 쓰기(작성자만) — 갱신된 상세 반환. 알림은 다시 가지 않는다(BE).
+export function useUpdateAnswer(questionId: string) {
+  const base = useQnaBase()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      answerId,
+      input,
+    }: {
+      answerId: string
+      input: NewCommentInput
+    }) =>
+      apiClient
+        .put<QnaDetail>(`${base}/${questionId}/answers/${answerId}`, input)
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(qnaKeys.detail(questionId), detail)
+      queryClient.invalidateQueries({ queryKey: qnaKeys.list() })
+    },
+  })
+}
+
+// 댓글 고쳐 쓰기(작성자만) — 갱신된 상세 반환.
+export function useUpdateComment(questionId: string, answerId: string) {
+  const base = useQnaBase()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      commentId,
+      input,
+    }: {
+      commentId: string
+      input: NewCommentInput
+    }) =>
+      apiClient
+        .put<QnaDetail>(
+          `${base}/${questionId}/answers/${answerId}/comments/${commentId}`,
+          input,
+        )
+        .then((r) => r.data),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(qnaKeys.detail(questionId), detail)
+      queryClient.invalidateQueries({ queryKey: qnaKeys.list() })
+    },
+  })
+}
+
 // 답변 삭제(작성자만) — 댓글 cascade. 갱신된 상세 반환.
 export function useDeleteAnswer(questionId: string) {
   const base = useQnaBase()

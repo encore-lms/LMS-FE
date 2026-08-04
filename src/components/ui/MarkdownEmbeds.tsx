@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentPropsWithoutRef } from 'react'
 import { FileUp, ImageOff, Loader2 } from 'lucide-react'
 import { formatBytes, type EmbedMeta } from './embedMeta'
+import { cachedUploadUrl, uploadObjectUrl } from './uploadCache'
 import { fetchEditorUpload, type UploadScope } from '@/shared/api'
 
 // 본문 안의 카드형 링크를 그린다. 표기 규칙은 embedMeta.ts 참고.
@@ -174,25 +175,21 @@ export function UploadImage({
   scope: UploadScope
   alt: string
 }) {
-  const [src, setSrc] = useState<string | null>(null)
+  const [src, setSrc] = useState<string | null>(
+    () => cachedUploadUrl(id, scope) ?? null,
+  )
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    let url: string | null = null
+    if (src) return
     let alive = true
-    fetchEditorUpload(id, scope)
-      .then((blob) => {
-        if (!alive) return
-        url = URL.createObjectURL(blob)
-        setSrc(url)
-      })
+    uploadObjectUrl(id, scope)
+      .then((url) => alive && setSrc(url))
       .catch(() => alive && setFailed(true))
     return () => {
       alive = false
-      // 화면에서 사라지면 브라우저가 들고 있던 사본을 놓아 준다.
-      if (url) URL.revokeObjectURL(url)
     }
-  }, [id, scope])
+  }, [id, scope, src])
 
   if (failed) {
     return <BrokenImage alt={alt} reason="지워졌거나 볼 권한이 없어요" />

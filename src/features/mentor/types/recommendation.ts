@@ -49,6 +49,10 @@ export interface MentorRecommendationSheetData {
   /** 저장된 초안(없으면 기본값) — 제출 후에는 제출본 미러 */
   draft: MentorRecommendationDraftPayload
   submittedAtLabel: string | null
+  /** 계약 종료 마감 — 경과 시 제출·재제출 잠금(읽기 전용) */
+  submissionClosed: boolean
+  /** 마감 라벨 '2026-12-28 까지' — 마감 없으면 null */
+  submissionDeadlineLabel: string | null
 }
 
 /** 제출 완료 페이지 요약 행 — GET /mentor/v1/recommendations. */

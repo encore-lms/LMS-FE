@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MarkdownEditor } from './MarkdownEditor'
-import { uploadEditorFile } from '@/shared/api'
+import { uploadEditorFile, type UploadScope } from '@/shared/api'
 
 vi.mock('@/shared/api', async (orig) => ({
   ...(await orig<typeof import('@/shared/api')>()),
@@ -19,6 +19,7 @@ function Harness({ spy }: { spy: (names: string[]) => void }) {
   return (
     <>
       <MarkdownEditor
+        uploadScope="student"
         value={value}
         onChange={setValue}
         // 의도적으로 매 렌더 새 배열(무한 루프 재현 조건)
@@ -88,7 +89,7 @@ describe('MarkdownEditor 멘션 파싱', () => {
 
 // 첨부 — 예전엔 base64 를 브라우저 메모리에만 담아 글은 저장돼도 그림이 새로고침에 사라졌다.
 // 이제 서버에 올리고 본문에는 `upload:{id}` 참조만 남는다.
-function AttachHarness({ scope }: { scope?: 'student' | 'staff' }) {
+function AttachHarness({ scope = 'student' }: { scope?: UploadScope }) {
   const [value, setValue] = useState('')
   return (
     <>
@@ -168,7 +169,12 @@ describe('MarkdownEditor 첨부', () => {
     const rejected = vi.fn()
     const user = userEvent.setup()
     render(
-      <MarkdownEditor value="" onChange={vi.fn()} onImageRejected={rejected} />,
+      <MarkdownEditor
+        uploadScope="student"
+        value=""
+        onChange={vi.fn()}
+        onImageRejected={rejected}
+      />,
     )
     const big = new File(['x'], '큰그림.png', { type: 'image/png' })
     Object.defineProperty(big, 'size', { value: 6 * 1024 * 1024 })

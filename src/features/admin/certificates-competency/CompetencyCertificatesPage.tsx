@@ -14,7 +14,11 @@ import { useStudentAccounts } from '@/shared/api'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { readLastCohort, writeLastCohort } from '../education/lastCohort'
 import { toCertRow } from './mocks'
-import type { CompetencyCertRow, CompetencyCertStatus } from './types'
+import {
+  REVIEW_STATUSES,
+  type CompetencyCertRow,
+  type CompetencyCertStatus,
+} from './types'
 import { TERMS } from '@/shared/constants'
 import { SearchInput } from '@/components/ui/SearchInput'
 
@@ -28,7 +32,10 @@ const STATUS_META: Record<
   cohort_open: { label: '기수 미종료', tone: 'neutral' },
   data_pending: { label: '데이터 미준비', tone: 'warning' },
   data_ready: { label: '데이터 준비', tone: 'info' },
-  issued: { label: '증명서 완료', tone: 'success' },
+  requested: { label: '인증 요청', tone: 'warning' },
+  reviewing: { label: '검토 중', tone: 'info' },
+  changes_requested: { label: '보완 요청', tone: 'warning' },
+  certified: { label: '인증 완료', tone: 'success' },
 }
 
 export default function CompetencyCertificatesPage() {
@@ -92,8 +99,9 @@ export default function CompetencyCertificatesPage() {
       rows.filter((r) => r.status === s).length
     return {
       total: rows.length,
-      issued: by('issued'),
-      preparing: by('data_pending') + by('data_ready'),
+      certified: by('certified'),
+      // 운영자가 지금 손댈 건 — 인증 요청·검토 중·보완 요청을 한 숫자로 본다.
+      review: REVIEW_STATUSES.reduce((n, st) => n + by(st), 0),
       published: rows.filter((r) => r.published).length,
     }
   }, [rows])
@@ -191,14 +199,14 @@ export default function CompetencyCertificatesPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="대상 수강생" value={`${summary.total}명`} />
         <KpiCard
-          label="증명서 완료"
-          value={`${summary.issued}명`}
-          tone="success"
+          label="검토 대기"
+          value={`${summary.review}명`}
+          tone="warning"
         />
         <KpiCard
-          label="준비 중"
-          value={`${summary.preparing}명`}
-          tone="warning"
+          label="인증 완료"
+          value={`${summary.certified}명`}
+          tone="success"
         />
         <KpiCard label="공개 중" value={`${summary.published}명`} tone="info" />
       </div>

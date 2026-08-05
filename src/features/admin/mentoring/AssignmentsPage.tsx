@@ -22,7 +22,9 @@ import { AssignmentFormModal } from './AssignmentFormModal'
 import { AssignmentCreateModal } from './AssignmentCreateModal'
 import type { MentorAssignmentRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { ListToolbar } from '@/components/ui/ListToolbar'
+import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 
 /** 멘토링 카드 — 멘토·멘티·진행/잔여 시간·일지(총·미인증). 기수 그룹 안에 팀 단위로 노출. */
 function MentoringCard({
@@ -387,89 +389,88 @@ export default function AssignmentsPage({
 
   return (
     <div className={embedded ? '' : 'p-8'}>
-      {/* 과정·기수·멘토·검색·액션을 한 곳에 모은 관리 툴바 */}
-      <div
-        role="region"
-        aria-label="배정 관리 도구"
-        className="border-brand bg-brand flex flex-col gap-3 rounded-xl border p-3.5 shadow-[0_4px_14px_rgba(26,140,133,0.18)] xl:flex-row xl:items-center xl:justify-between"
-      >
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <Select
-            value={mentorFilter}
-            onChange={(v) => setMentorFilter(v)}
-            aria-label="멘토 필터"
-            disabled={!data}
-            options={[
-              { value: 'all', label: '멘토 전체' },
-              ...(data?.mentors ?? []).map((m) => ({
-                value: m.mentorId,
-                label: m.name,
-              })),
-            ]}
-            className="h-9"
-          />
-          {!embedded && (
+      {/* 탭 공통 툴바(ListToolbar) — 우측 [검색][필터][액션](2026-08-07 통일, 구 브랜드 카드·하드코딩 hex 버튼 정리) */}
+      <div role="region" aria-label="배정 관리 도구">
+        <ListToolbar
+          search={{
+            value: q,
+            onChange: setQ,
+            placeholder: '팀명·멘토명 검색',
+            ariaLabel: '팀명·멘토명 검색',
+          }}
+          filters={
             <>
               <Select
-                aria-label="교육과정 선택"
-                value={course}
-                onChange={(v) => pickCourse(v)}
+                value={mentorFilter}
+                onChange={(v) => setMentorFilter(v)}
+                aria-label="멘토 필터"
+                disabled={!data}
                 options={[
-                  { value: 'all', label: '교육과정 전체' },
-                  ...(courseList.data ?? []).map((c) => ({
-                    value: c.courseId,
-                    label: c.title,
+                  { value: 'all', label: '멘토 전체' },
+                  ...(data?.mentors ?? []).map((m) => ({
+                    value: m.mentorId,
+                    label: m.name,
                   })),
                 ]}
                 className="h-9"
               />
-              <Select
-                aria-label="기수 선택"
-                value={cohort}
-                onChange={(v) => pickCohort(v)}
-                disabled={course === 'all'}
-                options={[
-                  { value: 'all', label: '기수 전체' },
-                  ...(courseConfig.data?.cohorts ?? []).map((c) => ({
-                    value: c.id,
-                    label: `${c.cohortNo}기`,
-                  })),
-                ]}
-                className="h-9"
-              />
+              {!embedded && (
+                <>
+                  <Select
+                    aria-label="교육과정 선택"
+                    value={course}
+                    onChange={(v) => pickCourse(v)}
+                    options={[
+                      { value: 'all', label: '교육과정 전체' },
+                      ...(courseList.data ?? []).map((c) => ({
+                        value: c.courseId,
+                        label: c.title,
+                      })),
+                    ]}
+                    className="h-9"
+                  />
+                  <Select
+                    aria-label="기수 선택"
+                    value={cohort}
+                    onChange={(v) => pickCohort(v)}
+                    disabled={course === 'all'}
+                    options={[
+                      { value: 'all', label: '기수 전체' },
+                      ...(courseConfig.data?.cohorts ?? []).map((c) => ({
+                        value: c.id,
+                        label: `${c.cohortNo}기`,
+                      })),
+                    ]}
+                    className="h-9"
+                  />
+                </>
+              )}
             </>
-          )}
-          <SearchInput
-            value={q}
-            onChange={setQ}
-            placeholder="팀명·멘토명 검색"
-            ariaLabel="팀명·멘토명 검색"
-            className="w-full sm:w-60"
-          />
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Link
-            to="/admin/mentoring/log-templates"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white bg-white px-3.5 text-[13px] font-bold text-[#355548] hover:bg-[#f4f8f6]"
-          >
-            <FileText className="h-4 w-4" />
-            템플릿 관리
-          </Link>
-          <button
-            type="button"
-            onClick={openStudentCreate}
-            disabled={cohort === 'all'}
-            title={
-              cohort === 'all'
-                ? '교육과정과 기수를 선택하면 배정을 추가할 수 있어요.'
-                : undefined
-            }
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white bg-white px-3.5 text-[13px] font-bold text-[#355548] shadow-[0_2px_6px_rgba(30,56,45,0.18)] hover:bg-[#f4f8f6] disabled:cursor-not-allowed disabled:opacity-55"
-          >
-            <Plus className="h-4 w-4" />새 배정 추가
-          </button>
-        </div>
+          }
+          actions={
+            <>
+              <Link
+                to="/admin/mentoring/log-templates"
+                className={buttonClass({ variant: 'secondary', size: 'sm' })}
+              >
+                <FileText className="h-4 w-4" />
+                템플릿 관리
+              </Link>
+              <Button
+                size="sm"
+                onClick={openStudentCreate}
+                disabled={cohort === 'all'}
+                title={
+                  cohort === 'all'
+                    ? '교육과정과 기수를 선택하면 배정을 추가할 수 있어요.'
+                    : undefined
+                }
+              >
+                <Plus className="h-4 w-4" />새 배정 추가
+              </Button>
+            </>
+          }
+        />
       </div>
 
       <DataBoundary

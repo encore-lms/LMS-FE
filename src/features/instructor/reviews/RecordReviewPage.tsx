@@ -19,7 +19,7 @@ import type {
 import { useCohortRoster, useStudentAccounts } from '@/shared/api/students'
 import { useRecordReviews } from '../api/reviews'
 import { RecordDetailPanel, type RecordPanelData } from './RecordDetailPanel'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { ListToolbar } from '@/components/ui/ListToolbar'
 
 // 학습 기록 조회 (/instructor/records/review) — §13. 강사 조회 전용 그리드.
 // 블로그·스터디 = 수강생×주차 히트맵(셀 클릭 상세), 자격증 = 종류별 매트릭스.
@@ -264,32 +264,35 @@ export default function RecordReviewPage({
       )}
       {!embedded && <RouteTabBar tabs={REVIEW_TABS} />}
 
-      {/* 검색 + 카테고리 토글 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <SearchInput
-          value={q}
-          onChange={setQ}
-          placeholder="이름으로 검색"
-          ariaLabel="수강생 이름 검색"
-          className="w-64"
+      {/* 탭 공통 툴바(ListToolbar) — 우측 [검색][카테고리 토글](2026-08-07 통일, 구 좌측 검색). */}
+      <div className="mb-4">
+        <ListToolbar
+          search={{
+            value: q,
+            onChange: setQ,
+            placeholder: '이름으로 검색',
+            ariaLabel: '수강생 이름 검색',
+          }}
+          filters={
+            <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
+              {CATEGORY_TABS.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setCategory(t.key)}
+                  className={cn(
+                    'rounded-md px-4 py-1.5 text-sm font-semibold',
+                    category === t.key
+                      ? 'text-fg bg-white shadow-sm'
+                      : 'text-fg-muted hover:text-fg',
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          }
         />
-        <div className="bg-surface-muted flex gap-1 rounded-lg p-1">
-          {CATEGORY_TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setCategory(t.key)}
-              className={cn(
-                'rounded-md px-4 py-1.5 text-sm font-semibold',
-                category === t.key
-                  ? 'text-fg bg-white shadow-sm'
-                  : 'text-fg-muted hover:text-fg',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* 본문 — 그리드 뼈대가 로스터라, 명단 로딩도 로딩에 포함(빈 상태 깜빡임 방지). */}

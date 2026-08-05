@@ -3,6 +3,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useProjectWorkspace } from '../../api/projects'
 import type { WsTab } from '../types'
 import { WorkspaceShell } from './WorkspaceShell'
+import { teamGuard } from './teamGuard'
 import { HomeTab } from './tabs/HomeTab'
 import { BoardTab } from './tabs/BoardTab'
 import { CalendarTab } from './tabs/CalendarTab'
@@ -59,6 +60,7 @@ export default function WorkspacePage() {
           endDate={data.endDate}
           active={tab}
           onTab={setTab}
+          teamLocked={!!teamGuard(data).invite}
         >
           {tab === 'home' && <HomeTab d={data} onTab={setTab} />}
           {tab === 'board' && <BoardTab d={data} />}

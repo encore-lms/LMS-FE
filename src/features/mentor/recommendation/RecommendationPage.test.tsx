@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import RecommendationPage from './RecommendationPage'
 import {
   useSaveRecommendationDraft,
@@ -37,20 +37,14 @@ function mockSheet(sheet: MentorRecommendationSheetData | null) {
   } as unknown as SheetHook)
 }
 
+const onSubmitted = vi.fn()
+
 function renderPage(teamId: string) {
+  onSubmitted.mockClear()
   return render(
-    <MemoryRouter initialEntries={[`/mentor/teams/${teamId}/recommendation`]}>
+    <MemoryRouter>
       <ToastProvider>
-        <Routes>
-          <Route
-            path="/mentor/teams/:teamId/recommendation"
-            element={<RecommendationPage />}
-          />
-          <Route
-            path="/mentor/recommendations"
-            element={<div>추천 제출 완료 페이지</div>}
-          />
-        </Routes>
+        <RecommendationPage teamId={teamId} onSubmitted={onSubmitted} />
       </ToastProvider>
     </MemoryRouter>,
   )
@@ -127,7 +121,8 @@ describe('RecommendationPage', () => {
         notify: false,
       },
     })
-    expect(await screen.findByText('추천 제출 완료 페이지')).toBeInTheDocument()
+    // 제출 후 화면을 옮기지 않는다 — 팀 상세 탭 안에서 완료 안내로 이어진다(2026-08-05).
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalled())
   })
 
   it("'추천하지 않음' — 팀원 그리드 비활성 + 사유 없이 제출(payload mode none)", async () => {

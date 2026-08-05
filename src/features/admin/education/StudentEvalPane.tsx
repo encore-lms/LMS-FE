@@ -4,7 +4,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { ListToolbar } from '@/components/ui/ListToolbar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -158,27 +158,26 @@ function EvalSheet({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* 진행 헤더 — 저장 기준 카운트 + 검색 */}
-      <section className="bg-surface border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-fg text-[14px] font-bold">수강생 평가</span>
-          <span className="text-fg-muted text-[12px]">
-            &lsquo;수강생 평가&rsquo;를 눌러 4축 점수를 매기고 저장하세요
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="bg-brand/10 text-brand flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-bold">
-            <Check className="h-3.5 w-3.5" />
-            저장 {savedCount} / {sheet.studentCount}명
-          </span>
-          <SearchInput
-            value={query}
-            onChange={setQuery}
-            placeholder="수강생 이름 검색"
-            ariaLabel="수강생 검색"
-          />
-        </div>
-      </section>
+      {/* 탭 공통 툴바(ListToolbar) — 좌: 안내·저장 카운트 / 우: 검색(2026-08-07 통일, 구 카드형 헤더). */}
+      <ListToolbar
+        left={
+          <>
+            <span>
+              &lsquo;수강생 평가&rsquo;를 눌러 4축 점수를 매기고 저장하세요
+            </span>
+            <span className="bg-brand/10 text-brand flex items-center gap-1 rounded-lg px-2.5 py-1 text-[12px] font-bold">
+              <Check className="h-3.5 w-3.5" />
+              저장 {savedCount} / {sheet.studentCount}명
+            </span>
+          </>
+        }
+        search={{
+          value: query,
+          onChange: setQuery,
+          placeholder: '수강생 이름 검색',
+          ariaLabel: '수강생 검색',
+        }}
+      />
 
       {visible.length === 0 ? (
         <Empty

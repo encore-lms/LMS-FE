@@ -53,6 +53,21 @@ const inviteButton = () => screen.getByRole('button', { name: '팀원 초대' })
 const removeButtons = () => screen.getAllByRole('button', { name: '삭제' })
 
 describe('TeamTab 팀 구성 가드', () => {
+  // 지우면 그 팀원이 주고받은 평가가 갈 곳 없는 행으로 남는다.
+  it('상호평가 기록이 있는 팀원은 삭제 버튼이 잠긴다', () => {
+    const members = [
+      base.members[0],
+      { ...base.members[1], hasPeerRecord: true },
+    ]
+    render(<TeamTab d={{ ...base, members } as WorkspaceData} />)
+
+    expect(removeButtons()[1]).toBeDisabled()
+    expect(removeButtons()[1]).toHaveAttribute(
+      'title',
+      '상호평가 기록이 있는 팀원은 삭제할 수 없어요',
+    )
+  })
+
   it('PM이고 작성 중이면 초대·삭제가 열려 있다', () => {
     render(<TeamTab d={base} />)
 

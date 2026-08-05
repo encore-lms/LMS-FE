@@ -166,6 +166,8 @@ export interface WsMember {
   role: string // "백엔드·인프라"
   kind: 'PM' | '팀원'
   avatarTone: Tone
+  /** 주고받은 상호평가 제출본이 있는 팀원 — 지우면 그 평가가 갈 곳을 잃어 삭제할 수 없다 */
+  hasPeerRecord?: boolean
 }
 export interface WsMetric {
   id?: string

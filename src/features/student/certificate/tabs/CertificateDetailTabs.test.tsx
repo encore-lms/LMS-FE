@@ -287,7 +287,10 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     renderWithQuery(<TechTab />)
 
     expect(await screen.findByText('프론트엔드')).toBeInTheDocument()
-    expect(screen.getByText('상위 12.5%')).toBeInTheDocument()
+    expect(
+      screen.getByText('첫 평가 1회 결과 · 이론 이해도'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('상위 12.5%')).not.toBeInTheDocument()
     expect(screen.getByText('PCCE')).toBeInTheDocument()
     expect(
       screen.getByText('승인 1건 · 검토 중 1건 · 응시 예정 1건'),
@@ -436,8 +439,11 @@ describe('수강생 증명서 상세 데이터 탭', () => {
       screen.getByRole('heading', { name: '평가·추천' }),
     ).toBeInTheDocument()
     expect(screen.getByText('4평가자 · 공통 4축 비교')).toBeInTheDocument()
+    expect(document.querySelector('[data-growth-evaluation-row]')).toHaveClass(
+      'xl:grid-cols-2',
+    )
     expect(document.querySelector('[data-evaluator-role-grid]')).toHaveClass(
-      'lg:grid-cols-4',
+      'sm:grid-cols-2',
     )
     expect(document.querySelectorAll('[data-evaluator-role]')).toHaveLength(4)
     expect(
@@ -460,13 +466,49 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(
       document.querySelector('[data-comments-recommendations-row]'),
     ).toHaveClass('lg:grid-cols-2')
-    expect(document.querySelector('[data-growth-trend-line]')).toBeNull()
-    expect(screen.queryByText('성장 곡선 (Growth Timeline)')).toBeNull()
+    expect(
+      screen.getByRole('heading', { name: '성장 곡선' }),
+    ).toBeInTheDocument()
+    const growthSegments = Array.from(
+      document.querySelectorAll('[data-growth-trend-segment]'),
+    )
+    expect(growthSegments).toHaveLength(5)
+    expect(
+      growthSegments.map((segment) =>
+        segment.getAttribute('data-growth-trend-type'),
+      ),
+    ).toEqual(['CS', 'ACHIEVEMENT', 'ACHIEVEMENT', 'CS', 'ACHIEVEMENT'])
+    expect(document.querySelectorAll('[data-growth-score-bar]')).toHaveLength(6)
+    expect(document.querySelector('[data-growth-plot]')).toHaveClass(
+      'h-[240px]',
+    )
+    expect(document.querySelector('[data-growth-plot-points]')).toHaveClass(
+      'h-[84%]',
+    )
+    expect(
+      document.querySelector('[data-growth-type-summary="ACHIEVEMENT"]'),
+    ).toHaveTextContent('성취도 평가 4회 · 평균 70.8점')
+    expect(
+      document.querySelector('[data-growth-type-summary="CS"]'),
+    ).toHaveTextContent('CS 평가 2회 · 평균 69점')
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-growth-chronology] time'),
+      ).map((item) => item.textContent),
+    ).toEqual([
+      '2024-04-17',
+      '2024-05-10',
+      '2024-06-13',
+      '2024-07-09',
+      '2024-08-07',
+      '2024-08-28',
+    ])
   })
 
-  it('평가·추천 데이터는 시험 상세를 중복 조회하지 않고 4축 점수만 조회한다', async () => {
+  it('평가·추천 데이터는 기존 시험 상세와 4축 점수를 함께 조회한다', async () => {
     vi.mocked(fetchCertificateDetailTabs).mockClear()
     vi.mocked(fetchCertificateScore).mockClear()
+    vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(result)
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
 
     renderWithQuery(
@@ -476,7 +518,10 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(
       await screen.findByText('4평가자 · 공통 4축 비교'),
     ).toBeInTheDocument()
-    expect(fetchCertificateDetailTabs).not.toHaveBeenCalled()
+    expect(
+      document.querySelector('[data-growth-type-summary="ACHIEVEMENT"]'),
+    ).toHaveTextContent('성취도 평가 1회 · 평균 86점')
+    expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(fetchCertificateScore).toHaveBeenCalledWith('student-1')
   })
 

@@ -19,7 +19,7 @@ import { useDeleteQuiz, useInstructorQuizzes } from '../api/quizzes'
 import { useQuizTemplates } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { ListToolbar } from '@/components/ui/ListToolbar'
+import { ListToolbar, ToolbarCount } from '@/components/ui/ListToolbar'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { FilterSelect } from '@/components/ui/FilterSelect'
 
@@ -49,6 +49,9 @@ export default function QuizListPage({
   const [cohort, setCohort] = useState<string>('전체')
   const [mode, setMode] = useState<ModeFilter>('all')
   const [visibility, setVisibility] = useState<VisibilityFilter>('all')
+  // 필터·검색 활성 여부 — 카운트 병기·초기화 버튼 노출 판정.
+  const hasFilter =
+    q !== '' || cohort !== '전체' || mode !== 'all' || visibility !== 'all'
   const [templateOpen, setTemplateOpen] = useState(false)
   const [templateQ, setTemplateQ] = useState('')
   usePageHeader(
@@ -247,15 +250,32 @@ export default function QuizListPage({
           {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
           <ListToolbar
             left={
-              <span>
-                총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
-              </span>
+              <>
+                {/* data.total 은 서버 집계 — 필터·검색이 걸렸을 때만 화면 필터 결과를 병기한다. */}
+                <ToolbarCount
+                  filtered={hasFilter ? filtered.length : data.total}
+                  total={data.total}
+                  unit="개"
+                />
+                <span className="text-fg-subtle">
+                  · 수동 대기 {data.manualPendingTotal}건
+                </span>
+              </>
             }
             search={{
               value: q,
               onChange: setQ,
               placeholder: '퀴즈명·과목으로 검색',
               ariaLabel: '퀴즈 검색',
+            }}
+            reset={{
+              active: hasFilter,
+              onReset: () => {
+                setQ('')
+                setCohort('전체')
+                setMode('all')
+                setVisibility('all')
+              },
             }}
             filters={
               <>

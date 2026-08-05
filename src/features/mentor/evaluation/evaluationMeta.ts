@@ -5,6 +5,7 @@ import {
   Send,
   type LucideIcon,
 } from 'lucide-react'
+import { EVALUATION_AXIS_LABELS } from '@/shared/constants'
 
 // 평가 작성 화면 메타 — 2026-08-05 4축 개편(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감).
 // 겹치던 소통·협업·팀워크를 한 축으로 합치고 단기 프로젝트에서 관찰 불가한 '성장'은 제외.
@@ -26,10 +27,11 @@ export interface EvaluationAxisMeta {
   fill: string
 }
 
-/** 고정 4축(2026-08-05 개편) — 순서 = EvaluationScoreTuple 인덱스(BE scores4 매핑과 1:1). */
+/** 고정 4축(2026-08-05 개편) — 순서 = EvaluationScoreTuple 인덱스(BE scores4 매핑과 1:1).
+ * 라벨 정본은 shared EVALUATION_AXIS_LABELS(운영 평판·mock 과 공유) — 여기서는 UI 메타만 더한다. */
 export const EVALUATION_AXES: EvaluationAxisMeta[] = [
   {
-    label: '기술/기술기여',
+    label: EVALUATION_AXIS_LABELS[0],
     short: '기술',
     desc: '맡은 몫을 결과물로 구현해 냈다',
     icon: Command,
@@ -38,7 +40,7 @@ export const EVALUATION_AXES: EvaluationAxisMeta[] = [
     fill: 'bg-brand',
   },
   {
-    label: '소통·협업·팀워크',
+    label: EVALUATION_AXIS_LABELS[1],
     short: '소통·협업',
     desc: '의견을 나누고 팀이 같이 일하기 좋았다',
     icon: Send,
@@ -47,7 +49,7 @@ export const EVALUATION_AXES: EvaluationAxisMeta[] = [
     fill: 'bg-info',
   },
   {
-    label: '문제해결',
+    label: EVALUATION_AXIS_LABELS[2],
     short: '문제해결',
     desc: '막힌 문제를 스스로 뚫거나 팀을 도왔다',
     icon: ChevronUp,
@@ -56,7 +58,7 @@ export const EVALUATION_AXES: EvaluationAxisMeta[] = [
     fill: 'bg-accent-strong',
   },
   {
-    label: '책임감',
+    label: EVALUATION_AXIS_LABELS[3],
     short: '책임감',
     desc: '맡은 일을 기한 안에 끝까지 해냈다',
     icon: CheckCircle2,

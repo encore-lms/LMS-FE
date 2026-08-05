@@ -14,14 +14,20 @@ export type MentorTeamStatus =
   | 'completed'
   | 'early_ended'
 
-/** 팀 상태 화면 표기 — 진행 중·예약 대기·일지 필요·평가 필요·수정 요청·완료(+조기 종료). */
+/**
+ * 팀 상태 화면 표기 — 진행 중·예약 대기·일지 필요·평가 필요·수정 요청·시간 완료(+조기 종료).
+ *
+ * completed 는 '배정이 끝났다'가 아니라 '인정 시간을 다 채웠다'는 뜻이다(recognizedHours >= allocated).
+ * 시간을 채운 뒤에도 배정은 살아 있어 멘토링을 더 할 수 있고, 초과분은 excessHours 로 잡힌다.
+ * 그냥 '완료'라고 부르면 기간 표기('~ 진행 중')와 나란히 놓였을 때 모순처럼 읽힌다.
+ */
 export const MENTOR_TEAM_STATUS_LABEL: Record<MentorTeamStatus, string> = {
   in_progress: '진행 중',
   reservation_waiting: '예약 대기',
   log_needed: '일지 필요',
   change_requested: '수정 요청',
   evaluation_needed: '평가 필요',
-  completed: '완료',
+  completed: '시간 완료',
   early_ended: '조기 종료',
 }
 

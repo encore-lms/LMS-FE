@@ -23,10 +23,13 @@ export function SectionHead({
   title,
   action,
   onAction,
+  /** 막힌 이유 — 있으면 버튼을 비활성화하고 그대로 툴팁에 쓴다(눌러보고 실패하지 않게). */
+  actionBlockedReason,
 }: {
   title: string
   action?: string
   onAction?: () => void
+  actionBlockedReason?: string | null
 }) {
   return (
     <div className="flex items-center justify-between">
@@ -35,7 +38,12 @@ export function SectionHead({
         <button
           type="button"
           onClick={onAction}
-          className={buttonClass({ size: 'sm' })}
+          disabled={!!actionBlockedReason}
+          title={actionBlockedReason ?? undefined}
+          className={cn(
+            buttonClass({ size: 'sm' }),
+            'disabled:cursor-not-allowed disabled:opacity-40',
+          )}
         >
           {action}
         </button>

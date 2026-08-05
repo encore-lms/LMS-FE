@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ToastProvider } from '@/components/ui/Toast'
 import { SettingsPane } from './SettingsPane'
 import { useCourseDetail } from './api'
-import { useCourseConfig, useUpdateCohortSettings } from '../api/settings'
+import {
+  useCourseConfig,
+  useHrdKeyList,
+  useUpdateCohortSettings,
+} from '../api/settings'
 import type { CourseDetail } from './types'
 
 vi.mock('./api')
@@ -32,7 +36,16 @@ const detail: CourseDetail = {
   trainingEnd: '2026.10.26',
 }
 
-function renderPane(over: Partial<CourseDetail> = {}) {
+/** 활성 HRD 키 2개 — 기수가 그중 하나를 고를 수 있다. */
+const HRD_KEYS = [
+  { id: 'key-a', name: '플레이데이터 본원', maskedKey: 'abcd****1234', active: true },
+  { id: 'key-b', name: '서초 캠퍼스', maskedKey: 'efgh****5678', active: true },
+]
+
+function renderPane(
+  over: Partial<CourseDetail> = {},
+  cohortOver: Record<string, unknown> = {},
+) {
   vi.mocked(useCourseDetail).mockReturnValue({
     data: { ...detail, ...over },
     isPending: false,
@@ -47,6 +60,7 @@ function renderPane(over: Partial<CourseDetail> = {}) {
           cohortNo: '32',
           mileageEnabled: true,
           playEnabled: false,
+          ...cohortOver,
         },
       ],
     },
@@ -54,6 +68,11 @@ function renderPane(over: Partial<CourseDetail> = {}) {
     isError: false,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useCourseConfig>)
+  vi.mocked(useHrdKeyList).mockReturnValue({
+    data: { items: HRD_KEYS, total: HRD_KEYS.length },
+    isPending: false,
+    isError: false,
+  } as unknown as ReturnType<typeof useHrdKeyList>)
   vi.mocked(useUpdateCohortSettings).mockReturnValue({
     mutateAsync,
     isPending: false,
@@ -115,6 +134,8 @@ describe('SettingsPane (과정 설정)', () => {
       cohortId: 'cohort-32',
       mileageEnabled: true,
       playEnabled: true,
+      // 키를 고르지 않았으면 지정 해제로 보낸다 — 활성 최신 키를 쓴다는 뜻.
+      hrdKeyId: null,
     })
   })
 
@@ -123,5 +144,45 @@ describe('SettingsPane (과정 설정)', () => {
     renderPane()
     await user.click(screen.getByRole('button', { name: /커리큘럼 설정/ }))
     expect(screen.getByText('커리큘럼 모달')).toBeInTheDocument()
+  })
+
+  // HRD 호출이 '활성 키 중 최신'을 암묵적으로 고르던 것을 기수마다 정할 수 있게 했다(2026-08-05).
+  it('기수가 쓸 HRD 키를 고르면 저장에 함께 실린다', async () => {
+    const user = userEvent.setup()
+    renderPane()
+
+    await user.click(screen.getByLabelText('HRD API Key'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: /서초 캠퍼스/,
+      }),
+    )
+    await user.click(screen.getByRole('button', { name: '저장' }))
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ hrdKeyId: 'key-b' }),
+      ),
+    )
+  })
+
+  // 고르지 않으면 종전대로 활성 최신 키를 쓴다.
+  it('기본값으로 되돌리면 지정을 비워 보낸다', async () => {
+    const user = userEvent.setup()
+    renderPane({}, { hrdKeyId: 'key-a' })
+
+    await user.click(screen.getByLabelText('HRD API Key'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', {
+        name: /활성 키 중 최신/,
+      }),
+    )
+    await user.click(screen.getByRole('button', { name: '저장' }))
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ hrdKeyId: null }),
+      ),
+    )
   })
 })

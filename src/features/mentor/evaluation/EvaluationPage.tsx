@@ -37,7 +37,7 @@ import {
 
 const round1 = (n: number) => Math.round(n * 10) / 10
 
-/** 입력 완료 — 5축 전 점수(1~5) + 줄글 코멘트(mock 검증과 동일 기준). */
+/** 입력 완료 — 4축 전 점수(1~5) + 줄글 코멘트(mock 검증과 동일 기준). */
 const isComplete = (entry: { scores: EvaluationScoreTuple; comment: string }) =>
   entry.scores.every((s) => s != null) && entry.comment.trim().length > 0
 
@@ -46,7 +46,7 @@ type CardState = 'done' | 'active' | 'waiting'
 // 멘토 평가 작성 (/mentor/teams/:teamId/evaluation) — Figma 2553:4279.
 // 정책 완화(2026-08-04): 멘토링 시작부터 상시 작성 · 제출 후에도 재제출로 수정 가능(마지막 제출본 유효).
 // 제출본은 draft 저장이 409라 자동 저장을 멈추고 '수정 재제출'만 연다(반쪽 상태 노출 방지).
-// 팀원 전체 카드형 — 고정 5축(1~5 세그먼트) + 수강생별 줄글 필수, 전원 입력 시 제출 활성.
+// 팀원 전체 카드형 — 고정 4축 리커트 그리드 + 수강생별 줄글 필수, 전원 입력 시 제출 활성.
 export default function EvaluationPage({
   teamId: fixedTeamId,
   onSubmitted,
@@ -232,7 +232,7 @@ function EvaluationForm({
         </div>
       </section>
 
-      {/* 평가 기준 — 5축 고정 칩 */}
+      {/* 평가 기준 — 4축 고정 칩 */}
       <section className="bg-surface flex flex-col gap-3 rounded-2xl p-5 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ function EvaluationForm({
       <section className="bg-brand-deep text-on-color flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-[18px] shadow-[0_8px_24px_rgba(18,23,38,0.18)]">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-bold">
-            평가 작성 {doneCount} / {sheet.memberCount}명 · 5축 모든 점수 필수
+            평가 작성 {doneCount} / {sheet.memberCount}명 · 4축 모든 점수 필수
           </span>
           <span className="text-on-color/70 text-[11px]">
             {EVALUATION_ACTION_CAPTION}

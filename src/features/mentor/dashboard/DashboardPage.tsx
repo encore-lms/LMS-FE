@@ -1,57 +1,30 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
+  ArrowRight,
   CalendarDays,
   Check,
   FileText,
-  Flag,
   Home,
   Star,
   Timer,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { DataTable, type Column } from '@/components/data/DataTable'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useMentorDashboard } from '../api/mentor'
 import { MENTOR_FLOW_CAPTION } from '../constants'
-import type { MentorTeamAssignment, MentorTodoType } from '../types'
-import { remainingTone } from '../components/statusMeta'
-import {
-  CohortChip,
-  LogStatusChip,
-  TeamStatusChip,
-  TeamSubTag,
-} from '../components/chips'
+import type { MentorTeamAssignment, MentorTeamStatus } from '../types'
+import { teamAction } from '../components/statusMeta'
+import { CohortChip, LogStatusChip } from '../components/chips'
 import { SectionLink } from '../components/SectionLink'
 import LogDetailModal from '../mentoring-logs/LogDetailModal'
-import { TeamActionLink } from '../components/TeamActionLink'
-import { TeamSummaryCard } from '../components/TeamSummaryCard'
 import { SkeletonDashboard } from '@/components/ui/Skeleton'
 
 // '해야 할 일' 행 고정 메타 — 문구는 Figma 원문(2553:3399).
-const TODO_META: Record<
-  MentorTodoType,
-  { title: string; linkLabel: string; icon: LucideIcon }
-> = {
-  log_write: {
-    title: '일지 작성 필요',
-    linkLabel: '멘토링 일지',
-    icon: FileText,
-  },
-  evaluation: { title: '평가 작성 필요', linkLabel: '평가 작성', icon: Star },
-  recommendation: {
-    title: '추천 선택 필요',
-    linkLabel: '추천 선택',
-    icon: Flag,
-  },
-  change_response: {
-    title: '수정 요청 응답 필요',
-    linkLabel: '일지 수정',
-    icon: AlertTriangle,
-  },
-}
 
 const CARD_SHELL =
   'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
@@ -67,88 +40,6 @@ export default function DashboardPage() {
 
   // 해야 할 일 링크 목적지 — 전부 팀 안으로 보낸다(2026-08-04 예약·일지·평가 탭 이관).
   // 팀을 특정할 수 있으면 그 팀 탭으로, 아니면 배정 팀 목록에서 고르게 한다.
-  const evalTeam = data?.teamCards.find((t) => t.status === 'evaluation_needed')
-  const logTeam = data?.teamCards.find((t) => t.status === 'log_needed')
-  const fixTeam = data?.teamCards.find((t) => t.status === 'change_requested')
-  const teamTab = (teamId: string | undefined, tab: string) =>
-    teamId ? `/mentor/teams/${teamId}?tab=${tab}` : '/mentor/teams'
-  const todoTo: Record<MentorTodoType, string> = {
-    log_write: teamTab(logTeam?.teamId, 'logs'),
-    evaluation: teamTab(evalTeam?.teamId, 'evaluation'),
-    recommendation: teamTab(evalTeam?.teamId, 'evaluation'),
-    change_response: teamTab(fixTeam?.teamId, 'logs'),
-  }
-
-  const teamColumns: Column<MentorTeamAssignment>[] = [
-    {
-      key: 'cohort',
-      header: '반/기수',
-      className: 'w-[100px]',
-      cell: (t) => <CohortChip label={t.cohortLabel} />,
-    },
-    {
-      key: 'team',
-      header: '팀명',
-      cell: (t) => (
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">{t.teamName}</span>
-          <TeamSubTag team={t} />
-        </div>
-      ),
-    },
-    {
-      key: 'members',
-      header: '팀원',
-      align: 'center',
-      className: 'w-16',
-      cell: (t) => (
-        <span className="text-fg-muted text-xs">{t.memberCount}명</span>
-      ),
-    },
-    {
-      key: 'allocated',
-      header: '배정',
-      className: 'w-16',
-      cell: (t) => (
-        <span className="text-fg-muted text-xs font-bold">
-          {t.allocatedHours}h
-        </span>
-      ),
-    },
-    {
-      key: 'accumulated',
-      header: '누적',
-      className: 'w-16',
-      cell: (t) => (
-        <span className="text-fg text-[13px] font-bold">
-          {t.accumulatedHours}h
-        </span>
-      ),
-    },
-    {
-      key: 'remaining',
-      header: '잔여 인정',
-      className: 'w-20',
-      cell: (t) => (
-        <span className={cn('text-[13px] font-bold', remainingTone(t))}>
-          {t.remainingHours}h
-        </span>
-      ),
-    },
-    {
-      key: 'status',
-      header: '상태',
-      className: 'w-[110px]',
-      cell: (t) => <TeamStatusChip status={t.status} />,
-    },
-    {
-      key: 'action',
-      header: '다음 액션',
-      className: 'w-[120px]',
-      cell: (t) => <TeamActionLink team={t} context="dashboard-table" />,
-    },
-  ]
-
   return (
     <DataBoundary
       isPending={isPending}
@@ -186,79 +77,10 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* 내 배정 팀 — 섹션 헤더 + 카드 3장 */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-fg text-lg font-bold">내 배정 팀</h2>
-              <span className="bg-surface-muted text-fg-muted rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
-                {data.teamCards.length}팀
-              </span>
-            </div>
-            <SectionLink to="/mentor/teams" label="내 배정 팀 전체" />
-          </div>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {data.teamCards.map((team) => (
-              <TeamSummaryCard key={team.teamId} team={team} />
-            ))}
-          </div>
+          {/* 지금 손이 필요해요 — 대시보드의 본론. 목록은 '내 배정 팀'이 맡는다. */}
+          <ActionNeeded teams={data.teamCards} />
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {/* 해야 할 일 */}
-            <section className={CARD_SHELL}>
-              <header className="flex items-center justify-between gap-3 px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <Check className="text-fg h-4 w-4" />
-                  <h3 className="text-fg text-[15px] font-bold">해야 할 일</h3>
-                  <span className="bg-danger-bg text-danger rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
-                    {data.mentor.todoCount}건
-                  </span>
-                </div>
-                <span className="text-fg-subtle text-[11px]">
-                  비용 표현 없이 활동 인정 요건으로 안내
-                </span>
-              </header>
-              <ul className="border-divider divide-divider divide-y border-t">
-                {data.todos.map((todo) => {
-                  const meta = TODO_META[todo.type]
-                  const Icon = meta.icon
-                  return (
-                    <li
-                      key={todo.type}
-                      className="flex items-center gap-3 px-6 py-3.5"
-                    >
-                      <span
-                        className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                          todo.required
-                            ? 'bg-danger-bg text-danger'
-                            : 'bg-surface-muted text-fg-muted',
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        <span className="text-fg text-[13px] font-semibold">
-                          {meta.title}
-                        </span>
-                        <span className="text-fg-muted text-[11px]">
-                          {todo.countLabel}
-                        </span>
-                      </div>
-                      {todo.required && (
-                        <span className="bg-danger-bg text-danger rounded px-[5px] py-px text-[10px] font-bold">
-                          필수
-                        </span>
-                      )}
-                      <SectionLink
-                        to={todoTo[todo.type]}
-                        label={meta.linkLabel}
-                      />
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-
             {/* 예정된 멘토링 — CONFIRMED만, 예정 시간은 인정 시간 미반영 */}
             <section className={CARD_SHELL}>
               <header className="flex items-center justify-between gap-3 px-6 py-4">
@@ -330,28 +152,6 @@ export default function DashboardPage() {
             </section>
           </div>
 
-          {/* 배정 팀 목록 테이블 */}
-          <section className={CARD_SHELL}>
-            <header className="flex items-center justify-between gap-3 px-6 py-4">
-              <div className="flex flex-col gap-0.5">
-                <h3 className="text-fg text-[15px] font-bold">배정 팀 목록</h3>
-                <p className="text-fg-muted text-[11px]">
-                  반/기수 · 팀명 · 팀원 수 · 배정 시간 N · 실제 누적 · 잔여 인정
-                  · 상태 · 다음 액션
-                </p>
-              </div>
-              <SectionLink to="/mentor/teams" label="전체 보기" />
-            </header>
-            <div className="px-6 pb-6">
-              <DataTable
-                columns={teamColumns}
-                rows={data.teamTable}
-                rowKey={(t) => t.teamId}
-                empty="배정된 팀이 없습니다"
-              />
-            </div>
-          </section>
-
           {/* 최근 멘토링 일지 */}
           <section className={CARD_SHELL}>
             <header className="flex items-center justify-between gap-3 px-6 py-4">
@@ -422,12 +222,158 @@ export default function DashboardPage() {
               )}
             </ul>
           </section>
+
+          {/* 목록은 여기서 보여 주지 않는다 — 가는 길만 둔다 */}
+          <Link
+            to="/mentor/teams"
+            className="border-border text-fg-muted hover:bg-surface-muted flex items-center justify-center gap-1.5 rounded-2xl border border-dashed py-4 text-[13px] font-semibold"
+          >
+            <Users className="h-4 w-4" />내 배정 팀{' '}
+            {data.mentor.assignedTeamCount}팀 전체 보기
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       )}
       {openLogId && (
         <LogDetailModal logId={openLogId} onClose={() => setOpenLogId(null)} />
       )}
     </DataBoundary>
+  )
+}
+
+/**
+ * 지금 손이 필요해요 — 대시보드가 답해야 하는 단 하나의 질문.
+ *
+ * <p>예전에는 배정 팀 카드 8장이 첫 화면을 다 먹고, 정작 할 일은 한참 아래에 있었다.
+ * 게다가 같은 팀이 카드로 한 번·표로 또 한 번, '내 배정 팀' 메뉴에서 또 한 번 나왔다.</p>
+ *
+ * <p>할 일은 팀 상태에서 뽑는다 — BE 의 todos 는 건수만 주고 어느 팀인지가 없어, 무엇을
+ * 눌러야 하는지 알 수 없었다.</p>
+ */
+const ACTION_GROUPS: {
+  status: MentorTeamStatus
+  title: string
+  hint: string
+  tone: string
+  icon: LucideIcon
+}[] = [
+  {
+    status: 'change_requested',
+    title: '일지 수정 요청',
+    hint: '운영자가 보완을 요청했어요 · 전체 수정 후 재제출',
+    tone: 'bg-danger-bg text-danger',
+    icon: AlertTriangle,
+  },
+  {
+    status: 'evaluation_needed',
+    title: '평가 필요',
+    hint: '팀원 5축 평가와 추천을 남겨 주세요',
+    tone: 'bg-warning-bg text-warning',
+    icon: Star,
+  },
+  {
+    status: 'log_needed',
+    title: '일지 작성',
+    hint: '진행한 멘토링을 기록해 주세요',
+    tone: 'bg-info-bg text-info',
+    icon: FileText,
+  },
+  {
+    status: 'reservation_waiting',
+    title: '예약 요청 확인',
+    hint: '수강생이 보낸 요청에 답해 주세요',
+    tone: 'bg-accent-bg text-accent-strong',
+    icon: CalendarDays,
+  },
+]
+
+function ActionNeeded({ teams }: { teams: MentorTeamAssignment[] }) {
+  const groups = ACTION_GROUPS.map((g) => ({
+    ...g,
+    hit: teams.filter((t) => t.status === g.status),
+  })).filter((g) => g.hit.length > 0)
+
+  if (groups.length === 0) {
+    return (
+      <section
+        className={cn(
+          CARD_SHELL,
+          'flex flex-col items-center gap-2 px-6 py-10',
+        )}
+      >
+        <span className="bg-success-bg text-success flex size-11 items-center justify-center rounded-full">
+          <Check className="size-5" />
+        </span>
+        <h2 className="text-fg text-[15px] font-bold">지금 할 일이 없어요</h2>
+        <p className="text-fg-muted text-[13px]">
+          새 요청이나 보완 요청이 오면 여기에 뜹니다.
+        </p>
+      </section>
+    )
+  }
+
+  return (
+    <section className={CARD_SHELL}>
+      <header className="flex items-center justify-between gap-3 px-6 py-4">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-danger h-4 w-4" />
+          <h2 className="text-fg text-[15px] font-bold">지금 손이 필요해요</h2>
+          <span className="bg-danger-bg text-danger rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
+            {groups.reduce((n, g) => n + g.hit.length, 0)}팀
+          </span>
+        </div>
+      </header>
+      <ul className="border-divider divide-divider divide-y border-t">
+        {groups.map((group) => (
+          <li key={group.status} className="flex flex-col gap-2.5 px-6 py-4">
+            <div className="flex items-center gap-2.5">
+              <span
+                className={cn(
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+                  group.tone,
+                )}
+              >
+                <group.icon className="h-3.5 w-3.5" />
+              </span>
+              <span className="text-fg text-[13px] font-bold">
+                {group.title}
+              </span>
+              <span className="text-fg-muted text-[11px]">{group.hint}</span>
+              <span className="text-fg-subtle ml-auto text-[11px] font-semibold">
+                {group.hit.length}팀
+              </span>
+            </div>
+            {/* 팀마다 바로 그 자리로 — 무엇을 눌러야 하는지 고민하지 않게 */}
+            <ul className="flex flex-col gap-1.5 pl-[38px]">
+              {group.hit.map((team) => {
+                const action = teamAction(team, 'dashboard-table')
+                return (
+                  <li
+                    key={team.teamId}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <CohortChip mini label={team.cohortLabel} />
+                    <span className="text-fg text-[13px] font-semibold">
+                      {team.teamName}
+                    </span>
+                    <span className="text-fg-subtle text-[11px]">
+                      인정 {team.recognizedHours}h / 배정 {team.allocatedHours}h
+                    </span>
+                    <Link
+                      to={action.to}
+                      className="border-border text-fg-muted hover:bg-surface-muted ml-auto inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold"
+                    >
+                      {action.label}
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

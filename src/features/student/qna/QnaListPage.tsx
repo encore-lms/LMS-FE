@@ -10,7 +10,7 @@ import { QnaQuestionCard } from './components/QnaQuestionCard'
 import type { QnaQuestion } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { TONE_SOLID } from '@/shared/lib/tone'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { ListToolbar } from '@/components/ui/ListToolbar'
 import { CourseTabs } from '../course/CourseTabs'
 import { useCourseHubHeader } from '../course/useCourseHubHeader'
 
@@ -93,31 +93,35 @@ export default function QnaListPage({
         >
           {/* 교육과정 허브 탭바 — 수강생 단독 화면에서만(허브 임베드는 바깥 탭이 담당). */}
           {!embedded && <CourseTabs />}
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>
-              <span className="text-fg-subtle text-[12px]">
-                {data.questions.length}건
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <SearchInput
-                value={query}
-                onChange={setQuery}
-                placeholder="제목·내용·태그 검색"
-                ariaLabel="질문 검색"
-                className="hidden w-[220px] sm:flex"
-              />
-              {canAsk && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/student/qna/new')}
-                  className={buttonClass({ size: 'md' })}
-                >
-                  + 질문하기
-                </button>
-              )}
-            </div>
+          {/* 탭 공통 툴바(ListToolbar) — 좌: 제목·카운트 / 우: [검색][질문하기](2026-08-07 통일). */}
+          <div className="pt-1">
+            <ListToolbar
+              left={
+                <>
+                  <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>
+                  <span className="text-fg-subtle text-[12px]">
+                    {data.questions.length}건
+                  </span>
+                </>
+              }
+              search={{
+                value: query,
+                onChange: setQuery,
+                placeholder: '제목·내용·태그 검색',
+                ariaLabel: '질문 검색',
+              }}
+              actions={
+                canAsk && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/student/qna/new')}
+                    className={buttonClass({ size: 'md' })}
+                  >
+                    + 질문하기
+                  </button>
+                )
+              }
+            />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">

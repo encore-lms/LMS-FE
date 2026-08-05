@@ -18,6 +18,9 @@ export const adminEducationKeys = {
     [...adminEducationKeys.all, 'projects', courseId, cohortId] as const,
   peerEvaluations: (projectId: string) =>
     [...adminEducationKeys.all, 'peer-evals', projectId] as const,
+  // 강사·매니저 수강생 평가('수강생 평가' 탭) — 기수 스코프, 평가자 본인 시트
+  staffStudentEvals: (cohortId: string) =>
+    [...adminEducationKeys.all, 'staff-evals', cohortId] as const,
   resumeDetail: (courseId: string, cohortId: string, resumeId: string) =>
     [
       ...adminEducationKeys.all,

@@ -18,7 +18,7 @@ export function AiTroubleshootingAnalysis({
       id="ai-troubleshooting-analysis"
       index="03"
       tone="success"
-      title="트러블슈팅 AI 분석"
+      title="문제해결 역량 분석"
       description="사례 수와 태그를 다시 나열하지 않고, 반복해서 드러난 문제 접근법과 해결 패턴, 확장 방향을 분석했습니다."
     >
       <section className="bg-success text-on-color rounded-2xl p-5 sm:p-6">
@@ -30,7 +30,7 @@ export function AiTroubleshootingAnalysis({
             <span className="text-on-color/80 text-[12px] font-bold">
               AI가 읽은 문제해결 성향
             </span>
-            <p className="mt-2 max-w-4xl text-[17px] leading-7 font-bold">
+            <p className="mt-2 max-w-4xl text-[17px] leading-7 font-bold whitespace-pre-line">
               {troubleshooting.summary}
             </p>
           </div>

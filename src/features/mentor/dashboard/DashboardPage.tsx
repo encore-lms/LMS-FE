@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   AlertTriangle,
   CalendarDays,
@@ -24,6 +25,7 @@ import {
   TeamSubTag,
 } from '../components/chips'
 import { SectionLink } from '../components/SectionLink'
+import LogDetailModal from '../mentoring-logs/LogDetailModal'
 import { TeamActionLink } from '../components/TeamActionLink'
 import { TeamSummaryCard } from '../components/TeamSummaryCard'
 import { SkeletonDashboard } from '@/components/ui/Skeleton'
@@ -58,6 +60,8 @@ const CARD_SHELL =
 // Hero 배너 · 배정 팀 카드 · 해야 할 일 · 예정된 멘토링(CONFIRMED만) · 배정 팀 테이블 · 최근 일지.
 // KPI Row·숫자 KPI는 삭제 정책(03_멘토.md §1) — 비용·정산·매출 표현 금지('활동 인정 요건'으로만).
 export default function DashboardPage() {
+  // 최근 일지 상세 — 라우트로 나가지 않고 이 화면 위에 띄운다.
+  const [openLogId, setOpenLogId] = useState<string | null>(null)
   usePageHeader('대시보드', MENTOR_FLOW_CAPTION)
   const { data, isPending, isError, refetch } = useMentorDashboard()
 
@@ -400,11 +404,15 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <LogStatusChip status={log.status} note={log.statusNote} />
-                  {/* 일지는 그 팀 안에서 본다 — 독립 목록은 팀 탭 이관과 함께 걷어냈다. */}
-                  <SectionLink
-                    to={`/mentor/teams/${log.teamId}?tab=logs`}
-                    label="일지 보기"
-                  />
+                  {/* 최근 일지는 '내가 쓴 일지'라 배정이 끝난 팀 것도 섞인다. 팀으로 보내면
+                      배정 가드에 막히므로, 일지 자체를 이 화면 위에서 연다. */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenLogId(log.logId)}
+                    className="text-brand text-xs font-semibold whitespace-nowrap hover:underline"
+                  >
+                    일지 보기 →
+                  </button>
                 </li>
               ))}
               {data.recentLogs.length === 0 && (
@@ -415,6 +423,9 @@ export default function DashboardPage() {
             </ul>
           </section>
         </div>
+      )}
+      {openLogId && (
+        <LogDetailModal logId={openLogId} onClose={() => setOpenLogId(null)} />
       )}
     </DataBoundary>
   )

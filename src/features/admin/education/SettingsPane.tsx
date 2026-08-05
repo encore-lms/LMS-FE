@@ -4,15 +4,21 @@ import {
   ChevronRight,
   Coins,
   Gamepad2,
+  KeyRound,
   Settings,
 } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { SkeletonText } from '@/components/ui/Skeleton'
+import { Select } from '@/components/ui/Select'
 import { Switch } from '@/components/ui/Switch'
 import { useToast } from '@/components/ui/use-toast'
 import { CurriculumModal } from './CurriculumModal'
 import { useCourseDetail } from './api'
-import { useCourseConfig, useUpdateCohortSettings } from '../api/settings'
+import {
+  useCourseConfig,
+  useHrdKeyList,
+  useUpdateCohortSettings,
+} from '../api/settings'
 
 type ToggleKey = 'mileage' | 'play'
 
@@ -119,6 +125,11 @@ export function SettingsPane({
     mileage: false,
     play: false,
   })
+  // 활성 키만 고를 수 있게 한다 — 비활성 키로 호출하면 HRD가 거부한다.
+  const hrdKeys = useHrdKeyList({ size: 100, active: true })
+  const activeKeys = hrdKeys.data?.items ?? []
+  // undefined = 아직 안 건드림(서버 값 사용), '' = 지정 해제, 그 외 = 고른 키.
+  const [keyDraft, setKeyDraft] = useState<string | undefined>(undefined)
 
   const d = detail.data
   const cohort = config.data?.cohorts?.find((c) => c.id === cohortId) ?? null
@@ -128,7 +139,10 @@ export function SettingsPane({
     key === 'mileage' ? !!cohort?.mileageEnabled : !!cohort?.playEnabled
   const effective = (key: ToggleKey) =>
     flipped[key] ? !saved(key) : saved(key)
-  const dirty = flipped.mileage || flipped.play
+  const savedKeyId = cohort?.hrdKeyId ?? ''
+  const effectiveKeyId = keyDraft ?? savedKeyId
+  const dirty =
+    flipped.mileage || flipped.play || effectiveKeyId !== savedKeyId
 
   const save = async () => {
     if (!cohort) return
@@ -138,8 +152,10 @@ export function SettingsPane({
         cohortId,
         mileageEnabled: effective('mileage'),
         playEnabled: effective('play'),
+        hrdKeyId: effectiveKeyId || null,
       })
       setFlipped({ mileage: false, play: false })
+      setKeyDraft(undefined)
       toast.success('기능 설정을 저장했어요 · 감사 로그에 기록됨')
     } catch {
       toast.danger('기능 설정 저장에 실패했어요')
@@ -275,6 +291,26 @@ export function SettingsPane({
             }
           />
           <SettingRow
+            icon={<KeyRound className="h-4 w-4" />}
+            title="HRD API Key"
+            description="이 기수의 HRD 연동(출결·수강생)에 사용할 키를 고릅니다. 고르지 않으면 활성 키 중 최신을 씁니다."
+            control={
+              <Select
+                aria-label="HRD API Key"
+                value={effectiveKeyId}
+                onChange={setKeyDraft}
+                options={[
+                  { value: '', label: '활성 키 중 최신 (기본)' },
+                  ...activeKeys.map((k) => ({
+                    value: k.id,
+                    label: `${k.name} (${k.maskedKey})`,
+                  })),
+                ]}
+                className="w-72"
+              />
+            }
+          />
+          <SettingRow
             icon={<BookOpen className="h-4 w-4" />}
             title="커리큘럼 설정"
             description="주차별 학습 내용과 커리큘럼을 설정하고 관리합니다."
@@ -291,7 +327,10 @@ export function SettingsPane({
           <div className="flex items-center justify-end gap-2 pt-4">
             <button
               type="button"
-              onClick={() => setFlipped({ mileage: false, play: false })}
+              onClick={() => {
+              setFlipped({ mileage: false, play: false })
+              setKeyDraft(undefined)
+            }}
               className="border-border text-fg hover:bg-surface-muted inline-flex h-9 items-center rounded-lg border px-3.5 text-[13px] font-semibold"
             >
               되돌리기

@@ -39,6 +39,7 @@ const notice = (over: Partial<NoticePost> = {}): NoticePost => ({
   createdAt: '2026.08.03',
   timeAgo: '2시간 전',
   canDelete: true,
+  canEdit: true,
   ...over,
 })
 
@@ -64,10 +65,12 @@ function renderDetail(notices: NoticePost[], noticeId = 'n1') {
                 cohortId="cohort-32"
                 noticeId={noticeId}
                 backTo="/hub?tab=notices"
+                editTo="/edit"
               />
             }
           />
           <Route path="/hub" element={<div>공지 목록 화면</div>} />
+          <Route path="/edit" element={<div>공지 수정 화면</div>} />
         </Routes>
       </MemoryRouter>
     </ToastProvider>,
@@ -159,5 +162,21 @@ describe('공지 상세', () => {
 
     const body = screen.getByText('한 줄 공지').closest('div')?.parentElement
     expect(body?.className).toContain('min-h-[320px]')
+  })
+
+  // 오타 하나 때문에 지우고 다시 쓰지 않도록 — 고정 해제도 이 화면으로 간다(2026-08-05 QA).
+  it('수정 버튼으로 수정 화면에 간다', async () => {
+    const user = userEvent.setup()
+    renderDetail([notice()])
+
+    await user.click(screen.getByRole('link', { name: '2주차 특강 안내 수정' }))
+
+    expect(screen.getByText('공지 수정 화면')).toBeInTheDocument()
+  })
+
+  it('고칠 수 없는 공지에는 수정 버튼이 없다', () => {
+    renderDetail([notice({ canEdit: false })])
+
+    expect(screen.queryByRole('link', { name: /수정/ })).not.toBeInTheDocument()
   })
 })

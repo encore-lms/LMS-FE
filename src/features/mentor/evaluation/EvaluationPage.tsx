@@ -1,26 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import {
-  ArrowLeft,
-  Check,
-  Flag,
-  Info,
-  Pencil,
-  Star,
-  Timer,
-  XCircle,
-} from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { Check, Flag, Info, Pencil, Star, Timer, XCircle } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
-import { usePageHeader } from '@/shared/store'
 import {
   useSaveEvaluationDraft,
   useSubmitEvaluation,
   useTeamEvaluation,
 } from '../api/evaluations'
 import { ConfirmSubmitModal } from '../components/ConfirmSubmitModal'
-import { MENTOR_FLOW_CAPTION } from '../constants'
 import { CharCounter } from '../mentoring-logs/LogChips'
 import type {
   EvaluationScoreTuple,
@@ -57,17 +46,13 @@ type CardState = 'done' | 'active' | 'waiting'
 // 제출본은 draft 저장이 409라 자동 저장을 멈추고 '수정 재제출'만 연다(반쪽 상태 노출 방지).
 // 팀원 전체 카드형 — 고정 5축(1~5 세그먼트) + 수강생별 줄글 필수, 전원 입력 시 제출 활성.
 export default function EvaluationPage({
-  embedded = false,
   teamId: fixedTeamId,
   onSubmitted,
 }: {
-  /** 팀 상세 '평가·추천' 탭에 얹을 때 — 자체 헤더·브레드크럼·바깥 여백을 생략한다. */
-  embedded?: boolean
   teamId?: string
   /** 제출이 끝났을 때 — 탭 안에서는 다음 단계(추천)로 이어야 해서 페이지를 옮기지 않는다. */
   onSubmitted?: () => void
 } = {}) {
-  usePageHeader('평가 작성', MENTOR_FLOW_CAPTION, !embedded)
   const { teamId: paramTeamId = '' } = useParams()
   const teamId = fixedTeamId ?? paramTeamId
   const { data, isPending, isError, refetch } = useTeamEvaluation(teamId)
@@ -80,31 +65,21 @@ export default function EvaluationPage({
       loadingText="평가 정보를 불러오는 중…"
       errorTitle="평가 정보를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className={embedded ? '' : 'p-8'}
     >
       {/* 정책 완화(2026-08-04) — 상시 작성·재제출 가능이라 잠금·차단 분기 없이 항상 폼을 연다.
           제출된 평가도 값이 채워진 폼으로 열려 '자세히 보기'를 겸한다. */}
-      {data && (
-        <EvaluationForm
-          sheet={data}
-          embedded={embedded}
-          onSubmitted={onSubmitted}
-        />
-      )}
+      {data && <EvaluationForm sheet={data} onSubmitted={onSubmitted} />}
     </DataBoundary>
   )
 }
 
 function EvaluationForm({
   sheet,
-  embedded = false,
   onSubmitted,
 }: {
   sheet: MentorEvaluationSheetData
-  embedded?: boolean
   onSubmitted?: () => void
 }) {
-  const navigate = useNavigate()
   const toast = useToast()
   const draftMutation = useSaveEvaluationDraft()
   const submitMutation = useSubmitEvaluation()
@@ -196,10 +171,8 @@ function EvaluationForm({
         teamId: sheet.teamId,
         payload: { entries },
       })
-      // 탭 안에서는 화면을 옮기지 않는다 — 바로 다음 단계(추천 선택)로 이어진다.
-      if (embedded) onSubmitted?.()
-      else
-        navigate(`/mentor/evaluations?teamId=${sheet.teamId}&toast=submitted`)
+      // 팀 상세 탭 안에서만 쓰인다 — 화면을 옮기지 않고 다음 단계(추천 선택)로 이어진다.
+      onSubmitted?.()
     } catch {
       setConfirmOpen(false)
       toast.danger('평가 제출에 실패했어요. 잠시 후 다시 시도해 주세요.')
@@ -210,23 +183,9 @@ function EvaluationForm({
   const teamLabel = `${sheet.cohortLabel} · ${sheet.teamName}`
 
   return (
-    <div className={cn('flex flex-col gap-5', !embedded && 'p-8')}>
-      {/* 브레드크럼 + 자동 저장 칩 — 탭 안에서는 이미 팀 안이라 길잡이가 필요 없다. */}
+    <div className="flex flex-col gap-5">
+      {/* 자동 저장 칩 — 탭 안이라 길잡이(브레드크럼)는 두지 않는다. */}
       <div className="flex flex-wrap items-center gap-2">
-        {!embedded && (
-          <>
-            <Link
-              to={`/mentor/teams/${sheet.teamId}`}
-              className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
-            >
-              <ArrowLeft className="h-3 w-3" />팀 상세
-            </Link>
-            <span className="text-fg-subtle text-[13px]">›</span>
-            <span className="text-fg-subtle text-[13px]">{teamLabel}</span>
-            <span className="text-fg-subtle text-[13px]">›</span>
-            <span className="text-fg text-xs font-medium">평가 작성</span>
-          </>
-        )}
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
           {closed

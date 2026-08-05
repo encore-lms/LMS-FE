@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { formatDateDot } from '@/shared/lib/date'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -277,7 +277,7 @@ export default function ResumePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
-  usePageHeader('이력서', '이력서 작성 현황과 피드백을 관리합니다.')
+  useCourseHubHeader()
 
   // 필터 팝오버 — 바깥 클릭 시 닫기.
   useEffect(() => {

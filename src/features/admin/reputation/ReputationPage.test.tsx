@@ -52,10 +52,11 @@ const overview: ReputationOverview = {
       uuid: 'abc-1234',
       endorsementStatus: 'collected',
       endorsementBy: '김지훈 강사',
-      endorsementComment: '현업 기준으로도 손색없는 문제 해결력을 보여줬습니다.',
+      endorsementComment:
+        '현업 기준으로도 손색없는 문제 해결력을 보여줬습니다.',
       mentorEvalStatus: 'recommended',
       mentorBy: '김효원',
-      mentorScores: [5, 4, 5, 4, 5],
+      mentorScores: [5, 5, 4, 4],
       peerCount: 6,
       peerTotal: 6,
       pushTargets: [],
@@ -82,12 +83,12 @@ const mentorDetail: MentorEvaluationDetail = {
   mentorName: '김효원',
   evalStatus: 'recommended',
   evaluationSubmitted: true,
+  // 2026-08-05 4축 개편 — scores4 순서(기술/기술기여·소통협업팀워크·문제해결·책임감).
   axes: [
-    { label: '기술', value: 5 },
+    { label: '기술/기술기여', value: 5 },
+    { label: '소통·협업·팀워크', value: 5 },
+    { label: '문제해결', value: 4 },
     { label: '책임감', value: 4 },
-    { label: '소통', value: 5 },
-    { label: '성장', value: 4 },
-    { label: '팀워크', value: 5 },
   ],
   comment: '실무 적응력이 뛰어납니다.',
   recommendation: 'recommended',
@@ -188,14 +189,14 @@ describe('ReputationPage (평판 관리)', () => {
     expect(vi.mocked(useReputation)).toHaveBeenLastCalledWith(['c34'])
   })
 
-  it('멘토 5축 점수를 테이블 행에 바로 보여준다', () => {
+  it('멘토 4축 점수를 테이블 행에 바로 보여준다', () => {
     renderPage()
     // 김민준(제출됨)은 5축 칩이 보이고, 박지훈(미제출)은 안 보인다.
     const kim = screen.getByText('김민준').closest('tr') as HTMLElement
-    expect(within(kim).getByTitle('기술')).toHaveTextContent('5')
-    expect(within(kim).getByTitle('팀워크')).toHaveTextContent('5')
+    expect(within(kim).getByTitle('기술/기술기여')).toHaveTextContent('5')
+    expect(within(kim).getByTitle('책임감')).toHaveTextContent('4')
     const park = screen.getByText('박지훈').closest('tr') as HTMLElement
-    expect(within(park).queryByTitle('기술')).toBeNull()
+    expect(within(park).queryByTitle('기술/기술기여')).toBeNull()
   })
 
   it('멘토 필터 — 특정 멘토가 평가한 수강생만 남긴다', async () => {
@@ -292,22 +293,24 @@ describe('ReputationPage (평판 관리)', () => {
   it('평판 행 클릭 — 액션 셀의 푸시 버튼 클릭은 상세를 함께 열지 않는다', async () => {
     renderPage()
     const user = userEvent.setup()
-    await user.click(screen.getAllByRole('button', { name: '강사 푸시 요청' })[0])
+    await user.click(
+      screen.getAllByRole('button', { name: '강사 푸시 요청' })[0],
+    )
     // 푸시 확인 모달만 열리고 평판 상세 제목은 없어야 한다.
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).queryByText(/평판 상세/)).toBeNull()
   })
 
-  it('평판 상세 — 멘토가 남긴 5축 점수·코멘트·추천 사유를 보여준다', async () => {
+  it('평판 상세 — 멘토가 남긴 4축 점수·코멘트·추천 사유를 보여준다', async () => {
     renderPage()
     const user = userEvent.setup()
     await user.click(screen.getAllByRole('button', { name: '상세' })[0])
     const dialog = screen.getByRole('dialog')
     // 멘토 평가 상세로 studentId를 넘겨 조회한다.
     expect(vi.mocked(useMentorEvaluationDetail)).toHaveBeenCalledWith('stu-1')
-    // 5축 라벨·코멘트·추천 사유가 노출된다.
+    // 4축 라벨·코멘트·추천 사유가 노출된다.
     expect(within(dialog).getByText('멘토 평가 내용')).toBeInTheDocument()
-    expect(within(dialog).getByText('팀워크')).toBeInTheDocument()
+    expect(within(dialog).getByText('소통·협업·팀워크')).toBeInTheDocument()
     expect(
       within(dialog).getByText('실무 적응력이 뛰어납니다.'),
     ).toBeInTheDocument()

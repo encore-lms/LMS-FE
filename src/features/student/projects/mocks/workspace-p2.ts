@@ -196,6 +196,7 @@ export const mockWorkspaceP2: WorkspaceData = {
     },
   ],
   stack: ['Spring Boot', 'WebSocket', 'Redis', 'Nginx', 'JUnit5', 'Docker'],
+  isOwner: true,
   peerDue: '마감 종료',
   peerMyStatus: { label: '내 상태: 제출 완료', tone: 'success' },
   peerTeamStatus: { label: '팀 제출 3/3', tone: 'success' },

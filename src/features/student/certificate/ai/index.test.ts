@@ -101,6 +101,15 @@ describe('fetchCertificateScore', () => {
 
     expect(score.status).toBe('READY')
     expect(score.student.studentId).toBe('demo-student')
+    expect(score.student.studentName).toBe('박수진')
+    expect(score.student.courseName).toBe('SK네트웍스 Family AI 캠프')
+    expect(score.student.cohortName).toBe('SKN 32기')
+    expect(score.overallScore).toBe(86)
+    expect(score.overallRelative).toMatchObject({
+      status: 'READY',
+      populationSize: 300,
+    })
+    expect(score.overallRelative.topPercent).not.toBeNull()
     expect(score.axes.map((axis) => axis.key)).toEqual([
       '기술·기술기여',
       '소통·협업·팀워크',
@@ -110,14 +119,95 @@ describe('fetchCertificateScore', () => {
       '성취도 평가',
     ])
     expect(score.axes.every((axis) => axis.evidence.length > 0)).toBe(true)
+    expect(
+      score.axes.every(
+        (axis) =>
+          axis.relative.status === 'READY' &&
+          axis.relative.populationSize === 300 &&
+          axis.relative.percentile !== null &&
+          axis.relative.topPercent !== null,
+      ),
+    ).toBe(true)
+    expect(
+      score.axes
+        .slice(0, 4)
+        .every(
+          (axis) =>
+            axis.comparison.peerScore !== null &&
+            axis.comparison.mentorScore !== null &&
+            axis.comparison.instructorScore !== null &&
+            axis.comparison.managerScore !== null,
+        ),
+    ).toBe(true)
     expect(tabs.studentId).toBe('demo-student')
     expect(tabs.tech.assessments.length).toBeGreaterThan(0)
+    expect(tabs.tech.assessmentAveragePopulationSize).toBe(300)
+    expect(
+      tabs.tech.assessments.every(
+        (assessment) =>
+          assessment.comparisonCount === 300 &&
+          assessment.cohortAverageScore !== null &&
+          assessment.relativeScore !== null,
+      ),
+    ).toBe(true)
+    expect(
+      tabs.tech.categories.every(
+        (category) =>
+          category.populationSize === 300 && category.topPercent !== null,
+      ),
+    ).toBe(true)
+    expect(
+      tabs.tech.assessments
+        .filter((assessment) => assessment.assessmentType === 'CS')
+        .map((assessment) => assessment.score),
+    ).toEqual([58, 80])
+    expect(
+      tabs.tech.categories
+        .filter((category) => category.assessmentType === 'CS')
+        .map((category) => category.label),
+    ).toEqual(['자료구조·운영체제', '네트워크·데이터베이스'])
     expect(tabs.tech.certifications.length).toBeGreaterThan(0)
     expect(tabs.problem.peerTags.length).toBeGreaterThan(0)
+    expect(tabs.problem.cases).toHaveLength(12)
+    expect(
+      tabs.problem.cases.every(
+        (item) =>
+          item.situation.length > 20 &&
+          item.resolution.length > 20 &&
+          item.result.length > 20 &&
+          item.summary?.generatedBy === 'FALLBACK',
+      ),
+    ).toBe(true)
+    expect(tabs.problem.cases.filter((item) => item.independent)).toHaveLength(
+      10,
+    )
     expect(analysis.projects.projects.length).toBeGreaterThan(0)
-    expect(analysis.troubleshooting.groups.length).toBeGreaterThan(0)
+    expect(analysis.troubleshooting.groups).toHaveLength(5)
+    const educationPeriod = ['2026-04-28', '2026-10-26'] as const
+    const isInEducationPeriod = (value: string) =>
+      value.slice(0, 10) >= educationPeriod[0] &&
+      value.slice(0, 10) <= educationPeriod[1]
+    expect(
+      tabs.tech.assessments.every((item) =>
+        isInEducationPeriod(item.submittedAt),
+      ),
+    ).toBe(true)
+    expect(
+      tabs.problem.cases.every((item) => isInEducationPeriod(item.createdAt)),
+    ).toBe(true)
+    expect(
+      analysis.projects.projects.every(
+        (project) =>
+          isInEducationPeriod(project.period.startedAt) &&
+          isInEducationPeriod(project.period.endedAt),
+      ),
+    ).toBe(true)
     expect(analysis.ontology.nodes.length).toBeGreaterThan(0)
     expect(analysis.ontology.edges.length).toBeGreaterThan(0)
+    expect(
+      analysis.ontology.nodes.find((node) => node.kind === 'self')?.label,
+    ).toBe('박수진')
+    expect(JSON.stringify({ score, tabs, analysis })).not.toContain('박준서')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

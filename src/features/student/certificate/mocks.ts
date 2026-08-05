@@ -53,7 +53,7 @@ const mockCommitActivity = [
     {
       id: 'pj1',
       name: 'Encore Mart — 마이크로서비스 백엔드',
-      period: '2026.02.03 ~ 2026.04.18',
+      period: '2026.07.06 ~ 2026.09.18',
       weeksLabel: '11주',
       certified: true,
       contrib: '38%',
@@ -70,7 +70,7 @@ const mockCommitActivity = [
     {
       id: 'pj2',
       name: '한국어 회의록 요약 LLM 파이프라인',
-      period: '2026.01.06 ~ 2026.02.16',
+      period: '2026.05.04 ~ 2026.06.12',
       weeksLabel: '6주',
       certified: true,
       contrib: '100%',
@@ -85,7 +85,7 @@ const mockCommitActivity = [
     {
       id: 'pj3',
       name: 'MSA 도서 추천 — 시스템 설계',
-      period: '2026.04.06 ~ 2026.04.26',
+      period: '2026.09.21 ~ 2026.10.16',
       weeksLabel: '3주',
       certified: false,
       contrib: '25%',
@@ -451,19 +451,19 @@ export const mockOverview: CertificateOverview = {
     certs: [
       {
         name: 'PCCE — 파이썬 코딩 입문',
-        detail: '발급 2026-02-14 · 검증 URL 보유',
+        detail: '발급 2026-06-12 · 검증 URL 보유',
         statusLabel: '승인',
         statusTone: 'success',
       },
       {
         name: 'PCCP — 파이썬 코딩 전문',
-        detail: '제출 2026-03-02 · 운영자 검토 보기',
+        detail: '제출 2026-08-14 · 운영자 검토 보기',
         statusLabel: '검토 중',
         statusTone: 'warning',
       },
       {
         name: 'PCSQL — SQL 개발자 1급',
-        detail: '2026-05-09 응시 예정 · 자가 등록',
+        detail: '2026-10-10 응시 예정 · 자가 등록',
         statusLabel: '응시 예정',
         statusTone: 'info',
       },
@@ -511,7 +511,7 @@ export const mockOverview: CertificateOverview = {
         badge: 'PROJECT 1',
         certified: true,
         title: 'Encore Mart — 마이크로서비스 백엔드',
-        period: '2026.02 — 2026.04',
+        period: '2026.07 — 2026.09',
         role: '팀 · 백엔드 리드',
         contrib: '38%',
         tags: ['Java 17', 'Spring Boot', 'Kafka', 'PostgreSQL', 'Docker'],
@@ -526,7 +526,7 @@ export const mockOverview: CertificateOverview = {
         badge: 'PROJECT 2',
         certified: true,
         title: '한국어 회의록 요약 LLM 파이프라인',
-        period: '2026.01 — 2026.03',
+        period: '2026.05 — 2026.06',
         role: '개인 · 100%',
         contrib: '100%',
         tags: ['Python', 'Whisper', 'GPT-4', 'KoBART', 'FastAPI'],
@@ -672,37 +672,37 @@ export const mockOverview: CertificateOverview = {
   growth: {
     timeline: [
       {
-        date: '2024-04-17',
+        date: '2026-06-04',
         type: '성취도',
         title: '파이썬 기초·데이터 처리 성취도 평가',
         score: 54,
       },
       {
-        date: '2024-05-10',
+        date: '2026-06-27',
         type: 'CS',
         title: '자료구조·운영체제 CS 평가',
         score: 58,
       },
       {
-        date: '2024-06-13',
+        date: '2026-07-31',
         type: '성취도',
         title: 'SQL·Pandas·웹 개발 통합 성취도 평가',
         score: 68,
       },
       {
-        date: '2024-07-09',
+        date: '2026-08-26',
         type: '성취도',
         title: '머신러닝·딥러닝 모델링 성취도 평가',
         score: 75,
       },
       {
-        date: '2024-08-07',
+        date: '2026-09-24',
         type: 'CS',
         title: '네트워크·데이터베이스 CS 평가',
         score: 80,
       },
       {
-        date: '2024-08-28',
+        date: '2026-10-15',
         type: '성취도',
         title: 'LLM·RAG·AWS 배포 성취도 평가',
         score: 86,

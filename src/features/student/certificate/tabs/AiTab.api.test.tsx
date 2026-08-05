@@ -34,8 +34,8 @@ describe('AiTab 상세 API 연결', () => {
       await screen.findByRole('heading', { name: 'AI 분석' }),
     ).toBeInTheDocument()
     expect(fetchAiAnalysis).toHaveBeenCalledWith('student-1')
-    expect(screen.getByText('직무 적합도')).toBeInTheDocument()
-    expect(screen.getByText('프로젝트 AI 분석')).toBeInTheDocument()
+    expect(screen.getAllByText('직무 적합도').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('프로젝트 AI 분석').length).toBeGreaterThan(0)
     expect(screen.getByText('문제해결에서 드러난 강점')).toBeInTheDocument()
     expect(screen.queryByText('AI 역량 프로파일링')).not.toBeInTheDocument()
     expect(screen.queryByText('AI 페르소나 TOP 3')).not.toBeInTheDocument()

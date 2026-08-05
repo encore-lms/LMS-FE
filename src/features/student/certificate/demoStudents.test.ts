@@ -35,6 +35,19 @@ describe('certificate demo students', () => {
       ),
     ).toBe(true)
 
+    expect(CERTIFICATE_DEMO_STUDENTS[0]).toMatchObject({
+      name: '박수진',
+      overallScore: 86,
+      periodLabel: '2026.04.28 — 2026.10.26',
+      highlights: ['기술 88', '출석 96%', '프로젝트 인증 2건'],
+      pendingTroubleshootingCount: 0,
+    })
+    expect(
+      CERTIFICATE_DEMO_STUDENTS[0].timeline.every(
+        (point) => point.date >= '2026-04-28' && point.date <= '2026-10-26',
+      ),
+    ).toBe(true)
+
     const noRecommendation = CERTIFICATE_DEMO_STUDENTS.at(-1)!
     expect(noRecommendation).toMatchObject({
       name: '전우진',

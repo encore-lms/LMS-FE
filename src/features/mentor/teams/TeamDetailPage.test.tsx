@@ -202,4 +202,65 @@ describe('TeamDetailPage', () => {
     await user.click(screen.getByRole('button', { name: /평가 작성/ }))
     expect(screen.getByText('평가 작성 폼')).toBeInTheDocument()
   })
+
+  it('팀원 탭에 참석 현황을 함께 보여 준다', async () => {
+    const base = buildTeamDetailData('team_rec')!
+    mockHook({
+      data: {
+        ...base,
+        members: [
+          {
+            ...base.members[0],
+            attendedCount: 6,
+            sessionCount: 6,
+            lastAttendedLabel: '7/22',
+          },
+          {
+            ...base.members[1],
+            attendedCount: 3,
+            sessionCount: 6,
+            lastAttendedLabel: '7/08',
+          },
+        ],
+      },
+      isPending: false,
+      isError: false,
+    })
+    mockStages('draft', 'not_started')
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('tab', { name: '팀원' }))
+    expect(screen.getByText('총 6회 진행')).toBeInTheDocument()
+    expect(screen.getByText('최근 7/22')).toBeInTheDocument()
+    // 참석률 막대 — 100% · 50%
+    const bars = screen.getAllByRole('progressbar')
+    expect(bars[0]).toHaveAttribute('aria-valuenow', '100')
+    expect(bars[1]).toHaveAttribute('aria-valuenow', '50')
+  })
+
+  it('아직 진행한 회차가 없으면 참석률을 그리지 않는다', async () => {
+    // 0으로 나누면 NaN%가 된다 — 셀 것이 없을 때는 아예 그리지 않는다.
+    const base = buildTeamDetailData('team_rec')!
+    mockHook({
+      data: {
+        ...base,
+        members: [
+          {
+            ...base.members[0],
+            attendedCount: 0,
+            sessionCount: 0,
+            lastAttendedLabel: null,
+          },
+        ],
+      },
+      isPending: false,
+      isError: false,
+    })
+    mockStages('draft', 'not_started')
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('tab', { name: '팀원' }))
+    expect(screen.getByText('진행한 회차 없음')).toBeInTheDocument()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
 })

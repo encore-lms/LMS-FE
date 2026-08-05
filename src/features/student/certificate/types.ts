@@ -257,7 +257,12 @@ export interface CertProjectCard {
   role: string
   contrib: string
   tags: string[]
+  techStackGroups?: CertProjectTechStackGroup[]
   outcomes: string[]
+}
+export interface CertProjectTechStackGroup {
+  category: string
+  items: string[]
 }
 export interface CertProjectsTab {
   certifiedLabel: string

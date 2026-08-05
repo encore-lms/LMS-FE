@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
@@ -72,12 +72,6 @@ const domainTones: Tone[] = [
   'brand',
   'danger',
 ]
-
-const scoreStatusLabel: Record<CertificateScoreResult['status'], string> = {
-  READY: '산출 완료',
-  NOT_READY: '산출 대기',
-  ERROR: '산출 오류',
-}
 
 function formatValue(value: number | null) {
   return value === null ? '-' : String(value)
@@ -201,35 +195,6 @@ function CertificateScoreLoading() {
       </div>
       <SkillRadarLoading />
     </section>
-  )
-}
-
-function RecommendationMark({ role }: { role: '강사' | '멘토' }) {
-  const isInstructor = role === '강사'
-
-  return (
-    <a
-      href="/student/certificate?tab=growth-reputation"
-      aria-label={`${role} 추천서 보기`}
-      className={cn(
-        'group flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors',
-        isInstructor
-          ? 'border-warning/30 bg-warning-bg/45 text-warning hover:bg-warning-bg/70'
-          : 'border-border bg-surface-muted/65 text-fg-muted hover:bg-surface-muted',
-      )}
-    >
-      <span
-        className={cn(
-          'flex size-5 items-center justify-center rounded-md',
-          isInstructor ? 'bg-warning/10' : 'bg-surface',
-        )}
-      >
-        <Sparkles aria-hidden="true" className="size-3" strokeWidth={1.8} />
-      </span>
-      <span className="text-[11px] font-bold tracking-[-0.01em]">
-        {role} 추천
-      </span>
-    </a>
   )
 }
 
@@ -626,11 +591,9 @@ export function ScoreEvidencePanel({
 function ScoreSummary({
   score,
   ontology,
-  recommendations,
 }: {
   score: CertificateScoreResult
   ontology?: Awaited<ReturnType<typeof fetchAiAnalysis>>['ontology']
-  recommendations: CertRecommendation[]
 }) {
   const [selectedAxisKey, setSelectedAxisKey] =
     useState<AxisKey>('기술·기술기여')
@@ -664,33 +627,15 @@ function ScoreSummary({
     .filter((metric) => metricOrder.includes(metric.key))
     .sort((a, b) => metricOrder.indexOf(a.key) - metricOrder.indexOf(b.key))
     .map(metricToKpi)
-  const highlights = score.axes
-    .filter(
-      (axis): axis is typeof axis & { score: number } => axis.score !== null,
-    )
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
-    .map((axis) => `${axis.key} ${axis.score}`)
-    .join(' · ')
   const overall = score.overallScore ?? 0
+  const progressOffset = Number(
+    (100 - Math.min(100, Math.max(0, overall))).toFixed(1),
+  )
   const overallTopPercent =
-    score.overallRelative.status === 'READY'
+    score.overallRelative.status === 'READY' &&
+    score.overallRelative.scope === 'ALL_STUDENTS'
       ? formatPercent(score.overallRelative.topPercent)
       : null
-  const overallPopulationLabel =
-    score.overallRelative.scope === 'ALL_STUDENTS' ? '전체' : '기수'
-  const miniStats = [
-    { value: `${score.axes.length}개`, label: '종합 산정 축' },
-    { value: scoreStatusLabel[score.status], label: '산출 상태' },
-    { value: '균등 평균', label: '종합 방식' },
-  ]
-  const recommendationRoles = new Set(
-    recommendations.map((recommendation) => recommendation.role),
-  )
-  const hasInstructorRecommendation = recommendationRoles.has('강사')
-  const hasMentorRecommendation = recommendationRoles.has('멘토')
-  const hasRecommendation =
-    hasInstructorRecommendation || hasMentorRecommendation
 
   return (
     <div className="flex flex-col gap-4">
@@ -709,73 +654,77 @@ function ScoreSummary({
       </div>
 
       <div className="flex flex-col gap-4 lg:flex-row">
-        <section className={cn(card, 'flex flex-col gap-5 lg:w-[46%]')}>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-fg-subtle text-[10px] font-bold">
-                AGGREGATE SCORE
-              </span>
-              <span className="text-fg text-[15px] font-bold">
-                절대 종합 점수
-              </span>
-            </div>
-
-            {hasRecommendation && (
-              <div
-                aria-label="추천 현황"
-                className="flex flex-wrap items-center justify-end gap-1.5"
-              >
-                {hasInstructorRecommendation && (
-                  <RecommendationMark role="강사" />
-                )}
-                {hasMentorRecommendation && <RecommendationMark role="멘토" />}
-              </div>
-            )}
+        <section
+          className={cn(
+            card,
+            'flex flex-col items-center justify-center gap-4 lg:w-[46%]',
+          )}
+        >
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-fg-subtle text-[10px] font-bold">
+              AGGREGATE SCORE
+            </span>
+            <span className="text-fg text-[15px] font-bold">
+              절대 종합 점수
+            </span>
           </div>
 
-          <div className="flex items-end gap-3">
-            <span className="text-fg text-[56px] leading-none font-bold">
-              {score.overallScore?.toFixed(1) ?? '-'}
-            </span>
-            <div className="flex flex-col gap-1.5 pb-1">
-              <span className="text-fg-muted text-[14px] font-medium">
+          <div
+            data-overall-score-gauge
+            role="img"
+            aria-label={`절대 종합 점수 ${score.overallScore?.toFixed(1) ?? '-'}점`}
+            className="relative size-48"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 120 120"
+              className="size-full -rotate-90"
+            >
+              <circle
+                cx="60"
+                cy="60"
+                r="50"
+                fill="none"
+                pathLength="100"
+                stroke="currentColor"
+                strokeWidth="10"
+                className="text-surface-muted"
+              />
+              <circle
+                data-overall-score-progress
+                cx="60"
+                cy="60"
+                r="50"
+                fill="none"
+                pathLength="100"
+                stroke="currentColor"
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray="100"
+                strokeDashoffset={progressOffset}
+                className="text-brand transition-[stroke-dashoffset] duration-700 ease-out"
+              />
+            </svg>
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-fg text-[44px] leading-none font-bold tracking-[-0.04em]">
+                {score.overallScore?.toFixed(1) ?? '-'}
+              </span>
+              <span className="text-fg-muted mt-1.5 text-[12px] font-medium">
                 / 100
               </span>
-              <span className="bg-brand/10 text-brand w-fit rounded-md px-2 py-0.5 text-[12px] font-bold">
-                Grade {score.grade ?? '-'}
-              </span>
-              <span className="bg-info-bg text-info w-fit rounded-md px-2 py-0.5 text-[12px] font-bold">
-                {overallTopPercent === null
-                  ? `${overallPopulationLabel} 상대 위치 산출 전`
-                  : `${overallPopulationLabel} 상위 ${overallTopPercent}%`}
-              </span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-              <span className="text-fg-muted font-semibold">
-                6축 균등 평균 · {scoreStatusLabel[score.status]}
-              </span>
-              <span className="text-fg-subtle text-right">{highlights}</span>
-            </div>
-            <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
-              <div
-                className="bg-brand h-full rounded-full"
-                style={{ width: `${overall}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="border-divider grid grid-cols-2 gap-3 border-t pt-4 sm:grid-cols-3">
-            {miniStats.map((item) => (
-              <div key={item.label} className="flex flex-col gap-0.5">
-                <span className="text-fg text-[15px] font-bold">
-                  {item.value}
-                </span>
-                <span className="text-fg-subtle text-[10px]">{item.label}</span>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="bg-brand/10 text-brand rounded-full px-3 py-1.5 text-[12px] font-bold">
+              Grade {score.grade ?? '-'}
+            </span>
+            <span className="bg-info-bg text-info rounded-full px-3 py-1.5 text-[12px] font-bold">
+              {overallTopPercent === null
+                ? '전체 상위 산출 전'
+                : `전체 상위 ${overallTopPercent}%`}
+            </span>
           </div>
         </section>
 
@@ -888,7 +837,6 @@ function ScoreSummary({
 
 export function SummaryTab({
   studentId = CERTIFICATE_MOCK_STUDENT_ID,
-  recommendations = [],
 }: {
   s: CertSummaryTab
   studentId?: string
@@ -912,11 +860,7 @@ export function SummaryTab({
       errorDescription="LMS-AI 엔진 상태와 수강생 식별자를 확인해 주세요."
     >
       {scoreQuery.data && (
-        <ScoreSummary
-          score={scoreQuery.data}
-          ontology={ai?.ontology}
-          recommendations={recommendations}
-        />
+        <ScoreSummary score={scoreQuery.data} ontology={ai?.ontology} />
       )}
     </DataBoundary>
   )

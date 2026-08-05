@@ -106,18 +106,19 @@ export const CERTIFICATE_DEMO_STUDENTS: CertificateDemoStudent[] = [
     name: '박수진',
     cohortName: 'SKN 32기',
     periodLabel: '2026.04.28 — 2026.10.26',
-    overallScore: 78.4,
-    profileLabel: '기존 기준형',
-    profileSummary: '기술은 매우 강하고 협업 역량은 보완 중인 기준 프로필',
+    overallScore: 86,
+    profileLabel: '가속 학습형',
+    profileSummary:
+      '분산 시스템 백엔드와 LLM 파이프라인 경험을 갖춘 가속 학습형',
     recommendationState: 'BOTH',
-    highlights: ['기술 95.4', '출석 91.7%', '프로젝트 인증 5건'],
-    timeline: growthTimeline('2026-04-28', [64, 65, 72, 74, 75, 78.4]),
+    highlights: ['기술 88', '출석 96%', '프로젝트 인증 2건'],
+    timeline: growthTimeline('2026-04-28', [54, 58, 68, 75, 80, 86]),
     reputation: [
-      { key: '기술기여', score: 4.7, detail: '동료평가 기술기여 평균' },
-      { key: '책임감', score: 3.8, detail: '마감·테스트 수행 평가' },
-      { key: '소통', score: 3.6, detail: '근거 공유 방식 보완 중' },
-      { key: '팀워크', score: 4, detail: '프로젝트 5회 협업' },
-      { key: '문제해결', score: 4.4, detail: '인증 사례와 동료평가' },
+      { key: '기술기여', score: 4.6, detail: 'PR 22건 · 코드 리뷰 평균' },
+      { key: '책임감', score: 4.8, detail: '리더십 평가 · 동료 평가 5인' },
+      { key: '소통', score: 4.5, detail: '논리적 설득 10회' },
+      { key: '팀워크', score: 4.5, detail: 'Encore Mart 백엔드 4인 협업' },
+      { key: '문제해결', score: 4.1, detail: '인증 문제해결 12건' },
     ],
     shortComments: [
       {
@@ -152,7 +153,7 @@ export const CERTIFICATE_DEMO_STUDENTS: CertificateDemoStudent[] = [
     ],
     finalProjectTitle: 'LLM 활용 대화형 상품추천 시스템',
     projectTags: ['API', 'RAG', '테스트', '배포'],
-    pendingTroubleshootingCount: 1,
+    pendingTroubleshootingCount: 0,
   },
   {
     id: '37b48417-d976-5d3a-ab5d-65c10a8c9b5b',

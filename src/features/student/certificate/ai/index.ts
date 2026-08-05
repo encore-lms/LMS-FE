@@ -8,9 +8,12 @@ import type {
   CertificateScoreResult,
   StudentDerived,
 } from './types'
-import { AI_ANALYSIS_STUB } from './stubs/analysis-redesign'
-import certificateSnapshot from './stubs/certificate.snapshot.json'
 import { DERIVED_STUBS } from './stubs/derived'
+import {
+  createParkSujinDetailTabs,
+  createParkSujinScore,
+  PARK_SUJIN_AI_ANALYSIS,
+} from './stubs/park-sujin'
 
 export {
   CERTIFICATE_360_AXIS_KEYS,
@@ -24,7 +27,7 @@ export {
  */
 export function getAiAnalysis(studentId: string): AiAnalysis {
   void studentId
-  return AI_ANALYSIS_STUB
+  return PARK_SUJIN_AI_ANALYSIS
 }
 
 /**
@@ -57,14 +60,7 @@ export async function fetchCertificateScore(
   studentId: string,
 ): Promise<CertificateScoreResult> {
   if (CERTIFICATE_MOCK_MODE) {
-    return {
-      ...(certificateSnapshot.score as CertificateScoreResult),
-      student: {
-        ...(certificateSnapshot.score
-          .student as CertificateScoreResult['student']),
-        studentId,
-      },
-    }
+    return createParkSujinScore(studentId)
   }
 
   const res = await fetch(
@@ -86,10 +82,7 @@ export async function fetchCertificateDetailTabs(
   studentId: string,
 ): Promise<CertificateDetailTabsResult> {
   if (CERTIFICATE_MOCK_MODE) {
-    return {
-      ...(certificateSnapshot.tabs as CertificateDetailTabsResult),
-      studentId,
-    }
+    return createParkSujinDetailTabs(studentId)
   }
 
   const res = await fetch(
@@ -131,7 +124,7 @@ export async function fetchAiDerived(
  * 다른 학생이나 정적 mock으로 대체하지 않고 조회 실패를 호출부에 전달한다.
  */
 export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
-  if (CERTIFICATE_MOCK_MODE) return AI_ANALYSIS_STUB
+  if (CERTIFICATE_MOCK_MODE) return PARK_SUJIN_AI_ANALYSIS
 
   const res = await fetch(
     `${CERTIFICATE_SCORE_API}/analysis/${encodeURIComponent(studentId)}`,

@@ -4,9 +4,9 @@ import { MemoryRouter } from 'react-router-dom'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { adminMenu } from './menu'
 
-// 운영 사이드바 — 4개 대분류(드롭다운) + active highlight 정합 검증.
-// menu.ts의 to/match가 Sidebar 매칭 로직과 맞는지(특히 인증 검토 하위 경로),
-// 그룹이 활성 자식 기준으로 자동 펼침/접힘 하는지.
+// 운영 사이드바 — 대분류(드롭다운) + active highlight 정합 검증.
+// menu.ts의 to/match가 Sidebar 매칭 로직과 맞는지, 그룹이 활성 자식 기준으로
+// 자동 펼침/접힘 하는지.
 
 function renderAt(path: string) {
   return render(
@@ -25,27 +25,15 @@ const isExpanded = (name: string) =>
   group(name).getAttribute('aria-expanded') === 'true'
 
 describe('adminMenu 사이드바 active highlight', () => {
-  // 인증 검토·증명서 템플릿은 BE 미구현(404)으로 comingSoon —
-  // '(준비 중)' 표기를 붙이되 내부 확인·작업을 위해 이동은 허용한다.
-  it("인증 검토는 '(준비 중)' 표기가 붙은 이동 가능한 링크로 렌더된다", () => {
-    renderAt('/admin/reputation') // 검토·심사 그룹 펼침(평판 관리 활성)
-    expect(
-      screen.getByRole('link', { name: /인증 검토.*\(준비 중\)/ }),
-    ).toHaveAttribute('href', '/admin/certificates/reviews')
+  // 인증 검토는 역량 증명서 상세로 흡수했다 — 사이드바에 별도 항목을 두지 않는다.
+  it('인증 검토 항목이 없다', () => {
+    renderAt('/admin/reputation')
+    expect(screen.queryByRole('link', { name: /인증 검토/ })).toBeNull()
   })
 
-  it('인증 검토 큐 경로에서 인증 검토가 활성', () => {
-    renderAt('/admin/certificates/reviews')
-    expect(
-      screen.getByRole('link', { name: /인증 검토.*\(준비 중\)/ }),
-    ).toHaveAttribute('aria-current', 'page')
-  })
-
-  it('인입 격리 큐 경로에서는 인증 검토가 비활성', () => {
-    renderAt('/admin/ingestion/quarantine')
-    expect(isActive('인증 검토')).toBe(false)
-    // 데이터·연동 임시 숨김 — 사이드바 항목 부재. 재활성화 시 아래 복원.
-    // expect(isActive('인입 격리 큐')).toBe(true)
+  it('평판 관리는 그룹 없이 leaf 로 렌더된다', () => {
+    renderAt('/admin/reputation')
+    expect(isActive('평판 관리')).toBe(true)
   })
 
   // 설정 하위 화면 — 계정 관리가 설정 랜딩이 되며 하위 탭은 prefix 매칭으로 '설정' 활성 유지.
@@ -72,13 +60,10 @@ describe('adminMenu 사이드바 active highlight', () => {
 
 describe('adminMenu 사이드바 대분류 드롭다운', () => {
   it('활성 자식이 있는 그룹은 자동 펼침, 없는 그룹은 접힘', () => {
-    renderAt('/admin/reputation')
-    // 평판 관리 = 검토·심사 그룹 → 자동 펼침 + 자식 노출(인증 검토는 준비 중 버튼)
-    expect(isExpanded('검토·심사(매니저)')).toBe(true)
-    expect(screen.queryByRole('link', { name: '평판 관리' })).not.toBeNull()
-    // 데이터·연동 임시 숨김 — 그룹 부재. 재활성화 시 아래 복원.
-    // expect(isExpanded('데이터·연동')).toBe(false)
-    // expect(screen.queryByRole('link', { name: '인입 격리 큐' })).toBeNull()
+    renderAt('/admin/certificates')
+    // 역량 증명서 = 학습·보상 그룹 → 자동 펼침 + 자식 노출
+    expect(isExpanded('학습·보상(매니저)')).toBe(true)
+    expect(screen.queryByRole('link', { name: '마일리지' })).not.toBeNull()
   })
 
   it('접힌 그룹 헤더를 클릭하면 자식 링크가 펼쳐진다', () => {

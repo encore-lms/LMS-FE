@@ -10,6 +10,8 @@ export type AmountSign = 'plus' | 'minus' | 'zero'
 // 원장 거래 한 행.
 export interface MileageTxRow {
   id: string
+  /** 수강생 이력으로 넘어가는 열쇠 — 원장 '상세'에서 쓴다. */
+  studentUserId?: string | null
   /** 일시 — 예: "05-19 14:32" */
   date: string
   studentName: string
@@ -56,4 +58,16 @@ export interface MileageHistoryData {
   summary: MileageHistorySummary
   rows: MileageTxRow[]
   footer: MileageHistoryFooter
+}
+
+/** 수강생 1명의 마일리지 이력 — 원장 '상세'에서 연다. */
+export interface StudentMileageHistory {
+  studentUserId: string
+  studentName: string
+  cohortLabel: string
+  balance: string
+  totalEarned: string
+  totalSpent: string
+  summary: MileageHistorySummary
+  rows: MileageTxRow[]
 }

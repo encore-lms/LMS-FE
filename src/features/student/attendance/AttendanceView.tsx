@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useAttendanceOverview } from '../api/attendance'
 import { HrdAttendanceCalendar } from './components/calendar/HrdAttendanceCalendar'
 import { SubmissionHistory } from './components/history/SubmissionHistory'
@@ -19,7 +19,7 @@ export default function AttendanceView() {
     view?.year,
     view?.month,
   )
-  usePageHeader('출결 / 태도')
+  useCourseHubHeader()
 
   return (
     <DataBoundary

@@ -61,12 +61,17 @@ describe('EvaluationPage', () => {
     expect(screen.getByText('진행률')).toBeInTheDocument()
     expect(screen.getByText('2 / 4명')).toBeInTheDocument()
     expect(screen.getByText('N시간 완료 · 평가 가능')).toBeInTheDocument()
-    expect(screen.getByText('평가 기준 · 5축 고정')).toBeInTheDocument()
+    expect(screen.getByText('평가 기준 · 4축 고정')).toBeInTheDocument()
     expect(
-      screen.getByText('고정 5축 · 0~5점 필수 · 줄글 평가 필수'),
+      screen.getByText('고정 4축 · 1~5 척도(낮음~높음) · 줄글 평가 필수'),
     ).toBeInTheDocument()
-    // 고정 5축 — 기준 칩 + 카드 축 라벨 양쪽 노출
-    for (const axis of ['기술', '책임감', '소통', '성장', '팀워크']) {
+    // 고정 4축 — 기준 칩 + 카드 축 라벨 양쪽 노출
+    for (const axis of [
+      '기술/기술기여',
+      '소통·협업·팀워크',
+      '문제해결',
+      '책임감',
+    ]) {
       expect(screen.getAllByText(axis).length).toBeGreaterThan(1)
     }
     // 카드 상태 — 완료 2 · 작성 중 1(첫 미완료) · 대기 1
@@ -87,7 +92,7 @@ describe('EvaluationPage', () => {
       ...base,
       members: base.members.map((m, i) => ({
         ...m,
-        scores: [5, 4, 5, 4, 5] as EvaluationScoreTuple,
+        scores: [5, 4, 5, 4] as EvaluationScoreTuple,
         comment: i < base.members.length - 1 ? '안정적인 협업 태도입니다.' : '',
       })),
     })
@@ -136,7 +141,7 @@ describe('EvaluationPage', () => {
     mockSheet(buildTeamEvaluationSheet('team_rec'))
     renderPage('team_rec')
     expect(screen.getByText('상시 평가 가능')).toBeInTheDocument()
-    expect(screen.getByText('평가 기준 · 5축 고정')).toBeInTheDocument()
+    expect(screen.getByText('평가 기준 · 4축 고정')).toBeInTheDocument()
     expect(
       screen.queryByText('아직 평가를 시작할 수 없어요'),
     ).not.toBeInTheDocument()
@@ -169,6 +174,6 @@ describe('EvaluationPage', () => {
     expect(screen.getByText(/제출됨 · /)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /수정 재제출/ })).toBeEnabled()
     expect(screen.queryByRole('button', { name: '임시 저장' })).toBeNull()
-    expect(screen.getByText('평가 기준 · 5축 고정')).toBeInTheDocument()
+    expect(screen.getByText('평가 기준 · 4축 고정')).toBeInTheDocument()
   })
 })

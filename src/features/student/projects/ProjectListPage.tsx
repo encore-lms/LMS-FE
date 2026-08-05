@@ -7,7 +7,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useDeleteProject, useProjectList } from '../api/projects'
 import { InvitationCard } from './components/InvitationCard'
 import { ProjectCard } from './components/ProjectCard'
@@ -45,7 +45,7 @@ export default function ProjectListPage() {
   const [pendingDelete, setPendingDelete] = useState<ProjectSummary | null>(
     null,
   )
-  usePageHeader(data?.headerTitle ?? '프로젝트', data?.headerSub)
+  useCourseHubHeader()
 
   const phases = useProjectFlow((s) => s.phases)
   const repIds = useRepresentatives((s) => s.ids)

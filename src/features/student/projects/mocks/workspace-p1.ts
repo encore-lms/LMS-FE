@@ -392,11 +392,10 @@ export const mockWorkspace: WorkspaceData = {
       name: '박지호',
       role: '풀스택',
       axes: [
-        { key: '협업', score: 4.5 },
-        { key: '소통', score: 4.5 },
-        { key: '책임감', score: 4.5 },
+        { key: '기술/기술기여', score: 4.0 },
+        { key: '소통·협업·팀워크', score: 4.5 },
         { key: '문제해결', score: 4.5 },
-        { key: '기술기여', score: 4.0 },
+        { key: '책임감', score: 4.5 },
       ],
       tags: [
         { label: '일정 준수', tone: 'info' },
@@ -408,11 +407,10 @@ export const mockWorkspace: WorkspaceData = {
       name: '최유나',
       role: '백엔드',
       axes: [
-        { key: '협업', score: 4.5 },
-        { key: '소통', score: 4.5 },
-        { key: '책임감', score: 4.5 },
+        { key: '기술/기술기여', score: 4.0 },
+        { key: '소통·협업·팀워크', score: 4.5 },
         { key: '문제해결', score: 4.5 },
-        { key: '기술기여', score: 4.0 },
+        { key: '책임감', score: 4.5 },
       ],
       tags: [
         { label: '문제해결', tone: 'brand' },
@@ -423,11 +421,10 @@ export const mockWorkspace: WorkspaceData = {
       name: '한지우',
       role: '백엔드',
       axes: [
-        { key: '협업', score: 4.5 },
-        { key: '소통', score: 4.5 },
-        { key: '책임감', score: 4.5 },
+        { key: '기술/기술기여', score: 4.0 },
+        { key: '소통·협업·팀워크', score: 4.5 },
         { key: '문제해결', score: 4.5 },
-        { key: '기술기여', score: 4.0 },
+        { key: '책임감', score: 4.5 },
       ],
       tags: [
         { label: '협업', tone: 'success' },

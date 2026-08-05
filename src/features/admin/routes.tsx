@@ -153,6 +153,10 @@ export const adminRoutes: RouteObject[] = [
         path: 'education/notices/:noticeId',
         element: <NoticeDetailPage />,
       },
+      {
+        path: 'education/notices/:noticeId/edit',
+        element: <NoticeFormPage />,
+      },
       // 기수 허브 — 정적 세그먼트(assignments·resume)를 동적 :cohortId 앞에 두는 컨벤션.
       { path: 'education/:cohortId', element: <EducationPage /> },
       // 프로젝트 워크스페이스 열람(읽기 전용) — 허브 프로젝트 탭 카드에서 진입.

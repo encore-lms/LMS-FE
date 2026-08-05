@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, Pin, Trash2 } from 'lucide-react'
+import { ChevronLeft, Pencil, Pin, Trash2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
@@ -25,6 +25,7 @@ export function NoticeDetailView({
   cohortId,
   noticeId,
   backTo,
+  editTo,
   source = 'staff',
 }: {
   /** 스태프(source='staff')만 필요 — 수강생 미러는 서버가 본인 기수를 해석한다. */
@@ -32,6 +33,8 @@ export function NoticeDetailView({
   noticeId: string
   /** 목록으로 돌아갈 경로 — 삭제 후에도 여기로 보낸다. */
   backTo: string
+  /** 수정 화면 경로 — 없으면 수정 버튼을 내지 않는다(수강생 미러). */
+  editTo?: string
   /** 수강생(source='student')은 같은 상세를 읽기 전용으로 소비(2026-08-05). */
   source?: 'staff' | 'student'
 }) {
@@ -119,17 +122,30 @@ export function NoticeDetailView({
                   <ChevronLeft className="size-4" aria-hidden="true" />
                   목록으로
                 </Link>
-                {!readOnly && notice.canDelete && (
-                  <button
-                    type="button"
-                    onClick={() => setConfirming(true)}
-                    aria-label={`${notice.title} 삭제`}
-                    className="border-danger/40 text-danger hover:bg-danger-bg inline-flex items-center gap-1 rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
-                  >
-                    <Trash2 className="size-3.5" aria-hidden="true" />
-                    삭제
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* 고정 해제도 이 수정 화면에서 한다 — 별도 토글을 두면 판이 둘로 갈린다. */}
+                  {!readOnly && notice.canEdit && editTo && (
+                    <Link
+                      to={editTo}
+                      aria-label={`${notice.title} 수정`}
+                      className="border-border text-fg hover:bg-surface-muted inline-flex items-center gap-1 rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
+                    >
+                      <Pencil className="size-3.5" aria-hidden="true" />
+                      수정
+                    </Link>
+                  )}
+                  {!readOnly && notice.canDelete && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(true)}
+                      aria-label={`${notice.title} 삭제`}
+                      className="border-danger/40 text-danger hover:bg-danger-bg inline-flex items-center gap-1 rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
+                    >
+                      <Trash2 className="size-3.5" aria-hidden="true" />
+                      삭제
+                    </button>
+                  )}
+                </div>
               </div>
             </article>
           ))}

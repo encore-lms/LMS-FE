@@ -4,11 +4,17 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import { NoticeFormView } from './NoticeFormView'
-import { useWriteCourseNotice } from '@/shared/api'
+import {
+  useEditCourseNotice,
+  useStaffCourseNotices,
+  useWriteCourseNotice,
+} from '@/shared/api'
 
 vi.mock('@/shared/api', async (orig) => ({
   ...(await orig<typeof import('@/shared/api')>()),
   useWriteCourseNotice: vi.fn(),
+  useEditCourseNotice: vi.fn(),
+  useStaffCourseNotices: vi.fn(),
   uploadEditorFile: vi.fn(),
   fetchLinkPreview: vi.fn(),
 }))
@@ -17,12 +23,35 @@ vi.mock('@/shared/api', async (orig) => ({
 // 좁은 상자 안에서는 쓴 글이 한눈에 들어오지 않는다.
 
 const write = vi.fn()
+const edit = vi.fn()
 
-function renderForm() {
+/** 수정 모드 검증용 기존 공지 — 서버 목록에서 찾아 폼을 채운다. */
+const EXISTING = {
+  id: 'n1',
+  title: '원래 제목',
+  content: '원래 내용',
+  authorName: '김강사',
+  authorRole: 'INSTRUCTOR',
+  roleLabel: '강사',
+  pinned: true,
+  createdAt: '2026.08.01',
+  timeAgo: '4일 전',
+  canDelete: true,
+  canEdit: true,
+}
+
+function renderForm(noticeId?: string) {
   vi.mocked(useWriteCourseNotice).mockReturnValue({
     mutate: write,
     isPending: false,
   } as unknown as ReturnType<typeof useWriteCourseNotice>)
+  vi.mocked(useEditCourseNotice).mockReturnValue({
+    mutate: edit,
+    isPending: false,
+  } as unknown as ReturnType<typeof useEditCourseNotice>)
+  vi.mocked(useStaffCourseNotices).mockReturnValue({
+    data: { notices: [EXISTING], canWrite: true },
+  } as unknown as ReturnType<typeof useStaffCourseNotices>)
   render(
     <ToastProvider>
       <MemoryRouter initialEntries={['/new']}>
@@ -30,7 +59,11 @@ function renderForm() {
           <Route
             path="/new"
             element={
-              <NoticeFormView cohortId="cohort-32" backTo="/hub?tab=notices" />
+              <NoticeFormView
+                cohortId="cohort-32"
+                noticeId={noticeId}
+                backTo="/hub?tab=notices"
+              />
             }
           />
           <Route path="/hub" element={<div>공지 목록 화면</div>} />
@@ -40,7 +73,10 @@ function renderForm() {
   )
 }
 
-beforeEach(() => write.mockReset())
+beforeEach(() => {
+  write.mockReset()
+  edit.mockReset()
+})
 
 describe('공지 작성 페이지', () => {
   it('제목·본문·고정을 담아 올린다', async () => {
@@ -125,6 +161,43 @@ describe('공지 작성 페이지', () => {
       expect(
         screen.getByRole('listbox', { name: '블록 고르기' }),
       ).toBeVisible(),
+    )
+  })
+
+  // 오타 하나 때문에 지우고 다시 쓰지 않도록(2026-08-05 QA).
+  it('수정 모드는 기존 값을 채워 열고 저장한다', async () => {
+    const user = userEvent.setup()
+    renderForm('n1')
+
+    expect(screen.getByLabelText('공지 제목')).toHaveValue('원래 제목')
+    expect(screen.getByLabelText('목록 맨 위에 고정')).toBeChecked()
+
+    await user.clear(screen.getByLabelText('공지 제목'))
+    await user.type(screen.getByLabelText('공지 제목'), '고친 제목')
+    await user.click(screen.getByRole('button', { name: '저장' }))
+
+    await waitFor(() =>
+      expect(edit).toHaveBeenCalledWith(
+        expect.objectContaining({ noticeId: 'n1', title: '고친 제목' }),
+        expect.anything(),
+      ),
+    )
+    expect(write).not.toHaveBeenCalled()
+  })
+
+  // 한 번 고정하면 영영 맨 위에 남던 문제 — 수정에서 풀 수 있어야 한다.
+  it('수정에서 고정을 해제한다', async () => {
+    const user = userEvent.setup()
+    renderForm('n1')
+
+    await user.click(screen.getByLabelText('목록 맨 위에 고정'))
+    await user.click(screen.getByRole('button', { name: '저장' }))
+
+    await waitFor(() =>
+      expect(edit).toHaveBeenCalledWith(
+        expect.objectContaining({ pinned: false }),
+        expect.anything(),
+      ),
     )
   })
 })

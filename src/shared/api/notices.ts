@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
 
 // 강의 홈 공지 — 수강생(읽기)과 강사·매니저(작성·삭제)가 함께 쓰므로 shared 소유.
-// 삭제 권한은 서버가 canDelete 로 판정한다(강사는 본인 글만, 매니저는 전부).
+// 수정·삭제 권한은 서버가 canEdit·canDelete 로 판정한다(강사는 본인 글만, 매니저는 전부).
 
 /** 공지 한 건. */
 export interface NoticePost {
@@ -16,6 +16,8 @@ export interface NoticePost {
   createdAt: string
   timeAgo: string
   canDelete: boolean
+  /** 수정·고정 해제 가능 여부 — 서버 판정(강사는 본인 글만, 매니저는 전부). */
+  canEdit?: boolean
 }
 
 export interface NoticePostList {
@@ -60,6 +62,27 @@ export function useWriteCourseNotice(cohortId: string | undefined) {
     mutationFn: (input: { title: string; content: string; pinned?: boolean }) =>
       apiClient.post<NoticePost>(
         `/instructor/course/notices?cohortId=${cohortId ?? ''}`,
+        input,
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: noticeKeys.all }),
+  })
+}
+
+/** 공지 수정 — 제목·내용과 함께 고정 여부를 바꾼다(고정 해제도 이 경로). */
+export function useEditCourseNotice() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      noticeId,
+      ...input
+    }: {
+      noticeId: string
+      title: string
+      content: string
+      pinned?: boolean
+    }) =>
+      apiClient.put<NoticePost>(
+        `/instructor/course/notices/${noticeId}`,
         input,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: noticeKeys.all }),

@@ -12,6 +12,7 @@ export default function NoticeDetailPage() {
       cohortId={cohortId}
       noticeId={noticeId}
       backTo={`/admin/education/${cohortId}?tab=notices`}
+      editTo={`/admin/education/notices/${noticeId}/edit?cohortId=${cohortId}`}
     />
   )
 }

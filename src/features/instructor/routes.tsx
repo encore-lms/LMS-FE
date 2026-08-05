@@ -89,6 +89,10 @@ export const instructorRoutes: RouteObject[] = [
         path: 'cohorts/:cohortId/notices/:noticeId',
         element: <InstructorNoticeDetailPage />,
       },
+      {
+        path: 'cohorts/:cohortId/notices/:noticeId/edit',
+        element: <InstructorNoticeFormPage />,
+      },
       // 수강생 목록·상세 단독 화면은 폐기 — 허브 '수강생' 탭(StudentsPane)으로 일원화.
       // 검토 2종 (§14~§15) — 사이드바 '검토' 묶음. 학습 기록 조회는 허브 '기록실' 탭으로 이관.
       { path: 'projects/review', element: <ProjectReviewPage /> },

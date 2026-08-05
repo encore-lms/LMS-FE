@@ -176,7 +176,7 @@ export interface PeerEvalMemberProgress {
   givenSubmitted: number
   givenExpected: number
   receivedSubmitted: number
-  /** 받은 평가 5축 평균(제출본만). 받은 게 없으면 null */
+  /** 받은 평가 4축 평균(제출본만). 받은 게 없으면 null */
   receivedAverage: number | null
 }
 
@@ -185,11 +185,8 @@ export interface PeerEvaluation {
   raterName: string
   targetUserId: string | null
   targetName: string
-  collaboration: number
-  communication: number
-  responsibility: number
-  problemSolving: number
-  technicalContribution: number
+  /** 4축 순서 = shared EVALUATION_AXIS_LABELS(2026-08-06 멘토 축 사전 통일) */
+  scores: number[]
   average: number
   comment: string | null
   /** 임시저장 — 아직 제출되지 않았다 */

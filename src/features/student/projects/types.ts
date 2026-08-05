@@ -188,13 +188,10 @@ export interface WsPeerTarget {
   myEval?: MyPeerEval | null
 }
 
-/** 내가 남긴 상호평가. draft 면 임시저장본. */
+/** 내가 남긴 상호평가. draft 면 임시저장본.
+ * scores 는 4축 순서(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감, 2026-08-06 멘토 축 사전 통일) — 미입력 0. */
 export interface MyPeerEval {
-  collaboration: number
-  communication: number
-  responsibility: number
-  problemSolving: number
-  technicalContribution: number
+  scores: number[]
   comment: string | null
   draft: boolean
 }

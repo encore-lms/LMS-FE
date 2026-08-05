@@ -161,14 +161,9 @@ function EvalSheet({
       {/* 진행 헤더 — 저장 기준 카운트 + 검색 */}
       <section className="bg-surface border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-fg text-[14px] font-bold">
-            수강생 평가 · 4축(기술/기술기여 · 소통·협업·팀워크 · 문제해결 ·
-            책임감)
-          </span>
+          <span className="text-fg text-[14px] font-bold">수강생 평가</span>
           <span className="text-fg-muted text-[12px]">
-            행의 &lsquo;수강생 평가&rsquo;를 눌러 4축 점수를 매기고
-            저장하세요(코멘트 선택). 재저장하면 마지막 저장본이 유효하며, 평가는
-            강사·매니저 각자 따로 저장됩니다.
+            &lsquo;수강생 평가&rsquo;를 눌러 4축 점수를 매기고 저장하세요
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -215,7 +210,7 @@ function EvalSheet({
                     <span className="text-fg-subtle text-xs">
                       {savedAt[s.studentId]
                         ? `평가 저장됨 · ${savedAt[s.studentId]}`
-                        : '아직 평가 전'}
+                        : '평가 전'}
                     </span>
                   </div>
                   <div className="ml-auto flex items-center gap-2">
@@ -276,7 +271,7 @@ function EvalSheet({
                               <span className="text-fg-subtle text-[11px]">
                                 {savedAt[s.studentId]
                                   ? `저장됨 · ${savedAt[s.studentId]}`
-                                  : '아직 저장 전'}
+                                  : '저장 전'}
                               </span>
                               <button
                                 type="button"

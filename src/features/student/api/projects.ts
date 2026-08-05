@@ -209,31 +209,24 @@ export function useAddArtifact(projectId: string) {
     projectId,
   )
 }
+/** 상호평가 제출 — scores 는 4축 순서(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감), 전 축 1~5 필수. */
 export function useSubmitPeerEval(projectId: string) {
   return useWsMutation<{
     targetMemberId: string
-    collaboration: number
-    communication: number
-    responsibility: number
-    problemSolving: number
-    technicalContribution: number
+    scores: number[]
     comment?: string
   }>(
     (id, v) => apiClient.post(`/student/projects/${id}/peer-evaluations`, v),
     projectId,
   )
 }
-/** 상호평가 임시저장 — 자기 수행 내용 + 팀원별 점수·코멘트를 함께 보관(제출로 세지 않음). */
+/** 상호평가 임시저장 — 자기 수행 내용 + 팀원별 점수(미입력 0)·코멘트를 함께 보관(제출로 세지 않음). */
 export function useSavePeerEvalDraft(projectId: string) {
   return useWsMutation<{
     selfReview: string
     evaluations: {
       targetMemberId: string
-      collaboration: number
-      communication: number
-      responsibility: number
-      problemSolving: number
-      technicalContribution: number
+      scores: number[]
       comment?: string
     }[]
   }>(

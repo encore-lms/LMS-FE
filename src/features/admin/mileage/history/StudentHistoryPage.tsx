@@ -81,6 +81,17 @@ export default function StudentHistoryPage() {
         </span>
       ),
     },
+    {
+      key: 'handler',
+      header: '처리자',
+      className: 'w-32',
+      cell: (r) => (
+        <div>
+          <p className="text-fg text-[13px]">{r.handler}</p>
+          <p className="text-fg-subtle text-[11px]">{r.handlerNote}</p>
+        </div>
+      ),
+    },
   ]
 
   return (

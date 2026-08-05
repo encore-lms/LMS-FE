@@ -36,8 +36,8 @@ const history: StudentMileageHistory = {
       amountSign: 'minus',
       txType: 'deduct',
       balance: '7,000M',
-      handler: '시스템',
-      handlerNote: '구매 요청 → 차감',
+      handler: '이장우',
+      handlerNote: '수강생 요청',
       pending: true,
     },
     {
@@ -50,7 +50,7 @@ const history: StudentMileageHistory = {
       txType: 'grant',
       balance: '10,000M',
       handler: '박매니저',
-      handlerNote: '직접 지급',
+      handlerNote: '운영 처리',
     },
   ],
 }
@@ -76,12 +76,16 @@ function renderPage(over: Partial<StudentMileageHistory> = {}) {
 describe('StudentHistoryPage (수강생 마일리지 이력)', () => {
   it('수강생 정보·누적 KPI·거래 행을 렌더한다', () => {
     renderPage()
-    expect(screen.getByText('이장우')).toBeInTheDocument()
+    // 이름은 머리말과 처리자 칸에 함께 나온다.
+    expect(screen.getAllByText('이장우').length).toBeGreaterThan(0)
     expect(screen.getByText('AI 캠프 30기')).toBeInTheDocument()
     expect(screen.getByText('누적 지급')).toBeInTheDocument()
     expect(screen.getByText('3,000M')).toBeInTheDocument()
     expect(screen.getByText('이벤트 지급')).toBeInTheDocument()
     expect(screen.getByText('총 2건')).toBeInTheDocument()
+    // 누가 낸 거래인지 원장과 같은 눈으로 본다 — 예전에는 전부 '운영' 이었다.
+    expect(screen.getByText('박매니저')).toBeInTheDocument()
+    expect(screen.getByText('수강생 요청')).toBeInTheDocument()
   })
 
   // 요청 즉시 차감이라 승인 전에도 원장에 남는다 — 확정 차감과 구분해야 한다(2026-08-05 QA).

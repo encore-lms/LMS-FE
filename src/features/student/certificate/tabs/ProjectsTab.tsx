@@ -1,5 +1,6 @@
+import { Briefcase, Code2, Folder, PieChart } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import type { CertProjectsTab } from '../types'
+import type { CertProjectCard, CertProjectsTab } from '../types'
 import { TabHead } from './TechTab'
 import { CERT_V2 } from '../config'
 import { ProjectContribution } from '../v2/ProjectContribution'
@@ -11,6 +12,31 @@ import { useLmsProjectMetrics } from '../github/useLmsProjectMetrics'
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const HEAT = ['bg-surface-muted', 'bg-brand/30', 'bg-brand/60', 'bg-brand']
+
+function unique(values: string[]) {
+  return [...new Set(values.filter(Boolean))]
+}
+
+function groupedTechStacks(projects: CertProjectCard[]) {
+  const grouped = new Map<string, Set<string>>()
+
+  projects.forEach((project) => {
+    const groups = project.techStackGroups?.length
+      ? project.techStackGroups
+      : [{ category: '기타', items: project.tags }]
+
+    groups.forEach((group) => {
+      const items = grouped.get(group.category) ?? new Set<string>()
+      group.items.forEach((item) => items.add(item))
+      grouped.set(group.category, items)
+    })
+  })
+
+  return [...grouped].map(([category, items]) => ({
+    category,
+    items: [...items],
+  }))
+}
 
 export function ProjectsTab({ p }: { p: CertProjectsTab }) {
   const githubProject = useLmsFeGithubProject()
@@ -40,13 +66,22 @@ export function ProjectsTab({ p }: { p: CertProjectsTab }) {
     ...(p.commitActivity ?? []),
     ...(githubActivity ? [githubActivity] : []),
   ]
+  const roles = unique(p.projects.map((project) => project.role))
+  const techStackGroups = groupedTechStacks(p.projects)
+  const techStackCount = unique(
+    techStackGroups.flatMap((group) => group.items),
+  ).length
+  const contributionRate = Math.min(
+    100,
+    Math.max(0, Number.parseFloat(p.contribAvg) || 0),
+  )
 
   return (
     <div className="flex flex-col gap-4">
       <TabHead
         no={3}
         title="프로젝트"
-        sub="대표 프로젝트 2건 인증 완료 · 기여도 평균 36%"
+        sub="전체 프로젝트·역할·기여도·기술 스택을 한눈에 확인"
       >
         <span className="text-fg-muted text-[11px] font-semibold">
           ● 인증 {p.certifiedLabel}
@@ -55,6 +90,161 @@ export function ProjectsTab({ p }: { p: CertProjectsTab }) {
           ● 기여도 평균 {p.contribAvg}
         </span>
       </TabHead>
+
+      <section
+        aria-label="프로젝트 전체 요약"
+        data-project-summary-grid
+        className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <article
+          data-project-summary="projects"
+          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="bg-brand/10 text-brand flex size-10 items-center justify-center rounded-xl">
+              <Folder className="size-5" aria-hidden="true" />
+            </span>
+            <span className="text-fg-subtle text-[10px] font-semibold">
+              인증 {p.certifiedLabel}
+            </span>
+          </div>
+          <div
+            data-project-summary-content
+            className="flex flex-1 flex-col justify-center gap-1"
+          >
+            <span className="text-fg-muted text-[11px] font-semibold">
+              전체 프로젝트
+            </span>
+            <strong className="text-fg text-[24px] leading-none tabular-nums">
+              {p.projects.length}건
+            </strong>
+            <span className="text-fg-subtle text-[11px] leading-4">
+              역량증명서에 등록된 프로젝트
+            </span>
+          </div>
+        </article>
+
+        <article
+          data-project-summary="role"
+          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="bg-accent-bg text-accent-strong flex size-10 items-center justify-center rounded-xl">
+              <Briefcase className="size-5" aria-hidden="true" />
+            </span>
+            <span className="text-fg-subtle text-[10px] font-semibold">
+              {roles.length}개 역할
+            </span>
+          </div>
+          <div
+            data-project-summary-content
+            className="flex flex-1 flex-col justify-center gap-2"
+          >
+            <span className="text-fg-muted text-[11px] font-semibold">
+              전체 프로젝트 역할
+            </span>
+            {roles.length > 1 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {roles.map((role) => (
+                  <span
+                    key={role}
+                    className="bg-accent-bg text-accent-strong rounded-md px-2 py-1 text-[11px] font-semibold"
+                  >
+                    {role}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <strong className="text-fg text-[18px] leading-snug">
+                {roles[0] ?? '등록 전'}
+              </strong>
+            )}
+          </div>
+        </article>
+
+        <article
+          data-project-summary="contribution"
+          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="bg-info-bg text-info flex size-10 items-center justify-center rounded-xl">
+              <PieChart className="size-5" aria-hidden="true" />
+            </span>
+            <span className="text-fg-subtle text-[10px] font-semibold">
+              전체 프로젝트 평균
+            </span>
+          </div>
+          <div
+            data-project-summary-content
+            className="flex flex-1 flex-col justify-center gap-2"
+          >
+            <div className="flex flex-col gap-1">
+              <span className="text-fg-muted text-[11px] font-semibold">
+                전체 프로젝트 기여도
+              </span>
+              <strong className="text-fg text-[24px] leading-none tabular-nums">
+                {p.contribAvg}
+              </strong>
+            </div>
+            <span className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
+              <span
+                className="bg-info block h-full rounded-full"
+                style={{ width: `${contributionRate}%` }}
+              />
+            </span>
+          </div>
+        </article>
+
+        <article
+          data-project-summary="tech-stack"
+          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="bg-success-bg text-success flex size-10 items-center justify-center rounded-xl">
+              <Code2 className="size-5" aria-hidden="true" />
+            </span>
+            <span className="text-fg-subtle text-[10px] font-semibold">
+              {techStackCount}개 기술
+            </span>
+          </div>
+          <div className="flex flex-1 flex-col justify-center gap-2">
+            <span className="text-fg-muted text-[11px] font-semibold">
+              전체 프로젝트 기술 스택
+            </span>
+            {techStackGroups.length > 0 ? (
+              <div
+                data-tech-stack-groups
+                className="grid grid-cols-2 gap-x-3 gap-y-2"
+              >
+                {techStackGroups.map((group) => (
+                  <div
+                    key={group.category}
+                    className="flex min-w-0 flex-col gap-1"
+                  >
+                    <span className="text-fg-subtle text-[10px] font-semibold">
+                      {group.category}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {group.items.map((item) => (
+                        <span
+                          key={item}
+                          className="bg-success-bg text-success rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-fg-subtle text-[11px]">
+                등록된 기술 스택이 없습니다.
+              </span>
+            )}
+          </div>
+        </article>
+      </section>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {p.projects.map((pj) => (

@@ -504,7 +504,7 @@ export const mockOverview: CertificateOverview = {
   },
   projects: {
     certifiedLabel: '2 / 3',
-    contribAvg: '36%',
+    contribAvg: '69%',
     projects: [
       {
         id: 'pj1',
@@ -512,9 +512,14 @@ export const mockOverview: CertificateOverview = {
         certified: true,
         title: 'Encore Mart — 마이크로서비스 백엔드',
         period: '2026.07 — 2026.09',
-        role: '팀 · 백엔드 리드',
+        role: '백엔드 리드',
         contrib: '38%',
         tags: ['Java 17', 'Spring Boot', 'Kafka', 'PostgreSQL', 'Docker'],
+        techStackGroups: [
+          { category: '백엔드', items: ['Java 17', 'Spring Boot'] },
+          { category: '데이터·메시징', items: ['Kafka', 'PostgreSQL'] },
+          { category: '인프라', items: ['Docker'] },
+        ],
         outcomes: [
           '주문/결제 도메인 분리 · 트랜잭션 격리 수준 정합',
           'Kafka 이벤트 라우팅 — 결제 실패 retry 95% 안정화',
@@ -527,9 +532,13 @@ export const mockOverview: CertificateOverview = {
         certified: true,
         title: '한국어 회의록 요약 LLM 파이프라인',
         period: '2026.05 — 2026.06',
-        role: '개인 · 100%',
+        role: 'AI 엔지니어',
         contrib: '100%',
         tags: ['Python', 'Whisper', 'GPT-4', 'KoBART', 'FastAPI'],
+        techStackGroups: [
+          { category: '백엔드', items: ['Python', 'FastAPI'] },
+          { category: 'AI·ML', items: ['Whisper', 'GPT-4', 'KoBART'] },
+        ],
         outcomes: [
           'Whisper STT + GPT-4 한국어 회의록 요약 자동화',
           'KoBART 추출 요약 ROUGE-L 0.873',

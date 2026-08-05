@@ -74,14 +74,14 @@ export function AiAnalysisMethodology({ analysis }: { analysis: AiAnalysis }) {
         />
         <MethodCard
           index="02"
-          title="프로젝트 AI 분석"
+          title="프로젝트 분석"
           data={projectNames || '완료·인증 프로젝트 없음'}
           method="프로젝트별 개인 역할 → 문제와 판단 → 검증 결과 → 실무 강점을 연결"
           result={analysis.projects.recruiterSummary.headline}
         />
         <MethodCard
           index="03"
-          title="트러블슈팅 AI 분석"
+          title="문제해결 역량 분석"
           data={troubleshootingGroups || '인증 트러블슈팅 없음'}
           method="상황·해결·결과를 연결하고 반복된 해결 행동과 확장 방향을 분석"
           result={analysis.troubleshooting.summary}

@@ -1059,6 +1059,102 @@ const parkSujinPrimaryRole: AiJobFitRoleCandidate = {
   limitations: [],
 }
 
+const parkSujinAiServiceRole: AiJobFitRoleCandidate = {
+  rank: 2,
+  role: 'ML·AI',
+  jobLabel: 'AI 서비스 개발자',
+  roleLabel: 'LLM 파이프라인·API 구현',
+  workType: '모델 활용·서비스 구현형',
+  fitScore: 84,
+  confidence: 'HIGH',
+  summary:
+    '회의록 프로젝트에서 STT·요약·API 파이프라인을 구현했고, 모델 활용 결과를 검증 지표로 확인했습니다.',
+  evidence: ['LLM 파이프라인 개발', '회의록 35건 검증', 'FastAPI 제공'],
+  fitEvidence: {
+    projectRoles: [
+      { label: 'LLM 파이프라인 개발', taskCount: 3, projectCount: 1 },
+    ],
+    troubleshooting: {
+      certifiedCaseCount: 5,
+      independentCaseCount: 0,
+      independentRate: null,
+      tags: [
+        { label: '성능 / 메모리', count: 2 },
+        { label: '네트워크 / API', count: 2 },
+        { label: '오디오 입력', count: 1 },
+      ],
+    },
+    highAchievements: [
+      { category: '파이썬·데이터 처리', score: 82 },
+      { category: '웹·데이터 구현', score: 90 },
+    ],
+  },
+  theoryUnderstanding: {
+    status: 'READY',
+    score: 87.2,
+    level: 'HIGH',
+    label: '높음',
+    summary:
+      '파이썬·데이터 처리와 웹·데이터 구현의 관련 개념을 높음 수준으로 이해하고 있습니다.',
+    categories: [
+      {
+        key: 'PYTHON',
+        category: '파이썬·데이터 처리',
+        score: 82,
+        weightPercent: 35,
+      },
+      {
+        key: 'WEB_DATA',
+        category: '웹·데이터 구현',
+        score: 90,
+        weightPercent: 65,
+      },
+    ],
+  },
+  evidenceCodes: ['PARK-SUJIN-PJ2', 'pc3', 'pc5', 'pc6', 'pc12'],
+  limitations: [],
+}
+
+const parkSujinDevOpsRole: AiJobFitRoleCandidate = {
+  rank: 3,
+  role: 'DevOps·인프라',
+  jobLabel: 'DevOps·인프라 엔지니어',
+  roleLabel: '배포 안정화·운영 문제해결',
+  workType: '검증·운영 안정화형',
+  fitScore: 79,
+  confidence: 'MEDIUM',
+  summary:
+    'Kafka·Docker·AWS 배포 문제를 인증 사례로 해결했고, 백엔드 수행 경험을 운영 안정화까지 연결했습니다.',
+  evidence: ['인프라·배포 인증 문제해결 3건', '무중단 배포 3회'],
+  fitEvidence: {
+    projectRoles: [],
+    troubleshooting: {
+      certifiedCaseCount: 3,
+      independentCaseCount: 0,
+      independentRate: null,
+      tags: [
+        { label: 'Kafka', count: 1 },
+        { label: 'Docker', count: 1 },
+        { label: 'AWS', count: 1 },
+      ],
+    },
+    highAchievements: [],
+  },
+  theoryUnderstanding: {
+    status: 'NOT_READY',
+    score: null,
+    level: 'NOT_READY',
+    label: '분석 준비 중',
+    summary:
+      '인프라 직무 관련 이론 평가가 충분하지 않아 인증 문제해결 근거를 중심으로 해석했습니다.',
+    categories: [],
+  },
+  evidenceCodes: ['pc2', 'pc10', 'pc11'],
+  limitations: [
+    '인프라 직무 관련 이론 평가는 근거가 충분해지면 다시 분석합니다.',
+  ],
+}
+
 export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
   policyVersion: '2026.08.05-park-sujin-mock-v1',
   jobFit: {
@@ -1066,7 +1162,11 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
     status: 'READY',
     summary: '분산 시스템에 강한 백엔드 엔지니어 역량이 가장 선명합니다.',
     primaryRole: parkSujinPrimaryRole,
-    roleCandidates: [parkSujinPrimaryRole],
+    roleCandidates: [
+      parkSujinPrimaryRole,
+      parkSujinAiServiceRole,
+      parkSujinDevOpsRole,
+    ],
     confidence: 'HIGH',
     limitations: [],
     sourcePolicies: ['PARK_SUJIN_CERTIFICATE_MOCK'],
@@ -1248,7 +1348,7 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
     policyVersion: '2026.08.05-troubleshooting-analysis-v2',
     status: 'READY',
     summary:
-      '개인 프로파일링, 수치 검증, 문서화로 문제를 해결하고 팀에 전파합니다.',
+      '재현 조건과 실패율을 먼저 고정해 문제 범위를 좁힙니다.\n확인된 원인에 맞춰 설계와 설정을 수정한 뒤 같은 조건에서 수치와 재발 여부를 검증합니다.\n해결 과정을 문서로 정리해 팀이 같은 기준으로 대응할 수 있도록 공유합니다.',
     certifiedCaseCount: 12,
     independentCaseCount: 10,
     independentRate: 83,

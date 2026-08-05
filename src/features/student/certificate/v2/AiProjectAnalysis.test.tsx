@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { getAiAnalysis } from '../ai'
 import { AiProjectAnalysis } from './AiProjectAnalysis'
 
-describe('프로젝트 AI 분석', () => {
+describe('프로젝트 분석', () => {
   it('대표 프로젝트의 역할·판단·결과·강점을 우선 표시한다', () => {
     const projects = getAiAnalysis('stu-001').projects
     const { container } = render(<AiProjectAnalysis projects={projects} />)
 
-    expect(screen.getByText('프로젝트 AI 분석')).toBeInTheDocument()
+    expect(screen.getByText('프로젝트 분석')).toBeInTheDocument()
     expect(container.querySelector('#ai-project-analysis')).toBeInTheDocument()
     expect(screen.getByText('AI가 종합한 프로젝트 경쟁력')).toBeInTheDocument()
     expect(
@@ -23,6 +23,11 @@ describe('프로젝트 AI 분석', () => {
     expect(screen.getAllByText('AI 종합 해석')).toHaveLength(2)
     expect(screen.getByText('대표 프로젝트 01')).toBeInTheDocument()
     expect(screen.getByText('대표 프로젝트 02')).toBeInTheDocument()
+
+    const projectGrid = screen
+      .getByText('대표 프로젝트 01')
+      .closest('article')?.parentElement
+    expect(projectGrid).toHaveClass('grid', 'lg:grid-cols-2')
   })
 
   it('대표 프로젝트 외 분석은 접힌 목록으로 구분한다', () => {

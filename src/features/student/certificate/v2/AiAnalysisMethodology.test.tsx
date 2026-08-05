@@ -9,8 +9,8 @@ describe('AI 분석 기준', () => {
 
     expect(screen.getByText('AI 분석 기준')).toBeInTheDocument()
     expect(screen.getByText('직무 적합도')).toBeInTheDocument()
-    expect(screen.getByText('프로젝트 AI 분석')).toBeInTheDocument()
-    expect(screen.getByText('트러블슈팅 AI 분석')).toBeInTheDocument()
+    expect(screen.getByText('프로젝트 분석')).toBeInTheDocument()
+    expect(screen.getByText('문제해결 역량 분석')).toBeInTheDocument()
     expect(screen.queryByText('6축 교차분석')).not.toBeInTheDocument()
   })
 })

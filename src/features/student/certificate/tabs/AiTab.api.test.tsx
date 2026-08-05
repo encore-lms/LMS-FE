@@ -35,8 +35,8 @@ describe('AiTab 상세 API 연결', () => {
     ).toBeInTheDocument()
     expect(fetchAiAnalysis).toHaveBeenCalledWith('student-1')
     expect(screen.getAllByText('직무 적합도').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('프로젝트 AI 분석').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('트러블슈팅 AI 분석').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('프로젝트 분석').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('문제해결 역량 분석').length).toBeGreaterThan(0)
     expect(
       screen.queryByText('AI 상담 감성·키워드 버블'),
     ).not.toBeInTheDocument()

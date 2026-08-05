@@ -4,10 +4,9 @@ import {
   CheckCircle2,
   ClockAlert,
   HeartPulse,
-  Inbox,
   type LucideIcon,
 } from 'lucide-react'
-import type { CohortBoard, ScheduleItem } from './types'
+import type { CohortBoard } from './types'
 
 export type Tone = 'critical' | 'warning' | 'info' | 'positive'
 
@@ -25,21 +24,9 @@ export interface Action {
 }
 
 /** 오늘 주목 포인트 문장 — 시급한 것부터 최대 3개. */
-export function buildInsights(
-  boards: CohortBoard[],
-  upcoming: ScheduleItem[],
-): Insight[] {
+export function buildInsights(boards: CohortBoard[]): Insight[] {
   const insights: Insight[] = []
 
-  // 오늘~D-3 임박 일정.
-  const imminent = upcoming.filter((s) => s.daysUntil <= 3)
-  if (imminent.length > 0) {
-    const s = imminent[0]
-    insights.push({
-      tone: 'info',
-      text: `${s.cohortLabel} ${s.title}이(가) ${s.daysUntil === 0 ? '오늘' : `D-${s.daysUntil}`} 예정입니다.`,
-    })
-  }
   const active = boards.filter((b) => b.status === 'operating')
   const live = active.filter((b) => b.attendance?.todayTotal != null)
   const todayTotal = live.reduce(
@@ -185,10 +172,7 @@ function studentsTab(cohortId: string) {
   return `/admin/education/${cohortId}?tab=students`
 }
 
-export function buildActions(
-  boards: CohortBoard[],
-  quarantineCount: number,
-): Action[] {
+export function buildActions(boards: CohortBoard[]): Action[] {
   const actions: Action[] = []
   const active = boards.filter((b) => b.status === 'operating')
   const absentByCohort = active
@@ -204,12 +188,6 @@ export function buildActions(
     b.issues.map((i) => ({ ...i, cohortId: b.cohortId, cohortLabel: b.cohortLabel })),
   )
   const urgent = issues.filter((i) => i.absentCount >= 4)
-  const pending = boards.reduce(
-    (s, b) =>
-      s + (b.pending ? b.pending.certificates + b.pending.troubleshooting : 0),
-    0,
-  )
-
   if (totalAbsent > 0)
     actions.push({
       tone: 'critical',
@@ -263,21 +241,6 @@ export function buildActions(
     })
   }
 
-  if (pending + quarantineCount > 0)
-    actions.push({
-      tone: 'info',
-      icon: Inbox,
-      label: '처리 대기',
-      value: `${pending + quarantineCount}건`,
-      detail:
-        quarantineCount > 0
-          ? `승인 ${pending} · 인입 격리 ${quarantineCount}`
-          : '자격증·트러블슈팅 승인 필요',
-      to:
-        quarantineCount > 0 && pending === 0
-          ? '/admin/ingestion/quarantine'
-          : '/admin/certificates/reviews',
-    })
   if (actions.length === 0)
     actions.push({
       tone: 'positive',
@@ -313,16 +276,6 @@ export function mergeTrend(active: CohortBoard[]): {
 
 export const fmtMD = (d: string) =>
   d.length >= 10 ? `${Number(d.slice(5, 7))}.${Number(d.slice(8, 10))}` : d
-
-const SCHEDULE_TONE: Record<string, string> = {
-  '성취도 평가': 'bg-info-inverse/15 text-info-inverse',
-  '단위 프로젝트': 'bg-accent-inverse/15 text-accent-inverse',
-  발표회: 'bg-warning-inverse/15 text-warning-inverse',
-  '최종 프로젝트': 'bg-success-inverse/15 text-success-inverse',
-}
-export function scheduleTone(cat: string) {
-  return SCHEDULE_TONE[cat] ?? 'bg-white/[0.07] text-white/70'
-}
 
 /** 출석률에 따른 게이지 색 — 이전 LMS 신호등 규칙(초록/노랑/빨강). */
 export function gaugeColor(rate: number) {

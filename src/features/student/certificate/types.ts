@@ -320,6 +320,7 @@ export interface CertProblemTab {
 
 /** 탭5 성장·평판 */
 export interface CertGrowthTimelinePoint {
+  id?: string
   date: string
   type: string
   title: string

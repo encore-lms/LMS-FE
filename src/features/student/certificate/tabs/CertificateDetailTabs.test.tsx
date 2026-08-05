@@ -2,17 +2,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
-import type { CertificateDetailTabsResult } from '../ai'
-import { fetchCertificateDetailTabs } from '../ai'
+import type { CertificateDetailTabsResult, CertificateScoreResult } from '../ai'
+import { fetchCertificateDetailTabs, fetchCertificateScore } from '../ai'
 import type { CertGrowthTab } from '../types'
-import { GrowthTab } from './GrowthTab'
+import { GrowthTab, GrowthTabData } from './GrowthTab'
 import { ProblemTab } from './ProblemTab'
 import { TechTab } from './TechTab'
 
-vi.mock('../ai', () => ({
-  CERTIFICATE_MOCK_STUDENT_ID: 'student-1',
-  fetchCertificateDetailTabs: vi.fn(),
-}))
+vi.mock('../ai', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ai')>()
+  return {
+    ...actual,
+    CERTIFICATE_MOCK_STUDENT_ID: 'student-1',
+    fetchCertificateDetailTabs: vi.fn(),
+    fetchCertificateScore: vi.fn(),
+  }
+})
 
 const result: CertificateDetailTabsResult = {
   policyVersion: '2026.08.05-certificate-detail-tabs-v2',
@@ -150,6 +155,47 @@ const result: CertificateDetailTabsResult = {
     limitations: [],
   },
 }
+
+const scoreResult = {
+  axes: [
+    {
+      key: '기술·기술기여',
+      comparison: {
+        peerScore: 80,
+        mentorScore: 75,
+        managerScore: 70,
+        instructorScore: 85,
+      },
+    },
+    {
+      key: '소통·협업·팀워크',
+      comparison: {
+        peerScore: 70,
+        mentorScore: 80,
+        managerScore: 75,
+        instructorScore: 90,
+      },
+    },
+    {
+      key: '문제해결',
+      comparison: {
+        peerScore: 90,
+        mentorScore: 85,
+        managerScore: 80,
+        instructorScore: 75,
+      },
+    },
+    {
+      key: '책임감',
+      comparison: {
+        peerScore: 85,
+        mentorScore: 90,
+        managerScore: 88,
+        instructorScore: 92,
+      },
+    },
+  ],
+} as CertificateScoreResult
 
 const growth: CertGrowthTab = {
   timeline: [
@@ -349,19 +395,35 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.queryByText(/API 조회를 점검했습니다.*…/)).toBeNull()
   })
 
-  it('성장 궤적·동료 평판·추천서를 증명서 형식으로 표시한다', () => {
-    renderWithQuery(<GrowthTab g={growth} />)
+  it('성장 궤적·4평가자 비교·코멘트와 추천서를 증명서 형식으로 표시한다', () => {
+    renderWithQuery(<GrowthTab g={growth} score={scoreResult} />)
 
-    expect(screen.getByText('6개월 평가 6회 +32점')).toBeInTheDocument()
-    expect(screen.getByText('동료 5축 평균 4.6')).toBeInTheDocument()
+    expect(screen.getByText('전체 시험 6회 +32점')).toBeInTheDocument()
+    expect(screen.getByText('4평가자 · 공통 4축 비교')).toBeInTheDocument()
+    expect(document.querySelector('[data-evaluator-role-grid]')).toHaveClass(
+      'xl:grid-cols-4',
+    )
+    expect(document.querySelectorAll('[data-evaluator-role]')).toHaveLength(4)
     expect(
-      screen.getByText('Skill360 · 누적 12회 동료 평가'),
-    ).toBeInTheDocument()
+      document.querySelector('[data-evaluator-role="peerScore"]'),
+    ).toHaveTextContent('동료완료 프로젝트 평가4.3/ 5.0')
+    expect(
+      document.querySelector('[data-evaluator-role="mentorScore"]'),
+    ).toHaveTextContent('멘토최신 멘토 평가4.3/ 5.0')
+    expect(
+      document.querySelector('[data-evaluator-role="managerScore"]'),
+    ).toHaveTextContent('운영(매니저)최신 운영 평가4.1/ 5.0')
+    expect(
+      document.querySelector('[data-evaluator-role="instructorScore"]'),
+    ).toHaveTextContent('강사최신 강사 평가4.4/ 5.0')
     expect(screen.getByText('#논리적설득')).toBeInTheDocument()
     expect(screen.getByText('추천서 2건')).toBeInTheDocument()
     expect(screen.getByText('강사·멘토 추천서')).toBeInTheDocument()
     expect(screen.getByText('이정훈 강사')).toBeInTheDocument()
     expect(screen.getByText('황설현 멘토')).toBeInTheDocument()
+    expect(
+      document.querySelector('[data-comments-recommendations-row]'),
+    ).toHaveClass('lg:grid-cols-2')
 
     expect(document.querySelector('[data-growth-trend-line]')).toBeTruthy()
     const growthBar = document.querySelector(
@@ -404,6 +466,84 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.getByText('04.17')).toBeInTheDocument()
     expect(screen.getByText('08.28')).toBeInTheDocument()
     expect(screen.queryByText(/W\d+/)).not.toBeInTheDocument()
+  })
+
+  it('상세 API의 모든 최신 유효 시험을 제출 시각 순으로 성장 그래프에 표시한다', async () => {
+    const assessments = [...growth.timeline].reverse().map((point, index) => ({
+      id: `growth-quiz-${index + 1}`,
+      title: point.title,
+      assessmentType:
+        point.type === 'CS' ? ('CS' as const) : ('ACHIEVEMENT' as const),
+      category: point.title,
+      score: point.score,
+      cohortAverageScore: null,
+      relativeScore: null,
+      comparisonCount: 0,
+      submittedAt: `${point.date}T09:00:00`,
+    }))
+    vi.mocked(fetchCertificateDetailTabs).mockResolvedValue({
+      ...result,
+      tech: { ...result.tech, assessments },
+    })
+    vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+
+    renderWithQuery(
+      <GrowthTabData g={{ ...growth, timeline: [] }} studentId="student-1" />,
+    )
+
+    expect(await screen.findByText('전체 시험 6회 +32점')).toBeInTheDocument()
+    const points = Array.from(
+      document.querySelectorAll('[data-growth-trend-point]'),
+    )
+    expect(points).toHaveLength(6)
+    expect(points[0]).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('2024-04-17'),
+    )
+    expect(points.at(-1)).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('2024-08-28'),
+    )
+    expect(
+      document.querySelector('[data-growth-chart-scroll-content]'),
+    ).toHaveStyle({ width: '560px' })
+    expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
+    expect(fetchCertificateScore).toHaveBeenCalledWith('student-1')
+  })
+
+  it('시험이 많으면 모든 점을 유지하고 8회 단위 탐색 제어를 표시한다', () => {
+    const longTimeline = Array.from({ length: 12 }, (_, index) => ({
+      id: `quiz-${index + 1}`,
+      date: `2024-${String(Math.floor(index / 2) + 1).padStart(2, '0')}-${index % 2 === 0 ? '05' : '20'}`,
+      type: index % 3 === 0 ? 'CS' : '성취도',
+      title: `${index + 1}회 평가`,
+      score: 60 + index,
+    }))
+
+    renderWithQuery(
+      <GrowthTab
+        g={{ ...growth, timeline: longTimeline }}
+        score={scoreResult}
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', { name: '이전 시험 점수 보기' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '다음 시험 점수 보기' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', {
+        name: '전체 시험 점수 시간순 그래프 12회',
+      }),
+    ).toHaveAttribute('tabindex', '0')
+    expect(
+      document.querySelector('[data-growth-chart-scroll-content]'),
+    ).toHaveStyle({ width: '912px' })
+    expect(document.querySelectorAll('[data-growth-trend-point]')).toHaveLength(
+      12,
+    )
   })
 
   it('팀원 한줄 코멘트를 기본 비공개로 두고 최대 5개까지만 공개한다', () => {

@@ -483,17 +483,19 @@ function MemberEvalCard({
       </header>
       <div className="bg-divider h-px" aria-hidden />
       <div className="flex flex-col gap-3 px-5 py-4">
-        {/* 리커트 앵커 헤더 — 라벨은 낮음/보통/높음 3개, 선택지는 1~5(저장값 1~5 유지). */}
+        {/* 리커트 앵커 헤더 — 라디오와 같은 5열 그리드, 1·3·5열(양끝·중앙) 원 바로 위에 정렬. */}
         <div className="flex items-center gap-3.5">
           <span className="w-[190px] shrink-0" aria-hidden />
           <div className="flex flex-1 items-center">
-            <span className="text-fg-subtle flex-1 text-left text-[11px] font-semibold">
+            <span className="text-fg-subtle flex-1 text-center text-[11px] font-semibold">
               {LIKERT_ANCHORS[0]}
             </span>
+            <span className="flex-1" aria-hidden />
             <span className="text-fg-subtle flex-1 text-center text-[11px] font-semibold">
               {LIKERT_ANCHORS[1]}
             </span>
-            <span className="text-fg-subtle flex-1 text-right text-[11px] font-semibold">
+            <span className="flex-1" aria-hidden />
+            <span className="text-fg-subtle flex-1 text-center text-[11px] font-semibold">
               {LIKERT_ANCHORS[2]}
             </span>
           </div>
@@ -531,32 +533,40 @@ function MemberEvalCard({
                 {[1, 2, 3, 4, 5].map((value, i) => {
                   const selected = score === value
                   return (
-                    <span
+                    // 셀 전체가 클릭 영역 — 작은 원만 노리지 않아도 된다(호버 시 원이 반응).
+                    <button
                       key={value}
-                      className="flex h-10 flex-1 items-center justify-center"
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      aria-label={`${value}점`}
+                      disabled={readOnly}
+                      onClick={() =>
+                        onScore(member.studentId, axisIndex, value)
+                      }
+                      className={cn(
+                        'group flex h-11 flex-1 items-center justify-center',
+                        readOnly ? 'cursor-default' : 'cursor-pointer',
+                      )}
                     >
-                      <button
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        aria-label={`${value}점`}
-                        disabled={readOnly}
-                        onClick={() =>
-                          onScore(member.studentId, axisIndex, value)
-                        }
+                      <span
+                        aria-hidden
                         style={{
                           width: LIKERT_SIZES[i],
                           height: LIKERT_SIZES[i],
                         }}
                         className={cn(
-                          'rounded-full border-2 transition-colors',
+                          'rounded-full border-2 transition-all',
                           selected
                             ? cn(axis.fill, 'border-transparent')
-                            : 'border-border bg-surface hover:border-brand/60',
-                          readOnly && 'cursor-default',
+                            : cn(
+                                'border-border bg-surface',
+                                !readOnly &&
+                                  'group-hover:border-brand/70 group-hover:scale-110',
+                              ),
                         )}
                       />
-                    </span>
+                    </button>
                   )
                 })}
               </div>

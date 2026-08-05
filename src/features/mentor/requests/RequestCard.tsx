@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { Calendar, Home } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
@@ -75,35 +74,26 @@ function ProposalBox({ slot }: { slot: MentoringRequestSlot }) {
 
 /** 상태별 우상단 액션 — 응답은 모달(공통 Modal) 오픈 + 모드 프리셀렉트, 제안 취소만 즉시 mutation. */
 /**
- * 응답 화면으로 가는 버튼 — 팀 안에서는 라우트로 나가지 않고 그 자리에서 연다.
+ * 응답 화면을 여는 버튼 — 목록이 있는 그 자리에 띄운다.
  *
- * <p>라우트로 나가면 사이드바에서 사라진 전체 예약 목록 위에 모달이 떠, 팀을 벗어나고
- * 배경도 다른 팀 요청이 된다(일지 '열기'에서 겪은 것과 같다).</p>
+ * <p>예전에는 주소로 나갔다. 그 화면은 걷어냈고(#728) 예약은 팀 상세 탭에서만 다루므로,
+ * 나가면 '찾을 수 없는 주소'가 된다.</p>
  */
 function ActionLink({
-  to,
   mode,
   onOpen,
   className,
   children,
 }: {
-  to: string
   mode: string
   onOpen?: (mode: string) => void
   className: string
   children: ReactNode
 }) {
-  if (onOpen) {
-    return (
-      <button type="button" onClick={() => onOpen(mode)} className={className}>
-        {children}
-      </button>
-    )
-  }
   return (
-    <Link to={to} className={className}>
+    <button type="button" onClick={() => onOpen?.(mode)} className={className}>
       {children}
-    </Link>
+    </button>
   )
 }
 
@@ -118,13 +108,11 @@ function CardActions({
   cancelPending: boolean
   onOpen?: (mode: string) => void
 }) {
-  const base = `/mentor/mentoring-requests/${request.requestId}`
   switch (request.status) {
     case 'requested':
       return (
         <>
           <ActionLink
-            to={`${base}?mode=reject`}
             mode="reject"
             onOpen={onOpen}
             className={cn(
@@ -136,7 +124,6 @@ function CardActions({
             거절
           </ActionLink>
           <ActionLink
-            to={`${base}?mode=counter`}
             mode="counter"
             onOpen={onOpen}
             className={cn(
@@ -148,7 +135,6 @@ function CardActions({
             조정 제안
           </ActionLink>
           <ActionLink
-            to={`${base}?mode=confirm`}
             mode="confirm"
             onOpen={onOpen}
             className={cn(
@@ -176,7 +162,6 @@ function CardActions({
             제안 취소
           </button>
           <ActionLink
-            to={`${base}?mode=counter`}
             mode="counter"
             onOpen={onOpen}
             className={cn(
@@ -192,7 +177,6 @@ function CardActions({
       // 확정 카드 시안 미제공 — 확정 후 변경(멘토만 가능) 진입만 보수적으로 제공.
       return (
         <ActionLink
-          to={base}
           mode="confirm"
           onOpen={onOpen}
           className={cn(
@@ -206,8 +190,9 @@ function CardActions({
       )
     default:
       return (
-        <Link
-          to={base}
+        <ActionLink
+          mode="confirm"
+          onOpen={onOpen}
           className={cn(
             ACTION_BASE,
             ACTION_OUTLINE,
@@ -215,7 +200,7 @@ function CardActions({
           )}
         >
           상세 보기
-        </Link>
+        </ActionLink>
       )
   }
 }

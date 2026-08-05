@@ -100,7 +100,9 @@ export default function QnaListPage({
                 <>
                   <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>
                   <span className="text-fg-subtle text-[12px]">
-                    {data.questions.length}건
+                    {visible.length}건
+                    {visible.length !== data.questions.length &&
+                      ` (전체 ${data.questions.length})`}
                   </span>
                 </>
               }
@@ -109,6 +111,13 @@ export default function QnaListPage({
                 onChange: setQuery,
                 placeholder: '제목·내용·태그 검색',
                 ariaLabel: '질문 검색',
+              }}
+              reset={{
+                active: !!query || active !== 'all',
+                onReset: () => {
+                  setQuery('')
+                  setActive('all')
+                },
               }}
               actions={
                 canAsk && (

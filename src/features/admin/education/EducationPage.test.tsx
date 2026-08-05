@@ -138,12 +138,14 @@ const TAB_ORDER = [
   '이력서',
   '기록실',
   'QnA 게시판',
+  // 수강생 평가(2026-08-06 신설) — 강사 허브와 공용 탭.
+  '수강생 평가',
   '멘토링(매니저)',
   '설정(매니저)',
 ]
 
 describe('EducationPage (기수 허브)', () => {
-  it('12개 탭을 렌더한다', () => {
+  it('13개 탭을 렌더한다', () => {
     renderHub()
     for (const label of TAB_ORDER) {
       expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()

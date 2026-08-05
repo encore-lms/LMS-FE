@@ -168,6 +168,26 @@ describe('ProjectWizardPage', () => {
     ).toBeInTheDocument()
   })
 
+  // 예전에는 '도메인 1'이 박혀 있어, 고르지도 않은 도메인이 골랐다고 나왔다.
+  it('3단계 요약은 실제 선택 수를 센다', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await fillStep1(user)
+
+    await user.click(screen.getByRole('button', { name: /다음.*팀 설정/ }))
+    await user.click(screen.getByRole('button', { name: /다음.*상세 설정/ }))
+
+    expect(
+      screen.getByText('스택 0 · 도메인 0 · 산출물 0건 선택 완료'),
+    ).toBeInTheDocument()
+
+    await fillStep3(user)
+
+    expect(
+      screen.getByText('스택 1 · 도메인 1 · 산출물 1건 선택 완료'),
+    ).toBeInTheDocument()
+  })
+
   it('3단계 직접 추가로 입력한 커스텀 스택을 해당 그룹과 요약에 칩으로 추가한다', async () => {
     const user = userEvent.setup()
     renderPage()

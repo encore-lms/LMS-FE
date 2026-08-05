@@ -266,7 +266,9 @@ export default function ProjectWizardPage() {
       heroTitle: '기술 스택 · 도메인 · 산출물 형태',
       heroSub:
         '선택한 값은 워크스페이스의 성과·기술스택 탭에 자동으로 반영됩니다.',
-      summary: `스택 ${stacks.length} · 도메인 1 · 산출물 ${deliverables.length}건 선택 완료`,
+      // 도메인은 1개 선택이라 예전엔 '1'이 박혀 있었다. 빈 폼에서 시작하면
+      // 고르지도 않은 도메인이 골랐다고 나온다.
+      summary: `스택 ${stacks.length} · 도메인 ${domain ? 1 : 0} · 산출물 ${deliverables.length}건 선택 완료`,
       summarySub: '다음 단계에서 입력값을 요약 확인하고 프로젝트를 생성합니다',
       leftLabel: '← 이전 — 팀 설정',
       rightLabel: '다음 — 생성 확인 →',

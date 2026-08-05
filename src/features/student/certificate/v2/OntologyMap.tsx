@@ -114,9 +114,11 @@ function arrowEdgeTarget(source: Pt, target: Pt, targetRadius: number) {
 export function OntologyMap({
   ontology,
   className,
+  compact = false,
 }: {
   ontology: Ontology
   className?: string
+  compact?: boolean
 }) {
   const displayGraph = useMemo(
     () => buildOntologyDisplayGraph(ontology.nodes, ontology.edges),
@@ -441,17 +443,36 @@ export function OntologyMap({
     : []
 
   return (
-    <section className={cn(card, 'flex flex-col gap-3', className)}>
-      <div className="flex items-center justify-between gap-4">
+    <section
+      data-ontology-compact={compact || undefined}
+      className={cn(
+        card,
+        'flex flex-col',
+        compact ? 'gap-2 p-4' : 'gap-3',
+        className,
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-fg text-[15px] font-bold">온톨로지 역량 맵</span>
-        <span className="text-fg-subtle shrink-0 text-[11px]">
+        <span
+          className={cn(
+            'text-fg-subtle shrink-0',
+            compact ? 'text-[9px]' : 'text-[11px]',
+          )}
+        >
           {nodes.length}노드 · 직접 {directEdges.length} · 문맥{' '}
-          {contextEdges.length} · 노드는 놓으면 원위치
+          {contextEdges.length}
+          {!compact && ' · 노드는 놓으면 원위치'}
         </span>
       </div>
 
       {ontology.status === 'NOT_READY' ? (
-        <p className="text-fg-muted flex h-[360px] items-center justify-center text-[12px]">
+        <p
+          className={cn(
+            'text-fg-muted flex items-center justify-center text-[12px]',
+            compact ? 'h-[220px]' : 'h-[360px]',
+          )}
+        >
           확정 평가나 완료 프로젝트 근거가 없어 역량 관계는 산출 전입니다.
         </p>
       ) : (
@@ -461,7 +482,10 @@ export function OntologyMap({
             viewBox={viewBox}
             data-zoom={viewport.zoom.toFixed(1)}
             className={cn(
-              'h-[360px] w-full min-w-[960px] touch-none select-none md:h-[380px]',
+              'w-full touch-none select-none',
+              compact
+                ? 'h-[220px] min-w-[520px]'
+                : 'h-[360px] min-w-[960px] md:h-[380px]',
               isPanning ? 'cursor-grabbing' : 'cursor-grab',
             )}
             role="img"
@@ -576,7 +600,7 @@ export function OntologyMap({
       )}
 
       <div
-        className="flex flex-wrap gap-2"
+        className={cn('flex flex-wrap', compact ? 'gap-1' : 'gap-2')}
         aria-label="온톨로지 노드 종류별 산출 근거"
       >
         {KINDS.map((kind) => (
@@ -588,7 +612,10 @@ export function OntologyMap({
               setSelectedKind((current) => (current === kind ? null : kind))
             }
             className={cn(
-              'focus-visible:ring-brand flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] outline-none focus-visible:ring-2',
+              'focus-visible:ring-brand flex items-center rounded-md border outline-none focus-visible:ring-2',
+              compact
+                ? 'gap-1 px-1.5 py-1 text-[9px]'
+                : 'gap-1.5 px-2.5 py-1.5 text-[11px]',
               selectedKind === kind
                 ? 'border-brand bg-brand/10 text-brand font-bold'
                 : 'border-divider text-fg-muted hover:text-fg',
@@ -601,11 +628,21 @@ export function OntologyMap({
             {KIND[kind].label}
           </button>
         ))}
-        <span className="text-fg-muted flex items-center gap-1.5 text-[11px]">
+        <span
+          className={cn(
+            'text-fg-muted flex items-center gap-1.5',
+            compact ? 'text-[9px]' : 'text-[11px]',
+          )}
+        >
           <span className="border-border w-4 border-t" />
           직접 근거
         </span>
-        <span className="text-fg-muted flex items-center gap-1.5 text-[11px]">
+        <span
+          className={cn(
+            'text-fg-muted flex items-center gap-1.5',
+            compact ? 'text-[9px]' : 'text-[11px]',
+          )}
+        >
           <span className="border-border w-4 border-t" />
           동일 프로젝트 문맥
         </span>

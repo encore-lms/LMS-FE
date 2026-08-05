@@ -23,7 +23,6 @@ import type {
   CertSummaryTab,
   Tone,
 } from '../types'
-import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
 import { DomainDonut } from '../v2/DomainDonut'
 import { OntologyMap } from '../v2/OntologyMap'
 
@@ -500,7 +499,7 @@ function LearningEvidence({
   )
 }
 
-function ScoreEvidencePanel({
+export function ScoreEvidencePanel({
   axes,
   assessments,
   assessmentsPending,
@@ -523,10 +522,7 @@ function ScoreEvidencePanel({
     <section
       id="score-evidence"
       data-score-evidence={selectedAxis.key}
-      className={cn(
-        card,
-        'flex min-w-0 flex-1 flex-col gap-4 p-5 xl:w-[54%] xl:flex-none',
-      )}
+      className={cn(card, 'flex min-w-0 flex-col gap-4 p-5')}
     >
       <div className="flex flex-col gap-0.5">
         <span className="text-fg text-[20px] font-bold">6축 점수 근거</span>
@@ -628,14 +624,10 @@ function ScoreSummary({
   score,
   ontology,
   recommendations,
-  assessments,
-  assessmentsPending,
 }: {
   score: CertificateScoreResult
   ontology?: Awaited<ReturnType<typeof fetchAiAnalysis>>['ontology']
   recommendations: CertRecommendation[]
-  assessments: CertificateAssessmentPoint[]
-  assessmentsPending: boolean
 }) {
   const [selectedAxisKey, setSelectedAxisKey] =
     useState<AxisKey>('기술·기술기여')
@@ -856,14 +848,17 @@ function ScoreSummary({
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-        <section className="border-border bg-surface flex flex-col items-center overflow-hidden rounded-lg border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)] xl:w-[46%] xl:flex-none">
+      <div
+        data-summary-competency-layout
+        className="grid gap-4 xl:grid-cols-[46%_minmax(0,54%)] xl:items-start"
+      >
+        <section className="border-border bg-surface flex flex-col items-center overflow-hidden rounded-lg border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
           <div className="flex w-full flex-col gap-0.5 px-5 pt-5 pb-2">
             <span className="text-fg text-[15px] font-bold">
               역량 비교 레이더
             </span>
             <span className="text-fg-muted text-[11px]">
-              6축 절대·상대 위치 · 축을 선택하면 오른쪽에서 점수 근거 확인
+              6축 절대·상대 위치 · 축을 선택해 상세 위치 확인
             </span>
           </div>
           <SkillRadar
@@ -873,17 +868,11 @@ function ScoreSummary({
           />
         </section>
 
-        <ScoreEvidencePanel
-          axes={score.axes}
-          assessments={assessments}
-          assessmentsPending={assessmentsPending}
-          selectedAxisKey={selectedAxisKey}
-          onSelectAxis={setSelectedAxisKey}
-        />
+        <div data-summary-visual-stack className="grid min-w-0 gap-4">
+          {CERT_V2 && <DomainDonut domains={domains} compact />}
+          {CERT_V2 && ontology && <OntologyMap ontology={ontology} compact />}
+        </div>
       </div>
-
-      {CERT_V2 && <DomainDonut domains={domains} />}
-      {CERT_V2 && ontology && <OntologyMap ontology={ontology} />}
     </div>
   )
 }
@@ -904,8 +893,6 @@ export function SummaryTab({
     queryKey: ['aiAnalysis', studentId],
     queryFn: () => fetchAiAnalysis(studentId),
   })
-  const detailTabsQuery = useCertificateDetailTabs(studentId)
-
   return (
     <DataBoundary
       isPending={scoreQuery.isPending}
@@ -920,8 +907,6 @@ export function SummaryTab({
           score={scoreQuery.data}
           ontology={ai?.ontology}
           recommendations={recommendations}
-          assessments={detailTabsQuery.data?.tech.assessments ?? []}
-          assessmentsPending={detailTabsQuery.isPending}
         />
       )}
     </DataBoundary>

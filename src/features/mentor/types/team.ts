@@ -123,6 +123,16 @@ export interface MentorTeamMember {
   role: MentorTeamMemberRole
   /** 담당 파트 태그 — 'AI/ML'·'백엔드' 등(Figma 학생 상세·일지 참석 칩, 선택) */
   tagLabel?: string
+  /**
+   * 참석한 회차 수 — 제출된 팀 일지 기준(2026-08-05 참석 기록 신설).
+   *
+   * <p>참석 표가 생기기 전 일지에는 기록이 없어 서버가 전원 참석으로 센다.</p>
+   */
+  attendedCount?: number
+  /** 분모 — 제출된 팀 일지 수 */
+  sessionCount?: number
+  /** 마지막 참석 회차 '7/22' — 한 번도 없으면 null */
+  lastAttendedLabel?: string | null
 }
 
 export interface MentorNextReservation {

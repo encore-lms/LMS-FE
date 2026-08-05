@@ -13,6 +13,7 @@ import { ProjectsPane } from '@/features/admin/education/ProjectsPane'
 import RecordReviewPage from '../reviews/RecordReviewPage'
 import { useInstructorCohorts } from '../api/console'
 import { MaterialsPane } from '@/features/admin/education/MaterialsPane'
+import { StudentEvalPane } from '@/features/admin/education/StudentEvalPane'
 import { ResumePane } from '@/features/admin/education/ResumePane'
 import { NoticesPane } from './NoticesPane'
 import { StudentsPane } from './StudentsPane'
@@ -23,6 +24,7 @@ import { CourseHomePane } from '@/features/admin/education/CourseHomePane'
 type TabKey =
   | 'home'
   | 'qna'
+  | 'evaluations'
   | 'students'
   | 'notices'
   | 'materials'
@@ -47,6 +49,8 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'records', label: '기록실' },
   // 사이드바 'QnA 게시판' 흡수(2026-08-03, 운영 선례 미러) — 열람·답변, 스코프는 BE JWT 담당 기수.
   { key: 'qna', label: TERMS.qnaBoard },
+  // 수강생 평가(2026-08-06 신설) — 매니저 허브와 공용 탭(운영 StudentEvalPane 미러 소비, 과정 홈 선례).
+  { key: 'evaluations', label: '수강생 평가' },
   // 강사 추천서 이관(2026-07-24) — 단독 화면 폐기, 허브 마지막 탭으로 일원화. 강사 전용이라 roleTag.
   { key: 'endorsements', label: roleTag('코멘트/추천', '강사') },
 ]
@@ -125,6 +129,8 @@ export default function InstructorEducationPage() {
             embedded
             backTo={`/instructor/cohorts/${cohortId}/education?tab=qna`}
           />
+        ) : tab === 'evaluations' ? (
+          <StudentEvalPane cohortId={cohortId} />
         ) : (
           <EndorsementsPage embedded cohortId={cohortId} />
         )}

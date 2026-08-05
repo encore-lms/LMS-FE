@@ -1,6 +1,5 @@
-// ⚠️ 자동 생성 파일 — 직접 수정 금지.
-// 원본(SSOT): LMS-AI/src/contract.ts
-// 재생성: pnpm sync:ai-contract   (LMS-AI가 형제 폴더에 있거나 LMS_AI_DIR 지정)
+// LMS-AI Python 응답 계약의 FE 소비 타입.
+// 원본(SSOT): LMS-AI/API.md와 src/lms_ai 응답 구현.
 
 // 증명서 AI 엔진 ↔ FE 공유 계약(SSOT). 순수 데이터 타입, 프레임워크·엔진 내부 의존 0.
 //
@@ -46,22 +45,21 @@ export interface StudentDerived {
 
 // ── 수강역량증명서 종합점수·6축 + 상대 위치 ──
 export const CERTIFICATE_AXIS_KEYS = [
-  "기술",
-  "소통",
-  "팀워크",
-  "책임감",
+  "기술·기술기여",
+  "소통·협업·팀워크",
   "문제해결",
+  "책임감",
   "학습지속성",
+  "성취도 평가",
 ] as const;
 export type CertificateAxisKey = (typeof CERTIFICATE_AXIS_KEYS)[number];
 
 /** 종합요약 동료평가 비교에 노출하는 축과 고정 순서. */
 export const CERTIFICATE_360_AXIS_KEYS = [
-  "기술",
-  "팀워크",
-  "책임감",
-  "소통",
+  "기술·기술기여",
+  "소통·협업·팀워크",
   "문제해결",
+  "책임감",
 ] as const satisfies readonly CertificateAxisKey[];
 export type Certificate360AxisKey = (typeof CERTIFICATE_360_AXIS_KEYS)[number];
 
@@ -89,6 +87,10 @@ export interface CertificateScoreComparison {
   peerScore: number | null;
   /** 최종 멘토평가를 1~5점에서 0~100점으로 환산한 값. 비교 원천이 없으면 null. */
   mentorScore: number | null;
+  /** 강사 평가자 그룹의 1~5점 평균을 0~100점으로 환산한 값. 비평가축은 생략한다. */
+  instructorScore?: number | null;
+  /** 운영 평가자 그룹의 1~5점 평균을 0~100점으로 환산한 값. 비평가축은 생략한다. */
+  managerScore?: number | null;
 }
 
 export interface CertificateAxisEvidenceItem {
@@ -175,7 +177,7 @@ export interface CertificateProjectNavigation {
 }
 
 export interface CertificateScoreResult {
-  policyVersion: "2026.07.21-six-axis-persistence-v4";
+  policyVersion: "2026.08.05-six-axis-four-rater-v1";
   calculatedAt: string;
   student: {
     studentId: string;

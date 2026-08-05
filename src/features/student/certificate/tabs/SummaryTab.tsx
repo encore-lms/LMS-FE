@@ -11,7 +11,6 @@ import {
   fetchAiAnalysis,
   fetchCertificateScore,
   type CertificateAssessmentPoint,
-  type CertificateExternalCertification,
   type CertificatePeerEvaluationAxis,
   type CertificateScoreMetric,
   type CertificateScoreResult,
@@ -238,12 +237,12 @@ const axisEvidencePolicy: Record<
   AxisKey,
   { description: string; data: string; calculation: string }
 > = {
-  기술: {
+  '기술·기술기여': {
     description:
-      '과정에서 확인한 기술 지식과 외부 코딩 역량을 함께 보여주는 점수입니다.',
-    data: '채점이 끝난 성취도 평가·CS 과목 평가, 승인된 외부 코딩테스트',
+      '과정에서 기술을 이해하고 실제 팀 결과물에 기여한 정도를 보여주는 점수입니다.',
+    data: '동료 기술기여 평가, 멘토·강사·운영 기술 평가',
     calculation:
-      '성취도·CS 평가 평균 80%와 외부 코딩테스트 환산점수 최대 20점을 합산합니다.',
+      '동료·멘토·강사·운영 평가자 그룹의 1~5점 평균을 각각 25%로 반영해 100점으로 환산합니다.',
   },
   학습지속성: {
     description:
@@ -252,33 +251,32 @@ const axisEvidencePolicy: Record<
     calculation:
       '출석률 70%와 블로그 제출률 30%를 기본으로 하고, 과제·스터디·멘토링 참여는 가산점으로 반영합니다.',
   },
-  소통: {
+  '소통·협업·팀워크': {
     description:
-      '프로젝트에서 의견을 전달하고 피드백을 주고받은 정도를 보여주는 점수입니다.',
-    data: '완료 프로젝트의 동료 소통 평가, 최종 멘토 소통 평가',
+      '프로젝트에서 의견을 나누고 공동 목표를 위해 협력한 정도를 보여주는 점수입니다.',
+    data: '동료 소통·협업 평가, 멘토 소통·팀워크 평가, 강사·운영 통합 평가',
     calculation:
-      '프로젝트 동료평가 80%와 최종 멘토평가 20%를 합산해 100점으로 환산합니다.',
+      '동료·멘토·강사·운영 평가자 그룹의 1~5점 평균을 각각 25%로 반영해 100점으로 환산합니다.',
   },
   문제해결: {
     description:
-      '문제를 기록하고 검증 가능한 해결 사례로 완성한 정도를 보여주는 점수입니다.',
-    data: '인증된 트러블슈팅 사례, 완료 프로젝트의 동료 문제해결 평가',
+      '문제를 파악하고 해결 방향을 찾아 실행한 정도를 보여주는 점수입니다.',
+    data: '동료·멘토·강사·운영 문제해결 평가',
     calculation:
-      '인증 사례 6건을 100점 기준으로 환산합니다. 50점 미만일 때만 동료평가를 최대 50점 범위의 보조 근거로 비교합니다.',
+      '동료·멘토·강사·운영 평가자 그룹의 1~5점 평균을 각각 25%로 반영해 100점으로 환산합니다.',
   },
   책임감: {
     description:
       '맡은 역할과 약속을 프로젝트 안에서 꾸준히 지킨 정도를 보여주는 점수입니다.',
-    data: '완료 프로젝트의 동료 책임감 평가, 최종 멘토 책임감 평가',
+    data: '동료·멘토·강사·운영 책임감 평가',
     calculation:
-      '프로젝트 동료평가 80%와 최종 멘토평가 20%를 합산해 100점으로 환산합니다.',
+      '동료·멘토·강사·운영 평가자 그룹의 1~5점 평균을 각각 25%로 반영해 100점으로 환산합니다.',
   },
-  팀워크: {
+  '성취도 평가': {
     description:
-      '공동 목표를 위해 역할을 나누고 팀에 기여한 정도를 보여주는 점수입니다.',
-    data: '완료 프로젝트의 동료 협업 평가, 최종 멘토 팀워크 평가',
-    calculation:
-      '프로젝트 동료평가 80%와 최종 멘토평가 20%를 합산해 100점으로 환산합니다.',
+      '과정에서 실시한 성취도 평가의 학습 결과를 보여주는 점수입니다.',
+    data: '채점이 끝난 성취도 평가의 최신 유효 응시 점수',
+    calculation: '반영 대상 성취도 평가 점수를 동일 비중으로 전체 평균합니다.',
   },
 }
 
@@ -352,30 +350,22 @@ function CalculationBox({
   )
 }
 
-function TechnicalEvidence({
+function AchievementEvidence({
   axis,
   assessments,
-  certifications,
   pending,
 }: {
   axis: CertificateScoreResult['axes'][number]
   assessments: CertificateAssessmentPoint[]
-  certifications: CertificateExternalCertification[]
   pending: boolean
 }) {
-  const internal = evidenceByKey(axis, 'internalAssessment')
-  const coding = evidenceByKey(axis, 'codingTest')
-  const approvedCertifications = certifications.filter(
-    (item) => item.status === 'APPROVED',
-  )
+  const achievement = evidenceByKey(axis, 'achievementAssessment')
 
   return (
     <div className="grid gap-4">
       <section className="border-divider grid gap-3 border-t pt-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-fg text-[15px] font-bold">
-            성취도·CS 평가별 점수
-          </h3>
+          <h3 className="text-fg text-[15px] font-bold">성취도 평가별 점수</h3>
           <span className="text-fg-subtle text-[11px]">채점 완료 기준</span>
         </div>
         {pending ? (
@@ -386,147 +376,76 @@ function TechnicalEvidence({
           </p>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">
-            {assessments.map((assessment) => {
-              const kind = /(?:\bCS\b|네트워크|운영체제|자료구조)/u.test(
-                assessment.title,
-              )
-                ? 'CS 평가'
-                : '성취도 평가'
-              return (
-                <article
-                  key={assessment.id}
-                  data-assessment-evidence={assessment.category}
-                  className="border-border bg-surface flex min-w-0 flex-col gap-1 rounded-lg border p-3"
-                >
-                  <span className="text-brand text-[10px] font-bold">
-                    {kind}
-                  </span>
-                  <span className="text-fg text-[13px] font-bold">
-                    {assessment.category}
-                  </span>
-                  <span className="text-fg-subtle line-clamp-2 text-[11px] leading-4">
-                    {assessment.title}
-                  </span>
-                  <strong className="text-fg mt-1 text-[20px]">
-                    {displayNumber(assessment.score)}점
-                  </strong>
-                </article>
-              )
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="border-divider grid gap-3 border-t pt-4">
-        <h3 className="text-fg text-[15px] font-bold">코딩테스트 인증</h3>
-        {approvedCertifications.length === 0 ? (
-          <p className="text-fg-muted text-[13px]">
-            승인된 코딩테스트 인증이 없습니다.
-          </p>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {approvedCertifications.map((certification, index) => (
+            {assessments.map((assessment) => (
               <article
-                key={`${certification.name}-${index}`}
-                className="border-border bg-surface flex flex-col gap-1 rounded-lg border p-3"
+                key={assessment.id}
+                data-assessment-evidence={assessment.category}
+                className="border-border bg-surface flex min-w-0 flex-col gap-1 rounded-lg border p-3"
               >
+                <span className="text-brand text-[10px] font-bold">
+                  성취도 평가
+                </span>
                 <span className="text-fg text-[13px] font-bold">
-                  {certification.name}
+                  {assessment.category}
                 </span>
-                <strong className="text-brand text-[20px]">
-                  {certification.score === null
-                    ? '원점수 없음'
-                    : `${certification.score.toLocaleString('ko-KR')}/1,000점`}
+                <span className="text-fg-subtle line-clamp-2 text-[11px] leading-4">
+                  {assessment.title}
+                </span>
+                <strong className="text-fg mt-1 text-[20px]">
+                  {displayNumber(assessment.score)}점
                 </strong>
-                <span className="text-fg-muted text-[12px] font-semibold">
-                  {certification.grade ?? '등급 없음'} · 승인
-                </span>
               </article>
             ))}
           </div>
         )}
       </section>
 
-      {internal && coding && (
+      {achievement && (
         <CalculationBox
           lines={[
-            `성취도·CS 평가 전체 평균 ${displayNumber(internal.value)}점의 80% = ${displayNumber(internal.appliedScore)}점`,
-            `${coding.detail}을 코딩테스트 20% 영역에 반영 = ${displayNumber(coding.appliedScore)}점`,
+            `채점 완료 ${achievement.numerator ?? 0}/${achievement.denominator ?? 0}건의 최신 유효 점수를 동일 비중으로 반영합니다.`,
+            `성취도 평가 전체 평균 = ${displayNumber(achievement.value)}점`,
           ]}
-          result={`${displayNumber(internal.appliedScore)} + ${displayNumber(coding.appliedScore)} = 기술 ${displayNumber(axis.score)}점`}
+          result={`성취도 평가 최종 ${displayNumber(axis.score)}점`}
         />
       )}
     </div>
   )
 }
 
-function SocialEvidence({
+function EvaluatorEvidence({
   axis,
 }: {
   axis: CertificateScoreResult['axes'][number]
 }) {
-  const projects = evidenceByKey(axis, 'completedProjects')
-  const peer = evidenceByKey(axis, 'peerEvaluation')
-  const mentor = evidenceByKey(axis, 'mentorEvaluation')
-  if (!projects || !peer || !mentor) return null
-  const weighted = (peer.value ?? 0) * 0.8 + (mentor.value ?? 0) * 0.2
-
-  return (
-    <div className="grid gap-4">
-      <div className="grid gap-2 sm:grid-cols-3">
-        <EvidenceCard item={projects} />
-        <EvidenceCard
-          item={peer}
-          valueLabel={`${displayNumber(peer.value, 2)}/5점`}
-        />
-        <EvidenceCard
-          item={mentor}
-          valueLabel={`${displayNumber(mentor.value, 2)}/5점`}
-        />
-      </div>
-      <CalculationBox
-        lines={[
-          `동료 상호평가 ${displayNumber(peer.value, 2)}점의 80% + 멘토평가 ${displayNumber(mentor.value, 2)}점의 20% = ${displayNumber(weighted, 2)}/5점`,
-          '1점은 0점, 5점은 100점이 되도록 100점 기준으로 환산합니다.',
-        ]}
-        result={`${axis.key} 최종 ${displayNumber(axis.score)}점`}
-      />
-    </div>
-  )
-}
-
-function ProblemEvidence({
-  axis,
-}: {
-  axis: CertificateScoreResult['axes'][number]
-}) {
-  const troubleshooting = evidenceByKey(axis, 'certifiedTroubleshooting')
-  const peer = evidenceByKey(axis, 'peerProblemSolving')
-  if (!troubleshooting || !peer) return null
-  const troubleshootingScore = troubleshooting.appliedScore ?? 0
-  const usePeerSupport = troubleshootingScore < 50
+  const evaluations = [
+    evidenceByKey(axis, 'peerEvaluation'),
+    evidenceByKey(axis, 'mentorEvaluation'),
+    evidenceByKey(axis, 'instructorEvaluation'),
+    evidenceByKey(axis, 'managerEvaluation'),
+  ].filter((item): item is AxisEvidence => item !== undefined)
+  if (evaluations.length === 0) return null
 
   return (
     <div className="grid gap-4">
       <div className="grid gap-2 sm:grid-cols-2">
-        <EvidenceCard
-          item={troubleshooting}
-          valueLabel={`${troubleshooting.numerator ?? 0}/${troubleshooting.denominator ?? 6}건`}
-        />
-        <EvidenceCard
-          item={peer}
-          valueLabel={`${displayNumber(peer.value, 2)}/5점`}
-        />
+        {evaluations.map((item) => (
+          <EvidenceCard
+            key={item.key}
+            item={item}
+            valueLabel={`${displayNumber(item.value, 2)}/5점`}
+          />
+        ))}
       </div>
       <CalculationBox
         lines={[
-          `인증 사례 ${troubleshooting.numerator ?? 0}건 ÷ 기준 ${troubleshooting.denominator ?? 6}건 × 100 = ${displayNumber(troubleshootingScore)}점`,
-          `프로젝트 상호평가 문제해결 ${displayNumber(peer.value, 2)}/5점은 최대 50점으로 환산하면 ${displayNumber(peer.appliedScore)}/50점입니다.`,
-          usePeerSupport
-            ? '트러블슈팅 점수가 50점 미만이므로 두 점수 중 높은 보조점수를 적용했습니다.'
-            : '트러블슈팅 점수가 50점 이상이므로 상호평가 보조점수는 적용하지 않았습니다.',
+          ...evaluations.map(
+            (item) =>
+              `${item.label} ${displayNumber(item.value, 2)}/5점 → 100점 환산 후 25% 반영 ${displayNumber(item.appliedScore)}점`,
+          ),
+          '1점은 0점, 5점은 100점이 되도록 100점 기준으로 환산합니다.',
         ]}
-        result={`문제해결 최종 ${displayNumber(axis.score)}점`}
+        result={`${axis.key} 최종 ${displayNumber(axis.score)}점`}
       />
     </div>
   )
@@ -584,14 +503,12 @@ function LearningEvidence({
 function ScoreEvidencePanel({
   axes,
   assessments,
-  certifications,
   assessmentsPending,
   selectedAxisKey,
   onSelectAxis,
 }: {
   axes: CertificateScoreResult['axes']
   assessments: CertificateAssessmentPoint[]
-  certifications: CertificateExternalCertification[]
   assessmentsPending: boolean
   selectedAxisKey: AxisKey
   onSelectAxis: (key: AxisKey) => void
@@ -668,19 +585,15 @@ function ScoreEvidencePanel({
           {policy.description}
         </p>
 
-        {selectedAxis.key === '기술' && (
-          <TechnicalEvidence
+        {['기술·기술기여', '소통·협업·팀워크', '문제해결', '책임감'].includes(
+          selectedAxis.key,
+        ) && <EvaluatorEvidence axis={selectedAxis} />}
+        {selectedAxis.key === '성취도 평가' && (
+          <AchievementEvidence
             axis={selectedAxis}
             assessments={assessments}
-            certifications={certifications}
             pending={assessmentsPending}
           />
-        )}
-        {['소통', '팀워크', '책임감'].includes(selectedAxis.key) && (
-          <SocialEvidence axis={selectedAxis} />
-        )}
-        {selectedAxis.key === '문제해결' && (
-          <ProblemEvidence axis={selectedAxis} />
         )}
         {selectedAxis.key === '학습지속성' && (
           <LearningEvidence axis={selectedAxis} />
@@ -716,17 +629,16 @@ function ScoreSummary({
   ontology,
   recommendations,
   assessments,
-  certifications,
   assessmentsPending,
 }: {
   score: CertificateScoreResult
   ontology?: Awaited<ReturnType<typeof fetchAiAnalysis>>['ontology']
   recommendations: CertRecommendation[]
   assessments: CertificateAssessmentPoint[]
-  certifications: CertificateExternalCertification[]
   assessmentsPending: boolean
 }) {
-  const [selectedAxisKey, setSelectedAxisKey] = useState<AxisKey>('기술')
+  const [selectedAxisKey, setSelectedAxisKey] =
+    useState<AxisKey>('기술·기술기여')
   const axisByKey = new Map(score.axes.map((axis) => [axis.key, axis]))
   const radarAxes = CERTIFICATE_AXIS_KEYS.map((key) => {
     const axis = axisByKey.get(key)
@@ -964,7 +876,6 @@ function ScoreSummary({
         <ScoreEvidencePanel
           axes={score.axes}
           assessments={assessments}
-          certifications={certifications}
           assessmentsPending={assessmentsPending}
           selectedAxisKey={selectedAxisKey}
           onSelectAxis={setSelectedAxisKey}
@@ -1010,7 +921,6 @@ export function SummaryTab({
           ontology={ai?.ontology}
           recommendations={recommendations}
           assessments={detailTabsQuery.data?.tech.assessments ?? []}
-          certifications={detailTabsQuery.data?.tech.certifications ?? []}
           assessmentsPending={detailTabsQuery.isPending}
         />
       )}

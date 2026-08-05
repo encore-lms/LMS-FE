@@ -74,7 +74,7 @@ export async function fetchCertificateScore(
   }
 
   const result = (await res.json()) as CertificateScoreResult
-  if (result.policyVersion !== '2026.07.21-six-axis-persistence-v4') {
+  if (result.policyVersion !== '2026.08.05-six-axis-four-rater-v1') {
     throw new Error('지원하지 않는 수강역량 점수 정책 버전입니다.')
   }
   return result

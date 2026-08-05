@@ -83,4 +83,32 @@ describe('SearchInput', () => {
     expect(cls).not.toContain('w-56')
     expect(cls).not.toContain('h-9')
   })
+
+  // 이름을 치고 Enter 로 바로 집는 화면이 있다(멘토링 수강생 선택, 2026-08-05 QA).
+  it('Enter 로 onEnter 를 부른다', async () => {
+    const user = userEvent.setup()
+    const onEnter = vi.fn()
+    render(
+      <SearchInput
+        value="박수진"
+        onChange={vi.fn()}
+        ariaLabel="수강생 검색"
+        onEnter={onEnter}
+      />,
+    )
+
+    await user.type(screen.getByLabelText('수강생 검색'), '{Enter}')
+
+    expect(onEnter).toHaveBeenCalledOnce()
+  })
+
+  it('onEnter 가 없으면 Enter 를 가로채지 않는다', async () => {
+    const user = userEvent.setup()
+    render(<SearchInput value="" onChange={vi.fn()} ariaLabel="검색" />)
+
+    // 예외 없이 통과하면 된다 — 기본 동작을 막지 않는다.
+    await user.type(screen.getByLabelText('검색'), '{Enter}')
+
+    expect(screen.getByLabelText('검색')).toBeInTheDocument()
+  })
 })

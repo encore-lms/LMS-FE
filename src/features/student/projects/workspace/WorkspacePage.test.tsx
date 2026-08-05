@@ -326,9 +326,11 @@ describe('WorkspacePage home', () => {
     const user = userEvent.setup()
     renderPage('/student/projects/p1?tab=peer-evaluation')
 
-    // 화면에 그려진 점수 슬라이더를 전부 채운다.
-    for (const s of screen.getAllByRole('slider')) {
-      fireEvent.change(s, { target: { value: '5' } })
+    // 화면에 그려진 리커트 라디오(4축 개편)를 전부 5점으로 채운다.
+    for (const group of screen.getAllByRole('radiogroup')) {
+      fireEvent.click(
+        Array.from(group.querySelectorAll('[role="radio"]'))[4] as HTMLElement,
+      )
     }
     await user.type(
       screen.getAllByPlaceholderText(/선택 코멘트/)[0],

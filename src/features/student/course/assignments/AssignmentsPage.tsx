@@ -5,7 +5,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../useCourseHubHeader'
 import { useAssignments } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import type { AssignmentListItem, AssignmentStatus, DueTone } from './types'
@@ -52,7 +52,7 @@ const DUE_TONE: Record<DueTone, string> = {
 export default function AssignmentsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAssignments()
-  usePageHeader('과제/실습')
+  useCourseHubHeader()
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
 

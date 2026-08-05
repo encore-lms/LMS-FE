@@ -16,6 +16,8 @@ export interface TsUpsertBody {
   tags: string[]
   links: string[]
   projectId: string | null
+  /** 문제를 겪은 날(YYYY-MM-DD). 안 골랐으면 null — 오늘로 대신 채우지 않는다. */
+  occurredOn: string | null
 }
 
 // 트러블슈팅 훅 — 엔드포인트가 /student/* 라 학생 feature 소유. baseURL /api 라 경로 앞 /api 생략.

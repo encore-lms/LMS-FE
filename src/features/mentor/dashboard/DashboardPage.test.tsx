@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from './DashboardPage'
@@ -31,41 +31,37 @@ function renderPage() {
 }
 
 describe('DashboardPage', () => {
-  it('히어로·팀 카드·해야 할 일·예정·테이블·최근 일지를 렌더한다', () => {
+  it('히어로·손이 필요한 팀·예정·최근 일지를 렌더한다', () => {
     mockHook({ data: buildDashboardData(), isPending: false, isError: false })
     renderPage()
     // 제목은 본문 h1이 아니라 공유 헤더(usePageHeader)에 등록된다.
     expect(usePageHeaderStore.getState().title).toBe('대시보드')
     expect(screen.getByText('안녕하세요, 임수현 멘토님')).toBeInTheDocument()
-    // 팀 3장 — 카드 + 테이블 양쪽 노출
-    expect(screen.getAllByText('추천시스템 팀').length).toBeGreaterThan(1)
-    expect(screen.getAllByText('데이터마트 팀').length).toBeGreaterThan(1)
-    expect(screen.getAllByText('트러블슈팅 팀').length).toBeGreaterThan(1)
-    // 완료 팀(NLP 분석)은 대시보드 미노출
-    expect(screen.queryByText('NLP 분석 팀')).not.toBeInTheDocument()
-    expect(screen.getByText('일지 작성 필요')).toBeInTheDocument()
+    // 손이 필요한 팀만 — 목록은 '내 배정 팀'이 맡는다(2026-08-05 재구성).
+    // 같은 팀이 카드로 한 번·표로 또 한 번 나오던 중복을 걷어냈다.
+    const 손 = screen
+      .getByText('지금 손이 필요해요')
+      .closest('section') as HTMLElement
+    expect(within(손).getByText('일지 수정 요청')).toBeInTheDocument()
+    expect(within(손).getByText('평가 필요')).toBeInTheDocument()
+    expect(within(손).getByText('트러블슈팅 팀')).toBeInTheDocument()
+    // 진행 중·완료 팀은 여기 나오지 않는다 — 할 일이 아니다.
+    expect(within(손).queryByText('추천시스템 팀')).not.toBeInTheDocument()
+    expect(within(손).queryByText('NLP 분석 팀')).not.toBeInTheDocument()
     expect(screen.getByText('예정된 멘토링')).toBeInTheDocument()
-    expect(screen.getByText('배정 팀 목록')).toBeInTheDocument()
     expect(screen.getByText('최근 멘토링 일지')).toBeInTheDocument()
-    // 'N시간 완료'는 상태가 아닌 보조 라벨로 표기
-    expect(screen.getAllByText(/N시간 완료/).length).toBeGreaterThan(0)
-    // 수정 요청 일지 상태 칩 — 사유 메모는 칩 아래 별도 줄로 병기
-    expect(screen.getAllByText('수정 요청').length).toBeGreaterThan(0)
-    expect(screen.getByText('일지 보강 필요')).toBeInTheDocument()
+    // 목록으로 가는 길만 남긴다
+    expect(
+      screen.getByRole('link', { name: /내 배정 팀 .*전체 보기/ }),
+    ).toHaveAttribute('href', '/mentor/teams')
   })
 
   it('비용·정산·매출 표현이 없다 — 활동 인정 요건 캡션만 허용', () => {
     mockHook({ data: buildDashboardData(), isPending: false, isError: false })
     const { container } = renderPage()
-    // Figma 원문 캡션(유일하게 '비용'이 등장하는 안내 문구)은 존재해야 한다.
-    expect(
-      screen.getByText('비용 표현 없이 활동 인정 요건으로 안내'),
-    ).toBeInTheDocument()
-    const text = (container.textContent ?? '').replace(
-      '비용 표현 없이 활동 인정 요건으로 안내',
-      '',
-    )
-    expect(text).not.toMatch(/비용|정산|매출/)
+    // 그 캡션이 달려 있던 '해야 할 일' 헤더를 걷어내며 문구도 함께 사라졌다(2026-08-05).
+    // 화면 어디에도 비용 표현이 없어야 한다는 규칙은 그대로다.
+    expect(container.textContent ?? '').not.toMatch(/비용|정산|매출/)
   })
 
   it('로딩·에러 상태를 표시한다', () => {
@@ -101,5 +97,24 @@ describe('DashboardPage', () => {
     const open = screen.getAllByRole('button', { name: /일지 보기/ })[0]
     await user.click(open)
     expect(screen.getByText(/그 자리 일지 모달/)).toBeInTheDocument()
+  })
+
+  it('손이 필요한 팀이 없으면 비어 있다고 말한다', () => {
+    // 빈 카드만 덩그러니 두면 로딩 중인지 할 일이 없는지 알 수 없다.
+    const base = buildDashboardData()
+    mockHook({
+      data: {
+        ...base,
+        teamCards: base.teamCards.map((t) => ({
+          ...t,
+          status: 'in_progress' as const,
+        })),
+      },
+      isPending: false,
+      isError: false,
+    })
+    renderPage()
+    expect(screen.getByText('지금 할 일이 없어요')).toBeInTheDocument()
+    expect(screen.queryByText('지금 손이 필요해요')).not.toBeInTheDocument()
   })
 })

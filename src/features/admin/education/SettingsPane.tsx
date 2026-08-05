@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import {
   BookOpen,
-  CalendarRange,
   ChevronRight,
   Coins,
   Gamepad2,
@@ -273,20 +272,6 @@ export function SettingsPane({
                   {effective('play') ? '활성화' : '비활성'}
                 </span>
               </>
-            }
-          />
-          <SettingRow
-            icon={<CalendarRange className="h-4 w-4" />}
-            title="단위기간 설정"
-            description="훈련 차수 및 단위 기간을 설정하고 관리합니다."
-            control={
-              <GoButton
-                label="설정"
-                // TODO: 단위 기간 설정 화면(BE 단위기간 계약 확정 후)
-                onClick={() =>
-                  toast.info('단위 기간 설정 화면은 준비 중입니다.')
-                }
-              />
             }
           />
           <SettingRow

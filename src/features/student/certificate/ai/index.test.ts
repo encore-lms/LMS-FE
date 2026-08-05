@@ -160,13 +160,61 @@ describe('fetchCertificateScore', () => {
       tabs.tech.assessments
         .filter((assessment) => assessment.assessmentType === 'CS')
         .map((assessment) => assessment.score),
-    ).toEqual([58, 80])
+    ).toEqual([68, 74, 79, 83])
     expect(
       tabs.tech.categories
         .filter((category) => category.assessmentType === 'CS')
         .map((category) => category.label),
-    ).toEqual(['자료구조·운영체제', '네트워크·데이터베이스'])
-    expect(tabs.tech.certifications.length).toBeGreaterThan(0)
+    ).toEqual(['자료구조·알고리즘', '운영체제', '네트워크', '데이터베이스'])
+    expect(
+      tabs.tech.categories
+        .filter((category) => category.assessmentType === 'ACHIEVEMENT')
+        .reduce((sum, category) => sum + category.score, 0) / 4,
+    ).toBe(81)
+    expect(
+      tabs.tech.categories
+        .filter((category) => category.assessmentType === 'CS')
+        .reduce((sum, category) => sum + category.score, 0) / 4,
+    ).toBe(76)
+    expect(
+      tabs.tech.certifications.map(({ name, grade, score, status }) => ({
+        name,
+        grade,
+        score,
+        status,
+      })),
+    ).toEqual([
+      {
+        name: '정보처리기사',
+        grade: '최종합격',
+        score: null,
+        status: 'APPROVED',
+      },
+      {
+        name: 'SQL 개발자(SQLD)',
+        grade: '최종합격',
+        score: null,
+        status: 'APPROVED',
+      },
+      {
+        name: 'PCCE — 파이썬 코딩 입문',
+        grade: 'LV.4',
+        score: 940,
+        status: 'APPROVED',
+      },
+      {
+        name: 'PCCP — 파이썬 코딩 전문',
+        grade: 'LV.4',
+        score: 820,
+        status: 'APPROVED',
+      },
+      {
+        name: 'PCSQL — SQL 개발자 1급',
+        grade: 'LV.3',
+        score: 830,
+        status: 'APPROVED',
+      },
+    ])
     expect(tabs.problem.peerTags.length).toBeGreaterThan(0)
     expect(tabs.problem.cases).toHaveLength(12)
     expect(

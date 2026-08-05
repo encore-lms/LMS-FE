@@ -44,6 +44,11 @@ describe('AssessmentTrendChart', () => {
     expect(screen.getByText('성취도 평가 · 평균 이상')).toBeInTheDocument()
     expect(screen.getByText(/상위 18%/)).toBeInTheDocument()
     expect(screen.getByText('시험별 기수 평균')).toBeInTheDocument()
+    expect(screen.getByText('파이썬 기초')).toBeInTheDocument()
+    expect(screen.getByText('SQL 활용')).toBeInTheDocument()
+    expect(screen.getByText('2026.03.18')).toBeInTheDocument()
+    expect(screen.getByText('2026.04.02')).toBeInTheDocument()
+    expect(screen.queryByText(/^Q[12]$/)).not.toBeInTheDocument()
     expect(screen.getByText(/최근 5회 절대 평균\s*88.0점/)).toHaveTextContent(
       '유효 2회 · +0.0점',
     )
@@ -82,7 +87,7 @@ describe('AssessmentTrendChart', () => {
     )
     expect(averageTooltip).toHaveTextContent('SKN 4기 파이썬 기초 성취도평가')
     expect(averageTooltip).toHaveTextContent('파이썬')
-    expect(averageTooltip).toHaveTextContent('Q1 기수 평균')
+    expect(averageTooltip).toHaveTextContent('파이썬 · 기수 평균')
     expect(averageTooltip).toHaveTextContent('평균 점수86점')
     expect(averageTooltip).toHaveTextContent('비교 표본 36명')
     fireEvent.mouseLeave(firstAverage)

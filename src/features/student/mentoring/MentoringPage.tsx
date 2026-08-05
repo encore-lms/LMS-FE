@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast, type ToastTone } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import {
   useAcceptMentoringProposal,
   useCancelMentoringRequest,
@@ -94,7 +94,7 @@ function limitReachedReason(policy: MentoringRequestPolicy) {
  */
 export default function MentoringPage() {
   const { data, isPending, isError, refetch } = useMentoring()
-  usePageHeader('멘토링')
+  useCourseHubHeader()
 
   return (
     <DataBoundary

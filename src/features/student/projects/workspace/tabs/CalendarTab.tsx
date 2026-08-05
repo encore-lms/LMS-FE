@@ -105,6 +105,12 @@ export function CalendarTab({
     ...Array.from({ length: offset }, () => null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
+  /**
+   * 프로젝트 기간 안의 날인지 — 기간 밖은 일정을 넣을 수 없어 흐리게 표시한다.
+   * 기간이 비어 있으면(옛 프로젝트) 제한하지 않는다.
+   */
+  const inPeriod = (ds: string) =>
+    (!d.startDate || ds >= d.startDate) && (!d.endDate || ds <= d.endDate)
   const eventsOf = (day: number) =>
     events.filter((e) => e.date === dateStr(cursor.y, cursor.m, day))
   const prevMonth = () =>
@@ -168,11 +174,13 @@ export function CalendarTab({
                 (() => {
                   const ds = dateStr(cursor.y, cursor.m, day)
                   const isToday = ds === todayStr
+                  // 프로젝트 기간 밖 — 일정을 넣을 수 없는 날이라 흐리게 두고 클릭도 받지 않는다.
+                  const outside = !inPeriod(ds)
                   return (
                     // 칸 안에 일정별 버튼을 두어야 해서 칸 자체는 div — 버튼 안에 버튼은 둘 수 없다.
                     <div
                       key={i}
-                      {...(readOnly
+                      {...(readOnly || outside
                         ? {}
                         : {
                             role: 'button',
@@ -188,12 +196,14 @@ export function CalendarTab({
                           })}
                       className={cn(
                         'flex min-h-[78px] flex-col items-start gap-1 rounded-lg border p-1.5 text-left transition-colors',
-                        !readOnly && 'cursor-pointer',
+                        !readOnly && !outside && 'cursor-pointer',
+                        outside && 'bg-surface-muted/40 opacity-45',
                         isToday
                           ? 'border-brand bg-brand/5'
                           : cn(
                               'border-border',
                               !readOnly &&
+                                !outside &&
                                 'hover:border-brand/50 hover:bg-surface-muted/60',
                             ),
                       )}
@@ -265,6 +275,7 @@ export function CalendarTab({
       </div>
       {editing && (
         <AddScheduleModal
+          period={{ start: d.startDate, end: d.endDate }}
           initialDate={editing.date}
           editing={editing}
           onClose={() => setEditing(null)}
@@ -318,6 +329,7 @@ export function CalendarTab({
       </ConfirmDialog>
       {addDate !== null && (
         <AddScheduleModal
+          period={{ start: d.startDate, end: d.endDate }}
           initialDate={addDate}
           onClose={() => setAddDate(null)}
           onAdd={(item) => {
@@ -345,12 +357,15 @@ export function CalendarTab({
 
 function AddScheduleModal({
   initialDate,
+  period,
   editing,
   onClose,
   onDelete,
   onAdd,
 }: {
   initialDate: string
+  /** 프로젝트 기간 — 이 밖의 날짜는 고를 수 없다. */
+  period: { start?: string | null; end?: string | null }
   /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
   editing?: CalItem
   onClose: () => void
@@ -426,6 +441,9 @@ function AddScheduleModal({
             onChange={setDate}
             ariaLabel="일정 날짜"
             placeholder="날짜 선택"
+            // 프로젝트 기간 밖은 고를 수 없다 — 기간 밖 일정은 이 프로젝트의 기록이 아니다.
+            min={period.start ?? undefined}
+            max={period.end ?? undefined}
           />
           {date && (
             <span className="text-fg-subtle text-[11px]">

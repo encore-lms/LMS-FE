@@ -8,7 +8,7 @@ const CERT_TABS: { key: CertTab; label: string }[] = [
   { key: 'tech', label: '기술·검증' },
   { key: 'projects', label: '프로젝트' },
   { key: 'problem-solving', label: '문제해결·협업' },
-  { key: 'growth-reputation', label: '성장·평판' },
+  { key: 'growth-reputation', label: '평가·추천' },
   { key: 'resume', label: '이력서' },
 ]
 // AI 해석 콘텐츠는 데이터 탭에서 분리해 전용 탭으로(데이터 vs AI 구분).

@@ -429,13 +429,15 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.queryByText(/API 조회를 점검했습니다.*…/)).toBeNull()
   })
 
-  it('성장 궤적·4평가자 비교·코멘트와 추천서를 증명서 형식으로 표시한다', () => {
+  it('역할별 4축 평가·추천서·코멘트를 평가·추천 형식으로 표시한다', () => {
     renderWithQuery(<GrowthTab g={growth} score={scoreResult} />)
 
-    expect(screen.getByText('전체 시험 6회 +32점')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: '평가·추천' }),
+    ).toBeInTheDocument()
     expect(screen.getByText('4평가자 · 공통 4축 비교')).toBeInTheDocument()
     expect(document.querySelector('[data-evaluator-role-grid]')).toHaveClass(
-      'xl:grid-cols-4',
+      'lg:grid-cols-4',
     )
     expect(document.querySelectorAll('[data-evaluator-role]')).toHaveLength(4)
     expect(
@@ -458,126 +460,24 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(
       document.querySelector('[data-comments-recommendations-row]'),
     ).toHaveClass('lg:grid-cols-2')
-
-    expect(document.querySelector('[data-growth-trend-line]')).toBeTruthy()
-    const growthBar = document.querySelector(
-      '[data-growth-bar="2024-07-09"]',
-    ) as HTMLElement
-    fireEvent.mouseMove(growthBar, { clientX: 160, clientY: 120 })
-    const subjectTooltip = document.querySelector(
-      '[data-growth-subject-tooltip="2024-07-09"]',
-    )
-    expect(subjectTooltip).toHaveTextContent('머신러닝')
-    expect(subjectTooltip).toHaveTextContent('75점')
-    expect(subjectTooltip).not.toHaveTextContent('2024-07-09')
-    expect(subjectTooltip).not.toHaveTextContent('성취도 평가')
-    fireEvent.mouseLeave(growthBar)
-    fireEvent.mouseMove(
-      document.querySelector('[data-growth-chart-area]') as HTMLElement,
-      { clientX: 160, clientY: 40 },
-    )
-    expect(
-      document.querySelector('[data-growth-subject-tooltip]'),
-    ).not.toBeInTheDocument()
-
-    fireEvent.mouseEnter(
-      screen.getByRole('button', {
-        name: '2024-07-09 머신러닝 성취도 평가 75점 성장 추세 비교',
-      }),
-    )
-    const growthTooltip = screen.getByRole('tooltip')
-    expect(growthTooltip).toHaveTextContent('머신러닝 성취도 평가')
-    expect(growthTooltip).toHaveTextContent('2024-07-09 · 성취도 평가')
-    expect(growthTooltip).toHaveTextContent('현재 시험')
-    expect(growthTooltip).toHaveTextContent('직전 시험')
-    expect(growthTooltip.textContent?.indexOf('직전 시험')).toBeLessThan(
-      growthTooltip.textContent?.indexOf('현재 시험') ?? 0,
-    )
-    expect(growthTooltip).toHaveTextContent('7점')
-    expect(document.querySelector('[data-growth-chart-area]')).toHaveClass(
-      'z-auto',
-    )
-    expect(screen.getByText('04.17')).toBeInTheDocument()
-    expect(screen.getByText('08.28')).toBeInTheDocument()
-    expect(screen.queryByText(/W\d+/)).not.toBeInTheDocument()
+    expect(document.querySelector('[data-growth-trend-line]')).toBeNull()
+    expect(screen.queryByText('성장 곡선 (Growth Timeline)')).toBeNull()
   })
 
-  it('상세 API의 모든 최신 유효 시험을 제출 시각 순으로 성장 그래프에 표시한다', async () => {
-    const assessments = [...growth.timeline].reverse().map((point, index) => ({
-      id: `growth-quiz-${index + 1}`,
-      title: point.title,
-      assessmentType:
-        point.type === 'CS' ? ('CS' as const) : ('ACHIEVEMENT' as const),
-      category: point.title,
-      score: point.score,
-      cohortAverageScore: null,
-      relativeScore: null,
-      comparisonCount: 0,
-      submittedAt: `${point.date}T09:00:00`,
-    }))
-    vi.mocked(fetchCertificateDetailTabs).mockResolvedValue({
-      ...result,
-      tech: { ...result.tech, assessments },
-    })
+  it('평가·추천 데이터는 시험 상세를 중복 조회하지 않고 4축 점수만 조회한다', async () => {
+    vi.mocked(fetchCertificateDetailTabs).mockClear()
+    vi.mocked(fetchCertificateScore).mockClear()
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
 
     renderWithQuery(
       <GrowthTabData g={{ ...growth, timeline: [] }} studentId="student-1" />,
     )
 
-    expect(await screen.findByText('전체 시험 6회 +32점')).toBeInTheDocument()
-    const points = Array.from(
-      document.querySelectorAll('[data-growth-trend-point]'),
-    )
-    expect(points).toHaveLength(6)
-    expect(points[0]).toHaveAttribute(
-      'aria-label',
-      expect.stringContaining('2024-04-17'),
-    )
-    expect(points.at(-1)).toHaveAttribute(
-      'aria-label',
-      expect.stringContaining('2024-08-28'),
-    )
     expect(
-      document.querySelector('[data-growth-chart-scroll-content]'),
-    ).toHaveStyle({ width: '560px' })
-    expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
+      await screen.findByText('4평가자 · 공통 4축 비교'),
+    ).toBeInTheDocument()
+    expect(fetchCertificateDetailTabs).not.toHaveBeenCalled()
     expect(fetchCertificateScore).toHaveBeenCalledWith('student-1')
-  })
-
-  it('시험이 많으면 모든 점을 유지하고 8회 단위 탐색 제어를 표시한다', () => {
-    const longTimeline = Array.from({ length: 12 }, (_, index) => ({
-      id: `quiz-${index + 1}`,
-      date: `2024-${String(Math.floor(index / 2) + 1).padStart(2, '0')}-${index % 2 === 0 ? '05' : '20'}`,
-      type: index % 3 === 0 ? 'CS' : '성취도',
-      title: `${index + 1}회 평가`,
-      score: 60 + index,
-    }))
-
-    renderWithQuery(
-      <GrowthTab
-        g={{ ...growth, timeline: longTimeline }}
-        score={scoreResult}
-      />,
-    )
-
-    expect(
-      screen.getByRole('button', { name: '이전 시험 점수 보기' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: '다음 시험 점수 보기' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('region', {
-        name: '전체 시험 점수 시간순 그래프 12회',
-      }),
-    ).toHaveAttribute('tabindex', '0')
-    expect(
-      document.querySelector('[data-growth-chart-scroll-content]'),
-    ).toHaveStyle({ width: '912px' })
-    expect(document.querySelectorAll('[data-growth-trend-point]')).toHaveLength(
-      12,
-    )
   })
 
   it('팀원 한줄 코멘트를 기본 비공개로 두고 최대 5개까지만 공개한다', () => {

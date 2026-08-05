@@ -203,6 +203,7 @@ export function AssessmentTrendChart({
   title = '시험 추세',
   emptyMessage = '표시할 시험 이력이 없습니다.',
   showAverageRank = true,
+  tone = 'achievement',
 }: {
   assessments: CertificateTechDetail['assessments']
   averageTopPercent: number | null
@@ -210,6 +211,7 @@ export function AssessmentTrendChart({
   title?: string
   emptyMessage?: string
   showAverageRank?: boolean
+  tone?: 'achievement' | 'cs'
 }) {
   const assessmentChartRef = useRef<HTMLDivElement>(null)
   const [focusedAssessmentIndex, setFocusedAssessmentIndex] = useState<
@@ -230,6 +232,28 @@ export function AssessmentTrendChart({
       : assessments.reduce((sum, assessment) => sum + assessment.score, 0) /
         assessments.length
   const trendPath = buildAssessmentTrendPath(assessments)
+  const toneStyle =
+    tone === 'cs'
+      ? {
+          label: 'CS 평가',
+          line: 'stroke-info',
+          pointHalo: 'bg-info/15 group-hover:bg-info/25',
+          point: 'border-info',
+          aboveBar: 'bg-gradient-to-t from-info to-info/65',
+          belowBar: 'border border-info/30 bg-info-bg',
+          text: 'text-info',
+          legend: 'border-info',
+        }
+      : {
+          label: '성취도 평가',
+          line: 'stroke-accent-strong',
+          pointHalo: 'bg-accent-strong/15 group-hover:bg-accent-strong/25',
+          point: 'border-accent-strong',
+          aboveBar: 'bg-gradient-to-t from-accent-strong to-brand',
+          belowBar: 'border border-accent-strong/30 bg-accent-bg',
+          text: 'text-accent-strong',
+          legend: 'border-accent-strong',
+        }
   const hoveredAssessmentSubject =
     subjectHover === null ? null : assessments[subjectHover.index]
 
@@ -256,7 +280,10 @@ export function AssessmentTrendChart({
   }
 
   return (
-    <section className={cn(card, 'flex flex-col gap-5')}>
+    <section
+      data-assessment-trend-tone={tone}
+      className={cn(card, 'flex flex-col gap-5')}
+    >
       <div className="flex flex-col gap-1">
         <h3 className="text-fg text-[15px] font-bold">{title}</h3>
         <span
@@ -310,7 +337,7 @@ export function AssessmentTrendChart({
                     d={trendPath}
                     fill="none"
                     vectorEffect="non-scaling-stroke"
-                    className="stroke-accent opacity-20"
+                    className={cn(toneStyle.line, 'opacity-20')}
                     strokeWidth="7"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -320,7 +347,7 @@ export function AssessmentTrendChart({
                     d={trendPath}
                     fill="none"
                     vectorEffect="non-scaling-stroke"
-                    className="stroke-accent"
+                    className={toneStyle.line}
                     strokeWidth="1.75"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -436,8 +463,18 @@ export function AssessmentTrendChart({
                           onFocus={() => setFocusedAssessmentIndex(index)}
                           onBlur={() => setFocusedAssessmentIndex(null)}
                         >
-                          <span className="bg-accent/15 group-hover:bg-accent/25 flex size-5 items-center justify-center rounded-full transition-colors">
-                            <span className="border-accent bg-surface pointer-events-none size-2.5 rounded-full border-2 shadow-sm transition-transform group-hover:scale-110" />
+                          <span
+                            className={cn(
+                              'flex size-5 items-center justify-center rounded-full transition-colors',
+                              toneStyle.pointHalo,
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'bg-surface pointer-events-none size-2.5 rounded-full border-2 shadow-sm transition-transform group-hover:scale-110',
+                                toneStyle.point,
+                              )}
+                            />
                           </span>
                         </button>
                         {focusedAssessmentIndex === index && (
@@ -484,7 +521,12 @@ export function AssessmentTrendChart({
                                   </span>
                                 </p>
                               </div>
-                              <div className="border-accent border-l-2 pl-2">
+                              <div
+                                className={cn(
+                                  'border-l-2 pl-2',
+                                  toneStyle.point,
+                                )}
+                              >
                                 <p className="text-surface/65 text-[9px] font-semibold">
                                   현재 시험
                                 </p>
@@ -530,13 +572,20 @@ export function AssessmentTrendChart({
                         )}
                         <div
                           data-assessment-bar={assessment.id}
+                          data-average-position={
+                            isAboveAverage === null
+                              ? 'unavailable'
+                              : isAboveAverage
+                                ? 'above'
+                                : 'below'
+                          }
                           className={cn(
                             'relative w-full max-w-7 rounded-t-md',
                             isAboveAverage === null
                               ? 'bg-fg-muted'
                               : isAboveAverage
-                                ? 'bg-brand'
-                                : 'bg-info',
+                                ? toneStyle.aboveBar
+                                : toneStyle.belowBar,
                           )}
                           style={{
                             height: `${clampScore(assessment.score)}%`,
@@ -549,11 +598,7 @@ export function AssessmentTrendChart({
                           <span
                             className={cn(
                               'absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold tabular-nums',
-                              isAboveAverage === null
-                                ? 'text-fg-muted'
-                                : isAboveAverage
-                                  ? 'text-brand'
-                                  : 'text-info',
+                              toneStyle.text,
                             )}
                           >
                             {formatNumber(assessment.score)}
@@ -584,7 +629,12 @@ export function AssessmentTrendChart({
                         <p className="text-[11px] leading-4 font-semibold">
                           {assessmentSubject(hoveredAssessmentSubject.title)}
                         </p>
-                        <span className="text-accent-bg shrink-0 text-[11px] font-bold tabular-nums">
+                        <span
+                          className={cn(
+                            'shrink-0 text-[11px] font-bold tabular-nums',
+                            toneStyle.text,
+                          )}
+                        >
                           {formatNumber(hoveredAssessmentSubject.score)}점
                         </span>
                       </div>
@@ -616,18 +666,30 @@ export function AssessmentTrendChart({
 
           <div className="text-fg-muted flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px]">
             <span className="flex items-center gap-1.5">
-              <span className="bg-info size-2.5 rounded-sm" /> 평균 미만
+              <span className={cn('size-2.5 rounded-sm', toneStyle.aboveBar)} />
+              {toneStyle.label} · 평균 이상
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="bg-brand size-2.5 rounded-sm" /> 평균 이상
+              <span className={cn('size-2.5 rounded-sm', toneStyle.belowBar)} />
+              {toneStyle.label} · 평균 미만
             </span>
             <span className="flex items-center gap-1.5">
               <span className="border-danger w-5 border-t-2 border-dashed" />
               시험별 기수 평균
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="border-accent relative w-5 border-t-2 border-solid">
-                <span className="bg-surface border-accent absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2" />
+              <span
+                className={cn(
+                  'relative w-5 border-t-2 border-solid',
+                  toneStyle.legend,
+                )}
+              >
+                <span
+                  className={cn(
+                    'bg-surface absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2',
+                    toneStyle.point,
+                  )}
+                />
               </span>
               실제 점수 추세
             </span>
@@ -833,6 +895,7 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
             averagePopulationSize={tech.assessmentAveragePopulationSize}
             title="성취도 평가 시험 추세"
             emptyMessage="표시할 성취도 평가 이력이 없습니다."
+            tone="achievement"
             showAverageRank={false}
           />
         </div>
@@ -843,6 +906,7 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
             averagePopulationSize={tech.assessmentAveragePopulationSize}
             title="CS 평가 시험 추세"
             emptyMessage="표시할 CS 평가 이력이 없습니다."
+            tone="cs"
             showAverageRank={false}
           />
         </div>

@@ -156,11 +156,11 @@ export default function PublicationPage() {
             </div>
           </section>
 
-          {/* 성장·평판 공개 항목 */}
+          {/* 평가·추천 공개 항목 */}
           <section className={cn(card, 'flex flex-col')}>
             <div className="flex flex-col gap-0.5 px-6 pt-5 pb-1">
               <span className="text-fg text-[15px] font-bold">
-                성장·평판 공개 항목
+                평가·추천 공개 항목
               </span>
               <span className="text-fg-subtle text-[12px]">
                 동료 평가 / ShortComment 공개 여부 · 기본 OFF · 수료일
@@ -247,7 +247,8 @@ export default function PublicationPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (qr.downloadPng()) toast.success('PNG를 내려받았어요')
+                        if (qr.downloadPng())
+                          toast.success('PNG를 내려받았어요')
                         else toast.danger('QR을 만들지 못했어요')
                       }}
                       className={buttonClass({ size: 'sm' })}
@@ -257,7 +258,8 @@ export default function PublicationPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (qr.downloadSvg()) toast.success('SVG를 내려받았어요')
+                        if (qr.downloadSvg())
+                          toast.success('SVG를 내려받았어요')
                         else toast.danger('QR을 만들지 못했어요')
                       }}
                       className="border-border text-fg rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
@@ -420,9 +422,7 @@ export default function PublicationPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() =>
-                  window.open(verifyPath, '_blank', 'noopener')
-                }
+                onClick={() => window.open(verifyPath, '_blank', 'noopener')}
                 className="rounded-lg border border-white/30 px-4 py-2.5 text-[13px] font-semibold"
               >
                 공개 페이지 미리보기

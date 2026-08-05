@@ -53,6 +53,10 @@ const PlayBulkUploadPage = lazy(() => import('./play/bulk/BulkUploadPage'))
 const IntegrationsPage = lazy(() => import('./integrations/IntegrationsPage'))
 // 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
 const MileageHistoryPage = lazy(() => import('./mileage/history/HistoryPage'))
+// 수강생 마일리지 이력 (지급 내역 '상세' 진입 — 한 사람의 지급·차감 흐름)
+const MileageStudentHistoryPage = lazy(
+  () => import('./mileage/history/StudentHistoryPage'),
+)
 // 마일리지 직접 지급 (클러스터 sub — features/admin/mileage/direct-pay, Figma 1226:6549)
 const MileageDirectPayPage = lazy(
   () => import('./mileage/direct-pay/DirectPayPage'),
@@ -181,6 +185,10 @@ export const adminRoutes: RouteObject[] = [
         element: <Navigate to="/admin/mileage/history" replace />,
       },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
+      {
+        path: 'mileage/history/students/:studentUserId',
+        element: <MileageStudentHistoryPage />,
+      },
       { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },
       { path: 'mileage/purchase-requests', element: <MileagePurchasePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },

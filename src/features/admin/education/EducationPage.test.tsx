@@ -182,7 +182,7 @@ describe('EducationPage (기수 허브)', () => {
     expect(screen.getByText('기록실 임베드')).toBeInTheDocument()
   })
 
-  // 과정 정보와 기능 설정(마일리지·PLAY·단위기간·커리큘럼)을 한 패널이 갖는다.
+  // 과정 정보와 기능 설정(마일리지·PLAY·커리큘럼)을 한 패널이 갖는다.
   it('설정 탭은 과정 설정 패널을 그 기수로 보여준다', () => {
     renderHub('?tab=settings')
     expect(screen.getByText('과정 설정 패널 cohort-34')).toBeInTheDocument()

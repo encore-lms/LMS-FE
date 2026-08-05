@@ -14,7 +14,7 @@ vi.mock('./CurriculumModal', () => ({
     open ? <div>커리큘럼 모달</div> : null,
 }))
 
-// 과정 설정 탭 — 과정 정보 + 기능 설정(마일리지·PLAY·단위기간·커리큘럼).
+// 과정 설정 탭 — 과정 정보 + 기능 설정(마일리지·PLAY·커리큘럼).
 
 const mutateAsync = vi.fn().mockResolvedValue({})
 

@@ -57,9 +57,9 @@ const overview: MileageHistoryData = {
   footer: { total: 482, grant: 312, deduct: 162, partial: 5, failed: 3 },
 }
 
-function renderPage() {
+function renderPage(over: Partial<MileageHistoryData> = {}) {
   vi.mocked(useMileageHistory).mockReturnValue({
-    data: overview,
+    data: { ...overview, ...over },
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useMileageHistory>)
@@ -78,8 +78,9 @@ describe('HistoryPage (마일리지 지급 내역)', () => {
     expect(screen.getByText('+312,500M')).toBeInTheDocument()
     expect(screen.getByText('중간 발표 우수상 지급')).toBeInTheDocument()
     expect(screen.getByText('구매 승인 → 차감')).toBeInTheDocument()
+    // 하단 집계는 화면에 보이는 행 기준 — 서버 전체값(482건)은 괄호로 덧붙인다.
     expect(
-      screen.getByText('총 482건 · 지급 312 · 차감 162 · 부분 5 · 실패 3'),
+      screen.getByText(/총 2건 · 지급 1 · 차감 1 · 부분 0 · 실패 0/),
     ).toBeInTheDocument()
   })
 
@@ -103,5 +104,33 @@ describe('HistoryPage (마일리지 지급 내역)', () => {
     expect(
       await screen.findByText('CSV 내보내기는 준비 중입니다.'),
     ).toBeInTheDocument()
+  })
+
+  // 필터를 걸면 표는 줄어드는데 KPI·하단은 서버 전체값이라 숫자가 어긋났다(2026-08-05 QA).
+  it('필터를 걸면 건수도 함께 줄어든다', async () => {
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(screen.getByLabelText('구분 필터'))
+    await user.click(
+      within(screen.getByRole('listbox')).getByRole('button', { name: '차감' }),
+    )
+
+    expect(
+      screen.getByText(/총 1건 · 지급 0 · 차감 1 · 부분 0 · 실패 0/),
+    ).toBeInTheDocument()
+    expect(screen.getByText('1건')).toBeInTheDocument()
+  })
+
+  // 구매는 요청 즉시 차감이라 승인 전에도 원장에 남는다 — 확정 차감과 구분해야 한다.
+  it('승인 전 구매는 승인 검토로 표시한다', () => {
+    renderPage({ rows: [{ ...overview.rows[1], pending: true }] })
+
+    expect(screen.getByText('승인 검토')).toBeInTheDocument()
+  })
+
+  it('승인이 끝난 거래는 원래 구분 배지를 쓴다', () => {
+    renderPage()
+
+    expect(screen.queryByText('승인 검토')).not.toBeInTheDocument()
   })
 })

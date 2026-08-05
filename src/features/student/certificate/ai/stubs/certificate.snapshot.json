@@ -370,8 +370,8 @@
         "key": "성취도 평가",
         "score": 94.3,
         "status": "READY",
-        "source": "채점 완료된 성취도 평가의 최신 유효 응시 점수 전체 평균",
-        "detail": "채점 완료 4/4건 전체 평균 94.3점",
+        "source": "채점 완료된 성취도 평가와 CS 평가의 최신 유효 응시 점수 전체 평균",
+        "detail": "성취도·CS 평가 채점 완료 4/4건 전체 평균 94.3점",
         "relative": {
           "status": "READY",
           "scope": "COHORT",
@@ -387,14 +387,14 @@
         "evidence": [
           {
             "key": "achievementAssessment",
-            "label": "성취도 평가 전체 평균",
+            "label": "성취도·CS 평가 전체 평균",
             "value": 94.25,
             "unit": "점",
             "numerator": 4,
             "denominator": 4,
             "weightPercent": 100,
             "appliedScore": 94.25,
-            "detail": "채점 완료 4/4건 전체 평균 94.3점"
+            "detail": "성취도·CS 평가 채점 완료 4/4건 전체 평균 94.3점"
           }
         ]
       }
@@ -407,16 +407,7 @@
         "maximum": 100,
         "unit": "점",
         "status": "READY",
-        "detail": "채점 완료 4/4건 전체 평균 94.3점"
-      },
-      {
-        "key": "certifiedTroubleshooting",
-        "label": "트러블슈팅 인증사례",
-        "value": 4,
-        "maximum": 6,
-        "unit": "건",
-        "status": "READY",
-        "detail": "인증 완료 4건 · 문제해결축 6건 기준"
+        "detail": "성취도·CS 평가 채점 완료 4/4건 전체 평균 94.3점"
       },
       {
         "key": "attendance",
@@ -428,15 +419,6 @@
         "detail": "인정 110/120일 · 결석 8일 · 지각·조퇴 환산 2일"
       },
       {
-        "key": "blog",
-        "label": "블로그 제출률",
-        "value": 100,
-        "maximum": 100,
-        "unit": "%",
-        "status": "READY",
-        "detail": "제출 완료 26/26건"
-      },
-      {
         "key": "certifiedProject",
         "label": "인증 프로젝트",
         "value": 5,
@@ -444,6 +426,33 @@
         "unit": "건",
         "status": "READY",
         "detail": "완료 프로젝트 5건 중 인증 완료"
+      },
+      {
+        "key": "certifiedTroubleshooting",
+        "label": "트러블슈팅 인증사례",
+        "value": 4,
+        "maximum": 6,
+        "unit": "건",
+        "status": "READY",
+        "detail": "인증 완료 4건 · 문제해결축 6건 기준"
+      },
+      {
+        "key": "certifiedCertificate",
+        "label": "인증 자격증",
+        "value": 2,
+        "maximum": 3,
+        "unit": "건",
+        "status": "READY",
+        "detail": "등록 3건 중 운영 승인 완료 2건"
+      },
+      {
+        "key": "evaluatorAverage",
+        "label": "다면역량 평가",
+        "value": 4.3,
+        "maximum": 5,
+        "unit": "점",
+        "status": "READY",
+        "detail": "4개 역량축별 동료·멘토·강사·운영 평가 평균 · 5점 만점"
       }
     ],
     "peerEvaluation": [

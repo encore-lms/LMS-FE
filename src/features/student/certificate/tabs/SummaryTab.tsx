@@ -11,7 +11,6 @@ import {
   fetchAiAnalysis,
   fetchCertificateScore,
   type CertificateAssessmentPoint,
-  type CertificatePeerEvaluationAxis,
   type CertificateScoreMetric,
   type CertificateScoreResult,
 } from '../ai'
@@ -35,14 +34,17 @@ const metricTone: Record<CertificateScoreMetric['key'], Tone> = {
   blog: 'accent',
   certifiedProject: 'brand',
   certifiedTroubleshooting: 'warning',
+  certifiedCertificate: 'accent',
+  evaluatorAverage: 'success',
 }
 
 const metricOrder: CertificateScoreMetric['key'][] = [
   'assessment',
   'attendance',
-  'blog',
   'certifiedProject',
   'certifiedTroubleshooting',
+  'certifiedCertificate',
+  'evaluatorAverage',
 ]
 
 function metricRoute(
@@ -53,17 +55,13 @@ function metricRoute(
   if (key === 'attendance') return '/student/attendance'
   if (key === 'blog') return '/student/records'
   if (key === 'certifiedProject') return '/student/projects'
+  if (key === 'certifiedCertificate') return '/student/records'
+  if (key === 'evaluatorAverage') {
+    return '/student/certificate?tab=growth-reputation'
+  }
   return projectNavigation.issuesProjectId
     ? `/student/projects/${encodeURIComponent(projectNavigation.issuesProjectId)}?tab=issues`
     : '/student/projects'
-}
-
-const peerAxisTone: Record<CertificatePeerEvaluationAxis['key'], Tone> = {
-  협업: 'brand',
-  소통: 'info',
-  책임감: 'success',
-  문제해결: 'accent',
-  기술기여: 'warning',
 }
 
 const domainTones: Tone[] = [
@@ -110,40 +108,54 @@ function metricToKpi(metric: CertificateScoreMetric): CertKpi {
   }
 }
 
-function PeerEvaluationKpi({
+const evaluatorAxisDefinitions = [
+  { key: '기술·기술기여', label: '기술·기술기여', tone: 'brand' },
+  { key: '소통·협업·팀워크', label: '소통·협업·팀워크', tone: 'info' },
+  { key: '문제해결', label: '문제해결', tone: 'warning' },
+  { key: '책임감', label: '책임감', tone: 'success' },
+] as const satisfies ReadonlyArray<{
+  key: CertificateScoreResult['axes'][number]['key']
+  label: string
+  tone: Tone
+}>
+
+function EvaluatorAverageKpi({
+  kpi,
   axes,
-  projectId,
 }: {
-  axes: CertificatePeerEvaluationAxis[]
-  projectId: string | null
+  kpi: CertKpi
+  axes: CertificateScoreResult['axes']
 }) {
-  const readyCount = axes.filter(
-    (axis) => axis.status === 'READY' && axis.score !== null,
-  ).length
+  const competencyAxes = evaluatorAxisDefinitions.map((definition) => {
+    const axis = axes.find((item) => item.key === definition.key)
+    const fivePointAverage =
+      axis?.score === null || axis?.score === undefined
+        ? null
+        : 1 + axis.score / 25
+
+    return { ...definition, score: fivePointAverage }
+  })
 
   return (
     <Link
-      to={
-        projectId
-          ? `/student/projects/${encodeURIComponent(projectId)}?tab=peer-evaluation`
-          : '/student/projects'
-      }
-      aria-label="동료 5축 평가 상세 보기"
-      data-summary-kpi="peerEvaluation"
-      data-summary-kpi-route={
-        projectId
-          ? `/student/projects/${encodeURIComponent(projectId)}?tab=peer-evaluation`
-          : '/student/projects'
-      }
+      to="/student/certificate?tab=growth-reputation"
+      aria-label="다면역량 평가 상세 화면으로 이동"
+      data-summary-kpi="evaluatorAverage"
+      data-summary-kpi-route="/student/certificate?tab=growth-reputation"
       className={cn(
         card,
         'focus-visible:ring-ring group flex min-w-0 flex-col gap-2 p-4 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-fg-muted truncate text-[11px] font-medium">
-          동료 5축 평가
-        </span>
+        <div className="flex min-w-0 flex-col">
+          <span className="text-fg-muted truncate text-[11px] font-medium">
+            {kpi.label}
+          </span>
+          <span className="text-fg-subtle truncate text-[9px]">
+            동료·멘토·강사·매니저 전체 평균 · 5점 만점
+          </span>
+        </div>
         <ArrowRight
           aria-hidden="true"
           className="text-fg-subtle size-3 shrink-0 transition-transform group-hover:translate-x-0.5"
@@ -151,38 +163,29 @@ function PeerEvaluationKpi({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col justify-between gap-1">
-        {axes.map((axis) => {
-          const bar =
-            axis.score === null ? 0 : Math.min(100, (axis.score / 5) * 100)
-          return (
-            <div
-              key={axis.key}
-              className="grid grid-cols-[42px_minmax(0,1fr)_26px] items-center gap-1.5"
-            >
-              <span className="text-fg-subtle truncate text-[9px] font-medium">
-                {axis.key}
-              </span>
-              <div className="bg-surface-muted h-1.5 min-w-0 overflow-hidden rounded-full">
-                <div
-                  data-peer-axis-bar={axis.key}
-                  className={cn(
-                    'h-full rounded-full',
-                    TONE_SOLID[peerAxisTone[axis.key]],
-                  )}
-                  style={{ width: `${bar}%` }}
-                />
-              </div>
-              <span className="text-fg text-right text-[9px] font-bold">
-                {axis.score?.toFixed(1) ?? '-'}
-              </span>
+        {competencyAxes.map((axis) => (
+          <div
+            key={axis.key}
+            className="grid grid-cols-[90px_minmax(0,1fr)_42px] items-center gap-1.5"
+          >
+            <span className="text-fg-subtle text-[9px] leading-3 font-medium">
+              {axis.label}
+            </span>
+            <div className="bg-surface-muted h-1.5 min-w-0 overflow-hidden rounded-full">
+              <div
+                data-evaluator-axis-bar={axis.key}
+                className={cn('h-full rounded-full', TONE_SOLID[axis.tone])}
+                style={{
+                  width: `${axis.score === null ? 0 : Math.min(100, (axis.score / 5) * 100)}%`,
+                }}
+              />
             </div>
-          )
-        })}
+            <span className="text-fg text-right text-[9px] font-bold">
+              {axis.score?.toFixed(1) ?? '-'} / 5
+            </span>
+          </div>
+        ))}
       </div>
-
-      <span className="text-fg-subtle truncate text-[9px]">
-        유효 {readyCount}/5축 · 5점 기준
-      </span>
     </Link>
   )
 }
@@ -657,7 +660,8 @@ function ScoreSummary({
     projectCount: domain.projectCount,
     tone: domainTones[index % domainTones.length],
   }))
-  const kpis = [...score.metrics]
+  const kpis = score.metrics
+    .filter((metric) => metricOrder.includes(metric.key))
     .sort((a, b) => metricOrder.indexOf(a.key) - metricOrder.indexOf(b.key))
     .map(metricToKpi)
   const highlights = score.axes
@@ -780,6 +784,15 @@ function ScoreSummary({
           className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2"
         >
           {kpis.map((kpi) => {
+            if (kpi.key === 'evaluatorAverage') {
+              return (
+                <EvaluatorAverageKpi
+                  key={kpi.key}
+                  kpi={kpi}
+                  axes={score.axes}
+                />
+              )
+            }
             const route = metricRoute(
               kpi.key as CertificateScoreMetric['key'],
               score.projectNavigation,
@@ -841,10 +854,6 @@ function ScoreSummary({
               </Link>
             )
           })}
-          <PeerEvaluationKpi
-            axes={score.peerEvaluation}
-            projectId={score.projectNavigation.peerEvaluationProjectId}
-          />
         </div>
       </div>
 

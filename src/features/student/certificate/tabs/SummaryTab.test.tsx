@@ -200,15 +200,6 @@ const scoreResult: CertificateScoreResult = {
       detail: '채점 완료 3/4건',
     },
     {
-      key: 'blog',
-      label: '블로그 제출률',
-      value: 82,
-      maximum: 100,
-      unit: '%',
-      status: 'READY',
-      detail: '제출 완료 21/26건',
-    },
-    {
       key: 'certifiedProject',
       label: '인증 프로젝트',
       value: 2,
@@ -225,6 +216,24 @@ const scoreResult: CertificateScoreResult = {
       unit: '건',
       status: 'READY',
       detail: '인증 완료 4건 · 문제해결축 6건 기준',
+    },
+    {
+      key: 'certifiedCertificate',
+      label: '인증 자격증',
+      value: 1,
+      maximum: 3,
+      unit: '건',
+      status: 'READY',
+      detail: '등록 3건 중 운영 승인 완료 1건',
+    },
+    {
+      key: 'evaluatorAverage',
+      label: '다면역량 평가',
+      value: 4.2,
+      maximum: 5,
+      unit: '점',
+      status: 'READY',
+      detail: '4개 역량축별 동료·멘토·강사·운영 평가 평균 · 5점 만점',
     },
   ],
   peerEvaluation: [
@@ -483,11 +492,20 @@ describe('SummaryTab', () => {
       screen.queryByText('수동 채점 대기 시험 1건은 계산에서 제외했습니다.'),
     ).not.toBeInTheDocument()
     expect(container.querySelectorAll('[data-summary-kpi]')).toHaveLength(6)
-    expect(screen.getByText('블로그 제출률')).toBeInTheDocument()
-    expect(screen.queryByText('과제 제출률')).not.toBeInTheDocument()
+    expect(screen.queryByText('블로그 제출률')).not.toBeInTheDocument()
     expect(screen.getByText('트러블슈팅 인증사례')).toBeInTheDocument()
-    expect(screen.getByText('동료 5축 평가')).toBeInTheDocument()
-    expect(container.querySelectorAll('[data-peer-axis-bar]')).toHaveLength(5)
+    expect(screen.getByText('인증 자격증')).toBeInTheDocument()
+    expect(screen.getByText('다면역량 평가')).toBeInTheDocument()
+    expect(
+      container.querySelectorAll('[data-evaluator-axis-bar]'),
+    ).toHaveLength(4)
+    const evaluatorCard = container.querySelector(
+      '[data-summary-kpi="evaluatorAverage"]',
+    )
+    expect(evaluatorCard).toHaveTextContent('기술·기술기여')
+    expect(evaluatorCard).toHaveTextContent('소통·협업·팀워크')
+    expect(evaluatorCard).toHaveTextContent('문제해결')
+    expect(evaluatorCard).toHaveTextContent('책임감')
     expect(
       screen.getByRole('link', {
         name: '성취도 평가 평균 상세 화면으로 이동',
@@ -510,12 +528,14 @@ describe('SummaryTab', () => {
     ).toHaveAttribute('href', '/student/projects/project-issues?tab=issues')
     expect(
       screen.getByRole('link', {
-        name: '동료 5축 평가 상세 보기',
+        name: '인증 자격증 상세 화면으로 이동',
       }),
-    ).toHaveAttribute(
-      'href',
-      '/student/projects/project-peer?tab=peer-evaluation',
-    )
+    ).toHaveAttribute('href', '/student/records')
+    expect(
+      screen.getByRole('link', {
+        name: '다면역량 평가 상세 화면으로 이동',
+      }),
+    ).toHaveAttribute('href', '/student/certificate?tab=growth-reputation')
 
     expect(screen.getByText('역량 비교 레이더')).toBeInTheDocument()
     expect(container.querySelectorAll('[data-radar-spoke]')).toHaveLength(6)

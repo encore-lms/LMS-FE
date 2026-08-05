@@ -106,13 +106,16 @@ export function requiredChangedLabel(nowRequired: boolean) {
 
 // ───────────────────────── 멘토 통계 (§33) ─────────────────────────
 
-/** 상태 요약·필터 라벨 — 통계 노출 5종(진행 중/일지 필요/수정 요청/평가 필요/완료). */
+/**
+ * 상태 요약·필터 라벨 — 통계 노출 5종(진행 중/일지 필요/수정 요청/평가 필요/시간 완료).
+ * completed 는 인정 시간을 다 채웠다는 뜻이지 배정이 끝났다는 뜻이 아니다(멘토 화면과 같은 기준).
+ */
 export const STAT_TEAM_STATUS_LABEL: Record<MentoringTeamStatKey, string> = {
   in_progress: '진행 중',
   log_needed: '일지 필요',
   change_requested: '수정 요청',
   evaluation_needed: '평가 필요',
-  completed: '완료',
+  completed: '시간 완료',
 }
 
 export const STAT_TEAM_STATUS_KEYS = Object.keys(

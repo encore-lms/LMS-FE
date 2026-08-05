@@ -25,17 +25,6 @@ function formatNumber(value: number | null) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
-function peerTagLabel(label: string) {
-  return `#${label.replace(/^#/, '').replace(/\s+/g, '')}`
-}
-
-function tagFontSize(count: number, minCount: number, maxCount: number) {
-  if (minCount === maxCount) return 15
-  return Number(
-    (12 + ((count - minCount) / (maxCount - minCount)) * 8).toFixed(1),
-  )
-}
-
 function summaryFields(item: CertificateProblemDetail['cases'][number]) {
   const summary = item.summary?.generatedBy === 'AI' ? item.summary : null
   return [
@@ -77,12 +66,6 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
     label: string
     content: string
   } | null>(null)
-  const peerTags = [...problem.peerTags].sort(
-    (a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ko'),
-  )
-  const tagCount = peerTags.reduce((sum, tag) => sum + tag.count, 0)
-  const maxTagCount = peerTags[0]?.count ?? 0
-  const minTagCount = peerTags.at(-1)?.count ?? 0
   const representativeCases = problem.cases.slice(0, 3)
 
   return (
@@ -190,75 +173,40 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
         )}
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className={cn(card, 'flex flex-col gap-3.5')}>
-          <span className="text-fg text-[15px] font-bold">문제 분포</span>
-          <span className="text-fg-subtle text-[11px]">
-            카테고리별 인증 사례 · {problem.certifiedCount}건 기준
-          </span>
-          {problem.categories.length === 0 ? (
-            <EmptyData>산출 가능한 카테고리 분포가 없습니다.</EmptyData>
-          ) : (
-            problem.categories.map((category, index) => {
-              const tone = tones[index % tones.length]
-              return (
-                <div key={category.label} className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between text-[12px]">
-                    <span className="text-fg flex items-center gap-1.5 font-medium">
-                      <span
-                        className={cn('size-2 rounded-full', TONE_SOLID[tone])}
-                      />
-                      {category.label}
-                    </span>
-                    <span className="text-fg-muted font-semibold">
-                      {category.count}건 · {formatNumber(category.percentage)}%
-                    </span>
-                  </div>
-                  <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
-                    <div
-                      className={cn('h-full rounded-full', TONE_SOLID[tone])}
-                      style={{ width: `${category.percentage}%` }}
+      <section className={cn(card, 'flex flex-col gap-3.5')}>
+        <span className="text-fg text-[15px] font-bold">문제 분포</span>
+        <span className="text-fg-subtle text-[11px]">
+          카테고리별 인증 사례 · {problem.certifiedCount}건 기준
+        </span>
+        {problem.categories.length === 0 ? (
+          <EmptyData>산출 가능한 카테고리 분포가 없습니다.</EmptyData>
+        ) : (
+          problem.categories.map((category, index) => {
+            const tone = tones[index % tones.length]
+            return (
+              <div key={category.label} className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between text-[12px]">
+                  <span className="text-fg flex items-center gap-1.5 font-medium">
+                    <span
+                      className={cn('size-2 rounded-full', TONE_SOLID[tone])}
                     />
-                  </div>
+                    {category.label}
+                  </span>
+                  <span className="text-fg-muted font-semibold">
+                    {category.count}건 · {formatNumber(category.percentage)}%
+                  </span>
                 </div>
-              )
-            })
-          )}
-        </section>
-
-        <section className={cn(card, 'flex flex-col gap-3')}>
-          <span className="text-fg text-[15px] font-bold">
-            PeerTag 클라우드
-          </span>
-          <span className="text-fg-subtle text-[11px]">
-            동료 평가에서 수집된 태그 · 누적 {tagCount}회
-          </span>
-          {peerTags.length === 0 ? (
-            <div className="bg-surface-muted text-fg-subtle rounded-xl px-4 py-8 text-center text-[12px]">
-              수집된 동료 평가 태그가 없습니다.
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {peerTags.map((tag, index) => (
-                <span
-                  key={tag.label}
-                  aria-label={`${peerTagLabel(tag.label)} ${tag.count}회`}
-                  className={cn(
-                    'rounded-full px-3 py-1.5 font-bold',
-                    TONE_SOFT[tones[index % tones.length]],
-                  )}
-                  style={{
-                    fontSize: `${tagFontSize(tag.count, minTagCount, maxTagCount)}px`,
-                  }}
-                >
-                  {peerTagLabel(tag.label)}{' '}
-                  <span className="text-[0.78em] opacity-70">{tag.count}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+                <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
+                  <div
+                    className={cn('h-full rounded-full', TONE_SOLID[tone])}
+                    style={{ width: `${category.percentage}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })
+        )}
+      </section>
 
       <Modal
         open={detail !== null}

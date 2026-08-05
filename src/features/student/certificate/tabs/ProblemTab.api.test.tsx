@@ -89,7 +89,7 @@ function renderProblemTab(result = detailTabs) {
 }
 
 describe('ProblemTab 상세 API 연결', () => {
-  it('인증 통계·안전 요약·문제 분포와 PeerTag 클라우드를 표시한다', async () => {
+  it('인증 통계·안전 요약·문제 분포만 표시한다', async () => {
     renderProblemTab()
 
     expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
@@ -100,12 +100,14 @@ describe('ProblemTab 상세 API 연결', () => {
     expect(screen.getAllByText('AI 요약을 생성하지 못했습니다.')).toHaveLength(
       3,
     )
-    expect(screen.getByText('PeerTag 클라우드')).toBeInTheDocument()
+    expect(screen.getByText('문제 분포')).toBeInTheDocument()
+    expect(screen.getByText('1건 · 100%')).toBeInTheDocument()
+    expect(screen.queryByText('PeerTag 클라우드')).not.toBeInTheDocument()
     expect(
-      screen.getByText('동료 평가에서 수집된 태그 · 누적 4회'),
-    ).toBeInTheDocument()
-    expect(screen.getByLabelText('#협업 3회')).toBeInTheDocument()
-    expect(screen.getByLabelText('#소통 1회')).toBeInTheDocument()
+      screen.queryByText('동료 평가에서 수집된 태그 · 누적 4회'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('#협업 3회')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('#소통 1회')).not.toBeInTheDocument()
     expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
   })
 

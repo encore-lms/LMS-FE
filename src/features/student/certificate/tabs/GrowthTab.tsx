@@ -6,14 +6,17 @@ import { cn } from '@/shared/lib/cn'
 import {
   CERTIFICATE_360_AXIS_KEYS,
   fetchCertificateScore,
+  type CertificateAssessmentPoint,
   type CertificateScoreResult,
 } from '../ai'
 import type { CertGrowthTab, CertRecommendation } from '../types'
+import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
 import { TabHead } from './TechTab'
 
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const MAX_PUBLIC_SHORT_COMMENTS = 5
+const growthTrendTicks = [100, 75, 50, 25, 0]
 
 const recommendationTone: Record<string, string> = {
   강사: 'bg-success-bg text-success',
@@ -67,6 +70,287 @@ function clampScore(score: number) {
 
 function fivePointScore(value: number) {
   return (value / 100) * 4 + 1
+}
+
+type GrowthAssessmentType = 'ACHIEVEMENT' | 'CS'
+
+interface GrowthTimelinePoint {
+  id: string
+  date: string
+  type: GrowthAssessmentType
+  title: string
+  score: number
+}
+
+const growthTypeMeta = {
+  ACHIEVEMENT: {
+    label: '성취도 평가',
+    shortLabel: '성취도',
+    line: 'stroke-accent-strong',
+    dot: 'border-accent-strong',
+    halo: 'bg-accent-strong/15',
+    bar: 'bg-gradient-to-t from-accent-strong to-brand',
+    badge: 'bg-accent-bg text-accent-strong',
+  },
+  CS: {
+    label: 'CS 평가',
+    shortLabel: 'CS',
+    line: 'stroke-info',
+    dot: 'border-info',
+    halo: 'bg-info/15',
+    bar: 'bg-gradient-to-t from-info to-info/65',
+    badge: 'bg-info-bg text-info',
+  },
+} as const
+
+function growthAssessmentType(value: string): GrowthAssessmentType {
+  return value.toUpperCase().includes('CS') ? 'CS' : 'ACHIEVEMENT'
+}
+
+function growthTimelinePoints(
+  timeline: CertGrowthTab['timeline'],
+  assessments?: CertificateAssessmentPoint[],
+): GrowthTimelinePoint[] {
+  const points = assessments
+    ? assessments.map((assessment) => ({
+        id: assessment.id,
+        date: assessment.submittedAt,
+        type: assessment.assessmentType,
+        title: assessment.title,
+        score: assessment.score,
+      }))
+    : timeline.map((point, index) => ({
+        id: point.id ?? `${point.date}-${index}`,
+        date: point.date,
+        type: growthAssessmentType(point.type),
+        title: point.title,
+        score: point.score,
+      }))
+
+  return points
+    .map((point, index) => ({ point, index }))
+    .sort(
+      (a, b) => a.point.date.localeCompare(b.point.date) || a.index - b.index,
+    )
+    .map(({ point }) => point)
+}
+
+function growthPointPosition(points: GrowthTimelinePoint[], index: number) {
+  const point = points[index]
+  return {
+    x: ((index + 0.5) / points.length) * 1000,
+    y: 100 - clampScore(point.score),
+  }
+}
+
+function growthSegmentPath(points: GrowthTimelinePoint[], index: number) {
+  const start = growthPointPosition(points, index)
+  const end = growthPointPosition(points, index + 1)
+  return `M ${start.x} ${start.y} L ${end.x} ${end.y}`
+}
+
+function formatGrowthScore(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function formatGrowthDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : value
+}
+
+function assessmentAverage(
+  points: GrowthTimelinePoint[],
+  type: GrowthAssessmentType,
+) {
+  const scores = points.flatMap((point) =>
+    point.type === type ? [point.score] : [],
+  )
+  if (scores.length === 0) return null
+  return scores.reduce((sum, score) => sum + score, 0) / scores.length
+}
+
+function GrowthTimeline({ points }: { points: GrowthTimelinePoint[] }) {
+  const achievementAverage = assessmentAverage(points, 'ACHIEVEMENT')
+  const csAverage = assessmentAverage(points, 'CS')
+  const minimumChartWidth = Math.max(560, points.length * 96)
+
+  return (
+    <section data-growth-timeline className={cn(card, 'flex flex-col gap-5')}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-fg text-[15px] font-bold">성장 곡선</h3>
+          <span className="text-fg-subtle text-[11px]">
+            성취도와 CS 평가를 유형 색상으로 구분해 하나의 시간순 성장선으로
+            표시
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+          {(['ACHIEVEMENT', 'CS'] as const).map((type) => {
+            const meta = growthTypeMeta[type]
+            const average =
+              type === 'ACHIEVEMENT' ? achievementAverage : csAverage
+            const count = points.filter((point) => point.type === type).length
+            return (
+              <span
+                key={type}
+                data-growth-type-summary={type}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-md px-2.5 py-1.5',
+                  meta.badge,
+                )}
+              >
+                <span
+                  className={cn('size-2 rounded-full border-2', meta.dot)}
+                />
+                {meta.label} {count}회 · 평균{' '}
+                {average === null ? '-' : formatGrowthScore(average)}점
+              </span>
+            )
+          })}
+        </div>
+      </div>
+
+      {points.length === 0 ? (
+        <div className="bg-surface-muted text-fg-subtle rounded-xl px-4 py-10 text-center text-[12px]">
+          아직 표시할 성취도·CS 평가 이력이 없습니다.
+        </div>
+      ) : (
+        <div className="w-full overflow-x-auto pb-2">
+          <div style={{ minWidth: minimumChartWidth }}>
+            <div data-growth-plot className="relative ml-9 h-[240px] pr-2">
+              {growthTrendTicks.map((tick) => (
+                <div
+                  key={tick}
+                  className="absolute inset-x-0 flex items-center"
+                  style={{ bottom: `calc(${tick}% * 0.84)` }}
+                >
+                  <span className="text-fg-subtle absolute right-full mr-2 w-7 text-right text-[10px] tabular-nums">
+                    {tick}
+                  </span>
+                  <span className="bg-divider h-px w-full" />
+                </div>
+              ))}
+
+              <svg
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[84%] w-full overflow-visible pr-2"
+                viewBox="0 0 1000 100"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                {points.slice(1).map((point, index) => (
+                  <path
+                    key={`${points[index].id}-${point.id}`}
+                    data-growth-trend-segment={point.id}
+                    data-growth-trend-type={point.type}
+                    d={growthSegmentPath(points, index)}
+                    fill="none"
+                    vectorEffect="non-scaling-stroke"
+                    className={growthTypeMeta[point.type].line}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ))}
+              </svg>
+
+              <div
+                data-growth-plot-points
+                className="absolute inset-x-0 bottom-0 z-30 grid h-[84%] items-end pr-2"
+                style={{
+                  gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {points.map((point) => {
+                  const meta = growthTypeMeta[point.type]
+                  return (
+                    <div
+                      key={point.id}
+                      className="relative flex h-full min-w-0 justify-center"
+                    >
+                      <div
+                        data-growth-score-bar={point.id}
+                        className={cn(
+                          'absolute bottom-0 w-8 rounded-t-md opacity-75',
+                          meta.bar,
+                        )}
+                        style={{ height: `${clampScore(point.score)}%` }}
+                      />
+                      <button
+                        type="button"
+                        data-growth-trend-point={point.id}
+                        aria-label={`${formatGrowthDate(point.date)} ${meta.label} ${point.title} ${formatGrowthScore(point.score)}점`}
+                        className="focus-visible:ring-ring group absolute left-1/2 flex size-8 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none"
+                        style={{ bottom: `${clampScore(point.score)}%` }}
+                      >
+                        <span
+                          className={cn(
+                            'flex size-6 items-center justify-center rounded-full transition-transform group-hover:scale-110',
+                            meta.halo,
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'bg-surface size-3 rounded-full border-[3px] shadow-sm',
+                              meta.dot,
+                            )}
+                          />
+                        </span>
+                        <span
+                          className={cn(
+                            'absolute bottom-full mb-0.5 text-[11px] font-bold tabular-nums',
+                            point.type === 'CS'
+                              ? 'text-info'
+                              : 'text-accent-strong',
+                          )}
+                        >
+                          {formatGrowthScore(point.score)}
+                        </span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <ol
+              data-growth-chronology
+              className="ml-9 grid pt-3 pr-2"
+              style={{
+                gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {points.map((point) => {
+                const meta = growthTypeMeta[point.type]
+                return (
+                  <li
+                    key={point.id}
+                    className="border-divider flex min-w-0 flex-col items-center gap-1 border-t px-2 pt-3 text-center"
+                  >
+                    <time className="text-fg-subtle text-[10px] tabular-nums">
+                      {formatGrowthDate(point.date)}
+                    </time>
+                    <span
+                      className={cn(
+                        'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                        meta.badge,
+                      )}
+                    >
+                      {meta.shortLabel}
+                    </span>
+                    <span
+                      className="text-fg-muted line-clamp-2 text-[10px] leading-4 font-semibold"
+                      title={point.title}
+                    >
+                      {point.title}
+                    </span>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+        </div>
+      )}
+    </section>
+  )
 }
 
 function shortCommentKey(
@@ -194,16 +478,31 @@ export function GrowthTabData({
     queryKey: ['certificateScore', studentId],
     queryFn: () => fetchCertificateScore(studentId),
   })
+  const detailQuery = useCertificateDetailTabs(studentId)
 
   return (
     <DataBoundary
-      isPending={scoreQuery.isPending}
-      isError={scoreQuery.isError || !scoreQuery.data}
-      onRetry={() => void scoreQuery.refetch()}
+      isPending={scoreQuery.isPending || detailQuery.isPending}
+      isError={
+        scoreQuery.isError ||
+        detailQuery.isError ||
+        !scoreQuery.data ||
+        !detailQuery.data
+      }
+      onRetry={() => {
+        void scoreQuery.refetch()
+        void detailQuery.refetch()
+      }}
       errorTitle="평가·추천 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >
-      {scoreQuery.data && <GrowthTab g={g} score={scoreQuery.data} />}
+      {scoreQuery.data && detailQuery.data && (
+        <GrowthTab
+          g={g}
+          score={scoreQuery.data}
+          assessments={detailQuery.data.tech.assessments}
+        />
+      )}
     </DataBoundary>
   )
 }
@@ -211,9 +510,11 @@ export function GrowthTabData({
 export function GrowthTab({
   g,
   score,
+  assessments,
 }: {
   g: CertGrowthTab
   score?: CertificateScoreResult
+  assessments?: CertificateAssessmentPoint[]
 }) {
   const toast = useToast()
   const [publicShortCommentKeys, setPublicShortCommentKeys] = useState<
@@ -239,6 +540,7 @@ export function GrowthTab({
       (publicShortCommentKeys.has(shortCommentKey(comment, index)) ? 1 : 0),
     0,
   )
+  const timelinePoints = growthTimelinePoints(g.timeline, assessments)
 
   const toggleShortCommentVisibility = (commentKey: string) => {
     if (
@@ -262,7 +564,7 @@ export function GrowthTab({
       <TabHead
         no={5}
         title="평가·추천"
-        sub="동료·멘토·운영·강사 4축 평가·추천서·팀원 한줄 코멘트"
+        sub="평가 성장 흐름·동료·멘토·운영·강사 4축 평가·추천서·팀원 한줄 코멘트"
       >
         <Metric dot="bg-accent-strong">4평가자 · 공통 4축 비교</Metric>
         {g.recommendations.length > 0 && (
@@ -273,27 +575,34 @@ export function GrowthTab({
         )}
       </TabHead>
 
-      <section className={cn(card, 'flex flex-col gap-4')}>
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div className="flex flex-col gap-0.5">
-            <h3 className="text-fg text-[15px] font-bold">역할별 4축 평가</h3>
-            <span className="text-fg-subtle text-[11px]">
-              기술·기여 · 소통·협업 · 문제해결 · 책임감
+      <div
+        data-growth-evaluation-row
+        className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2"
+      >
+        <GrowthTimeline points={timelinePoints} />
+
+        <section className={cn(card, 'flex h-full flex-col gap-4')}>
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div className="flex flex-col gap-0.5">
+              <h3 className="text-fg text-[15px] font-bold">역할별 4축 평가</h3>
+              <span className="text-fg-subtle text-[11px]">
+                기술·기여 · 소통·협업 · 문제해결 · 책임감
+              </span>
+            </div>
+            <span className="text-fg-subtle text-[10px]">
+              역할별 집계값 · 개별 평가자 정보 비노출
             </span>
           </div>
-          <span className="text-fg-subtle text-[10px]">
-            역할별 집계값 · 개별 평가자 정보 비노출
-          </span>
-        </div>
-        <div
-          data-evaluator-role-grid
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {evaluatorRoles.map((role) => (
-            <EvaluationRoleCard key={role.key} score={score} role={role} />
-          ))}
-        </div>
-      </section>
+          <div
+            data-evaluator-role-grid
+            className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2"
+          >
+            {evaluatorRoles.map((role) => (
+              <EvaluationRoleCard key={role.key} score={score} role={role} />
+            ))}
+          </div>
+        </section>
+      </div>
 
       <div
         data-comments-recommendations-row

@@ -204,7 +204,7 @@ function EvaluationForm({
       <section className="bg-brand text-on-color flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-[22px] shadow-[0_8px_22px_rgba(26,140,133,0.18)]">
         <div className="flex flex-col gap-1.5">
           <span className="text-[11px] font-semibold tracking-[1.98px]">
-            MENTOR EVALUATION · 5축 평가
+            MENTOR EVALUATION · 4축 평가
           </span>
           <h2 className="text-[22px] leading-7 font-bold">
             {sheet.teamName} {sheet.memberCount}명 카드형 일괄 평가

@@ -359,7 +359,7 @@ describe('SummaryTab', () => {
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(detailTabsResult)
   })
 
-  it('실제 추천서가 있는 평가자의 추천 마크만 종합 점수에 표시한다', async () => {
+  it('추천 데이터가 있어도 종합 점수에는 강사·멘토 추천 배지를 표시하지 않는다', async () => {
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
     vi.mocked(fetchAiAnalysis).mockImplementation(
       () => new Promise(() => undefined),
@@ -376,18 +376,13 @@ describe('SummaryTab', () => {
       </MemoryRouter>,
     )
 
-    const instructor = await screen.findByRole('link', {
-      name: '강사 추천서 보기',
-    })
-    const mentor = screen.getByRole('link', { name: '멘토 추천서 보기' })
-    expect(instructor).toHaveAttribute(
-      'href',
-      '/student/certificate?tab=growth-reputation',
-    )
-    expect(mentor).toHaveAttribute(
-      'href',
-      '/student/certificate?tab=growth-reputation',
-    )
+    await screen.findByText('79.9')
+    expect(
+      screen.queryByRole('link', { name: '강사 추천서 보기' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: '멘토 추천서 보기' }),
+    ).not.toBeInTheDocument()
   })
 
   it('점수 계산 중에는 회전 스캔 레이더를 표시한다', () => {
@@ -484,9 +479,15 @@ describe('SummaryTab', () => {
     expect(screen.queryByText(/mock|정책 2026\.07\.20/)).not.toBeInTheDocument()
     expect(screen.getByText('Grade B')).toBeInTheDocument()
     expect(screen.getByText('전체 상위 31.7%')).toBeInTheDocument()
-    expect(screen.getByText('종합 산정 축')).toBeInTheDocument()
-    expect(screen.getByText('산출 상태')).toBeInTheDocument()
-    expect(screen.getByText('종합 방식')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: '절대 종합 점수 79.9점' }),
+    ).toBeInTheDocument()
+    expect(
+      container.querySelector('[data-overall-score-progress]'),
+    ).toHaveAttribute('stroke-dashoffset', '20.1')
+    expect(screen.queryByText('종합 산정 축')).not.toBeInTheDocument()
+    expect(screen.queryByText('산출 상태')).not.toBeInTheDocument()
+    expect(screen.queryByText('종합 방식')).not.toBeInTheDocument()
     expect(screen.queryByText('데이터 안내')).not.toBeInTheDocument()
     expect(
       screen.queryByText('수동 채점 대기 시험 1건은 계산에서 제외했습니다.'),

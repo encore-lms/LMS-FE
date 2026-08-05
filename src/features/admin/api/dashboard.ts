@@ -6,7 +6,6 @@ import type {
   CohortBoard,
   CohortHrdSummary,
   MyCohortRef,
-  OperatorDashboard,
 } from '../dashboard/types'
 
 interface CourseSummary {
@@ -68,8 +67,15 @@ export function useMyCohorts() {
   })
 }
 
-/** 담당 기수 스켈레톤 보드(hasData=false) — HRD 라이브 병합 경로로 채워진다. */
-function emptyBoard(r: MyCohortRef, today: string): CohortBoard {
+/** 오늘(KST) — 예전에는 BE 응답의 today 를 썼다. 집계를 걷어낸 뒤로 클라이언트가 정한다. */
+export function kstToday(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(
+    new Date(),
+  )
+}
+
+/** 담당 기수 보드 껍데기(hasData=false) — HRD 라이브 병합 경로로 채워진다. */
+export function emptyBoard(r: MyCohortRef, today: string): CohortBoard {
   const status =
     today < r.startDate ? 'upcoming' : today > r.endDate ? 'ended' : 'operating'
   const daysLeft = Math.round(
@@ -91,60 +97,7 @@ function emptyBoard(r: MyCohortRef, today: string): CohortBoard {
     assessment: null,
     weeklyCheck: null,
     issues: [],
-    pending: null,
   }
-}
-
-// 배포 환경에서 /admin/dashboard 가 레거시(learning-service) 응답으로 라우팅될 수 있다
-// (ops-service 미배포 시 ALB /admin/* → learning). ops 계약(hasData boolean)이 아니면
-// 담당 기수 스켈레톤으로 정규화해 HRD 라이브 병합으로 구동한다(TypeError 크래시 방지).
-function normalizeDashboard(
-  data: OperatorDashboard,
-  refs: MyCohortRef[],
-): OperatorDashboard {
-  const cohorts = data?.cohorts ?? []
-  const isOpsShape = cohorts.every(
-    (c) => typeof (c as { hasData?: unknown }).hasData === 'boolean',
-  )
-  const today = data?.today ?? new Date().toISOString().slice(0, 10)
-  if (isOpsShape) {
-    return {
-      today,
-      cohorts,
-      quarantineCount: data?.quarantineCount ?? 0,
-      upcoming: data?.upcoming ?? [],
-    }
-  }
-  return {
-    today,
-    cohorts: refs.map((r) => emptyBoard(r, today)),
-    quarantineCount: 0,
-    upcoming: [],
-  }
-}
-
-// 담당 기수 스코프 대시보드 집계 — operations-service(staging 원본 집계) 실연동.
-// axios 기본 배열 직렬화(cohort[]=)가 Spring과 맞지 않아 쿼리스트링을 직접 구성한다.
-export function useOperatorDashboard(refs: MyCohortRef[] | undefined) {
-  const query = (refs ?? [])
-    .map(
-      (r) =>
-        'cohort=' +
-        encodeURIComponent(
-          [r.cohortId, r.courseName, r.cohortNo, r.startDate, r.endDate].join(
-            '|',
-          ),
-        ),
-    )
-    .join('&')
-  return useQuery({
-    queryKey: [...adminKeys.dashboard(), 'board', query],
-    enabled: !!refs && refs.length > 0,
-    queryFn: () =>
-      apiClient
-        .get<OperatorDashboard>(`/admin/dashboard?${query}`)
-        .then((r) => normalizeDashboard(r.data, refs ?? [])),
-  })
 }
 
 // CSV 미인입 기수의 HRD-Net 라이브 요약 — learning-service가 HRD 월별 출결을 집계한다.

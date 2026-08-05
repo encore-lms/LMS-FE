@@ -31,17 +31,15 @@ function renderPage() {
 }
 
 describe('DashboardPage', () => {
-  it('히어로·손이 필요한 팀·예정·최근 일지를 렌더한다', () => {
+  it('히어로·할 일·예정·최근 일지를 렌더한다', () => {
     mockHook({ data: buildDashboardData(), isPending: false, isError: false })
     renderPage()
     // 제목은 본문 h1이 아니라 공유 헤더(usePageHeader)에 등록된다.
     expect(usePageHeaderStore.getState().title).toBe('대시보드')
     expect(screen.getByText('안녕하세요, 임수현 멘토님')).toBeInTheDocument()
-    // 손이 필요한 팀만 — 목록은 '내 배정 팀'이 맡는다(2026-08-05 재구성).
+    // 할 일 있는 팀만 — 목록은 '내 배정 팀'이 맡는다(2026-08-05 재구성).
     // 같은 팀이 카드로 한 번·표로 또 한 번 나오던 중복을 걷어냈다.
-    const 손 = screen
-      .getByText('지금 손이 필요해요')
-      .closest('section') as HTMLElement
+    const 손 = screen.getByText('지금 할 일').closest('section') as HTMLElement
     expect(within(손).getByText('일지 수정 요청')).toBeInTheDocument()
     expect(within(손).getByText('평가 필요')).toBeInTheDocument()
     expect(within(손).getByText('트러블슈팅 팀')).toBeInTheDocument()
@@ -99,7 +97,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText(/그 자리 일지 모달/)).toBeInTheDocument()
   })
 
-  it('손이 필요한 팀이 없으면 비어 있다고 말한다', () => {
+  it('할 일 있는 팀이 없으면 비어 있다고 말한다', () => {
     // 빈 카드만 덩그러니 두면 로딩 중인지 할 일이 없는지 알 수 없다.
     const base = buildDashboardData()
     mockHook({
@@ -115,6 +113,6 @@ describe('DashboardPage', () => {
     })
     renderPage()
     expect(screen.getByText('지금 할 일이 없어요')).toBeInTheDocument()
-    expect(screen.queryByText('지금 손이 필요해요')).not.toBeInTheDocument()
+    expect(screen.queryByText('지금 할 일')).not.toBeInTheDocument()
   })
 })

@@ -4,51 +4,44 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import {
+  MemberEvalCard,
+  type EvalCardState,
+} from '@/components/evaluation/MemberEvalCard'
+import {
   useSavePeerEvalDraft,
   useSaveSelfReview,
   useSubmitPeerEval,
   wsWriteError,
 } from '../../../api/projects'
 import { statusToPhase, useProjectFlow } from '../useProjectFlow'
-import type { WorkspaceData, WsPeerTarget } from '../../types'
+import type { WorkspaceData } from '../../types'
 import { Chip } from '../components/ws-shared'
 import { card } from '../components/ws-style'
 import { useMemberNames } from '../components/useMemberNames'
 
-/** 내가 그 팀원에게 준 축 점수(없으면 null). BE 한글 축 key 를 그대로 쓴다. */
-function myScoreOf(target: WsPeerTarget, axisKey: string): number | null {
-  const mine = target.myEval
-  if (!mine) return null
-  switch (axisKey) {
-    case '협업':
-      return mine.collaboration
-    case '소통':
-      return mine.communication
-    case '책임감':
-      return mine.responsibility
-    case '문제해결':
-      return mine.problemSolving
-    case '기술기여':
-      return mine.technicalContribution
-    default:
-      return null
-  }
-}
+// 상호평가 4축 개편(2026-08-06) — 멘토 평가와 같은 공용 카드(MemberEvalCard)·같은 축 사전.
+// 점수는 리커트 1~5 정수(구 0.5 슬라이더 폐기), 코멘트는 상호평가 정책대로 선택 유지.
+
+type Scores4 = (number | null)[]
+
+/** BE 점수(4축, 미입력 0) → UI 점수(미선택 null). 구 V1 복원값도 1~5 정수로 정규화. */
+const toUiScores = (scores?: number[] | null): Scores4 =>
+  Array.from({ length: 4 }, (_, i) => {
+    const v = scores?.[i]
+    if (v == null || v < 1) return null
+    return Math.min(5, Math.round(v))
+  })
+
+const isComplete = (scores: Scores4) => scores.every((s) => s != null)
 
 export function PeerTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
   const nameOf = useMemberNames()
   const [submitted, setSubmitted] = useState(false)
-  // 초기값은 '내가 준 평가'(myEval)다 — axes 는 팀에서 받은 평균이라 내 입력값이 아니다.
-  // 서버가 내 평가를 돌려주지 않던 때는 코멘트가 늘 빈 칸이라 저장이 안 된 것처럼 보였다.
-  const [scores, setScores] = useState<Record<string, number>>(() =>
+  // 초기값은 '내가 준 평가'(myEval) — axes 는 팀에서 받은 평균이라 내 입력값이 아니다.
+  const [scores, setScores] = useState<Record<string, Scores4>>(() =>
     Object.fromEntries(
-      d.peerTargets.flatMap((target) =>
-        target.axes.map((axis) => [
-          `${target.name}:${axis.key}`,
-          myScoreOf(target, axis.key) ?? axis.score,
-        ]),
-      ),
+      d.peerTargets.map((t) => [t.name, toUiScores(t.myEval?.scores)]),
     ),
   )
   const [comments, setComments] = useState<Record<string, string>>(() =>
@@ -64,28 +57,31 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
   const saveSelfM = useSaveSelfReview(d.id)
   // 임시저장은 자기 수행 내용만이 아니라 점수·코멘트까지 함께 보관한다.
   const saveDraftM = useSavePeerEvalDraft(d.id)
-  /**
-   * 아직 점수를 안 매긴 팀원 — 화면에 그려진 축이 모두 채워져야 평가한 것으로 본다.
-   *
-   * <p>기준을 고정 목록이 아니라 t.axes 로 두는 이유: 축 이름이 BE 에서 오고 표기가 조금씩
-   * 다르다(예: '기술 기여' / '기술기여'). 화면이 그린 축을 그대로 세야 어긋나지 않는다.</p>
-   */
-  const unscored = d.peerTargets
-    .filter((t) => t.memberId)
-    .filter((t) => t.axes.some((a) => !scores[`${t.name}:${a.key}`]))
+
+  const targets = d.peerTargets.filter((t) => t.memberId)
+  // 아직 점수를 안 매긴 팀원 — 4축 전부 채워야 평가한 것으로 본다(코멘트는 선택).
+  const unscored = targets
+    .filter((t) => !isComplete(scores[t.name]))
     .map((t) => t.name)
+  // 카드 상태 — 멘토 평가와 동일한 순차 시각 상태(자유 편집 허용, 순서 강제 없음).
+  const firstIncomplete = d.peerTargets.findIndex(
+    (t) => t.memberId && !isComplete(scores[t.name]),
+  )
+  const cardStateOf = (index: number): EvalCardState => {
+    const t = d.peerTargets[index]
+    if (isComplete(scores[t.name])) return 'done'
+    return index === firstIncomplete ? 'active' : 'waiting'
+  }
 
   const submitAll = () => {
-    const targets = d.peerTargets.filter((t) => t.memberId)
     if (targets.length === 0) {
       toast.danger('평가할 팀원이 없어요.')
       return
     }
-    // 빈 축을 0 점으로 채워 보내면 '안 매긴 것'과 '1점 미만'을 구분할 수 없고,
-    // 증명서에는 매기지도 않은 점수가 반영된다. 제출 전에 막는다.
+    // 빈 축을 0 점으로 채워 보내면 '안 매긴 것'과 '저점'을 구분할 수 없다. 제출 전에 막는다(BE도 422).
     if (unscored.length > 0) {
       toast.danger(
-        `점수를 매기지 않은 팀원이 있어요 — ${unscored.join(', ')} (5개 항목 모두 필요)`,
+        `점수를 매기지 않은 팀원이 있어요 — ${unscored.join(', ')} (4개 축 모두 필요)`,
       )
       return
     }
@@ -94,11 +90,7 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
       ...targets.map((t) =>
         submitPeerM.mutateAsync({
           targetMemberId: t.memberId!,
-          collaboration: scores[`${t.name}:협업`] ?? 0,
-          communication: scores[`${t.name}:소통`] ?? 0,
-          responsibility: scores[`${t.name}:책임감`] ?? 0,
-          problemSolving: scores[`${t.name}:문제해결`] ?? 0,
-          technicalContribution: scores[`${t.name}:기술기여`] ?? 0,
+          scores: scores[t.name].map((s) => s ?? 0),
           comment: comments[t.name] ?? '',
         }),
       ),
@@ -111,8 +103,11 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
         toast.danger(wsWriteError(e, '상호평가 제출에 실패했어요.')),
       )
   }
-  const setScore = (name: string, key: string, score: number) =>
-    setScores((prev) => ({ ...prev, [`${name}:${key}`]: score }))
+  const setScore = (name: string, axisIndex: number, value: number) =>
+    setScores((prev) => ({
+      ...prev,
+      [name]: prev[name].map((s, i) => (i === axisIndex ? value : s)),
+    }))
 
   // 열리지 않은 경우 폼을 아예 그리지 않는다 — 그리면 다 입력하고 제출에서만 실패해 입력이 날아간다.
   //  · 완료 확정 전(진행 중) (§17)
@@ -155,8 +150,9 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
             필수 제출 · 마감 {d.peerDue}
           </span>
           <span className="text-fg-muted text-[12px]">
-            PM 포함 모든 멤버가 자기 자신을 제외한 팀원을 평가합니다. 마감
-            전까지 수정 가능하며, 최종본이 증명서에 반영됩니다.
+            PM 포함 모든 멤버가 자기 자신을 제외한 팀원을 4축(기술/기술기여 ·
+            소통·협업·팀워크 · 문제해결 · 책임감)으로 평가합니다. 마감 전까지
+            수정 가능하며, 최종본이 증명서에 반영됩니다.
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -186,60 +182,26 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
           className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-24 resize-none rounded-lg border px-3 py-2 text-[12px] focus:outline-none"
         />
       </section>
-      {d.peerTargets.map((t) => (
-        <section key={t.name} className={cn(card, 'flex flex-col gap-3')}>
-          <div className="flex items-center gap-2">
-            <span className="text-fg text-[14px] font-bold">
-              {nameOf(t.memberId, t.name)}
-            </span>
-            <span className="text-fg-subtle text-[11px]">{t.role}</span>
-            <span className="text-fg-subtle ml-auto text-[11px]">
-              5개 축은 모두 필수, 코멘트는 선택입니다.
-            </span>
-          </div>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
-            {t.axes.map((a) => (
-              <div key={a.key} className="flex items-center gap-2">
-                <span className="text-fg w-16 shrink-0 text-[12px] font-medium">
-                  {a.key}
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={5}
-                  step={0.5}
-                  value={scores[`${t.name}:${a.key}`]}
-                  onChange={(e) =>
-                    setScore(t.name, a.key, Number(e.target.value))
-                  }
-                  aria-label={`${t.name} ${a.key} 점수`}
-                  className="accent-brand flex-1"
-                />
-                <span className="text-fg w-7 shrink-0 text-right text-[12px] font-bold">
-                  {scores[`${t.name}:${a.key}`].toFixed(1)}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-fg-subtle text-[11px]">
-                팀원 한줄 코멘트
-              </span>
-              {t.tags.map((tg, i) => (
-                <Chip key={i} badge={tg} />
-              ))}
-            </div>
-            <textarea
-              value={comments[t.name] ?? ''}
-              onChange={(e) =>
-                setComments((prev) => ({ ...prev, [t.name]: e.target.value }))
-              }
-              placeholder="선택 코멘트: 프로젝트에서 드러난 협업/기여 근거를 적어주세요."
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand min-h-10 flex-1 resize-none rounded-lg border px-3 py-2 text-[11px] focus:outline-none"
-            />
-          </div>
-        </section>
+      {d.peerTargets.map((t, index) => (
+        <MemberEvalCard
+          key={t.memberId ?? t.name}
+          person={{
+            id: t.memberId ?? t.name,
+            name: nameOf(t.memberId, t.name),
+            roleLabel: t.role,
+          }}
+          index={index}
+          scores={scores[t.name]}
+          comment={comments[t.name] ?? ''}
+          state={cardStateOf(index)}
+          readOnly={!t.memberId}
+          commentRequired={false}
+          commentPlaceholder="선택 코멘트: 프로젝트에서 드러난 협업/기여 근거를 적어주세요."
+          onScore={(axisIndex, value) => setScore(t.name, axisIndex, value)}
+          onComment={(comment) =>
+            setComments((prev) => ({ ...prev, [t.name]: comment }))
+          }
+        />
       ))}
       <div className="border-border flex items-center justify-between border-t pt-4">
         <span className="text-fg-subtle text-[11px]">
@@ -253,17 +215,11 @@ export function PeerTab({ d }: { d: WorkspaceData }) {
               saveDraftM
                 .mutateAsync({
                   selfReview,
-                  evaluations: d.peerTargets
-                    .filter((t) => t.memberId)
-                    .map((t) => ({
-                      targetMemberId: t.memberId!,
-                      collaboration: scores[`${t.name}:협업`] ?? 0,
-                      communication: scores[`${t.name}:소통`] ?? 0,
-                      responsibility: scores[`${t.name}:책임감`] ?? 0,
-                      problemSolving: scores[`${t.name}:문제해결`] ?? 0,
-                      technicalContribution: scores[`${t.name}:기술기여`] ?? 0,
-                      comment: comments[t.name] ?? '',
-                    })),
+                  evaluations: targets.map((t) => ({
+                    targetMemberId: t.memberId!,
+                    scores: scores[t.name].map((s) => s ?? 0),
+                    comment: comments[t.name] ?? '',
+                  })),
                 })
                 .then(() => toast.info('상호평가를 임시 저장했습니다'))
                 .catch((e) =>

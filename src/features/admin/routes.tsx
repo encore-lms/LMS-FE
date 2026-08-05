@@ -5,8 +5,6 @@ import type { RouteObject } from 'react-router-dom'
 // 운영(매니저/ADMIN) 라우트 — features/admin 소유자만 편집.
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
 const ProfilePage = lazy(() => import('./profile/AdminProfilePage'))
-const ReviewQueuePage = lazy(() => import('./certificates/ReviewQueuePage'))
-const ReviewDetailPage = lazy(() => import('./certificates/ReviewDetailPage'))
 const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
 const StudentManagementPage = lazy(
   () => import('./students/StudentManagementPage'),
@@ -184,8 +182,6 @@ export const adminRoutes: RouteObject[] = [
       { path: 'mileage/purchase-requests', element: <MileagePurchasePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },
       { path: 'mileage/type-limits', element: <MileageTypeLimitsPage /> },
-      { path: 'certificates/reviews', element: <ReviewQueuePage /> },
-      { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {
         path: 'certificates/:certificateId/snapshot',
         element: <SnapshotPage />,

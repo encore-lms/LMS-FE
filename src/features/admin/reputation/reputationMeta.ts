@@ -38,8 +38,14 @@ export const PUSH_SHORT: Record<PushTarget, string> = {
 }
 
 // 멘토 5축 축 라벨(BE scoresOf 순서와 동일). SHORT 는 테이블 인라인 칩용 축약.
-export const AXIS_LABELS = ['기술', '책임감', '소통', '성장', '팀워크']
-export const AXIS_SHORT = ['기', '책', '소', '성', '팀']
+// 2026-08-05 4축 개편 — BE MentorEvaluationEntry.scores4 순서와 1:1.
+export const AXIS_LABELS = [
+  '기술/기술기여',
+  '소통·협업·팀워크',
+  '문제해결',
+  '책임감',
+]
+export const AXIS_SHORT = ['기', '소', '문', '책']
 
 /** 푸시 확인 모달 스펙 + 성공 토스트 문구 + 요청 payload 묶음(단건·일괄 공용). */
 export type ReputationPushAction = {

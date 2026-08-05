@@ -213,13 +213,13 @@ describe('mentoring logs mockDb', () => {
     const detail = buildMenteeDetail('stu_han_y')!
     expect(detail.student.name).toBe('한예린')
     expect(detail.student.teamName).toBe('NLP 분석 팀')
-    expect(detail.evaluation?.average).toBe(4.6)
+    // 2026-08-05 4축 개편 — 시드 [5,4,5,5] 평균 4.8.
+    expect(detail.evaluation?.average).toBe(4.8)
     expect(detail.evaluation?.axes.map((a) => a.label)).toEqual([
-      '기술',
+      '기술/기술기여',
+      '소통·협업·팀워크',
+      '문제해결',
       '책임감',
-      '소통',
-      '성장',
-      '팀워크',
     ])
     expect(detail.recommendation?.recommended).toBe(true)
     expect(detail.attendance.attended).toBe(4)

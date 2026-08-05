@@ -50,10 +50,15 @@ describe('MenteeDetailPage', () => {
       screen.getByText('멘토에게 노출되는 수강생 정보 범위'),
     ).toBeInTheDocument()
     expect(screen.getByText(/HRD-Net 출결/)).toBeInTheDocument()
-    // 평가 5축 — 고정 축 + 평균
-    expect(screen.getByText('멘토 평가 5축')).toBeInTheDocument()
-    expect(screen.getByText('4.6')).toBeInTheDocument()
-    for (const axis of ['기술', '책임감', '소통', '성장', '팀워크']) {
+    // 평가 4축 — 고정 축 + 평균
+    expect(screen.getByText('멘토 평가 4축')).toBeInTheDocument()
+    expect(screen.getByText('4.8')).toBeInTheDocument()
+    for (const axis of [
+      '기술/기술기여',
+      '소통·협업·팀워크',
+      '문제해결',
+      '책임감',
+    ]) {
       expect(screen.getByText(axis)).toBeInTheDocument()
     }
     expect(screen.getByText('멘토 코멘트')).toBeInTheDocument()

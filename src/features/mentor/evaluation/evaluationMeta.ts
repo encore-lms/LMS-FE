@@ -2,18 +2,20 @@ import {
   CheckCircle2,
   ChevronUp,
   Command,
-  Flag,
   Send,
   type LucideIcon,
 } from 'lucide-react'
 
-// 평가 작성 화면 메타 — Figma 2553:4279 / 3150:1928 / 2582:6400 원문.
-// 5축 색 체계 고정(스펙 sharedPatterns): 기술=brand · 책임감=success · 소통=info ·
-// 성장=accent-strong · 팀워크=warning. 틴트는 @theme 토큰만(#e8f7f7→brand/10 ·
-// #d6f2e8→success-bg · #e0edfc→info-bg · #f0edfa→accent-bg · 팀워크=warning-bg).
+// 평가 작성 화면 메타 — 2026-08-05 4축 개편(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감).
+// 겹치던 소통·협업·팀워크를 한 축으로 합치고 단기 프로젝트에서 관찰 불가한 '성장'은 제외.
+// 진술문(desc)은 인성검사식 — 사람이 아니라 행동에 답하게 해 관대화를 줄인다.
+// 저장은 1~5 유지(집계·증명서 호환), UI만 리커트 그리드(낮음/보통/높음 앵커).
 
 export interface EvaluationAxisMeta {
   label: string
+  /** 콤팩트 표기(추천 후보 카드 등 좁은 자리) */
+  short: string
+  /** 진술문 — "이 사람은 ~했다"에 대한 동의 정도를 묻는다 */
   desc: string
   icon: LucideIcon
   /** 축 텍스트 색 */
@@ -24,49 +26,50 @@ export interface EvaluationAxisMeta {
   fill: string
 }
 
-/** 고정 5축(운영 커스터마이즈 없음, 05-26 확정) — 순서 = EvaluationScoreTuple 인덱스. */
+/** 고정 4축(2026-08-05 개편) — 순서 = EvaluationScoreTuple 인덱스(BE scores4 매핑과 1:1). */
 export const EVALUATION_AXES: EvaluationAxisMeta[] = [
   {
-    label: '기술',
-    desc: '구현 능력·완성도',
+    label: '기술/기술기여',
+    short: '기술',
+    desc: '맡은 몫을 결과물로 구현해 냈다',
     icon: Command,
     text: 'text-brand',
     tint: 'bg-brand/10',
     fill: 'bg-brand',
   },
   {
-    label: '책임감',
-    desc: '맡은 일 + 마감 준수',
-    icon: CheckCircle2,
-    text: 'text-success',
-    tint: 'bg-success-bg',
-    fill: 'bg-success',
-  },
-  {
-    label: '소통',
-    desc: '의사 전달·경청',
+    label: '소통·협업·팀워크',
+    short: '소통·협업',
+    desc: '의견을 나누고 팀이 같이 일하기 좋았다',
     icon: Send,
     text: 'text-info',
     tint: 'bg-info-bg',
     fill: 'bg-info',
   },
   {
-    label: '성장',
-    desc: '학습 의지·적응',
+    label: '문제해결',
+    short: '문제해결',
+    desc: '막힌 문제를 스스로 뚫거나 팀을 도왔다',
     icon: ChevronUp,
     text: 'text-accent-strong',
     tint: 'bg-accent-bg',
     fill: 'bg-accent-strong',
   },
   {
-    label: '팀워크',
-    desc: '협업 태도·지원',
-    icon: Flag,
-    text: 'text-warning',
-    tint: 'bg-warning-bg',
-    fill: 'bg-warning',
+    label: '책임감',
+    short: '책임감',
+    desc: '맡은 일을 기한 안에 끝까지 해냈다',
+    icon: CheckCircle2,
+    text: 'text-success',
+    tint: 'bg-success-bg',
+    fill: 'bg-success',
   },
 ]
+
+/** 리커트 앵커 — 라벨은 3개(낮음·보통·높음), 선택지는 1~5 다섯 개(저장값 1~5 유지). */
+export const LIKERT_ANCHORS = ['낮음', '보통', '높음'] as const
+/** 선택지 원 크기(px) — 인성검사식 양끝 크게, 중앙으로 갈수록 작게. */
+export const LIKERT_SIZES = [30, 24, 20, 24, 30] as const
 
 /**
  * 멤버 아바타 색 — Figma 5인 시안 순서 매핑(#5c4fd9 · #29b5b0→brand · #3b82f5 ·
@@ -89,11 +92,10 @@ export const EVALUATION_COMMENT_LIMIT = 500
 /** 자동 저장 디바운스(ms) — 주기·트리거 미확정(openQuestion), 입력 멈춤 기준 보수값. */
 export const AUTOSAVE_DELAY_MS = 1500
 
-// ── 고정 문구(Figma textContent 원문) ──
-// 기준 카피 '0~5점 필수'는 UI 1~5 세그먼트와 충돌(0점 입력 부재 openQuestion) — 원문 유지.
-export const EVALUATION_CRITERIA_TITLE = '평가 기준 · 5축 고정'
+// ── 고정 문구 ──
+export const EVALUATION_CRITERIA_TITLE = '평가 기준 · 4축 고정'
 export const EVALUATION_CRITERIA_CAPTION =
-  '고정 5축 · 0~5점 필수 · 줄글 평가 필수'
+  '고정 4축 · 1~5 척도(낮음~높음) · 줄글 평가 필수'
 export const EVALUATION_COMMENT_PLACEHOLDER =
   '이 수강생의 강점·관찰 근거·다음 단계를 적어주세요'
 // 정책 완화(2026-08-04) — 멘토링 시작부터 상시 작성, 제출 후에도 재제출로 수정 가능.

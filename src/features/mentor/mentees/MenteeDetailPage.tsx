@@ -21,7 +21,7 @@ import { TERMS } from '@/shared/constants'
 const CARD_SHELL =
   'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
 
-// 5축 막대 색 — Figma 축별 색(기술 brand / 책임감 success / 소통 info / 성장 accent /
+// 4축 막대 색(2026-08-05 개편) — 축별 색(기술 brand / 소통·협업 info / 문제해결 accent /
 // 팀워크 warning). 축별 고정 의미 색인지 장식인지는 openQuestion — Figma 표기 그대로.
 const AXIS_COLORS = [
   'bg-brand text-brand',
@@ -260,12 +260,12 @@ function MenteeDetailBody({
         </div>
       </section>
 
-      {/* 멘토 평가 5축 */}
+      {/* 멘토 평가 4축 */}
       <section className={CARD_SHELL}>
         <header className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5 pb-3.5">
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-fg text-base font-bold">멘토 평가 5축</h3>
+              <h3 className="text-fg text-base font-bold">멘토 평가 4축</h3>
               {evaluation && (
                 <span className="bg-surface-muted text-fg-muted rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
                   작성 {evaluation.writtenAtLabel} · 제출 후 수정 불가

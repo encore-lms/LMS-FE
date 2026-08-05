@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Check, Flag, Info, Pencil, Star, Timer, XCircle } from 'lucide-react'
+import { Check, Flag, Info, Pencil, Timer, XCircle } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -21,6 +21,8 @@ import {
   AUTOSAVE_DELAY_MS,
   EVALUATION_ACTION_CAPTION,
   EVALUATION_AXES,
+  LIKERT_ANCHORS,
+  LIKERT_SIZES,
   EVALUATION_COMMENT_LIMIT,
   EVALUATION_COMMENT_PLACEHOLDER,
   EVALUATION_CONFIRM_BODY,
@@ -481,58 +483,80 @@ function MemberEvalCard({
       </header>
       <div className="bg-divider h-px" aria-hidden />
       <div className="flex flex-col gap-3 px-5 py-4">
+        {/* 리커트 앵커 헤더 — 라벨은 낮음/보통/높음 3개, 선택지는 1~5(저장값 1~5 유지). */}
+        <div className="flex items-center gap-3.5">
+          <span className="w-[190px] shrink-0" aria-hidden />
+          <div className="flex flex-1 items-center">
+            <span className="text-fg-subtle flex-1 text-left text-[11px] font-semibold">
+              {LIKERT_ANCHORS[0]}
+            </span>
+            <span className="text-fg-subtle flex-1 text-center text-[11px] font-semibold">
+              {LIKERT_ANCHORS[1]}
+            </span>
+            <span className="text-fg-subtle flex-1 text-right text-[11px] font-semibold">
+              {LIKERT_ANCHORS[2]}
+            </span>
+          </div>
+          <span className="w-[60px] shrink-0" aria-hidden />
+        </div>
         {EVALUATION_AXES.map((axis, axisIndex) => {
           const Icon = axis.icon
           const score = entry.scores[axisIndex]
           return (
             <div key={axis.label} className="flex items-center gap-3.5">
-              <span className="flex w-[140px] shrink-0 items-center gap-2">
+              <span className="flex w-[190px] shrink-0 items-start gap-2">
                 <span
                   className={cn(
-                    'flex h-6 w-6 items-center justify-center rounded-md',
+                    'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md',
                     axis.tint,
                   )}
                 >
                   <Icon className={cn('h-3 w-3', axis.text)} />
                 </span>
-                <span className="text-fg text-[13px] font-bold">
-                  {axis.label}
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-fg text-[13px] font-bold">
+                    {axis.label}
+                  </span>
+                  {/* 진술문 — 사람이 아니라 행동에 답하게 한다(인성검사식). */}
+                  <span className="text-fg-subtle text-[11px]">
+                    {axis.desc}
+                  </span>
                 </span>
               </span>
               <div
                 role="radiogroup"
                 aria-label={`${member.name} ${axis.label} 점수`}
-                className="flex flex-1 gap-1.5"
+                className="flex flex-1 items-center"
               >
-                {[1, 2, 3, 4, 5].map((value) => {
-                  const selected = score != null && value <= score
+                {[1, 2, 3, 4, 5].map((value, i) => {
+                  const selected = score === value
                   return (
-                    <button
+                    <span
                       key={value}
-                      type="button"
-                      role="radio"
-                      aria-checked={score === value}
-                      aria-label={`${value}점`}
-                      disabled={readOnly}
-                      onClick={() =>
-                        onScore(member.studentId, axisIndex, value)
-                      }
-                      className={cn(
-                        'flex h-9 flex-1 items-center justify-center rounded-lg',
-                        selected
-                          ? axis.fill
-                          : 'bg-surface-muted border-border hover:bg-divider border',
-                      )}
+                      className="flex h-10 flex-1 items-center justify-center"
                     >
-                      <Star
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        aria-label={`${value}점`}
+                        disabled={readOnly}
+                        onClick={() =>
+                          onScore(member.studentId, axisIndex, value)
+                        }
+                        style={{
+                          width: LIKERT_SIZES[i],
+                          height: LIKERT_SIZES[i],
+                        }}
                         className={cn(
-                          'h-3.5 w-3.5',
+                          'rounded-full border-2 transition-colors',
                           selected
-                            ? 'text-on-color fill-current'
-                            : 'text-fg-subtle',
+                            ? cn(axis.fill, 'border-transparent')
+                            : 'border-border bg-surface hover:border-brand/60',
+                          readOnly && 'cursor-default',
                         )}
                       />
-                    </button>
+                    </span>
                   )
                 })}
               </div>

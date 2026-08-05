@@ -16,7 +16,7 @@ export type MentorRecommendationStatus =
 /** 추천 모드 — 팀당 1명 추천 또는 '추천 안 함' 명시 선택(상호배타). */
 export type MentorRecommendationMode = 'recommend' | 'none'
 
-/** 추천 후보 카드 — 제출된 평가의 5축 점수·평균을 그대로 표시(조회 전용). */
+/** 추천 후보 카드 — 제출된 평가의 4축 점수·평균을 그대로 표시(조회 전용). */
 export interface MentorRecommendationCandidate extends MentorTeamMember {
   /** 평가 평균(소수 1자리) — 평가 미제출이면 null */
   average: number | null

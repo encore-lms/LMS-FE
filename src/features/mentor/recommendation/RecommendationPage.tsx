@@ -560,7 +560,7 @@ function CandidateCard({
               key={axis.label}
               className="flex items-center justify-between gap-1.5"
             >
-              <span className="text-fg-subtle text-[10px]">{axis.label}</span>
+              <span className="text-fg-subtle text-[10px]">{axis.short}</span>
               <span className="flex items-center gap-1">
                 <span className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((step) => (

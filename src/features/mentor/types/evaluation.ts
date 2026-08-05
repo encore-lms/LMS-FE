@@ -1,14 +1,14 @@
-// 멘토 도메인 타입 — 팀 평가 5축 점수·시트·제출 요약(M4).
+// 멘토 도메인 타입 — 팀 평가 4축 점수·시트·제출 요약(M4).
 import type { MentorTeamMember } from './team'
 // ───────────────────────── 평가 · 추천 (M4) ─────────────────────────
 
 /**
- * 5축 점수 튜플 — 축 순서 고정(기술·책임감·소통·성장·팀워크, EVALUATION_AXIS_LABELS).
+ * 4축 점수 튜플 — 축 순서 고정(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감).
  * 점수 범위는 1~5 가정(문서 미확정 TODO — Figma 캡션 '0~5점 필수'와 UI 1~5 세그먼트 충돌
  * openQuestion). 미입력 축은 null.
  */
+// 2026-08-05 4축 개편 — 순서: 기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감.
 export type EvaluationScoreTuple = [
-  number | null,
   number | null,
   number | null,
   number | null,
@@ -30,7 +30,7 @@ export interface MentorEvaluationDraftPayload {
 
 /**
  * 평가 상태 — MentorEvaluationStatus 4종(P0_32_35 API명세).
- * ready_to_submit = 전원 5축 + 줄글 입력 완료(제출 전).
+ * ready_to_submit = 전원 4축 + 줄글 입력 완료(제출 전).
  */
 export type MentorEvaluationStatus =
   | 'not_eligible'

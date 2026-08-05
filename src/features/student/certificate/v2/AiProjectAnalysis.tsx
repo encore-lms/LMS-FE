@@ -117,7 +117,7 @@ export function AiProjectAnalysis({
       id="ai-project-analysis"
       index="02"
       tone="info"
-      title="프로젝트 AI 분석"
+      title="프로젝트 분석"
       description="프로젝트 이력을 다시 나열하지 않고, 프로젝트마다 맡은 역할과 판단, 결과가 어떤 실무 강점으로 이어지는지 분석했습니다."
       className={className}
     >
@@ -133,7 +133,7 @@ export function AiProjectAnalysis({
         </p>
       </section>
 
-      <div className="flex flex-col gap-5">
+      <div className="grid gap-5 lg:grid-cols-2">
         {representativeProjects.map((project) => (
           <ProjectCard key={project.projectId} project={project} />
         ))}

@@ -16,7 +16,7 @@ import {
   useStaffCourseNotices,
   type NoticePost,
 } from '@/shared/api'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { ListToolbar } from '@/components/ui/ListToolbar'
 
 // 담당 기수 공지 — 강사·매니저가 쓰고 지운다.
 // 삭제 버튼은 서버가 canDelete 로 허락한 글에만 나온다(강사는 본인 글만).
@@ -141,19 +141,24 @@ export function NoticesPane({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <SearchInput
-          value={q}
-          onChange={setQ}
-          placeholder="제목·내용·작성자 검색"
-          ariaLabel="공지 검색"
-        />
-        {!readOnly && newPath && (
-          <Link to={newPath} className={buttonClass({ size: 'sm' })}>
-            공지 작성
-          </Link>
-        )}
-      </div>
+      {/* 탭 공통 툴바 규격 — 좌측 카운트, 우측 [검색][액션](2026-08-07 통일). */}
+      <ListToolbar
+        left={<span>총 {data?.notices.length ?? 0}건 공지</span>}
+        search={{
+          value: q,
+          onChange: setQ,
+          placeholder: '제목·내용·작성자 검색',
+          ariaLabel: '공지 검색',
+        }}
+        actions={
+          !readOnly &&
+          newPath && (
+            <Link to={newPath} className={buttonClass({ size: 'sm' })}>
+              공지 작성
+            </Link>
+          )
+        }
+      />
 
       <DataBoundary
         isPending={isPending}

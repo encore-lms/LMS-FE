@@ -18,7 +18,7 @@ import {
 import { DeleteAssignmentModal } from './DeleteAssignmentModal'
 import { SUBMISSION_STATUS_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { ListToolbar } from '@/components/ui/ListToolbar'
 
 // 상태 필터 — 진행/마감(강사 원본) + 제출 상태(구 운영 AssignmentsPane에서 이식, 2026-08-03).
 type StatusFilter =
@@ -240,51 +240,51 @@ export default function AssignmentsPage({
             />
           </div>
 
-          {/* 필터 바 */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <SearchInput
-              value={q}
-              onChange={setQ}
-              placeholder="과제명·과목으로 검색"
-              ariaLabel="과제 검색"
-              className="w-72"
+          {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수·정렬 안내 / 우: 검색·필터·주 액션(2026-08-07 통일). */}
+          <div className="mt-4">
+            <ListToolbar
+              left={<span>총 {data.total}개 · 마감일 가까운 순</span>}
+              search={{
+                value: q,
+                onChange: setQ,
+                placeholder: '과제명·과목으로 검색',
+                ariaLabel: '과제 검색',
+              }}
+              filters={
+                <>
+                  <Select
+                    value={status}
+                    onChange={(v) => setStatus(v as StatusFilter)}
+                    aria-label="상태 필터"
+                    options={[
+                      { value: 'all', label: '전체 상태' },
+                      { value: 'open', label: '진행 중' },
+                      { value: 'closed', label: '마감됨' },
+                      { value: 'submitted', label: '제출 있음' },
+                      { value: 'supplement', label: '보완 요청' },
+                      { value: 'done', label: '검토 완료' },
+                    ]}
+                  />
+                  {/* 기수 필터 — 임베드(과정·기수 허브 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
+                  {!embedded && (
+                    <Select
+                      value={cohort}
+                      onChange={(v) => setCohort(v)}
+                      aria-label="기수 필터"
+                      options={cohortOpts.map((c) => ({ value: c, label: c }))}
+                    />
+                  )}
+                </>
+              }
+              actions={
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`${base}/new${hubQs}`)}
+                >
+                  <Plus className="h-3.5 w-3.5" /> 과제 생성
+                </Button>
+              }
             />
-            <label className="flex items-center gap-2 text-xs">
-              <span className="text-fg-subtle">상태</span>
-              <Select
-                value={status}
-                onChange={(v) => setStatus(v as StatusFilter)}
-                aria-label="상태 필터"
-                options={[
-                  { value: 'all', label: '전체' },
-                  { value: 'open', label: '진행 중' },
-                  { value: 'closed', label: '마감됨' },
-                  { value: 'submitted', label: '제출 있음' },
-                  { value: 'supplement', label: '보완 요청' },
-                  { value: 'done', label: '검토 완료' },
-                ]}
-              />
-            </label>
-            {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
-            {!embedded && (
-              <label className="flex items-center gap-2 text-xs">
-                <span className="text-fg-subtle">기수</span>
-                <Select
-                  value={cohort}
-                  onChange={(v) => setCohort(v)}
-                  aria-label="기수 필터"
-                  options={cohortOpts.map((c) => ({ value: c, label: c }))}
-                />
-              </label>
-            )}
-            <div className="ml-auto flex items-center gap-3">
-              <span className="text-fg-subtle text-xs">
-                총 {data.total}개 · 마감일 가까운 순
-              </span>
-              <Button size="sm" onClick={() => navigate(`${base}/new${hubQs}`)}>
-                <Plus className="h-3.5 w-3.5" /> 과제 생성
-              </Button>
-            </div>
           </div>
 
           <div className="mt-4">

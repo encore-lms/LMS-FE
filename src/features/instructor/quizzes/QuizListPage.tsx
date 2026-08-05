@@ -19,6 +19,7 @@ import { useDeleteQuiz, useInstructorQuizzes } from '../api/quizzes'
 import { useQuizTemplates } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { ListToolbar } from '@/components/ui/ListToolbar'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { FilterSelect } from '@/components/ui/FilterSelect'
 
@@ -243,70 +244,81 @@ export default function QuizListPage({
     >
       {data && (
         <div className={embedded ? '' : 'p-8'}>
-          {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-fg-muted text-sm">
-              총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <SearchInput
-                value={q}
-                onChange={setQ}
-                placeholder="퀴즈명·과목으로 검색"
-                ariaLabel="퀴즈 검색"
-              />
-              {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
-              {!embedded && (
+          {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
+          <ListToolbar
+            left={
+              <span>
+                총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
+              </span>
+            }
+            search={{
+              value: q,
+              onChange: setQ,
+              placeholder: '퀴즈명·과목으로 검색',
+              ariaLabel: '퀴즈 검색',
+            }}
+            filters={
+              <>
+                {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
+                {!embedded && (
+                  <FilterSelect
+                    label="기수"
+                    value={cohort}
+                    onChange={setCohort}
+                    options={cohortOpts.map((c) => ({ value: c, label: c }))}
+                  />
+                )}
                 <FilterSelect
-                  label="기수"
-                  value={cohort}
-                  onChange={setCohort}
-                  options={cohortOpts.map((c) => ({ value: c, label: c }))}
+                  label="채점 모드"
+                  value={mode}
+                  onChange={(v) => setMode(v as ModeFilter)}
+                  options={[
+                    { value: 'all', label: '전체' },
+                    { value: 'AUTO', label: 'AUTO' },
+                    { value: 'MANUAL', label: 'MANUAL' },
+                    { value: 'MIXED', label: 'MIXED' },
+                  ]}
                 />
-              )}
-              <FilterSelect
-                label="채점 모드"
-                value={mode}
-                onChange={(v) => setMode(v as ModeFilter)}
-                options={[
-                  { value: 'all', label: '전체' },
-                  { value: 'AUTO', label: 'AUTO' },
-                  { value: 'MANUAL', label: 'MANUAL' },
-                  { value: 'MIXED', label: 'MIXED' },
-                ]}
-              />
-              <FilterSelect
-                label="공개 상태"
-                value={visibility}
-                onChange={(v) => setVisibility(v as VisibilityFilter)}
-                options={[
-                  { value: 'all', label: '전체' },
-                  { value: 'draft', label: '임시저장' },
-                  { value: 'published', label: '공개' },
-                  { value: 'closed', label: '종료' },
-                ]}
-              />
-              {/* 템플릿 관리 — 전역 자산이라 별도 메뉴 없이 퀴즈 영역에서 진입(생성·편집·삭제). */}
-              <Button
-                variant="secondary"
-                onClick={() => navigate(templateBase)}
-              >
-                <Settings2 className="h-4 w-4" /> 템플릿 관리
-              </Button>
-              <Button variant="secondary" onClick={() => setTemplateOpen(true)}>
-                <FileText className="h-4 w-4" /> 템플릿 열기
-              </Button>
-              <Button
-                onClick={() =>
-                  navigate(
-                    `${base}/new${cohortId ? `?cohortId=${cohortId}` : ''}`,
-                  )
-                }
-              >
-                <Plus className="h-4 w-4" /> 퀴즈 생성
-              </Button>
-            </div>
-          </div>
+                <FilterSelect
+                  label="공개 상태"
+                  value={visibility}
+                  onChange={(v) => setVisibility(v as VisibilityFilter)}
+                  options={[
+                    { value: 'all', label: '전체' },
+                    { value: 'draft', label: '임시저장' },
+                    { value: 'published', label: '공개' },
+                    { value: 'closed', label: '종료' },
+                  ]}
+                />
+              </>
+            }
+            actions={
+              <>
+                {/* 템플릿 관리 — 전역 자산이라 별도 메뉴 없이 퀴즈 영역에서 진입(생성·편집·삭제). */}
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(templateBase)}
+                >
+                  <Settings2 className="h-4 w-4" /> 템플릿 관리
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setTemplateOpen(true)}
+                >
+                  <FileText className="h-4 w-4" /> 템플릿 열기
+                </Button>
+                <Button
+                  onClick={() =>
+                    navigate(
+                      `${base}/new${cohortId ? `?cohortId=${cohortId}` : ''}`,
+                    )
+                  }
+                >
+                  <Plus className="h-4 w-4" /> 퀴즈 생성
+                </Button>
+              </>
+            }
+          />
 
           <div className="mt-4">
             <DataTable

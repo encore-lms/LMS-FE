@@ -7,6 +7,7 @@ import { useMentorTeamDetail } from '../api/mentor'
 import { useTeamEvaluation, useTeamRecommendation } from '../api/evaluations'
 import { buildTeamDetailData } from '../mockDb'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/mentor')
 // 평가·추천 탭은 작성 화면을 그대로 얹는다 — 여기서는 '어느 단계가 열리는지'만 본다.
@@ -58,19 +59,18 @@ describe('TeamDetailPage', () => {
     expect(usePageHeaderStore.getState().title).toBe('추천시스템 팀')
     expect(screen.getByText(/추천시스템 팀 · /)).toBeInTheDocument()
     expect(screen.getByText('담당 멘토 임수현')).toBeInTheDocument()
-    // 평가·추천 — 상시 작성 가능(2026-08-04 완화): 잠금 칩 없이 작성 화면 링크가 열린다.
+    // 평가·추천 — 상시 작성 가능(2026-08-04 완화): 잠금 칩 없이 열린다.
+    // 단독 작성 화면은 걷어냈고(2026-08-04) 탭 안에서 순서대로 하므로, 링크가 아니라 버튼이다.
     expect(screen.queryByText('N시간 완료 후 활성')).not.toBeInTheDocument()
     expect(
       screen.getByText('팀원 5명 평가 · 상시 작성·재제출 가능'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /평가 작성/ })).toHaveAttribute(
-      'href',
-      '/mentor/teams/team_rec/evaluation',
-    )
-    expect(screen.getByRole('link', { name: /추천 선택/ })).toHaveAttribute(
-      'href',
-      '/mentor/teams/team_rec/recommendation',
-    )
+    expect(
+      screen.getByRole('button', { name: /평가 작성/ }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /추천 선택/ }),
+    ).toBeInTheDocument()
     // 다음 확정 예약 + 일지 건수(목록은 일지 탭에)
     expect(screen.getByText('예상 90분 · 요청자 김수강')).toBeInTheDocument()
     expect(screen.getByText(/팀 일지 \d+건/)).toBeInTheDocument()
@@ -166,6 +166,40 @@ describe('TeamDetailPage', () => {
     expect(screen.getByText('평가와 추천을 모두 마쳤어요')).toBeInTheDocument()
     // 고치고 싶으면 그 자리에서 다시 연다 — 다른 화면으로 내보내지 않는다.
     await user.click(screen.getByRole('button', { name: '평가 수정' }))
+    expect(screen.getByText('평가 작성 폼')).toBeInTheDocument()
+  })
+
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', async () => {
+    // 화면을 걷어낼 때 링크를 함께 훑지 않으면 '찾을 수 없는 주소'로 떨어진다.
+    // 홈 탭의 평가·추천 카드가 걷어낸 단독 화면을 가리키고 있었다(2026-08-05 배포 검증).
+    mockHook({
+      data: buildTeamDetailData('team_rec')!,
+      isPending: false,
+      isError: false,
+    })
+    mockStages('draft', 'not_started')
+    const user = userEvent.setup()
+    const { container } = renderPage()
+    for (const tab of ['홈', '팀원', '평가·추천']) {
+      await user.click(screen.getByRole('tab', { name: tab }))
+      const dead = [...container.querySelectorAll('a')]
+        .map((a) => a.getAttribute('href') ?? '')
+        .filter((href) => href.startsWith('/mentor'))
+        .filter((href) => !reachable(href))
+      expect(dead, `${tab} 탭`).toEqual([])
+    }
+  })
+
+  it('홈 카드의 평가 작성을 누르면 평가·추천 탭으로 간다', async () => {
+    mockHook({
+      data: buildTeamDetailData('team_rec')!,
+      isPending: false,
+      isError: false,
+    })
+    mockStages('draft', 'not_started')
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: /평가 작성/ }))
     expect(screen.getByText('평가 작성 폼')).toBeInTheDocument()
   })
 })

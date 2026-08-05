@@ -383,6 +383,7 @@ function EvaluationCard({
   onOpen,
 }: {
   data: Detail
+  /** 평가·추천 탭으로 — 홈 카드에서만 준다(탭 안에서는 이미 그 자리다). */
   onOpen?: () => void
 }) {
   const team = data.assignment
@@ -425,14 +426,14 @@ function EvaluationCard({
           title="평가 작성"
           description={`팀원 ${team.memberCount}명 평가 · 상시 작성·재제출 가능`}
           statusLabel={data.evaluation.evaluationStatusLabel}
-          to={`/mentor/teams/${team.teamId}/evaluation`}
+          onClick={onOpen}
         />
         <EvalItem
           icon={Flag}
           title="추천 선택"
           description="팀원 중 1명 또는 추천 안 함 · 평가와 독립"
           statusLabel={data.evaluation.recommendationStatusLabel}
-          to={`/mentor/teams/${team.teamId}/recommendation`}
+          onClick={onOpen}
         />
       </ul>
     </section>
@@ -475,25 +476,27 @@ function StatTile({
   )
 }
 
-// 상시 작성 정책(2026-08-04) — 행 전체를 작성 화면으로 연결해 팀 상세에서 바로 진입한다.
+// 행 전체가 평가·추천 탭으로 가는 버튼 — 평가·추천은 탭 안에서 순서대로 하고,
+// 단독 작성 화면은 걷어냈다(2026-08-04). 주소로 나가면 '찾을 수 없는 주소'가 된다.
 function EvalItem({
   icon: Icon,
   title,
   description,
   statusLabel,
-  to,
+  onClick,
 }: {
   icon: LucideIcon
   title: string
   description: string
   statusLabel: string
-  to: string
+  onClick?: () => void
 }) {
   return (
     <li>
-      <Link
-        to={to}
-        className="hover:bg-surface-muted -m-1 flex items-center gap-3 rounded-lg p-1"
+      <button
+        type="button"
+        onClick={onClick}
+        className="hover:bg-surface-muted -m-1 flex w-full items-center gap-3 rounded-lg p-1 text-left"
       >
         <span className="bg-surface-muted border-border text-fg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
           <Icon className="h-4 w-4" />
@@ -504,7 +507,7 @@ function EvalItem({
         </div>
         <StatusBadge label={statusLabel} />
         <ArrowRight className="text-fg-subtle h-3 w-3 shrink-0" />
-      </Link>
+      </button>
     </li>
   )
 }

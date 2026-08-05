@@ -10,7 +10,7 @@ import { SummaryTab } from './tabs/SummaryTab'
 import { TechTab } from './tabs/TechTab'
 import { ProjectsTab } from './tabs/ProjectsTab'
 import { ProblemTab } from './tabs/ProblemTab'
-import { GrowthTab } from './tabs/GrowthTab'
+import { GrowthTabData } from './tabs/GrowthTab'
 import { ResumeTab } from './tabs/ResumeTab'
 import { AiTab } from './tabs/AiTab'
 import { CERT_V2 } from './config'
@@ -93,7 +93,10 @@ export default function CertificatePage() {
                 <ProblemTab studentId={selectedStudent.id} />
               )}
               {tab === 'growth-reputation' && (
-                <GrowthTab g={certificateData.growth} />
+                <GrowthTabData
+                  g={certificateData.growth}
+                  studentId={selectedStudent.id}
+                />
               )}
               {tab === 'ai-analysis' && CERT_V2 && (
                 <AiTab studentId={selectedStudent.id} />

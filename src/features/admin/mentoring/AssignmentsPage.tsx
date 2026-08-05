@@ -398,6 +398,13 @@ export default function AssignmentsPage({
             placeholder: '팀명·멘토명 검색',
             ariaLabel: '팀명·멘토명 검색',
           }}
+          reset={{
+            active: !!q || mentorFilter !== 'all',
+            onReset: () => {
+              setQ('')
+              setMentorFilter('all')
+            },
+          }}
           filters={
             <>
               <Select

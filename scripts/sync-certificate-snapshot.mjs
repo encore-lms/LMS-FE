@@ -56,7 +56,7 @@ const raw = execFileSync(pythonPath, ['-c', source], {
 })
 const snapshot = JSON.parse(raw)
 
-if (snapshot.score.policyVersion !== '2026.08.05-six-axis-four-rater-v1') {
+if (snapshot.score.policyVersion !== '2026.08.05-six-axis-four-rater-v2') {
   throw new Error(
     `지원하지 않는 점수 정책 버전입니다: ${snapshot.score.policyVersion}`,
   )

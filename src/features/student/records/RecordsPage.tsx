@@ -73,6 +73,8 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   const deleteRecord = useDeleteRecord()
   const [params, setParams] = useSearchParams()
   const [activeTab, setActiveTabState] = useState<RecordCategory>(() => {
+    const requested = params.get('category')
+    if (isRecordCategory(requested)) return requested
     try {
       const stored = sessionStorage.getItem(RECORDS_TAB_KEY)
       return isRecordCategory(stored) ? stored : 'blog'
@@ -84,6 +86,9 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   // 탭 변경을 보존 — 기록 보고 돌아와도 마지막 카테고리 탭이 유지된다.
   const setActiveTab = (key: RecordCategory) => {
     setActiveTabState(key)
+    const nextParams = new URLSearchParams(params)
+    nextParams.set('category', key)
+    setParams(nextParams, { replace: true })
     try {
       sessionStorage.setItem(RECORDS_TAB_KEY, key)
     } catch {
@@ -200,7 +205,11 @@ function RecordsView({ data }: { data: RecordsOverview }) {
 
   const closeModal = () => {
     setDeleteId(null)
-    if (modalParam) setParams({}, { replace: true })
+    if (modalParam) {
+      const nextParams = new URLSearchParams(params)
+      nextParams.delete('modal')
+      setParams(nextParams, { replace: true })
+    }
   }
 
   const confirmDelete = () => {

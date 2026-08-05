@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, X } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
-import { TONE_SOLID } from '@/shared/lib/tone'
+import { TONE_SOFT, TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 import {
   CERTIFICATE_MOCK_STUDENT_ID,
   CERTIFICATE_AXIS_KEYS,
@@ -14,7 +14,6 @@ import {
   type CertificateScoreMetric,
   type CertificateScoreResult,
 } from '../ai'
-import { SkillRadar, SkillRadarLoading } from '../components/SkillRadar'
 import { CERT_V2 } from '../config'
 import type {
   CertKpi,
@@ -28,40 +27,87 @@ import { OntologyMap } from '../v2/OntologyMap'
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
-const metricTone: Record<CertificateScoreMetric['key'], Tone> = {
-  attendance: 'success',
-  assessment: 'info',
-  blog: 'accent',
-  certifiedProject: 'brand',
-  certifiedTroubleshooting: 'warning',
-  certifiedCertificate: 'accent',
-  evaluatorAverage: 'success',
+type AxisKey = CertificateScoreResult['axes'][number]['key']
+
+const axisTone: Record<AxisKey, Tone> = {
+  '기술·기술기여': 'brand',
+  '소통·협업·팀워크': 'info',
+  문제해결: 'danger',
+  책임감: 'warning',
+  학습지속성: 'success',
+  '성취도 평가': 'accent',
 }
 
-const metricOrder: CertificateScoreMetric['key'][] = [
-  'assessment',
+const toneRing: Record<Tone, string> = {
+  brand: 'ring-brand/50',
+  info: 'ring-info/50',
+  warning: 'ring-warning/50',
+  danger: 'ring-danger/50',
+  accent: 'ring-accent/50',
+  success: 'ring-success/50',
+}
+
+const metricTone: Record<CertificateScoreMetric['key'], Tone> = {
+  attendance: axisTone.학습지속성,
+  assessment: axisTone['성취도 평가'],
+  blog: axisTone.학습지속성,
+  certifiedProject: axisTone['기술·기술기여'],
+  certifiedTroubleshooting: axisTone.문제해결,
+  certifiedCertificate: 'accent',
+  evaluatorAverage: axisTone['소통·협업·팀워크'],
+}
+
+const progressMetricOrder: CertificateScoreMetric['key'][] = [
   'attendance',
-  'certifiedProject',
-  'certifiedTroubleshooting',
-  'certifiedCertificate',
+  'assessment',
   'evaluatorAverage',
 ]
 
-function metricRoute(
-  key: CertificateScoreMetric['key'],
-  projectNavigation: CertificateScoreResult['projectNavigation'],
-) {
+const countMetricOrder: CertificateScoreMetric['key'][] = [
+  'certifiedProject',
+  'certifiedTroubleshooting',
+  'certifiedCertificate',
+]
+
+const metricOrder = [...progressMetricOrder, ...countMetricOrder]
+
+const metricLabelOverride: Partial<
+  Record<CertificateScoreMetric['key'], string>
+> = {
+  assessment: '성취도 평가 평균',
+  certifiedProject: '프로젝트',
+  certifiedTroubleshooting: '트러블슈팅',
+  certifiedCertificate: '자격증',
+  evaluatorAverage: '4축 평가 전체 평균',
+}
+
+const countMetricDisplay: Partial<
+  Record<CertificateScoreMetric['key'], { suffix: string; description: string }>
+> = {
+  certifiedProject: {
+    suffix: '건',
+    description: '기술·기술기여 판단 근거가 된 완료 프로젝트',
+  },
+  certifiedTroubleshooting: {
+    suffix: '건',
+    description: '문제해결 판단 근거가 된 인증 사례',
+  },
+  certifiedCertificate: {
+    suffix: '건',
+    description: '역량 검증 근거가 된 등록 자격증',
+  },
+}
+
+function metricRoute(key: CertificateScoreMetric['key']) {
   if (key === 'assessment') return '/student/quizzes'
   if (key === 'attendance') return '/student/attendance'
-  if (key === 'blog') return '/student/records'
+  if (key === 'blog') return '/student/records?category=blog'
   if (key === 'certifiedProject') return '/student/projects'
-  if (key === 'certifiedCertificate') return '/student/records'
+  if (key === 'certifiedCertificate') return '/student/records?category=cert'
   if (key === 'evaluatorAverage') {
-    return '/student/certificate?tab=growth-reputation'
+    return '/student/certificate'
   }
-  return projectNavigation.issuesProjectId
-    ? `/student/projects/${encodeURIComponent(projectNavigation.issuesProjectId)}?tab=issues`
-    : '/student/projects'
+  return '/student/troubleshooting'
 }
 
 const domainTones: Tone[] = [
@@ -93,7 +139,7 @@ function metricToKpi(metric: CertificateScoreMetric): CertKpi {
 
   return {
     key: metric.key,
-    label: metric.label,
+    label: metricLabelOverride[metric.key] ?? metric.label,
     value: formatValue(metric.value),
     unit: metric.unit,
     tone: metricTone[metric.key],
@@ -103,10 +149,18 @@ function metricToKpi(metric: CertificateScoreMetric): CertKpi {
 }
 
 const evaluatorAxisDefinitions = [
-  { key: '기술·기술기여', label: '기술·기술기여', tone: 'brand' },
-  { key: '소통·협업·팀워크', label: '소통·협업·팀워크', tone: 'info' },
-  { key: '문제해결', label: '문제해결', tone: 'warning' },
-  { key: '책임감', label: '책임감', tone: 'success' },
+  {
+    key: '기술·기술기여',
+    label: '기술·기술기여',
+    tone: axisTone['기술·기술기여'],
+  },
+  {
+    key: '소통·협업·팀워크',
+    label: '소통·협업·팀워크',
+    tone: axisTone['소통·협업·팀워크'],
+  },
+  { key: '문제해결', label: '문제해결', tone: axisTone.문제해결 },
+  { key: '책임감', label: '책임감', tone: axisTone.책임감 },
 ] as const satisfies ReadonlyArray<{
   key: CertificateScoreResult['axes'][number]['key']
   label: string
@@ -116,9 +170,11 @@ const evaluatorAxisDefinitions = [
 function EvaluatorAverageKpi({
   kpi,
   axes,
+  selectedAxisKey,
 }: {
   kpi: CertKpi
   axes: CertificateScoreResult['axes']
+  selectedAxisKey: AxisKey | null
 }) {
   const competencyAxes = evaluatorAxisDefinitions.map((definition) => {
     const axis = axes.find((item) => item.key === definition.key)
@@ -127,18 +183,26 @@ function EvaluatorAverageKpi({
         ? null
         : 1 + axis.score / 25
 
-    return { ...definition, score: fivePointAverage }
+    return {
+      ...definition,
+      score: fivePointAverage,
+      convertedScore: axis?.score ?? null,
+    }
   })
+  const highlightedAxis = competencyAxes.find(
+    (axis) => axis.key === selectedAxisKey,
+  )
 
   return (
-    <Link
-      to="/student/certificate?tab=growth-reputation"
-      aria-label="다면역량 평가 상세 화면으로 이동"
+    <article
       data-summary-kpi="evaluatorAverage"
-      data-summary-kpi-route="/student/certificate?tab=growth-reputation"
+      data-kpi-visual="evaluation"
+      data-axis-highlighted={Boolean(highlightedAxis)}
       className={cn(
         card,
-        'focus-visible:ring-ring group flex min-w-0 flex-col gap-2 p-4 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
+        'flex min-w-0 flex-col gap-2 p-4 transition-shadow',
+        highlightedAxis && 'ring-offset-surface ring-2 ring-offset-2',
+        highlightedAxis && toneRing[highlightedAxis.tone],
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -146,21 +210,32 @@ function EvaluatorAverageKpi({
           <span className="text-fg-muted truncate text-[11px] font-medium">
             {kpi.label}
           </span>
-          <span className="text-fg-subtle truncate text-[9px]">
-            동료·멘토·강사·매니저 전체 평균 · 5점 만점
+          <span className="text-fg-muted truncate text-[10px] font-medium">
+            동료·멘토·강사·운영 각 25% · 100점 환산
           </span>
         </div>
-        <ArrowRight
-          aria-hidden="true"
-          className="text-fg-subtle size-3 shrink-0 transition-transform group-hover:translate-x-0.5"
-        />
+        {highlightedAxis && (
+          <span
+            className={cn(
+              'shrink-0 rounded-full px-2 py-1 text-[9px] font-bold',
+              TONE_SOFT[highlightedAxis.tone],
+            )}
+          >
+            연결된 지표
+          </span>
+        )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col justify-between gap-1">
         {competencyAxes.map((axis) => (
           <div
             key={axis.key}
-            className="grid grid-cols-[90px_minmax(0,1fr)_42px] items-center gap-1.5"
+            className={cn(
+              'grid grid-cols-[90px_minmax(0,1fr)_88px] items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors',
+              selectedAxisKey === axis.key && TONE_SOFT[axis.tone],
+            )}
+            data-evaluator-axis-row={axis.key}
+            data-axis-highlighted={selectedAxisKey === axis.key}
           >
             <span className="text-fg-subtle text-[9px] leading-3 font-medium">
               {axis.label}
@@ -168,17 +243,319 @@ function EvaluatorAverageKpi({
             <div className="bg-surface-muted h-1.5 min-w-0 overflow-hidden rounded-full">
               <div
                 data-evaluator-axis-bar={axis.key}
+                data-axis-tone={axis.tone}
                 className={cn('h-full rounded-full', TONE_SOLID[axis.tone])}
                 style={{
                   width: `${axis.score === null ? 0 : Math.min(100, (axis.score / 5) * 100)}%`,
                 }}
               />
             </div>
-            <span className="text-fg text-right text-[9px] font-bold">
-              {axis.score?.toFixed(1) ?? '-'} / 5
+            <span className="text-fg text-right text-[9px] font-bold tabular-nums">
+              {axis.score?.toFixed(1) ?? '-'} / 5 →{' '}
+              {displayNumber(axis.convertedScore)}점
             </span>
           </div>
         ))}
+      </div>
+    </article>
+  )
+}
+
+function ProgressKpiCard({
+  kpi,
+  route,
+  contribution,
+  highlighted,
+}: {
+  kpi: CertKpi
+  route: string
+  contribution: {
+    axisLabel: AxisKey
+    score: number | null
+    rule: string
+  }
+  highlighted: boolean
+}) {
+  return (
+    <Link
+      to={route}
+      aria-label={`${kpi.label} 상세 화면으로 이동`}
+      data-summary-kpi={kpi.key}
+      data-summary-kpi-route={route}
+      data-kpi-visual="progress"
+      data-kpi-tone={kpi.tone}
+      className={cn(
+        card,
+        'focus-visible:ring-ring group flex min-w-0 flex-col justify-between gap-4 p-5 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
+        highlighted && 'ring-offset-surface ring-2 ring-offset-2',
+        highlighted && toneRing[kpi.tone ?? 'brand'],
+      )}
+      data-axis-highlighted={highlighted}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-fg-muted truncate text-[12px] font-semibold">
+          {kpi.label}
+        </span>
+        {highlighted ? (
+          <span
+            className={cn(
+              'rounded-full px-2 py-1 text-[9px] font-bold',
+              TONE_SOFT[kpi.tone ?? 'brand'],
+            )}
+          >
+            연결된 지표
+          </span>
+        ) : (
+          <span
+            className={cn(
+              'size-2.5 rounded-full',
+              TONE_SOLID[kpi.tone ?? 'brand'],
+            )}
+          />
+        )}
+      </div>
+
+      <span className="text-fg text-[30px] leading-none font-bold tabular-nums">
+        {kpi.value}
+        {kpi.unit && (
+          <span className="text-fg-muted ml-1 text-[14px] font-medium">
+            {kpi.unit}
+          </span>
+        )}
+      </span>
+
+      <div
+        className={cn(
+          'flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2.5 py-2 text-[10px]',
+          TONE_SOFT[kpi.tone ?? 'brand'],
+        )}
+        data-kpi-contribution={contribution.axisLabel}
+      >
+        <span className="font-semibold">6축 반영</span>
+        <strong className="font-bold">
+          {contribution.axisLabel} {displayNumber(contribution.score)}점
+        </strong>
+        <span className="w-full opacity-80">{contribution.rule}</span>
+      </div>
+
+      <div className="grid gap-2">
+        <div
+          className="bg-surface-muted h-2.5 w-full overflow-hidden rounded-full"
+          role="progressbar"
+          aria-label={`${kpi.label} 달성도`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(kpi.bar ?? 0)}
+        >
+          <div
+            className={cn(
+              'h-full rounded-full transition-[width] duration-500',
+              TONE_SOLID[kpi.tone ?? 'brand'],
+            )}
+            style={{ width: `${kpi.bar ?? 0}%` }}
+          />
+        </div>
+        <div
+          className="flex items-center justify-between gap-2"
+          data-kpi-link-footer
+        >
+          <span className="text-fg-subtle truncate text-[10px]" title={kpi.sub}>
+            {kpi.sub}
+          </span>
+          <ArrowRight
+            aria-hidden="true"
+            className="text-fg-subtle size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
+            data-progress-kpi-link-arrow
+          />
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function CountKpiCard({ kpi, route }: { kpi: CertKpi; route: string }) {
+  const display = countMetricDisplay[kpi.key as CertificateScoreMetric['key']]
+
+  return (
+    <Link
+      to={route}
+      aria-label={`${kpi.label} 상세 화면으로 이동`}
+      data-summary-kpi={kpi.key}
+      data-summary-kpi-route={route}
+      data-kpi-visual="count"
+      data-kpi-tone={kpi.tone}
+      className={cn(
+        card,
+        'focus-visible:ring-ring group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-5 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
+      )}
+    >
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="text-fg text-[12px] font-bold">{kpi.label}</span>
+        <span className="text-fg-subtle truncate text-[10px]" title={kpi.sub}>
+          {display?.description ?? kpi.sub}
+        </span>
+      </span>
+      <span className="flex items-center gap-2">
+        <span
+          className={cn(
+            'flex items-baseline gap-1 rounded-xl px-3 py-2',
+            TONE_SOFT[kpi.tone ?? 'brand'],
+          )}
+        >
+          <span className="text-[22px] leading-none font-bold tabular-nums">
+            {kpi.value}
+          </span>
+          <span className="text-fg-muted text-[10px] font-semibold">
+            {display?.suffix ?? kpi.unit}
+          </span>
+        </span>
+        <ArrowRight
+          aria-hidden="true"
+          className="text-fg-subtle size-3.5 transition-transform group-hover:translate-x-0.5"
+        />
+      </span>
+    </Link>
+  )
+}
+
+function LearningPersistenceKpi({
+  axis,
+  highlighted,
+}: {
+  axis: CertificateScoreResult['axes'][number] | undefined
+  highlighted: boolean
+}) {
+  const definitions = [
+    { key: 'blog', label: '블로그 제출', bonus: false },
+    { key: 'assignment', label: '과제 제출', bonus: true },
+    { key: 'study', label: '스터디 참여', bonus: true },
+    { key: 'mentoring', label: '멘토링 참석', bonus: true },
+  ] as const
+  const items = definitions.map((definition) => ({
+    ...definition,
+    evidence: axis ? evidenceByKey(axis, definition.key) : undefined,
+  }))
+  const attendanceScore = axis
+    ? (evidenceByKey(axis, 'attendance')?.appliedScore ?? 0)
+    : 0
+  const blogScore = items.find((item) => item.key === 'blog')?.evidence
+    ?.appliedScore
+  const bonusScore = items
+    .filter((item) => item.bonus)
+    .reduce((total, item) => total + (item.evidence?.appliedScore ?? 0), 0)
+  const participationScore = (blogScore ?? 0) + bonusScore
+  const combinedScore = attendanceScore + participationScore
+  const finalScore = axis?.score ?? combinedScore
+
+  return (
+    <Link
+      to="/student/records?category=blog"
+      aria-label="학습 참여·제출 블로그 화면으로 이동"
+      className={cn(
+        card,
+        'group flex min-w-0 flex-col gap-3 p-4 transition-shadow',
+        highlighted && 'ring-offset-surface ring-2 ring-offset-2',
+        highlighted && toneRing[axisTone.학습지속성],
+      )}
+      data-summary-kpi="learningPersistenceInputs"
+      data-summary-kpi-route="/student/records?category=blog"
+      data-kpi-visual="learning-components"
+      data-kpi-tone={axisTone.학습지속성}
+      data-axis-highlighted={highlighted}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-col">
+          <span className="text-fg-muted text-[11px] font-semibold">
+            학습 참여·제출
+          </span>
+          <span className="text-fg-subtle text-[9px]">
+            블로그 기본 {items[0]?.evidence?.weightPercent ?? 30}% ·
+            과제·스터디·멘토링 가산점
+          </span>
+        </div>
+        <span
+          className={cn(
+            'shrink-0 rounded-full px-2 py-1 text-[9px] font-bold',
+            TONE_SOFT[axisTone.학습지속성],
+          )}
+        >
+          {axis?.score === null || axis?.score === undefined
+            ? '산출 전'
+            : `${highlighted ? '연결됨 · ' : ''}학습지속성 +${displayNumber(participationScore)}점`}
+        </span>
+      </div>
+
+      <div className="grid gap-1.5">
+        {items.map((item) => {
+          const value = item.evidence?.value
+          const appliedScore = item.evidence?.appliedScore
+          const appliedLabel =
+            appliedScore === null || appliedScore === undefined
+              ? '-'
+              : item.bonus
+                ? `+${displayNumber(appliedScore)}점`
+                : `${displayNumber(appliedScore)}점 반영`
+
+          return (
+            <div
+              key={item.key}
+              className="grid grid-cols-[76px_minmax(0,1fr)_64px] items-center gap-2"
+              data-learning-input={item.key}
+            >
+              <span className="text-fg-subtle text-[9px] font-medium">
+                {item.label}
+              </span>
+              <div className="bg-surface-muted h-1.5 min-w-0 overflow-hidden rounded-full">
+                <div
+                  className={cn(
+                    'h-full rounded-full',
+                    TONE_SOLID[axisTone.학습지속성],
+                  )}
+                  style={{
+                    width: `${value === null || value === undefined ? 0 : Math.min(100, Math.max(0, value))}%`,
+                  }}
+                />
+              </div>
+              <span className="text-fg text-right text-[9px] font-bold tabular-nums">
+                {value === null || value === undefined
+                  ? '-'
+                  : `${displayNumber(value)}%`}
+                <span className={cn('ml-1', TONE_TEXT[axisTone.학습지속성])}>
+                  {appliedLabel}
+                </span>
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      <div
+        className="border-border text-fg-muted mt-auto flex items-end justify-between gap-2 border-t pt-2 text-[9px] font-medium"
+        data-learning-persistence-calculation
+        data-kpi-link-footer
+      >
+        <span className="flex flex-wrap items-center gap-x-1">
+          <span>출석 {displayNumber(attendanceScore)}점</span>
+          <span aria-hidden="true">+</span>
+          <span>블로그 {displayNumber(blogScore ?? 0)}점</span>
+          <span aria-hidden="true">+</span>
+          <span>가산점 {displayNumber(bonusScore)}점</span>
+          <span aria-hidden="true">=</span>
+          {combinedScore !== finalScore && (
+            <>
+              <span>{displayNumber(combinedScore)}점</span>
+              <span aria-hidden="true">→</span>
+            </>
+          )}
+          <strong className={TONE_TEXT[axisTone.학습지속성]}>
+            학습지속성 {displayNumber(finalScore)}점
+          </strong>
+        </span>
+        <ArrowRight
+          aria-hidden="true"
+          className="text-fg-subtle size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
+          data-learning-persistence-link-arrow
+        />
       </div>
     </Link>
   )
@@ -186,19 +563,33 @@ function EvaluatorAverageKpi({
 
 function CertificateScoreLoading() {
   return (
-    <section className="border-border bg-surface flex w-full flex-col items-center overflow-hidden rounded-lg border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
-      <div className="flex w-full flex-col gap-0.5 px-6 pt-6 pb-3">
-        <span className="text-fg text-[15px] font-bold">역량 비교 레이더</span>
+    <section
+      className={cn(card, 'flex w-full flex-col gap-4')}
+      role="status"
+      aria-live="polite"
+      data-axis-gauge-loading
+    >
+      <div className="flex flex-col gap-0.5">
+        <span className="text-fg text-[15px] font-bold">6축 역량 점수</span>
         <span className="text-fg-muted text-[11px]">
-          원천 평가 데이터를 6축 점수와 기수 상대 위치로 변환 중
+          원천 평가 데이터를 절대 점수와 전체 상대 위치로 변환 중
         </span>
       </div>
-      <SkillRadarLoading />
+      <div className="grid gap-3">
+        {CERTIFICATE_AXIS_KEYS.map((key) => (
+          <div key={key} className="grid gap-2 sm:grid-cols-[150px_1fr_120px]">
+            <span className="bg-surface-muted h-4 animate-pulse rounded" />
+            <span className="bg-surface-muted h-2.5 animate-pulse self-center rounded-full" />
+            <span className="bg-surface-muted h-4 animate-pulse rounded" />
+          </div>
+        ))}
+      </div>
+      <span className="text-fg-muted text-[12px] font-semibold">
+        6축 점수를 계산하는 중…
+      </span>
     </section>
   )
 }
-
-type AxisKey = CertificateScoreResult['axes'][number]['key']
 
 const axisEvidencePolicy: Record<
   AxisKey,
@@ -256,6 +647,111 @@ const axisStatusLabel: Record<
   ERROR: '확인 필요',
 }
 
+function AxisGaugeList({
+  axes,
+  selectedAxisKey,
+  highlightedByOverall,
+  onToggleAxis,
+}: {
+  axes: CertificateScoreResult['axes']
+  selectedAxisKey: AxisKey | null
+  highlightedByOverall: boolean
+  onToggleAxis: (key: AxisKey) => void
+}) {
+  const axisByKey = new Map(axes.map((axis) => [axis.key, axis]))
+
+  return (
+    <section
+      className={cn(
+        card,
+        'flex min-w-0 flex-1 flex-col gap-4 transition-shadow',
+        highlightedByOverall &&
+          'ring-brand/50 ring-offset-surface ring-2 ring-offset-2',
+      )}
+      data-axis-gauge-list
+      data-overall-basis-highlighted={highlightedByOverall}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-fg text-[15px] font-bold">6축 역량 점수</span>
+          <span className="text-fg-muted text-[11px]">
+            학습·성과 지표를 100점 기준으로 환산 · 축을 누르면 관련 지표 강조
+          </span>
+        </div>
+        <span
+          className={cn(
+            'shrink-0 rounded-full px-2 py-1 text-[9px] font-bold transition-colors',
+            highlightedByOverall
+              ? 'bg-brand/10 text-brand'
+              : 'bg-surface-muted text-fg-subtle',
+          )}
+        >
+          종합 점수 산출 기준
+        </span>
+      </div>
+
+      <div className="grid flex-1 content-center gap-3.5">
+        {CERTIFICATE_AXIS_KEYS.map((key) => {
+          const axis = axisByKey.get(key)
+          const scoreValue = axis?.score ?? null
+          const gaugeWidth =
+            scoreValue === null ? 0 : Math.min(100, Math.max(0, scoreValue))
+          const topPercent =
+            axis?.relative.status === 'READY'
+              ? formatPercent(axis.relative.topPercent)
+              : null
+          const scopeLabel = axis?.relative.scope === 'COHORT' ? '기수' : '전체'
+
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={selectedAxisKey === key}
+              aria-label={`${key} ${scoreValue === null ? '산출 전' : `${displayNumber(scoreValue)}점`} 관련 지표 ${selectedAxisKey === key ? '강조 해제' : '강조'}`}
+              className={cn(
+                'focus-visible:ring-ring grid w-full cursor-pointer items-center gap-x-3 gap-y-1 rounded-xl px-2.5 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:grid-cols-[150px_minmax(120px,1fr)_56px_104px]',
+                selectedAxisKey === key
+                  ? TONE_SOFT[axisTone[key]]
+                  : 'hover:bg-surface-muted',
+              )}
+              data-axis-gauge={key}
+              data-axis-tone={axisTone[key]}
+              data-axis-selected={selectedAxisKey === key}
+              onClick={() => onToggleAxis(key)}
+            >
+              <span className="text-fg truncate text-[12px] font-bold">
+                {key}
+              </span>
+              <div
+                role="img"
+                aria-label={`${key} 절대 점수 ${scoreValue === null ? '산출 전' : `${displayNumber(scoreValue)}점`}`}
+                className="bg-surface-muted h-2.5 min-w-0 overflow-hidden rounded-full"
+              >
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-[width] duration-500',
+                    TONE_SOLID[axisTone[key]],
+                  )}
+                  style={{ width: `${gaugeWidth}%` }}
+                  data-axis-gauge-progress={key}
+                />
+              </div>
+              <span className="text-fg text-right text-[12px] font-bold tabular-nums">
+                {scoreValue === null ? '-' : displayNumber(scoreValue)}점
+              </span>
+              <span className="text-info text-right text-[11px] font-semibold tabular-nums">
+                {topPercent === null
+                  ? '상대 위치 산출 전'
+                  : `${scopeLabel} 상위 ${topPercent}%`}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 type AxisEvidence = CertificateScoreResult['axes'][number]['evidence'][number]
 
 function displayNumber(value: number | null, digits = 1) {
@@ -295,16 +791,20 @@ function EvidenceCard({
 function CalculationBox({
   lines,
   result,
+  tone,
 }: {
   lines: string[]
   result: string
+  tone: Tone
 }) {
   return (
     <section
       data-axis-calculation
-      className="border-brand/20 bg-surface flex flex-col gap-2 rounded-xl border p-4"
+      className="border-border bg-surface flex flex-col gap-2 rounded-xl border p-4"
     >
-      <span className="text-brand text-[12px] font-bold">계산 과정</span>
+      <span className={cn('text-[12px] font-bold', TONE_TEXT[tone])}>
+        계산 과정
+      </span>
       {lines.map((line) => (
         <p key={line} className="text-fg-muted text-[13px] leading-5">
           {line}
@@ -374,6 +874,7 @@ function AchievementEvidence({
             `성취도 평가 전체 평균 = ${displayNumber(achievement.value)}점`,
           ]}
           result={`성취도 평가 최종 ${displayNumber(axis.score)}점`}
+          tone={axisTone[axis.key]}
         />
       )}
     </div>
@@ -413,6 +914,7 @@ function EvaluatorEvidence({
           '1점은 0점, 5점은 100점이 되도록 100점 기준으로 환산합니다.',
         ]}
         result={`${axis.key} 최종 ${displayNumber(axis.score)}점`}
+        tone={axisTone[axis.key]}
       />
     </div>
   )
@@ -462,6 +964,7 @@ function LearningEvidence({
           ),
         ]}
         result={`${items.map((item) => displayNumber(item.appliedScore)).join(' + ')} = ${displayNumber(beforeCap)}점${beforeCap > 100 ? ` → 100점 상한 적용 = ${displayNumber(axis.score)}점` : ''}`}
+        tone={axisTone[axis.key]}
       />
     </div>
   )
@@ -472,19 +975,20 @@ export function ScoreEvidencePanel({
   assessments,
   assessmentsPending,
   selectedAxisKey,
-  onSelectAxis,
+  onClose,
 }: {
   axes: CertificateScoreResult['axes']
   assessments: CertificateAssessmentPoint[]
   assessmentsPending: boolean
   selectedAxisKey: AxisKey
-  onSelectAxis: (key: AxisKey) => void
+  onClose: () => void
 }) {
   const selectedAxis =
     axes.find((axis) => axis.key === selectedAxisKey) ?? axes[0]
   if (!selectedAxis) return null
 
   const policy = axisEvidencePolicy[selectedAxis.key]
+  const tone = axisTone[selectedAxis.key]
 
   return (
     <section
@@ -492,45 +996,71 @@ export function ScoreEvidencePanel({
       data-score-evidence={selectedAxis.key}
       className={cn(card, 'flex min-w-0 flex-col gap-4 p-5')}
     >
-      <div className="flex flex-col gap-0.5">
-        <span className="text-fg text-[20px] font-bold">6축 점수 근거</span>
-        <span className="text-fg-muted text-[13px] leading-5">
-          항목을 선택하면 점수에 사용한 평가와 계산 기준을 확인할 수 있어요.
-        </span>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-fg text-[20px] font-bold">
+            {selectedAxis.key} 계산 근거
+          </span>
+          <span className="text-fg-muted text-[13px] leading-5">
+            사용한 항목부터 환산·가중치와 최종 점수까지 순서대로 확인할 수
+            있어요.
+          </span>
+        </div>
+        <button
+          type="button"
+          aria-label={`${selectedAxis.key} 계산 근거 닫기`}
+          className="border-border text-fg-muted hover:bg-surface-muted hover:text-fg focus-visible:ring-ring grid size-8 shrink-0 place-items-center rounded-lg border transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          onClick={onClose}
+        >
+          <X aria-hidden="true" className="size-4" />
+        </button>
       </div>
 
-      <div
-        role="tablist"
-        aria-label="점수 근거 항목"
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3"
-      >
-        {CERTIFICATE_AXIS_KEYS.map((key) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={selectedAxis.key === key}
-            className={cn(
-              'min-h-9 rounded-lg border px-3 py-2 text-[12px] font-bold transition-colors',
-              selectedAxis.key === key
-                ? 'border-brand bg-brand/10 text-brand'
-                : 'border-border text-fg-muted hover:bg-surface-muted hover:text-fg',
+      <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-stretch">
+        {[
+          ['1', '사용한 항목', policy.data],
+          ['2', '계산 기준', policy.calculation],
+          [
+            '3',
+            '6축 반영 결과',
+            `${selectedAxis.key} ${displayNumber(selectedAxis.score)}점`,
+          ],
+        ].map(([step, label, description], index) => (
+          <div key={step} className="contents">
+            {index > 0 && (
+              <ArrowRight
+                aria-hidden="true"
+                className="text-fg-subtle mx-auto hidden size-4 self-center md:block"
+              />
             )}
-            onClick={() => onSelectAxis(key)}
-          >
-            {key}
-          </button>
+            <div className="border-border bg-surface flex min-w-0 flex-col gap-1.5 rounded-xl border p-3">
+              <span
+                className={cn(
+                  'text-[10px] font-bold tracking-[0.08em]',
+                  TONE_TEXT[tone],
+                )}
+              >
+                STEP {step} · {label}
+              </span>
+              <span className="text-fg-muted text-[12px] leading-5">
+                {description}
+              </span>
+            </div>
+          </div>
         ))}
       </div>
 
       <div
         role="tabpanel"
         aria-live="polite"
-        className="border-brand/20 bg-brand/5 flex flex-col gap-4 rounded-xl border p-4"
+        className={cn(
+          'flex flex-col gap-4 rounded-xl border p-4',
+          TONE_SOFT[tone],
+        )}
       >
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div className="flex flex-col gap-1">
-            <span className="text-brand text-[11px] font-bold">
+            <span className={cn('text-[11px] font-bold', TONE_TEXT[tone])}>
               {selectedAxis.key} 점수
             </span>
             <span className="text-fg text-[32px] leading-none font-bold">
@@ -595,28 +1125,9 @@ function ScoreSummary({
   score: CertificateScoreResult
   ontology?: Awaited<ReturnType<typeof fetchAiAnalysis>>['ontology']
 }) {
-  const [selectedAxisKey, setSelectedAxisKey] =
-    useState<AxisKey>('기술·기술기여')
-  const axisByKey = new Map(score.axes.map((axis) => [axis.key, axis]))
-  const radarAxes = CERTIFICATE_AXIS_KEYS.map((key) => {
-    const axis = axisByKey.get(key)
-    return {
-      key,
-      score: axis?.score ?? null,
-      relativePercentile:
-        axis?.relative.status === 'READY' ? axis.relative.percentile : null,
-      relativeTopPercent:
-        axis?.relative.status === 'READY' ? axis.relative.topPercent : null,
-      detail: axis?.detail ?? '평가 근거를 확인할 수 없습니다.',
-      source: axis?.source ?? '계산식을 확인할 수 없습니다.',
-      status: axis?.status ?? ('ERROR' as const),
-      relativeStatus: axis?.relative.status ?? ('NOT_READY' as const),
-      relativeScope: axis?.relative.scope ?? ('COHORT' as const),
-      relativePopulationSize: axis?.relative.populationSize ?? 0,
-      relativeDetail:
-        axis?.relative.detail ?? '상대 위치 근거를 확인할 수 없습니다.',
-    }
-  })
+  const [selectedAxisKey, setSelectedAxisKey] = useState<AxisKey | null>(null)
+  const [isOverallBasisHighlighted, setIsOverallBasisHighlighted] =
+    useState(false)
   const domains = score.domainExperience.map((domain, index) => ({
     label: domain.label,
     pct: domain.percentage,
@@ -627,6 +1138,22 @@ function ScoreSummary({
     .filter((metric) => metricOrder.includes(metric.key))
     .sort((a, b) => metricOrder.indexOf(a.key) - metricOrder.indexOf(b.key))
     .map(metricToKpi)
+  const progressKpis = kpis.filter((kpi) =>
+    progressMetricOrder.includes(kpi.key as CertificateScoreMetric['key']),
+  )
+  const countKpis = kpis.filter((kpi) =>
+    countMetricOrder.includes(kpi.key as CertificateScoreMetric['key']),
+  )
+  const attendanceKpi = progressKpis.find((kpi) => kpi.key === 'attendance')
+  const assessmentKpi = progressKpis.find((kpi) => kpi.key === 'assessment')
+  const evaluatorKpi = progressKpis.find(
+    (kpi) => kpi.key === 'evaluatorAverage',
+  )
+  const learningAxis = score.axes.find((axis) => axis.key === '학습지속성')
+  const attendanceEvidence = learningAxis
+    ? evidenceByKey(learningAxis, 'attendance')
+    : undefined
+  const assessmentAxis = score.axes.find((axis) => axis.key === '성취도 평가')
   const overall = score.overallScore ?? 0
   const progressOffset = Number(
     (100 - Math.min(100, Math.max(0, overall))).toFixed(1),
@@ -645,7 +1172,7 @@ function ScoreSummary({
             핵심 지표 · 종합 요약
           </span>
           <span className="text-fg-subtle text-[11px]">
-            학습·프로젝트·평가 데이터를 바탕으로 한 6축 절대·상대 산정
+            산출 흐름 · 학습·성과 지표 → 6축 역량 점수 → 절대 종합 점수
           </span>
         </div>
         <span className="text-fg-subtle text-[11px]">
@@ -653,12 +1180,23 @@ function ScoreSummary({
         </span>
       </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <section
+      <div className="grid gap-4 lg:grid-cols-[minmax(300px,35%)_minmax(0,65%)]">
+        <button
+          type="button"
+          aria-pressed={isOverallBasisHighlighted}
+          aria-label={`절대 종합 점수 ${score.overallScore?.toFixed(1) ?? '-'}점 · 6축 역량 점수 산출 기준 ${isOverallBasisHighlighted ? '강조 해제' : '강조'}`}
           className={cn(
             card,
-            'flex flex-col items-center justify-center gap-4 lg:w-[46%]',
+            'focus-visible:ring-ring flex cursor-pointer flex-col items-center justify-center gap-4 transition-shadow focus-visible:ring-2 focus-visible:outline-none',
+            isOverallBasisHighlighted &&
+              'ring-brand/50 ring-offset-surface ring-2 ring-offset-2',
           )}
+          data-overall-score-card
+          data-overall-selected={isOverallBasisHighlighted}
+          onClick={() => {
+            setSelectedAxisKey(null)
+            setIsOverallBasisHighlighted((current) => !current)
+          }}
         >
           <div className="flex flex-col items-center gap-1">
             <span className="text-fg-subtle text-[10px] font-bold">
@@ -666,6 +1204,9 @@ function ScoreSummary({
             </span>
             <span className="text-fg text-[15px] font-bold">
               절대 종합 점수
+            </span>
+            <span className="text-fg-muted text-[11px]">
+              6축 역량 점수를 종합한 결과
             </span>
           </div>
 
@@ -726,111 +1267,117 @@ function ScoreSummary({
                 : `전체 상위 ${overallTopPercent}%`}
             </span>
           </div>
-        </section>
+        </button>
 
-        <div
-          data-summary-kpi-grid
-          className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2"
-        >
-          {kpis.map((kpi) => {
-            if (kpi.key === 'evaluatorAverage') {
-              return (
+        <AxisGaugeList
+          axes={score.axes}
+          selectedAxisKey={selectedAxisKey}
+          highlightedByOverall={isOverallBasisHighlighted}
+          onToggleAxis={(key) => {
+            setIsOverallBasisHighlighted(false)
+            setSelectedAxisKey((current) => (current === key ? null : key))
+          }}
+        />
+      </div>
+
+      <section className="flex flex-col gap-3" data-summary-metrics-section>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-fg text-[15px] font-bold">학습·성과 지표</span>
+          <span className="text-fg-muted text-[11px]">
+            6축 역량 점수를 산출하는 학습·평가·인증 근거
+          </span>
+        </div>
+
+        <div data-summary-kpi-grid className="grid gap-4">
+          <div className="grid gap-2">
+            <span className="text-fg-subtle text-[10px] font-bold">
+              학습·평가 구성
+            </span>
+            <div
+              className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"
+              data-summary-learning-grid
+            >
+              {attendanceKpi && (
+                <ProgressKpiCard
+                  kpi={attendanceKpi}
+                  route={metricRoute('attendance')}
+                  contribution={{
+                    axisLabel: '학습지속성',
+                    score: attendanceEvidence?.appliedScore ?? null,
+                    rule: `출석률 기본점수 ${attendanceEvidence?.weightPercent ?? 70}% 반영`,
+                  }}
+                  highlighted={selectedAxisKey === '학습지속성'}
+                />
+              )}
+              <LearningPersistenceKpi
+                axis={learningAxis}
+                highlighted={selectedAxisKey === '학습지속성'}
+              />
+              {assessmentKpi && (
+                <ProgressKpiCard
+                  kpi={assessmentKpi}
+                  route={metricRoute('assessment')}
+                  contribution={{
+                    axisLabel: '성취도 평가',
+                    score: assessmentAxis?.score ?? null,
+                    rule: '채점 완료 평가의 전체 평균을 직접 반영',
+                  }}
+                  highlighted={selectedAxisKey === '성취도 평가'}
+                />
+              )}
+              {evaluatorKpi && (
                 <EvaluatorAverageKpi
+                  kpi={evaluatorKpi}
+                  axes={score.axes}
+                  selectedAxisKey={selectedAxisKey}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-fg-subtle text-[10px] font-bold">
+              인증·프로젝트 실적
+            </span>
+            <div
+              className="grid grid-cols-1 gap-3 lg:grid-cols-3"
+              data-summary-count-grid
+            >
+              {countKpis.map((kpi) => (
+                <CountKpiCard
                   key={kpi.key}
                   kpi={kpi}
-                  axes={score.axes}
+                  route={metricRoute(kpi.key as CertificateScoreMetric['key'])}
                 />
-              )
-            }
-            const route = metricRoute(
-              kpi.key as CertificateScoreMetric['key'],
-              score.projectNavigation,
-            )
-            return (
-              <Link
-                key={kpi.key}
-                to={route}
-                aria-label={`${kpi.label} 상세 화면으로 이동`}
-                data-summary-kpi={kpi.key}
-                data-summary-kpi-route={route}
-                className={cn(
-                  card,
-                  'focus-visible:ring-ring group flex min-w-0 flex-col gap-2.5 p-4 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-fg-muted truncate text-[11px] font-medium">
-                    {kpi.label}
-                  </span>
-                  <span
-                    className={cn(
-                      'size-2 rounded-full',
-                      TONE_SOLID[kpi.tone ?? 'brand'],
-                    )}
-                  />
-                </div>
-                <span className="text-fg text-[24px] leading-none font-bold">
-                  {kpi.value}
-                  {kpi.unit && (
-                    <span className="text-fg-muted ml-0.5 text-[14px] font-medium">
-                      {kpi.unit}
-                    </span>
-                  )}
-                </span>
-                <div className="bg-surface-muted h-1.5 w-full overflow-hidden rounded-full">
-                  <div
-                    className={cn(
-                      'h-full rounded-full',
-                      TONE_SOLID[kpi.tone ?? 'brand'],
-                    )}
-                    style={{ width: `${kpi.bar ?? 0}%` }}
-                  />
-                </div>
-                {kpi.sub && (
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className="text-fg-subtle truncate text-[9px]"
-                      title={kpi.sub}
-                    >
-                      {kpi.sub}
-                    </span>
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="text-fg-subtle size-3 shrink-0 transition-transform group-hover:translate-x-0.5"
-                    />
-                  </div>
-                )}
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-
-      <div
-        data-summary-competency-layout
-        className="grid gap-4 xl:grid-cols-[46%_minmax(0,54%)] xl:items-start"
-      >
-        <section className="border-border bg-surface flex flex-col items-center overflow-hidden rounded-lg border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]">
-          <div className="flex w-full flex-col gap-0.5 px-5 pt-5 pb-2">
-            <span className="text-fg text-[15px] font-bold">
-              역량 비교 레이더
-            </span>
-            <span className="text-fg-muted text-[11px]">
-              6축 절대·상대 위치 · 축을 선택해 상세 위치 확인
-            </span>
+              ))}
+            </div>
           </div>
-          <SkillRadar
-            axes={radarAxes}
-            selectedAxisKey={selectedAxisKey}
-            onSelectAxis={(key) => setSelectedAxisKey(key as AxisKey)}
-          />
-        </section>
-
-        <div data-summary-visual-stack className="grid min-w-0 gap-4">
-          {CERT_V2 && <DomainDonut domains={domains} compact />}
-          {CERT_V2 && ontology && <OntologyMap ontology={ontology} compact />}
         </div>
-      </div>
+      </section>
+
+      <section className="flex flex-col gap-3" data-summary-context-section>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-fg text-[15px] font-bold">경험·역량 맥락</span>
+          <span className="text-fg-muted text-[11px]">
+            점수가 확인된 프로젝트 도메인과 학습 이력의 연결
+          </span>
+        </div>
+        <div
+          data-summary-context-layout
+          className={cn(
+            'grid min-w-0 gap-4',
+            ontology &&
+              'xl:grid-cols-[minmax(0,35fr)_minmax(0,65fr)] xl:items-stretch',
+          )}
+        >
+          {CERT_V2 && (
+            <DomainDonut domains={domains} compact className="h-full" />
+          )}
+          {CERT_V2 && ontology && (
+            <OntologyMap ontology={ontology} compact className="h-full" />
+          )}
+        </div>
+      </section>
     </div>
   )
 }

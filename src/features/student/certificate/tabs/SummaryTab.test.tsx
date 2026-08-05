@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
@@ -51,11 +51,11 @@ const axis = (
   detail: `${key} 계산 근거`,
   relative: {
     status: 'READY',
-    scope: 'COHORT',
+    scope: 'ALL_STUDENTS',
     percentile: 68.3,
     topPercent: 31.7,
     populationSize: 300,
-    detail: '동일 기수 유효 300명 중 상위 31.7%입니다.',
+    detail: '전체 수강생 유효 300명 중 상위 31.7%입니다.',
   },
   comparison: { peerScore, mentorScore, instructorScore, managerScore },
   evidence: [
@@ -139,19 +139,52 @@ const axis = (
           {
             key: 'blog',
             label: '블로그 제출률',
-            value: 82,
+            value: 100,
             unit: '%',
-            numerator: 21,
+            numerator: 26,
             denominator: 26,
             weightPercent: 30,
-            appliedScore: 24,
-            detail: '21/26주 제출',
+            appliedScore: 30,
+            detail: '26/26주 제출',
+          },
+          {
+            key: 'assignment',
+            label: '과제 제출률',
+            value: 100,
+            unit: '%',
+            numerator: 13,
+            denominator: 13,
+            weightPercent: null,
+            appliedScore: 5,
+            detail: '13/13건 제출',
+          },
+          {
+            key: 'study',
+            label: '스터디 제출률',
+            value: 75,
+            unit: '%',
+            numerator: 6,
+            denominator: 8,
+            weightPercent: null,
+            appliedScore: 4,
+            detail: '6/8건 제출',
+          },
+          {
+            key: 'mentoring',
+            label: '멘토링 참석률',
+            value: 60,
+            unit: '%',
+            numerator: 6,
+            denominator: 10,
+            weightPercent: null,
+            appliedScore: 3.5,
+            detail: '6/10회 참석',
           },
         ],
 })
 
 const scoreResult: CertificateScoreResult = {
-  policyVersion: '2026.08.05-six-axis-four-rater-v1',
+  policyVersion: '2026.08.05-six-axis-four-rater-v2',
   calculatedAt: '2026-07-16',
   student: {
     studentId: 'student-1',
@@ -404,13 +437,11 @@ describe('SummaryTab', () => {
       </MemoryRouter>,
     )
 
-    expect(container.querySelector('[data-radar-loading]')).not.toBeNull()
-    expect(container.querySelector('[data-radar-scan]')).toHaveClass(
-      'animate-spin',
-    )
+    expect(container.querySelector('[data-axis-gauge-loading]')).not.toBeNull()
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(18)
   })
 
-  it('레이더 옆 한 칸에 도메인과 온톨로지 역량 맵을 축소 배치한다', async () => {
+  it('도메인 경험과 온톨로지 역량 맵을 한 줄의 35:65 영역에 배치한다', async () => {
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
     vi.mocked(fetchAiAnalysis).mockResolvedValue({
       ontology: ontologyNotReady,
@@ -429,11 +460,8 @@ describe('SummaryTab', () => {
 
     await screen.findByText('온톨로지 역량 맵')
 
-    const layout = container.querySelector<HTMLElement>(
-      '[data-summary-competency-layout]',
-    )
-    const visualStack = container.querySelector<HTMLElement>(
-      '[data-summary-visual-stack]',
+    const contextLayout = container.querySelector<HTMLElement>(
+      '[data-summary-context-layout]',
     )
     const domainCard = screen
       .getByText('도메인 경험')
@@ -442,9 +470,11 @@ describe('SummaryTab', () => {
       .getByText('온톨로지 역량 맵')
       .closest('section') as HTMLElement | null
 
-    expect(layout).toContainElement(visualStack)
-    expect(visualStack).toContainElement(domainCard)
-    expect(visualStack).toContainElement(ontologyCard)
+    expect(contextLayout).toContainElement(domainCard)
+    expect(contextLayout).toContainElement(ontologyCard)
+    expect(contextLayout).toHaveClass(
+      'xl:grid-cols-[minmax(0,35fr)_minmax(0,65fr)]',
+    )
     expect(domainCard).toHaveAttribute('data-domain-compact', 'true')
     expect(ontologyCard).toHaveAttribute('data-ontology-compact', 'true')
     expect(
@@ -453,7 +483,7 @@ describe('SummaryTab', () => {
     expect(screen.queryByText(/예상 점수|점수 전망/)).not.toBeInTheDocument()
   })
 
-  it('핵심 지표를 관련 화면으로 연결하고 6축 레이더를 표시한다', async () => {
+  it('핵심 지표를 관련 화면으로 연결하고 6축 점수를 게이지로 표시한다', async () => {
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
     vi.mocked(fetchAiAnalysis).mockImplementation(
       () => new Promise(() => undefined),
@@ -473,12 +503,17 @@ describe('SummaryTab', () => {
     expect(await screen.findByText('79.9')).toBeInTheDocument()
     expect(
       screen.getByText(
-        '학습·프로젝트·평가 데이터를 바탕으로 한 6축 절대·상대 산정',
+        '산출 흐름 · 학습·성과 지표 → 6축 역량 점수 → 절대 종합 점수',
       ),
     ).toBeInTheDocument()
+    expect(screen.getByText('6축 역량 점수를 종합한 결과')).toBeInTheDocument()
+    expect(
+      screen.getByText('6축 역량 점수를 산출하는 학습·평가·인증 근거'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('종합 점수 산출 기준')).toBeInTheDocument()
     expect(screen.queryByText(/mock|정책 2026\.07\.20/)).not.toBeInTheDocument()
     expect(screen.getByText('Grade B')).toBeInTheDocument()
-    expect(screen.getByText('전체 상위 31.7%')).toBeInTheDocument()
+    expect(screen.getAllByText('전체 상위 31.7%')[0]).toBeInTheDocument()
     expect(
       screen.getByRole('img', { name: '절대 종합 점수 79.9점' }),
     ).toBeInTheDocument()
@@ -492,14 +527,123 @@ describe('SummaryTab', () => {
     expect(
       screen.queryByText('수동 채점 대기 시험 1건은 계산에서 제외했습니다.'),
     ).not.toBeInTheDocument()
-    expect(container.querySelectorAll('[data-summary-kpi]')).toHaveLength(6)
+    expect(container.querySelectorAll('[data-summary-kpi]')).toHaveLength(7)
+    expect(
+      [
+        ...container.querySelectorAll(
+          '[data-summary-learning-grid] [data-summary-kpi]',
+        ),
+      ].map((item) => item.getAttribute('data-summary-kpi')),
+    ).toEqual([
+      'attendance',
+      'learningPersistenceInputs',
+      'assessment',
+      'evaluatorAverage',
+    ])
+    expect(
+      [
+        ...container.querySelectorAll(
+          '[data-summary-count-grid] [data-summary-kpi]',
+        ),
+      ].map((item) => item.getAttribute('data-summary-kpi')),
+    ).toEqual([
+      'certifiedProject',
+      'certifiedTroubleshooting',
+      'certifiedCertificate',
+    ])
+    expect(
+      container.querySelectorAll('[data-kpi-visual="progress"]'),
+    ).toHaveLength(2)
+    expect(
+      container.querySelectorAll('[data-kpi-visual="evaluation"]'),
+    ).toHaveLength(1)
+    expect(
+      container.querySelectorAll('[data-kpi-visual="learning-components"]'),
+    ).toHaveLength(1)
+    expect(
+      container.querySelectorAll('[data-kpi-visual="count"]'),
+    ).toHaveLength(3)
+    expect(
+      container.querySelector('[data-summary-count-grid] [role="progressbar"]'),
+    ).toBeNull()
+    expect(container.querySelectorAll('[data-learning-input]')).toHaveLength(4)
+    const learningInputs = container.querySelector(
+      '[data-summary-kpi="learningPersistenceInputs"]',
+    )
+    expect(learningInputs).toHaveTextContent('블로그 제출')
+    expect(learningInputs).toHaveTextContent('과제 제출')
+    expect(learningInputs).toHaveTextContent('스터디 참여')
+    expect(learningInputs).toHaveTextContent('멘토링 참석')
+    expect(learningInputs).toHaveTextContent('30점 반영')
+    expect(learningInputs).toHaveTextContent('+5점')
+    expect(
+      learningInputs?.querySelector('[data-learning-persistence-link-arrow]'),
+    ).toBeInTheDocument()
+    expect(
+      learningInputs
+        ?.querySelector('[data-learning-persistence-link-arrow]')
+        ?.closest('[data-kpi-link-footer]'),
+    ).toBeInTheDocument()
+    for (const key of ['attendance', 'assessment']) {
+      const linkedKpi = container.querySelector(`[data-summary-kpi="${key}"]`)
+      expect(
+        linkedKpi
+          ?.querySelector('[data-progress-kpi-link-arrow]')
+          ?.closest('[data-kpi-link-footer]'),
+      ).toBeInTheDocument()
+    }
+    expect(
+      container.querySelector('[data-learning-persistence-calculation]'),
+    ).toHaveTextContent('출석 52.5점+블로그 30점+가산점 12.5점=학습지속성 95점')
+    expect(
+      container.querySelector('[data-summary-kpi="attendance"]'),
+    ).toHaveTextContent('6축 반영학습지속성 52.5점출석률 기본점수 70% 반영')
+    expect(
+      container.querySelector('[data-summary-kpi="assessment"]'),
+    ).toHaveTextContent(
+      '6축 반영성취도 평가 66점채점 완료 평가의 전체 평균을 직접 반영',
+    )
+    expect(
+      [
+        ...container.querySelectorAll(
+          '[data-summary-metrics-section], [data-overall-score-gauge]',
+        ),
+      ].map((item) =>
+        item.hasAttribute('data-summary-metrics-section')
+          ? 'metrics'
+          : 'overall',
+      ),
+    ).toEqual(['overall', 'metrics'])
     expect(screen.queryByText('블로그 제출률')).not.toBeInTheDocument()
-    expect(screen.getByText('트러블슈팅 인증사례')).toBeInTheDocument()
-    expect(screen.getByText('인증 자격증')).toBeInTheDocument()
-    expect(screen.getByText('다면역량 평가')).toBeInTheDocument()
+    expect(screen.getByText('프로젝트')).toBeInTheDocument()
+    expect(screen.getByText('트러블슈팅')).toBeInTheDocument()
+    expect(screen.getByText('자격증')).toBeInTheDocument()
+    expect(screen.getByText('4축 평가 전체 평균')).toBeInTheDocument()
+    expect(screen.getByText('학습 참여·제출')).toBeInTheDocument()
+    expect(
+      container.querySelector('[data-summary-kpi="certifiedProject"]'),
+    ).toHaveTextContent('2건')
+    expect(
+      container.querySelector('[data-summary-kpi="certifiedTroubleshooting"]'),
+    ).toHaveTextContent('4건')
+    expect(
+      container.querySelector('[data-summary-kpi="certifiedCertificate"]'),
+    ).toHaveTextContent('1건')
     expect(
       container.querySelectorAll('[data-evaluator-axis-bar]'),
     ).toHaveLength(4)
+    expect(
+      container.querySelector('[data-evaluator-axis-bar="기술·기술기여"]'),
+    ).toHaveAttribute('data-axis-tone', 'brand')
+    expect(
+      container.querySelector('[data-evaluator-axis-bar="소통·협업·팀워크"]'),
+    ).toHaveAttribute('data-axis-tone', 'info')
+    expect(
+      container.querySelector('[data-evaluator-axis-bar="문제해결"]'),
+    ).toHaveAttribute('data-axis-tone', 'danger')
+    expect(
+      container.querySelector('[data-evaluator-axis-bar="책임감"]'),
+    ).toHaveAttribute('data-axis-tone', 'warning')
     const evaluatorCard = container.querySelector(
       '[data-summary-kpi="evaluatorAverage"]',
     )
@@ -507,6 +651,16 @@ describe('SummaryTab', () => {
     expect(evaluatorCard).toHaveTextContent('소통·협업·팀워크')
     expect(evaluatorCard).toHaveTextContent('문제해결')
     expect(evaluatorCard).toHaveTextContent('책임감')
+    expect(evaluatorCard).toHaveTextContent('3.9 / 5 → 72.2점')
+    expect(evaluatorCard).toHaveTextContent('동료·멘토·강사·운영 각 25%')
+    expect(evaluatorCard?.tagName).toBe('ARTICLE')
+    expect(evaluatorCard).not.toHaveAttribute('href')
+    expect(evaluatorCard?.querySelector('[data-kpi-link-footer]')).toBeNull()
+    expect(
+      screen.queryByRole('link', {
+        name: '4축 평가 전체 평균 상세 화면으로 이동',
+      }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('link', {
         name: '성취도 평가 평균 상세 화면으로 이동',
@@ -519,59 +673,140 @@ describe('SummaryTab', () => {
     ).toHaveAttribute('href', '/student/attendance')
     expect(
       screen.getByRole('link', {
-        name: '인증 프로젝트 상세 화면으로 이동',
+        name: '학습 참여·제출 블로그 화면으로 이동',
+      }),
+    ).toHaveAttribute('href', '/student/records?category=blog')
+    expect(
+      screen.getByRole('link', {
+        name: '프로젝트 상세 화면으로 이동',
       }),
     ).toHaveAttribute('href', '/student/projects')
     expect(
       screen.getByRole('link', {
-        name: '트러블슈팅 인증사례 상세 화면으로 이동',
+        name: '트러블슈팅 상세 화면으로 이동',
       }),
-    ).toHaveAttribute('href', '/student/projects/project-issues?tab=issues')
+    ).toHaveAttribute('href', '/student/troubleshooting')
     expect(
       screen.getByRole('link', {
-        name: '인증 자격증 상세 화면으로 이동',
+        name: '자격증 상세 화면으로 이동',
       }),
-    ).toHaveAttribute('href', '/student/records')
-    expect(
-      screen.getByRole('link', {
-        name: '다면역량 평가 상세 화면으로 이동',
-      }),
-    ).toHaveAttribute('href', '/student/certificate?tab=growth-reputation')
+    ).toHaveAttribute('href', '/student/records?category=cert')
 
-    expect(screen.getByText('역량 비교 레이더')).toBeInTheDocument()
-    expect(container.querySelectorAll('[data-radar-spoke]')).toHaveLength(6)
-    expect(container.querySelectorAll('[data-radar-point]')).toHaveLength(12)
-    expect(container.querySelector('[data-radar-series="peer"]')).toBeNull()
+    expect(screen.getByText('6축 역량 점수')).toBeInTheDocument()
+    expect(container.querySelectorAll('[data-axis-gauge]')).toHaveLength(6)
     expect(
-      [...container.querySelectorAll('[data-radar-axis-label]')].map(
-        (label) => label.textContent,
-      ),
-    ).toEqual([
-      '기술·기술기여',
-      '소통·협업·팀워크',
-      '문제해결',
-      '책임감',
-      '학습지속성',
-      '성취도 평가',
-    ])
-    expect(
-      container.querySelectorAll('[data-radar-axis-trigger]'),
+      container.querySelectorAll('[data-axis-gauge-progress]'),
     ).toHaveLength(6)
+    const technicalGauge = container.querySelector(
+      '[data-axis-gauge="기술·기술기여"]',
+    )
+    expect(technicalGauge).toHaveTextContent('기술·기술기여')
+    expect(technicalGauge).toHaveTextContent('72.2점')
+    expect(technicalGauge).toHaveTextContent('전체 상위 31.7%')
     expect(
-      container.querySelector('[data-radar-axis-clickable="true"]'),
-    ).not.toBeNull()
+      container.querySelector('[data-axis-gauge-progress="기술·기술기여"]'),
+    ).toHaveStyle({ width: '72.2%' })
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '절대 종합 점수 79.9점 · 6축 역량 점수 산출 기준 강조',
+      }),
+    )
+    expect(
+      container.querySelector('[data-overall-score-card]'),
+    ).toHaveAttribute('data-overall-selected', 'true')
+    expect(container.querySelector('[data-axis-gauge-list]')).toHaveAttribute(
+      'data-overall-basis-highlighted',
+      'true',
+    )
+    expect(
+      [
+        ['기술·기술기여', 'brand'],
+        ['소통·협업·팀워크', 'info'],
+        ['문제해결', 'danger'],
+        ['책임감', 'warning'],
+        ['학습지속성', 'success'],
+        ['성취도 평가', 'accent'],
+      ].map(
+        ([key, tone]) =>
+          container
+            .querySelector(`[data-axis-gauge="${key}"]`)
+            ?.getAttribute('data-axis-tone') === tone,
+      ),
+    ).toEqual([true, true, true, true, true, true])
+    expect(
+      container.querySelector('[data-summary-kpi="attendance"]'),
+    ).toHaveAttribute('data-kpi-tone', 'success')
+    expect(learningInputs).toHaveAttribute('data-kpi-tone', 'success')
+    expect(
+      container.querySelector('[data-summary-kpi="assessment"]'),
+    ).toHaveAttribute('data-kpi-tone', 'accent')
+    expect(
+      container.querySelector('[data-summary-kpi="certifiedProject"]'),
+    ).toHaveAttribute('data-kpi-tone', 'brand')
+    expect(
+      container.querySelector('[data-summary-kpi="certifiedTroubleshooting"]'),
+    ).toHaveAttribute('data-kpi-tone', 'danger')
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '학습지속성 95점 관련 지표 강조',
+      }),
+    )
+    expect(container.querySelector('[data-axis-gauge-list]')).toHaveAttribute(
+      'data-overall-basis-highlighted',
+      'false',
+    )
+    expect(
+      container.querySelector('[data-summary-kpi="attendance"]'),
+    ).toHaveAttribute('data-axis-highlighted', 'true')
+    expect(
+      container.querySelector('[data-summary-kpi="attendance"]'),
+    ).toHaveTextContent('연결된 지표')
+    expect(learningInputs).toHaveAttribute('data-axis-highlighted', 'true')
+    expect(learningInputs).toHaveTextContent('연결됨 · 학습지속성')
+    expect(
+      container.querySelector('[data-summary-kpi="assessment"]'),
+    ).toHaveAttribute('data-axis-highlighted', 'false')
+    expect(container.querySelector('[data-score-evidence]')).toBeNull()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '성취도 평가 66점 관련 지표 강조',
+      }),
+    )
+    expect(
+      container.querySelector('[data-summary-kpi="attendance"]'),
+    ).toHaveAttribute('data-axis-highlighted', 'false')
+    expect(
+      container.querySelector('[data-summary-kpi="assessment"]'),
+    ).toHaveAttribute('data-axis-highlighted', 'true')
+    expect(
+      container.querySelector('[data-summary-kpi="assessment"]'),
+    ).toHaveTextContent('연결된 지표')
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '기술·기술기여 72.2점 관련 지표 강조',
+      }),
+    )
+    expect(
+      container.querySelector('[data-evaluator-axis-row="기술·기술기여"]'),
+    ).toHaveAttribute('data-axis-highlighted', 'true')
+    expect(evaluatorCard).toHaveAttribute('data-axis-highlighted', 'true')
+    expect(evaluatorCard).toHaveTextContent('연결된 지표')
+    expect(
+      container.querySelector('[data-evaluator-axis-row="책임감"]'),
+    ).toHaveAttribute('data-axis-highlighted', 'false')
+    expect(screen.queryByText('역량 비교 레이더')).not.toBeInTheDocument()
+    expect(container.querySelector('[data-radar-series]')).toBeNull()
     expect(
       screen.queryByRole('button', { name: '동료 5축 평가 비교' }),
     ).not.toBeInTheDocument()
     expect(container.querySelector('[data-three-sixty-comparison]')).toBeNull()
 
-    expect(
-      screen.getByRole('button', { name: '함께 보기', pressed: true }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: '상대 위치' }),
-    ).toBeInTheDocument()
-
+    expect(screen.getByText('학습·성과 지표')).toBeInTheDocument()
+    expect(screen.getByText('경험·역량 맥락')).toBeInTheDocument()
     expect(screen.getByText('도메인 경험')).toBeInTheDocument()
     const commerceDomain = container.querySelector(
       '[data-domain-list-item="커머스"]',

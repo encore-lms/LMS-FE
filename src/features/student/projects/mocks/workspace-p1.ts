@@ -381,6 +381,7 @@ export const mockWorkspace: WorkspaceData = {
     },
   ],
   stack: ['Java 17', 'Spring Boot', 'PostgreSQL', 'Apache Kafka', 'Docker'],
+  isOwner: true,
   peerDue: 'D-3',
   peerMyStatus: { label: '내 상태: 미제출', tone: 'warning' },
   peerTeamStatus: { label: '팀 제출 3/4', tone: 'info' },

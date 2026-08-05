@@ -58,9 +58,10 @@ export default function InstructorEducationPage() {
     () => (data?.rows ?? []).find((r) => r.id === cohortId) ?? null,
     [data, cohortId],
   )
+  // 헤더 = 과정명/기간 — 3역할(수강생·강사·매니저) 허브 통일 형식(2026-08-05).
   usePageHeader(
     row?.name ?? TERMS.educationCourse,
-    row?.subtitle ?? `${TERMS.educationCourse}별 학습 자료와 활동을 확인합니다`,
+    row?.period ?? `${TERMS.educationCourse}별 학습 자료와 활동을 확인합니다`,
   )
 
   const [tab, setTab] = useSearchParamState('tab', 'home')

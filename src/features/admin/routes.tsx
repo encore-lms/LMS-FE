@@ -39,18 +39,12 @@ const CompetencyCertificatesPage = lazy(
 const CompetencyCertificateDetailPage = lazy(
   () => import('./certificates-competency/CompetencyCertificateDetailPage'),
 )
-// CSV 매핑·업로드 (운영 전용 신설 — features/admin/csv, Figma 1521:10678)
-const CsvMappingPage = lazy(() => import('./csv/CsvMappingPage'))
-// 인입 격리 큐 (운영 전용 신설 — features/admin/ingestion, Figma 1185:6029)
-const IngestionQueuePage = lazy(() => import('./ingestion/IngestionQueuePage'))
 // 평판 관리 (운영 전용 신설 — features/admin/reputation, Figma 1193:6267)
 const ReputationPage = lazy(() => import('./reputation/ReputationPage'))
 // PLAY 타자 관리 (운영 전용 신설 — features/admin/play, Figma 3380:7959)
 const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
 // 타자 제시문 일괄 업로드 (PLAY sub — features/admin/play/bulk, Figma 1546:11329)
 const PlayBulkUploadPage = lazy(() => import('./play/bulk/BulkUploadPage'))
-// 외부 연동 (운영 전용 신설 — features/admin/integrations, Figma 1546:11613)
-const IntegrationsPage = lazy(() => import('./integrations/IntegrationsPage'))
 // 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
 const MileageHistoryPage = lazy(() => import('./mileage/history/HistoryPage'))
 // 수강생 마일리지 이력 (지급 내역 '상세' 진입 — 한 사람의 지급·차감 흐름)
@@ -173,12 +167,9 @@ export const adminRoutes: RouteObject[] = [
         path: 'certificates/:studentId',
         element: <CompetencyCertificateDetailPage />,
       },
-      { path: 'csv-mapping', element: <CsvMappingPage /> },
-      { path: 'ingestion/quarantine', element: <IngestionQueuePage /> },
       { path: 'reputation', element: <ReputationPage /> },
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
       { path: 'play/typing-texts/bulk', element: <PlayBulkUploadPage /> },
-      { path: 'integrations', element: <IntegrationsPage /> },
       // 마일리지는 허브 없이 지급 내역이 첫 화면(허브 페이지 폐기).
       {
         path: 'mileage',

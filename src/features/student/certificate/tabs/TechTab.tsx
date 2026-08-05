@@ -10,7 +10,7 @@ const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
 const certificationStatus: Record<string, { label: string; tone: Tone }> = {
-  APPROVED: { label: '승인', tone: 'success' },
+  APPROVED: { label: '운영 인증', tone: 'success' },
   PENDING: { label: '검토 중', tone: 'warning' },
   SCHEDULED: { label: '응시 예정', tone: 'info' },
   REJECTED: { label: '반려', tone: 'danger' },
@@ -130,24 +130,6 @@ function certificationDetailLabel(
   return details.join(' · ')
 }
 
-function certificationCountLabel(
-  certifications: CertificateTechDetail['certifications'],
-) {
-  const labels = [
-    ['APPROVED', '승인'],
-    ['PENDING', '검토 중'],
-    ['SCHEDULED', '응시 예정'],
-  ] as const
-  return labels
-    .map(([status, label]) => ({
-      label,
-      count: certifications.filter((item) => item.status === status).length,
-    }))
-    .filter((item) => item.count > 0)
-    .map((item) => `${item.label} ${item.count}건`)
-    .join(' · ')
-}
-
 function EmptyData({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-surface-muted text-fg-subtle rounded-xl px-4 py-8 text-center text-[12px]">
@@ -169,6 +151,11 @@ function assessmentSubject(title: string) {
       .replace(/\s*(?:성취도|CS)\s*평가$/u, '')
       .trim() || title
   )
+}
+
+function formatAssessmentDate(value: string) {
+  const date = value.slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.replaceAll('-', '.') : value
 }
 
 function buildAssessmentTrendPath(
@@ -435,7 +422,7 @@ export function AssessmentTrendChart({
                                 {assessment.title}
                               </p>
                               <p className="text-surface/60 mt-0.5 text-[9px] font-medium">
-                                {assessment.category} · Q{index + 1} 기수 평균
+                                {assessment.category} · 기수 평균
                               </p>
                               <div className="border-surface/15 mt-2 flex items-end justify-between gap-3 border-t pt-2">
                                 <span className="text-surface/65 text-[10px] font-semibold">
@@ -453,7 +440,7 @@ export function AssessmentTrendChart({
                         <button
                           type="button"
                           data-assessment-trend-point={assessment.id}
-                          aria-label={`Q${index + 1} ${assessment.title} ${formatNumber(assessment.score)}점 추세 비교`}
+                          aria-label={`${assessment.title} ${formatNumber(assessment.score)}점 추세 비교`}
                           className="group focus-visible:ring-ring absolute left-1/2 z-50 flex size-7 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none"
                           style={{
                             bottom: `${clampScore(assessment.score)}%`,
@@ -505,7 +492,7 @@ export function AssessmentTrendChart({
                               {assessment.title}
                             </p>
                             <p className="text-surface/60 mt-0.5 text-[9px] font-medium">
-                              {assessment.category} · Q{index + 1} 시험 추세
+                              {assessment.category} · 기술 추세
                             </p>
                             <div className="border-surface/15 mt-2.5 grid grid-cols-2 gap-2 border-t pt-2.5">
                               <div className="border-info border-l-2 pl-2">
@@ -649,14 +636,17 @@ export function AssessmentTrendChart({
                   gridTemplateColumns: `repeat(${assessments.length}, minmax(0, 1fr))`,
                 }}
               >
-                {assessments.map((assessment, index) => (
+                {assessments.map((assessment) => (
                   <div
                     key={assessment.id}
-                    className="flex min-w-0 items-center justify-center text-center"
+                    className="flex min-w-0 flex-col items-center justify-start gap-0.5 text-center"
                     title={assessment.title}
                   >
-                    <span className="text-fg text-[10px] font-semibold">
-                      Q{index + 1}
+                    <span className="text-fg text-center text-[10px] leading-4 font-semibold break-keep">
+                      {assessmentSubject(assessment.title)}
+                    </span>
+                    <span className="text-fg-subtle text-[9px] leading-3 tabular-nums">
+                      {formatAssessmentDate(assessment.submittedAt)}
                     </span>
                   </div>
                 ))}
@@ -733,13 +723,11 @@ function RecentFiveAverage({
 
 function TechCategoryGroup({
   title,
-  description,
   categories,
   emptyMessage,
   toneOffset = 0,
 }: {
   title: string
-  description: string
   categories: CertificateTechDetail['categories']
   emptyMessage: string
   toneOffset?: number
@@ -749,12 +737,19 @@ function TechCategoryGroup({
   const visibleCategories = expanded
     ? categories
     : categories.slice(0, INITIAL_VISIBLE_CATEGORY_COUNT)
+  const averageScore =
+    categories.length === 0
+      ? null
+      : categories.reduce((sum, category) => sum + category.score, 0) /
+        categories.length
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <span className="text-fg text-[13px] font-bold">{title}</span>
-        <span className="text-fg-subtle text-[11px]">{description}</span>
+        <span className="text-fg-subtle text-[11px]">
+          {categories.length}개 카테고리 · 평균 {formatNumber(averageScore)}점
+        </span>
       </div>
       {categories.length === 0 ? (
         <EmptyData>{emptyMessage}</EmptyData>
@@ -767,16 +762,13 @@ function TechCategoryGroup({
                   {category.label}
                 </span>
                 <span className="text-fg-subtle text-[11px]">
-                  {category.attemptCount}회 평가 · 비교 표본{' '}
-                  {category.populationSize}명
+                  평가 {category.attemptCount}회
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                {category.topPercent !== null && (
-                  <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
-                    상위 {formatNumber(category.topPercent)}%
-                  </span>
-                )}
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-fg-subtle text-[10px] font-semibold">
+                  평균 점수
+                </span>
                 <span className="text-fg text-[16px] font-bold">
                   {formatNumber(category.score)}점
                 </span>
@@ -810,10 +802,39 @@ function TechCategoryGroup({
   )
 }
 
+function buildSingleAssessmentCategoryScores(
+  assessments: CertificateTechDetail['assessments'],
+): CertificateTechDetail['categories'] {
+  const seen = new Set<string>()
+
+  return [...assessments]
+    .sort(
+      (left, right) =>
+        left.submittedAt.localeCompare(right.submittedAt) ||
+        left.id.localeCompare(right.id),
+    )
+    .flatMap((assessment) => {
+      const key = `${assessment.assessmentType}:${assessment.category}`
+      if (seen.has(key)) return []
+      seen.add(key)
+
+      return [
+        {
+          assessmentType: assessment.assessmentType,
+          label: assessment.category,
+          score: assessment.score,
+          attemptCount: 1,
+          topPercent: null,
+          populationSize: 0,
+        },
+      ]
+    })
+}
+
 function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
-  const approvedCount = tech.certifications.filter(
+  const verifiedCertifications = tech.certifications.filter(
     (certification) => certification.status === 'APPROVED',
-  ).length
+  )
   const chronologicalAssessments = [...tech.assessments].sort(
     (left, right) =>
       left.submittedAt.localeCompare(right.submittedAt) ||
@@ -825,33 +846,34 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
   const csAssessments = chronologicalAssessments.filter(
     (assessment) => assessment.assessmentType === 'CS',
   )
-  const achievementCategories = tech.categories.filter(
+  const categoryScores = buildSingleAssessmentCategoryScores(tech.assessments)
+  const achievementCategories = categoryScores.filter(
     (category) => category.assessmentType !== 'CS',
   )
-  const csCategories = tech.categories.filter(
+  const csCategories = categoryScores.filter(
     (category) => category.assessmentType === 'CS',
   )
+  const categoryAverage =
+    categoryScores.length === 0
+      ? null
+      : categoryScores.reduce((sum, category) => sum + category.score, 0) /
+        categoryScores.length
 
   return (
     <div className="flex flex-col gap-4">
       <TabHead
         no={2}
         title="기술·검증"
-        sub="퀴즈 카테고리 점수·평가 추세·자격증·과제 제출 근거"
+        sub="성취도·CS 카테고리별 평균 점수와 자격증 근거"
       >
         <span className="text-fg-muted text-[11px] font-semibold">
-          ● 기술 평균 {formatNumber(tech.averageScore)}
+          ● 카테고리 평균 {formatNumber(categoryAverage)}점
         </span>
         <span className="text-fg-muted text-[11px] font-semibold">
-          ● 전체 시험 평균{' '}
-          {tech.assessmentAverageTopPercent === null
-            ? '상위 비율 산출 전'
-            : `상위 ${formatNumber(tech.assessmentAverageTopPercent)}%`}
-          {tech.assessmentAveragePopulationSize > 0 &&
-            ` · ${tech.assessmentAveragePopulationSize}명`}
+          ● 성취도 {achievementCategories.length}개 · CS {csCategories.length}개
         </span>
         <span className="text-fg-muted text-[11px] font-semibold">
-          ● 인증 완료 {approvedCount}건
+          ● 운영 인증 {verifiedCertifications.length}건
         </span>
       </TabHead>
 
@@ -859,14 +881,18 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
         data-tech-category-card
         className={cn(card, 'flex flex-col gap-4')}
       >
-        <span className="text-fg text-[15px] font-bold">
-          카테고리별 기술 점수
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className="text-fg text-[15px] font-bold">
+            카테고리별 기술 점수
+          </span>
+          <span className="text-fg-subtle text-[11px]">
+            성취도 평가와 CS 평가의 카테고리별 평균 점수를 비교합니다.
+          </span>
+        </div>
         <div data-tech-category-split className="grid grid-cols-2 items-start">
           <div className="min-w-0 pr-4">
             <TechCategoryGroup
               title="성취도 평가"
-              description="카테고리별 최신 유효 평가"
               categories={achievementCategories}
               emptyMessage="산정 가능한 성취도 평가 결과가 없습니다."
             />
@@ -874,7 +900,6 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
           <div className="border-divider min-w-0 border-l pl-4">
             <TechCategoryGroup
               title="CS 평가"
-              description="시행된 카테고리를 동적으로 표시"
               categories={csCategories}
               emptyMessage="아직 시행된 CS 평가가 없습니다."
               toneOffset={achievementCategories.length}
@@ -893,7 +918,7 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
             assessments={achievementAssessments}
             averageTopPercent={tech.assessmentAverageTopPercent}
             averagePopulationSize={tech.assessmentAveragePopulationSize}
-            title="성취도 평가 시험 추세"
+            title="성취도 평가 기술 추세"
             emptyMessage="표시할 성취도 평가 이력이 없습니다."
             tone="achievement"
             showAverageRank={false}
@@ -904,7 +929,7 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
             assessments={csAssessments}
             averageTopPercent={tech.assessmentAverageTopPercent}
             averagePopulationSize={tech.assessmentAveragePopulationSize}
-            title="CS 평가 시험 추세"
+            title="CS 평가 기술 추세"
             emptyMessage="표시할 CS 평가 이력이 없습니다."
             tone="cs"
             showAverageRank={false}
@@ -917,16 +942,16 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
           <span className="text-fg text-[15px] font-bold">
             자격증 · 외부 인증
           </span>
-          {tech.certifications.length > 0 && (
+          {verifiedCertifications.length > 0 && (
             <span className="text-fg-subtle text-[11px]">
-              {certificationCountLabel(tech.certifications)}
+              운영 인증이 완료된 자격증 {verifiedCertifications.length}건
             </span>
           )}
         </div>
-        {tech.certifications.length === 0 ? (
-          <EmptyData>등록된 외부 인증이 없습니다.</EmptyData>
+        {verifiedCertifications.length === 0 ? (
+          <EmptyData>운영 인증이 완료된 자격증이 없습니다.</EmptyData>
         ) : (
-          tech.certifications.map((certification) => {
+          verifiedCertifications.map((certification) => {
             const status = certificationStatus[certification.status] ?? {
               label: certification.status,
               tone: 'info' as const,

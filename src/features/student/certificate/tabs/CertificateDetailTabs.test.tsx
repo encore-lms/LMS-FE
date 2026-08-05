@@ -60,7 +60,7 @@ const result: CertificateDetailTabsResult = {
         scheduledAt: null,
         submittedAt: '2026-05-10',
         issuedAt: '2026-05-12',
-        registrationSource: '자가 등록',
+        registrationSource: '운영 인증 · 제출 증빙 확인',
       },
       {
         name: 'PCCP',
@@ -287,23 +287,20 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     renderWithQuery(<TechTab />)
 
     expect(await screen.findByText('프론트엔드')).toBeInTheDocument()
-    expect(
-      screen.getByText('첫 평가 1회 결과 · 이론 이해도'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('평가 1회')).toBeInTheDocument()
+    expect(screen.getByText('평균 점수')).toBeInTheDocument()
     expect(screen.queryByText('상위 12.5%')).not.toBeInTheDocument()
     expect(screen.getByText('PCCE')).toBeInTheDocument()
     expect(
-      screen.getByText('승인 1건 · 검토 중 1건 · 응시 예정 1건'),
+      screen.getByText('운영 인증이 완료된 자격증 1건'),
     ).toBeInTheDocument()
     expect(
       screen.getByText(
-        'LV.4 (900–1,000점) · 1,000/1,000점 · 발급 2026-05-12 · 자가 등록',
+        'LV.4 (900–1,000점) · 1,000/1,000점 · 발급 2026-05-12 · 운영 인증 · 제출 증빙 확인',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('제출 2026-06-01 · 자가 등록')).toBeInTheDocument()
-    expect(
-      screen.getByText('2026-07-12 응시 예정 · 자가 등록'),
-    ).toBeInTheDocument()
+    expect(screen.queryByText('PCCP')).not.toBeInTheDocument()
+    expect(screen.queryByText('PCSQL')).not.toBeInTheDocument()
     expect(screen.queryByText('과제 / 실습 검증')).not.toBeInTheDocument()
     expect(
       screen.queryByText('Spring REST API + JWT 인증'),

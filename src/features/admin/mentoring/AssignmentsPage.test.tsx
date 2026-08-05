@@ -138,17 +138,19 @@ describe('AssignmentsPage 관리 툴바', () => {
     ).toBeEnabled()
   })
 
-  it('브랜드 초록 배경에서 두 액션을 흰색 버튼 계열로 통일한다', () => {
+  // 허브 탭 공통 툴바 통일(2026-08-07) — 브랜드 카드·하드코딩 hex 를 걷어내고
+  // 공용 ListToolbar + Button/buttonClass 규격을 쓴다.
+  it('두 액션이 공용 버튼 규격을 쓴다(하드코딩 hex 없음)', () => {
     renderPage()
 
     const toolbar = screen.getByRole('region', { name: '배정 관리 도구' })
-    expect(toolbar).toHaveClass('bg-brand')
+    expect(toolbar).not.toHaveClass('bg-brand')
     expect(
       within(toolbar).getByRole('link', { name: '템플릿 관리' }),
-    ).toHaveClass('bg-white', 'text-[#355548]')
+    ).not.toHaveClass('text-[#355548]')
     expect(
       within(toolbar).getByRole('button', { name: '새 배정 추가' }),
-    ).toHaveClass('bg-white', 'text-[#355548]')
+    ).not.toHaveClass('text-[#355548]')
   })
 
   it('기존 히어로 문구와 기수별 중복 배정 버튼을 제거한다', () => {

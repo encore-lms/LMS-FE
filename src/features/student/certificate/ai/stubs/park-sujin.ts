@@ -979,6 +979,28 @@ const parkSujinPrimaryRole: AiJobFitRoleCandidate = {
       { category: 'DB / SQL', score: 84 },
     ],
   },
+  theoryUnderstanding: {
+    status: 'READY',
+    score: 87.2,
+    level: 'HIGH',
+    label: '높음',
+    summary:
+      '파이썬·데이터 처리와 웹·데이터 구현의 직무 관련 개념을 높음 수준으로 이해하고 있습니다.',
+    categories: [
+      {
+        key: 'PYTHON',
+        category: '파이썬·데이터 처리',
+        score: 82,
+        weightPercent: 35,
+      },
+      {
+        key: 'WEB_DATA',
+        category: '웹·데이터 구현',
+        score: 90,
+        weightPercent: 65,
+      },
+    ],
+  },
   evidenceCodes: projectEvidenceCodes,
   limitations: [],
 }
@@ -986,7 +1008,7 @@ const parkSujinPrimaryRole: AiJobFitRoleCandidate = {
 export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
   policyVersion: '2026.08.05-park-sujin-mock-v1',
   jobFit: {
-    policyVersion: '2026.08.05-job-fit-v2',
+    policyVersion: '2026.08.05-job-fit-v3',
     status: 'READY',
     summary: '분산 시스템에 강한 백엔드 엔지니어 역량이 가장 선명합니다.',
     primaryRole: parkSujinPrimaryRole,

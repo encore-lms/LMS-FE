@@ -10,6 +10,7 @@ vi.mock('../ai', async (importOriginal) => {
   }
 })
 
+import { getAiAnalysis } from '../ai'
 import { AiTab } from './AiTab'
 
 describe('AiTab', () => {
@@ -23,15 +24,22 @@ describe('AiTab', () => {
       </QueryClientProvider>,
     )
 
-    const trigger = await screen.findByRole('button', { name: '산출 기준' })
-    const panelTitle = screen.getByText('AI 분석 산출 기준')
+    const trigger = await screen.findByRole('button', { name: '분석 기준' })
+    const panelTitle = screen.getByText('AI 분석 기준')
+    const evidenceText =
+      getAiAnalysis('stu-001').jobFit.primaryRole!.evidence.join(' · ')
+    const evidence = screen.getByText((content) =>
+      content.startsWith(evidenceText),
+    )
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
     expect(panelTitle).not.toBeVisible()
+    expect(evidence).not.toBeVisible()
 
     fireEvent.click(trigger)
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
     expect(panelTitle).toBeVisible()
+    expect(evidence).toBeVisible()
 
     fireEvent.click(trigger)
     expect(trigger).toHaveAttribute('aria-expanded', 'false')

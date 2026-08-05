@@ -34,12 +34,15 @@ describe('AiTab 상세 API 연결', () => {
       await screen.findByRole('heading', { name: 'AI 분석' }),
     ).toBeInTheDocument()
     expect(fetchAiAnalysis).toHaveBeenCalledWith('student-1')
-    // '직무 적합도'는 히어로(h2)와 섹션(h3)에 중복 등장한다 — 단일 조회는 깨진다(#771 이후).
     expect(screen.getAllByText('직무 적합도').length).toBeGreaterThan(0)
     expect(screen.getAllByText('프로젝트 AI 분석').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('트러블슈팅 AI 분석').length).toBeGreaterThan(0)
     expect(
-      screen.getAllByText('문제해결에서 드러난 강점').length,
-    ).toBeGreaterThan(0)
+      screen.queryByText('AI 상담 감성·키워드 버블'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('AI 6축 평가·결과 교차분석'),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('AI 역량 프로파일링')).not.toBeInTheDocument()
     expect(screen.queryByText('AI 페르소나 TOP 3')).not.toBeInTheDocument()
   })

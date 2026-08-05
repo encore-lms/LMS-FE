@@ -131,6 +131,7 @@ export function BoardTab({
           initialCol={addCol}
           members={d.members}
           nameOf={nameOf}
+          period={{ start: d.startDate, end: d.endDate }}
           onClose={() => setAddCol(null)}
           onAdd={(colIdx, task, startAt, endAt, assigneeMemberIds) => {
             addTaskM.mutate(
@@ -159,6 +160,7 @@ export function BoardTab({
           initialCol={editing.col}
           members={d.members}
           nameOf={nameOf}
+          period={{ start: d.startDate, end: d.endDate }}
           editing={editing.task}
           onClose={() => setEditing(null)}
           onAdd={(colIdx, task, startAt, endAt, assigneeMemberIds) => {
@@ -218,6 +220,7 @@ function AddTaskModal({
   initialCol,
   members,
   nameOf,
+  period,
   editing,
   onClose,
   onAdd,
@@ -226,6 +229,8 @@ function AddTaskModal({
   initialCol: number
   members: WsMember[]
   nameOf: (userId: string | undefined, fallback: string) => string
+  /** 프로젝트 기간 — 이 밖의 날짜는 고를 수 없다. */
+  period: { start?: string | null; end?: string | null }
   /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
   editing?: WsTask
   onClose: () => void
@@ -371,11 +376,17 @@ function AddTaskModal({
             <input
               type="date"
               value={startAt}
+              // 프로젝트 기간 밖은 고를 수 없다 — 기간 밖 작업은 이 프로젝트의 일이 아니다.
+              min={period.start ?? undefined}
+              max={period.end ?? undefined}
               onChange={(e) => {
                 const v = e.target.value
                 setStartAt(v)
-                // 종료일이 시작일보다 빠르면 시작일 다음날로 보정
-                if (v && (!endAt || endAt <= v)) setEndAt(nextDayISO(v))
+                // 종료일이 시작일보다 빠르면 시작일 다음날로 보정(프로젝트 종료일은 넘지 않는다)
+                if (v && (!endAt || endAt <= v)) {
+                  const next = nextDayISO(v)
+                  setEndAt(period.end && next > period.end ? period.end : next)
+                }
               }}
               className={field}
             />
@@ -385,7 +396,8 @@ function AddTaskModal({
             <input
               type="date"
               value={endAt}
-              min={startAt}
+              min={startAt || (period.start ?? undefined)}
+              max={period.end ?? undefined}
               onChange={(e) => setEndAt(e.target.value)}
               className={field}
             />

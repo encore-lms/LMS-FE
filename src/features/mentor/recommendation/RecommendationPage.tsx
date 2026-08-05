@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,14 +12,12 @@ import {
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
-import { usePageHeader } from '@/shared/store'
 import {
   useSaveRecommendationDraft,
   useSubmitRecommendation,
   useTeamRecommendation,
 } from '../api/evaluations'
 import { ConfirmSubmitModal } from '../components/ConfirmSubmitModal'
-import { MENTOR_FLOW_CAPTION } from '../constants'
 import {
   AUTOSAVE_DELAY_MS,
   EVALUATION_AXES,
@@ -50,20 +48,16 @@ import {
 // 자동 저장을 멈추고 '수정 재제출'만 연다. 팀당 1명 라디오 또는 '추천 안 함' 명시 선택 ·
 // 추천 시 증명서용 간략 요약 필수 · 최종 제출 확인 모달.
 export default function RecommendationPage({
-  embedded = false,
   teamId: fixedTeamId,
   onSubmitted,
   onBack,
 }: {
-  /** 팀 상세 '평가·추천' 탭에 얹을 때 — 자체 헤더·브레드크럼·바깥 여백을 생략한다. */
-  embedded?: boolean
   teamId?: string
   /** 제출이 끝났을 때 — 탭 안에서는 완료 안내로 이어야 해서 페이지를 옮기지 않는다. */
   onSubmitted?: () => void
   /** 앞 단계(평가)로 되돌아가기 — 탭 안에서만 쓴다. */
   onBack?: () => void
 } = {}) {
-  usePageHeader('추천 선택', MENTOR_FLOW_CAPTION, !embedded)
   const { teamId: paramTeamId = '' } = useParams()
   const teamId = fixedTeamId ?? paramTeamId
   const { data, isPending, isError, refetch } = useTeamRecommendation(teamId)
@@ -76,13 +70,11 @@ export default function RecommendationPage({
       skeleton={<SkeletonListPage kpis={3} columns={4} className="" />}
       errorTitle="추천 정보를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className={embedded ? '' : 'p-8'}
     >
       {/* 정책 완화(2026-08-04) — 잠금·차단 분기 없이 항상 폼. 제출본도 값 채워진 폼으로 열린다. */}
       {data && (
         <RecommendationForm
           sheet={data}
-          embedded={embedded}
           onSubmitted={onSubmitted}
           onBack={onBack}
         />
@@ -93,16 +85,13 @@ export default function RecommendationPage({
 
 function RecommendationForm({
   sheet,
-  embedded = false,
   onSubmitted,
   onBack,
 }: {
   sheet: MentorRecommendationSheetData
-  embedded?: boolean
   onSubmitted?: () => void
   onBack?: () => void
 }) {
-  const navigate = useNavigate()
   const toast = useToast()
   const draftMutation = useSaveRecommendationDraft()
   const submitMutation = useSubmitRecommendation()
@@ -167,12 +156,8 @@ function RecommendationForm({
   const onConfirmSubmit = async () => {
     try {
       await submitMutation.mutateAsync({ teamId: sheet.teamId, payload })
-      // 탭 안에서는 화면을 옮기지 않는다 — 바로 완료 안내로 이어진다.
-      if (embedded) onSubmitted?.()
-      else
-        navigate(
-          `/mentor/recommendations?teamId=${sheet.teamId}&toast=submitted`,
-        )
+      // 팀 상세 탭 안에서만 쓰인다 — 화면을 옮기지 않고 바로 완료 안내로 이어진다.
+      onSubmitted?.()
     } catch {
       setConfirmOpen(false)
       toast.danger('추천 제출에 실패했어요. 잠시 후 다시 시도해 주세요.')
@@ -191,36 +176,18 @@ function RecommendationForm({
             ? `${selected.name} 님 추천 · 증명서용 요약 ${summary.length}자 작성 완료`
             : `${selected.name} 님 추천 · 증명서용 간략 요약 필수`
 
-  const teamLabel = `${sheet.cohortLabel} · ${sheet.teamName}`
-
   return (
-    <div className={cn('flex flex-col gap-5', !embedded && 'p-8')}>
+    <div className="flex flex-col gap-5">
       {/* 브레드크럼 + 자동 저장 칩 — 탭 안에서는 앞 단계로 돌아가는 버튼만 남긴다. */}
       <div className="flex flex-wrap items-center gap-2">
-        {embedded ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            평가 다시 보기
-          </button>
-        ) : (
-          <>
-            <Link
-              to={`/mentor/teams/${sheet.teamId}/evaluation`}
-              className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              평가 작성
-            </Link>
-            <span className="text-fg-subtle text-[13px]">›</span>
-            <span className="text-fg-subtle text-[13px]">{teamLabel}</span>
-            <span className="text-fg-subtle text-[13px]">›</span>
-            <span className="text-fg text-xs font-medium">추천 선택</span>
-          </>
-        )}
+        <button
+          type="button"
+          onClick={onBack}
+          className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          평가 다시 보기
+        </button>
         <span className="bg-surface-muted text-fg-muted ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium">
           <Pencil className="h-3 w-3" />
           {closed
@@ -411,13 +378,14 @@ function RecommendationForm({
           </span>
         </div>
         <div className="flex items-center gap-2.5">
-          <Link
-            to={`/mentor/teams/${sheet.teamId}/evaluation`}
+          <button
+            type="button"
+            onClick={onBack}
             className="border-on-color/70 text-on-color hover:bg-on-color/10 flex items-center gap-1 rounded-[10px] border px-4 py-2.5 text-[13px] font-semibold"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             평가로 돌아가기
-          </Link>
+          </button>
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}

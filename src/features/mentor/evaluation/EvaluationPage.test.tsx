@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import EvaluationPage from './EvaluationPage'
 import {
   useSaveEvaluationDraft,
@@ -27,20 +27,14 @@ function mockSheet(sheet: MentorEvaluationSheetData | null) {
   } as unknown as SheetHook)
 }
 
+const onSubmitted = vi.fn()
+
 function renderPage(teamId: string) {
+  onSubmitted.mockClear()
   return render(
-    <MemoryRouter initialEntries={[`/mentor/teams/${teamId}/evaluation`]}>
+    <MemoryRouter>
       <ToastProvider>
-        <Routes>
-          <Route
-            path="/mentor/teams/:teamId/evaluation"
-            element={<EvaluationPage />}
-          />
-          <Route
-            path="/mentor/evaluations"
-            element={<div>평가 제출 완료 페이지</div>}
-          />
-        </Routes>
+        <EvaluationPage teamId={teamId} onSubmitted={onSubmitted} />
       </ToastProvider>
     </MemoryRouter>,
   )
@@ -133,8 +127,8 @@ describe('EvaluationPage', () => {
         ]),
       }),
     })
-    // 제출 성공 → 완료 페이지(?toast=submitted)로 이동
-    expect(await screen.findByText('평가 제출 완료 페이지')).toBeInTheDocument()
+    // 제출 후 화면을 옮기지 않는다 — 팀 상세 탭 안에서 다음 단계로 이어진다(2026-08-05).
+    expect(onSubmitted).toHaveBeenCalled()
   })
 
   // 정책 완화(2026-08-04) — N시간 미완료여도 상시 작성 폼이 열린다.

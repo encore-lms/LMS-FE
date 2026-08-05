@@ -240,8 +240,10 @@ export const mockWorkspaceP3: WorkspaceData = {
   peerDue: '해당 없음',
   peerMyStatus: { label: '개인 프로젝트 · 상호평가 없음', tone: 'info' },
   peerTeamStatus: { label: '팀원 없음', tone: 'info' },
-  peerEvalEnabled: true,
+  // 작성 중인 개인 프로젝트 — 상호평가가 열릴 수 없는 조합이다(완료 후 매니저·강사가 켠다).
+  peerEvalEnabled: false,
   peerTargets: [],
+  isOwner: true,
   certChecklist: [
     {
       label: '프로젝트 기본 정보 입력',

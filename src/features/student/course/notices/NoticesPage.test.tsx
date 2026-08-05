@@ -21,6 +21,8 @@ vi.mock('@/shared/api', async (orig) => ({
   useDeleteCourseNotice: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 vi.mock('../CourseTabs', () => ({ CourseTabs: () => null }))
+// 허브 공통 헤더 훅(과정명/기간) — useQuery 의존이라 껍데기로 대체한다.
+vi.mock('../useCourseHubHeader', () => ({ useCourseHubHeader: () => {} }))
 
 const notice = (over: Partial<NoticePost> = {}): NoticePost => ({
   id: 'n1',

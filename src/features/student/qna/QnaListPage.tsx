@@ -12,6 +12,7 @@ import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { TONE_SOLID } from '@/shared/lib/tone'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { CourseTabs } from '../course/CourseTabs'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 
 const PAGE_SIZE = 4
 
@@ -37,12 +38,15 @@ export default function QnaListPage({
   // 질문 작성은 수강생 전용이라 나머지 역할에선 숨긴다(BE도 작성 엔드포인트를 열지 않는다).
   const base = useQnaBase()
   const canAsk = base === '/student/qna'
+  // 수강생 마운트는 허브 공통 헤더(과정명/기간, 3역할 통일 2026-08-05),
+  // 스태프 단독 라우트(/admin·/instructor/qna)는 기존 화면 제목 유지. 훅 규칙상 둘 다 호출하고 enabled 로 가른다.
+  useCourseHubHeader(!embedded && canAsk)
   usePageHeader(
     'QnA 게시판',
     base === '/instructor/qna'
       ? '담당 기수 수강생이 올린 질문을 확인하고 답변해 주세요.'
       : '강의·과제·환경설정·진로 궁금증을 동료·멘토·강사와 함께 풀어요.',
-    !embedded,
+    !embedded && !canAsk,
   )
 
   // 상세는 허브 밖 라우트라, 허브에서 열었으면 돌아올 곳을 들려 보낸다.

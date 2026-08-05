@@ -6,7 +6,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useRecordsOverview, useDeleteRecord } from '../api/records'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
@@ -50,10 +50,7 @@ function isRecordCategory(value: string | null): value is RecordCategory {
  */
 export default function RecordsPage() {
   const { data, isPending, isError, refetch } = useRecordsOverview()
-  usePageHeader(
-    '기록실',
-    '블로그·스터디·자격증·이력서·GitHub 등 학습 기록을 한 곳에서 관리',
-  )
+  useCourseHubHeader()
 
   return (
     <DataBoundary

@@ -1,36 +1,42 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
 
-// 증명서 v2 — 탭 공용 "AI 분석" 패널 크롬(보라 강조 박스 + AI 분석 배지).
-// confirmed 데이터 기반 해석 콘텐츠를 감싼다. 외부 공개 payload 노출은 후속(운영자 승인) 과제.
 export function AiAnalysisPanel({
   title,
+  description,
+  index,
   children,
   className,
 }: {
   title: string
+  description?: string
+  index?: string
   children: ReactNode
   className?: string
 }) {
   return (
     <section
       className={cn(
-        'border-accent/30 bg-accent-bg/40 flex flex-col gap-4 rounded-2xl border p-5',
+        'border-border bg-surface overflow-hidden rounded-2xl border shadow-sm',
         className,
       )}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-accent-strong flex items-center gap-1.5 text-[14px] font-bold">
-          <span className="bg-accent-strong flex size-4 items-center justify-center rounded text-[10px] text-white">
-            ✦
+      <header className="border-border flex items-start gap-3 border-b px-5 py-4 sm:px-6 sm:py-5">
+        {index && (
+          <span className="bg-accent-bg text-accent-strong flex size-8 shrink-0 items-center justify-center rounded-lg text-[13px] font-extrabold">
+            {index}
           </span>
-          {title}
-        </span>
-        <span className="text-accent-strong rounded bg-white px-2 py-0.5 text-[10px] font-bold">
-          AI 분석
-        </span>
-      </div>
-      {children}
+        )}
+        <div className="min-w-0">
+          <h2 className="text-fg text-[18px] leading-7 font-bold">{title}</h2>
+          {description && (
+            <p className="text-fg-muted mt-1 text-[13px] leading-5">
+              {description}
+            </p>
+          )}
+        </div>
+      </header>
+      <div className="flex flex-col gap-4 p-5 sm:p-6">{children}</div>
     </section>
   )
 }

@@ -373,6 +373,130 @@ export type Tone =
   | "accent"
   | "success";
 
+export type AiAnalysisStatus = "READY" | "PARTIAL" | "NOT_READY";
+
+export interface AiJobFitProjectRoleEvidence {
+  label: string;
+  taskCount: number;
+  projectCount: number;
+}
+
+export interface AiJobFitTagEvidence {
+  label: string;
+  count: number;
+}
+
+export interface AiJobFitAchievementEvidence {
+  category: string;
+  score: number;
+}
+
+export interface AiJobFitEvidence {
+  projectRoles: AiJobFitProjectRoleEvidence[];
+  troubleshooting: {
+    certifiedCaseCount: number;
+    independentCaseCount: number;
+    independentRate: number | null;
+    tags: AiJobFitTagEvidence[];
+  };
+  highAchievements: AiJobFitAchievementEvidence[];
+}
+
+export interface AiJobFitRoleCandidate {
+  rank: number;
+  role: PersonaBase;
+  jobLabel: string;
+  roleLabel: string;
+  workType: string;
+  fitScore: number;
+  confidence: AiProfileConfidence;
+  summary: string;
+  evidence: string[];
+  fitEvidence: AiJobFitEvidence;
+  evidenceCodes: string[];
+  limitations: string[];
+}
+
+export interface AiJobFit {
+  policyVersion: string;
+  status: AiAnalysisStatus;
+  summary: string;
+  primaryRole: AiJobFitRoleCandidate | null;
+  roleCandidates: AiJobFitRoleCandidate[];
+  confidence: AiProfileConfidence;
+  limitations: string[];
+  sourcePolicies: string[];
+  generatedBy: "AI" | "FALLBACK";
+}
+
+export type AiAxisAlignmentRelation =
+  | "ALIGNED"
+  | "MIXED"
+  | "DIVERGENT"
+  | "NOT_READY";
+
+export interface AiAxisAlignmentEvidence {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+  weightPercent: number;
+  detail: string;
+  sourceType: string;
+}
+
+export interface AiAxisAlignmentAxis {
+  key: CertificateAxisKey;
+  status: "READY" | "NOT_READY";
+  axisScore: number | null;
+  evidenceScore: number | null;
+  difference: number | null;
+  relation: AiAxisAlignmentRelation;
+  summary: string;
+  reason: string[];
+  evidence: AiAxisAlignmentEvidence[];
+}
+
+export interface AiAxisAlignment {
+  policyVersion: string;
+  status: "READY" | "NOT_READY";
+  summary: string;
+  thresholds: {
+    alignedMaxDifference: number;
+    divergentMinDifference: number;
+  };
+  axes: AiAxisAlignmentAxis[];
+  highlights: {
+    alignedAxes: CertificateAxisKey[];
+    divergentAxes: CertificateAxisKey[];
+    largestGapAxis: CertificateAxisKey | null;
+  };
+  limitations: string[];
+}
+
+export interface AiTroubleshooting {
+  policyVersion: string;
+  status: AiProblemStatus;
+  summary: string;
+  certifiedCaseCount: number;
+  independentCaseCount: number;
+  independentRate: number | null;
+  period: { startedAt: string; endedAt: string } | null;
+  axes: ProblemCap[];
+  steps: ProblemSolvingStep[];
+  groups: ProblemEvidenceGroup[];
+  growth: {
+    status: "READY" | "NOT_READY";
+    summary: string;
+    newDomains: string[];
+    repeatedDomains: string[];
+    newTechnologies: string[];
+    repeatedTechnologies: string[];
+    confidence: AiProblemConfidence;
+  } | null;
+  limitations: string[];
+}
+
 // 블록1 — 기술 종합 판단
 export type AiVerdictItemKey = "strength" | "growth" | "gap" | "unique";
 export type AiVerdictItemStatus = "READY" | "NOT_READY";
@@ -482,6 +606,16 @@ export interface AiProjectPersonalEvidence {
   troubleshootingCases: string[];
   artifacts: string[];
 }
+export interface AiProjectRecruiterInsight {
+  role: string;
+  challenge: string | null;
+  action: string | null;
+  outcome: string | null;
+  strength: string;
+  summary: string;
+  evidenceCodes: string[];
+  generatedBy: "AI" | "FALLBACK";
+}
 export interface AiProjectSnapshot {
   projectId: string;
   order: number;
@@ -493,6 +627,7 @@ export interface AiProjectSnapshot {
   teamContext: AiProjectTeamContext;
   personalEvidence: AiProjectPersonalEvidence;
   analysis: string;
+  recruiterInsight: AiProjectRecruiterInsight;
   evidenceCodes: string[];
   limitations: string[];
   generatedBy: "AI" | "FALLBACK";
@@ -523,6 +658,13 @@ export interface AiProjects {
   status: AiProjectStatus;
   projects: AiProjectSnapshot[];
   overview: AiProjectOverview;
+  recruiterSummary: {
+    headline: string;
+    summary: string;
+    strengths: string[];
+    evidenceCodes: string[];
+    generatedBy: "AI" | "FALLBACK";
+  };
   projectCount: number;
   period: { startedAt: string; endedAt: string } | null;
   evidenceCodes: string[];
@@ -732,11 +874,11 @@ export interface Ontology {
 
 // 최종 분석 결과 (getAnalysis 반환 / 서버 /analysis 응답)
 export interface AiAnalysis {
-  verdict: AiVerdict;
-  profile: AiProfile;
-  personas: AiPersona[];
+  policyVersion: string;
+  jobFit: AiJobFit;
+  axisAlignment: AiAxisAlignment;
   projects: AiProjects;
-  problem: ProblemAi;
+  troubleshooting: AiTroubleshooting;
   sentiment: Sentiment;
   ontology: Ontology;
 }

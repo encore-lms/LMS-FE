@@ -29,7 +29,6 @@ const STATUS_META: Record<
   data_pending: { label: '데이터 미준비', tone: 'warning' },
   data_ready: { label: '데이터 준비', tone: 'info' },
   issued: { label: '증명서 완료', tone: 'success' },
-  data_rebuilding: { label: '재 데이터 준비', tone: 'accent' },
 }
 
 export default function CompetencyCertificatesPage() {
@@ -94,7 +93,7 @@ export default function CompetencyCertificatesPage() {
     return {
       total: rows.length,
       issued: by('issued'),
-      preparing: by('data_pending') + by('data_ready') + by('data_rebuilding'),
+      preparing: by('data_pending') + by('data_ready'),
       published: rows.filter((r) => r.published).length,
     }
   }, [rows])

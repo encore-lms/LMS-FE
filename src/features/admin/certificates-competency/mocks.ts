@@ -30,7 +30,6 @@ const STATUS_CYCLE: CompetencyCertStatus[] = [
   'cohort_open',
   'issued',
   'data_pending',
-  'data_rebuilding',
   'issued',
   'cohort_open',
 ]

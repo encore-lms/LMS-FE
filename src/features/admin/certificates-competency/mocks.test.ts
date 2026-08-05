@@ -43,18 +43,12 @@ describe('역량 증명서 목록 목데이터', () => {
     expect(row.cohortLabel).toBe('30기')
   })
 
-  // 한 화면에서 다섯 상태를 다 볼 수 있어야 흐름을 확인할 수 있다.
-  it('다섯 상태가 고르게 나온다', () => {
+  // 한 화면에서 네 상태를 다 볼 수 있어야 흐름을 확인할 수 있다.
+  it('네 상태가 고르게 나온다', () => {
     const statuses = new Set(rowsOf(40).map((r) => r.status))
 
     expect(statuses).toEqual(
-      new Set([
-        'issued',
-        'data_ready',
-        'data_pending',
-        'data_rebuilding',
-        'cohort_open',
-      ]),
+      new Set(['issued', 'data_ready', 'data_pending', 'cohort_open']),
     )
   })
 

@@ -5,14 +5,12 @@
  * - `data_pending` 기수는 끝났는데 재료(프로젝트·기록·평판)가 덜 모였다
  * - `data_ready` 재료가 갖춰져 증명서를 만들 수 있다
  * - `issued` 증명서가 나왔다 — 이 상태에서만 상세를 열 수 있다
- * - `data_rebuilding` 자료가 바뀌어 다시 준비 중이다
  */
 export type CompetencyCertStatus =
   | 'cohort_open'
   | 'data_pending'
   | 'data_ready'
   | 'issued'
-  | 'data_rebuilding'
 
 /** 목록 한 줄 — 수강생 한 명의 역량 증명서 현황. */
 export interface CompetencyCertRow {

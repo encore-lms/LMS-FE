@@ -1,8 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CertificateDetailTabsResult, CertificateScoreResult } from '../ai'
+import type {
+  CertificateDetailTabsResult,
+  CertificateScoreResult,
+  Ontology,
+} from '../ai'
 import {
   fetchAiAnalysis,
   fetchCertificateDetailTabs,
@@ -324,6 +328,23 @@ const recommendations: CertRecommendation[] = [
   },
 ]
 
+const ontologyNotReady: Ontology = {
+  policyVersion: '2026.07.21-competency-ontology-v2',
+  status: 'NOT_READY',
+  summary: '표시 가능한 역량 관계가 없습니다.',
+  counts: {
+    self: 0,
+    subject: 0,
+    skill: 0,
+    method: 0,
+    project: 0,
+    domain: 0,
+  },
+  omittedCounts: {},
+  nodes: [],
+  edges: [],
+}
+
 describe('SummaryTab', () => {
   beforeEach(() => {
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(detailTabsResult)
@@ -385,7 +406,50 @@ describe('SummaryTab', () => {
     )
   })
 
-  it('핵심 지표를 관련 화면으로 연결하고 6축별 실제 점수 근거를 표시한다', async () => {
+  it('레이더 옆 한 칸에 도메인과 온톨로지 역량 맵을 축소 배치한다', async () => {
+    vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+    vi.mocked(fetchAiAnalysis).mockResolvedValue({
+      ontology: ontologyNotReady,
+    } as Awaited<ReturnType<typeof fetchAiAnalysis>>)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    const { container } = render(
+      <MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <SummaryTab s={summary} />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('온톨로지 역량 맵')
+
+    const layout = container.querySelector<HTMLElement>(
+      '[data-summary-competency-layout]',
+    )
+    const visualStack = container.querySelector<HTMLElement>(
+      '[data-summary-visual-stack]',
+    )
+    const domainCard = screen
+      .getByText('도메인 경험')
+      .closest('section') as HTMLElement | null
+    const ontologyCard = screen
+      .getByText('온톨로지 역량 맵')
+      .closest('section') as HTMLElement | null
+
+    expect(layout).toContainElement(visualStack)
+    expect(visualStack).toContainElement(domainCard)
+    expect(visualStack).toContainElement(ontologyCard)
+    expect(domainCard).toHaveAttribute('data-domain-compact', 'true')
+    expect(ontologyCard).toHaveAttribute('data-ontology-compact', 'true')
+    expect(
+      container.querySelector('[data-score-evidence="기술·기술기여"]'),
+    ).toBeNull()
+    expect(screen.queryByText(/예상 점수|점수 전망/)).not.toBeInTheDocument()
+  })
+
+  it('핵심 지표를 관련 화면으로 연결하고 6축 레이더를 표시한다', async () => {
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
     vi.mocked(fetchAiAnalysis).mockImplementation(
       () => new Promise(() => undefined),
@@ -479,67 +543,6 @@ describe('SummaryTab', () => {
       screen.queryByRole('button', { name: '동료 5축 평가 비교' }),
     ).not.toBeInTheDocument()
     expect(container.querySelector('[data-three-sixty-comparison]')).toBeNull()
-
-    const technicalEvidence = container.querySelector(
-      '[data-score-evidence="기술·기술기여"]',
-    )
-    expect(technicalEvidence).toHaveTextContent('기술·기술기여 점수')
-    expect(technicalEvidence).toHaveTextContent('동료 평가')
-    expect(technicalEvidence).toHaveTextContent('멘토 평가')
-    expect(technicalEvidence).toHaveTextContent('강사 평가')
-    expect(technicalEvidence).toHaveTextContent('운영 평가')
-    expect(technicalEvidence).toHaveTextContent('100점 환산 후 25% 반영')
-    expect(technicalEvidence).toHaveTextContent('기술·기술기여 최종 72.2점')
-
-    fireEvent.click(screen.getByRole('tab', { name: '소통·협업·팀워크' }))
-    const communicationEvidence = container.querySelector(
-      '[data-score-evidence="소통·협업·팀워크"]',
-    )
-    expect(communicationEvidence).toHaveTextContent('소통·협업·팀워크 점수')
-    expect(communicationEvidence).toHaveTextContent(
-      '소통·협업·팀워크 최종 86.3점',
-    )
-
-    fireEvent.click(screen.getByRole('tab', { name: '책임감' }))
-    expect(
-      container.querySelector('[data-score-evidence="책임감"]'),
-    ).toHaveTextContent('책임감 최종 80.9점')
-
-    fireEvent.click(
-      screen.getByRole('button', { name: '문제해결 점수 근거 보기' }),
-    )
-    const problemEvidence = container.querySelector(
-      '[data-score-evidence="문제해결"]',
-    )
-    expect(problemEvidence).toHaveTextContent('문제해결 점수')
-    expect(problemEvidence).toHaveTextContent('강사 평가')
-    expect(problemEvidence).toHaveTextContent('운영 평가')
-    expect(problemEvidence).toHaveTextContent('문제해결 최종 79.1점')
-
-    fireEvent.click(screen.getByRole('tab', { name: '학습지속성' }))
-    const learningEvidence = container.querySelector(
-      '[data-score-evidence="학습지속성"]',
-    )
-    expect(learningEvidence).toHaveTextContent('115/155일 · 74.2%')
-    expect(learningEvidence).toHaveTextContent(
-      '출석률 74.2%의 70% 반영 = 52.5점',
-    )
-    expect(learningEvidence).toHaveTextContent(
-      '블로그 제출률 82%의 30% 반영 = 24점',
-    )
-
-    fireEvent.click(screen.getByRole('tab', { name: '성취도 평가' }))
-    const achievementEvidence = container.querySelector(
-      '[data-score-evidence="성취도 평가"]',
-    )
-    expect(achievementEvidence).toHaveTextContent('성취도 평가별 점수')
-    expect(achievementEvidence).toHaveTextContent('파이썬')
-    expect(achievementEvidence).toHaveTextContent('머신러닝')
-    expect(achievementEvidence).toHaveTextContent('네트워크')
-    expect(achievementEvidence).toHaveTextContent(
-      '성취도 평가 전체 평균 = 66점',
-    )
-    expect(achievementEvidence).toHaveTextContent('성취도 평가 최종 66점')
 
     expect(
       screen.getByRole('button', { name: '함께 보기', pressed: true }),

@@ -16,9 +16,11 @@ const domainCollator = new Intl.Collator(['ko', 'en'], {
 export function DomainDonut({
   domains,
   className,
+  compact = false,
 }: {
   domains: CertDomain[]
   className?: string
+  compact?: boolean
 }) {
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
   const sortedDomains = useMemo(
@@ -42,7 +44,15 @@ export function DomainDonut({
     sortedDomains[0]
 
   return (
-    <section className={cn(card, 'flex flex-col gap-5', className)}>
+    <section
+      data-domain-compact={compact || undefined}
+      className={cn(
+        card,
+        'flex flex-col',
+        compact ? 'gap-3 p-4' : 'gap-5',
+        className,
+      )}
+    >
       <div className="flex flex-col gap-0.5">
         <span className="text-fg text-[15px] font-bold">도메인 경험</span>
         <span className="text-fg-muted text-[11px]">
@@ -58,10 +68,25 @@ export function DomainDonut({
           도메인이 등록된 인증 완료 프로젝트가 없습니다.
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:justify-center lg:gap-14">
-          <div className="flex w-full max-w-[280px] flex-col items-center gap-3">
+        <div
+          className={cn(
+            'flex items-center',
+            compact
+              ? 'grid grid-cols-[132px_minmax(0,1fr)] gap-3'
+              : 'flex-col gap-8 lg:flex-row lg:justify-center lg:gap-14',
+          )}
+        >
+          <div
+            className={cn(
+              'flex w-full flex-col items-center',
+              compact ? 'gap-1.5' : 'max-w-[280px] gap-3',
+            )}
+          >
             <div
-              className="border-border bg-surface min-h-[58px] max-w-full rounded-lg border px-3 py-2 text-center shadow-sm"
+              className={cn(
+                'border-border bg-surface max-w-full rounded-lg border text-center shadow-sm',
+                compact ? 'min-h-11 px-2 py-1.5' : 'min-h-[58px] px-3 py-2',
+              )}
               data-domain-detail={selected.label}
             >
               <div
@@ -84,7 +109,10 @@ export function DomainDonut({
 
             <svg
               viewBox="0 0 140 140"
-              className="size-[190px] shrink-0"
+              className={cn(
+                'shrink-0',
+                compact ? 'size-[124px]' : 'size-[190px]',
+              )}
               role="group"
               aria-label="도메인 경험 비율 도넛"
             >
@@ -152,7 +180,7 @@ export function DomainDonut({
           </div>
 
           <div
-            className="flex w-full max-w-[520px] flex-col"
+            className={cn('flex w-full flex-col', !compact && 'max-w-[520px]')}
             aria-label="도메인 경험 순위"
           >
             {sortedDomains.map((domain, index) => {
@@ -162,7 +190,10 @@ export function DomainDonut({
                   key={domain.label}
                   type="button"
                   className={cn(
-                    'border-divider flex min-h-12 items-center gap-3 border-b px-3 text-left text-[13px] transition-colors last:border-b-0',
+                    'border-divider flex items-center border-b text-left transition-colors last:border-b-0',
+                    compact
+                      ? 'min-h-8 gap-2 px-2 text-[11px]'
+                      : 'min-h-12 gap-3 px-3 text-[13px]',
                     isSelected
                       ? 'bg-surface-muted rounded-md'
                       : 'hover:bg-surface-muted/60',

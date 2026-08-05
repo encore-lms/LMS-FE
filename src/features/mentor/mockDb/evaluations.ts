@@ -13,7 +13,7 @@ import type { MentorMockEvaluation, MentorMockTeam } from './db'
 import { nowStamp, round1, toAssignment } from './shared'
 // ───────────────────────── 평가 · 추천 (M4) ─────────────────────────
 
-export const EMPTY_SCORES: EvaluationScoreTuple = [null, null, null, null, null]
+export const EMPTY_SCORES: EvaluationScoreTuple = [null, null, null, null]
 
 /** 점수 유효성 — 1~5 정수(범위 미확정 TODO — Figma '0~5점 필수' 카피와 충돌 openQuestion). */
 const isValidScore = (s: number | null): s is number =>
@@ -204,13 +204,7 @@ export function submitEvaluation(
       entries.map((e) => [
         e.studentId,
         {
-          axes: e.scores.map((s) => s!) as [
-            number,
-            number,
-            number,
-            number,
-            number,
-          ],
+          axes: e.scores.map((s) => s!) as [number, number, number, number],
           comment: e.comment.trim(),
         },
       ]),

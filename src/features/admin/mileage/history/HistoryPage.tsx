@@ -59,7 +59,22 @@ export default function HistoryPage() {
   }, [rows, txType, q])
 
   const summary = data?.summary
-  const footer = data?.footer
+  // 필터를 걸면 표는 줄어드는데 KPI·하단은 서버 전체값이라 숫자가 어긋났다(2026-08-05 QA).
+  // 지금 화면에 보이는 결과로 다시 센다.
+  const footer = useMemo(() => {
+    const grant = filtered.filter((r) => r.txType === 'grant').length
+    const deduct = filtered.filter((r) => r.txType === 'deduct').length
+    const partial = filtered.filter((r) => r.txType === 'partial').length
+    return {
+      total: filtered.length,
+      grant,
+      deduct,
+      partial,
+      failed: filtered.length - grant - deduct - partial,
+    }
+  }, [filtered])
+  const filteredCount = filtered.length
+  const isFiltered = filteredCount !== rows.length
 
   const columns: Column<MileageTxRow>[] = [
     {
@@ -105,13 +120,18 @@ export default function HistoryPage() {
     {
       key: 'type',
       header: '구분',
-      className: 'w-16',
-      cell: (r) => (
-        <StatusBadge
-          label={TX_META[r.txType].label}
-          tone={TX_META[r.txType].tone}
-        />
-      ),
+      className: 'w-24',
+      // 구매는 요청 즉시 차감이라 승인 전에도 원장에 남는다 — 확정된 차감처럼 보이지 않게
+      // '승인 검토'로 구분한다(2026-08-05 QA).
+      cell: (r) =>
+        r.pending ? (
+          <StatusBadge label="승인 검토" tone="warning" />
+        ) : (
+          <StatusBadge
+            label={TX_META[r.txType].label}
+            tone={TX_META[r.txType].tone}
+          />
+        ),
     },
     {
       key: 'balance',
@@ -193,8 +213,8 @@ export default function HistoryPage() {
             />
             <KpiCard
               label="내역 건수"
-              value={`${summary.count}건`}
-              hint={summary.countHint}
+              value={`${filteredCount}건`}
+              hint={isFiltered ? `전체 ${summary.count}건 중 조건에 맞는 건수` : summary.countHint}
             />
           </div>
         )}
@@ -239,12 +259,11 @@ export default function HistoryPage() {
             rowKey={(r) => r.id}
             empty="조건에 맞는 거래가 없어요"
           />
-          {footer && (
-            <div className="text-fg-subtle mt-3 text-xs">
-              총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
-              부분 {footer.partial} · 실패 {footer.failed}
-            </div>
-          )}
+          <div className="text-fg-subtle mt-3 text-xs">
+            총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
+            부분 {footer.partial} · 실패 {footer.failed}
+            {isFiltered && ` (전체 ${rows.length}건)`}
+          </div>
         </div>
       </DataBoundary>
     </div>

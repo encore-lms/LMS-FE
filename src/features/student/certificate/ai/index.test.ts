@@ -115,7 +115,7 @@ describe('fetchCertificateScore', () => {
     expect(tabs.tech.certifications.length).toBeGreaterThan(0)
     expect(tabs.problem.peerTags.length).toBeGreaterThan(0)
     expect(analysis.projects.projects.length).toBeGreaterThan(0)
-    expect(analysis.problem.troubleshooting.evidence.length).toBeGreaterThan(0)
+    expect(analysis.troubleshooting.groups.length).toBeGreaterThan(0)
     expect(analysis.ontology.nodes.length).toBeGreaterThan(0)
     expect(analysis.ontology.edges.length).toBeGreaterThan(0)
     expect(fetchMock).not.toHaveBeenCalled()

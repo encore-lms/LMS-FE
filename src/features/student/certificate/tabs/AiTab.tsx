@@ -3,18 +3,13 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronDown } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
-import { AiProfile } from '../v2/AiProfile'
-import { AiProjectAnalysis } from '../v2/AiProjectAnalysis'
-import { AiProblemAnalysis } from '../v2/AiProblemAnalysis'
-import { AiTechnicalVerdict } from '../v2/AiTechnicalVerdict'
-import { SentimentBubbles } from '../v2/SentimentBubbles'
-import { AiAnalysisMethodology } from '../v2/AiAnalysisMethodology'
 import { CERTIFICATE_MOCK_STUDENT_ID, fetchAiAnalysis } from '../ai'
+import { AiAnalysisMethodology } from '../v2/AiAnalysisMethodology'
+import { AiJobFit } from '../v2/AiJobFit'
+import { AiProjectAnalysis } from '../v2/AiProjectAnalysis'
+import { AiTroubleshootingAnalysis } from '../v2/AiTroubleshootingAnalysis'
+import { SentimentBubbles } from '../v2/SentimentBubbles'
 
-// 증명서 v2 — AI 분석 통합 탭. AI 해석은 ai 모듈(getAiAnalysis)에서 단일 소스로 가져온다.
-// 지금은 mock. 나중에 getAiAnalysis 내부만 서버 API로 교체하면 됨(호출부 불변).
-
-// TODO(BE 연동): 인증 사용자 식별자로 교체. 지금은 증명서 대표 mock 학생을 사용한다.
 export function AiTab({
   studentId = CERTIFICATE_MOCK_STUDENT_ID,
 }: {
@@ -25,6 +20,7 @@ export function AiTab({
     queryKey: ['aiAnalysis', studentId],
     queryFn: () => fetchAiAnalysis(studentId),
   })
+
   return (
     <DataBoundary
       isPending={query.isPending}
@@ -34,18 +30,20 @@ export function AiTab({
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >
       {query.data && (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <span className="bg-accent-strong flex size-6 items-center justify-center rounded-md text-[13px] font-bold text-white">
+        <div className="flex flex-col gap-5">
+          <header className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="bg-accent-strong text-on-color flex size-8 items-center justify-center rounded-lg text-[15px] font-bold">
                 ✦
               </span>
-              <div className="flex flex-col">
-                <h2 className="text-fg text-[18px] font-bold">AI 분석</h2>
-                <span className="text-fg-subtle text-[11px]">
-                  데이터·인증 결과를 바탕으로 AI가 해석한 종합 분석 · 검증
-                  사실과 분리해 제공
-                </span>
+              <div>
+                <h1 className="text-fg text-[20px] leading-7 font-bold">
+                  AI 분석
+                </h1>
+                <p className="text-fg-muted mt-0.5 text-[13px] leading-5">
+                  채용 담당자가 먼저 확인할 직무 적합도, 프로젝트 수행, 문제해결
+                  강점을 요약했습니다.
+                </p>
               </div>
             </div>
 
@@ -54,36 +52,28 @@ export function AiTab({
               aria-expanded={isMethodologyOpen}
               aria-controls="ai-analysis-methodology"
               onClick={() => setIsMethodologyOpen((open) => !open)}
-              className="border-border bg-surface text-fg-muted hover:bg-surface-muted hover:text-fg focus-visible:ring-brand flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-bold transition-colors outline-none focus-visible:ring-2"
+              className="border-border bg-surface text-fg-muted hover:bg-surface-muted hover:text-fg focus-visible:ring-brand flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-[13px] font-bold transition-colors outline-none focus-visible:ring-2"
             >
-              산출 근거
+              산출 기준
               <ChevronDown
                 aria-hidden="true"
                 className={cn(
-                  'size-3.5 transition-transform',
+                  'size-4 transition-transform',
                   isMethodologyOpen && 'rotate-180',
                 )}
               />
             </button>
-          </div>
+          </header>
 
           <div id="ai-analysis-methodology" hidden={!isMethodologyOpen}>
             <AiAnalysisMethodology analysis={query.data} />
           </div>
 
-          {/* 프로파일링/페르소나 (온톨로지 역량맵은 종합 요약 탭으로 이동) */}
-          <AiProfile
-            profile={query.data.profile}
-            personas={query.data.personas}
-          />
-
-          {/* 기술 판단과 프로젝트 궤적은 정보 밀도가 달라 각각 독립된 전체 폭으로 표시 */}
-          <AiTechnicalVerdict verdict={query.data.verdict} />
+          <AiJobFit jobFit={query.data.jobFit} />
           <AiProjectAnalysis projects={query.data.projects} />
-
-          <AiProblemAnalysis problem={query.data.problem} />
-
-          {/* 상담 감성 — 과정 기간을 초기·중기·후기로 나눈 실제 상담 흐름 */}
+          <AiTroubleshootingAnalysis
+            troubleshooting={query.data.troubleshooting}
+          />
           <SentimentBubbles sentiment={query.data.sentiment} />
         </div>
       )}

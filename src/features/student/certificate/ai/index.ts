@@ -8,7 +8,7 @@ import type {
   CertificateScoreResult,
   StudentDerived,
 } from './types'
-import { ANALYSIS_STUBS } from './stubs/analysis'
+import { AI_ANALYSIS_STUB } from './stubs/analysis-redesign'
 import certificateSnapshot from './stubs/certificate.snapshot.json'
 import { DERIVED_STUBS } from './stubs/derived'
 
@@ -23,7 +23,8 @@ export {
  * TODO(서버 연동): 내부를 LMS-AI 서버 API 호출로 교체.
  */
 export function getAiAnalysis(studentId: string): AiAnalysis {
-  return ANALYSIS_STUBS[studentId] ?? ANALYSIS_STUBS['stu-001']
+  void studentId
+  return AI_ANALYSIS_STUB
 }
 
 /**
@@ -130,7 +131,7 @@ export async function fetchAiDerived(
  * 다른 학생이나 정적 mock으로 대체하지 않고 조회 실패를 호출부에 전달한다.
  */
 export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
-  if (CERTIFICATE_MOCK_MODE) return certificateSnapshot.analysis as AiAnalysis
+  if (CERTIFICATE_MOCK_MODE) return AI_ANALYSIS_STUB
 
   const res = await fetch(
     `${CERTIFICATE_SCORE_API}/analysis/${encodeURIComponent(studentId)}`,
@@ -143,6 +144,14 @@ export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
 
 export type {
   AiAnalysis,
+  AiAnalysisStatus,
+  AiAxisAlignment,
+  AiAxisAlignmentAxis,
+  AiAxisAlignmentEvidence,
+  AiAxisAlignmentRelation,
+  AiJobFit,
+  AiJobFitRoleCandidate,
+  AiTroubleshooting,
   AiVerdict,
   AiVerdictItemKey,
   AiPersona,
@@ -154,6 +163,7 @@ export type {
   AiProjectMembershipRole,
   AiProjectOverview,
   AiProjectPersonalEvidence,
+  AiProjectRecruiterInsight,
   AiProjectSnapshot,
   AiProjectStatus,
   AiProjectTeamContext,

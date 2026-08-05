@@ -1,11 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { getAiAnalysis } from '../ai'
+import { ANALYSIS_STUBS } from '../ai/stubs/analysis'
 import { AiTechnicalVerdict } from './AiTechnicalVerdict'
 
 describe('AI 기술 역량 종합 판단', () => {
   it('강점·보완·특이형을 독립 카드로 표시한다', () => {
-    const verdict = getAiAnalysis('stu-001').verdict
+    const verdict = ANALYSIS_STUBS['stu-001'].verdict
     render(<AiTechnicalVerdict verdict={verdict} />)
 
     expect(screen.getByText('핵심 강점')).toBeInTheDocument()
@@ -16,7 +16,7 @@ describe('AI 기술 역량 종합 판단', () => {
   })
 
   it('정보 버튼으로 직접 근거를 확인한다', () => {
-    render(<AiTechnicalVerdict verdict={getAiAnalysis('stu-001').verdict} />)
+    render(<AiTechnicalVerdict verdict={ANALYSIS_STUBS['stu-001'].verdict} />)
     fireEvent.click(
       screen.getByRole('button', { name: '핵심 강점 판단 근거 보기' }),
     )

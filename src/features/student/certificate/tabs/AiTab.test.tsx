@@ -23,8 +23,8 @@ describe('AiTab', () => {
       </QueryClientProvider>,
     )
 
-    const trigger = await screen.findByRole('button', { name: '산출 근거' })
-    const panelTitle = screen.getByText('AI 분석 산출 근거')
+    const trigger = await screen.findByRole('button', { name: '산출 기준' })
+    const panelTitle = screen.getByText('AI 분석 산출 기준')
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
     expect(panelTitle).not.toBeVisible()

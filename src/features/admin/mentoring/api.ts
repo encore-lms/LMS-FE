@@ -115,6 +115,21 @@ export function useCreateMentorAssignmentFromStudents() {
 }
 
 /** POST /admin/mentors/assignments/teams/{teamId}/members — 멘티(팀원) 추가. */
+/** 멘티 제외 — 잘못 넣은 멘티를 팀을 지우지 않고 정리한다(마지막 1명은 BE가 막는다). */
+export function useRemoveTeamMember() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ teamId, userId }: { teamId: string; userId: string }) =>
+      apiClient
+        .delete<AdminMentoringTeamDetail>(
+          `/admin/mentors/assignments/teams/${teamId}/members/${userId}`,
+        )
+        .then((r) => r.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminMentoringKeys.all }),
+  })
+}
+
 export function useAddTeamMembers() {
   const queryClient = useQueryClient()
   return useMutation({

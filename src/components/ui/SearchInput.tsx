@@ -16,6 +16,7 @@ export function SearchInput({
   placeholder,
   ariaLabel,
   className,
+  onEnter,
 }: {
   value: string
   onChange: (value: string) => void
@@ -23,6 +24,8 @@ export function SearchInput({
   /** 스크린리더용 이름 — 화면마다 무엇을 찾는지 다르므로 호출부가 정한다. */
   ariaLabel: string
   className?: string
+  /** Enter 로 첫 결과를 바로 집는 화면에서 쓴다(멘토링 수강생 선택 등). */
+  onEnter?: () => void
 }) {
   // cn 은 단순 join 이라 기본 크기와 넘겨받은 크기가 함께 남는다. 그러면 어느 쪽이 이길지는
   // Tailwind 가 유틸리티를 찍어낸 순서에 달려 — w-52 를 넘겨도 기본 w-56 이 이겨 무시됐다.
@@ -44,6 +47,16 @@ export function SearchInput({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={
+          onEnter
+            ? (e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onEnter()
+                }
+              }
+            : undefined
+        }
         placeholder={placeholder}
         aria-label={ariaLabel}
         className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"

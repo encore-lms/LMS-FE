@@ -5,7 +5,7 @@ import { Clock, FileText } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
-import { useMentorAssignments } from './api'
+import { apiErrorOf, useMentorAssignments, useRemoveTeamMember } from './api'
 import {
   ASSIGNMENT_STATUS_META,
   nHoursDoneLabel,
@@ -14,6 +14,9 @@ import {
 } from './statusMeta'
 import { AssignmentManageModal } from './AssignmentManageModal'
 import { AddMenteesModal } from './AddMenteesModal'
+import type { AdminMentoringStudentOption } from './types'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useToast } from '@/components/ui/use-toast'
 import { EarlyEndModal } from './EarlyEndModal'
 import { LogReviewModal } from './LogReviewModal'
 import { RoundHoursBarChart } from './RoundHoursBarChart'
@@ -30,6 +33,11 @@ export function TeamDetailBody({ d }: { d: AdminMentoringTeamDetail }) {
   const [manageOpen, setManageOpen] = useState(false)
   const [earlyEndOpen, setEarlyEndOpen] = useState(false)
   const [addMenteesOpen, setAddMenteesOpen] = useState(false)
+  // 멘티 제외 — 되돌리기 어려우니 한 번 묻는다.
+  const [removeTarget, setRemoveTarget] =
+    useState<AdminMentoringStudentOption | null>(null)
+  const removeMember = useRemoveTeamMember()
+  const toast = useToast()
   const [reviewLogId, setReviewLogId] = useState<string | null>(null)
 
   const displayStatus: AssignmentDisplayStatus = !d.assignmentId
@@ -200,6 +208,7 @@ export function TeamDetailBody({ d }: { d: AdminMentoringTeamDetail }) {
           <MenteeRosterSection
             members={d.members}
             onAdd={() => setAddMenteesOpen(true)}
+            onRemove={setRemoveTarget}
           />
         </div>
       </div>
@@ -228,6 +237,35 @@ export function TeamDetailBody({ d }: { d: AdminMentoringTeamDetail }) {
           cohortId={d.cohortId}
           existingIds={d.members.map((m) => m.userId)}
         />
+      )}
+      {removeTarget && (
+        <ConfirmDialog
+          open
+          title="멘티를 뺄까요?"
+          confirmLabel="제외"
+          tone="danger"
+          onClose={() => setRemoveTarget(null)}
+          onConfirm={() =>
+            removeMember.mutate(
+              { teamId: d.teamId, userId: removeTarget.userId },
+              {
+                onSuccess: () => {
+                  toast.success(`${removeTarget.name} 님을 뺐어요.`)
+                  setRemoveTarget(null)
+                },
+                onError: (err) =>
+                  toast.danger(
+                    apiErrorOf(err).message ?? '멘티를 빼지 못했어요.',
+                  ),
+              },
+            )
+          }
+        >
+          <p className="text-fg-muted text-[13px] leading-6">
+            <span className="text-fg font-bold">{removeTarget.name}</span> 님을 이
+            팀의 멘티 명단에서 뺍니다. 이미 쌓인 일지·평가 기록은 그대로 남아요.
+          </p>
+        </ConfirmDialog>
       )}
       {reviewLogId && (
         <LogReviewModal

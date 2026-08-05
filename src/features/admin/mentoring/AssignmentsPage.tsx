@@ -551,6 +551,7 @@ export default function AssignmentsPage({
               <AssignmentCreateModal
                 open
                 onClose={() => setCreateOpen(false)}
+                courseId={course === 'all' ? null : course}
                 cohortId={cohort}
                 cohortLabel={selectedCohortLabel}
                 existingTeamCount={cohortTeamCount}

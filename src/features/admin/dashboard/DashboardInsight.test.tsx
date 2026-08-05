@@ -59,6 +59,21 @@ describe('DashboardInsight', () => {
     ).toBeInTheDocument()
   })
 
+  // 수강생 관리는 기수 허브 탭으로 옮겼다 — "35기 2명부터 확인" 이라 짚어 놓고 기수 없는
+  // 단독 화면으로 보내면 들어가서 기수를 다시 골라야 했다(2026-08-05).
+  it('출결 액션은 그 기수의 수강생 탭으로 보낸다', () => {
+    renderInsight({
+      boards: [board({ cohortId: 'cohort-35' })],
+      quarantineCount: 0,
+      today: '2026-07-06',
+      upcoming: [],
+    })
+    expect(screen.getByText('미출석 공지').closest('a')).toHaveAttribute(
+      'href',
+      '/admin/education/cohort-35?tab=students',
+    )
+  })
+
   it('결석 4회 이상 반복자는 긴급 위험군으로 잡힌다', () => {
     const b = board({
       attendance: { ...board({}).attendance!, todayAbsentees: [] },

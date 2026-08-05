@@ -317,7 +317,9 @@ describe('QuizListPage (§5)', () => {
     expect(screen.getByText('알고리즘 기초 #3')).toBeInTheDocument()
     expect(screen.getAllByText('MANUAL').length).toBeGreaterThan(0)
     expect(screen.getByText('수동 대기 9')).toBeInTheDocument()
-    expect(screen.getByText(/총 14개 · 수동 대기 15건/)).toBeInTheDocument()
+    // 카운트·수동 대기가 ToolbarCount + 별도 span 으로 나뉘어(2026-08-07 툴바 UX) 따로 확인한다.
+    expect(screen.getByText(/총 14/)).toBeInTheDocument()
+    expect(screen.getByText(/수동 대기 15건/)).toBeInTheDocument()
   })
 
   it('제출 있는 퀴즈는 삭제 비활성, 임시저장은 제출 현황 비활성', () => {
@@ -417,8 +419,8 @@ describe('SubmissionsPage (§8)', () => {
 
   it('재독촉 알림은 대상 수강생에게 발송 후 전송됨으로 잠긴다', async () => {
     const user = userEvent.setup()
-    const mutate = vi.fn(
-      (_id: string, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.(),
+    const mutate = vi.fn((_id: string, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
     )
     renderAt('/instructor/quizzes/quiz-algo-3/submissions', () => {
       vi.mocked(useRemindSubmission).mockReturnValue({
@@ -471,20 +473,21 @@ describe('GradingPage (§9)', () => {
   })
 
   it('자동 채점 전용 제출은 대상 없음 표기와 확정 점수를 보여준다', () => {
-    renderAt('/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade?view=1', () => {
-      vi.mocked(useGradingDetail).mockReturnValue(
-        ok({
-          ...grading,
-          items: [],
-          totalManualCount: 0,
-          provisionalScore: 20,
-          totalScore: 20,
-        }) as unknown as ReturnType<typeof useGradingDetail>,
-      )
-    })
-    expect(
-      screen.getByText('대상 문항 없음 · 자동 채점'),
-    ).toBeInTheDocument()
+    renderAt(
+      '/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade?view=1',
+      () => {
+        vi.mocked(useGradingDetail).mockReturnValue(
+          ok({
+            ...grading,
+            items: [],
+            totalManualCount: 0,
+            provisionalScore: 20,
+            totalScore: 20,
+          }) as unknown as ReturnType<typeof useGradingDetail>,
+        )
+      },
+    )
+    expect(screen.getByText('대상 문항 없음 · 자동 채점')).toBeInTheDocument()
     expect(screen.getByText('확정 점수')).toBeInTheDocument()
     expect(screen.queryByText('임시 점수')).toBeNull()
   })

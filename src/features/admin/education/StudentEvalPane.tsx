@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { MemberEvalCard } from '@/components/evaluation/MemberEvalCard'
+import { AXIS_LABELS, AXIS_SHORT } from '../reputation/reputationMeta'
 import { useSaveStaffStudentEval, useStaffStudentEvals } from './api'
 import type { StaffStudentEvalSheet } from './types'
 
@@ -213,6 +214,21 @@ function EvalSheet({
                     </span>
                   </div>
                   <div className="ml-auto flex items-center gap-2">
+                    {/* 저장된 행은 펼치지 않아도 점수가 보이게 — 평판 관리와 같은 축약 칩(기·소·문·책). */}
+                    {savedAt[s.studentId] && (
+                      <span className="hidden items-center gap-1 sm:flex">
+                        {scores[s.studentId].map((v, i) => (
+                          <span
+                            key={AXIS_LABELS[i]}
+                            title={AXIS_LABELS[i]}
+                            className="border-border text-fg-muted flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[11px]"
+                          >
+                            {AXIS_SHORT[i]}
+                            <b className="text-fg tabular-nums">{v ?? '-'}</b>
+                          </span>
+                        ))}
+                      </span>
+                    )}
                     {savedAt[s.studentId] ? (
                       <StatusBadge label="평가됨" tone="success" />
                     ) : (

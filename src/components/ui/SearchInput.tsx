@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 
 /**
@@ -47,20 +47,32 @@ export function SearchInput({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={
-          onEnter
-            ? (e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  onEnter()
-                }
-              }
-            : undefined
-        }
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && onEnter) {
+            e.preventDefault()
+            onEnter()
+          }
+          // ESC = 검색어 비우기 — 입력을 지우려고 마우스로 X 를 찾지 않아도 된다.
+          if (e.key === 'Escape' && value) {
+            e.preventDefault()
+            onChange('')
+          }
+        }}
         placeholder={placeholder}
         aria-label={ariaLabel}
         className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
       />
+      {/* 지우기 — 검색어가 있을 때만. 입력 폭을 흔들지 않게 아이콘 자리만 차지한다. */}
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          aria-label="검색어 지우기"
+          className="text-fg-subtle hover:text-fg shrink-0"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   )
 }

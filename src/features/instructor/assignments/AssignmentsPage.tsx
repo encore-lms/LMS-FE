@@ -18,7 +18,7 @@ import {
 import { DeleteAssignmentModal } from './DeleteAssignmentModal'
 import { SUBMISSION_STATUS_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-import { ListToolbar } from '@/components/ui/ListToolbar'
+import { ListToolbar, ToolbarCount } from '@/components/ui/ListToolbar'
 
 // 상태 필터 — 진행/마감(강사 원본) + 제출 상태(구 운영 AssignmentsPane에서 이식, 2026-08-03).
 type StatusFilter =
@@ -243,12 +243,29 @@ export default function AssignmentsPage({
           {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수·정렬 안내 / 우: 검색·필터·주 액션(2026-08-07 통일). */}
           <div className="mt-4">
             <ListToolbar
-              left={<span>총 {data.total}개 · 마감일 가까운 순</span>}
+              left={
+                <>
+                  <ToolbarCount
+                    filtered={filtered.length}
+                    total={data.total}
+                    unit="개"
+                  />
+                  <span className="text-fg-subtle">· 마감일 가까운 순</span>
+                </>
+              }
               search={{
                 value: q,
                 onChange: setQ,
                 placeholder: '과제명·과목으로 검색',
                 ariaLabel: '과제 검색',
+              }}
+              reset={{
+                active: !!q || status !== 'all' || cohort !== '전체',
+                onReset: () => {
+                  setQ('')
+                  setStatus('all')
+                  setCohort('전체')
+                },
               }}
               filters={
                 <>

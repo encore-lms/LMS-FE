@@ -30,7 +30,7 @@ import {
   AttachmentFileCard,
   AttachmentLinkCard,
 } from '@/components/data/MaterialAttachment'
-import { ListToolbar } from '@/components/ui/ListToolbar'
+import { ListToolbar, ToolbarCount } from '@/components/ui/ListToolbar'
 
 const TYPE_LABEL: Record<string, string> = {
   link: '링크',
@@ -306,18 +306,24 @@ export function MaterialsPane({
         <div className="mb-3">
           <ListToolbar
             left={
-              <span>
-                총 {filtered.length}개 자료
-                {data &&
-                  filtered.length !== data.length &&
-                  ` (전체 ${data.length})`}
-              </span>
+              <ToolbarCount
+                filtered={filtered.length}
+                total={data?.length ?? 0}
+                unit="개 자료"
+              />
             }
             search={{
               value: q,
               onChange: setQ,
               placeholder: '제목·내용 검색',
               ariaLabel: '자료 검색',
+            }}
+            reset={{
+              active: !!q || typeFilter !== 'all',
+              onReset: () => {
+                setQ('')
+                setTypeFilter('all')
+              },
             }}
             filters={
               <Select

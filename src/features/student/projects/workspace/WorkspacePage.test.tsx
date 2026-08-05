@@ -20,6 +20,9 @@ import {
   useUnlinkTroubleshooting,
   useInviteMember,
   useRemoveMember,
+  useUpdateMember,
+  useUpdateProjectInfo,
+  useUpdateProjectTechStacks,
 } from '../../api/projects'
 import { tsKeys } from '../../troubleshooting/queryKeys'
 import { usePeers } from '../../api/peers'
@@ -113,6 +116,10 @@ function renderPage(
   vi.mocked(useUnlinkTroubleshooting).mockReturnValue(writeMock as never)
   vi.mocked(useInviteMember).mockReturnValue(writeMock as never)
   vi.mocked(useRemoveMember).mockReturnValue(writeMock as never)
+  vi.mocked(useUpdateMember).mockReturnValue(writeMock as never)
+  // 작성 중 프로젝트는 설정 탭이 편집 폼을 그린다 — 잠긴 상태에선 없던 훅이라 함께 채운다.
+  vi.mocked(useUpdateProjectInfo).mockReturnValue(writeMock as never)
+  vi.mocked(useUpdateProjectTechStacks).mockReturnValue(writeMock as never)
   vi.mocked(usePeers).mockReturnValue({
     data: { items: [{ userId: 'u-os', name: '오세훈' }] },
   } as unknown as ReturnType<typeof usePeers>)
@@ -276,8 +283,13 @@ describe('WorkspacePage home', () => {
   // 부르는 것까지가 초대다 — 팀이 되는 건 상대가 받아들였을 때다.
   it('팀원 초대 모달로 초대를 보낸다', async () => {
     const user = userEvent.setup()
-    // 팀 관리는 설정 탭으로 이관됨 — 설정 탭에서 팀원 초대 확인
-    renderPage('/student/projects/p1?tab=settings')
+    // 팀 관리는 설정 탭으로 이관됨 — 설정 탭에서 팀원 초대 확인.
+    // 기본 mock(p1)은 인증 완료 + 상호평가 진행 중이라 팀 구성이 동결된다 — 작성 중으로 낮춰 확인한다.
+    renderPage('/student/projects/p1?tab=settings', {
+      ...mockWorkspace,
+      status: 'draft',
+      peerEvalEnabled: false,
+    })
 
     await user.click(screen.getByRole('button', { name: '팀원 초대' }))
     // 같은 기수 동료 후보(usePeers mock) 중 선택 — 동료 선택 셀렉트

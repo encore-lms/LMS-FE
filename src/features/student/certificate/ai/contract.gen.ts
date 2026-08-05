@@ -72,7 +72,7 @@ export type CertificateRelativeScope = "COHORT" | "ALL_STUDENTS";
 
 export interface CertificateRelativePosition {
   status: CertificateRelativeStatus;
-  /** 축은 동일 기수, 종합점수는 전체 산출 가능 수강생을 모집단으로 사용한다. */
+  /** 축과 종합점수 모두 전체 산출 가능 수강생을 모집단으로 사용한다. */
   scope: CertificateRelativeScope;
   /** 레이더 표시용 백분위. 0~100이며 클수록 상대 위치가 높다. */
   percentile: number | null;
@@ -179,7 +179,7 @@ export interface CertificateProjectNavigation {
 }
 
 export interface CertificateScoreResult {
-  policyVersion: "2026.08.05-six-axis-four-rater-v1";
+  policyVersion: "2026.08.05-six-axis-four-rater-v2";
   calculatedAt: string;
   student: {
     studentId: string;

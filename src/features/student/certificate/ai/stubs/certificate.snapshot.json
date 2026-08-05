@@ -1,6 +1,6 @@
 {
   "score": {
-    "policyVersion": "2026.08.05-six-axis-four-rater-v1",
+    "policyVersion": "2026.08.05-six-axis-four-rater-v2",
     "calculatedAt": "2026-08-05",
     "student": {
       "studentId": "d9552119-7a27-5be5-b2a4-1d82a709cfb9",
@@ -30,11 +30,11 @@
         "detail": "동료 4.7/5 · 멘토 5/5 · 강사 5/5 · 운영 5/5 → 98점",
         "relative": {
           "status": "READY",
-          "scope": "COHORT",
-          "percentile": 88.2,
-          "topPercent": 11.8,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 11.8%입니다."
+          "scope": "ALL_STUDENTS",
+          "percentile": 93.9,
+          "topPercent": 6.1,
+          "populationSize": 279,
+          "detail": "전체 수강생 유효 279명 중 상위 6.1%입니다."
         },
         "comparison": {
           "peerScore": 92,
@@ -97,11 +97,11 @@
         "detail": "동료 3.8/5 · 멘토 3.5/5 · 강사 5/5 · 운영 4/5 → 76.8점",
         "relative": {
           "status": "READY",
-          "scope": "COHORT",
-          "percentile": 64.7,
-          "topPercent": 35.3,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 35.3%입니다."
+          "scope": "ALL_STUDENTS",
+          "percentile": 64.9,
+          "topPercent": 35.1,
+          "populationSize": 279,
+          "detail": "전체 수강생 유효 279명 중 상위 35.1%입니다."
         },
         "comparison": {
           "peerScore": 69.5,
@@ -164,11 +164,11 @@
         "detail": "동료 4.4/5 · 멘토 4/5 · 강사 3/5 · 운영 5/5 → 77.5점",
         "relative": {
           "status": "READY",
-          "scope": "COHORT",
-          "percentile": 47.1,
-          "topPercent": 52.9,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 52.9%입니다."
+          "scope": "ALL_STUDENTS",
+          "percentile": 50.7,
+          "topPercent": 49.3,
+          "populationSize": 279,
+          "detail": "전체 수강생 유효 279명 중 상위 49.3%입니다."
         },
         "comparison": {
           "peerScore": 85,
@@ -231,11 +231,11 @@
         "detail": "동료 3.8/5 · 멘토 4/5 · 강사 4/5 · 운영 5/5 → 80.3점",
         "relative": {
           "status": "READY",
-          "scope": "COHORT",
-          "percentile": 58.8,
-          "topPercent": 41.2,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 41.2%입니다."
+          "scope": "ALL_STUDENTS",
+          "percentile": 52.3,
+          "topPercent": 47.7,
+          "populationSize": 279,
+          "detail": "전체 수강생 유효 279명 중 상위 47.7%입니다."
         },
         "comparison": {
           "peerScore": 71,
@@ -295,14 +295,14 @@
         "score": 100,
         "status": "READY",
         "source": "min(5점 단위 반올림 출석률 × 0.7 + 5점 단위 반올림 블로그 제출률 × 0.3 + 과제·스터디·멘토링 가산점, 100)",
-        "detail": "기본 93점 · 과제 제출 15/15건 100% +5 · 스터디 제출 +0 · 멘토링 참석 7/8회 87.5% +4.5",
+        "detail": "출석 반영 63점 · 블로그 반영 27점 · 과제 +4 · 스터디 +3 · 멘토링 +3 = 100점",
         "relative": {
           "status": "READY",
-          "scope": "COHORT",
-          "percentile": 76.5,
-          "topPercent": 23.5,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 23.5%입니다."
+          "scope": "ALL_STUDENTS",
+          "percentile": 77.4,
+          "topPercent": 22.6,
+          "populationSize": 279,
+          "detail": "전체 수강생 유효 279명 중 상위 22.6%입니다."
         },
         "comparison": {
           "peerScore": null,
@@ -323,46 +323,46 @@
           {
             "key": "blog",
             "label": "블로그 제출률",
-            "value": 100,
+            "value": 88.46,
             "unit": "%",
-            "numerator": 26,
+            "numerator": 23,
             "denominator": 26,
             "weightPercent": 30,
-            "appliedScore": 30,
-            "detail": "26/26주 제출 완료"
+            "appliedScore": 27,
+            "detail": "23/26주 제출 · 27점 반영"
           },
           {
             "key": "assignment",
             "label": "과제 제출",
-            "value": 100,
+            "value": 70,
             "unit": "%",
-            "numerator": 15,
-            "denominator": 15,
+            "numerator": 7,
+            "denominator": 10,
             "weightPercent": null,
-            "appliedScore": 5,
-            "detail": "15/15건 · 100%"
+            "appliedScore": 4,
+            "detail": "7/10건 · 70% · +4점"
           },
           {
             "key": "study",
             "label": "스터디 제출",
-            "value": null,
+            "value": 50,
             "unit": "%",
-            "numerator": 0,
-            "denominator": 0,
+            "numerator": 4,
+            "denominator": 8,
             "weightPercent": null,
-            "appliedScore": 0,
-            "detail": "스터디 제출 기회 없음 또는 원천 확인 필요"
+            "appliedScore": 3,
+            "detail": "4/8건 · 50% · +3점"
           },
           {
             "key": "mentoring",
             "label": "멘토링 참석",
-            "value": 87.5,
+            "value": 50,
             "unit": "%",
-            "numerator": 7,
+            "numerator": 4,
             "denominator": 8,
             "weightPercent": null,
-            "appliedScore": 4.5,
-            "detail": "7/8회 · 87.5%"
+            "appliedScore": 3,
+            "detail": "4/8회 · 50% · +3점"
           }
         ]
       },
@@ -374,11 +374,11 @@
         "detail": "성취도·CS 평가 채점 완료 4/4건 전체 평균 94.3점",
         "relative": {
           "status": "READY",
-          "scope": "COHORT",
-          "percentile": 93.7,
-          "topPercent": 6.3,
-          "populationSize": 16,
-          "detail": "동일 기수 유효 16명 중 상위 6.3%입니다."
+          "scope": "ALL_STUDENTS",
+          "percentile": 96.8,
+          "topPercent": 3.2,
+          "populationSize": 279,
+          "detail": "전체 수강생 유효 279명 중 상위 3.2%입니다."
         },
         "comparison": {
           "peerScore": null,

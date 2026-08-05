@@ -74,7 +74,7 @@ export interface CertSkillAxis {
   note?: string // 360 강사·근거 열 텍스트 (없으면 confirmed 배지)
 }
 
-/** 6축 절대점수·기수 상대 위치 비교 레이더 축 */
+/** 6축 절대점수·전체 수강생 상대 위치 비교 레이더 축 */
 export interface CertRadarAxis {
   key: string
   score: number | null

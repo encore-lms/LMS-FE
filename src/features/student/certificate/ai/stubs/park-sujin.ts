@@ -84,6 +84,7 @@ type AxisInput = {
   evidenceLabel: string
   evidenceDetail: string
   relative?: CertificateRelativePosition
+  evidence?: CertificateAxisScore['evidence']
 }
 
 function axis({
@@ -97,6 +98,7 @@ function axis({
   evidenceLabel,
   evidenceDetail,
   relative,
+  evidence,
 }: AxisInput): CertificateAxisScore {
   const evaluatorScores = [
     ['peerEvaluation', '동료 평가', peerScore],
@@ -122,6 +124,23 @@ function axis({
             },
           ],
   )
+  const resolvedEvidence =
+    evidence ??
+    (evaluatorEvidence.length > 0
+      ? evaluatorEvidence
+      : [
+          {
+            key: 'parkSujinMock',
+            label: evidenceLabel,
+            value: score,
+            unit: '점',
+            numerator: null,
+            denominator: null,
+            weightPercent: 100,
+            appliedScore: score,
+            detail: evidenceDetail,
+          },
+        ])
 
   return {
     key,
@@ -133,7 +152,7 @@ function axis({
       relative ??
       readyRelative(
         score,
-        'COHORT',
+        'ALL_STUDENTS',
         `${key} ${score}점`,
         axisRelativeSeeds[key],
       ),
@@ -143,22 +162,7 @@ function axis({
       instructorScore,
       managerScore,
     },
-    evidence:
-      evaluatorEvidence.length > 0
-        ? evaluatorEvidence
-        : [
-            {
-              key: 'parkSujinMock',
-              label: evidenceLabel,
-              value: score,
-              unit: '점',
-              numerator: null,
-              denominator: null,
-              weightPercent: 100,
-              appliedScore: score,
-              detail: evidenceDetail,
-            },
-          ],
+    evidence: resolvedEvidence,
   }
 }
 
@@ -209,11 +213,69 @@ const scoreAxes: CertificateAxisScore[] = [
   }),
   axis({
     key: '학습지속성',
-    score: 85,
+    score: 100,
     peerScore: null,
-    detail: '성장 85점 · 최근 8주 17점 상승',
+    detail:
+      '출석 66.5점 + 블로그 24점 + 과제·스터디·멘토링 가산점 9.5점 = 100점',
     evidenceLabel: '성장 역량',
     evidenceDetail: '성취도·CS 평가의 지속 상승을 반영한 박수진 mock 값',
+    evidence: [
+      {
+        key: 'attendance',
+        label: '출석률',
+        value: 96,
+        unit: '%',
+        numerator: 768,
+        denominator: 800,
+        weightPercent: 70,
+        appliedScore: 66.5,
+        detail: '768/800시간 · 66.5점 반영',
+      },
+      {
+        key: 'blog',
+        label: '블로그 제출률',
+        value: 81,
+        unit: '%',
+        numerator: 21,
+        denominator: 26,
+        weightPercent: 30,
+        appliedScore: 24,
+        detail: '21/26회 · 24점 반영',
+      },
+      {
+        key: 'assignment',
+        label: '과제 제출률',
+        value: 60,
+        unit: '%',
+        numerator: 6,
+        denominator: 10,
+        weightPercent: null,
+        appliedScore: 3.5,
+        detail: '6/10건 · 60% · +3.5점',
+      },
+      {
+        key: 'study',
+        label: '스터디 참여율',
+        value: 50,
+        unit: '%',
+        numerator: 4,
+        denominator: 8,
+        weightPercent: null,
+        appliedScore: 3,
+        detail: '4/8회 · 50% · +3점',
+      },
+      {
+        key: 'mentoring',
+        label: '멘토링 참석률',
+        value: 50,
+        unit: '%',
+        numerator: 4,
+        denominator: 8,
+        weightPercent: null,
+        appliedScore: 3,
+        detail: '4/8회 · 50% · +3점',
+      },
+    ],
   }),
   axis({
     key: '성취도 평가',
@@ -223,6 +285,19 @@ const scoreAxes: CertificateAxisScore[] = [
     evidenceLabel: '시험 평균',
     evidenceDetail: '박수진 mock의 퀴즈 12회 평균',
     relative: assessmentRelative,
+    evidence: [
+      {
+        key: 'achievementAssessment',
+        label: '성취도 평가 전체 평균',
+        value: 82,
+        unit: '점',
+        numerator: 12,
+        denominator: 12,
+        weightPercent: 100,
+        appliedScore: 82,
+        detail: '채점 완료 퀴즈 12회의 최신 유효 점수 전체 평균',
+      },
+    ],
   }),
 ]
 
@@ -230,7 +305,7 @@ export function createParkSujinScore(
   studentId: string,
 ): CertificateScoreResult {
   return {
-    policyVersion: '2026.08.05-six-axis-four-rater-v1',
+    policyVersion: '2026.08.05-six-axis-four-rater-v2',
     calculatedAt: CALCULATED_AT,
     student: {
       studentId,
@@ -784,13 +859,13 @@ const alignmentAxes: AiAxisAlignmentAxis[] = scoreAxes.map((item) => ({
 const ontologyNodes: OntologyNode[] = [
   ['me', '박수진', 50, 50, 'self'],
   ['be', '백엔드', 28, 30, 'subject'],
-  ['db', 'DB·SQL', 70, 28, 'subject'],
+  ['db', 'DB', 70, 28, 'subject'],
   ['cloud', '클라우드', 74, 72, 'subject'],
   ['algo', '알고리즘', 26, 72, 'subject'],
   ['java', 'Java', 16, 18, 'skill'],
   ['spring', 'Spring', 40, 15, 'skill'],
   ['kafka', 'Kafka', 60, 15, 'skill'],
-  ['pg', 'PostgreSQL', 86, 34, 'skill'],
+  ['sql', 'SQL', 86, 34, 'skill'],
   ['docker', 'Docker', 90, 58, 'skill'],
   ['aws', 'AWS', 82, 86, 'skill'],
   ['msa', 'MSA', 52, 33, 'method'],
@@ -816,22 +891,22 @@ const ontologyEdges: OntologyEdge[] = [
   ['me', 'db', 'LEARNED'],
   ['me', 'cloud', 'LEARNED'],
   ['me', 'algo', 'LEARNED'],
-  ['me', 'msa', 'APPLIED'],
-  ['me', 'tx', 'APPLIED'],
   ['me', 'mart', 'PARTICIPATED'],
   ['me', 'llm', 'PARTICIPATED'],
-  ['be', 'java', 'USED'],
-  ['be', 'spring', 'USED'],
-  ['be', 'kafka', 'USED'],
-  ['db', 'pg', 'USED'],
-  ['cloud', 'docker', 'USED'],
-  ['cloud', 'aws', 'USED'],
-  ['msa', 'mart', 'APPLIED'],
-  ['tx', 'mart', 'APPLIED'],
+  ['be', 'java', 'FOLLOWED_BY'],
+  ['be', 'spring', 'FOLLOWED_BY'],
+  ['be', 'kafka', 'FOLLOWED_BY'],
+  ['be', 'msa', 'FOLLOWED_BY'],
+  ['db', 'sql', 'FOLLOWED_BY'],
+  ['db', 'tx', 'FOLLOWED_BY'],
+  ['cloud', 'docker', 'FOLLOWED_BY'],
+  ['cloud', 'aws', 'FOLLOWED_BY'],
+  ['mart', 'msa', 'APPLIED'],
+  ['mart', 'tx', 'APPLIED'],
   ['mart', 'kafka', 'USED'],
-  ['mart', 'pg', 'USED'],
+  ['mart', 'sql', 'USED'],
   ['mart', 'commerce', 'BELONGS_TO'],
-  ['llm', 'db', 'USED'],
+  ['llm', 'sql', 'USED'],
   ['llm', 'reco', 'BELONGS_TO'],
 ].map(([source, target, type]) => ({
   source,
@@ -1274,7 +1349,7 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
     policyVersion: '2026.08.05-park-sujin-ontology-v1',
     status: 'READY',
     summary:
-      '박수진의 백엔드·DB·클라우드 학습과 Encore Mart·LLM 추천 프로젝트 연결을 보여줍니다.',
+      '박수진의 백엔드·DB→SQL·클라우드 학습과 Encore Mart·LLM 추천 프로젝트 연결을 보여줍니다.',
     counts: {
       self: 1,
       subject: 4,

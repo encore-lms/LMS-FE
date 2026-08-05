@@ -3,7 +3,7 @@ import type { CertificateScoreResult } from './types'
 import { CERTIFICATE_MOCK_STUDENT_ID, fetchCertificateScore } from './index'
 
 const result: CertificateScoreResult = {
-  policyVersion: '2026.08.05-six-axis-four-rater-v1',
+  policyVersion: '2026.08.05-six-axis-four-rater-v2',
   calculatedAt: '2026-07-16',
   student: {
     studentId: 'student-1',
@@ -207,6 +207,52 @@ describe('fetchCertificateScore', () => {
     expect(
       analysis.ontology.nodes.find((node) => node.kind === 'self')?.label,
     ).toBe('박수진')
+    const ontologyNodeIds = analysis.ontology.nodes.map((node) => node.id)
+    expect(
+      analysis.ontology.nodes.some((node) => node.label === 'DB·SQL'),
+    ).toBe(false)
+    expect(
+      analysis.ontology.nodes.find((node) => node.id === 'db')?.label,
+    ).toBe('DB')
+    expect(
+      analysis.ontology.nodes.find((node) => node.id === 'sql')?.label,
+    ).toBe('SQL')
+    expect(ontologyNodeIds.indexOf('db')).toBeLessThan(
+      ontologyNodeIds.indexOf('sql'),
+    )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'db',
+        target: 'sql',
+        type: 'FOLLOWED_BY',
+      }),
+    )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'be',
+        target: 'msa',
+        type: 'FOLLOWED_BY',
+      }),
+    )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'db',
+        target: 'tx',
+        type: 'FOLLOWED_BY',
+      }),
+    )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'mart',
+        target: 'msa',
+        type: 'APPLIED',
+      }),
+    )
+    expect(
+      analysis.ontology.edges.some(
+        (edge) => edge.source === 'me' && ['msa', 'tx'].includes(edge.target),
+      ),
+    ).toBe(false)
     expect(JSON.stringify({ score, tabs, analysis })).not.toContain('박준서')
     expect(fetchMock).not.toHaveBeenCalled()
   })

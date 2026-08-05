@@ -108,6 +108,6 @@ export const EVALUATION_ACTION_CAPTION =
 export const EVALUATION_CONFIRM_EYEBROW = 'MENTOR EVALUATION'
 export const EVALUATION_CONFIRM_TITLE = '평가를 제출할까요?'
 export const EVALUATION_CONFIRM_BODY =
-  '팀원 전체 5축 점수와 줄글 평가 코멘트를 제출합니다. 제출 후에도 재제출로 수정할 수 있으며, 마지막 제출본이 평판·증명서에 반영됩니다.'
+  '팀원 전체 4축 점수와 줄글 평가 코멘트를 제출합니다. 제출 후에도 재제출로 수정할 수 있으며, 마지막 제출본이 평판·증명서에 반영됩니다.'
 export const EVALUATION_SUBMITTED_TOAST =
   '평가가 제출되었습니다. 팀원별 평가 이력에 반영됩니다.'

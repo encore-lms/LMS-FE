@@ -19,7 +19,7 @@ export const EMPTY_SCORES: EvaluationScoreTuple = [null, null, null, null]
 const isValidScore = (s: number | null): s is number =>
   s != null && Number.isInteger(s) && s >= 1 && s <= 5
 
-/** 평가 입력 완료 — 5축 전 점수 + 줄글 코멘트(필수, 500자 이내). */
+/** 평가 입력 완료 — 4축 전 점수 + 줄글 코멘트(필수, 500자 이내). */
 const isCompleteEvaluationEntry = (entry: {
   scores: EvaluationScoreTuple
   comment: string
@@ -163,7 +163,7 @@ export function saveEvaluationDraft(
 
 /**
  * POST /mentor/v1/teams/{teamId}/evaluation/submit — 제출·재제출(상시 수정, 마지막 제출본 유효).
- * 전원 5축 점수 + 줄글 코멘트 필수(미충족 422).
+ * 전원 4축 점수 + 줄글 코멘트 필수(미충족 422).
  * 제출 후에도 팀 상태는 evaluation_needed 유지 — 추천 제출까지 완료해야 completed
  * (활동 인정 요건 = 평가 + 추천 제출 완료, P0_32).
  */
@@ -192,7 +192,7 @@ export function submitEvaluation(
     return evalError(
       422,
       'MENTOR_EVALUATION_REQUIRED_FIELD_MISSING',
-      `팀원 전체 5축 점수와 줄글 평가 코멘트를 입력해 주세요 (${missing}명 미완료).`,
+      `팀원 전체 4축 점수와 줄글 평가 코멘트를 입력해 주세요 (${missing}명 미완료).`,
     )
   }
   const stamp = nowStamp().replace('T', ' ')

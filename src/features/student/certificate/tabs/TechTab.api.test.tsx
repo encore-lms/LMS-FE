@@ -11,7 +11,7 @@ vi.mock('../ai', () => ({
 }))
 
 const detailTabs: CertificateDetailTabsResult = {
-  policyVersion: '2026.07.23-certificate-detail-tabs-v1',
+  policyVersion: '2026.08.05-certificate-detail-tabs-v2',
   calculatedAt: '2026-07-23',
   studentId: 'student-1',
   tech: {
@@ -21,17 +21,27 @@ const detailTabs: CertificateDetailTabsResult = {
     assessmentAveragePopulationSize: 40,
     categories: [
       {
+        assessmentType: 'ACHIEVEMENT',
         label: '프론트엔드',
         score: 86,
-        attemptCount: 2,
+        attemptCount: 1,
         topPercent: 12.5,
         populationSize: 40,
+      },
+      {
+        assessmentType: 'CS',
+        label: '컴퓨터 구조',
+        score: 82,
+        attemptCount: 1,
+        topPercent: null,
+        populationSize: 12,
       },
     ],
     assessments: [
       {
         id: 'quiz-1',
         title: 'React 평가',
+        assessmentType: 'ACHIEVEMENT',
         category: '프론트엔드',
         score: 86,
         cohortAverageScore: 80,
@@ -128,6 +138,15 @@ describe('TechTab 상세 API 연결', () => {
     renderTechTab()
 
     expect(await screen.findByText('프론트엔드')).toBeInTheDocument()
+    expect(screen.getByText('성취도 평가')).toBeInTheDocument()
+    expect(screen.getByText('CS 평가')).toBeInTheDocument()
+    expect(screen.getByText('컴퓨터 구조')).toBeInTheDocument()
+    expect(
+      screen.getByText('시행된 카테고리를 동적으로 표시'),
+    ).toBeInTheDocument()
+    expect(document.querySelector('[data-tech-category-split]')).toHaveClass(
+      'grid-cols-2',
+    )
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(screen.getByText('상위 12.5%')).toBeInTheDocument()
     expect(screen.getByText('시험별 기수 평균')).toBeInTheDocument()

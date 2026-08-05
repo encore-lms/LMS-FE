@@ -15,7 +15,7 @@ vi.mock('../ai', () => ({
 }))
 
 const result: CertificateDetailTabsResult = {
-  policyVersion: '2026.07.23-certificate-detail-tabs-v1',
+  policyVersion: '2026.08.05-certificate-detail-tabs-v2',
   calculatedAt: '2026-07-20',
   studentId: 'student-1',
   tech: {
@@ -25,6 +25,7 @@ const result: CertificateDetailTabsResult = {
     assessmentAveragePopulationSize: 40,
     categories: [
       {
+        assessmentType: 'ACHIEVEMENT',
         label: '프론트엔드',
         score: 86,
         attemptCount: 2,
@@ -36,6 +37,7 @@ const result: CertificateDetailTabsResult = {
       {
         id: 'quiz-1',
         title: 'React 평가',
+        assessmentType: 'ACHIEVEMENT',
         category: '프론트엔드',
         score: 86,
         cohortAverageScore: 80,

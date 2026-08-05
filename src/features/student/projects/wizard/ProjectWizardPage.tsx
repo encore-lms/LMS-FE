@@ -17,16 +17,25 @@ import { Step4 } from './steps/Step4'
 /** 기술 스택 상한 — 고르는 자리와 검증이 같은 숫자를 보게 한곳에 둔다. */
 export const MAX_STACKS = 12
 
+/** 오늘(YYYY-MM-DD, 로컬 기준) — sv-SE 로케일이 ISO 형태를 준다. */
+const today = () => new Date().toLocaleDateString('sv-SE')
+
+/**
+ * 새 프로젝트의 빈 폼.
+ *
+ * <p>예전에는 예시 프로젝트의 이름·설명·기간·스택이 그대로 박혀 있어, 지우지 않으면
+ * 남의 프로젝트 내용으로 저장됐다. 기간만 오늘로 채워 두고 나머지는 비운다.</p>
+ */
 const DEFAULT_WIZARD_VALUES = {
-  name: 'Encore Mart — 마이크로서비스 백엔드',
-  desc: '주문/결제 도메인을 마이크로서비스로 분리하고 Kafka 이벤트 라우팅으로 결제 실패율을 안정화하는 백엔드 프로젝트.',
-  start: '2026-06-01',
-  end: '2026-07-15',
+  name: '',
+  desc: '',
+  start: today(),
+  end: today(),
   invited: [],
   teamSearch: '',
-  stacks: ['Java 17', 'Spring Boot', 'PostgreSQL', 'Apache Kafka', 'Docker'],
-  domain: '커머스',
-  deliverables: ['GitHub 리포지토리', '기술 문서·회고', '발표 자료'],
+  stacks: [],
+  domain: '',
+  deliverables: [],
   checks: [false, false, false],
 }
 

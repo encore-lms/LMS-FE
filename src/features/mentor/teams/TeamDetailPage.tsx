@@ -230,7 +230,17 @@ function HomePane({
   )
 }
 
+/**
+ * 팀원 탭 — 이름만으로는 비어 보여, 이 팀에서 각자가 얼마나 함께했는지를 함께 둔다.
+ *
+ * <p>참석은 제출된 팀 일지 기준이다. 참석 기록이 생기기 전(2026-08-05) 일지는 누가 왔는지
+ * 적힌 적이 없어 서버가 전원 참석으로 센다 — 그래서 옛 팀은 전부 100%로 보인다.</p>
+ *
+ * <p>담당 파트 칩은 두지 않는다 — tagLabel 이 파트가 아니라 역할('PM'·'팀원')을 담고 있어
+ * 옆의 역할 배지와 같은 글자가 두 번 나온다.</p>
+ */
 function MembersPane({ data }: { data: Detail }) {
+  const total = data.members[0]?.sessionCount ?? 0
   return (
     <section className={cn(CARD_SHELL, 'flex flex-col')}>
       <header className="flex items-center gap-2 px-5 py-4">
@@ -238,29 +248,40 @@ function MembersPane({ data }: { data: Detail }) {
         <span className="bg-surface-muted text-fg-muted rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
           {data.members.length}명
         </span>
+        {total > 0 && (
+          <span className="text-fg-subtle ml-auto text-[11px]">
+            총 {total}회 진행
+          </span>
+        )}
       </header>
       <ul className="divide-divider divide-y">
         {data.members.map((member) => (
           <li key={member.studentId}>
             <Link
               to={`/mentor/mentees/${member.studentId}`}
-              className="hover:bg-surface-muted flex items-center gap-3 px-5 py-3"
+              className="hover:bg-surface-muted flex flex-col gap-2 px-5 py-3"
             >
-              {/* 아바타 색은 공통 Avatar 이름 해시 팔레트(고정 색 규칙 미확정 openQuestion) */}
-              <Avatar name={member.name} size={32} />
-              <span className="text-fg text-[13px] font-semibold">
-                {member.name}
-              </span>
-              {member.role === 'pm' ? (
-                <span className="bg-accent-strong text-on-color rounded px-[5px] py-px text-[9px] font-bold">
-                  PM
+              <div className="flex items-center gap-3">
+                {/* 아바타 색은 공통 Avatar 이름 해시 팔레트(고정 색 규칙 미확정 openQuestion) */}
+                <Avatar name={member.name} size={32} />
+                <span className="text-fg text-[13px] font-semibold">
+                  {member.name}
                 </span>
-              ) : (
-                <span className="bg-surface-muted text-fg-subtle rounded px-[5px] py-px text-[9px] font-bold">
-                  팀원
+                {member.role === 'pm' ? (
+                  <span className="bg-accent-strong text-on-color rounded px-[5px] py-px text-[9px] font-bold">
+                    PM
+                  </span>
+                ) : (
+                  <span className="bg-surface-muted text-fg-subtle rounded px-[5px] py-px text-[9px] font-bold">
+                    팀원
+                  </span>
+                )}
+                <span className="ml-auto flex items-center gap-3">
+                  <AttendanceLabel member={member} />
+                  <ChevronRight className="text-fg-subtle h-3 w-3" />
                 </span>
-              )}
-              <ChevronRight className="text-fg-subtle ml-auto h-3 w-3" />
+              </div>
+              <AttendanceBar member={member} />
             </Link>
           </li>
         ))}
@@ -269,13 +290,55 @@ function MembersPane({ data }: { data: Detail }) {
   )
 }
 
-/**
- * 평가·추천 탭 — 링크 두 개가 아니라 순서대로 하는 일 그 자체를 연다.
- *
- * <p>평가 → 추천 → 완료. 들어오면 지금 해야 할 단계가 바로 열린다. 평가를 이미 냈으면
- * 추천부터, 둘 다 냈으면 완료 안내다. 예전에는 '평가 작성 →' 링크를 눌러 다른 페이지로
- * 나갔다가 돌아와야 했고, 돌아오면 또 같은 링크 화면이었다.</p>
- */
+/** 참석 수치 — 아직 한 회차도 진행하지 않았으면 셀 것이 없다. */
+function AttendanceLabel({ member }: { member: Detail['members'][number] }) {
+  const total = member.sessionCount ?? 0
+  if (total === 0) {
+    return <span className="text-fg-subtle text-[11px]">진행한 회차 없음</span>
+  }
+  return (
+    <>
+      <span className="text-fg text-[11px] font-bold">
+        {member.attendedCount ?? 0}
+        <span className="text-fg-subtle font-medium">/{total}회</span>
+      </span>
+      {member.lastAttendedLabel && (
+        <span className="text-fg-subtle text-[11px] whitespace-nowrap">
+          최근 {member.lastAttendedLabel}
+        </span>
+      )}
+    </>
+  )
+}
+
+// 참석률 막대 — 이름줄 아래로 아바타 폭만큼 들여 써 누구의 것인지 이어 보인다.
+function AttendanceBar({ member }: { member: Detail['members'][number] }) {
+  const total = member.sessionCount ?? 0
+  if (total === 0) return null
+  const pct = Math.round(((member.attendedCount ?? 0) / total) * 100)
+  return (
+    <div className="flex items-center gap-2 pl-11">
+      <div
+        className="bg-surface-muted h-1.5 flex-1 overflow-hidden rounded-full"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${member.name} 참석률`}
+      >
+        <div
+          className={cn(
+            'h-full rounded-full',
+            pct >= 80 ? 'bg-success' : pct >= 50 ? 'bg-brand' : 'bg-warning',
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-fg-subtle w-9 text-right text-[10px]">{pct}%</span>
+    </div>
+  )
+}
+
 function EvaluationPane({ teamId }: { teamId: string }) {
   const evaluation = useTeamEvaluation(teamId)
   const recommendation = useTeamRecommendation(teamId)

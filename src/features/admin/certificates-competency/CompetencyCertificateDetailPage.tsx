@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { usePageHeader } from '@/shared/store'
@@ -18,6 +19,9 @@ import {
 } from '@/features/student/certificate/demoStudents'
 import { mockOverview } from '@/features/student/certificate/mocks'
 import type { CertTab } from '@/features/student/certificate/types'
+import { ApproveModal, ChangesRequestModal } from './ReviewModals'
+import { statusOf } from './mocks'
+import type { CompetencyCertStatus } from './types'
 
 // 매니저 역량 증명서 상세 (/admin/certificates/:studentId) — 읽기 전용.
 // 수강생이 보는 증명서와 같은 탭 구성을 그대로 띄운다 — 매니저가 보는 것과
@@ -39,6 +43,19 @@ const MANAGER_TABS: CertTab[] = [
 
 // 지금은 데모 데이터다(?demo= 로 인물 지정). BE 가 붙으면 이 조립만 실제 조회로 바꾼다.
 
+const STATUS_META: Record<
+  CompetencyCertStatus,
+  { label: string; tone: 'neutral' | 'warning' | 'info' | 'success' }
+> = {
+  cohort_open: { label: '기수 미종료', tone: 'neutral' },
+  data_pending: { label: '데이터 미준비', tone: 'warning' },
+  data_ready: { label: '데이터 준비', tone: 'info' },
+  requested: { label: '인증 요청', tone: 'warning' },
+  reviewing: { label: '검토 중', tone: 'info' },
+  changes_requested: { label: '보완 요청', tone: 'warning' },
+  certified: { label: '인증 완료', tone: 'success' },
+}
+
 export default function CompetencyCertificateDetailPage() {
   const { studentId = '' } = useParams()
   const [params] = useSearchParams()
@@ -46,6 +63,11 @@ export default function CompetencyCertificateDetailPage() {
   const [tab, setTab] = useState<CertTab>('summary')
 
   const student = getCertificateDemoStudent(params.get('demo'))
+  // 검토 결과는 아직 화면 안에서만 산다 — 증명서 BE 가 붙으면 이 상태를 서버가 준다.
+  const [status, setStatus] = useState<CompetencyCertStatus>(() =>
+    statusOf(studentId),
+  )
+  const [modal, setModal] = useState<'approve' | 'changes' | null>(null)
   const data = useMemo(
     () => applyCertificateDemoStudent(mockOverview, student),
     [student],
@@ -71,11 +93,42 @@ export default function CompetencyCertificateDetailPage() {
         <span className="text-fg-subtle text-[12px]">
           {student.cohortName} · {student.periodLabel}
         </span>
-        <StatusBadge tone="success" label="증명서 완료" />
+        <StatusBadge
+          tone={STATUS_META[status].tone}
+          label={STATUS_META[status].label}
+        />
         {/* 실제 공개 전환은 수강생 본인이 한다 — 여기선 상태만 보여준다. */}
-        <span className="text-fg-subtle ml-auto text-[12px]">
-          수강생 ID {studentId.slice(0, 8)}
-        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-fg-subtle text-[12px]">
+            수강생 ID {studentId.slice(0, 8)}
+          </span>
+          {/* 정식 인증 판단은 증명서를 본 자리에서 한다 — 예전에는 별도 '인증 검토 큐'로
+              옮겨 가야 했다(2026-08-06 통합). */}
+          {status === 'requested' && (
+            <Button size="sm" onClick={() => setStatus('reviewing')}>
+              검토 시작
+            </Button>
+          )}
+          {status === 'reviewing' && (
+            <>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setModal('changes')}
+              >
+                보완 요청
+              </Button>
+              <Button size="sm" onClick={() => setModal('approve')}>
+                정식 인증 승인
+              </Button>
+            </>
+          )}
+          {status === 'changes_requested' && (
+            <span className="text-fg-subtle text-[12px]">
+              수강생 재요청 대기 중
+            </span>
+          )}
+        </div>
       </div>
 
       <CertHero header={data.header} status="issued" />
@@ -93,6 +146,19 @@ export default function CompetencyCertificateDetailPage() {
       {tab === 'problem-solving' && <ProblemTab studentId={student.id} />}
       {tab === 'growth-reputation' && <GrowthTab g={data.growth} />}
       {tab === 'ai-analysis' && CERT_V2 && <AiTab studentId={student.id} />}
+
+      <ApproveModal
+        open={modal === 'approve'}
+        onClose={() => setModal(null)}
+        student={{ name: student.name, cohort: student.cohortName }}
+        onSubmitted={() => setStatus('certified')}
+      />
+      <ChangesRequestModal
+        open={modal === 'changes'}
+        onClose={() => setModal(null)}
+        student={{ name: student.name, cohort: student.cohortName }}
+        onSubmitted={() => setStatus('changes_requested')}
+      />
     </div>
   )
 }

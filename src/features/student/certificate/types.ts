@@ -204,7 +204,7 @@ export interface CertProblemAi {
   style: string // 스타일 종합
   scaling: string // 확장 종합
 }
-/** 탭5 성장·평판 v2 — AI 상담 감성·키워드 버블 */
+/** 탭5 평가·추천 v2 — AI 상담 감성·키워드 버블 */
 export type SentimentPhase = 'early' | 'mid' | 'late'
 export interface CertSentimentBubble {
   label: string
@@ -318,7 +318,7 @@ export interface CertProblemTab {
   ai?: CertProblemAi // v2 (CERT_V2)
 }
 
-/** 탭5 성장·평판 */
+/** 탭5 평가·추천 */
 export interface CertGrowthTimelinePoint {
   id?: string
   date: string
@@ -407,7 +407,7 @@ export interface CertPublicationData {
   publicUrl: string // "https://verify.playdata.io/v/abc123ef9456" (표시·복사용)
   // 외부 검증 URL 공개 토글(별도 카드 + 안내 행)
   urlToggle: CertPublicToggle & { badge: string; info: string }
-  // 성장·평판 공개 항목(PeerReputation / ShortComment)
+  // 평가·추천 공개 항목(PeerReputation / ShortComment)
   growthToggles: CertPublicToggle[]
   // 강사·멘토 추천서 — 개별 토글 없음(자동 포함)
   recommendRow: { label: string; tag: string; sub: string; chip: string }

@@ -312,17 +312,19 @@ export interface CohortSettingsUpdateInput {
   cohortId: string
   mileageEnabled: boolean
   playEnabled: boolean
+  /** 이 기수가 쓸 HRD 키 id. 빈 문자열이면 지정 해제(활성 최신 키). */
+  hrdKeyId?: string | null
 }
 
-// 기수 기능 토글(mileage·play) 저장. 응답(최신 과정 상세)을 캐시에 반영.
+// 기수 기능 토글(mileage·play) + HRD 키 지정 저장. 응답(최신 과정 상세)을 캐시에 반영.
 export function useUpdateCohortSettings() {
   const queryClient = useQueryClient()
   return useMutation<CourseConfigDetail, Error, CohortSettingsUpdateInput>({
-    mutationFn: ({ courseId, cohortId, mileageEnabled, playEnabled }) =>
+    mutationFn: ({ courseId, cohortId, mileageEnabled, playEnabled, hrdKeyId }) =>
       apiClient
         .put<CourseConfigDetail>(
           `/admin/courses/${courseId}/cohorts/${cohortId}/settings`,
-          { mileageEnabled, playEnabled },
+          { mileageEnabled, playEnabled, hrdKeyId: hrdKeyId ?? null },
         )
         .then((r) => r.data),
     onSuccess: (data, { courseId }) => {

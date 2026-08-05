@@ -96,12 +96,31 @@ describe('ProblemTab 상세 API 연결', () => {
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(screen.getByText('인증 사례 1건')).toBeInTheDocument()
     expect(screen.getByText('평균 2일')).toBeInTheDocument()
-    expect(screen.getAllByText('성능최적화')).toHaveLength(2)
-    expect(screen.getAllByText('AI 요약을 생성하지 못했습니다.')).toHaveLength(
-      3,
+    expect(screen.getByText('인증 트러블슈팅 사례')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '전체 1건' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
     )
+    expect(
+      screen.getByRole('button', { name: '독립 해결 1건' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '지원 활용 0건' }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('성능최적화')).toHaveLength(2)
+    expect(
+      screen.getByText('[이메일] 공유 후 API 조회 지연을 확인했습니다.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('[IP] 서버에 복합 인덱스를 추가했습니다.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('응답 시간이 7초에서 300ms로 줄었습니다.'),
+    ).toBeInTheDocument()
     expect(screen.getByText('문제 분포')).toBeInTheDocument()
-    expect(screen.getByText('1건 · 100%')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '성능최적화 카테고리 1건' }),
+    ).toHaveAttribute('aria-pressed', 'false')
     expect(screen.queryByText('PeerTag 클라우드')).not.toBeInTheDocument()
     expect(
       screen.queryByText('동료 평가에서 수집된 태그 · 누적 4회'),
@@ -148,6 +167,49 @@ describe('ProblemTab 상세 API 연결', () => {
     expect(
       screen.queryByText(/dev@example\.com|10\.0\.0\.7/),
     ).not.toBeInTheDocument()
+  })
+
+  it('문제 카테고리와 해결 방식 필터를 함께 적용한다', async () => {
+    const supportedCase = {
+      ...detailTabs.problem.cases[0],
+      id: 'case-2',
+      title: '배포 설정 충돌 해결',
+      category: '배포·인프라',
+      independent: false,
+    }
+    renderProblemTab({
+      ...detailTabs,
+      problem: {
+        ...detailTabs.problem,
+        certifiedCount: 2,
+        independentRate: 50,
+        categories: [
+          { label: '성능최적화', count: 1, percentage: 50 },
+          { label: '배포·인프라', count: 1, percentage: 50 },
+        ],
+        cases: [detailTabs.problem.cases[0], supportedCase],
+      },
+    })
+
+    expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
+    expect(screen.getByText('배포 설정 충돌 해결')).toBeInTheDocument()
+    expect(
+      screen.getByText('지원 활용', { selector: 'span' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '배포·인프라 카테고리 1건' }),
+    )
+
+    expect(screen.queryByText('쿼리 지연 해결')).not.toBeInTheDocument()
+    expect(screen.getByText('배포 설정 충돌 해결')).toBeInTheDocument()
+    expect(screen.getByText('배포·인프라 트러블슈팅')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '지원 활용 1건' }))
+
+    expect(
+      screen.getByRole('button', { name: '지원 활용 1건' }),
+    ).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('조회 실패 시 내부 엔진명과 학생 식별자를 노출하지 않는다', async () => {

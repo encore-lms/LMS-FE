@@ -266,23 +266,34 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     renderWithQuery(<ProblemTab />)
 
     expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
-    expect(screen.getByText('문제 분포')).toBeInTheDocument()
-    expect(screen.getByText('1건 · 100%')).toBeInTheDocument()
+    const distributionHeading = screen.getByText('문제 분포')
+    const casesHeading = screen.getByText('인증 트러블슈팅 사례')
+    expect(distributionHeading).toBeInTheDocument()
+    expect(
+      distributionHeading.closest('section')?.nextElementSibling,
+    ).toContainElement(casesHeading)
+    expect(
+      screen.getByRole('button', { name: '성능 카테고리 1건' }),
+    ).toBeInTheDocument()
     expect(screen.queryByText('#협업')).not.toBeInTheDocument()
     expect(screen.queryByText('PeerTag 클라우드')).not.toBeInTheDocument()
-    expect(screen.getByText('대표 트러블슈팅 사례')).toBeInTheDocument()
     expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
     expect(screen.queryByText('인증 사례')).not.toBeInTheDocument()
     expect(screen.queryByText('평균 소요 일수')).not.toBeInTheDocument()
     expect(screen.queryByText('협업 태그')).not.toBeInTheDocument()
     expect(screen.queryByText('동료 평가자')).not.toBeInTheDocument()
     expect(screen.queryByText('독립 해결 비율')).not.toBeInTheDocument()
-    expect(screen.queryByText('독립 해결')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '독립 해결 1건' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('독립 해결', { selector: 'span' }),
+    ).toBeInTheDocument()
     expect(screen.queryByText(/검토·보완/)).not.toBeInTheDocument()
     expect(screen.getByText('소요 2일')).toBeInTheDocument()
-    expect(screen.getByText('상황')).toBeInTheDocument()
-    expect(screen.getByText('해결')).toBeInTheDocument()
-    expect(screen.getByText('결과')).toBeInTheDocument()
+    expect(screen.getByText('문제 상황')).toBeInTheDocument()
+    expect(screen.getByText('해결 접근')).toBeInTheDocument()
+    expect(screen.getByText('검증 결과')).toBeInTheDocument()
     expect(
       screen.getByText('인덱스 부재로 목록 조회가 지연됨'),
     ).toBeInTheDocument()
@@ -308,28 +319,51 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     ).toBeInTheDocument()
   })
 
-  it('대표 트러블슈팅 사례를 최대 3건만 상황·해결·결과로 표시한다', async () => {
+  it('카테고리와 해결 방식으로 인증 트러블슈팅을 좁혀 본다', async () => {
     const cases = Array.from({ length: 4 }, (_, index) => ({
       ...result.problem.cases[0],
       id: `case-${index + 1}`,
-      title: `대표 후보 ${index + 1}`,
+      title: `인증 사례 ${index + 1}`,
+      category: index < 2 ? '성능최적화' : '배포·인프라',
+      independent: index % 2 === 0,
     }))
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue({
       ...result,
       problem: {
         ...result.problem,
         certifiedCount: 4,
+        categories: [
+          { label: '성능최적화', count: 2, percentage: 50 },
+          { label: '배포·인프라', count: 2, percentage: 50 },
+        ],
         cases,
       },
     })
 
     renderWithQuery(<ProblemTab />)
 
-    expect(await screen.findByText('대표 후보 1')).toBeInTheDocument()
+    expect(await screen.findByText('인증 사례 1')).toBeInTheDocument()
     expect(
       document.querySelectorAll('[data-troubleshooting-case]'),
-    ).toHaveLength(3)
-    expect(screen.queryByText('대표 후보 4')).not.toBeInTheDocument()
+    ).toHaveLength(4)
+    expect(screen.getByText('인증 사례 4')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '배포·인프라 카테고리 2건' }),
+    )
+    expect(
+      document.querySelectorAll('[data-troubleshooting-case]'),
+    ).toHaveLength(2)
+    expect(screen.getByText('배포·인프라 트러블슈팅')).toBeInTheDocument()
+    expect(screen.queryByText('인증 사례 1')).not.toBeInTheDocument()
+    expect(screen.getByText('인증 사례 3')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '지원 활용 1건' }))
+    expect(
+      document.querySelectorAll('[data-troubleshooting-case]'),
+    ).toHaveLength(1)
+    expect(screen.getByText('인증 사례 4')).toBeInTheDocument()
+    expect(screen.queryByText('인증 사례 3')).not.toBeInTheDocument()
   })
 
   it('AI 요약이 없으면 원문을 잘라 요약처럼 표시하지 않는다', async () => {

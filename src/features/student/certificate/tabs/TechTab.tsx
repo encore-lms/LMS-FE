@@ -24,6 +24,7 @@ const categoryTones: Tone[] = [
   'brand',
   'danger',
 ]
+const INITIAL_VISIBLE_CATEGORY_COUNT = 5
 
 const officialCertificationScoreBands: Record<
   'PCCE' | 'PCCP' | 'PCSQL',
@@ -670,6 +671,12 @@ function TechCategoryGroup({
   emptyMessage: string
   toneOffset?: number
 }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasMore = categories.length > INITIAL_VISIBLE_CATEGORY_COUNT
+  const visibleCategories = expanded
+    ? categories
+    : categories.slice(0, INITIAL_VISIBLE_CATEGORY_COUNT)
+
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -679,7 +686,7 @@ function TechCategoryGroup({
       {categories.length === 0 ? (
         <EmptyData>{emptyMessage}</EmptyData>
       ) : (
-        categories.map((category, index) => (
+        visibleCategories.map((category, index) => (
           <div key={category.label} className="flex flex-col gap-1.5">
             <div className="flex items-end justify-between gap-4">
               <div className="flex flex-col">
@@ -716,6 +723,16 @@ function TechCategoryGroup({
           </div>
         ))
       )}
+      {hasMore && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          className="border-divider text-brand focus-visible:ring-ring w-full border-t pt-3 text-[11px] font-bold focus-visible:ring-2 focus-visible:outline-none"
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? '접기' : `전체 ${categories.length}개 보기`}
+        </button>
+      )}
     </div>
   )
 }
@@ -746,7 +763,10 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
         </span>
       </TabHead>
 
-      <section className={cn(card, 'flex flex-col gap-4')}>
+      <section
+        data-tech-category-card
+        className={cn(card, 'flex flex-col gap-4')}
+      >
         <span className="text-fg text-[15px] font-bold">
           카테고리별 기술 점수
         </span>
@@ -771,7 +791,10 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
         </div>
       </section>
 
-      <div className="flex flex-col gap-4 lg:flex-row">
+      <div
+        data-tech-following-content
+        className="flex flex-col gap-4 lg:flex-row"
+      >
         <div className="min-w-0 flex-1">
           <AssessmentTrendChart
             assessments={tech.assessments}

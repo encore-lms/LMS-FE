@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CertificateDetailTabsResult } from '../ai'
 import { fetchCertificateDetailTabs } from '../ai'
@@ -26,6 +26,46 @@ const detailTabs: CertificateDetailTabsResult = {
         score: 86,
         attemptCount: 1,
         topPercent: 12.5,
+        populationSize: 40,
+      },
+      {
+        assessmentType: 'ACHIEVEMENT',
+        label: '백엔드',
+        score: 84,
+        attemptCount: 1,
+        topPercent: null,
+        populationSize: 40,
+      },
+      {
+        assessmentType: 'ACHIEVEMENT',
+        label: '데이터베이스',
+        score: 83,
+        attemptCount: 1,
+        topPercent: null,
+        populationSize: 40,
+      },
+      {
+        assessmentType: 'ACHIEVEMENT',
+        label: '네트워크',
+        score: 82,
+        attemptCount: 1,
+        topPercent: null,
+        populationSize: 40,
+      },
+      {
+        assessmentType: 'ACHIEVEMENT',
+        label: '운영체제',
+        score: 81,
+        attemptCount: 1,
+        topPercent: null,
+        populationSize: 40,
+      },
+      {
+        assessmentType: 'ACHIEVEMENT',
+        label: '알고리즘',
+        score: 80,
+        attemptCount: 1,
+        topPercent: null,
         populationSize: 40,
       },
       {
@@ -147,6 +187,24 @@ describe('TechTab 상세 API 연결', () => {
     expect(document.querySelector('[data-tech-category-split]')).toHaveClass(
       'grid-cols-2',
     )
+    expect(screen.queryByText('알고리즘')).not.toBeInTheDocument()
+    const showAllButton = screen.getByRole('button', {
+      name: '전체 6개 보기',
+    })
+    fireEvent.click(showAllButton)
+    expect(screen.getByText('알고리즘')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '접기' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+    const categoryCard = document.querySelector('[data-tech-category-card]')!
+    const followingContent = document.querySelector(
+      '[data-tech-following-content]',
+    )!
+    expect(
+      categoryCard.compareDocumentPosition(followingContent) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(screen.getByText('상위 12.5%')).toBeInTheDocument()
     expect(screen.getByText('시험별 기수 평균')).toBeInTheDocument()

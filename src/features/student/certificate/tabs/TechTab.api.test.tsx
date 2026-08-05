@@ -89,6 +89,17 @@ const detailTabs: CertificateDetailTabsResult = {
         comparisonCount: 40,
         submittedAt: '2026-06-01',
       },
+      {
+        id: 'quiz-cs-1',
+        title: '컴퓨터 구조 CS 평가',
+        assessmentType: 'CS',
+        category: '컴퓨터 구조',
+        score: 82,
+        cohortAverageScore: 76,
+        relativeScore: 74,
+        comparisonCount: 12,
+        submittedAt: '2026-06-15',
+      },
     ],
     certifications: [
       {
@@ -188,28 +199,37 @@ describe('TechTab 상세 API 연결', () => {
       'grid-cols-2',
     )
     expect(screen.queryByText('알고리즘')).not.toBeInTheDocument()
-    const showAllButton = screen.getByRole('button', {
-      name: '전체 6개 보기',
-    })
-    fireEvent.click(showAllButton)
+    fireEvent.click(screen.getByRole('button', { name: '전체 6개 보기' }))
     expect(screen.getByText('알고리즘')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '접기' })).toHaveAttribute(
       'aria-expanded',
       'true',
     )
-    const categoryCard = document.querySelector('[data-tech-category-card]')!
-    const followingContent = document.querySelector(
-      '[data-tech-following-content]',
-    )!
+    expect(document.querySelector('[data-assessment-trend-split]')).toHaveClass(
+      'xl:grid-cols-2',
+    )
     expect(
-      categoryCard.compareDocumentPosition(followingContent) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+      screen.getByRole('heading', { name: '성취도 평가 시험 추세' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'CS 평가 시험 추세' }),
+    ).toBeInTheDocument()
+    expect(
+      document.querySelectorAll('[data-assessment-chart-area]'),
+    ).toHaveLength(2)
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(screen.getByText('상위 12.5%')).toBeInTheDocument()
-    expect(screen.getByText('시험별 기수 평균')).toBeInTheDocument()
+    expect(screen.getAllByText('시험별 기수 평균')).toHaveLength(2)
+    expect(screen.getByText(/전체 시험 평균/)).toHaveTextContent(
+      '전체 시험 평균 상위 18% · 40명',
+    )
     expect(
       screen.getByRole('button', { name: 'React 평가 기수 평균 80점' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: '컴퓨터 구조 CS 평가 기수 평균 76점',
+      }),
     ).toBeInTheDocument()
     expect(
       screen.getByText('승인 1건 · 검토 중 1건 · 응시 예정 1건'),

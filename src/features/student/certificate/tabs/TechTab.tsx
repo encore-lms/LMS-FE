@@ -200,10 +200,16 @@ export function AssessmentTrendChart({
   assessments,
   averageTopPercent,
   averagePopulationSize,
+  title = '시험 추세',
+  emptyMessage = '표시할 시험 이력이 없습니다.',
+  showAverageRank = true,
 }: {
   assessments: CertificateTechDetail['assessments']
   averageTopPercent: number | null
   averagePopulationSize: number
+  title?: string
+  emptyMessage?: string
+  showAverageRank?: boolean
 }) {
   const assessmentChartRef = useRef<HTMLDivElement>(null)
   const [focusedAssessmentIndex, setFocusedAssessmentIndex] = useState<
@@ -252,25 +258,30 @@ export function AssessmentTrendChart({
   return (
     <section className={cn(card, 'flex flex-col gap-5')}>
       <div className="flex flex-col gap-1">
-        <h3 className="text-fg text-[15px] font-bold">시험 추세</h3>
+        <h3 className="text-fg text-[15px] font-bold">{title}</h3>
         <span
           className="text-fg-subtle text-[11px]"
           title={
-            averagePopulationSize > 0
+            showAverageRank && averagePopulationSize > 0
               ? `기수 평균 순위 비교 표본 ${averagePopulationSize}명`
               : undefined
           }
         >
           {assessments.length}회 평가 기록 · 평균{' '}
-          {formatNumber(absoluteAverage)}점 ·{' '}
-          {averageTopPercent === null
-            ? '상위 비율 산출 전'
-            : `상위 ${formatNumber(averageTopPercent)}%`}
+          {formatNumber(absoluteAverage)}점
+          {showAverageRank && (
+            <>
+              {' · '}
+              {averageTopPercent === null
+                ? '상위 비율 산출 전'
+                : `상위 ${formatNumber(averageTopPercent)}%`}
+            </>
+          )}
         </span>
       </div>
 
       {assessments.length === 0 ? (
-        <EmptyData>표시할 성취도평가 이력이 없습니다.</EmptyData>
+        <EmptyData>{emptyMessage}</EmptyData>
       ) : (
         <>
           <div className="w-full min-w-0 pb-1">
@@ -741,6 +752,17 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
   const approvedCount = tech.certifications.filter(
     (certification) => certification.status === 'APPROVED',
   ).length
+  const chronologicalAssessments = [...tech.assessments].sort(
+    (left, right) =>
+      left.submittedAt.localeCompare(right.submittedAt) ||
+      left.id.localeCompare(right.id),
+  )
+  const achievementAssessments = chronologicalAssessments.filter(
+    (assessment) => assessment.assessmentType === 'ACHIEVEMENT',
+  )
+  const csAssessments = chronologicalAssessments.filter(
+    (assessment) => assessment.assessmentType === 'CS',
+  )
   const achievementCategories = tech.categories.filter(
     (category) => category.assessmentType !== 'CS',
   )
@@ -757,6 +779,14 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
       >
         <span className="text-fg-muted text-[11px] font-semibold">
           ● 기술 평균 {formatNumber(tech.averageScore)}
+        </span>
+        <span className="text-fg-muted text-[11px] font-semibold">
+          ● 전체 시험 평균{' '}
+          {tech.assessmentAverageTopPercent === null
+            ? '상위 비율 산출 전'
+            : `상위 ${formatNumber(tech.assessmentAverageTopPercent)}%`}
+          {tech.assessmentAveragePopulationSize > 0 &&
+            ` · ${tech.assessmentAveragePopulationSize}명`}
         </span>
         <span className="text-fg-muted text-[11px] font-semibold">
           ● 인증 완료 {approvedCount}건
@@ -793,61 +823,76 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
 
       <div
         data-tech-following-content
-        className="flex flex-col gap-4 lg:flex-row"
+        data-assessment-trend-split
+        className="grid grid-cols-1 gap-4 xl:grid-cols-2"
       >
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <AssessmentTrendChart
-            assessments={tech.assessments}
+            assessments={achievementAssessments}
             averageTopPercent={tech.assessmentAverageTopPercent}
             averagePopulationSize={tech.assessmentAveragePopulationSize}
+            title="성취도 평가 시험 추세"
+            emptyMessage="표시할 성취도 평가 이력이 없습니다."
+            showAverageRank={false}
           />
         </div>
-        <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
-          <div className="flex flex-col gap-1">
-            <span className="text-fg text-[15px] font-bold">
-              자격증 · 외부 인증
-            </span>
-            {tech.certifications.length > 0 && (
-              <span className="text-fg-subtle text-[11px]">
-                {certificationCountLabel(tech.certifications)}
-              </span>
-            )}
-          </div>
-          {tech.certifications.length === 0 ? (
-            <EmptyData>등록된 외부 인증이 없습니다.</EmptyData>
-          ) : (
-            tech.certifications.map((certification) => {
-              const status = certificationStatus[certification.status] ?? {
-                label: certification.status,
-                tone: 'info' as const,
-              }
-              return (
-                <div
-                  key={certification.name}
-                  className="flex min-w-0 items-start gap-3"
-                >
-                  <span
-                    className={cn(
-                      'min-w-12 shrink-0 rounded-md px-2 py-1 text-center text-[10px] font-bold',
-                      TONE_SOFT[status.tone],
-                    )}
-                  >
-                    {status.label}
-                  </span>
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-fg text-[13px] font-semibold">
-                      {certification.name}
-                    </span>
-                    <span className="text-fg-subtle text-[11px]">
-                      {certificationDetailLabel(certification)}
-                    </span>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </section>
+        <div className="min-w-0">
+          <AssessmentTrendChart
+            assessments={csAssessments}
+            averageTopPercent={tech.assessmentAverageTopPercent}
+            averagePopulationSize={tech.assessmentAveragePopulationSize}
+            title="CS 평가 시험 추세"
+            emptyMessage="표시할 CS 평가 이력이 없습니다."
+            showAverageRank={false}
+          />
+        </div>
       </div>
+
+      <section className={cn(card, 'flex flex-col gap-4')}>
+        <div className="flex flex-col gap-1">
+          <span className="text-fg text-[15px] font-bold">
+            자격증 · 외부 인증
+          </span>
+          {tech.certifications.length > 0 && (
+            <span className="text-fg-subtle text-[11px]">
+              {certificationCountLabel(tech.certifications)}
+            </span>
+          )}
+        </div>
+        {tech.certifications.length === 0 ? (
+          <EmptyData>등록된 외부 인증이 없습니다.</EmptyData>
+        ) : (
+          tech.certifications.map((certification) => {
+            const status = certificationStatus[certification.status] ?? {
+              label: certification.status,
+              tone: 'info' as const,
+            }
+            return (
+              <div
+                key={certification.name}
+                className="flex min-w-0 items-start gap-3"
+              >
+                <span
+                  className={cn(
+                    'min-w-12 shrink-0 rounded-md px-2 py-1 text-center text-[10px] font-bold',
+                    TONE_SOFT[status.tone],
+                  )}
+                >
+                  {status.label}
+                </span>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-fg text-[13px] font-semibold">
+                    {certification.name}
+                  </span>
+                  <span className="text-fg-subtle text-[11px]">
+                    {certificationDetailLabel(certification)}
+                  </span>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </section>
     </div>
   )
 }

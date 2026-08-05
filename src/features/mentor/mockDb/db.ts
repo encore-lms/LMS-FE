@@ -158,13 +158,8 @@ export interface MentorMockRecommendation {
   notify?: boolean
 }
 
-/** 멘토 평가 고정 4축 라벨(2026-08-05 개편) — BE scores4 순서와 1:1. */
-export const EVALUATION_AXIS_LABELS = [
-  '기술/기술기여',
-  '소통·협업·팀워크',
-  '문제해결',
-  '책임감',
-] as const
+/** 멘토 평가 고정 4축 라벨 — 정본은 shared(멘토 작성·운영 평판 화면과 공유), 임포트 표면 유지 재수출. */
+export { EVALUATION_AXIS_LABELS } from '@/shared/constants'
 
 // Figma 2553:4166/2582:6514 '운영 설정 항목' 6종 — 팀 템플릿 6개 · 필수 3 · 선택 3.
 // 텍스트 항목 타입은 SHORT_TEXT/LONG_TEXT만(계약). 작성 산출물·활동 기록은 첨부형 —

@@ -314,7 +314,6 @@ function EvaluationPane({ teamId }: { teamId: string }) {
   if (step === 'rec') {
     return (
       <RecommendationPage
-        embedded
         teamId={teamId}
         onSubmitted={() => {
           setReopen(null)
@@ -327,7 +326,6 @@ function EvaluationPane({ teamId }: { teamId: string }) {
 
   return (
     <EvaluationPage
-      embedded
       teamId={teamId}
       onSubmitted={() => {
         // 평가를 냈으니 다음은 추천이다 — 붙잡아 둔 단계를 놓아 자동 판정에 맡긴다.

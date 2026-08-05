@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast, type ToastTone } from '@/components/ui/use-toast'
+import { apiErrorMessage } from '@/shared/api/errorMessage'
 import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import {
   useAcceptMentoringProposal,
@@ -214,8 +215,9 @@ function MentoringView({ data }: { data: MentoringData }) {
         setRequestModalOpen(false)
         toast.success(TOAST.requested.message)
       },
-      onError: () => {
-        toast.danger('멘토링 요청 제출에 실패했어요')
+      onError: (e) => {
+        // 겹친 예약 같은 사유는 서버만 안다 — 그대로 보여줘야 다른 시간을 고를 수 있다.
+        toast.danger(apiErrorMessage(e, '멘토링 요청 제출에 실패했어요'))
       },
     })
   }

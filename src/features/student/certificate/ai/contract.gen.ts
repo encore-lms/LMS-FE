@@ -129,7 +129,9 @@ export type CertificateMetricKey =
   | "assessment"
   | "blog"
   | "certifiedProject"
-  | "certifiedTroubleshooting";
+  | "certifiedTroubleshooting"
+  | "certifiedCertificate"
+  | "evaluatorAverage";
 
 export interface CertificateScoreMetric {
   key: CertificateMetricKey;

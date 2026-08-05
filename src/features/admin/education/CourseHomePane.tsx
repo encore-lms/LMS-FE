@@ -60,7 +60,15 @@ export function CourseHomePane({
             />
             <div className="flex w-full flex-col gap-4 lg:w-[344px]">
               {data.sideCards.map((card) => (
-                <MiniListCard key={card.key} card={card} />
+                <MiniListCard
+                  key={card.key}
+                  card={card}
+                  hubTo={(tab) =>
+                    source === 'admin'
+                      ? `/admin/education/${cohortId}?tab=${tab}`
+                      : `/instructor/cohorts/${cohortId}/education?tab=${tab}`
+                  }
+                />
               ))}
             </div>
           </div>

@@ -99,7 +99,7 @@ export async function fetchCertificateDetailTabs(
   }
 
   const result = (await res.json()) as CertificateDetailTabsResult
-  if (result.policyVersion !== '2026.07.23-certificate-detail-tabs-v1') {
+  if (result.policyVersion !== '2026.08.05-certificate-detail-tabs-v2') {
     throw new Error('지원하지 않는 수강역량 상세 탭 정책 버전입니다.')
   }
   return result
@@ -179,6 +179,7 @@ export type {
   Ontology,
   CertificateAxisScore,
   CertificateAssessmentPoint,
+  CertificateAssessmentType,
   CertificateDetailStatus,
   CertificateDetailTabsResult,
   CertificateDomainExperience,

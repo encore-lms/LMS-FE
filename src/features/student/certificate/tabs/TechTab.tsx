@@ -657,10 +657,79 @@ function RecentFiveAverage({
   )
 }
 
+function TechCategoryGroup({
+  title,
+  description,
+  categories,
+  emptyMessage,
+  toneOffset = 0,
+}: {
+  title: string
+  description: string
+  categories: CertificateTechDetail['categories']
+  emptyMessage: string
+  toneOffset?: number
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <span className="text-fg text-[13px] font-bold">{title}</span>
+        <span className="text-fg-subtle text-[11px]">{description}</span>
+      </div>
+      {categories.length === 0 ? (
+        <EmptyData>{emptyMessage}</EmptyData>
+      ) : (
+        categories.map((category, index) => (
+          <div key={category.label} className="flex flex-col gap-1.5">
+            <div className="flex items-end justify-between gap-4">
+              <div className="flex flex-col">
+                <span className="text-fg text-[13px] font-semibold">
+                  {category.label}
+                </span>
+                <span className="text-fg-subtle text-[11px]">
+                  {category.attemptCount}회 평가 · 비교 표본{' '}
+                  {category.populationSize}명
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {category.topPercent !== null && (
+                  <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
+                    상위 {formatNumber(category.topPercent)}%
+                  </span>
+                )}
+                <span className="text-fg text-[16px] font-bold">
+                  {formatNumber(category.score)}점
+                </span>
+              </div>
+            </div>
+            <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
+              <div
+                className={cn(
+                  'h-full rounded-full',
+                  TONE_SOLID[
+                    categoryTones[(index + toneOffset) % categoryTones.length]
+                  ],
+                )}
+                style={{ width: `${category.score}%` }}
+              />
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
 function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
   const approvedCount = tech.certifications.filter(
     (certification) => certification.status === 'APPROVED',
   ).length
+  const achievementCategories = tech.categories.filter(
+    (category) => category.assessmentType !== 'CS',
+  )
+  const csCategories = tech.categories.filter(
+    (category) => category.assessmentType === 'CS',
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -681,44 +750,25 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
         <span className="text-fg text-[15px] font-bold">
           카테고리별 기술 점수
         </span>
-        {tech.categories.length === 0 ? (
-          <EmptyData>산정 가능한 퀴즈 결과가 없습니다.</EmptyData>
-        ) : (
-          tech.categories.map((category, index) => (
-            <div key={category.label} className="flex flex-col gap-1.5">
-              <div className="flex items-end justify-between gap-4">
-                <div className="flex flex-col">
-                  <span className="text-fg text-[13px] font-semibold">
-                    {category.label}
-                  </span>
-                  <span className="text-fg-subtle text-[11px]">
-                    {category.attemptCount}회 평가 · 비교 표본{' '}
-                    {category.populationSize}명
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {category.topPercent !== null && (
-                    <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
-                      상위 {formatNumber(category.topPercent)}%
-                    </span>
-                  )}
-                  <span className="text-fg text-[16px] font-bold">
-                    {formatNumber(category.score)}점
-                  </span>
-                </div>
-              </div>
-              <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
-                <div
-                  className={cn(
-                    'h-full rounded-full',
-                    TONE_SOLID[categoryTones[index % categoryTones.length]],
-                  )}
-                  style={{ width: `${category.score}%` }}
-                />
-              </div>
-            </div>
-          ))
-        )}
+        <div data-tech-category-split className="grid grid-cols-2 items-start">
+          <div className="min-w-0 pr-4">
+            <TechCategoryGroup
+              title="성취도 평가"
+              description="카테고리별 최신 유효 평가"
+              categories={achievementCategories}
+              emptyMessage="산정 가능한 성취도 평가 결과가 없습니다."
+            />
+          </div>
+          <div className="border-divider min-w-0 border-l pl-4">
+            <TechCategoryGroup
+              title="CS 평가"
+              description="시행된 카테고리를 동적으로 표시"
+              categories={csCategories}
+              emptyMessage="아직 시행된 CS 평가가 없습니다."
+              toneOffset={achievementCategories.length}
+            />
+          </div>
+        </div>
       </section>
 
       <div className="flex flex-col gap-4 lg:flex-row">

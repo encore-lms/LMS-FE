@@ -15,7 +15,7 @@ vi.mock('../ai', async (importOriginal) => {
 })
 
 const detailTabs: CertificateDetailTabsResult = {
-  policyVersion: '2026.07.23-certificate-detail-tabs-v1',
+  policyVersion: '2026.08.05-certificate-detail-tabs-v2',
   calculatedAt: '2026-07-23',
   studentId: 'student-1',
   tech: {

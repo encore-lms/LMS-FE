@@ -457,6 +457,7 @@ export function applyCertificateDemoDetailTabs(
       assessmentAverageTopPercent: 12.5,
       assessmentAveragePopulationSize: 24,
       categories: assessmentSeed.map(([label, , score], index) => ({
+        assessmentType: 'ACHIEVEMENT' as const,
         label,
         score,
         attemptCount: 1,
@@ -467,6 +468,7 @@ export function applyCertificateDemoDetailTabs(
         ([category, title, score, cohortAverageScore, submittedAt], index) => ({
           id: `${studentId}-demo-assessment-${index + 1}`,
           title,
+          assessmentType: 'ACHIEVEMENT' as const,
           category,
           score,
           cohortAverageScore,

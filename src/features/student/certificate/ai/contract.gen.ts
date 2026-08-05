@@ -201,8 +201,10 @@ export interface CertificateScoreResult {
 
 // ── 수강역량증명서 데이터 탭 상세(기술·검증 / 문제해결·협업 / 성장·평판) ──
 export type CertificateDetailStatus = "READY" | "PARTIAL" | "NOT_READY";
+export type CertificateAssessmentType = "ACHIEVEMENT" | "CS";
 
 export interface CertificateTechCategory {
+  assessmentType: CertificateAssessmentType;
   label: string;
   score: number;
   attemptCount: number;
@@ -213,8 +215,9 @@ export interface CertificateTechCategory {
 export interface CertificateAssessmentPoint {
   id: string;
   title: string;
+  assessmentType: CertificateAssessmentType;
   category: string;
-  /** 수강생의 최신 유효 성취도평가 점수(0~100). */
+  /** 수강생의 최신 유효 성취도·CS 평가 점수(0~100). */
   score: number;
   /** 같은 시험을 치른 기수 수강생의 최신 유효 점수 평균(0~100). */
   cohortAverageScore: number | null;
@@ -339,7 +342,7 @@ export interface CertificateGrowthDetail {
 }
 
 export interface CertificateDetailTabsResult {
-  policyVersion: "2026.07.23-certificate-detail-tabs-v1";
+  policyVersion: "2026.08.05-certificate-detail-tabs-v2";
   calculatedAt: string;
   studentId: string;
   tech: CertificateTechDetail;

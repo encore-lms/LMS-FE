@@ -7,6 +7,7 @@ const assessments: CertificateTechDetail['assessments'] = [
   {
     id: 'quiz-1',
     title: 'SKN 4기 파이썬 기초 성취도평가',
+    assessmentType: 'ACHIEVEMENT',
     category: '파이썬',
     score: 92,
     cohortAverageScore: 86,
@@ -17,6 +18,7 @@ const assessments: CertificateTechDetail['assessments'] = [
   {
     id: 'quiz-2',
     title: 'SQL 활용 성취도평가',
+    assessmentType: 'ACHIEVEMENT',
     category: 'SQL',
     score: 84,
     cohortAverageScore: 88,

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useStudentQuizzes } from '../api/quiz'
 import { CourseTabs } from '../course/CourseTabs'
 import type { StudentQuizListItem } from './types'
@@ -30,7 +30,7 @@ export default function QuizListPage() {
   // 화면은 없으므로 목록에서 찾아 준다.
   const { quizId } = useParams()
   const { data, isPending, isError, refetch } = useStudentQuizzes()
-  usePageHeader('퀴즈')
+  useCourseHubHeader()
   const [status, setStatus] = useState<QuizStatus>('available')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)

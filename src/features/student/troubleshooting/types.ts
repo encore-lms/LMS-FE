@@ -130,6 +130,8 @@ export interface TsCaseDetail {
   reviewComment?: string | null
   /** 강사 검토 결과 — 라벨 문자열 비교를 대신한다. */
   reviewStatus?: TsReviewStatus | null
+  /** 문제를 겪은 날(YYYY-MM-DD). 저장된 적 없는 과거 사례는 null. */
+  occurredOn?: string | null
 }
 
 /**

@@ -88,9 +88,11 @@ export function CaseContentForm({
       : [],
   )
   const [customInput, setCustomInput] = useState('')
-  // 기본값은 오늘 — 겪은 날을 쓰는 칸이라 대개 오늘이거나 며칠 전이다.
-  // 예전에는 특정 날짜가 박혀 있어 모든 사례가 그 날짜로 저장됐다.
-  const [date, setDate] = useState(() => new Date().toLocaleDateString('sv-SE'))
+  // 저장해 둔 발생일을 먼저 쓰고, 없을 때만 오늘로 시작한다(겪은 날은 대개 오늘이거나 며칠 전).
+  // 예전에는 저장한 값을 되읽지 않아, 임시저장 후 다시 열면 고른 날짜가 오늘로 되돌아갔다.
+  const [date, setDate] = useState(
+    () => detailCache?.occurredOn ?? new Date().toLocaleDateString('sv-SE'),
+  )
   // 해결 소요 — 숫자만 입력받고 '일'은 고정 단위. 기존 값(예 "3일")에서 숫자만 추출.
   const [dayCount, setDayCount] = useState(
     () => existing?.days?.match(/\d+/)?.[0] ?? '',
@@ -196,6 +198,7 @@ export function CaseContentForm({
     tags,
     links,
     projectId: projectLink?.projectId ?? null,
+    occurredOn: date || null,
   })
 
   // 저장 — 신규는 create(POST, BE 발급 id 반환), 기존은 update(PUT). 저장 후 신규 선택 파일을

@@ -4,7 +4,7 @@ import type { WeekCell } from '../types'
 
 // 주차 선택 그리드 — 블로그 등록/수정 폼 공용. 승인/반려/완료 상태 + 선택 강조.
 const LEGEND: { label: string; cls: string }[] = [
-  { label: '공주', cls: 'bg-success' },
+  { label: '완료', cls: 'bg-success' },
   { label: '승인', cls: 'bg-brand' },
   { label: '반려', cls: 'bg-danger' },
 ]

@@ -114,6 +114,7 @@ export function MeetingsTab({
       )}
       {editing && (
         <AddMeetingModal
+          period={{ start: d.startDate, end: d.endDate }}
           editing={editing}
           onClose={() => setEditing(null)}
           onAdd={(meeting, body, heldAt) => {
@@ -158,6 +159,7 @@ export function MeetingsTab({
       </ConfirmDialog>
       {adding && (
         <AddMeetingModal
+          period={{ start: d.startDate, end: d.endDate }}
           onClose={() => setAdding(false)}
           onAdd={(meeting, body, heldAt) => {
             addMeetingM.mutate(
@@ -179,10 +181,13 @@ export function MeetingsTab({
 }
 
 function AddMeetingModal({
+  period,
   editing,
   onClose,
   onAdd,
 }: {
+  /** 프로젝트 기간 — 이 밖의 날짜는 고를 수 없다. */
+  period: { start?: string | null; end?: string | null }
   /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
   editing?: WsMeeting
   onClose: () => void
@@ -260,6 +265,9 @@ function AddMeetingModal({
             onChange={setDate}
             ariaLabel="회의 일자"
             placeholder="날짜 선택"
+            // 프로젝트 기간 밖은 고를 수 없다 — 기간 밖 일정은 이 프로젝트의 기록이 아니다.
+            min={period.start ?? undefined}
+            max={period.end ?? undefined}
           />
         </div>
         <label className="flex flex-col gap-1.5">

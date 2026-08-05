@@ -7,7 +7,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { DashboardInsight } from './DashboardInsight'
 import { QuickLinks } from './QuickLinks'
 import { Sparkline } from './Sparkline'
-import type { CohortBoard, ScheduleItem } from './types'
+import type { CohortBoard } from './types'
 import { STATUS_META, cohortColor } from './dashboardConstants'
 import { NoData, RiskList } from './dashboardParts'
 
@@ -31,15 +31,11 @@ function recentBusinessDays(n: number): string[] {
 
 export function AllCohortsView({
   boards,
-  quarantineCount,
   today,
-  upcoming,
   onSelect,
 }: {
   boards: CohortBoard[]
-  quarantineCount: number
   today: string
-  upcoming: ScheduleItem[]
   onSelect: (cohortId: string) => void
 }) {
   const columns: Column<CohortBoard>[] = [
@@ -195,12 +191,7 @@ export function AllCohortsView({
   return (
     <>
       {/* 오늘 인사이트 — 자동 생성 액션 큐 + 상황 요약 + 지표 팝오버 */}
-      <DashboardInsight
-        boards={boards}
-        quarantineCount={quarantineCount}
-        today={today}
-        upcoming={upcoming}
-      />
+      <DashboardInsight boards={boards} today={today} />
 
       {/* 바로가기 — 자주 쓰는 화면 타일(매니저 개인 편집 가능) */}
       <div className="mt-5">

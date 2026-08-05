@@ -176,14 +176,6 @@ export function CohortDeepDive({
             </div>
           )}
 
-          {/* 승인 대기 */}
-          {board.pending &&
-            board.pending.certificates + board.pending.troubleshooting > 0 && (
-              <p className="text-fg-muted mt-4 text-[12.5px]">
-                승인 대기 — 자격증 {board.pending.certificates}건 · 트러블슈팅{' '}
-                {board.pending.troubleshooting}건
-              </p>
-            )}
         </>
       )}
     </>

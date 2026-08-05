@@ -1,5 +1,6 @@
-// 운영 대시보드(관제탑형) 타입 — BE operations-service GET /admin/dashboard 계약과 일치.
-// 담당 기수 스코프: auth 배정(cohortId) + learning 기수 메타를 합친 서술자(MyCohortRef)로 요청한다.
+// 운영 대시보드(관제탑형) 타입.
+// 담당 기수 스코프: auth 배정(cohortId) + learning 기수 메타를 합친 서술자(MyCohortRef)에
+// learning-service 의 HRD-Net 라이브 집계를 얹어 만든다. CSV 인입(staging) 집계는 폐지했다.
 
 /** 담당 기수 서술자 — useMyCohorts()가 auth+learning을 합쳐 만든다. */
 export interface MyCohortRef {
@@ -13,26 +14,7 @@ export interface MyCohortRef {
 
 export type CohortStatus = 'upcoming' | 'operating' | 'ended'
 
-export interface OperatorDashboard {
-  today: string // yyyy-MM-dd (KST)
-  cohorts: CohortBoard[]
-  /** 인입 격리 큐 전체 건수(기수 무관 공통 지표) */
-  quarantineCount: number
-  /** 다가오는 일정/마일스톤(오늘 이후 가까운 순, 최대 6건) */
-  upcoming: ScheduleItem[]
-}
-
-/** 일정/마일스톤 1건. */
-export interface ScheduleItem {
-  cohortLabel: string
-  date: string
-  endDate: string
-  category: string
-  title: string
-  daysUntil: number
-}
-
-/** 기수 1개의 집계 묶음. hasData=false면 CSV 미인입 기수(지표 null). */
+/** 기수 1개의 집계 묶음. hasData=false면 HRD 라이브가 아직 안 온 기수(지표 null). */
 export interface CohortBoard {
   /** 클라이언트 병합 시 표기용 데이터 원천 — staging(인입큐) | hrd-live(HRD-Net 실시간) */
   source?: 'staging' | 'hrd-live'
@@ -52,7 +34,6 @@ export interface CohortBoard {
   issues: IssueStudent[]
   /** issues 일별 마크의 날짜 축(최근 5영업일, ISO) — HRD 라이브 병합 시 채움. */
   issueDays?: string[]
-  pending: CohortPending | null
 }
 
 export interface CohortStudents {
@@ -106,11 +87,6 @@ export interface IssueStudent {
   absentCount: number
   /** issueDays 축과 같은 길이의 일별 상태('ok'|'late'|'absent'|'none') — 구 BE 응답엔 없음. */
   marks?: string[]
-}
-
-export interface CohortPending {
-  certificates: number
-  troubleshooting: number
 }
 
 /** learning-service 기수 출결 요약(HRD-Net 라이브) — CSV 미인입 기수 병합용. */

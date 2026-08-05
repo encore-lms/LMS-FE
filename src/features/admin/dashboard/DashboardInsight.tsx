@@ -22,15 +22,14 @@ import {
 import {
   FocusBand,
   MetricTile,
-  UpcomingSchedule,
   type PopoverItem,
 } from './insightParts'
-import type { CohortBoard, ScheduleItem } from './types'
+import type { CohortBoard } from './types'
 
 // 오늘 인사이트 히어로 — 이전 LMS DashboardHeroCard(디자인·기능)를 새 데이터(CohortBoard[])로 이식.
 // 좌: 액션 큐 + 상황 요약 문장 / 우: 4개 지표 타일(hover 팝오버 · 출석률 스파크라인 추이).
 // 다크 카드로 단일 커밋된 디자인(테마 무관, 원본과 동일한 룩).
-// 일일 운영 지표(출결·위험군)는 진행 중 기수만, 처리 대기는 전체 기수에서 집계한다.
+// 일일 운영 지표(출결·위험군)는 진행 중 기수만 집계한다.
 
 const ACTION_ICON_COLOR: Record<Tone, string> = {
   critical: 'text-danger-inverse',
@@ -80,17 +79,13 @@ function useMeasuredWidth() {
 
 export function DashboardInsight({
   boards,
-  quarantineCount,
   today,
-  upcoming,
 }: {
   boards: CohortBoard[]
-  quarantineCount: number
   today: string
-  upcoming: ScheduleItem[]
 }) {
-  const insights = buildInsights(boards, upcoming)
-  const actions = buildActions(boards, quarantineCount)
+  const insights = buildInsights(boards)
+  const actions = buildActions(boards)
 
   const active = boards.filter((b) => b.status === 'operating')
   const live = active.filter((b) => b.attendance?.todayTotal != null)
@@ -117,18 +112,9 @@ export function DashboardInsight({
     (s, b) => s + (b.attendance?.todayAbsentees?.length ?? 0),
     0,
   )
-  const pendingCount =
-    boards.reduce(
-      (s, b) =>
-        s +
-        (b.pending ? b.pending.certificates + b.pending.troubleshooting : 0),
-      0,
-    ) + quarantineCount
-
   const rateAnim = useCountUp(attendanceRate)
   const riskAnim = useCountUp(riskCount)
   const absentAnim = useCountUp(absentCount)
-  const pendingAnim = useCountUp(pendingCount)
 
   const trend = mergeTrend(active)
   const todayIdx = trend.dates.indexOf(today)
@@ -182,41 +168,6 @@ export function DashboardInsight({
       stacked: true,
       value: b.attendance!.todayAbsentees.map((a) => a.name).join(', '),
     }))
-  const pendingItems: PopoverItem[] = boards
-    .map((b) => {
-      const n = b.pending
-        ? b.pending.certificates + b.pending.troubleshooting
-        : 0
-      return { b, n }
-    })
-    .filter((x) => x.n > 0)
-    .map(({ b, n }) => ({
-      key: b.cohortId,
-      label: b.cohortLabel,
-      value: (
-        <span className="inline-grid grid-cols-[2.5rem_4.25rem_4rem] items-baseline gap-1.5 tabular-nums">
-          <span className="text-surface-inverse text-right font-bold">
-            {n}건
-          </span>
-          <span className="text-right font-semibold text-black/65">
-            자격증 {b.pending?.certificates ?? 0}
-          </span>
-          <span className="text-right font-semibold text-black/65">
-            트러블 {b.pending?.troubleshooting ?? 0}
-          </span>
-        </span>
-      ),
-    }))
-  if (quarantineCount > 0)
-    pendingItems.push({
-      key: '__quarantine',
-      label: '인입 격리 큐',
-      value: (
-        <span className="text-surface-inverse font-bold tabular-nums">
-          {quarantineCount}건
-        </span>
-      ),
-    })
 
   return (
     <section className="bg-surface-inverse relative z-[1] flex flex-col gap-4 overflow-hidden rounded-3xl p-6 text-white">
@@ -396,27 +347,6 @@ export function DashboardInsight({
             items={absentItems}
             emptyText="모든 기수 출석 완료"
           />
-          <MetricTile
-            label="처리 대기"
-            value={pendingAnim}
-            suffix="건"
-            sub={
-              pendingCount === 0 ? (
-                <span className="text-success-inverse inline-flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" />
-                  모두 처리했어요
-                </span>
-              ) : quarantineCount > 0 ? (
-                `승인 ${pendingCount - quarantineCount} · 격리 ${quarantineCount}`
-              ) : (
-                '자격증·트러블슈팅 승인'
-              )
-            }
-            popoverTitle="기수별 처리 대기"
-            items={pendingItems}
-            emptyText="처리 대기 업무가 없습니다."
-            alignRight
-          />
         </div>
       </div>
 
@@ -424,7 +354,6 @@ export function DashboardInsight({
       <FocusBand boards={boards} />
 
       {/* 다가오는 일정/마일스톤 */}
-      <UpcomingSchedule upcoming={upcoming} />
     </section>
   )
 }

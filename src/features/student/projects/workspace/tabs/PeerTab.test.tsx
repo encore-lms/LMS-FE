@@ -30,7 +30,7 @@ const base = {
       memberId: 'm1',
       name: '김팀원',
       role: '팀원',
-      axes: [{ key: 'collaboration', label: '협업', score: 0 }],
+      axes: [],
       tags: [],
     },
   ],
@@ -55,40 +55,30 @@ describe('PeerTab 동료 평가 개시 게이트', () => {
 })
 
 // QA: "미평가 항목이 있어도 제출이 성공한다."
-// 빈 축을 0 점으로 채워 보내면 '안 매긴 것'과 '1점 미만'을 구분할 수 없고,
+// 빈 축을 0 점으로 채워 보내면 '안 매긴 것'과 '저점'을 구분할 수 없고,
 // 증명서에는 매기지도 않은 점수가 반영된다.
+// 4축 개편(2026-08-06) — 리커트 라디오(1~5) 기준, 4개 축 전부 채워야 제출 활성.
 describe('PeerTab 제출 전 점수 검증', () => {
-  const twoAxes = {
-    ...base,
-    peerTargets: [
-      {
-        memberId: 'm1',
-        name: '김팀원',
-        role: '팀원',
-        axes: [
-          { key: '협업', label: '협업', score: 0 },
-          { key: '소통', label: '소통', score: 0 },
-        ],
-        tags: [],
-      },
-    ],
-  } as unknown as WorkspaceData
-
   it('축이 하나라도 비면 제출이 잠긴다', () => {
-    render(<PeerTab d={twoAxes} />)
+    render(<PeerTab d={base} />)
     expect(screen.getByRole('button', { name: '제출' })).toBeDisabled()
 
-    fireEvent.change(screen.getByRole('slider', { name: /김팀원 협업 점수/ }), {
-      target: { value: '4' },
+    // 기술/기술기여 한 축만 4점 — 나머지 3축이 비어 있다.
+    const group = screen.getByRole('radiogroup', {
+      name: /김팀원 기술\/기술기여 점수/,
     })
-    // 소통이 아직 비어 있다.
+    fireEvent.click(
+      Array.from(group.querySelectorAll('[role="radio"]'))[3] as HTMLElement,
+    )
     expect(screen.getByRole('button', { name: '제출' })).toBeDisabled()
   })
 
-  it('그려진 축을 모두 매기면 잠금이 풀린다', () => {
-    render(<PeerTab d={twoAxes} />)
-    for (const s of screen.getAllByRole('slider')) {
-      fireEvent.change(s, { target: { value: '4' } })
+  it('4개 축을 모두 매기면 잠금이 풀린다', () => {
+    render(<PeerTab d={base} />)
+    for (const group of screen.getAllByRole('radiogroup')) {
+      fireEvent.click(
+        Array.from(group.querySelectorAll('[role="radio"]'))[3] as HTMLElement,
+      )
     }
     expect(screen.getByRole('button', { name: '제출' })).toBeEnabled()
   })

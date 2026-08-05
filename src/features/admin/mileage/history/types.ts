@@ -24,6 +24,8 @@ export interface MileageTxRow {
   handler: string
   /** 처리 경로 — 예: "직접 지급" / "구매 승인 → 차감" */
   handlerNote: string
+  /** 매니저가 아직 승인·반려하지 않은 구매 — 확정 차감과 구분해 보여준다. */
+  pending?: boolean
 }
 
 // 상단 KPI 4종.

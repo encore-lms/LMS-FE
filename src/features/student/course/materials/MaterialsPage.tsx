@@ -5,7 +5,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../useCourseHubHeader'
 import {
   useCourseMaterials,
   useShareMaterial,
@@ -41,7 +41,7 @@ export default function MaterialsPage() {
   // 상세 모달 대상 — 행을 클릭하면 열리고, 다운로드·링크 열기·삭제를 그 안에서 한다.
   const [detailTarget, setDetailTarget] = useState<MaterialItem | null>(null)
   const [editTarget, setEditTarget] = useState<MaterialItem | null>(null)
-  usePageHeader('자료실')
+  useCourseHubHeader()
   const [query, setQuery] = useState('')
   // 서버 응답이 돌아오기 전까지만 쓰는 낙관적 표시 — 별을 누른 즉시 화면이 반응해야 한다.
   const [favOverride, setFavOverride] = useState<Record<string, boolean>>({})

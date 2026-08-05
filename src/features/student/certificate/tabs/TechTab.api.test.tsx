@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CertificateDetailTabsResult } from '../ai'
 import { fetchCertificateDetailTabs } from '../ai'
@@ -90,6 +90,61 @@ const detailTabs: CertificateDetailTabsResult = {
         submittedAt: '2026-06-01',
       },
       {
+        id: 'quiz-2',
+        title: '백엔드 평가',
+        assessmentType: 'ACHIEVEMENT',
+        category: '백엔드',
+        score: 84,
+        cohortAverageScore: 80,
+        relativeScore: 76,
+        comparisonCount: 40,
+        submittedAt: '2026-06-02',
+      },
+      {
+        id: 'quiz-3',
+        title: '데이터베이스 평가',
+        assessmentType: 'ACHIEVEMENT',
+        category: '데이터베이스',
+        score: 83,
+        cohortAverageScore: 80,
+        relativeScore: 75,
+        comparisonCount: 40,
+        submittedAt: '2026-06-03',
+      },
+      {
+        id: 'quiz-4',
+        title: '네트워크 평가',
+        assessmentType: 'ACHIEVEMENT',
+        category: '네트워크',
+        score: 82,
+        cohortAverageScore: 80,
+        relativeScore: 74,
+        comparisonCount: 40,
+        submittedAt: '2026-06-04',
+      },
+      {
+        id: 'quiz-5',
+        title: '운영체제 평가',
+        assessmentType: 'ACHIEVEMENT',
+        category: '운영체제',
+        score: 81,
+        cohortAverageScore: 80,
+        relativeScore: 73,
+        comparisonCount: 40,
+        submittedAt: '2026-06-05',
+      },
+      {
+        id: 'quiz-6',
+        title: '알고리즘 평가',
+        assessmentType: 'ACHIEVEMENT',
+        category: '알고리즘',
+        score: 80,
+        cohortAverageScore: 80,
+        relativeScore: 72,
+        comparisonCount: 40,
+        submittedAt: '2026-06-06',
+      },
+      {
         id: 'quiz-cs-1',
         title: '컴퓨터 구조 CS 평가',
         assessmentType: 'CS',
@@ -100,8 +155,41 @@ const detailTabs: CertificateDetailTabsResult = {
         comparisonCount: 12,
         submittedAt: '2026-06-15',
       },
+      {
+        id: 'quiz-1-retry',
+        title: 'React 평가 재응시',
+        assessmentType: 'ACHIEVEMENT',
+        category: '프론트엔드',
+        score: 99,
+        cohortAverageScore: 80,
+        relativeScore: 95,
+        comparisonCount: 40,
+        submittedAt: '2026-07-01',
+      },
     ],
     certifications: [
+      {
+        name: '정보처리기사',
+        score: null,
+        grade: '최종합격',
+        status: 'APPROVED',
+        scheduledAt: null,
+        submittedAt: null,
+        issuedAt: '2026-05-30',
+        registrationSource:
+          '운영 인증 · 한국산업인력공단 · 시연용 자격번호 26200000001A',
+      },
+      {
+        name: 'SQL 개발자(SQLD)',
+        score: null,
+        grade: '최종합격',
+        status: 'APPROVED',
+        scheduledAt: null,
+        submittedAt: null,
+        issuedAt: '2026-06-20',
+        registrationSource:
+          '운영 인증 · 한국데이터산업진흥원 · 시연용 자격번호 SQLD-DEMO-26001 · 2028-06-20까지 유효',
+      },
       {
         name: 'PCCE',
         score: 1000,
@@ -110,7 +198,7 @@ const detailTabs: CertificateDetailTabsResult = {
         scheduledAt: null,
         submittedAt: '2026-05-10',
         issuedAt: '2026-05-12',
-        registrationSource: '자가 등록',
+        registrationSource: '운영 인증 · 제출 증빙 확인',
       },
       {
         name: 'PCCP',
@@ -191,52 +279,73 @@ describe('TechTab 상세 API 연결', () => {
     expect(await screen.findByText('프론트엔드')).toBeInTheDocument()
     expect(screen.getByText('성취도 평가')).toBeInTheDocument()
     expect(screen.getByText('CS 평가')).toBeInTheDocument()
-    expect(screen.getByText('컴퓨터 구조')).toBeInTheDocument()
+    expect(screen.getAllByText('컴퓨터 구조')).toHaveLength(2)
+    expect(screen.getByText('6개 카테고리 · 평균 82.7점')).toBeInTheDocument()
+    expect(screen.getByText('1개 카테고리 · 평균 82점')).toBeInTheDocument()
     expect(
-      screen.getByText('시행된 카테고리를 동적으로 표시'),
+      screen.getByText(
+        '성취도 평가와 CS 평가의 카테고리별 평균 점수를 비교합니다.',
+      ),
     ).toBeInTheDocument()
     expect(document.querySelector('[data-tech-category-split]')).toHaveClass(
       'grid-cols-2',
     )
-    expect(screen.queryByText('알고리즘')).not.toBeInTheDocument()
+    const categoryCard = document.querySelector(
+      '[data-tech-category-card]',
+    ) as HTMLElement
+    expect(within(categoryCard).queryByText('알고리즘')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '전체 6개 보기' }))
-    expect(screen.getByText('알고리즘')).toBeInTheDocument()
+    expect(within(categoryCard).getByText('알고리즘')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '접기' })).toHaveAttribute(
       'aria-expanded',
       'true',
     )
-    expect(document.querySelector('[data-assessment-trend-split]')).toHaveClass(
-      'xl:grid-cols-2',
-    )
     expect(
-      screen.getByRole('heading', { name: '성취도 평가 시험 추세' }),
+      screen.getByRole('heading', { name: '성취도 평가 기술 추세' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'CS 평가 시험 추세' }),
+      screen.getByRole('heading', { name: 'CS 평가 기술 추세' }),
     ).toBeInTheDocument()
+    expect(screen.getByText('React 평가')).toBeInTheDocument()
+    expect(screen.getByText('2026.06.01')).toBeInTheDocument()
+    expect(screen.getByText('2026.06.15')).toBeInTheDocument()
     expect(
       document.querySelectorAll('[data-assessment-chart-area]'),
     ).toHaveLength(2)
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
-    expect(screen.getByText('상위 12.5%')).toBeInTheDocument()
-    expect(screen.getAllByText('시험별 기수 평균')).toHaveLength(2)
-    expect(screen.getByText(/전체 시험 평균/)).toHaveTextContent(
-      '전체 시험 평균 상위 18% · 40명',
+    expect(screen.getByText(/카테고리 평균/)).toHaveTextContent(
+      '카테고리 평균 82.6점',
     )
+    expect(screen.getByText('● 성취도 6개 · CS 1개')).toBeInTheDocument()
+    expect(screen.getAllByText('평가 1회')).toHaveLength(7)
+    expect(screen.getAllByText('평균 점수')).toHaveLength(7)
+    expect(screen.queryByText('상위 12.5%')).not.toBeInTheDocument()
+    expect(screen.queryByText(/비교 표본/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/전체 시험 평균/)).not.toBeInTheDocument()
+    expect(within(categoryCard).getByText('86점')).toBeInTheDocument()
+    expect(within(categoryCard).queryByText('99점')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'React 평가 기수 평균 80점' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', {
-        name: '컴퓨터 구조 CS 평가 기수 평균 76점',
-      }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText('승인 1건 · 검토 중 1건 · 응시 예정 1건'),
+      screen.getByText('운영 인증이 완료된 자격증 3건'),
     ).toBeInTheDocument()
     expect(
       screen.getByText(
-        'LV.4 (900–1,000점) · 1,000/1,000점 · 발급 2026-05-12 · 자가 등록',
+        '최종합격 · 발급 2026-05-30 · 운영 인증 · 한국산업인력공단 · 시연용 자격번호 26200000001A',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '최종합격 · 발급 2026-06-20 · 운영 인증 · 한국데이터산업진흥원 · 시연용 자격번호 SQLD-DEMO-26001 · 2028-06-20까지 유효',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /Q-Net|K-DATA|진위확인/ }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('PCCP')).not.toBeInTheDocument()
+    expect(screen.queryByText('PCSQL')).not.toBeInTheDocument()
+    expect(screen.getAllByText('운영 인증')).toHaveLength(3)
+    expect(
+      screen.getByText(
+        'LV.4 (900–1,000점) · 1,000/1,000점 · 발급 2026-05-12 · 운영 인증 · 제출 증빙 확인',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('과제 / 실습 검증')).not.toBeInTheDocument()

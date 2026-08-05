@@ -17,6 +17,7 @@ export {
   useCourseNotices,
   useStaffCourseNotices,
   useWriteCourseNotice,
+  useEditCourseNotice,
   useDeleteCourseNotice,
 } from './notices'
 export type { NoticePost, NoticePostList } from './notices'

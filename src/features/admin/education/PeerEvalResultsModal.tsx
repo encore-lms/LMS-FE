@@ -3,19 +3,15 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/shared/lib/cn'
+import { EVALUATION_AXIS_LABELS } from '@/shared/constants'
 import { usePeerEvaluations } from './api'
 import type { PeerEvalMemberProgress, PeerEvaluation } from './types'
 
 // 동료 평가 결과 — 여닫는 버튼만 있고 안을 볼 수단이 없어, 운영자는 평가가 실제로
 // 이뤄지는지 알 수 없었다. 누가 아직 안 냈는지 보여야 독촉이라도 할 수 있다.
 
-const AXES: { key: keyof PeerEvaluation; label: string }[] = [
-  { key: 'collaboration', label: '협업' },
-  { key: 'communication', label: '소통' },
-  { key: 'responsibility', label: '책임감' },
-  { key: 'problemSolving', label: '문제해결' },
-  { key: 'technicalContribution', label: '기술기여' },
-]
+// 4축 라벨 — shared 정본(2026-08-06 멘토 축 사전 통일), 순서 = PeerEvaluation.scores 인덱스.
+const AXES = EVALUATION_AXIS_LABELS
 
 function ProgressRow({ m }: { m: PeerEvalMemberProgress }) {
   const done = m.givenExpected > 0 && m.givenSubmitted >= m.givenExpected
@@ -65,12 +61,12 @@ function EvaluationCard({ e }: { e: PeerEvaluation }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
-        {AXES.map((a) => (
-          <div key={a.key} className="flex flex-col items-center gap-1">
-            <span className="text-fg-subtle text-[11px]">{a.label}</span>
+      <div className="grid grid-cols-4 gap-2">
+        {AXES.map((label, i) => (
+          <div key={label} className="flex flex-col items-center gap-1">
+            <span className="text-fg-subtle text-[11px]">{label}</span>
             <span className="text-fg text-[13px] font-semibold tabular-nums">
-              {e[a.key] as number}
+              {e.scores[i] ?? '-'}
             </span>
           </div>
         ))}

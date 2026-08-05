@@ -456,13 +456,17 @@ export default function AssignmentsPage({
           }
           actions={
             <>
-              <Link
-                to="/admin/mentoring/log-templates"
-                className={buttonClass({ variant: 'secondary', size: 'sm' })}
-              >
-                <FileText className="h-4 w-4" />
-                템플릿 관리
-              </Link>
+              {/* 허브 '멘토링' 탭에는 '일지 템플릿' 하위 탭이 있다 — 탭 안에서 단독 화면으로
+                  튕겨 나가지 않게 임베드일 때는 감춘다. */}
+              {!embedded && (
+                <Link
+                  to="/admin/mentoring/log-templates"
+                  className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                >
+                  <FileText className="h-4 w-4" />
+                  템플릿 관리
+                </Link>
+              )}
               <Button
                 size="sm"
                 onClick={openStudentCreate}

@@ -175,6 +175,16 @@ export function buildInsights(
 }
 
 /** 지금 할 일 — 시급한 것부터 최대 3개. */
+/**
+ * 출결·상담 이슈의 목적지 — 그 기수의 수강생 탭.
+ *
+ * <p>수강생 관리는 기수 허브 탭으로 옮겼다. 기수 없는 단독 화면(/admin/students)으로 보내면
+ * "OO기 N명부터 확인" 이라고 짚어 놓고도 들어가서 기수를 다시 골라야 했다.</p>
+ */
+function studentsTab(cohortId: string) {
+  return `/admin/education/${cohortId}?tab=students`
+}
+
 export function buildActions(
   boards: CohortBoard[],
   quarantineCount: number,
@@ -183,6 +193,7 @@ export function buildActions(
   const active = boards.filter((b) => b.status === 'operating')
   const absentByCohort = active
     .map((b) => ({
+      id: b.cohortId,
       label: b.cohortLabel,
       n: b.attendance?.todayAbsentees?.length ?? 0,
     }))
@@ -190,7 +201,7 @@ export function buildActions(
     .sort((a, b) => b.n - a.n)
   const totalAbsent = absentByCohort.reduce((s, c) => s + c.n, 0)
   const issues = active.flatMap((b) =>
-    b.issues.map((i) => ({ ...i, cohortLabel: b.cohortLabel })),
+    b.issues.map((i) => ({ ...i, cohortId: b.cohortId, cohortLabel: b.cohortLabel })),
   )
   const urgent = issues.filter((i) => i.absentCount >= 4)
   const pending = boards.reduce(
@@ -206,7 +217,7 @@ export function buildActions(
       label: '미출석 공지',
       value: `${totalAbsent}명`,
       detail: `${absentByCohort[0].label} ${absentByCohort[0].n}명부터 확인`,
-      to: '/admin/students',
+      to: studentsTab(absentByCohort[0].id),
     })
   if (urgent.length > 0)
     actions.push({
@@ -215,7 +226,7 @@ export function buildActions(
       label: '긴급 위험군',
       value: `${urgent.length}명`,
       detail: `${urgent[0].cohortLabel} ${urgent[0].name} 우선 상담`,
-      to: '/admin/students',
+      to: studentsTab(urgent[0].cohortId),
     })
   else if (issues.length > 0)
     actions.push({
@@ -224,11 +235,12 @@ export function buildActions(
       label: '반복 이상 출결',
       value: `${issues.length}명`,
       detail: '지각·결석 패턴 확인',
-      to: '/admin/students',
+      to: studentsTab(issues[0].cohortId),
     })
   // 위클리 체크 상담 요청 — 진행 중 기수.
   const counselByCohort = active
     .map((b) => ({
+      id: b.cohortId,
       label: b.cohortLabel,
       n: b.weeklyCheck?.counselRequests ?? 0,
       flag: b.weeklyCheck?.flagged ?? [],
@@ -247,7 +259,7 @@ export function buildActions(
       detail: firstName
         ? `${top.label} ${firstName} 등 확인`
         : `${top.label} ${top.n}명`,
-      to: '/admin/students',
+      to: studentsTab(top.id),
     })
   }
 

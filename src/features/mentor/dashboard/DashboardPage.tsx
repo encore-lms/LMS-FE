@@ -77,7 +77,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* 지금 손이 필요해요 — 대시보드의 본론. 목록은 '내 배정 팀'이 맡는다. */}
+          {/* 지금 할 일 — 대시보드의 본론. 목록은 '내 배정 팀'이 맡는다. */}
           <ActionNeeded teams={data.teamCards} />
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -242,7 +242,7 @@ export default function DashboardPage() {
 }
 
 /**
- * 지금 손이 필요해요 — 대시보드가 답해야 하는 단 하나의 질문.
+ * 지금 할 일 — 대시보드가 답해야 하는 단 하나의 질문.
  *
  * <p>예전에는 배정 팀 카드 8장이 첫 화면을 다 먹고, 정작 할 일은 한참 아래에 있었다.
  * 게다가 같은 팀이 카드로 한 번·표로 또 한 번, '내 배정 팀' 메뉴에서 또 한 번 나왔다.</p>
@@ -267,7 +267,7 @@ const ACTION_GROUPS: {
   {
     status: 'evaluation_needed',
     title: '평가 필요',
-    hint: '팀원 5축 평가와 추천을 남겨 주세요',
+    hint: '팀원 4축 평가와 추천을 남겨 주세요',
     tone: 'bg-warning-bg text-warning',
     icon: Star,
   },
@@ -317,7 +317,7 @@ function ActionNeeded({ teams }: { teams: MentorTeamAssignment[] }) {
       <header className="flex items-center justify-between gap-3 px-6 py-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="text-danger h-4 w-4" />
-          <h2 className="text-fg text-[15px] font-bold">지금 손이 필요해요</h2>
+          <h2 className="text-fg text-[15px] font-bold">지금 할 일</h2>
           <span className="bg-danger-bg text-danger rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
             {groups.reduce((n, g) => n + g.hit.length, 0)}팀
           </span>

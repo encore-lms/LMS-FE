@@ -369,7 +369,7 @@ export function useStaffStudentEvals(cohortId: string | null) {
     queryFn: () =>
       apiClient
         .get<StaffStudentEvalSheet>(
-          `/staff/cohorts/${cohortId}/student-evaluations`,
+          `/users/cohorts/${cohortId}/student-evaluations`,
         )
         .then((r) => r.data),
     enabled: !!cohortId,
@@ -387,7 +387,7 @@ export function useSaveStaffStudentEval(cohortId: string) {
     }) =>
       apiClient
         .put<StaffStudentEvalEntry>(
-          `/staff/cohorts/${cohortId}/student-evaluations/${input.studentId}`,
+          `/users/cohorts/${cohortId}/student-evaluations/${input.studentId}`,
           { scores: input.scores, comment: input.comment ?? '' },
         )
         .then((r) => r.data),

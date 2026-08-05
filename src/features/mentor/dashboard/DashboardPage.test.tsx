@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from './DashboardPage'
 import { useMentorDashboard } from '../api/mentor'
@@ -8,6 +9,12 @@ import { usePageHeaderStore } from '@/shared/store'
 import { reachable } from '../routeReach'
 
 vi.mock('../api/mentor')
+// 상세 모달 자체는 여기서 검증하지 않는다 — '어디에' 열리는지만 본다.
+vi.mock('../mentoring-logs/LogDetailModal', () => ({
+  default: ({ logId }: { logId?: string }) => (
+    <div>그 자리 일지 모달 {logId}</div>
+  ),
+}))
 
 type Hook = ReturnType<typeof useMentorDashboard>
 
@@ -83,5 +90,16 @@ describe('DashboardPage', () => {
       .filter((href) => href.startsWith('/mentor'))
       .filter((href) => !reachable(href))
     expect(dead).toEqual([])
+  })
+
+  it('최근 일지는 팀으로 보내지 않고 그 자리에서 연다', async () => {
+    // 최근 일지는 '내가 쓴 일지'라 배정이 끝난 팀 것도 섞인다. 팀 상세로 보내면
+    // '본인에게 배정된 팀만 열람할 수 있어요'로 막힌다(2026-08-05 배포 검증에서 확인).
+    mockHook({ data: buildDashboardData(), isPending: false, isError: false })
+    const user = userEvent.setup()
+    renderPage()
+    const open = screen.getAllByRole('button', { name: /일지 보기/ })[0]
+    await user.click(open)
+    expect(screen.getByText(/그 자리 일지 모달/)).toBeInTheDocument()
   })
 })

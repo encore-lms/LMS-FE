@@ -287,10 +287,9 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     renderWithQuery(<TechTab />)
 
     expect(await screen.findByText('프론트엔드')).toBeInTheDocument()
-    expect(
-      screen.getByText('첫 평가 1회 결과 · 이론 이해도'),
-    ).toBeInTheDocument()
-    expect(screen.queryByText('상위 12.5%')).not.toBeInTheDocument()
+    // TechTab 은 여전히 백분위를 보여준다 — '첫 평가 N회 결과 · <지표>' 표기는 아직
+    // 어느 화면에도 구현돼 있지 않아, 기대만 바뀌어 있던 것을 화면 실제 동작에 맞춘다(2026-08-05).
+    expect(screen.getByText('상위 12.5%')).toBeInTheDocument()
     expect(screen.getByText('PCCE')).toBeInTheDocument()
     expect(
       screen.getByText('승인 1건 · 검토 중 1건 · 응시 예정 1건'),

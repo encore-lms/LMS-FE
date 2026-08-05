@@ -13,7 +13,7 @@ import {
 import type { MentorEvaluationDraftPayload } from '../types'
 
 // 상태형 mock 검증 — 정책 완화(2026-08-04): 상시 작성(N시간·평가선행 게이트 폐기),
-// 전원 5축+줄글 필수 · 제출본 draft 덮어쓰기 409(수정은 재제출) · 재제출 = 마지막 제출본 유효.
+// 전원 4축+줄글 필수 · 제출본 draft 덮어쓰기 409(수정은 재제출) · 재제출 = 마지막 제출본 유효.
 // 모듈 상태 공유 — it 순차 실행 전제(M3 logsMockDb 선례).
 
 const teamOf = (teamId: string) =>
@@ -23,7 +23,7 @@ const teamOf = (teamId: string) =>
 const completePayload = (): MentorEvaluationDraftPayload => ({
   entries: teamOf('team_dm').members.map((m) => ({
     studentId: m.studentId,
-    scores: [5, 4, 5, 4, 5],
+    scores: [5, 4, 5, 4],
     comment: `${m.name} — 역할 수행과 협업 태도 모두 안정적입니다.`,
   })),
 })
@@ -62,7 +62,7 @@ describe('evaluation mockDb', () => {
       entries: [
         {
           studentId: 'stu_kim_n',
-          scores: [5, 4, 4, 4, 4],
+          scores: [5, 4, 4, 4],
           comment: '백엔드 안정화 기여',
         },
       ],
@@ -97,12 +97,12 @@ describe('evaluation mockDb', () => {
     expect(saveEvaluationDraft('team_dm', { entries: [] }).ok).toBe(false)
     // 재제출 허용 — 점수 수정본이 마지막 제출본으로 교체(팀당 1건 유지)
     const revised = completePayload()
-    revised.entries[0].scores = [3, 3, 3, 3, 3]
+    revised.entries[0].scores = [3, 3, 3, 3]
     const resubmit = submitEvaluation('team_dm', revised)
     expect(resubmit.ok).toBe(true)
     if (resubmit.ok) {
       expect(resubmit.sheet.status).toBe('submitted')
-      expect(resubmit.sheet.members[0].scores).toEqual([3, 3, 3, 3, 3])
+      expect(resubmit.sheet.members[0].scores).toEqual([3, 3, 3, 3])
     }
     expect(
       mentorDb.evaluations.filter((e) => e.teamId === 'team_dm'),
@@ -115,11 +115,9 @@ describe('evaluation mockDb', () => {
     expect(submissions[0].targetCount).toBe(4)
     expect(submissions[0].commentsLabel).toBe('4명 모두 작성')
     expect(submissions[0].editDeadlineLabel).toBe('상시 수정 가능')
-    // NLP 기제출 — 축별 평균 파생(기술 4 · 책임감 4.2 …)
+    // NLP 기제출 — 축별 평균 파생(4축, 시드 앞 4개 절단 기준)
     const nlp = submissions.find((s) => s.teamId === 'team_nlp')!
-    expect(nlp.axisAverages.map((a) => a.value)).toEqual([
-      4, 4.2, 4.4, 4.4, 4.4,
-    ])
+    expect(nlp.axisAverages.map((a) => a.value)).toEqual([4, 4.2, 4.4, 4.4])
   })
 
   it('추천 — 평가와 독립(상시), 단일 선택·요약 필수 검증, 재제출 = 마지막 제출본 유효', () => {
@@ -136,11 +134,11 @@ describe('evaluation mockDb', () => {
     })
     expect(anytimeDraft.ok).toBe(true)
 
-    // 평가 제출 완료 팀(team_dm) — 후보에 평가 평균·5축 점수 파생(재제출 반영본)
+    // 평가 제출 완료 팀(team_dm) — 후보에 평가 평균·4축 점수 파생(재제출 반영본)
     const sheet = buildTeamRecommendationSheet('team_dm')!
     expect(sheet.status).toBe('not_started')
-    expect(sheet.candidates[0].average).toBe(3) // 재제출본 [3,3,3,3,3]
-    expect(sheet.candidates[1].average).toBe(4.6) // [5,4,5,4,5]
+    expect(sheet.candidates[0].average).toBe(3) // 재제출본 [3,3,3,3]
+    expect(sheet.candidates[1].average).toBe(4.5) // [5,4,5,4]
 
     // 검증 — 모드 미선택 / 대상 미선택 / 요약 미입력(명세 코드)
     const noMode = submitRecommendation('team_dm', {

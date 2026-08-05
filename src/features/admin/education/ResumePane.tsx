@@ -7,7 +7,7 @@ import { formatDateTime } from '@/shared/lib/date'
 import { useStudentAccounts, useCohortRoster } from '@/shared/api/students'
 import type { ResumeRow } from './types'
 import { useResumes } from './api'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { ListToolbar } from '@/components/ui/ListToolbar'
 import { useInstructorResumes } from '@/features/instructor/education/api'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -146,19 +146,23 @@ export function ResumePane({
       errorDescription="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
     >
       <div>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-fg-muted text-sm">
-            총 {rows.length}개 이력서
-            {needle && data && (
-              <span className="text-fg-subtle"> · 전체 {data.length}</span>
-            )}
-          </p>
-          {/* 탭 공통 필터 바 규격 — 검색은 우측·아이콘 포함·w-56 */}
-          <SearchInput
-            value={q}
-            onChange={setQ}
-            placeholder="이름·이력서 제목 검색"
-            ariaLabel="이력서 검색"
+        {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수 / 우: 검색(2026-08-07 통일). */}
+        <div className="mb-3">
+          <ListToolbar
+            left={
+              <span>
+                총 {rows.length}개 이력서
+                {needle && data && (
+                  <span className="text-fg-subtle"> · 전체 {data.length}</span>
+                )}
+              </span>
+            }
+            search={{
+              value: q,
+              onChange: setQ,
+              placeholder: '이름·이력서 제목 검색',
+              ariaLabel: '이력서 검색',
+            }}
           />
         </div>
         <DataTable

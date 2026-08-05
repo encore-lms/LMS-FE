@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync:ai-contract": "node scripts/sync-ai-contract.mjs",
+    "sync:certificate-snapshot": "node scripts/sync-certificate-snapshot.mjs",
     "prepare": "husky"
   },
   "dependencies": {

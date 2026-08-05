@@ -3,7 +3,7 @@ import type { CertificateScoreResult } from './types'
 import { CERTIFICATE_MOCK_STUDENT_ID, fetchCertificateScore } from './index'
 
 const result: CertificateScoreResult = {
-  policyVersion: '2026.07.21-six-axis-persistence-v4',
+  policyVersion: '2026.08.05-six-axis-four-rater-v1',
   calculatedAt: '2026-07-16',
   student: {
     studentId: 'student-1',
@@ -41,7 +41,7 @@ afterEach(() => {
 })
 
 describe('fetchCertificateScore', () => {
-  it('발급 조건을 충족하는 박수진를 기본 시연 수강생으로 사용한다', () => {
+  it('발급 조건을 충족하는 기본 시연 수강생을 사용한다', () => {
     expect(CERTIFICATE_MOCK_STUDENT_ID).toBe(
       'd9552119-7a27-5be5-b2a4-1d82a709cfb9',
     )
@@ -101,6 +101,14 @@ describe('fetchCertificateScore', () => {
 
     expect(score.status).toBe('READY')
     expect(score.student.studentId).toBe('demo-student')
+    expect(score.axes.map((axis) => axis.key)).toEqual([
+      '기술·기술기여',
+      '소통·협업·팀워크',
+      '문제해결',
+      '책임감',
+      '학습지속성',
+      '성취도 평가',
+    ])
     expect(score.axes.every((axis) => axis.evidence.length > 0)).toBe(true)
     expect(tabs.studentId).toBe('demo-student')
     expect(tabs.tech.assessments.length).toBeGreaterThan(0)

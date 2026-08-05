@@ -1,238 +1,33 @@
 {
   "score": {
-    "policyVersion": "2026.07.21-six-axis-persistence-v4",
-    "calculatedAt": "2026-07-23",
+    "policyVersion": "2026.08.05-six-axis-four-rater-v1",
+    "calculatedAt": "2026-08-05",
     "student": {
       "studentId": "d9552119-7a27-5be5-b2a4-1d82a709cfb9",
-      "studentName": "박수진",
-      "courseName": "SK네트웍스 Family AI 캠프",
-      "cohortName": "SKN 32기",
-      "cohortStartedAt": "2026-04-28",
-      "cohortEndedAt": "2026-10-26"
+      "studentName": "박준서",
+      "courseName": "SKN LLM·AI 개발자 과정",
+      "cohortName": "SKN 4기",
+      "cohortStartedAt": "2024-03-11",
+      "cohortEndedAt": "2024-09-08"
     },
     "status": "READY",
-    "overallScore": 78.4,
-    "grade": "B",
+    "overallScore": 87.8,
+    "grade": "A",
     "overallRelative": {
       "status": "READY",
       "scope": "ALL_STUDENTS",
-      "percentile": 76.9,
-      "topPercent": 23.1,
-      "populationSize": 255,
-      "detail": "전체 수강생 유효 255명 중 상위 23.1%입니다."
+      "percentile": 92,
+      "topPercent": 8,
+      "populationSize": 263,
+      "detail": "전체 수강생 유효 263명 중 상위 8%입니다."
     },
     "axes": [
       {
-        "key": "기술",
-        "score": 95.4,
+        "key": "기술·기술기여",
+        "score": 98,
         "status": "READY",
-        "source": "내부 인증(성취도 평가·CS 평가) 평균 × 0.8 + 외부 인증(코딩테스트) 과목·등급 환산점수(최대 20점)",
-        "detail": "내부 인증 완료 4건 평균 94.3점, 외부 인증 코딩테스트 PCCP LV.5 20점",
-        "relative": {
-          "status": "READY",
-          "scope": "COHORT",
-          "percentile": 93.7,
-          "topPercent": 6.3,
-          "populationSize": 16,
-          "detail": "동일 기수 유효 16명 중 상위 6.3%입니다."
-        },
-        "comparison": {
-          "peerScore": 92,
-          "mentorScore": 100
-        },
-        "evidence": [
-          {
-            "key": "internalAssessment",
-            "label": "성취도·CS 평가 전체 평균",
-            "value": 94.25,
-            "unit": "점",
-            "numerator": 4,
-            "denominator": 4,
-            "weightPercent": 80,
-            "appliedScore": 75.4,
-            "detail": "채점 완료 4/4건"
-          },
-          {
-            "key": "codingTest",
-            "label": "외부 코딩테스트",
-            "value": 20,
-            "unit": "점",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": 20,
-            "appliedScore": 20,
-            "detail": "PCCP LV.5 20점"
-          }
-        ]
-      },
-      {
-        "key": "소통",
-        "score": 61.2,
-        "status": "READY",
-        "source": "동료평가 소통 평균 80% + 최종 멘토평가 소통 20% → 1~5점 가중평균, 최저점 1점을 0점 기준으로 맞춰 ÷4 × 100 환산",
-        "detail": "완료 프로젝트 5개 · 동료평가 소통 3.6/5, 최종 멘토평가 소통 3/5",
-        "relative": {
-          "status": "READY",
-          "scope": "COHORT",
-          "percentile": 47.1,
-          "topPercent": 52.9,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 52.9%입니다."
-        },
-        "comparison": {
-          "peerScore": 64,
-          "mentorScore": 50
-        },
-        "evidence": [
-          {
-            "key": "completedProjects",
-            "label": "완료 프로젝트",
-            "value": 5,
-            "unit": "건",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": null,
-            "appliedScore": null,
-            "detail": "완료 프로젝트 5개"
-          },
-          {
-            "key": "peerEvaluation",
-            "label": "동료평가 소통",
-            "value": 3.56,
-            "unit": "점",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": 80,
-            "appliedScore": 2.85,
-            "detail": "전체 프로젝트 상호평가 평균 3.6/5"
-          },
-          {
-            "key": "mentorEvaluation",
-            "label": "최종 멘토평가 소통",
-            "value": 3,
-            "unit": "점",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": 20,
-            "appliedScore": 0.6,
-            "detail": "최종 멘토평가 3/5"
-          }
-        ]
-      },
-      {
-        "key": "팀워크",
-        "score": 75,
-        "status": "READY",
-        "source": "동료평가 협업 평균 80% + 최종 멘토평가 팀워크 20% → 1~5점 가중평균, 최저점 1점을 0점 기준으로 맞춰 ÷4 × 100 환산",
-        "detail": "완료 프로젝트 5개 · 동료평가 협업 4/5, 최종 멘토평가 팀워크 4/5",
-        "relative": {
-          "status": "READY",
-          "scope": "COHORT",
-          "percentile": 58.8,
-          "topPercent": 41.2,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 41.2%입니다."
-        },
-        "comparison": {
-          "peerScore": 75,
-          "mentorScore": 75
-        },
-        "evidence": [
-          {
-            "key": "completedProjects",
-            "label": "완료 프로젝트",
-            "value": 5,
-            "unit": "건",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": null,
-            "appliedScore": null,
-            "detail": "완료 프로젝트 5개"
-          },
-          {
-            "key": "peerEvaluation",
-            "label": "동료평가 협업",
-            "value": 4,
-            "unit": "점",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": 80,
-            "appliedScore": 3.2,
-            "detail": "전체 프로젝트 상호평가 평균 4/5"
-          },
-          {
-            "key": "mentorEvaluation",
-            "label": "최종 멘토평가 팀워크",
-            "value": 4,
-            "unit": "점",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": 20,
-            "appliedScore": 0.8,
-            "detail": "최종 멘토평가 4/5"
-          }
-        ]
-      },
-      {
-        "key": "책임감",
-        "score": 71.8,
-        "status": "READY",
-        "source": "동료평가 책임감 평균 80% + 최종 멘토평가 책임감 20% → 1~5점 가중평균, 최저점 1점을 0점 기준으로 맞춰 ÷4 × 100 환산",
-        "detail": "완료 프로젝트 5개 · 동료평가 책임감 3.8/5, 최종 멘토평가 책임감 4/5",
-        "relative": {
-          "status": "READY",
-          "scope": "COHORT",
-          "percentile": 29.4,
-          "topPercent": 70.6,
-          "populationSize": 17,
-          "detail": "동일 기수 유효 17명 중 상위 70.6%입니다."
-        },
-        "comparison": {
-          "peerScore": 71,
-          "mentorScore": 75
-        },
-        "evidence": [
-          {
-            "key": "completedProjects",
-            "label": "완료 프로젝트",
-            "value": 5,
-            "unit": "건",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": null,
-            "appliedScore": null,
-            "detail": "완료 프로젝트 5개"
-          },
-          {
-            "key": "peerEvaluation",
-            "label": "동료평가 책임감",
-            "value": 3.84,
-            "unit": "점",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": 80,
-            "appliedScore": 3.07,
-            "detail": "전체 프로젝트 상호평가 평균 3.8/5"
-          },
-          {
-            "key": "mentorEvaluation",
-            "label": "최종 멘토평가 책임감",
-            "value": 4,
-            "unit": "점",
-            "numerator": null,
-            "denominator": null,
-            "weightPercent": 20,
-            "appliedScore": 0.8,
-            "detail": "최종 멘토평가 4/5"
-          }
-        ]
-      },
-      {
-        "key": "문제해결",
-        "score": 66.7,
-        "status": "READY",
-        "source": "인증 트러블슈팅 건수 ÷ 6 × 100, 단 50점 미만이면 동료 문제해결 평균 ÷ 5 × 50 보조점수 적용",
-        "detail": "인증 트러블슈팅 4건 66.7점, 동료 문제해결 전체 평균 4.4/5 → 보조 44/50 미적용",
+        "source": "동료·멘토·강사·운영 평가자 그룹별 평균을 동일 비중(각 25%)으로 반영",
+        "detail": "동료 4.7/5 · 멘토 5/5 · 강사 5/5 · 운영 5/5 → 98점",
         "relative": {
           "status": "READY",
           "scope": "COHORT",
@@ -242,31 +37,256 @@
           "detail": "동일 기수 유효 17명 중 상위 11.8%입니다."
         },
         "comparison": {
-          "peerScore": 85,
-          "mentorScore": null
+          "peerScore": 92,
+          "mentorScore": 100,
+          "instructorScore": 100,
+          "managerScore": 100
         },
         "evidence": [
           {
-            "key": "certifiedTroubleshooting",
-            "label": "인증 트러블슈팅",
-            "value": 4,
-            "unit": "건",
-            "numerator": 4,
-            "denominator": 6,
-            "weightPercent": null,
-            "appliedScore": 66.67,
-            "detail": "인증 완료 4건 / 기준 6건"
+            "key": "peerEvaluation",
+            "label": "동료 평가",
+            "value": 4.68,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 23,
+            "detail": "동료 평가자 그룹 평균 4.7/5"
           },
           {
-            "key": "peerProblemSolving",
-            "label": "프로젝트 동료 문제해결 평가",
+            "key": "mentorEvaluation",
+            "label": "멘토 평가",
+            "value": 5,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 25,
+            "detail": "멘토 평가자 그룹 평균 5/5"
+          },
+          {
+            "key": "instructorEvaluation",
+            "label": "강사 평가",
+            "value": 5,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 25,
+            "detail": "강사 평가자 그룹 평균 5/5"
+          },
+          {
+            "key": "managerEvaluation",
+            "label": "운영 평가",
+            "value": 5,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 25,
+            "detail": "운영 평가자 그룹 평균 5/5"
+          }
+        ]
+      },
+      {
+        "key": "소통·협업·팀워크",
+        "score": 76.8,
+        "status": "READY",
+        "source": "동료·멘토·강사·운영 평가자 그룹별 평균을 동일 비중(각 25%)으로 반영",
+        "detail": "동료 3.8/5 · 멘토 3.5/5 · 강사 5/5 · 운영 4/5 → 76.8점",
+        "relative": {
+          "status": "READY",
+          "scope": "COHORT",
+          "percentile": 64.7,
+          "topPercent": 35.3,
+          "populationSize": 17,
+          "detail": "동일 기수 유효 17명 중 상위 35.3%입니다."
+        },
+        "comparison": {
+          "peerScore": 69.5,
+          "mentorScore": 62.5,
+          "instructorScore": 100,
+          "managerScore": 75
+        },
+        "evidence": [
+          {
+            "key": "peerEvaluation",
+            "label": "동료 평가",
+            "value": 3.78,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 17.38,
+            "detail": "동료 평가자 그룹 평균 3.8/5"
+          },
+          {
+            "key": "mentorEvaluation",
+            "label": "멘토 평가",
+            "value": 3.5,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 15.63,
+            "detail": "멘토 평가자 그룹 평균 3.5/5"
+          },
+          {
+            "key": "instructorEvaluation",
+            "label": "강사 평가",
+            "value": 5,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 25,
+            "detail": "강사 평가자 그룹 평균 5/5"
+          },
+          {
+            "key": "managerEvaluation",
+            "label": "운영 평가",
+            "value": 4,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 18.75,
+            "detail": "운영 평가자 그룹 평균 4/5"
+          }
+        ]
+      },
+      {
+        "key": "문제해결",
+        "score": 77.5,
+        "status": "READY",
+        "source": "동료·멘토·강사·운영 평가자 그룹별 평균을 동일 비중(각 25%)으로 반영",
+        "detail": "동료 4.4/5 · 멘토 4/5 · 강사 3/5 · 운영 5/5 → 77.5점",
+        "relative": {
+          "status": "READY",
+          "scope": "COHORT",
+          "percentile": 47.1,
+          "topPercent": 52.9,
+          "populationSize": 17,
+          "detail": "동일 기수 유효 17명 중 상위 52.9%입니다."
+        },
+        "comparison": {
+          "peerScore": 85,
+          "mentorScore": 75,
+          "instructorScore": 50,
+          "managerScore": 100
+        },
+        "evidence": [
+          {
+            "key": "peerEvaluation",
+            "label": "동료 평가",
             "value": 4.4,
             "unit": "점",
             "numerator": null,
             "denominator": null,
-            "weightPercent": 50,
-            "appliedScore": 44,
-            "detail": "전체 프로젝트 상호평가 평균 4.4/5"
+            "weightPercent": 25,
+            "appliedScore": 21.25,
+            "detail": "동료 평가자 그룹 평균 4.4/5"
+          },
+          {
+            "key": "mentorEvaluation",
+            "label": "멘토 평가",
+            "value": 4,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 18.75,
+            "detail": "멘토 평가자 그룹 평균 4/5"
+          },
+          {
+            "key": "instructorEvaluation",
+            "label": "강사 평가",
+            "value": 3,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 12.5,
+            "detail": "강사 평가자 그룹 평균 3/5"
+          },
+          {
+            "key": "managerEvaluation",
+            "label": "운영 평가",
+            "value": 5,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 25,
+            "detail": "운영 평가자 그룹 평균 5/5"
+          }
+        ]
+      },
+      {
+        "key": "책임감",
+        "score": 80.3,
+        "status": "READY",
+        "source": "동료·멘토·강사·운영 평가자 그룹별 평균을 동일 비중(각 25%)으로 반영",
+        "detail": "동료 3.8/5 · 멘토 4/5 · 강사 4/5 · 운영 5/5 → 80.3점",
+        "relative": {
+          "status": "READY",
+          "scope": "COHORT",
+          "percentile": 58.8,
+          "topPercent": 41.2,
+          "populationSize": 17,
+          "detail": "동일 기수 유효 17명 중 상위 41.2%입니다."
+        },
+        "comparison": {
+          "peerScore": 71,
+          "mentorScore": 75,
+          "instructorScore": 75,
+          "managerScore": 100
+        },
+        "evidence": [
+          {
+            "key": "peerEvaluation",
+            "label": "동료 평가",
+            "value": 3.84,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 17.75,
+            "detail": "동료 평가자 그룹 평균 3.8/5"
+          },
+          {
+            "key": "mentorEvaluation",
+            "label": "멘토 평가",
+            "value": 4,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 18.75,
+            "detail": "멘토 평가자 그룹 평균 4/5"
+          },
+          {
+            "key": "instructorEvaluation",
+            "label": "강사 평가",
+            "value": 4,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 18.75,
+            "detail": "강사 평가자 그룹 평균 4/5"
+          },
+          {
+            "key": "managerEvaluation",
+            "label": "운영 평가",
+            "value": 5,
+            "unit": "점",
+            "numerator": null,
+            "denominator": null,
+            "weightPercent": 25,
+            "appliedScore": 25,
+            "detail": "운영 평가자 그룹 평균 5/5"
           }
         ]
       },
@@ -345,17 +365,49 @@
             "detail": "7/8회 · 87.5%"
           }
         ]
+      },
+      {
+        "key": "성취도 평가",
+        "score": 94.3,
+        "status": "READY",
+        "source": "채점 완료된 성취도 평가의 최신 유효 응시 점수 전체 평균",
+        "detail": "채점 완료 4/4건 전체 평균 94.3점",
+        "relative": {
+          "status": "READY",
+          "scope": "COHORT",
+          "percentile": 93.7,
+          "topPercent": 6.3,
+          "populationSize": 16,
+          "detail": "동일 기수 유효 16명 중 상위 6.3%입니다."
+        },
+        "comparison": {
+          "peerScore": null,
+          "mentorScore": null
+        },
+        "evidence": [
+          {
+            "key": "achievementAssessment",
+            "label": "성취도 평가 전체 평균",
+            "value": 94.25,
+            "unit": "점",
+            "numerator": 4,
+            "denominator": 4,
+            "weightPercent": 100,
+            "appliedScore": 94.25,
+            "detail": "채점 완료 4/4건 전체 평균 94.3점"
+          }
+        ]
       }
     ],
     "metrics": [
       {
         "key": "assessment",
-        "label": "시험 평균",
+        "label": "성취도 평가 평균",
         "value": 94.3,
         "maximum": 100,
         "unit": "점",
         "status": "READY",
-        "detail": "채점 완료 4/4건"
+        "detail": "채점 완료 4/4건 전체 평균 94.3점"
       },
       {
         "key": "certifiedTroubleshooting",
@@ -463,7 +515,7 @@
   },
   "tabs": {
     "policyVersion": "2026.07.23-certificate-detail-tabs-v1",
-    "calculatedAt": "2026-07-23",
+    "calculatedAt": "2026-08-05",
     "studentId": "d9552119-7a27-5be5-b2a4-1d82a709cfb9",
     "tech": {
       "status": "READY",
@@ -503,7 +555,7 @@
       "assessments": [
         {
           "id": "001d8423-c2ce-57a0-96cb-607692837173",
-          "title": "SKN 32기 파이썬 기초·데이터 처리 성취도 평가",
+          "title": "SKN 4기 파이썬 기초·데이터 처리 성취도 평가",
           "category": "파이썬",
           "score": 88,
           "cohortAverageScore": 69.5,
@@ -513,7 +565,7 @@
         },
         {
           "id": "6ea1b8de-3078-523f-ba10-38f228d2da71",
-          "title": "SKN 32기 SQL·Pandas·웹 개발 통합 성취도 평가",
+          "title": "SKN 4기 SQL·Pandas·웹 개발 통합 성취도 평가",
           "category": "SQL·Pandas·프론트엔드·Django",
           "score": 94,
           "cohortAverageScore": 79.6,
@@ -523,7 +575,7 @@
         },
         {
           "id": "d903a933-0c10-5b47-9b2c-5abfeb87c01f",
-          "title": "SKN 32기 머신러닝·딥러닝 모델링 성취도 평가",
+          "title": "SKN 4기 머신러닝·딥러닝 모델링 성취도 평가",
           "category": "머신러닝·딥러닝",
           "score": 97,
           "cohortAverageScore": 72.1,
@@ -533,7 +585,7 @@
         },
         {
           "id": "93c35adb-f368-5af7-ac13-52c1a66f2e52",
-          "title": "SKN 32기 LLM·RAG·AWS 배포 성취도 평가",
+          "title": "SKN 4기 LLM·RAG·AWS 배포 성취도 평가",
           "category": "LLM·AWS 배포",
           "score": 98,
           "cohortAverageScore": 77.4,
@@ -911,103 +963,103 @@
       ],
       "peerComments": [
         {
-          "comment": "박수진 수강생은 5차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송시우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 5차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송시우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
           "submittedAt": "2024-09-09T18:59:00"
         },
         {
-          "comment": "박수진 수강생은 5차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 신수빈은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
+          "comment": "박준서 수강생은 5차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 신수빈은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
           "submittedAt": "2024-09-09T18:56:00"
         },
         {
-          "comment": "박수진 수강생은 5차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송현우은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
+          "comment": "박준서 수강생은 5차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송현우은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
           "submittedAt": "2024-09-09T18:55:00"
         },
         {
-          "comment": "박수진 수강생은 5차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송태윤은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
+          "comment": "박준서 수강생은 5차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송태윤은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
           "submittedAt": "2024-09-09T18:05:00"
         },
         {
-          "comment": "박수진 수강생은 5차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
+          "comment": "박준서 수강생은 5차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
           "submittedAt": "2024-09-09T18:00:00"
         },
         {
-          "comment": "박수진 수강생은 4차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송시우은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 4차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송시우은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
           "submittedAt": "2024-07-16T18:59:00"
         },
         {
-          "comment": "박수진 수강생은 4차 프로젝트에서 막힌 작업의 재현 조건을 먼저 정리했다. 신수빈은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 4차 프로젝트에서 막힌 작업의 재현 조건을 먼저 정리했다. 신수빈은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
           "submittedAt": "2024-07-16T18:56:00"
         },
         {
-          "comment": "박수진 수강생은 4차 프로젝트에서 막힌 작업의 재현 조건을 먼저 정리했다. 송현우은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 4차 프로젝트에서 막힌 작업의 재현 조건을 먼저 정리했다. 송현우은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
           "submittedAt": "2024-07-16T18:55:00"
         },
         {
-          "comment": "박수진 수강생은 4차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송태윤은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
+          "comment": "박준서 수강생은 4차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송태윤은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
           "submittedAt": "2024-07-16T18:05:00"
         },
         {
-          "comment": "박수진 수강생은 4차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
+          "comment": "박준서 수강생은 4차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
           "submittedAt": "2024-07-16T18:00:00"
         },
         {
-          "comment": "박수진 수강생은 3차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송시우은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
+          "comment": "박준서 수강생은 3차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송시우은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
           "submittedAt": "2024-07-08T18:59:00"
         },
         {
-          "comment": "박수진 수강생은 3차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 신수빈은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 3차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 신수빈은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
           "submittedAt": "2024-07-08T18:56:00"
         },
         {
-          "comment": "박수진 수강생은 3차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송현우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 3차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송현우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
           "submittedAt": "2024-07-08T18:55:00"
         },
         {
-          "comment": "박수진 수강생은 3차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송태윤은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
+          "comment": "박준서 수강생은 3차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송태윤은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
           "submittedAt": "2024-07-08T18:05:00"
         },
         {
-          "comment": "박수진 수강생은 3차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
+          "comment": "박준서 수강생은 3차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
           "submittedAt": "2024-07-08T18:00:00"
         },
         {
-          "comment": "박수진 수강생은 2차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송시우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 2차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송시우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
           "submittedAt": "2024-06-11T18:59:00"
         },
         {
-          "comment": "박수진 수강생은 2차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 신수빈은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
+          "comment": "박준서 수강생은 2차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 신수빈은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
           "submittedAt": "2024-06-11T18:56:00"
         },
         {
-          "comment": "박수진 수강생은 2차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송현우은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
+          "comment": "박준서 수강생은 2차 프로젝트에서 다른 팀원의 코드를 읽고 구체적인 수정 의견을 남겼다. 송현우은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
           "submittedAt": "2024-06-11T18:55:00"
         },
         {
-          "comment": "박수진 수강생은 2차 프로젝트에서 막힌 작업의 재현 조건을 먼저 정리했다. 송태윤은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
+          "comment": "박준서 수강생은 2차 프로젝트에서 막힌 작업의 재현 조건을 먼저 정리했다. 송태윤은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
           "submittedAt": "2024-06-11T18:05:00"
         },
         {
-          "comment": "박수진 수강생은 2차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
+          "comment": "박준서 수강생은 2차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송하은은 다음 협업에서 진행 상황을 조금 더 일찍 공유하면 좋겠다고 평가했다.",
           "submittedAt": "2024-06-11T18:00:00"
         },
         {
-          "comment": "박수진 수강생은 1차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송시우은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 1차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송시우은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
           "submittedAt": "2024-04-15T18:59:00"
         },
         {
-          "comment": "박수진 수강생은 1차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 신수빈은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
+          "comment": "박준서 수강생은 1차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 신수빈은 다음 협업에서 현재의 차분한 문제 해결 방식을 계속 유지했으면 한다고 평가했다.",
           "submittedAt": "2024-04-15T18:56:00"
         },
         {
-          "comment": "박수진 수강생은 1차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송현우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 1차 프로젝트에서 API 계약과 화면 흐름의 차이를 팀에 설명했다. 송현우은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
           "submittedAt": "2024-04-15T18:55:00"
         },
         {
-          "comment": "박수진 수강생은 1차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송태윤은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 1차 프로젝트에서 마감 직전에도 맡은 기능의 테스트를 끝까지 확인했다. 송태윤은 다음 협업에서 리뷰 요청 범위를 더 작게 나누면 피드백 속도가 빨라질 것 같다고 평가했다.",
           "submittedAt": "2024-04-15T18:05:00"
         },
         {
-          "comment": "박수진 수강생은 1차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송하은은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
+          "comment": "박준서 수강생은 1차 프로젝트에서 데이터 품질 문제를 찾아 전처리 기준을 합의했다. 송하은은 다음 협업에서 설계 근거를 문서로 남기면 인수인계가 쉬울 것 같다고 평가했다.",
           "submittedAt": "2024-04-15T18:00:00"
         }
       ],
@@ -1024,7 +1076,7 @@
   },
   "analysis": {
     "verdict": {
-      "policyVersion": "2026.07.23-technical-verdict-v1",
+      "policyVersion": "2026.08.05-technical-verdict-v2",
       "strength": "개인에게 귀속된 문제 해결과 프로젝트의 기술 행동이 함께 나타나, 네트워크·API 맥락에서 원인을 좁히고 검증하는 역량이 강점입니다.",
       "growth": "파이썬에서 시작해 LLM·AWS 배포까지 성취도 점수를 꾸준히 높였고, 기초 카테고리보다 이후 심화 카테고리에서 더 높은 성취를 보였습니다.",
       "gap": "평가된 범위에서 보완 방향을 정할 직접 근거가 아직 충분하지 않습니다.",
@@ -1105,10 +1157,10 @@
               "key": "EXECUTION",
               "label": "실행·완결",
               "level": "MID",
-              "score": 64.72,
+              "score": 68.12,
               "calculation": [
                 "완료 수행업무 3/5건 = 60점 × 60%",
-                "책임감 절대 점수 71.8점 × 40%"
+                "책임감 절대 점수 80.3점 × 40%"
               ]
             },
             {
@@ -1236,26 +1288,26 @@
         {
           "label": "소통",
           "value": "근거설명형",
-          "description": "6축 소통 수준과 팀워크·책임감 맥락을 바탕으로, 동료 코멘트에서 실제 확인된 설명·공유·피드백 행동만 구체화했습니다.",
+          "description": "6축 소통·협업·팀워크 수준과 책임감 맥락을 바탕으로, 동료 코멘트에서 실제 확인된 설명·공유·피드백 행동만 구체화했습니다.",
           "dimensions": [
             {
               "key": "CLARITY",
               "label": "명료성",
               "level": "HIGH",
-              "score": 72.48,
+              "score": 78.72,
               "calculation": [
                 "설명 행동 프로젝트 4/5개 = 80점 × 60%",
-                "소통 절대 점수 61.2점 × 40%"
+                "소통 절대 점수 76.8점 × 40%"
               ]
             },
             {
               "key": "SHARING",
               "label": "공유 적시성",
               "level": "LOW",
-              "score": 4.480000000000004,
+              "score": 10.719999999999999,
               "calculation": [
                 "진행 공유·문서화 프로젝트 0/5개 = 0점 × 60%",
-                "소통 절대 점수 61.2점 × 40%",
+                "소통 절대 점수 76.8점 × 40%",
                 "늦은 공유 개선 의견 프로젝트 4/5개 = 80점 × 25% 차감"
               ]
             },
@@ -1263,10 +1315,10 @@
               "key": "FEEDBACK",
               "label": "피드백",
               "level": "MID",
-              "score": 60.42,
+              "score": 65.88,
               "calculation": [
                 "리뷰·피드백 프로젝트 3/5개 = 60점 × 65%",
-                "소통 절대 점수 61.2점 × 35%"
+                "소통 절대 점수 76.8점 × 35%"
               ]
             }
           ],
@@ -1274,38 +1326,38 @@
             "명료한 설명 근거 4개 프로젝트, 구체적 피드백 근거 3개 프로젝트",
             "공유·문서화 근거 0개 프로젝트",
             "진행 상황을 더 일찍 공유하라는 피드백 4개 프로젝트",
-            "6축 소통 산출, 팀워크 산출, 책임감 산출"
+            "6축 소통·협업·팀워크 산출, 책임감 산출"
           ],
           "confidence": "HIGH",
           "limitations": [
             "메시지 원문이나 회의 발화 기록이 없어 실제 관찰 행동이 담긴 동료·멘토 서술만 세부 유형에 사용함",
-            "소통·팀워크·책임감은 각각 독립 축으로 사용하며 서로 다시 합산하지 않음"
+            "소통·협업·팀워크 통합축과 책임감은 서로 다시 중복 합산하지 않음"
           ]
         },
         {
           "label": "기술",
           "value": "백엔드 구현형",
-          "description": "기술 절대점수와 인증 트러블슈팅, 개인 담당 과업, 동료·멘토 기술평가를 분리해 계산하고 백엔드 구현 관련 개인 근거를 교차 확인했습니다.",
+          "description": "성취도 평가와 인증 트러블슈팅, 개인 담당 과업, 4평가자 기술·기술기여 평가를 분리해 계산하고 백엔드 구현 관련 개인 근거를 교차 확인했습니다.",
           "dimensions": [
             {
               "key": "FOUNDATION",
               "label": "기초 역량",
               "level": "HIGH",
-              "score": 95.4,
+              "score": 94.3,
               "calculation": [
-                "내부 인증(성취도 평가·CS 평가) 평균 × 0.8 + 외부 인증(코딩테스트) 과목·등급 환산점수(최대 20점)",
-                "내부 인증 완료 4건 평균 94.3점, 외부 인증 코딩테스트 PCCP LV.5 20점"
+                "채점 완료된 성취도 평가의 최신 유효 응시 점수 전체 평균",
+                "채점 완료 4/4건 전체 평균 94.3점"
               ]
             },
             {
               "key": "APPLICATION",
               "label": "기술 적용",
               "level": "HIGH",
-              "score": 80.04266666666666,
+              "score": 80.66666666666666,
               "calculation": [
                 "기술 관련 본인 수행업무 상태 점수 86점 × 40%",
                 "인증 트러블슈팅 4/5건 = 66.7점 × 40%",
-                "프로젝트 상호평가 기술기여·최종 멘토평가 기술 94.9점 × 20%",
+                "동료·멘토·강사·운영 기술·기술기여 평가 98점 × 20%",
                 "산출 가능한 항목만 해당 배점 비율로 다시 맞춰 계산"
               ]
             },
@@ -1322,11 +1374,11 @@
             }
           ],
           "evidence": [
-            "기술 절대점수 산출 완료만 프로파일 수준 산정에 사용",
+            "성취도 평가 산출 완료만 기술 기초 수준 산정에 사용",
             "완료 프로젝트 5개 중 백엔드 개인 활용기술 5개, AI 개인 활용기술 0개, 운영 개인 활용기술 0개",
             "개인 담당 과업 초점: 서비스 0개, 데이터 0개, 백엔드 5개, 프론트 0개, 품질 0개, 운영 1개, AI 3개 프로젝트",
             "인증 트러블슈팅 4건 중 운영·배포 0건",
-            "기술 프로파일 가중치: 절대성취 40%, 인증 트러블슈팅 30%, 개인 과업 20%, 동료·멘토 기술평가 10%"
+            "기술 프로파일 가중치: 성취도 평가 40%, 인증 트러블슈팅 30%, 개인 과업 20%, 4평가자 기술·기술기여 평가 10%"
           ],
           "confidence": "HIGH",
           "limitations": [
@@ -1335,9 +1387,9 @@
           ]
         }
       ],
-      "summary": "수행 결과를 점검하고 근거를 정리하며, 여러 평가에서 확인된 학습 지속과 기술 성취 역량을 실제 프로젝트에 연결하며 맡은 역할을 꾸준히 이어가는 수강생입니다.",
-      "strengths": "지속적인 학습 역량, 검증된 기술 성취 역량과 안정적인 팀 수행 역량이 6축 상위에서 함께 확인되어, 학습과 프로젝트 수행 전반에 연결되는 점이 핵심 강점입니다.",
-      "growth": "팀 내 소통 기반과 인증된 문제해결 근거 영역을 우선 보강하면, 지속적인 학습 역량 등 현재 확인된 강점을 더 안정적인 실전 역량으로 확장할 수 있습니다."
+      "summary": "수행 결과를 점검하고 근거를 정리하며, 여러 평가에서 확인된 학습 지속과 기술 기여 역량을 실제 프로젝트에 연결하며 맡은 역할을 꾸준히 이어가는 수강생입니다.",
+      "strengths": "지속적인 학습 역량, 검증된 기술·기술기여 역량과 검증된 기술 성취 역량이 6축 상위에서 함께 확인되어, 학습과 프로젝트 수행 전반에 연결되는 점이 핵심 강점입니다.",
+      "growth": "현재 유효한 6축 평가만으로 우선 성장 영역을 특정하기 어렵습니다."
     },
     "personas": [
       {
@@ -1444,11 +1496,11 @@
             "53c5ac91-3ba6-5380-9938-124d0a05c35f"
           ],
           "projectNames": [
-            "SKN 32기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
-            "SKN 32기 1팀 2차 · 가입 고객 이탈 예측 서비스",
-            "SKN 32기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
-            "SKN 32기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
-            "SKN 32기 1팀 5차 · LLM 활용 대화형 상품추천 시스템"
+            "SKN 4기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
+            "SKN 4기 1팀 2차 · 가입 고객 이탈 예측 서비스",
+            "SKN 4기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
+            "SKN 4기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
+            "SKN 4기 1팀 5차 · LLM 활용 대화형 상품추천 시스템"
           ],
           "evidenceCodes": [
             "TASK:81127f37-0823-5b92-8c2b-97bc40ac3bf4",
@@ -1520,11 +1572,11 @@
             "53c5ac91-3ba6-5380-9938-124d0a05c35f"
           ],
           "projectNames": [
-            "SKN 32기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
-            "SKN 32기 1팀 2차 · 가입 고객 이탈 예측 서비스",
-            "SKN 32기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
-            "SKN 32기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
-            "SKN 32기 1팀 5차 · LLM 활용 대화형 상품추천 시스템"
+            "SKN 4기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
+            "SKN 4기 1팀 2차 · 가입 고객 이탈 예측 서비스",
+            "SKN 4기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
+            "SKN 4기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
+            "SKN 4기 1팀 5차 · LLM 활용 대화형 상품추천 시스템"
           ],
           "evidenceCodes": [
             "TASK:81127f37-0823-5b92-8c2b-97bc40ac3bf4",
@@ -1596,11 +1648,11 @@
             "53c5ac91-3ba6-5380-9938-124d0a05c35f"
           ],
           "projectNames": [
-            "SKN 32기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
-            "SKN 32기 1팀 2차 · 가입 고객 이탈 예측 서비스",
-            "SKN 32기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
-            "SKN 32기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
-            "SKN 32기 1팀 5차 · LLM 활용 대화형 상품추천 시스템"
+            "SKN 4기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
+            "SKN 4기 1팀 2차 · 가입 고객 이탈 예측 서비스",
+            "SKN 4기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
+            "SKN 4기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
+            "SKN 4기 1팀 5차 · LLM 활용 대화형 상품추천 시스템"
           ],
           "evidenceCodes": [
             "TASK:81127f37-0823-5b92-8c2b-97bc40ac3bf4",
@@ -1666,7 +1718,7 @@
         {
           "projectId": "2dcaf2c3-d1be-5123-be35-1b7665005fe1",
           "order": 1,
-          "name": "SKN 32기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
+          "name": "SKN 4기 1팀 1차 · 전국 자동차 등록 현황 및 기업 FAQ 조회 시스템",
           "period": {
             "startedAt": "2024-04-01",
             "endedAt": "2024-04-14"
@@ -1676,7 +1728,7 @@
           "membershipRole": "MEMBER",
           "teamContext": {
             "domain": "공공데이터·기업 정보 조회",
-            "scope": "Python으로 자동차 등록 공공데이터를 수집·정제하고 지역·차종별 현황을 탐색하며, 기업 FAQ를 조건 검색할 수 있는 콘솔 기반 조회 애플리케이션을 구현한다. SKN 32기 1팀은 데이터 품질을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
+            "scope": "Python으로 자동차 등록 공공데이터를 수집·정제하고 지역·차종별 현황을 탐색하며, 기업 FAQ를 조건 검색할 수 있는 콘솔 기반 조회 애플리케이션을 구현한다. SKN 4기 1팀은 데이터 품질을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
             "techStacks": [
               "Python",
               "Requests",
@@ -1729,7 +1781,7 @@
         {
           "projectId": "24edeaeb-ff41-52ee-a59f-43805c9aebc7",
           "order": 2,
-          "name": "SKN 32기 1팀 2차 · 가입 고객 이탈 예측 서비스",
+          "name": "SKN 4기 1팀 2차 · 가입 고객 이탈 예측 서비스",
           "period": {
             "startedAt": "2024-05-25",
             "endedAt": "2024-06-10"
@@ -1739,7 +1791,7 @@
           "membershipRole": "MEMBER",
           "teamContext": {
             "domain": "고객 분석·이탈 예측",
-            "scope": "SQL과 Pandas로 가입 고객 행동 데이터를 분석하고 이탈 위험도를 산출한 뒤, HTML·CSS·JavaScript 화면과 Django API를 연결해 담당자가 위험 고객을 조회하는 웹 서비스를 개발한다. SKN 32기 1팀은 테스트 자동화을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
+            "scope": "SQL과 Pandas로 가입 고객 행동 데이터를 분석하고 이탈 위험도를 산출한 뒤, HTML·CSS·JavaScript 화면과 Django API를 연결해 담당자가 위험 고객을 조회하는 웹 서비스를 개발한다. SKN 4기 1팀은 테스트 자동화을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
             "techStacks": [
               "Python",
               "SQL",
@@ -1794,7 +1846,7 @@
         {
           "projectId": "0590e38e-3abc-5c4e-a511-cdddbc45a100",
           "order": 3,
-          "name": "SKN 32기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
+          "name": "SKN 4기 1팀 3차 · 내·외부 문서 기반 질의응답 시스템",
           "period": {
             "startedAt": "2024-06-24",
             "endedAt": "2024-07-07"
@@ -1804,7 +1856,7 @@
           "membershipRole": "MEMBER",
           "teamContext": {
             "domain": "문서 검색·질의응답",
-            "scope": "머신러닝·딥러닝 학습 결과를 바탕으로 문서 분류와 검색 품질을 비교하고, LLM을 연동해 사내 규정과 외부 공개 문서에서 근거를 찾아 답변하는 질의응답 시스템을 구현한다. SKN 32기 1팀은 사용자 검증을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
+            "scope": "머신러닝·딥러닝 학습 결과를 바탕으로 문서 분류와 검색 품질을 비교하고, LLM을 연동해 사내 규정과 외부 공개 문서에서 근거를 찾아 답변하는 질의응답 시스템을 구현한다. SKN 4기 1팀은 사용자 검증을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
             "techStacks": [
               "Python",
               "scikit-learn",
@@ -1859,7 +1911,7 @@
         {
           "projectId": "46e6e6e2-523b-51d5-a2a2-485aea1e2423",
           "order": 4,
-          "name": "SKN 32기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
+          "name": "SKN 4기 1팀 4차 · 문서 질의응답 서비스 배포·고도화",
           "period": {
             "startedAt": "2024-07-08",
             "endedAt": "2024-07-15"
@@ -1869,7 +1921,7 @@
           "membershipRole": "MEMBER",
           "teamContext": {
             "domain": "LLM 서비스 운영·클라우드 배포",
-            "scope": "3차 프로젝트의 문서 질의응답 시스템을 AWS에 배포하고, 검색 청크·프롬프트·캐시·관측 로그를 개선해 응답 안정성과 운영 편의성을 높이는 고도화 프로젝트를 수행한다. SKN 32기 1팀은 관측 가능성을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
+            "scope": "3차 프로젝트의 문서 질의응답 시스템을 AWS에 배포하고, 검색 청크·프롬프트·캐시·관측 로그를 개선해 응답 안정성과 운영 편의성을 높이는 고도화 프로젝트를 수행한다. SKN 4기 1팀은 관측 가능성을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
             "techStacks": [
               "Python",
               "Django",
@@ -1925,17 +1977,17 @@
         {
           "projectId": "53c5ac91-3ba6-5380-9938-124d0a05c35f",
           "order": 5,
-          "name": "SKN 32기 1팀 5차 · LLM 활용 대화형 상품추천 시스템",
+          "name": "SKN 4기 1팀 5차 · LLM 활용 대화형 상품추천 시스템",
           "period": {
             "startedAt": "2024-07-15",
-            "endedAt": "2026-10-26"
+            "endedAt": "2024-09-08"
           },
           "certificationStatus": "CERTIFIED",
           "status": "READY",
           "membershipRole": "MEMBER",
           "teamContext": {
             "domain": "대화형 커머스·개인화 추천",
-            "scope": "사용자의 자연어 요구와 대화 맥락을 분석해 상품 후보를 검색하고 추천 이유·비교 근거를 제시하는 대화형 추천 서비스를 개발한다. SKN 32기 1팀은 데이터 품질을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
+            "scope": "사용자의 자연어 요구와 대화 맥락을 분석해 상품 후보를 검색하고 추천 이유·비교 근거를 제시하는 대화형 추천 서비스를 개발한다. SKN 4기 1팀은 데이터 품질을 중점 목표로 잡고 6명이 역할을 나눠 개발했다.",
             "techStacks": [
               "Python",
               "Django",
@@ -1993,7 +2045,7 @@
       "projectCount": 5,
       "period": {
         "startedAt": "2024-04-01",
-        "endedAt": "2026-10-26"
+        "endedAt": "2024-09-08"
       },
       "evidenceCodes": [
         "TASK:81127f37-0823-5b92-8c2b-97bc40ac3bf4",
@@ -2456,7 +2508,7 @@
           "phase": "early",
           "label": "초기",
           "period": {
-            "startedAt": "2026-04-28",
+            "startedAt": "2024-03-11",
             "endedAt": "2024-05-10"
           },
           "noteCount": 2,
@@ -2479,7 +2531,7 @@
           "label": "후기",
           "period": {
             "startedAt": "2024-07-11",
-            "endedAt": "2026-10-26"
+            "endedAt": "2024-09-08"
           },
           "noteCount": 2,
           "summary": "후기 상담에서는 설명 전달 부담·지원 위축·기여 설명 어려움과 학습 꾸준함 신호가 함께 확인됩니다.",
@@ -2775,13 +2827,13 @@
       "nodes": [
         {
           "id": "self",
-          "label": "박수진",
+          "label": "박준서",
           "x": 50,
           "y": 50,
           "kind": "self",
           "weight": 1,
           "evidenceCount": 1,
-          "evidence": ["SKN 32기 수강생"],
+          "evidence": ["SKN 4기 수강생"],
           "confidence": "HIGH"
         },
         {
@@ -2890,7 +2942,7 @@
           "weight": 0.83,
           "evidenceCount": 4,
           "evidence": [
-            "완료 프로젝트 · 2026-10-26",
+            "완료 프로젝트 · 2024-09-08",
             "본인 담당 완료 과업 1개",
             "동료평가에서 프로젝트 참여 확인",
             "강사 인증 완료 프로젝트"
@@ -3559,7 +3611,7 @@
           "type": "PARTICIPATED",
           "strength": 0.83,
           "evidence": [
-            "완료 프로젝트 · 2026-10-26",
+            "완료 프로젝트 · 2024-09-08",
             "본인 담당 완료 과업 1개",
             "동료평가에서 프로젝트 참여 확인"
           ]

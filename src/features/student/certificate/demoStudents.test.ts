@@ -81,12 +81,12 @@ describe('certificate demo students', () => {
     const score = {
       overallScore: 87.4,
       axes: [
-        { key: '기술', score: 79.3 },
-        { key: '소통', score: 76 },
-        { key: '팀워크', score: 87 },
-        { key: '책임감', score: 99 },
+        { key: '기술·기술기여', score: 79.3 },
+        { key: '소통·협업·팀워크', score: 76 },
         { key: '문제해결', score: 83.3 },
+        { key: '책임감', score: 99 },
         { key: '학습지속성', score: 100 },
+        { key: '성취도 평가', score: 80.3 },
       ],
       metrics: [{ key: 'assessment', value: 80.3, detail: '채점 완료 3/4건' }],
     } as unknown as CertificateScoreResult
@@ -94,7 +94,9 @@ describe('certificate demo students', () => {
     const result = applyCertificateDemoScore(score, highAchiever.id)
 
     expect(result.overallScore).toBeGreaterThanOrEqual(80)
-    expect(result.axes.find((axis) => axis.key === '기술')?.score).toBe(80.6)
+    expect(result.axes.find((axis) => axis.key === '성취도 평가')?.score).toBe(
+      82,
+    )
     expect(result.metrics[0]).toMatchObject({
       value: 82,
       detail: '채점 완료 6/6건',

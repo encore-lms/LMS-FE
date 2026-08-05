@@ -409,11 +409,11 @@ export function applyCertificateDemoScore(
   if (studentId !== HIGH_ACHIEVER_STUDENT_ID) return score
 
   const axes = score.axes.map((axis) =>
-    axis.key === '기술'
+    axis.key === '성취도 평가'
       ? {
           ...axis,
-          score: 80.6,
-          detail: '내부 인증 완료 6건 평균 82점, 외부 인증 코딩테스트 15점',
+          score: 82,
+          detail: '채점 완료 6/6건 전체 평균 82점',
         }
       : axis,
   )

@@ -13,14 +13,19 @@ import { SummaryTab } from './SummaryTab'
 
 vi.mock('../ai', () => ({
   CERTIFICATE_MOCK_STUDENT_ID: 'student-1',
-  CERTIFICATE_360_AXIS_KEYS: ['기술', '팀워크', '책임감', '소통', '문제해결'],
-  CERTIFICATE_AXIS_KEYS: [
-    '기술',
-    '소통',
-    '팀워크',
-    '책임감',
+  CERTIFICATE_360_AXIS_KEYS: [
+    '기술·기술기여',
+    '소통·협업·팀워크',
     '문제해결',
+    '책임감',
+  ],
+  CERTIFICATE_AXIS_KEYS: [
+    '기술·기술기여',
+    '소통·협업·팀워크',
+    '문제해결',
+    '책임감',
     '학습지속성',
+    '성취도 평가',
   ],
   fetchAiAnalysis: vi.fn(),
   fetchCertificateDetailTabs: vi.fn(),
@@ -32,6 +37,8 @@ const axis = (
   score: number,
   peerScore: number | null,
   mentorScore: number | null,
+  instructorScore: number | null = null,
+  managerScore: number | null = null,
 ): CertificateScoreResult['axes'][number] => ({
   key,
   score,
@@ -46,122 +53,101 @@ const axis = (
     populationSize: 300,
     detail: '동일 기수 유효 300명 중 상위 31.7%입니다.',
   },
-  comparison: { peerScore, mentorScore },
-  evidence:
-    key === '기술'
+  comparison: { peerScore, mentorScore, instructorScore, managerScore },
+  evidence: [
+    '기술·기술기여',
+    '소통·협업·팀워크',
+    '문제해결',
+    '책임감',
+  ].includes(key)
+    ? [
+        {
+          key: 'peerEvaluation',
+          label: '동료 평가',
+          value: 3.8,
+          unit: '점',
+          numerator: null,
+          denominator: null,
+          weightPercent: 25,
+          appliedScore: 17.5,
+          detail: '동료 평가자 그룹 평균 3.8/5',
+        },
+        {
+          key: 'mentorEvaluation',
+          label: '멘토 평가',
+          value: 4,
+          unit: '점',
+          numerator: null,
+          denominator: null,
+          weightPercent: 25,
+          appliedScore: 18.75,
+          detail: '멘토 평가자 그룹 평균 4/5',
+        },
+        {
+          key: 'instructorEvaluation',
+          label: '강사 평가',
+          value: 4.2,
+          unit: '점',
+          numerator: null,
+          denominator: null,
+          weightPercent: 25,
+          appliedScore: 20,
+          detail: '강사 평가자 그룹 평균 4.2/5',
+        },
+        {
+          key: 'managerEvaluation',
+          label: '운영 평가',
+          value: 4.4,
+          unit: '점',
+          numerator: null,
+          denominator: null,
+          weightPercent: 25,
+          appliedScore: 21.25,
+          detail: '운영 평가자 그룹 평균 4.4/5',
+        },
+      ]
+    : key === '성취도 평가'
       ? [
           {
-            key: 'internalAssessment',
-            label: '성취도·CS 평가 전체 평균',
+            key: 'achievementAssessment',
+            label: '성취도 평가 전체 평균',
             value: 66,
             unit: '점',
             numerator: 3,
-            denominator: 3,
-            weightPercent: 80,
-            appliedScore: 52.8,
-            detail: '채점 완료 3/3건',
-          },
-          {
-            key: 'codingTest',
-            label: '외부 코딩테스트',
-            value: 2,
-            unit: '점',
-            numerator: null,
-            denominator: null,
-            weightPercent: 20,
-            appliedScore: 2,
-            detail: 'PCCE 520점 · LV.1 · 기술점수 2점 부여',
+            denominator: 4,
+            weightPercent: 100,
+            appliedScore: 66,
+            detail: '채점 완료 3/4건 전체 평균 66점',
           },
         ]
-      : ['소통', '팀워크', '책임감'].includes(key)
-        ? [
-            {
-              key: 'completedProjects',
-              label: '완료 프로젝트',
-              value: 5,
-              unit: '건',
-              numerator: null,
-              denominator: null,
-              weightPercent: null,
-              appliedScore: null,
-              detail: '완료 5건',
-            },
-            {
-              key: 'peerEvaluation',
-              label: `전체 프로젝트 상호평가 ${key}`,
-              value: 4.2,
-              unit: '점',
-              numerator: null,
-              denominator: null,
-              weightPercent: 80,
-              appliedScore: 3.36,
-              detail: '5점 만점 평균',
-            },
-            {
-              key: 'mentorEvaluation',
-              label: `최종 멘토평가 ${key}`,
-              value: 4.25,
-              unit: '점',
-              numerator: null,
-              denominator: null,
-              weightPercent: 20,
-              appliedScore: 0.85,
-              detail: '5점 만점',
-            },
-          ]
-        : key === '문제해결'
-          ? [
-              {
-                key: 'certifiedTroubleshooting',
-                label: '인증 트러블슈팅',
-                value: 2,
-                unit: '건',
-                numerator: 2,
-                denominator: 6,
-                weightPercent: null,
-                appliedScore: 33.3,
-                detail: '인증 완료 2건 / 기준 6건',
-              },
-              {
-                key: 'peerProblemSolving',
-                label: '전체 프로젝트 상호평가 문제해결',
-                value: 3.65,
-                unit: '점',
-                numerator: null,
-                denominator: null,
-                weightPercent: 50,
-                appliedScore: 36.5,
-                detail: '보조점수 36.5/50',
-              },
-            ]
-          : [
-              {
-                key: 'attendance',
-                label: '출석률',
-                value: 74.2,
-                unit: '%',
-                numerator: 115,
-                denominator: 155,
-                weightPercent: 70,
-                appliedScore: 52.5,
-                detail: '115/155일 출석 인정',
-              },
-              {
-                key: 'blog',
-                label: '블로그 제출률',
-                value: 82,
-                unit: '%',
-                numerator: 21,
-                denominator: 26,
-                weightPercent: 30,
-                appliedScore: 24,
-                detail: '21/26주 제출',
-              },
-            ],
+      : [
+          {
+            key: 'attendance',
+            label: '출석률',
+            value: 74.2,
+            unit: '%',
+            numerator: 115,
+            denominator: 155,
+            weightPercent: 70,
+            appliedScore: 52.5,
+            detail: '115/155일 출석 인정',
+          },
+          {
+            key: 'blog',
+            label: '블로그 제출률',
+            value: 82,
+            unit: '%',
+            numerator: 21,
+            denominator: 26,
+            weightPercent: 30,
+            appliedScore: 24,
+            detail: '21/26주 제출',
+          },
+        ],
 })
 
 const scoreResult: CertificateScoreResult = {
-  policyVersion: '2026.07.21-six-axis-persistence-v4',
+  policyVersion: '2026.08.05-six-axis-four-rater-v1',
   calculatedAt: '2026-07-16',
   student: {
     studentId: 'student-1',
@@ -172,7 +158,7 @@ const scoreResult: CertificateScoreResult = {
     cohortEndedAt: '2024-10-20',
   },
   status: 'READY',
-  overallScore: 71.2,
+  overallScore: 79.9,
   grade: 'B',
   overallRelative: {
     status: 'READY',
@@ -183,12 +169,12 @@ const scoreResult: CertificateScoreResult = {
     detail: '전체 수강생 유효 300명 중 상위 31.7%입니다.',
   },
   axes: [
-    axis('기술', 54.8, 75, 75),
-    axis('소통', 84, 83.8, 85),
-    axis('팀워크', 83, 82.5, 85),
-    axis('책임감', 74, 73.8, 75),
-    axis('문제해결', 36.5, 70, null),
-    axis('학습지속성', 95, null, 82.5),
+    axis('기술·기술기여', 72.2, 63.7, 75, 75, 75),
+    axis('소통·협업·팀워크', 86.3, 82.5, 87.5, 75, 100),
+    axis('문제해결', 79.1, 66.3, 75, 75, 100),
+    axis('책임감', 80.9, 73.8, 75, 75, 100),
+    axis('학습지속성', 95, null, null),
+    axis('성취도 평가', 66, null, null),
   ],
   metrics: [
     {
@@ -202,7 +188,7 @@ const scoreResult: CertificateScoreResult = {
     },
     {
       key: 'assessment',
-      label: '시험 평균',
+      label: '성취도 평가 평균',
       value: 66,
       maximum: 100,
       unit: '점',
@@ -280,7 +266,7 @@ const detailTabsResult = {
       },
       {
         id: 'assessment-network',
-        title: '네트워크 CS 평가',
+        title: '네트워크 성취도 평가',
         category: '네트워크',
         score: 78,
         cohortAverageScore: 69,
@@ -416,7 +402,7 @@ describe('SummaryTab', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('71.2')).toBeInTheDocument()
+    expect(await screen.findByText('79.9')).toBeInTheDocument()
     expect(
       screen.getByText(
         '학습·프로젝트·평가 데이터를 바탕으로 한 6축 절대·상대 산정',
@@ -440,7 +426,7 @@ describe('SummaryTab', () => {
     expect(container.querySelectorAll('[data-peer-axis-bar]')).toHaveLength(5)
     expect(
       screen.getByRole('link', {
-        name: '시험 평균 상세 화면으로 이동',
+        name: '성취도 평가 평균 상세 화면으로 이동',
       }),
     ).toHaveAttribute('href', '/student/quizzes')
     expect(
@@ -475,7 +461,14 @@ describe('SummaryTab', () => {
       [...container.querySelectorAll('[data-radar-axis-label]')].map(
         (label) => label.textContent,
       ),
-    ).toEqual(['기술', '소통', '팀워크', '책임감', '문제해결', '학습지속성'])
+    ).toEqual([
+      '기술·기술기여',
+      '소통·협업·팀워크',
+      '문제해결',
+      '책임감',
+      '학습지속성',
+      '성취도 평가',
+    ])
     expect(
       container.querySelectorAll('[data-radar-axis-trigger]'),
     ).toHaveLength(6)
@@ -488,44 +481,29 @@ describe('SummaryTab', () => {
     expect(container.querySelector('[data-three-sixty-comparison]')).toBeNull()
 
     const technicalEvidence = container.querySelector(
-      '[data-score-evidence="기술"]',
+      '[data-score-evidence="기술·기술기여"]',
     )
-    expect(technicalEvidence).toHaveTextContent('기술 점수')
-    expect(technicalEvidence).toHaveTextContent('성취도·CS 평가별 점수')
-    expect(technicalEvidence).toHaveTextContent('파이썬')
-    expect(technicalEvidence).toHaveTextContent('91점')
-    expect(technicalEvidence).toHaveTextContent('머신러닝')
-    expect(technicalEvidence).toHaveTextContent('87점')
-    expect(technicalEvidence).toHaveTextContent('네트워크')
-    expect(technicalEvidence).toHaveTextContent('78점')
-    expect(technicalEvidence).toHaveTextContent('520/1,000점')
-    expect(technicalEvidence).toHaveTextContent('LV.1 · 승인')
-    expect(technicalEvidence).toHaveTextContent(
-      '성취도·CS 평가 전체 평균 66점의 80% = 52.8점',
-    )
-    expect(technicalEvidence).toHaveTextContent('기술 54.8점')
+    expect(technicalEvidence).toHaveTextContent('기술·기술기여 점수')
+    expect(technicalEvidence).toHaveTextContent('동료 평가')
+    expect(technicalEvidence).toHaveTextContent('멘토 평가')
+    expect(technicalEvidence).toHaveTextContent('강사 평가')
+    expect(technicalEvidence).toHaveTextContent('운영 평가')
+    expect(technicalEvidence).toHaveTextContent('100점 환산 후 25% 반영')
+    expect(technicalEvidence).toHaveTextContent('기술·기술기여 최종 72.2점')
 
-    fireEvent.click(screen.getByRole('tab', { name: '소통' }))
+    fireEvent.click(screen.getByRole('tab', { name: '소통·협업·팀워크' }))
     const communicationEvidence = container.querySelector(
-      '[data-score-evidence="소통"]',
+      '[data-score-evidence="소통·협업·팀워크"]',
     )
-    expect(communicationEvidence).toHaveTextContent('소통 점수')
-    expect(communicationEvidence).toHaveTextContent('완료 프로젝트')
+    expect(communicationEvidence).toHaveTextContent('소통·협업·팀워크 점수')
     expect(communicationEvidence).toHaveTextContent(
-      '전체 프로젝트 상호평가 소통',
+      '소통·협업·팀워크 최종 86.3점',
     )
-    expect(communicationEvidence).toHaveTextContent('최종 멘토평가 소통')
-    expect(communicationEvidence).toHaveTextContent('소통 최종 84점')
-
-    fireEvent.click(screen.getByRole('tab', { name: '팀워크' }))
-    expect(
-      container.querySelector('[data-score-evidence="팀워크"]'),
-    ).toHaveTextContent('팀워크 최종 83점')
 
     fireEvent.click(screen.getByRole('tab', { name: '책임감' }))
     expect(
       container.querySelector('[data-score-evidence="책임감"]'),
-    ).toHaveTextContent('책임감 최종 74점')
+    ).toHaveTextContent('책임감 최종 80.9점')
 
     fireEvent.click(
       screen.getByRole('button', { name: '문제해결 점수 근거 보기' }),
@@ -534,8 +512,9 @@ describe('SummaryTab', () => {
       '[data-score-evidence="문제해결"]',
     )
     expect(problemEvidence).toHaveTextContent('문제해결 점수')
-    expect(problemEvidence).toHaveTextContent('인증 사례 2건 ÷ 기준 6건')
-    expect(problemEvidence).toHaveTextContent('트러블슈팅 점수가 50점 미만')
+    expect(problemEvidence).toHaveTextContent('강사 평가')
+    expect(problemEvidence).toHaveTextContent('운영 평가')
+    expect(problemEvidence).toHaveTextContent('문제해결 최종 79.1점')
 
     fireEvent.click(screen.getByRole('tab', { name: '학습지속성' }))
     const learningEvidence = container.querySelector(
@@ -548,6 +527,19 @@ describe('SummaryTab', () => {
     expect(learningEvidence).toHaveTextContent(
       '블로그 제출률 82%의 30% 반영 = 24점',
     )
+
+    fireEvent.click(screen.getByRole('tab', { name: '성취도 평가' }))
+    const achievementEvidence = container.querySelector(
+      '[data-score-evidence="성취도 평가"]',
+    )
+    expect(achievementEvidence).toHaveTextContent('성취도 평가별 점수')
+    expect(achievementEvidence).toHaveTextContent('파이썬')
+    expect(achievementEvidence).toHaveTextContent('머신러닝')
+    expect(achievementEvidence).toHaveTextContent('네트워크')
+    expect(achievementEvidence).toHaveTextContent(
+      '성취도 평가 전체 평균 = 66점',
+    )
+    expect(achievementEvidence).toHaveTextContent('성취도 평가 최종 66점')
 
     expect(
       screen.getByRole('button', { name: '함께 보기', pressed: true }),

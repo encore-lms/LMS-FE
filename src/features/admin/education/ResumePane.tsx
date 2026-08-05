@@ -7,7 +7,7 @@ import { formatDateTime } from '@/shared/lib/date'
 import { useStudentAccounts, useCohortRoster } from '@/shared/api/students'
 import type { ResumeRow } from './types'
 import { useResumes } from './api'
-import { ListToolbar } from '@/components/ui/ListToolbar'
+import { ListToolbar, ToolbarCount } from '@/components/ui/ListToolbar'
 import { useInstructorResumes } from '@/features/instructor/education/api'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -150,12 +150,11 @@ export function ResumePane({
         <div className="mb-3">
           <ListToolbar
             left={
-              <span>
-                총 {rows.length}개 이력서
-                {needle && data && (
-                  <span className="text-fg-subtle"> · 전체 {data.length}</span>
-                )}
-              </span>
+              <ToolbarCount
+                filtered={rows.length}
+                total={data?.length ?? 0}
+                unit="개 이력서"
+              />
             }
             search={{
               value: q,
@@ -163,6 +162,7 @@ export function ResumePane({
               placeholder: '이름·이력서 제목 검색',
               ariaLabel: '이력서 검색',
             }}
+            reset={{ active: !!q, onReset: () => setQ('') }}
           />
         </div>
         <DataTable

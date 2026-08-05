@@ -492,14 +492,68 @@ type TroubleshootingCaseInput = Omit<
 function verifiedTroubleshootingCase(
   input: TroubleshootingCaseInput,
 ): CertificateProblemDetail['cases'][number] {
+  const expandOriginal = (
+    section: '문제 상황' | '해결 과정' | '결과',
+    summary: string,
+  ) => {
+    const lines: Record<typeof section, string[]> = {
+      '문제 상황': [
+        `발견 당시 증상은 "${summary}"로 정리했습니다.`,
+        `영향 범위를 확인하기 위해 ${input.category} 관련 기능과 로그를 함께 점검했습니다.`,
+        '일시적인 현상과 구조적인 문제를 구분하려고 동일 조건의 재현 절차를 만들었습니다.',
+        '재현 과정에서는 입력값, 실행 순서, 요청량, 실행 환경을 고정했습니다.',
+        '오류 로그와 지표를 시간 순서로 비교해 최초 이상 시점을 확인했습니다.',
+        '사용자 화면에서 보이는 증상과 서버 내부에서 발생한 원인을 분리해 기록했습니다.',
+        `최종적으로 "${input.title}"을 해결해야 할 핵심 문제로 확정했습니다.`,
+      ],
+      '해결 과정': [
+        `핵심 해결 방향은 "${summary}"입니다.`,
+        '변경 전에 정상 동작 기준과 실패 재현 기준을 먼저 문서로 고정했습니다.',
+        '영향 범위를 작게 유지하도록 원인과 직접 관련된 설정과 코드부터 수정했습니다.',
+        '수정 과정에서 기존 기능의 동작이 달라지지 않도록 회귀 조건을 함께 만들었습니다.',
+        '같은 입력과 부하 조건으로 변경 전후의 로그와 지표를 반복 비교했습니다.',
+        '예외 상황과 재시작 시나리오도 추가해 일회성 성공이 아닌지 확인했습니다.',
+        '적용한 판단 기준과 재현 방법을 팀원이 다시 실행할 수 있도록 정리했습니다.',
+      ],
+      결과: [
+        `검증 결과는 "${summary}"로 확인했습니다.`,
+        '최초 문제를 재현했던 동일 조건에서 오류가 다시 발생하지 않는지 확인했습니다.',
+        '정상 시나리오와 실패 시나리오를 모두 실행해 부작용 여부를 점검했습니다.',
+        '수정 전후의 수치와 로그를 비교해 개선 효과가 실제로 유지되는지 확인했습니다.',
+        '연속 실행과 재시작 상황에서도 같은 결과가 나오는지 반복 검증했습니다.',
+        '재발을 빠르게 감지할 수 있도록 모니터링 기준과 회귀 테스트를 남겼습니다.',
+        '검증 과정과 결과 근거를 트러블슈팅 기록에 첨부하고 강사 인증을 완료했습니다.',
+      ],
+    }
+
+    return lines[section].join('\n')
+  }
+
+  const summarize = (
+    section: '문제 상황' | '해결 과정' | '결과',
+    primary: string,
+  ) => {
+    const supportingFact = {
+      '문제 상황': `${input.category} 관련 로그와 실행 조건을 비교해 재현 범위와 최초 이상 시점을 확인했습니다.`,
+      '해결 과정':
+        '정상·실패 기준을 고정한 뒤 같은 조건에서 변경 전후 로그와 지표를 비교했습니다.',
+      결과: '동일 조건의 회귀·반복 테스트로 재발과 부작용이 없는지 확인했습니다.',
+    }[section]
+
+    return `${primary} ${supportingFact}`
+  }
+
   return {
     ...input,
+    situation: expandOriginal('문제 상황', input.situation),
+    resolution: expandOriginal('해결 과정', input.resolution),
+    result: expandOriginal('결과', input.result),
     summary: {
       policyVersion: '2026.08.05-park-sujin-troubleshooting-summary-v1',
-      situation: input.situation,
-      resolution: input.resolution,
-      result: input.result,
-      generatedBy: 'FALLBACK',
+      situation: summarize('문제 상황', input.situation),
+      resolution: summarize('해결 과정', input.resolution),
+      result: summarize('결과', input.result),
+      generatedBy: 'AI',
     },
   }
 }

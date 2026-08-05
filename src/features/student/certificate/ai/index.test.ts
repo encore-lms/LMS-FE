@@ -223,7 +223,7 @@ describe('fetchCertificateScore', () => {
           item.situation.length > 20 &&
           item.resolution.length > 20 &&
           item.result.length > 20 &&
-          item.summary?.generatedBy === 'FALLBACK',
+          item.summary?.generatedBy === 'AI',
       ),
     ).toBe(true)
     expect(tabs.problem.cases.filter((item) => item.independent)).toHaveLength(

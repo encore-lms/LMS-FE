@@ -193,3 +193,22 @@ export interface PeerEvaluation {
   draft: boolean
   submittedAt: string | null
 }
+
+// ── 수강생 평가('수강생 평가' 탭, 2026-08-06 신설) ──
+
+/** 수강생 1명 — scores 는 4축 순서(shared EVALUATION_AXIS_LABELS), 평가 전이면 null. */
+export interface StaffStudentEvalEntry {
+  studentId: string
+  name: string
+  scores: number[] | null
+  comment: string | null
+  updatedAtLabel: string | null
+}
+
+/** 기수 평가 시트 — 로스터 전체 + 평가자 본인이 저장한 평가(강사·매니저 각자 독립). */
+export interface StaffStudentEvalSheet {
+  cohortId: string
+  studentCount: number
+  evaluatedCount: number
+  students: StaffStudentEvalEntry[]
+}

@@ -11,6 +11,7 @@ import { RecordReviewActions } from '../records/RecordReviewActions'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { NoticesPane } from '@/features/instructor/education/NoticesPane'
 import QnaListPage from '@/features/student/qna/QnaListPage'
+import { StudentEvalPane } from './StudentEvalPane'
 import { StudentsPane } from '../students/StudentsPane'
 import { MentoringPane } from '../mentoring/MentoringPane'
 import { MaterialsPane } from './MaterialsPane'
@@ -33,6 +34,7 @@ type TabKey =
   | 'resume'
   | 'mentoring'
   | 'qna'
+  | 'evaluations'
   | 'materials'
   | 'settings'
 
@@ -50,6 +52,8 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'resume', label: '이력서' },
   { key: 'records', label: '기록실' },
   { key: 'qna', label: TERMS.qnaBoard },
+  // 수강생 평가(2026-08-06 신설) — 강사 허브와 공용 탭·무접미('과정 홈' 선례).
+  { key: 'evaluations', label: '수강생 평가' },
   { key: 'mentoring', label: roleTag('멘토링', '매니저') },
   { key: 'settings', label: roleTag('설정', '매니저') },
 ]
@@ -180,6 +184,8 @@ export default function EducationPage() {
             embedded
             backTo={`/admin/education/${cohortId}?tab=qna`}
           />
+        ) : tab === 'evaluations' ? (
+          <StudentEvalPane cohortId={cohortId} />
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />

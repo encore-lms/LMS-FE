@@ -12,6 +12,8 @@ import type {
   ResumeRow,
   CohortProject,
   PeerEvalResults,
+  StaffStudentEvalEntry,
+  StaffStudentEvalSheet,
 } from './types'
 
 // 설명 탭 — HRD-Net 과정 상세(learning-service). 과정/기수 둘 다 있어야 조회.
@@ -354,5 +356,45 @@ export function usePeerEvaluations(projectId: string | null) {
         )
         .then((r) => r.data),
     enabled: !!projectId,
+  })
+}
+
+/**
+ * 수강생 평가('수강생 평가' 탭, 2026-08-06 신설) — 강사·매니저가 담당 기수 전체 수강생을
+ * 4축(shared EVALUATION_AXIS_LABELS 순서)으로 평가한다. 시트는 로스터 전체 + 평가자 본인 저장분.
+ */
+export function useStaffStudentEvals(cohortId: string | null) {
+  return useQuery({
+    queryKey: adminEducationKeys.staffStudentEvals(cohortId ?? ''),
+    queryFn: () =>
+      apiClient
+        .get<StaffStudentEvalSheet>(
+          `/staff/cohorts/${cohortId}/student-evaluations`,
+        )
+        .then((r) => r.data),
+    enabled: !!cohortId,
+  })
+}
+
+/** 수강생 1명 저장(재저장=덮어쓰기) — 전 축 1~5 필수, 코멘트 선택. 성공 시 시트 갱신. */
+export function useSaveStaffStudentEval(cohortId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      studentId: string
+      scores: number[]
+      comment?: string
+    }) =>
+      apiClient
+        .put<StaffStudentEvalEntry>(
+          `/staff/cohorts/${cohortId}/student-evaluations/${input.studentId}`,
+          { scores: input.scores, comment: input.comment ?? '' },
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: adminEducationKeys.staffStudentEvals(cohortId),
+      })
+    },
   })
 }

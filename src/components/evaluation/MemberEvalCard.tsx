@@ -45,6 +45,7 @@ export function MemberEvalCard({
   commentPlaceholder,
   onScore,
   onComment,
+  footer,
 }: {
   person: {
     id: string
@@ -66,6 +67,8 @@ export function MemberEvalCard({
   commentPlaceholder?: string
   onScore: (axisIndex: number, value: number) => void
   onComment: (comment: string) => void
+  /** 카드 하단 슬롯 — 개별 저장 버튼 등 화면별 액션(수강생 평가 탭). */
+  footer?: React.ReactNode
 }) {
   const meta = CARD_STATE_META[state]
   const PillIcon = meta.icon
@@ -287,6 +290,7 @@ export function MemberEvalCard({
             )}
           />
         </div>
+        {footer}
       </div>
     </section>
   )

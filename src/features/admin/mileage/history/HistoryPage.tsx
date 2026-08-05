@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 
 import { Download } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
-import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
@@ -14,26 +15,14 @@ import { usePageHeader } from '@/shared/store'
 import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
 import { useMileageHistory } from './api'
-import type { AmountSign, MileageTxRow, TxType } from './types'
+import type { MileageTxRow, TxType } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { SearchInput } from '@/components/ui/SearchInput'
-
-const TX_META: Record<TxType, { label: string; tone: BadgeTone }> = {
-  grant: { label: '지급', tone: 'success' },
-  deduct: { label: '차감', tone: 'neutral' },
-  partial: { label: '부분', tone: 'warning' },
-  failed: { label: '실패', tone: 'danger' },
-}
-
-const AMOUNT_COLOR: Record<AmountSign, string> = {
-  plus: 'text-success',
-  minus: 'text-danger',
-  zero: 'text-fg-subtle',
-}
+import { AMOUNT_COLOR, TX_META } from './meta'
 
 // 마일리지 지급 내역 (/admin/mileage/history) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1197:6378. 지급·차감 원장(MileageTransaction) 조회. 마일리지 클러스터 sub-page.
-// 조회 전용 — CSV 내보내기·상세는 별도 시안 미설계 → 토스트 + TODO(P0_16).
+// 조회 전용 — 상세는 수강생 이력 페이지로, CSV 내보내기는 미설계 → 토스트.
 export default function HistoryPage() {
   usePageHeader(
     '마일리지 지급 내역',
@@ -158,18 +147,16 @@ export default function HistoryPage() {
       key: 'action',
       header: '',
       className: 'w-16',
-      cell: (r) => (
-        <button
-          type="button"
-          // TODO: 거래 상세(P0_16 BE 계약 확정 후)
-          onClick={() =>
-            toast.info(`${r.studentName} 거래 상세는 준비 중입니다.`)
-          }
-          className="text-brand text-[13px] font-semibold hover:underline"
-        >
-          상세
-        </button>
-      ),
+      // 거래 한 줄만 떼어 보면 잔액이 왜 그 숫자인지 알 수 없다 — 그 수강생의 흐름으로 보낸다.
+      cell: (r) =>
+        r.studentUserId ? (
+          <Link
+            to={`/admin/mileage/history/students/${r.studentUserId}`}
+            className="text-brand text-[13px] font-semibold hover:underline"
+          >
+            상세
+          </Link>
+        ) : null,
     },
   ]
 

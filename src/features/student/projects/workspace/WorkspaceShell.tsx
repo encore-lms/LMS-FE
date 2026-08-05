@@ -43,6 +43,7 @@ export function WorkspaceShell({
   onTab,
   visibleTabs,
   readOnly = false,
+  teamLocked = false,
   backTo,
   children,
 }: {
@@ -57,6 +58,8 @@ export function WorkspaceShell({
   visibleTabs?: WsTab[]
   /** 검토자(매니저·강사) 열람 — 히어로의 팀원 초대·인증 요청 액션 미노출(2026-08-04). */
   readOnly?: boolean
+  /** 팀 구성이 잠긴 상태(PM 아님·종료·상호평가 중) — 히어로 액션을 '팀 관리'로 바꾼다. */
+  teamLocked?: boolean
   /** 브레드크럼 목록 링크 대체 — 미지정 시 수강생 프로젝트 목록. */
   backTo?: { label: string; onClick: () => void }
   children: ReactNode
@@ -130,6 +133,7 @@ export function WorkspaceShell({
         </div>
         {!readOnly && (
           <div className="flex shrink-0 items-center gap-2">
+            {/* 초대가 막힌 상태에서 '팀원 초대'라고 부르면, 눌러 간 곳에서 비활성 버튼을 만난다. */}
             <button
               type="button"
               onClick={() => onTab('settings')}
@@ -137,7 +141,7 @@ export function WorkspaceShell({
               className="flex items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-white/25"
             >
               <Send className="size-3.5" aria-hidden="true" />
-              팀원 초대
+              {teamLocked ? '팀 관리' : '팀원 초대'}
             </button>
             <button
               type="button"

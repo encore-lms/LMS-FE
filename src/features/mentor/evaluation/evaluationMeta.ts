@@ -1,92 +1,14 @@
-import {
-  CheckCircle2,
-  ChevronUp,
-  Command,
-  Send,
-  type LucideIcon,
-} from 'lucide-react'
-import { EVALUATION_AXIS_LABELS } from '@/shared/constants'
-
-// 평가 작성 화면 메타 — 2026-08-05 4축 개편(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감).
-// 겹치던 소통·협업·팀워크를 한 축으로 합치고 단기 프로젝트에서 관찰 불가한 '성장'은 제외.
-// 진술문(desc)은 인성검사식 — 사람이 아니라 행동에 답하게 해 관대화를 줄인다.
-// 저장은 1~5 유지(집계·증명서 호환), UI만 리커트 그리드(낮음/보통/높음 앵커).
-
-export interface EvaluationAxisMeta {
-  label: string
-  /** 콤팩트 표기(추천 후보 카드 등 좁은 자리) */
-  short: string
-  /** 진술문 — "이 사람은 ~했다"에 대한 동의 정도를 묻는다 */
-  desc: string
-  icon: LucideIcon
-  /** 축 텍스트 색 */
-  text: string
-  /** 축 틴트 bg(기준 칩·아이콘 박스) */
-  tint: string
-  /** 선택 세그먼트 fill */
-  fill: string
-}
-
-/** 고정 4축(2026-08-05 개편) — 순서 = EvaluationScoreTuple 인덱스(BE scores4 매핑과 1:1).
- * 라벨 정본은 shared EVALUATION_AXIS_LABELS(운영 평판·mock 과 공유) — 여기서는 UI 메타만 더한다. */
-export const EVALUATION_AXES: EvaluationAxisMeta[] = [
-  {
-    label: EVALUATION_AXIS_LABELS[0],
-    short: '기술',
-    desc: '맡은 몫을 결과물로 구현해 냈다',
-    icon: Command,
-    text: 'text-brand',
-    tint: 'bg-brand/10',
-    fill: 'bg-brand',
-  },
-  {
-    label: EVALUATION_AXIS_LABELS[1],
-    short: '소통·협업',
-    desc: '의견을 나누고 팀이 같이 일하기 좋았다',
-    icon: Send,
-    text: 'text-info',
-    tint: 'bg-info-bg',
-    fill: 'bg-info',
-  },
-  {
-    label: EVALUATION_AXIS_LABELS[2],
-    short: '문제해결',
-    desc: '막힌 문제를 스스로 뚫거나 팀을 도왔다',
-    icon: ChevronUp,
-    text: 'text-accent-strong',
-    tint: 'bg-accent-bg',
-    fill: 'bg-accent-strong',
-  },
-  {
-    label: EVALUATION_AXIS_LABELS[3],
-    short: '책임감',
-    desc: '맡은 일을 기한 안에 끝까지 해냈다',
-    icon: CheckCircle2,
-    text: 'text-success',
-    tint: 'bg-success-bg',
-    fill: 'bg-success',
-  },
-]
-
-/** 리커트 앵커 — 라벨은 3개(낮음·보통·높음), 선택지는 1~5 다섯 개(저장값 1~5 유지). */
-export const LIKERT_ANCHORS = ['낮음', '보통', '높음'] as const
-/** 선택지 원 크기(px) — 인성검사식 양끝 크게, 중앙으로 갈수록 작게. */
-export const LIKERT_SIZES = [30, 24, 20, 24, 30] as const
-
-/**
- * 멤버 아바타 색 — Figma 5인 시안 순서 매핑(#5c4fd9 · #29b5b0→brand · #3b82f5 ·
- * #f59e0a→warning · #f04545). 역할 고정/임의 배정 규칙 미확정(openQuestion) — 순번 순환.
- */
-export const MEMBER_AVATAR_BG = [
-  'bg-accent-strong',
-  'bg-brand',
-  'bg-info',
-  'bg-warning',
-  'bg-danger',
-] as const
-
-export const memberAvatarBg = (index: number) =>
-  MEMBER_AVATAR_BG[index % MEMBER_AVATAR_BG.length]
+// 평가 작성 화면 메타 — 축 UI 메타·리커트 상수·아바타 색은 공용 카드로 승격(2026-08-06,
+// @/components/evaluation — 멘토 평가·프로젝트 상호평가 공용). 임포트 표면 유지 재수출.
+// 아래에는 멘토 평가 화면 고유 문구·상수만 남긴다.
+export {
+  EVALUATION_AXES,
+  LIKERT_ANCHORS,
+  LIKERT_SIZES,
+  MEMBER_AVATAR_BG,
+  memberAvatarBg,
+} from '@/components/evaluation/evalAxes'
+export type { EvaluationAxisMeta } from '@/components/evaluation/evalAxes'
 
 /** 줄글 평가 코멘트 글자수 한도 — 길이 정책 미확정(Figma 카운터 500 기준) TODO. */
 export const EVALUATION_COMMENT_LIMIT = 500

@@ -109,11 +109,15 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
               <button
                 type="button"
                 onClick={() => setRemoving(i)}
-                disabled={m.kind === 'PM' || !!removeBlocked}
+                disabled={
+                  m.kind === 'PM' || !!removeBlocked || m.hasPeerRecord === true
+                }
                 title={
                   m.kind === 'PM'
                     ? 'PM은 삭제할 수 없어요. 다른 팀원에게 PM을 위임한 뒤 삭제하세요.'
-                    : (removeBlocked ?? undefined)
+                    : m.hasPeerRecord
+                      ? '상호평가 기록이 있는 팀원은 삭제할 수 없어요'
+                      : (removeBlocked ?? undefined)
                 }
                 className="border-border text-danger hover:bg-danger-bg rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
               >

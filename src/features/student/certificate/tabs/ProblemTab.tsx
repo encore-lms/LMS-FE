@@ -208,16 +208,9 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
     <div className="flex flex-col gap-4">
       <TabHead
         no={4}
-        title="문제해결·협업"
+        title="문제해결"
         sub="인증된 경험을 문제 유형과 해결 흐름으로 확인합니다."
-      >
-        <span className="bg-success-bg text-success rounded-full px-2.5 py-1 text-[11px] font-semibold">
-          인증 사례 {problem.certifiedCount}건
-        </span>
-        <span className="bg-info-bg text-info rounded-full px-2.5 py-1 text-[11px] font-semibold">
-          평균 {formatNumber(problem.averageDays)}일
-        </span>
-      </TabHead>
+      />
 
       <section className={cn(card, 'overflow-hidden p-0')}>
         {problem.cases.length === 0 ? (
@@ -233,10 +226,10 @@ function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
               <div className="flex items-center justify-between gap-3 px-3">
                 <div>
                   <h2 className="text-fg m-0 text-[16px] font-bold">
-                    전체 해결 분포
+                    전체 트러블슈팅 카테고리
                   </h2>
                   <p className="text-fg-subtle m-0 mt-1 text-[10px]">
-                    카테고리를 선택해 해결 경험을 확인하세요.
+                    카테고리를 선택하면 아래 인증 사례가 바뀌니다.
                   </p>
                 </div>
                 <span className="text-fg-muted text-[11px] font-bold">
@@ -375,7 +368,7 @@ export function ProblemTab({
       isPending={query.isPending}
       isError={query.isError || !query.data}
       onRetry={query.refetch}
-      errorTitle="문제해결·협업 데이터를 불러오지 못했어요"
+      errorTitle="문제해결 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >
       {query.data && <ProblemTabContent problem={query.data.problem} />}

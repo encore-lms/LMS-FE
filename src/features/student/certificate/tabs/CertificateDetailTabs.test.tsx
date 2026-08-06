@@ -313,7 +313,7 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     renderWithQuery(<ProblemTab />)
 
     expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
-    expect(screen.getByText('전체 해결 분포')).toBeInTheDocument()
+    expect(screen.getByText('전체 트러블슈팅 카테고리')).toBeInTheDocument()
     expect(screen.queryByText('선택한 카테고리')).not.toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: '전체 카테고리 1건' }),

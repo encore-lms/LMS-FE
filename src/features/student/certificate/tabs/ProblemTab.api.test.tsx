@@ -94,9 +94,10 @@ describe('ProblemTab 상세 API 연결', () => {
 
     expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
-    expect(screen.getByText('인증 사례 1건')).toBeInTheDocument()
-    expect(screen.getByText('평균 2일')).toBeInTheDocument()
-    expect(screen.getByText('전체 해결 분포')).toBeInTheDocument()
+    expect(screen.getByText('문제해결')).toBeInTheDocument()
+    expect(screen.getByText('전체 트러블슈팅 카테고리')).toBeInTheDocument()
+    expect(screen.getByText('총 1건')).toBeInTheDocument()
+    expect(screen.queryByText('평균 2일')).not.toBeInTheDocument()
     expect(screen.getByText('성능최적화')).toBeInTheDocument()
     expect(
       screen.getByText('[이메일] 공유 후 API 조회 지연을 확인했습니다.'),

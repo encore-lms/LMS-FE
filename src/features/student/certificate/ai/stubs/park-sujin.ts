@@ -1167,6 +1167,27 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
       parkSujinAiServiceRole,
       parkSujinDevOpsRole,
     ],
+    sourceData: {
+      interestedJobs: ['백엔드 개발자', 'AI 서비스 개발자'],
+      skillTags: [
+        'Java',
+        'Spring Boot',
+        'Kafka',
+        'PostgreSQL',
+        'Python',
+        'FastAPI',
+      ],
+      projectDomains: ['커머스 · 주문/결제', '추천 · LLM 파이프라인'],
+      theoryCategories:
+        parkSujinPrimaryRole.theoryUnderstanding?.categories ?? [],
+      certifications: [
+        '정보처리기사',
+        'SQL 개발자(SQLD)',
+        'PCCE — 파이썬 코딩 입문',
+        'PCCP — 파이썬 코딩 전문',
+        'PCSQL — SQL 개발자 1급',
+      ],
+    },
     confidence: 'HIGH',
     limitations: [],
     sourcePolicies: ['PARK_SUJIN_CERTIFICATE_MOCK'],
@@ -1337,6 +1358,93 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
       evidenceCodes: projectEvidenceCodes,
       generatedBy: 'FALLBACK',
     },
+    aggregateAnalysis: {
+      summary: [
+        '전체 프로젝트에서 백엔드 리드와 LLM 파이프라인 개발을 맡아 핵심 기능을 구현하고 검증까지 마무리했습니다.',
+        '동료평가에서는 책임감과 기술 기여가 특히 선명하며, 근거를 공유해 팀의 해결 기준을 맞추는 프로젝트 스타일이 나타납니다.',
+      ],
+      rolePatterns: [
+        { label: '백엔드 리드', projectCount: 1, taskCount: 3 },
+        { label: 'LLM 파이프라인 개발', projectCount: 1, taskCount: 3 },
+      ],
+      commonTasks: [
+        '도메인·트랜잭션 설계',
+        '이벤트 라우팅',
+        'STT·요약 파이프라인 구현',
+        'API 제공과 결과 검증',
+      ],
+      selfReviewStatements: [
+        '주문·결제 도메인 분리와 Kafka 이벤트 라우팅을 맡아 백엔드 팀의 구현 기준을 정리했습니다.',
+        'Whisper STT부터 한국어 요약 API까지 전체 파이프라인을 구현하고 품질 지표를 검증했습니다.',
+      ],
+      contribution: {
+        totalBoardTaskCount: 15,
+        assignedTaskCount: 6,
+        completedAssignedTaskCount: 6,
+        summary: [
+          '전체 보드 업무 15개 중 핵심 구현 업무 6개를 담당했습니다.',
+          '담당 업무 6개를 모두 완료해 맡은 범위를 끝까지 마무리하는 기여가 확인됩니다.',
+        ],
+      },
+      peerAxes: [
+        {
+          key: '기술/기술기여',
+          score: 4.6,
+          summary: [
+            '핵심 기능 구현과 기술 방향을 함께 제시하는 기술 주도형입니다.',
+            '개인 구현을 팀이 이어서 사용할 수 있는 구조와 기준으로 연결합니다.',
+          ],
+        },
+        {
+          key: '소통·협업·팀워크',
+          score: 4.5,
+          summary: [
+            '문제 상황과 판단 근거를 설명해 팀의 합의를 이끄는 조율형입니다.',
+            '혼자 해결한 내용도 문서와 리뷰로 공유해 협업 자산으로 전환합니다.',
+          ],
+        },
+        {
+          key: '문제해결',
+          score: 4.1,
+          summary: [
+            '재현 조건을 고정하고 원인을 분리한 뒤 결과를 수치로 확인하는 검증형입니다.',
+            '복잡한 장애에서도 해결 과정을 단계적으로 좁혀가는 성향이 나타납니다.',
+          ],
+        },
+        {
+          key: '책임감',
+          score: 4.8,
+          summary: [
+            '맡은 업무를 구현에서 검증까지 끝내는 완결형입니다.',
+            '팀의 핵심 업무를 지속적으로 책임지고 마감하는 신뢰가 가장 높게 나타납니다.',
+          ],
+        },
+      ],
+      projectGrowth: [
+        {
+          projectId: 'pj1',
+          projectName: 'Encore Mart — 마이크로서비스 백엔드',
+          summary: [
+            '단일 API 구현에서 트랜잭션·이벤트·성능을 함께 다루는 분산 시스템 역할로 확장했습니다.',
+            '개인 구현을 넘어 백엔드 팀의 도메인 분리와 문제해결 기준을 가이드했습니다.',
+          ],
+        },
+        {
+          projectId: 'pj2',
+          projectName: '한국어 회의록 요약 LLM 파이프라인',
+          summary: [
+            '백엔드 서비스 경험을 STT·요약 모델·API가 연결된 AI 서비스 파이프라인으로 확장했습니다.',
+            '기능 구현에 머무르지 않고 품질과 처리 시간을 직접 검증하는 범위까지 넓혔습니다.',
+          ],
+        },
+      ],
+      strengths: [
+        '핵심 기술 업무를 맡아 구현과 검증까지 완결하는 실행력',
+        '복잡한 문제를 구조화하고 근거를 팀과 공유하는 협업 방식',
+        '백엔드에서 AI 서비스까지 역할과 기술 범위를 확장하는 성장성',
+      ],
+      evaluationSource: 'PEER_ONLY',
+    },
     projectCount: 2,
     period: { startedAt: '2026-05-04', endedAt: '2026-09-18' },
     evidenceCodes: projectEvidenceCodes,
@@ -1352,6 +1460,29 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
     certifiedCaseCount: 12,
     independentCaseCount: 10,
     independentRate: 83,
+    sourceData: {
+      categories: [
+        { label: 'DB / SQL', count: 4 },
+        { label: '배포 / 인프라', count: 3 },
+        { label: '성능 / 메모리', count: 2 },
+        { label: '네트워크 / API', count: 2 },
+        { label: '기타', count: 1 },
+      ],
+      cases: parkSujinTroubleshootingCases.map((item) => ({
+        id: item.id,
+        title: item.title,
+        category: item.category,
+        situation: item.summary?.situation ?? item.situation,
+        resolution: item.summary?.resolution ?? item.resolution,
+        result: item.summary?.result ?? item.result,
+        days: item.days,
+        independent: item.independent,
+      })),
+      averageDays: 2.3,
+      medianDays: 2,
+      independentCaseCount: 10,
+      supportedCaseCount: 2,
+    },
     period: { startedAt: '2026-08-12', endedAt: '2026-10-08' },
     axes: [
       {

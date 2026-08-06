@@ -28,11 +28,92 @@ export interface AiTheoryUnderstanding {
   categories: AiTheoryUnderstandingCategory[]
 }
 
+export interface AiJobFitSourceData {
+  interestedJobs: string[]
+  skillTags: string[]
+  projectDomains: string[]
+  theoryCategories: AiTheoryUnderstandingCategory[]
+  certifications: string[]
+}
+
+export interface AiTroubleshootingSourceCase {
+  id: string
+  title: string
+  category: string
+  situation: string
+  resolution: string
+  result: string
+  days: number | null
+  independent: boolean
+}
+
+export interface AiTroubleshootingSourceData {
+  categories: Array<{ label: string; count: number }>
+  cases: AiTroubleshootingSourceCase[]
+  averageDays: number | null
+  medianDays: number | null
+  independentCaseCount: number
+  supportedCaseCount: number
+}
+
+export type AiProjectPeerAxisKey =
+  | '기술/기술기여'
+  | '소통·협업·팀워크'
+  | '문제해결'
+  | '책임감'
+
+export interface AiProjectRolePattern {
+  label: string
+  projectCount: number
+  taskCount: number
+}
+
+export interface AiProjectPeerAxisAnalysis {
+  key: AiProjectPeerAxisKey
+  score: number | null
+  summary: string[]
+}
+
+export interface AiProjectGrowthAnalysis {
+  projectId: string
+  projectName: string
+  summary: string[]
+}
+
+export interface AiProjectAggregateAnalysis {
+  summary: string[]
+  rolePatterns: AiProjectRolePattern[]
+  commonTasks: string[]
+  selfReviewStatements: string[]
+  contribution: {
+    totalBoardTaskCount: number | null
+    assignedTaskCount: number
+    completedAssignedTaskCount: number
+    summary: string[]
+  }
+  peerAxes: AiProjectPeerAxisAnalysis[]
+  projectGrowth: AiProjectGrowthAnalysis[]
+  strengths: string[]
+  evaluationSource: 'PEER_ONLY'
+}
+
 // Python 기반 LMS-AI 응답에 먼저 추가된 점진적 계약 필드다. 이전 응답과도
 // 호환되도록 선택값으로 두고, contract codegen이 복구되면 원본 계약으로 이동한다.
 declare module './contract.gen' {
   interface AiJobFitRoleCandidate {
     theoryUnderstanding?: AiTheoryUnderstanding
+  }
+
+  interface AiJobFit {
+    sourceData?: AiJobFitSourceData
+  }
+
+  interface AiProjects {
+    aggregateAnalysis?: AiProjectAggregateAnalysis
+  }
+
+  interface AiTroubleshooting {
+    sourceData?: AiTroubleshootingSourceData
   }
 }
 

@@ -1,95 +1,71 @@
-import { ChevronDown, Sparkles } from 'lucide-react'
-import type { AiProjectSnapshot, AiProjects } from '../ai'
+import {
+  ChartNoAxesColumnIncreasing,
+  CheckCircle2,
+  ClipboardList,
+  Sparkles,
+  Users,
+} from 'lucide-react'
+import type { AiProjects } from '../ai'
+import { AiAnalysisEvidence } from './AiAnalysisEvidence'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
-function evidenceStrength(project: AiProjectSnapshot) {
-  return (
-    project.personalEvidence.tasks.length * 2 +
-    project.personalEvidence.troubleshootingCases.length * 3 +
-    project.personalEvidence.peerObservations.length +
-    project.teamContext.outcomes.length
+type AggregateAnalysis = NonNullable<AiProjects['aggregateAnalysis']>
+
+function fallbackAnalysis(projects: AiProjects): AggregateAnalysis {
+  const roles = new Map<string, { projectCount: number; taskCount: number }>()
+
+  projects.projects.forEach((project) => {
+    project.personalEvidence.workCategories.forEach((role) => {
+      const current = roles.get(role) ?? { projectCount: 0, taskCount: 0 }
+      current.projectCount += 1
+      current.taskCount += project.personalEvidence.tasks.length
+      roles.set(role, current)
+    })
+  })
+
+  const assignedTaskCount = projects.projects.reduce(
+    (total, project) => total + project.personalEvidence.tasks.length,
+    0,
   )
+
+  return {
+    summary: [projects.summary, projects.overview.overall].filter(Boolean),
+    rolePatterns: [...roles].map(([label, count]) => ({ label, ...count })),
+    commonTasks: projects.projects
+      .flatMap((project) => project.personalEvidence.tasks)
+      .slice(0, 6),
+    selfReviewStatements: projects.projects
+      .flatMap((project) => project.personalEvidence.peerObservations)
+      .slice(0, 3),
+    contribution: {
+      totalBoardTaskCount: null,
+      assignedTaskCount,
+      completedAssignedTaskCount: 0,
+      summary: [
+        `프로젝트 기록에서 개인 담당 업무 ${assignedTaskCount}개가 확인됩니다.`,
+        '보드 전체 업무 수와 완료 상태가 연동되면 전체 프로젝트 기여 범위를 분석합니다.',
+      ],
+    },
+    peerAxes: [],
+    projectGrowth: projects.projects.map((project) => ({
+      projectId: project.projectId,
+      projectName: project.name,
+      summary: [project.analysis, project.recruiterInsight.strength],
+    })),
+    strengths: projects.recruiterSummary.strengths,
+    evaluationSource: 'PEER_ONLY',
+  }
 }
 
-function ProjectCard({ project }: { project: AiProjectSnapshot }) {
-  const insight = project.recruiterInsight
-
+function TextLines({ lines }: { lines: string[] }) {
   return (
-    <article className="border-info/25 bg-surface overflow-hidden rounded-2xl border shadow-sm">
-      <header className="border-info/20 bg-info-bg/60 border-b px-5 py-4 sm:px-6">
-        <span className="text-info text-[12px] font-bold">
-          대표 프로젝트 {String(project.order).padStart(2, '0')}
-        </span>
-        <h3 className="text-fg mt-1 text-[18px] leading-7 font-bold">
-          {project.name}
-        </h3>
-      </header>
-
-      <div className="p-5 sm:p-6">
-        <section className="bg-info text-on-color rounded-2xl px-5 py-4">
-          <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <div>
-              <span className="text-on-color/80 text-[12px] font-bold">
-                이 프로젝트에서 읽히는 실무 강점
-              </span>
-              <p className="mt-1 text-[16px] leading-7 font-bold">
-                {insight.strength}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <div className="border-border bg-surface-muted mt-4 overflow-hidden rounded-2xl border">
-          <div className="divide-border grid divide-y lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-            <div className="flex flex-col gap-5 p-5">
-              <section>
-                <h4 className="text-fg-subtle text-[12px] font-bold">
-                  개인 역할
-                </h4>
-                <p className="text-fg mt-1.5 text-[14px] leading-6 font-semibold">
-                  {insight.role}
-                </p>
-              </section>
-              <section className="border-border border-t pt-5">
-                <h4 className="text-fg-subtle text-[12px] font-bold">
-                  문제와 판단
-                </h4>
-                <p className="text-fg-muted mt-1.5 text-[14px] leading-6">
-                  {insight.challenge ??
-                    '해석할 수 있는 문제해결 맥락이 아직 충분하지 않습니다.'}
-                </p>
-                {insight.action && (
-                  <p className="text-fg mt-2 text-[14px] leading-6 font-semibold">
-                    {insight.action}
-                  </p>
-                )}
-              </section>
-            </div>
-
-            <div className="flex flex-col gap-5 p-5">
-              <section>
-                <h4 className="text-fg-subtle text-[12px] font-bold">
-                  검증된 결과
-                </h4>
-                <p className="text-fg mt-1.5 text-[14px] leading-6 font-semibold">
-                  {insight.outcome ??
-                    '확인 가능한 결과가 쌓이면 분석에 반영됩니다.'}
-                </p>
-              </section>
-              <section className="border-border border-t pt-5">
-                <h4 className="text-fg-subtle text-[12px] font-bold">
-                  AI 종합 해석
-                </h4>
-                <p className="text-fg-muted mt-1.5 text-[14px] leading-6">
-                  {insight.summary}
-                </p>
-              </section>
-            </div>
-          </div>
-        </div>
-      </div>
-    </article>
+    <div className="flex flex-col gap-1.5">
+      {lines.slice(0, 3).map((line) => (
+        <p key={line} className="text-fg-muted text-[14px] leading-6">
+          {line}
+        </p>
+      ))}
+    </div>
   )
 }
 
@@ -102,15 +78,43 @@ export function AiProjectAnalysis({
 }) {
   if (projects.projects.length === 0) return null
 
-  const representativeProjects = [...projects.projects]
-    .sort((a, b) => evidenceStrength(b) - evidenceStrength(a))
-    .slice(0, 2)
-  const remainingProjects = projects.projects.filter(
-    (project) =>
-      !representativeProjects.some(
-        (representative) => representative.projectId === project.projectId,
-      ),
+  const analysis = projects.aggregateAnalysis ?? fallbackAnalysis(projects)
+  const contribution = analysis.contribution
+  const roleSummary = analysis.rolePatterns
+    .map((role) => `${role.label} · ${role.taskCount}개 업무`)
+    .join('\n')
+  const contributionHeadline =
+    contribution.totalBoardTaskCount === null
+      ? `담당 업무 ${contribution.assignedTaskCount}개`
+      : `전체 ${contribution.totalBoardTaskCount}개 중 ${contribution.assignedTaskCount}개 담당`
+  const roleEvidence = analysis.rolePatterns.map(
+    (role) =>
+      `${role.label} · 프로젝트 ${role.projectCount}개 · 담당 업무 ${role.taskCount}개`,
   )
+  const taskEvidence = [
+    ...analysis.commonTasks.map((task) => `보드 담당 업무 · ${task}`),
+    ...analysis.selfReviewStatements.map(
+      (statement) => `본인 작성 수행·기여 · ${statement}`,
+    ),
+  ]
+  const contributionEvidence = [
+    contribution.totalBoardTaskCount === null
+      ? `보드 담당 업무 ${contribution.assignedTaskCount}개`
+      : `보드 전체 ${contribution.totalBoardTaskCount}개 중 담당 ${contribution.assignedTaskCount}개 · 완료 ${contribution.completedAssignedTaskCount}개`,
+    ...analysis.selfReviewStatements,
+  ]
+  const peerEvidence = [
+    ...analysis.peerAxes.map(
+      (axis) =>
+        `${axis.key} · ${axis.score === null ? '평가 없음' : `${axis.score.toFixed(1)} / 5`}`,
+    ),
+    '동료 평가만 사용하며 멘토·강사·운영 평가는 제외합니다.',
+  ]
+  const summaryEvidence = [
+    ...roleEvidence,
+    ...contributionEvidence.slice(0, 1),
+    ...peerEvidence.slice(0, 4),
+  ]
 
   return (
     <AiAnalysisPanel
@@ -118,50 +122,244 @@ export function AiProjectAnalysis({
       index="02"
       tone="info"
       title="프로젝트 분석"
-      description="프로젝트 이력을 다시 나열하지 않고, 프로젝트마다 맡은 역할과 판단, 결과가 어떤 실무 강점으로 이어지는지 분석했습니다."
+      description="전체 프로젝트의 보드 담당 업무, 본인이 작성한 수행·기여, 맡은 역할과 동료평가 4축을 함께 읽어 프로젝트 수행 스타일과 성장 범위를 분석했습니다."
       className={className}
     >
-      <section className="bg-info text-on-color rounded-2xl p-5 sm:p-6">
-        <span className="text-on-color/80 text-[12px] font-bold">
-          AI가 종합한 프로젝트 경쟁력
-        </span>
-        <h3 className="mt-1 text-[20px] leading-8 font-bold">
-          {projects.recruiterSummary.headline}
-        </h3>
-        <p className="text-on-color/90 mt-2 max-w-4xl text-[14px] leading-6">
-          {projects.recruiterSummary.summary}
-        </p>
+      <section
+        data-project-analysis-summary
+        className="border-info/25 bg-info-bg/45 rounded-xl border px-4 py-4 sm:px-5"
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles className="text-info size-4" aria-hidden="true" />
+          <h3 className="text-info text-[13px] font-bold">AI 전체 요약</h3>
+          <AiAnalysisEvidence label="AI 전체 요약" evidence={summaryEvidence} />
+        </div>
+        <div className="mt-2.5 flex flex-col gap-1.5">
+          {analysis.summary.slice(0, 3).map((line) => (
+            <p
+              key={line}
+              className="text-fg text-[15px] leading-6 font-semibold"
+            >
+              {line}
+            </p>
+          ))}
+        </div>
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        {representativeProjects.map((project) => (
-          <ProjectCard key={project.projectId} project={project} />
-        ))}
-      </div>
+      <section aria-labelledby="project-work-pattern-title">
+        <h3
+          id="project-work-pattern-title"
+          className="text-fg text-[15px] font-bold"
+        >
+          전체 프로젝트에서 주로 한 일
+        </h3>
+        <div className="mt-3 grid gap-3 lg:grid-cols-3">
+          <article className="border-border bg-surface rounded-xl border p-4">
+            <span className="flex items-center gap-2">
+              <Users className="text-info size-4" aria-hidden="true" />
+              <span className="text-fg-subtle text-[12px] font-bold">
+                주로 맡은 역할
+              </span>
+              <AiAnalysisEvidence
+                label="주로 맡은 역할"
+                evidence={roleEvidence}
+              />
+            </span>
+            <p className="text-fg mt-2 text-[14px] leading-6 font-semibold whitespace-pre-line">
+              {roleSummary || '역할 데이터 연동 대기'}
+            </p>
+          </article>
 
-      {remainingProjects.length > 0 && (
-        <details className="border-info/20 bg-info-bg/35 rounded-2xl border">
-          <summary className="text-fg flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-[14px] font-bold">
-            나머지 프로젝트 분석 {remainingProjects.length}개 보기
-            <ChevronDown className="text-info size-4" aria-hidden="true" />
-          </summary>
-          <div className="border-info/20 grid gap-3 border-t p-4 md:grid-cols-2">
-            {remainingProjects.map((project) => (
-              <article
-                key={project.projectId}
-                className="bg-surface rounded-xl p-4"
-              >
-                <h3 className="text-fg text-[14px] leading-5 font-bold">
-                  {project.name}
-                </h3>
-                <p className="text-fg-muted mt-2 text-[13px] leading-5">
-                  {project.recruiterInsight.summary}
+          <article className="border-border bg-surface rounded-xl border p-4">
+            <span className="flex items-center gap-2">
+              <ClipboardList className="text-info size-4" aria-hidden="true" />
+              <span className="text-fg-subtle text-[12px] font-bold">
+                주로 맡은 업무
+              </span>
+              <AiAnalysisEvidence
+                label="주로 맡은 업무"
+                evidence={taskEvidence}
+              />
+            </span>
+            <p className="text-fg mt-2 text-[14px] leading-6 font-semibold">
+              {analysis.commonTasks.join(' · ') || '담당 업무 데이터 연동 대기'}
+            </p>
+          </article>
+
+          <article className="border-border bg-surface rounded-xl border p-4">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="text-info size-4" aria-hidden="true" />
+              <span className="text-fg-subtle text-[12px] font-bold">
+                프로젝트 기여
+              </span>
+              <AiAnalysisEvidence
+                label="프로젝트 기여"
+                evidence={contributionEvidence}
+              />
+            </span>
+            <p className="text-fg mt-2 text-[15px] leading-6 font-bold">
+              {contributionHeadline}
+            </p>
+            <TextLines lines={contribution.summary} />
+          </article>
+        </div>
+
+        {analysis.selfReviewStatements.length > 0 && (
+          <div className="border-border bg-surface-muted mt-3 rounded-xl border px-4 py-3.5">
+            <h4 className="text-fg-subtle text-[12px] font-bold">
+              본인이 작성한 수행·기여에서 반복된 내용
+            </h4>
+            <div className="mt-2 grid gap-2 md:grid-cols-2">
+              {analysis.selfReviewStatements.map((statement) => (
+                <p
+                  key={statement}
+                  className="text-fg text-[13px] leading-5 font-medium"
+                >
+                  {statement}
                 </p>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section aria-labelledby="project-peer-style-title">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3
+            id="project-peer-style-title"
+            className="text-fg text-[15px] font-bold"
+          >
+            동료평가 4축으로 본 프로젝트 스타일
+          </h3>
+          <p className="text-fg-subtle text-[11px] font-semibold">
+            동료 평가만 사용 · 멘토·강사·운영 평가 제외
+          </p>
+        </div>
+
+        {analysis.peerAxes.length === 4 ? (
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {analysis.peerAxes.map((axis) => (
+              <article
+                key={axis.key}
+                data-project-peer-axis={axis.key}
+                className="border-info/20 bg-info-bg/30 rounded-xl border p-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-1">
+                    <h4 className="text-fg text-[13px] font-bold">
+                      {axis.key}
+                    </h4>
+                    <AiAnalysisEvidence
+                      label={`${axis.key} 프로젝트 스타일`}
+                      evidence={[
+                        `동료평가 평균 · ${axis.score === null ? '평가 없음' : `${axis.score.toFixed(1)} / 5`}`,
+                        '멘토·강사·운영 평가 제외',
+                      ]}
+                    />
+                  </span>
+                  <strong className="text-info text-[14px] font-extrabold">
+                    {axis.score === null
+                      ? '분석 대기'
+                      : `${axis.score.toFixed(1)} / 5`}
+                  </strong>
+                </div>
+                <div className="mt-2">
+                  <TextLines lines={axis.summary} />
+                </div>
               </article>
             ))}
           </div>
-        </details>
-      )}
+        ) : (
+          <div className="border-border bg-surface-muted mt-3 rounded-xl border px-4 py-5 text-center">
+            <p className="text-fg text-[13px] font-bold">
+              동료평가 4축 데이터 연동이 필요합니다.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section aria-labelledby="project-growth-title">
+        <div className="flex items-center gap-2">
+          <ChartNoAxesColumnIncreasing
+            className="text-info size-4"
+            aria-hidden="true"
+          />
+          <h3
+            id="project-growth-title"
+            className="text-fg text-[15px] font-bold"
+          >
+            프로젝트마다 성장하거나 확장한 부분
+          </h3>
+        </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {analysis.projectGrowth.map((growth) => {
+            const sourceProject = projects.projects.find(
+              (project) => project.projectId === growth.projectId,
+            )
+            const growthEvidence = sourceProject
+              ? [
+                  `역할 · ${sourceProject.personalEvidence.workCategories.join(' · ')}`,
+                  ...sourceProject.personalEvidence.tasks.map(
+                    (task) => `담당 업무 · ${task}`,
+                  ),
+                  ...sourceProject.personalEvidence.peerObservations.map(
+                    (observation) => `본인 작성 수행·기여 · ${observation}`,
+                  ),
+                ]
+              : []
+
+            return (
+              <article
+                key={growth.projectId}
+                data-project-growth={growth.projectId}
+                className="border-border bg-surface rounded-xl border p-4"
+              >
+                <span className="flex items-center gap-1">
+                  <h4 className="text-fg text-[14px] leading-6 font-bold">
+                    {growth.projectName}
+                  </h4>
+                  <AiAnalysisEvidence
+                    label={`${growth.projectName} 성장·확장`}
+                    evidence={growthEvidence}
+                  />
+                </span>
+                <div className="mt-1.5">
+                  <TextLines lines={growth.summary} />
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section aria-labelledby="project-strength-title">
+        <span className="flex items-center gap-1">
+          <h3
+            id="project-strength-title"
+            className="text-fg text-[15px] font-bold"
+          >
+            핵심 강점
+          </h3>
+          <AiAnalysisEvidence
+            label="프로젝트 핵심 강점"
+            evidence={[
+              ...roleEvidence,
+              ...contributionEvidence,
+              ...peerEvidence,
+            ]}
+          />
+        </span>
+        <ul className="mt-3 grid gap-2 md:grid-cols-3">
+          {analysis.strengths.map((strength) => (
+            <li
+              key={strength}
+              className="border-info/20 bg-info-bg/35 text-fg rounded-xl border px-4 py-3 text-[13px] leading-5 font-semibold"
+            >
+              {strength}
+            </li>
+          ))}
+        </ul>
+      </section>
     </AiAnalysisPanel>
   )
 }

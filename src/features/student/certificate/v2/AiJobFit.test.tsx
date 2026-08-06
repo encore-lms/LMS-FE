@@ -60,4 +60,26 @@ describe('직무 적합도 AI 분석', () => {
       screen.getByText(candidates[1].theoryUnderstanding!.summary),
     ).toBeInTheDocument()
   })
+
+  it('직무 후보·개발자 유형·강점·이론 이해도에 실제 데이터 근거를 연결한다', async () => {
+    const user = userEvent.setup()
+    render(<AiJobFit jobFit={getAiAnalysis('stu-001').jobFit} />)
+    ;['직무 후보', '개발자 유형', '핵심 강점', '관련 이론 이해도'].forEach(
+      (label) => {
+        expect(
+          screen.getByRole('button', { name: `${label} 근거 보기` }),
+        ).toHaveTextContent('!')
+      },
+    )
+    expect(
+      screen.queryByText('분석에 사용한 기본 데이터'),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: '직무 후보 근거 보기' }),
+    )
+    const tooltip = screen.getByRole('tooltip')
+    expect(tooltip).toHaveTextContent('관심 직무 · 백엔드 개발자')
+    expect(tooltip).toHaveTextContent('기술 태그 · Java')
+  })
 })

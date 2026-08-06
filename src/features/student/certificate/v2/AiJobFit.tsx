@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BriefcaseBusiness, GraduationCap, Sparkles } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { AiJobFit as AiJobFitData } from '../ai'
+import { AiAnalysisEvidence } from './AiAnalysisEvidence'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
 const CONFIDENCE_LABEL = { HIGH: '높음', MEDIUM: '보통', LOW: '낮음' } as const
@@ -51,6 +52,38 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
     label: '분석 준비 중',
     summary: '직무 관련 이론 평가가 쌓이면 이해 수준을 분석합니다.',
   }
+  const sourceData = jobFit.sourceData
+  const jobCandidateEvidence = sourceData
+    ? [
+        `관심 직무 · ${sourceData.interestedJobs.join(' · ') || '미선택'}`,
+        `기술 태그 · ${sourceData.skillTags.join(' · ')}`,
+        `프로젝트 도메인 · ${sourceData.projectDomains.join(' · ')}`,
+        `이론 이해도 · ${sourceData.theoryCategories
+          .map((category) => `${category.category} ${category.score}점`)
+          .join(' · ')}`,
+        `승인 자격증 · ${sourceData.certifications.join(' · ')}`,
+      ]
+    : selected.evidence
+  const developerTypeEvidence = sourceData
+    ? [
+        ...sourceData.skillTags.slice(0, 5).map((tag) => `기술 태그 · ${tag}`),
+        ...sourceData.projectDomains.map((domain) => `경험 도메인 · ${domain}`),
+      ]
+    : selected.evidence
+  const strengthEvidence = sourceData
+    ? [
+        ...sourceData.skillTags.slice(0, 4).map((tag) => `기술 태그 · ${tag}`),
+        ...sourceData.certifications
+          .slice(0, 3)
+          .map((certification) => `승인 자격증 · ${certification}`),
+      ]
+    : selected.evidence
+  const theoryEvidence = sourceData
+    ? sourceData.theoryCategories.map(
+        (category) =>
+          `${category.category} · ${category.score}점 · 반영 비중 ${category.weightPercent}%`,
+      )
+    : []
 
   return (
     <AiAnalysisPanel
@@ -112,7 +145,13 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
         <section className="border-accent/25 bg-accent-bg/55 grid gap-5 rounded-2xl border p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_11rem] lg:items-center">
           <div className="min-w-0">
             <div className="text-accent-strong flex flex-wrap items-center gap-2 text-[13px] font-bold">
-              <span>TOP {selected.rank} 직무 후보</span>
+              <span className="flex items-center gap-1">
+                <span>TOP {selected.rank} 직무 후보</span>
+                <AiAnalysisEvidence
+                  label="직무 후보"
+                  evidence={jobCandidateEvidence}
+                />
+              </span>
               <span aria-hidden="true">·</span>
               <span>분석 신뢰도 {CONFIDENCE_LABEL[selected.confidence]}</span>
             </div>
@@ -141,8 +180,12 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
             <span className="bg-accent-bg text-accent-strong flex size-9 items-center justify-center rounded-xl">
               <BriefcaseBusiness className="size-4" aria-hidden="true" />
             </span>
-            <span className="text-fg-subtle mt-4 block text-[12px] font-bold">
-              개발자 유형
+            <span className="text-fg-subtle mt-4 flex items-center gap-1 text-[12px] font-bold">
+              <span>개발자 유형</span>
+              <AiAnalysisEvidence
+                label="개발자 유형"
+                evidence={developerTypeEvidence}
+              />
             </span>
             <h3 className="text-fg mt-1 text-[17px] leading-6 font-bold">
               {selected.workType}
@@ -157,8 +200,12 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
             <span className="bg-success-bg text-success flex size-9 items-center justify-center rounded-xl">
               <Sparkles className="size-4" aria-hidden="true" />
             </span>
-            <span className="text-fg-subtle mt-4 block text-[12px] font-bold">
-              핵심 강점
+            <span className="text-fg-subtle mt-4 flex items-center gap-1 text-[12px] font-bold">
+              <span>핵심 강점</span>
+              <AiAnalysisEvidence
+                label="핵심 강점"
+                evidence={strengthEvidence}
+              />
             </span>
             <ul className="mt-2 flex flex-col gap-2.5">
               {strengths.map((strength) => (
@@ -176,8 +223,12 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
             <span className="bg-info-bg text-info flex size-9 items-center justify-center rounded-xl">
               <GraduationCap className="size-4" aria-hidden="true" />
             </span>
-            <span className="text-fg-subtle mt-4 block text-[12px] font-bold">
-              관련 이론 이해도
+            <span className="text-fg-subtle mt-4 flex items-center gap-1 text-[12px] font-bold">
+              <span>관련 이론 이해도</span>
+              <AiAnalysisEvidence
+                label="관련 이론 이해도"
+                evidence={theoryEvidence}
+              />
             </span>
             <h3 className="text-info mt-1 text-[17px] leading-6 font-bold">
               {theory.label}

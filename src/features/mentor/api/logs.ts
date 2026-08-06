@@ -91,3 +91,33 @@ export function useSubmitMentoringLog() {
     },
   })
 }
+
+/** 업로드된 이미지 — 답변 값에 imageId 를 적어 제출하면 일지에 연결된다. */
+export interface UploadedLogImage {
+  imageId: string
+  fileName: string
+  contentType: string
+  sizeBytes: number
+}
+
+/**
+ * 이미지 항목 첨부 업로드 — 일지 제출 *전*에 올려 id 를 받는다.
+ *
+ * <p>제출 시점엔 아직 일지가 없어 서버가 파일을 먼저 저장하고, 답변 값에 적힌 id 로 잇는다.</p>
+ */
+export function useUploadLogImage() {
+  return useMutation<UploadedLogImage, Error, File>({
+    mutationFn: (file) => {
+      const form = new FormData()
+      form.append('file', file)
+      return apiClient
+        .postForm<UploadedLogImage>('/mentor/v1/mentoring-log-images', form)
+        .then((r) => r.data)
+    },
+  })
+}
+
+/** 첨부 이미지 원본 경로 — <img src>·새 탭 열기에 그대로 쓴다. */
+export function logImageUrl(imageId: string) {
+  return `/api/mentor/v1/mentoring-log-images/${imageId}`
+}

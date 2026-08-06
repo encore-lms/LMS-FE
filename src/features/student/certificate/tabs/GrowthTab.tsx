@@ -10,8 +10,7 @@ import {
   type CertificateScoreResult,
 } from '../ai'
 import type { CertGrowthTab, CertRecommendation } from '../types'
-import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
-import { TabHead } from './TechTab'
+import { TabHead } from './TabHead'
 
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
@@ -353,6 +352,14 @@ function GrowthTimeline({ points }: { points: GrowthTimelinePoint[] }) {
   )
 }
 
+export function AssessmentGrowthTimeline({
+  assessments,
+}: {
+  assessments: CertificateAssessmentPoint[]
+}) {
+  return <GrowthTimeline points={growthTimelinePoints([], assessments)} />
+}
+
 function shortCommentKey(
   comment: CertGrowthTab['shortComments'][number],
   index: number,
@@ -478,31 +485,18 @@ export function GrowthTabData({
     queryKey: ['certificateScore', studentId],
     queryFn: () => fetchCertificateScore(studentId),
   })
-  const detailQuery = useCertificateDetailTabs(studentId)
 
   return (
     <DataBoundary
-      isPending={scoreQuery.isPending || detailQuery.isPending}
-      isError={
-        scoreQuery.isError ||
-        detailQuery.isError ||
-        !scoreQuery.data ||
-        !detailQuery.data
-      }
+      isPending={scoreQuery.isPending}
+      isError={scoreQuery.isError || !scoreQuery.data}
       onRetry={() => {
         void scoreQuery.refetch()
-        void detailQuery.refetch()
       }}
       errorTitle="평가·추천 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >
-      {scoreQuery.data && detailQuery.data && (
-        <GrowthTab
-          g={g}
-          score={scoreQuery.data}
-          assessments={detailQuery.data.tech.assessments}
-        />
-      )}
+      {scoreQuery.data && <GrowthTab g={g} score={scoreQuery.data} />}
     </DataBoundary>
   )
 }
@@ -510,11 +504,9 @@ export function GrowthTabData({
 export function GrowthTab({
   g,
   score,
-  assessments,
 }: {
   g: CertGrowthTab
   score?: CertificateScoreResult
-  assessments?: CertificateAssessmentPoint[]
 }) {
   const toast = useToast()
   const [publicShortCommentKeys, setPublicShortCommentKeys] = useState<
@@ -540,8 +532,6 @@ export function GrowthTab({
       (publicShortCommentKeys.has(shortCommentKey(comment, index)) ? 1 : 0),
     0,
   )
-  const timelinePoints = growthTimelinePoints(g.timeline, assessments)
-
   const toggleShortCommentVisibility = (commentKey: string) => {
     if (
       !publicShortCommentKeys.has(commentKey) &&
@@ -564,7 +554,7 @@ export function GrowthTab({
       <TabHead
         no={5}
         title="평가·추천"
-        sub="평가 성장 흐름·동료·멘토·운영·강사 4축 평가·추천서·팀원 한줄 코멘트"
+        sub="동료·멘토·운영·강사 4축 평가·추천서·팀원 한줄 코멘트"
       >
         <Metric dot="bg-accent-strong">4평가자 · 공통 4축 비교</Metric>
         {g.recommendations.length > 0 && (
@@ -579,8 +569,6 @@ export function GrowthTab({
         data-growth-evaluation-row
         className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2"
       >
-        <GrowthTimeline points={timelinePoints} />
-
         <section className={cn(card, 'flex h-full flex-col gap-4')}>
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div className="flex flex-col gap-0.5">
@@ -602,109 +590,105 @@ export function GrowthTab({
             ))}
           </div>
         </section>
-      </div>
-
-      <div
-        data-comments-recommendations-row
-        className={cn(
-          'grid grid-cols-1 items-start gap-4',
-          g.recommendations.length > 0 && 'lg:grid-cols-2',
-        )}
-      >
-        {g.recommendations.length > 0 && (
-          <section
-            data-recommendation-section
-            className="border-border bg-surface flex flex-col overflow-hidden rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
-          >
-            <div className="flex flex-col gap-0.5 px-6 pt-5 pb-3">
-              <h3 className="text-fg text-[15px] font-bold">
-                {recommendationTitle}
-              </h3>
-              <span className="text-fg-subtle text-[11px]">
-                인증 완료와 최신화 작업 이후 공개 스냅샷에 포함
-              </span>
-            </div>
-            {g.recommendations.map((item, index) => (
-              <div key={`${item.role}-${item.name}`}>
-                {index > 0 && <div className="bg-divider h-px w-full" />}
-                <RecommendationRow item={item} />
+        <div
+          data-evaluation-support-panel
+          className="flex min-w-0 flex-col gap-4"
+        >
+          {g.recommendations.length > 0 && (
+            <section
+              data-recommendation-section
+              className="border-border bg-surface flex flex-col overflow-hidden rounded-2xl border shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
+            >
+              <div className="flex flex-col gap-0.5 px-6 pt-5 pb-3">
+                <h3 className="text-fg text-[15px] font-bold">
+                  {recommendationTitle}
+                </h3>
+                <span className="text-fg-subtle text-[11px]">
+                  인증 완료와 최신화 작업 이후 공개 스냅샷에 포함
+                </span>
               </div>
-            ))}
-          </section>
-        )}
+              {g.recommendations.map((item, index) => (
+                <div key={`${item.role}-${item.name}`}>
+                  {index > 0 && <div className="bg-divider h-px w-full" />}
+                  <RecommendationRow item={item} />
+                </div>
+              ))}
+            </section>
+          )}
 
-        <section className={cn(card, 'flex flex-col gap-3')}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-col gap-0.5">
-              <h3 className="text-fg text-[15px] font-bold">
-                팀원 한줄 코멘트 공개 후보
-              </h3>
-              <span className="text-fg-subtle text-[11px]">
-                프로젝트 종료 후 팀원 동료평가에서 수집 · 기본 OFF
+          <section className={cn(card, 'flex flex-col gap-3')}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <h3 className="text-fg text-[15px] font-bold">
+                  팀원 한줄 코멘트 공개 후보
+                </h3>
+                <span className="text-fg-subtle text-[11px]">
+                  프로젝트 종료 후 팀원 동료평가에서 수집 · 기본 OFF
+                </span>
+              </div>
+              <span className="bg-accent-bg text-accent-strong shrink-0 rounded-md px-2 py-1 text-[11px] font-bold tabular-nums">
+                공개 {publicShortCommentCount}/{MAX_PUBLIC_SHORT_COMMENTS}
               </span>
             </div>
-            <span className="bg-accent-bg text-accent-strong shrink-0 rounded-md px-2 py-1 text-[11px] font-bold tabular-nums">
-              공개 {publicShortCommentCount}/{MAX_PUBLIC_SHORT_COMMENTS}
-            </span>
-          </div>
 
-          {g.shortComments.map((comment, index) => {
-            const commentKey = shortCommentKey(comment, index)
-            const isPublic = publicShortCommentKeys.has(commentKey)
+            {g.shortComments.map((comment, index) => {
+              const commentKey = shortCommentKey(comment, index)
+              const isPublic = publicShortCommentKeys.has(commentKey)
 
-            return (
-              <article
-                key={commentKey}
-                className={cn(
-                  'flex flex-col gap-2 rounded-[10px] border p-4 transition-colors',
-                  isPublic
-                    ? 'border-accent-strong/30 bg-accent-bg/30'
-                    : 'bg-surface-muted border-transparent',
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <p className="text-fg min-w-0 flex-1 text-[13px] leading-5">
-                    {comment.quote}
-                  </p>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <span
-                      className={cn(
-                        'text-[10px] font-bold',
-                        isPublic ? 'text-accent-strong' : 'text-fg-subtle',
-                      )}
-                    >
-                      {isPublic ? 'ON' : 'OFF'}
-                    </span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isPublic}
-                      aria-label={`${index + 1}번 팀원 한줄 코멘트 공개`}
-                      onClick={() => toggleShortCommentVisibility(commentKey)}
-                      className={cn(
-                        'focus-visible:ring-ring relative h-6 w-11 rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none',
-                        isPublic ? 'bg-brand' : 'bg-border',
-                      )}
-                    >
+              return (
+                <article
+                  key={commentKey}
+                  className={cn(
+                    'flex flex-col gap-2 rounded-[10px] border p-4 transition-colors',
+                    isPublic
+                      ? 'border-accent-strong/30 bg-accent-bg/30'
+                      : 'bg-surface-muted border-transparent',
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <p className="text-fg min-w-0 flex-1 text-[13px] leading-5">
+                      {comment.quote}
+                    </p>
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <span
                         className={cn(
-                          'absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform',
-                          isPublic && 'translate-x-5',
+                          'text-[10px] font-bold',
+                          isPublic ? 'text-accent-strong' : 'text-fg-subtle',
                         )}
-                      />
-                    </button>
+                      >
+                        {isPublic ? 'ON' : 'OFF'}
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={isPublic}
+                        aria-label={`${index + 1}번 팀원 한줄 코멘트 공개`}
+                        onClick={() => toggleShortCommentVisibility(commentKey)}
+                        className={cn(
+                          'focus-visible:ring-ring relative h-6 w-11 rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                          isPublic ? 'bg-brand' : 'bg-border',
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform',
+                            isPublic && 'translate-x-5',
+                          )}
+                        />
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="text-fg-subtle flex flex-wrap items-center gap-2 text-[10px]">
-                  <span>{comment.by}</span>
-                  <span className="bg-accent-bg text-accent-strong rounded px-1.5 py-0.5 font-bold">
-                    {comment.tag}
-                  </span>
-                </div>
-              </article>
-            )
-          })}
-        </section>
+                  <div className="text-fg-subtle flex flex-wrap items-center gap-2 text-[10px]">
+                    <span>{comment.by}</span>
+                    <span className="bg-accent-bg text-accent-strong rounded px-1.5 py-0.5 font-bold">
+                      {comment.tag}
+                    </span>
+                  </div>
+                </article>
+              )
+            })}
+          </section>
+        </div>
       </div>
     </div>
   )

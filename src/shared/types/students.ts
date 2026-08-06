@@ -2,7 +2,8 @@
 // 공유 읽기전용 계약. 변경은 도메인 PR에 섞지 말고 별도 shared PR로.
 
 // ── 계정 탭 ──
-export type StudentTrainingStatus = 'active' | 'dropout' // 정상 / 중도탈락
+// 계정 활성 여부(auth LmsUser.status 매핑) — HRD 훈련상태와 다른 축이다.
+export type StudentTrainingStatus = 'active' | 'dropout' // 정상 / 비활성
 
 export interface StudentAccount {
   id: string
@@ -12,6 +13,12 @@ export interface StudentAccount {
   joinedAt: string // MM-DD
   lastLoginAt: string | null // '오늘 09:18' | '7일 전' 표기 (null = 미접속)
   trainingStatus: StudentTrainingStatus
+  /**
+   * HRD-Net 훈련상태 원문 — '훈련중' | '조기취업' | '중도탈락'. 계정 갱신(HRD 동기화)으로 채운다.
+   *
+   * 아직 동기화하지 않은 계정은 null 이다. 위 trainingStatus 는 계정 활성 여부라 축이 다르다.
+   */
+  hrdTrainingStatus: string | null
   loginBlocked: boolean
   isTest: boolean // 시연·검증용으로 만든 계정 — 운영 화면에서만 보이고 삭제할 수 있다
 }

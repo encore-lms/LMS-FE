@@ -56,6 +56,7 @@ const accounts: StudentAccountQueue = {
       joinedAt: '05-01',
       lastLoginAt: '오늘 09:18',
       trainingStatus: 'active',
+      hrdTrainingStatus: '조기취업',
       loginBlocked: false,
     isTest: false,
     },
@@ -67,6 +68,7 @@ const accounts: StudentAccountQueue = {
       joinedAt: '05-04',
       lastLoginAt: '05-12 16:08',
       trainingStatus: 'active',
+    hrdTrainingStatus: null,
       loginBlocked: true,
     isTest: false,
     },
@@ -210,6 +212,7 @@ describe('StudentManagementPage', () => {
           joinedAt: '07-29',
           lastLoginAt: null,
           trainingStatus: 'active',
+    hrdTrainingStatus: null,
           loginBlocked: false,
           isTest: true,
         },
@@ -270,6 +273,15 @@ describe('StudentManagementPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('김민준')).toBeInTheDocument()
     expect(screen.getByText('정하늘')).toBeInTheDocument()
+  })
+
+  // 출결·명단에서는 교육 중인 사람만 보이므로, 조기취업·중도탈락을 확인할 곳은 계정 탭뿐이다.
+  it('계정 탭은 HRD 훈련상태를 배지로 보여준다', () => {
+    renderPage()
+    expect(screen.getByText('훈련상태')).toBeInTheDocument()
+    expect(screen.getByText('조기취업')).toBeInTheDocument()
+    // 동기화 전 계정은 값이 없다는 사실을 그대로 드러낸다.
+    expect(screen.getAllByText('동기화 전').length).toBeGreaterThan(0)
   })
 
   it('"로그인 차단" 필터는 차단 계정만 남긴다', async () => {

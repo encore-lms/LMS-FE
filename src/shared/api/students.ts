@@ -18,6 +18,8 @@ interface RawStudent {
   lastLoginAt: string | null
   createdAt: string
   test: boolean
+  /** HRD 훈련상태 원문 — 동기화 전이면 없음. */
+  trainingStatus?: string | null
 }
 interface RawStudentPage {
   content: RawStudent[]
@@ -33,6 +35,7 @@ function toAccount(s: RawStudent): StudentAccount {
     joinedAt: s.createdAt ? s.createdAt.slice(5, 10) : '-',
     lastLoginAt: s.lastLoginAt ? s.lastLoginAt.slice(0, 10) : null,
     trainingStatus: s.status === 'INACTIVE' ? 'dropout' : 'active',
+    hrdTrainingStatus: s.trainingStatus ?? null,
     loginBlocked: s.status === 'BLOCKED',
     isTest: s.test ?? false,
   }

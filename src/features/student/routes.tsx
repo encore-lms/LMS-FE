@@ -21,7 +21,6 @@ const MentoringPage = lazy(() => import('./mentoring/MentoringPage'))
 const CertificatePage = lazy(() => import('./certificate/CertificatePage'))
 const CertChangesPage = lazy(() => import('./certificate/ChangesRequestedPage'))
 const CertPublicationPage = lazy(() => import('./certificate/PublicationPage'))
-const CertPreviewPage = lazy(() => import('./certificate/CertPreviewPage'))
 const QuizListPage = lazy(() => import('./quiz/QuizListPage'))
 const AttendanceView = lazy(() => import('./attendance/AttendanceView'))
 const AttendanceFormPage = lazy(
@@ -177,5 +176,4 @@ export const studentFullscreenRoutes: RouteObject[] = [
   // 온보딩 마법사 — 자체 헤더·푸터의 풀스크린 플로우라 쉘 밖.
   { path: 'student/onboarding', element: <OnboardingPage /> },
   // 증명서 미리보기 — 사이드바 없이 전체화면으로 증명서 모습만 보여준다(보기 전용).
-  { path: 'student/certificate/preview', element: <CertPreviewPage /> },
 ]

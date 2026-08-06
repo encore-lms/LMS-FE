@@ -14,11 +14,11 @@ export function AppShell({ menus }: { menus: Record<Role, MenuNode[]> }) {
   const menu = role ? menus[role] : []
   const label = role ? ROLE_LABEL[role] : ''
   return (
-    <div className="flex h-screen">
+    <div className="fixed inset-0 flex overflow-hidden">
       <Sidebar label={label} items={menu} />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto">
+        <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
           {/* 라우트 청크 로딩 fallback — 각 페이지가 마운트 직후 자체 스켈레톤을 띄우므로
               여기서는 텍스트 대신 빈 화면을 둬서 '불러오는 중' 텍스트 깜빡임을 없앤다. */}
           <Suspense fallback={null}>

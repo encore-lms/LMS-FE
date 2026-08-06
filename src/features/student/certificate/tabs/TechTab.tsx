@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
+import { BadgeCheck } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
-import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
+import { TONE_SOLID } from '@/shared/lib/tone'
 import type { CertificateTechDetail } from '../ai'
 import type { Tone } from '../types'
 import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
@@ -13,13 +14,6 @@ export { TabHead } from './TabHead'
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
-const certificationStatus: Record<string, { label: string; tone: Tone }> = {
-  APPROVED: { label: '운영 인증', tone: 'success' },
-  PENDING: { label: '검토 중', tone: 'warning' },
-  SCHEDULED: { label: '응시 예정', tone: 'info' },
-  REJECTED: { label: '반려', tone: 'danger' },
-}
-
 const categoryTones: Tone[] = [
   'brand',
   'info',
@@ -29,31 +23,6 @@ const categoryTones: Tone[] = [
   'danger',
 ]
 const INITIAL_VISIBLE_CATEGORY_COUNT = 5
-
-const officialCertificationScoreBands: Record<
-  'PCCE' | 'PCCP' | 'PCSQL',
-  Record<string, string>
-> = {
-  PCCE: {
-    'LV.1': '400–599점',
-    'LV.2': '600–749점',
-    'LV.3': '750–899점',
-    'LV.4': '900–1,000점',
-  },
-  PCCP: {
-    'LV.1': '400–499점',
-    'LV.2': '500–599점',
-    'LV.3': '600–749점',
-    'LV.4': '750–899점',
-    'LV.5': '900–1,000점',
-  },
-  PCSQL: {
-    'LV.1': '200–449점',
-    'LV.2': '450–699점',
-    'LV.3': '700–899점',
-    'LV.4': '900–1,000점',
-  },
-}
 
 function formatNumber(value: number | null | undefined) {
   if (value === null || value === undefined) return '-'
@@ -78,62 +47,20 @@ function officialCertificationScoreLabel(
   }).format(certification.score)} / 1,000점`
 }
 
-function officialCertificationScoreBand(
-  certification: CertificateTechDetail['certifications'][number],
-) {
-  if (!certification.grade) return null
-  const certificationName = officialCertificationName(certification.name)
-  if (!certificationName) return null
-
-  const grade = certification.grade.trim().toUpperCase()
-  return officialCertificationScoreBands[certificationName][grade] ?? null
-}
-
-function formatCertificationDate(value: string) {
-  return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : value
-}
-
-function certificationDateLabel(
-  certification: CertificateTechDetail['certifications'][number],
-) {
-  if (certification.status === 'APPROVED') {
-    return certification.issuedAt
-      ? `발급 ${formatCertificationDate(certification.issuedAt)}`
-      : '발급일 정보 없음'
-  }
-  if (certification.status === 'PENDING') {
-    return certification.submittedAt
-      ? `제출 ${formatCertificationDate(certification.submittedAt)}`
-      : '제출일 정보 없음'
-  }
-  if (certification.status === 'SCHEDULED') {
-    return certification.scheduledAt
-      ? `${formatCertificationDate(certification.scheduledAt)} 응시 예정`
-      : '응시 예정일 정보 없음'
-  }
-  return certification.submittedAt
-    ? `제출 ${formatCertificationDate(certification.submittedAt)}`
-    : '일자 정보 없음'
-}
-
 type Certification = CertificateTechDetail['certifications'][number]
 type CertificationGroupKey = 'coding-test' | 'credential'
 
 const certificationGroupMeta: Record<
   CertificationGroupKey,
-  { title: string; description: string; emptyMessage: string; tone: Tone }
+  { title: string; emptyMessage: string }
 > = {
   'coding-test': {
     title: '코딩테스트',
-    description: '공식 원점수와 등급이 있는 코딩 역량 시험',
     emptyMessage: '인증된 코딩테스트 결과가 없습니다.',
-    tone: 'brand',
   },
   credential: {
     title: '자격·기술 인증',
-    description: '기관 자격증과 플랫폼 배지·등급 등 기술 근거',
     emptyMessage: '인증된 자격·기술 인증이 없습니다.',
-    tone: 'success',
   },
 }
 
@@ -156,74 +83,58 @@ function certificationScoreLabel(certification: Certification) {
   )
 }
 
+function certificationAcquiredLabel(certification: Certification) {
+  if (!certification.issuedAt) return '취득일 미등록'
+  const issuedAt = /^\d{4}-\d{2}-\d{2}/.test(certification.issuedAt)
+    ? certification.issuedAt.slice(0, 10).replaceAll('-', '.')
+    : certification.issuedAt
+  return `취득일 ${issuedAt}`
+}
+
 function CertificationItem({
   certification,
+  showResult,
 }: {
   certification: Certification
+  showResult: boolean
 }) {
-  const status = certificationStatus[certification.status] ?? {
-    label: certification.status,
-    tone: 'info' as const,
-  }
   const scoreLabel = certificationScoreLabel(certification)
-  const scoreBand = officialCertificationScoreBand(certification)
-  const hasMetrics = certification.grade || scoreLabel
+  const resultLabel = [certification.grade, scoreLabel]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <article
       data-certification-item={certification.name}
-      className="bg-surface flex min-w-0 flex-col gap-3 rounded-xl p-4"
+      className="bg-surface-muted/60 flex min-w-0 flex-col gap-1 rounded-lg px-3 py-2.5"
     >
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <h4 className="text-fg min-w-0 text-[13px] leading-5 font-bold">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <h4 className="text-fg min-w-0 text-[13px] leading-5 font-semibold">
           {certification.name}
         </h4>
         <span
-          className={cn(
-            'shrink-0 rounded-md px-2 py-1 text-center text-[10px] font-bold',
-            TONE_SOFT[status.tone],
-          )}
+          className="text-success inline-flex shrink-0"
+          title="운영 인증 완료"
         >
-          {status.label}
+          <BadgeCheck aria-hidden="true" className="size-3.5" strokeWidth={2} />
+          <span className="sr-only">운영 인증 완료</span>
         </span>
       </div>
 
-      {hasMetrics && (
-        <dl
-          data-certification-metrics
-          className={cn(
-            'grid gap-2',
-            certification.grade && scoreLabel && 'grid-cols-2',
-          )}
+      {showResult && resultLabel && (
+        <p
+          data-certification-result
+          className="text-fg-muted text-[10px] font-medium tabular-nums"
         >
-          {certification.grade && (
-            <div className="bg-surface-muted rounded-lg px-3 py-2.5">
-              <dt className="text-fg-subtle text-[10px] font-semibold">등급</dt>
-              <dd className="text-fg mt-1 text-[16px] leading-none font-extrabold">
-                {certification.grade}
-              </dd>
-              {scoreBand && (
-                <span className="text-fg-muted mt-1 block text-[9px] font-medium">
-                  {scoreBand}
-                </span>
-              )}
-            </div>
-          )}
-          {scoreLabel && (
-            <div className="bg-brand/10 rounded-lg px-3 py-2.5">
-              <dt className="text-brand text-[10px] font-semibold">점수</dt>
-              <dd className="text-brand mt-1 text-[16px] leading-none font-extrabold tabular-nums">
-                {scoreLabel}
-              </dd>
-            </div>
-          )}
-        </dl>
+          {resultLabel}
+        </p>
       )}
-
-      <div className="text-fg-subtle flex flex-col gap-1 text-[10px] leading-4">
-        <span>{certificationDateLabel(certification)}</span>
-        <span>{certification.registrationSource || '외부 인증 입력'}</span>
-      </div>
+      <p
+        data-certification-acquired-at
+        className="text-fg-subtle text-[9px] font-medium tabular-nums"
+      >
+        {certificationAcquiredLabel(certification)}
+      </p>
     </article>
   )
 }
@@ -240,27 +151,17 @@ function CertificationGroup({
   return (
     <section
       data-certification-group={groupKey}
-      className="bg-surface-muted/60 flex min-w-0 flex-col gap-3 rounded-xl p-4"
+      className="flex min-w-0 flex-col gap-2.5"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="text-fg text-[13px] font-bold">{meta.title}</h3>
-          <p className="text-fg-subtle text-[10px] leading-4">
-            {meta.description}
-          </p>
-        </div>
-        <span
-          className={cn(
-            'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums',
-            TONE_SOFT[meta.tone],
-          )}
-        >
+      <div className="flex items-center gap-1.5">
+        <h3 className="text-fg text-[13px] font-bold">{meta.title}</h3>
+        <span className="text-fg-subtle text-[10px] font-medium tabular-nums">
           {certifications.length}건
         </span>
       </div>
 
       {certifications.length === 0 ? (
-        <p className="text-fg-subtle bg-surface rounded-lg px-3 py-6 text-center text-[10px]">
+        <p className="text-fg-subtle bg-surface-muted/60 rounded-lg px-3 py-5 text-center text-[10px]">
           {meta.emptyMessage}
         </p>
       ) : (
@@ -269,6 +170,7 @@ function CertificationGroup({
             <CertificationItem
               key={`${certification.name}-${certification.issuedAt ?? certification.submittedAt ?? ''}`}
               certification={certification}
+              showResult={groupKey === 'coding-test'}
             />
           ))}
         </div>
@@ -1063,15 +965,7 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
         data-tech-certifications
         className={cn(card, 'flex flex-col gap-4')}
       >
-        <div className="flex flex-col gap-1">
-          <span className="text-fg text-[15px] font-bold">기술 인증</span>
-          {verifiedCertifications.length > 0 && (
-            <span className="text-fg-subtle text-[11px]">
-              운영 인증이 완료된 기술 근거 {verifiedCertifications.length}건을
-              유형별로 구분했습니다.
-            </span>
-          )}
-        </div>
+        <span className="text-fg text-[15px] font-bold">기술 인증</span>
         {verifiedCertifications.length === 0 ? (
           <EmptyData>운영 인증이 완료된 기술 인증이 없습니다.</EmptyData>
         ) : (

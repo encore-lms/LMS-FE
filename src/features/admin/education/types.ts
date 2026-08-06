@@ -235,3 +235,21 @@ export interface StaffEvalAllData {
   cohortId: string
   students: StaffEvalStudentEntries[]
 }
+
+/** 수강생 활동 요약('수강생 종합 데이터' 탭) — 과제·퀴즈·QnA, 수강생 1명 기준. */
+export interface StudentActivitySummary {
+  assignments: {
+    total: number
+    submitted: number
+    supplementRequested: number
+    reviewDone: number
+    notSubmitted: number
+  }
+  quizzes: {
+    totalOpen: number
+    attempted: number
+    finalized: number
+    avgScorePct: number | null
+  }
+  qna: { questionCount: number }
+}

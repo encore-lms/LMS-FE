@@ -128,8 +128,11 @@ describe('프로젝트 분석', () => {
     fireEvent.click(
       screen.getByRole('button', { name: '프로젝트 기여 근거 보기' }),
     )
-    expect(screen.getByRole('tooltip')).toHaveTextContent(
-      '보드 전체 15개 중 담당 6개 · 완료 6개',
-    )
+    const tooltip = screen.getByRole('tooltip')
+    expect(tooltip).toHaveTextContent('실제 데이터')
+    expect(tooltip).toHaveTextContent('분석 흐름')
+    expect(tooltip).toHaveTextContent('보드 전체 15개 중 담당 6개 · 완료 6개')
+    expect(tooltip).toHaveTextContent('확인 산출물 프로젝트 v0.3 산출물')
+    expect(tooltip).toHaveTextContent('전체 보드 중 담당·완료 업무 수를 집계')
   })
 })

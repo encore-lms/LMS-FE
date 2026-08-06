@@ -32,6 +32,11 @@ export interface AiJobFitSourceData {
   interestedJobs: string[]
   skillTags: string[]
   projectDomains: string[]
+  assessments: Array<{
+    assessmentType: 'ACHIEVEMENT' | 'CS'
+    category: string
+    score: number
+  }>
   theoryCategories: AiTheoryUnderstandingCategory[]
   certifications: string[]
 }

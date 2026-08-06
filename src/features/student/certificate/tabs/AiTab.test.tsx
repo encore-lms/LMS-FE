@@ -10,7 +10,6 @@ vi.mock('../ai', async (importOriginal) => {
   }
 })
 
-import { getAiAnalysis } from '../ai'
 import { AiTab } from './AiTab'
 
 function renderAiTab() {
@@ -30,27 +29,25 @@ describe('AiTab', () => {
 
     const trigger = await screen.findByRole('button', { name: '분석 기준' })
     const panelTitle = screen.getByText('AI 분석 기준')
-    const evidenceText =
-      getAiAnalysis('stu-001').jobFit.primaryRole!.evidence.join(' · ')
-    const evidence = screen.getByText((content) =>
-      content.startsWith(evidenceText),
-    )
+    const methodologyTabs = document.querySelector<HTMLElement>(
+      '[aria-label="AI 분석 기준 항목"]',
+    )!
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
     expect(panelTitle).not.toBeVisible()
-    expect(evidence).not.toBeVisible()
+    expect(methodologyTabs).not.toBeVisible()
 
     fireEvent.click(trigger)
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
     expect(panelTitle).toBeVisible()
-    expect(evidence).toBeVisible()
+    expect(methodologyTabs).toBeVisible()
 
     fireEvent.click(trigger)
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
     expect(panelTitle).not.toBeVisible()
   })
 
-  it('직무 적합도·프로젝트·트러블슈팅을 선택 탭으로 표시한다', async () => {
+  it('직무 적합도·프로젝트·문제해결을 설명형 선택 탭으로 표시한다', async () => {
     renderAiTab()
 
     const analysisTabs = await screen.findByRole('tablist', {
@@ -58,23 +55,31 @@ describe('AiTab', () => {
     })
     expect(within(analysisTabs).getAllByRole('tab')).toHaveLength(3)
     expect(
-      screen.getByRole('tab', { name: /직무 적합도 가장 어울리는 직무/ }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('tab', { name: /프로젝트 분석 전체 프로젝트/ }),
+      screen.getByRole('tab', { name: /직무 적합도 프로필과 학습·수행 기록/ }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('tab', {
-        name: /트러블슈팅 분석 가장 선명한 해결 영역/,
+        name: /프로젝트 분석 전체 프로젝트에서 반복된/,
       }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('tab', {
+        name: /문제해결 역량 분석 인증된 문제해결 기록/,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(analysisTabs).queryByText('백엔드 개발자'),
+    ).not.toBeInTheDocument()
+    expect(
+      within(analysisTabs).queryByText('적합도 88점'),
+    ).not.toBeInTheDocument()
   })
 
   it('선택한 분석 상세 하나만 표시한다', async () => {
     renderAiTab()
 
     const projectTab = await screen.findByRole('tab', {
-      name: /프로젝트 분석 전체 프로젝트/,
+      name: /프로젝트 분석 전체 프로젝트에서 반복된/,
     })
     expect(document.querySelector('#ai-job-fit')).toBeInTheDocument()
     expect(
@@ -95,10 +100,10 @@ describe('AiTab', () => {
     renderAiTab()
 
     const jobFitTab = await screen.findByRole('tab', {
-      name: /직무 적합도 가장 어울리는 직무/,
+      name: /직무 적합도 프로필과 학습·수행 기록/,
     })
     const projectTab = screen.getByRole('tab', {
-      name: /프로젝트 분석 전체 프로젝트/,
+      name: /프로젝트 분석 전체 프로젝트에서 반복된/,
     })
 
     jobFitTab.focus()

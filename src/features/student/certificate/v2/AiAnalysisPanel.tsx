@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
 
-type AnalysisTone = 'accent' | 'info' | 'success'
+type AnalysisTone = 'accent' | 'info' | 'brown'
 
 const TONE_STYLE: Record<
   AnalysisTone,
@@ -17,10 +17,10 @@ const TONE_STYLE: Record<
     header: 'border-info/20 bg-info-bg/60',
     index: 'bg-info text-on-color',
   },
-  success: {
-    section: 'border-success/30',
-    header: 'border-success/20 bg-success-bg/65',
-    index: 'bg-success text-on-color',
+  brown: {
+    section: 'border-brown/25',
+    header: 'border-brown/15 bg-surface',
+    index: 'bg-brown text-on-color',
   },
 }
 

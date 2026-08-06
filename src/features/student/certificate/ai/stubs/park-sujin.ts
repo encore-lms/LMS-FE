@@ -1178,6 +1178,11 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
         'FastAPI',
       ],
       projectDomains: ['커머스 · 주문/결제', '추천 · LLM 파이프라인'],
+      assessments: parkSujinAssessments.map((assessment) => ({
+        assessmentType: assessment.assessmentType,
+        category: assessment.category,
+        score: assessment.score,
+      })),
       theoryCategories:
         parkSujinPrimaryRole.theoryUnderstanding?.categories ?? [],
       certifications: [

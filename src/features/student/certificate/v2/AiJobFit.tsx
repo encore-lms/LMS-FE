@@ -53,37 +53,113 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
     summary: '직무 관련 이론 평가가 쌓이면 이해 수준을 분석합니다.',
   }
   const sourceData = jobFit.sourceData
-  const jobCandidateEvidence = sourceData
-    ? [
-        `관심 직무 · ${sourceData.interestedJobs.join(' · ') || '미선택'}`,
-        `기술 태그 · ${sourceData.skillTags.join(' · ')}`,
-        `프로젝트 도메인 · ${sourceData.projectDomains.join(' · ')}`,
-        `이론 이해도 · ${sourceData.theoryCategories
-          .map((category) => `${category.category} ${category.score}점`)
-          .join(' · ')}`,
-        `승인 자격증 · ${sourceData.certifications.join(' · ')}`,
-      ]
-    : selected.evidence
-  const developerTypeEvidence = sourceData
-    ? [
-        ...sourceData.skillTags.slice(0, 5).map((tag) => `기술 태그 · ${tag}`),
-        ...sourceData.projectDomains.map((domain) => `경험 도메인 · ${domain}`),
-      ]
-    : selected.evidence
-  const strengthEvidence = sourceData
-    ? [
-        ...sourceData.skillTags.slice(0, 4).map((tag) => `기술 태그 · ${tag}`),
-        ...sourceData.certifications
-          .slice(0, 3)
-          .map((certification) => `승인 자격증 · ${certification}`),
-      ]
-    : selected.evidence
-  const theoryEvidence = sourceData
-    ? sourceData.theoryCategories.map(
-        (category) =>
-          `${category.category} · ${category.score}점 · 반영 비중 ${category.weightPercent}%`,
-      )
-    : []
+  const projectRoleSummary = selected.fitEvidence.projectRoles
+    .map((role) => `${role.label} ${role.projectCount}개 프로젝트`)
+    .join(' · ')
+  const problemSummary = selected.fitEvidence.troubleshooting.tags
+    .map((tag) => `${tag.label} ${tag.count}건`)
+    .join(' · ')
+  const achievementSummary = sourceData?.assessments
+    .filter((assessment) => assessment.assessmentType === 'ACHIEVEMENT')
+    .map((assessment) => `${assessment.category} ${assessment.score}점`)
+    .join(' · ')
+  const csSummary = sourceData?.assessments
+    .filter((assessment) => assessment.assessmentType === 'CS')
+    .map((assessment) => `${assessment.category} ${assessment.score}점`)
+    .join(' · ')
+  const existingAnalysisEvidence = [
+    ...selected.evidence.map((item) => `종합 역량 · ${item}`),
+    ...selected.fitEvidence.projectRoles.map(
+      (role) =>
+        `프로젝트 수행 역할 · ${role.label} · ${role.projectCount}개 프로젝트 · ${role.taskCount}개 업무`,
+    ),
+    ...selected.fitEvidence.troubleshooting.tags.map(
+      (tag) => `문제해결 반복 영역 · ${tag.label} ${tag.count}건`,
+    ),
+    ...selected.fitEvidence.highAchievements.map(
+      (achievement) =>
+        `기존 성취도 평가 · ${achievement.category} ${achievement.score}점`,
+    ),
+  ]
+  const jobCandidateEvidence = [
+    ...(sourceData
+      ? [
+          `프로필 · 관심 ${sourceData.interestedJobs.join(' · ') || '미선택'} / 기술 ${sourceData.skillTags.slice(0, 5).join(' · ')}`,
+          `프로젝트 · ${sourceData.projectDomains.join(' · ')} / 역할 ${projectRoleSummary || '확인 대기'}`,
+          `성취도 평가 · ${achievementSummary}`,
+          `CS 평가 · ${csSummary}`,
+          `승인 자격증 · ${sourceData.certifications.slice(0, 3).join(' · ')}`,
+          `문제해결 · ${problemSummary || '확인 대기'}`,
+        ]
+      : existingAnalysisEvidence.slice(0, 6)),
+  ]
+  const developerTypeEvidence = [
+    ...(sourceData
+      ? [
+          `기술 태그 · ${sourceData.skillTags.slice(0, 5).join(' · ')}`,
+          `경험 도메인 · ${sourceData.projectDomains.join(' · ')}`,
+        ]
+      : []),
+    `프로젝트 역할 · ${projectRoleSummary || '확인 대기'}`,
+    `문제해결 영역 · ${problemSummary || '확인 대기'}`,
+  ]
+  const strengthEvidence = [
+    ...(sourceData
+      ? [
+          `기술 태그 · ${sourceData.skillTags.slice(0, 4).join(' · ')}`,
+          `승인 자격증 · ${sourceData.certifications.slice(0, 3).join(' · ')}`,
+        ]
+      : []),
+    `프로젝트 역할 · ${projectRoleSummary || '확인 대기'}`,
+    `문제해결 영역 · ${problemSummary || '확인 대기'}`,
+    `상위 성취 · ${selected.fitEvidence.highAchievements
+      .slice(0, 3)
+      .map((achievement) => `${achievement.category} ${achievement.score}점`)
+      .join(' · ')}`,
+  ]
+  const theoryEvidence = [
+    ...(sourceData
+      ? [
+          `성취도 평가 · ${achievementSummary}`,
+          `CS 평가 · ${csSummary}`,
+          `직무 관련 카테고리 · ${sourceData.theoryCategories
+            .map(
+              (category) =>
+                `${category.category} ${category.score}점(${category.weightPercent}%)`,
+            )
+            .join(' · ')}`,
+        ]
+      : selected.fitEvidence.highAchievements.map(
+          (achievement) =>
+            `성취도 평가 · ${achievement.category} ${achievement.score}점`,
+        )),
+  ]
+  const scoreEvidenceSections = [
+    {
+      label: '실제 데이터',
+      items: jobCandidateEvidence,
+    },
+    {
+      label: '분석 흐름',
+      items: [
+        `입력 신호를 ${selected.jobLabel} 역량과 연결`,
+        '여러 출처에서 반복되고 수행 결과로 확인된 신호를 우선',
+        '누락 데이터는 감점하지 않고 신뢰도에 반영해 0~100점으로 보정',
+      ],
+    },
+    {
+      label: '산출 결과',
+      items: [
+        `직무 적합도 · ${selected.fitScore}점`,
+        `후보 순위 · TOP ${selected.rank}`,
+        `분석 신뢰도 · ${CONFIDENCE_LABEL[selected.confidence]}`,
+        `점수 해석 · ${selected.summary}`,
+        ...selected.limitations.map(
+          (limitation) => `제한 사항 · ${limitation}`,
+        ),
+      ],
+    },
+  ]
 
   return (
     <AiAnalysisPanel
@@ -150,6 +226,10 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
                 <AiAnalysisEvidence
                   label="직무 후보"
                   evidence={jobCandidateEvidence}
+                  flow={[
+                    '데이터를 직무군별 관련 신호로 분류',
+                    '반복·검증 신호가 선명한 후보를 점수순으로 TOP3 선정',
+                  ]}
                 />
               </span>
               <span aria-hidden="true">·</span>
@@ -165,8 +245,13 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
           </div>
 
           <div className="border-accent/20 bg-surface rounded-2xl border px-5 py-4 text-left shadow-sm lg:text-center">
-            <span className="text-fg-subtle text-[13px] font-semibold">
-              직무 적합도
+            <span className="text-fg-subtle inline-flex items-center gap-1 text-[13px] font-semibold">
+              <span>직무 적합도</span>
+              <AiAnalysisEvidence
+                label="직무 적합도 점수"
+                evidence={[]}
+                sections={scoreEvidenceSections}
+              />
             </span>
             <strong className="text-accent-strong mt-1 block text-[38px] leading-none font-extrabold">
               {selected.fitScore}
@@ -185,6 +270,10 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
               <AiAnalysisEvidence
                 label="개발자 유형"
                 evidence={developerTypeEvidence}
+                flow={[
+                  '반복된 기술·도메인·수행 역할을 묶음',
+                  '가장 선명한 업무 방식을 유형 라벨로 요약',
+                ]}
               />
             </span>
             <h3 className="text-fg mt-1 text-[17px] leading-6 font-bold">
@@ -205,6 +294,10 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
               <AiAnalysisEvidence
                 label="핵심 강점"
                 evidence={strengthEvidence}
+                flow={[
+                  '서로 다른 출처에서 반복된 강점 신호를 확인',
+                  '직무와 직접 연결되는 핵심 강점만 최대 3개로 요약',
+                ]}
               />
             </span>
             <ul className="mt-2 flex flex-col gap-2.5">
@@ -228,6 +321,10 @@ export function AiJobFit({ jobFit }: { jobFit: AiJobFitData }) {
               <AiAnalysisEvidence
                 label="관련 이론 이해도"
                 evidence={theoryEvidence}
+                flow={[
+                  '선택 직무와 관련된 성취도·CS 평가 카테고리를 연결',
+                  '카테고리 점수와 반영 비중으로 이해 수준을 산출',
+                ]}
               />
             </span>
             <h3 className="text-info mt-1 text-[17px] leading-6 font-bold">

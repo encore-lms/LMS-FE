@@ -41,6 +41,7 @@ export function AnalysisEvidenceTooltip({
   const triggerRef = useRef<HTMLButtonElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
+  const [pinned, setPinned] = useState(false)
   const [position, setPosition] = useState<TooltipPosition | null>(null)
 
   const updatePosition = useCallback(() => {
@@ -81,6 +82,7 @@ export function AnalysisEvidenceTooltip({
         !tooltipRef.current?.contains(target)
       ) {
         setOpen(false)
+        setPinned(false)
       }
     }
     const reposition = () => updatePosition()
@@ -106,13 +108,28 @@ export function AnalysisEvidenceTooltip({
         type="button"
         aria-label={ariaLabel ?? `${label} 분석 근거 보기`}
         aria-expanded={open}
+        aria-pressed={pinned}
         aria-describedby={open ? tooltipId : undefined}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setPinned((wasPinned) => {
+            const nextPinned = !wasPinned
+            setOpen(nextPinned)
+            return nextPinned
+          })
+        }}
         onFocus={() => setOpen(true)}
+        onBlur={() => {
+          if (!pinned) setOpen(false)
+        }}
         onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onMouseLeave={() => {
+          if (!pinned) setOpen(false)
+        }}
         onKeyDown={(event) => {
-          if (event.key === 'Escape') setOpen(false)
+          if (event.key === 'Escape') {
+            setOpen(false)
+            setPinned(false)
+          }
         }}
         className={cn(
           'text-fg-subtle hover:text-fg focus-visible:ring-ring flex size-5 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none',

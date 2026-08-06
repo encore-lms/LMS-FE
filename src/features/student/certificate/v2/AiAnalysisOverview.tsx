@@ -8,58 +8,34 @@ import { AiTroubleshootingAnalysis } from './AiTroubleshootingAnalysis'
 
 type AnalysisKey = 'job-fit' | 'projects' | 'troubleshooting'
 
-function firstLine(value: string) {
-  return (
-    value
-      .split('\n')
-      .map((line) => line.trim())
-      .find(Boolean) ?? '분석 결과를 준비하고 있습니다.'
-  )
-}
-
 export function AiAnalysisOverview({ analysis }: { analysis: AiAnalysis }) {
-  const primaryRole = analysis.jobFit.primaryRole
-  const primaryTroubleshootingGroup = [...analysis.troubleshooting.groups].sort(
-    (a, b) => b.certifiedCaseCount - a.certifiedCaseCount,
-  )[0]
   const items = [
     {
       key: 'job-fit' as const,
       label: '직무 적합도',
-      eyebrow: '가장 어울리는 직무',
-      title: primaryRole?.jobLabel ?? '직무 분석 준비 중',
-      summary: primaryRole
-        ? `적합도 ${primaryRole.fitScore}점 · ${primaryRole.workType}`
-        : '직무 관련 근거가 쌓이면 분석합니다.',
+      description:
+        '프로필과 학습·수행 기록을 바탕으로 어울리는 직무 방향을 분석합니다.',
       icon: BriefcaseBusiness,
       active: 'border-accent/40 bg-accent-bg/35 ring-accent/10',
       iconStyle: 'bg-accent-bg text-accent-strong',
-      eyebrowStyle: 'text-accent-strong',
     },
     {
       key: 'projects' as const,
       label: '프로젝트 분석',
-      eyebrow: `전체 프로젝트 ${analysis.projects.projectCount}개 분석`,
-      title: analysis.projects.overview.workingStyle,
-      summary: firstLine(
-        analysis.projects.aggregateAnalysis?.summary[0] ??
-          analysis.projects.summary,
-      ),
+      description:
+        '전체 프로젝트에서 반복된 역할·업무·기여와 수행 스타일을 분석합니다.',
       icon: FolderKanban,
       active: 'border-info/40 bg-info-bg/35 ring-info/10',
       iconStyle: 'bg-info-bg text-info',
-      eyebrowStyle: 'text-info',
     },
     {
       key: 'troubleshooting' as const,
-      label: '트러블슈팅 분석',
-      eyebrow: '가장 선명한 해결 영역',
-      title: primaryTroubleshootingGroup?.label ?? '문제해결 분석 준비 중',
-      summary: firstLine(analysis.troubleshooting.summary),
+      label: '문제해결 역량 분석',
+      description:
+        '인증된 문제해결 기록에서 반복된 접근법과 해결 범위의 확장을 분석합니다.',
       icon: ShieldCheck,
-      active: 'border-warning/40 bg-warning-bg/35 ring-warning/10',
-      iconStyle: 'bg-warning-bg text-warning',
-      eyebrowStyle: 'text-warning',
+      active: 'border-brown/35 bg-surface ring-brown/5',
+      iconStyle: 'bg-brown text-on-color',
     },
   ]
   const [selectedKey, setSelectedKey] = useState<AnalysisKey>('job-fit')
@@ -124,40 +100,27 @@ export function AiAnalysisOverview({ analysis }: { analysis: AiAnalysis }) {
                 onClick={() => setSelectedKey(item.key)}
                 onKeyDown={(event) => selectByKeyboard(event, index)}
                 className={cn(
-                  'focus-visible:ring-brand flex min-w-0 flex-col rounded-xl border p-4 text-left transition-colors outline-none focus-visible:ring-2',
+                  'focus-visible:ring-brand flex min-w-0 items-start gap-3 rounded-xl border p-4 text-left transition-colors outline-none focus-visible:ring-2',
                   selected
                     ? cn('ring-1', item.active)
                     : 'border-border bg-surface hover:bg-surface-muted',
                 )}
               >
-                <span className="flex items-center gap-2.5">
-                  <span
-                    className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                      item.iconStyle,
-                    )}
-                  >
-                    <Icon className="size-4" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="text-fg block text-[14px] font-bold">
-                      {item.label}
-                    </span>
-                    <span
-                      className={cn(
-                        'block truncate text-[12px] font-semibold',
-                        item.eyebrowStyle,
-                      )}
-                    >
-                      {item.eyebrow}
-                    </span>
-                  </span>
+                <span
+                  className={cn(
+                    'flex size-8 shrink-0 items-center justify-center rounded-lg',
+                    item.iconStyle,
+                  )}
+                >
+                  <Icon className="size-4" aria-hidden="true" />
                 </span>
-                <span className="text-fg mt-3 line-clamp-2 text-[15px] leading-5 font-bold">
-                  {item.title}
-                </span>
-                <span className="text-fg-muted mt-1 line-clamp-1 text-[12px] leading-5">
-                  {item.summary}
+                <span className="min-w-0">
+                  <span className="text-fg block text-[14px] font-bold">
+                    {item.label}
+                  </span>
+                  <span className="text-fg-muted mt-1 block text-[12px] leading-5">
+                    {item.description}
+                  </span>
                 </span>
               </button>
             )

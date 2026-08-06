@@ -20,7 +20,7 @@ import { useCartStore, cartTotal, type CartItem } from './cartStore'
 import { ProductImage } from './components/ProductImage'
 import { TONE_SOFT } from '@/shared/lib/tone'
 
-// 마일리지 장바구니/결제 (/student/mileage/cart) — 이전 LMS MileageCart 흐름.
+// 마일리지 장바구니/결제 (/student/mileage?view=cart) — 이전 LMS MileageCart 흐름.
 const PRODUCT_ICON: Record<CartItem['icon'], LucideIcon> = {
   book: Book,
   video: Video,

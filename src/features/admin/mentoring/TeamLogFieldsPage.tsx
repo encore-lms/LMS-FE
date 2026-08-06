@@ -32,7 +32,7 @@ import {
   useTeamLogFields,
 } from './api'
 import {
-  FIELD_TYPE_META,
+  fieldTypeMeta,
   FIELD_DIFF_LABEL,
   requiredChangedLabel,
 } from './statusMeta'
@@ -286,8 +286,8 @@ function TeamLogFieldsBody({ data }: { data: AdminTeamLogFieldsData }) {
       className: 'w-24',
       cell: (f) => (
         <StatusBadge
-          label={FIELD_TYPE_META[f.type].label}
-          tone={FIELD_TYPE_META[f.type].tone}
+          label={fieldTypeMeta(f.type).label}
+          tone={fieldTypeMeta(f.type).tone}
         />
       ),
     },

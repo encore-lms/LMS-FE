@@ -16,6 +16,7 @@ import type {
   StaffStudentEvalEntry,
   StaffStudentEvalSheet,
   StaffEvalAllData,
+  StudentActivitySummary,
 } from './types'
 
 // 설명 탭 — HRD-Net 과정 상세(learning-service). 과정/기수 둘 다 있어야 조회.
@@ -459,5 +460,27 @@ export function useAdminRecordGrid(cohortId: string | null) {
         })
         .then((r) => r.data),
     enabled: !!cohortId,
+  })
+}
+
+/** 수강생 활동 요약('수강생 종합 데이터' 탭) — 과제 제출·퀴즈 응시·QnA 작성(learning-service 집계). */
+export function useStudentActivitySummary(
+  cohortId: string | null,
+  studentId: string | null,
+) {
+  return useQuery({
+    queryKey: [
+      ...adminEducationKeys.all,
+      'activity',
+      cohortId ?? '',
+      studentId ?? '',
+    ] as const,
+    queryFn: () =>
+      apiClient
+        .get<StudentActivitySummary>(
+          `/admin/cohorts/${cohortId}/students/${studentId}/activity-summary`,
+        )
+        .then((r) => r.data),
+    enabled: !!cohortId && !!studentId,
   })
 }

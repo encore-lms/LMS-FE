@@ -27,12 +27,14 @@ export function AnalysisEvidenceTooltip({
   children,
   className,
   triggerClassName,
+  triggerContent,
 }: {
   label: string
   ariaLabel?: string
   children: ReactNode
   className?: string
   triggerClassName?: string
+  triggerContent?: ReactNode
 }) {
   const title = label.endsWith('근거') ? label : `${label} 분석 근거`
   const tooltipId = useId()
@@ -105,8 +107,10 @@ export function AnalysisEvidenceTooltip({
         aria-label={ariaLabel ?? `${label} 분석 근거 보기`}
         aria-expanded={open}
         aria-describedby={open ? tooltipId : undefined}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => setOpen(true)}
         onFocus={() => setOpen(true)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
         onKeyDown={(event) => {
           if (event.key === 'Escape') setOpen(false)
         }}
@@ -115,7 +119,7 @@ export function AnalysisEvidenceTooltip({
           triggerClassName,
         )}
       >
-        <Info className="size-3.5" aria-hidden="true" />
+        {triggerContent ?? <Info className="size-3.5" aria-hidden="true" />}
       </button>
 
       {open &&

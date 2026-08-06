@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { getAiAnalysis } from '../ai'
 import { AiTroubleshootingAnalysis } from './AiTroubleshootingAnalysis'
@@ -72,5 +72,33 @@ describe('문제해결 역량 분석', () => {
     )
 
     expect(container).toBeEmptyDOMElement()
+  })
+
+  it('문제 구조화·해결·검증·강점 영역·확장 범위에 실제 사례 근거를 연결한다', () => {
+    render(
+      <AiTroubleshootingAnalysis
+        troubleshooting={getAiAnalysis('stu-001').troubleshooting}
+      />,
+    )
+    ;[
+      '문제해결 성향',
+      '문제 구조화',
+      '해결 적용',
+      '결과 검증',
+      '가장 선명한 해결 영역',
+      '확장되는 문제해결 범위',
+    ].forEach((label) => {
+      expect(
+        screen.getByRole('button', { name: `${label} 근거 보기` }),
+      ).toHaveTextContent('!')
+    })
+    expect(
+      screen.queryByText('분석에 사용한 기본 데이터'),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '문제 구조화 근거 보기' }),
+    )
+    expect(screen.getByRole('tooltip')).toHaveTextContent('상황:')
   })
 })

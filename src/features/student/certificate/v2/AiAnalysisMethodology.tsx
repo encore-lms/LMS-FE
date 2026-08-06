@@ -46,12 +46,40 @@ export function AiAnalysisMethodology({ analysis }: { analysis: AiAnalysis }) {
         `${item.category} ${item.score}점 · 반영 비중 ${item.weightPercent}%`,
     )
     .join(' · ')
-  const projectNames = analysis.projects.projects
-    .map((project) => project.name)
-    .join(' · ')
+  const jobSource = analysis.jobFit.sourceData
+  const jobSourceEvidence = jobSource
+    ? [
+        `관심 직무 ${jobSource.interestedJobs.length}개`,
+        `기술 태그 ${jobSource.skillTags.length}개`,
+        `프로젝트 도메인 ${jobSource.projectDomains.length}개`,
+        `이론 이해도 ${jobSource.theoryCategories.length}개 카테고리`,
+        `승인 자격증 ${jobSource.certifications.length}개`,
+      ].join(' · ')
+    : `${jobFitEvidence}${theoryEvidence ? ` · 이론 평가: ${theoryEvidence}` : ''}`
+  const projectAnalysis = analysis.projects.aggregateAnalysis
+  const projectContribution = projectAnalysis?.contribution
+  const projectEvidence = projectAnalysis
+    ? [
+        projectContribution?.totalBoardTaskCount === null
+          ? `보드 담당 업무 ${projectContribution.assignedTaskCount}개`
+          : `보드 전체 ${projectContribution?.totalBoardTaskCount}개 중 담당 ${projectContribution?.assignedTaskCount}개 · 완료 ${projectContribution?.completedAssignedTaskCount}개`,
+        `본인 작성 수행·기여 ${projectAnalysis.selfReviewStatements.length}건`,
+        `프로젝트 역할 ${projectAnalysis.rolePatterns.length}종`,
+        `동료평가 ${projectAnalysis.peerAxes.length}축`,
+      ].join(' · ')
+    : '보드 담당 업무 · 본인 작성 수행·기여 · 프로젝트 역할 · 동료평가 4축 연동 대기'
   const troubleshootingGroups = analysis.troubleshooting.groups
     .map((group) => `${group.label} ${group.certifiedCaseCount}건`)
     .join(' · ')
+  const troubleshootingSource = analysis.troubleshooting.sourceData
+  const troubleshootingEvidence = troubleshootingSource
+    ? [
+        `카테고리 ${troubleshootingSource.categories.length}개`,
+        `상황·해결·결과 ${troubleshootingSource.cases.length}건`,
+        `중앙 ${troubleshootingSource.medianDays}일 · 평균 ${troubleshootingSource.averageDays}일`,
+        `독립 ${troubleshootingSource.independentCaseCount}건 · 협업 ${troubleshootingSource.supportedCaseCount}건`,
+      ].join(' · ')
+    : troubleshootingGroups || '인증 트러블슈팅 없음'
 
   return (
     <section className="border-accent/20 bg-accent-bg/30 rounded-2xl border p-5">
@@ -64,8 +92,8 @@ export function AiAnalysisMethodology({ analysis }: { analysis: AiAnalysis }) {
         <MethodCard
           index="01"
           title="직무 적합도"
-          data={`${jobFitEvidence}${theoryEvidence ? ` · 이론 평가: ${theoryEvidence}` : ''}`}
-          method="직무 후보는 개인 역할 40% + 인증 문제해결 30% + 80점 이상 직무 연관 성취 20% + 교차 검증 10%로 정렬합니다. 이론 이해도는 직무별 관련 평가 전체를 가중 평균하며 미응시 영역은 제외합니다."
+          data={jobSourceEvidence}
+          method="고정 직무군에서 서로 다른 데이터 출처가 같은 방향을 반복해서 지지하는 후보를 우선합니다. 이론 이해도와 승인 자격증은 검증 근거, 기술 태그는 방향 신호, 관심 직무와 프로젝트 도메인은 보조 맥락으로 사용하며 미선택·미보유 항목은 감점하지 않습니다."
           result={
             primary
               ? `${primary.jobLabel} · ${primary.workType} · 적합도 ${primary.fitScore}점`
@@ -75,15 +103,15 @@ export function AiAnalysisMethodology({ analysis }: { analysis: AiAnalysis }) {
         <MethodCard
           index="02"
           title="프로젝트 분석"
-          data={projectNames || '완료·인증 프로젝트 없음'}
-          method="프로젝트별 개인 역할 → 문제와 판단 → 검증 결과 → 실무 강점을 연결"
-          result={analysis.projects.recruiterSummary.headline}
+          data={projectEvidence}
+          method="전체 프로젝트에서 반복된 역할과 업무, 보드 담당·완료 범위, 본인이 작성한 수행·기여를 연결합니다. 프로젝트 스타일은 동료평가의 기술/기술기여·소통/협업/팀워크·문제해결·책임감 4축 평균만 사용하며 멘토·강사·운영 평가는 제외합니다."
+          result="전체 프로젝트 수행 스타일 · 동료평가 4축 유형 · 프로젝트별 성장·확장 · 핵심 강점"
         />
         <MethodCard
           index="03"
           title="문제해결 역량 분석"
-          data={troubleshootingGroups || '인증 트러블슈팅 없음'}
-          method="상황·해결·결과를 연결하고 반복된 해결 행동과 확장 방향을 분석"
+          data={troubleshootingEvidence}
+          method="트러블슈팅 카테고리와 마스킹된 상황·해결·결과를 연결하고, 중앙 소요일과 독립·협업 해결 분포를 함께 비교해 반복 성향·강점 영역·확장 방향을 분석합니다."
           result={analysis.troubleshooting.summary}
         />
       </div>

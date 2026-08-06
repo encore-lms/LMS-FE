@@ -4,10 +4,8 @@ import { ChevronDown } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { cn } from '@/shared/lib/cn'
 import { CERTIFICATE_MOCK_STUDENT_ID, fetchAiAnalysis } from '../ai'
+import { AiAnalysisOverview } from '../v2/AiAnalysisOverview'
 import { AiAnalysisMethodology } from '../v2/AiAnalysisMethodology'
-import { AiJobFit } from '../v2/AiJobFit'
-import { AiProjectAnalysis } from '../v2/AiProjectAnalysis'
-import { AiTroubleshootingAnalysis } from '../v2/AiTroubleshootingAnalysis'
 
 export function AiTab({
   studentId = CERTIFICATE_MOCK_STUDENT_ID,
@@ -68,11 +66,7 @@ export function AiTab({
             <AiAnalysisMethodology analysis={query.data} />
           </div>
 
-          <AiJobFit jobFit={query.data.jobFit} />
-          <AiProjectAnalysis projects={query.data.projects} />
-          <AiTroubleshootingAnalysis
-            troubleshooting={query.data.troubleshooting}
-          />
+          <AiAnalysisOverview key={studentId} analysis={query.data} />
         </div>
       )}
     </DataBoundary>

@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react'
 import type { AiTroubleshooting } from '../ai'
+import { AiAnalysisEvidence } from './AiAnalysisEvidence'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
 export function AiTroubleshootingAnalysis({
@@ -12,6 +13,38 @@ export function AiTroubleshootingAnalysis({
   const primaryGroup = [...troubleshooting.groups].sort(
     (a, b) => b.certifiedCaseCount - a.certifiedCaseCount,
   )[0]
+  const sourceData = troubleshooting.sourceData
+  const tendencyEvidence = sourceData
+    ? [
+        ...sourceData.categories.map(
+          (category) => `${category.label} · ${category.count}건`,
+        ),
+        `해결 소요일 · 중앙 ${sourceData.medianDays}일 · 평균 ${sourceData.averageDays}일`,
+        `해결 방식 · 독립 ${sourceData.independentCaseCount}건 · 협업 ${sourceData.supportedCaseCount}건`,
+      ]
+    : []
+  const stepEvidence = (index: number) =>
+    sourceData?.cases.slice(0, 4).map((item) => {
+      if (index === 0) return `${item.title} · 상황: ${item.situation}`
+      if (index === 1) return `${item.title} · 해결: ${item.resolution}`
+      return `${item.title} · 결과: ${item.result}`
+    }) ?? []
+  const primaryGroupEvidence = primaryGroup
+    ? [
+        `${primaryGroup.label} · 인증 사례 ${primaryGroup.certifiedCaseCount}건`,
+        ...primaryGroup.caseTitles
+          .slice(0, 4)
+          .map((title) => `사례 · ${title}`),
+      ]
+    : []
+  const growthEvidence = troubleshooting.growth
+    ? [
+        `반복 도메인 · ${troubleshooting.growth.repeatedDomains.join(' · ') || '없음'}`,
+        `새 도메인 · ${troubleshooting.growth.newDomains.join(' · ') || '없음'}`,
+        `반복 기술 · ${troubleshooting.growth.repeatedTechnologies.join(' · ') || '없음'}`,
+        `새 기술 · ${troubleshooting.growth.newTechnologies.join(' · ') || '없음'}`,
+      ]
+    : []
 
   return (
     <AiAnalysisPanel
@@ -27,8 +60,12 @@ export function AiTroubleshootingAnalysis({
             <ShieldCheck className="size-5" aria-hidden="true" />
           </span>
           <div>
-            <span className="text-on-color/80 text-[12px] font-bold">
-              AI가 읽은 문제해결 성향
+            <span className="text-on-color/80 flex items-center gap-1 text-[12px] font-bold">
+              <span>AI가 읽은 문제해결 성향</span>
+              <AiAnalysisEvidence
+                label="문제해결 성향"
+                evidence={tendencyEvidence}
+              />
             </span>
             <p className="mt-2 max-w-4xl text-[17px] leading-7 font-bold whitespace-pre-line">
               {troubleshooting.summary}
@@ -51,9 +88,15 @@ export function AiTroubleshootingAnalysis({
                 <span className="bg-success text-on-color flex size-7 items-center justify-center rounded-lg text-[12px] font-bold">
                   {index + 1}
                 </span>
-                <h4 className="text-fg mt-3 text-[14px] font-bold">
-                  {step.label}
-                </h4>
+                <span className="mt-3 flex items-center gap-1">
+                  <h4 className="text-fg text-[14px] font-bold">
+                    {step.label}
+                  </h4>
+                  <AiAnalysisEvidence
+                    label={step.label}
+                    evidence={stepEvidence(index)}
+                  />
+                </span>
                 <p className="text-fg-muted mt-1.5 text-[14px] leading-6">
                   {step.summary}
                 </p>
@@ -72,8 +115,12 @@ export function AiTroubleshootingAnalysis({
       <div className="grid gap-4 lg:grid-cols-2">
         {primaryGroup && (
           <section className="border-border bg-surface rounded-2xl border p-5">
-            <span className="text-success text-[12px] font-bold">
-              가장 선명한 해결 영역
+            <span className="text-success flex items-center gap-1 text-[12px] font-bold">
+              <span>가장 선명한 해결 영역</span>
+              <AiAnalysisEvidence
+                label="가장 선명한 해결 영역"
+                evidence={primaryGroupEvidence}
+              />
             </span>
             <h3 className="text-fg mt-1.5 text-[17px] font-bold">
               {primaryGroup.label}
@@ -94,6 +141,10 @@ export function AiTroubleshootingAnalysis({
               <span className="text-info text-[12px] font-bold">
                 확장되는 문제해결 범위
               </span>
+              <AiAnalysisEvidence
+                label="확장되는 문제해결 범위"
+                evidence={growthEvidence}
+              />
             </div>
             <p className="text-fg mt-2 text-[14px] leading-6 font-semibold">
               {troubleshooting.growth.summary}

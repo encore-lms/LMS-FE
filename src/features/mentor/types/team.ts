@@ -31,6 +31,17 @@ export const MENTOR_TEAM_STATUS_LABEL: Record<MentorTeamStatus, string> = {
   early_ended: '조기 종료',
 }
 
+/**
+ * '배정 시간 완료' 표기 — 10 → '10시간 완료', 1 → '1시간 완료'.
+ *
+ * <p>화면에 변수 이름 그대로 'N시간 완료'가 나오던 것을 실제 배정 시간으로 바꾼다.
+ * 운영(매니저) 화면은 2026-08-04에 같은 처리를 했는데 멘토 화면만 남아 있었다(2026-08-06 QA).</p>
+ */
+export function hoursDoneLabel(allocatedHours: number | null | undefined) {
+  if (allocatedHours == null || allocatedHours <= 0) return '배정 시간 완료'
+  return `${allocatedHours}시간 완료`
+}
+
 /** 멘토-팀 배정 + 시간 집계 read model — 대시보드·내 배정 팀 공용 행. */
 export interface MentorTeamAssignment {
   assignmentId: string

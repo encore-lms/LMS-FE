@@ -125,8 +125,7 @@ describe('OntologyMap', () => {
       }),
     ).toBeInTheDocument()
     expect(container.querySelectorAll('svg')).toHaveLength(1)
-    // 배경 도트 패턴·본인 헤일로가 circle을 추가하므로(2026-08-08 비주얼 개선) 노드 g 로 센다.
-    expect(container.querySelectorAll('[data-ontology-node]')).toHaveLength(
+    expect(container.querySelectorAll('svg circle')).toHaveLength(
       ontology.nodes.length,
     )
     expect(container.querySelectorAll('svg line')).toHaveLength(12)
@@ -239,22 +238,19 @@ describe('OntologyMap', () => {
     const { container } = render(<OntologyMap ontology={ontology} />)
     const radiusOf = (kind: string) => {
       const node = ontology.nodes.find((candidate) => candidate.kind === kind)!
-      // 본인 노드는 헤일로 circle이 먼저 온다 — 본체(surface 링)를 집는다.
       return Number(
         container
-          .querySelector(
-            `[data-ontology-node="${node.id}"] circle.stroke-surface`,
-          )
+          .querySelector(`[data-ontology-node="${node.id}"] circle`)
           ?.getAttribute('r'),
       )
     }
 
-    expect(radiusOf('self')).toBe(6.5)
-    expect(radiusOf('subject')).toBe(4.8)
-    expect(radiusOf('project')).toBe(3.8)
-    expect(radiusOf('domain')).toBe(2.7)
-    expect(radiusOf('skill')).toBe(2.7)
-    expect(radiusOf('method')).toBe(2.7)
+    expect(radiusOf('self')).toBe(6)
+    expect(radiusOf('subject')).toBe(4.5)
+    expect(radiusOf('project')).toBe(3.3)
+    expect(radiusOf('domain')).toBe(2.2)
+    expect(radiusOf('skill')).toBe(2.2)
+    expect(radiusOf('method')).toBe(2.2)
   })
 
   it('휠 입력으로 맵을 확대하고 축소한다', () => {

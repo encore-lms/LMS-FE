@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { CalendarCheck } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Empty } from '@/components/ui/Empty'
 import { InteractiveCard } from '@/components/ui/InteractiveCard'
+import { useMentoringLogs } from '../api/logs'
 import { useMentoringRequests } from '../api/requests'
 import {
   MENTORING_PLACE_TYPE_LABEL,
@@ -10,6 +12,9 @@ import {
 
 // 일지 작성 시 확정된 예약을 골라 진행 일시·장소를 그대로 가져온다.
 // 손으로 다시 옮겨 적으면 예약과 일지가 어긋나기 쉽다.
+//
+// 이미 일지를 쓴 예약은 목록에서 뺀다 — 그대로 두면 같은 날 같은 팀 일지를 또 만들게 되고,
+// 서버도 이제 그걸 막아 저장 직전에야 실패한다(2026-08-06 QA).
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 
@@ -22,6 +27,13 @@ export function splitIso(iso?: string | null) {
     date: `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`,
     time: `${pad2(d.getHours())}:${pad2(d.getMinutes())}`,
   }
+}
+
+/** 목록 행의 'YYYY' + 'M/D' → 'YYYY-MM-DD'. 일지 응답에 ISO 날짜가 없어 조합한다. */
+function ymdOf(yearLabel: string, dateLabel: string) {
+  const [month, day] = dateLabel.split('/')
+  if (!yearLabel || !month || !day) return ''
+  return `${yearLabel}-${pad2(Number(month))}-${pad2(Number(day))}`
 }
 
 export interface ReservationPick {
@@ -43,10 +55,24 @@ export function ReservationPickModal({
   onPick: (pick: ReservationPick) => void
 }) {
   const { data } = useMentoringRequests()
+  const { data: logsData } = useMentoringLogs()
+  // 이미 쓴 (팀, 날짜) — 초안은 아직 제출 전이라 세지 않는다(이어 쓰는 길을 막지 않음).
+  const written = useMemo(() => {
+    const set = new Set<string>()
+    for (const log of logsData?.logs ?? []) {
+      if (log.status === 'draft') continue
+      const date = ymdOf(log.yearLabel, log.dateLabel)
+      if (date) set.add(`${log.teamId}|${date}`)
+    }
+    return set
+  }, [logsData])
+
   // 실제로 진행이 정해진 것만 — 요청 대기·거절 건을 일지로 옮길 일은 없다.
   const rows: MentoringRequestItem[] = (data?.requests ?? []).filter(
     (r) =>
-      (r.status === 'confirmed' || r.status === 'completed') && !!r.confirmed,
+      (r.status === 'confirmed' || r.status === 'completed') &&
+      !!r.confirmed &&
+      !written.has(`${r.teamId}|${splitIso(r.confirmed.startsAt).date}`),
   )
 
   return (

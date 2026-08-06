@@ -1,5 +1,6 @@
 import { AlertTriangle, Check, Clock } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { hoursDoneLabel } from '../types'
 import type {
   MentorTeamAssignment,
   MentorTeamStatus,
@@ -53,7 +54,7 @@ export function TeamStatusChip({ status }: { status: MentorTeamStatus }) {
   )
 }
 
-// 'N시간 완료'·'초과 멘토링' 보조 태그 — 상태가 아닌 부가 라벨(팀명 옆 9px).
+// '배정 시간 완료'·'초과 멘토링' 보조 태그 — 상태가 아닌 부가 라벨(팀명 옆 9px).
 // 틴트 매핑: #d6f2e8→success-bg · #f0edfa→accent-bg.
 export function TeamSubTag({ team }: { team: MentorTeamAssignment }) {
   if (team.excessHours > 0) {
@@ -66,7 +67,7 @@ export function TeamSubTag({ team }: { team: MentorTeamAssignment }) {
   if (team.nHoursDone) {
     return (
       <span className="bg-success-bg text-success inline-flex rounded px-[5px] py-px text-[9px] font-bold whitespace-nowrap">
-        ✓ N시간 완료
+        ✓ {hoursDoneLabel(team.allocatedHours)}
       </span>
     )
   }

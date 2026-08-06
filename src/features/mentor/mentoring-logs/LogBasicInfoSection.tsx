@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { cn } from '@/shared/lib/cn'
+import { todayYmd } from './logFormSchema'
 import { ReservationPickModal } from './ReservationPickModal'
 import type { MentoringLogTarget } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
@@ -148,6 +149,7 @@ export function LogBasicInfoSection({
                 }
                 ariaLabel="진행 일자"
                 placeholder="날짜 선택"
+                max={todayYmd()}
               />
             </div>
             <div className="w-[150px]">

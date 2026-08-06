@@ -118,11 +118,16 @@ describe('LogComposePage', () => {
   it('작성 완료 제출 — 초안 생성 후 submit, 목록(?toast=submitted)으로 복귀한다', async () => {
     const user = userEvent.setup()
     renderPage()
-    // 진행 일자 — 달력 기본=이번 달, 15일 선택(소요시간은 시작/종료 시각으로만 산정)
+    // 진행 일자 — 달력 기본=이번 달. 앞날은 못 고르므로 오늘을 집는다(2026-08-06 QA).
     const now = new Date()
-    const expectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-15`
+    const day = now.getDate()
+    const expectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     await user.click(screen.getByRole('button', { name: '진행 일자' }))
-    await user.click(within(screen.getByRole('dialog')).getByText('15'))
+    await user.click(
+      within(screen.getByRole('dialog')).getByText(String(day), {
+        selector: 'button',
+      }),
+    )
     // 시작 14:00 = 오후 02시 00분
     await user.click(screen.getByRole('button', { name: '시작 시각' }))
     const startDlg = screen.getByRole('dialog')

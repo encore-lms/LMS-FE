@@ -11,6 +11,7 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
+import { hoursDoneLabel } from '../types'
 import { Avatar } from '@/components/ui/Avatar'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -465,7 +466,9 @@ function EvaluationCard({
       </header>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-end justify-between gap-2">
-          <span className="text-fg-subtle text-[11px]">N시간 완료 진행률</span>
+          <span className="text-fg-subtle text-[11px]">
+            {hoursDoneLabel(data.evaluation.allocatedHours)} 진행률
+          </span>
           <span>
             <span className="text-brand text-sm font-bold">
               {data.evaluation.progressHours}h

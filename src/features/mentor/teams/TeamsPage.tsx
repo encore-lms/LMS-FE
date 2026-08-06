@@ -220,7 +220,7 @@ export default function TeamsPage() {
                 label: '진행 중',
                 value: data.kpis.inProgress,
                 unit: '팀',
-                hint: 'N시간 미완료 일반 진행',
+                hint: '배정 시간 미완료 · 진행 중',
                 dot: 'bg-brand',
               },
               {
@@ -234,7 +234,7 @@ export default function TeamsPage() {
                 label: '평가 필요',
                 value: data.kpis.evaluationNeeded,
                 unit: '팀',
-                hint: 'N시간 완료 또는 조기 종료',
+                hint: '배정 시간 완료 또는 조기 종료',
                 dot: 'bg-warning',
               },
               {

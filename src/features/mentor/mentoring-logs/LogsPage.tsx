@@ -67,7 +67,8 @@ function rowAction(log: MentoringLogListItem, backTo?: string) {
       return {
         kind: 'open' as const,
         label: '열기',
-        to: `/mentor/mentoring-logs/${log.logId}`,
+        // 상세 라우트는 없다 — 모달로 연다(위 렌더 참고). 링크로 쓰이지 않는다.
+        to: '',
         className:
           'border-border text-fg-muted hover:bg-surface-muted border font-medium',
       }
@@ -348,8 +349,9 @@ export default function LogsPage({
           'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] whitespace-nowrap',
           action.className,
         )
-        // 팀 안에서 연 상세는 팀 안에 머문다 — 라우트로 나가면 팀 밖 전체 목록 위에 뜬다.
-        if (embedded && action.kind === 'open') {
+        // 상세는 모달로만 연다 — 일지 상세 라우트는 없다(팀 탭으로 이관, 2026-08-04).
+        // embedded 일 때만 모달로 열던 탓에 링크가 없는 주소를 가리키고 있었다(2026-08-06 QA).
+        if (action.kind === 'open') {
           return (
             <button
               type="button"

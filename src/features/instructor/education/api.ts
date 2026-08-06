@@ -13,7 +13,13 @@ import type {
 export interface CohortAttendanceSummary {
   cohortLabel: string
   date: string
-  students: { total: number; active: number; dropout: number }
+  students: {
+    total: number
+    active: number
+    dropout: number
+    /** 조기취업 — 취업으로 교육을 마쳤다. 중도탈락과 사유가 달라 따로 센다. */
+    earlyEmployed?: number
+  }
   todayPresent: number | null
   todayTotal: number | null
   todayAbsentees: { studentUuid: string; name: string; detail: string }[]

@@ -156,7 +156,6 @@ export function NoticesPane({
           placeholder: '제목·내용·작성자 검색',
           ariaLabel: '공지 검색',
         }}
-        reset={{ active: !!q, onReset: () => setQ('') }}
         actions={
           !readOnly &&
           newPath && (

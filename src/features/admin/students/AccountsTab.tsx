@@ -38,6 +38,19 @@ function accountBadge(
   return { label: '정상', tone: 'success' }
 }
 
+/**
+ * HRD 훈련상태 배지 — 계정 갱신으로 채워지는 '지금 교육 중인가'.
+ *
+ * <p>계정 탭에서만 이 값을 보여준다. 출결·수강생 명단은 교육 중인 사람만 나오므로,
+ * 조기취업·중도탈락한 사람을 확인할 수 있는 곳이 여기뿐이다(2026-08-06).</p>
+ */
+function trainingBadge(status: string | null): { label: string; tone: BadgeTone } {
+  if (!status) return { label: '동기화 전', tone: 'neutral' }
+  if (status.includes('중도탈락')) return { label: '중도탈락', tone: 'danger' }
+  if (status.includes('조기취업')) return { label: '조기취업', tone: 'info' }
+  return { label: status, tone: 'success' }
+}
+
 // 계정 탭 — HRD 동기화 + 계정 관제 테이블 + 학생 계정 상세 모달. (Figma 1457:10648)
 export function AccountsTab({ scope }: { scope?: CohortScope }) {
   const toast = useToast()
@@ -193,6 +206,8 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
           studentUuid: t.studentUuid,
           name: t.name,
           birth: t.birth,
+          // HRD 훈련상태를 함께 넘긴다 — 계정 갱신 때마다 '지금 교육 중인가'가 최신이 된다.
+          trainingStatus: t.status,
         })),
       })
       setSyncResult(result)
@@ -233,6 +248,15 @@ export function AccountsTab({ scope }: { scope?: CohortScope }) {
       className: 'w-28',
       cell: (a) => {
         const b = accountBadge(a, isBlocked(a))
+        return <StatusBadge label={b.label} tone={b.tone} />
+      },
+    },
+    {
+      key: 'training',
+      header: '훈련상태',
+      className: 'w-28',
+      cell: (a) => {
+        const b = trainingBadge(a.hrdTrainingStatus)
         return <StatusBadge label={b.label} tone={b.tone} />
       },
     },

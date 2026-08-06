@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
@@ -392,7 +392,7 @@ describe('SummaryTab', () => {
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(detailTabsResult)
   })
 
-  it('추천 데이터가 있어도 종합 점수에는 강사·멘토 추천 배지를 표시하지 않는다', async () => {
+  it('종합 점수의 강사·멘토 추천 배지에서 각 추천 인증서 모달을 연다', async () => {
     vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
     vi.mocked(fetchAiAnalysis).mockImplementation(
       () => new Promise(() => undefined),
@@ -410,11 +410,93 @@ describe('SummaryTab', () => {
     )
 
     await screen.findByText('79.9')
+    fireEvent.click(
+      screen.getByRole('button', { name: '강사 추천 인증서 보기' }),
+    )
+
+    let dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('강사 추천 인증서')).toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: '강사 추천서 보기' }),
-    ).not.toBeInTheDocument()
+      within(dialog).getByRole('article', { name: '강사 추천 인증서' }),
+    ).toHaveTextContent('기술 깊이와 협업 태도가 인상적입니다.')
+    expect(within(dialog).getByText('이정훈 강사')).toBeInTheDocument()
+
+    fireEvent.click(within(dialog).getByRole('button', { name: '닫기' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: '멘토 추천 인증서 보기' }),
+    )
+
+    dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('멘토 추천 인증서')).toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: '멘토 추천서 보기' }),
+      within(dialog).getByRole('article', { name: '멘토 추천 인증서' }),
+    ).toHaveTextContent('동료의 성장에도 긍정적인 영향을 주었습니다.')
+    expect(within(dialog).getByText('황설현 멘토')).toBeInTheDocument()
+  })
+
+  it.each([
+    ['강사', '멘토'],
+    ['멘토', '강사'],
+  ] as const)(
+    '%s 추천만 있으면 해당 추천 배지만 표시한다',
+    async (presentRole, absentRole) => {
+      vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+      vi.mocked(fetchAiAnalysis).mockImplementation(
+        () => new Promise(() => undefined),
+      )
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      })
+
+      render(
+        <MemoryRouter>
+          <QueryClientProvider client={queryClient}>
+            <SummaryTab
+              s={summary}
+              recommendations={recommendations.filter(
+                (item) => item.role === presentRole,
+              )}
+            />
+          </QueryClientProvider>
+        </MemoryRouter>,
+      )
+
+      await screen.findByText('79.9')
+      expect(screen.getByText('공식 추천')).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', {
+          name: `${presentRole} 추천 인증서 보기`,
+        }),
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', {
+          name: `${absentRole} 추천 인증서 보기`,
+        }),
+      ).not.toBeInTheDocument()
+    },
+  )
+
+  it('추천 데이터가 없으면 종합 점수에 추천 인증 배지를 표시하지 않는다', async () => {
+    vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+    vi.mocked(fetchAiAnalysis).mockImplementation(
+      () => new Promise(() => undefined),
+    )
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <SummaryTab s={summary} />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('79.9')
+    expect(screen.queryByText('공식 추천')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /추천 인증서 보기/ }),
     ).not.toBeInTheDocument()
   })
 

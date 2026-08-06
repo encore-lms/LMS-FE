@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, X } from 'lucide-react'
+import { ArrowRight, Award, ShieldCheck, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/shared/lib/cn'
 import { TONE_SOFT, TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
 import {
@@ -118,6 +119,171 @@ const domainTones: Tone[] = [
   'brand',
   'danger',
 ]
+
+type RecommendationRole = '강사' | '멘토'
+
+const recommendationStyles: Record<
+  RecommendationRole,
+  {
+    label: string
+    marker: string
+    roleText: string
+  }
+> = {
+  강사: {
+    label: '강사 추천',
+    marker: 'bg-success',
+    roleText: 'text-success',
+  },
+  멘토: {
+    label: '멘토 추천',
+    marker: 'bg-accent',
+    roleText: 'text-accent-strong',
+  },
+}
+
+function RecommendationBadge({
+  item,
+  onClick,
+}: {
+  item: CertRecommendation
+  onClick: () => void
+}) {
+  const role = item.role as RecommendationRole
+  const style = recommendationStyles[role]
+
+  return (
+    <button
+      type="button"
+      aria-label={`${style.label} 인증서 보기`}
+      onClick={onClick}
+      className="border-border bg-surface hover:border-brand/40 hover:bg-surface-muted focus-visible:ring-brand group flex min-w-32 items-center gap-2.5 rounded-xl border px-2 py-2 text-left shadow-sm transition-all outline-none hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2"
+    >
+      <span className="bg-brand-deep text-warning-inverse ring-border relative flex size-9 shrink-0 items-center justify-center rounded-full shadow-sm ring-2 ring-offset-1">
+        <Award aria-hidden="true" className="size-5" strokeWidth={1.8} />
+        <span
+          aria-hidden="true"
+          className={cn(
+            'border-surface absolute right-0 bottom-0 size-2.5 rounded-full border-2',
+            style.marker,
+          )}
+        />
+      </span>
+      <span className="flex min-w-0 flex-col">
+        <span className="text-fg-subtle text-[8px] leading-none font-bold tracking-[0.12em]">
+          RECOMMENDED
+        </span>
+        <span className="text-fg mt-1 text-[11px] leading-none font-bold">
+          {style.label}
+        </span>
+      </span>
+    </button>
+  )
+}
+
+function recommendationQuote(quote: string) {
+  return quote.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim()
+}
+
+function RecommendationCertificate({ item }: { item: CertRecommendation }) {
+  const role = item.role as RecommendationRole
+  const style = recommendationStyles[role]
+
+  return (
+    <article
+      aria-label={`${style.label} 인증서`}
+      className="border-brand-deep/20 bg-surface-muted relative overflow-hidden rounded-sm border p-2 shadow-lg"
+    >
+      <div className="border-brand-deep/25 bg-surface relative flex min-h-[420px] flex-col items-center overflow-hidden border px-7 py-8 text-center sm:px-12">
+        <span
+          aria-hidden="true"
+          className="border-warning/55 absolute top-4 left-4 size-7 border-t-2 border-l-2"
+        />
+        <span
+          aria-hidden="true"
+          className="border-warning/55 absolute top-4 right-4 size-7 border-t-2 border-r-2"
+        />
+        <span
+          aria-hidden="true"
+          className="border-warning/55 absolute bottom-4 left-4 size-7 border-b-2 border-l-2"
+        />
+        <span
+          aria-hidden="true"
+          className="border-warning/55 absolute right-4 bottom-4 size-7 border-r-2 border-b-2"
+        />
+        <Award
+          aria-hidden="true"
+          className="text-brand-deep pointer-events-none absolute top-1/2 left-1/2 size-60 -translate-x-1/2 -translate-y-1/2 opacity-[0.025]"
+          strokeWidth={1}
+        />
+
+        <div className="relative z-10 flex w-full flex-1 flex-col items-center">
+          <p className="text-fg-subtle text-[9px] font-bold tracking-[0.22em]">
+            PLAYDATA LMS · COURSE COMPETENCY CERTIFICATE
+          </p>
+
+          <span className="border-brand-deep/20 bg-surface mt-5 flex size-16 items-center justify-center rounded-full border p-1 shadow-sm">
+            <span className="bg-brand-deep text-warning-inverse flex size-full items-center justify-center rounded-full">
+              <Award aria-hidden="true" className="size-8" strokeWidth={1.6} />
+            </span>
+          </span>
+
+          <h3 className="text-brand-deep mt-4 text-2xl font-extrabold tracking-[-0.02em]">
+            추천 인증서
+          </h3>
+          <div className="mt-2 flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className={cn('size-1.5 rounded-full', style.marker)}
+            />
+            <span className={cn('text-[11px] font-bold', style.roleText)}>
+              {style.label}
+            </span>
+          </div>
+
+          <div
+            className="my-5 flex w-full items-center gap-3"
+            aria-hidden="true"
+          >
+            <span className="bg-brand-deep/10 h-px flex-1" />
+            <span className="bg-warning size-1.5 rotate-45" />
+            <span className="bg-brand-deep/10 h-px flex-1" />
+          </div>
+
+          <div className="text-fg-muted flex items-center gap-1.5 text-[10px] font-semibold">
+            <ShieldCheck aria-hidden="true" className="text-brand size-3.5" />
+            수강역량증명서에 반영된 추천
+          </div>
+
+          <blockquote className="text-fg my-5 max-w-md text-[16px] leading-8 font-semibold break-keep">
+            “{recommendationQuote(item.quote)}”
+          </blockquote>
+
+          <div className="border-brand-deep/10 mt-auto grid w-full gap-3 border-t pt-5 sm:grid-cols-[1fr_auto] sm:items-end sm:text-left">
+            <div>
+              <span className="text-fg-subtle block text-[9px] font-bold tracking-[0.12em]">
+                RECOMMENDED BY
+              </span>
+              <strong className="text-brand-deep mt-1 block text-[14px]">
+                {item.name}
+              </strong>
+              <span className="text-fg-muted mt-0.5 block text-[11px]">
+                {item.meta}
+              </span>
+            </div>
+            <span className="text-fg-subtle text-[10px] sm:pb-0.5">
+              {item.date}
+            </span>
+          </div>
+
+          <p className="text-fg-subtle mt-5 text-[9px] leading-4 break-keep">
+            수강 과정에서 작성되어 최종 수강역량증명서에 반영된 추천입니다.
+          </p>
+        </div>
+      </div>
+    </article>
+  )
+}
 
 function formatValue(value: number | null) {
   return value === null ? '-' : String(value)
@@ -1121,13 +1287,20 @@ export function ScoreEvidencePanel({
 function ScoreSummary({
   score,
   ontology,
+  recommendations = [],
 }: {
   score: CertificateScoreResult
   ontology?: Awaited<ReturnType<typeof fetchAiAnalysis>>['ontology']
+  recommendations?: CertRecommendation[]
 }) {
   const [selectedAxisKey, setSelectedAxisKey] = useState<AxisKey | null>(null)
   const [isOverallBasisHighlighted, setIsOverallBasisHighlighted] =
     useState(false)
+  const [selectedRecommendation, setSelectedRecommendation] =
+    useState<CertRecommendation | null>(null)
+  const visibleRecommendations = (['강사', '멘토'] as const)
+    .map((role) => recommendations.find((item) => item.role === role))
+    .filter((item): item is CertRecommendation => item !== undefined)
   const domains = score.domainExperience.map((domain, index) => ({
     label: domain.label,
     pct: domain.percentage,
@@ -1181,93 +1354,114 @@ function ScoreSummary({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(300px,35%)_minmax(0,65%)]">
-        <button
-          type="button"
-          aria-pressed={isOverallBasisHighlighted}
-          aria-label={`절대 종합 점수 ${score.overallScore?.toFixed(1) ?? '-'}점 · 6축 역량 점수 산출 기준 ${isOverallBasisHighlighted ? '강조 해제' : '강조'}`}
+        <div
           className={cn(
             card,
-            'focus-visible:ring-ring flex cursor-pointer flex-col items-center justify-center gap-4 transition-shadow focus-visible:ring-2 focus-visible:outline-none',
+            'flex flex-col gap-4 transition-shadow',
             isOverallBasisHighlighted &&
               'ring-brand/50 ring-offset-surface ring-2 ring-offset-2',
           )}
           data-overall-score-card
           data-overall-selected={isOverallBasisHighlighted}
-          onClick={() => {
-            setSelectedAxisKey(null)
-            setIsOverallBasisHighlighted((current) => !current)
-          }}
         >
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-fg-subtle text-[10px] font-bold">
-              AGGREGATE SCORE
-            </span>
-            <span className="text-fg text-[15px] font-bold">
-              절대 종합 점수
-            </span>
-            <span className="text-fg-muted text-[11px]">
-              6축 역량 점수를 종합한 결과
-            </span>
-          </div>
-
-          <div
-            data-overall-score-gauge
-            role="img"
-            aria-label={`절대 종합 점수 ${score.overallScore?.toFixed(1) ?? '-'}점`}
-            className="relative size-48"
+          <button
+            type="button"
+            aria-pressed={isOverallBasisHighlighted}
+            aria-label={`절대 종합 점수 ${score.overallScore?.toFixed(1) ?? '-'}점 · 6축 역량 점수 산출 기준 ${isOverallBasisHighlighted ? '강조 해제' : '강조'}`}
+            className="focus-visible:ring-brand flex flex-1 cursor-pointer flex-col items-center justify-center gap-4 rounded-xl outline-none focus-visible:ring-2"
+            onClick={() => {
+              setSelectedAxisKey(null)
+              setIsOverallBasisHighlighted((current) => !current)
+            }}
           >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 120 120"
-              className="size-full -rotate-90"
-            >
-              <circle
-                cx="60"
-                cy="60"
-                r="50"
-                fill="none"
-                pathLength="100"
-                stroke="currentColor"
-                strokeWidth="10"
-                className="text-surface-muted"
-              />
-              <circle
-                data-overall-score-progress
-                cx="60"
-                cy="60"
-                r="50"
-                fill="none"
-                pathLength="100"
-                stroke="currentColor"
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray="100"
-                strokeDashoffset={progressOffset}
-                className="text-brand transition-[stroke-dashoffset] duration-700 ease-out"
-              />
-            </svg>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-fg text-[44px] leading-none font-bold tracking-[-0.04em]">
-                {score.overallScore?.toFixed(1) ?? '-'}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-fg-subtle text-[10px] font-bold">
+                AGGREGATE SCORE
               </span>
-              <span className="text-fg-muted mt-1.5 text-[12px] font-medium">
-                / 100
+              <span className="text-fg text-[15px] font-bold">
+                절대 종합 점수
+              </span>
+              <span className="text-fg-muted text-[11px]">
+                6축 역량 점수를 종합한 결과
               </span>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="bg-brand/10 text-brand rounded-full px-3 py-1.5 text-[12px] font-bold">
-              Grade {score.grade ?? '-'}
-            </span>
-            <span className="bg-info-bg text-info rounded-full px-3 py-1.5 text-[12px] font-bold">
-              {overallTopPercent === null
-                ? '전체 상위 산출 전'
-                : `전체 상위 ${overallTopPercent}%`}
-            </span>
-          </div>
-        </button>
+            <div
+              data-overall-score-gauge
+              role="img"
+              aria-label={`절대 종합 점수 ${score.overallScore?.toFixed(1) ?? '-'}점`}
+              className="relative size-48"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 120 120"
+                className="size-full -rotate-90"
+              >
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  fill="none"
+                  pathLength="100"
+                  stroke="currentColor"
+                  strokeWidth="10"
+                  className="text-surface-muted"
+                />
+                <circle
+                  data-overall-score-progress
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  fill="none"
+                  pathLength="100"
+                  stroke="currentColor"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray="100"
+                  strokeDashoffset={progressOffset}
+                  className="text-brand transition-[stroke-dashoffset] duration-700 ease-out"
+                />
+              </svg>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-fg text-[44px] leading-none font-bold tracking-[-0.04em]">
+                  {score.overallScore?.toFixed(1) ?? '-'}
+                </span>
+                <span className="text-fg-muted mt-1.5 text-[12px] font-medium">
+                  / 100
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="bg-brand/10 text-brand rounded-full px-3 py-1.5 text-[12px] font-bold">
+                Grade {score.grade ?? '-'}
+              </span>
+              <span className="bg-info-bg text-info rounded-full px-3 py-1.5 text-[12px] font-bold">
+                {overallTopPercent === null
+                  ? '전체 상위 산출 전'
+                  : `전체 상위 ${overallTopPercent}%`}
+              </span>
+            </div>
+          </button>
+
+          {visibleRecommendations.length > 0 && (
+            <div className="border-divider flex flex-col items-center gap-2 border-t pt-4">
+              <span className="text-fg-subtle text-[10px] font-bold">
+                공식 추천
+              </span>
+              <div className="flex flex-wrap justify-center gap-2">
+                {visibleRecommendations.map((item) => (
+                  <RecommendationBadge
+                    key={item.role}
+                    item={item}
+                    onClick={() => setSelectedRecommendation(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <AxisGaugeList
           axes={score.axes}
@@ -1378,12 +1572,28 @@ function ScoreSummary({
           )}
         </div>
       </section>
+
+      <Modal
+        open={selectedRecommendation !== null}
+        onClose={() => setSelectedRecommendation(null)}
+        size="lg"
+        title={
+          selectedRecommendation
+            ? `${selectedRecommendation.role} 추천 인증서`
+            : undefined
+        }
+      >
+        {selectedRecommendation && (
+          <RecommendationCertificate item={selectedRecommendation} />
+        )}
+      </Modal>
     </div>
   )
 }
 
 export function SummaryTab({
   studentId = CERTIFICATE_MOCK_STUDENT_ID,
+  recommendations = [],
 }: {
   s: CertSummaryTab
   studentId?: string
@@ -1407,7 +1617,11 @@ export function SummaryTab({
       errorDescription="LMS-AI 엔진 상태와 수강생 식별자를 확인해 주세요."
     >
       {scoreQuery.data && (
-        <ScoreSummary score={scoreQuery.data} ontology={ai?.ontology} />
+        <ScoreSummary
+          score={scoreQuery.data}
+          ontology={ai?.ontology}
+          recommendations={recommendations}
+        />
       )}
     </DataBoundary>
   )

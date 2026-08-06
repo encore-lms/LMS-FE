@@ -119,3 +119,18 @@ export function useUploadLogImage() {
 
 // 첨부 이미지는 인증이 필요해 <img src> 로 직접 못 부른다 — LogImage 가 토큰 실린 요청으로
 // blob 을 받아 그린다(2026-08-06).
+
+/**
+ * 첨부 이미지 삭제 — 작성 중 뺀 이미지를 서버에서도 지운다.
+ *
+ * <p>업로드는 제출 전에 끝나므로, 지우지 않으면 일지에 붙지 않은 파일이 그대로 쌓인다.
+ * 이미 제출한 일지의 첨부는 서버가 422 로 막는다(재제출·일지 삭제가 정리).</p>
+ */
+export function useDeleteLogImage() {
+  return useMutation<void, Error, string>({
+    mutationFn: (imageId) =>
+      apiClient
+        .delete<void>(`/mentor/v1/mentoring-log-images/${imageId}`)
+        .then(() => undefined),
+  })
+}

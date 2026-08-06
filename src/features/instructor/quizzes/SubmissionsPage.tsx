@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -43,6 +48,7 @@ export default function SubmissionsPage() {
   usePageHeader('제출 현황', '퀴즈 제출률과 채점 대기 현황을 확인합니다')
   // 정답 관리는 운영 전용이다 — 강사 마운트에서는 감춘다.
   const isAdmin = useQuizBasePath().startsWith('/admin')
+  const location = useLocation()
 
   const rows = useMemo(() => data?.rows ?? [], [data])
   // 제출자 userId → 이름 join. BE는 studentUserId만 주고 이름은 FE에서 결합.
@@ -312,7 +318,13 @@ export default function SubmissionsPage() {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => navigate(`/admin/quizzes/${quizId}/answers`)}
+                onClick={() =>
+                  navigate(
+                    `/admin/quizzes/${quizId}/answers?from=${encodeURIComponent(
+                      location.pathname + location.search,
+                    )}`,
+                  )
+                }
                 className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
               >
                 정답 관리 →

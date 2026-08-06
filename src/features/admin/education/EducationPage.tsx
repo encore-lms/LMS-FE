@@ -12,6 +12,7 @@ import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { NoticesPane } from '@/features/instructor/education/NoticesPane'
 import QnaListPage from '@/features/student/qna/QnaListPage'
 import { StudentEvalPane } from './StudentEvalPane'
+import { StudentOverviewPane } from './StudentOverviewPane'
 import { StudentsPane } from '../students/StudentsPane'
 import { MentoringPane } from '../mentoring/MentoringPane'
 import { MaterialsPane } from './MaterialsPane'
@@ -35,6 +36,7 @@ type TabKey =
   | 'mentoring'
   | 'qna'
   | 'evaluations'
+  | 'overview'
   | 'materials'
   | 'settings'
 
@@ -54,6 +56,9 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'qna', label: TERMS.qnaBoard },
   // 수강생 평가(2026-08-06 신설) — 강사 허브와 공용 탭·무접미('과정 홈' 선례).
   { key: 'evaluations', label: '수강생 평가' },
+  // 수강생 종합 데이터(2026-08-07 신설) — 수강생 1명의 연관 데이터 통합 뷰. 당분간 매니저 전용,
+  // 강사·수강생 개방 범위는 이 화면으로 전체 데이터를 본 뒤 결정(사용자 계획).
+  { key: 'overview', label: roleTag('수강생 종합 데이터', '매니저') },
   { key: 'mentoring', label: roleTag('멘토링', '매니저') },
   { key: 'settings', label: roleTag('설정', '매니저') },
 ]
@@ -186,6 +191,8 @@ export default function EducationPage() {
           />
         ) : tab === 'evaluations' ? (
           <StudentEvalPane cohortId={cohortId} />
+        ) : tab === 'overview' ? (
+          <StudentOverviewPane courseId={courseId} cohortId={cohortId} />
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />

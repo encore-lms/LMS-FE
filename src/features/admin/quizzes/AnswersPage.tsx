@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
@@ -159,8 +159,12 @@ function ChangeEditor({
 export default function AnswersPage() {
   const { quizId = '' } = useParams()
   const navigate = useNavigate()
+  // 제출 현황에서 들어오므로 그리로 돌려보낸다 — 단독 퀴즈 목록으로 내보내면
+  // 허브에서 온 사용자가 허브 밖에 떨어진다(2026-08-06 경로 감사).
+  const [answersParams] = useSearchParams()
+  const backTo = answersParams.get('from') ?? `/admin/quizzes/${quizId}/submissions`
   const toast = useToast()
-  usePageHeader('정답 관리', '/admin/quizzes/:quizId/answers')
+  usePageHeader('정답 관리', '정답·배점을 고치고 재채점 영향을 확인합니다')
 
   const { data, isPending, isError, refetch } = useQuizAnswers(quizId)
   const save = useSaveAnswerChanges(quizId)
@@ -328,7 +332,7 @@ export default function AnswersPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => navigate('/admin/quizzes')}
+              onClick={() => navigate(backTo)}
               className={cn(
                 pill,
                 'bg-surface-muted text-fg-muted hover:text-fg',

@@ -39,8 +39,12 @@ export default function AssignmentFormPage() {
   const cohortParam = searchParams.get('cohort')
   const isAdminCtx = !!(courseParam || cohortParam)
   const fromCohortId = cohortIdParam ?? cohortParam
+  // 운영 허브는 기수를 경로로 받는다(/admin/education/{cohortId}) — 쿼리로 넘기면
+  // 기수 목록이 잡아 허브가 아니라 목록으로 떨어졌다(2026-08-06 QA). 기수를 모르면 목록으로.
   const backTo = isAdminCtx
-    ? `/admin/education?course=${courseParam ?? ''}&cohort=${cohortParam ?? ''}&tab=assignments`
+    ? cohortParam
+      ? `/admin/education/${cohortParam}?tab=assignments`
+      : '/admin/education'
     : fromCohortId
       ? `/instructor/cohorts/${fromCohortId}/education?tab=assignments`
       : '/instructor/assignments'

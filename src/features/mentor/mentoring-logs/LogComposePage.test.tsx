@@ -17,6 +17,7 @@ import {
 } from '../mockDb'
 import { ToastProvider } from '@/components/ui/Toast'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/logs')
 
@@ -36,10 +37,6 @@ function renderPage(entry = '/mentor/mentoring-logs/new') {
           <Route
             path="/mentor/mentoring-logs/new"
             element={<LogComposePage />}
-          />
-          <Route
-            path="/mentor/mentoring-logs"
-            element={<div>일지 목록 화면</div>}
           />
           <Route
             path="/mentor/mentoring-logs/submitted"
@@ -234,5 +231,24 @@ describe('LogComposePage', () => {
   it('비용·정산·매출 표현이 없다', () => {
     const { container } = renderPage()
     expect(container.textContent ?? '').not.toMatch(/비용|정산|매출/)
+  })
+
+  // 화면을 걷어낼 때 링크를 함께 훑지 않으면 '찾을 수 없는 주소'로 떨어진다.
+  // 일지 계열은 이 검사가 빠져 있어 '일지 목록으로' 버튼이 404 로 남아 있었다(2026-08-06 QA).
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', () => {
+    // 유효 일지 차단 화면 — '일지 목록으로' 버튼이 뜨는 바로 그 화면이다.
+    mockDetail({
+      isPending: false,
+      isError: false,
+      data: buildMentoringLogDetail('log_rec_4'),
+    })
+    const { container } = renderPage(
+      '/mentor/mentoring-logs/new?logId=log_rec_4',
+    )
+    const dead = [...container.querySelectorAll('a')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => href.startsWith('/mentor'))
+      .filter((href) => !reachable(href))
+    expect(dead).toEqual([])
   })
 })

@@ -34,8 +34,11 @@ export default function SubmissionsPage() {
   // 운영 허브 진입(course 쿼리 존재) 시 운영 허브 과제 탭으로 복귀 — 공용 폼과 같은 계약.
   const courseParam = searchParams.get('course')
   const cohortParam = searchParams.get('cohort')
+  // 운영 허브는 기수를 경로로 받는다 — 공용 폼과 같은 계약(2026-08-06 QA).
   const backTo = courseParam
-    ? `/admin/education?course=${courseParam}&cohort=${cohortParam ?? ''}&tab=assignments`
+    ? cohortParam
+      ? `/admin/education/${cohortParam}?tab=assignments`
+      : '/admin/education'
     : fromCohortId
       ? `/instructor/cohorts/${fromCohortId}/education?tab=assignments`
       : '/instructor/assignments'

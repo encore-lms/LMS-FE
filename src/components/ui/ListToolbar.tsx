@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { RotateCcw } from 'lucide-react'
 import { SearchInput } from './SearchInput'
 
 /** 좌측 카운트 표준 표기 — 필터·검색이 걸려 목록이 줄었을 때만 '(전체 M)'을 병기한다. */
@@ -36,7 +35,6 @@ export function ListToolbar({
   filters,
   actions,
   secondRow,
-  reset,
 }: {
   /** 좌측 — '총 N개' 카운트·보조 안내 */
   left?: ReactNode
@@ -52,8 +50,6 @@ export function ListToolbar({
   actions?: ReactNode
   /** 둘째 줄(카테고리 칩 등) — 렌더는 호출부 몫 */
   secondRow?: ReactNode
-  /** 검색·필터가 기본값이 아닐 때만 '초기화' 버튼 노출 — active 판정은 호출부가 한다. */
-  reset?: { active: boolean; onReset: () => void }
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -71,16 +67,6 @@ export function ListToolbar({
             />
           )}
           {filters}
-          {reset?.active && (
-            <button
-              type="button"
-              onClick={reset.onReset}
-              className="text-fg-muted hover:text-fg flex h-9 items-center gap-1 rounded-lg px-2 text-[12px] font-medium"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              초기화
-            </button>
-          )}
           {actions}
         </div>
       </div>

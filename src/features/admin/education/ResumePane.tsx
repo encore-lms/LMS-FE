@@ -162,7 +162,6 @@ export function ResumePane({
               placeholder: '이름·이력서 제목 검색',
               ariaLabel: '이력서 검색',
             }}
-            reset={{ active: !!q, onReset: () => setQ('') }}
           />
         </div>
         <DataTable

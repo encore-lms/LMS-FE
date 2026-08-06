@@ -268,15 +268,6 @@ export default function QuizListPage({
               placeholder: '퀴즈명·과목으로 검색',
               ariaLabel: '퀴즈 검색',
             }}
-            reset={{
-              active: hasFilter,
-              onReset: () => {
-                setQ('')
-                setCohort('전체')
-                setMode('all')
-                setVisibility('all')
-              },
-            }}
             filters={
               <>
                 {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}

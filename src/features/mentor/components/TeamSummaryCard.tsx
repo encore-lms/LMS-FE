@@ -1,6 +1,6 @@
 import { Check, Send } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import type { MentorTeamAssignment } from '../types'
+import { hoursDoneLabel, type MentorTeamAssignment } from '../types'
 import { TEAM_STATUS_META } from './statusMeta'
 import { CohortChip, TeamStatusChip } from './chips'
 import { ProgressBar } from './ProgressBar'
@@ -63,7 +63,7 @@ export function TeamSummaryCard({
       {team.nHoursDone && (
         <p className="text-success flex items-center gap-1 text-[11px] font-bold">
           <Check className="h-3 w-3" />
-          N시간 완료
+          {hoursDoneLabel(team.allocatedHours)}
         </p>
       )}
       <TeamActionLink team={team} context="card" block />

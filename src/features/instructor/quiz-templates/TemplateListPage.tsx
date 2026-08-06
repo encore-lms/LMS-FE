@@ -12,6 +12,10 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { QuizTemplateRow } from '@/shared/types'
 import { useDeleteQuizTemplate, useQuizTemplates } from '../api/quizTemplates'
+import {
+  useQuizBasePath,
+  useQuizTemplateBasePath,
+} from '../quizzes/useQuizBasePath'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { SearchInput } from '@/components/ui/SearchInput'
 
@@ -25,9 +29,13 @@ const CATEGORIES = [
 ] as const
 type SortKey = 'recent' | 'useCount' | 'name'
 
-// 퀴즈 템플릿 목록 (/instructor/quiz-templates) — §10. (Figma 1354:9948)
+// 퀴즈 템플릿 목록 (/instructor/quiz-templates · /admin/quiz-templates) — §10. (Figma 1354:9948)
 // [새 퀴즈로 복제] → §6 퀴즈 생성 폼 진입. 사용 중 템플릿(복제된 퀴즈 존재)은 삭제 비활성.
 export default function TemplateListPage() {
+  // 강사·운영이 같은 화면을 쓴다 — 내부 이동은 마운트 위치의 역할 프리픽스를 따라야
+  // 매니저가 /instructor 로 나가 역할 가드에 막히지 않는다(2026-08-06 QA).
+  const quizBase = useQuizBasePath()
+  const templateBase = useQuizTemplateBasePath()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = useQuizTemplates()
@@ -140,7 +148,7 @@ export default function TemplateListPage() {
               onClick={(e) => {
                 e.stopPropagation()
                 // 퀴즈 생성 폼이 templateId로 설정 프리필 + 저장 시 문항 복제까지 수행.
-                navigate(`/instructor/quizzes/new?templateId=${t.id}`)
+                navigate(`${quizBase}/new?templateId=${t.id}`)
               }}
             >
               새 퀴즈로 복제
@@ -150,7 +158,7 @@ export default function TemplateListPage() {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`/instructor/quiz-templates/${t.id}/edit`)
+                navigate(`${templateBase}/${t.id}/edit`)
               }}
             >
               편집
@@ -241,7 +249,7 @@ export default function TemplateListPage() {
               </span>
               <Button
                 size="sm"
-                onClick={() => navigate('/instructor/quiz-templates/new')}
+                onClick={() => navigate(`${templateBase}/new`)}
               >
                 <Plus className="h-3.5 w-3.5" /> 템플릿 생성
               </Button>
@@ -254,7 +262,7 @@ export default function TemplateListPage() {
               rows={paged}
               rowKey={(t) => t.id}
               onRowClick={(t) =>
-                navigate(`/instructor/quiz-templates/${t.id}/edit`)
+                navigate(`${templateBase}/${t.id}/edit`)
               }
               empty="조건에 맞는 템플릿이 없어요"
             />

@@ -432,7 +432,11 @@ export default function QnaDetailPage() {
   // 기수 허브의 QnA 탭에서 왔으면 그 탭으로 돌려보낸다 — 목록이 허브 안에 있어서
   // base 로 돌아가면 방금 있던 화면이 아니라 단독 게시판으로 튄다.
   const [detailParams] = useSearchParams()
-  const backTo = detailParams.get('from') ?? base
+  // 허브에서 열었으면 ?from= 이 붙는다. 알림으로 바로 들어오면 없는데, 강사는 목록 단독
+  // 라우트를 걷어내(2026-08-06) base 로 보내면 404 다 — 교육과정 목록으로 돌려보낸다.
+  const backTo =
+    detailParams.get('from') ??
+    (base === '/instructor/qna' ? '/instructor/cohorts' : base)
   const toast = useToast()
   const { user } = useAuth()
   const selfName = user?.name ?? '나'

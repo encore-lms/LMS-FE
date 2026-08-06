@@ -28,7 +28,7 @@ import {
   useSetTemplateStatus,
   useUpdateTemplateFields,
 } from './api'
-import { FIELD_TYPE_META } from './statusMeta'
+import { fieldTypeMeta } from './statusMeta'
 import { newFieldId } from './fieldDiff'
 import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
 import { TemplateFormModal } from './TemplateFormModal'
@@ -531,8 +531,8 @@ export default function LogTemplatesPage({
                                     tone={field.required ? 'danger' : 'neutral'}
                                   />
                                   <StatusBadge
-                                    label={FIELD_TYPE_META[field.type].label}
-                                    tone={FIELD_TYPE_META[field.type].tone}
+                                    label={fieldTypeMeta(field.type).label}
+                                    tone={fieldTypeMeta(field.type).tone}
                                   />
                                 </p>
                                 {field.helpText && (

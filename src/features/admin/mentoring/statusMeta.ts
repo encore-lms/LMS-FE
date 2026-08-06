@@ -76,7 +76,7 @@ export function progressFillClass(pct: number) {
 
 // ───────────────────────── 일지 항목·템플릿 (§31~32) ─────────────────────────
 
-/** 항목 타입 배지 — 텍스트=info/success 틴트 · 이미지=warning · 텍스트+이미지=accent. */
+/** 항목 타입 배지 — 텍스트=info/success 틴트 · 이미지=warning. */
 export const FIELD_TYPE_META: Record<
   AdminTemplateFieldType,
   { label: string; tone: BadgeTone }
@@ -84,6 +84,21 @@ export const FIELD_TYPE_META: Record<
   long_text: { label: '긴 텍스트', tone: 'info' },
   short_text: { label: '짧은 텍스트', tone: 'success' },
   image: { label: '이미지', tone: 'warning' },
+}
+
+/**
+ * 배지에 쓸 항목 타입 표기 — 모르는 타입이면 값을 그대로 보여준다.
+ *
+ * 서버가 아는 타입은 FE 보다 넓을 수 있다(배포 순서가 어긋나거나 타입이 늘어날 때).
+ * 맵을 바로 인덱싱하다 undefined.label 로 화면 전체가 죽은 적이 있다(2026-08-06).
+ */
+export function fieldTypeMeta(type: string): { label: string; tone: BadgeTone } {
+  return (
+    FIELD_TYPE_META[type as AdminTemplateFieldType] ?? {
+      label: type,
+      tone: 'neutral',
+    }
+  )
 }
 
 /**

@@ -306,6 +306,17 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(
       screen.queryByText('Spring REST API + JWT 인증'),
     ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: '성장 곡선' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('성취도 평가 기술 추세')).not.toBeInTheDocument()
+    expect(screen.queryByText('CS 평가 기술 추세')).not.toBeInTheDocument()
+    expect(
+      document.querySelector('[data-growth-type-summary="ACHIEVEMENT"]'),
+    ).toHaveTextContent('성취도 평가 1회 · 평균 86점')
+    expect(
+      document.querySelector('[data-growth-timeline]')?.nextElementSibling,
+    ).toBe(document.querySelector('[data-tech-category-card]'))
   })
 
   it('인증 문제해결 사례를 카테고리와 해결 흐름으로 표시한다', async () => {
@@ -426,7 +437,7 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.queryByText(/API 조회를 점검했습니다.*…/)).toBeNull()
   })
 
-  it('역할별 4축 평가·추천서·코멘트를 평가·추천 형식으로 표시한다', () => {
+  it('역할별 4축 평가 옆에 추천서와 코멘트를 세로로 표시한다', () => {
     renderWithQuery(<GrowthTab g={growth} score={scoreResult} />)
 
     expect(
@@ -458,48 +469,12 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.getByText('이정훈 강사')).toBeInTheDocument()
     expect(screen.getByText('황설현 멘토')).toBeInTheDocument()
     expect(
-      document.querySelector('[data-comments-recommendations-row]'),
-    ).toHaveClass('lg:grid-cols-2')
-    expect(
-      screen.getByRole('heading', { name: '성장 곡선' }),
-    ).toBeInTheDocument()
-    const growthSegments = Array.from(
-      document.querySelectorAll('[data-growth-trend-segment]'),
-    )
-    expect(growthSegments).toHaveLength(5)
-    expect(
-      growthSegments.map((segment) =>
-        segment.getAttribute('data-growth-trend-type'),
-      ),
-    ).toEqual(['CS', 'ACHIEVEMENT', 'ACHIEVEMENT', 'CS', 'ACHIEVEMENT'])
-    expect(document.querySelectorAll('[data-growth-score-bar]')).toHaveLength(6)
-    expect(document.querySelector('[data-growth-plot]')).toHaveClass(
-      'h-[240px]',
-    )
-    expect(document.querySelector('[data-growth-plot-points]')).toHaveClass(
-      'h-[84%]',
-    )
-    expect(
-      document.querySelector('[data-growth-type-summary="ACHIEVEMENT"]'),
-    ).toHaveTextContent('성취도 평가 4회 · 평균 70.8점')
-    expect(
-      document.querySelector('[data-growth-type-summary="CS"]'),
-    ).toHaveTextContent('CS 평가 2회 · 평균 69점')
-    expect(
-      Array.from(
-        document.querySelectorAll('[data-growth-chronology] time'),
-      ).map((item) => item.textContent),
-    ).toEqual([
-      '2024-04-17',
-      '2024-05-10',
-      '2024-06-13',
-      '2024-07-09',
-      '2024-08-07',
-      '2024-08-28',
-    ])
+      document.querySelector('[data-evaluation-support-panel]'),
+    ).toHaveClass('flex-col')
+    expect(screen.queryByRole('heading', { name: '성장 곡선' })).toBeNull()
   })
 
-  it('평가·추천 데이터는 기존 시험 상세와 4축 점수를 함께 조회한다', async () => {
+  it('평가·추천 데이터는 4축 점수만 조회한다', async () => {
     vi.mocked(fetchCertificateDetailTabs).mockClear()
     vi.mocked(fetchCertificateScore).mockClear()
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(result)
@@ -512,10 +487,7 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(
       await screen.findByText('4평가자 · 공통 4축 비교'),
     ).toBeInTheDocument()
-    expect(
-      document.querySelector('[data-growth-type-summary="ACHIEVEMENT"]'),
-    ).toHaveTextContent('성취도 평가 1회 · 평균 86점')
-    expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
+    expect(fetchCertificateDetailTabs).not.toHaveBeenCalled()
     expect(fetchCertificateScore).toHaveBeenCalledWith('student-1')
   })
 

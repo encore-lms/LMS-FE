@@ -5,6 +5,10 @@ import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 import type { CertificateTechDetail } from '../ai'
 import type { Tone } from '../types'
 import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
+import { AssessmentGrowthTimeline } from './GrowthTab'
+import { TabHead } from './TabHead'
+
+export { TabHead } from './TabHead'
 
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
@@ -991,12 +995,6 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
       left.submittedAt.localeCompare(right.submittedAt) ||
       left.id.localeCompare(right.id),
   )
-  const achievementAssessments = chronologicalAssessments.filter(
-    (assessment) => assessment.assessmentType === 'ACHIEVEMENT',
-  )
-  const csAssessments = chronologicalAssessments.filter(
-    (assessment) => assessment.assessmentType === 'CS',
-  )
   const categoryScores = buildSingleAssessmentCategoryScores(tech.assessments)
   const achievementCategories = categoryScores.filter(
     (category) => category.assessmentType !== 'CS',
@@ -1028,6 +1026,8 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
         </span>
       </TabHead>
 
+      <AssessmentGrowthTimeline assessments={chronologicalAssessments} />
+
       <section
         data-tech-category-card
         className={cn(card, 'flex flex-col gap-4')}
@@ -1058,35 +1058,6 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
           </div>
         </div>
       </section>
-
-      <div
-        data-tech-following-content
-        data-assessment-trend-split
-        className="grid grid-cols-1 gap-4 xl:grid-cols-2"
-      >
-        <div className="min-w-0">
-          <AssessmentTrendChart
-            assessments={achievementAssessments}
-            averageTopPercent={tech.assessmentAverageTopPercent}
-            averagePopulationSize={tech.assessmentAveragePopulationSize}
-            title="성취도 평가 기술 추세"
-            emptyMessage="표시할 성취도 평가 이력이 없습니다."
-            tone="achievement"
-            showAverageRank={false}
-          />
-        </div>
-        <div className="min-w-0">
-          <AssessmentTrendChart
-            assessments={csAssessments}
-            averageTopPercent={tech.assessmentAverageTopPercent}
-            averagePopulationSize={tech.assessmentAveragePopulationSize}
-            title="CS 평가 기술 추세"
-            emptyMessage="표시할 CS 평가 이력이 없습니다."
-            tone="cs"
-            showAverageRank={false}
-          />
-        </div>
-      </div>
 
       <section
         data-tech-certifications
@@ -1135,32 +1106,5 @@ export function TechTab({ studentId }: { studentId?: string }) {
     >
       {query.data && <TechTabContent tech={query.data.tech} />}
     </DataBoundary>
-  )
-}
-
-export function TabHead({
-  no,
-  title,
-  sub,
-  children,
-}: {
-  no: number
-  title: string
-  sub: string
-  children?: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <span className="bg-brand-deep flex size-6 items-center justify-center rounded-md text-[12px] font-bold text-white">
-          {no}
-        </span>
-        <div className="flex flex-col">
-          <h2 className="text-fg text-[18px] font-bold">{title}</h2>
-          <span className="text-fg-subtle text-[11px]">{sub}</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-3">{children}</div>
-    </div>
   )
 }

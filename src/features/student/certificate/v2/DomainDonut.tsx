@@ -8,6 +8,8 @@ const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const R = 52
 const C = 2 * Math.PI * R
+// 세그먼트 사이 surface 갭 — 인접 채움이 맞닿지 않게 한다(마크 스펙: 2px 갭).
+const SEG_GAP = 3
 const domainCollator = new Intl.Collator(['ko', 'en'], {
   numeric: true,
   sensitivity: 'base',
@@ -82,31 +84,6 @@ export function DomainDonut({
               compact ? 'gap-1.5' : 'max-w-[280px] gap-3',
             )}
           >
-            <div
-              className={cn(
-                'border-border bg-surface max-w-full rounded-lg border text-center shadow-sm',
-                compact ? 'min-h-11 px-2 py-1.5' : 'min-h-[58px] px-3 py-2',
-              )}
-              data-domain-detail={selected.label}
-            >
-              <div
-                className="text-fg max-w-[240px] truncate text-[12px] font-bold"
-                title={selected.label}
-              >
-                {selected.label}
-              </div>
-              <div className="mt-0.5 flex items-center justify-center gap-1.5">
-                <span className="text-brand text-[14px] font-bold">
-                  {selected.pct}%
-                </span>
-                {selected.projectCount !== undefined && (
-                  <span className="text-fg-subtle text-[10px]">
-                    · 인증 프로젝트 {selected.projectCount}개
-                  </span>
-                )}
-              </div>
-            </div>
-
             <svg
               viewBox="0 0 140 140"
               className={cn(
@@ -127,6 +104,9 @@ export function DomainDonut({
               <g transform="rotate(-90 70 70)">
                 {segments.map(({ domain, length, offset }) => {
                   const isSelected = selected.label === domain.label
+                  // 갭만큼 줄인 호 — 세그먼트가 1개면 갭 없이 온전한 링을 그린다.
+                  const gap = segments.length > 1 ? SEG_GAP : 0
+                  const arc = Math.max(length - gap, 0.5)
                   return (
                     <circle
                       key={domain.label}
@@ -135,14 +115,15 @@ export function DomainDonut({
                       r={R}
                       fill="none"
                       stroke="currentColor"
+                      strokeLinecap={gap ? 'round' : 'butt'}
                       className={cn(
                         TONE_TEXT[domain.tone],
                         'cursor-pointer transition-all duration-200 outline-none',
-                        !isSelected && 'opacity-70 hover:opacity-100',
+                        !isSelected && 'opacity-55 hover:opacity-90',
                       )}
-                      strokeWidth={isSelected ? 20 : 16}
-                      strokeDasharray={`${length} ${C - length}`}
-                      strokeDashoffset={-offset}
+                      strokeWidth={isSelected ? 19 : 14}
+                      strokeDasharray={`${arc} ${C - arc}`}
+                      strokeDashoffset={-(offset + gap / 2)}
                       role="button"
                       tabIndex={0}
                       aria-label={`${domain.label} ${domain.pct}%`}
@@ -159,22 +140,41 @@ export function DomainDonut({
                   )
                 })}
               </g>
+              {/* 중앙 = 선택 도메인 요약 — 별도 카드 없이 도넛이 스스로 말한다. */}
               <text
                 x="70"
-                y="65"
+                y="62"
                 textAnchor="middle"
-                className="fill-fg text-[20px] font-bold"
+                className={cn(
+                  'fill-fg text-[22px] font-bold',
+                  TONE_TEXT[selected.tone],
+                )}
+                fill="currentColor"
                 data-domain-total
               >
-                {sortedDomains.length}개
+                {selected.pct}%
               </text>
               <text
                 x="70"
-                y="82"
+                y="76"
                 textAnchor="middle"
-                className="fill-fg-muted text-[9px] font-semibold"
+                className="fill-fg text-[8.5px] font-semibold"
+                data-domain-detail={selected.label}
               >
-                도메인
+                {selected.label.length > 12
+                  ? `${selected.label.slice(0, 11)}…`
+                  : selected.label}
+              </text>
+              <text
+                x="70"
+                y="87"
+                textAnchor="middle"
+                className="fill-fg-muted text-[7.5px] font-medium"
+              >
+                {selected.projectCount !== undefined
+                  ? `인증 프로젝트 ${selected.projectCount}개 · `
+                  : ''}
+                {sortedDomains.length}개 도메인
               </text>
             </svg>
           </div>
@@ -211,8 +211,20 @@ export function DomainDonut({
                       TONE_SOLID[domain.tone],
                     )}
                   />
-                  <span className="text-fg min-w-0 flex-1 truncate font-medium">
-                    {domain.label}
+                  <span className="flex min-w-0 flex-1 flex-col gap-1 py-1.5">
+                    <span className="text-fg min-w-0 truncate font-medium">
+                      {domain.label}
+                    </span>
+                    <span className="bg-surface-muted h-1 w-full overflow-hidden rounded-full">
+                      <span
+                        className={cn(
+                          'block h-full rounded-full transition-all',
+                          TONE_SOLID[domain.tone],
+                          !isSelected && 'opacity-60',
+                        )}
+                        style={{ width: `${domain.pct}%` }}
+                      />
+                    </span>
                   </span>
                   {domain.projectCount !== undefined && (
                     <span className="text-fg-subtle text-[11px]">

@@ -71,19 +71,18 @@ function officialCertificationScoreLabel(
 
   return `${new Intl.NumberFormat('ko-KR', {
     maximumFractionDigits: 1,
-  }).format(certification.score)}/1,000점`
+  }).format(certification.score)} / 1,000점`
 }
 
-function officialCertificationGradeLabel(
+function officialCertificationScoreBand(
   certification: CertificateTechDetail['certifications'][number],
 ) {
   if (!certification.grade) return null
   const certificationName = officialCertificationName(certification.name)
-  if (!certificationName) return certification.grade
+  if (!certificationName) return null
 
   const grade = certification.grade.trim().toUpperCase()
-  const scoreBand = officialCertificationScoreBands[certificationName][grade]
-  return scoreBand ? `${grade} (${scoreBand})` : certification.grade
+  return officialCertificationScoreBands[certificationName][grade] ?? null
 }
 
 function formatCertificationDate(value: string) {
@@ -113,21 +112,165 @@ function certificationDateLabel(
     : '일자 정보 없음'
 }
 
-function certificationDetailLabel(
-  certification: CertificateTechDetail['certifications'][number],
-) {
-  const details: string[] = []
-  if (certification.status === 'APPROVED') {
-    const gradeLabel = officialCertificationGradeLabel(certification)
-    const scoreLabel = officialCertificationScoreLabel(certification)
-    if (gradeLabel) details.push(gradeLabel)
-    if (scoreLabel) details.push(scoreLabel)
-    else if (certification.score !== null)
-      details.push(`${formatNumber(certification.score)}점`)
+type Certification = CertificateTechDetail['certifications'][number]
+type CertificationGroupKey = 'coding-test' | 'credential'
+
+const certificationGroupMeta: Record<
+  CertificationGroupKey,
+  { title: string; description: string; emptyMessage: string; tone: Tone }
+> = {
+  'coding-test': {
+    title: '코딩테스트',
+    description: '공식 원점수와 등급이 있는 코딩 역량 시험',
+    emptyMessage: '인증된 코딩테스트 결과가 없습니다.',
+    tone: 'brand',
+  },
+  credential: {
+    title: '자격·기술 인증',
+    description: '기관 자격증과 플랫폼 배지·등급 등 기술 근거',
+    emptyMessage: '인증된 자격·기술 인증이 없습니다.',
+    tone: 'success',
+  },
+}
+
+const certificationGroupOrder: CertificationGroupKey[] = [
+  'coding-test',
+  'credential',
+]
+
+function certificationGroup(certification: Certification) {
+  if (officialCertificationName(certification.name)) return 'coding-test'
+  return 'credential'
+}
+
+function certificationScoreLabel(certification: Certification) {
+  return (
+    officialCertificationScoreLabel(certification) ??
+    (certification.score === null
+      ? null
+      : `${formatNumber(certification.score)}점`)
+  )
+}
+
+function CertificationItem({
+  certification,
+}: {
+  certification: Certification
+}) {
+  const status = certificationStatus[certification.status] ?? {
+    label: certification.status,
+    tone: 'info' as const,
   }
-  details.push(certificationDateLabel(certification))
-  details.push(certification.registrationSource || '외부 인증 입력')
-  return details.join(' · ')
+  const scoreLabel = certificationScoreLabel(certification)
+  const scoreBand = officialCertificationScoreBand(certification)
+  const hasMetrics = certification.grade || scoreLabel
+
+  return (
+    <article
+      data-certification-item={certification.name}
+      className="bg-surface flex min-w-0 flex-col gap-3 rounded-xl p-4"
+    >
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <h4 className="text-fg min-w-0 text-[13px] leading-5 font-bold">
+          {certification.name}
+        </h4>
+        <span
+          className={cn(
+            'shrink-0 rounded-md px-2 py-1 text-center text-[10px] font-bold',
+            TONE_SOFT[status.tone],
+          )}
+        >
+          {status.label}
+        </span>
+      </div>
+
+      {hasMetrics && (
+        <dl
+          data-certification-metrics
+          className={cn(
+            'grid gap-2',
+            certification.grade && scoreLabel && 'grid-cols-2',
+          )}
+        >
+          {certification.grade && (
+            <div className="bg-surface-muted rounded-lg px-3 py-2.5">
+              <dt className="text-fg-subtle text-[10px] font-semibold">등급</dt>
+              <dd className="text-fg mt-1 text-[16px] leading-none font-extrabold">
+                {certification.grade}
+              </dd>
+              {scoreBand && (
+                <span className="text-fg-muted mt-1 block text-[9px] font-medium">
+                  {scoreBand}
+                </span>
+              )}
+            </div>
+          )}
+          {scoreLabel && (
+            <div className="bg-brand/10 rounded-lg px-3 py-2.5">
+              <dt className="text-brand text-[10px] font-semibold">점수</dt>
+              <dd className="text-brand mt-1 text-[16px] leading-none font-extrabold tabular-nums">
+                {scoreLabel}
+              </dd>
+            </div>
+          )}
+        </dl>
+      )}
+
+      <div className="text-fg-subtle flex flex-col gap-1 text-[10px] leading-4">
+        <span>{certificationDateLabel(certification)}</span>
+        <span>{certification.registrationSource || '외부 인증 입력'}</span>
+      </div>
+    </article>
+  )
+}
+
+function CertificationGroup({
+  groupKey,
+  certifications,
+}: {
+  groupKey: CertificationGroupKey
+  certifications: Certification[]
+}) {
+  const meta = certificationGroupMeta[groupKey]
+
+  return (
+    <section
+      data-certification-group={groupKey}
+      className="bg-surface-muted/60 flex min-w-0 flex-col gap-3 rounded-xl p-4"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h3 className="text-fg text-[13px] font-bold">{meta.title}</h3>
+          <p className="text-fg-subtle text-[10px] leading-4">
+            {meta.description}
+          </p>
+        </div>
+        <span
+          className={cn(
+            'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums',
+            TONE_SOFT[meta.tone],
+          )}
+        >
+          {certifications.length}건
+        </span>
+      </div>
+
+      {certifications.length === 0 ? (
+        <p className="text-fg-subtle bg-surface rounded-lg px-3 py-6 text-center text-[10px]">
+          {meta.emptyMessage}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {certifications.map((certification) => (
+            <CertificationItem
+              key={`${certification.name}-${certification.issuedAt ?? certification.submittedAt ?? ''}`}
+              certification={certification}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
 }
 
 function EmptyData({ children }: { children: React.ReactNode }) {
@@ -835,6 +978,14 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
   const verifiedCertifications = tech.certifications.filter(
     (certification) => certification.status === 'APPROVED',
   )
+  const certificationGroups = Object.fromEntries(
+    certificationGroupOrder.map((groupKey) => [
+      groupKey,
+      verifiedCertifications.filter(
+        (certification) => certificationGroup(certification) === groupKey,
+      ),
+    ]),
+  ) as Record<CertificationGroupKey, Certification[]>
   const chronologicalAssessments = [...tech.assessments].sort(
     (left, right) =>
       left.submittedAt.localeCompare(right.submittedAt) ||
@@ -937,49 +1088,34 @@ function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
         </div>
       </div>
 
-      <section className={cn(card, 'flex flex-col gap-4')}>
+      <section
+        data-tech-certifications
+        className={cn(card, 'flex flex-col gap-4')}
+      >
         <div className="flex flex-col gap-1">
-          <span className="text-fg text-[15px] font-bold">
-            자격증 · 외부 인증
-          </span>
+          <span className="text-fg text-[15px] font-bold">기술 인증</span>
           {verifiedCertifications.length > 0 && (
             <span className="text-fg-subtle text-[11px]">
-              운영 인증이 완료된 자격증 {verifiedCertifications.length}건
+              운영 인증이 완료된 기술 근거 {verifiedCertifications.length}건을
+              유형별로 구분했습니다.
             </span>
           )}
         </div>
         {verifiedCertifications.length === 0 ? (
-          <EmptyData>운영 인증이 완료된 자격증이 없습니다.</EmptyData>
+          <EmptyData>운영 인증이 완료된 기술 인증이 없습니다.</EmptyData>
         ) : (
-          verifiedCertifications.map((certification) => {
-            const status = certificationStatus[certification.status] ?? {
-              label: certification.status,
-              tone: 'info' as const,
-            }
-            return (
-              <div
-                key={certification.name}
-                className="flex min-w-0 items-start gap-3"
-              >
-                <span
-                  className={cn(
-                    'min-w-12 shrink-0 rounded-md px-2 py-1 text-center text-[10px] font-bold',
-                    TONE_SOFT[status.tone],
-                  )}
-                >
-                  {status.label}
-                </span>
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-fg text-[13px] font-semibold">
-                    {certification.name}
-                  </span>
-                  <span className="text-fg-subtle text-[11px]">
-                    {certificationDetailLabel(certification)}
-                  </span>
-                </div>
-              </div>
-            )
-          })
+          <div
+            data-certification-group-grid
+            className="grid items-start gap-4 lg:grid-cols-2"
+          >
+            {certificationGroupOrder.map((groupKey) => (
+              <CertificationGroup
+                key={groupKey}
+                groupKey={groupKey}
+                certifications={certificationGroups[groupKey]}
+              />
+            ))}
+          </div>
         )}
       </section>
     </div>

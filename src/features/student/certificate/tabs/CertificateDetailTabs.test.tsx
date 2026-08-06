@@ -292,13 +292,14 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.queryByText('상위 12.5%')).not.toBeInTheDocument()
     expect(screen.getByText('PCCE')).toBeInTheDocument()
     expect(
-      screen.getByText('운영 인증이 완료된 자격증 1건'),
+      screen.getByText(/운영 인증이 완료된 기술 근거 1건/),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'LV.4 (900–1,000점) · 1,000/1,000점 · 발급 2026-05-12 · 운영 인증 · 제출 증빙 확인',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('코딩테스트')).toBeInTheDocument()
+    expect(screen.getByText('LV.4')).toBeInTheDocument()
+    expect(screen.getByText('900–1,000점')).toBeInTheDocument()
+    expect(screen.getByText('1,000 / 1,000점')).toBeInTheDocument()
+    expect(screen.getByText('발급 2026-05-12')).toBeInTheDocument()
+    expect(screen.getByText('운영 인증 · 제출 증빙 확인')).toBeInTheDocument()
     expect(screen.queryByText('PCCP')).not.toBeInTheDocument()
     expect(screen.queryByText('PCSQL')).not.toBeInTheDocument()
     expect(screen.queryByText('과제 / 실습 검증')).not.toBeInTheDocument()

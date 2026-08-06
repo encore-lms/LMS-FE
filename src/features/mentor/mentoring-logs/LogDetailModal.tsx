@@ -19,7 +19,7 @@ import { cn } from '@/shared/lib/cn'
 import { useMentoringLogDetail } from '../api/logs'
 import type { MentoringLogDetailData } from '../types'
 import { isImageField } from '../types'
-import { logImageUrl } from '../api/logs'
+import { LogImage } from './LogImage'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { CharCounter, LogStateChip, RequiredChip } from './LogChips'
 import { TemplateFieldList } from './TemplateFieldList'
@@ -451,19 +451,16 @@ function AnswerContent({
         ) : (
           <div className="flex flex-wrap gap-2">
             {ids.map((imageId) => (
-              <a
+              <div
                 key={imageId}
-                href={logImageUrl(imageId)}
-                target="_blank"
-                rel="noreferrer"
                 className="border-border h-24 w-24 overflow-hidden rounded-lg border"
               >
-                <img
-                  src={logImageUrl(imageId)}
+                <LogImage
+                  imageId={imageId}
                   alt={`${field.name} 첨부`}
                   className="h-full w-full object-cover"
                 />
-              </a>
+              </div>
             ))}
           </div>
         )}

@@ -23,6 +23,12 @@ export default function LogComposePage() {
   const detailQuery = useMentoringLogDetail(logId)
 
   const detail = logId ? (detailQuery.data ?? null) : null
+  // 사이드바에서 사라진 옛 목록(/mentor/mentoring-logs)으로 내보내면 404 다(2026-08-06 QA).
+  // 진입 경로 → 그 일지가 속한 팀의 일지 탭 → 팀 목록 순으로 돌려보낸다.
+  const backTeamId = detail?.teamId ?? presetTeamId
+  const listTo =
+    backTo ??
+    (backTeamId ? `/mentor/teams/${backTeamId}?tab=logs` : '/mentor/teams')
 
   return (
     <DataBoundary
@@ -47,7 +53,7 @@ export default function LogComposePage() {
               description="제출하면 매니저 승인 대기 상태가 됩니다. 운영자 수정 요청이 있을 때만 전체 수정 후 재제출할 수 있어요."
               action={
                 <Link
-                  to="/mentor/mentoring-logs"
+                  to={listTo}
                   className="border-border text-fg hover:bg-surface-muted flex h-14 items-center rounded-[11px] border bg-white px-5 text-[15px] font-bold"
                 >
                   일지 목록으로

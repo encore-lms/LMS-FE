@@ -50,7 +50,6 @@ const SubmissionsPage = lazy(() => import('./quizzes/SubmissionsPage'))
 const GradingPage = lazy(() => import('./quizzes/GradingPage'))
 // QnA 게시판 — 수강생 화면을 강사 경로에 그대로 마운트(운영과 동일 방식).
 // 열람·답변만 하며 보이는 질문은 BE가 담당 기수로 스코프한다(useQnaBase가 API base를 결정).
-const QnaListPage = lazy(() => import('@/features/student/qna/QnaListPage'))
 const QnaDetailPage = lazy(() => import('@/features/student/qna/QnaDetailPage'))
 // 마이 프로필 — 전 역할 공용 화면(features/profile), 헤더 아바타 드롭다운에서 진입(§7-X).
 const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'))
@@ -157,7 +156,8 @@ export const instructorRoutes: RouteObject[] = [
         element: <TemplateQuestionsPage />,
       },
       // QnA 게시판 (§74~76) — 담당 기수 수강생 질문 열람·답변.
-      { path: 'qna', element: <QnaListPage /> },
+      // 목록은 기수 허브 QnA 탭이 인라인으로 그린다 — 단독 라우트는 어디서도 링크되지 않아
+      // 걷어냈다(2026-08-06). BE 알림도 강사에게는 늘 상세로 보낸다(QnaService).
       { path: 'qna/:id', element: <QnaDetailPage /> },
       // TODO(owner): 강사 화면 라우트 추가
     ],

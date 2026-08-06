@@ -1,4 +1,3 @@
-import { Briefcase, Code2, Folder, PieChart } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import type { CertProjectCard, CertProjectsTab } from '../types'
 import { TabHead } from './TechTab'
@@ -93,57 +92,71 @@ export function ProjectsTab({ p }: { p: CertProjectsTab }) {
 
       <section
         aria-label="프로젝트 전체 요약"
-        data-project-summary-grid
-        className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        data-project-summary
+        className="border-border bg-surface overflow-hidden rounded-2xl border"
       >
-        <article
-          data-project-summary="projects"
-          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <span className="bg-brand/10 text-brand flex size-10 items-center justify-center rounded-xl">
-              <Folder className="size-5" aria-hidden="true" />
-            </span>
-            <span className="text-fg-subtle text-[10px] font-semibold">
-              인증 {p.certifiedLabel}
-            </span>
-          </div>
-          <div
-            data-project-summary-content
-            className="flex flex-1 flex-col justify-center gap-1"
+        <div className="border-divider border-b px-5 py-4 sm:px-6">
+          <h3 className="text-fg text-sm font-bold">프로젝트 경험 요약</h3>
+          <p className="text-fg-muted mt-1 text-[11px] leading-4">
+            인증된 프로젝트에서 맡은 역할과 평균 기여도, 활용 기술을 모아
+            보여줍니다.
+          </p>
+        </div>
+
+        <div className="divide-divider grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <article
+            data-project-summary-item="projects"
+            className="flex min-w-0 flex-col gap-2 px-5 py-5 sm:px-6"
           >
             <span className="text-fg-muted text-[11px] font-semibold">
-              전체 프로젝트
+              프로젝트
             </span>
             <strong className="text-fg text-[24px] leading-none tabular-nums">
               {p.projects.length}건
             </strong>
             <span className="text-fg-subtle text-[11px] leading-4">
-              역량증명서에 등록된 프로젝트
+              등록 프로젝트 중 {p.certifiedLabel} 인증 완료
             </span>
-          </div>
-        </article>
+          </article>
 
-        <article
-          data-project-summary="role"
-          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <span className="bg-accent-bg text-accent-strong flex size-10 items-center justify-center rounded-xl">
-              <Briefcase className="size-5" aria-hidden="true" />
-            </span>
-            <span className="text-fg-subtle text-[10px] font-semibold">
-              {roles.length}개 역할
-            </span>
-          </div>
-          <div
-            data-project-summary-content
-            className="flex flex-1 flex-col justify-center gap-2"
+          <article
+            data-project-summary-item="contribution"
+            className="flex min-w-0 flex-col gap-2 px-5 py-5 sm:px-6"
           >
             <span className="text-fg-muted text-[11px] font-semibold">
-              전체 프로젝트 역할
+              평균 기여도
             </span>
-            {roles.length > 1 ? (
+            <strong className="text-fg text-[24px] leading-none tabular-nums">
+              {p.contribAvg}
+            </strong>
+            <div className="flex flex-col gap-1.5">
+              <span
+                role="progressbar"
+                aria-label="전체 프로젝트 평균 기여도"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={contributionRate}
+                className="bg-surface-muted h-1.5 overflow-hidden rounded-full"
+              >
+                <span
+                  className="bg-brand block h-full rounded-full"
+                  style={{ width: `${contributionRate}%` }}
+                />
+              </span>
+              <span className="text-fg-subtle text-[11px] leading-4">
+                등록된 프로젝트 기여도의 평균
+              </span>
+            </div>
+          </article>
+
+          <article
+            data-project-summary-item="role"
+            className="flex min-w-0 flex-col gap-2 px-5 py-5 sm:px-6"
+          >
+            <span className="text-fg-muted text-[11px] font-semibold">
+              주요 역할
+            </span>
+            {roles.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {roles.map((role) => (
                   <span
@@ -156,93 +169,62 @@ export function ProjectsTab({ p }: { p: CertProjectsTab }) {
               </div>
             ) : (
               <strong className="text-fg text-[18px] leading-snug">
-                {roles[0] ?? '등록 전'}
+                등록 전
               </strong>
             )}
-          </div>
-        </article>
+            <span className="text-fg-subtle text-[11px] leading-4">
+              프로젝트에서 담당한 역할 {roles.length}개
+            </span>
+          </article>
+        </div>
 
         <article
-          data-project-summary="contribution"
-          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
+          data-project-summary-item="tech-stack"
+          className="border-divider border-t px-5 py-5 sm:px-6"
         >
-          <div className="flex items-center justify-between gap-3">
-            <span className="bg-info-bg text-info flex size-10 items-center justify-center rounded-xl">
-              <PieChart className="size-5" aria-hidden="true" />
-            </span>
-            <span className="text-fg-subtle text-[10px] font-semibold">
-              전체 프로젝트 평균
-            </span>
-          </div>
-          <div
-            data-project-summary-content
-            className="flex flex-1 flex-col justify-center gap-2"
-          >
-            <div className="flex flex-col gap-1">
-              <span className="text-fg-muted text-[11px] font-semibold">
-                전체 프로젝트 기여도
-              </span>
-              <strong className="text-fg text-[24px] leading-none tabular-nums">
-                {p.contribAvg}
-              </strong>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div>
+              <h4 className="text-fg text-xs font-bold">활용 기술</h4>
+              <p className="text-fg-muted mt-1 text-[11px] leading-4">
+                프로젝트에서 사용한 기술을 분야별로 정리했습니다.
+              </p>
             </div>
-            <span className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
-              <span
-                className="bg-info block h-full rounded-full"
-                style={{ width: `${contributionRate}%` }}
-              />
+            <span className="text-fg-subtle text-[11px] font-semibold">
+              총 {techStackCount}개 기술
             </span>
           </div>
-        </article>
 
-        <article
-          data-project-summary="tech-stack"
-          className="border-border bg-surface flex min-h-44 flex-col gap-4 rounded-2xl border p-5 shadow-[0px_2px_8px_0px_rgba(18,23,38,0.04)]"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <span className="bg-success-bg text-success flex size-10 items-center justify-center rounded-xl">
-              <Code2 className="size-5" aria-hidden="true" />
-            </span>
-            <span className="text-fg-subtle text-[10px] font-semibold">
-              {techStackCount}개 기술
-            </span>
-          </div>
-          <div className="flex flex-1 flex-col justify-center gap-2">
-            <span className="text-fg-muted text-[11px] font-semibold">
-              전체 프로젝트 기술 스택
-            </span>
-            {techStackGroups.length > 0 ? (
-              <div
-                data-tech-stack-groups
-                className="grid grid-cols-2 gap-x-3 gap-y-2"
-              >
-                {techStackGroups.map((group) => (
-                  <div
-                    key={group.category}
-                    className="flex min-w-0 flex-col gap-1"
-                  >
-                    <span className="text-fg-subtle text-[10px] font-semibold">
-                      {group.category}
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {group.items.map((item) => (
-                        <span
-                          key={item}
-                          className="bg-success-bg text-success rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
+          {techStackGroups.length > 0 ? (
+            <div
+              data-tech-stack-groups
+              className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4"
+            >
+              {techStackGroups.map((group) => (
+                <div
+                  key={group.category}
+                  className="flex min-w-0 flex-col gap-1.5"
+                >
+                  <span className="text-fg-subtle text-[10px] font-semibold">
+                    {group.category}
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {group.items.map((item) => (
+                      <span
+                        key={item}
+                        className="bg-success-bg text-success rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                      >
+                        {item}
+                      </span>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <span className="text-fg-subtle text-[11px]">
-                등록된 기술 스택이 없습니다.
-              </span>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-fg-subtle mt-4 block text-[11px]">
+              등록된 기술 스택이 없습니다.
+            </span>
+          )}
         </article>
       </section>
 

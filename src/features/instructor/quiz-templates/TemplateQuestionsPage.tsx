@@ -16,6 +16,7 @@ import {
   type AnswerDraft,
 } from '../quizzes/answerDraft'
 import { QuestionWorkbench } from '../quizzes/QuestionWorkbench'
+import { useQuizTemplateBasePath } from '../quizzes/useQuizBasePath'
 import { QuestionPreviewModal } from './QuestionPreviewModal'
 
 // 미저장 로컬 드래프트 id 접두사 — 저장 성공 시 서버 문항으로 교체된다.
@@ -34,10 +35,12 @@ function apiMessage(e: unknown): string | undefined {
     ?.message
 }
 
-// 템플릿 문항 관리 (/instructor/quiz-templates/:templateId/questions) — §10. (Figma 3547:2247)
+// 템플릿 문항 관리 (/instructor|/admin quiz-templates/:templateId/questions) — §10. (Figma 3547:2247)
 // 워크벤치 공용 골격 + 템플릿 문맥(사용 횟수·파생 활성 메타, 복제 시 노출 안내).
 // 추가=미저장 로컬 드래프트 → 저장 시 POST, 기존 문항 저장=PUT. 목록은 서버 응답으로 재동기화.
 export default function TemplateQuestionsPage() {
+  // 강사·운영이 같은 화면을 쓴다 — 마운트 위치의 역할 프리픽스를 따라 이동한다.
+  const templateBase = useQuizTemplateBasePath()
   const { templateId = '' } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
@@ -239,7 +242,7 @@ export default function TemplateQuestionsPage() {
             back={{
               label: '← 템플릿 설정으로',
               onClick: () =>
-                navigate(`/instructor/quiz-templates/${templateId}/edit`),
+                navigate(`${templateBase}/${templateId}/edit`),
             }}
             previewLabel="템플릿 미리보기"
             bodyHint="복제된 퀴즈에서 학생에게 노출 — 마크다운 지원"

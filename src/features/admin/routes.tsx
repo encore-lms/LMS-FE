@@ -109,7 +109,6 @@ const MentoringTeamDetailPage = lazy(
 const MentoringTeamLogFieldsPage = lazy(
   () => import('./mentoring/TeamLogFieldsPage'),
 )
-const MentoringStatisticsPage = lazy(() => import('./mentoring/StatisticsPage'))
 // 감사 로그 (운영 전용 신설 — features/admin/audit, Figma 1521:11112)
 // 경로는 증명서(soulhn 소유) 하위지만 컴포넌트는 admin/audit(본인 소유)에 둠.
 const AuditLogPage = lazy(() => import('./audit/AuditLogPage'))
@@ -199,7 +198,6 @@ export const adminRoutes: RouteObject[] = [
         path: 'mentoring/log-templates',
         element: <MentoringLogTemplatesPage />,
       },
-      { path: 'mentoring/statistics', element: <MentoringStatisticsPage /> },
       {
         path: 'mentoring/teams/:teamId',
         element: <MentoringTeamDetailPage />,

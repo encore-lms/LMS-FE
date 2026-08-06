@@ -18,7 +18,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
 import { useMentoringLogDetail } from '../api/logs'
 import type { MentoringLogDetailData } from '../types'
-import { isImageField } from '../types'
+import { isImageField, splitImageAnswer } from '../types'
 import { LogImage } from './LogImage'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { CharCounter, LogStateChip, RequiredChip } from './LogChips'
@@ -442,13 +442,12 @@ function AnswerContent({
   photos: MentoringLogDetailData['photos']
 }) {
   // 이미지 항목 — 값이 곧 업로드한 이미지 id 목록이다.
+  // 첨부를 못 붙이던 시절 이 자리에 적어 둔 텍스트가 남아 있어, 갈라서 함께 보여준다.
   if (isImageField(field.type)) {
-    const ids = value ? value.split(',').filter(Boolean) : []
+    const { ids, text } = splitImageAnswer(value)
     return (
       <div className="flex flex-col gap-2">
-        {ids.length === 0 ? (
-          <span className="text-fg-subtle text-[11px]">첨부된 이미지 없음</span>
-        ) : (
+        {ids.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {ids.map((imageId) => (
               <div
@@ -463,6 +462,14 @@ function AnswerContent({
               </div>
             ))}
           </div>
+        )}
+        {text && (
+          <p className="bg-surface-muted text-fg rounded-[10px] px-4 py-3 text-[13px] leading-5 font-medium">
+            {text}
+          </p>
+        )}
+        {ids.length === 0 && !text && (
+          <span className="text-fg-subtle text-[11px]">첨부된 이미지 없음</span>
         )}
       </div>
     )

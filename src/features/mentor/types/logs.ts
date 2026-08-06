@@ -29,6 +29,30 @@ export function isTextField(type: MentoringLogFieldType) {
   return type !== 'image'
 }
 
+const IMAGE_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * 이미지 항목 값을 id 와 옛 텍스트로 가른다.
+ *
+ * 폐기한 'text_image' 시절엔 이 자리에 첨부 대신 텍스트를 적을 수 있었다
+ * ("증빙자료 첨부 불가능" 등). 전부 id 로 보고 렌더하면 그 메모가 깨진 이미지로
+ * 가려져 화면에서 사라진다 — 갈라서 텍스트는 텍스트로 보여준다(2026-08-06).
+ */
+export function splitImageAnswer(value: string | null | undefined): {
+  ids: string[]
+  text: string
+} {
+  const tokens = (value ?? '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+  return {
+    ids: tokens.filter((t) => IMAGE_ID.test(t)),
+    text: tokens.filter((t) => !IMAGE_ID.test(t)).join(', '),
+  }
+}
+
 /**
  * 운영 적용 템플릿 항목 스냅샷 — 멘토는 렌더링만(항목 편집 불가).
  * MentoringTeamLogFieldOverride.fieldSnapshot 또는 배정 시점 템플릿(03_멘토.md §5).

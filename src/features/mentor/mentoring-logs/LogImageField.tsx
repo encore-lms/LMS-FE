@@ -3,6 +3,7 @@ import { ImagePlus, X } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { useDeleteLogImage, useUploadLogImage } from '../api/logs'
+import { splitImageAnswer } from '../types'
 import { LogImage } from './LogImage'
 
 /**
@@ -29,7 +30,11 @@ export function LogImageField({
   const inputRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState(false)
 
-  const ids = value ? value.split(',').filter(Boolean) : []
+  // 폐기한 'text_image' 시절 이 자리에 적어 둔 텍스트가 섞여 있을 수 있다.
+  // 첨부로 세지 않되 값에서 지우지도 않는다 — 재제출로 옛 메모가 사라지면 안 된다.
+  const { ids, text: legacyText } = splitImageAnswer(value)
+  const join = (next: string[]) =>
+    (legacyText ? [...next, legacyText] : next).join(',')
 
   const pick = async (files: FileList | null) => {
     if (!files || files.length === 0) return
@@ -40,7 +45,7 @@ export function LogImageField({
         const result = await upload.mutateAsync(file)
         uploaded.push(result.imageId)
       }
-      onChange([...ids, ...uploaded].join(','))
+      onChange(join([...ids, ...uploaded]))
     } catch {
       toast.danger('이미지를 올리지 못했어요 (10MB 이하 이미지 파일만 가능)')
     } finally {
@@ -52,12 +57,17 @@ export function LogImageField({
   // 값에서 빼는 것으로 끝내면 업로드한 파일이 서버에 남는다 — 함께 지운다.
   // 이미 제출한 일지의 첨부는 서버가 막으므로(422) 화면에서 빼는 것까지만 하고 넘어간다.
   const removeAt = (imageId: string) => {
-    onChange(ids.filter((id) => id !== imageId).join(','))
+    onChange(join(ids.filter((id) => id !== imageId)))
     remove.mutate(imageId, { onError: () => undefined })
   }
 
   return (
     <div className="flex flex-col gap-2">
+      {legacyText && (
+        <p className="bg-surface-muted text-fg-muted rounded-[10px] px-3 py-2 text-[11px] leading-4">
+          이전에 적어 둔 내용 · 사진 항목이라 그대로 둡니다 — {legacyText}
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {ids.map((imageId) => (
           <div

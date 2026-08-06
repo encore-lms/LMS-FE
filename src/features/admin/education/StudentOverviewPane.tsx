@@ -10,6 +10,7 @@ import { EVALUATION_AXIS_LABELS } from '@/shared/constants'
 import { useStudentAccounts } from '@/shared/api/students'
 import { useMentorEvaluationDetail, useReputation } from '../reputation/api'
 import { AXIS_SHORT } from '../reputation/reputationMeta'
+import { StudentOverviewRaw } from './StudentOverviewRaw'
 import {
   useAdminRecordGrid,
   useCohortAttendanceIssues,
@@ -82,6 +83,8 @@ export function StudentOverviewPane({
   const accounts = useStudentAccounts(cohortId)
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // 보기 전환 — 요약(가공) vs 원본 데이터(DB 명세식, 필드명 그대로).
+  const [viewMode, setViewMode] = useState<'summary' | 'raw'>('summary')
 
   // 기수 단위 소스(1회 조회, 섹션별 graceful degrade).
   const { data: staffAll } = useStaffStudentEvalsAll(cohortId)
@@ -192,35 +195,86 @@ export function StudentOverviewPane({
               })}
             </div>
 
-            {/* 우측 — 선택 수강생 종합 */}
+            {/* 우측 — 선택 수강생 종합(요약/원본 토글) */}
             {!selected ? (
               <div className="border-border bg-surface flex items-center justify-center rounded-xl border py-24">
                 <EmptyLine>좌측에서 수강생을 선택하세요</EmptyLine>
               </div>
             ) : (
-              <OverviewDetail
-                key={selected.id}
-                student={selected}
-                staffEntries={staffByStudent.get(selected.id) ?? []}
-                reputation={reputationByStudent.get(selected.id) ?? null}
-                mentorDetail={mentorDetail.data ?? null}
-                resume={
-                  (resumes ?? []).find(
-                    (r) => r.studentUserId === selected.id,
-                  ) ?? null
-                }
-                projects={(projects ?? []).filter((p) =>
-                  p.members.some((m) => m.userId === selected.id),
+              <div className="flex flex-col gap-3">
+                <div className="bg-surface-muted flex w-fit gap-1 rounded-lg p-1">
+                  {(
+                    [
+                      ['summary', '요약'],
+                      ['raw', '원본 데이터(DB)'],
+                    ] as const
+                  ).map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setViewMode(mode)}
+                      className={cn(
+                        'rounded-md px-3.5 py-1.5 text-[12px] font-semibold',
+                        viewMode === mode
+                          ? 'text-fg bg-white shadow-sm'
+                          : 'text-fg-muted hover:text-fg',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {viewMode === 'raw' ? (
+                  <StudentOverviewRaw
+                    key={selected.id}
+                    student={selected}
+                    cohortId={cohortId}
+                    staffEntries={staffByStudent.get(selected.id) ?? []}
+                    reputation={reputationByStudent.get(selected.id) ?? null}
+                    mentorDetail={mentorDetail.data ?? null}
+                    resume={
+                      (resumes ?? []).find(
+                        (r) => r.studentUserId === selected.id,
+                      ) ?? null
+                    }
+                    projects={(projects ?? []).filter((p) =>
+                      p.members.some((m) => m.userId === selected.id),
+                    )}
+                    attendanceIssue={
+                      (attendance?.issues ?? []).find(
+                        (i) =>
+                          i.studentUuid === selected.studentUuid ||
+                          i.name === selected.name,
+                      ) ?? null
+                    }
+                    records={records ?? null}
+                  />
+                ) : (
+                  <OverviewDetail
+                    key={selected.id}
+                    student={selected}
+                    staffEntries={staffByStudent.get(selected.id) ?? []}
+                    reputation={reputationByStudent.get(selected.id) ?? null}
+                    mentorDetail={mentorDetail.data ?? null}
+                    resume={
+                      (resumes ?? []).find(
+                        (r) => r.studentUserId === selected.id,
+                      ) ?? null
+                    }
+                    projects={(projects ?? []).filter((p) =>
+                      p.members.some((m) => m.userId === selected.id),
+                    )}
+                    attendanceIssue={
+                      (attendance?.issues ?? []).find(
+                        (i) =>
+                          i.studentUuid === selected.studentUuid ||
+                          i.name === selected.name,
+                      ) ?? null
+                    }
+                    records={records ?? null}
+                  />
                 )}
-                attendanceIssue={
-                  (attendance?.issues ?? []).find(
-                    (i) =>
-                      i.studentUuid === selected.studentUuid ||
-                      i.name === selected.name,
-                  ) ?? null
-                }
-                records={records ?? null}
-              />
+              </div>
             )}
           </div>
         )}

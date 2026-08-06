@@ -17,12 +17,12 @@ const KIND: Record<OntologyKind, { color: string; label: string }> = {
   domain: { color: 'text-danger', label: '도메인' },
 }
 const NODE_RADIUS: Record<OntologyKind, number> = {
-  self: 6.5,
-  subject: 4.8,
-  project: 3.8,
-  domain: 2.7,
-  skill: 2.7,
-  method: 2.7,
+  self: 6,
+  subject: 4.5,
+  project: 3.3,
+  domain: 2.2,
+  skill: 2.2,
+  method: 2.2,
 }
 const KINDS: OntologyKind[] = [
   'self',
@@ -496,21 +496,6 @@ export function OntologyMap({
             onPointerCancel={endPointer}
           >
             <defs>
-              {/* 지도 느낌의 옅은 도트 그리드 — 빈 캔버스가 허전하지 않게, 정보는 방해하지 않게. */}
-              <pattern
-                id={`${arrowMarkerId}-grid`}
-                width="12"
-                height="12"
-                patternUnits="userSpaceOnUse"
-              >
-                <circle
-                  cx="1"
-                  cy="1"
-                  r="0.45"
-                  className="fill-border"
-                  opacity="0.55"
-                />
-              </pattern>
               <marker
                 id={arrowMarkerId}
                 viewBox="0 0 8 8"
@@ -524,14 +509,6 @@ export function OntologyMap({
                 <path d="M 0 0 L 8 4 L 0 8 z" fill="currentColor" />
               </marker>
             </defs>
-            <rect
-              x="0"
-              y="0"
-              width={MAP_WIDTH}
-              height={MAP_HEIGHT}
-              fill={`url(#${arrowMarkerId}-grid)`}
-              pointerEvents="none"
-            />
             {displayEdges.map((edge) => {
               const source = positions[edge.source]
               const target = positions[edge.target]
@@ -548,13 +525,10 @@ export function OntologyMap({
                   y1={source.y}
                   x2={lineTarget.x}
                   y2={lineTarget.y}
-                  className={on ? 'text-brand' : 'text-fg-subtle'}
+                  className={on ? 'text-brand' : 'text-border'}
                   stroke="currentColor"
                   strokeWidth={
-                    on ? 0.7 : edge.relation === 'context' ? 0.3 : 0.45
-                  }
-                  strokeDasharray={
-                    edge.relation === 'context' ? '1.6 1.6' : undefined
+                    on ? 0.7 : edge.relation === 'context' ? 0.25 : 0.35
                   }
                   strokeOpacity={
                     hover
@@ -562,8 +536,8 @@ export function OntologyMap({
                         ? 1
                         : 0.08
                       : edge.relation === 'context'
-                        ? 0.35
-                        : 0.55
+                        ? 0.28
+                        : 1
                   }
                   data-edge-relation={edge.relation}
                   data-edge-source={edge.source}
@@ -601,40 +575,20 @@ export function OntologyMap({
                     )
                   }
                 >
-                  {/* 본인 노드 헤일로 — 맵의 시각적 중심을 잡아 준다. */}
-                  {isSelf && (
-                    <circle
-                      cx={point.x}
-                      cy={point.y}
-                      r={radius + 2.6}
-                      fill="currentColor"
-                      opacity={0.14}
-                      pointerEvents="none"
-                    />
-                  )}
                   <circle
                     cx={point.x}
                     cy={point.y}
                     r={hover === node.id ? radius + 0.8 : radius}
                     fill="currentColor"
-                    className="stroke-surface"
-                    strokeWidth={0.9}
                   />
-                  {/* 라벨 헤일로(paintOrder stroke) — 간선·노드 위에서도 읽힌다. */}
                   <text
                     x={point.x}
-                    y={point.y - radius - 1.6}
+                    y={point.y - radius - 1.2}
                     textAnchor="middle"
-                    fontSize={
-                      isSelf ? 3.4 : node.kind === 'subject' ? 2.9 : 2.6
-                    }
-                    fontWeight={isSelf ? 700 : 600}
-                    className={cn(
-                      'stroke-surface pointer-events-none',
-                      isSelf ? 'fill-fg' : 'fill-fg-muted',
-                    )}
-                    strokeWidth={0.9}
-                    style={{ paintOrder: 'stroke' }}
+                    fontSize={isSelf ? 3 : 2.4}
+                    fontWeight={isSelf ? 700 : 500}
+                    className="text-fg-muted pointer-events-none"
+                    fill="currentColor"
                   >
                     {node.label}
                   </text>
@@ -680,7 +634,7 @@ export function OntologyMap({
             compact ? 'text-[9px]' : 'text-[11px]',
           )}
         >
-          <span className="border-fg-subtle w-4 border-t" />
+          <span className="border-border w-4 border-t" />
           직접 근거
         </span>
         <span
@@ -689,7 +643,7 @@ export function OntologyMap({
             compact ? 'text-[9px]' : 'text-[11px]',
           )}
         >
-          <span className="border-fg-subtle w-4 border-t border-dashed" />
+          <span className="border-border w-4 border-t" />
           동일 프로젝트 문맥
         </span>
       </div>

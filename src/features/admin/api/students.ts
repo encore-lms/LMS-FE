@@ -31,7 +31,13 @@ export interface SyncResult {
 }
 export interface SyncStudentsInput {
   cohortId: string
-  students: { studentUuid: string; name: string; birth: string }[]
+  students: {
+    studentUuid: string
+    name: string
+    birth: string
+    /** HRD 훈련상태 원문 — 훈련중|조기취업|중도탈락. */
+    trainingStatus?: string | null
+  }[]
 }
 // HRD 명단을 계정에 동기화(생성/갱신). 성공 시 목록 무효화.
 export function useSyncStudents() {

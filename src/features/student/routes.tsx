@@ -131,7 +131,7 @@ export const studentRoutes: RouteObject[] = [
         path: 'troubleshooting/:id/change-requests/new',
         element: <TsChangePage />,
       },
-      // QnA 게시판(목록·작성·상세). FE 선반영 — 실 BE API 없음(mock 전용).
+      // QnA 게시판(목록·작성·상세). learning-service 실 연동(api/qna.ts).
       { path: 'qna', element: <QnaListPage /> },
       { path: 'qna/new', element: <QnaNewPage /> },
       { path: 'qna/:id', element: <QnaDetailPage /> },

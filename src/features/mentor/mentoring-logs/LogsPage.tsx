@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Outlet, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowDown,
@@ -115,7 +115,6 @@ function exportCsv(rows: MentoringLogListItem[]) {
 
 // 멘토링 일지 (/mentor/mentoring-logs) — Figma 2553:4040.
 // 필터(팀/상태/기간/검색) · KPI 4 · 8컬럼 테이블 · CSV · 일지 정책 요약 배너.
-// :logId 상세 모달은 중첩 라우트(Outlet) 오버레이 — 목록 필터 상태 유지.
 // 목록 페이지당 일지 수 — 표가 길어지지 않게 페이지네이션(공통 Pagination).
 const LOG_PAGE_SIZE = 8
 
@@ -505,7 +504,6 @@ export default function LogsPage({
 
         {/* /:logId 상세 모달 — 목록 필터 상태 유지한 채 오버레이 */}
         <Suspense fallback={null}>
-          <Outlet />
         </Suspense>
       </div>
     </DataBoundary>

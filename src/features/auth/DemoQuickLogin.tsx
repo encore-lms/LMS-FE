@@ -1,6 +1,5 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { PATHS } from '@/shared/constants/routes'
 import { DEMO_ACCOUNTS, type DemoAccount } from './demoAccounts'
 
 interface DemoQuickLoginProps {
@@ -49,7 +48,7 @@ export function DemoQuickLogin({ onPick }: DemoQuickLoginProps) {
         <>
           <div className="mt-1 h-px w-full bg-white/15" />
           <Link
-            to={PATHS.styleguide}
+            to="/_styleguide"
             className="flex items-center gap-1 text-[13px] font-medium text-white/85 transition-colors hover:text-white"
           >
             스타일 가이드로 이동

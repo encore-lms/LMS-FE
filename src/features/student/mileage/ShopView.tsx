@@ -23,7 +23,7 @@ import { SkeletonCards } from '@/components/ui/Skeleton'
 import { TONE_SOFT } from '@/shared/lib/tone'
 import { SearchInput } from '@/components/ui/SearchInput'
 
-// 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
+// 마일리지 상품 목록(/student/mileage?view=shop) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 // 상품 카드(한 줄 5개) — 기본은 그림자 없이 flat, 호버 시에만 그림자로 떠오르게.

@@ -1,5 +1,4 @@
 import { Suspense, useMemo, useState } from 'react'
-import { Outlet } from 'react-router-dom'
 import { Calendar, Check, CheckCircle2, Timer } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
@@ -45,7 +44,6 @@ const withinDays = (
 
 // 멘토링 예약 요청 (/mentor/mentoring-requests) — Figma 2553:3820.
 // KPI 4 · 필터 툴바(상태 탭 6 + 기간 + 검색) · 요청 카드 · 예약 정책 요약 배너.
-// :requestId 응답 모달은 중첩 라우트(Outlet)로 목록 위에 오버레이.
 export default function RequestsPage({
   embedded = false,
   teamId,
@@ -236,7 +234,6 @@ export default function RequestsPage({
             />
           )}
 
-          <Outlet />
         </Suspense>
       </div>
     </DataBoundary>

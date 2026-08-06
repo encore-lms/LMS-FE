@@ -38,8 +38,8 @@ export function AiTab({
                   AI 분석
                 </h1>
                 <p className="text-fg-muted mt-1 max-w-3xl text-[14px] leading-6">
-                  증명서 내용을 다시 나열하지 않고, 수강생의 직무 방향과 실제
-                  수행 방식, 문제해결 특성을 AI가 세 관점으로 해석했습니다.
+                  수강생의 직무 방향, 프로젝트 수행 방식, 문제해결 역량을 AI가
+                  세 관점에서 종합적으로 분석했습니다.
                 </p>
               </div>
             </div>

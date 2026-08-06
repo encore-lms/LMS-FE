@@ -17,9 +17,16 @@ describe('문제해결 역량 분석', () => {
     expect(
       container.querySelector('#ai-troubleshooting-analysis'),
     ).toBeInTheDocument()
+    expect(container.querySelector('#ai-troubleshooting-analysis')).toHaveClass(
+      'border-brown/25',
+    )
+    expect(container.querySelector('[class~="bg-brown"]')).toBeInTheDocument()
+    expect(
+      container.querySelector('[class*="bg-success"]'),
+    ).not.toBeInTheDocument()
     expect(screen.getByText('AI가 읽은 문제해결 성향')).toBeInTheDocument()
     expect(
-      screen.getByText('AI가 읽은 문제해결 성향').parentElement,
+      screen.getByText('AI가 읽은 문제해결 성향').closest('section'),
     ).toHaveTextContent(troubleshooting.summary.replaceAll('\n', ' '))
     expect(screen.getByText('반복해서 나타난 해결 패턴')).toBeInTheDocument()
     expect(screen.getByText('가장 선명한 해결 영역')).toBeInTheDocument()
@@ -41,7 +48,9 @@ describe('문제해결 역량 분석', () => {
 
     expect(summaryLines.length).toBeGreaterThanOrEqual(3)
     expect(new Set(summaryLines).size).toBe(summaryLines.length)
-    const summary = screen.getByText('AI가 읽은 문제해결 성향').parentElement
+    const summary = screen
+      .getByText('AI가 읽은 문제해결 성향')
+      .closest('section')
     summaryLines.forEach((line) => {
       expect(summary).toHaveTextContent(line)
     })
@@ -99,6 +108,31 @@ describe('문제해결 역량 분석', () => {
     fireEvent.click(
       screen.getByRole('button', { name: '문제 구조화 근거 보기' }),
     )
-    expect(screen.getByRole('tooltip')).toHaveTextContent('상황:')
+    const structureTooltip = screen.getByRole('tooltip')
+    expect(structureTooltip).toHaveTextContent('실제 데이터')
+    expect(structureTooltip).toHaveTextContent('분석 흐름')
+    expect(structureTooltip).toHaveTextContent(
+      'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
+    )
+    expect(structureTooltip).toHaveTextContent(
+      '상황에서 재현 조건과 영향 범위를 추출',
+    )
+    expect(structureTooltip.textContent!.length).toBeLessThan(500)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '문제 구조화 근거 보기' }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: '문제해결 성향 근거 보기' }),
+    )
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      '해결 소요일 · 중앙 2일 · 평균 2.3일',
+    )
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      '해결 역량 영역 · 데이터·트랜잭션 처리 4건',
+    )
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      '카테고리·소요일·독립/협업 해결 분포를 집계',
+    )
   })
 })

@@ -64,13 +64,17 @@ describe('직무 적합도 AI 분석', () => {
   it('직무 후보·개발자 유형·강점·이론 이해도에 실제 데이터 근거를 연결한다', async () => {
     const user = userEvent.setup()
     render(<AiJobFit jobFit={getAiAnalysis('stu-001').jobFit} />)
-    ;['직무 후보', '개발자 유형', '핵심 강점', '관련 이론 이해도'].forEach(
-      (label) => {
-        expect(
-          screen.getByRole('button', { name: `${label} 근거 보기` }),
-        ).toHaveTextContent('!')
-      },
-    )
+    ;[
+      '직무 후보',
+      '직무 적합도 점수',
+      '개발자 유형',
+      '핵심 강점',
+      '관련 이론 이해도',
+    ].forEach((label) => {
+      expect(
+        screen.getByRole('button', { name: `${label} 근거 보기` }),
+      ).toHaveTextContent('!')
+    })
     expect(
       screen.queryByText('분석에 사용한 기본 데이터'),
     ).not.toBeInTheDocument()
@@ -79,7 +83,27 @@ describe('직무 적합도 AI 분석', () => {
       screen.getByRole('button', { name: '직무 후보 근거 보기' }),
     )
     const tooltip = screen.getByRole('tooltip')
-    expect(tooltip).toHaveTextContent('관심 직무 · 백엔드 개발자')
-    expect(tooltip).toHaveTextContent('기술 태그 · Java')
+    expect(tooltip).toHaveTextContent('실제 데이터')
+    expect(tooltip).toHaveTextContent('분석 흐름')
+    expect(tooltip).toHaveTextContent('프로필 · 관심 백엔드 개발자')
+    expect(tooltip).toHaveTextContent('기술 Java')
+    expect(tooltip).toHaveTextContent('성취도 평가 · 파이썬 72점')
+    expect(tooltip).toHaveTextContent('CS 평가 · 자료구조·알고리즘 68점')
+    expect(tooltip).toHaveTextContent('역할 백엔드 리드')
+    expect(tooltip).toHaveTextContent('문제해결 · DB / SQL 4건')
+
+    await user.unhover(
+      screen.getByRole('button', { name: '직무 후보 근거 보기' }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: '직무 적합도 점수 근거 보기' }),
+    )
+    const scoreTooltip = screen.getByRole('tooltip')
+    expect(scoreTooltip).toHaveTextContent('실제 데이터')
+    expect(scoreTooltip).toHaveTextContent('분석 흐름')
+    expect(scoreTooltip).toHaveTextContent('산출 결과')
+    expect(scoreTooltip).toHaveTextContent('직무 적합도 · 88점')
+    expect(scoreTooltip).toHaveTextContent('후보 순위 · TOP 1')
+    expect(scoreTooltip).toHaveTextContent('분석 신뢰도 · 높음')
   })
 })

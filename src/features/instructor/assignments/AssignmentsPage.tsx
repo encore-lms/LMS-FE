@@ -259,14 +259,6 @@ export default function AssignmentsPage({
                 placeholder: '과제명·과목으로 검색',
                 ariaLabel: '과제 검색',
               }}
-              reset={{
-                active: !!q || status !== 'all' || cohort !== '전체',
-                onReset: () => {
-                  setQ('')
-                  setStatus('all')
-                  setCohort('전체')
-                },
-              }}
               filters={
                 <>
                   <Select

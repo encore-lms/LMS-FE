@@ -8,6 +8,7 @@ import { buildMentoringLogsData } from '../mockDb'
 import { LOG_SUBMITTED_TOAST } from './logMeta'
 import { ToastProvider } from '@/components/ui/Toast'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/logs')
 // 상세 모달 자체는 여기서 검증하지 않는다 — '어디에' 열리는지만 본다.
@@ -63,9 +64,9 @@ describe('LogsPage', () => {
     expect(screen.getByText('일지 보강 필요')).toBeInTheDocument()
     // 페이지네이션 — 페이지당 8건(공통 Pagination), 전체 건수 대비 표시 건수 안내
     expect(screen.getByText(/건 중 8건 표시/)).toBeInTheDocument()
-    // 상태 연동 액션 — 열기(상세 모달) / 수정(재제출 폼 딥링크)
+    // 상태 연동 액션 — 열기(상세 모달, 라우트 없음) / 수정(재제출 폼 딥링크)
     expect(
-      screen.getAllByRole('link', { name: /열기/ }).length,
+      screen.getAllByRole('button', { name: /열기/ }).length,
     ).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /^수정/ })).toHaveAttribute(
       'href',
@@ -197,5 +198,21 @@ describe('LogsPage', () => {
         `from=${encodeURIComponent('/mentor/teams/team_ts?tab=logs')}`,
       ),
     )
+  })
+
+  // 화면을 걷어낼 때 링크를 함께 훑지 않으면 '찾을 수 없는 주소'로 떨어진다.
+  // 일지 계열은 이 검사가 빠져 있어 '일지 목록으로' 버튼이 404 로 남아 있었다(2026-08-06 QA).
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', () => {
+    vi.mocked(useMentoringLogs).mockReturnValue({
+      data: buildMentoringLogsData(),
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useMentoringLogs>)
+    const { container } = renderPage()
+    const dead = [...container.querySelectorAll('a')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => href.startsWith('/mentor'))
+      .filter((href) => !reachable(href))
+    expect(dead).toEqual([])
   })
 })

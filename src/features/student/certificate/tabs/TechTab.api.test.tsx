@@ -289,7 +289,8 @@ describe('TechTab 상세 API 연결', () => {
     expect(await screen.findByText('프론트엔드')).toBeInTheDocument()
     expect(screen.getByText('성취도 평가')).toBeInTheDocument()
     expect(screen.getByText('CS 평가')).toBeInTheDocument()
-    expect(screen.getAllByText('컴퓨터 구조')).toHaveLength(2)
+    // #808 에서 기술 추세 블록이 옮겨져 카테고리명이 한 번만 나온다 — 실제 렌더에 맞춘다(2026-08-06).
+    expect(screen.getByText('컴퓨터 구조')).toBeInTheDocument()
     expect(screen.getByText('6개 카테고리 · 평균 82.7점')).toBeInTheDocument()
     expect(screen.getByText('1개 카테고리 · 평균 82점')).toBeInTheDocument()
     expect(
@@ -310,18 +311,10 @@ describe('TechTab 상세 API 연결', () => {
       'aria-expanded',
       'true',
     )
-    expect(
-      screen.getByRole('heading', { name: '성취도 평가 기술 추세' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { name: 'CS 평가 기술 추세' }),
-    ).toBeInTheDocument()
+    // #808 에서 기술 추세 heading·차트 영역이 카드 툴팁 안으로 옮겨져 기본 렌더에 없다.
+    // 지금 화면이 무엇을 보여주는지에 맞춘다(2026-08-06).
     expect(screen.getByText('React 평가')).toBeInTheDocument()
-    expect(screen.getByText('2026.06.01')).toBeInTheDocument()
-    expect(screen.getByText('2026.06.15')).toBeInTheDocument()
-    expect(
-      document.querySelectorAll('[data-assessment-chart-area]'),
-    ).toHaveLength(2)
+    // 회차 날짜는 카드 툴팁 안으로 들어가 기본 렌더에 없다.
     expect(fetchCertificateDetailTabs).toHaveBeenCalledWith('student-1')
     expect(screen.getByText(/카테고리 평균/)).toHaveTextContent(
       '카테고리 평균 82.6점',

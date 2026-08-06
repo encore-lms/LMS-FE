@@ -18,6 +18,8 @@ import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
 import { useMentoringLogDetail } from '../api/logs'
 import type { MentoringLogDetailData } from '../types'
+import { isImageField } from '../types'
+import { logImageUrl } from '../api/logs'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { CharCounter, LogStateChip, RequiredChip } from './LogChips'
 import { TemplateFieldList } from './TemplateFieldList'
@@ -439,6 +441,35 @@ function AnswerContent({
   value: string
   photos: MentoringLogDetailData['photos']
 }) {
+  // 이미지 항목 — 값이 곧 업로드한 이미지 id 목록이다.
+  if (isImageField(field.type)) {
+    const ids = value ? value.split(',').filter(Boolean) : []
+    return (
+      <div className="flex flex-col gap-2">
+        {ids.length === 0 ? (
+          <span className="text-fg-subtle text-[11px]">첨부된 이미지 없음</span>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {ids.map((imageId) => (
+              <a
+                key={imageId}
+                href={logImageUrl(imageId)}
+                target="_blank"
+                rel="noreferrer"
+                className="border-border h-24 w-24 overflow-hidden rounded-lg border"
+              >
+                <img
+                  src={logImageUrl(imageId)}
+                  alt={`${field.name} 첨부`}
+                  className="h-full w-full object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
   if (field.inputKind === 'files') {
     // 업로드 계약 미확정(DB 스키마 갭) — 첨부 빈 상태 고정 표시(원문).
     return (

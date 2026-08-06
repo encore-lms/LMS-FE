@@ -11,8 +11,27 @@ export type MentoringLogStatus =
 
 // ───────────────────────── 멘토링 일지 (M3) ─────────────────────────
 
-/** 템플릿 항목 타입 — SHORT_TEXT/LONG_TEXT만(선택형·점수형 금지, P0-ADM-MTR-010). */
-export type MentoringLogFieldType = 'short_text' | 'long_text'
+/**
+ * 템플릿 항목 타입 — 텍스트(짧은/긴)·이미지·텍스트+이미지.
+ *
+ * <p>운영 템플릿 폼은 진작 네 종류를 만들 수 있었는데 멘토 쪽 타입이 텍스트 둘뿐이라,
+ * 이미지 항목을 넣어도 작성 화면엔 텍스트만 떴다(2026-08-06 QA).</p>
+ */
+export type MentoringLogFieldType =
+  | 'short_text'
+  | 'long_text'
+  | 'image'
+  | 'text_image'
+
+/** 이미지가 붙는 항목인가 — 답변 값은 업로드한 이미지 id(쉼표로 이음). */
+export function isImageField(type: MentoringLogFieldType) {
+  return type === 'image' || type === 'text_image'
+}
+
+/** 텍스트를 함께 받는 항목인가. */
+export function isTextField(type: MentoringLogFieldType) {
+  return type !== 'image'
+}
 
 /**
  * 운영 적용 템플릿 항목 스냅샷 — 멘토는 렌더링만(항목 편집 불가).

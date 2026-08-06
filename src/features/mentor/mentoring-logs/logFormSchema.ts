@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isImageField, isTextField } from '../types'
 import type { MentoringLogFieldSnapshot } from '../types'
 import { minutesBetween } from './logMeta'
 
@@ -53,10 +54,18 @@ export function buildLogFormSchema(
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['answers', field.fieldSnapshotId],
-            message: `필수 항목이에요 — ${field.name}을(를) 작성해주세요`,
+            // 이미지 항목의 값은 업로드한 id 라 '작성'이 아니라 '첨부'다.
+            message: isImageField(field.type)
+              ? `필수 항목이에요 — ${field.name} 이미지를 첨부해주세요`
+              : `필수 항목이에요 — ${field.name}을(를) 작성해주세요`,
           })
         }
-        if (field.charLimit != null && value.length > field.charLimit) {
+        // 글자수 한도는 텍스트 항목에만 — 이미지 값은 id 목록이라 길이를 재지 않는다.
+        if (
+          isTextField(field.type) &&
+          field.charLimit != null &&
+          value.length > field.charLimit
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['answers', field.fieldSnapshotId],

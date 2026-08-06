@@ -7,13 +7,24 @@ import { minutesBetween } from './logMeta'
 // 템플릿 항목은 팀별 스냅샷으로 동적이라 getter 로 주입(superRefine 시점의 최신 항목 검증).
 // 초안 저장은 자유 입력(스키마 미적용 — DRAFT 는 부분 입력 허용·인정 시간 미반영).
 
+/** 오늘(KST) — 서버도 같은 기준으로 막는다. */
+export function todayYmd() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(
+    new Date(),
+  )
+}
+
 export function buildLogFormSchema(
   getFields: () => MentoringLogFieldSnapshot[],
 ) {
   return z
     .object({
       teamId: z.string().min(1, '대상 팀을 선택해주세요'),
-      sessionDate: z.string().min(1, '진행 일자를 입력해주세요'),
+      // 일지는 이미 한 멘토링의 기록이다 — 앞날로 쓰면 인정 시간이 먼저 잡힌다(2026-08-06 QA).
+      sessionDate: z
+        .string()
+        .min(1, '진행 일자를 입력해주세요')
+        .refine((v) => !v || v <= todayYmd(), '아직 오지 않은 날짜로는 쓸 수 없어요'),
       startTime: z.string().min(1, '시작 시각을 입력해주세요'),
       endTime: z.string().min(1, '종료 시각을 입력해주세요'),
       placeType: z.enum(['offline', 'online', 'etc']),

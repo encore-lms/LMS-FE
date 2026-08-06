@@ -735,14 +735,15 @@ describe('SummaryTab', () => {
     expect(evaluatorCard).toHaveTextContent('책임감')
     expect(evaluatorCard).toHaveTextContent('3.9 / 5 → 72.2점')
     expect(evaluatorCard).toHaveTextContent('동료·멘토·강사·운영 각 25%')
-    expect(evaluatorCard?.tagName).toBe('ARTICLE')
-    expect(evaluatorCard).not.toHaveAttribute('href')
-    expect(evaluatorCard?.querySelector('[data-kpi-link-footer]')).toBeNull()
+    expect(evaluatorCard?.tagName).toBe('A')
     expect(
-      screen.queryByRole('link', {
-        name: '4축 평가 전체 평균 상세 화면으로 이동',
+      evaluatorCard?.querySelector('[data-kpi-link-footer]'),
+    ).toHaveTextContent('평가·추천 탭에서 자세히 보기')
+    expect(
+      screen.getByRole('link', {
+        name: '4축 평가 전체 평균 평가·추천 탭으로 이동',
       }),
-    ).not.toBeInTheDocument()
+    ).toHaveAttribute('href', '/student/certificate?tab=growth-reputation')
     expect(
       screen.getByRole('link', {
         name: '성취도 평가 평균 상세 화면으로 이동',

@@ -106,7 +106,7 @@ function metricRoute(key: CertificateScoreMetric['key']) {
   if (key === 'certifiedProject') return '/student/projects'
   if (key === 'certifiedCertificate') return '/student/records?category=cert'
   if (key === 'evaluatorAverage') {
-    return '/student/certificate'
+    return '/student/certificate?tab=growth-reputation'
   }
   return '/student/troubleshooting'
 }
@@ -337,10 +337,12 @@ function EvaluatorAverageKpi({
   kpi,
   axes,
   selectedAxisKey,
+  route,
 }: {
   kpi: CertKpi
   axes: CertificateScoreResult['axes']
   selectedAxisKey: AxisKey | null
+  route: string
 }) {
   const competencyAxes = evaluatorAxisDefinitions.map((definition) => {
     const axis = axes.find((item) => item.key === definition.key)
@@ -360,13 +362,16 @@ function EvaluatorAverageKpi({
   )
 
   return (
-    <article
+    <Link
+      to={route}
+      aria-label={`${kpi.label} 평가·추천 탭으로 이동`}
       data-summary-kpi="evaluatorAverage"
+      data-summary-kpi-route={route}
       data-kpi-visual="evaluation"
       data-axis-highlighted={Boolean(highlightedAxis)}
       className={cn(
         card,
-        'flex min-w-0 flex-col gap-2 p-4 transition-shadow',
+        'focus-visible:ring-ring group flex min-w-0 flex-col gap-2 p-4 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
         highlightedAxis && 'ring-offset-surface ring-2 ring-offset-2',
         highlightedAxis && toneRing[highlightedAxis.tone],
       )}
@@ -423,7 +428,18 @@ function EvaluatorAverageKpi({
           </div>
         ))}
       </div>
-    </article>
+
+      <div
+        className="border-divider text-fg-subtle mt-1 flex items-center justify-between border-t pt-2 text-[9px] font-semibold"
+        data-kpi-link-footer
+      >
+        <span>평가·추천 탭에서 자세히 보기</span>
+        <ArrowRight
+          aria-hidden="true"
+          className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
+        />
+      </div>
+    </Link>
   )
 }
 
@@ -1524,6 +1540,7 @@ function ScoreSummary({
                   kpi={evaluatorKpi}
                   axes={score.axes}
                   selectedAxisKey={selectedAxisKey}
+                  route={metricRoute('evaluatorAverage')}
                 />
               )}
             </div>

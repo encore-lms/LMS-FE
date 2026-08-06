@@ -84,7 +84,6 @@ export const FIELD_TYPE_META: Record<
   long_text: { label: '긴 텍스트', tone: 'info' },
   short_text: { label: '짧은 텍스트', tone: 'success' },
   image: { label: '이미지', tone: 'warning' },
-  text_image: { label: '텍스트+이미지', tone: 'accent' },
 }
 
 /**

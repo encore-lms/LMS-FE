@@ -112,13 +112,6 @@ export default function QnaListPage({
                 placeholder: '제목·내용·태그 검색',
                 ariaLabel: '질문 검색',
               }}
-              reset={{
-                active: !!query || active !== 'all',
-                onReset: () => {
-                  setQuery('')
-                  setActive('all')
-                },
-              }}
               actions={
                 canAsk && (
                   <button

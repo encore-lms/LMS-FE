@@ -12,6 +12,11 @@ import { useAuditLog } from './api'
 import type { AuditCategory, AuditEvent, AuditResult } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
+//
+// [진입점 없음 — 의도된 보류] 증명서 심사 기능(상태 머신·보완 사유·목록)이 아직 BE 에 없다.
+// 화면만 먼저 만들어 둔 것이라 지금 연결해도 동작하지 않는다. 심사 기능을 설계·구현할 때
+// 이 화면도 함께 연결한다. 고아로 보고 지우지 말 것(2026-08-06 경로 감사).
+
 const RESULT_META: Record<AuditResult, { label: string; tone: BadgeTone }> = {
   success: { label: '성공', tone: 'success' },
   failure: { label: '실패', tone: 'danger' },

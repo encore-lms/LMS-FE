@@ -212,3 +212,26 @@ export interface StaffStudentEvalSheet {
   evaluatedCount: number
   students: StaffStudentEvalEntry[]
 }
+
+// ── 수강생 종합 데이터 탭(2026-08-07 신설) — 스태프 평가 전 평가자 조회 ──
+
+/** 평가 1건 — 평가자(강사/매니저) 정보 포함. scores 순서 = shared EVALUATION_AXIS_LABELS. */
+export interface StaffEvalRaterEntry {
+  raterUserId: string
+  raterName: string
+  raterRole: string
+  scores: number[]
+  comment: string | null
+  updatedAtLabel: string
+}
+
+export interface StaffEvalStudentEntries {
+  studentId: string
+  entries: StaffEvalRaterEntry[]
+}
+
+/** 기수 전체 — 평가가 있는 수강생만 담긴다. */
+export interface StaffEvalAllData {
+  cohortId: string
+  students: StaffEvalStudentEntries[]
+}

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { adminEducationKeys } from './queryKeys'
 import type { WorkspaceData } from '@/features/student/projects/types'
+import type { InstructorRecordReviewData } from '@/shared/types'
 import type {
   AssignmentFormDetail,
   AssignmentItem,
@@ -14,6 +15,7 @@ import type {
   PeerEvalResults,
   StaffStudentEvalEntry,
   StaffStudentEvalSheet,
+  StaffEvalAllData,
 } from './types'
 
 // 설명 탭 — HRD-Net 과정 상세(learning-service). 과정/기수 둘 다 있어야 조회.
@@ -396,5 +398,66 @@ export function useSaveStaffStudentEval(cohortId: string) {
         queryKey: adminEducationKeys.staffStudentEvals(cohortId),
       })
     },
+  })
+}
+
+/** 스태프 평가 전 평가자 조회('수강생 종합 데이터' 탭) — 강사·매니저 저장분을 수강생별로 모아 본다. */
+export function useStaffStudentEvalsAll(cohortId: string | null) {
+  return useQuery({
+    queryKey: [
+      ...adminEducationKeys.staffStudentEvals(cohortId ?? ''),
+      'all',
+    ] as const,
+    queryFn: () =>
+      apiClient
+        .get<StaffEvalAllData>(
+          `/users/cohorts/${cohortId}/student-evaluations/all`,
+        )
+        .then((r) => r.data),
+    enabled: !!cohortId,
+  })
+}
+
+/**
+ * 출결 요약('수강생 종합 데이터' 탭) — 지각·결석 이슈 수강생만 쓴다.
+ * 강사 feature 훅과 같은 엔드포인트지만 교차 api 임포트가 린트로 막혀 admin 로컬 훅으로 둔다.
+ */
+export function useCohortAttendanceIssues(cohortId: string | null) {
+  return useQuery({
+    queryKey: [
+      ...adminEducationKeys.all,
+      'attendance-issues',
+      cohortId ?? '',
+    ] as const,
+    queryFn: () =>
+      apiClient
+        .get<{
+          issues: {
+            studentUuid: string
+            name: string
+            lateCount: number
+            absentCount: number
+          }[]
+        }>(`/instructor/cohorts/${cohortId}/attendance-summary`)
+        .then((r) => r.data),
+    enabled: !!cohortId,
+  })
+}
+
+/** 기록실 그리드('수강생 종합 데이터' 탭) — 수강생별 블로그/스터디/자격증 진행 요약용(admin 미러). */
+export function useAdminRecordGrid(cohortId: string | null) {
+  return useQuery({
+    queryKey: [
+      ...adminEducationKeys.all,
+      'record-grid',
+      cohortId ?? '',
+    ] as const,
+    queryFn: () =>
+      apiClient
+        .get<InstructorRecordReviewData>('/admin/records/review-grid', {
+          cohortId: cohortId ?? undefined,
+        })
+        .then((r) => r.data),
+    enabled: !!cohortId,
   })
 }

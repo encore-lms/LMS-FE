@@ -15,9 +15,12 @@ import {
   useAdminRecordGrid,
   useCohortAttendanceIssues,
   useCohortProjects,
+  usePeerEvaluations,
   useResumes,
   useStaffStudentEvalsAll,
+  useStudentActivitySummary,
 } from './api'
+import { useStudentMileageHistory } from '../mileage/history/api'
 
 // 수강생 종합 데이터 탭(2026-08-07 신설, 매니저 전용) — 수강생 1명의 연관 데이터를 DB 뷰처럼
 // 한 화면에 모은다: 스태프(강사·매니저) 4축 평가 · 멘토 평가·추천 · 강사 추천서 · 동료 평가 ·
@@ -63,6 +66,36 @@ function ScoreChips({ scores }: { scores: (number | null)[] }) {
           <b className="text-fg tabular-nums">{v ?? '-'}</b>
         </span>
       ))}
+    </span>
+  )
+}
+
+/** 프로젝트 1건에서 받은 상호평가 요약 한 줄 — 받은 게 없으면 숨긴다. */
+function PeerReceivedLine({
+  projectId,
+  projectTitle,
+  studentUserId,
+}: {
+  projectId: string
+  projectTitle: string
+  studentUserId: string
+}) {
+  const { data } = usePeerEvaluations(projectId)
+  const me = (data?.members ?? []).find((m) => m.userId === studentUserId)
+  if (!me || me.receivedSubmitted === 0) return null
+  return (
+    <span className="text-fg-muted">
+      · {projectTitle}: 받음{' '}
+      <b className="text-fg tabular-nums">{me.receivedSubmitted}건</b>
+      {me.receivedAverage != null && (
+        <>
+          {' '}
+          평균{' '}
+          <b className="text-fg tabular-nums">
+            {me.receivedAverage.toFixed(1)}
+          </b>
+        </>
+      )}
     </span>
   )
 }
@@ -118,6 +151,9 @@ export function StudentOverviewPane({
   const selected = allStudents.find((s) => s.id === selectedId) ?? null
   // 멘토 평가 상세(코멘트·추천 포함) — 선택 시에만 조회.
   const mentorDetail = useMentorEvaluationDetail(selected?.id ?? null)
+  // 학습 활동 요약(과제·퀴즈·QnA)·마일리지 — 선택 시에만 조회.
+  const activity = useStudentActivitySummary(cohortId, selected?.id ?? null)
+  const mileage = useStudentMileageHistory(selected?.id ?? null)
 
   return (
     <DataBoundary
@@ -253,6 +289,8 @@ export function StudentOverviewPane({
                   <OverviewDetail
                     key={selected.id}
                     student={selected}
+                    activity={activity.data ?? null}
+                    mileage={mileage.data ?? null}
                     staffEntries={staffByStudent.get(selected.id) ?? []}
                     reputation={reputationByStudent.get(selected.id) ?? null}
                     mentorDetail={mentorDetail.data ?? null}
@@ -285,6 +323,8 @@ export function StudentOverviewPane({
 
 function OverviewDetail({
   student,
+  activity,
+  mileage,
   staffEntries,
   reputation,
   mentorDetail,
@@ -301,6 +341,8 @@ function OverviewDetail({
     trainingStatus?: string | null
     lastLoginAt?: string | null
   }
+  activity: import('./types').StudentActivitySummary | null
+  mileage: import('../mileage/history/types').StudentMileageHistory | null
   staffEntries: import('./types').StaffEvalRaterEntry[]
   reputation: import('../reputation/types').ReputationStudent | null
   mentorDetail: import('../reputation/types').MentorEvaluationDetail | null
@@ -463,6 +505,14 @@ function OverviewDetail({
                   : '-'}
               </b>
             </span>
+            {projects.map((p) => (
+              <PeerReceivedLine
+                key={p.id}
+                projectId={p.id}
+                projectTitle={p.title}
+                studentUserId={student.id}
+              />
+            ))}
             <span className="text-fg-muted">
               출결 특이사항{' '}
               {attendanceIssue ? (
@@ -475,6 +525,74 @@ function OverviewDetail({
               )}
             </span>
           </div>
+        </Section>
+
+        {/* 학습 활동 — 과제·퀴즈·QnA(수강생별 집계 API) */}
+        <Section title="학습 활동 (과제·퀴즈·QnA)">
+          {activity ? (
+            <div className="flex flex-col gap-1.5 text-[12px]">
+              <span className="text-fg-muted">
+                과제 제출{' '}
+                <b className="text-fg tabular-nums">
+                  {activity.assignments.submitted}/{activity.assignments.total}
+                </b>
+                {activity.assignments.supplementRequested > 0 && (
+                  <b className="text-warning">
+                    {' '}
+                    · 보완요청 {activity.assignments.supplementRequested}
+                  </b>
+                )}
+                {activity.assignments.reviewDone > 0 &&
+                  ` · 검토완료 ${activity.assignments.reviewDone}`}
+              </span>
+              <span className="text-fg-muted">
+                퀴즈 응시{' '}
+                <b className="text-fg tabular-nums">
+                  {activity.quizzes.attempted}/{activity.quizzes.totalOpen}
+                </b>
+                {activity.quizzes.avgScorePct != null &&
+                  ` · 평균 ${activity.quizzes.avgScorePct}%`}
+              </span>
+              <span className="text-fg-muted">
+                QnA 질문{' '}
+                <b className="text-fg tabular-nums">
+                  {activity.qna.questionCount}건
+                </b>
+              </span>
+            </div>
+          ) : (
+            <EmptyLine>불러오는 중…</EmptyLine>
+          )}
+        </Section>
+
+        {/* 마일리지 */}
+        <Section
+          title="마일리지"
+          badge={
+            mileage ? (
+              <StatusBadge label={`잔액 ${mileage.balance}`} tone="info" />
+            ) : undefined
+          }
+        >
+          {mileage ? (
+            <div className="flex flex-col gap-1 text-[12px]">
+              <span className="text-fg-muted">
+                적립{' '}
+                <b className="text-fg tabular-nums">{mileage.totalEarned}</b> ·
+                사용{' '}
+                <b className="text-fg tabular-nums">{mileage.totalSpent}</b> ·
+                거래{' '}
+                <b className="text-fg tabular-nums">{mileage.rows.length}건</b>
+              </span>
+              {mileage.rows.slice(0, 3).map((r) => (
+                <span key={r.id} className="text-fg-subtle">
+                  {r.date} · {r.reason} · {r.amount}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <EmptyLine>마일리지 이력이 없거나 미사용 기수예요</EmptyLine>
+          )}
         </Section>
 
         {/* 이력서 */}

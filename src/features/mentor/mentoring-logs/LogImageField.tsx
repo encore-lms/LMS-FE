@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { ImagePlus, X } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
-import { useUploadLogImage } from '../api/logs'
+import { useDeleteLogImage, useUploadLogImage } from '../api/logs'
 import { LogImage } from './LogImage'
 
 /**
@@ -25,6 +25,7 @@ export function LogImageField({
 }) {
   const toast = useToast()
   const upload = useUploadLogImage()
+  const remove = useDeleteLogImage()
   const inputRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState(false)
 
@@ -48,8 +49,12 @@ export function LogImageField({
     }
   }
 
-  const removeAt = (imageId: string) =>
+  // 값에서 빼는 것으로 끝내면 업로드한 파일이 서버에 남는다 — 함께 지운다.
+  // 이미 제출한 일지의 첨부는 서버가 막으므로(422) 화면에서 빼는 것까지만 하고 넘어간다.
+  const removeAt = (imageId: string) => {
     onChange(ids.filter((id) => id !== imageId).join(','))
+    remove.mutate(imageId, { onError: () => undefined })
+  }
 
   return (
     <div className="flex flex-col gap-2">

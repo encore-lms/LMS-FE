@@ -3,11 +3,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ToastProvider } from '@/components/ui/Toast'
 import { LogImageField } from './LogImageField'
-import { useUploadLogImage } from '../api/logs'
+import { useDeleteLogImage, useUploadLogImage } from '../api/logs'
 
 vi.mock('../api/logs', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/logs')>()),
   useUploadLogImage: vi.fn(),
+  useDeleteLogImage: vi.fn(),
 }))
 
 // 첨부 이미지는 인증이 필요해 토큰 실린 요청으로 받아 그린다 — 테스트에선 그리기만 확인한다.
@@ -18,7 +19,12 @@ vi.mock('./LogImage', () => ({
 // 이미지 항목 — 올린 즉시 서버에 저장하고 받은 id 를 답변 값으로 들고 있는다.
 // 제출 전에 업로드가 끝나야 서버가 일지에 이을 수 있다(2026-08-06 QA).
 
+const deleteMutate = vi.fn()
+
 function renderField(value: string, onChange = vi.fn()) {
+  vi.mocked(useDeleteLogImage).mockReturnValue({
+    mutate: deleteMutate,
+  } as unknown as ReturnType<typeof useDeleteLogImage>)
   render(
     <ToastProvider>
       <LogImageField value={value} onChange={onChange} label="멘토링 사진" />
@@ -68,5 +74,7 @@ describe('LogImageField', () => {
     await user.click(screen.getAllByLabelText('멘토링 사진 첨부 삭제')[0])
 
     expect(onChange).toHaveBeenCalledWith('img-2')
+    // 값에서만 빼면 업로드한 파일이 서버에 남는다(2026-08-06).
+    expect(deleteMutate).toHaveBeenCalledWith('img-1', expect.anything())
   })
 })

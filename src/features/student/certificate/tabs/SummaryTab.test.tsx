@@ -582,6 +582,13 @@ describe('SummaryTab', () => {
       </MemoryRouter>,
     )
 
+    const summaryHeading = await screen.findByRole('heading', {
+      name: '종합 요약 · 핵심 지표',
+    })
+    expect(
+      summaryHeading.parentElement?.previousElementSibling,
+    ).toHaveTextContent('1')
+
     expect(await screen.findByText('79.9')).toBeInTheDocument()
     expect(
       screen.getByText(

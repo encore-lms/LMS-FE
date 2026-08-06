@@ -24,6 +24,7 @@ import type {
 } from '../types'
 import { DomainDonut } from '../v2/DomainDonut'
 import { OntologyMap } from '../v2/OntologyMap'
+import { TabHead } from './TabHead'
 
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
@@ -1355,19 +1356,15 @@ function ScoreSummary({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-fg text-[16px] font-bold">
-            핵심 지표 · 종합 요약
-          </span>
-          <span className="text-fg-subtle text-[11px]">
-            산출 흐름 · 학습·성과 지표 → 6축 역량 점수 → 절대 종합 점수
-          </span>
-        </div>
+      <TabHead
+        no={1}
+        title="종합 요약 · 핵심 지표"
+        sub="산출 흐름 · 학습·성과 지표 → 6축 역량 점수 → 절대 종합 점수"
+      >
         <span className="text-fg-subtle text-[11px]">
           산정일 {score.calculatedAt}
         </span>
-      </div>
+      </TabHead>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(300px,35%)_minmax(0,65%)]">
         <div

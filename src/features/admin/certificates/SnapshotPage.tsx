@@ -304,7 +304,7 @@ export default function SnapshotPage() {
             </p>
             <div className="flex shrink-0 gap-2">
               <Button variant="secondary" onClick={() => navigate(-1)}>
-                검토 상세로 돌아가기
+                돌아가기
               </Button>
               <Button
                 onClick={() => toast.info('JSON 다운로드는 준비 중입니다.')}

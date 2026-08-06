@@ -32,13 +32,13 @@ const CATALOG: QuickLinkDef[] = [
   { to: '/admin/education', label: '교육과정', icon: BookOpen, tone: 'bg-success-bg text-success' },
   { to: '/admin/mileage', label: '마일리지', icon: Coins, tone: 'bg-warning-bg text-warning' },
   { to: '/admin/reputation', label: '평판 관리', icon: Star, tone: 'bg-warning-bg text-warning' },
-  { to: '/admin/certificates/reviews', label: '인증 검토', icon: BadgeCheck, tone: 'bg-success-bg text-success' },
+  { to: '/admin/certificates', label: '역량 증명서', icon: BadgeCheck, tone: 'bg-success-bg text-success' },
   { to: '/admin/play/typing-texts', label: 'PLAY 관리', icon: Gamepad2, tone: 'bg-accent-bg text-accent-strong' },
   { to: '/admin/settings', label: '설정', icon: Settings, tone: 'bg-surface-muted text-fg-muted' },
 ]
 
 const STORAGE_KEY = 'admin-quick-links'
-const DEFAULTS = ['/admin/education', '/admin/mileage', '/admin/certificates/reviews']
+const DEFAULTS = ['/admin/education', '/admin/mileage', '/admin/certificates']
 
 // 낡은 경로 → 새 경로 마이그레이션. 카탈로그 재정비 시 기존 저장값이 사라지지 않게.
 // 학습 기록: 단독 라우트 제거 → 기수 허브 기록실 탭으로 흡수. 탭은 기수를 고른 뒤라야 열려
@@ -51,6 +51,8 @@ const MIGRATE: Record<string, string> = {
   '/admin/mentors/assignments': '/admin/education',
   '/admin/mentoring/logs': '/admin/education',
   '/admin/quizzes': '/admin/education',
+  // 인증 검토는 역량 증명서 상세로 흡수(2026-08-06).
+  '/admin/certificates/reviews': '/admin/certificates',
 }
 
 function loadLinks(): string[] {

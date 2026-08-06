@@ -43,32 +43,45 @@ describe('역량 증명서 목록 목데이터', () => {
     expect(row.cohortLabel).toBe('30기')
   })
 
-  // 한 화면에서 네 상태를 다 볼 수 있어야 흐름을 확인할 수 있다.
-  it('네 상태가 고르게 나온다', () => {
+  // 재료 축과 인증 축을 한 화면에서 다 볼 수 있어야 흐름을 확인할 수 있다.
+  it('재료·인증 단계가 고르게 나온다', () => {
     const statuses = new Set(rowsOf(40).map((r) => r.status))
 
     expect(statuses).toEqual(
-      new Set(['issued', 'data_ready', 'data_pending', 'cohort_open']),
+      new Set([
+        'cohort_open',
+        'data_pending',
+        'data_ready',
+        'requested',
+        'reviewing',
+        'changes_requested',
+        'certified',
+      ]),
     )
   })
 
-  // 상세는 증명서가 나온 건에서만 열린다 — 준비 중인 행은 열어도 볼 게 없다.
-  it('증명서 완료만 열 수 있고 점수가 있다', () => {
+  // 검토하려면 증명서를 먼저 봐야 한다 — 인증 전에도 열려야 한다.
+  it('재료가 갖춰지면 인증 전에도 열 수 있고 점수가 있다', () => {
     const rows = rowsOf(40)
     const openable = rows.filter((r) => r.openable)
 
     expect(openable.length).toBeGreaterThan(0)
-    expect(openable.every((r) => r.status === 'issued')).toBe(true)
+    expect(
+      openable.every(
+        (r) => r.status !== 'cohort_open' && r.status !== 'data_pending',
+      ),
+    ).toBe(true)
+    expect(openable.some((r) => r.status !== 'certified')).toBe(true)
     expect(openable.every((r) => typeof r.overallScore === 'number')).toBe(true)
     expect(
       rows.filter((r) => !r.openable).every((r) => r.overallScore === null),
     ).toBe(true)
   })
 
-  it('공개는 증명서가 나온 뒤에만 켜진다', () => {
+  it('공개는 정식 인증 뒤에만 켜진다', () => {
     const published = rowsOf(40).filter((r) => r.published)
 
     expect(published.length).toBeGreaterThan(0)
-    expect(published.every((r) => r.status === 'issued')).toBe(true)
+    expect(published.every((r) => r.status === 'certified')).toBe(true)
   })
 })

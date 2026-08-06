@@ -11,6 +11,11 @@ import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import { useSnapshot } from './api'
 
+//
+// [진입점 없음 — 의도된 보류] 증명서 심사 기능(상태 머신·보완 사유·목록)이 아직 BE 에 없다.
+// 화면만 먼저 만들어 둔 것이라 지금 연결해도 동작하지 않는다. 심사 기능을 설계·구현할 때
+// 이 화면도 함께 연결한다. 고아로 보고 지우지 말 것(2026-08-06 경로 감사).
+
 const TABS = [
   '종합 요약',
   '기술·검증',

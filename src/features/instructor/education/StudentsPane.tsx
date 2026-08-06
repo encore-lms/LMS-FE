@@ -81,8 +81,14 @@ function AttendanceSummarySection({
         {data && (
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="재적" value={data.students.total} unit="명" />
-              <StatCard label="활동" value={data.students.active} unit="명" />
+              {/* 명단 전체가 아니라 '지금 교육 중'을 앞에 둔다 — 예전에는 탈락자를 포함한
+                  전체를 '재적'이라 적어 실제 인원과 어긋났다(2026-08-06 QA). */}
+              <StatCard label="교육 중" value={data.students.active} unit="명" />
+              <StatCard
+                label="조기취업"
+                value={data.students.earlyEmployed ?? 0}
+                unit="명"
+              />
               <StatCard
                 label="중도탈락"
                 value={data.students.dropout}

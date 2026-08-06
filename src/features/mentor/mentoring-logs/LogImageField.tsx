@@ -2,7 +2,8 @@ import { useRef, useState } from 'react'
 import { ImagePlus, X } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
-import { logImageUrl, useUploadLogImage } from '../api/logs'
+import { useUploadLogImage } from '../api/logs'
+import { LogImage } from './LogImage'
 
 /**
  * 이미지 항목 입력 — 올린 즉시 서버에 저장하고 받은 id 를 답변 값으로 들고 있는다.
@@ -58,8 +59,8 @@ export function LogImageField({
             key={imageId}
             className="border-border relative h-24 w-24 overflow-hidden rounded-lg border"
           >
-            <img
-              src={logImageUrl(imageId)}
+            <LogImage
+              imageId={imageId}
               alt={`${label} 첨부`}
               className="h-full w-full object-cover"
             />

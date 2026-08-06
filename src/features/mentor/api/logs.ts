@@ -117,7 +117,5 @@ export function useUploadLogImage() {
   })
 }
 
-/** 첨부 이미지 원본 경로 — <img src>·새 탭 열기에 그대로 쓴다. */
-export function logImageUrl(imageId: string) {
-  return `/api/mentor/v1/mentoring-log-images/${imageId}`
-}
+// 첨부 이미지는 인증이 필요해 <img src> 로 직접 못 부른다 — LogImage 가 토큰 실린 요청으로
+// blob 을 받아 그린다(2026-08-06).

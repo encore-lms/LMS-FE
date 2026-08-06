@@ -10,6 +10,11 @@ vi.mock('../api/logs', async (importOriginal) => ({
   useUploadLogImage: vi.fn(),
 }))
 
+// 첨부 이미지는 인증이 필요해 토큰 실린 요청으로 받아 그린다 — 테스트에선 그리기만 확인한다.
+vi.mock('./LogImage', () => ({
+  LogImage: ({ alt }: { alt: string }) => <img alt={alt} />,
+}))
+
 // 이미지 항목 — 올린 즉시 서버에 저장하고 받은 id 를 답변 값으로 들고 있는다.
 // 제출 전에 업로드가 끝나야 서버가 일지에 이을 수 있다(2026-08-06 QA).
 

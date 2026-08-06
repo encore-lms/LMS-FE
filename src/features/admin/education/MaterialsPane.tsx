@@ -318,13 +318,6 @@ export function MaterialsPane({
               placeholder: '제목·내용 검색',
               ariaLabel: '자료 검색',
             }}
-            reset={{
-              active: !!q || typeFilter !== 'all',
-              onReset: () => {
-                setQ('')
-                setTypeFilter('all')
-              },
-            }}
             filters={
               <Select
                 aria-label="유형 필터"

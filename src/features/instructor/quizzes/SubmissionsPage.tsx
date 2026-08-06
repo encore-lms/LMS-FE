@@ -41,6 +41,8 @@ export default function SubmissionsPage() {
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<StatusFilter>('all')
   usePageHeader('제출 현황', '퀴즈 제출률과 채점 대기 현황을 확인합니다')
+  // 정답 관리는 운영 전용이다 — 강사 마운트에서는 감춘다.
+  const isAdmin = useQuizBasePath().startsWith('/admin')
 
   const rows = useMemo(() => data?.rows ?? [], [data])
   // 제출자 userId → 이름 join. BE는 studentUserId만 주고 이름은 FE에서 결합.
@@ -305,10 +307,24 @@ export default function SubmissionsPage() {
                 <span className="text-fg-subtle text-xs">({t.count})</span>
               </button>
             ))}
+            {/* 정답 관리 — 채점 결과를 보다 정답 오류를 발견했을 때 여기서 들어간다.
+                운영 전용 화면이라 /admin 마운트에서만 보인다(BE 도 /admin/quizzes/* 전용). */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate(`/admin/quizzes/${quizId}/answers`)}
+                className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
+              >
+                정답 관리 →
+              </button>
+            )}
             <button
               type="button"
               onClick={() => navigate(backTo)}
-              className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
+              className={cn(
+                'border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-xs font-medium',
+                !isAdmin && 'ml-auto',
+              )}
             >
               ← 퀴즈 목록으로
             </button>

@@ -5,7 +5,6 @@ import {
   Check,
   ChevronDown,
   Image as ImageIcon,
-  ImagePlus,
   Minus,
   type LucideIcon,
 } from 'lucide-react'
@@ -36,12 +35,6 @@ const TYPE_OPTIONS: {
     hint: '한 줄 입력',
   },
   { value: 'image', label: '이미지', icon: ImageIcon, hint: '사진·캡처 첨부' },
-  {
-    value: 'text_image',
-    label: '텍스트 + 이미지',
-    icon: ImagePlus,
-    hint: '서술 + 사진 첨부',
-  },
 ]
 
 /**

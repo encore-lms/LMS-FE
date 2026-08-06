@@ -17,18 +17,14 @@ export type MentoringLogStatus =
  * <p>운영 템플릿 폼은 진작 네 종류를 만들 수 있었는데 멘토 쪽 타입이 텍스트 둘뿐이라,
  * 이미지 항목을 넣어도 작성 화면엔 텍스트만 떴다(2026-08-06 QA).</p>
  */
-export type MentoringLogFieldType =
-  | 'short_text'
-  | 'long_text'
-  | 'image'
-  | 'text_image'
+export type MentoringLogFieldType = 'short_text' | 'long_text' | 'image'
 
-/** 이미지가 붙는 항목인가 — 답변 값은 업로드한 이미지 id(쉼표로 이음). */
+/** 이미지 항목인가 — 답변 값은 업로드한 이미지 id(쉼표로 이음). */
 export function isImageField(type: MentoringLogFieldType) {
-  return type === 'image' || type === 'text_image'
+  return type === 'image'
 }
 
-/** 텍스트를 함께 받는 항목인가. */
+/** 텍스트 항목인가. */
 export function isTextField(type: MentoringLogFieldType) {
   return type !== 'image'
 }

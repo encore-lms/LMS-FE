@@ -277,14 +277,13 @@ export interface MentoringLogChangeRequestPayload {
 // ───────────────────────── 일지 템플릿 (§31) ─────────────────────────
 
 /**
- * 항목 타입 — 텍스트(짧은/긴) · 이미지 · 텍스트+이미지.
+ * 항목 타입 — 텍스트(짧은/긴) · 이미지.
  * (선택형·점수형·체크리스트는 범위 제외, 422)
+ *
+ * 'text_image'(텍스트+이미지)는 폐기했다(2026-08-06). 답변이 항목당 문자열 한 칸이라
+ * 텍스트와 이미지 id 를 같이 담을 수 없었다 — 둘 다 받으려면 항목을 둘로 나눈다.
  */
-export type AdminTemplateFieldType =
-  | 'short_text'
-  | 'long_text'
-  | 'image'
-  | 'text_image'
+export type AdminTemplateFieldType = 'short_text' | 'long_text' | 'image'
 
 /** 일지 항목 = 항목명·설명/도움말·필수 여부·표시 순서·타입(§31 도메인 모델). */
 export interface AdminTemplateField {

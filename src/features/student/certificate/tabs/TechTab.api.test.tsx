@@ -327,9 +327,6 @@ describe('TechTab 상세 API 연결', () => {
     expect(screen.queryByText(/전체 시험 평균/)).not.toBeInTheDocument()
     expect(within(categoryCard).getByText('86점')).toBeInTheDocument()
     expect(within(categoryCard).queryByText('99점')).not.toBeInTheDocument()
-    expect(
-      screen.getByText(/운영 인증이 완료된 기술 근거 4건/),
-    ).toBeInTheDocument()
     const codingTestGroup = document.querySelector(
       '[data-certification-group="coding-test"]',
     ) as HTMLElement
@@ -338,10 +335,11 @@ describe('TechTab 상세 API 연결', () => {
     ) as HTMLElement
     expect(within(codingTestGroup).getByText('코딩테스트')).toBeInTheDocument()
     expect(within(codingTestGroup).getByText('PCCE')).toBeInTheDocument()
-    expect(within(codingTestGroup).getByText('LV.4')).toBeInTheDocument()
-    expect(within(codingTestGroup).getByText('900–1,000점')).toBeInTheDocument()
     expect(
-      within(codingTestGroup).getByText('1,000 / 1,000점'),
+      within(codingTestGroup).getByText('LV.4 · 1,000 / 1,000점'),
+    ).toBeInTheDocument()
+    expect(
+      within(codingTestGroup).getByText('취득일 2026.05.12'),
     ).toBeInTheDocument()
     expect(
       within(credentialGroup).getByText('자격·기술 인증'),
@@ -352,34 +350,52 @@ describe('TechTab 상세 API 연결', () => {
     expect(
       within(credentialGroup).getByText('SQL 개발자(SQLD)'),
     ).toBeInTheDocument()
-    expect(within(credentialGroup).getAllByText('최종합격')).toHaveLength(2)
     expect(
       within(credentialGroup).getByText('Kaggle Expert'),
     ).toBeInTheDocument()
-    expect(within(credentialGroup).getByText('Expert')).toBeInTheDocument()
+    expect(
+      within(credentialGroup).getByText('취득일 2026.05.30'),
+    ).toBeInTheDocument()
+    expect(
+      within(credentialGroup).getByText('취득일 2026.06.20'),
+    ).toBeInTheDocument()
+    expect(
+      within(credentialGroup).getByText('취득일 2026.05.24'),
+    ).toBeInTheDocument()
+    expect(
+      within(credentialGroup).queryByText(/^Expert$/),
+    ).not.toBeInTheDocument()
+    expect(
+      within(credentialGroup).queryByText('최종합격'),
+    ).not.toBeInTheDocument()
+    expect(screen.getAllByTitle('운영 인증 완료')).toHaveLength(4)
+    expect(
+      screen.queryByText('공식 원점수와 등급이 있는 코딩 역량 시험'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('기관 자격증과 플랫폼 배지·등급 등 기술 근거'),
+    ).not.toBeInTheDocument()
     expect(
       document.querySelector('[data-certification-group-grid]'),
     ).toHaveClass('lg:grid-cols-2')
-    expect(screen.getByText('발급 2026-05-30')).toBeInTheDocument()
     expect(
-      screen.getByText(
+      screen.queryByText(
         '운영 인증 · 한국산업인력공단 · 시연용 자격번호 26200000001A',
       ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('발급 2026-06-20')).toBeInTheDocument()
+    ).not.toBeInTheDocument()
     expect(
-      screen.getByText(
+      screen.queryByText(
         '운영 인증 · 한국데이터산업진흥원 · 시연용 자격번호 SQLD-DEMO-26001 · 2028-06-20까지 유효',
       ),
-    ).toBeInTheDocument()
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: /Q-Net|K-DATA|진위확인/ }),
     ).not.toBeInTheDocument()
     expect(screen.queryByText('PCCP')).not.toBeInTheDocument()
     expect(screen.queryByText('PCSQL')).not.toBeInTheDocument()
-    expect(screen.getAllByText('운영 인증')).toHaveLength(4)
-    expect(screen.getByText('발급 2026-05-12')).toBeInTheDocument()
-    expect(screen.getByText('운영 인증 · 제출 증빙 확인')).toBeInTheDocument()
+    expect(
+      screen.queryByText('운영 인증 · 제출 증빙 확인'),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('과제 / 실습 검증')).not.toBeInTheDocument()
     expect(
       screen.queryByText('Spring REST API + JWT 인증'),

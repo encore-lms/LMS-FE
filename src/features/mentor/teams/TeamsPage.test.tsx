@@ -30,17 +30,18 @@ describe('TeamsPage', () => {
     renderPage()
     expect(usePageHeaderStore.getState().title).toBe('내 배정 팀')
     // KPI 4종 — Figma 대표값(진행 중 2 · 예약 대기 1 · 평가 필요 1 · 수정 요청 1)
-    expect(screen.getByText('N시간 미완료 일반 진행')).toBeInTheDocument()
+    expect(screen.getByText('배정 시간 미완료 · 진행 중')).toBeInTheDocument()
     expect(screen.getByText('요청 확인 필요')).toBeInTheDocument()
-    expect(screen.getByText('N시간 완료 또는 조기 종료')).toBeInTheDocument()
+    expect(screen.getByText('배정 시간 완료 또는 조기 종료')).toBeInTheDocument()
     expect(screen.getByText('운영자 보강 요청')).toBeInTheDocument()
     // 목록은 한 벌 — 완료 팀(NLP 분석)까지 4팀 전부가 표에만 나온다.
     expect(
       screen.getByText('배정 4팀 (진행 중 2 · 평가 필요 1 · 완료 1)'),
     ).toBeInTheDocument()
     expect(screen.getAllByText('NLP 분석 팀')).toHaveLength(1)
-    // 보조 태그 — 상태가 아닌 부가 라벨
-    expect(screen.getByText('✓ N시간 완료')).toBeInTheDocument()
+    // 보조 태그 — 상태가 아닌 부가 라벨. 변수 이름 'N'이 아니라 실제 배정 시간을 적는다(2026-08-06 QA).
+    expect(screen.getByText(/✓ \d+시간 완료/)).toBeInTheDocument()
+    expect(screen.queryByText(/N시간/)).toBeNull()
     expect(screen.getByText('초과 멘토링 1.5h')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /CSV 내보내기/ }),

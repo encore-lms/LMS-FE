@@ -40,28 +40,14 @@ export type {
   AdminGradingDetail,
 } from './quiz'
 export type {
-  OverallStatus,
-  SyncStatus,
-  Priority,
-  AdminKpi,
-  AdminQueueItem,
-  AdminRiskSignal,
-  AdminShortcut,
-  AdminSyncRow,
-  AdminDecisionLog,
-  AdminDashboardSummary,
-} from './admin'
-export type {
   CertReviewStatus,
   CertReviewListItem,
-  CertReviewQueue,
   SkillScore,
   ApprovalCheck,
   ReviewRiskFlag,
   ScoreEvidence,
   ArtifactApproval,
   AuditEntry,
-  CertReviewDetail,
   SnapshotEvidence,
   CertSnapshot,
 } from './certificates'

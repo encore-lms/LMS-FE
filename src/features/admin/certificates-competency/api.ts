@@ -29,9 +29,9 @@ export function useCertReviewList(cohortId: string | null) {
     enabled: !!cohortId,
     queryFn: () =>
       apiClient
-        .get<{ rows: CertReviewRow[] }>('/admin/certificates', {
-          params: { cohortId },
-        })
+        // apiClient.get 의 둘째 인자는 params 객체 그 자체다 — 한 겹 더 감싸면
+        // 쿼리가 실려 가지 않아 400 이 나고 목록이 조용히 비었다(2026-08-07 QA).
+        .get<{ rows: CertReviewRow[] }>('/admin/certificates', { cohortId })
         .then((r) => r.data.rows),
   })
 }

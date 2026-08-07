@@ -74,8 +74,10 @@ export default function CompetencyCertificateDetailPage() {
   const cohortId = params.get('cohortId')
   // 상태·전이는 서버가 정본이다(2026-08-07, learning-service V51).
   const { data: reviewRows } = useCertReviewList(cohortId)
+  // 아직 심사 행이 없으면 기수가 안 끝났다는 뜻이다 — data_ready 로 폴백하면 실제 상태를
+  // 가려 '준비 완료' 버튼조차 안 보인다(2026-08-07 QA).
   const status: CompetencyCertStatus =
-    reviewRows?.find((r) => r.studentUserId === studentId)?.status ?? 'data_ready'
+    reviewRows?.find((r) => r.studentUserId === studentId)?.status ?? 'cohort_open'
   const markDataReady = useMarkCertDataReady(cohortId)
   const startReview = useStartCertReview(cohortId)
   const requestChanges = useRequestCertChanges(cohortId)

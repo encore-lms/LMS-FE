@@ -12,6 +12,7 @@ export const certKeys = {
     [...certKeys.all, 'github-project', repository, branch, author] as const,
   lmsProjectByRepository: (repository: string, studentId: string) =>
     [...certKeys.all, 'lms-project', repository, studentId] as const,
+  status: () => [...certKeys.all, 'status'] as const,
   changes: () => [...certKeys.all, 'changes'] as const,
   publication: () => [...certKeys.all, 'publication'] as const,
 } as const

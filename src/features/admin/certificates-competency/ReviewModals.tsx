@@ -2,90 +2,34 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { DateTimePicker } from '@/components/ui/DateTimePicker'
-import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/shared/lib/cn'
 
 interface Student {
   name: string
   cohort: string
 }
 
-// 단일 선택 칩 그룹.
-function ChipGroup({
-  options,
-  value,
-  onChange,
-  activeClass = 'bg-fg text-on-color',
-}: {
-  options: string[]
-  value: string
-  onChange: (v: string) => void
-  activeClass?: string
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((o) => (
-        <button
-          key={o}
-          type="button"
-          onClick={() => onChange(o)}
-          className={cn(
-            'rounded-full px-3 py-1.5 text-xs font-medium',
-            value === o
-              ? activeClass
-              : 'bg-surface-muted text-fg-muted hover:text-fg',
-          )}
-        >
-          {o}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-const REASON_CODES = [
-  'missing_evidence',
-  'wrong_profile',
-  'unapproved_artifact',
-  'privacy_risk',
-  'score_review_needed',
-  'other',
-]
-const SECTIONS = [
-  'profile',
-  'metric',
-  'score',
-  'record',
-  'project',
-  'privacy',
-  'ai_summary',
-  'other',
-]
 
 // 보완 요청 모달 — reviewing → changes_requested.
+// 사유 코드·대상 섹션·권장 기한은 두지 않는다(2026-08-07 결정: 코멘트만, 길이 제한 없음).
 export function ChangesRequestModal({
   open,
   onClose,
   student,
-  onSubmitted,
+  pending,
+  onSubmit,
 }: {
   open: boolean
   onClose: () => void
   student: Student
-  onSubmitted?: () => void
+  pending?: boolean
+  onSubmit: (comment: string) => void
 }) {
-  const toast = useToast()
-  const [reason, setReason] = useState('')
-  const [section, setSection] = useState('')
   const [comment, setComment] = useState('')
-  const [due, setDue] = useState('')
-  const canSubmit = !!reason && !!section && comment.trim().length > 0
 
   const submit = () => {
-    toast.warning('보완 요청 전송 — reviewing → changes_requested')
-    onSubmitted?.()
-    onClose()
+    if (!comment.trim()) return
+    onSubmit(comment.trim())
+    setComment('')
   }
 
   return (
@@ -105,76 +49,30 @@ export function ChangesRequestModal({
           <Button variant="secondary" onClick={onClose}>
             취소
           </Button>
-          <Button disabled={!canSubmit} onClick={submit}>
-            보완 요청 전송
+          <Button disabled={!comment.trim() || pending} onClick={submit}>
+            {pending ? '전송 중…' : '보완 요청 전송'}
           </Button>
         </>
       }
     >
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <p className="text-fg-subtle text-xs">
           {student.name} · {student.cohort} · 수강생에게 그대로 노출
         </p>
         <div>
           <p className="text-fg text-sm font-bold">
-            사유 코드 <span className="text-danger">*</span>
-          </p>
-          <p className="text-fg-subtle mb-2 text-xs">enum 6종 — 하나 선택</p>
-          <ChipGroup
-            options={REASON_CODES}
-            value={reason}
-            onChange={setReason}
-            activeClass="bg-danger text-on-color"
-          />
-        </div>
-        <div>
-          <p className="text-fg text-sm font-bold">
-            대상 섹션 <span className="text-danger">*</span>
+            코멘트 <span className="text-danger">*</span>
           </p>
           <p className="text-fg-subtle mb-2 text-xs">
-            보완해야 할 영역 — enum 8종
-          </p>
-          <ChipGroup options={SECTIONS} value={section} onChange={setSection} />
-        </div>
-        <div>
-          <div className="flex items-center justify-between">
-            <p className="text-fg text-sm font-bold">
-              코멘트 <span className="text-danger">*</span>
-            </p>
-            <span className="text-fg-subtle text-xs">
-              {comment.length} / 500
-            </span>
-          </div>
-          <p className="text-fg-subtle mb-2 text-xs">
-            수강생에게 그대로 노출되는 사유 설명
+            무엇을 어떻게 고쳐야 하는지 적어 주세요 — 수강생에게 이 글이 그대로 보입니다
           </p>
           <textarea
             value={comment}
-            maxLength={500}
-            rows={4}
+            rows={8}
             onChange={(e) => setComment(e.target.value)}
             placeholder="보완이 필요한 항목과 조치 방법을 구체적으로 적어주세요."
             className="border-border focus:border-brand text-fg placeholder:text-fg-subtle bg-surface w-full rounded-lg border p-3 text-sm outline-none"
           />
-        </div>
-        <div>
-          <p className="text-fg text-sm font-bold">권장 기한</p>
-          <p className="text-fg-subtle mb-2 text-xs">
-            미입력 시 14일 자동 적용
-          </p>
-          <DateTimePicker
-            mode="date"
-            value={due}
-            onChange={setDue}
-            ariaLabel="권장 기한"
-            placeholder="날짜 선택"
-          />
-        </div>
-        <div className="bg-info-bg text-fg-muted rounded-lg p-3 text-xs">
-          <p className="text-fg font-medium">
-            수강생 요청 상세에 동일 내용이 표시됩니다
-          </p>
-          <p className="mt-0.5">사유 코드 · 대상 섹션 · 코멘트 · 권장 기한</p>
         </div>
       </div>
     </Modal>
@@ -198,21 +96,20 @@ export function ApproveModal({
   open,
   onClose,
   student,
-  onSubmitted,
+  pending,
+  onSubmit,
 }: {
   open: boolean
   onClose: () => void
   student: Student
-  onSubmitted?: () => void
+  pending?: boolean
+  onSubmit: () => void
 }) {
-  const toast = useToast()
   const [checks, setChecks] = useState([false, false, false])
   const allChecked = checks.every(Boolean)
 
   const submit = () => {
-    toast.success('정식 인증 승인 — CertificateSnapshot 생성·동결')
-    onSubmitted?.()
-    onClose()
+    onSubmit()
   }
 
   return (
@@ -232,8 +129,8 @@ export function ApproveModal({
           <Button variant="secondary" onClick={onClose}>
             취소
           </Button>
-          <Button disabled={!allChecked} onClick={submit}>
-            정식 인증 승인
+          <Button disabled={!allChecked || pending} onClick={submit}>
+            {pending ? '승인 중…' : '정식 인증 승인'}
           </Button>
         </>
       }

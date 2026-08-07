@@ -13,12 +13,33 @@ export type CertTab =
 import type { Tone } from '@/shared/lib/tone'
 export type { Tone }
 
-/** 증명서 라이프사이클 상태 (draft→under_review→issued/changes_requested) */
-export type CertStatus =
-  | 'draft' // 정식 인증 전(미리보기)
-  | 'under_review' // 요청 접수 · 매니저 검토 중
+/**
+ * 증명서 진행 단계 — 서버가 운영 7단계를 접어서 내려주는 값.
+ *
+ * 예전에는 화면마다 상태를 따로 들고 있었다(수강생 4단계·운영 7단계). 정본은 서버가
+ * 갖고, 화면은 이 넷만 본다(2026-08-07).
+ */
+export type CertStage =
+  | 'before' // 인증 전 (cohort_open · data_pending · data_ready)
+  | 'reviewing' // 검토 중 (requested · reviewing)
   | 'changes_requested' // 보완 요청
-  | 'issued' // 정식 인증 완료
+  | 'certified' // 정식 인증 완료
+
+/** 보완 요청 — 코멘트만 받는다(2026-08-07 결정). */
+export interface CertChangeRequest {
+  comment: string
+  reviewerName: string
+  requestedAt: string
+  resolved: boolean
+}
+
+export interface CertStatusData {
+  status: string
+  stage: CertStage
+  /** 재료가 갖춰진 뒤(data_ready)·보완 요청 상태에서만 true. */
+  canRequest: boolean
+  changeRequest: CertChangeRequest | null
+}
 
 /** 헤더/히어로 */
 export interface CertHeader {
@@ -28,7 +49,8 @@ export interface CertHeader {
   periodLabel: string // "2025-03-04 — 2025-09-12 · 총 960h"
   certId: string // "abc-1234"
   isPublic: boolean
-  status: CertStatus
+  /** 진행 단계는 GET /student/certificate/status 가 정본 — 여기 값은 쓰지 않는다. */
+  status?: CertStage
 }
 
 /** 보완이 필요한 항목(미리보기 상단 카드) */

@@ -20,7 +20,13 @@ import {
 import { mockOverview } from '@/features/student/certificate/mocks'
 import type { CertTab } from '@/features/student/certificate/types'
 import { ApproveModal, ChangesRequestModal } from './ReviewModals'
-import { statusOf } from './mocks'
+import { useToast } from '@/components/ui/use-toast'
+import {
+  useCertReviewList,
+  useCertifyCertificate,
+  useRequestCertChanges,
+  useStartCertReview,
+} from './api'
 import type { CompetencyCertStatus } from './types'
 
 // 매니저 역량 증명서 상세 (/admin/certificates/:studentId) — 읽기 전용.
@@ -61,12 +67,17 @@ export default function CompetencyCertificateDetailPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const [tab, setTab] = useState<CertTab>('summary')
+  const toast = useToast()
 
   const student = getCertificateDemoStudent(params.get('demo'))
-  // 검토 결과는 아직 화면 안에서만 산다 — 증명서 BE 가 붙으면 이 상태를 서버가 준다.
-  const [status, setStatus] = useState<CompetencyCertStatus>(() =>
-    statusOf(studentId),
-  )
+  const cohortId = params.get('cohortId')
+  // 상태·전이는 서버가 정본이다(2026-08-07, learning-service V51).
+  const { data: reviewRows } = useCertReviewList(cohortId)
+  const status: CompetencyCertStatus =
+    reviewRows?.find((r) => r.studentUserId === studentId)?.status ?? 'data_ready'
+  const startReview = useStartCertReview(cohortId)
+  const requestChanges = useRequestCertChanges(cohortId)
+  const certify = useCertifyCertificate(cohortId)
   const [modal, setModal] = useState<'approve' | 'changes' | null>(null)
   const data = useMemo(
     () => applyCertificateDemoStudent(mockOverview, student),
@@ -105,7 +116,11 @@ export default function CompetencyCertificateDetailPage() {
           {/* 정식 인증 판단은 증명서를 본 자리에서 한다 — 예전에는 별도 '인증 검토 큐'로
               옮겨 가야 했다(2026-08-06 통합). */}
           {status === 'requested' && (
-            <Button size="sm" onClick={() => setStatus('reviewing')}>
+            <Button
+              size="sm"
+              disabled={startReview.isPending}
+              onClick={() => startReview.mutate({ studentId })}
+            >
               검토 시작
             </Button>
           )}
@@ -131,7 +146,7 @@ export default function CompetencyCertificateDetailPage() {
         </div>
       </div>
 
-      <CertHero header={data.header} status="issued" />
+      <CertHero header={data.header} status="certified" />
       <CertTabs active={tab} onChange={setTab} only={MANAGER_TABS} />
 
       {tab === 'summary' && (
@@ -151,13 +166,38 @@ export default function CompetencyCertificateDetailPage() {
         open={modal === 'approve'}
         onClose={() => setModal(null)}
         student={{ name: student.name, cohort: student.cohortName }}
-        onSubmitted={() => setStatus('certified')}
+        pending={certify.isPending}
+        onSubmit={() =>
+          certify.mutate(
+            { studentId },
+            {
+              onSuccess: () => {
+                toast.success('정식 인증을 승인했어요')
+                setModal(null)
+              },
+              onError: () => toast.danger('승인하지 못했어요 · 잠시 후 다시 시도해 주세요'),
+            },
+          )
+        }
       />
       <ChangesRequestModal
         open={modal === 'changes'}
         onClose={() => setModal(null)}
         student={{ name: student.name, cohort: student.cohortName }}
-        onSubmitted={() => setStatus('changes_requested')}
+        pending={requestChanges.isPending}
+        onSubmit={(comment) =>
+          requestChanges.mutate(
+            { studentId, body: { comment } },
+            {
+              onSuccess: () => {
+                toast.success('보완 요청을 보냈어요 · 수강생에게 그대로 보입니다')
+                setModal(null)
+              },
+              onError: () =>
+                toast.danger('보완 요청을 보내지 못했어요 · 잠시 후 다시 시도해 주세요'),
+            },
+          )
+        }
       />
     </div>
   )

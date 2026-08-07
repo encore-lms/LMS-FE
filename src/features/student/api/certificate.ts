@@ -3,6 +3,7 @@ import { apiClient } from '@/shared/api'
 import { certKeys } from '../certificate/queryKeys'
 import type {
   CertChangesData,
+  CertStatusData,
   CertificateOverview,
   CertPublicationData,
   CertSentiment,
@@ -17,6 +18,34 @@ export function useCertificateOverview() {
       apiClient
         .get<CertificateOverview>('/student/certificate')
         .then((r) => r.data),
+  })
+}
+
+/**
+ * 증명서 진행 단계 + 최근 보완 요청 — /student/certificate/status.
+ *
+ * 예전엔 zustand 로컬 시뮬레이션(useCertFlow)이라 새로고침하면 초기화됐고 매니저와
+ * 연결되지 않았다. 서버가 정본을 갖는다(2026-08-07).
+ */
+export function useCertStatus() {
+  return useQuery({
+    queryKey: certKeys.status(),
+    queryFn: () =>
+      apiClient.get<CertStatusData>('/student/certificate/status').then((r) => r.data),
+  })
+}
+
+/** 정식 인증 요청 — 첫 요청과 보완 후 재요청이 같은 문으로 들어간다. */
+export function useRequestCertification() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient
+        .post<CertStatusData>('/student/certificate/request', {})
+        .then((r) => r.data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: certKeys.status() })
+    },
   })
 }
 

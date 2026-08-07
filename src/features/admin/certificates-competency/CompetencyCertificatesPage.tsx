@@ -12,6 +12,7 @@ import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { usePageHeader } from '@/shared/store'
 import { useStudentAccounts } from '@/shared/api'
 import { useCourseConfig, useCourseList } from '../api/settings'
+import { useCertReviewList } from './api'
 import { readLastCohort, writeLastCohort } from '../education/lastCohort'
 import { toCertRow } from './mocks'
 import {
@@ -71,6 +72,9 @@ export default function CompetencyCertificatesPage() {
 
   const [q, setQ] = useSearchParamState('q')
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
+  // 심사 상태는 서버가 정본 — 행이 없는 수강생은 아직 증명서를 연 적이 없다는 뜻이라
+  // 로스터 기준 기본값을 그대로 쓴다(2026-08-07, 예전엔 학생 id 해시로 만든 데모였다).
+  const { data: reviewRows } = useCertReviewList(cohortId)
 
   const cohortLabel = useMemo(() => {
     const found = cohorts.find((c) => c.id === cohortId)
@@ -84,7 +88,13 @@ export default function CompetencyCertificatesPage() {
       items
         // 시연용 테스트 계정은 증명서 대상이 아니다.
         .filter((s) => !s.isTest)
-        .map((s) => toCertRow(s, cohortLabel))
+        .map((s) => {
+          const row = toCertRow(s, cohortLabel)
+          const served = reviewRows?.find((r) => r.studentUserId === s.id)
+          return served
+            ? { ...row, status: served.status, openable: true }
+            : row
+        })
         .filter(
           (r) =>
             !needle ||
@@ -92,7 +102,7 @@ export default function CompetencyCertificatesPage() {
             r.studentUuid.toLowerCase().includes(needle),
         )
     )
-  }, [data, q, cohortLabel])
+  }, [data, q, cohortLabel, reviewRows])
 
   const summary = useMemo(() => {
     const by = (s: CompetencyCertStatus) =>
@@ -240,7 +250,7 @@ export default function CompetencyCertificatesPage() {
             onRowClick={(r) =>
               r.openable &&
               navigate(
-                `/admin/certificates/${r.studentId}?demo=${r.demoStudentId}`,
+                `/admin/certificates/${r.studentId}?demo=${r.demoStudentId}&cohortId=${cohortId ?? ''}`,
               )
             }
             rowClassName={(r) =>

@@ -2,9 +2,9 @@ import { useNavigate } from 'react-router-dom'
 import { Globe, Lock } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { useToast } from '@/components/ui/use-toast'
-import { useCertFlow } from '../useCertFlow'
 import {
   useCertPublicationSettings,
+  useCertStatus,
   useUpdateCertPublication,
 } from '../../api/certificate'
 
@@ -19,13 +19,13 @@ import {
 export function CertPublishBar() {
   const navigate = useNavigate()
   const toast = useToast()
-  const status = useCertFlow((s) => s.status)
+  const { data: cert } = useCertStatus()
   // 공개 여부는 서버가 정본 — 검증 페이지는 다른 기기에서 열리므로 프론트 상태로는 못 넘긴다.
   const { data: settings } = useCertPublicationSettings()
   const updatePublication = useUpdateCertPublication()
   const published = settings?.published ?? false
 
-  const certified = status === 'issued'
+  const certified = cert?.stage === 'certified'
 
   const toggle = () => {
     if (!certified) {

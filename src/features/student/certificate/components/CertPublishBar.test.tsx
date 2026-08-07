@@ -4,11 +4,12 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import { CertPublishBar } from './CertPublishBar'
-import { useCertFlow } from '../useCertFlow'
 
 // 공개 여부는 서버가 정본이라(검증 페이지는 다른 기기에서 열린다) 훅을 목으로 세운다.
 const mutate = vi.fn()
 let published = false
+// 진행 단계도 서버가 정본이다 — 예전 zustand 시뮬레이션(useCertFlow)은 걷어냈다(2026-08-07).
+let stage: 'before' | 'certified' = 'before'
 
 vi.mock('../../api/certificate', () => ({
   useCertPublicationSettings: () => ({
@@ -21,6 +22,7 @@ vi.mock('../../api/certificate', () => ({
     },
   }),
   useUpdateCertPublication: () => ({ mutate }),
+  useCertStatus: () => ({ data: { status: 'x', stage, canRequest: false, changeRequest: null } }),
 }))
 
 // 외부 검증 URL 공개는 수강생이 직접 켜고 끈다.
@@ -38,7 +40,7 @@ function renderBar() {
 beforeEach(() => {
   mutate.mockClear()
   published = false
-  useCertFlow.setState({ status: 'draft' })
+  stage = 'before'
 })
 
 describe('증명서 공개 바', () => {
@@ -55,7 +57,7 @@ describe('증명서 공개 바', () => {
   })
 
   it('인증이 끝나면 공개로 바꿀 수 있다', async () => {
-    useCertFlow.setState({ status: 'issued' })
+    stage = 'certified'
     const user = userEvent.setup()
     renderBar()
 
@@ -66,7 +68,7 @@ describe('증명서 공개 바', () => {
 
   it('공개 중이면 다시 비공개로 되돌릴 수 있다', async () => {
     published = true
-    useCertFlow.setState({ status: 'issued' })
+    stage = 'certified'
     const user = userEvent.setup()
     renderBar()
 

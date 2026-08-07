@@ -2,7 +2,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { usePageHeader } from '@/shared/store'
-import { useCertStatus, useCertificateOverview } from '../api/certificate'
+import {
+  useCertStatus,
+  useCertificateOverview,
+  useRequestCertification,
+} from '../api/certificate'
+import { buttonClass } from '@/components/ui/buttonClass'
+import { useToast } from '@/components/ui/use-toast'
 import { CertHero } from './components/CertHero'
 import { CertificateDemoStudentFab } from './components/CertificateDemoStudentFab'
 import { CertPublishBar } from './components/CertPublishBar'
@@ -36,6 +42,8 @@ export default function CertificatePage() {
   const [params, setParams] = useSearchParams()
   const { data, isPending, isError, refetch } = useCertificateOverview()
   const { data: cert } = useCertStatus()
+  const requestCert = useRequestCertification()
+  const toast = useToast()
   usePageHeader(TERMS.certificate)
 
   // ?tab 없으면 종합요약 탭 기본. AI 탭은 CERT_V2 플래그 ON일 때만.
@@ -87,6 +95,35 @@ export default function CertificatePage() {
             확인하기 →
           </span>
         </button>
+      )}
+
+      {/* 정식 인증 요청 — 재료가 갖춰지면(canRequest) 여기서 낸다.
+          API 는 있는데 누를 자리가 없어 흐름이 시작되지 않았다(2026-08-07 QA). */}
+      {cert?.canRequest && cert.stage === 'before' && (
+        <div className="bg-surface flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-4 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+          <span className="flex flex-col">
+            <span className="text-fg text-[14px] font-bold">
+              정식 인증을 요청할 수 있어요
+            </span>
+            <span className="text-fg-muted text-[12px]">
+              매니저가 검토한 뒤 인증 마크가 붙습니다
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() =>
+              requestCert.mutate(undefined, {
+                onSuccess: () => toast.success('정식 인증을 요청했어요 · 매니저 검토 대기'),
+                onError: () =>
+                  toast.danger('요청하지 못했어요 · 잠시 후 다시 시도해 주세요'),
+              })
+            }
+            disabled={requestCert.isPending}
+            className={buttonClass()}
+          >
+            {requestCert.isPending ? '요청 중…' : '정식 인증 요청'}
+          </button>
+        </div>
       )}
 
       <CertTabs active={tab} onChange={setTab} />

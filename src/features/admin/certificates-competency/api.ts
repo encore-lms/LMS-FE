@@ -50,6 +50,11 @@ function useReviewMutation<TBody>(
   })
 }
 
+/** 재료가 갖춰졌다고 표시 — 기수 종료 자동 판정 외의 수동 경로. */
+export function useMarkCertDataReady(cohortId: string | null) {
+  return useReviewMutation<never>((id) => `/admin/certificates/${id}/data-ready`, cohortId)
+}
+
 /** requested → reviewing. */
 export function useStartCertReview(cohortId: string | null) {
   return useReviewMutation<never>((id) => `/admin/certificates/${id}/review`, cohortId)

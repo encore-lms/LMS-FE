@@ -23,6 +23,7 @@ import { ApproveModal, ChangesRequestModal } from './ReviewModals'
 import { useToast } from '@/components/ui/use-toast'
 import {
   useCertReviewList,
+  useMarkCertDataReady,
   useCertifyCertificate,
   useRequestCertChanges,
   useStartCertReview,
@@ -75,6 +76,7 @@ export default function CompetencyCertificateDetailPage() {
   const { data: reviewRows } = useCertReviewList(cohortId)
   const status: CompetencyCertStatus =
     reviewRows?.find((r) => r.studentUserId === studentId)?.status ?? 'data_ready'
+  const markDataReady = useMarkCertDataReady(cohortId)
   const startReview = useStartCertReview(cohortId)
   const requestChanges = useRequestCertChanges(cohortId)
   const certify = useCertifyCertificate(cohortId)
@@ -115,6 +117,24 @@ export default function CompetencyCertificateDetailPage() {
           </span>
           {/* 정식 인증 판단은 증명서를 본 자리에서 한다 — 예전에는 별도 '인증 검토 큐'로
               옮겨 가야 했다(2026-08-06 통합). */}
+          {(status === 'cohort_open' || status === 'data_pending') && (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={markDataReady.isPending}
+              onClick={() =>
+                markDataReady.mutate(
+                  { studentId },
+                  {
+                    onSuccess: () => toast.success('데이터 준비 완료로 바꿨어요'),
+                    onError: () => toast.danger('바꾸지 못했어요 · 잠시 후 다시 시도해 주세요'),
+                  },
+                )
+              }
+            >
+              데이터 준비 완료
+            </Button>
+          )}
           {status === 'requested' && (
             <Button
               size="sm"

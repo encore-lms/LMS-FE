@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, useAuthActions, usePageHeaderStore } from '@/shared/store'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
@@ -8,7 +8,13 @@ import { PROFILE_PATH } from '@/features/profile/paths'
 // 헤더 — 콘텐츠 영역 상단 바. 좌측: 페이지 제목·설명(usePageHeader로 각 페이지가 등록),
 // 우측 클러스터: 알림 · 프로필. 구분선 없이 본문과 이어지는 통합형(Figma 기준).
 // 전역 검색란은 비기능 UI(BE 엔드포인트 없음)라 제거(2026-07-28). 프로필은 로그아웃까지 실동작.
-export function Header() {
+export function Header({
+  sidebarCollapsed = false,
+  onToggleSidebar,
+}: {
+  sidebarCollapsed?: boolean
+  onToggleSidebar?: () => void
+} = {}) {
   const navigate = useNavigate()
   const { user, role } = useAuth()
   const { clearSession } = useAuthActions()
@@ -38,14 +44,32 @@ export function Header() {
 
   return (
     <header className="flex min-h-[80px] shrink-0 items-center justify-between gap-6 bg-white px-8 py-4">
-      {/* 페이지 제목 — 각 페이지가 usePageHeader()로 등록(본문 h1 대체) */}
-      <div className="flex min-w-0 flex-col gap-0.5">
-        {title && (
-          <h1 className="text-fg truncate text-[22px] font-bold">{title}</h1>
+      <div className="flex min-w-0 items-center gap-3">
+        {/* 사이드바 접기/펼치기 — 전 역할 공통(2026-08-08). 접힌 상태에서도 여기서 다시 연다. */}
+        {onToggleSidebar && (
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            aria-label={sidebarCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
+            aria-expanded={!sidebarCollapsed}
+            className="text-fg-muted hover:bg-divider hover:text-fg -ml-2 flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen className="size-5" />
+            ) : (
+              <PanelLeftClose className="size-5" />
+            )}
+          </button>
         )}
-        {description && (
-          <p className="text-fg-muted truncate text-[13px]">{description}</p>
-        )}
+        {/* 페이지 제목 — 각 페이지가 usePageHeader()로 등록(본문 h1 대체) */}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          {title && (
+            <h1 className="text-fg truncate text-[22px] font-bold">{title}</h1>
+          )}
+          {description && (
+            <p className="text-fg-muted truncate text-[13px]">{description}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-3">

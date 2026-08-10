@@ -98,5 +98,8 @@ describe('증명서 공개 바', () => {
     expect(bar).not.toBeNull()
     expect(bar?.className).not.toContain('fixed')
     expect(bar?.className).not.toMatch(/left-\[/)
+    // 내용이 짧은 탭(이력서 빈 상태)에서 바가 위로 딸려 올라오지 않게 아래로 밀어 둔다.
+    expect(bar?.className).toContain('mt-auto')
+    expect(bar?.className).toContain('bottom-6')
   })
 })

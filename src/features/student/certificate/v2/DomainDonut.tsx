@@ -8,6 +8,10 @@ const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 const R = 52
 const C = 2 * Math.PI * R
+// 조각 사이 균일한 틈 — 어느 조각이 선택돼도 이음새가 흐트러지지 않는다.
+const SEG_GAP = 3
+// 두께는 선택과 무관하게 고정한다(선택 시 두께가 변하면 도넛 형태가 울렁인다 — 08-10 반려).
+const SEG_WIDTH = 17
 const domainCollator = new Intl.Collator(['ko', 'en'], {
   numeric: true,
   sensitivity: 'base',
@@ -84,31 +88,6 @@ export function DomainDonut({
               compact ? 'gap-1.5' : 'max-w-[280px] gap-3',
             )}
           >
-            <div
-              className={cn(
-                'border-border bg-surface max-w-full rounded-lg border text-center shadow-sm',
-                compact ? 'min-h-11 px-2 py-1.5' : 'min-h-[58px] px-3 py-2',
-              )}
-              data-domain-detail={selected.label}
-            >
-              <div
-                className="text-fg max-w-[240px] truncate text-[12px] font-bold"
-                title={selected.label}
-              >
-                {selected.label}
-              </div>
-              <div className="mt-0.5 flex items-center justify-center gap-1.5">
-                <span className="text-brand text-[14px] font-bold">
-                  {selected.pct}%
-                </span>
-                {selected.projectCount !== undefined && (
-                  <span className="text-fg-subtle text-[10px]">
-                    · 인증 프로젝트 {selected.projectCount}개
-                  </span>
-                )}
-              </div>
-            </div>
-
             <svg
               viewBox="0 0 140 140"
               className={cn(
@@ -139,12 +118,12 @@ export function DomainDonut({
                       stroke="currentColor"
                       className={cn(
                         TONE_TEXT[domain.tone],
-                        'cursor-pointer transition-all duration-200 outline-none',
-                        !isSelected && 'opacity-70 hover:opacity-100',
+                        'cursor-pointer transition-opacity duration-200 outline-none',
+                        !isSelected && 'opacity-40 hover:opacity-75',
                       )}
-                      strokeWidth={isSelected ? 20 : 16}
-                      strokeDasharray={`${length} ${C - length}`}
-                      strokeDashoffset={-offset}
+                      strokeWidth={SEG_WIDTH}
+                      strokeDasharray={`${Math.max(length - SEG_GAP, 1)} ${C - Math.max(length - SEG_GAP, 1)}`}
+                      strokeDashoffset={-(offset + SEG_GAP / 2)}
                       role="button"
                       tabIndex={0}
                       aria-label={`${domain.label} ${domain.pct}%`}
@@ -161,23 +140,36 @@ export function DomainDonut({
                   )
                 })}
               </g>
-              <text
-                x="70"
-                y="65"
-                textAnchor="middle"
-                className="fill-fg text-[20px] font-bold"
-                data-domain-total
-              >
-                {sortedDomains.length}개
-              </text>
-              <text
-                x="70"
-                y="82"
-                textAnchor="middle"
-                className="fill-fg-muted text-[9px] font-semibold"
-              >
-                도메인
-              </text>
+              {/* 중앙 = 선택 도메인 요약 — 별도 상세 카드 없이 도넛 안에서 답한다. */}
+              <g data-domain-detail={selected.label} className="pointer-events-none">
+                <text
+                  x="70"
+                  y="62"
+                  textAnchor="middle"
+                  fill="currentColor"
+                  className={cn(TONE_TEXT[selected.tone], 'text-[19px] font-extrabold')}
+                >
+                  {selected.pct}%
+                </text>
+                <text
+                  x="70"
+                  y="77"
+                  textAnchor="middle"
+                  className="fill-fg text-[8.5px] font-bold"
+                >
+                  {selected.label}
+                </text>
+                {selected.projectCount !== undefined && (
+                  <text
+                    x="70"
+                    y="89"
+                    textAnchor="middle"
+                    className="fill-fg-muted text-[8px]"
+                  >
+                    인증 프로젝트 {selected.projectCount}개
+                  </text>
+                )}
+              </g>
             </svg>
           </div>
 

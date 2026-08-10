@@ -73,7 +73,9 @@ export function VerifyPublicView({
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[880px] flex-col gap-[18px] px-4 pt-12 pb-[60px]">
+    // 폭·간격을 수강생 미리보기 본문과 맞춘다 — 1240 - 좌우 패딩 64 = 1176px.
+    // 880px 로 두면 증명서 본문(4열 지표 카드 등)이 눌려 글자가 깨진다.
+    <main className="mx-auto flex w-full max-w-[1240px] flex-col gap-5 px-8 pt-12 pb-[60px]">
       {/* Hero 진본 배너 — brand bg, certified·해시 칩 + 우측 메타 3쌍(흰 세로 구분선). */}
       <section className="bg-brand flex flex-wrap items-center justify-between gap-6 rounded-2xl px-7 py-[26px] shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
         <div className="flex flex-col gap-2">

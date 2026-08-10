@@ -45,9 +45,14 @@ export function CertHero({
           <span className="text-[26px] leading-none font-bold">
             {header.studentName}
           </span>
-          <span className="text-[13px] font-medium text-white/85">
-            {header.courseName} · {header.cohortName}
-          </span>
+          {/* 과정·기수는 별도 요청이라 늦게 온다 — 오는 동안 구분점만 남지 않게 통째로 감춘다. */}
+          {(header.courseName || header.cohortName) && (
+            <span className="text-[13px] font-medium text-white/85">
+              {[header.courseName, header.cohortName]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
         </div>
         <span className="text-[12px] text-white/75">
           교육 기간 {header.periodLabel}

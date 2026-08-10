@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { usePageHeader } from '@/shared/store'
+import { useAuth, usePageHeader } from '@/shared/store'
 import {
   useCertStatus,
   useCertificateOverview,
@@ -57,18 +57,22 @@ export default function CertificatePage() {
       ? applyCertificateDemoStudent(data, selectedStudent)
       : data
   // 증명서 본문은 아직 mock 이라 헤더에 고정 인물(박수진 · 32기)이 박혀 있었다.
-  // 누구로 로그인하든 같은 이름이 보이므로, 신원만 실제 소속(대시보드 hero)으로 덮는다.
+  // 누구로 로그인하든 같은 이름이 보이므로 신원은 mock 값을 쓰지 않는다.
+  //
+  // 이름은 세션에서 바로 읽는다 — 요청을 기다리면 mock 이름이 먼저 그려졌다가 바뀌어 깜빡인다.
+  // 과정·기수는 세션에 없어 대시보드를 기다리되, 오는 동안 틀린 값 대신 빈 값을 둔다.
   // 시연 인물 전환 중에는 그 인물을 보여줘야 하므로 건드리지 않는다.
+  const { user } = useAuth()
   const { data: dashboard } = useStudentDashboard()
   const certificateData =
-    demoApplied && dashboard && !CERTIFICATE_DEMO_MODE
+    demoApplied && !CERTIFICATE_DEMO_MODE
       ? {
           ...demoApplied,
           header: {
             ...demoApplied.header,
-            studentName: dashboard.hero.studentName,
-            courseName: dashboard.hero.courseName,
-            cohortName: dashboard.hero.cohortName,
+            studentName: user?.name ?? '',
+            courseName: dashboard?.hero.courseName ?? '',
+            cohortName: dashboard?.hero.cohortName ?? '',
           },
         }
       : demoApplied

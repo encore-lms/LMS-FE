@@ -105,7 +105,7 @@ describe('fetchCertificateScore', () => {
     expect(score.student.courseName).toBe('SK네트웍스 Family AI 캠프')
     expect(score.student.cohortName).toBe('34기')
     // 6축 평균과 일치해야 한다 — 어긋나면 공개 검증 페이지와도 어긋난다.
-    expect(score.overallScore).toBe(93.9)
+    expect(score.overallScore).toBe(94.4)
     expect(score.overallRelative).toMatchObject({
       status: 'READY',
       populationSize: 300,
@@ -167,26 +167,20 @@ describe('fetchCertificateScore', () => {
           category.populationSize === 300 && category.topPercent !== null,
       ),
     ).toBe(true)
+    // 실측 — 역량 점검 2회(전부 ACHIEVEMENT). CS 평가는 아직 없다.
     expect(
       tabs.tech.assessments
         .filter((assessment) => assessment.assessmentType === 'CS')
         .map((assessment) => assessment.score),
-    ).toEqual([68, 74, 79, 83])
-    expect(
-      tabs.tech.categories
-        .filter((category) => category.assessmentType === 'CS')
-        .map((category) => category.label),
-    ).toEqual(['자료구조·알고리즘', '운영체제', '네트워크', '데이터베이스'])
+    ).toEqual([])
     expect(
       tabs.tech.categories
         .filter((category) => category.assessmentType === 'ACHIEVEMENT')
-        .reduce((sum, category) => sum + category.score, 0) / 4,
-    ).toBe(81)
-    expect(
-      tabs.tech.categories
-        .filter((category) => category.assessmentType === 'CS')
-        .reduce((sum, category) => sum + category.score, 0) / 4,
-    ).toBe(76)
+        .map((category) => [category.label, category.score]),
+    ).toEqual([
+      ['Python', 100],
+      ['SQL', 96],
+    ])
     expect(
       tabs.tech.certifications.map(({ name, grade, score, status }) => ({
         name,
@@ -196,38 +190,20 @@ describe('fetchCertificateScore', () => {
       })),
     ).toEqual([
       {
-        name: '정보처리기사',
+        name: 'SQLD 개발자 자격',
         grade: '최종합격',
         score: null,
         status: 'APPROVED',
       },
       {
-        name: 'SQL 개발자(SQLD)',
-        grade: '최종합격',
+        name: 'PCCE 파이썬 코딩 실력 인증 3급',
+        grade: '3급',
         score: null,
-        status: 'APPROVED',
-      },
-      {
-        name: 'PCCE — 파이썬 코딩 입문',
-        grade: 'LV.4',
-        score: 940,
-        status: 'APPROVED',
-      },
-      {
-        name: 'PCCP — 파이썬 코딩 전문',
-        grade: 'LV.4',
-        score: 820,
-        status: 'APPROVED',
-      },
-      {
-        name: 'PCSQL — SQL 개발자 1급',
-        grade: 'LV.3',
-        score: 830,
         status: 'APPROVED',
       },
     ])
     expect(tabs.problem.peerTags.length).toBeGreaterThan(0)
-    expect(tabs.problem.cases).toHaveLength(12)
+    expect(tabs.problem.cases).toHaveLength(3)
     expect(
       tabs.problem.cases.every(
         (item) =>
@@ -238,11 +214,11 @@ describe('fetchCertificateScore', () => {
       ),
     ).toBe(true)
     expect(tabs.problem.cases.filter((item) => item.independent)).toHaveLength(
-      10,
+      1,
     )
     expect(analysis.projects.projects.length).toBeGreaterThan(0)
-    expect(analysis.troubleshooting.groups).toHaveLength(5)
-    const educationPeriod = ['2026-04-28', '2026-10-26'] as const
+    expect(analysis.troubleshooting.groups).toHaveLength(3)
+    const educationPeriod = ['2026-06-16', '2026-12-08'] as const
     const isInEducationPeriod = (value: string) =>
       value.slice(0, 10) >= educationPeriod[0] &&
       value.slice(0, 10) <= educationPeriod[1]
@@ -265,51 +241,47 @@ describe('fetchCertificateScore', () => {
     expect(analysis.ontology.edges.length).toBeGreaterThan(0)
     expect(
       analysis.ontology.nodes.find((node) => node.kind === 'self')?.label,
-    ).toBe('박수진')
+    ).toBe('황수빈')
     const ontologyNodeIds = analysis.ontology.nodes.map((node) => node.id)
-    expect(
-      analysis.ontology.nodes.some((node) => node.label === 'DB·SQL'),
-    ).toBe(false)
-    expect(
-      analysis.ontology.nodes.find((node) => node.id === 'db')?.label,
-    ).toBe('DB')
-    expect(
-      analysis.ontology.nodes.find((node) => node.id === 'sql')?.label,
-    ).toBe('SQL')
-    expect(ontologyNodeIds.indexOf('db')).toBeLessThan(
-      ontologyNodeIds.indexOf('sql'),
+    // 실측 그래프 — Python 과목 아래 pandas 스킬, 전처리 방법이 프로젝트에 적용됐다.
+    expect(ontologyNodeIds.indexOf('py')).toBeLessThan(
+      ontologyNodeIds.indexOf('pandas'),
     )
+    expect(
+      analysis.ontology.nodes.find((node) => node.id === 'map')?.label,
+    ).toBe('채용 스택 지도')
     expect(analysis.ontology.edges).toContainEqual(
       expect.objectContaining({
-        source: 'db',
-        target: 'sql',
-        type: 'FOLLOWED_BY',
-      }),
-    )
-    expect(analysis.ontology.edges).toContainEqual(
-      expect.objectContaining({
-        source: 'be',
-        target: 'msa',
+        source: 'py',
+        target: 'pandas',
         type: 'FOLLOWED_BY',
       }),
     )
     expect(analysis.ontology.edges).toContainEqual(
       expect.objectContaining({
         source: 'db',
-        target: 'tx',
+        target: 'pg',
         type: 'FOLLOWED_BY',
       }),
     )
     expect(analysis.ontology.edges).toContainEqual(
       expect.objectContaining({
-        source: 'mart',
-        target: 'msa',
+        source: 'map',
+        target: 'prep',
         type: 'APPLIED',
       }),
     )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'map',
+        target: 'jobmkt',
+        type: 'BELONGS_TO',
+      }),
+    )
+    // 학생-방법 직접 연결은 두지 않는다 — 방법은 과목·프로젝트를 거쳐 연결된다.
     expect(
       analysis.ontology.edges.some(
-        (edge) => edge.source === 'me' && ['msa', 'tx'].includes(edge.target),
+        (edge) => edge.source === 'me' && ['prep', 'cv'].includes(edge.target),
       ),
     ).toBe(false)
     expect(JSON.stringify({ score, tabs, analysis })).not.toContain('박준서')

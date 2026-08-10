@@ -11,6 +11,7 @@ import { RecordReviewActions } from '../records/RecordReviewActions'
 import QuizListPage from '@/features/instructor/quizzes/QuizListPage'
 import { NoticesPane } from '@/features/instructor/education/NoticesPane'
 import QnaListPage from '@/features/student/qna/QnaListPage'
+import { GroupReportPane } from '@/features/student/course/diagnosis/GroupReportPane'
 import { StudentEvalPane } from './StudentEvalPane'
 import { StudentOverviewPane } from './StudentOverviewPane'
 import { StudentsPane } from '../students/StudentsPane'
@@ -37,6 +38,7 @@ type TabKey =
   | 'qna'
   | 'evaluations'
   | 'overview'
+  | 'diagnosis'
   | 'materials'
   | 'settings'
 
@@ -59,6 +61,8 @@ const TABS: { key: TabKey; label: string }[] = [
   // 수강생 종합 데이터(2026-08-07 신설) — 수강생 1명의 연관 데이터 통합 뷰. 당분간 매니저 전용,
   // 강사·수강생 개방 범위는 이 화면으로 전체 데이터를 본 뒤 결정(사용자 계획).
   { key: 'overview', label: roleTag('수강생 종합 데이터', '매니저') },
+  // 진단 리포트(2026-08-10 수강생 탭에서 이관) — LLM 수준 진단 PoV 그룹 리포트. 매니저 전용.
+  { key: 'diagnosis', label: roleTag('진단 리포트', '매니저') },
   { key: 'mentoring', label: roleTag('멘토링', '매니저') },
   { key: 'settings', label: roleTag('설정', '매니저') },
 ]
@@ -193,6 +197,9 @@ export default function EducationPage() {
           <StudentEvalPane cohortId={cohortId} />
         ) : tab === 'overview' ? (
           <StudentOverviewPane courseId={courseId} cohortId={cohortId} />
+        ) : tab === 'diagnosis' ? (
+          // LLM 수준 진단 그룹 리포트(주차별) — 학생별 진단·위험 신호·피드백 초안 검토.
+          <GroupReportPane />
         ) : tab === 'quizzes' ? (
           // 학습·보상 '퀴즈 운영' 흡수 — 선택 기수로 스코프(실 BE).
           <QuizListPage embedded cohortId={cohortId} />

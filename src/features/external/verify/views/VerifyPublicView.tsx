@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Check, Download, Hash, Star } from 'lucide-react'
 import type { CertifiedPublicResult } from '../types'
 import { VerifyPolicyBox } from '../components'
+import { VerifyCertificateTabs } from './VerifyCertificateTabs'
 
 // 6축 색 — 수강생 미리보기(SummaryTab 의 axisTone)와 같은 축 이름 기준 매핑.
 // 순서 기반이면 축이 하나만 늘어도 두 화면의 색이 어긋난다.
@@ -333,6 +334,9 @@ export function VerifyPublicView({
           </div>
         </SectionCard>
       </div>
+
+      {/* 증명서 탭 — 수강생 미리보기와 같은 컴포넌트. 이력서·AI 분석은 공개 대상이 아니다. */}
+      <VerifyCertificateTabs payload={p} />
 
       {/* 대표 근거 — 공개 허용 산출물 3행. */}
       <SectionCard

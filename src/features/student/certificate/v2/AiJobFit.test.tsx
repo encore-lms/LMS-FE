@@ -45,11 +45,11 @@ describe('직무 적합도 AI 분석', () => {
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
 
     await user.click(
-      screen.getByRole('tab', { name: /TOP 2 AI 서비스 개발자/ }),
+      screen.getByRole('tab', { name: /TOP 2 데이터 엔지니어/ }),
     )
 
     expect(
-      screen.getByRole('tab', { name: /TOP 2 AI 서비스 개발자/ }),
+      screen.getByRole('tab', { name: /TOP 2 데이터 엔지니어/ }),
     ).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('TOP 2 직무 후보')).toBeInTheDocument()
     expect(
@@ -85,12 +85,12 @@ describe('직무 적합도 AI 분석', () => {
     const tooltip = screen.getByRole('tooltip')
     expect(tooltip).toHaveTextContent('실제 데이터')
     expect(tooltip).toHaveTextContent('분석 흐름')
-    expect(tooltip).toHaveTextContent('프로필 · 관심 백엔드 개발자')
-    expect(tooltip).toHaveTextContent('기술 Java')
-    expect(tooltip).toHaveTextContent('성취도 평가 · 파이썬 72점')
-    expect(tooltip).toHaveTextContent('CS 평가 · 자료구조·알고리즘 68점')
-    expect(tooltip).toHaveTextContent('역할 백엔드 리드')
-    expect(tooltip).toHaveTextContent('문제해결 · DB / SQL 4건')
+    expect(tooltip).toHaveTextContent('프로필 · 관심 AI 엔지니어')
+    expect(tooltip).toHaveTextContent('기술 Python')
+    expect(tooltip).toHaveTextContent('성취도 평가 · Python 100점')
+    expect(tooltip).toHaveTextContent('승인 자격증 · SQLD 개발자 자격')
+    expect(tooltip).toHaveTextContent('역할 수집·정규화 설계')
+    expect(tooltip).toHaveTextContent('문제해결 · 데이터 1건')
 
     await user.unhover(
       screen.getByRole('button', { name: '직무 후보 근거 보기' }),

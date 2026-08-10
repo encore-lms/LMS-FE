@@ -597,7 +597,7 @@ describe('SummaryTab', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('6축 역량 점수를 종합한 결과')).toBeInTheDocument()
     expect(
-      screen.getByText('6축 역량 점수를 산출하는 학습·평가·인증 근거'),
+      screen.getByText('6축 역량 점수를 산출하는 학습·평가 근거'),
     ).toBeInTheDocument()
     expect(screen.getByText('종합 점수 산출 기준')).toBeInTheDocument()
     expect(screen.queryByText(/mock|정책 2026\.07\.20/)).not.toBeInTheDocument()
@@ -616,7 +616,7 @@ describe('SummaryTab', () => {
     expect(
       screen.queryByText('수동 채점 대기 시험 1건은 계산에서 제외했습니다.'),
     ).not.toBeInTheDocument()
-    expect(container.querySelectorAll('[data-summary-kpi]')).toHaveLength(7)
+    expect(container.querySelectorAll('[data-summary-kpi]')).toHaveLength(4)
     expect(
       [
         ...container.querySelectorAll(
@@ -630,17 +630,6 @@ describe('SummaryTab', () => {
       'evaluatorAverage',
     ])
     expect(
-      [
-        ...container.querySelectorAll(
-          '[data-summary-count-grid] [data-summary-kpi]',
-        ),
-      ].map((item) => item.getAttribute('data-summary-kpi')),
-    ).toEqual([
-      'certifiedProject',
-      'certifiedTroubleshooting',
-      'certifiedCertificate',
-    ])
-    expect(
       container.querySelectorAll('[data-kpi-visual="progress"]'),
     ).toHaveLength(2)
     expect(
@@ -649,12 +638,6 @@ describe('SummaryTab', () => {
     expect(
       container.querySelectorAll('[data-kpi-visual="learning-components"]'),
     ).toHaveLength(1)
-    expect(
-      container.querySelectorAll('[data-kpi-visual="count"]'),
-    ).toHaveLength(3)
-    expect(
-      container.querySelector('[data-summary-count-grid] [role="progressbar"]'),
-    ).toBeNull()
     expect(container.querySelectorAll('[data-learning-input]')).toHaveLength(4)
     const learningInputs = container.querySelector(
       '[data-summary-kpi="learningPersistenceInputs"]',
@@ -704,20 +687,18 @@ describe('SummaryTab', () => {
       ),
     ).toEqual(['overall', 'metrics'])
     expect(screen.queryByText('블로그 제출률')).not.toBeInTheDocument()
-    expect(screen.getByText('프로젝트')).toBeInTheDocument()
-    expect(screen.getByText('트러블슈팅')).toBeInTheDocument()
-    expect(screen.getByText('자격증')).toBeInTheDocument()
-    expect(screen.getByText('4축 평가 전체 평균')).toBeInTheDocument()
-    expect(screen.getByText('학습 참여·제출')).toBeInTheDocument()
+    expect(screen.queryByText('인증·프로젝트 실적')).not.toBeInTheDocument()
     expect(
       container.querySelector('[data-summary-kpi="certifiedProject"]'),
-    ).toHaveTextContent('2건')
+    ).toBeNull()
     expect(
       container.querySelector('[data-summary-kpi="certifiedTroubleshooting"]'),
-    ).toHaveTextContent('4건')
+    ).toBeNull()
     expect(
       container.querySelector('[data-summary-kpi="certifiedCertificate"]'),
-    ).toHaveTextContent('1건')
+    ).toBeNull()
+    expect(screen.getByText('4축 평가 전체 평균')).toBeInTheDocument()
+    expect(screen.getByText('학습 참여·제출')).toBeInTheDocument()
     expect(
       container.querySelectorAll('[data-evaluator-axis-bar]'),
     ).toHaveLength(4)
@@ -766,22 +747,6 @@ describe('SummaryTab', () => {
         name: '학습 참여·제출 블로그 화면으로 이동',
       }),
     ).toHaveAttribute('href', '/student/records?category=blog')
-    expect(
-      screen.getByRole('link', {
-        name: '프로젝트 상세 화면으로 이동',
-      }),
-    ).toHaveAttribute('href', '/student/projects')
-    expect(
-      screen.getByRole('link', {
-        name: '트러블슈팅 상세 화면으로 이동',
-      }),
-    ).toHaveAttribute('href', '/student/troubleshooting')
-    expect(
-      screen.getByRole('link', {
-        name: '자격증 상세 화면으로 이동',
-      }),
-    ).toHaveAttribute('href', '/student/records?category=cert')
-
     expect(screen.getByText('6축 역량 점수')).toBeInTheDocument()
     expect(container.querySelectorAll('[data-axis-gauge]')).toHaveLength(6)
     expect(
@@ -831,13 +796,6 @@ describe('SummaryTab', () => {
     expect(
       container.querySelector('[data-summary-kpi="assessment"]'),
     ).toHaveAttribute('data-kpi-tone', 'accent')
-    expect(
-      container.querySelector('[data-summary-kpi="certifiedProject"]'),
-    ).toHaveAttribute('data-kpi-tone', 'brand')
-    expect(
-      container.querySelector('[data-summary-kpi="certifiedTroubleshooting"]'),
-    ).toHaveAttribute('data-kpi-tone', 'danger')
-
     fireEvent.click(
       screen.getByRole('button', {
         name: '학습지속성 95점 관련 지표 강조',

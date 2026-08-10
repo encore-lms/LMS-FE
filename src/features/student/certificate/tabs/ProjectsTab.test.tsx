@@ -181,8 +181,7 @@ describe('ProjectsTab', () => {
 
     renderProjectsTab()
 
-    expect(
-      screen.getByText('프로젝트 증명 데이터를 불러오는 중…'),
-    ).toBeInTheDocument()
+    // 텍스트 한 줄이던 로딩을 본문 높이를 닮은 골격으로 바꿨다 — 탭을 옮길 때 높이가 튀지 않게.
+    expect(screen.getByRole('status')).toHaveTextContent('불러오는 중…')
   })
 })

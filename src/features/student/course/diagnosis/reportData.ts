@@ -1,6 +1,7 @@
 import type {
   DiagnosisConfidence,
   DiagnosisLevel,
+  MyWeeklyReport,
   StudentDiagnosis,
   StudentMetrics,
   WeeklyDiagnosisReport,
@@ -445,4 +446,157 @@ function buildWeek(week: number): WeeklyDiagnosisReport {
 
 export function buildDiagnosisReports(): WeeklyDiagnosisReport[] {
   return Array.from({ length: TOTAL_WEEKS }, (_, i) => buildWeek(i + 1))
+}
+
+// --- 수강생 개인 리포트 (데모 본인 = 김민준 궤적) ---------------------------
+// 그룹 리포트의 강사용 서술(권장 조치·위험 신호·타 학생 비교) 대신 수강생 눈높이의
+// 변화·강점·보완점·학습 제안으로 재구성한다. 피드백은 강사 검토 후 전달본만 싣는다.
+
+const ME = STUDENTS[0]
+
+/** 에러 유형별 수강생용 실전 팁 */
+const ERROR_TIP: Record<string, string> = {
+  IndentationError:
+    '에디터의 공백 표시·자동 들여쓰기 설정을 켜면 들여쓰기 실수를 크게 줄일 수 있어요.',
+  TypeError:
+    '에러가 난 값에 print(type(x))로 타입을 확인하는 습관을 들여보세요.',
+  NameError:
+    '변수 이름의 오타와 선언 위치(선언 전에 쓰지 않았는지)를 먼저 확인해 보세요.',
+  ValueError: '함수에 들어가는 값의 범위·형식을 먼저 점검해 보세요.',
+  IndexError:
+    '리스트 길이를 len()으로 확인하거나 enumerate로 순회하면 인덱스 실수를 줄일 수 있어요.',
+  KeyError:
+    '딕셔너리에 접근하기 전에 in 연산자나 .get()으로 키 존재를 확인해 보세요.',
+}
+
+function myGrowthOf(m: StudentMetrics, prev: StudentMetrics | null): string[] {
+  if (!prev) {
+    return [
+      `첫 진단 주차예요 — ${m.stepsCompleted}/${m.totalSteps} 단계에서 출발합니다.`,
+    ]
+  }
+  const items: string[] = []
+  const stepDelta = m.stepsCompleted - prev.stepsCompleted
+  items.push(
+    stepDelta > 0
+      ? `완료 단계가 ${prev.stepsCompleted}→${m.stepsCompleted}단계로 늘었어요 (+${stepDelta}).`
+      : `완료 단계는 ${m.stepsCompleted}/${m.totalSteps}로 지난주와 같아요.`,
+  )
+  const eprDelta = round2(m.errorPerRun - prev.errorPerRun)
+  items.push(
+    `실행당 에러 ${m.errorPerRun.toFixed(2)} — 지난주 대비 ${
+      eprDelta > 0 ? `+${eprDelta.toFixed(2)}` : eprDelta.toFixed(2)
+    }.`,
+  )
+  const gapDelta =
+    Math.round((m.retryGapAvgMin - prev.retryGapAvgMin) * 10) / 10
+  items.push(
+    `에러 후 재시도까지 평균 ${m.retryGapAvgMin.toFixed(1)}분 — 지난주 대비 ${
+      gapDelta > 0 ? `+${gapDelta.toFixed(1)}` : gapDelta.toFixed(1)
+    }분.`,
+  )
+  return items
+}
+
+function myStrengthsOf(
+  m: StudentMetrics,
+  prev: StudentMetrics | null,
+): string[] {
+  const strengths: string[] = []
+  if (m.daysSinceLastActivity === 0) {
+    strengths.push('이번 주 꾸준히 접속하며 학습 흐름을 유지했어요.')
+  }
+  if (prev && m.stepsCompleted > prev.stepsCompleted) {
+    strengths.push('새로운 단계를 완료하며 앞으로 나아갔어요.')
+  }
+  if (prev && m.errorPerRun < prev.errorPerRun) {
+    strengths.push(
+      '실행당 에러가 지난주보다 줄었어요 — 디버깅 감각이 늘고 있다는 신호예요.',
+    )
+  }
+  if (prev && m.retryGapAvgMin < prev.retryGapAvgMin) {
+    strengths.push('에러가 난 뒤 다시 도전하기까지의 시간이 짧아졌어요.')
+  }
+  if (strengths.length === 0) {
+    strengths.push(
+      '포기하지 않고 계속 도전하고 있는 것 자체가 성장의 증거예요.',
+    )
+  }
+  return strengths
+}
+
+function myWeakPatternsOf(m: StudentMetrics): string[] {
+  const patterns: string[] = []
+  const top = m.topErrors[0]
+  patterns.push(`${top.type}가 ${top.count}회로 가장 자주 발생했어요.`)
+  if (m.stalledDays >= 5 && m.stepsCompleted < m.totalSteps) {
+    patterns.push(
+      `현재 ${m.currentStep}단계에서 ${m.stalledDays}일째 머물러 있어요.`,
+    )
+  }
+  if (m.hintPerActiveDay >= 2) {
+    patterns.push(
+      `힌트 요청이 하루 평균 ${m.hintPerActiveDay.toFixed(1)}회로 많은 편이에요 — 힌트를 열기 전에 에러 메시지를 한 번 더 읽어보세요.`,
+    )
+  }
+  return patterns
+}
+
+function myTipsOf(level: DiagnosisLevel, m: StudentMetrics): string[] {
+  const tips: string[] = []
+  if (m.daysSinceLastActivity >= 5) {
+    tips.push(
+      `접속이 ${m.daysSinceLastActivity}일간 없었어요 — 10분 복습이라도 좋으니 가볍게 다시 시작해 보세요.`,
+    )
+  }
+  const errorTip = ERROR_TIP[m.topErrors[0].type]
+  if (errorTip) tips.push(errorTip)
+  if (m.stalledDays >= 5 && m.stepsCompleted < m.totalSteps) {
+    tips.push(
+      `${m.currentStep}단계에서 막히는 부분을 QnA 게시판에 올려보세요 — 질문을 정리하는 과정에서 답이 보이기도 해요.`,
+    )
+  }
+  if (level === '입문' || level === '초급') {
+    tips.push(
+      '정답을 바로 확인하기보다 에러 메시지에서 원인을 한 번 추측해 본 뒤 힌트를 여는 연습을 해보세요.',
+    )
+  } else if (level === '중급') {
+    tips.push(
+      '자주 쓰는 패턴(enumerate, 타입 체크 등)을 작은 예제로 정리해 두면 반복 에러가 줄어요.',
+    )
+  } else {
+    tips.push(
+      '심화 주제(설계·라이브러리 내부 구현)를 골라 깊이 파보세요 — 지금 수준에선 폭보다 깊이가 성장 포인트예요.',
+    )
+  }
+  return tips
+}
+
+export function buildMyDiagnosisReports(): MyWeeklyReport[] {
+  let prev: StudentMetrics | null = null
+  return Array.from({ length: TOTAL_WEEKS }, (_, i) => {
+    const week = i + 1
+    const m = metricsOf(ME, week)
+    const level = ME.levelAt(week)
+    const report: MyWeeklyReport = {
+      week,
+      baseDate: weekBaseDate(week),
+      generator: 'LLM 수준 진단 PoV v0.1',
+      level,
+      confidence: ME.confidenceAt(week),
+      metrics: m,
+      needsAttention: m.daysSinceLastActivity >= 5 || m.stalledDays >= 7,
+      growth: myGrowthOf(m, prev),
+      strengths: myStrengthsOf(m, prev),
+      weakPatterns: myWeakPatternsOf(m),
+      tips: myTipsOf(level, m),
+      // 20주차는 PoV 산출 원문의 피드백(강사 검토본)을 그대로 전달한다.
+      instructorFeedback:
+        week === 20
+          ? WEEK20_TEXT[ME.name].feedbackDraft
+          : feedbackDraftOf(ME.name, level, m),
+    }
+    prev = m
+    return report
+  })
 }

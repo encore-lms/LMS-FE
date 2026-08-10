@@ -90,7 +90,7 @@ export default function CertificatePage() {
   return (
     // min-h-full 로 본문 칸이 최소 한 화면을 채우게 한다 — 내용이 짧아도 아래 공개 바가
     // mt-auto 로 화면 맨 아래에 붙는다(이력서 빈 상태처럼 짧은 탭에서 바가 위로 딸려 올라오던 문제).
-    <div className="flex min-h-full flex-col gap-5 p-8 pb-28">
+    <div className="flex min-h-full flex-col gap-5 p-8">
       {/* 히어로는 데이터 의존 → 있을 때만. 탭 네비(CertTabs)는 항상 유지. */}
       {certificateData && (
         <CertHero

@@ -85,4 +85,18 @@ describe('증명서 공개 바', () => {
     renderBar()
     expect(screen.getByRole('button', { name: '공개 설정' })).toBeInTheDocument()
   })
+
+  // 폭 규칙 회귀 — 예전엔 `fixed left-[232px]` 로 사이드바 폭을 하드코딩해서, 사이드바를
+  // 접거나 좁은 화면에서 숨으면 왼쪽에 232px 빈 칸이 남고 바가 붕 떠 보였다.
+  // jsdom 은 레이아웃을 계산하지 않으므로 규칙(클래스)을 고정한다.
+  it('본문 칸 안에서 sticky 로 붙는다 — 사이드바 폭을 가정하지 않는다', () => {
+    renderBar()
+    const bar = screen
+      .getByRole('switch', { name: '외부 검증 URL 공개' })
+      .closest('div.sticky')
+
+    expect(bar).not.toBeNull()
+    expect(bar?.className).not.toContain('fixed')
+    expect(bar?.className).not.toMatch(/left-\[/)
+  })
 })

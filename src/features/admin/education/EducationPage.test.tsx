@@ -36,6 +36,9 @@ vi.mock('../mentoring/MentoringPane', () => ({
 vi.mock('@/features/student/qna/QnaListPage', () => ({
   default: () => <div>QnA 임베드</div>,
 }))
+vi.mock('@/features/student/course/diagnosis/GroupReportPane', () => ({
+  GroupReportPane: () => <div>진단 리포트 패널</div>,
+}))
 vi.mock('./SettingsPane', () => ({
   SettingsPane: ({ cohortId }: { cohortId: string }) => (
     <div>과정 설정 패널 {cohortId}</div>
@@ -141,12 +144,14 @@ const TAB_ORDER = [
   // 수강생 평가(2026-08-06 신설) — 강사 허브와 공용 탭.
   '수강생 평가',
   '수강생 종합 데이터(매니저)',
+  // 진단 리포트(2026-08-10 수강생 탭에서 이관) — LLM 수준 진단 그룹 리포트.
+  '진단 리포트(매니저)',
   '멘토링(매니저)',
   '설정(매니저)',
 ]
 
 describe('EducationPage (기수 허브)', () => {
-  it('14개 탭을 렌더한다', () => {
+  it('15개 탭을 렌더한다', () => {
     renderHub()
     for (const label of TAB_ORDER) {
       expect(screen.getByRole('tab', { name: label })).toBeInTheDocument()
@@ -181,6 +186,13 @@ describe('EducationPage (기수 허브)', () => {
     renderHub()
     await user.click(screen.getByRole('tab', { name: '기록실' }))
     expect(screen.getByText('기록실 임베드')).toBeInTheDocument()
+  })
+
+  it('진단 리포트 탭 = 그룹 진단 리포트 패널(임베드)', async () => {
+    const user = userEvent.setup()
+    renderHub()
+    await user.click(screen.getByRole('tab', { name: '진단 리포트(매니저)' }))
+    expect(screen.getByText('진단 리포트 패널')).toBeInTheDocument()
   })
 
   // 과정 정보와 기능 설정(마일리지·PLAY·커리큘럼)을 한 패널이 갖는다.

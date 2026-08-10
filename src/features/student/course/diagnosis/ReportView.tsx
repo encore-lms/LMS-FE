@@ -1,21 +1,12 @@
 import type { ReactNode } from 'react'
 import { AlertTriangle, Bot, ClipboardList, FileText } from 'lucide-react'
-import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import type {
-  DiagnosisLevel,
-  StudentDiagnosis,
-  WeeklyDiagnosisReport,
-} from './types'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { MetricGrid } from './MetricGrid'
+import { LEVEL_TONE } from './levelTone'
+import type { StudentDiagnosis, WeeklyDiagnosisReport } from './types'
 
 // 진단 리포트 단일 주차 뷰 — 그룹 요약 → 학생별 현황 표 → 학생별 상세 카드.
 // LLM PoV 산출물 구조(지표 그리드·진단 근거·취약 패턴·위험 신호·권장 조치·피드백 초안)를 그대로 따른다.
-
-const LEVEL_TONE: Record<DiagnosisLevel, BadgeTone> = {
-  입문: 'neutral',
-  초급: 'warning',
-  중급: 'info',
-  해결사: 'success',
-}
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return <h4 className="text-fg text-[13px] font-bold">{children}</h4>
@@ -50,19 +41,7 @@ function BulletList({
   )
 }
 
-function MetricCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-fg-subtle text-[11px] font-medium">{label}</dt>
-      <dd className="text-fg text-[13px] font-semibold tabular-nums">
-        {value}
-      </dd>
-    </div>
-  )
-}
-
 function StudentCard({ s }: { s: StudentDiagnosis }) {
-  const m = s.metrics
   return (
     <section className="border-border bg-surface flex flex-col gap-4 rounded-xl border p-5">
       <header className="flex flex-wrap items-center gap-2">
@@ -72,34 +51,7 @@ function StudentCard({ s }: { s: StudentDiagnosis }) {
         <span className="text-fg-subtle text-xs">확신도: {s.confidence}</span>
       </header>
 
-      <dl className="border-border bg-surface-muted/50 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border p-4 sm:grid-cols-4">
-        <MetricCell
-          label="진행 단계"
-          value={`${m.stepsCompleted}/${m.totalSteps} 완료 (현재 ${m.currentStep}단계)`}
-        />
-        <MetricCell label="활동일" value={`${m.activeDays}일`} />
-        <MetricCell label="현 단계 정체" value={`${m.stalledDays}일`} />
-        <MetricCell
-          label="최근 미접속"
-          value={`${m.daysSinceLastActivity}일`}
-        />
-        <MetricCell
-          label="실행당 에러"
-          value={`${m.errorPerRun.toFixed(2)} (${m.errorRuns}회/${m.totalRuns}회)`}
-        />
-        <MetricCell
-          label="힌트 요청"
-          value={`${m.hintTotal}회 (일 ${m.hintPerActiveDay.toFixed(2)}회)`}
-        />
-        <MetricCell
-          label="에러 후 재시도 간격"
-          value={`${m.retryGapAvgMin.toFixed(1)}분 (최대 ${m.retryGapMaxMin.toFixed(1)}분)`}
-        />
-        <MetricCell
-          label="주요 에러"
-          value={m.topErrors.map((e) => `${e.type}×${e.count}`).join(', ')}
-        />
-      </dl>
+      <MetricGrid m={s.metrics} />
 
       <div className="flex flex-col gap-1.5">
         <SectionTitle>진단 근거</SectionTitle>

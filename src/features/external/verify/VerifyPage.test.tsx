@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import VerifyPage from './VerifyPage'
 import { useVerifyCertificate } from '../api/verify'
 import { externalPublicRoutes } from '../routes'
@@ -19,12 +20,16 @@ function mockResult(data: ExternalCertificateVerificationResponse) {
 }
 
 function renderPage(token = 'vfy_kp9q4r2nx0') {
+  // 공개 검증도 증명서 탭(useQuery 사용)을 재사용하므로 QueryClient 가 필요하다.
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={[`/verify/${token}`]}>
-      <Routes>
-        <Route path="/verify/:publicToken" element={<VerifyPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={[`/verify/${token}`]}>
+        <Routes>
+          <Route path="/verify/:publicToken" element={<VerifyPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
@@ -86,6 +91,29 @@ describe('VerifyPage — 진입 로딩(pending)', () => {
   })
 })
 
+describe('VerifyPage — 평가·추천 공개 토글', () => {
+  // 동료 평판·코멘트는 남의 평가다 — 수강생이 켠 경우에만 외부에 보인다.
+  it('토글이 꺼져 있으면 평가·추천 탭을 노출하지 않는다', () => {
+    mockResult(publicResult)
+    renderPage()
+    expect(screen.queryByRole('button', { name: '평가·추천' })).toBeNull()
+  })
+
+  it('토글이 켜져 있으면 평가·추천 탭이 나타난다', () => {
+    mockResult({
+      ...publicResult,
+      publicPayload: {
+        ...publicResult.publicPayload,
+        peerReputationPublic: true,
+      },
+    })
+    renderPage()
+    expect(
+      screen.getByRole('button', { name: '평가·추천' }),
+    ).toBeInTheDocument()
+  })
+})
+
 describe('VerifyPage — certified_public(공개 증명서)', () => {
   it('Hero 진본 배너·핵심 정보·6축·대표 근거·무결성 필드를 렌더한다', () => {
     mockResult(publicResult)
@@ -103,7 +131,16 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
     // 6축 점수 + 평균.
     expect(screen.getByText('6축 점수 — 동결 시점')).toBeInTheDocument()
     expect(screen.getByText('81.7')).toBeInTheDocument()
-    expect(screen.getByText('문제해결')).toBeInTheDocument()
+    // '문제해결' 은 6축 라벨과 탭 이름 두 곳에 나온다 — 6축 쪽을 특정해 확인한다.
+    expect(
+      screen.getAllByText('문제해결').length,
+    ).toBeGreaterThanOrEqual(1)
+    // 증명서 탭을 미리보기와 같은 컴포넌트로 재사용한다.
+    // 이력서·AI 분석은 공개 대상이 아니라 노출되면 안 된다.
+    expect(screen.getByRole('button', { name: '기술·검증' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '프로젝트' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '이력서' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /AI 분석/ })).toBeNull()
     // 수강생 미리보기와 같은 얼굴 — 절대 종합 점수 도넛이 공개 페이지에도 있어야 한다.
     // 두 화면이 다르게 생기면 검증자가 같은 문서로 읽지 않는다.
     expect(screen.getByText('AGGREGATE SCORE')).toBeInTheDocument()

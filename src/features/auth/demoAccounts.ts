@@ -5,8 +5,6 @@ export interface DemoAccount {
   label: string
   email: string
   password: string
-  /** QA 전용 계정 — 시연 본계정과 분리된 둘째 줄에 렌더. */
-  qa?: boolean
 }
 
 // 데모 로그인 노출 게이트 — 로컬 dev이거나 VITE_ENABLE_DEMO_LOGIN='true'인 빌드에서만.
@@ -34,17 +32,5 @@ export const DEMO_ACCOUNTS: DemoAccount[] = DEMO_LOGIN_ENABLED
         email: 'test@gmail.com',
         password: 'Lms@W52LbdnWaEFH',
       },
-      {
-        label: '최고(관리자)',
-        email: 'admin@playdata.io',
-        password: 'password123!',
-      },
-      // QA 전용 계정 — 시연 본계정 데이터를 건드리지 않고 검증할 때 사용(전부 32기).
-      // 수강생(qa)은 테스트 계정 API(is_test)로 생성돼 운영 콘솔에서 삭제 가능.
-      { label: '수강생(qa)', email: 'qa-student', password: 'LmsQa2026!', qa: true },
-      { label: '멘토(qa)', email: 'qa.mentor@playdata.io', password: 'LmsQa2026!', qa: true },
-      { label: '강사(qa)', email: 'qa.instructor@playdata.io', password: 'LmsQa2026!', qa: true },
-      { label: '매니저(qa)', email: 'qa.manager@playdata.io', password: 'LmsQa2026!', qa: true },
-      { label: '최고관리자(qa)', email: 'qa.admin@playdata.io', password: 'LmsQa2026!', qa: true },
     ]
   : []

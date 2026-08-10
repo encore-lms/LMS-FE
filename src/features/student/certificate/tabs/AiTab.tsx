@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { AiTabSkeleton } from './TabSkeletons'
 import { cn } from '@/shared/lib/cn'
 import { CERTIFICATE_MOCK_STUDENT_ID, fetchAiAnalysis } from '../ai'
 import { AiAnalysisOverview } from '../v2/AiAnalysisOverview'
@@ -23,6 +24,7 @@ export function AiTab({
       isPending={query.isPending}
       isError={query.isError || !query.data}
       onRetry={query.refetch}
+      skeleton={<AiTabSkeleton />}
       errorTitle="AI 분석을 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >

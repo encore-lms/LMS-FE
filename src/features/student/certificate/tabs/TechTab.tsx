@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { BadgeCheck } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { TechTabSkeleton } from './TabSkeletons'
 import { cn } from '@/shared/lib/cn'
 import { TONE_SOLID } from '@/shared/lib/tone'
 import type { CertificateTechDetail } from '../ai'
@@ -995,6 +996,7 @@ export function TechTab({ studentId }: { studentId?: string }) {
       isPending={query.isPending}
       isError={query.isError || !query.data}
       onRetry={query.refetch}
+      skeleton={<TechTabSkeleton />}
       errorTitle="기술·검증 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >

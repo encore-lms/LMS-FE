@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { GrowthTabSkeleton } from './TabSkeletons'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import {
@@ -493,6 +494,7 @@ export function GrowthTabData({
       onRetry={() => {
         void scoreQuery.refetch()
       }}
+      skeleton={<GrowthTabSkeleton />}
       errorTitle="평가·추천 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >

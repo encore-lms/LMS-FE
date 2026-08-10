@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle2, FileText } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { ProblemTabSkeleton } from './TabSkeletons'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/shared/lib/cn'
 import type { CertificateProblemDetail } from '../ai'
@@ -368,6 +369,7 @@ export function ProblemTab({
       isPending={query.isPending}
       isError={query.isError || !query.data}
       onRetry={query.refetch}
+      skeleton={<ProblemTabSkeleton />}
       errorTitle="문제해결 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >

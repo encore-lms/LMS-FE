@@ -19,12 +19,24 @@ describe('DomainDonut', () => {
         item.getAttribute('data-domain-list-item'),
       ),
     ).toEqual(['데이터', '커머스', 'Alpha', 'Beta'])
-    expect(container.querySelector('[data-domain-total]')).toHaveTextContent(
-      '4개',
-    )
+    // 초기 선택 = 1위 도메인이 중앙에 표시된다.
     expect(
       container.querySelector('[data-domain-detail="데이터"]'),
     ).not.toBeNull()
+  })
+
+  it('선택이 바뀌어도 조각 두께는 변하지 않는다', () => {
+    const { container } = render(<DomainDonut domains={domains} />)
+    const widths = () =>
+      [...container.querySelectorAll('[data-domain-segment]')].map((el) =>
+        el.getAttribute('stroke-width'),
+      )
+    const before = widths()
+    fireEvent.click(
+      container.querySelector('[data-domain-segment="커머스"]') as Element,
+    )
+    expect(widths()).toEqual(before)
+    expect(new Set(widths()).size).toBe(1)
   })
 
   it('도넛 조각을 선택하면 해당 도메인의 상세 정보를 표시한다', () => {

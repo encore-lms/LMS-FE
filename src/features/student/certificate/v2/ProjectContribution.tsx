@@ -3,6 +3,8 @@ import { cn } from '@/shared/lib/cn'
 import type { CertProjectActivity } from '../types'
 
 export interface ProjectContributionActivity extends CertProjectActivity {
+  selectorLabel?: string
+  repositoryTotalCommits?: number
   metricLabel?: string
   metricValue?: string
   note?: string
@@ -32,7 +34,13 @@ export function ProjectContribution({
   if (!a) return null
   const pct = Math.round((a.activeDays / a.totalDays) * 100)
   const stats = [
-    { label: '총 커밋', value: `${a.totalCommits}` },
+    {
+      label: a.repositoryTotalCommits === undefined ? '총 커밋' : '내 커밋',
+      value: `${a.totalCommits}`,
+    },
+    ...(a.repositoryTotalCommits === undefined
+      ? []
+      : [{ label: '전체 커밋', value: `${a.repositoryTotalCommits}` }]),
     { label: '활동 기간', value: a.weeksLabel },
     {
       label: '활동일',
@@ -54,7 +62,7 @@ export function ProjectContribution({
           프로젝트 커밋 활동
         </span>
         <span className="text-fg-subtle text-[11px]">
-          프로젝트를 선택하면 해당 레포의 커밋만 표시 · 참여 일관성 근거
+          저장소를 선택하면 분석 브랜치의 커밋 활동과 커밋 기여율을 표시
         </span>
       </div>
 
@@ -73,7 +81,7 @@ export function ProjectContribution({
             )}
           >
             {p.certified && '✓ '}
-            {p.name.split(' — ')[0]}
+            {p.selectorLabel ?? p.name.split(' — ')[0]}
           </button>
         ))}
       </div>
@@ -115,7 +123,7 @@ export function ProjectContribution({
       </div>
 
       {/* 참여 일관성 지표 */}
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
         {stats.map((s) => (
           <div
             key={s.label}

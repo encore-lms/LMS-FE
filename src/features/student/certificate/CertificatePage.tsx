@@ -70,7 +70,10 @@ export default function CertificatePage() {
     <div className="flex flex-col gap-5 p-8 pb-28">
       {/* 히어로는 데이터 의존 → 있을 때만. 탭 네비(CertTabs)는 항상 유지. */}
       {certificateData && (
-        <CertHero header={certificateData.header} status={cert?.stage ?? 'before'} />
+        <CertHero
+          header={certificateData.header}
+          status={cert?.stage ?? 'before'}
+        />
       )}
 
       {/* 보완 요청 진입 — 그동안 이 화면이 있는데 가는 길이 없었다(2026-08-07 연결). */}
@@ -113,9 +116,12 @@ export default function CertificatePage() {
             type="button"
             onClick={() =>
               requestCert.mutate(undefined, {
-                onSuccess: () => toast.success('정식 인증을 요청했어요 · 매니저 검토 대기'),
+                onSuccess: () =>
+                  toast.success('정식 인증을 요청했어요 · 매니저 검토 대기'),
                 onError: () =>
-                  toast.danger('요청하지 못했어요 · 잠시 후 다시 시도해 주세요'),
+                  toast.danger(
+                    '요청하지 못했어요 · 잠시 후 다시 시도해 주세요',
+                  ),
               })
             }
             disabled={requestCert.isPending}
@@ -128,8 +134,10 @@ export default function CertificatePage() {
 
       <CertTabs active={tab} onChange={setTab} />
 
-      {/* 이력서 탭은 증명서 overview 가 아닌 이력서 API 를 쓴다 — 자체 DataBoundary 보유 */}
-      {tab === 'resume' ? (
+      {/* 프로젝트·이력서 탭은 overview가 아닌 전용 API를 쓴다 — 자체 DataBoundary 보유 */}
+      {tab === 'projects' ? (
+        <ProjectsTab />
+      ) : tab === 'resume' ? (
         <ResumeTab />
       ) : (
         <DataBoundary
@@ -149,9 +157,6 @@ export default function CertificatePage() {
                 />
               )}
               {tab === 'tech' && <TechTab studentId={selectedStudent.id} />}
-              {tab === 'projects' && (
-                <ProjectsTab p={certificateData.projects} />
-              )}
               {tab === 'problem-solving' && (
                 <ProblemTab studentId={selectedStudent.id} />
               )}

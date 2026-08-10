@@ -37,7 +37,10 @@ describe('수강역량증명서 배포 mock 경로', () => {
     vi.resetModules()
     const { CERTIFICATE_MOCK_ENDPOINTS } = await import('./mocks')
 
-    expect(Object.values(CERTIFICATE_MOCK_ENDPOINTS)).toHaveLength(4)
+    expect(Object.values(CERTIFICATE_MOCK_ENDPOINTS)).toHaveLength(5)
+    expect(CERTIFICATE_MOCK_ENDPOINTS.projects).toBe(
+      'https://api.example.com/student/certificate/projects',
+    )
     expect(
       Object.values(CERTIFICATE_MOCK_ENDPOINTS).some((endpoint) =>
         endpoint.includes('/student/resume'),

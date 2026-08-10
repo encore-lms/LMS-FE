@@ -56,8 +56,9 @@ export function AttendanceFormTab({ scope }: { scope?: CohortScope }) {
     courseId,
     cohortId,
   )
-  // 제출자 이름·생년월일 join용 — 전체 학생 계정(출결폼은 이미 기수로 필터됨).
-  const { data: students } = useStudentAccounts()
+  // 제출자 이름·생년월일 join용 — 선택 기수로 좁혀 받는다.
+  // 인자 없이 부르면 전 기수에서 앞 100명만 와서, 그 밖의 수강생은 이름이 '(미배정)'으로 떨어졌다.
+  const { data: students } = useStudentAccounts(cohortId)
   const studentMap = useMemo(() => {
     const m = new Map<string, { name: string; birth: string }>()
     for (const s of students?.items ?? []) {

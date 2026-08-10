@@ -185,9 +185,9 @@ const scoreAxes: CertificateAxisScore[] = [
     mentorScore: 90,
     instructorScore: 88,
     managerScore: 88,
-    detail: '멘토링 3/3 참석 · 멘토링 팀 4인 · Q&A 질문 3건 채택',
+    detail: '멘토링 3/3 참석 · 4인 팀 프로젝트 PM · Q&A 질문 3건 채택',
     evidenceLabel: '팀워크 역량',
-    evidenceDetail: '멘토링 팀 4인 · SQL 스터디 2회 운영 · Q&A 질문 3건 전부 채택',
+    evidenceDetail: '4인 팀 프로젝트 PM · SQL 스터디 2회 운영 · Q&A 질문 3건 전부 채택',
   }),
   axis({
     key: '문제해결',
@@ -432,7 +432,7 @@ export function createParkSujinScore(
   }
 }
 
-// 실측 — 34기 역량 점검 응시 이력. 3차(데이터 분석·머신러닝)는 08-14 예정이라 미반영.
+// 실측 — 성취도(역량 점검) 2회 + CS 점검 4회. 3차 역량 점검(데이터 분석·머신러닝)은 08-14 예정.
 const parkSujinAssessments = [
   {
     title: '1차 역량 점검 — Python 기초와 자료구조',
@@ -442,11 +442,39 @@ const parkSujinAssessments = [
     submittedAt: '2026-07-03T15:40:00',
   },
   {
+    title: 'CS 점검 1차 — 자료구조와 알고리즘',
+    assessmentType: 'CS' as const,
+    category: '자료구조·알고리즘',
+    score: 85,
+    submittedAt: '2026-07-10T14:40:00',
+  },
+  {
+    title: 'CS 점검 2차 — 운영체제 기초',
+    assessmentType: 'CS' as const,
+    category: '운영체제',
+    score: 80,
+    submittedAt: '2026-07-17T14:40:00',
+  },
+  {
     title: '2차 역량 점검 — SQL과 관계형 데이터베이스',
     assessmentType: 'ACHIEVEMENT' as const,
     category: 'SQL',
     score: 96,
     submittedAt: '2026-07-24T15:40:00',
+  },
+  {
+    title: 'CS 점검 3차 — 네트워크 기초',
+    assessmentType: 'CS' as const,
+    category: '네트워크',
+    score: 90,
+    submittedAt: '2026-07-31T14:40:00',
+  },
+  {
+    title: 'CS 점검 4차 — 데이터베이스 원리',
+    assessmentType: 'CS' as const,
+    category: '데이터베이스',
+    score: 95,
+    submittedAt: '2026-08-07T14:40:00',
   },
 ]
 
@@ -827,6 +855,7 @@ const parkSujinPrimaryRole: AiJobFitRoleCandidate = {
     projectRoles: [
       { label: '수집·정규화 설계', taskCount: 4, projectCount: 1 },
       { label: '분석·대시보드', taskCount: 3, projectCount: 1 },
+      { label: '팀 PM · 모델링(진행 중)', taskCount: 4, projectCount: 1 },
     ],
     troubleshooting: {
       certifiedCaseCount: 3,
@@ -908,8 +937,8 @@ const parkSujinDevOpsRole: AiJobFitRoleCandidate = {
   fitScore: 74,
   confidence: 'MEDIUM',
   summary:
-    '교차검증·데이터 누수 사례로 검증 감각은 확인되지만, 머신러닝 범위의 평가는 3차 역량 점검(08-14 예정) 이후에 보강됩니다.',
-  evidence: ['데이터 누수 인증 사례 1건', '교차검증·HPO 과제 제출'],
+    '이탈 예측 팀 프로젝트에서 전처리 Pipeline·베이스라인 비교를 이끌고 있으나, 머신러닝 범위 평가는 3차 역량 점검(08-14 예정) 이후에 보강됩니다.',
+  evidence: ['이탈 예측 팀 프로젝트 PM(진행 중)', '데이터 누수 인증 사례 1건', 'CS 점검 4회 평균 87.5점'],
   fitEvidence: {
     projectRoles: [],
     troubleshooting: {
@@ -958,8 +987,9 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
         'PostgreSQL',
         'Streamlit',
         'scikit-learn',
+        'LightGBM',
       ],
-      projectDomains: ['데이터 · 채용 시장 분석'],
+      projectDomains: ['데이터 · 채용 시장 분석', '데이터 · 고객 이탈 예측'],
       assessments: parkSujinAssessments.map((assessment) => ({
         assessmentType: assessment.assessmentType,
         category: assessment.category,

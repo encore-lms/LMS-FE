@@ -320,8 +320,8 @@ export const mockOverview: CertificateOverview = {
     },
   },
   tech: {
-    // 실측 — 역량 점검 2회(1차 Python 100 · 2차 SQL 96) · 승인 자격증 2건.
-    avgScore: 98,
+    // 실측 — 역량 점검 2회(100·96) + CS 점검 4회(85·80·90·95) · 승인 자격증 2건.
+    avgScore: 91,
     certCount: 2,
     categories: [
       {
@@ -337,13 +337,37 @@ export const mockOverview: CertificateOverview = {
         percentile: '상위 3%',
       },
       {
+        label: 'CS · 자료구조·알고리즘',
+        sub: 'CS 점검 1차 85점',
+        score: 85,
+        percentile: '상위 12%',
+      },
+      {
+        label: 'CS · 운영체제',
+        sub: 'CS 점검 2차 80점',
+        score: 80,
+        percentile: '상위 18%',
+      },
+      {
+        label: 'CS · 네트워크',
+        sub: 'CS 점검 3차 90점',
+        score: 90,
+        percentile: '상위 8%',
+      },
+      {
+        label: 'CS · 데이터베이스',
+        sub: 'CS 점검 4차 95점',
+        score: 95,
+        percentile: '상위 4%',
+      },
+      {
         label: '데이터 분석 · 머신러닝',
         sub: '3차 역량 점검 08-14 예정',
         score: 0,
         percentile: '응시 예정',
       },
     ],
-    examTrend: [100, 96],
+    examTrend: [100, 85, 80, 96, 90, 95],
     certs: [
       {
         name: 'SQLD 개발자 자격',
@@ -387,8 +411,8 @@ export const mockOverview: CertificateOverview = {
     // ── v2 (CERT_V2) ──
     aiVerdict: {
       strength:
-        'Python·SQL 역량 점검 평균 98점 — 수집·정규화 프로젝트 수행이 이론을 뒷받침.',
-      gap: '머신러닝 범위는 3차 역량 점검(08-14) 전 — 데이터 누수 사례로 검증 감각은 확인됨.',
+        'Python·SQL 역량 점검 평균 98점 · CS 점검 우상향(80→95) — 프로젝트 수행이 이론을 뒷받침.',
+      gap: '머신러닝 범위는 3차 역량 점검(08-14) 전 — 데이터 누수 사례·CS 데이터베이스 95점으로 기반은 확인됨.',
       unique: '해결한 문제를 템플릿·규칙으로 만들어 재사용하는 기록 습관.',
     },
   },
@@ -518,10 +542,34 @@ export const mockOverview: CertificateOverview = {
         score: 100,
       },
       {
+        date: '2026-07-10',
+        type: 'CS',
+        title: 'CS 점검 1차 — 자료구조와 알고리즘',
+        score: 85,
+      },
+      {
+        date: '2026-07-17',
+        type: 'CS',
+        title: 'CS 점검 2차 — 운영체제 기초',
+        score: 80,
+      },
+      {
         date: '2026-07-24',
         type: '성취도',
         title: '2차 역량 점검 — SQL과 관계형 데이터베이스',
         score: 96,
+      },
+      {
+        date: '2026-07-31',
+        type: 'CS',
+        title: 'CS 점검 3차 — 네트워크 기초',
+        score: 90,
+      },
+      {
+        date: '2026-08-07',
+        type: 'CS',
+        title: 'CS 점검 4차 — 데이터베이스 원리',
+        score: 95,
       },
     ],
     peerAverage: 4.6,
@@ -590,18 +638,19 @@ export const mockOverview: CertificateOverview = {
 
 /** 프로젝트 탭 전용 합성 응답 — 워크스페이스 실측값을 그대로 옮긴다. */
 function createMockCertificateProjects(): CertProjectsTab {
-  // 34기 황수빈의 실제 프로젝트 — 개인 프로젝트 1건, 강사 인증 완료.
-  // 성과 3건은 워크스페이스 metrics 에 실제로 저장된 값과 동일한 문구다.
+  // 34기 황수빈의 실제 프로젝트 2건 — 개인(인증 완료) + 4인 팀(진행 중, PM).
+  // 성과 문구는 워크스페이스 metrics 에 실제로 저장된 값과 동일하다.
   return {
     summary: {
-      totalProjectCount: 1,
+      totalProjectCount: 2,
       completedProjectCount: 0,
       certifiedProjectCount: 1,
-      responsibilities: ['수집·정규화 설계', '분석·대시보드'],
+      responsibilities: ['수집·정규화 설계', '분석·대시보드', '팀 PM · 모델링'],
       techStackGroups: [
         { category: '언어·분석', items: ['Python', 'pandas'] },
         { category: '수집', items: ['BeautifulSoup'] },
         { category: '데이터', items: ['PostgreSQL'] },
+        { category: '머신러닝', items: ['scikit-learn', 'LightGBM'] },
         { category: '시각화', items: ['Streamlit'] },
       ],
     },
@@ -627,9 +676,37 @@ function createMockCertificateProjects(): CertProjectsTab {
         outcomes: [
           '채용 공고 5,240건 수집 · 중복 제거 후 4,180건 확보',
           '기술 표기 1,148종 → 표준 키워드 312개 정규화',
+          '직무별 요구 스택 도출 — DE는 Python 87% · SQL 84% · Spark 61%',
+          '수집 실패율 7.2% → 0.4% — 재시도·재큐잉 도입',
           '대시보드 조회 4.2초 → 0.8초 — 집계 사전 계산',
         ],
         // 실측 — GitHub 연동 전. 연동하면 실 저장소 지표가 이 자리에 온다.
+        githubStatus: 'DISCONNECTED',
+        repositories: [],
+      },
+      {
+        projectId: 'pj2',
+        title: '구독 서비스 고객 이탈 예측과 리텐션 대시보드',
+        startDate: '2026-08-03',
+        endDate: '2026-09-25',
+        domain: '데이터 · 고객 이탈 예측',
+        projectStatus: 'IN_PROGRESS',
+        certificationStatus: 'NONE',
+        certifiedAt: null,
+        membershipRole: 'OWNER',
+        responsibility: '팀 PM · 전처리 파이프라인·모델링',
+        teamSize: 4,
+        techStackGroups: [
+          { category: '언어·분석', items: ['Python', 'pandas'] },
+          { category: '머신러닝', items: ['scikit-learn', 'LightGBM'] },
+          { category: '데이터', items: ['PostgreSQL'] },
+          { category: '시각화', items: ['Streamlit'] },
+        ],
+        outcomes: [
+          '베이스라인 PR-AUC — 로지스틱 0.431 → LightGBM 0.612 (+42%)',
+          '전처리 Pipeline 구축 — 데이터 누수 재발 방지',
+          '작업 10건 배분 — 완료 3 · 진행 3 · 예정 4 (마감 09-25)',
+        ],
         githubStatus: 'DISCONNECTED',
         repositories: [],
       },

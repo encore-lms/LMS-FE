@@ -17,21 +17,7 @@ export function DemoQuickLogin({ onPick }: DemoQuickLoginProps) {
       </span>
 
       <div className="flex flex-wrap gap-2">
-        {DEMO_ACCOUNTS.filter((acc) => !acc.qa).map((acc) => (
-          <button
-            key={acc.email}
-            type="button"
-            onClick={() => onPick(acc)}
-            className="rounded-[10px] border border-white/25 bg-white/5 px-3 py-2 text-[13px] font-medium text-white transition-colors hover:bg-white/15"
-          >
-            {acc.label}
-          </button>
-        ))}
-      </div>
-
-      {/* QA 전용 계정 줄 — 시연 본계정과 분리 */}
-      <div className="flex flex-wrap gap-2">
-        {DEMO_ACCOUNTS.filter((acc) => acc.qa).map((acc) => (
+        {DEMO_ACCOUNTS.map((acc) => (
           <button
             key={acc.email}
             type="button"

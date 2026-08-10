@@ -13,6 +13,7 @@ import {
   fetchCertificateScore,
 } from '../ai'
 import type { CertRecommendation, CertSummaryTab } from '../types'
+import { CertPublicDocContext } from '../publicDoc'
 import { SummaryTab } from './SummaryTab'
 
 vi.mock('../ai', () => ({
@@ -862,5 +863,40 @@ describe('SummaryTab', () => {
     expect(commerceDomain).toHaveTextContent('커머스')
     expect(commerceDomain).toHaveTextContent('66.7%')
     expect(commerceDomain).toHaveTextContent('2개')
+  })
+
+  it('공개 문서 모드에서는 KPI 카드가 링크가 아니라 정적 카드다', async () => {
+    vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+    vi.mocked(fetchAiAnalysis).mockImplementation(
+      () => new Promise(() => undefined),
+    )
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <CertPublicDocContext.Provider value={true}>
+            <SummaryTab s={summary} />
+          </CertPublicDocContext.Provider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('79.9')
+    // 외부 검증자는 LMS 계정이 없다 — 내부 화면으로 이동하는 링크가 없어야 한다.
+    expect(screen.queryAllByRole('link')).toHaveLength(0)
+    // 카드 자체(수치·근거)는 그대로 보여 준다.
+    const evaluatorCard = document.querySelector(
+      '[data-summary-kpi="evaluatorAverage"]',
+    )
+    expect(evaluatorCard?.tagName).toBe('DIV')
+    expect(evaluatorCard).toHaveTextContent('동료·멘토·강사·운영 각 25%')
+    // 이동 안내 푸터·화살표도 없어야 한다 — 클릭 유도만 남으면 더 혼란스럽다.
+    expect(evaluatorCard?.querySelector('[data-kpi-link-footer]')).toBeNull()
+    expect(
+      document.querySelector('[data-progress-kpi-link-arrow]'),
+    ).toBeNull()
   })
 })

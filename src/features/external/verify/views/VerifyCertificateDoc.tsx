@@ -18,6 +18,7 @@ import {
   TechTabSkeleton,
 } from '@/features/student/certificate/tabs/TabSkeletons'
 import { mockOverview } from '@/features/student/certificate/mocks'
+import { CertPublicDocContext } from '@/features/student/certificate/publicDoc'
 import { CERT_V2 } from '@/features/student/certificate/config'
 import type { CertTab } from '@/features/student/certificate/types'
 import type { PublicCertificatePayload } from '../types'
@@ -86,62 +87,65 @@ export function VerifyCertificateDoc({
   })
 
   return (
-    <div className="flex flex-col gap-5">
-      <CertHero
-        header={{
-          studentName: payload.student.nameKo,
-          ...splitCourse(payload.student),
-          certId: verificationId,
-          isPublic: true,
-          status: 'certified',
-        }}
-        status="certified"
-      />
+    // 공개 문서 모드 — 탭 안의 내부 화면 이동 링크(기록실·프로젝트 등)를 정적 카드로 바꾼다.
+    <CertPublicDocContext.Provider value={true}>
+      <div className="flex flex-col gap-5">
+        <CertHero
+          header={{
+            studentName: payload.student.nameKo,
+            ...splitCourse(payload.student),
+            certId: verificationId,
+            isPublic: true,
+            status: 'certified',
+          }}
+          status="certified"
+        />
 
-      <CertTabs active={tab} onChange={setTab} only={only} />
+        <CertTabs active={tab} onChange={setTab} only={only} />
 
-      {tab === 'summary' && (
-        <SummaryTab s={mockOverview.summary} studentId={PUBLIC_STUDENT_ID} />
-      )}
+        {tab === 'summary' && (
+          <SummaryTab s={mockOverview.summary} studentId={PUBLIC_STUDENT_ID} />
+        )}
 
-      {tab === 'projects' && <ProjectsTab p={mockOverview.projects} />}
+        {tab === 'projects' && <ProjectsTab p={mockOverview.projects} />}
 
-      {tab === 'ai-analysis' && CERT_V2 && (
-        <AiTab studentId={PUBLIC_STUDENT_ID} />
-      )}
+        {tab === 'ai-analysis' && CERT_V2 && (
+          <AiTab studentId={PUBLIC_STUDENT_ID} />
+        )}
 
-      {tab === 'growth-reputation' && (
-        <DataBoundary
-          isPending={score.isPending}
-          isError={score.isError || !score.data}
-          onRetry={() => void score.refetch()}
-          skeleton={<TechTabSkeleton />}
-          errorTitle="평가·추천을 불러오지 못했어요"
-        >
-          {score.data && (
-            <GrowthTab g={mockOverview.growth} score={score.data} />
-          )}
-        </DataBoundary>
-      )}
+        {tab === 'growth-reputation' && (
+          <DataBoundary
+            isPending={score.isPending}
+            isError={score.isError || !score.data}
+            onRetry={() => void score.refetch()}
+            skeleton={<TechTabSkeleton />}
+            errorTitle="평가·추천을 불러오지 못했어요"
+          >
+            {score.data && (
+              <GrowthTab g={mockOverview.growth} score={score.data} />
+            )}
+          </DataBoundary>
+        )}
 
-      {(tab === 'tech' || tab === 'problem-solving') && (
-        <DataBoundary
-          isPending={detail.isPending}
-          isError={detail.isError || !detail.data}
-          onRetry={() => void detail.refetch()}
-          skeleton={
-            tab === 'tech' ? <TechTabSkeleton /> : <ProblemTabSkeleton />
-          }
-          errorTitle="증명서 상세를 불러오지 못했어요"
-        >
-          {detail.data &&
-            (tab === 'tech' ? (
-              <TechTabContent tech={detail.data.tech} />
-            ) : (
-              <ProblemTabContent problem={detail.data.problem} />
-            ))}
-        </DataBoundary>
-      )}
-    </div>
+        {(tab === 'tech' || tab === 'problem-solving') && (
+          <DataBoundary
+            isPending={detail.isPending}
+            isError={detail.isError || !detail.data}
+            onRetry={() => void detail.refetch()}
+            skeleton={
+              tab === 'tech' ? <TechTabSkeleton /> : <ProblemTabSkeleton />
+            }
+            errorTitle="증명서 상세를 불러오지 못했어요"
+          >
+            {detail.data &&
+              (tab === 'tech' ? (
+                <TechTabContent tech={detail.data.tech} />
+              ) : (
+                <ProblemTabContent problem={detail.data.problem} />
+              ))}
+          </DataBoundary>
+        )}
+      </div>
+    </CertPublicDocContext.Provider>
   )
 }

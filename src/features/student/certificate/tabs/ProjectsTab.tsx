@@ -1,6 +1,7 @@
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { ProjectsTabSkeleton } from './TabSkeletons'
 import { Link } from 'react-router-dom'
+import { useIsPublicCertDoc } from '../publicDoc'
 import { useCertificateProjects } from '../../api/certificate'
 import type {
   CertProjectDetail,
@@ -79,13 +80,12 @@ function ProjectCard({
   index: number
 }) {
   const certified = project.certificationStatus === 'CERTIFIED'
+  // 공개 문서에서는 워크스페이스로 이동하지 않는다 — 외부 검증자는 LMS 계정이 없다.
+  const isPublic = useIsPublicCertDoc()
+  const cardClass = `${card} border-brand focus-visible:ring-brand flex flex-col gap-3 border-t-2 transition-transform focus-visible:ring-2 focus-visible:outline-none`
 
-  return (
-    <Link
-      to={`/student/projects/${project.projectId}`}
-      aria-label={`${project.title} 프로젝트 워크스페이스로 이동`}
-      className={`${card} border-brand focus-visible:ring-brand flex flex-col gap-3 border-t-2 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none`}
-    >
+  const body = (
+    <>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-brand text-[11px] font-bold tracking-wider">
           PROJECT {index + 1}
@@ -173,6 +173,20 @@ function ProjectCard({
           </span>
         )}
       </div>
+    </>
+  )
+
+  if (isPublic) {
+    return <div className={cardClass}>{body}</div>
+  }
+
+  return (
+    <Link
+      to={`/student/projects/${project.projectId}`}
+      aria-label={`${project.title} 프로젝트 워크스페이스로 이동`}
+      className={`${cardClass} hover:-translate-y-0.5`}
+    >
+      {body}
     </Link>
   )
 }

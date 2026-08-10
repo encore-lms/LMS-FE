@@ -215,7 +215,8 @@ const scoreAxes: CertificateAxisScore[] = [
     key: '학습지속성',
     score: 100,
     peerScore: null,
-    detail: '출석 66.4점 + 블로그 30점 + 스터디·멘토링 가산점 6점 = 100점(상한)',
+    detail:
+      '출석 66.4점 + 블로그 30점 + 과제·스터디·멘토링 가산점 8.7점 = 105.1점 → 100점(상한)',
     evidenceLabel: '성장 역량',
     evidenceDetail: '8주 연속 학습 기록 · 멘토링 전회 참석',
     evidence: [
@@ -240,6 +241,18 @@ const scoreAxes: CertificateAxisScore[] = [
         weightPercent: 30,
         appliedScore: 30,
         detail: '8/8주 · 30점 반영',
+      },
+      {
+        // 10주차 최종 산출물은 아직 진행 중 — 9/10 제출. 가산점은 제출률 × 3점.
+        key: 'assignment',
+        label: '과제 제출률',
+        value: 90,
+        unit: '%',
+        numerator: 9,
+        denominator: 10,
+        weightPercent: null,
+        appliedScore: 2.7,
+        detail: '9/10건 · 90% · +2.7점',
       },
       {
         key: 'study',

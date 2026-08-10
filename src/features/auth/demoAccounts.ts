@@ -13,24 +13,26 @@ export interface DemoAccount {
 export const DEMO_LOGIN_ENABLED =
   import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true'
 
+// 네 계정 모두 SK네트웍스 Family AI 캠프 34기 하나에만 묶여 있다. 이전 프리셋은 32기를 포함한
+// 여섯 기수에 배정돼 있어 32기에 쌓인 검증용 데이터가 그대로 보였다.
 export const DEMO_ACCOUNTS: DemoAccount[] = DEMO_LOGIN_ENABLED
   ? [
-      // 수강생은 이메일 대신 수강생 코드(uuid)로 로그인 — SK네트웍스 Family AI캠프 32기 박수진
-      { label: '수강생', email: '100058794696', password: 'Lms@B5Btu9DfnGDE' },
+      // 수강생은 이메일 대신 수강생 코드로 로그인 — 34기 황수빈
+      { label: '수강생', email: '100051503818', password: 'PlaydataDemo2026!' },
       {
         label: '멘토',
-        email: 'apsxh123@naver.com',
-        password: 'Lms@MXKi7uBGfh76',
+        email: 'jungminjae@playdata.io',
+        password: 'PlaydataDemo2026!',
       },
       {
         label: '강사',
-        email: 'rkdtk123@naver.com',
-        password: 'Lms@RAmGcDJBCqw9',
+        email: 'parkjihoon@playdata.io',
+        password: 'PlaydataDemo2026!',
       },
       {
         label: '매니저',
-        email: 'test@gmail.com',
-        password: 'Lms@W52LbdnWaEFH',
+        email: 'encore@playdata.io',
+        password: 'PlaydataDemo2026!',
       },
     ]
   : []

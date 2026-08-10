@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { buildDiagnosisReports } from './reportData'
+import { buildDiagnosisReports, buildMyDiagnosisReports } from './reportData'
 
 // 진단 리포트 mock — 기능 로컬. 자동 수집 규약: `export const handlers`
 // (mocks/handlers.ts 가 import.meta.glob 으로 자동 등록 → handlers.ts 안 건드림).
@@ -7,7 +7,11 @@ import { buildDiagnosisReports } from './reportData'
 const ok = <T>(data: T) => HttpResponse.json({ data })
 
 const reports = buildDiagnosisReports()
+const myReports = buildMyDiagnosisReports()
 
 export const handlers = [
+  // 그룹 리포트 — 매니저 허브(진단 리포트 탭) 소비.
   http.get('/api/student/course/diagnosis/reports', () => ok(reports)),
+  // 개인 리포트 — 수강생 교육과정 허브(진단 리포트 탭) 소비.
+  http.get('/api/student/course/diagnosis/my-reports', () => ok(myReports)),
 ]

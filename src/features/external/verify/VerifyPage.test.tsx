@@ -104,6 +104,13 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
     expect(screen.getByText('6축 점수 — 동결 시점')).toBeInTheDocument()
     expect(screen.getByText('81.7')).toBeInTheDocument()
     expect(screen.getByText('문제해결')).toBeInTheDocument()
+    // 수강생 미리보기와 같은 얼굴 — 절대 종합 점수 도넛이 공개 페이지에도 있어야 한다.
+    // 두 화면이 다르게 생기면 검증자가 같은 문서로 읽지 않는다.
+    expect(screen.getByText('AGGREGATE SCORE')).toBeInTheDocument()
+    expect(screen.getByText('절대 종합 점수')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: /절대 종합 점수 81\.7점/ }),
+    ).toBeInTheDocument()
     // 대표 근거.
     expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()
     // 검증 정보 — 무결성(해시는 Hero 칩과 필드 박스 2곳).

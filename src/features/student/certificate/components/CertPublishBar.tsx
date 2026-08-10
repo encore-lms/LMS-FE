@@ -53,7 +53,7 @@ export function CertPublishBar() {
     //
     // 화면 아래 고정은 두 갈래로 지킨다 — 내용이 길면 sticky 가 스크롤 중 붙잡고,
     // 짧으면 mt-auto 가 (min-h-full 인) 본문 칸 맨 아래로 밀어 준다.
-    <div className="bg-brand-deep sticky bottom-6 z-30 mt-auto flex items-center justify-between gap-4 rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
+    <div className="bg-brand-deep sticky bottom-8 z-30 mt-auto flex items-center justify-between gap-4 rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
       <div className="flex min-w-0 items-center gap-3">
         <span
           className={cn(

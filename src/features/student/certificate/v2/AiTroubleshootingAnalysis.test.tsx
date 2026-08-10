@@ -112,7 +112,7 @@ describe('문제해결 역량 분석', () => {
     expect(structureTooltip).toHaveTextContent('실제 데이터')
     expect(structureTooltip).toHaveTextContent('분석 흐름')
     expect(structureTooltip).toHaveTextContent(
-      'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
+      'pandas merge 후 행 수가 3배로 늘어난 문제',
     )
     expect(structureTooltip).toHaveTextContent(
       '상황에서 재현 조건과 영향 범위를 추출',
@@ -126,10 +126,10 @@ describe('문제해결 역량 분석', () => {
       screen.getByRole('button', { name: '문제해결 성향 근거 보기' }),
     )
     expect(screen.getByRole('tooltip')).toHaveTextContent(
-      '해결 소요일 · 중앙 2일 · 평균 2.3일',
+      '해결 소요일 · 중앙 1일 · 평균 1.3일',
     )
     expect(screen.getByRole('tooltip')).toHaveTextContent(
-      '해결 역량 영역 · 데이터·트랜잭션 처리 4건',
+      '해결 역량 영역 · 데이터 처리 1건',
     )
     expect(screen.getByRole('tooltip')).toHaveTextContent(
       '카테고리·소요일·독립/협업 해결 분포를 집계',

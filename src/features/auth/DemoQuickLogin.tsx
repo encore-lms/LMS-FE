@@ -5,19 +5,25 @@ import { DEMO_ACCOUNTS, type DemoAccount } from './demoAccounts'
 interface DemoQuickLoginProps {
   /** 역할 버튼 클릭 시 해당 실제 계정으로 즉시 로그인하고 역할 홈으로 이동한다. */
   onPick: (account: DemoAccount) => void
+  /** 버튼에 노출할 계정 목록 — /login2(회의용)처럼 다른 프리셋을 쓸 때 주입. 기본은 데모 4계정. */
+  accounts?: DemoAccount[]
+  /** 그룹 상단 안내 문구 — 계정 목록과 함께 페이지 성격에 맞게 교체. */
+  title?: string
 }
 
 // BrandPanel(어두운 그라데이션 배경)에 들어가는 데모 빠른 로그인 그룹.
 // 소개 문구 3줄을 대체하며, 버튼 클릭 시 실제 계정으로 즉시 로그인하고 스타일 가이드 이동 링크를 함께 제공한다.
-export function DemoQuickLogin({ onPick }: DemoQuickLoginProps) {
+export function DemoQuickLogin({
+  onPick,
+  accounts = DEMO_ACCOUNTS,
+  title = '데모 빠른 로그인 · 클릭하면 바로 입장',
+}: DemoQuickLoginProps) {
   return (
     <div className="flex flex-col gap-[14px]">
-      <span className="text-[13px] font-medium text-white/85">
-        데모 빠른 로그인 · 클릭하면 바로 입장
-      </span>
+      <span className="text-[13px] font-medium text-white/85">{title}</span>
 
       <div className="flex flex-wrap gap-2">
-        {DEMO_ACCOUNTS.map((acc) => (
+        {accounts.map((acc) => (
           <button
             key={acc.email}
             type="button"

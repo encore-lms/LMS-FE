@@ -2,6 +2,7 @@ import { delay, http, HttpResponse } from 'msw'
 import type {
   CertChangesData,
   CertificateOverview,
+  CertProjectsTab,
   CertPublicationData,
   CertSentiment,
 } from './types'
@@ -502,57 +503,7 @@ export const mockOverview: CertificateOverview = {
       unique: '프론트 2년 경험 위 백엔드 전환 → 풀스택 E2E 설계 가능.',
     },
   },
-  projects: {
-    certifiedLabel: '2 / 3',
-    contribAvg: '69%',
-    projects: [
-      {
-        id: 'pj1',
-        badge: 'PROJECT 1',
-        certified: true,
-        title: 'Encore Mart — 마이크로서비스 백엔드',
-        period: '2026.07 — 2026.09',
-        role: '백엔드 리드',
-        contrib: '38%',
-        tags: ['Java 17', 'Spring Boot', 'Kafka', 'PostgreSQL', 'Docker'],
-        techStackGroups: [
-          { category: '백엔드', items: ['Java 17', 'Spring Boot'] },
-          { category: '데이터·메시징', items: ['Kafka', 'PostgreSQL'] },
-          { category: '인프라', items: ['Docker'] },
-        ],
-        outcomes: [
-          '주문/결제 도메인 분리 · 트랜잭션 격리 수준 정합',
-          'Kafka 이벤트 라우팅 — 결제 실패 retry 95% 안정화',
-          'API 응답 평균 320ms → 145ms (-55%)',
-        ],
-      },
-      {
-        id: 'pj2',
-        badge: 'PROJECT 2',
-        certified: true,
-        title: '한국어 회의록 요약 LLM 파이프라인',
-        period: '2026.05 — 2026.06',
-        role: 'AI 엔지니어',
-        contrib: '100%',
-        tags: ['Python', 'Whisper', 'GPT-4', 'KoBART', 'FastAPI'],
-        techStackGroups: [
-          { category: '백엔드', items: ['Python', 'FastAPI'] },
-          { category: 'AI·ML', items: ['Whisper', 'GPT-4', 'KoBART'] },
-        ],
-        outcomes: [
-          'Whisper STT + GPT-4 한국어 회의록 요약 자동화',
-          'KoBART 추출 요약 ROUGE-L 0.873',
-          '회의록 35건 검증 · 평균 처리 시간 12초',
-        ],
-      },
-    ],
-    matrix: Array.from({ length: 84 }, (_, i) => (i * 3 + 1) % 4),
-    ai: {
-      summary:
-        '응답 320→145ms·결제 자동복구 95%는 Kafka 이벤트 라우팅 + 트랜잭션 격리 재설계의 결과. 배포·모니터링까지 이어져 E2E 운영 가능 수준을 입증.',
-    },
-    commitActivity: mockCommitActivity,
-  },
+  projects: createMockCertificateProjects(),
   problem: {
     kpis: [
       {
@@ -784,6 +735,179 @@ export const mockOverview: CertificateOverview = {
   },
 }
 
+type MockCommitActivity = (typeof mockCommitActivity)[number]
+
+function getMockCommitActivity(id: string) {
+  const activity = mockCommitActivity.find((item) => item.id === id)
+  if (!activity) throw new Error(`프로젝트 커밋 mock을 찾을 수 없습니다: ${id}`)
+  return activity
+}
+
+function toDailyActivity(startDate: string, activity: MockCommitActivity) {
+  const start = new Date(`${startDate}T00:00:00Z`)
+  return activity.grid.flatMap((week, weekIndex) =>
+    week.map((commits, dayIndex) => {
+      const date = new Date(start)
+      date.setUTCDate(start.getUTCDate() + weekIndex * 7 + dayIndex)
+      return { date: date.toISOString().slice(0, 10), commits }
+    }),
+  )
+}
+
+function mockRepository({
+  activity,
+  startDate,
+  githubRepositoryId,
+  fullName,
+  visibility,
+  analysisBranch,
+  totalCommits,
+  isPublicForMe,
+}: {
+  activity: MockCommitActivity
+  startDate: string
+  githubRepositoryId: number
+  fullName: string
+  visibility: 'PUBLIC' | 'PRIVATE'
+  analysisBranch: string
+  totalCommits: number
+  isPublicForMe: boolean
+}) {
+  return {
+    githubRepositoryId,
+    fullName,
+    visibility,
+    analysisBranch,
+    isPublicForMe,
+    myCommits: activity.totalCommits,
+    totalCommits,
+    commitContributionRate: Number(
+      ((activity.totalCommits / totalCommits) * 100).toFixed(1),
+    ),
+    activeDays: activity.activeDays,
+    longestStreak: activity.longestStreak,
+    weeklyAverage: activity.weeklyAvg,
+    dailyActivity: toDailyActivity(startDate, activity),
+    lastSyncedAt: '2026-08-10T09:00:00+09:00',
+  }
+}
+
+/** 프로젝트 탭 전용 합성 응답 — 워크스페이스 정보와 프로젝트별 GitHub 동기화를 결합한다. */
+function createMockCertificateProjects(): CertProjectsTab {
+  const encoreActivity = getMockCommitActivity('pj1')
+  const llmActivity = getMockCommitActivity('pj2')
+
+  return {
+    summary: {
+      totalProjectCount: 3,
+      completedProjectCount: 2,
+      certifiedProjectCount: 2,
+      responsibilities: ['백엔드 리드', 'AI 엔지니어', '시스템 설계'],
+      techStackGroups: [
+        { category: '백엔드', items: ['Java 17', 'Spring Boot', 'FastAPI'] },
+        { category: '데이터·메시징', items: ['Kafka', 'PostgreSQL'] },
+        { category: '인프라', items: ['Docker'] },
+        { category: 'AI·ML', items: ['Python', 'Whisper', 'KoBART'] },
+      ],
+    },
+    projects: [
+      {
+        projectId: 'pj1',
+        title: 'Encore Mart — 마이크로서비스 백엔드',
+        startDate: '2026-07-06',
+        endDate: '2026-09-18',
+        domain: '커머스',
+        projectStatus: 'COMPLETED',
+        certificationStatus: 'CERTIFIED',
+        certifiedAt: '2026-09-21T14:00:00+09:00',
+        membershipRole: 'OWNER',
+        responsibility: '백엔드 리드',
+        teamSize: 4,
+        techStackGroups: [
+          { category: '백엔드', items: ['Java 17', 'Spring Boot'] },
+          { category: '데이터·메시징', items: ['Kafka', 'PostgreSQL'] },
+          { category: '인프라', items: ['Docker'] },
+        ],
+        outcomes: [
+          '주문/결제 도메인 분리 · 트랜잭션 격리 수준 정합',
+          'Kafka 이벤트 라우팅 — 결제 실패 retry 95% 안정화',
+          'API 응답 평균 320ms → 145ms (-55%)',
+        ],
+        githubStatus: 'CONNECTED',
+        repositories: [
+          mockRepository({
+            activity: encoreActivity,
+            startDate: '2026-07-06',
+            githubRepositoryId: 71001,
+            fullName: 'team-encore/encore-mart',
+            visibility: 'PRIVATE',
+            analysisBranch: 'main',
+            totalCommits: encoreActivity.totalCommits + 268,
+            isPublicForMe: true,
+          }),
+        ],
+      },
+      {
+        projectId: 'pj2',
+        title: '한국어 회의록 요약 LLM 파이프라인',
+        startDate: '2026-05-04',
+        endDate: '2026-06-12',
+        domain: '업무 자동화',
+        projectStatus: 'COMPLETED',
+        certificationStatus: 'CERTIFIED',
+        certifiedAt: '2026-06-15T11:00:00+09:00',
+        membershipRole: 'OWNER',
+        responsibility: 'AI 엔지니어',
+        teamSize: 1,
+        techStackGroups: [
+          { category: '백엔드', items: ['Python', 'FastAPI'] },
+          { category: 'AI·ML', items: ['Whisper', 'KoBART'] },
+        ],
+        outcomes: [
+          'Whisper STT 기반 한국어 회의록 요약 자동화',
+          'KoBART 추출 요약 ROUGE-L 0.873',
+          '회의록 35건 검증 · 평균 처리 시간 12초',
+        ],
+        githubStatus: 'CONNECTED',
+        repositories: [
+          mockRepository({
+            activity: llmActivity,
+            startDate: '2026-05-04',
+            githubRepositoryId: 71002,
+            fullName: 'team-encore/meeting-summary-ai',
+            visibility: 'PUBLIC',
+            analysisBranch: 'main',
+            totalCommits: llmActivity.totalCommits,
+            isPublicForMe: true,
+          }),
+        ],
+      },
+      {
+        projectId: 'pj3',
+        title: 'MSA 도서 추천 — 시스템 설계',
+        startDate: '2026-09-21',
+        endDate: null,
+        domain: '콘텐츠 추천',
+        projectStatus: 'IN_PROGRESS',
+        certificationStatus: 'NONE',
+        certifiedAt: null,
+        membershipRole: 'MEMBER',
+        responsibility: '시스템 설계',
+        teamSize: 5,
+        techStackGroups: [
+          { category: '백엔드', items: ['Spring Boot'] },
+          { category: '인프라', items: ['Docker'] },
+        ],
+        outcomes: [],
+        githubStatus: 'DISCONNECTED',
+        repositories: [],
+      },
+    ],
+  }
+}
+
+export const mockCertificateProjects = createMockCertificateProjects()
+
 const mockChanges: CertChangesData = {
   roundLabel: '1차 보완 요청',
   summaryTitle: '정식 인증 전, 아래 3개 항목을 보완해 주세요',
@@ -986,6 +1110,7 @@ const certificateApiBase =
 
 export const CERTIFICATE_MOCK_ENDPOINTS = {
   overview: `${certificateApiBase}/student/certificate`,
+  projects: `${certificateApiBase}/student/certificate/projects`,
   changes: `${certificateApiBase}/student/certificate/changes`,
   publication: `${certificateApiBase}/student/certificate/publication`,
   sentiment: `${certificateApiBase}/student/certificate/sentiment/analyze`,
@@ -994,6 +1119,9 @@ export const CERTIFICATE_MOCK_ENDPOINTS = {
 export const handlers = [
   http.get(CERTIFICATE_MOCK_ENDPOINTS.overview, () =>
     ok<CertificateOverview>(mockOverview),
+  ),
+  http.get(CERTIFICATE_MOCK_ENDPOINTS.projects, () =>
+    ok<CertProjectsTab>(mockCertificateProjects),
   ),
   http.get(CERTIFICATE_MOCK_ENDPOINTS.changes, () =>
     ok<CertChangesData>(mockChanges),

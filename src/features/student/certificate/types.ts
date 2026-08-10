@@ -269,30 +269,73 @@ export interface CertTechTab {
   aiVerdict?: CertAiVerdict // v2: AI 기술 종합 판단 (CERT_V2)
 }
 
-/** 탭3 프로젝트 */
-export interface CertProjectCard {
-  id: string
-  badge: string
-  certified: boolean
-  title: string
-  period: string
-  role: string
-  contrib: string
-  tags: string[]
-  techStackGroups?: CertProjectTechStackGroup[]
-  outcomes: string[]
-}
 export interface CertProjectTechStackGroup {
   category: string
   items: string[]
 }
+
+export type CertProjectStatus = 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED'
+export type CertProjectCertificationStatus =
+  | 'NONE'
+  | 'REQUESTED'
+  | 'REVIEWING'
+  | 'CHANGES_REQUESTED'
+  | 'CERTIFIED'
+export type CertProjectGithubStatus =
+  | 'CONNECTED'
+  | 'INSTALLATION_PENDING'
+  | 'PERMISSION_REQUIRED'
+  | 'DISCONNECTED'
+
+export interface CertProjectGithubDailyActivity {
+  date: string
+  commits: number
+}
+
+export interface CertProjectRepository {
+  githubRepositoryId: number
+  fullName: string
+  visibility: 'PUBLIC' | 'PRIVATE'
+  analysisBranch: string | null
+  isPublicForMe: boolean
+  myCommits: number
+  totalCommits: number
+  commitContributionRate: number
+  activeDays: number
+  longestStreak: number
+  weeklyAverage: number
+  dailyActivity: CertProjectGithubDailyActivity[]
+  lastSyncedAt: string | null
+}
+
+export interface CertProjectDetail {
+  projectId: string
+  title: string
+  startDate: string
+  endDate: string | null
+  domain: string | null
+  projectStatus: CertProjectStatus
+  certificationStatus: CertProjectCertificationStatus
+  certifiedAt: string | null
+  membershipRole: 'OWNER' | 'MEMBER'
+  responsibility: string | null
+  teamSize: number
+  techStackGroups: CertProjectTechStackGroup[]
+  outcomes: string[]
+  githubStatus: CertProjectGithubStatus
+  repositories: CertProjectRepository[]
+}
+
+/** 탭3 프로젝트 — 프로젝트 워크스페이스와 프로젝트별 GitHub 동기화의 합성 응답. */
 export interface CertProjectsTab {
-  certifiedLabel: string
-  contribAvg: string
-  projects: CertProjectCard[]
-  matrix: number[] // 0~3 강도, 주차 순
-  ai?: CertProjectsAi // v2 (CERT_V2)
-  commitActivity?: CertProjectActivity[] // v2: 프로젝트별 커밋 잔디밭(선택형)
+  summary: {
+    totalProjectCount: number
+    completedProjectCount: number
+    certifiedProjectCount: number
+    responsibilities: string[]
+    techStackGroups: CertProjectTechStackGroup[]
+  }
+  projects: CertProjectDetail[]
 }
 /** 탭3 v2 — 프로젝트별 커밋 활동(레포 단위 잔디밭 + 참여 일관성 지표) */
 export interface CertProjectActivity {

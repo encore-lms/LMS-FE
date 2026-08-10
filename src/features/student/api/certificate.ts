@@ -3,6 +3,7 @@ import { apiClient } from '@/shared/api'
 import { certKeys } from '../certificate/queryKeys'
 import type {
   CertChangesData,
+  CertProjectsTab,
   CertStatusData,
   CertificateOverview,
   CertPublicationData,
@@ -21,6 +22,18 @@ export function useCertificateOverview() {
   })
 }
 
+/** 프로젝트 탭 전용 합성 조회 — 워크스페이스와 GitHub 동기화 결과를 BE에서 결합한다. */
+export function useCertificateProjects(enabled = true) {
+  return useQuery({
+    queryKey: certKeys.projects(),
+    queryFn: () =>
+      apiClient
+        .get<CertProjectsTab>('/student/certificate/projects')
+        .then((r) => r.data),
+    enabled,
+  })
+}
+
 /**
  * 증명서 진행 단계 + 최근 보완 요청 — /student/certificate/status.
  *
@@ -31,7 +44,9 @@ export function useCertStatus() {
   return useQuery({
     queryKey: certKeys.status(),
     queryFn: () =>
-      apiClient.get<CertStatusData>('/student/certificate/status').then((r) => r.data),
+      apiClient
+        .get<CertStatusData>('/student/certificate/status')
+        .then((r) => r.data),
   })
 }
 
@@ -102,7 +117,9 @@ export function useCertPublicationSettings() {
     queryKey: [...certKeys.publication(), 'settings'],
     queryFn: () =>
       apiClient
-        .get<CertPublicationSettings>('/student/certificate/publication-settings')
+        .get<CertPublicationSettings>(
+          '/student/certificate/publication-settings',
+        )
         .then((r) => r.data),
   })
 }
@@ -121,7 +138,6 @@ export function useUpdateCertPublication() {
           input,
         )
         .then((r) => r.data),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: certKeys.publication() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: certKeys.publication() }),
   })
 }

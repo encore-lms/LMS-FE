@@ -72,7 +72,9 @@ export function DomainDonut({
           className={cn(
             'flex items-center',
             compact
-              ? 'grid grid-cols-[132px_minmax(0,1fr)] gap-3'
+              // 좁은 화면에서는 도넛 아래로 목록을 내린다 — 132px 고정 컬럼을 그대로
+              // 두면 가로 스크롤이 생긴다(공개 검증 500px 에서 84px 넘침).
+              ? 'grid grid-cols-1 gap-3 sm:grid-cols-[132px_minmax(0,1fr)]'
               : 'flex-col gap-8 lg:flex-row lg:justify-center lg:gap-14',
           )}
         >

@@ -1,81 +1,24 @@
-import type { ReactNode } from 'react'
-import { Check, Download, Hash } from 'lucide-react'
+import { Check, Hash } from 'lucide-react'
 import type { CertifiedPublicResult } from '../types'
-import { VerifyPolicyBox } from '../components'
 import { VerifyCertificateDoc } from './VerifyCertificateDoc'
 
-// 대표 근거 카테고리 칩 색 — raw #e8f7f7(brand 틴트)은 토큰 부재로 brand/10 매핑.
-const CATEGORY_CHIP: Record<string, string> = {
-  프로젝트: 'bg-brand/10 text-brand',
-  트러블슈팅: 'bg-danger-bg text-danger',
-  기록실: 'bg-success-bg text-success',
-}
-
-// 흰 카드 공통 셸 — 헤더(좌 타이틀·우 보조) + divider + 바디. Figma 카드 공통 패턴.
-// 라디우스: 핵심 정보(2815:370)=16, 6축·대표 근거·검증 정보(2815:402~)=14.
-function SectionCard({
-  title,
-  icon,
-  aside,
-  radius = 14,
-  children,
-}: {
-  title: string
-  icon?: ReactNode
-  aside?: ReactNode
-  radius?: 16 | 14
-  children: ReactNode
-}) {
-  return (
-    <section
-      className={`border-border bg-surface border shadow-[0_2px_8px_rgba(18,23,38,0.04)] ${
-        radius === 16 ? 'rounded-2xl' : 'rounded-[14px]'
-      }`}
-    >
-      <div className="border-divider flex items-center justify-between gap-4 border-b px-6 pt-[18px] pb-3.5">
-        <h2 className="text-fg flex items-center gap-2 text-[15px] font-bold">
-          {icon}
-          {title}
-        </h2>
-        {aside}
-      </div>
-      {children}
-    </section>
-  )
-}
-
 /**
- * 공개 증명서 — Figma 543:2909. certified_public 전용 880px 스택.
- * 데이터는 활성 CertificateSnapshot.publicPayload만 사용(내부 근거·결측 경고·검토 코멘트 비노출).
+ * 공개 증명서 — 진본 배너 + 증명서 본문.
+ *
+ * <p>본문은 수강생 미리보기와 같은 히어로·탭·탭 콘텐츠를 그대로 쓴다.
+ * 무결성 근거(해시·발급기관·인증일)는 배너가, 검증 ID 는 히어로가 보여준다.</p>
  */
 export function VerifyPublicView({
   result,
-  publicToken,
 }: {
   result: CertifiedPublicResult
   publicToken: string
 }) {
   const p = result.publicPayload
 
-  // 공개 JSON 다운로드(P0-EXT-VERIFY-007) — 응답이 {data} 래핑 없는 raw 파일이라
-  // apiClient 대신 fetch + Blob 다운로드. 아이콘은 lucide Download(Figma pencil-fill은 오기 판단).
-  const downloadPublicJson = async () => {
-    const res = await fetch(`/api/verify/${publicToken}/public-payload.json`)
-    if (!res.ok) return
-    const url = URL.createObjectURL(await res.blob())
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${publicToken}-public-payload.json`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-  }
-
   return (
-    // 폭·간격을 수강생 미리보기 본문과 맞춘다 — 1240 - 좌우 패딩 64 = 1176px.
-    // 880px 로 두면 증명서 본문(4열 지표 카드 등)이 눌려 글자가 깨진다.
-    <main className="mx-auto flex w-full max-w-[1240px] flex-col gap-5 px-8 pt-12 pb-[60px]">
+    // 최대 1440 까지 넓히고 그 아래는 화면을 따라 줄인다. 여백도 폭에 맞춰 단계적으로.
+    <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 pt-8 pb-[60px] sm:px-6 lg:px-8 lg:pt-12">
       {/* Hero 진본 배너 — brand bg, certified·해시 칩 + 우측 메타 3쌍(흰 세로 구분선). */}
       <section className="bg-brand flex flex-wrap items-center justify-between gap-6 rounded-2xl px-7 py-[26px] shadow-[0_2px_8px_rgba(18,23,38,0.04)]">
         <div className="flex flex-col gap-2">
@@ -128,80 +71,6 @@ export function VerifyPublicView({
         verificationId={result.verificationId}
       />
 
-      {/* 대표 근거 — 공개 허용 산출물 3행. */}
-      <SectionCard
-        title="대표 근거 — 공개 허용 산출물"
-        aside={
-          <span className="text-fg-subtle text-[11px] font-medium">
-            {p.evidenceSummary}
-          </span>
-        }
-      >
-        <div className="divide-divider flex flex-col divide-y">
-          {p.evidence.map((item) => (
-            <div
-              key={item.title}
-              className="flex items-center gap-3.5 px-6 py-3.5"
-            >
-              <span
-                className={`w-[90px] shrink-0 rounded-[5px] px-[9px] py-[3px] text-center text-[11px] font-bold ${
-                  CATEGORY_CHIP[item.category] ?? 'bg-brand/10 text-brand'
-                }`}
-              >
-                {item.category}
-              </span>
-              <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-fg text-[13px] font-bold">
-                  {item.title}
-                </span>
-                <span className="text-fg-subtle text-[11px] leading-4">
-                  {item.description}
-                </span>
-              </span>
-            </div>
-          ))}
-        </div>
-      </SectionCard>
-
-      {/* 검증 정보 — 무결성 + 공개 JSON 다운로드(이 화면의 유일한 인터랙션). */}
-      <SectionCard
-        title="검증 정보 — 무결성"
-        aside={
-          <button
-            type="button"
-            onClick={downloadPublicJson}
-            className="border-border bg-surface text-fg-muted hover:text-fg flex shrink-0 items-center gap-1.5 rounded-[7px] border px-2.5 py-1.5 text-[11px] font-bold whitespace-nowrap"
-          >
-            <Download size={12} aria-hidden className="shrink-0" />
-            공개 JSON 다운로드
-          </button>
-        }
-      >
-        <div className="flex flex-col gap-3.5 px-6 pt-3.5 pb-[18px] sm:flex-row">
-          {[
-            { label: 'snapshotHash', value: result.snapshotHash },
-            { label: 'publicToken', value: publicToken },
-            { label: '발급 시점', value: p.issuedAt },
-          ].map((field) => (
-            <div
-              key={field.label}
-              className="flex min-w-0 flex-1 flex-col gap-1.5"
-            >
-              <span className="text-fg-subtle text-[10px] font-medium tracking-[0.6px]">
-                {field.label}
-              </span>
-              <span className="bg-surface-muted text-fg truncate rounded-lg px-2.5 py-[9px] text-xs font-bold">
-                {field.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      </SectionCard>
-
-      <VerifyPolicyBox title="외부 검증 페이지 정책" withIcon>
-        로그인 없이 접근 · 공개 payload만 사용 · 내부 근거 노출 없음 ·
-        비공개·미인증 상태에서 상세 정보 렌더링 없음
-      </VerifyPolicyBox>
     </main>
   )
 }

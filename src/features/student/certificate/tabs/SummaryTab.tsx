@@ -1476,7 +1476,9 @@ function ScoreSummary({
         <div
           data-summary-context-layout
           className={cn(
-            'grid min-w-0 gap-4',
+            // 자식에도 min-w-0 을 걸어야 한다 — grid item 의 기본 min-width:auto 때문에
+            // 도넛·온톨로지 맵이 좁은 화면에서 셀을 뚫고 나가 페이지에 가로 스크롤이 생겼다.
+            'grid min-w-0 gap-4 [&>*]:min-w-0',
             ontology &&
               'xl:grid-cols-[minmax(0,35fr)_minmax(0,65fr)] xl:items-stretch',
           )}

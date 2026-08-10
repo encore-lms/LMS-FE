@@ -49,67 +49,30 @@ const toneRing: Record<Tone, string> = {
   success: 'ring-success/50',
 }
 
-const metricTone: Record<CertificateScoreMetric['key'], Tone> = {
-  attendance: axisTone.학습지속성,
-  assessment: axisTone['성취도 평가'],
-  blog: axisTone.학습지속성,
-  certifiedProject: axisTone['기술·기술기여'],
-  certifiedTroubleshooting: axisTone.문제해결,
-  certifiedCertificate: 'accent',
-  evaluatorAverage: axisTone['소통·협업·팀워크'],
-}
-
-const progressMetricOrder: CertificateScoreMetric['key'][] = [
+const progressMetricOrder = [
   'attendance',
   'assessment',
   'evaluatorAverage',
-]
+] as const satisfies ReadonlyArray<CertificateScoreMetric['key']>
 
-const countMetricOrder: CertificateScoreMetric['key'][] = [
-  'certifiedProject',
-  'certifiedTroubleshooting',
-  'certifiedCertificate',
-]
+type ProgressMetricKey = (typeof progressMetricOrder)[number]
+type ProgressMetric = CertificateScoreMetric & { key: ProgressMetricKey }
 
-const metricOrder = [...progressMetricOrder, ...countMetricOrder]
+const metricTone: Record<ProgressMetricKey, Tone> = {
+  attendance: axisTone.학습지속성,
+  assessment: axisTone['성취도 평가'],
+  evaluatorAverage: axisTone['소통·협업·팀워크'],
+}
 
-const metricLabelOverride: Partial<
-  Record<CertificateScoreMetric['key'], string>
-> = {
+const metricLabelOverride: Partial<Record<ProgressMetricKey, string>> = {
   assessment: '성취도 평가 평균',
-  certifiedProject: '프로젝트',
-  certifiedTroubleshooting: '트러블슈팅',
-  certifiedCertificate: '자격증',
   evaluatorAverage: '4축 평가 전체 평균',
 }
 
-const countMetricDisplay: Partial<
-  Record<CertificateScoreMetric['key'], { suffix: string; description: string }>
-> = {
-  certifiedProject: {
-    suffix: '건',
-    description: '기술·기술기여 판단 근거가 된 완료 프로젝트',
-  },
-  certifiedTroubleshooting: {
-    suffix: '건',
-    description: '문제해결 판단 근거가 된 인증 사례',
-  },
-  certifiedCertificate: {
-    suffix: '건',
-    description: '역량 검증 근거가 된 등록 자격증',
-  },
-}
-
-function metricRoute(key: CertificateScoreMetric['key']) {
+function metricRoute(key: ProgressMetricKey) {
   if (key === 'assessment') return '/student/quizzes'
   if (key === 'attendance') return '/student/attendance'
-  if (key === 'blog') return '/student/records?category=blog'
-  if (key === 'certifiedProject') return '/student/projects'
-  if (key === 'certifiedCertificate') return '/student/records?category=cert'
-  if (key === 'evaluatorAverage') {
-    return '/student/certificate?tab=growth-reputation'
-  }
-  return '/student/troubleshooting'
+  return '/student/certificate?tab=growth-reputation'
 }
 
 const domainTones: Tone[] = [
@@ -298,7 +261,13 @@ function formatPercent(value: number | null) {
       : value.toFixed(1)
 }
 
-function metricToKpi(metric: CertificateScoreMetric): CertKpi {
+function isProgressMetric(
+  metric: CertificateScoreMetric,
+): metric is ProgressMetric {
+  return progressMetricOrder.some((key) => key === metric.key)
+}
+
+function metricToKpi(metric: ProgressMetric): CertKpi {
   const bar =
     metric.value !== null && metric.maximum !== null && metric.maximum > 0
       ? Math.min(100, (metric.value / metric.maximum) * 100)
@@ -552,51 +521,6 @@ function ProgressKpiCard({
           />
         </div>
       </div>
-    </Link>
-  )
-}
-
-function CountKpiCard({ kpi, route }: { kpi: CertKpi; route: string }) {
-  const display = countMetricDisplay[kpi.key as CertificateScoreMetric['key']]
-
-  return (
-    <Link
-      to={route}
-      aria-label={`${kpi.label} 상세 화면으로 이동`}
-      data-summary-kpi={kpi.key}
-      data-summary-kpi-route={route}
-      data-kpi-visual="count"
-      data-kpi-tone={kpi.tone}
-      className={cn(
-        card,
-        'focus-visible:ring-ring group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-5 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
-      )}
-    >
-      <span className="flex min-w-0 flex-col gap-1">
-        <span className="text-fg text-[12px] font-bold">{kpi.label}</span>
-        <span className="text-fg-subtle truncate text-[10px]" title={kpi.sub}>
-          {display?.description ?? kpi.sub}
-        </span>
-      </span>
-      <span className="flex items-center gap-2">
-        <span
-          className={cn(
-            'flex items-baseline gap-1 rounded-xl px-3 py-2',
-            TONE_SOFT[kpi.tone ?? 'brand'],
-          )}
-        >
-          <span className="text-[22px] leading-none font-bold tabular-nums">
-            {kpi.value}
-          </span>
-          <span className="text-fg-muted text-[10px] font-semibold">
-            {display?.suffix ?? kpi.unit}
-          </span>
-        </span>
-        <ArrowRight
-          aria-hidden="true"
-          className="text-fg-subtle size-3.5 transition-transform group-hover:translate-x-0.5"
-        />
-      </span>
     </Link>
   )
 }
@@ -1324,16 +1248,13 @@ function ScoreSummary({
     projectCount: domain.projectCount,
     tone: domainTones[index % domainTones.length],
   }))
-  const kpis = score.metrics
-    .filter((metric) => metricOrder.includes(metric.key))
-    .sort((a, b) => metricOrder.indexOf(a.key) - metricOrder.indexOf(b.key))
+  const progressKpis = score.metrics
+    .filter(isProgressMetric)
+    .sort(
+      (a, b) =>
+        progressMetricOrder.indexOf(a.key) - progressMetricOrder.indexOf(b.key),
+    )
     .map(metricToKpi)
-  const progressKpis = kpis.filter((kpi) =>
-    progressMetricOrder.includes(kpi.key as CertificateScoreMetric['key']),
-  )
-  const countKpis = kpis.filter((kpi) =>
-    countMetricOrder.includes(kpi.key as CertificateScoreMetric['key']),
-  )
   const attendanceKpi = progressKpis.find((kpi) => kpi.key === 'attendance')
   const assessmentKpi = progressKpis.find((kpi) => kpi.key === 'assessment')
   const evaluatorKpi = progressKpis.find(
@@ -1491,7 +1412,7 @@ function ScoreSummary({
         <div className="flex flex-col gap-0.5">
           <span className="text-fg text-[15px] font-bold">학습·성과 지표</span>
           <span className="text-fg-muted text-[11px]">
-            6축 역량 점수를 산출하는 학습·평가·인증 근거
+            6축 역량 점수를 산출하는 학습·평가 근거
           </span>
         </div>
 
@@ -1540,24 +1461,6 @@ function ScoreSummary({
                   route={metricRoute('evaluatorAverage')}
                 />
               )}
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <span className="text-fg-subtle text-[10px] font-bold">
-              인증·프로젝트 실적
-            </span>
-            <div
-              className="grid grid-cols-1 gap-3 lg:grid-cols-3"
-              data-summary-count-grid
-            >
-              {countKpis.map((kpi) => (
-                <CountKpiCard
-                  key={kpi.key}
-                  kpi={kpi}
-                  route={metricRoute(kpi.key as CertificateScoreMetric['key'])}
-                />
-              ))}
             </div>
           </div>
         </div>

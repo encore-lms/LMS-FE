@@ -12,7 +12,7 @@ import type {
   OntologyNode,
 } from '../types'
 
-const CALCULATED_AT = '2026-10-26'
+const CALCULATED_AT = '2026-08-10'
 const RELATIVE_MOCK_POPULATION_SIZE = 300
 
 function mockPopulationScores(seed: number) {
@@ -62,7 +62,7 @@ function mockPopulationAverage(seed: number) {
   )
 }
 
-const assessmentRelative = readyRelative(82, 'COHORT', '시험 평균 82점', 82)
+const assessmentRelative = readyRelative(98, 'COHORT', '시험 평균 98점', 82)
 
 const axisRelativeSeeds: Record<CertificateAxisKey, number> = {
   '기술·기술기여': 11,
@@ -146,7 +146,7 @@ function axis({
     key,
     score,
     status: 'READY',
-    source: '수강역량증명서 박수진 mock',
+    source: '수강역량증명서 실측 기반 mock',
     detail,
     relative:
       relative ??
@@ -185,9 +185,9 @@ const scoreAxes: CertificateAxisScore[] = [
     mentorScore: 90,
     instructorScore: 88,
     managerScore: 88,
-    detail: '멘토링 3/3 참석 · 4인 팀 PM · Q&A 답변 채택',
+    detail: '멘토링 3/3 참석 · 멘토링 팀 4인 · Q&A 질문 3건 채택',
     evidenceLabel: '팀워크 역량',
-    evidenceDetail: '팀 프로젝트 PM · SQL 스터디 운영 · Q&A 질문 3건',
+    evidenceDetail: '멘토링 팀 4인 · SQL 스터디 2회 운영 · Q&A 질문 3건 전부 채택',
   }),
   axis({
     key: '문제해결',
@@ -196,40 +196,41 @@ const scoreAxes: CertificateAxisScore[] = [
     mentorScore: 80,
     instructorScore: 80,
     managerScore: 78,
-    detail: '인증 3/5 × 0.5 + 독립 해결 3/3 × 0.5',
+    detail: '인증 3/5 사례 · 독립 해결 1건 · 평균 1.3일',
     evidenceLabel: '문제해결 역량',
     evidenceDetail: 'pandas merge · 데이터 누수 · Git rebase 인증 3건',
   }),
   axis({
     key: '책임감',
-    score: 96.9,
+    score: 100,
     peerScore: 96,
     mentorScore: 96,
     instructorScore: 98,
     managerScore: 96,
-    detail: '출석률 94.9 × 0.6 + 학습 기록 8/8주 × 0.4',
+    detail: '출석률 100 × 0.6 + 학습 기록 8/8주 × 0.4',
     evidenceLabel: '책임감 역량',
-    evidenceDetail: '39일 중 결석 2일 · 8주 연속 학습 기록 제출',
+    evidenceDetail: '출석 인정 6/6일 · 결석 0 · 8주 연속 학습 기록 제출',
   }),
   axis({
     key: '학습지속성',
     score: 100,
     peerScore: null,
     detail:
-      '출석 66.4점 + 블로그 30점 + 과제·스터디·멘토링 가산점 8.7점 = 105.1점 → 100점(상한)',
+      '출석 70점 + 블로그 30점 + 과제·스터디·멘토링 가산점 8.7점 = 108.7점 → 100점(상한)',
     evidenceLabel: '성장 역량',
     evidenceDetail: '8주 연속 학습 기록 · 멘토링 전회 참석',
     evidence: [
       {
+        // HRD-Net 실측(2026-08-10) — 기록 6일 · 출석 3 · 지각 3 · 결석 0, 인정률 100%.
         key: 'attendance',
         label: '출석률',
-        value: 94.9,
+        value: 100,
         unit: '%',
-        numerator: 37,
-        denominator: 39,
+        numerator: 6,
+        denominator: 6,
         weightPercent: 70,
-        appliedScore: 66.4,
-        detail: '39일 중 결석 2일 · 66.4점 반영',
+        appliedScore: 70,
+        detail: '6일 중 지각 3 · 결석 0 · 70점 반영',
       },
       {
         key: 'blog',
@@ -317,20 +318,20 @@ export function createParkSujinScore(
       cohortEndedAt: '2026-12-08',
     },
     status: 'READY',
-    // 6축 평균 = (98.6 + 90 + 80 + 96.9 + 100 + 98) / 6 = 93.9
-    overallScore: 93.9,
+    // 6축 평균 = (98.6 + 90 + 80 + 100 + 100 + 98) / 6 = 94.4
+    overallScore: 94.4,
     grade: 'A',
-    overallRelative: readyRelative(93.9, 'ALL_STUDENTS', '종합점수 93.9점', 97),
+    overallRelative: readyRelative(94.4, 'ALL_STUDENTS', '종합점수 94.4점', 97),
     axes: scoreAxes,
     metrics: [
       {
         key: 'attendance',
         label: '출석률',
-        value: 94.9,
+        value: 100,
         maximum: 100,
         unit: '%',
         status: 'READY',
-        detail: '39일 중 결석 2 · 지각 8 · 조퇴 1',
+        detail: '기록 6일 · 출석 3 · 지각 3 · 결석 0',
       },
       {
         key: 'assessment',
@@ -366,7 +367,7 @@ export function createParkSujinScore(
         maximum: null,
         unit: '건',
         status: 'READY',
-        detail: 'STAR 구조 인증 사례 3건 · 전부 독립 해결',
+        detail: 'STAR 구조 인증 사례 3건 · 독립 해결 1건',
       },
       {
         key: 'certifiedCertificate',
@@ -392,93 +393,60 @@ export function createParkSujinScore(
         key: '협업',
         score: 4.5,
         status: 'READY',
-        detail: '팀워크 동료평 평균',
+        detail: '멘토링 팀 4인 동료평 평균',
       },
-      { key: '소통', score: 4.5, status: 'READY', detail: '논리적 설득 10회' },
-      { key: '책임감', score: 4.8, status: 'READY', detail: '리더십 평가 1위' },
+      {
+        key: '소통',
+        score: 4.5,
+        status: 'READY',
+        detail: 'Q&A 질문 3건 전부 답변 채택',
+      },
+      {
+        key: '책임감',
+        score: 4.8,
+        status: 'READY',
+        detail: '과제 9/10 제출 · 결석 0',
+      },
       {
         key: '문제해결',
         score: 4.1,
         status: 'READY',
-        detail: '문제해결 비교 82점',
+        detail: '트러블슈팅 인증 3건',
       },
       {
         key: '기술기여',
         score: 4.6,
         status: 'READY',
-        detail: 'PR 22건 · 코드 리뷰 평균 4.6',
+        detail: '역량 점검 평균 98점 · 인증 프로젝트 1건',
       },
     ],
     projectNavigation: {
       issuesProjectId: 'pj1',
       peerEvaluationProjectId: 'pj1',
     },
+    // 인증 완료 프로젝트 1건(채용 공고 스택 지도)의 도메인 — 실측.
     domainExperience: [
-      { label: '커머스 · 주문/결제', projectCount: 2, percentage: 40 },
-      { label: '추천 · LLM 파이프라인', projectCount: 2, percentage: 30 },
-      { label: '인프라 · DevOps', projectCount: 1, percentage: 20 },
-      { label: '데이터 · 분석', projectCount: 1, percentage: 10 },
+      { label: '데이터 · 채용 시장 분석', projectCount: 1, percentage: 100 },
     ],
     warnings: [],
   }
 }
 
+// 실측 — 34기 역량 점검 응시 이력. 3차(데이터 분석·머신러닝)는 08-14 예정이라 미반영.
 const parkSujinAssessments = [
   {
-    title: '파이썬 기초 성취도 평가',
+    title: '1차 역량 점검 — Python 기초와 자료구조',
     assessmentType: 'ACHIEVEMENT' as const,
-    category: '파이썬',
-    score: 72,
-    submittedAt: '2026-06-04T18:00:00',
+    category: 'Python',
+    score: 100,
+    submittedAt: '2026-07-03T15:40:00',
   },
   {
-    title: '자료구조·알고리즘 CS 평가',
-    assessmentType: 'CS' as const,
-    category: '자료구조·알고리즘',
-    score: 68,
-    submittedAt: '2026-06-18T18:00:00',
-  },
-  {
-    title: 'SQL 활용 성취도 평가',
+    title: '2차 역량 점검 — SQL과 관계형 데이터베이스',
     assessmentType: 'ACHIEVEMENT' as const,
     category: 'SQL',
-    score: 80,
-    submittedAt: '2026-07-02T18:00:00',
-  },
-  {
-    title: '운영체제 CS 평가',
-    assessmentType: 'CS' as const,
-    category: '운영체제',
-    score: 74,
-    submittedAt: '2026-07-16T18:00:00',
-  },
-  {
-    title: '머신러닝·딥러닝 성취도 평가',
-    assessmentType: 'ACHIEVEMENT' as const,
-    category: '머신러닝·딥러닝',
-    score: 84,
-    submittedAt: '2026-08-06T18:00:00',
-  },
-  {
-    title: '네트워크 CS 평가',
-    assessmentType: 'CS' as const,
-    category: '네트워크',
-    score: 79,
-    submittedAt: '2026-08-20T18:00:00',
-  },
-  {
-    title: 'LLM·RAG 성취도 평가',
-    assessmentType: 'ACHIEVEMENT' as const,
-    category: 'LLM·RAG',
-    score: 88,
-    submittedAt: '2026-09-03T18:00:00',
-  },
-  {
-    title: '데이터베이스 CS 평가',
-    assessmentType: 'CS' as const,
-    category: '데이터베이스',
-    score: 83,
-    submittedAt: '2026-09-17T18:00:00',
+    score: 96,
+    submittedAt: '2026-07-24T15:40:00',
   },
 ]
 
@@ -560,173 +528,49 @@ function verifiedTroubleshootingCase(
   }
 }
 
+// 실측 — 트러블슈팅 강사 인증 3건(전체 5건 중 환경 2건은 작성 중이라 제외).
 const parkSujinTroubleshootingCases: CertificateProblemDetail['cases'] = [
   verifiedTroubleshootingCase({
     id: 'pc1',
-    title: 'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
-    category: 'DB / SQL',
-    independent: true,
-    days: 3,
-    situation:
-      '동시 결제 100건 재현 테스트에서 PostgreSQL 데드락과 8% 실패율이 발생했습니다.',
-    resolution:
-      '락 획득 순서를 통일하고 트랜잭션 격리 범위를 줄인 뒤 동일 부하로 재검증했습니다.',
-    result: '결제 실패율을 8%에서 0.2%로 낮추고 재현 테스트를 통과했습니다.',
-    createdAt: '2026-08-12T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc2',
-    title: 'Kafka 컨슈머 ack 미반영 — 메시지 중복 발생',
-    category: '배포 / 인프라',
-    independent: true,
-    days: 2,
-    situation:
-      '컨슈머 재시작 시 결제 이벤트가 중복 소비되어 주문 상태가 두 번 갱신됐습니다.',
-    resolution:
-      'enable.auto.commit=false와 멱등 키를 적용하고 실패·재시작 시나리오를 반복 실행했습니다.',
-    result:
-      '중복 처리를 제거하고 결제 실패 이벤트의 자동 재처리를 95% 안정화했습니다.',
-    createdAt: '2026-08-28T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc3',
-    title: 'N+1 쿼리 — 사용자 주문 목록 응답 7초',
-    category: '성능 / 메모리',
+    title: 'pandas merge 후 행 수가 3배로 늘어난 문제',
+    category: '데이터',
     independent: true,
     days: 1,
     situation:
-      '주문 1,000건 조회 시 연관 엔티티별 추가 쿼리로 응답에 7초가 걸렸습니다.',
+      '주문·회원 테이블 merge 후 집계값이 원본의 3배로 부풀어 분석 결과를 신뢰할 수 없었습니다.',
     resolution:
-      '@EntityGraph와 fetch join을 적용하고 쿼리 수와 실행 계획을 전후 비교했습니다.',
+      '조인 키 중복을 확인해 회원 테이블을 키 기준으로 유일화한 뒤 validate 옵션으로 재발을 차단했습니다.',
     result:
-      '응답 시간을 7초에서 380ms로 94% 단축하고 회귀 테스트를 통과했습니다.',
-    createdAt: '2026-09-08T18:00:00',
+      '행 수가 원본과 일치했고 merge 전 키 유일성 검증을 분석 템플릿에 추가했습니다.',
+    createdAt: '2026-08-10T18:00:00',
   }),
   verifiedTroubleshootingCase({
-    id: 'pc4',
-    title: 'RAG 검색 API — 임베딩 차원 불일치',
-    category: '네트워크 / API',
-    independent: true,
-    days: 2,
-    situation:
-      '문서와 질문의 임베딩 차원이 달라 검색 API가 500 오류를 반환했습니다.',
-    resolution:
-      '임베딩 모델과 벡터 차원을 단일 설정으로 통일하고 인덱스를 다시 생성했습니다.',
-    result:
-      '검증 질문 35건이 정상 응답했고 검색 API 계약 테스트가 모두 통과했습니다.',
-    createdAt: '2026-05-20T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc5',
-    title: 'Whisper 입력 — 오디오 샘플링 레이트 불일치',
-    category: '기타',
+    id: 'pc2',
+    title: 'StandardScaler를 전체 데이터에 fit 해서 성능이 부풀려진 문제',
+    category: '머신러닝',
     independent: false,
-    days: 3,
-    situation:
-      '모바일 녹음 파일 일부가 44.1kHz로 들어와 Whisper 전사 결과가 비어 있었습니다.',
-    resolution:
-      '멘토 피드백을 반영해 입력을 16kHz mono로 정규화하고 파일 형식 검증을 추가했습니다.',
-    result:
-      '실패 파일 12건을 모두 전사하고 입력 검증 자동 테스트를 추가했습니다.',
-    createdAt: '2026-05-28T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc6',
-    title: 'KoBART 요약 — GPU 메모리 부족',
-    category: '성능 / 메모리',
-    independent: true,
     days: 2,
     situation:
-      '긴 회의록을 일괄 요약할 때 GPU 메모리 부족으로 프로세스가 종료됐습니다.',
+      '검증 점수가 비정상적으로 높아 확인해 보니 스케일러를 train·test 전체에 fit 한 데이터 누수였습니다.',
     resolution:
-      '문장 단위 청킹과 배치 크기 제한을 적용하고 길이별 메모리 사용량을 측정했습니다.',
+      '멘토 피드백을 받아 Pipeline 으로 스케일링을 교차검증 안쪽으로 옮기고 전후 점수를 비교했습니다.',
     result:
-      '최대 60분 회의록까지 중단 없이 처리하고 평균 처리 시간을 12초로 유지했습니다.',
-    createdAt: '2026-06-05T18:00:00',
+      '부풀려진 점수를 걷어낸 실제 성능을 확인했고 전처리는 Pipeline 에 넣는 규칙을 세웠습니다.',
+    createdAt: '2026-08-10T18:00:00',
   }),
   verifiedTroubleshootingCase({
-    id: 'pc7',
-    title: 'PostgreSQL 인덱스 — 주문 검색 지연',
-    category: 'DB / SQL',
-    independent: true,
-    days: 2,
-    situation:
-      '기간·상태 복합 조건의 주문 검색이 전체 테이블 스캔으로 2.8초가 걸렸습니다.',
-    resolution:
-      '실행 계획을 기준으로 복합 인덱스 순서를 조정하고 동일 데이터로 비교했습니다.',
-    result:
-      '검색 응답을 2.8초에서 190ms로 줄이고 인덱스 회귀 기준을 문서화했습니다.',
-    createdAt: '2026-08-19T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc8',
-    title: 'Redis 캐시 키 — 사용자별 장바구니 충돌',
-    category: 'DB / SQL',
-    independent: true,
-    days: 3,
-    situation:
-      '캐시 키에 사용자 식별자가 없어 다른 사용자의 장바구니 결과가 재사용됐습니다.',
-    resolution:
-      '사용자·버전 정보를 포함한 키 규칙과 만료 정책을 적용하고 격리 테스트를 추가했습니다.',
-    result:
-      '사용자 간 캐시 충돌을 제거하고 200개 병렬 요청 검증을 통과했습니다.',
-    createdAt: '2026-09-02T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc9',
-    title: 'Flyway 마이그레이션 — 컬럼 제약조건 충돌',
-    category: 'DB / SQL',
-    independent: true,
-    days: 2,
-    situation:
-      '기존 주문 데이터의 null 값 때문에 NOT NULL 마이그레이션이 배포 단계에서 실패했습니다.',
-    resolution:
-      '백필과 제약조건 적용을 두 단계로 분리하고 운영 복제 데이터로 사전 검증했습니다.',
-    result:
-      '데이터 손실 없이 마이그레이션을 완료하고 롤백 시나리오까지 검증했습니다.',
-    createdAt: '2026-09-10T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc10',
-    title: 'Docker 환경변수 — 프로필 설정 누락',
-    category: '배포 / 인프라',
-    independent: true,
-    days: 2,
-    situation:
-      '스테이징 컨테이너에서 Spring 프로필이 누락되어 로컬 DB 주소로 접속했습니다.',
-    resolution:
-      '환경별 필수 변수 검증과 시작 전 설정 확인 스크립트를 배포 파이프라인에 추가했습니다.',
-    result:
-      '환경 오접속을 차단하고 스테이징 배포 및 헬스 체크를 연속 5회 통과했습니다.',
-    createdAt: '2026-09-21T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc11',
-    title: 'AWS 헬스 체크 — 롤링 배포 중 502 응답',
-    category: '배포 / 인프라',
+    id: 'pc3',
+    title: 'Git rebase 중 충돌을 잘못 해결해 동료 커밋을 날린 문제',
+    category: '협업',
     independent: false,
-    days: 3,
+    days: 1,
     situation:
-      '롤링 배포 중 준비되지 않은 인스턴스로 트래픽이 전달되어 502 응답이 발생했습니다.',
+      'rebase 충돌을 내 코드만 남기고 해결해 동료가 추가한 함수 두 개가 지워진 채 push 됐습니다.',
     resolution:
-      '강사 리뷰를 반영해 readiness 경로와 grace period를 분리하고 배포 순서를 조정했습니다.',
+      'git reflog 로 rebase 이전 커밋을 찾아 백업 브랜치를 만들고 지워진 파일을 복구했습니다.',
     result:
-      '무중단 배포 3회를 완료하고 배포 구간 502 응답이 0건임을 확인했습니다.',
-    createdAt: '2026-09-29T18:00:00',
-  }),
-  verifiedTroubleshootingCase({
-    id: 'pc12',
-    title: 'OAuth 콜백 — CORS 사전 요청 실패',
-    category: '네트워크 / API',
-    independent: true,
-    days: 3,
-    situation:
-      '운영 도메인의 OAuth 콜백 전 OPTIONS 요청이 차단되어 로그인이 완료되지 않았습니다.',
-    resolution:
-      '허용 origin과 자격증명 정책을 명시하고 프론트·API 도메인 조합별 계약 테스트를 만들었습니다.',
-    result:
-      '운영·스테이징 로그인 시나리오 8건을 모두 통과하고 재발 방지 문서를 남겼습니다.',
-    createdAt: '2026-10-08T18:00:00',
+      '동료 커밋을 모두 복구했고 rebase 전 백업 브랜치 생성을 팀 규칙으로 만들었습니다.',
+    createdAt: '2026-08-10T18:00:00',
   }),
 ]
 
@@ -771,65 +615,41 @@ export function createParkSujinDetailTabs(
           comparisonCount: RELATIVE_MOCK_POPULATION_SIZE,
         }
       }),
+      // 실측 — 기록실 자격증 2건, 매니저 승인 완료(2026-08-10).
       certifications: [
         {
-          name: '정보처리기사',
+          name: 'SQLD 개발자 자격',
           score: null,
           grade: '최종합격',
           status: 'APPROVED',
           scheduledAt: null,
-          submittedAt: null,
-          issuedAt: '2026-05-30',
-          registrationSource:
-            '운영 인증 · 한국산업인력공단 · 시연용 자격번호 26200000001A',
+          submittedAt: '2026-08-10',
+          issuedAt: '2026-08-10',
+          registrationSource: '기록실 제출 · 매니저 승인',
         },
         {
-          name: 'SQL 개발자(SQLD)',
+          name: 'PCCE 파이썬 코딩 실력 인증 3급',
           score: null,
-          grade: '최종합격',
+          grade: '3급',
           status: 'APPROVED',
           scheduledAt: null,
-          submittedAt: null,
-          issuedAt: '2026-06-20',
-          registrationSource:
-            '운영 인증 · 한국데이터산업진흥원 · 시연용 자격번호 SQLD-DEMO-26001 · 2028-06-20까지 유효',
-        },
-        {
-          name: 'PCCE — 파이썬 코딩 입문',
-          score: 940,
-          grade: 'LV.4',
-          status: 'APPROVED',
-          scheduledAt: null,
-          submittedAt: null,
-          issuedAt: '2026-06-12',
-          registrationSource: '운영 인증 · 제출 증빙 확인',
-        },
-        {
-          name: 'PCCP — 파이썬 코딩 전문',
-          score: 820,
-          grade: 'LV.4',
-          status: 'APPROVED',
-          scheduledAt: null,
-          submittedAt: null,
-          issuedAt: '2026-08-14',
-          registrationSource: '운영 인증 · 제출 증빙 확인',
-        },
-        {
-          name: 'PCSQL — SQL 개발자 1급',
-          score: 830,
-          grade: 'LV.3',
-          status: 'APPROVED',
-          scheduledAt: null,
-          submittedAt: null,
-          issuedAt: '2026-09-28',
-          registrationSource: '운영 인증 · 제출 증빙 확인',
+          submittedAt: '2026-08-10',
+          issuedAt: '2026-08-10',
+          registrationSource: '기록실 제출 · 매니저 승인',
         },
       ],
+      // 실측 — 과제 10건, 9건 제출(10주차 최종 산출물만 진행 중).
       assignments: [
-        ['W08', 'Spring REST API + JWT 인증', '실습', '완료'],
-        ['W10', 'Kafka 이벤트 라우팅 미니 프로젝트', '과제', '완료'],
-        ['W12', '트랜잭션 격리 수준 비교 분석', '리포트', '—'],
-        ['W14', 'MSA 도서 추천 — 시스템 설계 발표', '실습', '완료'],
+        ['W01', '개발 환경 구축과 Git 기초', '실습', '완료'],
+        ['W02', 'Python 자료구조로 로그 집계하기', '실습', '완료'],
+        ['W03', '함수와 예외 처리로 CSV 검증기 만들기', '실습', '완료'],
+        ['W04', 'SQL 기초 쿼리 20제', '실습', '완료'],
+        ['W05', '실행 계획 읽고 쿼리 튜닝하기', '실습', '완료'],
+        ['W06', 'pandas 로 공공데이터 전처리', '실습', '완료'],
+        ['W07', '첫 분류 모델 만들고 평가하기', '실습', '완료'],
+        ['W08', '1차 미니 프로젝트 중간 점검 자료', '과제', '완료'],
+        ['W09', '교차검증과 하이퍼파라미터 탐색', '실습', '완료'],
+        ['W10', '1차 미니 프로젝트 최종 산출물', '과제', '—'],
       ].map(([week, subjectName, type, submissionStatus], index) => ({
         id: `park-sujin-assignment-${index + 1}`,
         week,
@@ -842,47 +662,38 @@ export function createParkSujinDetailTabs(
     },
     problem: {
       status: 'READY',
-      certifiedCount: 12,
-      independentRate: 83,
-      averageDays: 2.3,
+      // 실측 — 인증 3건(pandas merge · StandardScaler · Git rebase), 독립 해결 1건, 평균 1.3일.
+      certifiedCount: 3,
+      independentRate: 33,
+      averageDays: 1.3,
       categories: [
-        { label: 'DB / SQL', count: 4, percentage: 33 },
-        { label: '배포 / 인프라', count: 3, percentage: 25 },
-        { label: '성능 / 메모리', count: 2, percentage: 17 },
-        { label: '네트워크 / API', count: 2, percentage: 17 },
-        { label: '기타', count: 1, percentage: 8 },
+        { label: '데이터', count: 1, percentage: 34 },
+        { label: '머신러닝', count: 1, percentage: 33 },
+        { label: '협업', count: 1, percentage: 33 },
       ],
       cases: parkSujinTroubleshootingCases,
-      peerEvaluatorCount: 12,
+      peerEvaluatorCount: 3,
       peerTags: [
-        { label: '논리적설득', count: 10 },
-        { label: '문제해결', count: 7 },
-        { label: '리더십', count: 6 },
-        { label: '코드리뷰', count: 5 },
-        { label: '책임감', count: 4 },
-        { label: '성장', count: 3 },
+        { label: '문제해결', count: 3 },
+        { label: '기록공유', count: 3 },
+        { label: '책임감', count: 2 },
         { label: '팀워크', count: 2 },
       ],
       peerTagCases: [
         {
-          tag: '논리적설득',
-          caseId: 'pc1',
-          caseTitle: 'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
-        },
-        {
           tag: '문제해결',
-          caseId: 'pc2',
-          caseTitle: 'Kafka 컨슈머 ack 미반영 — 메시지 중복 발생',
-        },
-        {
-          tag: '리더십',
           caseId: 'pc1',
-          caseTitle: 'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
+          caseTitle: 'pandas merge 후 행 수가 3배로 늘어난 문제',
         },
         {
-          tag: '코드리뷰',
+          tag: '기록공유',
+          caseId: 'pc2',
+          caseTitle: 'StandardScaler를 전체 데이터에 fit 해서 성능이 부풀려진 문제',
+        },
+        {
+          tag: '팀워크',
           caseId: 'pc3',
-          caseTitle: 'N+1 쿼리 — 사용자 주문 목록 응답 7초',
+          caseTitle: 'Git rebase 중 충돌을 잘못 해결해 동료 커밋을 날린 문제',
         },
       ],
       limitations: [],
@@ -890,7 +701,7 @@ export function createParkSujinDetailTabs(
     growth: {
       status: 'READY',
       growthTimelineStatus: 'NOT_READY',
-      peerEvaluationCount: 12,
+      peerEvaluationCount: 3,
       peerReputation: [
         { key: '협업', score: 4.5 },
         { key: '소통', score: 4.5 },
@@ -900,28 +711,28 @@ export function createParkSujinDetailTabs(
       ],
       peerComments: [
         {
-          comment: '디버깅 접근이 논리적. 격리 수준 문제를 팀에 잘 설명함.',
-          submittedAt: '2026-05-10T18:00:00',
+          comment: 'merge 행 폭증 원인을 키 중복까지 파고들어 팀 템플릿으로 만들어 줌.',
+          submittedAt: '2026-08-08T18:00:00',
         },
         {
-          comment: 'PR 코드 리뷰 코멘트가 따뜻하고 구체적. 함께 일하기 좋음.',
-          submittedAt: '2026-05-08T18:00:00',
+          comment: '스터디에서 실행 계획 읽는 법을 차근차근 설명해 줘서 이해가 잘 됐음.',
+          submittedAt: '2026-08-05T18:00:00',
         },
         {
-          comment: '막힌 부분을 끝까지 파고듦. Kafka ack 처리 사례가 인상적.',
-          submittedAt: '2026-05-06T18:00:00',
+          comment: '날린 커밋을 복구하고 rebase 백업 규칙까지 정리해 공유한 게 인상적.',
+          submittedAt: '2026-08-01T18:00:00',
         },
       ],
       mentorEvaluation: {
         averageScore: 4.3,
-        submittedAt: '2026-10-16T18:00:00',
+        submittedAt: '2026-08-08T18:00:00',
       },
       limitations: [],
     },
   }
 }
 
-const projectEvidenceCodes = ['PARK-SUJIN-PJ1', 'PARK-SUJIN-PJ2']
+const projectEvidenceCodes = ['HWANG-SUBIN-PJ1']
 
 const alignmentAxes: AiAxisAlignmentAxis[] = scoreAxes.map((item) => ({
   key: item.key,
@@ -930,7 +741,7 @@ const alignmentAxes: AiAxisAlignmentAxis[] = scoreAxes.map((item) => ({
   evidenceScore: item.score,
   difference: 0,
   relation: 'ALIGNED',
-  summary: `${item.key} ${item.score}점으로 박수진 mock 근거와 일치합니다.`,
+  summary: `${item.key} ${item.score}점으로 실측 근거와 일치합니다.`,
   reason: [item.detail],
   evidence: item.evidence.map((evidence) => ({
     key: evidence.key,
@@ -943,24 +754,23 @@ const alignmentAxes: AiAxisAlignmentAxis[] = scoreAxes.map((item) => ({
   })),
 }))
 
+// 실측 — 34기 학습 이력(퀴즈·과제·블로그)과 인증 프로젝트에서 뽑은 그래프.
 const ontologyNodes: OntologyNode[] = [
-  ['me', '박수진', 50, 50, 'self'],
-  ['be', '백엔드', 28, 30, 'subject'],
-  ['db', 'DB', 70, 28, 'subject'],
-  ['cloud', '클라우드', 74, 72, 'subject'],
-  ['algo', '알고리즘', 26, 72, 'subject'],
-  ['java', 'Java', 16, 18, 'skill'],
-  ['spring', 'Spring', 40, 15, 'skill'],
-  ['kafka', 'Kafka', 60, 15, 'skill'],
-  ['sql', 'SQL', 86, 34, 'skill'],
-  ['docker', 'Docker', 90, 58, 'skill'],
-  ['aws', 'AWS', 82, 86, 'skill'],
-  ['msa', 'MSA', 52, 33, 'method'],
-  ['tx', '트랜잭션', 62, 44, 'method'],
-  ['mart', 'Encore Mart', 44, 64, 'project'],
-  ['llm', 'LLM 추천', 64, 62, 'project'],
-  ['commerce', '커머스', 38, 86, 'domain'],
-  ['reco', '추천', 78, 78, 'domain'],
+  ['me', '황수빈', 50, 50, 'self'],
+  ['py', 'Python', 28, 30, 'subject'],
+  ['db', 'SQL·DB', 70, 28, 'subject'],
+  ['da', '데이터 분석', 74, 72, 'subject'],
+  ['ml', '머신러닝', 26, 72, 'subject'],
+  ['pandas', 'pandas', 16, 18, 'skill'],
+  ['bs', 'BeautifulSoup', 40, 15, 'skill'],
+  ['pg', 'PostgreSQL', 86, 34, 'skill'],
+  ['st', 'Streamlit', 90, 58, 'skill'],
+  ['sk', 'scikit-learn', 12, 60, 'skill'],
+  ['git', 'Git', 60, 15, 'skill'],
+  ['prep', '전처리·정규화', 52, 33, 'method'],
+  ['cv', '교차검증', 38, 62, 'method'],
+  ['map', '채용 스택 지도', 64, 62, 'project'],
+  ['jobmkt', '채용·시장 분석', 78, 78, 'domain'],
 ].map(([id, label, x, y, kind]) => ({
   id: String(id),
   label: String(label),
@@ -969,92 +779,80 @@ const ontologyNodes: OntologyNode[] = [
   kind: kind as OntologyNode['kind'],
   weight: kind === 'self' ? 1 : 0.8,
   evidenceCount: 1,
-  evidence: [`박수진 수강역량증명서 mock · ${String(label)}`],
+  evidence: [`학습 이력 실측 · ${String(label)}`],
   confidence: 'HIGH',
 }))
 
 const ontologyEdges: OntologyEdge[] = [
-  ['me', 'be', 'LEARNED'],
+  ['me', 'py', 'LEARNED'],
   ['me', 'db', 'LEARNED'],
-  ['me', 'cloud', 'LEARNED'],
-  ['me', 'algo', 'LEARNED'],
-  ['me', 'mart', 'PARTICIPATED'],
-  ['me', 'llm', 'PARTICIPATED'],
-  ['be', 'java', 'FOLLOWED_BY'],
-  ['be', 'spring', 'FOLLOWED_BY'],
-  ['be', 'kafka', 'FOLLOWED_BY'],
-  ['be', 'msa', 'FOLLOWED_BY'],
-  ['db', 'sql', 'FOLLOWED_BY'],
-  ['db', 'tx', 'FOLLOWED_BY'],
-  ['cloud', 'docker', 'FOLLOWED_BY'],
-  ['cloud', 'aws', 'FOLLOWED_BY'],
-  ['mart', 'msa', 'APPLIED'],
-  ['mart', 'tx', 'APPLIED'],
-  ['mart', 'kafka', 'USED'],
-  ['mart', 'sql', 'USED'],
-  ['mart', 'commerce', 'BELONGS_TO'],
-  ['llm', 'sql', 'USED'],
-  ['llm', 'reco', 'BELONGS_TO'],
+  ['me', 'da', 'LEARNED'],
+  ['me', 'ml', 'LEARNED'],
+  ['me', 'map', 'PARTICIPATED'],
+  ['py', 'pandas', 'FOLLOWED_BY'],
+  ['py', 'bs', 'FOLLOWED_BY'],
+  ['py', 'git', 'FOLLOWED_BY'],
+  ['db', 'pg', 'FOLLOWED_BY'],
+  ['da', 'st', 'FOLLOWED_BY'],
+  ['da', 'prep', 'FOLLOWED_BY'],
+  ['ml', 'sk', 'FOLLOWED_BY'],
+  ['ml', 'cv', 'FOLLOWED_BY'],
+  ['map', 'prep', 'APPLIED'],
+  ['map', 'pandas', 'USED'],
+  ['map', 'bs', 'USED'],
+  ['map', 'pg', 'USED'],
+  ['map', 'st', 'USED'],
+  ['map', 'jobmkt', 'BELONGS_TO'],
 ].map(([source, target, type]) => ({
   source,
   target,
   type: type as OntologyEdge['type'],
   strength: 0.8,
-  evidence: ['박수진 수강역량증명서 mock의 온톨로지 연결'],
+  evidence: ['학습 이력과 인증 프로젝트에서 확인된 연결'],
 }))
 
+// 직무 적합도 — 실측 근거(역량 점검 2회 · 인증 프로젝트 1건 · 인증 문제해결 3건) 기반.
 const parkSujinPrimaryRole: AiJobFitRoleCandidate = {
   rank: 1,
-  role: '백엔드',
-  jobLabel: '백엔드 개발자',
-  roleLabel: '마이크로서비스·분산 시스템',
-  workType: '체계적 문제해결형',
+  role: '데이터 분석',
+  jobLabel: '데이터 분석가',
+  workType: '수집부터 검증까지 잇는 완결형',
+  roleLabel: '채용·시장 데이터 분석',
   fitScore: 88,
   confidence: 'HIGH',
   summary:
-    '백엔드 기초, 트랜잭션 설계, Kafka 기반 문제해결 경험이 같은 방향을 가리킵니다.',
-  evidence: ['기술 88점', '인증 프로젝트 2건', '인증 문제해결 12건'],
+    '채용 공고 4,180건을 직접 수집·정규화해 직무별 스택 지도를 만든 인증 프로젝트가 분석 직무와 정확히 겹칩니다.',
+  evidence: ['역량 점검 평균 98점', '인증 프로젝트 1건', '인증 문제해결 3건'],
   fitEvidence: {
     projectRoles: [
-      { label: '백엔드 리드', taskCount: 3, projectCount: 1 },
-      { label: 'LLM 파이프라인 개발', taskCount: 3, projectCount: 1 },
+      { label: '수집·정규화 설계', taskCount: 4, projectCount: 1 },
+      { label: '분석·대시보드', taskCount: 3, projectCount: 1 },
     ],
     troubleshooting: {
-      certifiedCaseCount: 12,
-      independentCaseCount: 10,
-      independentRate: 83,
+      certifiedCaseCount: 3,
+      independentCaseCount: 1,
+      independentRate: 33,
       tags: [
-        { label: 'DB / SQL', count: 4 },
-        { label: '배포 / 인프라', count: 3 },
-        { label: '성능 / 메모리', count: 2 },
+        { label: '데이터', count: 1 },
+        { label: '머신러닝', count: 1 },
+        { label: '협업', count: 1 },
       ],
     },
     highAchievements: [
-      { category: '백엔드 기초 (Java · Spring)', score: 92 },
-      { category: '트러블슈팅 · 디버깅', score: 88 },
-      { category: 'DB / SQL', score: 84 },
+      { category: 'Python', score: 100 },
+      { category: 'SQL', score: 96 },
     ],
   },
   theoryUnderstanding: {
     status: 'READY',
-    score: 87.2,
+    score: 98,
     level: 'HIGH',
     label: '높음',
     summary:
-      '파이썬·데이터 처리와 웹·데이터 구현의 직무 관련 개념을 높음 수준으로 이해하고 있습니다.',
+      'Python·SQL 역량 점검 2회를 평균 98점으로 통과해 분석 직무의 기초 이론을 안정적으로 이해하고 있습니다.',
     categories: [
-      {
-        key: 'PYTHON',
-        category: '파이썬·데이터 처리',
-        score: 82,
-        weightPercent: 35,
-      },
-      {
-        key: 'WEB_DATA',
-        category: '웹·데이터 구현',
-        score: 90,
-        weightPercent: 65,
-      },
+      { key: 'PYTHON', category: 'Python·자료구조', score: 100, weightPercent: 50 },
+      { key: 'WEB_DATA', category: 'SQL·관계형 DB', score: 96, weightPercent: 50 },
     ],
   },
   evidenceCodes: projectEvidenceCodes,
@@ -1063,81 +861,64 @@ const parkSujinPrimaryRole: AiJobFitRoleCandidate = {
 
 const parkSujinAiServiceRole: AiJobFitRoleCandidate = {
   rank: 2,
-  role: 'ML·AI',
-  jobLabel: 'AI 서비스 개발자',
-  roleLabel: 'LLM 파이프라인·API 구현',
-  workType: '모델 활용·서비스 구현형',
-  fitScore: 84,
-  confidence: 'HIGH',
+  role: '데이터 엔지니어',
+  jobLabel: '데이터 엔지니어',
+  roleLabel: '수집·적재 파이프라인',
+  workType: '파이프라인 구축형',
+  fitScore: 82,
+  confidence: 'MEDIUM',
   summary:
-    '회의록 프로젝트에서 STT·요약·API 파이프라인을 구현했고, 모델 활용 결과를 검증 지표로 확인했습니다.',
-  evidence: ['LLM 파이프라인 개발', '회의록 35건 검증', 'FastAPI 제공'],
+    '크롤러 → 정규화 → PostgreSQL 적재 → 대시보드로 이어지는 파이프라인을 혼자 완성했고, 메모리·중복 문제를 직접 해결했습니다.',
+  evidence: ['수집 파이프라인 구축', '키워드 정규화 312개', 'PostgreSQL 적재'],
   fitEvidence: {
     projectRoles: [
-      { label: 'LLM 파이프라인 개발', taskCount: 3, projectCount: 1 },
+      { label: '수집·적재 파이프라인 구축', taskCount: 3, projectCount: 1 },
     ],
     troubleshooting: {
-      certifiedCaseCount: 5,
-      independentCaseCount: 0,
-      independentRate: null,
+      certifiedCaseCount: 1,
+      independentCaseCount: 1,
+      independentRate: 100,
       tags: [
-        { label: '성능 / 메모리', count: 2 },
-        { label: '네트워크 / API', count: 2 },
-        { label: '오디오 입력', count: 1 },
+        { label: 'pandas', count: 1 },
+        { label: '메모리 최적화', count: 1 },
       ],
     },
-    highAchievements: [
-      { category: '파이썬·데이터 처리', score: 82 },
-      { category: '웹·데이터 구현', score: 90 },
-    ],
+    highAchievements: [{ category: 'SQL', score: 96 }],
   },
   theoryUnderstanding: {
     status: 'READY',
-    score: 87.2,
+    score: 96,
     level: 'HIGH',
     label: '높음',
-    summary:
-      '파이썬·데이터 처리와 웹·데이터 구현의 관련 개념을 높음 수준으로 이해하고 있습니다.',
+    summary: 'SQL·관계형 DB 역량 점검 96점으로 적재·조회 설계의 기초가 확인됩니다.',
     categories: [
-      {
-        key: 'PYTHON',
-        category: '파이썬·데이터 처리',
-        score: 82,
-        weightPercent: 35,
-      },
-      {
-        key: 'WEB_DATA',
-        category: '웹·데이터 구현',
-        score: 90,
-        weightPercent: 65,
-      },
+      { key: 'WEB_DATA', category: 'SQL·관계형 DB', score: 96, weightPercent: 100 },
     ],
   },
-  evidenceCodes: ['PARK-SUJIN-PJ2', 'pc3', 'pc5', 'pc6', 'pc12'],
+  evidenceCodes: ['HWANG-SUBIN-PJ1', 'pc1'],
   limitations: [],
 }
 
 const parkSujinDevOpsRole: AiJobFitRoleCandidate = {
   rank: 3,
-  role: 'DevOps·인프라',
-  jobLabel: 'DevOps·인프라 엔지니어',
-  roleLabel: '배포 안정화·운영 문제해결',
-  workType: '검증·운영 안정화형',
-  fitScore: 79,
+  role: 'ML·AI',
+  jobLabel: '머신러닝 엔지니어',
+  roleLabel: '모델 학습·검증',
+  workType: '검증 중심 학습형',
+  fitScore: 74,
   confidence: 'MEDIUM',
   summary:
-    'Kafka·Docker·AWS 배포 문제를 인증 사례로 해결했고, 백엔드 수행 경험을 운영 안정화까지 연결했습니다.',
-  evidence: ['인프라·배포 인증 문제해결 3건', '무중단 배포 3회'],
+    '교차검증·데이터 누수 사례로 검증 감각은 확인되지만, 머신러닝 범위의 평가는 3차 역량 점검(08-14 예정) 이후에 보강됩니다.',
+  evidence: ['데이터 누수 인증 사례 1건', '교차검증·HPO 과제 제출'],
   fitEvidence: {
     projectRoles: [],
     troubleshooting: {
-      certifiedCaseCount: 3,
+      certifiedCaseCount: 1,
       independentCaseCount: 0,
       independentRate: null,
       tags: [
-        { label: 'Kafka', count: 1 },
-        { label: 'Docker', count: 1 },
-        { label: 'AWS', count: 1 },
+        { label: 'scikit-learn', count: 1 },
+        { label: '데이터 누수', count: 1 },
       ],
     },
     highAchievements: [],
@@ -1148,13 +929,11 @@ const parkSujinDevOpsRole: AiJobFitRoleCandidate = {
     level: 'NOT_READY',
     label: '분석 준비 중',
     summary:
-      '인프라 직무 관련 이론 평가가 충분하지 않아 인증 문제해결 근거를 중심으로 해석했습니다.',
+      '머신러닝 범위 역량 점검(3차)이 아직 응시 전이라 인증 사례와 과제 제출 근거로만 해석했습니다.',
     categories: [],
   },
-  evidenceCodes: ['pc2', 'pc10', 'pc11'],
-  limitations: [
-    '인프라 직무 관련 이론 평가는 근거가 충분해지면 다시 분석합니다.',
-  ],
+  evidenceCodes: ['pc2'],
+  limitations: ['3차 역량 점검(데이터 분석·머신러닝) 응시 후 다시 분석합니다.'],
 }
 
 export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
@@ -1162,7 +941,7 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
   jobFit: {
     policyVersion: '2026.08.05-job-fit-v3',
     status: 'READY',
-    summary: '분산 시스템에 강한 백엔드 엔지니어 역량이 가장 선명합니다.',
+    summary: '수집부터 검증까지 스스로 완결하는 데이터 분석가 역량이 가장 선명합니다.',
     primaryRole: parkSujinPrimaryRole,
     roleCandidates: [
       parkSujinPrimaryRole,
@@ -1170,16 +949,17 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
       parkSujinDevOpsRole,
     ],
     sourceData: {
-      interestedJobs: ['백엔드 개발자', 'AI 서비스 개발자'],
+      // 이력서 2종(백엔드 개발자 지원용 · AI 엔지니어 지원용)의 희망 직무 — 실측.
+      interestedJobs: ['AI 엔지니어', '백엔드 개발자'],
       skillTags: [
-        'Java',
-        'Spring Boot',
-        'Kafka',
-        'PostgreSQL',
         'Python',
-        'FastAPI',
+        'pandas',
+        'BeautifulSoup',
+        'PostgreSQL',
+        'Streamlit',
+        'scikit-learn',
       ],
-      projectDomains: ['커머스 · 주문/결제', '추천 · LLM 파이프라인'],
+      projectDomains: ['데이터 · 채용 시장 분석'],
       assessments: parkSujinAssessments.map((assessment) => ({
         assessmentType: assessment.assessmentType,
         category: assessment.category,
@@ -1187,13 +967,7 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
       })),
       theoryCategories:
         parkSujinPrimaryRole.theoryUnderstanding?.categories ?? [],
-      certifications: [
-        '정보처리기사',
-        'SQL 개발자(SQLD)',
-        'PCCE — 파이썬 코딩 입문',
-        'PCCP — 파이썬 코딩 전문',
-        'PCSQL — SQL 개발자 1급',
-      ],
+      certifications: ['SQLD 개발자 자격', 'PCCE 파이썬 코딩 실력 인증 3급'],
     },
     confidence: 'HIGH',
     limitations: [],
@@ -1203,7 +977,7 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
   axisAlignment: {
     policyVersion: '2026.08.05-axis-alignment-v1',
     status: 'READY',
-    summary: '박수진 mock의 종합 역량 축과 근거가 일치합니다.',
+    summary: '종합 역량 축과 실측 근거가 일치합니다.',
     thresholds: { alignedMaxDifference: 10, divergentMinDifference: 25 },
     axes: alignmentAxes,
     highlights: {
@@ -1216,25 +990,16 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
   projects: {
     policyVersion: '2026.08.05-project-recruiter-analysis-v2',
     summary:
-      '커머스 백엔드와 한국어 회의록 LLM 파이프라인 프로젝트 2건을 인증했습니다.',
+      '채용 공고 데이터를 수집·정규화해 직무별 기술 스택 지도를 만든 개인 프로젝트 1건을 인증했습니다.',
     groups: [
       {
         key: 'CONTINUITY',
-        label: '백엔드 문제해결의 연속성',
-        summary: '트랜잭션·Kafka·성능 개선을 설계부터 검증까지 연결했습니다.',
+        label: '수집 → 분석 → 시각화 완결',
+        summary:
+          '크롤링·정규화·적재·분석·대시보드를 한 사람이 끝까지 연결했습니다.',
         projectIds: ['pj1'],
-        projectNames: ['Encore Mart — 마이크로서비스 백엔드'],
-        evidenceCodes: ['PARK-SUJIN-PJ1'],
-        confidence: 'HIGH',
-        limitations: [],
-      },
-      {
-        key: 'EXPANSION',
-        label: 'LLM 파이프라인으로의 확장',
-        summary: '백엔드 경험을 STT·요약·API 파이프라인으로 확장했습니다.',
-        projectIds: ['pj2'],
-        projectNames: ['한국어 회의록 요약 LLM 파이프라인'],
-        evidenceCodes: ['PARK-SUJIN-PJ2'],
+        projectNames: ['채용 공고로 보는 데이터 직무 기술 스택 지도'],
+        evidenceCodes: ['HWANG-SUBIN-PJ1'],
         confidence: 'HIGH',
         limitations: [],
       },
@@ -1244,153 +1009,107 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
       {
         projectId: 'pj1',
         order: 1,
-        name: 'Encore Mart — 마이크로서비스 백엔드',
-        period: { startedAt: '2026-07-06', endedAt: '2026-09-18' },
-        certificationStatus: 'CERTIFIED',
-        status: 'READY',
-        membershipRole: 'MEMBER',
-        teamContext: {
-          domain: '커머스 · 주문/결제',
-          scope: '팀 프로젝트',
-          techStacks: [
-            'Java 17',
-            'Spring Boot',
-            'Kafka',
-            'PostgreSQL',
-            'Docker',
-          ],
-          outcomes: [
-            '결제 실패 retry 95% 안정화',
-            'API 응답 320ms에서 145ms로 단축',
-          ],
-        },
-        personalEvidence: {
-          tasks: [
-            '주문·결제 도메인 분리',
-            '트랜잭션 격리 수준 정합',
-            'Kafka 이벤트 라우팅',
-          ],
-          workCategories: ['백엔드 리드'],
-          technologies: [
-            'Java 17',
-            'Spring Boot',
-            'Kafka',
-            'PostgreSQL',
-            'Docker',
-          ],
-          peerObservations: [
-            'Encore Mart 도메인 분리에서 백엔드 4인을 가이드함',
-          ],
-          troubleshootingCases: [
-            'PostgreSQL 데드락',
-            'Kafka 메시지 중복',
-            'N+1 쿼리',
-          ],
-          artifacts: ['프로젝트 v0.3 산출물', '강사 코멘트 3건'],
-        },
-        analysis: '주문·결제 도메인의 안정성과 응답 성능을 함께 개선했습니다.',
-        recruiterInsight: {
-          role: '백엔드 리드',
-          challenge: '결제 데드락과 Kafka 메시지 중복',
-          action:
-            '격리 수준과 ack 처리 방식을 재설계하고 같은 조건으로 재검증했습니다.',
-          outcome:
-            '실패율 0.2%, retry 95% 안정화, API 응답 145ms를 달성했습니다.',
-          strength: '분산 시스템 문제를 수치로 검증하는 실행력',
-          summary:
-            '트랜잭션·이벤트·성능 문제를 연결해 해결한 백엔드 경험입니다.',
-          evidenceCodes: ['PARK-SUJIN-PJ1'],
-          generatedBy: 'FALLBACK',
-        },
-        evidenceCodes: ['PARK-SUJIN-PJ1'],
-        limitations: [],
-        generatedBy: 'FALLBACK',
-      },
-      {
-        projectId: 'pj2',
-        order: 2,
-        name: '한국어 회의록 요약 LLM 파이프라인',
-        period: { startedAt: '2026-05-04', endedAt: '2026-06-12' },
+        name: '채용 공고로 보는 데이터 직무 기술 스택 지도',
+        period: { startedAt: '2026-07-14', endedAt: '2026-08-29' },
         certificationStatus: 'CERTIFIED',
         status: 'READY',
         membershipRole: 'OWNER',
         teamContext: {
-          domain: '추천 · LLM 파이프라인',
+          domain: '데이터 · 채용 시장 분석',
           scope: '개인 프로젝트',
-          techStacks: ['Python', 'Whisper', 'GPT-4', 'KoBART', 'FastAPI'],
+          techStacks: [
+            'Python',
+            'pandas',
+            'BeautifulSoup',
+            'PostgreSQL',
+            'Streamlit',
+          ],
           outcomes: [
-            'ROUGE-L 0.873',
-            '회의록 35건 검증',
-            '평균 처리 시간 12초',
+            '채용 공고 5,240건 수집 · 중복 제거 후 4,180건 확보',
+            '기술 표기 1,148종 → 표준 키워드 312개 정규화',
+            '대시보드 조회 4.2초 → 0.8초',
           ],
         },
         personalEvidence: {
           tasks: [
-            'Whisper STT 구성',
-            '한국어 회의록 요약 자동화',
-            'FastAPI 제공',
+            '채용 사이트 구조 분석 및 수집 대상 확정',
+            '크롤러 구현 (요청 간격 1초, 재시도 3회)',
+            '기술 스택 표기 정규화',
+            'Streamlit 대시보드 구현',
           ],
-          workCategories: ['LLM 파이프라인 개발'],
-          technologies: ['Python', 'Whisper', 'GPT-4', 'KoBART', 'FastAPI'],
+          workCategories: ['수집·정규화 설계', '분석·대시보드'],
+          technologies: [
+            'Python',
+            'pandas',
+            'BeautifulSoup',
+            'PostgreSQL',
+            'Streamlit',
+          ],
           peerObservations: [],
-          troubleshootingCases: [],
-          artifacts: ['회의록 35건 검증 결과'],
+          troubleshootingCases: [
+            'pandas merge 후 행 수가 3배로 늘어난 문제',
+          ],
+          artifacts: ['성과 지표 3건', '작업 보드 7/8 완료'],
         },
-        analysis: 'STT부터 요약 API까지 개인이 전체 파이프라인을 구현했습니다.',
+        analysis:
+          '수집 규모와 정규화 커버리지를 수치로 남기며 분석 결과의 신뢰를 스스로 검증했습니다.',
         recruiterInsight: {
-          role: 'LLM 파이프라인 개발',
-          challenge: '한국어 회의록의 자동 전사와 요약 품질 검증',
+          role: '개인 프로젝트 · 수집부터 대시보드까지',
+          challenge: '표기가 제각각인 기술 키워드 1,148종과 merge 행 폭증',
           action:
-            'Whisper, GPT-4, KoBART를 연결하고 회의록 35건으로 검증했습니다.',
-          outcome: 'ROUGE-L 0.873과 평균 처리 시간 12초를 기록했습니다.',
-          strength: '모델 활용을 서비스 가능한 파이프라인으로 연결하는 역량',
-          summary: 'LLM 기능을 API와 검증 지표까지 완결한 개인 프로젝트입니다.',
-          evidenceCodes: ['PARK-SUJIN-PJ2'],
+            '동의어 사전으로 312개 표준 키워드로 정규화하고, 조인 키 유일성 검증을 템플릿화했습니다.',
+          outcome:
+            '공고 4,180건 기반 직무별 스택 지도를 완성하고 대시보드 조회를 0.8초로 만들었습니다.',
+          strength: '수집·정규화·검증을 혼자 완결하는 실행력',
+          summary:
+            '데이터 수집부터 시각화까지 전 과정을 검증 가능한 수치로 남긴 개인 프로젝트입니다.',
+          evidenceCodes: ['HWANG-SUBIN-PJ1'],
           generatedBy: 'FALLBACK',
         },
-        evidenceCodes: ['PARK-SUJIN-PJ2'],
+        evidenceCodes: ['HWANG-SUBIN-PJ1'],
         limitations: [],
         generatedBy: 'FALLBACK',
       },
     ],
     overview: {
-      experienceScope: '커머스 백엔드부터 LLM 파이프라인까지',
-      workingStyle: '수치 검증과 문서화를 연결하는 체계적 문제해결형',
-      overall: '분산 시스템 백엔드와 LLM 서비스 구현을 함께 경험했습니다.',
+      experienceScope: '채용 공고 수집부터 직무 스택 대시보드까지',
+      workingStyle: '수치 검증과 기록 공유를 연결하는 완결형',
+      overall:
+        '개인 프로젝트 1건으로 데이터 파이프라인 전 구간을 경험했습니다.',
     },
     recruiterSummary: {
-      headline: '분산 시스템 문제를 수치로 검증하는 백엔드 엔지니어',
-      summary: '인증 프로젝트 2건에서 개인 역할과 검증 결과가 확인됩니다.',
-      strengths: ['트랜잭션·Kafka 설계', '성능 개선', 'LLM 파이프라인 구현'],
+      headline: '수집부터 검증까지 혼자 완결하는 데이터 분석가',
+      summary: '인증 프로젝트 1건에서 개인 수행 범위와 검증 결과가 확인됩니다.',
+      strengths: ['수집 파이프라인 구축', '키워드 정규화', '대시보드 시각화'],
       evidenceCodes: projectEvidenceCodes,
       generatedBy: 'FALLBACK',
     },
     aggregateAnalysis: {
       summary: [
-        '전체 프로젝트에서 백엔드 리드와 LLM 파이프라인 개발을 맡아 핵심 기능을 구현하고 검증까지 마무리했습니다.',
-        '동료평가에서는 책임감과 기술 기여가 특히 선명하며, 근거를 공유해 팀의 해결 기준을 맞추는 프로젝트 스타일이 나타납니다.',
+        '인증 프로젝트에서 수집·정규화·분석·시각화 전 구간을 혼자 수행하고 성과를 수치로 남겼습니다.',
+        '블로그·트러블슈팅 기록에서 해결 과정을 문서로 공유하는 스타일이 일관되게 나타납니다.',
       ],
       rolePatterns: [
-        { label: '백엔드 리드', projectCount: 1, taskCount: 3 },
-        { label: 'LLM 파이프라인 개발', projectCount: 1, taskCount: 3 },
+        { label: '수집·정규화 설계', projectCount: 1, taskCount: 4 },
+        { label: '분석·대시보드', projectCount: 1, taskCount: 3 },
       ],
       commonTasks: [
-        '도메인·트랜잭션 설계',
-        '이벤트 라우팅',
-        'STT·요약 파이프라인 구현',
-        'API 제공과 결과 검증',
+        '수집 대상 구조 분석',
+        '데이터 정규화·적재',
+        '직무별 빈도 분석',
+        '대시보드 구현과 결과 검증',
       ],
       selfReviewStatements: [
-        '주문·결제 도메인 분리와 Kafka 이벤트 라우팅을 맡아 백엔드 팀의 구현 기준을 정리했습니다.',
-        'Whisper STT부터 한국어 요약 API까지 전체 파이프라인을 구현하고 품질 지표를 검증했습니다.',
+        '채용 사이트 구조를 분석해 수집 파이프라인을 만들고 키워드 정규화 기준을 세웠습니다.',
+        '직무별 스택 빈도를 분석해 Streamlit 대시보드로 공개했습니다.',
       ],
       contribution: {
-        totalBoardTaskCount: 15,
-        assignedTaskCount: 6,
-        completedAssignedTaskCount: 6,
+        totalBoardTaskCount: 8,
+        assignedTaskCount: 8,
+        completedAssignedTaskCount: 7,
         summary: [
-          '전체 보드 업무 15개 중 핵심 구현 업무 6개를 담당했습니다.',
-          '담당 업무 6개를 모두 완료해 맡은 범위를 끝까지 마무리하는 기여가 확인됩니다.',
+          '개인 프로젝트 보드 업무 8개를 모두 스스로 계획하고 담당했습니다.',
+          '7개를 완료했고 발표자료 작성 1건이 진행 중입니다(마감 08-29).',
         ],
       },
       peerAxes: [
@@ -1398,62 +1117,54 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
           key: '기술/기술기여',
           score: 4.6,
           summary: [
-            '핵심 기능 구현과 기술 방향을 함께 제시하는 기술 주도형입니다.',
-            '개인 구현을 팀이 이어서 사용할 수 있는 구조와 기준으로 연결합니다.',
+            '역량 점검 평균 98점의 기초 위에 수집·분석 파이프라인을 직접 구현합니다.',
+            '해결한 문제를 템플릿·규칙으로 만들어 재사용 가능하게 남깁니다.',
           ],
         },
         {
           key: '소통·협업·팀워크',
           score: 4.5,
           summary: [
-            '문제 상황과 판단 근거를 설명해 팀의 합의를 이끄는 조율형입니다.',
-            '혼자 해결한 내용도 문서와 리뷰로 공유해 협업 자산으로 전환합니다.',
+            'Q&A 질문 3건이 전부 답변 채택될 만큼 질문을 구체적으로 정리합니다.',
+            'SQL 스터디를 2회 운영하며 배운 내용을 팀과 나눕니다.',
           ],
         },
         {
           key: '문제해결',
           score: 4.1,
           summary: [
-            '재현 조건을 고정하고 원인을 분리한 뒤 결과를 수치로 확인하는 검증형입니다.',
-            '복잡한 장애에서도 해결 과정을 단계적으로 좁혀가는 성향이 나타납니다.',
+            '행 폭증·데이터 누수처럼 결과를 왜곡하는 문제를 원인까지 파고들어 해결합니다.',
+            '해결 후 검증 규칙을 만들어 재발을 차단하는 성향이 나타납니다.',
           ],
         },
         {
           key: '책임감',
           score: 4.8,
           summary: [
-            '맡은 업무를 구현에서 검증까지 끝내는 완결형입니다.',
-            '팀의 핵심 업무를 지속적으로 책임지고 마감하는 신뢰가 가장 높게 나타납니다.',
+            '결석 0에 과제 9/10 제출, 블로그 8주 연속 제출로 꾸준함이 확인됩니다.',
+            '맡은 프로젝트 작업 8건을 스스로 계획하고 7건을 완료했습니다.',
           ],
         },
       ],
       projectGrowth: [
         {
           projectId: 'pj1',
-          projectName: 'Encore Mart — 마이크로서비스 백엔드',
+          projectName: '채용 공고로 보는 데이터 직무 기술 스택 지도',
           summary: [
-            '단일 API 구현에서 트랜잭션·이벤트·성능을 함께 다루는 분산 시스템 역할로 확장했습니다.',
-            '개인 구현을 넘어 백엔드 팀의 도메인 분리와 문제해결 기준을 가이드했습니다.',
-          ],
-        },
-        {
-          projectId: 'pj2',
-          projectName: '한국어 회의록 요약 LLM 파이프라인',
-          summary: [
-            '백엔드 서비스 경험을 STT·요약 모델·API가 연결된 AI 서비스 파이프라인으로 확장했습니다.',
-            '기능 구현에 머무르지 않고 품질과 처리 시간을 직접 검증하는 범위까지 넓혔습니다.',
+            '주차 실습에서 배운 크롤링·전처리·SQL을 하나의 파이프라인으로 통합했습니다.',
+            '수집 데이터의 품질 문제(중복·표기 불일치)를 직접 겪고 검증 규칙으로 만들었습니다.',
           ],
         },
       ],
       strengths: [
-        '핵심 기술 업무를 맡아 구현과 검증까지 완결하는 실행력',
-        '복잡한 문제를 구조화하고 근거를 팀과 공유하는 협업 방식',
-        '백엔드에서 AI 서비스까지 역할과 기술 범위를 확장하는 성장성',
+        '수집부터 시각화까지 전 구간을 혼자 완결하는 실행력',
+        '문제를 해결한 뒤 템플릿·규칙으로 재발을 막는 습관',
+        '블로그·스터디·Q&A로 학습을 공유하는 꾸준함',
       ],
       evaluationSource: 'PEER_ONLY',
     },
-    projectCount: 2,
-    period: { startedAt: '2026-05-04', endedAt: '2026-09-18' },
+    projectCount: 1,
+    period: { startedAt: '2026-07-14', endedAt: '2026-08-29' },
     evidenceCodes: projectEvidenceCodes,
     confidence: 'HIGH',
     limitations: [],
@@ -1463,17 +1174,16 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
     policyVersion: '2026.08.05-troubleshooting-analysis-v2',
     status: 'READY',
     summary:
-      '재현 조건과 실패율을 먼저 고정해 문제 범위를 좁힙니다.\n확인된 원인에 맞춰 설계와 설정을 수정한 뒤 같은 조건에서 수치와 재발 여부를 검증합니다.\n해결 과정을 문서로 정리해 팀이 같은 기준으로 대응할 수 있도록 공유합니다.',
-    certifiedCaseCount: 12,
-    independentCaseCount: 10,
-    independentRate: 83,
+      '결과가 이상하면 먼저 재현 조건을 고정하고 원인 후보를 하나씩 배제합니다.\n원인을 찾으면 최소 변경으로 수정한 뒤 같은 조건에서 수치로 재검증합니다.\n해결 과정을 기록실·팀 규칙으로 남겨 같은 문제가 반복되지 않게 합니다.',
+    certifiedCaseCount: 3,
+    independentCaseCount: 1,
+    independentRate: 33,
     sourceData: {
       categories: [
-        { label: 'DB / SQL', count: 4 },
-        { label: '배포 / 인프라', count: 3 },
-        { label: '성능 / 메모리', count: 2 },
-        { label: '네트워크 / API', count: 2 },
-        { label: '기타', count: 1 },
+        { label: '데이터', count: 1 },
+        { label: '머신러닝', count: 1 },
+        { label: '협업', count: 1 },
+        { label: '환경', count: 2 },
       ],
       cases: parkSujinTroubleshootingCases.map((item) => ({
         id: item.id,
@@ -1485,41 +1195,41 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
         days: item.days,
         independent: item.independent,
       })),
-      averageDays: 2.3,
-      medianDays: 2,
-      independentCaseCount: 10,
+      averageDays: 1.3,
+      medianDays: 1,
+      independentCaseCount: 1,
       supportedCaseCount: 2,
     },
-    period: { startedAt: '2026-08-12', endedAt: '2026-10-08' },
+    period: { startedAt: '2026-07-20', endedAt: '2026-08-10' },
     axes: [
       {
         key: 'DATA_PROCESSING',
-        label: '데이터·트랜잭션 처리',
+        label: '데이터 처리',
         status: 'PARTIAL',
         score: null,
-        certifiedCaseCount: 4,
-        evidence: ['PostgreSQL 데드락·인덱스·캐시·마이그레이션 해결'],
-        evidenceCodes: ['pc1', 'pc7', 'pc8', 'pc9'],
+        certifiedCaseCount: 1,
+        evidence: ['pandas merge 행 폭증 — 키 유일성 검증으로 해결'],
+        evidenceCodes: ['pc1'],
         limitations: [],
       },
       {
         key: 'MODEL_TUNING',
-        label: '장애 대응·디버깅',
+        label: '모델 검증',
         status: 'PARTIAL',
         score: null,
-        certifiedCaseCount: 5,
-        evidence: ['API·LLM·성능 문제 5건 해결'],
-        evidenceCodes: ['pc3', 'pc4', 'pc5', 'pc6', 'pc12'],
+        certifiedCaseCount: 1,
+        evidence: ['StandardScaler 데이터 누수 — Pipeline 으로 교정'],
+        evidenceCodes: ['pc2'],
         limitations: [],
       },
       {
         key: 'INFRA_DEPLOYMENT',
-        label: '인프라·배포',
+        label: '협업·환경',
         status: 'PARTIAL',
         score: null,
-        certifiedCaseCount: 3,
-        evidence: ['Kafka·Docker·AWS 배포 문제 3건 해결'],
-        evidenceCodes: ['pc2', 'pc10', 'pc11'],
+        certifiedCaseCount: 1,
+        evidence: ['Git rebase 커밋 유실 — reflog 복구와 백업 규칙'],
+        evidenceCodes: ['pc3'],
         limitations: [],
       },
     ],
@@ -1527,12 +1237,12 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
       {
         key: 'FRAME',
         label: '문제 구조화',
-        summary: '재현 조건과 실패율을 먼저 고정합니다.',
+        summary: '재현 조건을 고정하고 원인 후보를 좁힙니다.',
       },
       {
         key: 'APPLY',
         label: '해결 적용',
-        summary: '원인을 분리한 뒤 설계와 설정을 수정합니다.',
+        summary: '원인에 맞는 최소 변경을 적용합니다.',
       },
       {
         key: 'VERIFY',
@@ -1542,87 +1252,43 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
     ],
     groups: [
       {
-        label: 'DB / SQL',
-        certifiedCaseCount: 4,
-        solutionSummary: '격리 수준과 조회 구조를 재설계했습니다.',
-        tags: [
-          { label: 'PostgreSQL', count: 3 },
-          { label: 'Redis', count: 1 },
-        ],
-        caseIds: ['pc1', 'pc7', 'pc8', 'pc9'],
-        caseTitles: [
-          'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
-          'PostgreSQL 인덱스 — 주문 검색 지연',
-          'Redis 캐시 키 — 사용자별 장바구니 충돌',
-          'Flyway 마이그레이션 — 컬럼 제약조건 충돌',
-        ],
-        evidence: ['실패율 8% → 0.2%', '검색 2.8초 → 190ms'],
-      },
-      {
-        label: '배포 / 인프라',
-        certifiedCaseCount: 3,
-        solutionSummary: '배포 전 검증과 준비 상태 확인 절차를 자동화했습니다.',
-        tags: [
-          { label: 'Kafka', count: 1 },
-          { label: 'Docker', count: 1 },
-          { label: 'AWS', count: 1 },
-        ],
-        caseIds: ['pc2', 'pc10', 'pc11'],
-        caseTitles: [
-          'Kafka 컨슈머 ack 미반영 — 메시지 중복 발생',
-          'Docker 환경변수 — 프로필 설정 누락',
-          'AWS 헬스 체크 — 롤링 배포 중 502 응답',
-        ],
-        evidence: ['결제 실패 retry 95% 안정화', '무중단 배포 3회'],
-      },
-      {
-        label: '성능 / 메모리',
-        certifiedCaseCount: 2,
-        solutionSummary: '조회 구조와 LLM 배치 처리를 개선했습니다.',
-        tags: [
-          { label: 'N+1', count: 1 },
-          { label: 'KoBART', count: 1 },
-        ],
-        caseIds: ['pc3', 'pc6'],
-        caseTitles: [
-          'N+1 쿼리 — 사용자 주문 목록 응답 7초',
-          'KoBART 요약 — GPU 메모리 부족',
-        ],
-        evidence: ['7초 → 380ms', '60분 회의록 처리 완료'],
-      },
-      {
-        label: '네트워크 / API',
-        certifiedCaseCount: 2,
-        solutionSummary: 'API 계약과 도메인 조합별 검증을 자동화했습니다.',
-        tags: [
-          { label: 'RAG API', count: 1 },
-          { label: 'OAuth', count: 1 },
-        ],
-        caseIds: ['pc4', 'pc12'],
-        caseTitles: [
-          'RAG 검색 API — 임베딩 차원 불일치',
-          'OAuth 콜백 — CORS 사전 요청 실패',
-        ],
-        evidence: ['검증 질문 35건 통과', '로그인 시나리오 8건 통과'],
-      },
-      {
-        label: '기타',
+        label: '데이터',
         certifiedCaseCount: 1,
-        solutionSummary: '오디오 입력을 표준 형식으로 정규화했습니다.',
-        tags: [{ label: 'Whisper', count: 1 }],
-        caseIds: ['pc5'],
-        caseTitles: ['Whisper 입력 — 오디오 샘플링 레이트 불일치'],
-        evidence: ['실패 파일 12건 전사 완료'],
+        solutionSummary: '조인 키 유일성 검증을 분석 템플릿에 넣었습니다.',
+        tags: [{ label: 'pandas', count: 1 }],
+        caseIds: ['pc1'],
+        caseTitles: ['pandas merge 후 행 수가 3배로 늘어난 문제'],
+        evidence: ['행 수 원본 일치 · validate 옵션 적용'],
+      },
+      {
+        label: '머신러닝',
+        certifiedCaseCount: 1,
+        solutionSummary: '전처리를 Pipeline 안으로 옮겨 누수를 차단했습니다.',
+        tags: [{ label: 'scikit-learn', count: 1 }],
+        caseIds: ['pc2'],
+        caseTitles: [
+          'StandardScaler를 전체 데이터에 fit 해서 성능이 부풀려진 문제',
+        ],
+        evidence: ['부풀려진 검증 점수 교정'],
+      },
+      {
+        label: '협업',
+        certifiedCaseCount: 1,
+        solutionSummary: 'reflog 복구 후 rebase 백업 규칙을 만들었습니다.',
+        tags: [{ label: 'Git', count: 1 }],
+        caseIds: ['pc3'],
+        caseTitles: ['Git rebase 중 충돌을 잘못 해결해 동료 커밋을 날린 문제'],
+        evidence: ['동료 커밋 2건 복구 · 팀 규칙 공유'],
       },
     ],
     growth: {
       status: 'READY',
       summary:
-        '단일 모듈 디버깅에서 파이프라인·시스템 범위로 해결 영역을 확장했습니다.',
-      newDomains: ['커머스', '추천'],
-      repeatedDomains: ['주문·결제'],
-      newTechnologies: ['Kafka', 'Whisper', 'KoBART'],
-      repeatedTechnologies: ['Spring', 'PostgreSQL'],
+        '환경 설정 문제에서 데이터 품질·모델 검증 문제로 해결 범위를 넓혔습니다.',
+      newDomains: ['데이터 품질', '모델 검증'],
+      repeatedDomains: ['분석 환경'],
+      newTechnologies: ['scikit-learn Pipeline', 'pandas validate'],
+      repeatedTechnologies: ['Python', 'Git'],
       confidence: 'MEDIUM',
     },
     limitations: [],
@@ -1630,45 +1296,42 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
   sentiment: {
     policyVersion: '2026.08.05-park-sujin-sentiment-v1',
     status: 'READY',
-    noteCount: 11,
+    noteCount: 8,
     phases: [
       {
         phase: 'early',
         label: '초반',
-        period: { startedAt: '2026-04-28', endedAt: '2026-06-27' },
+        period: { startedAt: '2026-06-16', endedAt: '2026-07-05' },
         noteCount: 3,
-        summary: '학습 불안과 진로 고민 속에서 적응을 시작했습니다.',
+        summary: '환경 구축과 Git 에서 헤맸지만 기록으로 정리하며 적응했습니다.',
         confidence: 'MEDIUM',
       },
       {
         phase: 'mid',
         label: '중반',
-        period: { startedAt: '2026-06-28', endedAt: '2026-08-27' },
+        period: { startedAt: '2026-07-06', endedAt: '2026-07-31' },
         noteCount: 3,
-        summary: 'SQL 난관과 스트레스를 멘토링으로 조정했습니다.',
+        summary: 'SQL 스터디를 직접 운영하며 역량 점검 2회를 안정적으로 통과했습니다.',
         confidence: 'MEDIUM',
       },
       {
         phase: 'late',
-        label: '후반',
-        period: { startedAt: '2026-08-28', endedAt: '2026-10-26' },
-        noteCount: 5,
-        summary: '자기효능감과 성취감이 빠르게 높아졌습니다.',
+        label: '현재',
+        period: { startedAt: '2026-08-01', endedAt: '2026-08-10' },
+        noteCount: 2,
+        summary: '개인 프로젝트가 강사 인증을 받으며 성취감이 높아졌습니다.',
         confidence: 'HIGH',
       },
     ],
     bubbles: [
-      ['학습 불안', 16, 36, 13, 'early', 'CONCERN'],
-      ['적응', 24, 58, 11, 'early', 'NEUTRAL'],
-      ['진로 고민', 11, 18, 8, 'early', 'CONCERN'],
-      ['SQL 난관', 42, 28, 12, 'mid', 'CONCERN'],
-      ['스트레스', 47, 54, 14, 'mid', 'CONCERN'],
-      ['멘토링', 35, 44, 10, 'mid', 'POSITIVE'],
-      ['자기효능감', 66, 28, 13, 'late', 'POSITIVE'],
-      ['성취감', 73, 50, 15, 'late', 'POSITIVE'],
-      ['코드리뷰 1위', 84, 36, 12, 'late', 'POSITIVE'],
-      ['자신감', 88, 60, 10, 'late', 'POSITIVE'],
-      ['성장 회고', 60, 64, 10, 'late', 'POSITIVE'],
+      ['환경 헤맴', 14, 34, 12, 'early', 'CONCERN'],
+      ['Git 실수', 22, 56, 11, 'early', 'CONCERN'],
+      ['기록 습관', 30, 40, 10, 'early', 'POSITIVE'],
+      ['스터디 운영', 46, 30, 12, 'mid', 'POSITIVE'],
+      ['역량 점검 100점', 54, 52, 14, 'mid', 'POSITIVE'],
+      ['데이터 누수 교훈', 62, 68, 10, 'mid', 'NEUTRAL'],
+      ['프로젝트 인증', 80, 38, 15, 'late', 'POSITIVE'],
+      ['성취감', 88, 58, 12, 'late', 'POSITIVE'],
     ].map(([label, x, y, r, phase, polarity], index) => ({
       label: String(label),
       x: Number(x),
@@ -1686,7 +1349,7 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
         },
       ],
     })),
-    trend: 'V자 변동형: 위기(4주차) → 멘토링 → 급반등',
+    trend: '우상향: 환경 적응 → 스터디·역량 점검 → 프로젝트 인증',
     confidence: 'HIGH',
     limitations: [],
   },
@@ -1694,14 +1357,14 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
     policyVersion: '2026.08.05-park-sujin-ontology-v1',
     status: 'READY',
     summary:
-      '박수진의 백엔드·DB→SQL·클라우드 학습과 Encore Mart·LLM 추천 프로젝트 연결을 보여줍니다.',
+      '황수빈의 Python·SQL·데이터 분석 학습과 채용 스택 지도 프로젝트의 연결을 보여줍니다.',
     counts: {
       self: 1,
       subject: 4,
       skill: 6,
       method: 2,
-      project: 2,
-      domain: 2,
+      project: 1,
+      domain: 1,
     },
     omittedCounts: {},
     nodes: ontologyNodes,

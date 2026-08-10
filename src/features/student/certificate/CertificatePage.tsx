@@ -7,6 +7,7 @@ import {
   useCertificateOverview,
   useRequestCertification,
 } from '../api/certificate'
+import { useStudentDashboard } from '../api/dashboard'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { CertHero } from './components/CertHero'
@@ -51,10 +52,26 @@ export default function CertificatePage() {
   const selectedStudent = getCertificateDemoStudent(
     CERTIFICATE_DEMO_MODE ? params.get('demoStudent') : null,
   )
-  const certificateData =
+  const demoApplied =
     data && CERTIFICATE_DEMO_MODE
       ? applyCertificateDemoStudent(data, selectedStudent)
       : data
+  // 증명서 본문은 아직 mock 이라 헤더에 고정 인물(박수진 · 32기)이 박혀 있었다.
+  // 누구로 로그인하든 같은 이름이 보이므로, 신원만 실제 소속(대시보드 hero)으로 덮는다.
+  // 시연 인물 전환 중에는 그 인물을 보여줘야 하므로 건드리지 않는다.
+  const { data: dashboard } = useStudentDashboard()
+  const certificateData =
+    demoApplied && dashboard && !CERTIFICATE_DEMO_MODE
+      ? {
+          ...demoApplied,
+          header: {
+            ...demoApplied.header,
+            studentName: dashboard.hero.studentName,
+            courseName: dashboard.hero.courseName,
+            cohortName: dashboard.hero.cohortName,
+          },
+        }
+      : demoApplied
   const setTab = (nextTab: CertTab) => {
     const next = new URLSearchParams(params)
     next.set('tab', nextTab)

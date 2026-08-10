@@ -30,7 +30,7 @@ export function CertTabs({
   const all = CERT_V2 ? [...CERT_TABS, AI_TAB] : CERT_TABS
   const tabs = only ? all.filter((t) => only.includes(t.key)) : all
   return (
-    <nav className="bg-surface flex w-full gap-1 rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+    <nav className="bg-surface flex w-full gap-1 overflow-x-auto rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       {tabs.map((t) => {
         const isActive = t.key === active
         return (
@@ -39,8 +39,10 @@ export function CertTabs({
             type="button"
             onClick={() => onChange(t.key)}
             className={cn(
-              // 탭 7개가 균등 분할되는 좁은 폭에서도 한 줄을 유지한다.
-              'flex-1 rounded-[10px] px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap',
+              // 여유가 있으면 균등 분할하되(flex-1), 글자보다 좁아지지는 않는다(min-w-fit).
+              // 예전엔 min-w 가 없어 좁은 창에서 셀이 100px 까지 줄고 nowrap 텍스트가 칸을 넘쳤다.
+              // 다 못 넣을 만큼 좁아지면 줄을 바꾸는 대신 탭바가 가로로 스크롤된다.
+              'min-w-fit flex-1 rounded-[10px] px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap',
               isActive
                 ? 'bg-brand/10 text-brand'
                 : 'text-fg-muted hover:bg-surface-muted',

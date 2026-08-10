@@ -37,6 +37,22 @@ import type { PublicCertificatePayload } from '../types'
 
 const PUBLIC_STUDENT_ID = 'verify-public'
 
+/**
+ * 공개 payload 의 과정 문자열을 히어로가 쓰는 세 조각으로 나눈다.
+ *
+ * <p>`cohort` 는 "SK네트웍스 Family AI 캠프 34기" 처럼 과정명을 이미 품고 있고,
+ * 히어로는 `courseName · cohortName` 으로 다시 이어 붙인다. 그대로 넘기면
+ * "… 캠프 · … 캠프 34기" 가 되어 과정명이 두 번 나온다.</p>
+ */
+function splitCourse(student: PublicCertificatePayload['student']) {
+  const [courseName = '', ...rest] = student.courseSummary.split(' · ')
+  // 기수 칩에서는 앞의 과정명을 떼고 "34기" 만 남긴다.
+  const cohortName = student.cohort.startsWith(courseName)
+    ? student.cohort.slice(courseName.length).trim() || student.cohort
+    : student.cohort
+  return { courseName, cohortName, periodLabel: rest.join(' · ') }
+}
+
 export function VerifyCertificateDoc({
   payload,
   verificationId,
@@ -74,12 +90,7 @@ export function VerifyCertificateDoc({
       <CertHero
         header={{
           studentName: payload.student.nameKo,
-          courseName: payload.student.courseSummary.split(' · ')[0],
-          cohortName: payload.student.cohort,
-          periodLabel: payload.student.courseSummary
-            .split(' · ')
-            .slice(1)
-            .join(' · '),
+          ...splitCourse(payload.student),
           certId: verificationId,
           isPublic: true,
           status: 'certified',
@@ -89,11 +100,15 @@ export function VerifyCertificateDoc({
 
       <CertTabs active={tab} onChange={setTab} only={only} />
 
-      {tab === 'summary' && <SummaryTab s={mockOverview.summary} studentId={PUBLIC_STUDENT_ID} />}
+      {tab === 'summary' && (
+        <SummaryTab s={mockOverview.summary} studentId={PUBLIC_STUDENT_ID} />
+      )}
 
       {tab === 'projects' && <ProjectsTab p={mockOverview.projects} />}
 
-      {tab === 'ai-analysis' && CERT_V2 && <AiTab studentId={PUBLIC_STUDENT_ID} />}
+      {tab === 'ai-analysis' && CERT_V2 && (
+        <AiTab studentId={PUBLIC_STUDENT_ID} />
+      )}
 
       {tab === 'growth-reputation' && (
         <DataBoundary
@@ -103,7 +118,9 @@ export function VerifyCertificateDoc({
           skeleton={<TechTabSkeleton />}
           errorTitle="평가·추천을 불러오지 못했어요"
         >
-          {score.data && <GrowthTab g={mockOverview.growth} score={score.data} />}
+          {score.data && (
+            <GrowthTab g={mockOverview.growth} score={score.data} />
+          )}
         </DataBoundary>
       )}
 

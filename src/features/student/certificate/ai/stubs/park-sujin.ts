@@ -1057,6 +1057,8 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
           outcomes: [
             '채용 공고 5,240건 수집 · 중복 제거 후 4,180건 확보',
             '기술 표기 1,148종 → 표준 키워드 312개 정규화',
+            '직무별 요구 스택 도출 — DE는 Python 87% · SQL 84% · Spark 61%',
+            '수집 실패율 7.2% → 0.4%',
             '대시보드 조회 4.2초 → 0.8초',
           ],
         },
@@ -1079,7 +1081,7 @@ export const PARK_SUJIN_AI_ANALYSIS: AiAnalysis = {
           troubleshootingCases: [
             'pandas merge 후 행 수가 3배로 늘어난 문제',
           ],
-          artifacts: ['성과 지표 3건', '작업 보드 7/8 완료'],
+          artifacts: ['성과 지표 5건', '산출물 5건', '작업 보드 7/8 완료'],
         },
         analysis:
           '수집 규모와 정규화 커버리지를 수치로 남기며 분석 결과의 신뢰를 스스로 검증했습니다.',

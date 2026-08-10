@@ -1,4 +1,5 @@
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { ProjectsTabSkeleton } from './TabSkeletons'
 import { Link } from 'react-router-dom'
 import { useCertificateProjects } from '../../api/certificate'
 import type {
@@ -337,7 +338,7 @@ export function ProjectsTab({ p }: { p?: CertProjectsTab }) {
         isPending={!p && projects.isPending}
         isError={!p && (projects.isError || !projects.data)}
         onRetry={() => void projects.refetch()}
-        loadingText="프로젝트 증명 데이터를 불러오는 중…"
+        skeleton={<ProjectsTabSkeleton />}
         errorTitle="프로젝트 증명 데이터를 불러오지 못했어요"
         errorDescription="프로젝트 워크스페이스와 GitHub 동기화 상태를 확인한 뒤 다시 시도해 주세요."
       >

@@ -17,6 +17,7 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { formatDateDot } from '@/shared/lib/date'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { ResumeTabSkeleton } from './TabSkeletons'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useResume, useResumes } from '../../api/resume'
 import { SECTIONS } from '../../resume/constants'
@@ -434,7 +435,7 @@ export function ResumeTab() {
           if (listQ.isError) listQ.refetch()
           if (detailQ.isError) detailQ.refetch()
         }}
-        loadingText="이력서를 불러오는 중…"
+        skeleton={<ResumeTabSkeleton />}
         errorTitle="이력서를 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >

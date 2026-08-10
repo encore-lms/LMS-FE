@@ -132,7 +132,7 @@ describe('프로젝트 분석', () => {
     expect(tooltip).toHaveTextContent('실제 데이터')
     expect(tooltip).toHaveTextContent('분석 흐름')
     expect(tooltip).toHaveTextContent('보드 전체 8개 중 담당 8개 · 완료 7개')
-    expect(tooltip).toHaveTextContent('확인 산출물 성과 지표 3건')
+    expect(tooltip).toHaveTextContent('확인 산출물 성과 지표 5건')
     expect(tooltip).toHaveTextContent('전체 보드 중 담당·완료 업무 수를 집계')
   })
 })

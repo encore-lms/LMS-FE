@@ -115,7 +115,7 @@ describe('VerifyPage — 평가·추천 공개 토글', () => {
 })
 
 describe('VerifyPage — certified_public(공개 증명서)', () => {
-  it('Hero 진본 배너·증명서 본문·무결성 필드를 렌더한다', () => {
+  it('Hero 진본 배너와 증명서 본문만 렌더한다', () => {
     mockResult(publicResult)
     renderPage()
     expect(
@@ -136,18 +136,16 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
     expect(screen.getByRole('button', { name: '종합 요약' })).toHaveClass(
       'text-brand',
     )
-    // 대표 근거.
-    expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()
-    // 검증 정보 — 무결성(해시는 Hero 칩과 필드 박스 2곳).
-    expect(screen.getAllByText(/sha256:a3f9…07e/)).toHaveLength(2)
-    expect(screen.getByText('vfy_kp9q4r2nx0')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /공개 JSON 다운로드/ }),
-    ).toBeInTheDocument()
-    // 본문 폭은 수강생 미리보기와 같아야 한다(1240 - 패딩 64 = 1176px).
-    // 예전 880px 그대로 두면 4열 지표 카드가 눌려 글자가 깨졌다.
+    // 무결성 해시는 진본 배너 칩 1곳에서만 보여 준다 — 별도 '검증 정보' 카드는 없앴다.
+    expect(screen.getAllByText(/sha256:a3f9…07e/)).toHaveLength(1)
+    // 증명서 본문 밖의 부가 섹션(대표 근거·검증 정보·정책 안내)은 렌더하지 않는다.
+    expect(screen.queryByText('대표 근거')).toBeNull()
+    expect(screen.queryByText(/검증 정보/)).toBeNull()
+    expect(screen.queryByText(/외부 검증 페이지 정책/)).toBeNull()
+    expect(screen.queryByRole('button', { name: /공개 JSON 다운로드/ })).toBeNull()
+    // 본문은 최대 1440 까지 넓히고 그 아래는 화면을 따라 줄인다.
     expect(document.querySelector('main')?.className).toContain(
-      'max-w-[1240px]',
+      'max-w-[1440px]',
     )
   })
 })

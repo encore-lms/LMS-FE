@@ -144,6 +144,11 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
     expect(
       screen.getByRole('button', { name: /공개 JSON 다운로드/ }),
     ).toBeInTheDocument()
+    // 본문 폭은 수강생 미리보기와 같아야 한다(1240 - 패딩 64 = 1176px).
+    // 예전 880px 그대로 두면 4열 지표 카드가 눌려 글자가 깨졌다.
+    expect(document.querySelector('main')?.className).toContain(
+      'max-w-[1240px]',
+    )
   })
 })
 

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, Award, ShieldCheck, X } from 'lucide-react'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useIsPublicCertDoc } from '../publicDoc'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/shared/lib/cn'
@@ -303,6 +304,34 @@ const evaluatorAxisDefinitions = [
   tone: Tone
 }>
 
+/** KPI 카드 셸 — 공개 문서에서는 링크 대신 정적 박스를 그린다(내부 화면 이동 금지). */
+function KpiCardShell({
+  to,
+  ariaLabel,
+  className,
+  children,
+  ...data
+}: {
+  to: string
+  ariaLabel: string
+  className: string
+  children: ReactNode
+} & Record<string, unknown>) {
+  const isPublic = useIsPublicCertDoc()
+  if (isPublic) {
+    return (
+      <div className={className} {...data}>
+        {children}
+      </div>
+    )
+  }
+  return (
+    <Link to={to} aria-label={ariaLabel} className={className} {...data}>
+      {children}
+    </Link>
+  )
+}
+
 function EvaluatorAverageKpi({
   kpi,
   axes,
@@ -331,17 +360,20 @@ function EvaluatorAverageKpi({
     (axis) => axis.key === selectedAxisKey,
   )
 
+  const isPublic = useIsPublicCertDoc()
+
   return (
-    <Link
+    <KpiCardShell
       to={route}
-      aria-label={`${kpi.label} 평가·추천 탭으로 이동`}
+      ariaLabel={`${kpi.label} 평가·추천 탭으로 이동`}
       data-summary-kpi="evaluatorAverage"
       data-summary-kpi-route={route}
       data-kpi-visual="evaluation"
       data-axis-highlighted={Boolean(highlightedAxis)}
       className={cn(
         card,
-        'focus-visible:ring-ring group flex min-w-0 flex-col gap-2 p-4 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
+        'focus-visible:ring-ring group flex min-w-0 flex-col gap-2 p-4 transition-transform focus-visible:ring-2 focus-visible:outline-none',
+        !isPublic && 'hover:-translate-y-0.5',
         highlightedAxis && 'ring-offset-surface ring-2 ring-offset-2',
         highlightedAxis && toneRing[highlightedAxis.tone],
       )}
@@ -399,17 +431,19 @@ function EvaluatorAverageKpi({
         ))}
       </div>
 
-      <div
-        className="border-divider text-fg-subtle mt-1 flex items-center justify-between border-t pt-2 text-[9px] font-semibold"
-        data-kpi-link-footer
-      >
-        <span>평가·추천 탭에서 자세히 보기</span>
-        <ArrowRight
-          aria-hidden="true"
-          className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
-        />
-      </div>
-    </Link>
+      {!isPublic && (
+        <div
+          className="border-divider text-fg-subtle mt-1 flex items-center justify-between border-t pt-2 text-[9px] font-semibold"
+          data-kpi-link-footer
+        >
+          <span>평가·추천 탭에서 자세히 보기</span>
+          <ArrowRight
+            aria-hidden="true"
+            className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
+          />
+        </div>
+      )}
+    </KpiCardShell>
   )
 }
 
@@ -428,17 +462,20 @@ function ProgressKpiCard({
   }
   highlighted: boolean
 }) {
+  const isPublic = useIsPublicCertDoc()
+
   return (
-    <Link
+    <KpiCardShell
       to={route}
-      aria-label={`${kpi.label} 상세 화면으로 이동`}
+      ariaLabel={`${kpi.label} 상세 화면으로 이동`}
       data-summary-kpi={kpi.key}
       data-summary-kpi-route={route}
       data-kpi-visual="progress"
       data-kpi-tone={kpi.tone}
       className={cn(
         card,
-        'focus-visible:ring-ring group flex min-w-0 flex-col justify-between gap-4 p-5 transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none',
+        'focus-visible:ring-ring group flex min-w-0 flex-col justify-between gap-4 p-5 transition-transform focus-visible:ring-2 focus-visible:outline-none',
+        !isPublic && 'hover:-translate-y-0.5',
         highlighted && 'ring-offset-surface ring-2 ring-offset-2',
         highlighted && toneRing[kpi.tone ?? 'brand'],
       )}
@@ -514,14 +551,16 @@ function ProgressKpiCard({
           <span className="text-fg-subtle truncate text-[10px]" title={kpi.sub}>
             {kpi.sub}
           </span>
-          <ArrowRight
-            aria-hidden="true"
-            className="text-fg-subtle size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
-            data-progress-kpi-link-arrow
-          />
+          {!isPublic && (
+            <ArrowRight
+              aria-hidden="true"
+              className="text-fg-subtle size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
+              data-progress-kpi-link-arrow
+            />
+          )}
         </div>
       </div>
-    </Link>
+    </KpiCardShell>
   )
 }
 
@@ -553,11 +592,12 @@ function LearningPersistenceKpi({
   const participationScore = (blogScore ?? 0) + bonusScore
   const combinedScore = attendanceScore + participationScore
   const finalScore = axis?.score ?? combinedScore
+  const isPublic = useIsPublicCertDoc()
 
   return (
-    <Link
+    <KpiCardShell
       to="/student/records?category=blog"
-      aria-label="학습 참여·제출 블로그 화면으로 이동"
+      ariaLabel="학습 참여·제출 블로그 화면으로 이동"
       className={cn(
         card,
         'group flex min-w-0 flex-col gap-3 p-4 transition-shadow',
@@ -658,13 +698,15 @@ function LearningPersistenceKpi({
             학습지속성 {displayNumber(finalScore)}점
           </strong>
         </span>
-        <ArrowRight
-          aria-hidden="true"
-          className="text-fg-subtle size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
-          data-learning-persistence-link-arrow
-        />
+        {!isPublic && (
+          <ArrowRight
+            aria-hidden="true"
+            className="text-fg-subtle size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
+            data-learning-persistence-link-arrow
+          />
+        )}
       </div>
-    </Link>
+    </KpiCardShell>
   )
 }
 

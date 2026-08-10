@@ -167,12 +167,12 @@ describe('fetchCertificateScore', () => {
           category.populationSize === 300 && category.topPercent !== null,
       ),
     ).toBe(true)
-    // 실측 — 역량 점검 2회(전부 ACHIEVEMENT). CS 평가는 아직 없다.
+    // 실측 — 성취도(역량 점검) 2회 + CS 점검 4회.
     expect(
       tabs.tech.assessments
         .filter((assessment) => assessment.assessmentType === 'CS')
         .map((assessment) => assessment.score),
-    ).toEqual([])
+    ).toEqual([85, 80, 90, 95])
     expect(
       tabs.tech.categories
         .filter((category) => category.assessmentType === 'ACHIEVEMENT')
@@ -181,6 +181,11 @@ describe('fetchCertificateScore', () => {
       ['Python', 100],
       ['SQL', 96],
     ])
+    expect(
+      tabs.tech.categories
+        .filter((category) => category.assessmentType === 'CS')
+        .map((category) => category.label),
+    ).toEqual(['자료구조·알고리즘', '운영체제', '네트워크', '데이터베이스'])
     expect(
       tabs.tech.certifications.map(({ name, grade, score, status }) => ({
         name,

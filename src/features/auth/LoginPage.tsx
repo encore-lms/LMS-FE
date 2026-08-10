@@ -2,33 +2,32 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Eye, EyeOff, Info, Lock, Mail } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
-import { apiClient } from '@/shared/api'
-import { useAuthActions } from '@/shared/store'
-import { ROLE_HOME } from '@/shared/constants'
-import type { User } from '@/shared/types'
-import { PROFILE_PATH } from '@/features/profile/paths'
 import { AuthLayout } from './AuthLayout'
 import { DemoQuickLogin } from './DemoQuickLogin'
 import { DEMO_LOGIN_ENABLED, type DemoAccount } from './demoAccounts'
+import { MEETING_ACCOUNTS } from './meetingAccounts'
 import { loginSchema, type LoginInput } from './login.schema'
+import { useLoginSubmit } from './useLoginSubmit'
 
-interface LoginResponse {
-  token: string
-  user: User
-  nextRoute?: string
+interface LoginPageProps {
+  /**
+   * meeting = /login2 개발자 회의용 — 빠른 로그인이 시연용 데모 계정 대신 QA 계정으로
+   * 바뀌고 상단에 회의용 표식이 붙는다. 시연 중 데모 계정 오클릭(단일 세션이라 시연
+   * 세션이 즉시 끊김)을 막기 위한 분리 입구로, 로그인 동작 자체는 동일하다.
+   */
+  variant?: 'demo' | 'meeting'
 }
 
-export function LoginPage() {
-  const navigate = useNavigate()
-  const { setSession, clearSession } = useAuthActions()
+export function LoginPage({ variant = 'demo' }: LoginPageProps) {
+  const isMeeting = variant === 'meeting'
+  const { submit, submitError } = useLoginSubmit()
   const [rememberEmail, setRememberEmail] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -37,14 +36,14 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
-  // 데모 빠른 로그인: 선택한 실제 계정으로 폼을 채우고 즉시 로그인 → 역할 홈으로 이동.
+  // 빠른 로그인: 선택한 실제 계정으로 폼을 채우고 즉시 로그인 → 역할 홈으로 이동.
   async function quickLogin(acc: DemoAccount) {
     setValue('email', acc.email, { shouldValidate: true, shouldDirty: true })
     setValue('password', acc.password, {
       shouldValidate: true,
       shouldDirty: true,
     })
-    await onSubmit({ email: acc.email, password: acc.password })
+    await submit({ email: acc.email, password: acc.password })
   }
 
   useEffect(() => {
@@ -59,45 +58,34 @@ export function LoginPage() {
     }
   }, [])
 
-  // 폼 패턴: handleSubmit이 zod 검증 통과 후에만 onSubmit 호출. 제출 단계 에러는 submitError로 분리.
-  async function onSubmit({ email, password }: LoginInput) {
-    setSubmitError(null)
-    try {
-      const res = await apiClient.post<LoginResponse>('/auth/login', {
-        userId: email,
-        password,
-      })
-      // 로그아웃 없이 /login에서 계정을 교체하는 경우(데모 빠른 로그인 등) 이전 세션의
-      // 쿼리 캐시·로컬 알림이 새 사용자에게 남지 않도록 세션을 먼저 정리한다(스토어 구독이 정리 수행).
-      clearSession()
-      setSession(res.data.token, res.data.user)
-      // 임시 비밀번호(매니저 발급) 상태면 역할 홈 대신 마이 프로필로 보내 비밀번호 변경을 유도한다(P0-01 계약).
-      // 단, 온보딩이 먼저 필요한 수강생은 온보딩부터 — 프로필이 OnboardingGate 하위라 어차피 튕기고,
-      // 온보딩 완료 화면이 mustChangePassword를 이어받아 프로필로 보낸다.
-      const needsOnboarding = res.data.nextRoute === '/student/onboarding'
-      navigate(
-        res.data.user.mustChangePassword && !needsOnboarding
-          ? PROFILE_PATH[res.data.user.role]
-          : (res.data.nextRoute ?? ROLE_HOME[res.data.user.role]),
-        { replace: true },
-      )
-    } catch {
-      setSubmitError('이메일 또는 비밀번호를 확인해주세요.')
-    }
-  }
+  // 회의용 입구는 빠른 로그인 게이트가 꺼진 빌드에서 존재 이유가 없다 — 기본 로그인으로 돌려보낸다.
+  if (isMeeting && !DEMO_LOGIN_ENABLED) return <Navigate to="/login" replace />
 
   return (
     <AuthLayout
       brandSlot={
-        DEMO_LOGIN_ENABLED ? <DemoQuickLogin onPick={quickLogin} /> : undefined
+        DEMO_LOGIN_ENABLED ? (
+          <DemoQuickLogin
+            onPick={quickLogin}
+            accounts={isMeeting ? MEETING_ACCOUNTS : undefined}
+            title={
+              isMeeting ? '회의용 QA 계정 · 클릭하면 바로 입장' : undefined
+            }
+          />
+        ) : undefined
       }
     >
       <form
         noValidate
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(submit)}
         className="flex w-[420px] flex-col gap-6"
       >
         <div className="flex flex-col gap-2">
+          {isMeeting && (
+            <span className="bg-brand/10 text-brand w-fit rounded-[6px] px-2 py-1 text-xs font-bold">
+              개발자 회의용 — 시연 계정 사용 금지
+            </span>
+          )}
           <h1 className="text-fg text-[30px] leading-[38px] font-bold">
             로그인
           </h1>

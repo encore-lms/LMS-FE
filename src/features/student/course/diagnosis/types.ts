@@ -53,6 +53,31 @@ export interface StudentDiagnosis {
   feedbackDraft: string
 }
 
+/**
+ * 수강생 개인 리포트 — 그룹 리포트(매니저용)에서 본인 데이터만, 수강생 눈높이 서술로 재구성.
+ * 강사 권장 조치·타 학생 정보는 담지 않고, 피드백은 강사 검토 후 전달본만 싣는다.
+ */
+export interface MyWeeklyReport {
+  week: number
+  baseDate: string
+  generator: string
+  level: DiagnosisLevel
+  confidence: DiagnosisConfidence
+  metrics: StudentMetrics
+  /** 미접속·장기 정체 등으로 이번 주 관리가 필요한 주차 표시 */
+  needsAttention: boolean
+  /** 지난주 대비 변화 */
+  growth: string[]
+  /** 잘하고 있는 점 */
+  strengths: string[]
+  /** 보완하면 좋은 점 */
+  weakPatterns: string[]
+  /** 이번 주 학습 제안 */
+  tips: string[]
+  /** 강사 피드백 (강사 검토·승인 후 전달본) */
+  instructorFeedback: string
+}
+
 export interface WeeklyDiagnosisReport {
   /** 1부터 시작하는 주차 번호 */
   week: number

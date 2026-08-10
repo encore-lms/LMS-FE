@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DiagnosisReportPage from './DiagnosisReportPage'
-import { useDiagnosisReports } from './api'
-import { buildDiagnosisReports, TOTAL_WEEKS } from './reportData'
+import { useMyDiagnosisReports } from './api'
+import { buildMyDiagnosisReports, TOTAL_WEEKS } from './reportData'
 
 // 교육과정 허브 탭바 — 페이지 본문 테스트에 집중하도록 껍데기만 둔다.
 vi.mock('../CourseTabs', () => ({ CourseTabs: () => null }))
@@ -12,15 +12,15 @@ vi.mock('../CourseTabs', () => ({ CourseTabs: () => null }))
 vi.mock('../useCourseHubHeader', () => ({ useCourseHubHeader: () => {} }))
 vi.mock('./api')
 
-const reports = buildDiagnosisReports()
+const reports = buildMyDiagnosisReports()
 
 function renderPage(initialEntry = '/student/course/diagnosis') {
-  vi.mocked(useDiagnosisReports).mockReturnValue({
+  vi.mocked(useMyDiagnosisReports).mockReturnValue({
     data: reports,
     isPending: false,
     isError: false,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useDiagnosisReports>)
+  } as unknown as ReturnType<typeof useMyDiagnosisReports>)
 
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -34,33 +34,44 @@ function renderPage(initialEntry = '/student/course/diagnosis') {
   )
 }
 
-describe('DiagnosisReportPage', () => {
+describe('DiagnosisReportPage (개인 리포트)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('기본으로 최신 주차 리포트를 연다', () => {
+  it('기본으로 최신 주차 내 리포트를 연다', () => {
     renderPage()
     expect(
       screen.getByText(`총 ${TOTAL_WEEKS}개 주차 리포트 · 24주차 열람 중`),
     ).toBeInTheDocument()
+    expect(screen.getByText('나의 주간 수준 진단 리포트')).toBeInTheDocument()
     expect(
       screen.getByText(/24주차 · 분석 기준일: 2026-08-05/),
     ).toBeInTheDocument()
   })
 
-  it('주차 목록에서 20주차를 고르면 해당 주 원문 리포트가 보인다', async () => {
+  it('수강생 눈높이 섹션 구성을 갖춘다(강사 권장 조치 없음)', () => {
+    renderPage()
+    expect(screen.getByText('이번 주 나의 수준')).toBeInTheDocument()
+    expect(screen.getByText('지난주 대비 변화')).toBeInTheDocument()
+    expect(screen.getByText('잘하고 있는 점')).toBeInTheDocument()
+    expect(screen.getByText('보완하면 좋은 점')).toBeInTheDocument()
+    expect(screen.getByText('이번 주 학습 제안')).toBeInTheDocument()
+    expect(screen.getByText('강사 피드백')).toBeInTheDocument()
+    // 그룹(매니저) 리포트 전용 섹션은 노출되지 않는다.
+    expect(screen.queryByText('강사 권장 조치')).not.toBeInTheDocument()
+    expect(screen.queryByText('학생별 현황')).not.toBeInTheDocument()
+  })
+
+  it('20주차를 고르면 강사 검토본 피드백 원문이 보인다', async () => {
     renderPage()
     await userEvent.click(screen.getByRole('button', { name: /^20주차/ }))
     expect(
       screen.getByText(/20주차 · 분석 기준일: 2026-07-08/),
     ).toBeInTheDocument()
-    // 20주차는 LLM PoV 산출 원문 — 김민준 진단 근거의 발화 인용이 그대로 실려야 한다.
-    expect(screen.getByText(/그냥 답을 알려주시면 안 돼요/)).toBeInTheDocument()
-    // 학생 3명 상세 카드의 피드백 초안 박스가 모두 렌더된다.
     expect(
-      screen.getAllByText(/피드백 초안 \(강사 검토·승인 후 전달/),
-    ).toHaveLength(3)
+      screen.getByText(/민준님, 지난번 IndentationError를 어제보다 더 빠르게/),
+    ).toBeInTheDocument()
   })
 
   it('?week= 쿼리로 특정 주차를 딥링크할 수 있다', () => {
@@ -68,6 +79,7 @@ describe('DiagnosisReportPage', () => {
     expect(
       screen.getByText(/1주차 · 분석 기준일: 2026-02-25/),
     ).toBeInTheDocument()
+    expect(screen.getByText(/첫 진단 주차예요/)).toBeInTheDocument()
   })
 
   it('이전 주/다음 주 버튼으로 인접 주차로 이동한다', async () => {

@@ -49,8 +49,11 @@ export function CertPublishBar() {
   return (
     // 예전엔 fixed + left-[232px] 로 사이드바 폭을 하드코딩했다. 사이드바를 접거나 좁은
     // 화면에서 숨으면 그 232px 이 그대로 남아 바가 왼쪽으로 붕 뜬 채 좁아 보였다.
-    // sticky 로 두면 본문 칸 안에 있으므로 폭이 저절로 따라온다(하단 여백은 부모의 pb-28).
-    <div className="bg-brand-deep sticky bottom-6 z-30 flex items-center justify-between gap-4 rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
+    // sticky 로 두면 본문 칸 안에 있으므로 폭이 저절로 따라온다.
+    //
+    // 화면 아래 고정은 두 갈래로 지킨다 — 내용이 길면 sticky 가 스크롤 중 붙잡고,
+    // 짧으면 mt-auto 가 (min-h-full 인) 본문 칸 맨 아래로 밀어 준다.
+    <div className="bg-brand-deep sticky bottom-6 z-30 mt-auto flex items-center justify-between gap-4 rounded-2xl px-6 py-4 text-white shadow-[0px_12px_32px_0px_rgba(18,23,38,0.28)]">
       <div className="flex min-w-0 items-center gap-3">
         <span
           className={cn(

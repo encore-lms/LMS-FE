@@ -190,7 +190,7 @@ function OriginalDetail({ item }: { item: ProblemCase }) {
   )
 }
 
-function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
+export function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
   const sortedCategories = [...problem.categories].sort(
     (a, b) => b.count - a.count,
   )

@@ -881,7 +881,7 @@ function buildSingleAssessmentCategoryScores(
     })
 }
 
-function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
+export function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
   const verifiedCertifications = tech.certifications.filter(
     (certification) => certification.status === 'APPROVED',
   )

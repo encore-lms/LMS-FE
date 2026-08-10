@@ -24,6 +24,8 @@ export interface PublicCertificatePayload {
   }
   skills: { label: string; score: number }[]
   skillAvg: number
+  /** 동료 평판·코멘트 공개 여부 — 수강생이 공개 설정에서 켠 값. '평가·추천' 탭 노출을 가른다. */
+  peerReputationPublic?: boolean
   /** 대표 근거 요약(예: '프로젝트 1 · 트러블슈팅 1 · 기록실 12'). */
   evidenceSummary: string
   evidence: {

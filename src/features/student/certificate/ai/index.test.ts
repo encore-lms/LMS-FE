@@ -101,15 +101,26 @@ describe('fetchCertificateScore', () => {
 
     expect(score.status).toBe('READY')
     expect(score.student.studentId).toBe('demo-student')
-    expect(score.student.studentName).toBe('박수진')
+    expect(score.student.studentName).toBe('황수빈')
     expect(score.student.courseName).toBe('SK네트웍스 Family AI 캠프')
-    expect(score.student.cohortName).toBe('SKN 32기')
-    expect(score.overallScore).toBe(86)
+    expect(score.student.cohortName).toBe('34기')
+    // 6축 평균과 일치해야 한다 — 어긋나면 공개 검증 페이지와도 어긋난다.
+    expect(score.overallScore).toBe(93.9)
     expect(score.overallRelative).toMatchObject({
       status: 'READY',
       populationSize: 300,
     })
     expect(score.overallRelative.topPercent).not.toBeNull()
+    // 종합 점수는 6축 평균이어야 한다. 어긋나면 수강생 미리보기와 공개 검증(/verify)이
+    // 서로 다른 숫자를 보여주게 되고, 검증자는 문서를 믿지 않는다.
+    const axisAvg =
+      Math.round(
+        (score.axes.reduce((sum, axis) => sum + (axis.score ?? 0), 0) /
+          score.axes.length) *
+          10,
+      ) / 10
+    expect(score.overallScore).toBe(axisAvg)
+
     expect(score.axes.map((axis) => axis.key)).toEqual([
       '기술·기술기여',
       '소통·협업·팀워크',

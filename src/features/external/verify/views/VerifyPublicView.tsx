@@ -3,22 +3,92 @@ import { Check, Download, Hash, Star } from 'lucide-react'
 import type { CertifiedPublicResult } from '../types'
 import { VerifyPolicyBox } from '../components'
 
-// 6축 색 — Figma 543:2909 축별 토큰(기술 brand / 책임감 success / 소통 info /
-// 성장 accent-strong / 팀워크 warning / 문제해결 danger). 순서 기반 매핑.
-const AXIS_TONES = [
-  { bar: 'bg-brand', text: 'text-brand' },
-  { bar: 'bg-success', text: 'text-success' },
-  { bar: 'bg-info', text: 'text-info' },
-  { bar: 'bg-accent-strong', text: 'text-accent-strong' },
-  { bar: 'bg-warning', text: 'text-warning' },
-  { bar: 'bg-danger', text: 'text-danger' },
-]
+// 6축 색 — 수강생 미리보기(SummaryTab 의 axisTone)와 같은 축 이름 기준 매핑.
+// 순서 기반이면 축이 하나만 늘어도 두 화면의 색이 어긋난다.
+const AXIS_TONE: Record<string, { bar: string; text: string }> = {
+  '기술·기술기여': { bar: 'bg-brand', text: 'text-brand' },
+  '소통·협업·팀워크': { bar: 'bg-info', text: 'text-info' },
+  문제해결: { bar: 'bg-danger', text: 'text-danger' },
+  책임감: { bar: 'bg-warning', text: 'text-warning' },
+  학습지속성: { bar: 'bg-success', text: 'text-success' },
+  '성취도 평가': { bar: 'bg-accent-strong', text: 'text-accent-strong' },
+}
+const AXIS_TONE_FALLBACK = { bar: 'bg-brand', text: 'text-brand' }
 
 // 대표 근거 카테고리 칩 색 — raw #e8f7f7(brand 틴트)은 토큰 부재로 brand/10 매핑.
 const CATEGORY_CHIP: Record<string, string> = {
   프로젝트: 'bg-brand/10 text-brand',
   트러블슈팅: 'bg-danger-bg text-danger',
   기록실: 'bg-success-bg text-success',
+}
+
+/**
+ * 절대 종합 점수 — 수강생 미리보기(SummaryTab)의 도넛과 같은 모양.
+ * 검증자가 본인 화면과 나란히 놓고 봐도 같은 문서로 읽히도록 수치·배치를 맞춘다.
+ */
+function OverallScoreCard({ score, grade }: { score: number; grade: string }) {
+  const clamped = Math.min(100, Math.max(0, score))
+  return (
+    <section className="bg-surface flex flex-col items-center gap-4 rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-fg-subtle text-[10px] font-bold">
+          AGGREGATE SCORE
+        </span>
+        <span className="text-fg text-[15px] font-bold">절대 종합 점수</span>
+        <span className="text-fg-muted text-[11px]">
+          6축 역량 점수를 종합한 결과
+        </span>
+      </div>
+
+      <div
+        role="img"
+        aria-label={`절대 종합 점수 ${score.toFixed(1)}점`}
+        className="relative size-48"
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 120 120"
+          className="size-full -rotate-90"
+        >
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="none"
+            pathLength="100"
+            stroke="currentColor"
+            strokeWidth="10"
+            className="text-surface-muted"
+          />
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="none"
+            pathLength="100"
+            stroke="currentColor"
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray="100"
+            strokeDashoffset={100 - clamped}
+            className="text-brand"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-fg text-[44px] leading-none font-bold tracking-[-0.04em]">
+            {score.toFixed(1)}
+          </span>
+          <span className="text-fg-muted mt-1.5 text-[12px] font-medium">
+            / 100
+          </span>
+        </div>
+      </div>
+
+      <span className="bg-brand/10 text-brand rounded-full px-3 py-1.5 text-[12px] font-bold">
+        Grade {grade}
+      </span>
+    </section>
+  )
 }
 
 // 흰 카드 공통 셸 — 헤더(좌 타이틀·우 보조) + divider + 바디. Figma 카드 공통 패턴.
@@ -215,45 +285,54 @@ export function VerifyPublicView({
         </div>
       </SectionCard>
 
-      {/* 6축 점수 — 트랙·score% fill·축별 토큰 색. */}
-      <SectionCard
-        title="6축 점수 — 동결 시점"
-        aside={
-          <span className="flex items-baseline gap-1">
-            <span className="text-fg-subtle text-[10px] font-medium tracking-[0.6px]">
-              평균
+      {/* 종합 점수 + 6축 — 수강생 미리보기의 '종합 요약' 배치를 그대로 따른다. */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(280px,340px)_1fr]">
+        <OverallScoreCard
+          score={p.skillAvg}
+          grade={p.stats.coreCompetencyGrade}
+        />
+        <SectionCard
+          title="6축 점수 — 동결 시점"
+          aside={
+            // 평균은 왼쪽 도넛이 이미 보여준다 — 미리보기처럼 산출 기준 칩만 둔다.
+            <span className="bg-surface-muted text-fg-subtle rounded-full px-2 py-1 text-[9px] font-bold">
+              종합 점수 산출 기준
             </span>
-            <span className="text-brand text-xl font-bold">{p.skillAvg}</span>
-            <span className="text-fg-subtle text-[11px] font-medium">
-              / 100
-            </span>
-          </span>
-        }
-      >
-        <div className="flex flex-col gap-2 px-6 pt-3.5 pb-[18px]">
-          {p.skills.map((skill, i) => {
-            const tone = AXIS_TONES[i % AXIS_TONES.length]
-            return (
-              <div key={skill.label} className="flex items-center gap-3">
-                <span className="text-fg-muted w-14 shrink-0 text-xs font-medium">
-                  {skill.label}
-                </span>
-                <div className="bg-surface-muted h-2 flex-1 overflow-hidden rounded">
-                  <div
-                    className={`h-full rounded ${tone.bar}`}
-                    style={{ width: `${skill.score}%` }}
-                  />
-                </div>
-                <span
-                  className={`w-[60px] shrink-0 text-right text-sm font-bold ${tone.text}`}
+          }
+        >
+          {/* 격자·게이지 두께·점수 표기를 수강생 미리보기(AxisGaugeList)와 맞춘다. */}
+          <div className="grid gap-3.5 px-6 pt-3.5 pb-[18px]">
+            {p.skills.map((skill) => {
+              const tone = AXIS_TONE[skill.label] ?? AXIS_TONE_FALLBACK
+              return (
+                <div
+                  key={skill.label}
+                  className="grid items-center gap-x-3 gap-y-1 sm:grid-cols-[150px_minmax(120px,1fr)_56px]"
                 >
-                  {skill.score}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      </SectionCard>
+                  <span className="text-fg truncate text-[12px] font-bold">
+                    {skill.label}
+                  </span>
+                  <div
+                    role="img"
+                    aria-label={`${skill.label} 절대 점수 ${skill.score}점`}
+                    className="bg-surface-muted h-2.5 min-w-0 overflow-hidden rounded-full"
+                  >
+                    <div
+                      className={`h-full rounded-full ${tone.bar}`}
+                      style={{
+                        width: `${Math.min(100, Math.max(0, skill.score))}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="text-fg text-right text-[12px] font-bold tabular-nums">
+                    {skill.score}점
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </SectionCard>
+      </div>
 
       {/* 대표 근거 — 공개 허용 산출물 3행. */}
       <SectionCard

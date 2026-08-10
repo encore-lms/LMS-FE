@@ -115,45 +115,32 @@ describe('VerifyPage — 평가·추천 공개 토글', () => {
 })
 
 describe('VerifyPage — certified_public(공개 증명서)', () => {
-  it('Hero 진본 배너·핵심 정보·6축·대표 근거·무결성 필드를 렌더한다', () => {
+  it('Hero 진본 배너·증명서 본문·무결성 필드를 렌더한다', () => {
     mockResult(publicResult)
     renderPage()
     expect(
       screen.getByText('이 증명서는 정식으로 발급된 진본입니다'),
     ).toBeInTheDocument()
     expect(screen.getByText('certified · 진본 검증 완료')).toBeInTheDocument()
-    // 핵심 정보 — 이름은 이름 행에만 전체로, 아바타는 이니셜(84px 원을 넘기지 않게).
-    expect(screen.getAllByText('이서연')).toHaveLength(1)
-    expect(screen.getByText('이')).toBeInTheDocument()
-    expect(screen.getByText('Lee Seoyeon')).toBeInTheDocument()
-    expect(screen.getByText('DA 5기')).toBeInTheDocument()
-    expect(screen.getByText('96.2%')).toBeInTheDocument()
-    // 6축 점수 + 평균.
-    expect(screen.getByText('6축 점수 — 동결 시점')).toBeInTheDocument()
-    expect(screen.getByText('81.7')).toBeInTheDocument()
-    // '문제해결' 은 6축 라벨과 탭 이름 두 곳에 나온다 — 6축 쪽을 특정해 확인한다.
-    expect(
-      screen.getAllByText('문제해결').length,
-    ).toBeGreaterThanOrEqual(1)
-    // 증명서 탭을 미리보기와 같은 컴포넌트로 재사용한다.
-    // 이력서·AI 분석은 공개 대상이 아니라 노출되면 안 된다.
+    // 증명서 본문 — 수강생 미리보기의 히어로를 그대로 쓴다(인증 완료 칩 + 검증 ID).
+    expect(screen.getByText('이서연')).toBeInTheDocument()
+    expect(screen.getByText('정식 인증 완료')).toBeInTheDocument()
+    expect(screen.getByText(/ver_2026Q2_512/)).toBeInTheDocument()
+    // 탭은 미리보기와 같은 컴포넌트(CertTabs). 종합 요약이 기본이다.
+    expect(screen.getByRole('button', { name: '종합 요약' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '기술·검증' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '프로젝트' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '이력서' })).toBeNull()
-    expect(screen.queryByRole('button', { name: /AI 분석/ })).toBeNull()
-    // 수강생 미리보기와 같은 얼굴 — 절대 종합 점수 도넛이 공개 페이지에도 있어야 한다.
-    // 두 화면이 다르게 생기면 검증자가 같은 문서로 읽지 않는다.
-    expect(screen.getByText('AGGREGATE SCORE')).toBeInTheDocument()
-    expect(screen.getByText('절대 종합 점수')).toBeInTheDocument()
-    expect(
-      screen.getByRole('img', { name: /절대 종합 점수 81\.7점/ }),
-    ).toBeInTheDocument()
+    // 종합 요약 본문(도넛·6축)은 미리보기의 SummaryTab 이 그대로 그린다.
+    // 점수 조회가 끝나기 전에는 골격이 뜬다 — 탭이 선택돼 있는 것으로 확인한다.
+    expect(screen.getByRole('button', { name: '종합 요약' })).toHaveClass(
+      'text-brand',
+    )
     // 대표 근거.
     expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()
     // 검증 정보 — 무결성(해시는 Hero 칩과 필드 박스 2곳).
     expect(screen.getAllByText(/sha256:a3f9…07e/)).toHaveLength(2)
     expect(screen.getByText('vfy_kp9q4r2nx0')).toBeInTheDocument()
-    expect(screen.getByText('ver_2026Q2_512')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /공개 JSON 다운로드/ }),
     ).toBeInTheDocument()

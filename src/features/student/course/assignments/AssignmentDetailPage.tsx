@@ -104,7 +104,7 @@ export default function AssignmentDetailPage() {
           <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_320px]">
             <SubmissionForm
               key={data.submittedAtLabel ?? 'first'}
-              draft={submitted}
+              draft={submitted ?? data.draft}
               isSaving={submitAssignment.isPending}
               onSave={handleSave}
               onBack={back}

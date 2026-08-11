@@ -1,4 +1,5 @@
 import {
+  CERTIFICATE_DEMO_STUDENT_BY_ID,
   CERTIFICATE_DEMO_STUDENTS,
   type CertificateDemoStudent,
 } from '@/features/student/certificate/demoStudents'
@@ -42,6 +43,9 @@ export function statusOf(studentId: string): CompetencyCertStatus {
 }
 
 export function demoOf(studentId: string): CertificateDemoStudent {
+  // 실제 로스터 id 매핑 우선 — 이름 불일치 방지(2026-08-11). 미등록 id만 해시 폴백.
+  const matched = CERTIFICATE_DEMO_STUDENT_BY_ID.get(studentId)
+  if (matched) return matched
   const list = CERTIFICATE_DEMO_STUDENTS
   return list[hash(studentId) % list.length]
 }

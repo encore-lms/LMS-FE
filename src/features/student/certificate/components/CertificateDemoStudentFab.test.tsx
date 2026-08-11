@@ -4,7 +4,7 @@ import { CERTIFICATE_DEMO_STUDENTS } from '../demoStudents'
 import { CertificateDemoStudentFab } from './CertificateDemoStudentFab'
 
 describe('CertificateDemoStudentFab', () => {
-  it('원형 버튼에서 5명 선택 패널을 열고 수강생을 선택한다', () => {
+  it('원형 버튼에서 26명 선택 패널을 열고 수강생을 선택한다', () => {
     const onSelect = vi.fn()
     render(
       <CertificateDemoStudentFab
@@ -16,16 +16,16 @@ describe('CertificateDemoStudentFab', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '시연 수강생 선택 · 현재 박수진',
+        name: '시연 수강생 선택 · 현재 황수빈',
       }),
     )
 
     expect(
       screen.getByRole('region', { name: '시연 수강생 선택 패널' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { pressed: false })).toHaveLength(4)
+    expect(screen.getAllByRole('button', { pressed: false })).toHaveLength(25)
 
-    fireEvent.click(screen.getByText('박채원').closest('button')!)
+    fireEvent.click(screen.getByText('김건우').closest('button')!)
     expect(onSelect).toHaveBeenCalledWith(CERTIFICATE_DEMO_STUDENTS[1].id)
     expect(
       screen.queryByRole('region', { name: '시연 수강생 선택 패널' }),
@@ -41,7 +41,7 @@ describe('CertificateDemoStudentFab', () => {
       />,
     )
     const button = getByRole('button', {
-      name: '시연 수강생 선택 · 현재 박수진',
+      name: '시연 수강생 선택 · 현재 황수빈',
     })
     const beforeLeft = button.style.left
     const beforeTop = button.style.top

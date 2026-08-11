@@ -113,31 +113,95 @@ export function createRosterScore(studentId: string): CertificateScoreResult {
     학습지속성: a.학습지속성,
     '성취도 평가': a.성취도,
   }
+  const blogApplied = r1(30 * (entry.blogs / 8))
+  const assignApplied = r1(3 * (entry.assigns / 10))
   const detailOf: Record<string, string> = {
     '기술·기술기여': `역량 점검 평균 ${avg} × 0.7 (인증 프로젝트 0/1)`,
     '소통·협업·팀워크': '멘토링·Q&A 활동 기반 산정 전 — 데모 추정치',
     문제해결: '인증 트러블슈팅 없음 — 데모 추정치',
     책임감: '출석률 100 × 0.6 + 학습 기록 × 0.4 — 데모 추정치',
-    학습지속성: '출석 70점 + 학습 기록 가산 — 데모 추정치',
+    학습지속성: `출석 70점 + 블로그 ${blogApplied}점 + 과제 가산 ${assignApplied}점`,
     '성취도 평가': `역량 점검 2회 평균 ${avg}점 · 1차 ${entry.q1} / 2차 ${entry.q2}`,
   }
+  // 학습지속성 KPI 카드는 evidence를 attendance/blog/assignment/study/mentoring
+  // 키로 찾는다 — 실측(블로그·과제 제출 수)으로 채워 축 점수와 합이 맞게 한다.
+  const persistenceEvidence = [
+    {
+      key: 'attendance',
+      label: '출석률',
+      value: 100,
+      unit: '%' as const,
+      numerator: 6,
+      denominator: 6,
+      weightPercent: 70,
+      appliedScore: 70,
+      detail: 'HRD 인정 100% · 70점 반영',
+    },
+    {
+      key: 'blog',
+      label: '블로그 제출률',
+      value: r1((entry.blogs / 8) * 100),
+      unit: '%' as const,
+      numerator: entry.blogs,
+      denominator: 8,
+      weightPercent: 30,
+      appliedScore: blogApplied,
+      detail: `${entry.blogs}/8주 · ${blogApplied}점 반영`,
+    },
+    {
+      key: 'assignment',
+      label: '과제 제출률',
+      value: r1((entry.assigns / 10) * 100),
+      unit: '%' as const,
+      numerator: entry.assigns,
+      denominator: 10,
+      weightPercent: null,
+      appliedScore: assignApplied,
+      detail: `${entry.assigns}/10건 · +${assignApplied}점`,
+    },
+    {
+      key: 'study',
+      label: '스터디 참여율',
+      value: 0,
+      unit: '%' as const,
+      numerator: 0,
+      denominator: 8,
+      weightPercent: null,
+      appliedScore: 0,
+      detail: '참여 기록 없음',
+    },
+    {
+      key: 'mentoring',
+      label: '멘토링 참석률',
+      value: 0,
+      unit: '%' as const,
+      numerator: 0,
+      denominator: 6,
+      weightPercent: null,
+      appliedScore: 0,
+      detail: '참석 기록 없음',
+    },
+  ]
   const axes = base.axes.map((axis) => ({
     ...axis,
     score: scoreOf[axis.key] ?? axis.score,
     detail: detailOf[axis.key] ?? axis.detail,
-    evidence: [
-      {
-        key: 'rosterDemo',
-        label: `${axis.key} 산정`,
-        value: scoreOf[axis.key] ?? 0,
-        unit: '점' as const,
-        numerator: null,
-        denominator: null,
-        weightPercent: 100,
-        appliedScore: scoreOf[axis.key] ?? 0,
-        detail: detailOf[axis.key] ?? '',
-      },
-    ],
+    evidence:
+      axis.key === '학습지속성'
+        ? persistenceEvidence
+        : [
+            {
+              key: 'rosterDemo',
+              label: `${axis.key} 산정`,
+              value: scoreOf[axis.key] ?? 0,
+              unit: '점' as const,
+              numerator: null,
+              denominator: null,
+              weightPercent: 100,
+              appliedScore: scoreOf[axis.key] ?? 0,
+              detail: detailOf[axis.key] ?? '',
+            },
+          ],
   }))
   const overall = rosterOverall(entry)
   return {

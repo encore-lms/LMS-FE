@@ -25,21 +25,11 @@ function hash(value: string) {
  * 어느 기수를 열어도 전원 '기수 미종료'가 되어 나머지 상태를 확인할 수 없었다.
  * BE 가 붙으면 이 배분을 실제 준비·인증 상태로 바꾼다.</p>
  */
-const STATUS_CYCLE: CompetencyCertStatus[] = [
-  'certified',
-  'data_ready',
-  'cohort_open',
-  'requested',
-  'data_pending',
-  'reviewing',
-  'certified',
-  'changes_requested',
-  'cohort_open',
-]
-
 /** 수강생 한 명의 진행 상태 — 목록과 상세가 같은 값을 보게 한 곳에서 정한다. */
 export function statusOf(studentId: string): CompetencyCertStatus {
-  return STATUS_CYCLE[hash(studentId) % STATUS_CYCLE.length]
+  // 서버 심사 행이 정본이다(전원 행 보유) — 행이 아직 없으면 '기수 진행 중'뿐이다.
+  void studentId
+  return 'cohort_open'
 }
 
 export function demoOf(studentId: string): CertificateDemoStudent {
@@ -61,9 +51,7 @@ export function toCertRow(
   cohortLabel: string,
 ): CompetencyCertRow {
   const demo = demoOf(student.id)
-  const seed = hash(student.id)
   const status = statusOf(student.id)
-  const certified = status === 'certified'
   // 재료가 덜 모인 두 단계 전에는 보여줄 것이 없다.
   const ready = status !== 'cohort_open' && status !== 'data_pending'
   return {
@@ -72,9 +60,11 @@ export function toCertRow(
     studentUuid: student.studentUuid,
     cohortLabel,
     status,
-    // 공개는 정식 인증 뒤에만 켜진다.
-    published: certified && seed % 3 === 0,
+    // 공개 여부도 서버 행이 덮는다 — 폴백은 항상 비공개.
+    published: false,
     overallScore: ready ? demo.overallScore : null,
+    // 서버 상태로 병합할 때 점수를 다시 계산할 수 있도록 원본을 함께 나른다.
+    demoOverallScore: demo.overallScore,
     openable: ready,
     demoStudentId: demo.id,
   }

@@ -20,37 +20,41 @@ export interface RosterEntry {
   name: string
   q1: number
   q2: number
+  /** 블로그 제출 주 수(실측) */
+  blogs: number
+  /** 과제 제출 수(실측, 총 10건 기준) */
+  assigns: number
 }
 
 export const HWANG_SUBIN_ID = 'f074a93b-5ad7-4234-ba35-4e260d9272ea'
 
 export const REAL_ROSTER: RosterEntry[] = [
-  { id: '173c1f4a-8f1a-4347-9313-a616928c747e', name: '김건우', q1: 84, q2: 86 },
-  { id: 'c83424f0-3657-464d-8755-ffbf0bdd4300', name: '김기호', q1: 93, q2: 94 },
-  { id: '36b5abd6-20b7-4371-8333-0884806535d2', name: '김대호', q1: 83, q2: 72 },
-  { id: '8fda7ecf-ab02-4c70-b6cb-f99252b97208', name: '김동섭', q1: 92, q2: 83 },
-  { id: '3e8122dc-2fcd-4965-9482-1461a40071d1', name: '김재현', q1: 63, q2: 60 },
-  { id: '7a63e4f0-a5cb-4bfb-96d2-d13f3c9eac40', name: '김진화', q1: 82, q2: 90 },
-  { id: 'fcc3ae0a-a921-4f3a-9a32-0992a225dbee', name: '김태윤', q1: 84, q2: 92 },
-  { id: 'cc416cf9-ee44-4568-9298-d72e13fbb3f9', name: '김현지', q1: 94, q2: 92 },
-  { id: 'b8f5bec7-a8e1-4b95-b646-481aeda7acac', name: '노민환', q1: 70, q2: 76 },
-  { id: '84333024-ae0e-46a1-8199-96c667b95157', name: '문성호', q1: 90, q2: 72 },
-  { id: 'bbc694f0-9325-426c-a85d-dca6cd4f39bb', name: '송승재', q1: 96, q2: 97 },
-  { id: 'd9748c45-3779-428a-9509-344272e385f3', name: '윤성호', q1: 65, q2: 72 },
-  { id: '75130370-ad62-4a2b-b0b3-25d3c9f4995a', name: '이성민', q1: 50, q2: 47 },
-  { id: '27652d16-2c51-444e-80e9-378e7d88da36', name: '이현준', q1: 90, q2: 78 },
-  { id: '3745ede2-1a35-4a25-9f50-870b6e256883', name: '이홍규', q1: 64, q2: 74 },
-  { id: 'bcb748bf-4649-4414-b6bf-cccdbad3d8e6', name: '임형준', q1: 76, q2: 60 },
-  { id: '272cc951-d4f9-49df-b4b7-900fa5e2478b', name: '전진영', q1: 82, q2: 74 },
-  { id: '7d369529-546c-4ac3-ba23-bc2bb762e8aa', name: '전진환', q1: 51, q2: 53 },
-  { id: '1ca3e604-be73-42f8-95ab-cad06f202333', name: '정예린', q1: 56, q2: 64 },
-  { id: '3f6250fa-91a7-4719-8b30-3abd7d94b37d', name: '채정석', q1: 80, q2: 67 },
-  { id: '6503f5a9-d91a-4729-a5d9-3345aa2af448', name: '최대원', q1: 81, q2: 75 },
-  { id: '2ac2a82b-7b1e-4238-9c22-a019e3995569', name: '최성욱', q1: 47, q2: 60 },
-  { id: '1af5e5c1-2f6b-4fce-9e26-0c36b1266842', name: '최인영', q1: 96, q2: 92 },
-  { id: '84310db5-c5c5-4f56-8fb1-7780dec1a30b', name: '홍지윤', q1: 76, q2: 78 },
-  { id: HWANG_SUBIN_ID, name: '황수빈', q1: 100, q2: 96 },
-  { id: '02b388be-68fa-44b0-9050-14890cf419d1', name: '황호순', q1: 76, q2: 96 },
+  { id: '173c1f4a-8f1a-4347-9313-a616928c747e', name: '김건우', q1: 84, q2: 86, blogs: 6, assigns: 6 },
+  { id: 'c83424f0-3657-464d-8755-ffbf0bdd4300', name: '김기호', q1: 93, q2: 94, blogs: 5, assigns: 6 },
+  { id: '36b5abd6-20b7-4371-8333-0884806535d2', name: '김대호', q1: 83, q2: 72, blogs: 3, assigns: 4 },
+  { id: '8fda7ecf-ab02-4c70-b6cb-f99252b97208', name: '김동섭', q1: 92, q2: 83, blogs: 5, assigns: 6 },
+  { id: '3e8122dc-2fcd-4965-9482-1461a40071d1', name: '김재현', q1: 63, q2: 60, blogs: 2, assigns: 2 },
+  { id: '7a63e4f0-a5cb-4bfb-96d2-d13f3c9eac40', name: '김진화', q1: 82, q2: 90, blogs: 5, assigns: 6 },
+  { id: 'fcc3ae0a-a921-4f3a-9a32-0992a225dbee', name: '김태윤', q1: 84, q2: 92, blogs: 5, assigns: 6 },
+  { id: 'cc416cf9-ee44-4568-9298-d72e13fbb3f9', name: '김현지', q1: 94, q2: 92, blogs: 5, assigns: 6 },
+  { id: 'b8f5bec7-a8e1-4b95-b646-481aeda7acac', name: '노민환', q1: 70, q2: 76, blogs: 3, assigns: 4 },
+  { id: '84333024-ae0e-46a1-8199-96c667b95157', name: '문성호', q1: 90, q2: 72, blogs: 3, assigns: 4 },
+  { id: 'bbc694f0-9325-426c-a85d-dca6cd4f39bb', name: '송승재', q1: 96, q2: 97, blogs: 5, assigns: 6 },
+  { id: 'd9748c45-3779-428a-9509-344272e385f3', name: '윤성호', q1: 65, q2: 72, blogs: 2, assigns: 2 },
+  { id: '75130370-ad62-4a2b-b0b3-25d3c9f4995a', name: '이성민', q1: 50, q2: 47, blogs: 1, assigns: 2 },
+  { id: '27652d16-2c51-444e-80e9-378e7d88da36', name: '이현준', q1: 90, q2: 78, blogs: 3, assigns: 4 },
+  { id: '3745ede2-1a35-4a25-9f50-870b6e256883', name: '이홍규', q1: 64, q2: 74, blogs: 4, assigns: 2 },
+  { id: 'bcb748bf-4649-4414-b6bf-cccdbad3d8e6', name: '임형준', q1: 76, q2: 60, blogs: 2, assigns: 2 },
+  { id: '272cc951-d4f9-49df-b4b7-900fa5e2478b', name: '전진영', q1: 82, q2: 74, blogs: 3, assigns: 4 },
+  { id: '7d369529-546c-4ac3-ba23-bc2bb762e8aa', name: '전진환', q1: 51, q2: 53, blogs: 5, assigns: 2 },
+  { id: '1ca3e604-be73-42f8-95ab-cad06f202333', name: '정예린', q1: 56, q2: 64, blogs: 4, assigns: 2 },
+  { id: '3f6250fa-91a7-4719-8b30-3abd7d94b37d', name: '채정석', q1: 80, q2: 67, blogs: 2, assigns: 4 },
+  { id: '6503f5a9-d91a-4729-a5d9-3345aa2af448', name: '최대원', q1: 81, q2: 75, blogs: 3, assigns: 4 },
+  { id: '2ac2a82b-7b1e-4238-9c22-a019e3995569', name: '최성욱', q1: 47, q2: 60, blogs: 3, assigns: 2 },
+  { id: '1af5e5c1-2f6b-4fce-9e26-0c36b1266842', name: '최인영', q1: 96, q2: 92, blogs: 5, assigns: 6 },
+  { id: '84310db5-c5c5-4f56-8fb1-7780dec1a30b', name: '홍지윤', q1: 76, q2: 78, blogs: 3, assigns: 4 },
+  { id: 'f074a93b-5ad7-4234-ba35-4e260d9272ea', name: '황수빈', q1: 100, q2: 96, blogs: 8, assigns: 9 },
+  { id: '02b388be-68fa-44b0-9050-14890cf419d1', name: '황호순', q1: 76, q2: 96, blogs: 3, assigns: 6 },
 ]
 
 export const ROSTER_BY_ID = new Map(REAL_ROSTER.map((s) => [s.id, s]))
@@ -78,8 +82,10 @@ export function rosterAxisScores(entry: RosterEntry) {
     소통: wiggle(2, 8),
     문제해결: wiggle(4, 10),
     책임감: wiggle(6, 6),
-    // 출석(HRD 100%) 기본 70점 + 결정론 가산.
-    학습지속성: r1(clamp(70 + ((seed >> 3) % 21), 70, 95)),
+    // 실측 산식 — 출석(HRD 100%) 70 + 블로그 30×(주/8) + 과제 가산 3×(건/10).
+    학습지속성: r1(
+      clamp(70 + 30 * (entry.blogs / 8) + 3 * (entry.assigns / 10), 70, 100),
+    ),
     성취도: avg,
   }
 }
@@ -154,7 +160,11 @@ export function createRosterScore(studentId: string): CertificateScoreResult {
       if (m.key === 'attendance') return m // 전원 HRD 100% 동일
       // 프로젝트·문제해결·자격증·블로그는 이 학생에게 아직 없다.
       if (m.key === 'blog')
-        return { ...m, value: 0, detail: '제출 이력 없음', status: 'NOT_READY' as const }
+        return {
+          ...m,
+          value: r1((entry.blogs / 8) * 100),
+          detail: `${entry.blogs} / 8주 제출`,
+        }
       if (m.key === 'certifiedProject')
         return { ...m, value: 0, detail: '인증 프로젝트 없음' }
       if (m.key === 'certifiedTroubleshooting')

@@ -1,87 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { demoOf, toCertRow } from './mocks'
 import type { StudentAccount } from '@/shared/types'
+import { statusOf, toCertRow } from './mocks'
 
-// 명단은 실제 로스터, 증명서 값은 데모 — 같은 수강생에게는 늘 같은 값이 붙어야
-// 새로고침할 때마다 점수가 바뀌지 않는다.
-const student = (id: string, name = '박수진'): StudentAccount =>
-  ({
-    id,
-    name,
-    studentUuid: '100058794696',
-    birthDate: '1999-03-02',
-    joinedAt: '04-28',
-    lastLoginAt: '오늘 09:18',
-    trainingStatus: 'active',
-    loginBlocked: false,
-    isTest: false,
-  }) as StudentAccount
-
-const rowsOf = (count: number) =>
-  Array.from({ length: count }, (_, i) => toCertRow(student(`s-${i}`), '32기'))
+const student = (id: string, name: string): StudentAccount =>
+  ({ id, name, studentUuid: 'stu-' + id, isTest: false }) as StudentAccount
 
 describe('역량 증명서 목록 목데이터', () => {
-  it('같은 수강생은 늘 같은 값을 받는다', () => {
-    const a = toCertRow(student('s-1'), '32기')
-    const b = toCertRow(student('s-1'), '32기')
-
-    expect(a).toEqual(b)
+  it('서버 행이 없으면 항상 기수 진행 중(폴백)이다 — 가짜 해시 상태 금지', () => {
+    // 예전에는 id 해시로 상태를 흩뿌려 시연 때 이름·상태가 뒤죽박죽이었다.
+    expect(statusOf('아무-id')).toBe('cohort_open')
+    const row = toCertRow(student('s-1', '김건우'), '34기')
+    expect(row.status).toBe('cohort_open')
+    expect(row.openable).toBe(false)
+    expect(row.overallScore).toBeNull()
+    expect(row.published).toBe(false)
   })
 
-  it('수강생이 다르면 데모도 갈린다', () => {
-    const ids = ['s-1', 's-2', 's-3', 's-4', 's-5', 's-6']
-    const names = new Set(ids.map((id) => demoOf(id).name))
-
-    expect(names.size).toBeGreaterThan(1)
-  })
-
-  it('로스터 값을 그대로 싣는다', () => {
-    const row = toCertRow(student('s-9', '김수강'), '30기')
-
-    expect(row.studentName).toBe('김수강')
-    expect(row.studentUuid).toBe('100058794696')
-    expect(row.cohortLabel).toBe('30기')
-  })
-
-  // 재료 축과 인증 축을 한 화면에서 다 볼 수 있어야 흐름을 확인할 수 있다.
-  it('재료·인증 단계가 고르게 나온다', () => {
-    const statuses = new Set(rowsOf(40).map((r) => r.status))
-
-    expect(statuses).toEqual(
-      new Set([
-        'cohort_open',
-        'data_pending',
-        'data_ready',
-        'requested',
-        'reviewing',
-        'changes_requested',
-        'certified',
-      ]),
+  it('서버 상태 병합용 데모 점수 원본을 함께 나른다', () => {
+    const row = toCertRow(
+      student('f074a93b-5ad7-4234-ba35-4e260d9272ea', '황수빈'),
+      '34기',
     )
-  })
-
-  // 검토하려면 증명서를 먼저 봐야 한다 — 인증 전에도 열려야 한다.
-  it('재료가 갖춰지면 인증 전에도 열 수 있고 점수가 있다', () => {
-    const rows = rowsOf(40)
-    const openable = rows.filter((r) => r.openable)
-
-    expect(openable.length).toBeGreaterThan(0)
-    expect(
-      openable.every(
-        (r) => r.status !== 'cohort_open' && r.status !== 'data_pending',
-      ),
-    ).toBe(true)
-    expect(openable.some((r) => r.status !== 'certified')).toBe(true)
-    expect(openable.every((r) => typeof r.overallScore === 'number')).toBe(true)
-    expect(
-      rows.filter((r) => !r.openable).every((r) => r.overallScore === null),
-    ).toBe(true)
-  })
-
-  it('공개는 정식 인증 뒤에만 켜진다', () => {
-    const published = rowsOf(40).filter((r) => r.published)
-
-    expect(published.length).toBeGreaterThan(0)
-    expect(published.every((r) => r.status === 'certified')).toBe(true)
+    expect(row.demoOverallScore).toBe(94.4)
   })
 })

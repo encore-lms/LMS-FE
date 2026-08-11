@@ -15,6 +15,8 @@ export interface CertReviewRow {
   updatedAt: string
   /** 미해소 보완 요청이 있으면 그 코멘트. */
   pendingComment: string | null
+  /** 외부 공개 여부 — BE가 publication 을 함께 조회해 내려준다. */
+  published?: boolean
 }
 
 const keys = {

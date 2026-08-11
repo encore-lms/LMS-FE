@@ -2,28 +2,17 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Eye, EyeOff, Info, Lock, Mail } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Navigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { AuthLayout } from './AuthLayout'
 import { DemoQuickLogin } from './DemoQuickLogin'
 import { DEMO_LOGIN_ENABLED, type DemoAccount } from './demoAccounts'
-import { MEETING_ACCOUNTS } from './meetingAccounts'
+import { QA_ACCOUNTS } from './qaAccounts'
 import { loginSchema, type LoginInput } from './login.schema'
 import { useLoginSubmit } from './useLoginSubmit'
 
-interface LoginPageProps {
-  /**
-   * meeting = /login2 개발자 회의용 — 빠른 로그인이 시연용 데모 계정 대신 QA 계정으로
-   * 바뀌고 상단에 회의용 표식이 붙는다. 시연 중 데모 계정 오클릭(단일 세션이라 시연
-   * 세션이 즉시 끊김)을 막기 위한 분리 입구로, 로그인 동작 자체는 동일하다.
-   */
-  variant?: 'demo' | 'meeting'
-}
-
-export function LoginPage({ variant = 'demo' }: LoginPageProps) {
-  const isMeeting = variant === 'meeting'
+export function LoginPage() {
   const { submit, submitError } = useLoginSubmit()
   const [rememberEmail, setRememberEmail] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
@@ -58,20 +47,22 @@ export function LoginPage({ variant = 'demo' }: LoginPageProps) {
     }
   }, [])
 
-  // 회의용 입구는 빠른 로그인 게이트가 꺼진 빌드에서 존재 이유가 없다 — 기본 로그인으로 돌려보낸다.
-  if (isMeeting && !DEMO_LOGIN_ENABLED) return <Navigate to="/login" replace />
-
   return (
     <AuthLayout
       brandSlot={
         DEMO_LOGIN_ENABLED ? (
-          <DemoQuickLogin
-            onPick={quickLogin}
-            accounts={isMeeting ? MEETING_ACCOUNTS : undefined}
-            title={
-              isMeeting ? '회의용 QA 계정 · 클릭하면 바로 입장' : undefined
-            }
-          />
+          // 데모(시연 데이터)와 QA(개발·테스트) 두 그룹 — /login2 폐쇄(08-11 시연 종료)로
+          // 한 입구에 모았다. 단일 세션 정책상 같은 계정 동시 로그인은 서로를 끊으므로
+          // 여럿이 쓸 때는 서로 다른 계정을 잡는다.
+          <div className="flex flex-col gap-5">
+            <DemoQuickLogin onPick={quickLogin} />
+            <DemoQuickLogin
+              onPick={quickLogin}
+              accounts={QA_ACCOUNTS}
+              title="QA 계정 · 개발·테스트용"
+              showStyleguideLink={false}
+            />
+          </div>
         ) : undefined
       }
     >
@@ -81,11 +72,6 @@ export function LoginPage({ variant = 'demo' }: LoginPageProps) {
         className="flex w-[420px] flex-col gap-6"
       >
         <div className="flex flex-col gap-2">
-          {isMeeting && (
-            <span className="bg-brand/10 text-brand w-fit rounded-[6px] px-2 py-1 text-xs font-bold">
-              개발자 회의용 — 시연 계정 사용 금지
-            </span>
-          )}
           <h1 className="text-fg text-[30px] leading-[38px] font-bold">
             로그인
           </h1>

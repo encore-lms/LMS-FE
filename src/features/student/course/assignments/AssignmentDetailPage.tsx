@@ -95,7 +95,7 @@ export default function AssignmentDetailPage() {
       className="p-8"
     >
       {data && (
-        <div className="flex flex-col gap-6 p-8">
+        <div className="flex flex-col gap-8 p-8">
           {/* 상태 배지 — 요약(휴지) 상태에서는 카드 안 배지로 충분하므로 폼 모드에서만 노출 */}
           {mode === 'form' && (
             <div className="flex justify-end">
@@ -120,7 +120,7 @@ export default function AssignmentDetailPage() {
               onEdit={() => setMode('form')}
             />
           ) : (
-            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_376px]">
+            <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_320px]">
               <SubmissionForm
                 draft={submitted}
                 isSaving={submitAssignment.isPending}

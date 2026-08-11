@@ -79,6 +79,8 @@ function buildRosterDemoStudent(
   name: string,
   q1: number,
   q2: number,
+  blogs: number,
+  assigns: number,
 ): CertificateDemoStudent {
   const avg = Math.round(((q1 + q2) / 2) * 10) / 10
   const seed = seedOf(name)
@@ -104,7 +106,7 @@ function buildRosterDemoStudent(
       tier >= 3 ? 'BOTH' : tier === 2 ? 'INSTRUCTOR_ONLY' : 'NONE',
     highlights: [
       `역량 점검 평균 ${avg}점`,
-      `1차 ${q1} · 2차 ${q2}`,
+      `블로그 ${blogs}주 · 과제 ${assigns}건 제출`,
       '출석 인정 100%',
     ],
     timeline: [
@@ -123,7 +125,7 @@ function buildRosterDemoStudent(
     ],
     reputation: [
       { key: '기술기여', score: rep(1, 2), detail: `역량 점검 평균 ${avg}점` },
-      { key: '책임감', score: rep(3, 2), detail: '출석 인정 100%' },
+      { key: '책임감', score: rep(3, 2), detail: `출석 100% · 과제 ${assigns}건 제출` },
       { key: '소통', score: rep(5, 2), detail: '기수 활동 기반 데모 추정' },
       { key: '성장', score: rep(7, 2), detail: `1차 ${q1} → 2차 ${q2}` },
       { key: '팀워크', score: rep(9, 2), detail: '팀 활동 수집 전' },
@@ -155,32 +157,32 @@ function buildRosterDemoStudent(
   }
 }
 
-const REAL_ROSTER_SCORES: [string, string, number, number][] = [
-  ['173c1f4a-8f1a-4347-9313-a616928c747e', '김건우', 84, 86],
-  ['c83424f0-3657-464d-8755-ffbf0bdd4300', '김기호', 93, 94],
-  ['36b5abd6-20b7-4371-8333-0884806535d2', '김대호', 83, 72],
-  ['8fda7ecf-ab02-4c70-b6cb-f99252b97208', '김동섭', 92, 83],
-  ['3e8122dc-2fcd-4965-9482-1461a40071d1', '김재현', 63, 60],
-  ['7a63e4f0-a5cb-4bfb-96d2-d13f3c9eac40', '김진화', 82, 90],
-  ['fcc3ae0a-a921-4f3a-9a32-0992a225dbee', '김태윤', 84, 92],
-  ['cc416cf9-ee44-4568-9298-d72e13fbb3f9', '김현지', 94, 92],
-  ['b8f5bec7-a8e1-4b95-b646-481aeda7acac', '노민환', 70, 76],
-  ['84333024-ae0e-46a1-8199-96c667b95157', '문성호', 90, 72],
-  ['bbc694f0-9325-426c-a85d-dca6cd4f39bb', '송승재', 96, 97],
-  ['d9748c45-3779-428a-9509-344272e385f3', '윤성호', 65, 72],
-  ['75130370-ad62-4a2b-b0b3-25d3c9f4995a', '이성민', 50, 47],
-  ['27652d16-2c51-444e-80e9-378e7d88da36', '이현준', 90, 78],
-  ['3745ede2-1a35-4a25-9f50-870b6e256883', '이홍규', 64, 74],
-  ['bcb748bf-4649-4414-b6bf-cccdbad3d8e6', '임형준', 76, 60],
-  ['272cc951-d4f9-49df-b4b7-900fa5e2478b', '전진영', 82, 74],
-  ['7d369529-546c-4ac3-ba23-bc2bb762e8aa', '전진환', 51, 53],
-  ['1ca3e604-be73-42f8-95ab-cad06f202333', '정예린', 56, 64],
-  ['3f6250fa-91a7-4719-8b30-3abd7d94b37d', '채정석', 80, 67],
-  ['6503f5a9-d91a-4729-a5d9-3345aa2af448', '최대원', 81, 75],
-  ['2ac2a82b-7b1e-4238-9c22-a019e3995569', '최성욱', 47, 60],
-  ['1af5e5c1-2f6b-4fce-9e26-0c36b1266842', '최인영', 96, 92],
-  ['84310db5-c5c5-4f56-8fb1-7780dec1a30b', '홍지윤', 76, 78],
-  ['02b388be-68fa-44b0-9050-14890cf419d1', '황호순', 76, 96],
+const REAL_ROSTER_SCORES: [string, string, number, number, number, number][] = [
+  ['173c1f4a-8f1a-4347-9313-a616928c747e', '김건우', 84, 86, 6, 6],
+  ['c83424f0-3657-464d-8755-ffbf0bdd4300', '김기호', 93, 94, 5, 6],
+  ['36b5abd6-20b7-4371-8333-0884806535d2', '김대호', 83, 72, 3, 4],
+  ['8fda7ecf-ab02-4c70-b6cb-f99252b97208', '김동섭', 92, 83, 5, 6],
+  ['3e8122dc-2fcd-4965-9482-1461a40071d1', '김재현', 63, 60, 2, 2],
+  ['7a63e4f0-a5cb-4bfb-96d2-d13f3c9eac40', '김진화', 82, 90, 5, 6],
+  ['fcc3ae0a-a921-4f3a-9a32-0992a225dbee', '김태윤', 84, 92, 5, 6],
+  ['cc416cf9-ee44-4568-9298-d72e13fbb3f9', '김현지', 94, 92, 5, 6],
+  ['b8f5bec7-a8e1-4b95-b646-481aeda7acac', '노민환', 70, 76, 3, 4],
+  ['84333024-ae0e-46a1-8199-96c667b95157', '문성호', 90, 72, 3, 4],
+  ['bbc694f0-9325-426c-a85d-dca6cd4f39bb', '송승재', 96, 97, 5, 6],
+  ['d9748c45-3779-428a-9509-344272e385f3', '윤성호', 65, 72, 2, 2],
+  ['75130370-ad62-4a2b-b0b3-25d3c9f4995a', '이성민', 50, 47, 1, 2],
+  ['27652d16-2c51-444e-80e9-378e7d88da36', '이현준', 90, 78, 3, 4],
+  ['3745ede2-1a35-4a25-9f50-870b6e256883', '이홍규', 64, 74, 4, 2],
+  ['bcb748bf-4649-4414-b6bf-cccdbad3d8e6', '임형준', 76, 60, 2, 2],
+  ['272cc951-d4f9-49df-b4b7-900fa5e2478b', '전진영', 82, 74, 3, 4],
+  ['7d369529-546c-4ac3-ba23-bc2bb762e8aa', '전진환', 51, 53, 5, 2],
+  ['1ca3e604-be73-42f8-95ab-cad06f202333', '정예린', 56, 64, 4, 2],
+  ['3f6250fa-91a7-4719-8b30-3abd7d94b37d', '채정석', 80, 67, 2, 4],
+  ['6503f5a9-d91a-4729-a5d9-3345aa2af448', '최대원', 81, 75, 3, 4],
+  ['2ac2a82b-7b1e-4238-9c22-a019e3995569', '최성욱', 47, 60, 3, 2],
+  ['1af5e5c1-2f6b-4fce-9e26-0c36b1266842', '최인영', 96, 92, 5, 6],
+  ['84310db5-c5c5-4f56-8fb1-7780dec1a30b', '홍지윤', 76, 78, 3, 4],
+  ['02b388be-68fa-44b0-9050-14890cf419d1', '황호순', 76, 96, 3, 6],
 ]
 
 // 황수빈(데모 계정) — 증명서 본인 화면(park-sujin 스텁)과 같은 값의 리치 엔트리.
@@ -249,8 +251,8 @@ const HWANG_SUBIN: CertificateDemoStudent = {
 
 export const CERTIFICATE_DEMO_STUDENTS: CertificateDemoStudent[] = [
   HWANG_SUBIN,
-  ...REAL_ROSTER_SCORES.map(([id, name, q1, q2]) =>
-    buildRosterDemoStudent(id, name, q1, q2),
+  ...REAL_ROSTER_SCORES.map(([id, name, q1, q2, blogs, assigns]) =>
+    buildRosterDemoStudent(id, name, q1, q2, blogs, assigns),
   ),
 ]
 

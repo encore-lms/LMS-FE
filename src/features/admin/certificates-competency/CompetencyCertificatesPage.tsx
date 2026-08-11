@@ -52,7 +52,14 @@ export default function CompetencyCertificatesPage() {
   const courseId = courseParam || courses?.[0]?.courseId || null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [cohortParam, setCohortParam] = useSearchParamState('cohort')
-  const cohorts = useMemo(() => courseConfig?.cohorts ?? [], [courseConfig])
+  // ⚠️ 시연 임시 잠금(2026-08-11) — 역량 증명서는 34기만 노출한다. 시연 종료 후 이 블록을
+  // 제거해 원복할 것. 잠금 기수가 목록에 없는 과정에서는 잠그지 않는다(타 과정 안전장치).
+  const DEMO_LOCK_COHORT_ID = 'f34c88f3-7cd2-4543-bf13-c36916d6f183' // SK네트웍스 Family AI 캠프 34기
+  const cohorts = useMemo(() => {
+    const all = courseConfig?.cohorts ?? []
+    const locked = all.filter((c) => c.id === DEMO_LOCK_COHORT_ID)
+    return locked.length > 0 ? locked : all
+  }, [courseConfig])
 
   // 기본 기수: 지난번에 본 기수 → 내가 담당하는 기수 → 목록 첫 기수.
   // 목록 첫 행은 최신 기수라 아직 수강생이 없는 경우가 많다.
@@ -64,7 +71,11 @@ export default function CompetencyCertificatesPage() {
     cohorts.find((c) => c.assigned)?.id ??
     cohorts[0]?.id ??
     null
-  const cohortId = cohortParam || defaultCohortId
+  // URL 파라미터도 노출 목록 안에서만 유효 — 잠금 밖 기수 북마크로 우회되지 않게.
+  const cohortId =
+    (cohortParam && cohorts.some((c) => c.id === cohortParam)
+      ? cohortParam
+      : null) ?? defaultCohortId
 
   useEffect(() => {
     if (courseId && cohortId) writeLastCohort(courseId, cohortId)

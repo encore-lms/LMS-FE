@@ -25,9 +25,6 @@ function guarded(allow: Role[], routes: RouteObject[]): RouteObject {
 // 이 파일은 새 shell 추가/제거·가드 매핑 변경 때만 손댄다(평소 도메인 작업에서 건드리지 않음).
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  // 개발자 회의용 입구 — 빠른 로그인이 시연용 데모 계정 대신 QA 계정.
-  // 데모 게이트가 꺼진 빌드에서는 /login 으로 리다이렉트된다(LoginPage 내부 처리).
-  { path: '/login2', element: <LoginPage variant="meeting" /> },
   // 스타일가이드는 로컬 dev 전용 — 배포 라우터에는 등록하지 않고, import()도 dead branch라
   // 프로덕션 빌드에서는 청크 자체가 emit되지 않는다(route-level lazy).
   ...(import.meta.env.DEV

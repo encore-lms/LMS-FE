@@ -109,7 +109,7 @@ function buildRosterDemoStudent(
     highlights: [
       `역량 점검 평균 ${avg}점`,
       `블로그 ${blogs}주 · 과제 ${assigns}건 제출`,
-      `팀 프로젝트 ${certifiedProjectsOf(name).length}건 인증`,
+      `인증 프로젝트 ${certifiedProjectsOf(name).length}건`,
     ],
     timeline: [
       {

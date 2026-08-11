@@ -52,6 +52,14 @@ export interface AssignmentDetail {
   draft: AssignmentDraft | null
   hasHistory: boolean
   submittedAtLabel?: string // 제출 완료 요약의 '제출 시각' (제출본 있을 때)
+  /** 제출 이력 타임라인(최신 먼저) — BE V53. 구버전 응답 대비 optional. */
+  history?: {
+    action: 'submitted' | 'resubmitted'
+    actionLabel: string // "제출완료" | "재제출"
+    timeLabel: string // "HH:mm"
+    dateLabel: string // "yyyy-MM-dd"
+    summary: string
+  }[]
   /** 사이드 '검토 완료 예시'(있으면 노출) */
   feedbackExample?: {
     statusLabel: string // "검토 완료"

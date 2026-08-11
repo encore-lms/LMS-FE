@@ -57,7 +57,8 @@ export function AssignmentSummary({
   }
 
   return (
-    <section className="flex items-start justify-between gap-6">
+    // 옅은 brand 틴트 배경 — 테두리 없이 배경으로만 구분한다(참조 이미지 정본).
+    <section className="bg-brand/[0.04] flex items-start justify-between gap-6 rounded-2xl p-7">
       <div className="flex min-w-0 flex-1 flex-col gap-3.5">
         <h2 className="text-fg text-[22px] font-bold">{detail.title}</h2>
         <p className="text-fg text-[14px] leading-6">{detail.description}</p>

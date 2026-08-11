@@ -9,15 +9,13 @@ import { AssignmentSummary } from './components/AssignmentSummary'
 import { STATUS_BADGE } from './meta'
 import { SubmissionForm } from './components/SubmissionForm'
 import { SubmissionState } from './components/SubmissionState'
-import { SubmissionSummary } from './components/SubmissionSummary'
 import { ConfirmResubmitModal } from './components/ConfirmResubmitModal'
 import type { AssignmentDraft, AssignmentStatus } from './types'
 
 /**
- * 과제 상세·제출 (/student/course/assignments/:assignmentId) — Figma 2236:10410.
- * 제출 흐름:
- *  - 미제출 → 제출 폼(2236:10410). 제출 저장 → 제출 완료 요약(2236:10480) + 토스트.
- *  - 제출 완료 → 제출 요약(휴지 상태). 제출 보기·수정 → 폼. 제출 저장 → 덮어쓰기 확인 모달(2236:10522).
+ * 과제 상세·제출 (/student/course/assignments/:assignmentId).
+ * 제출 전·후 모두 같은 폼 화면을 쓴다 — 제출본이 있으면 프리필되고, 우측 타임라인이
+ * 제출 이력을 보여준다(2026-08-11 참조 이미지 정본). 재제출은 덮어쓰기 확인 모달을 거친다.
  */
 export default function AssignmentDetailPage() {
   const { assignmentId = '' } = useParams()
@@ -30,20 +28,16 @@ export default function AssignmentDetailPage() {
     '마감 전에는 마지막 제출본이 유효합니다. 텍스트·URL·첨부 중 하나 이상을 입력하세요.',
   )
 
-  // 제출 상태머신 — data 로드(또는 다른 과제로 전환) 시 초기화
-  const [mode, setMode] = useState<'summary' | 'form'>('form')
+  // data 로드(또는 다른 과제로 전환) 시 초기화
   const [hasHistory, setHasHistory] = useState(false)
   const [submitted, setSubmitted] = useState<AssignmentDraft | null>(null)
-  const [submittedAt, setSubmittedAt] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [pending, setPending] = useState<AssignmentDraft | null>(null)
 
   useEffect(() => {
     if (!data) return
-    setMode(data.hasHistory ? 'summary' : 'form')
     setHasHistory(data.hasHistory)
     setSubmitted(data.draft)
-    setSubmittedAt(data.submittedAtLabel ?? '')
     setModalOpen(false)
     setPending(null)
   }, [data])
@@ -57,12 +51,10 @@ export default function AssignmentDetailPage() {
       : (data?.status ?? 'not_submitted')
   const badge = STATUS_BADGE[effectiveStatus]
 
-  // 요약으로 확정(첫 제출·수정 제출 공통)
+  // 제출 확정(첫 제출·재제출 공통) — 화면은 그대로 폼, 이력은 상세 재조회로 갱신된다.
   const commit = (draft: AssignmentDraft, msg: string) => {
     setSubmitted(draft)
-    setSubmittedAt('방금 전')
     setHasHistory(true)
-    setMode('summary')
     setModalOpen(false)
     setPending(null)
     toast.success(msg)
@@ -96,40 +88,29 @@ export default function AssignmentDetailPage() {
     >
       {data && (
         <div className="flex flex-col gap-8 p-8">
-          {/* 상태 배지 — 요약(휴지) 상태에서는 카드 안 배지로 충분하므로 폼 모드에서만 노출 */}
-          {mode === 'form' && (
-            <div className="flex justify-end">
-              <span
-                className={cn(
-                  'shrink-0 rounded-md px-2.5 py-1.5 text-[11px] font-semibold',
-                  badge.cls,
-                )}
-              >
-                {badge.label}
-              </span>
-            </div>
-          )}
+          <div className="flex justify-end">
+            <span
+              className={cn(
+                'shrink-0 rounded-md px-2.5 py-1.5 text-[11px] font-semibold',
+                badge.cls,
+              )}
+            >
+              {badge.label}
+            </span>
+          </div>
 
           <AssignmentSummary detail={data} status={effectiveStatus} />
 
-          {mode === 'summary' && submitted ? (
-            <SubmissionSummary
-              detail={data}
-              submitted={submitted}
-              submittedAtLabel={submittedAt || '방금 전'}
-              onEdit={() => setMode('form')}
+          <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_320px]">
+            <SubmissionForm
+              key={data.submittedAtLabel ?? 'first'}
+              draft={submitted}
+              isSaving={submitAssignment.isPending}
+              onSave={handleSave}
+              onBack={back}
             />
-          ) : (
-            <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_320px]">
-              <SubmissionForm
-                draft={submitted}
-                isSaving={submitAssignment.isPending}
-                onSave={handleSave}
-                onBack={back}
-              />
-              <SubmissionState detail={data} />
-            </div>
-          )}
+            <SubmissionState detail={data} />
+          </div>
 
           <ConfirmResubmitModal
             open={modalOpen}

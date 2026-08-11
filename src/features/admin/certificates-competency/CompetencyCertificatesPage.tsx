@@ -101,6 +101,8 @@ export default function CompetencyCertificatesPage() {
             r.studentName.toLowerCase().includes(needle) ||
             r.studentUuid.toLowerCase().includes(needle),
         )
+        // 이름 가나다 오름차순 — 로스터 순서가 뒤섞여 있어 시연 때 찾기 어려웠다(2026-08-11).
+        .sort((a, b) => a.studentName.localeCompare(b.studentName, 'ko'))
     )
   }, [data, q, cohortLabel, reviewRows])
 

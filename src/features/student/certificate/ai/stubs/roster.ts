@@ -332,26 +332,295 @@ const BIKE_PROJECT: TeamProjectSpec = {
   strength: '문제 재정의와 시계열 모델링',
 }
 
+/** 개인 인증 프로젝트 — 배포 BE 실측(2026-08-11 강사 인증). 도넛 분포를 학생별로 다르게 만든다. */
+interface PersonalProjectSpec extends TeamProjectSpec {
+  owner: string
+}
+
+export const PERSONAL_PROJECTS: PersonalProjectSpec[] = [
+  {
+    owner: '최인영',
+    id: '921a4214-dc8b-4ba4-b470-4e1ed7cb54d1',
+    name: '러닝 기록 데이터 페이스 분석',
+    domain: '헬스케어 · 운동 데이터',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "matplotlib"],
+    outcomes: ['월별 페이스 추이 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["러닝 앱 기록 내보내기·정리", "거리·페이스 파생 변수"],
+    challenge: '기록 앱마다 다른 내보내기 형식',
+    action: '공통 스키마로 변환하는 정리 스크립트를 만들었습니다.',
+    result: '월별 페이스 개선 추이를 정량화해 강사 인증을 받았습니다.',
+    strength: '생활 데이터의 정량 분석',
+  },
+  {
+    owner: '김건우',
+    id: 'c14c33a2-a21f-4677-bf66-fd75a77f1b79',
+    name: 'KBO 타자 기록 분석',
+    domain: '스포츠 · 경기 데이터 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "BeautifulSoup"],
+    outcomes: ['구장·상대별 성적 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["시즌 타자 기록 수집", "지표 정의·정리(OPS 등)"],
+    challenge: '시즌 중 갱신되는 기록의 수집 시점 관리',
+    action: '수집 일자를 버전으로 남겨 재현 가능하게 했습니다.',
+    result: '지표 기반 분석 리포트를 완성해 강사 인증을 받았습니다.',
+    strength: '수집 자동화와 지표 설계',
+  },
+  {
+    owner: '김대호',
+    id: '7bd3a886-6113-464f-9281-1d6530a8c2e2',
+    name: '편의점 시간대별 매출 분석',
+    domain: '리테일 · 상권 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "seaborn"],
+    outcomes: ['판매 패턴 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["아르바이트 매출 기록 정리", "시간대·요일 분류"],
+    challenge: '수기 기록의 결측·오기 정리',
+    action: '분류 기준표를 만들어 일관되게 정리했습니다.',
+    result: '시간대별 판매 패턴 리포트로 강사 인증을 받았습니다.',
+    strength: '현장 데이터 정리와 패턴 분석',
+  },
+  {
+    owner: '김동섭',
+    id: '6b5d5319-1cad-4a22-9baf-e1919f97f33f',
+    name: '게임 유저 이탈 로그 분석',
+    domain: '게임 · 유저 로그 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "SQL"],
+    outcomes: ['이탈 구간 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["공개 게임 로그 데이터 확보", "세션·잔존 지표 정의"],
+    challenge: '세션 경계가 불명확한 로그의 구간화',
+    action: '휴지 간격 기준으로 세션을 정의했습니다.',
+    result: '이탈 구간 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '로그 데이터 지표 정의',
+  },
+  {
+    owner: '김진화',
+    id: 'f0afd417-9b30-48b7-9164-a6e6700637da',
+    name: '자전거 주행 기록 분석',
+    domain: '모빌리티 · 수요 예측',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "folium"],
+    outcomes: ['주행 패턴 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["주행 기록 GPS 정리", "코스·시간대 분류"],
+    challenge: 'GPS 기록의 노이즈 제거',
+    action: '속도 이상치 필터로 경로를 정제했습니다.',
+    result: '주행 패턴 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '위치 데이터 전처리',
+  },
+  {
+    owner: '김태윤',
+    id: '684da83d-448a-435f-87b5-2cbb4debc0ce',
+    name: '웹툰 조회수 트렌드 분석',
+    domain: '미디어 · 흥행 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "Plotly"],
+    outcomes: ['트렌드 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["공개 조회수 데이터 수집", "장르·요일 분류"],
+    challenge: '플랫폼별 집계 기준 차이',
+    action: '공통 지표로 환산해 비교 기준을 통일했습니다.',
+    result: '트렌드 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '트렌드 데이터 비교 분석',
+  },
+  {
+    owner: '김현지',
+    id: '0093b7b7-4fc3-4b51-8a16-e7314f8d0b3f',
+    name: '가계부 지출 데이터 분석',
+    domain: '금융 · 소비 트렌드 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "matplotlib"],
+    outcomes: ['월별 지출 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["가계부 내보내기·정리", "카테고리 분류 체계"],
+    challenge: '수기 가계부의 카테고리 불일치',
+    action: '카테고리 매핑 규칙을 만들어 정리했습니다.',
+    result: '월별 지출 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '개인 금융 데이터 분석',
+  },
+  {
+    owner: '김현지',
+    id: '30665993-5a5f-4712-a7ca-f0c78c281998',
+    name: '동네 카페 매출 분석',
+    domain: '리테일 · 상권 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "seaborn"],
+    outcomes: ['판매 패턴 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["매출 기록 데이터 정리", "메뉴·시간대 분류"],
+    challenge: '수기 기록의 결측·오기 정리',
+    action: '분류 기준표를 만들어 일관되게 정리했습니다.',
+    result: '시간대별 판매 패턴 리포트로 강사 인증을 받았습니다.',
+    strength: '현장 데이터 정리와 패턴 분석',
+  },
+  {
+    owner: '문성호',
+    id: '8556372c-3886-43f7-8126-806a957bba3a',
+    name: '가정 전기요금 사용 패턴 분석',
+    domain: '에너지 · 사용량 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "matplotlib"],
+    outcomes: ['계절별 사용 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["시간별 사용량 데이터 확보", "요금제 구간 정리"],
+    challenge: '요금제 구간별 단가 계산',
+    action: '구간 요금 로직을 함수화해 검증했습니다.',
+    result: '사용 패턴 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '시계열 사용량 분석',
+  },
+  {
+    owner: '송승재',
+    id: 'eabd9858-a6b9-4399-b470-4ac489fa50eb',
+    name: '주식 종목 토론방 감성 분석',
+    domain: 'NLP · 감성 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "KoNLPy", "scikit-learn"],
+    outcomes: ['감성 사전 기반 분류 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["토론방 게시글 수집", "형태소 분석·전처리"],
+    challenge: '은어·종목 약어가 많은 텍스트',
+    action: '사용자 사전을 보강해 형태소 분석을 개선했습니다.',
+    result: '감성 분류 리포트로 강사 인증을 받았습니다.',
+    strength: '한국어 텍스트 전처리',
+  },
+  {
+    owner: '윤성호',
+    id: 'd7f32414-09d1-4417-83e3-fc7c6e8cab75',
+    name: '아파트 실거래가 분석',
+    domain: '부동산 · 시세 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "Plotly"],
+    outcomes: ['지역별 시세 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["국토부 실거래가 수집", "단지·면적 정리"],
+    challenge: '동일 단지의 표기 불일치',
+    action: '단지 코드 기준으로 표기를 통일했습니다.',
+    result: '지역별 시세 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '공공 데이터 정합',
+  },
+  {
+    owner: '이현준',
+    id: '50061489-4616-47c6-acb9-eade17f2177d',
+    name: '항공권 가격 변동 분석',
+    domain: '여행 · 가격 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "matplotlib"],
+    outcomes: ['가격 변동 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["노선별 가격 데이터 수집", "출발 전 일수 파생 변수"],
+    challenge: '수집 시점에 따른 가격 변동',
+    action: '수집 주기를 고정해 시계열로 쌓았습니다.',
+    result: '가격 변동 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '시계열 수집 설계',
+  },
+  {
+    owner: '전진영',
+    id: 'a411990a-780e-42bd-860a-c7b51dd6c532',
+    name: '학습 시간 기록 분석',
+    domain: '교육 · 학습 데이터 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "seaborn"],
+    outcomes: ['집중 시간 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["학습 기록 앱 데이터 정리", "과목·시간대 분류"],
+    challenge: '기록 누락일의 처리',
+    action: '누락 표시를 별도 상태로 두고 분석에서 분리했습니다.',
+    result: '집중 시간 분석 리포트로 강사 인증을 받았습니다.',
+    strength: '자기 기록 데이터 분석',
+  },
+  {
+    owner: '정예린',
+    id: '93ceb560-f06d-438d-8ed2-ae1d71f175ef',
+    name: '카페 음료 판매 분석',
+    domain: '리테일 · 상권 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "matplotlib"],
+    outcomes: ['날씨별 판매 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["POS 판매 기록 정리", "음료 카테고리 분류"],
+    challenge: '수기 기록의 결측·오기 정리',
+    action: '분류 기준표를 만들어 일관되게 정리했습니다.',
+    result: '시간대별 판매 패턴 리포트로 강사 인증을 받았습니다.',
+    strength: '현장 데이터 정리와 패턴 분석',
+  },
+  {
+    owner: '최대원',
+    id: '5bf95251-ba10-4d68-81d6-08a302e9b35f',
+    name: '축구 경기 기록 분석',
+    domain: '스포츠 · 경기 데이터 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "matplotlib"],
+    outcomes: ['홈·원정 성적 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["리그 경기 기록 수집", "팀·선수 지표 정리"],
+    challenge: '시즌 중 갱신되는 기록의 수집 시점 관리',
+    action: '수집 일자를 버전으로 남겨 재현 가능하게 했습니다.',
+    result: '지표 기반 분석 리포트를 완성해 강사 인증을 받았습니다.',
+    strength: '수집 자동화와 지표 설계',
+  },
+  {
+    owner: '홍지윤',
+    id: '0130e0fc-884d-4e43-a6c3-e2b8534a7b0b',
+    name: '국내 여행지 검색 트렌드 분석',
+    domain: '여행 · 관광 트렌드',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "pandas", "Plotly"],
+    outcomes: ['성수기 패턴 EDA 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["검색 트렌드 데이터 수집", "지역·계절 분류"],
+    challenge: '검색량 지수의 상대값 해석',
+    action: '기준 기간을 고정해 지수를 비교 가능하게 했습니다.',
+    result: '성수기 패턴 리포트로 강사 인증을 받았습니다.',
+    strength: '트렌드 지수 해석',
+  },
+  {
+    owner: '최성욱',
+    id: '0d243afe-86f6-48b8-952f-1eb74e6b8655',
+    name: '온라인 강의 리뷰 감성 분석과 키워드 추출',
+    domain: '콘텐츠 · 리뷰 분석',
+    startedAt: '2026-07-18',
+    endedAt: '2026-08-05',
+    techStacks: ["Python", "KoNLPy", "scikit-learn"],
+    outcomes: ['감성 분류 완료', '결과 리포트 작성·강사 인증'],
+    tasks: ["리뷰 수집·전처리", "형태소 분석"],
+    challenge: '도메인 단어가 분리되지 않는 형태소 분석',
+    action: 'Okt 사용자 사전에 도메인 단어를 추가했습니다.',
+    result: '감성 분류·키워드 추출 리포트로 강사 인증을 받았습니다.',
+    strength: '리뷰 텍스트 마이닝',
+  },
+]
+
 /** 학생의 인증 프로젝트 목록 — 팀 2건 + 개인(전진환 따릉이). 황수빈 개인 건은 park-sujin 정본에 있다. */
 export function certifiedProjectsOf(name: string): TeamProjectSpec[] {
   const team = TEAM_OF[name]
   const list: TeamProjectSpec[] = team ? [...TEAM_PROJECTS[team]] : []
   if (name === '전진환') list.push(BIKE_PROJECT)
+  list.push(...PERSONAL_PROJECTS.filter((p) => p.owner === name))
   return list
 }
 
-/** 인증 프로젝트 도메인 분포 — 개수 균등, 합이 정확히 100이 되게 잔여는 첫 항목에. */
+const PERSONAL_IDS = new Set(PERSONAL_PROJECTS.map((p) => p.id))
+
+/** 인증 프로젝트 도메인 분포 — 같은 라벨은 합산, 합이 정확히 100이 되게 잔여는 첫 항목에. */
 export function domainShare(
   labels: string[],
 ): { label: string; projectCount: number; percentage: number }[] {
   if (labels.length === 0) return []
-  const share = Math.floor(1000 / labels.length) / 10
-  const first = Math.round((100 - share * (labels.length - 1)) * 10) / 10
-  return labels.map((label, i) => ({
+  const counts = new Map<string, number>()
+  for (const label of labels) counts.set(label, (counts.get(label) ?? 0) + 1)
+  const shares = [...counts.entries()].map(([label, count]) => ({
     label,
-    projectCount: 1,
-    percentage: i === 0 ? first : share,
+    projectCount: count,
+    percentage: Math.floor((count / labels.length) * 1000) / 10,
   }))
+  const sum = shares.reduce((total, d) => total + d.percentage, 0)
+  shares[0].percentage = r1(shares[0].percentage + (100 - sum))
+  return shares
 }
 
 /** 이름 기반 결정론 시드 — 재실행·재렌더에도 같은 값이 나오게 한다. */
@@ -551,7 +820,7 @@ export function createRosterScore(studentId: string): CertificateScoreResult {
         return {
           ...m,
           value: certified.length,
-          detail: `팀 프로젝트 ${certified.length}건 인증`,
+          detail: `인증 프로젝트 ${certified.length}건`,
         }
       // 트러블슈팅·자격증은 이 학생에게 아직 없다.
       if (m.key === 'certifiedTroubleshooting')
@@ -694,14 +963,15 @@ export function createRosterAiAnalysis(studentId: string): AiAnalysis {
   const team = TEAM_OF[entry.name]
   const teamSize = Object.values(TEAM_OF).filter((t) => t === team).length
   const isOwner = team ? TEAM_OWNER[team] === entry.name : false
-  const snapshots = certified.map((spec, i) =>
-    teamProjectSnapshot(
+  const snapshots = certified.map((spec, i) => {
+    const personal = spec === BIKE_PROJECT || PERSONAL_IDS.has(spec.id)
+    return teamProjectSnapshot(
       spec,
       i + 1,
-      spec === BIKE_PROJECT || isOwner ? 'OWNER' : 'MEMBER',
-      spec === BIKE_PROJECT ? '개인 프로젝트' : `팀 프로젝트 · ${teamSize}명`,
-    ),
-  )
+      personal || isOwner ? 'OWNER' : 'MEMBER',
+      personal ? '개인 프로젝트' : `팀 프로젝트 · ${teamSize}명`,
+    )
+  })
   const domains = certified.map((p) => p.domain)
   const a = rosterAxisScores(entry)
   const fit = clamp(Math.round(avg * 0.9), 40, 95)
@@ -713,7 +983,7 @@ export function createRosterAiAnalysis(studentId: string): AiAnalysis {
     workType: '기초 다지기형',
     fitScore: fit,
     confidence: 'MEDIUM' as const,
-    summary: `역량 점검 평균 ${avg}점(1차 ${entry.q1} · 2차 ${entry.q2})과 팀 인증 프로젝트 ${certified.length}건을 근거로 한 분석입니다.`,
+    summary: `역량 점검 평균 ${avg}점(1차 ${entry.q1} · 2차 ${entry.q2})과 인증 프로젝트 ${certified.length}건을 근거로 한 분석입니다.`,
     evidence: [
       `역량 점검 평균 ${avg}점`,
       `인증 프로젝트 ${certified.length}건 (${domains.join(', ')})`,
@@ -796,7 +1066,7 @@ export function createRosterAiAnalysis(studentId: string): AiAnalysis {
     projects: {
       ...base.projects,
       status: 'READY',
-      summary: `도메인이 다른 팀 프로젝트 ${certified.length}건(${domains.join(', ')})을 강사 인증받았습니다.`,
+      summary: `팀·개인 인증 프로젝트 ${certified.length}건(${domains.join(', ')})을 강사 인증받았습니다.`,
       groups: [
         {
           key: 'EXPANSION',
@@ -814,10 +1084,10 @@ export function createRosterAiAnalysis(studentId: string): AiAnalysis {
       overview: {
         experienceScope: `${domains.join(' · ')} 도메인의 팀 프로젝트`,
         workingStyle: '분석에서 모델링으로 확장하는 협업형',
-        overall: `팀 인증 프로젝트 ${certified.length}건으로 데이터 분석과 모델링을 모두 경험했습니다.`,
+        overall: `인증 프로젝트 ${certified.length}건으로 데이터 분석과 모델링을 모두 경험했습니다.`,
       },
       recruiterSummary: {
-        headline: '도메인이 다른 팀 프로젝트를 완결한 협업형',
+        headline: '도메인이 다른 인증 프로젝트를 완결한 실행형',
         summary: `인증 프로젝트 ${certified.length}건에서 팀 수행 범위와 결과가 확인됩니다.`,
         strengths: certified.map((p) => p.strength),
         evidenceCodes: [],

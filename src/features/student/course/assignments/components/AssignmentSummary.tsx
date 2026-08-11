@@ -10,11 +10,20 @@ import type {
 } from '../types'
 import { STATUS_BADGE } from '../meta'
 
-// 과제 상세 요약 카드 — 제목·설명 / 마감·제출 상태 / 과목·마감·평가방식 배지.
+// 과제 상세 요약 — 제목·설명 / 마감·제출 상태 / 마감·평가방식 배지.
+// 카드 박스 없이 문서처럼 흐르는 플랫 레이아웃(2026-08-11 참조 이미지 정본).
 const DUE_BADGE: Record<DueTone, string> = {
   soon: 'bg-warning-bg text-warning',
   normal: 'bg-warning-bg text-warning',
   ended: 'bg-surface-muted text-fg-subtle',
+}
+
+// 우측 '제출 상태' 텍스트 색 — 배지와 같은 톤을 글자에만 입힌다.
+const STATUS_TEXT: Record<AssignmentStatus, string> = {
+  not_submitted: 'text-warning',
+  submitted: 'text-brand',
+  supplement_requested: 'text-danger',
+  reviewed: 'text-info',
 }
 
 export function AssignmentSummary({
@@ -48,12 +57,10 @@ export function AssignmentSummary({
   }
 
   return (
-    <section className="border-border bg-surface flex items-start justify-between gap-6 rounded-lg border p-6">
-      <div className="flex min-w-0 flex-col gap-3">
-        <h2 className="text-fg text-[20px] font-bold">{detail.title}</h2>
-        <p className="text-fg-muted max-w-[760px] text-[13px] leading-5">
-          {detail.description}
-        </p>
+    <section className="flex items-start justify-between gap-6">
+      <div className="flex min-w-0 flex-1 flex-col gap-3.5">
+        <h2 className="text-fg text-[22px] font-bold">{detail.title}</h2>
+        <p className="text-fg text-[14px] leading-6">{detail.description}</p>
         {hasAttachments && (
           <div className="flex flex-col gap-1.5">
             <span className="text-fg text-[12px] font-bold">첨부 자료</span>
@@ -93,16 +100,21 @@ export function AssignmentSummary({
           >
             {detail.dueBadge}
           </span>
-          <span className="bg-accent-bg text-accent-strong rounded-md px-2 py-[3px] text-[11px] font-semibold">
+          <span className="bg-surface-muted text-fg-muted rounded-md px-2 py-[3px] text-[11px] font-semibold">
             {detail.evaluationType}
           </span>
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
-        <span className="text-fg text-[13px] font-semibold">
+        <span className="text-fg text-[14px] font-bold">
           마감 {detail.dueAtLabel}
         </span>
-        <span className="text-fg-muted text-[13px]">
+        <span
+          className={cn(
+            'text-[13px] font-medium',
+            STATUS_TEXT[effectiveStatus],
+          )}
+        >
           제출 상태: {STATUS_BADGE[effectiveStatus].label}
         </span>
       </div>

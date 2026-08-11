@@ -91,9 +91,17 @@ export default function CompetencyCertificatesPage() {
         .map((s) => {
           const row = toCertRow(s, cohortLabel)
           const served = reviewRows?.find((r) => r.studentUserId === s.id)
-          return served
-            ? { ...row, status: served.status, openable: true }
-            : row
+          if (!served) return row
+          // 서버 심사 행이 정본 — 상태에 맞춰 점수·공개도 다시 계산한다.
+          const ready =
+            served.status !== 'cohort_open' && served.status !== 'data_pending'
+          return {
+            ...row,
+            status: served.status,
+            openable: ready,
+            overallScore: ready ? row.demoOverallScore : null,
+            published: served.published ?? false,
+          }
         })
         .filter(
           (r) =>

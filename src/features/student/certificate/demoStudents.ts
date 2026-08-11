@@ -5,6 +5,7 @@ import type {
   CertReputation,
   CertShortComment,
 } from './types'
+import { rosterOverall } from './ai/stubs/roster'
 
 export type DemoRecommendationState =
   | 'BOTH'
@@ -84,7 +85,8 @@ function buildRosterDemoStudent(
 ): CertificateDemoStudent {
   const avg = Math.round(((q1 + q2) / 2) * 10) / 10
   const seed = seedOf(name)
-  const overall = Math.round((avg * 0.75 + 70 * 0.25) * 10) / 10
+  // 관리자 목록 점수와 미리보기(6축 평균)가 같은 값을 보이도록 산식을 공유한다.
+  const overall = rosterOverall({ id, name, q1, q2, blogs, assigns })
   const tier = avg >= 90 ? 3 : avg >= 75 ? 2 : avg >= 60 ? 1 : 0
   const profile = [
     { label: '기초 보완형', summary: '기초 개념을 다시 다지며 따라오는 단계' },

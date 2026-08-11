@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { Paperclip } from 'lucide-react'
+import { FileText, Link2, Paperclip, X } from 'lucide-react'
 import { buttonClass } from '@/components/ui/buttonClass'
 import type { AssignmentDraft } from '../types'
 
@@ -24,6 +24,8 @@ export function SubmissionForm({
   const [url, setUrl] = useState(draft?.url ?? '')
   const [assets, setAssets] = useState<string[]>(draft?.assets ?? [])
   const [link, setLink] = useState('')
+  // 새로 고른 파일의 용량 표시용 — 저장 계약(assets: string[])은 이름만 나르므로 표시에만 쓴다.
+  const [sizeByName, setSizeByName] = useState<Record<string, string>>({})
   const fileRef = useRef<HTMLInputElement>(null)
 
   const addAssets = (items: string[]) =>
@@ -32,7 +34,14 @@ export function SubmissionForm({
       ...items.filter((i) => i && !prev.includes(i)),
     ])
   const onFiles = (e: ChangeEvent<HTMLInputElement>) => {
-    addAssets(Array.from(e.target.files ?? []).map((f) => f.name))
+    const files = Array.from(e.target.files ?? [])
+    setSizeByName((prev) => ({
+      ...prev,
+      ...Object.fromEntries(
+        files.map((f) => [f.name, `${(f.size / 1024 / 1024).toFixed(1)} MB`]),
+      ),
+    }))
+    addAssets(files.map((f) => f.name))
     e.target.value = '' // 같은 파일 재선택 허용
   }
   const addLink = () => {
@@ -84,6 +93,59 @@ export function SubmissionForm({
             파일, GitHub PR, 배포 링크를 추가할 수 있습니다.
           </p>
         </div>
+        {assets.length > 0 && (
+          <div className="flex flex-col gap-2.5">
+            {assets.map((a) => {
+              const isLink = /^https?:\/\//.test(a)
+              return (
+                <div
+                  key={a}
+                  className="bg-surface-muted flex items-center gap-3 rounded-xl px-4 py-3"
+                >
+                  {isLink ? (
+                    <Link2 aria-hidden className="text-brand size-4 shrink-0" />
+                  ) : (
+                    <FileText
+                      aria-hidden
+                      className="text-fg-muted size-4 shrink-0"
+                    />
+                  )}
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    {isLink ? (
+                      <>
+                        <span className="text-fg text-[12px] font-semibold">
+                          링크
+                        </span>
+                        <span className="text-fg-muted truncate text-[13px]">
+                          {a}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="flex items-baseline gap-2">
+                        <span className="text-fg truncate text-[13px] font-medium">
+                          {a}
+                        </span>
+                        {sizeByName[a] && (
+                          <span className="text-fg-subtle shrink-0 text-[12px]">
+                            {sizeByName[a]}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeAsset(a)}
+                    aria-label={`${a} 제거`}
+                    className="text-fg-subtle hover:text-danger shrink-0"
+                  >
+                    <X aria-hidden className="size-4" />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
         <div className="flex items-center gap-2.5">
           <input
             ref={fileRef}
@@ -115,26 +177,6 @@ export function SubmissionForm({
             링크 추가
           </button>
         </div>
-        {assets.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {assets.map((a) => (
-              <span
-                key={a}
-                className="bg-surface-muted inline-flex max-w-full items-center gap-1.5 rounded-lg py-1 pr-1.5 pl-2.5 text-[12px]"
-              >
-                <span className="text-fg max-w-[220px] truncate">{a}</span>
-                <button
-                  type="button"
-                  onClick={() => removeAsset(a)}
-                  aria-label={`${a} 제거`}
-                  className="text-fg-subtle hover:bg-divider hover:text-danger flex size-4 shrink-0 items-center justify-center rounded leading-none"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="flex items-center justify-end gap-2.5">

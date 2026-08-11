@@ -133,7 +133,7 @@ describe('ProjectsTab', () => {
     expect(project).toHaveAttribute('href', '/student/projects/project-1')
     expect(project).toHaveTextContent('2026-01-05 ~ 2026-03-27')
     expect(project).toHaveTextContent('역할 백엔드 리드')
-    expect(project).toHaveTextContent('팀 4명 · OWNER')
+    expect(project).toHaveTextContent('팀 4명 · 팀장')
     expect(project).toHaveTextContent('도메인 교육 플랫폼')
     expect(project).toHaveTextContent('응답 시간 40% 단축')
     expect(project).toHaveTextContent('✓ 강사 인증')

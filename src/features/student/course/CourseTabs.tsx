@@ -18,6 +18,7 @@ export type CourseTabKey =
   | 'resume'
   | 'records'
   | 'qna'
+  | 'diagnosis'
   | 'mentoring'
 
 interface TabDef {
@@ -38,6 +39,8 @@ const TABS: TabDef[] = [
   { key: 'resume', label: '이력서', to: '/student/resume' },
   { key: 'records', label: '기록실', to: '/student/records' },
   { key: 'qna', label: 'QnA 게시판', to: '/student/qna' },
+  // 진단 리포트 — LLM 수준 진단 PoV(주간 리포트 열람). QnA 우측 배치(2026-08-10).
+  { key: 'diagnosis', label: '진단 리포트', to: '/student/course/diagnosis' },
   { key: 'mentoring', label: '멘토링', to: '/student/mentoring' },
 ]
 

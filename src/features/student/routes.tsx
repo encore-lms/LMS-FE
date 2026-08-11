@@ -17,6 +17,10 @@ const AssignmentsPage = lazy(
 const AssignmentDetailPage = lazy(
   () => import('./course/assignments/AssignmentDetailPage'),
 )
+// 진단 리포트 — LLM 수준 진단 PoV 주간 리포트(교육과정 허브 탭).
+const DiagnosisReportPage = lazy(
+  () => import('./course/diagnosis/DiagnosisReportPage'),
+)
 const MentoringPage = lazy(() => import('./mentoring/MentoringPage'))
 const CertificatePage = lazy(() => import('./certificate/CertificatePage'))
 const CertChangesPage = lazy(() => import('./certificate/ChangesRequestedPage'))
@@ -91,6 +95,7 @@ export const studentRoutes: RouteObject[] = [
         path: 'course/assignments/:assignmentId',
         element: <AssignmentDetailPage />,
       },
+      { path: 'course/diagnosis', element: <DiagnosisReportPage /> },
       { path: 'mentoring', element: <MentoringPage /> },
       { path: 'certificate', element: <CertificatePage /> },
       { path: 'certificate/changes-requested', element: <CertChangesPage /> },

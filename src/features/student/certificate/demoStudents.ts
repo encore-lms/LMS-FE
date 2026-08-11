@@ -5,7 +5,7 @@ import type {
   CertReputation,
   CertShortComment,
 } from './types'
-import { rosterOverall } from './ai/stubs/roster'
+import { certifiedProjectsOf, rosterOverall } from './ai/stubs/roster'
 
 export type DemoRecommendationState =
   | 'BOTH'
@@ -109,7 +109,7 @@ function buildRosterDemoStudent(
     highlights: [
       `역량 점검 평균 ${avg}점`,
       `블로그 ${blogs}주 · 과제 ${assigns}건 제출`,
-      '출석 인정 100%',
+      `팀 프로젝트 ${certifiedProjectsOf(name).length}건 인증`,
     ],
     timeline: [
       {

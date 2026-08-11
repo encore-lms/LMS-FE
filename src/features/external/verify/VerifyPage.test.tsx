@@ -115,13 +115,14 @@ describe('VerifyPage — 평가·추천 공개 토글', () => {
 })
 
 describe('VerifyPage — certified_public(공개 증명서)', () => {
-  it('Hero 진본 배너와 증명서 본문만 렌더한다', () => {
+  it('증명서 본문만 렌더한다 — 진본 배너는 뺐다', () => {
     mockResult(publicResult)
     renderPage()
+    // 진본 배너 제거(2026-08-12) — 인증 상태·검증 ID 는 증명서 히어로가 보여준다.
     expect(
-      screen.getByText('이 증명서는 정식으로 발급된 진본입니다'),
-    ).toBeInTheDocument()
-    expect(screen.getByText('certified · 진본 검증 완료')).toBeInTheDocument()
+      screen.queryByText('이 증명서는 정식으로 발급된 진본입니다'),
+    ).toBeNull()
+    expect(screen.queryByText('certified · 진본 검증 완료')).toBeNull()
     // 증명서 본문 — 수강생 미리보기의 히어로를 그대로 쓴다(인증 완료 칩 + 검증 ID).
     expect(screen.getByText('이서연')).toBeInTheDocument()
     expect(screen.getByText('정식 인증 완료')).toBeInTheDocument()
@@ -136,8 +137,8 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
     expect(screen.getByRole('button', { name: '종합 요약' })).toHaveClass(
       'text-brand',
     )
-    // 무결성 해시는 진본 배너 칩 1곳에서만 보여 준다 — 별도 '검증 정보' 카드는 없앴다.
-    expect(screen.getAllByText(/sha256:a3f9…07e/)).toHaveLength(1)
+    // 해시는 배너와 함께 화면에서 제거됐다.
+    expect(screen.queryByText(/sha256:a3f9…07e/)).toBeNull()
     // 증명서 본문 밖의 부가 섹션(대표 근거·검증 정보·정책 안내)은 렌더하지 않는다.
     expect(screen.queryByText('대표 근거')).toBeNull()
     expect(screen.queryByText(/검증 정보/)).toBeNull()

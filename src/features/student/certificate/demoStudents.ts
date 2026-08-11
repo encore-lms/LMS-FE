@@ -95,7 +95,7 @@ function buildRosterDemoStudent(
   return {
     id,
     name,
-    cohortName: 'SK네트웍스 Family AI 캠프 34기',
+    cohortName: '34기',
     periodLabel: '2026.06.16 — 2026.12.08',
     overallScore: overall,
     profileLabel: profile.label,
@@ -187,7 +187,7 @@ const REAL_ROSTER_SCORES: [string, string, number, number][] = [
 const HWANG_SUBIN: CertificateDemoStudent = {
   id: 'f074a93b-5ad7-4234-ba35-4e260d9272ea',
   name: '황수빈',
-  cohortName: 'SK네트웍스 Family AI 캠프 34기',
+  cohortName: '34기',
   periodLabel: '2026.06.16 — 2026.12.08',
   overallScore: 94.4,
   profileLabel: '수집·검증 완결형',

@@ -10,30 +10,29 @@ vi.mock('@/shared/api', () => ({
   apiClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }))
 
-function renderMeetingLogin() {
+function renderLogin() {
   return render(
     <MemoryRouter>
-      <LoginPage variant="meeting" />
+      <LoginPage />
     </MemoryRouter>,
   )
 }
 
-// /login2 — 개발자 회의용 입구. 시연용 데모 계정이 노출되지 않는 것이 존재 이유이므로
-// 그 경계를 테스트로 고정한다.
-describe('LoginPage (meeting variant, /login2)', () => {
+// /login 빠른 로그인 — 데모(시연)와 QA(개발·테스트) 두 그룹이 한 입구에 공존한다.
+// (구 /login2 회의용 입구는 08-11 시연 종료 후 폐쇄.)
+describe('LoginPage 빠른 로그인 그룹', () => {
   beforeEach(() => {
     useAuthStore.getState().clearSession()
     vi.clearAllMocks()
   })
 
-  it('회의용 표식과 QA 빠른 로그인 버튼을 렌더한다', () => {
-    renderMeetingLogin()
-    expect(
-      screen.getByText('개발자 회의용 — 시연 계정 사용 금지'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText('회의용 QA 계정 · 클릭하면 바로 입장'),
-    ).toBeInTheDocument()
+  it('데모 4계정과 QA 5계정 버튼을 함께 렌더한다', () => {
+    renderLogin()
+    for (const label of ['수강생', '멘토', '강사', '매니저']) {
+      // Testing Library의 getByRole name 문자열은 완전 일치라 'QA 수강생'과 충돌하지 않는다.
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
+    }
+    expect(screen.getByText('QA 계정 · 개발·테스트용')).toBeInTheDocument()
     for (const label of [
       'QA 수강생',
       'QA 멘토',
@@ -45,15 +44,6 @@ describe('LoginPage (meeting variant, /login2)', () => {
     }
   })
 
-  it('시연용 데모 계정 버튼(수강생·멘토·강사·매니저)은 노출하지 않는다', () => {
-    renderMeetingLogin()
-    for (const label of ['수강생', '멘토', '강사', '매니저']) {
-      expect(
-        screen.queryByRole('button', { name: label }),
-      ).not.toBeInTheDocument()
-    }
-  })
-
   it('QA 버튼을 누르면 해당 QA 계정으로 로그인을 요청한다', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({
       data: {
@@ -62,7 +52,7 @@ describe('LoginPage (meeting variant, /login2)', () => {
       },
     })
     const user = userEvent.setup()
-    renderMeetingLogin()
+    renderLogin()
     await user.click(screen.getByRole('button', { name: 'QA 수강생' }))
     await waitFor(() =>
       expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
@@ -70,17 +60,5 @@ describe('LoginPage (meeting variant, /login2)', () => {
         password: 'LmsQa2026!',
       }),
     )
-  })
-
-  it('기본 /login(variant 미지정)은 데모 계정 버튼을 그대로 렌더한다', () => {
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>,
-    )
-    expect(screen.getByRole('button', { name: '수강생' })).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'QA 수강생' }),
-    ).not.toBeInTheDocument()
   })
 })

@@ -10,10 +10,10 @@ import type {
 } from './types'
 import { DERIVED_STUBS } from './stubs/derived'
 import {
-  createParkSujinDetailTabs,
-  createParkSujinScore,
-  PARK_SUJIN_AI_ANALYSIS,
-} from './stubs/park-sujin'
+  createRosterAiAnalysis,
+  createRosterDetailTabs,
+  createRosterScore,
+} from './stubs/roster'
 
 export {
   CERTIFICATE_360_AXIS_KEYS,
@@ -26,8 +26,7 @@ export {
  * TODO(서버 연동): 내부를 LMS-AI 서버 API 호출로 교체.
  */
 export function getAiAnalysis(studentId: string): AiAnalysis {
-  void studentId
-  return PARK_SUJIN_AI_ANALYSIS
+  return createRosterAiAnalysis(studentId)
 }
 
 /**
@@ -60,7 +59,7 @@ export async function fetchCertificateScore(
   studentId: string,
 ): Promise<CertificateScoreResult> {
   if (CERTIFICATE_MOCK_MODE) {
-    return createParkSujinScore(studentId)
+    return createRosterScore(studentId)
   }
 
   const res = await fetch(
@@ -82,7 +81,7 @@ export async function fetchCertificateDetailTabs(
   studentId: string,
 ): Promise<CertificateDetailTabsResult> {
   if (CERTIFICATE_MOCK_MODE) {
-    return createParkSujinDetailTabs(studentId)
+    return createRosterDetailTabs(studentId)
   }
 
   const res = await fetch(
@@ -124,7 +123,7 @@ export async function fetchAiDerived(
  * 다른 학생이나 정적 mock으로 대체하지 않고 조회 실패를 호출부에 전달한다.
  */
 export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
-  if (CERTIFICATE_MOCK_MODE) return PARK_SUJIN_AI_ANALYSIS
+  if (CERTIFICATE_MOCK_MODE) return createRosterAiAnalysis(studentId)
 
   const res = await fetch(
     `${CERTIFICATE_SCORE_API}/analysis/${encodeURIComponent(studentId)}`,

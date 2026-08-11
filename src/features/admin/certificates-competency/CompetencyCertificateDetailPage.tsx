@@ -70,7 +70,8 @@ export default function CompetencyCertificateDetailPage() {
   const [tab, setTab] = useState<CertTab>('summary')
   const toast = useToast()
 
-  const student = getCertificateDemoStudent(params.get('demo'))
+  // 클릭한 수강생의 실제 id 로 매핑한다 — ?demo= 가상 인물 배정은 이름 불일치를 만들었다(2026-08-11).
+  const student = getCertificateDemoStudent(studentId || params.get('demo'))
   const cohortId = params.get('cohortId')
   // 상태·전이는 서버가 정본이다(2026-08-07, learning-service V51).
   const { data: reviewRows } = useCertReviewList(cohortId)

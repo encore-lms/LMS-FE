@@ -43,4 +43,6 @@ export interface CompetencyCertRow {
   openable: boolean
   /** 상세에서 보여줄 데모 인물 id — BE 연동 시 실제 증명서 id 로 바뀐다. */
   demoStudentId: string
+  /** 서버 상태로 병합할 때 점수를 재계산하기 위한 데모 원본 점수. */
+  demoOverallScore: number
 }

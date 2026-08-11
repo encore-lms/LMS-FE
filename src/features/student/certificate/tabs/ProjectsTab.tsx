@@ -14,6 +14,12 @@ import {
 } from '../v2/ProjectContribution'
 import { TabHead } from './TechTab'
 
+// 코드값을 그대로 노출하지 않는다 — 외부 검증자도 보는 카드다.
+const ROLE_LABEL: Record<'OWNER' | 'MEMBER', string> = {
+  OWNER: '팀장',
+  MEMBER: '팀원',
+}
+
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
@@ -113,7 +119,7 @@ function ProjectCard({
         </span>
         <span className="whitespace-nowrap">
           <span className="text-fg-subtle">팀 </span>
-          {project.teamSize}명 · {project.membershipRole}
+          {project.teamSize}명 · {ROLE_LABEL[project.membershipRole]}
         </span>
         {project.domain && (
           <span className="whitespace-nowrap">

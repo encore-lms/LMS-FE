@@ -9,6 +9,8 @@ interface DemoQuickLoginProps {
   accounts?: DemoAccount[]
   /** 그룹 상단 안내 문구 — 계정 목록과 함께 페이지 성격에 맞게 교체. */
   title?: string
+  /** 한 화면에 그룹을 여러 개 쌓을 때 스타일 가이드 링크가 중복되지 않게 끄는 스위치. */
+  showStyleguideLink?: boolean
 }
 
 // BrandPanel(어두운 그라데이션 배경)에 들어가는 데모 빠른 로그인 그룹.
@@ -17,6 +19,7 @@ export function DemoQuickLogin({
   onPick,
   accounts = DEMO_ACCOUNTS,
   title = '데모 빠른 로그인 · 클릭하면 바로 입장',
+  showStyleguideLink = true,
 }: DemoQuickLoginProps) {
   return (
     <div className="flex flex-col gap-[14px]">
@@ -36,7 +39,7 @@ export function DemoQuickLogin({
       </div>
 
       {/* 스타일 가이드 라우트는 로컬 dev에서만 등록되므로 링크도 DEV에서만 노출. */}
-      {import.meta.env.DEV && (
+      {showStyleguideLink && import.meta.env.DEV && (
         <>
           <div className="mt-1 h-px w-full bg-white/15" />
           <Link

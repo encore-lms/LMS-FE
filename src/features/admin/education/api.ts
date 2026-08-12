@@ -84,7 +84,7 @@ export function useCohortAssignments(cohortId?: string | null) {
     refetchOnMount: 'always',
     queryFn: () =>
       apiClient
-        .get<InstructorAssignmentList>('/admin/assignments', {
+        .get<InstructorAssignmentList>('/instructor/assignments', {
           cohortId: cohortId ?? undefined,
         })
         .then((r) => r.data),
@@ -106,7 +106,7 @@ export function useCreateInstructorAssignment() {
   >({
     mutationFn: (input) =>
       apiClient
-        .post<AssignmentFormDetail>('/admin/assignments', input)
+        .post<AssignmentFormDetail>('/instructor/assignments', input)
         .then((r) => r.data),
     onSuccess: (_d, { cohortId }) =>
       queryClient.invalidateQueries({
@@ -120,7 +120,7 @@ export function useDeleteInstructorAssignment(cohortId: string) {
   return useMutation<void, Error, string>({
     mutationFn: (assignmentId) =>
       apiClient
-        .delete<void>(`/admin/assignments/${assignmentId}`)
+        .delete<void>(`/instructor/assignments/${assignmentId}`)
         .then(() => undefined),
     onSuccess: () =>
       queryClient.invalidateQueries({
@@ -136,7 +136,7 @@ export function useAssignmentSubmissions(assignmentId: string | null) {
     queryFn: () =>
       apiClient
         .get<AssignmentSubmissionsData>(
-          `/admin/assignments/${assignmentId}/submissions`,
+          `/instructor/assignments/${assignmentId}/submissions`,
         )
         .then((r) => r.data),
   })
@@ -152,7 +152,7 @@ export function useChangeSubmissionStatus(assignmentId: string) {
     mutationFn: ({ submissionId, status, feedback }) =>
       apiClient
         .patch<void>(
-          `/admin/assignments/${assignmentId}/submissions/${submissionId}`,
+          `/instructor/assignments/${assignmentId}/submissions/${submissionId}`,
           { status, feedback },
         )
         .then(() => undefined),

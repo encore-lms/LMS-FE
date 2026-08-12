@@ -10,3 +10,12 @@ export function useQnaBase() {
   if (pathname.startsWith('/instructor')) return '/instructor/qna'
   return '/student/qna'
 }
+
+// API 전용 base — 운영 마운트도 /instructor/qna 를 호출한다.
+// BE의 /admin/qna 미러 컨트롤러는 삭제됐고(강사 컨트롤러와 바이트 단위 동일),
+// /instructor/** 게이트는 INSTRUCTOR·ADMIN·MANAGER 를 모두 통과시킨다.
+// 화면 이동(navigate)은 여전히 useQnaBase(마운트 위치)를 쓴다 — 매니저는 강사 라우트가 차단된다.
+export function useQnaApiBase() {
+  const base = useQnaBase()
+  return base === '/admin/qna' ? '/instructor/qna' : base
+}

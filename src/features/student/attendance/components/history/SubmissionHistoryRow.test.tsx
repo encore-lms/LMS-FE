@@ -33,7 +33,8 @@ describe('SubmissionHistoryRow', () => {
     // 어느 날 출결인지가 먼저 보여야 한다.
     expect(screen.getByText('2026-07-22')).toBeInTheDocument()
     // 제출 시각도 남는다(뒤늦게 낸 것을 알 수 있게).
-    expect(screen.getByText(/2026-07-28/)).toBeInTheDocument()
+    // 픽스처는 UTC(05:04:18Z)이므로 KST 14:04로 보여야 한다 — 운영 화면과 같은 시각.
+    expect(screen.getByText('2026-07-28 14:04')).toBeInTheDocument()
   })
 
   it('같은 날 제출한 서로 다른 날짜 건이 구분된다', () => {

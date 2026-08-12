@@ -84,7 +84,9 @@ export function MaterialsPane({
     const map = new Map<string, string>()
     if (isAdmin) for (const o of ops?.items ?? []) map.set(o.id, o.name)
     else for (const r of roster ?? []) map.set(r.userId, r.name)
-    return (userId: string) => map.get(userId) ?? '운영자'
+    // 폴백을 '운영자'로 두면 수강생·강사가 올린 자료가 운영 화면에서 운영자 것으로
+    // 잘못 표시된다(맵이 운영 모드일 땐 운영 계정만 담는다). ResumePane 과 같은 표기.
+    return (userId: string) => map.get(userId) ?? '(이름 미확인)'
   }, [isAdmin, ops, roster])
 
   const [detail, setDetail] = useState<CohortMaterialItem | null>(null)

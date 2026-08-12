@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/shared/lib/date'
 import type { AttendanceType, OfficialLeaveType } from './types'
 
 // 출결 도메인 표시 상수 — 폼 옵션·이력 표시가 공유하는 단일 출처(라벨 중복 방지).
@@ -36,6 +37,11 @@ export const OFFICIAL_LEAVE_LABEL: Record<OfficialLeaveType, string> = {
   OTHER: '기타',
 }
 
-/** 제출 일시 표시 — ISO를 TZ 변환 없이 "YYYY-MM-DD HH:mm"으로(시안 값 그대로 노출) */
-export const formatSubmittedAt = (iso: string) =>
-  `${iso.slice(0, 10)} ${iso.slice(11, 16)}`
+/**
+ * 제출 일시 표시 — "YYYY-MM-DD HH:mm" (KST).
+ *
+ * BE는 Instant.toString() 으로 UTC(Z 접미)를 내려준다. 예전엔 시안 값을 그대로 쓰려고
+ * 문자열을 잘라 썼는데, 그러면 UTC 시각을 그대로 노출해 같은 제출 건이 운영 화면
+ * (formatDateTime, KST)보다 9시간 이르게 보였다. 표시는 공용 포맷터로 일원화한다.
+ */
+export const formatSubmittedAt = (iso: string) => formatDateTime(iso)

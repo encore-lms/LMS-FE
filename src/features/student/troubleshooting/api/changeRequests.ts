@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
+import { tsKeys } from '../queryKeys'
 
 // 트러블슈팅 변경 제안 — learning-service 실 BE(ISSUE 3+4). 항목별 diff + 사유 전송,
 // 강사 승인 시 즉시 원본 반영(1왕복).
@@ -42,7 +43,7 @@ export interface TsChangeState {
  */
 export function useTsChangeState(caseId: string, enabled = true) {
   return useQuery({
-    queryKey: ['student', 'troubleshooting', caseId, 'change-request'],
+    queryKey: tsKeys.changeRequest(caseId),
     enabled: enabled && !!caseId,
     queryFn: () =>
       apiClient
@@ -51,11 +52,15 @@ export function useTsChangeState(caseId: string, enabled = true) {
   })
 }
 
+/** 변경 제안 제출. 성공 시 상태 재조회 — 안 하면 상세가 60초(staleTime) 동안 '낸 적 없음'으로 남는다. */
 export function useCreateTsChangeRequest(caseId: string) {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateTsChangeInput) =>
       apiClient
         .post(`/student/troubleshooting/${caseId}/change-requests`, body)
         .then((r) => r.data),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: tsKeys.changeRequest(caseId) }),
   })
 }

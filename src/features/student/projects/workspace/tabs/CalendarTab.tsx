@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
@@ -7,7 +7,13 @@ import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddSchedule, wsWriteError } from '../../../api/projects'
+import {
+  useAddSchedule,
+  useEditSchedule,
+  useDeleteSchedule,
+  wsWriteError,
+} from '../../../api/projects'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { Tone, WorkspaceData } from '../../types'
 import { Chip, SectionHead } from '../components/ws-shared'
 import { card, dateStr, formatKoreanDate, pad2 } from '../components/ws-style'
@@ -31,13 +37,22 @@ const SCHEDULE_TYPES: { v: string; label: string; tone: Tone }[] = [
 ]
 
 interface CalItem {
+  /** 일정 id — 이 화면에서 만든 일정만 갖는다. 보드 작업에서 끌어온 항목은 없다(보드에서 고친다). */
+  id?: string
   date: string // YYYY-MM-DD
   label: string // 일정명
   tone: Tone
   type: string // 유형명(작업/회의/…/직접 입력)
 }
 
-export function CalendarTab({ d }: { d: WorkspaceData }) {
+export function CalendarTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 일정 추가·수정·삭제 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const today = new Date()
   const todayStr = dateStr(
@@ -50,27 +65,39 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
     y: today.getFullYear(),
     m: today.getMonth(),
   })
-  const [events, setEvents] = useState<CalItem[]>(() => [
-    ...d.calEvents.map((e) => ({
-      date: `${CAL_BASE}-${pad2(e.day)}`,
-      label: e.label,
-      tone: e.tone,
-      type: TONE_TYPE[e.tone],
-    })),
-    // 보드 작업(시작일 기준)을 캘린더에 함께 표시.
-    ...d.columns
-      .flatMap((col) => col.tasks)
-      .filter((t) => t.startDate)
-      .map((t) => ({
-        date: t.startDate as string,
-        label: t.title,
-        tone: 'brand' as const,
-        type: '작업',
+  // 서버 데이터에서 곧장 파생한다. 예전에는 추가한 항목을 로컬 배열에 밀어 넣었는데,
+  // 그 항목엔 서버 id 가 없어 새로고침 전까지 수정·삭제가 잠겨 있었다.
+  const events: CalItem[] = useMemo(
+    () => [
+      ...d.calEvents.map((e) => ({
+        // 서버가 실제 날짜를 준다. 예전에는 고정 월(CAL_BASE)에 일(day)만 붙여
+        // 다른 달 일정이 엉뚱한 날에 붙고, 탭을 다시 열면 위치가 어긋났다.
+        id: e.id,
+        date: e.date ?? `${CAL_BASE}-${pad2(e.day)}`,
+        label: e.label,
+        tone: e.tone,
+        type: TONE_TYPE[e.tone],
       })),
-  ])
+      // 보드 작업(시작일 기준)을 캘린더에 함께 표시.
+      ...d.columns
+        .flatMap((col) => col.tasks)
+        .filter((t) => t.startDate)
+        .map((t) => ({
+          date: t.startDate as string,
+          label: t.title,
+          tone: 'brand' as const,
+          type: '작업',
+        })),
+    ],
+    [d.calEvents, d.columns],
+  )
   // null = 닫힘, 그 외 = 해당 날짜(YYYY-MM-DD)로 일정 추가 모달 열림.
   const [addDate, setAddDate] = useState<string | null>(null)
   const addScheduleM = useAddSchedule(d.id)
+  const editScheduleM = useEditSchedule(d.id)
+  const deleteScheduleM = useDeleteSchedule(d.id)
+  const [editing, setEditing] = useState<CalItem | null>(null)
+  const [deleting, setDeleting] = useState<CalItem | null>(null)
 
   const offset = (new Date(cursor.y, cursor.m, 1).getDay() + 6) % 7
   const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate()
@@ -78,6 +105,12 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
     ...Array.from({ length: offset }, () => null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
+  /**
+   * 프로젝트 기간 안의 날인지 — 기간 밖은 일정을 넣을 수 없어 흐리게 표시한다.
+   * 기간이 비어 있으면(옛 프로젝트) 제한하지 않는다.
+   */
+  const inPeriod = (ds: string) =>
+    (!d.startDate || ds >= d.startDate) && (!d.endDate || ds <= d.endDate)
   const eventsOf = (day: number) =>
     events.filter((e) => e.date === dateStr(cursor.y, cursor.m, day))
   const prevMonth = () =>
@@ -101,8 +134,8 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="캘린더"
-        action="일정 추가"
-        onAction={() => setAddDate(todayStr)}
+        action={readOnly ? undefined : '일정 추가'}
+        onAction={readOnly ? undefined : () => setAddDate(todayStr)}
       />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex-1')}>
@@ -141,17 +174,38 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                 (() => {
                   const ds = dateStr(cursor.y, cursor.m, day)
                   const isToday = ds === todayStr
+                  // 프로젝트 기간 밖 — 일정을 넣을 수 없는 날이라 흐리게 두고 클릭도 받지 않는다.
+                  const outside = !inPeriod(ds)
                   return (
-                    <button
+                    // 칸 안에 일정별 버튼을 두어야 해서 칸 자체는 div — 버튼 안에 버튼은 둘 수 없다.
+                    <div
                       key={i}
-                      type="button"
-                      onClick={() => setAddDate(ds)}
-                      aria-label={`${cursor.m + 1}월 ${day}일 일정 추가`}
+                      {...(readOnly || outside
+                        ? {}
+                        : {
+                            role: 'button',
+                            tabIndex: 0,
+                            onClick: () => setAddDate(ds),
+                            onKeyDown: (e: React.KeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                setAddDate(ds)
+                              }
+                            },
+                            'aria-label': `${cursor.m + 1}월 ${day}일 일정 추가`,
+                          })}
                       className={cn(
                         'flex min-h-[78px] flex-col items-start gap-1 rounded-lg border p-1.5 text-left transition-colors',
+                        !readOnly && !outside && 'cursor-pointer',
+                        outside && 'bg-surface-muted/40 opacity-45',
                         isToday
                           ? 'border-brand bg-brand/5'
-                          : 'border-border hover:border-brand/50 hover:bg-surface-muted/60',
+                          : cn(
+                              'border-border',
+                              !readOnly &&
+                                !outside &&
+                                'hover:border-brand/50 hover:bg-surface-muted/60',
+                            ),
                       )}
                     >
                       <span
@@ -167,17 +221,31 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
                       {/* items-start 컨테이너라 폭이 max-content로 벌어진다 —
                           w-full·min-w-0으로 일자 칸(~104px) 안에 가둬야 line-clamp가 먹는다 */}
                       {eventsOf(day).map((ev, idx) => (
-                        <span
-                          key={idx}
-                          className="flex w-full min-w-0 flex-col items-start gap-0.5"
+                        <button
+                          key={ev.id ?? idx}
+                          type="button"
+                          // 칸을 누르면 '추가'라, 일정 자체를 누른 것은 전파를 끊어야 한다.
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (!readOnly && ev.id) setEditing(ev)
+                          }}
+                          disabled={readOnly || !ev.id}
+                          title={
+                            readOnly
+                              ? ev.label
+                              : ev.id
+                                ? `${ev.label} 수정`
+                                : '보드에서 만든 작업이에요'
+                          }
+                          className="hover:bg-surface-muted flex w-full min-w-0 flex-col items-start gap-0.5 rounded p-0.5 text-left disabled:cursor-default disabled:hover:bg-transparent"
                         >
                           <Chip badge={{ label: ev.type, tone: ev.tone }} />
                           <span className="text-fg-muted line-clamp-1 w-full text-[10px]">
                             {ev.label}
                           </span>
-                        </span>
+                        </button>
                       ))}
-                    </button>
+                    </div>
                   )
                 })()
               ),
@@ -205,8 +273,63 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
           )}
         </section>
       </div>
+      {editing && (
+        <AddScheduleModal
+          period={{ start: d.startDate, end: d.endDate }}
+          initialDate={editing.date}
+          editing={editing}
+          onClose={() => setEditing(null)}
+          onDelete={() => {
+            setDeleting(editing)
+            setEditing(null)
+          }}
+          onAdd={(item) => {
+            editScheduleM.mutate(
+              {
+                scheduleId: editing.id!,
+                title: item.label,
+                startsAt: item.date,
+              },
+              {
+                onSuccess: () => {
+                  setEditing(null)
+                  toast.success('일정을 수정했습니다')
+                },
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '일정 수정에 실패했어요.')),
+              },
+            )
+          }}
+        />
+      )}
+      <ConfirmDialog
+        open={!!deleting}
+        title="일정 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting?.id) return
+          deleteScheduleM.mutate(
+            { scheduleId: deleting.id },
+            {
+              onSuccess: () => {
+                setDeleting(null)
+                toast.success('일정을 삭제했습니다')
+              },
+              onError: (e) =>
+                toast.danger(wsWriteError(e, '일정 삭제에 실패했어요.')),
+            },
+          )
+        }}
+      >
+        <p className="text-fg-muted text-[13px]">
+          '{deleting?.label ?? ''}' 일정을 삭제할까요? 되돌릴 수 없어요.
+        </p>
+      </ConfirmDialog>
       {addDate !== null && (
         <AddScheduleModal
+          period={{ start: d.startDate, end: d.endDate }}
           initialDate={addDate}
           onClose={() => setAddDate(null)}
           onAdd={(item) => {
@@ -214,7 +337,6 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
               { title: item.label, date: item.date },
               {
                 onSuccess: () => {
-                  setEvents((prev) => [...prev, item])
                   setCursor({
                     y: Number(item.date.slice(0, 4)),
                     m: Number(item.date.slice(5, 7)) - 1,
@@ -235,16 +357,25 @@ export function CalendarTab({ d }: { d: WorkspaceData }) {
 
 function AddScheduleModal({
   initialDate,
+  period,
+  editing,
   onClose,
+  onDelete,
   onAdd,
 }: {
   initialDate: string
+  /** 프로젝트 기간 — 이 밖의 날짜는 고를 수 없다. */
+  period: { start?: string | null; end?: string | null }
+  /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
+  editing?: CalItem
   onClose: () => void
+  /** 수정 모드에서만 — 모달 안에서 바로 지울 수 있게. */
+  onDelete?: () => void
   onAdd: (item: CalItem) => void
 }) {
   const [date, setDate] = useState(initialDate)
-  const [label, setLabel] = useState('')
-  const [typeKey, setTypeKey] = useState('brand')
+  const [label, setLabel] = useState(editing?.label ?? '')
+  const [typeKey, setTypeKey] = useState<string>(editing?.tone ?? 'brand')
   const [customType, setCustomType] = useState('')
   const field = inputClass()
   const isEtc = typeKey === 'etc'
@@ -261,9 +392,18 @@ function AddScheduleModal({
     <Modal
       open
       onClose={onClose}
-      title="일정 추가"
+      title={editing ? '일정 수정' : '일정 추가'}
       footer={
         <>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="text-danger hover:bg-danger-bg mr-auto rounded-lg px-3 py-1.5 text-[13px] font-semibold"
+            >
+              삭제
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -277,7 +417,7 @@ function AddScheduleModal({
             disabled={!label.trim()}
             className={buttonClass({ size: 'sm' })}
           >
-            추가
+            {editing ? '저장' : '추가'}
           </button>
         </>
       }
@@ -301,6 +441,9 @@ function AddScheduleModal({
             onChange={setDate}
             ariaLabel="일정 날짜"
             placeholder="날짜 선택"
+            // 프로젝트 기간 밖은 고를 수 없다 — 기간 밖 일정은 이 프로젝트의 기록이 아니다.
+            min={period.start ?? undefined}
+            max={period.end ?? undefined}
           />
           {date && (
             <span className="text-fg-subtle text-[11px]">

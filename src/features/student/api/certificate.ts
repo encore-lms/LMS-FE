@@ -1,8 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { certKeys } from '../certificate/queryKeys'
 import type {
   CertChangesData,
+  CertProjectsTab,
+  CertStatusData,
   CertificateOverview,
   CertPublicationData,
   CertSentiment,
@@ -17,6 +19,48 @@ export function useCertificateOverview() {
       apiClient
         .get<CertificateOverview>('/student/certificate')
         .then((r) => r.data),
+  })
+}
+
+/** 프로젝트 탭 전용 합성 조회 — 워크스페이스와 GitHub 동기화 결과를 BE에서 결합한다. */
+export function useCertificateProjects(enabled = true) {
+  return useQuery({
+    queryKey: certKeys.projects(),
+    queryFn: () =>
+      apiClient
+        .get<CertProjectsTab>('/student/certificate/projects')
+        .then((r) => r.data),
+    enabled,
+  })
+}
+
+/**
+ * 증명서 진행 단계 + 최근 보완 요청 — /student/certificate/status.
+ *
+ * 예전엔 zustand 로컬 시뮬레이션(useCertFlow)이라 새로고침하면 초기화됐고 매니저와
+ * 연결되지 않았다. 서버가 정본을 갖는다(2026-08-07).
+ */
+export function useCertStatus() {
+  return useQuery({
+    queryKey: certKeys.status(),
+    queryFn: () =>
+      apiClient
+        .get<CertStatusData>('/student/certificate/status')
+        .then((r) => r.data),
+  })
+}
+
+/** 정식 인증 요청 — 첫 요청과 보완 후 재요청이 같은 문으로 들어간다. */
+export function useRequestCertification() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient
+        .post<CertStatusData>('/student/certificate/request', {})
+        .then((r) => r.data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: certKeys.status() })
+    },
   })
 }
 
@@ -53,5 +97,47 @@ export function useAnalyzeSentiment() {
       apiClient
         .post<CertSentiment>('/student/certificate/sentiment/analyze', payload)
         .then((r) => r.data),
+  })
+}
+
+// ── 외부 공개 설정(실 BE) ──
+// 공개 여부는 서버가 정본이다 — 검증 페이지는 다른 탭·다른 기기에서 열리므로
+// 프론트 상태로는 전달할 수 없다.
+
+export interface CertPublicationSettings {
+  publicToken: string
+  publicUrl: string
+  published: boolean
+  peerReputationPublic: boolean
+  shortCommentPublic: boolean
+}
+
+export function useCertPublicationSettings() {
+  return useQuery({
+    queryKey: [...certKeys.publication(), 'settings'],
+    queryFn: () =>
+      apiClient
+        .get<CertPublicationSettings>(
+          '/student/certificate/publication-settings',
+        )
+        .then((r) => r.data),
+  })
+}
+
+export function useUpdateCertPublication() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      published?: boolean
+      peerReputationPublic?: boolean
+      shortCommentPublic?: boolean
+    }) =>
+      apiClient
+        .patch<CertPublicationSettings>(
+          '/student/certificate/publication-settings',
+          input,
+        )
+        .then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: certKeys.publication() }),
   })
 }

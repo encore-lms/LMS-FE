@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { Info } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { gaugeColor, scheduleTone } from './insightLogic'
-import type { CohortBoard, ScheduleItem } from './types'
+import { gaugeColor } from './insightLogic'
+import type { CohortBoard } from './types'
 
 export interface PopoverItem {
   key: string
@@ -295,38 +295,3 @@ export function FocusBand({ boards }: { boards: CohortBoard[] }) {
 }
 
 /** 다가오는 일정/마일스톤 행 — 오늘 이후 가까운 순. */
-export function UpcomingSchedule({ upcoming }: { upcoming: ScheduleItem[] }) {
-  if (upcoming.length === 0) return null
-  return (
-    <div className="relative z-[1] border-t border-white/10 pt-5">
-      <p className="text-[11px] font-semibold tracking-wide text-white/55">
-        다가오는 일정
-      </p>
-      <ul className="mt-2.5 flex flex-wrap gap-2">
-        {upcoming.map((s, i) => (
-          <li
-            key={`${s.date}-${i}`}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/[0.05] py-1.5 pr-3 pl-2"
-          >
-            <span
-              className={cn(
-                'rounded-lg px-2 py-1 text-[11px] font-bold tabular-nums',
-                scheduleTone(s.category),
-              )}
-            >
-              {s.daysUntil === 0 ? '오늘' : `D-${s.daysUntil}`}
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-[12.5px] font-semibold text-white">
-                {s.title}
-              </span>
-              <span className="text-[10.5px] text-white/45">
-                {s.cohortLabel} · {s.category}
-              </span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}

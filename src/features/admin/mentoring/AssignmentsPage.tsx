@@ -14,6 +14,7 @@ import { useMyCohorts } from '../api/dashboard'
 import { useAdminMentoringLogs, useMentorAssignments } from './api'
 import {
   ASSIGNMENT_STATUS_META,
+  nHoursDoneLabel,
   assignmentDisplayStatus,
   progressFillClass,
 } from './statusMeta'
@@ -21,6 +22,9 @@ import { AssignmentFormModal } from './AssignmentFormModal'
 import { AssignmentCreateModal } from './AssignmentCreateModal'
 import type { MentorAssignmentRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { ListToolbar } from '@/components/ui/ListToolbar'
+import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonClass'
 
 /** 멘토링 카드 — 멘토·멘티·진행/잔여 시간·일지(총·미인증). 기수 그룹 안에 팀 단위로 노출. */
 function MentoringCard({
@@ -35,7 +39,13 @@ function MentoringCard({
   onAssign: () => void
 }) {
   const navigate = useNavigate()
-  const meta = ASSIGNMENT_STATUS_META[assignmentDisplayStatus(team)]
+  const displayStatus = assignmentDisplayStatus(team)
+  const meta = ASSIGNMENT_STATUS_META[displayStatus]
+  // 'N시간 완료'는 실제 배정 시간으로 표기(2026-08-04 QA).
+  const statusLabel =
+    displayStatus === 'n_hours_done'
+      ? nHoursDoneLabel(team.allocatedHours)
+      : meta.label
   const progress = team.recognizedHours ?? 0
   const remaining =
     team.allocatedHours !== null
@@ -77,7 +87,7 @@ function MentoringCard({
             멘티 {team.memberCount}명
           </p>
         </div>
-        <StatusBadge label={meta.label} tone={meta.tone} />
+        <StatusBadge label={statusLabel} tone={meta.tone} />
       </div>
 
       {/* 멘토 */}
@@ -143,6 +153,7 @@ function MentoringCard({
           {team.allocatedHours !== null && (
             <span className="text-fg-subtle tabular-nums">
               배정 {team.allocatedHours}h{pct !== null && ` · ${pct}%`}
+              {team.contractEndDate && ` · 계약 ~${team.contractEndDate}`}
             </span>
           )}
         </div>
@@ -204,13 +215,23 @@ function MentoringCard({
 
 // 멘토 배정 관리 (/admin/mentors/assignments) — 운영(MANAGER/ADMIN).
 // 반/기수별 팀 배정 · N시간 · 일지 템플릿 관리. (Figma "운영 — 멘토 배정 관리" 2744:7725)
-export default function AssignmentsPage() {
-  usePageHeader('멘토 배정 관리')
+// embedded=true 면 기수 허브의 '멘토링' 탭에 임베드 — 자체 헤더·바깥 패딩과
+// 과정·기수 셀렉터를 생략하고, 상위가 정한 기수({@code scopeCohortId})로 조회한다.
+export default function AssignmentsPage({
+  embedded = false,
+  scopeCohortId,
+  scopeCourseId,
+}: {
+  embedded?: boolean
+  scopeCohortId?: string
+  scopeCourseId?: string
+} = {}) {
+  usePageHeader('멘토 배정 관리', undefined, !embedded)
   // 과정·기수는 한 번의 setSearchParams로 갱신한다 — setCourse/setCohort를 연속 호출하면
   // 두 갱신이 각자 현재 URL을 기준으로 덮어써 뒤 호출이 앞 호출을 지운다(과정이 초기화되는 버그).
   const [searchParams, setSearchParams] = useSearchParams()
-  const course = searchParams.get('course') ?? 'all' // 'all' | courseId
-  const cohort = searchParams.get('cohort') ?? 'all' // 'all' | cohortId
+  const course = scopeCourseId ?? searchParams.get('course') ?? 'all' // 'all' | courseId
+  const cohort = scopeCohortId ?? searchParams.get('cohort') ?? 'all' // 'all' | cohortId
   // 보드는 상단 선택 기수 기준으로 조회(선택 없으면 담당/폴백 기수).
   const { data, isPending, isError, refetch } = useMentorAssignments(cohort)
   const logs = useAdminMentoringLogs()
@@ -248,6 +269,11 @@ export default function AssignmentsPage() {
   const didDefaultCohort = useRef(false)
   useEffect(() => {
     if (didDefaultCohort.current) return
+    // 임베드는 기수가 이미 정해져 들어온다 — URL 을 건드리면 바깥 탭 상태와 부딪친다.
+    if (scopeCohortId) {
+      didDefaultCohort.current = true
+      return
+    }
     if (searchParams.get('course')) {
       didDefaultCohort.current = true // 딥링크/직접 선택은 존중
       return
@@ -267,7 +293,13 @@ export default function AssignmentsPage() {
       },
       { replace: true },
     )
-  }, [data?.cohorts, myCohorts.data, searchParams, setSearchParams])
+  }, [
+    data?.cohorts,
+    myCohorts.data,
+    searchParams,
+    setSearchParams,
+    scopeCohortId,
+  ])
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [q, setQ] = useSearchParamState('q')
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
@@ -356,86 +388,93 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className="p-8">
-      {/* 과정·기수·멘토·검색·액션을 한 곳에 모은 관리 툴바 */}
-      <div
-        role="region"
-        aria-label="배정 관리 도구"
-        className="border-brand bg-brand flex flex-col gap-3 rounded-xl border p-3.5 shadow-[0_4px_14px_rgba(26,140,133,0.18)] xl:flex-row xl:items-center xl:justify-between"
-      >
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <Select
-            value={mentorFilter}
-            onChange={(v) => setMentorFilter(v)}
-            aria-label="멘토 필터"
-            disabled={!data}
-            options={[
-              { value: 'all', label: '멘토 전체' },
-              ...(data?.mentors ?? []).map((m) => ({
-                value: m.mentorId,
-                label: m.name,
-              })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            aria-label="교육과정 선택"
-            value={course}
-            onChange={(v) => pickCourse(v)}
-            options={[
-              { value: 'all', label: '교육과정 전체' },
-              ...(courseList.data ?? []).map((c) => ({
-                value: c.courseId,
-                label: c.title,
-              })),
-            ]}
-            className="h-9"
-          />
-          <Select
-            aria-label="기수 선택"
-            value={cohort}
-            onChange={(v) => pickCohort(v)}
-            disabled={course === 'all'}
-            options={[
-              { value: 'all', label: '기수 전체' },
-              ...(courseConfig.data?.cohorts ?? []).map((c) => ({
-                value: c.id,
-                label: `${c.cohortNo}기`,
-              })),
-            ]}
-            className="h-9"
-          />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="팀명·멘토명 검색"
-            aria-label="팀명·멘토명 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-full rounded-lg border px-3 text-sm outline-none sm:w-60"
-          />
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Link
-            to="/admin/mentoring/log-templates"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white bg-white px-3.5 text-[13px] font-bold text-[#355548] hover:bg-[#f4f8f6]"
-          >
-            <FileText className="h-4 w-4" />
-            템플릿 관리
-          </Link>
-          <button
-            type="button"
-            onClick={openStudentCreate}
-            disabled={cohort === 'all'}
-            title={
-              cohort === 'all'
-                ? '교육과정과 기수를 선택하면 배정을 추가할 수 있어요.'
-                : undefined
-            }
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white bg-white px-3.5 text-[13px] font-bold text-[#355548] shadow-[0_2px_6px_rgba(30,56,45,0.18)] hover:bg-[#f4f8f6] disabled:cursor-not-allowed disabled:opacity-55"
-          >
-            <Plus className="h-4 w-4" />새 배정 추가
-          </button>
-        </div>
+    <div className={embedded ? '' : 'p-8'}>
+      {/* 탭 공통 툴바(ListToolbar) — 우측 [검색][필터][액션](2026-08-07 통일, 구 브랜드 카드·하드코딩 hex 버튼 정리) */}
+      <div role="region" aria-label="배정 관리 도구">
+        <ListToolbar
+          search={{
+            value: q,
+            onChange: setQ,
+            placeholder: '팀명·멘토명 검색',
+            ariaLabel: '팀명·멘토명 검색',
+          }}
+          filters={
+            <>
+              <Select
+                value={mentorFilter}
+                onChange={(v) => setMentorFilter(v)}
+                aria-label="멘토 필터"
+                disabled={!data}
+                options={[
+                  { value: 'all', label: '멘토 전체' },
+                  ...(data?.mentors ?? []).map((m) => ({
+                    value: m.mentorId,
+                    label: m.name,
+                  })),
+                ]}
+                className="h-9"
+              />
+              {!embedded && (
+                <>
+                  <Select
+                    aria-label="교육과정 선택"
+                    value={course}
+                    onChange={(v) => pickCourse(v)}
+                    options={[
+                      { value: 'all', label: '교육과정 전체' },
+                      ...(courseList.data ?? []).map((c) => ({
+                        value: c.courseId,
+                        label: c.title,
+                      })),
+                    ]}
+                    className="h-9"
+                  />
+                  <Select
+                    aria-label="기수 선택"
+                    value={cohort}
+                    onChange={(v) => pickCohort(v)}
+                    disabled={course === 'all'}
+                    options={[
+                      { value: 'all', label: '기수 전체' },
+                      ...(courseConfig.data?.cohorts ?? []).map((c) => ({
+                        value: c.id,
+                        label: `${c.cohortNo}기`,
+                      })),
+                    ]}
+                    className="h-9"
+                  />
+                </>
+              )}
+            </>
+          }
+          actions={
+            <>
+              {/* 허브 '멘토링' 탭에는 '일지 템플릿' 하위 탭이 있다 — 탭 안에서 단독 화면으로
+                  튕겨 나가지 않게 임베드일 때는 감춘다. */}
+              {!embedded && (
+                <Link
+                  to="/admin/mentoring/log-templates"
+                  className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                >
+                  <FileText className="h-4 w-4" />
+                  템플릿 관리
+                </Link>
+              )}
+              <Button
+                size="sm"
+                onClick={openStudentCreate}
+                disabled={cohort === 'all'}
+                title={
+                  cohort === 'all'
+                    ? '교육과정과 기수를 선택하면 배정을 추가할 수 있어요.'
+                    : undefined
+                }
+              >
+                <Plus className="h-4 w-4" />새 배정 추가
+              </Button>
+            </>
+          }
+        />
       </div>
 
       <DataBoundary
@@ -517,6 +556,7 @@ export default function AssignmentsPage() {
               <AssignmentCreateModal
                 open
                 onClose={() => setCreateOpen(false)}
+                courseId={course === 'all' ? null : course}
                 cohortId={cohort}
                 cohortLabel={selectedCohortLabel}
                 existingTeamCount={cohortTeamCount}

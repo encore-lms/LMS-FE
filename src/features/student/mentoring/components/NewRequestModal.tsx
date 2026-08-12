@@ -8,6 +8,9 @@ import { Select } from '@/components/ui/Select'
 import { buttonClass } from '@/components/ui/buttonClass'
 
 // 새 멘토링 요청 폼(팝업). 멘토링 기록 헤더의 "새 멘토링 요청" 버튼으로 열린다.
+/** 오늘(YYYY-MM-DD, 로컬) — 지난 날짜를 막는 기준. */
+const 오늘 = () => new Date().toLocaleDateString('sv-SE')
+
 // 희망 일정은 공용 DateTimePicker(날짜 1 + 시작/종료 시각 2). 제출하면 onSubmit 으로 값 전달.
 // 진행 중 3건 한도·멘토 미배정 게이트는 부모(버튼 disabled)가 담당 — 모달은 항상 입력 가능 상태.
 
@@ -149,6 +152,8 @@ export function NewRequestModal({
                   onChange={field.onChange}
                   placeholder="날짜 선택"
                   ariaLabel="희망 날짜"
+                  // 지난 날로 멘토링을 요청할 수는 없다 — 오늘부터 고른다.
+                  min={오늘()}
                 />
               )}
             />

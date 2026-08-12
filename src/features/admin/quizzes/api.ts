@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiClient, adminKeys } from '@/shared/api'
+import { apiClient, adminKeys, instructorKeys } from '@/shared/api'
 import type {
   AdminGradingDetail,
   QuizAnswerChangeRequest,
@@ -111,6 +111,11 @@ export interface AdminGradeSaveRequest {
  * 채점 저장 mutation — PATCH .../grade.
  * 점수·피드백 blur 자동 저장과 [채점 완료] 확정이 같은 엔드포인트를 쓴다(임시 저장 = items만).
  * 성공 시 해당 제출 채점 캐시 무효화 — KPI(변경 이력·현재 점수)가 서버 상태로 갱신된다.
+ *
+ * <p>제출 현황 목록도 함께 무효화한다. /admin/quizzes/:quizId/submissions 는 강사
+ * SubmissionsPage 를 그대로 마운트해 instructorKeys.quizSubmissions 를 읽으므로,
+ * 채점 캐시만 비우면 뒤로 갔을 때 채점 상태·KPI가 staleTime 동안 옛 값으로 남았다.
+ * (키 팩토리는 shared/api 소유라 강사 훅 의존 금지 규약과 무관하다.)</p>
  */
 export function useSaveGrading(quizId: string, submissionId: string) {
   const queryClient = useQueryClient()
@@ -125,6 +130,9 @@ export function useSaveGrading(quizId: string, submissionId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: adminKeys.quizGrading(quizId, submissionId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: instructorKeys.quizSubmissions(quizId),
       })
     },
   })

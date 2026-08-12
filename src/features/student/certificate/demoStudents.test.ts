@@ -1,121 +1,39 @@
 import { describe, expect, it } from 'vitest'
-import type { CertificateDetailTabsResult, CertificateScoreResult } from './ai'
 import {
-  applyCertificateDemoDetailTabs,
-  applyCertificateDemoScore,
   applyCertificateDemoStudent,
   CERTIFICATE_DEMO_STUDENTS,
+  DEFAULT_CERTIFICATE_DEMO_STUDENT_ID,
   getCertificateDemoStudent,
 } from './demoStudents'
-import type { CertificateOverview } from './types'
-
-const highAchiever = getCertificateDemoStudent(
-  '37b48417-d976-5d3a-ab5d-65c10a8c9b5b',
-)
+import { mockOverview } from './mocks'
 
 describe('certificate demo students', () => {
-  it('서로 다른 맥락과 추천 상태를 가진 5명을 제공한다', () => {
-    expect(CERTIFICATE_DEMO_STUDENTS).toHaveLength(5)
+  it('34기 실제 로스터 26명을 제공하고 기본은 황수빈이다', () => {
+    expect(CERTIFICATE_DEMO_STUDENTS).toHaveLength(26)
     expect(
       new Set(CERTIFICATE_DEMO_STUDENTS.map((student) => student.id)).size,
-    ).toBe(5)
-    expect(CERTIFICATE_DEMO_STUDENTS.map((student) => student.name)).toEqual([
-      '박준서',
-      '박채원',
-      '강다은',
-      '황하은',
-      '전우진',
-    ])
-    expect(
-      CERTIFICATE_DEMO_STUDENTS.map((student) => student.recommendationState),
-    ).toEqual(['BOTH', 'BOTH', 'MENTOR_ONLY', 'INSTRUCTOR_ONLY', 'NONE'])
-    expect(
-      CERTIFICATE_DEMO_STUDENTS.every(
-        (student) => !/mock|시연 데이터/.test(student.periodLabel),
-      ),
-    ).toBe(true)
-
-    const noRecommendation = CERTIFICATE_DEMO_STUDENTS.at(-1)!
-    expect(noRecommendation).toMatchObject({
-      name: '전우진',
-      overallScore: 58,
-      highlights: expect.arrayContaining(['출석 82.5%']),
-    })
+    ).toBe(26)
+    // 대표 데모 계정 — 증명서 본인 화면과 같은 값이어야 한다.
+    const hwang = getCertificateDemoStudent(DEFAULT_CERTIFICATE_DEMO_STUDENT_ID)
+    expect(hwang.name).toBe('황수빈')
+    expect(hwang.overallScore).toBe(94.4)
+    // 실측 점수 매핑 표본 — 관리자 미리보기 이름 불일치 회귀 방지.
+    const song = CERTIFICATE_DEMO_STUDENTS.find((s) => s.name === '송승재')
+    expect(song?.timeline.map((t) => t.score)).toEqual([96, 97])
+    const lee = CERTIFICATE_DEMO_STUDENTS.find((s) => s.name === '이성민')
+    expect(lee?.timeline.map((t) => t.score)).toEqual([50, 47])
   })
 
-  it('프로젝트와 이력서를 건드리지 않고 헤더·성장평판만 전환한다', () => {
-    const projects = { marker: 'original-projects' }
-    const overview = {
-      header: {
-        studentName: '기존 학생',
-        cohortName: '기존 기수',
-        periodLabel: '기존 기간',
-        certId: 'existing',
-      },
-      projects,
-      growth: {
-        timeline: [],
-        recommendations: [],
-        reputation: [],
-        shortComments: [],
-      },
-    } as unknown as CertificateOverview
-
-    const result = applyCertificateDemoStudent(overview, highAchiever)
-
-    expect(result.header.studentName).toBe('박채원')
-    expect(result.growth.timeline).toHaveLength(6)
-    expect(result.growth.timeline.map((point) => point.type)).toEqual([
-      '성취도',
-      'CS',
-      '성취도',
-      '성취도',
-      'CS',
-      '성취도',
-    ])
-    expect(result.growth.recommendations).toHaveLength(2)
-    expect(result.projects).toBe(projects)
+  it('모르는 id 는 기본(황수빈)으로 폴백한다', () => {
+    expect(getCertificateDemoStudent('없는-id').name).toBe('황수빈')
+    expect(getCertificateDemoStudent(null).name).toBe('황수빈')
   })
 
-  it('고성취형 점수에는 완료 평가 6회 조건을 일관되게 반영한다', () => {
-    const score = {
-      overallScore: 87.4,
-      axes: [
-        { key: '기술', score: 79.3 },
-        { key: '소통', score: 76 },
-        { key: '팀워크', score: 87 },
-        { key: '책임감', score: 99 },
-        { key: '문제해결', score: 83.3 },
-        { key: '학습지속성', score: 100 },
-      ],
-      metrics: [{ key: 'assessment', value: 80.3, detail: '채점 완료 3/4건' }],
-    } as unknown as CertificateScoreResult
-
-    const result = applyCertificateDemoScore(score, highAchiever.id)
-
-    expect(result.overallScore).toBeGreaterThanOrEqual(80)
-    expect(result.axes.find((axis) => axis.key === '기술')?.score).toBe(80.6)
-    expect(result.metrics[0]).toMatchObject({
-      value: 82,
-      detail: '채점 완료 6/6건',
-    })
-  })
-
-  it('고성취형 상세에는 평가 6회와 PCCE·PCSQL 승인, PCCP 검토를 표시한다', () => {
-    const detail = {
-      tech: { limitations: [], assessments: [], certifications: [] },
-      problem: { limitations: [] },
-    } as unknown as CertificateDetailTabsResult
-
-    const result = applyCertificateDemoDetailTabs(detail, highAchiever.id)
-
-    expect(result.tech.assessments).toHaveLength(6)
-    expect(result.tech.certifications).toMatchObject([
-      { name: 'PCCE', status: 'APPROVED' },
-      { name: 'PCCP', status: 'PENDING' },
-      { name: 'PCSQL', status: 'APPROVED' },
-    ])
-    expect(result.problem.limitations.join(' ')).toContain('10건')
-    expect(highAchiever.pendingTroubleshootingCount).toBe(10)
+  it('헤더·성장 평판만 전환하고 프로젝트·이력서는 건드리지 않는다', () => {
+    const student = CERTIFICATE_DEMO_STUDENTS.find((s) => s.name === '김건우')!
+    const applied = applyCertificateDemoStudent(mockOverview, student)
+    expect(applied.header.studentName).toBe('김건우')
+    expect(applied.growth.timeline).toBe(student.timeline)
+    expect(applied.projects).toBe(mockOverview.projects)
   })
 })

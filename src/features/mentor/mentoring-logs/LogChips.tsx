@@ -55,25 +55,5 @@ export function RequiredChip({ required }: { required: boolean }) {
   )
 }
 
-/** 글자수 카운터 — 'n / 한도'(한도 미지정 항목은 입력 길이만). */
-export function CharCounter({
-  length,
-  limit,
-  over = false,
-}: {
-  length: number
-  limit: number | null
-  over?: boolean
-}) {
-  return (
-    <span
-      className={cn(
-        'text-[11px] whitespace-nowrap',
-        over ? 'text-danger font-bold' : 'text-fg-subtle',
-      )}
-    >
-      {length}
-      {limit != null ? ` / ${limit}` : '자'}
-    </span>
-  )
-}
+/** 글자수 카운터 — 공용 승격(@/components/ui/CharCounter, 2026-08-06 평가 카드 공용화). 임포트 표면 유지 재수출. */
+export { CharCounter } from '@/components/ui/CharCounter'

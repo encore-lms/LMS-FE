@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+
+/** 패널이 화면 가장자리에 붙지 않도록 두는 최소 여백(px). */
+const VIEWPORT_GAP = 8
 
 export interface SelectOption {
   value: string
@@ -60,6 +63,24 @@ export function Select({
     })
     setActive(options.findIndex((o) => o.value === value))
   }, [open, options, value])
+
+  /**
+   * 가로 넘침 보정.
+   *
+   * <p>위아래만 보고 좌우는 트리거 왼쪽에 그대로 붙였더니, 화면 오른쪽 끝에 있는 선택기에서
+   * 긴 옵션(기수명 등)이 패널을 트리거보다 넓게 만들어 화면 밖으로 나갔다.
+   * 실제 폭은 그려 봐야 알 수 있어 그린 뒤 한 번 당긴다.</p>
+   */
+  useLayoutEffect(() => {
+    if (!open || !pos) return
+    const el = listRef.current
+    if (!el) return
+    const maxLeft = window.innerWidth - el.offsetWidth - VIEWPORT_GAP
+    const nextLeft = Math.max(VIEWPORT_GAP, Math.min(pos.left, maxLeft))
+    if (Math.abs(nextLeft - pos.left) > 0.5) {
+      setPos({ ...pos, left: nextLeft })
+    }
+  }, [open, pos])
 
   // 외부 클릭·스크롤·리사이즈 시 닫기(포털이라 캡처 단계 스크롤 감지).
   useEffect(() => {
@@ -148,7 +169,12 @@ export function Select({
             ref={listRef}
             role="listbox"
             aria-label={ariaLabel}
-            style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
+            style={{
+              top: pos.top,
+              left: pos.left,
+              minWidth: pos.width,
+              maxWidth: `calc(100vw - ${VIEWPORT_GAP * 2}px)`,
+            }}
             className="fixed z-[10050] max-h-[280px] overflow-auto rounded-xl bg-white p-1 shadow-[0_4px_20px_rgba(18,23,38,0.14),0_0_0_1px_rgba(18,23,38,0.06)]"
           >
             {options.length === 0 && (

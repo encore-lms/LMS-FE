@@ -1,104 +1,72 @@
 import {
-  ArrowUpRight,
-  CalendarRange,
+  ChartNoAxesColumnIncreasing,
   CheckCircle2,
-  Link2,
-  Route,
+  ClipboardList,
+  Sparkles,
+  Users,
 } from 'lucide-react'
-import { cn } from '@/shared/lib/cn'
-import type { AiProfileConfidence, AiProjects } from '../ai'
-import { AnalysisEvidenceTooltip } from './AnalysisEvidenceTooltip'
+import type { AiProjects } from '../ai'
+import { AiAnalysisEvidence } from './AiAnalysisEvidence'
 import { AiAnalysisPanel } from './AiAnalysisPanel'
 
-const CONFIDENCE_LABEL: Record<AiProfileConfidence, string> = {
-  HIGH: '높음',
-  MEDIUM: '보통',
-  LOW: '낮음',
-}
+type AggregateAnalysis = NonNullable<AiProjects['aggregateAnalysis']>
 
-function monthLabel(value: string) {
-  const [year, month] = value.split('-')
-  return year && month ? `${year}.${month}` : value
-}
+function fallbackAnalysis(projects: AiProjects): AggregateAnalysis {
+  const roles = new Map<string, { projectCount: number; taskCount: number }>()
 
-function insightMeta(key: string | undefined) {
-  switch (key) {
-    case 'CONTINUITY':
-      return {
-        icon: Link2,
-        iconClassName: 'bg-accent/10 text-accent-strong',
-      }
-    case 'EXPANSION':
-      return { icon: ArrowUpRight, iconClassName: 'bg-info/10 text-info' }
-    case 'VALIDATION':
-      return {
-        icon: CheckCircle2,
-        iconClassName: 'bg-success/10 text-success',
-      }
-    default:
-      return { icon: Route, iconClassName: 'bg-surface-muted text-fg-muted' }
+  projects.projects.forEach((project) => {
+    project.personalEvidence.workCategories.forEach((role) => {
+      const current = roles.get(role) ?? { projectCount: 0, taskCount: 0 }
+      current.projectCount += 1
+      current.taskCount += project.personalEvidence.tasks.length
+      roles.set(role, current)
+    })
+  })
+
+  const assignedTaskCount = projects.projects.reduce(
+    (total, project) => total + project.personalEvidence.tasks.length,
+    0,
+  )
+
+  return {
+    summary: [projects.summary, projects.overview.overall].filter(Boolean),
+    rolePatterns: [...roles].map(([label, count]) => ({ label, ...count })),
+    commonTasks: projects.projects
+      .flatMap((project) => project.personalEvidence.tasks)
+      .slice(0, 6),
+    selfReviewStatements: projects.projects
+      .flatMap((project) => project.personalEvidence.peerObservations)
+      .slice(0, 3),
+    contribution: {
+      totalBoardTaskCount: null,
+      assignedTaskCount,
+      completedAssignedTaskCount: 0,
+      summary: [
+        `프로젝트 기록에서 개인 담당 업무 ${assignedTaskCount}개가 확인됩니다.`,
+        '보드 전체 업무 수와 완료 상태가 연동되면 전체 프로젝트 기여 범위를 분석합니다.',
+      ],
+    },
+    peerAxes: [],
+    projectGrowth: projects.projects.map((project) => ({
+      projectId: project.projectId,
+      projectName: project.name,
+      summary: [project.analysis, project.recruiterInsight.strength],
+    })),
+    strengths: projects.recruiterSummary.strengths,
+    evaluationSource: 'PEER_ONLY',
   }
 }
 
-function EvidenceInfo({
-  label,
-  evidence,
-  limitations,
-  projectNames,
-  result,
-  calculation,
-  dataSource,
-}: {
-  label: string
-  evidence?: string[]
-  limitations?: string[]
-  projectNames?: string[]
-  result: string
-  calculation: string
-  dataSource: string
-}) {
-  const hasDetail = Boolean(
-    evidence?.length || limitations?.length || projectNames?.length,
-  )
-  if (!hasDetail) return null
-
+function TextLines({ lines }: { lines: string[] }) {
   return (
-    <AnalysisEvidenceTooltip label={label} triggerClassName="size-4">
-      <span>
-        <b className="text-fg">사용 데이터</b>
-        <br />
-        {dataSource}
-      </span>
-      <span>
-        <b className="text-fg">판단 근거</b>
-        <br />
-        {projectNames && projectNames.length > 0
-          ? `연결 프로젝트: ${projectNames.join(' · ')} · ${compactProjectEvidence(evidence, '유효 근거 확인')}`
-          : compactProjectEvidence(evidence, '프로젝트별 유효 근거만 반영')}
-      </span>
-      <span>
-        <b className="text-fg">계산 흐름</b>
-        <br />
-        {calculation}
-      </span>
-      <span>
-        <b className="text-fg">결과</b>
-        <br />
-        {result}
-      </span>
-      {limitations?.map((item) => (
-        <span key={item} className="border-border border-t pt-2">
-          제한: {item}
-        </span>
+    <div className="flex flex-col gap-1.5">
+      {lines.slice(0, 3).map((line) => (
+        <p key={line} className="text-fg-muted text-[14px] leading-6">
+          {line}
+        </p>
       ))}
-    </AnalysisEvidenceTooltip>
+    </div>
   )
-}
-
-function compactProjectEvidence(items: string[] | undefined, fallback: string) {
-  if (!items?.length) return fallback
-  const visible = items.slice(0, 2).join(' · ')
-  return items.length > 2 ? `${visible} 외 ${items.length - 2}건` : visible
 }
 
 export function AiProjectAnalysis({
@@ -108,270 +76,359 @@ export function AiProjectAnalysis({
   projects: AiProjects
   className?: string
 }) {
-  const timeline = projects.projects.map((project) => ({
-    projectId: project.projectId,
-    phase: `${project.order}차 프로젝트`,
-    startedAt: project.period.startedAt,
-    endedAt: project.period.endedAt,
-    name: project.name,
-    evidence: [
-      ...project.personalEvidence.tasks,
-      ...project.personalEvidence.peerObservations,
-      ...project.personalEvidence.troubleshootingCases,
-    ],
-    contribution: project.analysis,
-    domain: project.teamContext.domain ?? '도메인 미분류',
-    role: project.membershipRole === 'OWNER' ? '프로젝트 리더' : '팀원',
-    themes: project.teamContext.techStacks,
-    workCategories: project.personalEvidence.workCategories,
-    usedTechnologies: project.personalEvidence.technologies,
-  }))
-  const groups = projects.groups.map((group) => ({
-    ...group,
-    evidence: projects.projects
-      .filter((project) => group.projectIds.includes(project.projectId))
-      .flatMap((project) => [
-        ...project.personalEvidence.tasks,
-        ...project.personalEvidence.peerObservations,
-        ...project.personalEvidence.troubleshootingCases,
-      ]),
-  }))
-  const projectCount = projects.projectCount
-  const period = projects.period
-  const confidence: AiProfileConfidence = projects.confidence
-  const evidence = projects.projects.flatMap((project) => [
-    ...project.personalEvidence.tasks,
-    ...project.personalEvidence.peerObservations,
-    ...project.personalEvidence.troubleshootingCases,
-  ])
-  const hasProject = timeline.length > 0
-  const canShowJourneySummary = timeline.length >= 2
-  const groupGridClassName =
-    groups.length >= 3
-      ? 'md:grid-cols-3'
-      : groups.length === 2
-        ? 'sm:grid-cols-2'
-        : 'grid-cols-1'
+  if (projects.projects.length === 0) return null
 
-  if (!hasProject) {
-    return null
-  }
+  const analysis = projects.aggregateAnalysis ?? fallbackAnalysis(projects)
+  const contribution = analysis.contribution
+  const roleSummary = analysis.rolePatterns
+    .map((role) => `${role.label} · ${role.taskCount}개 업무`)
+    .join('\n')
+  const contributionHeadline =
+    contribution.totalBoardTaskCount === null
+      ? `담당 업무 ${contribution.assignedTaskCount}개`
+      : `전체 ${contribution.totalBoardTaskCount}개 중 ${contribution.assignedTaskCount}개 담당`
+  const originalProjectEvidence = projects.projects.flatMap((project) => [
+    `프로젝트 · ${project.name} · ${project.teamContext.domain ?? '도메인 미입력'}`,
+    `담당 역할 · ${project.recruiterInsight.role}`,
+    `개인 기술 · ${project.personalEvidence.technologies.slice(0, 5).join(' · ')}`,
+    ...(project.teamContext.outcomes[0]
+      ? [`프로젝트 전체 결과 · ${project.teamContext.outcomes[0]}`]
+      : []),
+    `확인된 강점 · ${project.recruiterInsight.strength}`,
+  ])
+  const roleEvidence = [
+    ...analysis.rolePatterns.map(
+      (role) =>
+        `${role.label} · 프로젝트 ${role.projectCount}개 · 담당 업무 ${role.taskCount}개`,
+    ),
+    ...projects.projects.flatMap((project) =>
+      project.personalEvidence.workCategories.map(
+        (role) => `${project.name} · 담당 역할 ${role}`,
+      ),
+    ),
+  ]
+  const taskEvidence = [
+    ...analysis.commonTasks
+      .slice(0, 4)
+      .map((task) => `보드 담당 업무 · ${task}`),
+    ...analysis.selfReviewStatements
+      .slice(0, 2)
+      .map((statement) => `본인 작성 수행·기여 · ${statement}`),
+  ]
+  const contributionEvidence = [
+    contribution.totalBoardTaskCount === null
+      ? `보드 담당 업무 ${contribution.assignedTaskCount}개`
+      : `보드 전체 ${contribution.totalBoardTaskCount}개 중 담당 ${contribution.assignedTaskCount}개 · 완료 ${contribution.completedAssignedTaskCount}개`,
+    ...analysis.selfReviewStatements,
+    ...projects.projects.flatMap((project) => [
+      ...project.personalEvidence.peerObservations.map(
+        (observation) => `${project.name} · 본인 작성 수행·기여 ${observation}`,
+      ),
+      ...project.personalEvidence.artifacts.map(
+        (artifact) => `${project.name} · 확인 산출물 ${artifact}`,
+      ),
+    ]),
+  ]
+  const peerEvidence = [
+    ...analysis.peerAxes.map(
+      (axis) =>
+        `${axis.key} · ${axis.score === null ? '평가 없음' : `${axis.score.toFixed(1)} / 5`}`,
+    ),
+    '동료 평가만 사용하며 멘토·강사·운영 평가는 제외합니다.',
+  ]
+  const summaryEvidence = [
+    `기존 전체 분석 · ${projects.overview.overall}`,
+    `기존 수행 스타일 · ${projects.overview.workingStyle}`,
+    ...roleEvidence.slice(0, 1),
+    ...contributionEvidence.slice(0, 1),
+    ...peerEvidence.slice(0, 2),
+  ]
+  const strengthEvidence = [
+    ...roleEvidence.slice(0, 1),
+    ...contributionEvidence.slice(0, 1),
+    ...peerEvidence.slice(0, 3),
+    ...originalProjectEvidence.slice(-1),
+  ]
 
   return (
-    <AiAnalysisPanel title="AI 프로젝트 분석" className={className}>
-      <div className="flex flex-col gap-3.5">
-        {projectCount > 0 && (
-          <div className="text-fg-subtle flex items-center gap-1.5 text-[10px]">
-            <CalendarRange className="size-3.5" aria-hidden="true" />
-            <span>개인 근거 확인 프로젝트 {projectCount}개</span>
-            {period && (
-              <span>
-                · {monthLabel(period.startedAt)} - {monthLabel(period.endedAt)}
-              </span>
-            )}
-          </div>
-        )}
-
-        {timeline.length > 0 && (
-          <div className="overflow-x-auto pb-1">
-            <ol className="flex min-w-full items-stretch">
-              {timeline.map((project, index) => (
-                <li
-                  key={project.projectId}
-                  data-project-timeline-item={project.projectId}
-                  className="relative flex min-w-56 flex-1 flex-col pt-7 pr-4 last:pr-0"
-                >
-                  {index < timeline.length - 1 && (
-                    <span className="bg-accent/25 absolute top-[9px] right-0 left-3 h-px" />
-                  )}
-                  <span className="border-accent-strong bg-surface absolute top-1 left-0 z-10 size-3 rounded-full border-2" />
-                  <span className="text-accent-strong absolute top-0 left-5 text-[9px] font-bold">
-                    {project.phase}
-                  </span>
-
-                  <article className="border-border bg-surface flex h-full min-w-0 flex-col rounded-xl border p-3.5">
-                    <div className="text-fg-subtle flex flex-wrap items-center gap-x-1.5 text-[9px]">
-                      <span>{monthLabel(project.startedAt)}</span>
-                      <span>–</span>
-                      <span>{monthLabel(project.endedAt)}</span>
-                    </div>
-                    <p className="text-fg text-[12px] leading-5 font-bold">
-                      {project.name}
-                      <EvidenceInfo
-                        label={project.name}
-                        evidence={project.evidence}
-                        result={project.contribution}
-                        dataSource="인증 프로젝트, 프로젝트 참여 정보, 본인 수행업무, 개인 활용기술, 프로젝트 상호평가, 인증 트러블슈팅"
-                        calculation="본인 수행업무·개인 활용기술 분류 → 프로젝트 상호평가·인증 트러블슈팅을 같은 프로젝트 ID로 교차 확인"
-                      />
-                    </p>
-                    <p className="text-fg-muted text-[10px] leading-4">
-                      {project.domain} · {project.role}
-                    </p>
-                    {project.themes.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {project.themes.map((theme) => (
-                          <span
-                            key={theme}
-                            className="bg-accent-bg text-accent-strong rounded px-1.5 py-0.5 text-[9px] font-semibold"
-                          >
-                            {theme}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="border-border mt-3 flex flex-col gap-2 border-t pt-2.5">
-                      <div data-project-work-categories>
-                        <span className="text-fg-subtle block text-[9px] font-semibold">
-                          본인 수행업무
-                        </span>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {project.workCategories.map((category) => (
-                            <span
-                              key={category}
-                              className="bg-surface-muted text-fg-muted rounded px-1.5 py-0.5 text-[9px] font-semibold"
-                            >
-                              {category}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div data-project-used-technologies>
-                        <span className="text-fg-subtle block text-[9px] font-semibold">
-                          개인 활용기술
-                        </span>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {project.usedTechnologies.map((technology) => (
-                            <span
-                              key={technology}
-                              className="bg-info/10 text-info rounded px-1.5 py-0.5 text-[9px] font-semibold"
-                            >
-                              {technology}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="border-border text-fg-muted mt-3 border-t pt-2.5 text-[10px] leading-4">
-                      {project.contribution}
-                    </p>
-                  </article>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-        {canShowJourneySummary && (
-          <section
-            data-project-journey-summary
-            className="border-accent/20 bg-surface overflow-hidden rounded-xl border"
-          >
-            <div className="border-border flex items-center gap-2 border-b px-4 py-3">
-              <Route
-                className="text-accent-strong size-3.5"
-                aria-hidden="true"
-              />
-              <h3 className="text-fg text-[12px] font-bold">
-                프로젝트 궤적 요약
-              </h3>
-            </div>
-
-            <div
-              className={
-                groups.length > 0
-                  ? 'grid lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)]'
-                  : undefined
-              }
+    <AiAnalysisPanel
+      id="ai-project-analysis"
+      index="02"
+      tone="info"
+      title="프로젝트 분석"
+      description="전체 프로젝트의 보드 담당 업무, 본인이 작성한 수행·기여, 맡은 역할과 동료평가 4축을 함께 읽어 프로젝트 수행 스타일과 성장 범위를 분석했습니다."
+      className={className}
+    >
+      <section
+        data-project-analysis-summary
+        className="border-info/25 bg-info-bg/45 rounded-xl border px-4 py-4 sm:px-5"
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles className="text-info size-4" aria-hidden="true" />
+          <h3 className="text-info text-[13px] font-bold">AI 전체 요약</h3>
+          <AiAnalysisEvidence
+            label="AI 전체 요약"
+            evidence={summaryEvidence}
+            flow={[
+              '전체 프로젝트의 역할·업무·기여·동료평가를 통합',
+              '두 출처 이상에서 반복된 수행 특징을 2~3문장으로 요약',
+            ]}
+          />
+        </div>
+        <div className="mt-2.5 flex flex-col gap-1.5">
+          {analysis.summary.slice(0, 3).map((line) => (
+            <p
+              key={line}
+              className="text-fg text-[15px] leading-6 font-semibold"
             >
-              <div className="bg-accent-bg/35 p-4 lg:min-h-full">
-                <div className="mb-1.5 flex min-h-4 items-center gap-1.5">
-                  <span className="text-accent-strong text-[10px] font-bold">
-                    전체 궤적
-                  </span>
-                  <span className="text-fg-subtle text-[9px]">
-                    근거 충분도 {CONFIDENCE_LABEL[confidence]}
-                  </span>
-                  <EvidenceInfo
-                    label="전체 궤적"
-                    evidence={evidence}
-                    limitations={projects.limitations}
-                    result={projects.summary}
-                    dataSource="인증 프로젝트 전체 목록, 프로젝트 참여 정보, 본인 수행업무, 개인 활용기술, 인증 트러블슈팅"
-                    calculation="프로젝트별 개인 근거 확인 → 반복 수행축·확장 범위·검증 근거를 종합"
-                  />
-                </div>
-                <p className="text-fg text-[12px] leading-5 font-semibold">
-                  {projects.summary}
-                </p>
-              </div>
+              {line}
+            </p>
+          ))}
+        </div>
+      </section>
 
-              {groups.length > 0 && (
-                <div
-                  className={cn(
-                    'border-border grid border-t lg:border-t-0 lg:border-l',
-                    groupGridClassName,
-                  )}
+      <section aria-labelledby="project-work-pattern-title">
+        <h3
+          id="project-work-pattern-title"
+          className="text-fg text-[15px] font-bold"
+        >
+          전체 프로젝트에서 주로 한 일
+        </h3>
+        <div className="mt-3 grid gap-3 lg:grid-cols-3">
+          <article className="border-border bg-surface rounded-xl border p-4">
+            <span className="flex items-center gap-2">
+              <Users className="text-info size-4" aria-hidden="true" />
+              <span className="text-fg-subtle text-[12px] font-bold">
+                주로 맡은 역할
+              </span>
+              <AiAnalysisEvidence
+                label="주로 맡은 역할"
+                evidence={roleEvidence}
+                flow={[
+                  '프로젝트별 담당 역할을 같은 의미끼리 묶음',
+                  '가장 많은 프로젝트에서 반복된 역할을 우선 표시',
+                ]}
+              />
+            </span>
+            <p className="text-fg mt-2 text-[14px] leading-6 font-semibold whitespace-pre-line">
+              {roleSummary || '역할 데이터 연동 대기'}
+            </p>
+          </article>
+
+          <article className="border-border bg-surface rounded-xl border p-4">
+            <span className="flex items-center gap-2">
+              <ClipboardList className="text-info size-4" aria-hidden="true" />
+              <span className="text-fg-subtle text-[12px] font-bold">
+                주로 맡은 업무
+              </span>
+              <AiAnalysisEvidence
+                label="주로 맡은 업무"
+                evidence={taskEvidence}
+                flow={[
+                  '보드 업무와 본인 작성 수행 내용을 업무 유형별로 묶음',
+                  '여러 프로젝트에서 반복된 업무를 우선 표시',
+                ]}
+              />
+            </span>
+            <p className="text-fg mt-2 text-[14px] leading-6 font-semibold">
+              {analysis.commonTasks.join(' · ') || '담당 업무 데이터 연동 대기'}
+            </p>
+          </article>
+
+          <article className="border-border bg-surface rounded-xl border p-4">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="text-info size-4" aria-hidden="true" />
+              <span className="text-fg-subtle text-[12px] font-bold">
+                프로젝트 기여
+              </span>
+              <AiAnalysisEvidence
+                label="프로젝트 기여"
+                evidence={contributionEvidence}
+                flow={[
+                  '전체 보드 중 담당·완료 업무 수를 집계',
+                  '본인 작성 기여와 확인 산출물로 기여 맥락을 보완',
+                ]}
+              />
+            </span>
+            <p className="text-fg mt-2 text-[15px] leading-6 font-bold">
+              {contributionHeadline}
+            </p>
+            <TextLines lines={contribution.summary} />
+          </article>
+        </div>
+
+        {analysis.selfReviewStatements.length > 0 && (
+          <div className="border-border bg-surface-muted mt-3 rounded-xl border px-4 py-3.5">
+            <h4 className="text-fg-subtle text-[12px] font-bold">
+              본인이 작성한 수행·기여에서 반복된 내용
+            </h4>
+            <div className="mt-2 grid gap-2 md:grid-cols-2">
+              {analysis.selfReviewStatements.map((statement) => (
+                <p
+                  key={statement}
+                  className="text-fg text-[13px] leading-5 font-medium"
                 >
-                  {groups.map((group, index) => {
-                    const meta = insightMeta(group.key)
-                    const Icon = meta.icon
-                    return (
-                      <article
-                        key={group.key ?? group.label}
-                        data-project-insight={group.key ?? group.label}
-                        className={cn(
-                          'min-w-0 p-4',
-                          index > 0 && 'border-border border-l',
-                        )}
-                      >
-                        <div className="mb-2.5 flex items-start justify-between gap-2">
-                          <span
-                            className={cn(
-                              'flex size-7 shrink-0 items-center justify-center rounded-lg',
-                              meta.iconClassName,
-                            )}
-                          >
-                            <Icon className="size-3.5" aria-hidden="true" />
-                          </span>
-                          <div className="flex items-center gap-1">
-                            {group.confidence && (
-                              <span className="text-fg-subtle text-[9px]">
-                                근거 {CONFIDENCE_LABEL[group.confidence]}
-                              </span>
-                            )}
-                            <EvidenceInfo
-                              label={group.label}
-                              evidence={group.evidence}
-                              limitations={group.limitations}
-                              projectNames={group.projectNames}
-                              result={group.summary}
-                              dataSource="인증 프로젝트, 본인 수행업무, 개인 활용기술, 프로젝트 상호평가, 인증 트러블슈팅"
-                              calculation={
-                                group.key === 'CONTINUITY'
-                                  ? '2개 이상 프로젝트에서 반복된 본인 수행업무·개인 활용기술을 집계'
-                                  : group.key === 'EXPANSION'
-                                    ? '첫 프로젝트 이후 새로 등장한 수행업무·개인 활용기술을 비교'
-                                    : '본인 수행업무·개인 활용기술·상호평가·트러블슈팅을 프로젝트 ID로 교차 확인'
-                              }
-                            />
-                          </div>
-                        </div>
-                        <h4 className="text-fg text-[11px] font-bold">
-                          {group.label}
-                        </h4>
-                        <p className="text-fg-muted mt-1 text-[10px] leading-4">
-                          {group.summary}
-                        </p>
-                      </article>
-                    )
-                  })}
-                </div>
-              )}
+                  {statement}
+                </p>
+              ))}
             </div>
-          </section>
+          </div>
         )}
-      </div>
+      </section>
+
+      <section aria-labelledby="project-peer-style-title">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3
+            id="project-peer-style-title"
+            className="text-fg text-[15px] font-bold"
+          >
+            동료평가 4축으로 본 프로젝트 스타일
+          </h3>
+          <p className="text-fg-subtle text-[11px] font-semibold">
+            동료 평가만 사용 · 멘토·강사·운영 평가 제외
+          </p>
+        </div>
+
+        {analysis.peerAxes.length === 4 ? (
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {analysis.peerAxes.map((axis) => (
+              <article
+                key={axis.key}
+                data-project-peer-axis={axis.key}
+                className="border-info/20 bg-info-bg/30 rounded-xl border p-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-1">
+                    <h4 className="text-fg text-[13px] font-bold">
+                      {axis.key}
+                    </h4>
+                    <AiAnalysisEvidence
+                      label={`${axis.key} 프로젝트 스타일`}
+                      evidence={[
+                        `동료평가 평균 · ${axis.score === null ? '평가 없음' : `${axis.score.toFixed(1)} / 5`}`,
+                        '멘토·강사·운영 평가 제외',
+                      ]}
+                      flow={[
+                        '프로젝트별 동료 평가자 점수를 먼저 평균',
+                        '프로젝트 평균을 동일 비중으로 합쳐 축별 유형을 요약',
+                      ]}
+                    />
+                  </span>
+                  <strong className="text-info text-[14px] font-extrabold">
+                    {axis.score === null
+                      ? '분석 대기'
+                      : `${axis.score.toFixed(1)} / 5`}
+                  </strong>
+                </div>
+                <div className="mt-2">
+                  <TextLines lines={axis.summary} />
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="border-border bg-surface-muted mt-3 rounded-xl border px-4 py-5 text-center">
+            <p className="text-fg text-[13px] font-bold">
+              동료평가 4축 데이터 연동이 필요합니다.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section aria-labelledby="project-growth-title">
+        <div className="flex items-center gap-2">
+          <ChartNoAxesColumnIncreasing
+            className="text-info size-4"
+            aria-hidden="true"
+          />
+          <h3
+            id="project-growth-title"
+            className="text-fg text-[15px] font-bold"
+          >
+            프로젝트마다 성장하거나 확장한 부분
+          </h3>
+        </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {analysis.projectGrowth.map((growth) => {
+            const sourceProject = projects.projects.find(
+              (project) => project.projectId === growth.projectId,
+            )
+            const growthEvidence = sourceProject
+              ? [
+                  `도메인 · ${sourceProject.teamContext.domain ?? '미입력'}`,
+                  `기술 스택 · ${sourceProject.teamContext.techStacks.join(' · ')}`,
+                  `역할 · ${sourceProject.personalEvidence.workCategories.join(' · ')}`,
+                  `담당 업무 · ${sourceProject.personalEvidence.tasks.join(' · ')}`,
+                  ...(sourceProject.personalEvidence.peerObservations[0]
+                    ? [
+                        `본인 작성 수행·기여 · ${sourceProject.personalEvidence.peerObservations[0]}`,
+                      ]
+                    : []),
+                  ...(sourceProject.teamContext.outcomes[0]
+                    ? [
+                        `프로젝트 전체 결과 · ${sourceProject.teamContext.outcomes[0]}`,
+                      ]
+                    : []),
+                  `기존 강점 해석 · ${sourceProject.recruiterInsight.strength}`,
+                ]
+              : []
+
+            return (
+              <article
+                key={growth.projectId}
+                data-project-growth={growth.projectId}
+                className="border-border bg-surface rounded-xl border p-4"
+              >
+                <span className="flex items-center gap-1">
+                  <h4 className="text-fg text-[14px] leading-6 font-bold">
+                    {growth.projectName}
+                  </h4>
+                  <AiAnalysisEvidence
+                    label={`${growth.projectName} 성장·확장`}
+                    evidence={growthEvidence}
+                    flow={[
+                      '이전 프로젝트와 역할·업무·기술 범위를 비교',
+                      '새로 맡거나 더 깊어진 부분만 성장·확장으로 요약',
+                    ]}
+                  />
+                </span>
+                <div className="mt-1.5">
+                  <TextLines lines={growth.summary} />
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section aria-labelledby="project-strength-title">
+        <span className="flex items-center gap-1">
+          <h3
+            id="project-strength-title"
+            className="text-fg text-[15px] font-bold"
+          >
+            핵심 강점
+          </h3>
+          <AiAnalysisEvidence
+            label="프로젝트 핵심 강점"
+            evidence={strengthEvidence}
+            flow={[
+              '보드·본인 작성 내용·동료평가의 공통 신호를 확인',
+              '두 출처 이상에서 확인된 강점만 최종 요약',
+            ]}
+          />
+        </span>
+        <ul className="mt-3 grid gap-2 md:grid-cols-3">
+          {analysis.strengths.map((strength) => (
+            <li
+              key={strength}
+              className="border-info/20 bg-info-bg/35 text-fg rounded-xl border px-4 py-3 text-[13px] leading-5 font-semibold"
+            >
+              {strength}
+            </li>
+          ))}
+        </ul>
+      </section>
     </AiAnalysisPanel>
   )
 }

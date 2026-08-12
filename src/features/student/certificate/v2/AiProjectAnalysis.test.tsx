@@ -1,83 +1,138 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { getAiAnalysis } from '../ai'
 import { AiProjectAnalysis } from './AiProjectAnalysis'
 
-describe('AI 프로젝트 분석', () => {
-  it('최신 프로젝트 계약을 원본 타임라인 UI에 연결한다', () => {
-    const projects = {
-      ...getAiAnalysis('stu-001').projects,
-      status: 'READY' as const,
-      summary: '프로젝트 경험이 기술 적용과 검증으로 확장되었습니다.',
-      projects: [
-        {
-          projectId: 'project-1',
-          order: 1,
-          name: '수강역량 증명서',
-          period: { startedAt: '2026-06-01', endedAt: '2026-07-23' },
-          certificationStatus: 'CERTIFIED' as const,
-          status: 'READY' as const,
-          membershipRole: 'MEMBER' as const,
-          teamContext: {
-            domain: '교육',
-            scope: '증명서 분석 화면',
-            techStacks: ['React', 'TypeScript'],
-            outcomes: ['분석 화면 구현'],
-          },
-          personalEvidence: {
-            tasks: ['AI 분석 탭 구현'],
-            workCategories: ['프론트엔드'],
-            technologies: ['React', 'TypeScript'],
-            peerObservations: [],
-            troubleshootingCases: [],
-            artifacts: [],
-          },
-          analysis: '개인 수행업무와 활용기술을 근거로 화면을 구현했습니다.',
-          evidenceCodes: ['PROJECT_TASK_1'],
-          limitations: [],
-          generatedBy: 'FALLBACK' as const,
-        },
-      ],
-      groups: [
-        {
-          key: 'CONTINUITY' as const,
-          label: '이어진 공통 축',
-          summary: '프로젝트에서 기술을 직접 적용했습니다.',
-          projectIds: ['project-1', 'project-2'],
-          projectNames: ['수강역량 증명서', '후속 프로젝트'],
-          evidenceCodes: ['PROJECT_TASK_1'],
-          confidence: 'MEDIUM' as const,
-          limitations: [],
-        },
-      ],
-      projectCount: 2,
-      period: { startedAt: '2026-06-01', endedAt: '2026-07-23' },
-      evidenceCodes: ['PROJECT_TASK_1'],
-      confidence: 'MEDIUM' as const,
-    }
-    projects.projects.push({
-      ...projects.projects[0],
-      projectId: 'project-2',
-      order: 2,
-      name: '후속 프로젝트',
-      period: { startedAt: '2026-07-01', endedAt: '2026-07-23' },
-    })
-    render(<AiProjectAnalysis projects={projects} />)
+describe('프로젝트 분석', () => {
+  it('대표 프로젝트 상세 대신 전체 프로젝트 수행 방식을 요약한다', () => {
+    const projects = getAiAnalysis('stu-001').projects
+    const analysis = projects.aggregateAnalysis!
+    const { container } = render(<AiProjectAnalysis projects={projects} />)
 
-    expect(screen.getByText('AI 프로젝트 분석')).toBeInTheDocument()
-    expect(screen.getByText(projects.projects[0].name)).toBeInTheDocument()
-    expect(screen.getByText('프로젝트 궤적 요약')).toBeInTheDocument()
-    expect(screen.getAllByText(projects.summary).length).toBeGreaterThan(0)
+    expect(screen.getByText('프로젝트 분석')).toBeInTheDocument()
+    expect(container.querySelector('#ai-project-analysis')).toBeInTheDocument()
+    expect(screen.getByText('AI 전체 요약')).toBeInTheDocument()
+    expect(screen.getByText('전체 프로젝트에서 주로 한 일')).toBeInTheDocument()
+    expect(screen.getByText('주로 맡은 역할')).toBeInTheDocument()
+    expect(screen.getByText('주로 맡은 업무')).toBeInTheDocument()
+    expect(screen.getByText('프로젝트 기여')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        `전체 ${analysis.contribution.totalBoardTaskCount}개 중 ${analysis.contribution.assignedTaskCount}개 담당`,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('본인이 작성한 수행·기여에서 반복된 내용'),
+    ).toBeInTheDocument()
+
+    expect(screen.queryByText(/대표 프로젝트 0/)).not.toBeInTheDocument()
+    expect(screen.queryByText('문제와 판단')).not.toBeInTheDocument()
+    expect(screen.queryByText('검증된 결과')).not.toBeInTheDocument()
   })
 
-  it('프로젝트 근거가 없으면 빈 분석 패널을 만들지 않는다', () => {
+  it('AI 전체 요약을 두 문장 이상, 세 문장 이하로 표시한다', () => {
+    const { container } = render(
+      <AiProjectAnalysis projects={getAiAnalysis('stu-001').projects} />,
+    )
+    const summary = container.querySelector<HTMLElement>(
+      '[data-project-analysis-summary]',
+    )!
+    const lines = within(summary).getAllByText(/.+/, { selector: 'p' })
+
+    expect(lines.length).toBeGreaterThanOrEqual(2)
+    expect(lines.length).toBeLessThanOrEqual(3)
+  })
+
+  it('동료 평가만 사용한 4축 프로젝트 스타일을 표시한다', () => {
+    const projects = getAiAnalysis('stu-001').projects
+    const peerAxes = projects.aggregateAnalysis!.peerAxes
+    const { container } = render(<AiProjectAnalysis projects={projects} />)
+
+    expect(
+      screen.getByText('동료평가 4축으로 본 프로젝트 스타일'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('동료 평가만 사용 · 멘토·강사·운영 평가 제외'),
+    ).toBeInTheDocument()
+    expect(peerAxes).toHaveLength(4)
+
+    peerAxes.forEach((axis) => {
+      const card = container.querySelector(
+        `[data-project-peer-axis="${axis.key}"]`,
+      )!
+      expect(card).toHaveTextContent(axis.key)
+      expect(card).toHaveTextContent(`${axis.score!.toFixed(1)} / 5`)
+      axis.summary.forEach((line) => expect(card).toHaveTextContent(line))
+    })
+  })
+
+  it('프로젝트별 성장·확장과 전체 핵심 강점을 표시한다', () => {
+    const projects = getAiAnalysis('stu-001').projects
+    const analysis = projects.aggregateAnalysis!
+    const { container } = render(<AiProjectAnalysis projects={projects} />)
+
+    expect(
+      screen.getByText('프로젝트마다 성장하거나 확장한 부분'),
+    ).toBeInTheDocument()
+    analysis.projectGrowth.forEach((growth) => {
+      const card = container.querySelector(
+        `[data-project-growth="${growth.projectId}"]`,
+      )!
+      expect(card).toHaveTextContent(growth.projectName)
+      growth.summary.forEach((line) => expect(card).toHaveTextContent(line))
+    })
+
+    expect(screen.getByText('핵심 강점')).toBeInTheDocument()
+    analysis.strengths.forEach((strength) => {
+      expect(screen.getByText(strength)).toBeInTheDocument()
+    })
+  })
+
+  it('프로젝트 근거가 없으면 빈 패널을 만들지 않는다', () => {
     const projects = {
       ...getAiAnalysis('stu-001').projects,
-      status: 'NOT_READY' as const,
       projects: [],
     }
     const { container } = render(<AiProjectAnalysis projects={projects} />)
 
     expect(container).toBeEmptyDOMElement()
+  })
+
+  it('각 프로젝트 분석 결과에 실제 보드·기여·역할·동료평가 근거를 연결한다', () => {
+    const projects = getAiAnalysis('stu-001').projects
+    render(<AiProjectAnalysis projects={projects} />)
+    ;[
+      'AI 전체 요약',
+      '주로 맡은 역할',
+      '주로 맡은 업무',
+      '프로젝트 기여',
+    ].forEach((label) => {
+      expect(
+        screen.getByRole('button', { name: `${label} 근거 보기` }),
+      ).toHaveTextContent('!')
+    })
+    expect(
+      screen.getByRole('button', { name: '프로젝트 핵심 강점 근거 보기' }),
+    ).toHaveTextContent('!')
+    projects.aggregateAnalysis!.projectGrowth.forEach((growth) => {
+      expect(
+        screen.getByRole('button', {
+          name: `${growth.projectName} 성장·확장 근거 보기`,
+        }),
+      ).toHaveTextContent('!')
+    })
+    expect(
+      screen.queryByText('분석에 사용한 기본 데이터'),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '프로젝트 기여 근거 보기' }),
+    )
+    const tooltip = screen.getByRole('tooltip')
+    expect(tooltip).toHaveTextContent('실제 데이터')
+    expect(tooltip).toHaveTextContent('분석 흐름')
+    expect(tooltip).toHaveTextContent('보드 전체 8개 중 담당 8개 · 완료 7개')
+    expect(tooltip).toHaveTextContent('확인 산출물 성과 지표 5건')
+    expect(tooltip).toHaveTextContent('전체 보드 중 담당·완료 업무 수를 집계')
   })
 })

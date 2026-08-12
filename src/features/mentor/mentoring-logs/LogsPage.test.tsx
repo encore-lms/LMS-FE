@@ -8,8 +8,15 @@ import { buildMentoringLogsData } from '../mockDb'
 import { LOG_SUBMITTED_TOAST } from './logMeta'
 import { ToastProvider } from '@/components/ui/Toast'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/logs')
+// 상세 모달 자체는 여기서 검증하지 않는다 — '어디에' 열리는지만 본다.
+vi.mock('./LogDetailModal', () => ({
+  default: ({ logId }: { logId?: string }) => (
+    <div>그 자리 상세 모달 {logId}</div>
+  ),
+}))
 
 type ListHook = ReturnType<typeof useMentoringLogs>
 
@@ -57,9 +64,9 @@ describe('LogsPage', () => {
     expect(screen.getByText('일지 보강 필요')).toBeInTheDocument()
     // 페이지네이션 — 페이지당 8건(공통 Pagination), 전체 건수 대비 표시 건수 안내
     expect(screen.getByText(/건 중 8건 표시/)).toBeInTheDocument()
-    // 상태 연동 액션 — 열기(상세 모달) / 수정(재제출 폼 딥링크)
+    // 상태 연동 액션 — 열기(상세 모달, 라우트 없음) / 수정(재제출 폼 딥링크)
     expect(
-      screen.getAllByRole('link', { name: /열기/ }).length,
+      screen.getAllByRole('button', { name: /열기/ }).length,
     ).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /^수정/ })).toHaveAttribute(
       'href',
@@ -149,5 +156,63 @@ describe('LogsPage', () => {
     expect(
       screen.getByRole('button', { name: '다시 시도' }),
     ).toBeInTheDocument()
+  })
+
+  it('팀 안에서는 열기가 페이지를 옮기지 않고 그 자리에 상세를 띄운다', async () => {
+    // 예전에는 /mentor/mentoring-logs/:logId 로 나가, 사이드바에서 사라진 전체 목록 위에
+    // 모달이 떴다 — 팀 밖으로 튕겨 나가고 배경도 다른 팀 일지였다.
+    mockList({
+      data: buildMentoringLogsData(),
+      isPending: false,
+      isError: false,
+    })
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/mentor/teams/team_ts?tab=logs']}>
+        <ToastProvider>
+          <LogsPage embedded teamId="team_ts" />
+        </ToastProvider>
+      </MemoryRouter>,
+    )
+    const open = screen.getAllByRole('button', { name: /열기/ })[0]
+    await user.click(open)
+    expect(screen.getByText(/그 자리 상세 모달/)).toBeInTheDocument()
+  })
+
+  it('팀 안의 새 일지 작성은 돌아올 팀 주소를 달고 나간다', () => {
+    mockList({
+      data: buildMentoringLogsData(),
+      isPending: false,
+      isError: false,
+    })
+    render(
+      <MemoryRouter initialEntries={['/mentor/teams/team_ts?tab=logs']}>
+        <ToastProvider>
+          <LogsPage embedded teamId="team_ts" />
+        </ToastProvider>
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('link', { name: /새 일지 작성/ })).toHaveAttribute(
+      'href',
+      expect.stringContaining(
+        `from=${encodeURIComponent('/mentor/teams/team_ts?tab=logs')}`,
+      ),
+    )
+  })
+
+  // 화면을 걷어낼 때 링크를 함께 훑지 않으면 '찾을 수 없는 주소'로 떨어진다.
+  // 일지 계열은 이 검사가 빠져 있어 '일지 목록으로' 버튼이 404 로 남아 있었다(2026-08-06 QA).
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', () => {
+    vi.mocked(useMentoringLogs).mockReturnValue({
+      data: buildMentoringLogsData(),
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useMentoringLogs>)
+    const { container } = renderPage()
+    const dead = [...container.querySelectorAll('a')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => href.startsWith('/mentor'))
+      .filter((href) => !reachable(href))
+    expect(dead).toEqual([])
   })
 })

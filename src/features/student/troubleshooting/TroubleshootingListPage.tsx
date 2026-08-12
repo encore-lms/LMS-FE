@@ -12,6 +12,7 @@ import { RejectNoticeModal } from './components/RejectNoticeModal'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { type TsCase } from './types'
 import { TONE_SOLID } from '@/shared/lib/tone'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 목록 카드 우상단 버튼 라벨 — 상태/작성완료 기준.
 //   작성 중(미완료) 이어 작성 · 작성 완료 인증요청 · 검토 중 검토 중 · 인증 완료 사례 열기
@@ -60,9 +61,8 @@ export default function TroubleshootingListPage() {
     deleteMutation.mutate(delTarget.id, {
       onSuccess: () => toast.success('사례를 삭제했어요'),
       onError: (e) => {
-        const message = (
-          e as { response?: { data?: { message?: string } } }
-        )?.response?.data?.message
+        const message = (e as { response?: { data?: { message?: string } } })
+          ?.response?.data?.message
         toast.danger(message || '삭제에 실패했어요')
       },
     })
@@ -111,24 +111,13 @@ export default function TroubleshootingListPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative hidden sm:block">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3-3" strokeLinecap="round" />
-                </svg>
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="제목·카테고리·태그 검색"
-                  className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
-                />
-              </div>
+              <SearchInput
+                value={query}
+                onChange={setQuery}
+                placeholder="제목·카테고리·태그 검색"
+                ariaLabel="사례 검색"
+                className="hidden w-[220px] sm:flex"
+              />
               <button
                 type="button"
                 onClick={() => navigate('/student/troubleshooting/new')}
@@ -286,12 +275,11 @@ export default function TroubleshootingListPage() {
             </ConfirmDialog>
           )}
 
-          {/* 강사 반려 사유 — 카드 '반려 사유' 클릭 시 코멘트 회신을 보여준다(확인 후 페이지에서 보완). */}
-          {reasonTarget?.rejectionReason && (
+          {/* 강사가 돌려보낸 사유 — 카드에서 클릭하면 전문을 띄운다(확인 후 이어 작성으로 보완). */}
+          {reasonTarget?.reviewComment && (
             <RejectNoticeModal
-              kind={reasonTarget.rejectionFrom ?? 'cert'}
-              reviewer={`${reasonTarget.category} · 임수현 강사`}
-              reason={reasonTarget.rejectionReason}
+              kind={reasonTarget.reviewStatus ?? 'changes_requested'}
+              reason={reasonTarget.reviewComment}
               onClose={() => setReasonTarget(null)}
             />
           )}

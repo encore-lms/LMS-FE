@@ -49,12 +49,27 @@ function StatCard({
   )
 }
 
-function AttendanceSummarySection({ cohortId }: { cohortId: string }) {
+function AttendanceSummarySection({
+  cohortId,
+  date,
+}: {
+  cohortId: string
+  /** 아래 '출석' 표와 같은 선택 일자 — 결석 박스·제목이 이 날짜를 따른다('' = 오늘). */
+  date: string
+}) {
   const { data, isPending, isError, refetch } =
     useInstructorAttendanceSummary(cohortId)
+  // 선택 일자 출결 — 아래 표와 같은 쿼리 키라 추가 호출 없이 캐시를 공유한다.
+  const { data: daily } = useInstructorAttendance(cohortId, date || undefined)
+  const dateLabel = (date || daily?.date || '').replaceAll('-', '.')
+  const absentees = (daily?.rows ?? []).filter((r) => r.hrdStatus === 'absent')
+  const dailyTotal = daily?.rows.length ?? 0
   return (
     <section>
-      <SectionTitle title="출석 현황" hint="HRD-Net 라이브" />
+      <SectionTitle
+        title={dateLabel ? `${dateLabel} 출석 현황` : '출석 현황'}
+        hint="HRD-Net 라이브"
+      />
       <DataBoundary
         isPending={isPending}
         isError={isError || !data}
@@ -66,8 +81,14 @@ function AttendanceSummarySection({ cohortId }: { cohortId: string }) {
         {data && (
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="재적" value={data.students.total} unit="명" />
-              <StatCard label="활동" value={data.students.active} unit="명" />
+              {/* 명단 전체가 아니라 '지금 교육 중'을 앞에 둔다 — 예전에는 탈락자를 포함한
+                  전체를 '재적'이라 적어 실제 인원과 어긋났다(2026-08-06 QA). */}
+              <StatCard label="교육 중" value={data.students.active} unit="명" />
+              <StatCard
+                label="조기취업"
+                value={data.students.earlyEmployed ?? 0}
+                unit="명"
+              />
               <StatCard
                 label="중도탈락"
                 value={data.students.dropout}
@@ -80,25 +101,28 @@ function AttendanceSummarySection({ cohortId }: { cohortId: string }) {
               />
             </div>
 
-            {/* 오늘 결석자 */}
+            {/* 선택 일자 결석자 — 요약 API는 오늘 고정이라, 날짜 선택을 따르도록 일별 출결로 계산한다. */}
             <div className="bg-surface-muted rounded-xl p-4">
               <p className="text-fg-muted mb-2 text-xs font-semibold">
-                오늘 결석{' '}
-                {data.todayTotal != null && data.todayPresent != null
-                  ? `(출석 ${data.todayPresent}/${data.todayTotal})`
+                {dateLabel ? `${dateLabel} 결석` : '결석'}{' '}
+                {dailyTotal > 0
+                  ? `(출석 ${dailyTotal - absentees.length}/${dailyTotal})`
                   : ''}
               </p>
-              {data.todayAbsentees.length === 0 ? (
+              {dailyTotal === 0 ? (
+                <p className="text-fg-subtle text-sm">
+                  해당 일자 출결 기록이 없어요
+                </p>
+              ) : absentees.length === 0 ? (
                 <p className="text-fg-subtle text-sm">결석자 없음</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {data.todayAbsentees.map((a) => (
+                  {absentees.map((a) => (
                     <span
-                      key={a.studentUuid}
+                      key={a.id}
                       className="bg-danger-bg text-danger rounded-md px-2 py-1 text-xs font-medium"
-                      title={a.detail}
                     >
-                      {a.name}
+                      {a.studentName}
                     </span>
                   ))}
                 </div>
@@ -134,10 +158,16 @@ function AttendanceSummarySection({ cohortId }: { cohortId: string }) {
   )
 }
 
-// ── 오늘 출석(일별, 날짜 선택 가능) ──
-function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
-  // date='' → 오늘. 날짜 선택 시 해당 일자 출결 조회.
-  const [date, setDate] = useState('')
+// ── 출석(일별, 날짜 선택 가능) — 날짜 상태는 부모 소유(출석 현황 요약과 공유). ──
+function TodayAttendanceSection({
+  cohortId,
+  date,
+  onDateChange,
+}: {
+  cohortId: string
+  date: string
+  onDateChange: (date: string) => void
+}) {
   const { data, isPending, isError, refetch } = useInstructorAttendance(
     cohortId,
     date || undefined,
@@ -195,7 +225,7 @@ function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
           type="date"
           aria-label="출석 조회 일자"
           value={date || data?.date || ''}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => onDateChange(e.target.value)}
           className="border-border focus:border-brand text-fg h-9 rounded-lg border bg-white px-3 text-sm outline-none"
         />
       </div>
@@ -237,11 +267,17 @@ function TodayAttendanceSection({ cohortId }: { cohortId: string }) {
 }
 
 // 수강생 탭 — 출석 현황 + 출석(일별, 날짜 선택). 모두 조회 전용.
+// 날짜는 두 섹션이 공유 — 아래 표에서 날짜를 고르면 위 출석 현황(제목·결석)도 그 날짜를 따른다.
 export function StudentsPane({ cohortId }: { cohortId: string }) {
+  const [date, setDate] = useState('')
   return (
     <div className="flex flex-col gap-8">
-      <AttendanceSummarySection cohortId={cohortId} />
-      <TodayAttendanceSection cohortId={cohortId} />
+      <AttendanceSummarySection cohortId={cohortId} date={date} />
+      <TodayAttendanceSection
+        cohortId={cohortId}
+        date={date}
+        onDateChange={setDate}
+      />
     </div>
   )
 }

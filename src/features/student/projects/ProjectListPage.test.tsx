@@ -4,9 +4,21 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
 import ProjectListPage from './ProjectListPage'
-import { useDeleteProject, useProjectList } from '../api/projects'
+import {
+  useAnswerInvitation,
+  useDeleteProject,
+  useProjectInvitations,
+  useProjectList,
+} from '../api/projects'
 import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
 import type { ProjectListData, ProjectSummary } from './types'
+
+// 교육과정 허브 탭바(2026-08-05) — 페이지 본문 테스트에 집중하도록 껍데기만 둔다.
+vi.mock('../course/CourseTabs', () => ({ CourseTabs: () => null }))
+// 허브 공통 헤더 훅(과정명/기간) — useQuery 의존이라 껍데기로 대체한다.
+vi.mock('../course/useCourseHubHeader', () => ({
+  useCourseHubHeader: () => {},
+}))
 
 vi.mock('../api/projects')
 
@@ -102,6 +114,14 @@ function renderPage(listData: ProjectListData = data) {
     mutate: vi.fn(),
     isPending: false,
   } as unknown as ReturnType<typeof useDeleteProject>)
+  // 목록 위 '받은 초대' — 여기서는 초대가 없는 상태만 본다(초대 카드는 자기 테스트에서).
+  vi.mocked(useProjectInvitations).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useProjectInvitations>)
+  vi.mocked(useAnswerInvitation).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useAnswerInvitation>)
 
   render(
     <ToastProvider>

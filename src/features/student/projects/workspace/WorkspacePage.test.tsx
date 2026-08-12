@@ -11,6 +11,7 @@ import {
   useAddMeeting,
   useAddArtifact,
   useSubmitPeerEval,
+  useSavePeerEvalDraft,
   useSaveSelfReview,
   useRequestCertification,
   useAddSchedule,
@@ -19,6 +20,9 @@ import {
   useUnlinkTroubleshooting,
   useInviteMember,
   useRemoveMember,
+  useUpdateMember,
+  useUpdateProjectInfo,
+  useUpdateProjectTechStacks,
 } from '../../api/projects'
 import { tsKeys } from '../../troubleshooting/queryKeys'
 import { usePeers } from '../../api/peers'
@@ -104,6 +108,7 @@ function renderPage(
   vi.mocked(useAddArtifact).mockReturnValue(writeMock as never)
   vi.mocked(useSubmitPeerEval).mockReturnValue(writeMock as never)
   vi.mocked(useSaveSelfReview).mockReturnValue(writeMock as never)
+  vi.mocked(useSavePeerEvalDraft).mockReturnValue(writeMock as never)
   vi.mocked(useRequestCertification).mockReturnValue(writeMock as never)
   vi.mocked(useAddSchedule).mockReturnValue(writeMock as never)
   vi.mocked(useAddMetric).mockReturnValue(writeMock as never)
@@ -111,6 +116,10 @@ function renderPage(
   vi.mocked(useUnlinkTroubleshooting).mockReturnValue(writeMock as never)
   vi.mocked(useInviteMember).mockReturnValue(writeMock as never)
   vi.mocked(useRemoveMember).mockReturnValue(writeMock as never)
+  vi.mocked(useUpdateMember).mockReturnValue(writeMock as never)
+  // 작성 중 프로젝트는 설정 탭이 편집 폼을 그린다 — 잠긴 상태에선 없던 훅이라 함께 채운다.
+  vi.mocked(useUpdateProjectInfo).mockReturnValue(writeMock as never)
+  vi.mocked(useUpdateProjectTechStacks).mockReturnValue(writeMock as never)
   vi.mocked(usePeers).mockReturnValue({
     data: { items: [{ userId: 'u-os', name: '오세훈' }] },
   } as unknown as ReturnType<typeof usePeers>)
@@ -271,10 +280,16 @@ describe('WorkspacePage home', () => {
     await user.click(screen.getByRole('button', { name: '완료' }))
   })
 
-  it('팀원 초대 모달로 새 팀원을 추가한다', async () => {
+  // 부르는 것까지가 초대다 — 팀이 되는 건 상대가 받아들였을 때다.
+  it('팀원 초대 모달로 초대를 보낸다', async () => {
     const user = userEvent.setup()
-    // 팀 관리는 설정 탭으로 이관됨 — 설정 탭에서 팀원 초대 확인
-    renderPage('/student/projects/p1?tab=settings')
+    // 팀 관리는 설정 탭으로 이관됨 — 설정 탭에서 팀원 초대 확인.
+    // 기본 mock(p1)은 인증 완료 + 상호평가 진행 중이라 팀 구성이 동결된다 — 작성 중으로 낮춰 확인한다.
+    renderPage('/student/projects/p1?tab=settings', {
+      ...mockWorkspace,
+      status: 'draft',
+      peerEvalEnabled: false,
+    })
 
     await user.click(screen.getByRole('button', { name: '팀원 초대' }))
     // 같은 기수 동료 후보(usePeers mock) 중 선택 — 동료 선택 셀렉트
@@ -287,7 +302,7 @@ describe('WorkspacePage home', () => {
     await user.click(screen.getByRole('button', { name: '초대' }))
 
     expect(
-      await screen.findByText('오세훈 님을 초대했습니다'),
+      await screen.findByText(/오세훈 님에게 초대를 보냈어요/),
     ).toBeInTheDocument()
   })
 
@@ -305,12 +320,18 @@ describe('WorkspacePage home', () => {
     expect(await screen.findByText('지표를 추가했습니다')).toBeInTheDocument()
   })
 
-  it('상호평가 점수와 코멘트를 입력하고 제출한다', async () => {
+  // 미평가 상태에서 잠기는지는 PeerTab 단위 테스트에서 본다 —
+  // 이 목은 이미 내 평가(myEval)가 채워져 있어 빈 상태를 만들 수 없다.
+  it('모든 팀원의 모든 축을 매기면 제출된다', async () => {
     const user = userEvent.setup()
     renderPage('/student/projects/p1?tab=peer-evaluation')
 
-    const score = screen.getByRole('slider', { name: /박지호 협업 점수/ })
-    fireEvent.change(score, { target: { value: '5' } })
+    // 화면에 그려진 리커트 라디오(4축 개편)를 전부 5점으로 채운다.
+    for (const group of screen.getAllByRole('radiogroup')) {
+      fireEvent.click(
+        Array.from(group.querySelectorAll('[role="radio"]'))[4] as HTMLElement,
+      )
+    }
     await user.type(
       screen.getAllByPlaceholderText(/선택 코멘트/)[0],
       '협업 근거를 확인했습니다.',

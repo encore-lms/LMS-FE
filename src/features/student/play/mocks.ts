@@ -664,4 +664,14 @@ export const handlers = [
   http.get('/api/student/play/typing', () => ok(mockTyping)),
   http.get('/api/student/play/coding', () => ok(mockCoding)),
   http.get('/api/student/play/quiz', () => ok(mockQuiz)),
+  // 타자 결과 제출 — 실 API 계약({best, personalBest, rank})과 동일한 dev mock.
+  http.post('/api/student/play/typing/results', async ({ request }) => {
+    const body = (await request.json()) as { score?: number }
+    const score = body.score ?? 0
+    return ok({
+      best: score >= mockTyping.personalBest,
+      personalBest: Math.max(score, mockTyping.personalBest),
+      rank: 3,
+    })
+  }),
 ]

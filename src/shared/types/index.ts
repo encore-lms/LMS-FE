@@ -7,6 +7,12 @@ export type {
 } from './notification'
 export type { ApiResponse, ApiError } from './api'
 export type {
+  ResumeStatusCode,
+  ResumeRow,
+  ResumeFeedbackItem,
+  ResumeDetail,
+} from './resume'
+export type {
   GradingMode,
   QuestionType,
   GradingType,
@@ -34,28 +40,14 @@ export type {
   AdminGradingDetail,
 } from './quiz'
 export type {
-  OverallStatus,
-  SyncStatus,
-  Priority,
-  AdminKpi,
-  AdminQueueItem,
-  AdminRiskSignal,
-  AdminShortcut,
-  AdminSyncRow,
-  AdminDecisionLog,
-  AdminDashboardSummary,
-} from './admin'
-export type {
   CertReviewStatus,
   CertReviewListItem,
-  CertReviewQueue,
   SkillScore,
   ApprovalCheck,
   ReviewRiskFlag,
   ScoreEvidence,
   ArtifactApproval,
   AuditEntry,
-  CertReviewDetail,
   SnapshotEvidence,
   CertSnapshot,
 } from './certificates'
@@ -87,6 +79,8 @@ export type {
   StudentAccountQueue,
   HrdAttendanceStatus,
   StudentAttendanceRow,
+  AttendanceIssue,
+  AttendanceIssueAttachment,
   AttendanceSummary,
   StudentAttendanceData,
   AttendanceFormType,

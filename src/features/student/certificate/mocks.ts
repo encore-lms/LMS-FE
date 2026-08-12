@@ -2,6 +2,7 @@ import { delay, http, HttpResponse } from 'msw'
 import type {
   CertChangesData,
   CertificateOverview,
+  CertProjectsTab,
   CertPublicationData,
   CertSentiment,
 } from './types'
@@ -10,101 +11,13 @@ import type {
 // 데이터는 Figma 증명서 미리보기(249:27) 시안 재현. 탭1(종합 요약) 포함.
 const ok = <T>(data: T) => HttpResponse.json({ data })
 
-// 프로젝트별 커밋 잔디밭 mock — 결정론적 패턴(요일·주차 기반). 지표는 그리드에서 산출해 일관성 보장.
-function buildActivity(
-  meta: {
-    id: string
-    name: string
-    period: string
-    weeksLabel: string
-    certified: boolean
-    contrib: string
-  },
-  weeks: number,
-  shape: (w: number, d: number) => number,
-) {
-  const grid = Array.from({ length: weeks }, (_, w) =>
-    Array.from({ length: 7 }, (_, d) => Math.max(0, shape(w, d))),
-  )
-  const flat = grid.flat()
-  const totalCommits = flat.reduce((a, b) => a + b, 0)
-  const activeDays = flat.filter((c) => c > 0).length
-  let s = 0
-  let best = 0
-  for (const c of flat) {
-    if (c > 0) {
-      s += 1
-      best = Math.max(best, s)
-    } else s = 0
-  }
-  return {
-    ...meta,
-    grid,
-    totalCommits,
-    activeDays,
-    totalDays: flat.length,
-    longestStreak: best,
-    weeklyAvg: Math.round((totalCommits / weeks) * 10) / 10,
-  }
-}
-
-const mockCommitActivity = [
-  buildActivity(
-    {
-      id: 'pj1',
-      name: 'Encore Mart — 마이크로서비스 백엔드',
-      period: '2026.02.03 ~ 2026.04.18',
-      weeksLabel: '11주',
-      certified: true,
-      contrib: '38%',
-    },
-    11,
-    (w, d) => {
-      if (d === 6) return 0 // 일요일 휴식
-      const mid = w >= 2 && w <= 8 ? 1 : 0 // 중반 집중
-      const base = (w + d) % 4 === 0 ? 0 : 1 + ((w * 2 + d) % 3)
-      return base + mid
-    },
-  ),
-  buildActivity(
-    {
-      id: 'pj2',
-      name: '한국어 회의록 요약 LLM 파이프라인',
-      period: '2026.01.06 ~ 2026.02.16',
-      weeksLabel: '6주',
-      certified: true,
-      contrib: '100%',
-    },
-    6,
-    (w, d) => {
-      if (d === 6 && w % 2 === 0) return 0
-      return 1 + ((w * 3 + d) % 4) // 단독 100% — 빡센 패턴
-    },
-  ),
-  buildActivity(
-    {
-      id: 'pj3',
-      name: 'MSA 도서 추천 — 시스템 설계',
-      period: '2026.04.06 ~ 2026.04.26',
-      weeksLabel: '3주',
-      certified: false,
-      contrib: '25%',
-    },
-    3,
-    (w, d) => {
-      if (d >= 5) return d === 6 ? 0 : 1
-      return 2 + ((w + d) % 3) // 짧지만 밀도 높음
-    },
-  ),
-]
-
-const mockOverview: CertificateOverview = {
+export const mockOverview: CertificateOverview = {
   header: {
-    studentName: '박준서',
-    courseName: 'SKN LLM·AI 개발자 과정',
-    cohortName: 'SKN 4기',
-    periodLabel: '2024.03.11 — 2024.09.08',
-    certId: 'abc-1234',
+    studentName: '황수빈',
+    courseName: 'SK네트웍스 Family AI 캠프',
+    cohortName: '34기',
+    periodLabel: '2026.06.16 — 2026.12.08',
+    certId: 'VERIFY-2026-1D04-1D04',
     isPublic: false,
     status: 'changes_requested',
   },
@@ -168,114 +81,123 @@ const mockOverview: CertificateOverview = {
     },
   ],
   summary: {
-    overallScore: 86,
+    overallScore: 94.4,
     scoreMax: 100,
     grade: 'A',
-    scoreDelta: '+4점 지난주',
+    scoreDelta: '+2.4점 지난주',
     confirmedLabel: 'confirmed',
-    ratioLabel: '4 / 5',
+    ratioLabel: '6 / 6',
     sourceLabel: '자동 + 360°',
     kpis: [
       {
         key: 'attendance',
         label: '출석률',
-        value: '96',
+        value: '100',
         unit: '%',
         tone: 'success',
-        bar: 96,
-        sub: '768 / 800 시간 · 지각 2회',
+        bar: 100,
+        sub: '기록 6일 · 출석 3 · 지각 3 · 결석 0',
       },
       {
         key: 'exam',
         label: '시험 평균',
-        value: '82',
+        value: '98',
         unit: '점',
         tone: 'info',
-        bar: 82,
-        sub: '퀴즈 12회 · 상위 18%',
+        bar: 98,
+        sub: '역량 점검 2회 · 100점 / 96점',
       },
       {
         key: 'blog',
-        label: '블로그 제출률',
-        value: '81',
-        unit: '%',
+        label: '학습 기록',
+        value: '13',
+        unit: '건',
         tone: 'accent',
-        bar: 81,
-        sub: '21 / 26 제출 완료',
+        bar: 100,
+        sub: '블로그 8 · 스터디 3 · 자격증 2',
       },
       {
         key: 'project',
         label: '인증 프로젝트',
-        value: '2',
-        unit: '/ 3',
+        value: '1',
+        unit: '/ 1',
         tone: 'success',
-        bar: 66,
-        sub: '강사 인증 완료 2건',
+        bar: 100,
+        sub: '강사 인증 완료 1건',
       },
     ],
+    // 6축은 34기 황수빈의 실제 활동에서 유도한 값이다(집계 BE 가 생기면 이 산식을 옮긴다).
+    // 공개 검증(/verify)도 같은 값을 쓴다 — 두 화면이 어긋나면 검증자가 신뢰하지 않는다.
     skillAxes: [
-      { key: '기술', score: 88, peer: 92, confirmed: true },
       {
-        key: '성장',
-        score: 85,
-        peer: 86,
+        key: '기술·기술기여',
+        score: 98.6,
+        peer: 88,
         confirmed: true,
-        note: '최근 8주 +17점',
+        note: '퀴즈 평균 98.0 · 인증 프로젝트 1/1',
       },
       {
-        key: '팀워크',
-        score: 82,
-        peer: 90,
+        key: '소통·협업·팀워크',
+        score: 90,
+        peer: 92,
         confirmed: true,
-        note: '동료평 평균 4.5',
+        note: '멘토링 3/3 참석 · 멘토링 팀 4인 · Q&A 3건 채택',
       },
       {
         key: '책임감',
-        score: 90,
-        peer: 96,
-        confirmed: true,
-        note: 'PeerTag #리더십',
-      },
-      {
-        key: '소통',
-        score: 84,
+        score: 100,
         peer: 90,
         confirmed: true,
-        note: 'PeerTag #논리적설득 10회',
+        note: '출석률 100% · 기록 8/8주',
+      },
+      {
+        key: '학습지속성',
+        score: 100,
+        peer: 100,
+        confirmed: true,
+        note: '출석 70 + 블로그 30 + 가산 8.7 = 100(상한)',
+      },
+      {
+        key: '성취도 평가',
+        score: 98,
+        peer: 98,
+        confirmed: true,
+        note: '역량 점검 2회 평균 · 100점 / 96점',
       },
       {
         key: '문제해결',
-        score: 79,
+        score: 80,
         peer: 82,
         confirmed: true,
-        note: 'TS 케이스 9건 해결',
+        note: '인증 3/5 · 독립 해결 1건',
       },
     ],
-    skillAvg: 84.7,
+    skillAvg: 94.4,
+    // 실제 응시한 역량 점검 2회의 카테고리 구성(1차 Python · 2차 SQL).
     quizCategories: [
-      { label: '백엔드 기초', score: 92 },
-      { label: 'DB / SQL', score: 84 },
-      { label: '네트워크', score: 78 },
-      { label: '컨테이너', score: 71 },
-      { label: '자료구조', score: 86 },
+      { label: 'Python 자료형·컬렉션', score: 100 },
+      { label: 'Python 함수·예외', score: 100 },
+      { label: 'SQL 조인·집계', score: 96 },
+      { label: 'SQL 인덱스·트랜잭션', score: 96 },
+      { label: '컴프리헨션·모듈', score: 100 },
     ],
     evidence: [
       {
         id: 'e1',
-        label: '기술 82점',
-        detail: '프로젝트 v0.3 산출물 + 강사 코멘트 3건',
+        label: '기술 98.6점',
+        detail: '역량 점검 100 / 96 · 인증 프로젝트 1건',
         tone: 'brand',
       },
       {
         id: 'e2',
-        label: '소통 88점',
-        detail: 'PR 리뷰 28건 + 멘토 평가',
+        label: '문제해결 80점',
+        detail: '트러블슈팅 인증 3건 · 독립 해결 1건',
         tone: 'info',
       },
       {
         id: 'e3',
-        label: '기록 12건',
-        detail: 'PeerReputation 5건 평균 · 회의록 12',
+        label: '학습 기록 13건',
+        detail: '블로그 8 · 스터디 3 · 자격증 2 · 8주 연속',
         tone: 'accent',
       },
     ],
@@ -283,20 +205,20 @@ const mockOverview: CertificateOverview = {
       {
         id: 'p1',
         kind: 'PROJECT',
-        title: 'Encore Mart — 마이크로서비스 백엔드',
-        meta: '주문 도메인 · 강사 승인 · 5/35',
+        title: '채용 공고로 보는 데이터 직무 기술 스택 지도',
+        meta: '개인 프로젝트 · 강사 인증 완료',
       },
       {
         id: 'p2',
-        kind: 'PROJECT',
-        title: '운영 LLM 추천 파이프라인',
-        meta: '추천 시스템 팀 · 진행 67%',
+        kind: 'RECORD',
+        title: '트러블슈팅 인증 3건',
+        meta: 'pandas merge · 데이터 누수 · Git rebase',
       },
       {
         id: 'p3',
         kind: 'RECORD',
-        title: '블로그 12편 일괄 · 자격증 1건',
-        meta: 'PCCE 승인 · 5/13',
+        title: '블로그 8편 · 스터디 3회 · 자격증 2건',
+        meta: 'SQLD · PCCE 승인 · 8주 연속 제출',
       },
     ],
     checklist: [
@@ -337,218 +259,171 @@ const mockOverview: CertificateOverview = {
     // ── v2 (CERT_V2) ──
     aiProfile: {
       rows: [
-        { label: '업무', value: '체계적 플래너형' },
-        { label: '리더십', value: '서번트 리더' },
-        { label: '학습', value: '가속 학습형' },
-        { label: '소통', value: '논리적 설명가' },
-        { label: '기술', value: '마이크로서비스 백엔드 엔지니어' },
+        { label: '업무', value: '기록으로 남기는 완결형' },
+        { label: '리더십', value: '스터디 운영형' },
+        { label: '학습', value: '꾸준한 축적형' },
+        { label: '소통', value: '질문을 구조화하는 설명가' },
+        { label: '기술', value: '데이터 수집·분석 파이프라인' },
       ],
       summary:
-        '프론트 경험 위에 백엔드·분산 시스템을 쌓은 가속 학습형. 체계적 문제해결과 팀원 지원을 즐기며 후반부에 폭발 성장',
+        'Python·SQL 기초를 다진 뒤 채용 데이터 수집·분석 프로젝트로 확장한 축적형. 배운 것을 블로그·스터디로 공유하며 꾸준히 성장',
       strengths:
-        '데이터 기반 문제해결 · 트랜잭션/분산 설계 · 코드 리뷰 리딩 · 프론트+백엔드 크로스',
-      growth: '새 기술 초기 시행착오 · 리더 역할 스트레스 관리',
+        '수집·정규화 파이프라인 · SQL 실행 계획 분석 · 검증 규칙화 · 기록 공유',
+      growth: '머신러닝 범위 확장(3차 역량 점검 예정) · 팀 협업 경험 축적',
     },
     personas: [
-      { rank: 1, title: '분산 시스템에 강한 백엔드 엔지니어' },
-      { rank: 2, title: '실행형 트러블슈터' },
-      { rank: 3, title: '비즈니스 임팩트 드리븐 설계자' },
+      { rank: 1, title: '수집부터 검증까지 완결하는 데이터 분석가' },
+      { rank: 2, title: '기록으로 남기는 문제해결러' },
+      { rank: 3, title: '스터디를 운영하는 꾸준한 학습자' },
     ],
     domains: [
-      { label: '커머스 · 주문/결제', pct: 40, tone: 'info' },
-      { label: '추천 · LLM 파이프라인', pct: 30, tone: 'success' },
-      { label: '인프라 · DevOps', pct: 20, tone: 'warning' },
-      { label: '데이터 · 분석', pct: 10, tone: 'accent' },
+      { label: '데이터 · 채용 시장 분석', pct: 100, tone: 'accent' },
     ],
     ontology: {
       nodes: [
-        { id: 'me', label: '김수강', x: 50, y: 50, kind: 'self' },
-        { id: 'be', label: '백엔드', x: 28, y: 30, kind: 'subject' },
-        { id: 'db', label: 'DB·SQL', x: 70, y: 28, kind: 'subject' },
-        { id: 'cloud', label: '클라우드', x: 74, y: 72, kind: 'subject' },
-        { id: 'algo', label: '알고리즘', x: 26, y: 72, kind: 'subject' },
-        { id: 'java', label: 'Java', x: 16, y: 18, kind: 'skill' },
-        { id: 'spring', label: 'Spring', x: 40, y: 15, kind: 'skill' },
-        { id: 'kafka', label: 'Kafka', x: 60, y: 15, kind: 'skill' },
+        { id: 'me', label: '황수빈', x: 50, y: 50, kind: 'self' },
+        { id: 'py', label: 'Python', x: 28, y: 30, kind: 'subject' },
+        { id: 'db', label: 'SQL·DB', x: 70, y: 28, kind: 'subject' },
+        { id: 'da', label: '데이터 분석', x: 74, y: 72, kind: 'subject' },
+        { id: 'ml', label: '머신러닝', x: 26, y: 72, kind: 'subject' },
+        { id: 'pandas', label: 'pandas', x: 16, y: 18, kind: 'skill' },
+        { id: 'bs', label: 'BeautifulSoup', x: 40, y: 15, kind: 'skill' },
+        { id: 'git', label: 'Git', x: 60, y: 15, kind: 'skill' },
         { id: 'pg', label: 'PostgreSQL', x: 86, y: 34, kind: 'skill' },
-        { id: 'docker', label: 'Docker', x: 90, y: 58, kind: 'skill' },
-        { id: 'aws', label: 'AWS', x: 82, y: 86, kind: 'skill' },
-        { id: 'msa', label: 'MSA', x: 52, y: 33, kind: 'method' },
-        { id: 'tx', label: '트랜잭션', x: 62, y: 44, kind: 'method' },
-        { id: 'mart', label: 'Encore Mart', x: 44, y: 64, kind: 'project' },
-        { id: 'llm', label: 'LLM 추천', x: 64, y: 62, kind: 'project' },
-        { id: 'commerce', label: '커머스', x: 38, y: 86, kind: 'domain' },
-        { id: 'reco', label: '추천', x: 78, y: 78, kind: 'domain' },
+        { id: 'st', label: 'Streamlit', x: 90, y: 58, kind: 'skill' },
+        { id: 'sk', label: 'scikit-learn', x: 12, y: 60, kind: 'skill' },
+        { id: 'prep', label: '전처리·정규화', x: 52, y: 33, kind: 'method' },
+        { id: 'cv', label: '교차검증', x: 38, y: 62, kind: 'method' },
+        { id: 'map', label: '채용 스택 지도', x: 64, y: 62, kind: 'project' },
+        { id: 'jobmkt', label: '채용·시장 분석', x: 78, y: 78, kind: 'domain' },
       ],
       edges: [
-        ['me', 'be'],
+        ['me', 'py'],
         ['me', 'db'],
-        ['me', 'cloud'],
-        ['me', 'algo'],
-        ['me', 'msa'],
-        ['me', 'tx'],
-        ['me', 'mart'],
-        ['me', 'llm'],
-        ['be', 'java'],
-        ['be', 'spring'],
-        ['be', 'kafka'],
+        ['me', 'da'],
+        ['me', 'ml'],
+        ['me', 'map'],
+        ['py', 'pandas'],
+        ['py', 'bs'],
+        ['py', 'git'],
         ['db', 'pg'],
-        ['cloud', 'docker'],
-        ['cloud', 'aws'],
-        ['msa', 'mart'],
-        ['tx', 'mart'],
-        ['mart', 'kafka'],
-        ['mart', 'pg'],
-        ['mart', 'commerce'],
-        ['llm', 'db'],
-        ['llm', 'reco'],
+        ['da', 'st'],
+        ['da', 'prep'],
+        ['ml', 'sk'],
+        ['ml', 'cv'],
+        ['prep', 'map'],
+        ['map', 'pandas'],
+        ['map', 'pg'],
+        ['map', 'st'],
+        ['map', 'jobmkt'],
       ],
     },
   },
   tech: {
-    avgScore: 83,
-    certCount: 1,
+    // 실측 — 역량 점검 2회(100·96) + CS 점검 4회(85·80·90·95) · 승인 자격증 2건.
+    avgScore: 91,
+    certCount: 2,
     categories: [
       {
-        label: '백엔드 기초 (Java · Spring)',
-        sub: 'Quiz #1–4 평균 92.5',
-        score: 92,
-        percentile: '상위 6%',
+        label: 'Python · 자료구조',
+        sub: '1차 역량 점검 100점',
+        score: 100,
+        percentile: '상위 0.3%',
       },
       {
-        label: 'DB / SQL',
-        sub: 'Quiz #5–7 평균 84.2 · PCSQL 응시 예정',
-        score: 84,
-        percentile: '상위 14%',
+        label: 'SQL · 관계형 DB',
+        sub: '2차 역량 점검 96점 · SQLD 승인',
+        score: 96,
+        percentile: '상위 3%',
       },
       {
-        label: '네트워크 · OS',
-        sub: 'Quiz #8–9 평균 78.0',
-        score: 78,
-        percentile: '상위 22%',
+        label: 'CS · 자료구조·알고리즘',
+        sub: 'CS 점검 1차 85점',
+        score: 85,
+        percentile: '상위 12%',
       },
       {
-        label: '알고리즘 · 자료구조',
-        sub: 'Quiz #10–11 평균 71.5 — 보완 필요',
-        score: 71,
-        percentile: '상위 35%',
-      },
-      {
-        label: '클라우드 · DevOps',
-        sub: 'Quiz #12 80점 · 자격증 PCCE 1건',
+        label: 'CS · 운영체제',
+        sub: 'CS 점검 2차 80점',
         score: 80,
-        percentile: '상위 19%',
+        percentile: '상위 18%',
       },
       {
-        label: '트러블슈팅 · 디버깅',
-        sub: '실습 검증 8건 · 코드 리뷰 12회',
-        score: 88,
-        percentile: '상위 9%',
+        label: 'CS · 네트워크',
+        sub: 'CS 점검 3차 90점',
+        score: 90,
+        percentile: '상위 8%',
+      },
+      {
+        label: 'CS · 데이터베이스',
+        sub: 'CS 점검 4차 95점',
+        score: 95,
+        percentile: '상위 4%',
+      },
+      {
+        label: '데이터 분석 · 머신러닝',
+        sub: '3차 역량 점검 08-14 예정',
+        score: 0,
+        percentile: '응시 예정',
       },
     ],
-    examTrend: [70, 74, 72, 78, 75, 80, 82, 80, 85, 84, 88, 90],
+    examTrend: [100, 85, 80, 96, 90, 95],
     certs: [
       {
-        name: 'PCCE — 파이썬 코딩 입문',
-        detail: '발급 2026-02-14 · 검증 URL 보유',
+        name: 'SQLD 개발자 자격',
+        detail: '기록실 제출 2026-08-10 · 매니저 승인',
         statusLabel: '승인',
         statusTone: 'success',
       },
       {
-        name: 'PCCP — 파이썬 코딩 전문',
-        detail: '제출 2026-03-02 · 운영자 검토 보기',
-        statusLabel: '검토 중',
-        statusTone: 'warning',
-      },
-      {
-        name: 'PCSQL — SQL 개발자 1급',
-        detail: '2026-05-09 응시 예정 · 자가 등록',
-        statusLabel: '응시 예정',
-        statusTone: 'info',
+        name: 'PCCE 파이썬 코딩 실력 인증 3급',
+        detail: '기록실 제출 2026-08-10 · 매니저 승인',
+        statusLabel: '승인',
+        statusTone: 'success',
       },
     ],
     assignments: [
       {
+        week: 'W07',
+        title: '첫 분류 모델 만들고 평가하기',
+        type: '실습',
+        status: '완료',
+      },
+      {
         week: 'W08',
-        title: 'Spring REST API + JWT 인증',
+        title: '1차 미니 프로젝트 중간 점검 자료',
+        type: '과제',
+        status: '완료',
+      },
+      {
+        week: 'W09',
+        title: '교차검증과 하이퍼파라미터 탐색',
         type: '실습',
         status: '완료',
       },
       {
         week: 'W10',
-        title: 'Kafka 이벤트 라우팅 미니 프로젝트',
+        title: '1차 미니 프로젝트 최종 산출물',
         type: '과제',
-        status: '완료',
-      },
-      {
-        week: 'W12',
-        title: '트랜잭션 격리 수준 비교 분석',
-        type: '리포트',
         status: '—',
-      },
-      {
-        week: 'W14',
-        title: 'MSA 도서 추천 — 시스템 설계 발표',
-        type: '실습',
-        status: '완료',
       },
     ],
     // ── v2 (CERT_V2) ──
     aiVerdict: {
       strength:
-        '백엔드 기초·트러블슈팅이 누적 상위 10% — 분산/트랜잭션 설계가 실전 뒷받침.',
-      gap: '알고리즘(상위 35%)·네트워크가 상대적 약점, PCSQL 외부 인증으로 보완 중.',
-      unique: '프론트 2년 경험 위 백엔드 전환 → 풀스택 E2E 설계 가능.',
+        'Python·SQL 역량 점검 평균 98점 · CS 점검 우상향(80→95) — 프로젝트 수행이 이론을 뒷받침.',
+      gap: '머신러닝 범위는 3차 역량 점검(08-14) 전 — 데이터 누수 사례·CS 데이터베이스 95점으로 기반은 확인됨.',
+      unique: '해결한 문제를 템플릿·규칙으로 만들어 재사용하는 기록 습관.',
     },
   },
-  projects: {
-    certifiedLabel: '2 / 3',
-    contribAvg: '36%',
-    projects: [
-      {
-        id: 'pj1',
-        badge: 'PROJECT 1',
-        certified: true,
-        title: 'Encore Mart — 마이크로서비스 백엔드',
-        period: '2026.02 — 2026.04',
-        role: '팀 · 백엔드 리드',
-        contrib: '38%',
-        tags: ['Java 17', 'Spring Boot', 'Kafka', 'PostgreSQL', 'Docker'],
-        outcomes: [
-          '주문/결제 도메인 분리 · 트랜잭션 격리 수준 정합',
-          'Kafka 이벤트 라우팅 — 결제 실패 retry 95% 안정화',
-          'API 응답 평균 320ms → 145ms (-55%)',
-        ],
-      },
-      {
-        id: 'pj2',
-        badge: 'PROJECT 2',
-        certified: true,
-        title: '한국어 회의록 요약 LLM 파이프라인',
-        period: '2026.01 — 2026.03',
-        role: '개인 · 100%',
-        contrib: '100%',
-        tags: ['Python', 'Whisper', 'GPT-4', 'KoBART', 'FastAPI'],
-        outcomes: [
-          'Whisper STT + GPT-4 한국어 회의록 요약 자동화',
-          'KoBART 추출 요약 ROUGE-L 0.873',
-          '회의록 35건 검증 · 평균 처리 시간 12초',
-        ],
-      },
-    ],
-    matrix: Array.from({ length: 84 }, (_, i) => (i * 3 + 1) % 4),
-    ai: {
-      summary:
-        '응답 320→145ms·결제 자동복구 95%는 Kafka 이벤트 라우팅 + 트랜잭션 격리 재설계의 결과. 배포·모니터링까지 이어져 E2E 운영 가능 수준을 입증.',
-    },
-    commitActivity: mockCommitActivity,
-  },
+  projects: createMockCertificateProjects(),
   problem: {
+    // 실측 — 전체 5건 중 강사 인증 3건 · 독립 해결 1건 · 평균 1.3일.
     kpis: [
       {
         key: 'cases',
         label: '인증 사례',
-        value: '12',
+        value: '3',
         unit: '건',
         delta: 'STAR 구조 인증 반영',
         deltaTone: 'brand',
@@ -556,231 +431,298 @@ const mockOverview: CertificateOverview = {
       {
         key: 'independent',
         label: '독립 해결률',
-        value: '83',
+        value: '33',
         unit: '%',
-        delta: '독립 10건 / 동료 도움 2건',
+        delta: '독립 1건 / 도움 받아 해결 2건',
         deltaTone: 'brand',
       },
       {
         key: 'avgdays',
         label: '평균 해결 일수',
-        value: '2.3',
+        value: '1.3',
         unit: '일',
         delta: '문제 발생 → 해결 평균',
         deltaTone: 'info',
       },
       {
         key: 'tags',
-        label: '협업 태그',
-        value: '37',
-        unit: '회',
-        delta: 'PeerTag 5종 누적',
+        label: '작성 중 사례',
+        value: '2',
+        unit: '건',
+        delta: 'matplotlib · Jupyter 메모리',
         deltaTone: 'accent',
       },
     ],
     cases: [
       {
         id: 'pc1',
-        badge: 'DB',
+        badge: 'DATA',
         badgeTone: 'info',
         resolved: true,
-        days: '3일',
-        title: 'PostgreSQL 데드락 — 결제 트랜잭션 격리 수준',
-        detail: '결제 동시 처리 시 데드락 → 격리 수준 재설계, 실패율 8% → 0.2%',
+        days: '1일',
+        title: 'pandas merge 후 행 수가 3배로 늘어난 문제',
+        detail: '조인 키 중복 → 키 유일화 + validate 옵션, 행 수 원본 일치',
       },
       {
         id: 'pc2',
-        badge: 'DEPLOY',
-        badgeTone: 'accent',
+        badge: 'ML',
+        badgeTone: 'warning',
         resolved: true,
         days: '2일',
-        title: 'Kafka 컨슈머 ack 미반영 — 메시지 중복 발생',
-        detail:
-          'ack 누락 → 컨슈머 재시작 시 중복 처리. enable.auto.commit=false 전환',
+        title: 'StandardScaler를 전체 데이터에 fit 해서 성능이 부풀려진 문제',
+        detail: '데이터 누수 → Pipeline 으로 스케일링을 교차검증 안쪽으로 이동',
       },
       {
         id: 'pc3',
-        badge: 'PERF',
-        badgeTone: 'warning',
+        badge: 'GIT',
+        badgeTone: 'accent',
         resolved: true,
         days: '1일',
-        title: 'N+1 쿼리 — 사용자 주문 목록 응답 7초',
-        detail: '@EntityGraph + fetch join 설계, 응답 7s → 380ms (-94%)',
+        title: 'Git rebase 중 충돌을 잘못 해결해 동료 커밋을 날린 문제',
+        detail: 'reflog 로 이전 커밋 복구 · rebase 전 백업 브랜치 규칙화',
       },
     ],
     distribution: [
-      { label: 'DB / SQL', count: '4건 · 33%', pct: 33, tone: 'info' },
-      { label: '배포 / 인프라', count: '3건 · 25%', pct: 25, tone: 'accent' },
-      { label: '성능 / 메모리', count: '2건 · 17%', pct: 17, tone: 'warning' },
-      { label: '네트워크 / API', count: '2건 · 17%', pct: 17, tone: 'brand' },
-      { label: '기타', count: '1건 · 8%', pct: 8, tone: 'success' },
+      { label: '환경', count: '2건 · 40%', pct: 40, tone: 'success' },
+      { label: '데이터', count: '1건 · 20%', pct: 20, tone: 'info' },
+      { label: '머신러닝', count: '1건 · 20%', pct: 20, tone: 'warning' },
+      { label: '협업', count: '1건 · 20%', pct: 20, tone: 'accent' },
     ],
     tags: [
-      { tag: '#논리적설득', count: 10, tone: 'info' },
-      { tag: '#문제해결', count: 7, tone: 'brand' },
-      { tag: '#리더십', count: 6, tone: 'accent' },
-      { tag: '#코드리뷰', count: 5, tone: 'success' },
-      { tag: '#책임감', count: 4, tone: 'warning' },
-      { tag: '#성장', count: 3, tone: 'info' },
+      { tag: '#문제해결', count: 3, tone: 'brand' },
+      { tag: '#기록공유', count: 3, tone: 'info' },
+      { tag: '#책임감', count: 2, tone: 'warning' },
       { tag: '#팀워크', count: 2, tone: 'accent' },
     ],
     tagCases: [
       {
-        tag: '#논리적설득',
-        tone: 'info',
-        detail:
-          'PostgreSQL 격리 수준 논의 — 팀 회의에서 isolation level 변경 설득',
-      },
-      {
         tag: '#문제해결',
         tone: 'brand',
-        detail: 'Kafka 메시지 중복 — ack 처리 패턴 변경 후 7건 자동 복구',
+        detail: 'pandas merge 행 폭증 — 키 유일성 검증을 분석 템플릿으로',
       },
       {
-        tag: '#리더십',
+        tag: '#기록공유',
+        tone: 'info',
+        detail: '데이터 누수 사례 — Pipeline 규칙을 블로그로 공유',
+      },
+      {
+        tag: '#팀워크',
         tone: 'accent',
-        detail: 'Encore Mart 도메인 분리 — 백엔드 4인 가이드',
-      },
-      {
-        tag: '#코드리뷰',
-        tone: 'success',
-        detail: 'PR 22 · 동료 코드 리뷰 평균 4.8 / 5.0',
+        detail: 'rebase 커밋 복구 — 백업 브랜치 규칙을 팀에 전파',
       },
     ],
     ai: {
       caps: [
         {
-          label: '데이터·트랜잭션 처리',
-          score: 95,
+          label: '데이터 품질 검증',
+          score: 90,
           tag: '#문제해결',
           tone: 'success',
         },
         {
-          label: '장애 대응·디버깅',
-          score: 90,
-          tag: '#책임감',
+          label: '모델 검증·누수 차단',
+          score: 82,
+          tag: '#기록공유',
           tone: 'success',
         },
-        { label: '인프라·배포', score: 85, tag: '#팀워크', tone: 'info' },
+        { label: '협업·형상 관리', score: 78, tag: '#팀워크', tone: 'info' },
       ],
       style:
-        '개인 프로파일링 → 수치 검증 → 문서화로 일관. 해결 후 팀 전파(리뷰·일정 공유)가 강점.',
-      scaling: '단일 모듈 디버깅 → 파이프라인·시스템 범위로 해결 영역 확장.',
+        '재현 조건 고정 → 원인 배제 → 수치 재검증으로 일관. 해결 후 템플릿·규칙화가 강점.',
+      scaling: '환경 설정 문제에서 데이터 품질·모델 검증 범위로 확장.',
     },
   },
   growth: {
+    // 실측 — 역량 점검 2회 + 3차 예정. 평판·추천은 아직 평가 시스템 미도입이라 mock.
     timeline: [
       {
-        date: '2024-04-17',
+        date: '2026-07-03',
         type: '성취도',
-        title: '파이썬 기초·데이터 처리 성취도 평가',
-        score: 54,
+        title: '1차 역량 점검 — Python 기초와 자료구조',
+        score: 100,
       },
       {
-        date: '2024-05-10',
+        date: '2026-07-10',
         type: 'CS',
-        title: '자료구조·운영체제 CS 평가',
-        score: 58,
+        title: 'CS 점검 1차 — 자료구조와 알고리즘',
+        score: 85,
       },
       {
-        date: '2024-06-13',
-        type: '성취도',
-        title: 'SQL·Pandas·웹 개발 통합 성취도 평가',
-        score: 68,
-      },
-      {
-        date: '2024-07-09',
-        type: '성취도',
-        title: '머신러닝·딥러닝 모델링 성취도 평가',
-        score: 75,
-      },
-      {
-        date: '2024-08-07',
+        date: '2026-07-17',
         type: 'CS',
-        title: '네트워크·데이터베이스 CS 평가',
+        title: 'CS 점검 2차 — 운영체제 기초',
         score: 80,
       },
       {
-        date: '2024-08-28',
+        date: '2026-07-24',
         type: '성취도',
-        title: 'LLM·RAG·AWS 배포 성취도 평가',
-        score: 86,
+        title: '2차 역량 점검 — SQL과 관계형 데이터베이스',
+        score: 96,
+      },
+      {
+        date: '2026-07-31',
+        type: 'CS',
+        title: 'CS 점검 3차 — 네트워크 기초',
+        score: 90,
+      },
+      {
+        date: '2026-08-07',
+        type: 'CS',
+        title: 'CS 점검 4차 — 데이터베이스 원리',
+        score: 95,
       },
     ],
     peerAverage: 4.6,
-    peerEvaluationCount: 12,
+    peerEvaluationCount: 3,
     reputation: [
-      { key: '기술', score: 4.6, detail: 'PR 22 · 코드 리뷰 평균 4.6' },
+      { key: '기술', score: 4.6, detail: '역량 점검 평균 98 · 인증 프로젝트 1건' },
       {
         key: '책임감',
         score: 4.8,
-        detail: '리더십 평가 #1 · 동료 평가 5인 일관',
+        detail: '결석 0 · 과제 9/10 · 블로그 8주 연속',
       },
-      { key: '소통', score: 4.5, detail: '논리적설득 10회 · 코드리뷰 5회' },
-      { key: '성장', score: 4.3, detail: '6개월 성취도·CS 점수 상승' },
-      { key: '팀워크', score: 4.5, detail: 'Encore Mart 백엔드 4인 협업' },
+      { key: '소통', score: 4.5, detail: 'Q&A 질문 3건 전부 채택' },
+      { key: '성장', score: 4.3, detail: '환경 적응 → 프로젝트 인증까지 8주' },
+      { key: '팀워크', score: 4.5, detail: '멘토링 팀 4인 · SQL 스터디 운영' },
     ],
     shortComments: [
       {
-        quote: '"디버깅 접근이 논리적. 격리 수준 문제를 팀에 잘 설명함."',
-        by: '백엔드 동료 A',
-        tag: '#논리적설득',
-      },
-      {
-        quote: '"PR 코드 리뷰 코멘트가 따뜻하고 구체적. 함께 일하기 좋음."',
-        by: '백엔드 동료 B',
-        tag: '#코드리뷰',
-      },
-      {
-        quote: '"막힌 부분을 끝까지 파고듦. Kafka ack 처리 사례가 인상적."',
-        by: '백엔드 동료 C',
+        quote: '"merge 행 폭증 원인을 키 중복까지 파고들어 팀 템플릿으로 만들어 줬어요."',
+        by: '멘토링 팀 동료 A',
         tag: '#문제해결',
+      },
+      {
+        quote: '"스터디에서 실행 계획 읽는 법을 차근차근 설명해 줘서 이해가 잘 됐어요."',
+        by: '멘토링 팀 동료 B',
+        tag: '#기록공유',
+      },
+      {
+        quote: '"날린 커밋을 복구하고 백업 규칙까지 정리해 공유한 게 인상적이었어요."',
+        by: '멘토링 팀 동료 C',
+        tag: '#팀워크',
       },
     ],
     recommendations: [
       {
         role: '강사',
-        name: '이정훈 강사',
-        meta: '백엔드 멘토링 · 6개월',
+        name: '박지훈 강사',
+        meta: '담당 강사 · 34기',
         quote:
-          '"트랜잭션 격리 수준 문제를 팀 회의에서 끝까지 정리하며 합의를 끌어냈음. 협업 태도와 기술 깊이 모두 인상적."',
-        date: '2026-05-10 작성',
+          '"채용 공고 프로젝트에서 수집·정규화·검증을 혼자 완결했습니다. 문제를 만나면 기록으로 남기고 규칙을 만드는 습관이 돋보입니다."',
+        date: '2026-08-10 작성',
       },
       {
         role: '멘토',
-        name: '황설현 멘토',
-        meta: '코드 리뷰 · 12회',
+        name: '정민재 멘토',
+        meta: '데이터 직무 스택 지도 팀 · 멘토링 3회',
         quote:
-          '"PR 코멘트 품질이 일관되게 높음. 단순 지적이 아닌 구조적 개선 제안이 많아 동료 4인의 코드 품질에 함께 영향을 줌."',
-        date: '2026-05-08 작성',
+          '"데이터 누수 사례를 함께 짚었을 때 하루 만에 Pipeline 으로 교정하고 팀에 공유했습니다. 피드백 흡수가 빠릅니다."',
+        date: '2026-08-08 작성',
       },
     ],
     sentiment: {
       bubbles: [
-        { label: '학습 불안', x: 16, y: 36, r: 13, phase: 'early' },
-        { label: '적응', x: 24, y: 58, r: 11, phase: 'early' },
-        { label: '진로 고민', x: 11, y: 18, r: 8, phase: 'early' },
-        { label: 'SQL 난관', x: 42, y: 28, r: 12, phase: 'mid' },
-        { label: '스트레스', x: 47, y: 54, r: 14, phase: 'mid' },
-        { label: '멘토링', x: 35, y: 44, r: 10, phase: 'mid' },
-        { label: '자기효능감', x: 66, y: 28, r: 13, phase: 'late' },
-        { label: '성취감', x: 73, y: 50, r: 15, phase: 'late' },
-        { label: '코드리뷰 1위', x: 84, y: 36, r: 12, phase: 'late' },
-        { label: '자신감', x: 88, y: 60, r: 10, phase: 'late' },
-        { label: '성장 회고', x: 60, y: 64, r: 10, phase: 'late' },
+        { label: '환경 헤맴', x: 14, y: 34, r: 12, phase: 'early' },
+        { label: 'Git 실수', x: 22, y: 56, r: 11, phase: 'early' },
+        { label: '기록 습관', x: 30, y: 40, r: 10, phase: 'early' },
+        { label: '스터디 운영', x: 46, y: 30, r: 12, phase: 'mid' },
+        { label: '역량 점검 100점', x: 54, y: 52, r: 14, phase: 'mid' },
+        { label: '데이터 누수 교훈', x: 62, y: 68, r: 10, phase: 'mid' },
+        { label: '프로젝트 인증', x: 80, y: 38, r: 15, phase: 'late' },
+        { label: '성취감', x: 88, y: 58, r: 12, phase: 'late' },
       ],
-      trend: 'V자 변동형: 위기(4주차) → 멘토링 → 급반등',
+      trend: '우상향: 환경 적응 → 스터디·역량 점검 → 프로젝트 인증',
     },
   },
 }
+
+/** 프로젝트 탭 전용 합성 응답 — 워크스페이스 실측값을 그대로 옮긴다. */
+function createMockCertificateProjects(): CertProjectsTab {
+  // 34기 황수빈의 실제 프로젝트 2건 — 개인(인증 완료) + 4인 팀(진행 중, PM).
+  // 성과 문구는 워크스페이스 metrics 에 실제로 저장된 값과 동일하다.
+  return {
+    summary: {
+      totalProjectCount: 2,
+      completedProjectCount: 0,
+      certifiedProjectCount: 1,
+      responsibilities: ['수집·정규화 설계', '분석·대시보드', '팀 PM · 모델링'],
+      techStackGroups: [
+        { category: '언어·분석', items: ['Python', 'pandas'] },
+        { category: '수집', items: ['BeautifulSoup'] },
+        { category: '데이터', items: ['PostgreSQL'] },
+        { category: '머신러닝', items: ['scikit-learn', 'LightGBM'] },
+        { category: '시각화', items: ['Streamlit'] },
+      ],
+    },
+    projects: [
+      {
+        projectId: 'pj1',
+        title: '채용 공고로 보는 데이터 직무 기술 스택 지도',
+        startDate: '2026-07-14',
+        endDate: '2026-08-29',
+        domain: '데이터 · 채용 시장 분석',
+        projectStatus: 'IN_PROGRESS',
+        certificationStatus: 'CERTIFIED',
+        certifiedAt: '2026-08-10T11:44:00+09:00',
+        membershipRole: 'OWNER',
+        responsibility: '개인 프로젝트 · 수집부터 대시보드까지',
+        teamSize: 1,
+        techStackGroups: [
+          { category: '언어·분석', items: ['Python', 'pandas'] },
+          { category: '수집', items: ['BeautifulSoup'] },
+          { category: '데이터', items: ['PostgreSQL'] },
+          { category: '시각화', items: ['Streamlit'] },
+        ],
+        outcomes: [
+          '채용 공고 5,240건 수집 · 중복 제거 후 4,180건 확보',
+          '기술 표기 1,148종 → 표준 키워드 312개 정규화',
+          '직무별 요구 스택 도출 — DE는 Python 87% · SQL 84% · Spark 61%',
+          '수집 실패율 7.2% → 0.4% — 재시도·재큐잉 도입',
+          '대시보드 조회 4.2초 → 0.8초 — 집계 사전 계산',
+        ],
+        // 실측 — GitHub 연동 전. 연동하면 실 저장소 지표가 이 자리에 온다.
+        githubStatus: 'DISCONNECTED',
+        repositories: [],
+      },
+      {
+        projectId: 'pj2',
+        title: '구독 서비스 고객 이탈 예측과 리텐션 대시보드',
+        startDate: '2026-08-03',
+        endDate: '2026-09-25',
+        domain: '데이터 · 고객 이탈 예측',
+        projectStatus: 'IN_PROGRESS',
+        certificationStatus: 'NONE',
+        certifiedAt: null,
+        membershipRole: 'OWNER',
+        responsibility: '팀 PM · 전처리 파이프라인·모델링',
+        teamSize: 4,
+        techStackGroups: [
+          { category: '언어·분석', items: ['Python', 'pandas'] },
+          { category: '머신러닝', items: ['scikit-learn', 'LightGBM'] },
+          { category: '데이터', items: ['PostgreSQL'] },
+          { category: '시각화', items: ['Streamlit'] },
+        ],
+        outcomes: [
+          '베이스라인 PR-AUC — 로지스틱 0.431 → LightGBM 0.612 (+42%)',
+          '전처리 Pipeline 구축 — 데이터 누수 재발 방지',
+          '작업 10건 배분 — 완료 3 · 진행 3 · 예정 4 (마감 09-25)',
+        ],
+        githubStatus: 'DISCONNECTED',
+        repositories: [],
+      },
+    ],
+  }
+}
+
+export const mockCertificateProjects = createMockCertificateProjects()
 
 const mockChanges: CertChangesData = {
   roundLabel: '1차 보완 요청',
   summaryTitle: '정식 인증 전, 아래 3개 항목을 보완해 주세요',
   summarySub:
     '보완 완료 후 [정식 인증 재요청] 버튼이 활성화됩니다 · 매니저가 다시 검토합니다.',
-  requestedAt: '2026-05-12 14:30',
-  reviewer: '매니저 박지수',
+  requestedAt: '2026-08-10 14:30',
+  reviewer: '매니저 엔코아',
   replyWithin: '1영업일 이내',
   reasons: [
     {
@@ -804,7 +746,7 @@ const mockChanges: CertChangesData = {
       ],
       title: '대표 기록의 강사 승인 완료 후 재요청해 주세요',
       detail:
-        '대표 기록으로 선택한 8주차 블로그 "JPA 영속성 컨텍스트 정리"가 아직 검토 중입니다. 강사 승인이 완료된 산출물만 정식 인증 근거로 사용됩니다.',
+        '대표 기록으로 선택한 8월 1주차 블로그 "교차검증을 왜 하는지 직접 실험해봤다"가 아직 검토 중입니다. 강사 승인이 완료된 산출물만 정식 인증 근거로 사용됩니다.',
       actionLabel: '기록실 이동',
     },
     {
@@ -814,9 +756,9 @@ const mockChanges: CertChangesData = {
         { label: '점수 재요청 필요', tone: 'danger' },
         { label: '대상: 점수', tone: 'info' },
       ],
-      title: 'JPA 영속성 컨텍스트 퀴즈를 재응시해 주세요',
+      title: '3차 역량 점검(08-14) 응시 후 재요청해 주세요',
       detail:
-        '해당 퀴즈 결과가 동료 평균보다 낮게 산출되어 역량 증명서가 갱신되지 않았습니다. 재응시 후 점수가 반영되면 재요청해 주세요.',
+        '데이터 분석·머신러닝 범위 점수가 아직 산출되지 않았습니다. 3차 역량 점검 응시 후 점수가 반영되면 재요청해 주세요.',
       actionLabel: '역량 증명서 이동',
     },
   ],
@@ -873,14 +815,14 @@ const mockChanges: CertChangesData = {
     {
       id: 'c2',
       label: '대표 기록 강사 승인 완료',
-      sub: '8주차 블로그 검토 대기 중 — 강사 승인 시 자동 완료',
+      sub: '8월 1주차 블로그 검토 대기 중 — 강사 승인 시 자동 완료',
       done: false,
       actionLabel: '기록실 이동',
     },
     {
       id: 'c3',
-      label: 'JPA 영속성 컨텍스트 퀴즈 재응시 완료',
-      sub: '역량 증명서의 해당 카테고리에서 재응시 가능',
+      label: '3차 역량 점검 응시 완료',
+      sub: '08-14 시작 — 응시 후 자동 반영',
       done: false,
       actionLabel: '역량 증명서 이동',
     },
@@ -891,7 +833,7 @@ const mockChanges: CertChangesData = {
 const mockPublication: CertPublicationData = {
   issuedBadge: 'CERTIFIED · 정식 인증 완료',
   issuedLabel: '수강 역량 증명서 발급 완료',
-  issuedSub: '김수강 · 백엔드 부트캠프 3기 · 인증일 2026.05.14',
+  issuedSub: '황수빈 · SK네트웍스 Family AI 캠프 34기 · 인증일 2026.08.10',
   verifyId: 'VERIFY-2026-BB23-K1234',
   urlIssueDate: '2026-05-15 · 다음날 자동 활성',
   // 토큰 경로(새 탭 이동) / 표시·복사용 URL은 publicUrl 별도.
@@ -926,12 +868,12 @@ const mockPublication: CertPublicationData = {
     chip: '최신화 이후 포함',
   },
   preview: {
-    name: '수강 Kim',
-    period: '백엔드 부트캠프 · 3기 · 2025.11 ~ 2026.05',
+    name: '황수빈',
+    period: 'SK네트웍스 Family AI 캠프 · 34기 · 2026.06 ~ 2026.12',
     metrics: [
-      { v: '86', l: '종합 점수' },
-      { v: '96%', l: '출석률' },
-      { v: '2', l: '인증 프로젝트' },
+      { v: '94.4', l: '종합 점수' },
+      { v: '100%', l: '출석률' },
+      { v: '1', l: '인증 프로젝트' },
       { v: 'A', l: '등급' },
     ],
   },
@@ -952,20 +894,19 @@ const mockPublication: CertPublicationData = {
 
 // AI 상담 감성 분석 결과(목) — 실제로는 녹음 음성→STT→키워드 추출 산출물.
 // 정적 미리보기(mockOverview.sentiment)와 구분되게 "새로 분석된" 톤으로 구성.
+// 상담 감정 분석 mock — 실제 8주 이력(환경 적응 → 스터디·역량 점검 → 프로젝트 인증) 기반.
 const analyzedSentiment: CertSentiment = {
   bubbles: [
-    { label: '진로 불안', x: 14, y: 30, r: 12, phase: 'early' },
-    { label: '번아웃', x: 23, y: 54, r: 13, phase: 'early' },
-    { label: '방향 고민', x: 10, y: 16, r: 8, phase: 'early' },
-    { label: '협업 갈등', x: 40, y: 26, r: 11, phase: 'mid' },
-    { label: '자료구조 난관', x: 48, y: 52, r: 13, phase: 'mid' },
-    { label: '멘토 조언', x: 34, y: 42, r: 10, phase: 'mid' },
-    { label: '루틴 회복', x: 64, y: 30, r: 12, phase: 'late' },
-    { label: '성취감', x: 74, y: 52, r: 15, phase: 'late' },
-    { label: '발표 자신감', x: 85, y: 36, r: 12, phase: 'late' },
-    { label: '동료 신뢰', x: 88, y: 62, r: 10, phase: 'late' },
+    { label: '환경 헤맴', x: 14, y: 34, r: 12, phase: 'early' },
+    { label: 'Git 실수', x: 22, y: 56, r: 11, phase: 'early' },
+    { label: '기록 습관', x: 30, y: 40, r: 10, phase: 'early' },
+    { label: '스터디 운영', x: 46, y: 30, r: 12, phase: 'mid' },
+    { label: '역량 점검 100점', x: 54, y: 52, r: 14, phase: 'mid' },
+    { label: '데이터 누수 교훈', x: 62, y: 68, r: 10, phase: 'mid' },
+    { label: '프로젝트 인증', x: 80, y: 38, r: 15, phase: 'late' },
+    { label: '성취감', x: 88, y: 58, r: 12, phase: 'late' },
   ],
-  trend: '하강 후 회복형: 번아웃(상담 초반) → 멘토 조언 → 후반 자신감 회복',
+  trend: '우상향: 환경 적응 → 스터디·역량 점검 → 프로젝트 인증',
 }
 
 const certificateApiBase =
@@ -976,6 +917,7 @@ const certificateApiBase =
 
 export const CERTIFICATE_MOCK_ENDPOINTS = {
   overview: `${certificateApiBase}/student/certificate`,
+  projects: `${certificateApiBase}/student/certificate/projects`,
   changes: `${certificateApiBase}/student/certificate/changes`,
   publication: `${certificateApiBase}/student/certificate/publication`,
   sentiment: `${certificateApiBase}/student/certificate/sentiment/analyze`,
@@ -984,6 +926,9 @@ export const CERTIFICATE_MOCK_ENDPOINTS = {
 export const handlers = [
   http.get(CERTIFICATE_MOCK_ENDPOINTS.overview, () =>
     ok<CertificateOverview>(mockOverview),
+  ),
+  http.get(CERTIFICATE_MOCK_ENDPOINTS.projects, () =>
+    ok<CertProjectsTab>(mockCertificateProjects),
   ),
   http.get(CERTIFICATE_MOCK_ENDPOINTS.changes, () =>
     ok<CertChangesData>(mockChanges),

@@ -18,16 +18,6 @@ export interface CertReviewListItem {
 }
 
 // 인증 검토 큐(/admin/certificates/reviews) 응답.
-export interface CertReviewQueue {
-  total: number // 전체 167
-  byStatus: Record<CertReviewStatus, number> // 탭/KPI 카운트
-  unassigned: number // 미배정
-  riskFlagged: number // 위험 플래그 건
-  myAssigned: number // 내 담당
-  avgHours: number // 평균 처리 시간
-  items: CertReviewListItem[]
-}
-
 // --- 인증 검토 상세 (Flow 11 C2) ---
 
 export interface SkillScore {
@@ -67,31 +57,6 @@ export interface AuditEntry {
 }
 
 // 인증 검토 상세(/admin/certificates/reviews/:reviewId) 응답.
-export interface CertReviewDetail {
-  id: string
-  student: { name: string; certId: string; cohort: string }
-  status: CertReviewStatus
-  assignee: string
-  requestedAt: string
-  martStale: boolean // 원천 데이터 미갱신
-  martLastRefreshed: string
-  metrics: {
-    trainingHours: number // 480
-    attendance: number // 0.962
-    quizAvg: number // 84.7
-    submissionRate: number // 0.91
-    submissionRaw: string // "32/35건"
-  }
-  skills: SkillScore[]
-  skillAvg: number // 81.7
-  payloadPreview: string // JSON 요약 1줄
-  approvalChecks: ApprovalCheck[] // 승인 필수 체크
-  riskFlags: ReviewRiskFlag[]
-  scoreEvidence: ScoreEvidence[] // 점수 근거
-  artifactApprovals: ArtifactApproval[] // 산출물 승인 상태
-  auditLog: AuditEntry[] // 감사 로그
-}
-
 // --- 스냅샷 상세 (Flow 11 C3) ---
 
 export interface SnapshotEvidence {

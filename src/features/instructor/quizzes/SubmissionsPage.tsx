@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 import { useQuizBasePath } from './useQuizBasePath'
-import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -12,8 +16,9 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import type { QuizSubmissionRow } from '@/shared/types'
 import { useCohortRoster } from '../api/console'
-import { useQuizSubmissions } from '../api/quizzes'
+import { useQuizSubmissions, useRemindSubmission } from '../api/quizzes'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type StatusFilter = 'all' | 'manual_pending' | 'not_submitted' | 'done'
 
@@ -28,14 +33,22 @@ export default function SubmissionsPage() {
   // 허브 진입이면 목록으로 = 허브 퀴즈 탭. 채점 진입에도 cohortId를 이어붙인다.
   const fromCohortId = searchParams.get('cohortId')
   const hubQs = fromCohortId ? `?cohortId=${fromCohortId}` : ''
+  // 결과·답안 보기 — 채점 화면을 읽기 전용(view=1)으로 연다.
+  const viewQs = fromCohortId ? `${hubQs}&view=1` : '?view=1'
   const backTo = fromCohortId
     ? `/instructor/cohorts/${fromCohortId}/education?tab=quizzes`
     : base
   const toast = useToast()
   const { data, isPending, isError, refetch } = useQuizSubmissions(quizId)
+  const remind = useRemindSubmission(quizId)
+  // 한 세션에서 같은 수강생에게 연타로 중복 알림이 가지 않도록 전송한 행을 기억한다.
+  const [remindedIds, setRemindedIds] = useState<Set<string>>(new Set())
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<StatusFilter>('all')
   usePageHeader('제출 현황', '퀴즈 제출률과 채점 대기 현황을 확인합니다')
+  // 정답 관리는 운영 전용이다 — 강사 마운트에서는 감춘다.
+  const isAdmin = useQuizBasePath().startsWith('/admin')
+  const location = useLocation()
 
   const rows = useMemo(() => data?.rows ?? [], [data])
   // 제출자 userId → 이름 join. BE는 studentUserId만 주고 이름은 FE에서 결합.
@@ -170,19 +183,30 @@ export default function SubmissionsPage() {
       header: '액션',
       className: 'w-48',
       cell: (r) => {
-        if (!r.submitted)
+        if (!r.submitted) {
+          const sent = remindedIds.has(r.id)
           return (
             <button
               type="button"
+              disabled={sent || remind.isPending}
               onClick={(e) => {
                 e.stopPropagation()
-                toast.success(`재독촉 알림은 준비 중입니다.`)
+                remind.mutate(r.studentUserId, {
+                  onSuccess: () => {
+                    setRemindedIds((prev) => new Set(prev).add(r.id))
+                    toast.success(
+                      `${nameOf(r.studentUserId)} 님에게 제출 독촉 알림을 보냈어요`,
+                    )
+                  },
+                  onError: () => toast.danger('알림 전송에 실패했어요'),
+                })
               }}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap disabled:opacity-50 disabled:hover:bg-transparent"
             >
-              재독촉 알림
+              {sent ? '알림 전송됨' : '재독촉 알림'}
             </button>
           )
+        }
         if (r.gradingState === 'manual_pending')
           return (
             <div className="flex gap-1.5">
@@ -201,7 +225,9 @@ export default function SubmissionsPage() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  toast.info(`답안 보기는 준비 중입니다.`)
+                  navigate(
+                    `${base}/${quizId}/submissions/${r.id}/grade${viewQs}`,
+                  )
                 }}
                 className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
               >
@@ -214,7 +240,7 @@ export default function SubmissionsPage() {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              toast.info(`결과 보기는 준비 중입니다.`)
+              navigate(`${base}/${quizId}/submissions/${r.id}/grade${viewQs}`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap"
           >
@@ -264,16 +290,13 @@ export default function SubmissionsPage() {
 
           {/* 검색 + 상태 탭 */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <div className="border-border focus-within:border-brand flex h-9 w-64 items-center gap-2 rounded-lg border bg-white px-3">
-              <Search className="text-fg-subtle h-4 w-4" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="이름으로 검색"
-                aria-label="수강생 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
+            <SearchInput
+              value={q}
+              onChange={setQ}
+              placeholder="이름으로 검색"
+              ariaLabel="수강생 검색"
+              className="w-64"
+            />
             {statusTabs.map((t) => (
               <button
                 key={t.key}
@@ -290,10 +313,30 @@ export default function SubmissionsPage() {
                 <span className="text-fg-subtle text-xs">({t.count})</span>
               </button>
             ))}
+            {/* 정답 관리 — 채점 결과를 보다 정답 오류를 발견했을 때 여기서 들어간다.
+                운영 전용 화면이라 /admin 마운트에서만 보인다(BE 도 /admin/quizzes/* 전용). */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/admin/quizzes/${quizId}/answers?from=${encodeURIComponent(
+                      location.pathname + location.search,
+                    )}`,
+                  )
+                }
+                className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
+              >
+                정답 관리 →
+              </button>
+            )}
             <button
               type="button"
               onClick={() => navigate(backTo)}
-              className="border-border text-fg-muted hover:bg-surface-muted ml-auto rounded-lg border px-3 py-1.5 text-xs font-medium"
+              className={cn(
+                'border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3 py-1.5 text-xs font-medium',
+                !isAdmin && 'ml-auto',
+              )}
             >
               ← 퀴즈 목록으로
             </button>

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Role, User } from '@/shared/types'
+import { clearUploadCache } from '@/components/ui/uploadCache'
 
 // 전역 인증 상태 — Zustand + localStorage persist(새로고침 후 세션 복구).
 // 읽기는 useAuth()(파생: role·isAuthenticated), 쓰기는 useAuthActions()를 쓴다.
@@ -18,7 +19,11 @@ export const useAuthStore = create<AuthStoreState>()(
       user: null,
       token: null,
       setSession: (token, user) => set({ token, user }),
-      clearSession: () => set({ token: null, user: null }),
+      clearSession: () => {
+        // 보던 사람이 바뀐다 — 본문에 실린 그림 사본도 함께 놓는다.
+        clearUploadCache()
+        set({ token: null, user: null })
+      },
     }),
     {
       name: 'lms-auth',

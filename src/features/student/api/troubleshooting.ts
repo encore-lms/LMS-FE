@@ -16,12 +16,16 @@ export interface TsUpsertBody {
   tags: string[]
   links: string[]
   projectId: string | null
+  /** 문제를 겪은 날(YYYY-MM-DD). 안 골랐으면 null — 오늘로 대신 채우지 않는다. */
+  occurredOn: string | null
 }
 
 // 트러블슈팅 훅 — 엔드포인트가 /student/* 라 학생 feature 소유. baseURL /api 라 경로 앞 /api 생략.
-export function useTsList() {
+export function useTsList(enabled = true) {
   return useQuery({
     queryKey: tsKeys.list(),
+    // 검토자(매니저·강사) 워크스페이스 열람 — /student/** 는 403이라 조회 자체를 끈다.
+    enabled,
     queryFn: () =>
       apiClient.get<TsListData>('/student/troubleshooting').then((r) => r.data),
     // 새 사례 제출분(setQueryData)이 세션 내 유지되도록 재요청 억제(새로고침 시 mock 복원).

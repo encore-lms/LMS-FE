@@ -1,7 +1,8 @@
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { usePageHeader, useAuth } from '@/shared/store'
+import { useAuth } from '@/shared/store'
 import { useCourseHome } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
+import { useCourseHubHeader } from '../useCourseHubHeader'
 import { OnlineCoursePage } from '../online/OnlineCoursePage'
 import { CourseHero } from './components/CourseHero'
 import { WeekLearningCard } from './components/WeekLearningCard'
@@ -23,7 +24,8 @@ export default function CourseHomePage() {
  */
 function KdtCourseHome() {
   const { data, isPending, isError, refetch } = useCourseHome()
-  usePageHeader('강의 홈')
+  // 허브 공통 헤더(과정명/기간) — 3역할 통일(2026-08-05).
+  useCourseHubHeader()
 
   return (
     <div className="flex flex-col gap-5 p-8">

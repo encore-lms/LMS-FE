@@ -7,7 +7,13 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useToast } from '@/components/ui/use-toast'
-import { useAddMeeting, wsWriteError } from '../../../api/projects'
+import {
+  useAddMeeting,
+  useEditMeeting,
+  useDeleteMeeting,
+  wsWriteError,
+} from '../../../api/projects'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { WorkspaceData, WsMeeting, WsMember } from '../../types'
 import { Avatar, Chip, SectionHead } from '../components/ws-shared'
 import {
@@ -17,23 +23,36 @@ import {
   parseMeetingMeta,
 } from '../components/ws-style'
 
-export function MeetingsTab({ d }: { d: WorkspaceData }) {
+export function MeetingsTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 작성·수정·삭제 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const meetings = d.meetings
   const [adding, setAdding] = useState(false)
   const [openMeeting, setOpenMeeting] = useState<WsMeeting | null>(null)
   const addMeetingM = useAddMeeting(d.id)
+  const editMeetingM = useEditMeeting(d.id)
+  const deleteMeetingM = useDeleteMeeting(d.id)
+  const [editing, setEditing] = useState<WsMeeting | null>(null)
+  const [deleting, setDeleting] = useState<WsMeeting | null>(null)
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
         title="회의록"
-        action="회의록 작성"
-        onAction={() => setAdding(true)}
+        action={readOnly ? undefined : '회의록 작성'}
+        onAction={readOnly ? undefined : () => setAdding(true)}
       />
       {meetings.length === 0 ? (
         <Empty
           title="아직 작성된 회의록이 없어요"
-          description="‘회의록 작성’으로 첫 회의록을 남겨보세요."
+          description={
+            readOnly ? undefined : '‘회의록 작성’으로 첫 회의록을 남겨보세요.'
+          }
         />
       ) : (
         <section className={cn(card, 'flex flex-col')}>
@@ -46,7 +65,9 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
               )}
             >
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-fg text-[14px] font-bold">{m.title}</span>
+                <span className="text-fg text-[14px] font-bold [overflow-wrap:anywhere]">
+                  {m.title}
+                </span>
                 <span className="text-fg-subtle text-[11px]">{m.meta}</span>
               </div>
               {/* 요약은 길이 제한이 없어 제목·액션을 밀어낸다 — 남는 폭 안에서 말줄임 */}
@@ -73,10 +94,72 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
           meeting={openMeeting}
           members={d.members}
           onClose={() => setOpenMeeting(null)}
+          onEdit={
+            !readOnly && openMeeting.id
+              ? () => {
+                  setEditing(openMeeting)
+                  setOpenMeeting(null)
+                }
+              : undefined
+          }
+          onDelete={
+            !readOnly && openMeeting.id
+              ? () => {
+                  setDeleting(openMeeting)
+                  setOpenMeeting(null)
+                }
+              : undefined
+          }
         />
       )}
+      {editing && (
+        <AddMeetingModal
+          period={{ start: d.startDate, end: d.endDate }}
+          editing={editing}
+          onClose={() => setEditing(null)}
+          onAdd={(meeting, body, heldAt) => {
+            editMeetingM.mutate(
+              { meetingId: editing.id!, title: meeting.title, body, heldAt },
+              {
+                onSuccess: () => {
+                  toast.success('회의록을 수정했습니다')
+                  setEditing(null)
+                },
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '회의록 수정에 실패했어요.')),
+              },
+            )
+          }}
+        />
+      )}
+      <ConfirmDialog
+        open={!!deleting}
+        title="회의록 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting?.id) return
+          deleteMeetingM.mutate(
+            { meetingId: deleting.id },
+            {
+              onSuccess: () => {
+                toast.success('회의록을 삭제했습니다')
+                setDeleting(null)
+              },
+              onError: (e) =>
+                toast.danger(wsWriteError(e, '회의록 삭제에 실패했어요.')),
+            },
+          )
+        }}
+      >
+        <p className="text-fg-muted text-[13px]">
+          '{deleting?.title ?? ''}' 회의록을 삭제할까요? 되돌릴 수 없어요.
+        </p>
+      </ConfirmDialog>
       {adding && (
         <AddMeetingModal
+          period={{ start: d.startDate, end: d.endDate }}
           onClose={() => setAdding(false)}
           onAdd={(meeting, body, heldAt) => {
             addMeetingM.mutate(
@@ -98,18 +181,25 @@ export function MeetingsTab({ d }: { d: WorkspaceData }) {
 }
 
 function AddMeetingModal({
+  period,
+  editing,
   onClose,
   onAdd,
 }: {
+  /** 프로젝트 기간 — 이 밖의 날짜는 고를 수 없다. */
+  period: { start?: string | null; end?: string | null }
+  /** 주면 수정 모드 — 기존 값으로 채워 시작한다. */
+  editing?: WsMeeting
   onClose: () => void
   onAdd: (meeting: WsMeeting, body: string, heldAt: string) => void
 }) {
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(editing?.title ?? '')
   const now = new Date()
   const [date, setDate] = useState(
-    dateStr(now.getFullYear(), now.getMonth(), now.getDate()),
+    parseMeetingMeta(editing?.meta ?? '').date ??
+      dateStr(now.getFullYear(), now.getMonth(), now.getDate()),
   )
-  const [summary, setSummary] = useState('')
+  const [summary, setSummary] = useState(editing?.summary ?? '')
   const field = inputClass()
   const submit = () => {
     if (!title.trim() || !summary.trim()) return
@@ -129,7 +219,7 @@ function AddMeetingModal({
     <Modal
       open
       onClose={onClose}
-      title="회의록 작성"
+      title={editing ? '회의록 수정' : '회의록 작성'}
       footer={
         <>
           <button
@@ -175,6 +265,9 @@ function AddMeetingModal({
             onChange={setDate}
             ariaLabel="회의 일자"
             placeholder="날짜 선택"
+            // 프로젝트 기간 밖은 고를 수 없다 — 기간 밖 일정은 이 프로젝트의 기록이 아니다.
+            min={period.start ?? undefined}
+            max={period.end ?? undefined}
           />
         </div>
         <label className="flex flex-col gap-1.5">
@@ -196,10 +289,14 @@ function MeetingDetailModal({
   meeting,
   members,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   meeting: WsMeeting
   members: WsMember[]
   onClose: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }) {
   const { date, attendees } = parseMeetingMeta(meeting.meta)
   const attendList = attendees != null ? members.slice(0, attendees) : members
@@ -213,13 +310,33 @@ function MeetingDetailModal({
       onClose={onClose}
       title="회의록 상세"
       footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className={buttonClass({ variant: 'secondary', size: 'sm' })}
-        >
-          닫기
-        </button>
+        <>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="text-danger hover:bg-danger-bg mr-auto rounded-lg px-3 py-1.5 text-[13px] font-semibold"
+            >
+              삭제
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
+          >
+            닫기
+          </button>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className={buttonClass({ size: 'sm' })}
+            >
+              수정
+            </button>
+          )}
+        </>
       }
     >
       <div className="flex flex-col gap-4">
@@ -240,8 +357,10 @@ function MeetingDetailModal({
           <span className="text-fg-subtle text-[11px] font-semibold">
             핵심 요약
           </span>
-          <span className="text-fg text-[13px] font-semibold">
-            {meeting.summary}
+          {/* 상세는 원문을 통째로 — 목록용으로 자른 값(summary)을 쓰면 "…" 로 끝나 끝까지
+              읽을 수 없다. 줄바꿈도 쓴 대로 살린다. */}
+          <span className="text-fg text-[13px] leading-6 font-medium whitespace-pre-wrap">
+            {meeting.body ?? meeting.summary}
           </span>
         </div>
 

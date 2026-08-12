@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { useToast, type ToastTone } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { apiErrorMessage } from '@/shared/api/errorMessage'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import {
   useAcceptMentoringProposal,
   useCancelMentoringRequest,
@@ -21,6 +22,7 @@ import { MentoringHistorySection } from './components/MentoringHistorySection'
 import { CoMenteesPanel } from './components/CoMenteesPanel'
 import { CancelRequestModal } from './components/CancelRequestModal'
 import { MentoringProgressSummary } from './components/MentoringProgressSummary'
+import { CourseTabs } from '../course/CourseTabs'
 import type {
   MentoringActiveRequest,
   MentoringData,
@@ -93,7 +95,7 @@ function limitReachedReason(policy: MentoringRequestPolicy) {
  */
 export default function MentoringPage() {
   const { data, isPending, isError, refetch } = useMentoring()
-  usePageHeader('멘토링')
+  useCourseHubHeader()
 
   return (
     <DataBoundary
@@ -213,8 +215,9 @@ function MentoringView({ data }: { data: MentoringData }) {
         setRequestModalOpen(false)
         toast.success(TOAST.requested.message)
       },
-      onError: () => {
-        toast.danger('멘토링 요청 제출에 실패했어요')
+      onError: (e) => {
+        // 겹친 예약 같은 사유는 서버만 안다 — 그대로 보여줘야 다른 시간을 고를 수 있다.
+        toast.danger(apiErrorMessage(e, '멘토링 요청 제출에 실패했어요'))
       },
     })
   }
@@ -251,6 +254,7 @@ function MentoringView({ data }: { data: MentoringData }) {
 
   return (
     <div className="flex flex-col gap-5 p-8">
+      <CourseTabs />
       <MentoringHero data={display} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">

@@ -61,10 +61,18 @@ export interface TsCase {
   projectLink?: TsProjectLink | null
   // 검토 출처 — 검토 중(reviewing) 진입이 인증 요청인지 변경 제안인지. 반려 시 모달 종류 결정.
   reviewFrom?: 'cert' | 'change'
-  // 강사 반려 — 인증 요청/변경 제안이 반려되면 사유를 보관하고 '이어 작성'으로 되돌린다.
-  rejectionReason?: string
-  rejectionFrom?: 'cert' | 'change' // 반려 출처(인증 요청 / 변경 제안)
+  /**
+   * 강사 검토 결과 — 보완 요청·인증 취소는 status 가 둘 다 draft 라 '작성 중'과 구분되지 않는다.
+   * 표시용 라벨(statusLabel) 문자열을 비교하는 대신 이 키로 분기한다.
+   */
+  reviewStatus?: TsReviewStatus | null
+  /** 강사가 남긴 보완 요청·인증 취소 사유. */
+  reviewComment?: string | null
 }
+
+/** 강사 검토 결과 — 서버 계약(changes_requested | revoked). 없으면 검토 이력 없음. */
+export type TsReviewStatus = 'changes_requested' | 'revoked'
+
 
 export interface TsListData {
   stats: TsStat[]
@@ -104,6 +112,8 @@ export interface TsCaseDetail {
   situation: string
   resolution: string
   result: string
+  /** 자유 태그 — 저장 직후 폼을 다시 그릴 때 복원에 쓴다. */
+  tags?: string[]
   attachments: TsAttachment[]
   checklist: TsCheck[]
   timeline: TsTimeline[]
@@ -116,6 +126,12 @@ export interface TsCaseDetail {
   // 강사 반려 사유(있으면 반려 안내 모달 노출). 인증 요청/변경 제안 반려 시 설정.
   rejectionReason?: string
   rejectionFrom?: 'cert' | 'change'
+  /** 강사가 보완 요청·인증 취소하며 남긴 사유. 무엇을 고쳐야 하는지 알려준다. */
+  reviewComment?: string | null
+  /** 강사 검토 결과 — 라벨 문자열 비교를 대신한다. */
+  reviewStatus?: TsReviewStatus | null
+  /** 문제를 겪은 날(YYYY-MM-DD). 저장된 적 없는 과거 사례는 null. */
+  occurredOn?: string | null
 }
 
 /**

@@ -1,7 +1,10 @@
 // AI 분석 출력 stub (개발용) — 통찰형(교차 종합) 예시. 나중에 생성 계층(LLM)으로 교체.
 // 각 서술은 '최소 2소스 연결' 톤. FE에서 LMS-AI로 이전(계산 SSOT).
 import type {
-  AiAnalysis,
+  AiVerdict,
+  Ontology,
+  ProblemAi,
+  Sentiment,
   SentimentBubble,
   SentimentPhase,
   SentimentPolarity,
@@ -73,7 +76,7 @@ function sentimentStubBubbles(items: SentimentStubInput[]): SentimentBubble[] {
   })
 }
 
-const STU_001: AiAnalysis = {
+const STU_001 = {
   // 블록1 — 정규화 증명서 원천이 없는 레거시 ID용 명시적 준비 상태
   verdict: {
     policyVersion: '2026.07.23-technical-verdict-v1',
@@ -553,6 +556,11 @@ const STU_001: AiAnalysis = {
   },
 }
 
-export const ANALYSIS_STUBS: Record<string, AiAnalysis> = {
-  'stu-001': STU_001,
+export const ANALYSIS_STUBS = {
+  'stu-001': STU_001 as unknown as {
+    verdict: AiVerdict
+    problem: ProblemAi
+    sentiment: Sentiment
+    ontology: Ontology
+  },
 }

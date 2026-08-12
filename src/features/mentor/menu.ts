@@ -1,4 +1,5 @@
 import type { MenuItem } from '@/components/layout'
+import { roleTag } from '@/shared/constants'
 
 // 멘토 사이드바 1차 메뉴 — 정본: LMS-DOCS 화면_IA.md §멘토 콘솔.
 // 경로는 canonical(Figma · P0_32_35 API 명세)로 정합 — 구 /mentor/reservations · /mentor/journals 폐기.
@@ -8,12 +9,12 @@ export const mentorMenu: MenuItem[] = [
   // 팀 상세(/mentor/teams/:teamId)·학생 상세(/mentor/mentees/:studentId) 진입 시에도 활성 유지.
   // 평가 작성(/mentor/teams/:teamId/evaluation)은 Figma상 '평가·추천' 활성이지만 Sidebar match가
   // prefix 전용이라 suffix(:teamId/evaluation) 매칭 불가 — '내 배정 팀' 활성을 허용한다(결정 기록).
-  { label: '내 배정 팀', to: '/mentor/teams', match: ['/mentor/mentees'] },
-  { label: '멘토링 예약', to: '/mentor/mentoring-requests' },
-  { label: '멘토링 일지', to: '/mentor/mentoring-logs' },
+  // 예약·일지·평가·추천은 팀 상세(/mentor/teams/:teamId)의 탭으로 옮겼다(2026-08-04).
+  // 멘토가 하는 일은 늘 '어느 팀의' 무엇이라, 사이드바에서 연 뒤 다시 팀을 고르게 하지 않는다.
   {
-    label: '평가·추천',
-    to: '/mentor/evaluations',
-    match: ['/mentor/recommendations'],
+    label: roleTag('내 배정 팀', '멘토'),
+    to: '/mentor/teams',
+    // 일지 작성 폼은 팀에서 진입하는 전체 화면이라 여기서도 활성으로 둔다.
+    match: ['/mentor/mentees', '/mentor/mentoring-logs'],
   },
 ]

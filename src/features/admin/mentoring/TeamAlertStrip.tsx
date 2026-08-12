@@ -52,7 +52,8 @@ export function TeamAlertStrip({
     alerts.push({
       tone: 'positive',
       icon: CheckCircle2,
-      text: '배정 N시간을 모두 채웠습니다.',
+      // 'N시간' 리터럴 노출 방지 — 실제 배정 시간으로 표기(2026-08-04 QA).
+      text: `배정 시간 ${d.allocatedHours ?? 0}h를 모두 채웠습니다.`,
     })
   else if (isInProgress && remaining !== null && remaining > 0)
     alerts.push({

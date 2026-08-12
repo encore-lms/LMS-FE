@@ -25,7 +25,7 @@ function renderAiTab() {
 }
 
 describe('AiTab 상세 API 연결', () => {
-  it('현재 증명서 학생 ID로 AI 분석을 조회해 프로파일과 페르소나를 표시한다', async () => {
+  it('현재 증명서 학생 ID로 채용 관점의 핵심 AI 분석을 표시한다', async () => {
     vi.mocked(fetchAiAnalysis).mockResolvedValue(getAiAnalysis('stu-001'))
 
     renderAiTab()
@@ -34,12 +34,17 @@ describe('AiTab 상세 API 연결', () => {
       await screen.findByRole('heading', { name: 'AI 분석' }),
     ).toBeInTheDocument()
     expect(fetchAiAnalysis).toHaveBeenCalledWith('student-1')
-    expect(screen.getByText('AI 역량 프로파일링')).toBeInTheDocument()
-    expect(screen.getByText('AI 페르소나 TOP 3')).toBeInTheDocument()
-    expect(screen.queryByText('AI · 종합 분석')).not.toBeInTheDocument()
+    expect(screen.getAllByText('직무 적합도').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('프로젝트 분석').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('문제해결 역량 분석').length).toBeGreaterThan(0)
     expect(
-      screen.queryByText(/AI 분석은 강사가 인증한 활동을 근거로 한 해석/),
+      screen.queryByText('AI 상담 감성·키워드 버블'),
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('AI 6축 평가·결과 교차분석'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('AI 역량 프로파일링')).not.toBeInTheDocument()
+    expect(screen.queryByText('AI 페르소나 TOP 3')).not.toBeInTheDocument()
   })
 
   it('조회 실패 시 엔진명과 학생 식별자를 노출하지 않는다', async () => {

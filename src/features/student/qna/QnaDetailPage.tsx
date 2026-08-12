@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Eye, MessageSquare } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { Avatar } from '@/components/ui/Avatar'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Markdown } from '@/components/ui/Markdown'
+import type { UploadScope } from '@/shared/api'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader, useAuth } from '@/shared/store'
 import {
@@ -16,9 +18,11 @@ import {
   useDeleteComment,
   useDeleteQuestion,
   useQnaDetail,
+  useUpdateAnswer,
+  useUpdateComment,
 } from '../api/qna'
 import { useQnaBase } from './useQnaBase'
-import { MarkdownEditor } from './components/MarkdownEditor'
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
 import type { QnaAnswer, QnaDetail, Tone } from './types'
 
 // 상세는 클릭 대상이 아닌 읽기 컨테이너라 그림자 없이 flat(간격만으로 구분).
@@ -32,12 +36,6 @@ const CHIP: Record<Tone, string> = {
   accent: 'bg-accent-bg text-accent-strong',
   success: 'bg-success-bg text-success',
 }
-const ROLE_CHIP: Record<string, string> = {
-  강사: 'bg-brand/10 text-brand',
-  멘토: 'bg-accent-bg text-accent-strong',
-  수강생: 'bg-surface-muted text-fg-muted',
-}
-
 // 멘션 자동완성 후보 — 이 스레드의 실제 참여자(질문 작성자·답변자·댓글 작성자). 현재 사용자 제외.
 // BE가 멘션 이름을 스레드 참여자로만 해석해 알림을 보내므로(이름만으론 임의 사용자를 특정 불가),
 // 후보도 동일 범위여야 실제로 알림이 간다.
@@ -97,6 +95,82 @@ function DeleteButton({
   )
 }
 
+/** 글 옆 '수정' — 삭제와 나란히 두는 잔글씨 버튼. */
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-fg-subtle hover:text-fg text-[11px] font-semibold transition-colors"
+    >
+      수정
+    </button>
+  )
+}
+
+/**
+ * 쓴 자리에서 고쳐 쓰기 — 답변·댓글 공용.
+ *
+ * <p>따로 페이지로 보내지 않는다. 앞뒤 글이 보이는 채로 고쳐야 무엇을 고치는지 알 수 있다.</p>
+ */
+function InlineEditor({
+  initial,
+  mentionNames,
+  uploadScope,
+  minHeight,
+  maxLength,
+  pending,
+  onCancel,
+  onSave,
+}: {
+  initial: string
+  mentionNames: string[]
+  uploadScope: UploadScope
+  minHeight: number
+  maxLength: number
+  pending: boolean
+  onCancel: () => void
+  onSave: (content: string, mentions: string[]) => void
+}) {
+  const toast = useToast()
+  const [value, setValue] = useState(initial)
+  const [mentions, setMentions] = useState<string[]>([])
+  const unchanged = value.trim() === initial.trim()
+  return (
+    <div className="flex flex-col gap-2">
+      <MarkdownEditor
+        flat
+        uploadScope={uploadScope}
+        value={value}
+        onChange={setValue}
+        minHeight={minHeight}
+        maxLength={maxLength}
+        ariaLabel="내용 수정"
+        mentionNames={mentionNames}
+        onMentionsChange={setMentions}
+        onImageRejected={(msg) => toast.danger(msg)}
+      />
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-fg-subtle hover:text-fg text-[12px] font-semibold transition-colors"
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={() => onSave(value.trim(), mentions)}
+          disabled={!value.trim() || unchanged || pending}
+          className={buttonClass({ size: 'sm' })}
+        >
+          {pending ? '저장 중…' : '저장'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // 답변 1건 + 댓글 스레드 + 댓글 작성기(멘션). 답변별 작성 상태를 자체 보유.
 function AnswerItem({
   answer,
@@ -107,6 +181,7 @@ function AnswerItem({
   acceptPending,
   selfName,
   mentionNames,
+  uploadScope,
 }: {
   answer: QnaAnswer
   questionId: string
@@ -118,14 +193,21 @@ function AnswerItem({
   selfName: string
   /** 멘션 후보 — 스레드 실제 참여자(부모가 전체 스레드 기준으로 계산). */
   mentionNames: string[]
+  /** 본문에 박힌 첨부를 어느 경로로 주고받을지 — 보는 사람의 역할. */
+  uploadScope: UploadScope
 }) {
   const toast = useToast()
   const createComment = useCreateComment(questionId, answer.id)
   const deleteAnswer = useDeleteAnswer(questionId)
   const deleteComment = useDeleteComment(questionId, answer.id)
+  const updateAnswer = useUpdateAnswer(questionId)
+  const updateComment = useUpdateComment(questionId, answer.id)
   const [draft, setDraft] = useState('')
   const [mentions, setMentions] = useState<string[]>([])
   const [open, setOpen] = useState(false)
+  // 고쳐 쓰는 중인 글 — 답변은 boolean, 댓글은 어느 댓글인지.
+  const [editingAnswer, setEditingAnswer] = useState(false)
+  const [editingComment, setEditingComment] = useState<string | null>(null)
 
   const submit = () => {
     if (!draft.trim() || createComment.isPending) return
@@ -145,50 +227,78 @@ function AnswerItem({
   }
 
   return (
-    <section
-      className={cn(
-        card,
-        'flex flex-col gap-3',
-        answer.isAccepted && 'border-success ring-success/20 ring-1',
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-fg text-[13px] font-bold">
+    // 답변은 카드로 가두지 않는다 — 글이 이어지는 자리라 얇은 구분선으로만 나눈다.
+    // 채택은 테두리·링이 아니라 이름 옆 칩 하나로 알린다.
+    <section className="border-divider flex flex-col gap-3 border-b pb-7 last:border-b-0 last:pb-0">
+      {/* 채택 칩이 붙으면 한 줄이 모자라 날짜가 잘렸다 — 이름만 줄이고 나머지는 지킨다. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+          <Avatar name={answer.authorName} size={40} />
+          <span className="text-fg truncate text-[15px] font-bold">
             {answer.authorName}
           </span>
-          <span
-            className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-bold',
-              ROLE_CHIP[answer.authorRole] ?? 'bg-surface-muted text-fg-muted',
-            )}
-          >
+          {/* 역할은 칩이 아니라 이름 옆 곁말 — 칩이 늘어서면 누가 말했는지가 묻힌다. */}
+          <span className="text-fg-subtle shrink-0 text-[12px] whitespace-nowrap">
             {answer.authorRole}
           </span>
           {answer.isAccepted && (
-            <span className="bg-success-bg text-success flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold">
-              <CheckCircle2 className="size-3" /> 채택됨
+            <span className="bg-success-bg text-success shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold whitespace-nowrap">
+              채택됨
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-fg-subtle text-[11px]">{answer.createdAt}</span>
-          {answer.canDelete && (
-            <DeleteButton
-              pending={deleteAnswer.isPending}
-              confirmText="답변·댓글 삭제?"
-              onConfirm={() =>
-                deleteAnswer.mutate(answer.id, {
-                  onSuccess: () => toast.success('답변을 삭제했어요'),
-                  onError: () => toast.danger('답변 삭제에 실패했어요'),
-                })
-              }
-            />
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-fg-subtle text-[12px] whitespace-nowrap">
+            {answer.createdAt}
+          </span>
+          {/* canDelete 는 곧 '내가 쓴 글' — 수정도 작성자만 할 수 있다(BE 소유자 가드). */}
+          {answer.canDelete && !editingAnswer && (
+            <>
+              <EditButton onClick={() => setEditingAnswer(true)} />
+              <DeleteButton
+                pending={deleteAnswer.isPending}
+                confirmText="답변·댓글 삭제?"
+                onConfirm={() =>
+                  deleteAnswer.mutate(answer.id, {
+                    onSuccess: () => toast.success('답변을 삭제했어요'),
+                    onError: () => toast.danger('답변 삭제에 실패했어요'),
+                  })
+                }
+              />
+            </>
           )}
         </div>
       </div>
 
-      <Markdown mentions={answer.mentions}>{answer.content}</Markdown>
+      {editingAnswer ? (
+        <InlineEditor
+          initial={answer.content}
+          mentionNames={mentionNames}
+          uploadScope={uploadScope}
+          minHeight={120}
+          maxLength={2000}
+          pending={updateAnswer.isPending}
+          onCancel={() => setEditingAnswer(false)}
+          onSave={(content, mts) =>
+            updateAnswer.mutate(
+              { answerId: answer.id, input: { content, mentions: mts } },
+              {
+                onSuccess: () => {
+                  setEditingAnswer(false)
+                  toast.success('답변을 수정했어요')
+                },
+                onError: () => toast.danger('답변 수정에 실패했어요'),
+              },
+            )
+          }
+        />
+      ) : (
+        <div className="text-[14px] leading-7">
+          <Markdown mentions={answer.mentions} uploadScope={uploadScope}>
+            {answer.content}
+          </Markdown>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <button
@@ -213,26 +323,24 @@ function AnswerItem({
 
       {/* 댓글 스레드 — 1단 들여쓰기 */}
       {(open || answer.comments.length > 0) && (
-        <div className="border-border ml-1 flex flex-col gap-3 border-l-2 pl-4">
+        // 세로선을 걷어내고 여백으로만 들여쓴다 — 선이 있으면 답변과 댓글이 다른 글처럼 갈린다.
+        <div className="flex flex-col gap-4 pl-7">
           {answer.comments.map((c) => (
-            <div key={c.id} className="flex flex-col gap-1">
+            <div key={c.id} className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-fg text-[12px] font-bold">
+                <Avatar name={c.authorName} size={32} />
+                <span className="text-fg text-[13px] font-bold">
                   {c.authorName}
                 </span>
-                <span
-                  className={cn(
-                    'rounded-full px-1.5 py-0.5 text-[10px] font-bold',
-                    ROLE_CHIP[c.authorRole] ?? 'bg-surface-muted text-fg-muted',
-                  )}
-                >
+                <span className="text-fg-subtle text-[12px]">
                   {c.authorRole}
                 </span>
-                <span className="text-fg-subtle text-[10px]">
+                <span className="text-fg-subtle text-[12px]">
                   {c.createdAt}
                 </span>
-                {c.canDelete && (
-                  <span className="ml-auto">
+                {c.canDelete && editingComment !== c.id && (
+                  <span className="ml-auto flex items-center gap-3">
+                    <EditButton onClick={() => setEditingComment(c.id)} />
                     <DeleteButton
                       pending={deleteComment.isPending}
                       confirmText="삭제?"
@@ -246,8 +354,35 @@ function AnswerItem({
                   </span>
                 )}
               </div>
-              <div className="text-[13px]">
-                <Markdown mentions={c.mentions}>{c.content}</Markdown>
+              {/* 이름줄 아래로 아바타 폭만큼 들여 써 누구의 말인지 이어 보인다. */}
+              <div className="pl-10 text-[14px] leading-7">
+                {editingComment === c.id ? (
+                  <InlineEditor
+                    initial={c.content}
+                    mentionNames={mentionNames}
+                    uploadScope={uploadScope}
+                    minHeight={72}
+                    maxLength={1000}
+                    pending={updateComment.isPending}
+                    onCancel={() => setEditingComment(null)}
+                    onSave={(content, mts) =>
+                      updateComment.mutate(
+                        { commentId: c.id, input: { content, mentions: mts } },
+                        {
+                          onSuccess: () => {
+                            setEditingComment(null)
+                            toast.success('댓글을 수정했어요')
+                          },
+                          onError: () => toast.danger('댓글 수정에 실패했어요'),
+                        },
+                      )
+                    }
+                  />
+                ) : (
+                  <Markdown mentions={c.mentions} uploadScope={uploadScope}>
+                    {c.content}
+                  </Markdown>
+                )}
               </div>
             </div>
           ))}
@@ -255,6 +390,8 @@ function AnswerItem({
           {/* 댓글 작성기(멘션) */}
           <div className="flex flex-col gap-2 pt-1">
             <MarkdownEditor
+              flat
+              uploadScope={uploadScope}
               value={draft}
               onChange={setDraft}
               minHeight={72}
@@ -268,7 +405,7 @@ function AnswerItem({
               <span className="text-fg-subtle text-[11px]">
                 {mentions.length > 0
                   ? `멘션: @${mentions.join(', @')}`
-                  : '마크다운·@멘션 지원'}
+                  : '마크다운·코드 블록·이미지 삽입 지원'}
               </span>
               <button
                 type="button"
@@ -292,9 +429,20 @@ export default function QnaDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const base = useQnaBase()
+  // 기수 허브의 QnA 탭에서 왔으면 그 탭으로 돌려보낸다 — 목록이 허브 안에 있어서
+  // base 로 돌아가면 방금 있던 화면이 아니라 단독 게시판으로 튄다.
+  const [detailParams] = useSearchParams()
+  // 허브에서 열었으면 ?from= 이 붙는다. 알림으로 바로 들어오면 없는데, 강사는 목록 단독
+  // 라우트를 걷어내(2026-08-06) base 로 보내면 404 다 — 교육과정 목록으로 돌려보낸다.
+  const backTo =
+    detailParams.get('from') ??
+    (base === '/instructor/qna' ? '/instructor/cohorts' : base)
   const toast = useToast()
   const { user } = useAuth()
   const selfName = user?.name ?? '나'
+  // 첨부 경로는 역할별로 갈린다 — 같은 글을 수강생과 운영이 함께 본다.
+  const uploadScope: UploadScope =
+    user?.role === 'STUDENT' ? 'student' : 'staff'
   const { data, isPending, isError, refetch } = useQnaDetail(id)
   const createAnswer = useCreateAnswer(id)
   const acceptAnswer = useAcceptAnswer(id)
@@ -334,7 +482,7 @@ export default function QnaDetailPage() {
     <div className="flex flex-col gap-5 p-8">
       <button
         type="button"
-        onClick={() => navigate(base)}
+        onClick={() => navigate(backTo)}
         className="text-fg-muted hover:text-fg flex w-fit items-center gap-1.5 text-[13px] font-semibold"
       >
         <ArrowLeft className="size-4" />
@@ -351,8 +499,13 @@ export default function QnaDetailPage() {
       >
         {data && (
           <>
-            {/* 질문 본문 */}
-            <section className={cn(card, 'flex flex-col gap-4')}>
+            {/* 질문 본문 — 아래 '답변 작성'과 얇은 선으로만 나눈다(카드 없이 한 흐름). */}
+            <section
+              className={cn(
+                card,
+                'border-divider flex flex-col gap-4 border-b pb-7',
+              )}
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={cn(
@@ -400,8 +553,11 @@ export default function QnaDetailPage() {
               </h1>
 
               <div className="text-fg-subtle flex items-center gap-3 text-[12px]">
-                <span className="text-fg-muted font-semibold">
-                  {data.authorName}
+                <span className="flex items-center gap-2">
+                  <Avatar name={data.authorName} size={24} />
+                  <span className="text-fg-muted font-semibold">
+                    {data.authorName}
+                  </span>
                 </span>
                 <span>{data.createdAt}</span>
                 <span className="flex items-center gap-1">
@@ -414,7 +570,7 @@ export default function QnaDetailPage() {
                 </span>
               </div>
 
-              <Markdown>{data.content}</Markdown>
+              <Markdown uploadScope={uploadScope}>{data.content}</Markdown>
 
               {data.tags.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -439,7 +595,7 @@ export default function QnaDetailPage() {
                   onSuccess: () => {
                     setDeleteOpen(false)
                     toast.success('질문을 삭제했어요')
-                    navigate(base)
+                    navigate(backTo)
                   },
                   onError: () => toast.danger('질문 삭제에 실패했어요'),
                 })
@@ -467,6 +623,39 @@ export default function QnaDetailPage() {
               </div>
             </ConfirmDialog>
 
+            {/* 답변 작성 — 목록 위에 둔다. 답변이 쌓일수록 아래로 밀려 글을 다 지나쳐야
+                쓸 수 있었다. 질문을 읽은 자리에서 바로 쓰게 한다. */}
+            <section className="border-divider flex flex-col gap-3 border-b pb-7">
+              <span className="text-fg text-[15px] font-bold">답변 작성</span>
+              <MarkdownEditor
+                flat
+                uploadScope={uploadScope}
+                value={draft}
+                onChange={setDraft}
+                minHeight={120}
+                maxLength={2000}
+                placeholder="도움이 될 만한 답변을 남겨주세요. @로 멘션하면 알림이 가요."
+                mentionNames={threadMentionNames(data, selfName)}
+                onMentionsChange={setMentions}
+                onImageRejected={(msg) => toast.danger(msg)}
+              />
+              <div className="flex items-center justify-end gap-2">
+                <span className="text-fg-subtle mr-auto text-[11px]">
+                  {mentions.length > 0
+                    ? `멘션: @${mentions.join(', @')}`
+                    : '마크다운·코드 블록·이미지 삽입 지원'}
+                </span>
+                <button
+                  type="button"
+                  onClick={submitAnswer}
+                  disabled={!draft.trim() || createAnswer.isPending}
+                  className={buttonClass({ size: 'md' })}
+                >
+                  {createAnswer.isPending ? '등록 중…' : '답변 등록'}
+                </button>
+              </div>
+            </section>
+
             {/* 답변 목록 */}
             <div className="flex items-center gap-2 pt-1">
               <h2 className="text-fg text-[16px] font-bold">답변</h2>
@@ -475,7 +664,7 @@ export default function QnaDetailPage() {
               </span>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-7">
               {data.answers.length === 0 && (
                 <div className="text-fg-subtle rounded-2xl p-10 text-center text-[13px]">
                   아직 답변이 없어요. 첫 답변을 남겨보세요.
@@ -492,39 +681,10 @@ export default function QnaDetailPage() {
                   acceptPending={acceptAnswer.isPending}
                   selfName={selfName}
                   mentionNames={threadMentionNames(data, selfName)}
+                  uploadScope={uploadScope}
                 />
               ))}
             </div>
-
-            {/* 답변 작성 */}
-            <section className={cn(card, 'flex flex-col gap-3')}>
-              <span className="text-fg text-[14px] font-bold">답변 작성</span>
-              <MarkdownEditor
-                value={draft}
-                onChange={setDraft}
-                minHeight={120}
-                maxLength={2000}
-                placeholder="도움이 될 만한 답변을 남겨주세요. @로 멘션하면 알림이 가요."
-                mentionNames={threadMentionNames(data, selfName)}
-                onMentionsChange={setMentions}
-                onImageRejected={(msg) => toast.danger(msg)}
-              />
-              <div className="flex items-center justify-end gap-2">
-                <span className="text-fg-subtle mr-auto text-[11px]">
-                  {mentions.length > 0
-                    ? `멘션: @${mentions.join(', @')}`
-                    : '마크다운·코드 블록·이미지·@멘션 지원'}
-                </span>
-                <button
-                  type="button"
-                  onClick={submitAnswer}
-                  disabled={!draft.trim() || createAnswer.isPending}
-                  className={buttonClass({ size: 'md' })}
-                >
-                  {createAnswer.isPending ? '등록 중…' : '답변 등록'}
-                </button>
-              </div>
-            </section>
           </>
         )}
       </DataBoundary>

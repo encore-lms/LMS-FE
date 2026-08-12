@@ -2,7 +2,8 @@
 // 공유 읽기전용 계약. 변경은 도메인 PR에 섞지 말고 별도 shared PR로.
 
 // ── 계정 탭 ──
-export type StudentTrainingStatus = 'active' | 'dropout' // 정상 / 중도탈락
+// 계정 활성 여부(auth LmsUser.status 매핑) — HRD 훈련상태와 다른 축이다.
+export type StudentTrainingStatus = 'active' | 'dropout' // 정상 / 비활성
 
 export interface StudentAccount {
   id: string
@@ -12,6 +13,12 @@ export interface StudentAccount {
   joinedAt: string // MM-DD
   lastLoginAt: string | null // '오늘 09:18' | '7일 전' 표기 (null = 미접속)
   trainingStatus: StudentTrainingStatus
+  /**
+   * HRD-Net 훈련상태 원문 — '훈련중' | '조기취업' | '중도탈락'. 계정 갱신(HRD 동기화)으로 채운다.
+   *
+   * 아직 동기화하지 않은 계정은 null 이다. 위 trainingStatus 는 계정 활성 여부라 축이 다르다.
+   */
+  hrdTrainingStatus: string | null
   loginBlocked: boolean
   isTest: boolean // 시연·검증용으로 만든 계정 — 운영 화면에서만 보이고 삭제할 수 있다
 }
@@ -49,6 +56,25 @@ export interface StudentAttendanceRow {
   checkOut: string | null // '17:51'
   hrdStatus: HrdAttendanceStatus
   hrdStatusLabel: string // HRD 원본 상태명('출석'·'지각'…)
+  /** 그 날 낸 출결 폼(없으면 null) — 목록의 '이슈사항' 칸. */
+  issue?: AttendanceIssue | null
+}
+
+/** 출결 이슈 — 수강생이 낸 출결 폼 요약. 유형은 칸에 보이고 사유·증빙은 호버로 편다. */
+export interface AttendanceIssue {
+  submissionId: string
+  type: string // late | early_leave | outing | absent
+  typeLabel: string // 지각 | 조퇴 | 외출 | 결석
+  officialLeaveUsed: boolean
+  reason: string | null
+  submittedAt: string
+  attachments: AttendanceIssueAttachment[]
+}
+
+export interface AttendanceIssueAttachment {
+  id: string
+  fileName: string
+  fileSize: number
 }
 
 export interface AttendanceSummary {
@@ -77,6 +103,7 @@ export interface AttendanceFormRow {
   officialLeaveUsed: boolean // 공가 사용 여부
   reason: string // 신청 사유(세부 시간·공가 합성)
   submittedAt: string // 제출 시각(ISO)
+  attachments: AttendanceIssueAttachment[] // 수강생이 올린 증빙(진단서 등)
 }
 
 export interface AttendanceFormSummary {

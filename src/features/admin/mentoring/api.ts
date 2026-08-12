@@ -115,6 +115,21 @@ export function useCreateMentorAssignmentFromStudents() {
 }
 
 /** POST /admin/mentors/assignments/teams/{teamId}/members — 멘티(팀원) 추가. */
+/** 멘티 제외 — 잘못 넣은 멘티를 팀을 지우지 않고 정리한다(마지막 1명은 BE가 막는다). */
+export function useRemoveTeamMember() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ teamId, userId }: { teamId: string; userId: string }) =>
+      apiClient
+        .delete<AdminMentoringTeamDetail>(
+          `/admin/mentors/assignments/teams/${teamId}/members/${userId}`,
+        )
+        .then((r) => r.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminMentoringKeys.all }),
+  })
+}
+
 export function useAddTeamMembers() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -235,6 +250,31 @@ export function useUpdateAllocatedHours() {
   })
 }
 
+/** PATCH /admin/mentors/assignments/{id}/contract-end — 계약 종료일 설정·수정·해제(null). */
+export function useUpdateContractEnd() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      assignmentId,
+      contractEndDate,
+    }: {
+      assignmentId: string
+      contractEndDate: string | null
+    }) =>
+      apiClient
+        .patch<MentorAssignmentRow>(
+          `/admin/mentors/assignments/${assignmentId}/contract-end`,
+          { contractEndDate },
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminMentoringKeys.assignments(),
+      })
+    },
+  })
+}
+
 /** POST /admin/mentors/assignments/{id}/early-end — 조기 종료(사유 필수 422). */
 export function useEarlyEndAssignment() {
   const queryClient = useQueryClient()
@@ -280,12 +320,18 @@ export function useDeleteAssignment() {
 }
 
 /** GET /admin/mentoring/logs — 일지 목록(KPI·요약 포함). */
-export function useAdminMentoringLogs() {
+/**
+ * 일지 목록. cohortId 를 주면 그 기수(기수 허브 탭), 없으면 요청자 담당/폴백 기수.
+ */
+export function useAdminMentoringLogs(cohortId?: string | null) {
+  const scope = cohortId && cohortId !== 'all' ? cohortId : null
   return useQuery({
-    queryKey: adminMentoringKeys.logs(),
+    queryKey: [...adminMentoringKeys.logs(), scope ?? ''],
     queryFn: () =>
       apiClient
-        .get<AdminMentoringLogsData>('/admin/mentoring/logs')
+        .get<AdminMentoringLogsData>('/admin/mentoring/logs', {
+          cohortId: scope ?? undefined,
+        })
         .then((r) => r.data),
   })
 }

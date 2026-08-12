@@ -1,64 +1,49 @@
 import { useState } from 'react'
+import { CheckCircle2, FileText } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { ProblemTabSkeleton } from './TabSkeletons'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/shared/lib/cn'
-import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
 import type { CertificateProblemDetail } from '../ai'
-import type { CertProblemTab, Tone } from '../types'
+import type { CertProblemTab } from '../types'
 import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
 import { TabHead } from './TechTab'
 
-const card =
-  'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
+const card = 'border-divider bg-surface rounded-2xl border p-5 sm:p-6'
 
-const tones: Tone[] = [
-  'info',
-  'accent',
-  'warning',
-  'brand',
-  'success',
-  'danger',
-]
+type ProblemCase = CertificateProblemDetail['cases'][number]
 
 function formatNumber(value: number | null) {
   if (value === null) return '-'
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
-function peerTagLabel(label: string) {
-  return `#${label.replace(/^#/, '').replace(/\s+/g, '')}`
-}
-
-function tagFontSize(count: number, minCount: number, maxCount: number) {
-  if (minCount === maxCount) return 15
-  return Number(
-    (12 + ((count - minCount) / (maxCount - minCount)) * 8).toFixed(1),
-  )
-}
-
-function summaryFields(item: CertificateProblemDetail['cases'][number]) {
-  const summary = item.summary?.generatedBy === 'AI' ? item.summary : null
+function summaryFields(item: ProblemCase) {
+  const summary = item.summary ?? null
   return [
     {
       key: 'situation',
-      label: '상황',
+      step: '01',
+      label: '문제 상황',
       summary: summary?.situation,
       original: item.situation,
-      tone: 'info' as const,
+      numberClassName: 'bg-info-bg text-info',
     },
     {
       key: 'resolution',
-      label: '해결',
+      step: '02',
+      label: '해결 과정',
       summary: summary?.resolution,
       original: item.resolution,
-      tone: 'brand' as const,
+      numberClassName: 'bg-brand/10 text-brand',
     },
     {
       key: 'result',
+      step: '03',
       label: '결과',
       summary: summary?.result,
       original: item.result,
-      tone: 'success' as const,
+      numberClassName: 'bg-success-bg text-success',
     },
   ]
 }
@@ -71,211 +56,300 @@ function EmptyData({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
-  const [detail, setDetail] = useState<{
-    caseTitle: string
-    label: string
-    content: string
-  } | null>(null)
-  const peerTags = [...problem.peerTags].sort(
-    (a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ko'),
+function CategoryButton({
+  label,
+  count,
+  percentage,
+  selected,
+  onClick,
+}: {
+  label: string
+  count: number
+  percentage: number
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={`${label} 카테고리 ${count}건`}
+      aria-pressed={selected}
+      aria-controls="certificate-troubleshooting-cases"
+      onClick={onClick}
+      className={cn(
+        'focus-visible:ring-brand group grid w-full grid-cols-[minmax(100px,0.75fr)_minmax(120px,1fr)_88px] items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2',
+        selected ? 'bg-brand/10' : 'hover:bg-surface-muted bg-surface',
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        <span
+          className={cn(
+            'min-w-0 truncate text-[12px] font-bold',
+            selected ? 'text-brand' : 'text-fg',
+          )}
+        >
+          {label}
+        </span>
+      </span>
+      <span className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
+        <span
+          className={cn(
+            'block h-full rounded-full transition-[width]',
+            selected ? 'bg-brand' : 'bg-fg-subtle/60',
+          )}
+          style={{ width: `${percentage}%` }}
+        />
+      </span>
+      <span className="text-fg-muted text-right text-[11px] font-bold">
+        {count}건 · {formatNumber(percentage)}%
+      </span>
+    </button>
   )
-  const tagCount = peerTags.reduce((sum, tag) => sum + tag.count, 0)
-  const maxTagCount = peerTags[0]?.count ?? 0
-  const minTagCount = peerTags.at(-1)?.count ?? 0
-  const representativeCases = problem.cases.slice(0, 3)
+}
 
+function CaseFlow({ item }: { item: ProblemCase }) {
+  const fields = summaryFields(item)
+  const [situation, resolution, result] = fields
+
+  return (
+    <dl className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)] lg:gap-7">
+      <div className="flex min-w-0 flex-col">
+        {[situation, resolution].map((field, index) => (
+          <div key={field.key} className="relative flex gap-3 pb-5 last:pb-0">
+            <div className="flex w-7 shrink-0 flex-col items-center">
+              <span
+                className={cn(
+                  'flex size-7 items-center justify-center rounded-full text-[10px] font-bold',
+                  field.numberClassName,
+                )}
+              >
+                {field.step}
+              </span>
+              {index === 0 && (
+                <span className="bg-divider mt-1 block h-full w-px" />
+              )}
+            </div>
+            <div className="min-w-0 pt-1">
+              <dt className="text-fg text-[12px] font-bold">{field.label}</dt>
+              <dd className="text-fg-muted mt-1.5 line-clamp-3 min-h-12 max-w-[34rem] text-[13px] leading-6">
+                {field.summary || '요약을 준비 중입니다.'}
+              </dd>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-success/25 bg-success-bg/55 flex min-w-0 flex-col justify-between gap-4 rounded-xl border p-5">
+        <div>
+          <dt className="text-success flex items-center gap-2 text-[12px] font-bold">
+            <CheckCircle2 className="size-4" strokeWidth={2} />
+            {result.label}
+          </dt>
+          <dd className="text-fg mt-3 line-clamp-3 min-h-12 text-[14px] leading-6 font-semibold">
+            {result.summary || '요약을 준비 중입니다.'}
+          </dd>
+        </div>
+        <span className="text-success text-[10px] font-semibold">
+          강사 인증으로 확인된 결과
+        </span>
+      </div>
+    </dl>
+  )
+}
+
+function OriginalDetail({ item }: { item: ProblemCase }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-fg-subtle m-0 text-[11px] leading-5">
+        수강생이 작성하고 강사가 인증한 내용을 그대로 보여줍니다.
+      </p>
+      <dl className="divide-divider border-divider divide-y overflow-hidden rounded-xl border">
+        {summaryFields(item).map((field) => (
+          <div
+            key={field.key}
+            className="grid gap-2 p-4 sm:grid-cols-[96px_minmax(0,1fr)] sm:gap-4"
+          >
+            <dt className="text-fg flex items-center gap-2 text-[12px] font-bold">
+              <span
+                className={cn(
+                  'flex size-6 items-center justify-center rounded-full text-[10px] font-bold',
+                  field.numberClassName,
+                )}
+              >
+                {field.step}
+              </span>
+              {field.label}
+            </dt>
+            <dd className="text-fg-muted m-0 text-[13px] leading-6 whitespace-pre-wrap">
+              {field.original.trim() || '작성된 내용이 없습니다.'}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
+
+export function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
+  const sortedCategories = [...problem.categories].sort(
+    (a, b) => b.count - a.count,
+  )
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    () => sortedCategories[0]?.label ?? null,
+  )
+  const [detail, setDetail] = useState<ProblemCase | null>(null)
+  const visibleCases = problem.cases.filter(
+    (item) => selectedCategory === null || item.category === selectedCategory,
+  )
+  const independentCount = visibleCases.filter(
+    (item) => item.independent,
+  ).length
+  const supportedCount = visibleCases.length - independentCount
   return (
     <div className="flex flex-col gap-4">
       <TabHead
         no={4}
-        title="문제해결·협업"
-        sub="트러블슈팅 사례 · 문제 분포 · 자동 산정 기반"
-      >
-        <span className="bg-success-bg text-success rounded-full px-2.5 py-1 text-[11px] font-semibold">
-          인증 사례 {problem.certifiedCount}건
-        </span>
-        <span className="bg-info-bg text-info rounded-full px-2.5 py-1 text-[11px] font-semibold">
-          평균 {formatNumber(problem.averageDays)}일
-        </span>
-      </TabHead>
+        title="문제해결"
+        sub="인증된 경험을 문제 유형과 해결 흐름으로 확인합니다."
+      />
 
-      <section className={cn(card, 'flex flex-col gap-4')}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex flex-col">
-            <span className="text-fg text-[18px] font-bold">
-              대표 트러블슈팅 사례
-            </span>
-            <span className="text-fg-subtle text-[11px]">
-              인증 사례 중 대표 3건 · 상황·해결·결과 핵심 요약
-            </span>
+      <section className={cn(card, 'overflow-hidden p-0')}>
+        {problem.cases.length === 0 ? (
+          <div className="p-6">
+            <EmptyData>인증된 트러블슈팅 사례가 없습니다.</EmptyData>
           </div>
-          <span className="bg-success-bg text-success rounded-full px-2.5 py-1 text-[11px] font-semibold">
-            최대 3건
-          </span>
-        </div>
-
-        {representativeCases.length === 0 ? (
-          <EmptyData>인증된 트러블슈팅 사례가 없습니다.</EmptyData>
         ) : (
-          <div className="flex flex-col gap-4">
-            {representativeCases.map((item, index) => (
-              <article
-                key={item.id}
-                data-troubleshooting-case={item.id}
-                className="border-divider flex flex-col gap-4 rounded-xl border p-4"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-fg-muted text-[11px] font-bold">
-                    대표 {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span
-                    className={cn(
-                      'rounded px-1.5 py-0.5 text-[10px] font-bold',
-                      TONE_SOFT[tones[index % tones.length]],
-                    )}
-                  >
-                    {item.category}
-                  </span>
-                  <span className="text-fg text-[14px] font-bold">
-                    {item.title}
-                  </span>
-                  <span className="bg-surface-muted text-fg-muted ml-auto rounded px-1.5 py-0.5 text-[10px] font-bold">
-                    {item.days === null
-                      ? '소요 일수 미집계'
-                      : `소요 ${item.days}일`}
-                  </span>
+          <>
+            <div
+              data-troubleshooting-distribution
+              className="flex flex-col gap-3 p-5 sm:p-6"
+            >
+              <div className="flex items-center justify-between gap-3 px-3">
+                <div>
+                  <h2 className="text-fg m-0 text-[16px] font-bold">
+                    전체 트러블슈팅 카테고리
+                  </h2>
+                  <p className="text-fg-subtle m-0 mt-1 text-[10px]">
+                    카테고리를 선택하면 아래 인증 사례가 바뀌니다.
+                  </p>
                 </div>
+                <span className="text-fg-muted text-[11px] font-bold">
+                  총 {problem.certifiedCount}건
+                </span>
+              </div>
 
-                <dl className="grid gap-3 lg:grid-cols-3">
-                  {summaryFields(item).map((field) => (
-                    <div
-                      key={field.key}
-                      className="bg-surface-muted flex min-w-0 flex-col gap-2 rounded-xl p-3.5"
+              <div
+                className="flex flex-col"
+                aria-label="문제 카테고리"
+                aria-live="polite"
+              >
+                <CategoryButton
+                  label="전체"
+                  count={problem.cases.length}
+                  percentage={100}
+                  selected={selectedCategory === null}
+                  onClick={() => setSelectedCategory(null)}
+                />
+                {sortedCategories.map((category) => (
+                  <CategoryButton
+                    key={category.label}
+                    label={category.label}
+                    count={category.count}
+                    percentage={category.percentage}
+                    selected={selectedCategory === category.label}
+                    onClick={() => setSelectedCategory(category.label)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div
+              id="certificate-troubleshooting-cases"
+              className="border-divider border-t px-5 py-6 sm:px-7"
+            >
+              <div className="mb-1 flex flex-wrap items-end justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <span className="text-brand text-[10px] font-bold">
+                    선택한 문제 유형
+                  </span>
+                  <h3 className="text-fg m-0 text-[20px] font-bold">
+                    {selectedCategory ?? '전체 카테고리'} 해결 사례
+                  </h3>
+                </div>
+                <div className="text-fg-muted flex flex-wrap items-center gap-2 text-[10px] font-semibold">
+                  <span>{visibleCases.length}개 사례</span>
+                  <span aria-hidden="true">·</span>
+                  <span>독립 해결 {independentCount}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>지원 활용 {supportedCount}</span>
+                </div>
+              </div>
+
+              {visibleCases.length === 0 ? (
+                <div className="mt-5">
+                  <EmptyData>선택한 카테고리의 인증 사례가 없습니다.</EmptyData>
+                </div>
+              ) : (
+                <div className="divide-divider divide-y">
+                  {visibleCases.map((item, index) => (
+                    <article
+                      key={item.id}
+                      data-troubleshooting-case={item.id}
+                      className="flex flex-col gap-5 py-6 first:pt-5 last:pb-0"
                     >
-                      <dt className="flex items-center justify-between gap-2">
-                        <span className="text-fg flex items-center gap-2 text-[12px] font-bold">
-                          <span
-                            className={cn(
-                              'size-2 rounded-full',
-                              TONE_SOLID[field.tone],
-                            )}
-                          />
-                          {field.label}
-                        </span>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-1 flex-col gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-fg-subtle text-[10px] font-bold">
+                              인증 사례 {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <span
+                              className={cn(
+                                'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                                item.independent
+                                  ? 'bg-brand/10 text-brand'
+                                  : 'bg-info-bg text-info',
+                              )}
+                            >
+                              {item.independent ? '독립 해결' : '지원 활용'}
+                            </span>
+                            <span className="bg-surface-muted text-fg-muted rounded-full px-2 py-0.5 text-[10px] font-bold">
+                              {item.days === null
+                                ? '소요 일수 미집계'
+                                : `소요 ${item.days}일`}
+                            </span>
+                          </div>
+                          <h4 className="text-fg m-0 text-[15px] leading-6 font-bold">
+                            {item.title}
+                          </h4>
+                        </div>
                         <button
                           type="button"
-                          onClick={() =>
-                            setDetail({
-                              caseTitle: item.title,
-                              label: field.label,
-                              content: field.original,
-                            })
-                          }
-                          aria-label={`${item.title} ${field.label} 상세보기`}
-                          className="text-brand hover:text-brand-deep text-[10px] font-semibold underline-offset-2 hover:underline"
+                          onClick={() => setDetail(item)}
+                          className="border-divider text-fg-muted hover:border-brand/40 hover:text-brand focus-visible:ring-brand flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-bold transition-colors outline-none focus-visible:ring-2"
                         >
-                          상세보기
+                          <FileText className="size-3.5" strokeWidth={1.75} />
+                          작성 원문 보기
                         </button>
-                      </dt>
-                      <dd className="text-fg-muted m-0 text-[11px] leading-5">
-                        {field.summary || 'AI 요약을 생성하지 못했습니다.'}
-                      </dd>
-                    </div>
+                      </div>
+
+                      <CaseFlow item={item} />
+                    </article>
                   ))}
-                </dl>
-              </article>
-            ))}
-          </div>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </section>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className={cn(card, 'flex flex-col gap-3.5')}>
-          <span className="text-fg text-[15px] font-bold">문제 분포</span>
-          <span className="text-fg-subtle text-[11px]">
-            카테고리별 인증 사례 · {problem.certifiedCount}건 기준
-          </span>
-          {problem.categories.length === 0 ? (
-            <EmptyData>산출 가능한 카테고리 분포가 없습니다.</EmptyData>
-          ) : (
-            problem.categories.map((category, index) => {
-              const tone = tones[index % tones.length]
-              return (
-                <div key={category.label} className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between text-[12px]">
-                    <span className="text-fg flex items-center gap-1.5 font-medium">
-                      <span
-                        className={cn('size-2 rounded-full', TONE_SOLID[tone])}
-                      />
-                      {category.label}
-                    </span>
-                    <span className="text-fg-muted font-semibold">
-                      {category.count}건 · {formatNumber(category.percentage)}%
-                    </span>
-                  </div>
-                  <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
-                    <div
-                      className={cn('h-full rounded-full', TONE_SOLID[tone])}
-                      style={{ width: `${category.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </section>
-
-        <section className={cn(card, 'flex flex-col gap-3')}>
-          <span className="text-fg text-[15px] font-bold">
-            PeerTag 클라우드
-          </span>
-          <span className="text-fg-subtle text-[11px]">
-            동료 평가에서 수집된 태그 · 누적 {tagCount}회
-          </span>
-          {peerTags.length === 0 ? (
-            <div className="bg-surface-muted text-fg-subtle rounded-xl px-4 py-8 text-center text-[12px]">
-              수집된 동료 평가 태그가 없습니다.
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {peerTags.map((tag, index) => (
-                <span
-                  key={tag.label}
-                  aria-label={`${peerTagLabel(tag.label)} ${tag.count}회`}
-                  className={cn(
-                    'rounded-full px-3 py-1.5 font-bold',
-                    TONE_SOFT[tones[index % tones.length]],
-                  )}
-                  style={{
-                    fontSize: `${tagFontSize(tag.count, minTagCount, maxTagCount)}px`,
-                  }}
-                >
-                  {peerTagLabel(tag.label)}{' '}
-                  <span className="text-[0.78em] opacity-70">{tag.count}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
 
       <Modal
         open={detail !== null}
         onClose={() => setDetail(null)}
-        size="md"
-        title={detail ? `${detail.caseTitle} · ${detail.label}` : undefined}
+        size="lg"
+        title={detail ? `${detail.title} · 작성 원문` : undefined}
       >
-        {detail && (
-          <div className="flex flex-col gap-3">
-            <span className="text-fg-subtle text-[11px] font-semibold">
-              수강생 작성 원문
-            </span>
-            <p className="bg-surface-muted text-fg-muted m-0 rounded-xl p-4 text-[13px] leading-6 whitespace-pre-wrap">
-              {detail.content.trim() || '작성된 내용이 없습니다.'}
-            </p>
-          </div>
-        )}
+        {detail && <OriginalDetail item={detail} />}
       </Modal>
     </div>
   )
@@ -295,7 +369,8 @@ export function ProblemTab({
       isPending={query.isPending}
       isError={query.isError || !query.data}
       onRetry={query.refetch}
-      errorTitle="문제해결·협업 데이터를 불러오지 못했어요"
+      skeleton={<ProblemTabSkeleton />}
+      errorTitle="문제해결 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >
       {query.data && <ProblemTabContent problem={query.data.problem} />}

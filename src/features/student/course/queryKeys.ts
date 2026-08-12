@@ -5,5 +5,6 @@ export const courseKeys = {
   online: () => [...courseKeys.all, 'online'] as const,
   materials: () => [...courseKeys.all, 'materials'] as const,
   assignments: () => [...courseKeys.all, 'assignments'] as const,
+  notices: () => [...courseKeys.all, 'notices'] as const,
   assignment: (id: string) => [...courseKeys.all, 'assignment', id] as const,
 } as const

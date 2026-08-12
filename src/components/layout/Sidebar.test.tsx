@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import { Sidebar } from './Sidebar'
@@ -54,7 +54,7 @@ describe('Sidebar 준비 중(comingSoon) 메뉴', () => {
     { label: 'PLAY', to: '/student/play', comingSoon: true },
   ]
 
-  it('comingSoon 항목은 링크가 아니라 버튼으로 렌더된다(이동 없음)', () => {
+  it("comingSoon 항목은 '(준비 중)' 표기가 붙은 이동 가능한 링크로 렌더된다", () => {
     render(
       <ToastProvider>
         <MemoryRouter initialEntries={['/student']}>
@@ -62,19 +62,20 @@ describe('Sidebar 준비 중(comingSoon) 메뉴', () => {
         </MemoryRouter>
       </ToastProvider>,
     )
-    expect(screen.queryByRole('link', { name: 'PLAY' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'PLAY' })).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /PLAY.*\(준비 중\)/ })
+    expect(link).toHaveAttribute('href', '/student/play')
   })
 
-  it('comingSoon 항목 클릭 시 준비중 토스트가 뜬다', () => {
+  it('comingSoon 항목도 해당 경로에서 활성 표시된다', () => {
     render(
       <ToastProvider>
-        <MemoryRouter initialEntries={['/student']}>
+        <MemoryRouter initialEntries={['/student/play']}>
           <Sidebar label="수강생" items={menu} />
         </MemoryRouter>
       </ToastProvider>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'PLAY' }))
-    expect(screen.getByText('준비 중인 기능입니다.')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /PLAY.*\(준비 중\)/ }),
+    ).toHaveAttribute('aria-current', 'page')
   })
 })

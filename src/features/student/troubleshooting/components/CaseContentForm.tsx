@@ -28,6 +28,7 @@ import {
   type UploadFile,
 } from './caseFormConstants'
 import { CaseBasicInfoSection } from './CaseBasicInfoSection'
+import { resolutionDaysError } from '../resolutionDays'
 import { CaseStarSection } from './CaseStarSection'
 import { CaseTagsAttachments } from './CaseTagsAttachments'
 
@@ -61,13 +62,22 @@ export function CaseContentForm({
   const uploadMutation = useUploadTsAttachment()
   // 신규(임시 id ts_…)는 create(POST), 기존은 update(PUT).
   const isNew = caseId.startsWith('ts_')
-  const existing = queryClient
-    .getQueryData<TsListData>(tsKeys.list())
-    ?.cases.find((c) => c.id === caseId)
   // 기존 사례 수정 시 서버 첨부(링크·파일)를 폼에 로드 — update 가 링크를 교체하므로 로드 필수.
   const detailCache = queryClient.getQueryData<TsCaseDetail>(
     tsKeys.case(caseId),
   )
+  const listCache = queryClient
+    .getQueryData<TsListData>(tsKeys.list())
+    ?.cases.find((c) => c.id === caseId)
+  /**
+   * 폼 초기값의 출처.
+   *
+   * <p>임시 저장하면 신규 임시 id(ts_…) 에서 실 id 로 주소가 바뀌고, 그때 이 폼이 통째로
+   * 다시 만들어진다. 목록 캐시만 보면 방금 만든 사례는 아직 목록에 없어 전부 빈 값으로
+   * 초기화되고, 이어서 '작성 완료'를 누르면 빈 내용이 그대로 덮어써졌다.
+   * 저장 응답이 들어 있는 상세 캐시를 먼저 본다.</p>
+   */
+  const existing = detailCache ?? listCache
 
   const [title, setTitle] = useState(existing?.title ?? '')
   const [category, setCategory] = useState(existing?.category ?? 'DB')
@@ -78,11 +88,17 @@ export function CaseContentForm({
       : [],
   )
   const [customInput, setCustomInput] = useState('')
-  const [date, setDate] = useState('2026-04-22')
+  // 저장해 둔 발생일을 먼저 쓰고, 없을 때만 오늘로 시작한다(겪은 날은 대개 오늘이거나 며칠 전).
+  // 예전에는 저장한 값을 되읽지 않아, 임시저장 후 다시 열면 고른 날짜가 오늘로 되돌아갔다.
+  const [date, setDate] = useState(
+    () => detailCache?.occurredOn ?? new Date().toLocaleDateString('sv-SE'),
+  )
   // 해결 소요 — 숫자만 입력받고 '일'은 고정 단위. 기존 값(예 "3일")에서 숫자만 추출.
   const [dayCount, setDayCount] = useState(
     () => existing?.days?.match(/\d+/)?.[0] ?? '',
   )
+  // 발생일과 소요 일수가 앞뒤가 맞는지 — 아직 오지 않은 날을 소요로 적을 수는 없다.
+  const daysError = resolutionDaysError(date, dayCount)
   const [independent, setIndependent] = useState(existing?.independent ?? true)
   const [star, setStar] = useState<Record<string, string>>({
     situation: existing?.situation ?? '',
@@ -182,11 +198,16 @@ export function CaseContentForm({
     tags,
     links,
     projectId: projectLink?.projectId ?? null,
+    occurredOn: date || null,
   })
 
   // 저장 — 신규는 create(POST, BE 발급 id 반환), 기존은 update(PUT). 저장 후 신규 선택 파일을
   // 실 id 로 업로드(multipart)하고 onDone 에 확정 id 전달.
   const persist = (completed: boolean, onDone?: (id: string) => void) => {
+    if (daysError) {
+      toast.danger(daysError)
+      return
+    }
     const body = buildBody(completed)
     const pending = files.filter((f) => f.file)
     const afterSave = (id: string) => {
@@ -269,6 +290,7 @@ export function CaseContentForm({
             setDate={setDate}
             dayCount={dayCount}
             setDayCount={setDayCount}
+            daysError={daysError}
             independent={independent}
             setIndependent={setIndependent}
           />

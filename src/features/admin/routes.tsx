@@ -5,40 +5,50 @@ import type { RouteObject } from 'react-router-dom'
 // 운영(매니저/ADMIN) 라우트 — features/admin 소유자만 편집.
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
 const ProfilePage = lazy(() => import('./profile/AdminProfilePage'))
-const ReviewQueuePage = lazy(() => import('./certificates/ReviewQueuePage'))
-const ReviewDetailPage = lazy(() => import('./certificates/ReviewDetailPage'))
 const SnapshotPage = lazy(() => import('./certificates/SnapshotPage'))
 const StudentManagementPage = lazy(
   () => import('./students/StudentManagementPage'),
 )
-// 과정·기수·교과목 통합 관리 (운영 전용 신설 — features/admin/education, Figma 1543:11011)
+// 담당 과정/기수 — 목록에서 기수를 고르고(CohortListPage) 허브로 들어간다(EducationPage).
+const CohortListPage = lazy(() => import('./education/CohortListPage'))
 const EducationPage = lazy(() => import('./education/EducationPage'))
+const ProjectWorkspaceViewPage = lazy(
+  () => import('./education/ProjectWorkspaceViewPage'),
+)
 // 과제 등록·수정 — 강사·운영 공용 폼(첨부 포함). 운영은 ?course&cohort로 진입.
 const AssignmentFormPage = lazy(
   () => import('../instructor/assignments/AssignmentFormPage'),
+)
+// 제출 현황도 강사 페이지 공용(2026-08-03) — 구 운영 제출 현황 모달을 대체.
+const AssignmentSubmissionsPage = lazy(
+  () => import('../instructor/assignments/SubmissionsPage'),
 )
 // 과정·기수·교과목 이력서 상세(실 BE, 페이지 전환) — ResumePane에서 진입
 const EducationResumeDetailPage = lazy(
   () => import('./education/ResumeDetailPage'),
 )
-// 증명서 템플릿 (운영 전용 신설 — features/admin/certificate-template, Figma 1521:10895)
-const CertificateTemplatePage = lazy(
-  () => import('./certificate-template/CertificateTemplatePage'),
+// 공지 상세 — 허브 '공지' 탭에서 카드를 눌러 진입(강사와 같은 화면).
+const NoticeDetailPage = lazy(() => import('./education/NoticeDetailPage'))
+const NoticeFormPage = lazy(() => import('./education/NoticeFormPage'))
+// 역량 증명서 관리 — 과정·기수별 수강생 증명서 현황(증명서 템플릿 대체).
+const CompetencyCertificatesPage = lazy(
+  () => import('./certificates-competency/CompetencyCertificatesPage'),
 )
-// CSV 매핑·업로드 (운영 전용 신설 — features/admin/csv, Figma 1521:10678)
-const CsvMappingPage = lazy(() => import('./csv/CsvMappingPage'))
-// 인입 격리 큐 (운영 전용 신설 — features/admin/ingestion, Figma 1185:6029)
-const IngestionQueuePage = lazy(() => import('./ingestion/IngestionQueuePage'))
+const CompetencyCertificateDetailPage = lazy(
+  () => import('./certificates-competency/CompetencyCertificateDetailPage'),
+)
 // 평판 관리 (운영 전용 신설 — features/admin/reputation, Figma 1193:6267)
 const ReputationPage = lazy(() => import('./reputation/ReputationPage'))
 // PLAY 타자 관리 (운영 전용 신설 — features/admin/play, Figma 3380:7959)
 const TypingTextsPage = lazy(() => import('./play/TypingTextsPage'))
 // 타자 제시문 일괄 업로드 (PLAY sub — features/admin/play/bulk, Figma 1546:11329)
 const PlayBulkUploadPage = lazy(() => import('./play/bulk/BulkUploadPage'))
-// 외부 연동 (운영 전용 신설 — features/admin/integrations, Figma 1546:11613)
-const IntegrationsPage = lazy(() => import('./integrations/IntegrationsPage'))
 // 마일리지 지급 내역 (클러스터 sub — features/admin/mileage/history, Figma 1197:6378)
 const MileageHistoryPage = lazy(() => import('./mileage/history/HistoryPage'))
+// 수강생 마일리지 이력 (지급 내역 '상세' 진입 — 한 사람의 지급·차감 흐름)
+const MileageStudentHistoryPage = lazy(
+  () => import('./mileage/history/StudentHistoryPage'),
+)
 // 마일리지 직접 지급 (클러스터 sub — features/admin/mileage/direct-pay, Figma 1226:6549)
 const MileageDirectPayPage = lazy(
   () => import('./mileage/direct-pay/DirectPayPage'),
@@ -58,7 +68,6 @@ const MileageTypeLimitsPage = lazy(
 // 계정 관리 = 설정 탭 랜딩(/admin/settings). 별도 운영 계정 권한 페이지/라우트는 폐지.
 const SettingsAccountsPage = lazy(() => import('./settings/AccountsPage'))
 const HrdApiKeyPage = lazy(() => import('./settings/HrdApiKeyPage'))
-const CourseConfigPage = lazy(() => import('./settings/CourseConfigPage'))
 const CourseAddPage = lazy(() => import('./settings/CourseAddPage'))
 // 퀴즈 운영 (강사 컴포넌트 재사용, P0)
 const QuizListPage = lazy(
@@ -75,6 +84,16 @@ const QnaListPage = lazy(() => import('@/features/student/qna/QnaListPage'))
 const QnaDetailPage = lazy(() => import('@/features/student/qna/QnaDetailPage'))
 // 정답 관리 (운영 전용 신설 — features/admin/quizzes, Figma 1515:10493)
 const QuizAnswersPage = lazy(() => import('./quizzes/AnswersPage'))
+// 퀴즈 템플릿 — 강사 화면 재사용(운영 전용 화면 없음).
+const QuizTemplateListPage = lazy(
+  () => import('@/features/instructor/quiz-templates/TemplateListPage'),
+)
+const QuizTemplateFormPage = lazy(
+  () => import('@/features/instructor/quiz-templates/TemplateFormPage'),
+)
+const QuizTemplateQuestionsPage = lazy(
+  () => import('@/features/instructor/quiz-templates/TemplateQuestionsPage'),
+)
 // 수동 채점 (운영 전용 신설 B안 — 강사 GradingPage 대체, Figma 1515:10710)
 const QuizGradingPage = lazy(() => import('./quizzes/GradingPage'))
 // 멘토링 관리 (운영 전용 신설 — features/admin/mentoring,
@@ -90,7 +109,6 @@ const MentoringTeamDetailPage = lazy(
 const MentoringTeamLogFieldsPage = lazy(
   () => import('./mentoring/TeamLogFieldsPage'),
 )
-const MentoringStatisticsPage = lazy(() => import('./mentoring/StatisticsPage'))
 // 감사 로그 (운영 전용 신설 — features/admin/audit, Figma 1521:11112)
 // 경로는 증명서(soulhn 소유) 하위지만 컴포넌트는 admin/audit(본인 소유)에 둠.
 const AuditLogPage = lazy(() => import('./audit/AuditLogPage'))
@@ -103,11 +121,15 @@ export const adminRoutes: RouteObject[] = [
       // 실 auth 로그인 nextRoute(/admin/dashboard) 별칭 — index(/admin)와 같은 화면 (멘토 라우트 패턴)
       { path: 'dashboard', element: <AdminDashboard /> },
       { path: 'profile', element: <ProfilePage /> },
-      { path: 'education', element: <EducationPage /> },
+      { path: 'education', element: <CohortListPage /> },
       // 과제 등록·수정 — 강사·운영 공용 폼(첨부 포함). /new 는 :assignmentId보다 먼저(정적 우선).
       {
         path: 'education/assignments/new',
         element: <AssignmentFormPage />,
+      },
+      {
+        path: 'education/assignments/:assignmentId/submissions',
+        element: <AssignmentSubmissionsPage />,
       },
       {
         path: 'education/assignments/:assignmentId',
@@ -117,25 +139,48 @@ export const adminRoutes: RouteObject[] = [
         path: 'education/resume/:resumeId',
         element: <EducationResumeDetailPage />,
       },
-      { path: 'certificate-template', element: <CertificateTemplatePage /> },
-      { path: 'csv-mapping', element: <CsvMappingPage /> },
-      { path: 'ingestion/quarantine', element: <IngestionQueuePage /> },
+      // 정적 세그먼트를 :noticeId 앞에 둬 'new' 가 id 로 잡히지 않게 한다.
+      {
+        path: 'education/notices/new',
+        element: <NoticeFormPage />,
+      },
+      {
+        path: 'education/notices/:noticeId',
+        element: <NoticeDetailPage />,
+      },
+      {
+        path: 'education/notices/:noticeId/edit',
+        element: <NoticeFormPage />,
+      },
+      // 기수 허브 — 정적 세그먼트(assignments·resume)를 동적 :cohortId 앞에 두는 컨벤션.
+      { path: 'education/:cohortId', element: <EducationPage /> },
+      // 프로젝트 워크스페이스 열람(읽기 전용) — 허브 프로젝트 탭 카드에서 진입.
+      {
+        path: 'education/:cohortId/projects/:projectId',
+        element: <ProjectWorkspaceViewPage source="admin" />,
+      },
+      { path: 'certificates', element: <CompetencyCertificatesPage /> },
+      {
+        path: 'certificates/:studentId',
+        element: <CompetencyCertificateDetailPage />,
+      },
       { path: 'reputation', element: <ReputationPage /> },
       { path: 'play/typing-texts', element: <TypingTextsPage /> },
       { path: 'play/typing-texts/bulk', element: <PlayBulkUploadPage /> },
-      { path: 'integrations', element: <IntegrationsPage /> },
       // 마일리지는 허브 없이 지급 내역이 첫 화면(허브 페이지 폐기).
       {
         path: 'mileage',
         element: <Navigate to="/admin/mileage/history" replace />,
       },
       { path: 'mileage/history', element: <MileageHistoryPage /> },
+      {
+        path: 'mileage/history/students/:studentUserId',
+        element: <MileageStudentHistoryPage />,
+      },
       { path: 'mileage/direct-pay', element: <MileageDirectPayPage /> },
       { path: 'mileage/purchase-requests', element: <MileagePurchasePage /> },
       { path: 'mileage/products', element: <MileageProductsPage /> },
       { path: 'mileage/type-limits', element: <MileageTypeLimitsPage /> },
-      { path: 'certificates/reviews', element: <ReviewQueuePage /> },
-      { path: 'certificates/reviews/:reviewId', element: <ReviewDetailPage /> },
       {
         path: 'certificates/:certificateId/snapshot',
         element: <SnapshotPage />,
@@ -153,7 +198,6 @@ export const adminRoutes: RouteObject[] = [
         path: 'mentoring/log-templates',
         element: <MentoringLogTemplatesPage />,
       },
-      { path: 'mentoring/statistics', element: <MentoringStatisticsPage /> },
       {
         path: 'mentoring/teams/:teamId',
         element: <MentoringTeamDetailPage />,
@@ -165,7 +209,6 @@ export const adminRoutes: RouteObject[] = [
       { path: 'students', element: <StudentManagementPage /> },
       { path: 'settings', element: <SettingsAccountsPage /> },
       { path: 'settings/hrd-api-key', element: <HrdApiKeyPage /> },
-      { path: 'settings/course-config', element: <CourseConfigPage /> },
       { path: 'settings/courses/new', element: <CourseAddPage /> },
       // 퀴즈 운영 (강사 컴포넌트 재사용, 경로 패턴도 강사와 동일) — /admin/quizzes* 라우트
       { path: 'quizzes', element: <QuizListPage /> },
@@ -177,6 +220,18 @@ export const adminRoutes: RouteObject[] = [
       {
         path: 'quizzes/:quizId/submissions/:submissionId/grade',
         element: <QuizGradingPage />,
+      },
+      // 퀴즈 템플릿 운영 — 강사와 같은 화면. 없으면 '템플릿 관리'가 강사 경로로 나가
+      // 역할 가드에 막혀 대시보드로 튕긴다. /new 는 :templateId 보다 먼저(정적 우선).
+      { path: 'quiz-templates', element: <QuizTemplateListPage /> },
+      { path: 'quiz-templates/new', element: <QuizTemplateFormPage /> },
+      {
+        path: 'quiz-templates/:templateId/edit',
+        element: <QuizTemplateFormPage />,
+      },
+      {
+        path: 'quiz-templates/:templateId/questions',
+        element: <QuizTemplateQuestionsPage />,
       },
       // QnA 운영 — 'QnA 질문' 알림(매니저 브로드캐스트) 목적지. 수강생 화면 재사용.
       { path: 'qna', element: <QnaListPage /> },

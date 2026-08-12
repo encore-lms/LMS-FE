@@ -7,12 +7,11 @@ import { inputClass } from '@/components/ui/inputClass'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
 import {
-  DEFAULT_PROJECT_CONTENT,
   formatEditUntil,
   isEditWindowExpired,
   useProjectFlow,
+  type ChangeDiff,
   type EditRequestStatus,
-  type ProjectContent,
 } from './workspace/useProjectFlow'
 import {
   useCancelProjectChange,
@@ -20,6 +19,7 @@ import {
   useRequestProjectChange,
   useSubmitProjectRevision,
 } from './api/changeRequests'
+import { useProjectWorkspace } from '../api/projects'
 
 // 프로젝트 수정 권한 요청 (/student/projects/:projectId/change-requests/new)
 // — Figma 4859:6731(요청·locked) · 4857:6654(승인 후·editing).
@@ -48,6 +48,10 @@ const HEADER: Record<EditRequestStatus, [string, string]> = {
     '수정 완료 제출됨',
     '강사가 변경 요약과 현재 프로젝트 내용을 확인하는 중이에요.',
   ],
+  rejected: [
+    '수정 권한 요청 반려됨',
+    '강사가 남긴 반려 사유를 확인하고, 보완해서 다시 요청할 수 있어요.',
+  ],
 }
 
 export default function ChangeRequestPage() {
@@ -58,12 +62,11 @@ export default function ChangeRequestPage() {
   const editRequest = useProjectFlow((s) => s.editRequests[projectId])
   const setEditRequest = useProjectFlow((s) => s.setEditRequest)
   const resetEditRequest = useProjectFlow((s) => s.resetEditRequest)
-  const content =
-    useProjectFlow((s) => s.projectContent[projectId]) ??
-    DEFAULT_PROJECT_CONTENT
 
   // 서버가 상태 정본 — 강사 승인/반려가 여기로 반영된다. zustand 는 화면 공용 미러라 동기화.
   const { data: serverStatus } = useProjectChangeStatus(projectId)
+  // 제목·메타는 워크스페이스 조회에서 — 목록을 거치지 않고 URL 로 바로 들어와도 맞아야 한다.
+  const { data: project } = useProjectWorkspace(projectId)
   const requestMutation = useRequestProjectChange(projectId)
   const submitMutation = useSubmitProjectRevision(projectId)
   const cancelMutation = useCancelProjectChange(projectId)
@@ -78,6 +81,8 @@ export default function ChangeRequestPage() {
   const status: EditRequestStatus = expired
     ? 'none'
     : (editRequest?.status ?? 'none')
+  // 아직 안 냈거나 반려됐으면 사유를 적어 (다시) 요청할 수 있다.
+  const canRequest = status === 'none' || status === 'rejected'
 
   useEffect(() => {
     if (expired) {
@@ -86,9 +91,8 @@ export default function ChangeRequestPage() {
     }
   }, [expired, projectId, resetEditRequest, toast])
 
-  const [reason, setReason] = useState(
-    editRequest?.requestReason ?? EXAMPLE_REASON,
-  )
+  // 예시 문구를 값으로 채워 두면 수강생이 지우지 않고 그대로 내, 남의 프로젝트 사유가 강사에게 간다.
+  const [reason, setReason] = useState(editRequest?.requestReason ?? '')
   const [summary, setSummary] = useState(editRequest?.changeSummary ?? '')
 
   usePageHeader(HEADER[status][0], HEADER[status][1])
@@ -165,25 +169,40 @@ export default function ChangeRequestPage() {
           body="강사가 변경 요약과 현재 프로젝트 내용을 확인한 뒤 최종 확인 처리합니다."
         />
       )}
+      {/* 반려는 사유가 전부다 — 이 배너가 없으면 무엇이 부족했는지 알 길이 없다. */}
+      {status === 'rejected' && (
+        <StatusBanner
+          tone="danger"
+          icon={<Lock className="size-3.5" aria-hidden="true" />}
+          title="수정 권한 요청이 반려됐어요"
+          body={
+            editRequest?.decisionReason?.trim() ||
+            '강사가 반려 사유를 남기지 않았어요. 담당 강사에게 확인해 주세요.'
+          }
+        />
+      )}
 
-      {/* 프로젝트 정보 (공통) */}
+      {/* 프로젝트 정보 (공통) — 어느 프로젝트를 고치겠다는 요청인지 여기서 확인한다.
+          예전에는 이 카드가 통째로 하드코딩('주문 관리 MSA 백엔드')이라, 어떤 프로젝트에서
+          들어와도 남의 프로젝트가 적혀 있었다. */}
       <section className={cn(card, 'flex flex-col gap-2')}>
         <div className="flex items-center gap-2">
           <span className="text-fg text-[15px] font-bold">
-            주문 관리 MSA 백엔드
+            {project?.title ?? '프로젝트'}
           </span>
-          <span className="bg-success-bg text-success rounded px-1.5 py-0.5 text-[10px] font-bold">
-            인증 완료
-          </span>
+          {project?.status === 'certified' && (
+            <span className="bg-success-bg text-success rounded px-1.5 py-0.5 text-[10px] font-bold">
+              인증 완료
+            </span>
+          )}
         </div>
-        <span className="text-fg-subtle text-[11px]">
-          역할 PM · 팀 프로젝트 4명 · 2026-04-01 ~ 2026-05-30 · 인증일
-          2026-05-08
-        </span>
+        {project?.meta && (
+          <span className="text-fg-subtle text-[11px]">{project.meta}</span>
+        )}
       </section>
 
-      {/* none — 수정 사유 입력 */}
-      {status === 'none' && (
+      {/* none·rejected — 수정 사유 입력(반려됐으면 보완해서 다시 낸다) */}
+      {canRequest && (
         <>
           <section className={cn(card, 'flex flex-col gap-3')}>
             <div className="flex items-center gap-1.5">
@@ -193,7 +212,7 @@ export default function ChangeRequestPage() {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="왜 다시 수정해야 하는지 적어주세요"
+              placeholder={`왜 다시 수정해야 하는지 적어주세요 (예: ${EXAMPLE_REASON})`}
               className={inputClass({
                 size: 'md',
                 className: 'min-h-[100px] resize-none leading-6',
@@ -231,7 +250,7 @@ export default function ChangeRequestPage() {
               <ArrowRight className="size-4" aria-hidden="true" />
             </button>
           </section>
-          <BeforeAfterAux snapshot={editRequest?.snapshot} current={content} />
+          <BeforeAfterAux changes={editRequest?.changes} />
           <section className={cn(card, 'flex flex-col gap-3')}>
             <div className="flex items-center gap-1.5">
               <span className="text-fg text-[13px] font-bold">변경 요약</span>
@@ -264,7 +283,7 @@ export default function ChangeRequestPage() {
         </section>
       )}
       {status === 'submitted' && (
-        <BeforeAfterAux snapshot={editRequest?.snapshot} current={content} />
+        <BeforeAfterAux changes={editRequest?.changes} />
       )}
 
       {/* 하단 액션바 */}
@@ -274,10 +293,10 @@ export default function ChangeRequestPage() {
           onClick={() => navigate(-1)}
           className="border-border text-fg rounded-lg border px-4 py-2.5 text-[13px] font-semibold"
         >
-          {status === 'none' || status === 'approved' ? '취소' : '닫기'}
+          {canRequest || status === 'approved' ? '취소' : '닫기'}
         </button>
         <div className="flex items-center gap-4">
-          {status === 'none' && (
+          {canRequest && (
             <>
               <span className="text-fg-subtle text-[12px]">
                 승인되면 수정 권한이 열려요
@@ -287,7 +306,7 @@ export default function ChangeRequestPage() {
                 onClick={requestEdit}
                 className={buttonClass({ size: 'md' })}
               >
-                수정 권한 요청
+                {status === 'rejected' ? '수정 권한 다시 요청' : '수정 권한 요청'}
               </button>
             </>
           )}
@@ -336,7 +355,7 @@ function StatusBanner({
   title,
   body,
 }: {
-  tone: 'info' | 'warning' | 'success'
+  tone: 'info' | 'warning' | 'success' | 'danger'
   icon: React.ReactNode
   title: string
   body: string
@@ -345,6 +364,7 @@ function StatusBanner({
     info: 'bg-info-bg/60 text-info',
     warning: 'bg-warning-bg/70 text-warning',
     success: 'bg-success-bg/70 text-success',
+    danger: 'bg-danger-bg/70 text-danger',
   }[tone]
   return (
     <div className={cn('flex flex-col gap-1 rounded-xl p-4', toneCls)}>
@@ -358,66 +378,29 @@ function StatusBanner({
 }
 
 // 원본↔현재 비교 — '변경 전/후 비교'를 제거 대신 보조 수준으로 축소(승인 후/제출에서만).
-function BeforeAfterAux({
-  snapshot,
-  current,
-}: {
-  snapshot?: ProjectContent
-  current: ProjectContent
-}) {
-  const before = snapshot ?? current
-  const fields: (keyof ProjectContent)[] = ['설명', '산출물']
+function BeforeAfterAux({ changes }: { changes?: ChangeDiff[] }) {
+  // 승인 시점 스냅샷은 서버가 준다. 승인 전에는 비교할 원본이 없어 아무것도 그리지 않는다.
+  if (!changes || changes.length === 0) return null
   return (
     <section className="bg-surface-muted/30 flex flex-col gap-3 rounded-2xl p-5">
       <div className="flex items-center gap-1.5">
-        <span className="text-fg-muted text-[12px] font-bold">
-          변경 전 / 후
-        </span>
+        <span className="text-fg-muted text-[12px] font-bold">승인 시점 원본</span>
         <span className="text-fg-subtle text-[11px]">
-          참고 · 원본↔현재 비교
+          참고 · 수정 전 내용
         </span>
       </div>
-      {fields.map((f) => {
-        const changed = before[f] !== current[f]
-        return (
-          <div key={f} className="flex flex-col gap-1.5">
-            <span className="text-fg-subtle text-[11px] font-semibold">
-              {f}
-              {changed && <span className="text-brand"> · 변경됨</span>}
+      {changes.map((c) => (
+        <div key={c.label} className="flex flex-col gap-1.5">
+          <span className="text-fg-subtle text-[11px] font-semibold">
+            {c.label}
+          </span>
+          <div className="border-border bg-surface rounded-[10px] border p-3">
+            <span className="text-fg-muted text-[12px] leading-5">
+              {c.before?.trim() || '없음'}
             </span>
-            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-              <div className="border-border bg-surface flex flex-col gap-1 rounded-[10px] border p-3">
-                <span className="text-fg-subtle text-[10px]">
-                  변경 전 (원본)
-                </span>
-                <span className="text-fg-muted text-[12px] leading-5">
-                  {before[f]}
-                </span>
-              </div>
-              <div
-                className={cn(
-                  'flex flex-col gap-1 rounded-[10px] border p-3',
-                  changed
-                    ? 'border-brand/40 bg-brand/5'
-                    : 'border-border bg-surface',
-                )}
-              >
-                <span
-                  className={cn(
-                    'text-[10px]',
-                    changed ? 'text-brand font-semibold' : 'text-fg-subtle',
-                  )}
-                >
-                  변경 후 (현재)
-                </span>
-                <span className="text-fg text-[12px] leading-5">
-                  {current[f]}
-                </span>
-              </div>
-            </div>
           </div>
-        )
-      })}
+        </div>
+      ))}
     </section>
   )
 }

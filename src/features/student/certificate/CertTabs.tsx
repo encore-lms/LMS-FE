@@ -7,8 +7,8 @@ const CERT_TABS: { key: CertTab; label: string }[] = [
   { key: 'summary', label: '종합 요약' },
   { key: 'tech', label: '기술·검증' },
   { key: 'projects', label: '프로젝트' },
-  { key: 'problem-solving', label: '문제해결·협업' },
-  { key: 'growth-reputation', label: '성장·평판' },
+  { key: 'problem-solving', label: '문제해결' },
+  { key: 'growth-reputation', label: '평가·추천' },
   { key: 'resume', label: '이력서' },
 ]
 // AI 해석 콘텐츠는 데이터 탭에서 분리해 전용 탭으로(데이터 vs AI 구분).
@@ -20,13 +20,17 @@ const AI_TAB: { key: CertTab; label: string } = {
 export function CertTabs({
   active,
   onChange,
+  only,
 }: {
   active: CertTab
   onChange: (t: CertTab) => void
+  /** 노출할 탭을 좁힌다 — 매니저 열람처럼 일부 탭의 데이터 소스가 없는 화면용. */
+  only?: CertTab[]
 }) {
-  const tabs = CERT_V2 ? [...CERT_TABS, AI_TAB] : CERT_TABS
+  const all = CERT_V2 ? [...CERT_TABS, AI_TAB] : CERT_TABS
+  const tabs = only ? all.filter((t) => only.includes(t.key)) : all
   return (
-    <nav className="bg-surface flex w-full gap-1 rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
+    <nav className="bg-surface flex w-full gap-1 overflow-x-auto rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
       {tabs.map((t) => {
         const isActive = t.key === active
         return (
@@ -35,8 +39,10 @@ export function CertTabs({
             type="button"
             onClick={() => onChange(t.key)}
             className={cn(
-              // 탭 7개가 균등 분할되면 좁은 폭에서 '문제해결·협업'이 두 줄이 된다.
-              'flex-1 rounded-[10px] px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap',
+              // 여유가 있으면 균등 분할하되(flex-1), 글자보다 좁아지지는 않는다(min-w-fit).
+              // 예전엔 min-w 가 없어 좁은 창에서 셀이 100px 까지 줄고 nowrap 텍스트가 칸을 넘쳤다.
+              // 다 못 넣을 만큼 좁아지면 줄을 바꾸는 대신 탭바가 가로로 스크롤된다.
+              'min-w-fit flex-1 rounded-[10px] px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap',
               isActive
                 ? 'bg-brand/10 text-brand'
                 : 'text-fg-muted hover:bg-surface-muted',

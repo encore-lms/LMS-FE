@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { formatDateDot } from '@/shared/lib/date'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -24,6 +24,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useDeleteResume, useResumes } from '../api/resume'
 import { SECTIONS, completionOf } from './constants'
 import type { ResumeSummary } from './types'
+import { CourseTabs } from '../course/CourseTabs'
 
 // 상태 필터 옵션 — '전체' + ResumeStatus. 필터 버튼 팝오버에서 선택.
 const STATUS_FILTERS = ['전체', '작성 중', '작성 완료'] as const
@@ -276,7 +277,7 @@ export default function ResumePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('전체')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
-  usePageHeader('이력서 관리', '이력서 작성 현황과 피드백을 관리합니다.')
+  useCourseHubHeader()
 
   // 필터 팝오버 — 바깥 클릭 시 닫기.
   useEffect(() => {
@@ -329,6 +330,7 @@ export default function ResumePage() {
       className="p-8"
     >
       <div className="flex flex-col gap-5 p-8">
+        <CourseTabs />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard
             icon={<FileText />}

@@ -10,6 +10,7 @@ import {
 import { buildMentoringRequestsData } from '../mockDb'
 import { ToastProvider } from '@/components/ui/Toast'
 import { usePageHeaderStore } from '@/shared/store'
+import { reachable } from '../routeReach'
 
 vi.mock('../api/requests')
 
@@ -44,7 +45,9 @@ describe('RequestsPage', () => {
   // BE는 요청 일시 하나로만 정렬해 내려주므로 '확정' 탭도 확정 일시 순이 아니었다.
   it('탭 안에서 활동 시각 최신순으로 정렬한다', () => {
     const base = buildMentoringRequestsData()
-    const [first, second] = base.requests.filter((r) => r.status === 'requested')
+    const [first, second] = base.requests.filter(
+      (r) => r.status === 'requested',
+    )
     // 서버 순서를 일부러 역순으로 준다 — FE 정렬이 없으면 그대로 렌더된다.
     mockList({
       data: {
@@ -86,14 +89,13 @@ describe('RequestsPage', () => {
     expect(
       screen.getByRole('button', { name: '제안 취소' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '제안 수정' })).toBeInTheDocument()
-    // 요청 대기 카드 액션 — 모달 오픈 링크(모드 프리셀렉트)
-    expect(screen.getAllByRole('link', { name: '확정' })).toHaveLength(2)
-    // 활동 시각 최신순 — req_ts_4(05-27 10:15)가 req_rec_6(05-26 19:42)보다 앞선다
-    expect(screen.getAllByRole('link', { name: '거절' })[0]).toHaveAttribute(
-      'href',
-      '/mentor/mentoring-requests/req_ts_4?mode=reject',
-    )
+    // 응답 화면은 목록이 있는 그 자리에 띄운다 — 독립 화면을 걷어내며 주소 이동을 없앴다
+    // (2026-08-05). 그래서 링크가 아니라 버튼이다.
+    expect(
+      screen.getByRole('button', { name: '제안 수정' }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: '확정' })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: '거절' })).toHaveLength(2)
   })
 
   it('상태 탭·검색으로 목록을 거른다', async () => {
@@ -150,5 +152,16 @@ describe('RequestsPage', () => {
     expect(
       screen.getByRole('button', { name: '다시 시도' }),
     ).toBeInTheDocument()
+  })
+
+  // 화면을 걷어낼 때 링크를 함께 훑지 않으면 '찾을 수 없는 주소'로 떨어진다.
+  // 일지 계열은 이 검사가 빠져 있어 '일지 목록으로' 버튼이 404 로 남아 있었다(2026-08-06 QA).
+  it('그리는 모든 링크가 살아 있는 라우트를 가리킨다', () => {
+    const { container } = renderPage()
+    const dead = [...container.querySelectorAll('a')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => href.startsWith('/mentor'))
+      .filter((href) => !reachable(href))
+    expect(dead).toEqual([])
   })
 })

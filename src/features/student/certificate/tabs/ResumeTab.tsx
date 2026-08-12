@@ -17,6 +17,7 @@ import {
 import { cn } from '@/shared/lib/cn'
 import { formatDateDot } from '@/shared/lib/date'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { ResumeTabSkeleton } from './TabSkeletons'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useResume, useResumes } from '../../api/resume'
 import { SECTIONS } from '../../resume/constants'
@@ -229,27 +230,10 @@ function ProfileHero({ d }: { d: ResumeDetail }) {
       {/* 커버 밴드 — 링크드인 배경 이미지 자리. 히어로/배너는 brand 단색(그라데이션 금지, 2026-06-08 가드레일) */}
       <div className="bg-brand h-24" />
       <div className="flex flex-col gap-4 px-7 pb-6">
-        <div className="flex items-end justify-between gap-4">
-          <span className="border-surface bg-brand-deep -mt-10 flex size-20 shrink-0 items-center justify-center rounded-full border-4 text-[28px] font-bold text-white">
-            {b.name?.trim().charAt(0) || '?'}
-          </span>
-          <div className="flex items-center gap-2 pb-1">
-            <Link
-              to={`/student/resume/${d.id}/edit`}
-              className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              이력서 편집
-            </Link>
-            <Link
-              to="/student/resume"
-              className="border-border text-fg-muted hover:bg-surface-muted inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-[13px] font-semibold"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              이력서 관리
-            </Link>
-          </div>
-        </div>
+        {/* 증명서는 '보여지는 문서'다 — 편집·관리 진입 버튼은 두지 않는다(이력서 관리 화면에서 한다). */}
+        <span className="border-surface bg-brand-deep -mt-10 flex size-20 shrink-0 items-center justify-center rounded-full border-4 text-[28px] font-bold text-white">
+          {b.name?.trim().charAt(0) || '?'}
+        </span>
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2.5">
@@ -434,7 +418,7 @@ export function ResumeTab() {
           if (listQ.isError) listQ.refetch()
           if (detailQ.isError) detailQ.refetch()
         }}
-        loadingText="이력서를 불러오는 중…"
+        skeleton={<ResumeTabSkeleton />}
         errorTitle="이력서를 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >

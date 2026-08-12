@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Outlet, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowDown,
@@ -9,18 +9,17 @@ import {
   Clock3,
   FileText,
   Info,
-  Search,
   Send,
 } from 'lucide-react'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { Select } from '@/components/ui/Select'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { Pagination } from '@/components/data/Pagination'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
+import LogDetailModal from './LogDetailModal'
 import { useMentoringLogs } from '../api/logs'
 import { MENTOR_FLOW_CAPTION } from '../constants'
 import { CohortChip } from '../components/chips'
@@ -33,6 +32,8 @@ import {
   LOG_SUBMITTED_TOAST,
   PLACE_TYPE_ICON,
 } from './logMeta'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { FilterSelect } from '@/components/ui/FilterSelect'
 
 const PERIOD_OPTIONS = [
   { value: '7', label: '최근 7일' },
@@ -52,18 +53,22 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 // 행별 액션 — 상태 연동 변형: 승인 대기·유효=열기(상세 모달) / 수정 요청=수정(재제출 폼).
 // 수정은 작성 화면 ?logId= 딥링크.
-function rowAction(log: MentoringLogListItem) {
+function rowAction(log: MentoringLogListItem, backTo?: string) {
+  const from = backTo ? `&from=${encodeURIComponent(backTo)}` : ''
   switch (log.status) {
     case 'change_requested':
       return {
+        kind: 'edit' as const,
         label: '수정',
-        to: `/mentor/mentoring-logs/new?logId=${log.logId}`,
+        to: `/mentor/mentoring-logs/new?logId=${log.logId}${from}`,
         className: 'bg-danger text-on-color hover:bg-danger/90 font-bold',
       }
     default:
       return {
+        kind: 'open' as const,
         label: '열기',
-        to: `/mentor/mentoring-logs/${log.logId}`,
+        // 상세 라우트는 없다 — 모달로 연다(위 렌더 참고). 링크로 쓰이지 않는다.
+        to: '',
         className:
           'border-border text-fg-muted hover:bg-surface-muted border font-medium',
       }
@@ -110,12 +115,19 @@ function exportCsv(rows: MentoringLogListItem[]) {
 
 // 멘토링 일지 (/mentor/mentoring-logs) — Figma 2553:4040.
 // 필터(팀/상태/기간/검색) · KPI 4 · 8컬럼 테이블 · CSV · 일지 정책 요약 배너.
-// :logId 상세 모달은 중첩 라우트(Outlet) 오버레이 — 목록 필터 상태 유지.
 // 목록 페이지당 일지 수 — 표가 길어지지 않게 페이지네이션(공통 Pagination).
 const LOG_PAGE_SIZE = 8
 
-export default function LogsPage() {
-  usePageHeader('멘토링 일지', MENTOR_FLOW_CAPTION)
+export default function LogsPage({
+  embedded = false,
+  teamId: fixedTeamId,
+}: {
+  /** 팀 상세 '일지' 탭에 얹을 때 — 자체 헤더·바깥 여백을 생략한다. */
+  embedded?: boolean
+  /** 주면 그 팀 일지만 — 팀이 이미 정해졌으니 팀 고르는 칸도 없앤다. */
+  teamId?: string
+} = {}) {
+  usePageHeader('멘토링 일지', MENTOR_FLOW_CAPTION, !embedded)
   const { data, isPending, isError, refetch } = useMentoringLogs()
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -133,13 +145,29 @@ export default function LogsPage() {
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams, toast])
 
-  // 팀 필터 — ?teamId= 딥링크 지원(M1 팀 카드 '일지 수정' 진입 경로)
-  const [teamId, setTeamId] = useState(searchParams.get('teamId') ?? 'all')
+  // 팀 필터 — ?teamId= 딥링크 지원(M1 팀 카드 '일지 수정' 진입 경로).
+  // 팀 상세에 얹힐 때는 그 팀으로 고정한다(고르는 칸도 감춘다).
+  const [teamId, setTeamId] = useState(
+    fixedTeamId ?? searchParams.get('teamId') ?? 'all',
+  )
+  // 팀 안에서 그 자리에 띄운 상세 — 라우트 대신 값으로 연다.
+  const [openLogId, setOpenLogId] = useState<string | null>(null)
+  // 팀 안에 얹혀 있으면 작성 화면에서 돌아올 곳은 그 팀이다.
+  const backTo = fixedTeamId
+    ? `/mentor/teams/${fixedTeamId}?tab=logs`
+    : undefined
   const [status, setStatus] = useState<MentoringLogStatus | 'all'>('all')
-  const [period, setPeriod] = useState<string>('30')
+  // 팀 상세에 얹힐 때는 기간을 자르지 않는다 — 그 팀 것이 몇 건 안 되는데 최근 30일로
+  // 잘리면 홈에서 센 건수와 어긋나 보인다.
+  const [period, setPeriod] = useState<string>(fixedTeamId ? 'all' : '30')
   const [q, setQ] = useState('')
 
-  const logs = useMemo(() => data?.logs ?? [], [data])
+  // 팀 상세에 얹힐 때는 그 팀 것만이 이 화면의 전부다 — KPI·팀 목록까지 함께 좁힌다.
+  // (목록만 걸렀더니 '총 일지 8건'인데 표는 0줄이라 수가 어긋나 보였다.)
+  const logs = useMemo(() => {
+    const all = data?.logs ?? []
+    return fixedTeamId ? all.filter((l) => l.teamId === fixedTeamId) : all
+  }, [data, fixedTeamId])
 
   // 기간 기준일 — 목록 내 최근 진행 일시 기준 상대 계산(M2 선례 — mock 더미 보존,
   // 실서버 연동 시 서버 필터로 대체 TODO).
@@ -315,15 +343,27 @@ export default function LogsPage() {
       align: 'right',
       className: 'w-[110px]',
       cell: (l) => {
-        const action = rowAction(l)
+        const action = rowAction(l, backTo)
+        const cls = cn(
+          'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] whitespace-nowrap',
+          action.className,
+        )
+        // 상세는 모달로만 연다 — 일지 상세 라우트는 없다(팀 탭으로 이관, 2026-08-04).
+        // embedded 일 때만 모달로 열던 탓에 링크가 없는 주소를 가리키고 있었다(2026-08-06 QA).
+        if (action.kind === 'open') {
+          return (
+            <button
+              type="button"
+              onClick={() => setOpenLogId(l.logId)}
+              className={cls}
+            >
+              {action.label}
+              <ArrowRight className="h-2.5 w-2.5" />
+            </button>
+          )
+        }
         return (
-          <Link
-            to={action.to}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] whitespace-nowrap',
-              action.className,
-            )}
-          >
+          <Link to={action.to} className={cls}>
             {action.label}
             <ArrowRight className="h-2.5 w-2.5" />
           </Link>
@@ -340,18 +380,20 @@ export default function LogsPage() {
       skeleton={<SkeletonListPage kpis={4} columns={5} className="" />}
       errorTitle="멘토링 일지를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
-      <div className="flex flex-col gap-5 p-8">
+      <div className={cn('flex flex-col gap-5', !embedded && 'p-8')}>
         {/* 필터 행 — 팀/상태/기간 드롭다운 + 검색 + 새 일지 작성 */}
         <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
-            icon={<Send className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
-            label="팀"
-            value={teamId}
-            onChange={setTeamId}
-            options={[{ value: 'all', label: '전체' }, ...teamOptions]}
-          />
+          {!fixedTeamId && (
+            <FilterSelect
+              icon={<Send className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
+              label="팀"
+              value={teamId}
+              onChange={setTeamId}
+              options={[{ value: 'all', label: '전체' }, ...teamOptions]}
+            />
+          )}
           <FilterSelect
             icon={<Info className="text-fg-muted h-3.5 w-3.5 shrink-0" />}
             label="상태"
@@ -366,18 +408,19 @@ export default function LogsPage() {
             onChange={setPeriod}
             options={PERIOD_OPTIONS}
           />
-          <label className="border-border focus-within:border-brand bg-surface flex h-10 w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
-            <Search className="text-fg-subtle h-3.5 w-3.5 shrink-0" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="팀명·일지 요지 검색"
-              aria-label="팀명·일지 요지 검색"
-              className="text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent text-[13px] outline-none focus-visible:shadow-none"
-            />
-          </label>
+          <SearchInput
+            value={q}
+            onChange={setQ}
+            placeholder="팀명·일지 요지 검색"
+            ariaLabel="팀명·일지 요지 검색"
+            className="h-10 w-[240px]"
+          />
           <Link
-            to="/mentor/mentoring-logs/new"
+            to={
+              backTo
+                ? `/mentor/mentoring-logs/new?teamId=${fixedTeamId}&from=${encodeURIComponent(backTo)}`
+                : '/mentor/mentoring-logs/new'
+            }
             className={buttonClass({ className: 'ml-auto whitespace-nowrap' })}
           >
             <Check className="h-3.5 w-3.5" />새 일지 작성
@@ -451,42 +494,19 @@ export default function LogsPage() {
           />
         )}
 
+        {/* 팀 안에서 연 상세 — 같은 화면 위에 그대로 띄운다 */}
+        {embedded && openLogId && (
+          <LogDetailModal
+            logId={openLogId}
+            onClose={() => setOpenLogId(null)}
+          />
+        )}
+
         {/* /:logId 상세 모달 — 목록 필터 상태 유지한 채 오버레이 */}
         <Suspense fallback={null}>
-          <Outlet />
         </Suspense>
       </div>
     </DataBoundary>
-  )
-}
-
-// 드롭다운 트리거 — [아이콘 | 라벨 | 값 캐럿] (Figma 필터 문법)
-function FilterSelect({
-  icon,
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  onChange: (value: string) => void
-  options: readonly { value: string; label: string }[]
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      {icon}
-      <span className="text-fg-subtle text-[11px] font-medium whitespace-nowrap">
-        {label}
-      </span>
-      <Select
-        aria-label={`${label} 필터`}
-        value={value}
-        onChange={onChange}
-        options={[...options]}
-      />
-    </div>
   )
 }
 

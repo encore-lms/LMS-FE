@@ -16,11 +16,12 @@ import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useMenteeDetail } from '../api/mentees'
 import type { MenteeAttendanceRow } from '../types'
+import { TERMS } from '@/shared/constants'
 
 const CARD_SHELL =
   'bg-surface rounded-2xl shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]'
 
-// 5축 막대 색 — Figma 축별 색(기술 brand / 책임감 success / 소통 info / 성장 accent /
+// 4축 막대 색(2026-08-05 개편) — 축별 색(기술 brand / 소통·협업 info / 문제해결 accent /
 // 팀워크 warning). 축별 고정 의미 색인지 장식인지는 openQuestion — Figma 표기 그대로.
 const AXIS_COLORS = [
   'bg-brand text-brand',
@@ -35,7 +36,10 @@ const AXIS_COLORS = [
 // 노출 경계: 멘토 본인이 작성한 평가·코멘트·추천 + 일지 참석 이력만(05-26 결정).
 // Figma 의 '24h 수정 가능' 표기는 최종 제출 후 수정 불가 정책(05-31)으로 대체(결정 기록).
 export default function MenteeDetailPage() {
-  usePageHeader('학생 상세', '멘티의 평가·추천·참석 이력을 확인합니다')
+  usePageHeader(
+    `${TERMS.student} 상세`,
+    '멘티의 평가·추천·참석 이력을 확인합니다',
+  )
   const { studentId = '' } = useParams()
   const { data, isPending, isError, refetch } = useMenteeDetail(studentId)
 
@@ -44,8 +48,8 @@ export default function MenteeDetailPage() {
       isPending={isPending}
       isError={isError || !data}
       onRetry={() => refetch()}
-      loadingText="학생 정보를 불러오는 중…"
-      errorTitle="학생 정보를 불러오지 못했어요"
+      loadingText="수강생 정보를 불러오는 중…"
+      errorTitle="수강생 정보를 불러오지 못했어요"
       errorDescription="배정 팀의 팀원만 조회할 수 있어요."
       className="p-8"
     >
@@ -168,7 +172,7 @@ function MenteeDetailBody({
             {student.teamName}
           </Link>
           <span className="text-fg-subtle text-[13px]">›</span>
-          <span className="text-fg text-xs font-medium">팀원 학생 상세</span>
+          <span className="text-fg text-xs font-medium">팀원 수강생 상세</span>
         </div>
         <span className="bg-surface-muted flex items-center gap-2 rounded-md px-2.5 py-1">
           <span className="text-fg-subtle text-[10px] tracking-[0.6px]">
@@ -242,11 +246,11 @@ function MenteeDetailBody({
         </span>
         <div className="flex flex-col gap-0.5">
           <span className="text-fg text-[13px] font-bold">
-            멘토에게 노출되는 학생 정보 범위
+            멘토에게 노출되는 수강생 정보 범위
           </span>
           <p className="text-fg-muted text-xs leading-[18px]">
             배정 팀의 팀원에 한해, 멘토가 직접 작성한 평가·코멘트·추천과 멘토링
-            일지의 참석 이력만 표시. HRD-Net 출결·학생 개인 마이 프로필·다른
+            일지의 참석 이력만 표시. HRD-Net 출결·수강생 개인 마이 프로필·다른
             멘토 평가는 노출되지 않습니다.
           </p>
           <p className="text-fg-muted text-xs leading-[18px]">
@@ -256,12 +260,12 @@ function MenteeDetailBody({
         </div>
       </section>
 
-      {/* 멘토 평가 5축 */}
+      {/* 멘토 평가 4축 */}
       <section className={CARD_SHELL}>
         <header className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5 pb-3.5">
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-fg text-base font-bold">멘토 평가 5축</h3>
+              <h3 className="text-fg text-base font-bold">멘토 평가 4축</h3>
               {evaluation && (
                 <span className="bg-surface-muted text-fg-muted rounded-[5px] px-2 py-[3px] text-[11px] font-bold">
                   작성 {evaluation.writtenAtLabel} · 제출 후 수정 불가
@@ -359,7 +363,7 @@ function MenteeDetailBody({
                   </span>
                 </span>
                 <span className="text-fg-muted text-xs">
-                  팀당 1명 추천 정책에 따라 본 학생이 추천 대상으로 선정됨
+                  팀당 1명 추천 정책에 따라 본 수강생이 추천 대상으로 선정됨
                 </span>
               </div>
             </div>
@@ -419,22 +423,23 @@ function MenteeDetailBody({
       <section className="bg-brand-deep text-on-color flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-4 shadow-[0_6px_18px_rgba(18,23,38,0.16)]">
         <div className="flex flex-col gap-0.5">
           <span className="text-[13px] font-bold">
-            학생 평가 / 추천은 평가·추천 페이지에서 확인 (제출 후 수정 불가)
+            수강생 평가 / 추천은 평가·추천 페이지에서 확인 (제출 후 수정 불가)
           </span>
           <span className="text-on-color/70 text-[11px]">
-            학생 상세는 조회 전용 화면이며, 변경은 평가/추천 단계에서 처리합니다
+            수강생 상세는 조회 전용 화면이며, 변경은 평가/추천 단계에서
+            처리합니다
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to={`/mentor/teams/${student.teamId}/evaluation`}
+            to={`/mentor/teams/${student.teamId}?tab=evaluation`}
             className="border-on-color/70 text-on-color hover:bg-on-color/10 flex items-center gap-1.5 rounded-[9px] border px-3.5 py-2 text-xs font-medium"
           >
             평가로 이동
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
           <Link
-            to={`/mentor/teams/${student.teamId}/recommendation`}
+            to={`/mentor/teams/${student.teamId}?tab=evaluation`}
             className="bg-success text-on-color hover:bg-success/90 flex items-center gap-1.5 rounded-[9px] px-4 py-2 text-xs font-bold"
           >
             추천으로 이동

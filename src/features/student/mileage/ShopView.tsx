@@ -6,7 +6,6 @@ import {
   Gift,
   Minus,
   Plus,
-  Search,
   ShoppingCart,
   Video,
   type LucideIcon,
@@ -22,8 +21,9 @@ import { ProductImage } from './components/ProductImage'
 import type { MileageLimit, MileageProduct, Tone } from './types'
 import { SkeletonCards } from '@/components/ui/Skeleton'
 import { TONE_SOFT } from '@/shared/lib/tone'
+import { SearchInput } from '@/components/ui/SearchInput'
 
-// 마일리지 상품 목록(/student/mileage/products) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
+// 마일리지 상품 목록(/student/mileage?view=shop) — 담기 → 장바구니 → 결제(이전 LMS Shop/Cart 흐름).
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 // 상품 카드(한 줄 5개) — 기본은 그림자 없이 flat, 호버 시에만 그림자로 떠오르게.
@@ -304,15 +304,14 @@ export function ShopView({ onView }: { onView: (v: string | null) => void }) {
                 )
               })}
             </div>
-            <div className="border-border focus-within:border-brand flex items-center gap-1.5 rounded-lg border px-3 py-1.5">
-              <Search className="text-fg-subtle size-3.5" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="검색어 입력"
-                className="text-fg placeholder:text-fg-subtle w-40 bg-transparent text-[13px] outline-none focus-visible:shadow-none"
-              />
-            </div>
+            <SearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="검색어 입력"
+              ariaLabel="상품 검색"
+              // 옆 분류 칩과 높이를 맞춘다 — 이 줄만 목록 위 필터 바보다 낮다.
+              className="h-8 w-52 gap-1.5"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

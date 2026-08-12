@@ -4,7 +4,7 @@ import type { WeekCell } from '../types'
 
 // 주차 선택 그리드 — 블로그 등록/수정 폼 공용. 승인/반려/완료 상태 + 선택 강조.
 const LEGEND: { label: string; cls: string }[] = [
-  { label: '공주', cls: 'bg-success' },
+  { label: '완료', cls: 'bg-success' },
   { label: '승인', cls: 'bg-brand' },
   { label: '반려', cls: 'bg-danger' },
 ]
@@ -19,6 +19,7 @@ export function WeekPicker({
   selectedNo,
   onSelect,
   selectedPill,
+  maxNo,
   locked = false,
 }: {
   cohortLabel: string
@@ -27,6 +28,13 @@ export function WeekPicker({
   selectedNo: number
   onSelect: (no: number) => void
   selectedPill: string
+  /**
+   * 고를 수 있는 마지막 주차 — 아직 오지 않은 주차는 잠근다.
+   *
+   * <p>블로그는 그 주에 쓴 글을 내는 자리다. 다음 주를 고를 수 있으면 아직 하지 않은
+   * 활동을 제출하게 되고, 승인·반려를 붙일 근거도 없다.</p>
+   */
+  maxNo?: number
   /** 수정 모드 — 주차는 기존 1개로 고정(다른 주차 선택 불가, 더보기 숨김) */
   locked?: boolean
 }) {
@@ -67,7 +75,8 @@ export function WeekPicker({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {visibleWeeks.map((w) => {
           const selected = w.no === selectedNo
-          const disabled = locked && !selected
+          const 아직 = maxNo != null && w.no > maxNo
+          const disabled = (locked && !selected) || 아직
           return (
             <button
               key={w.no}
@@ -87,10 +96,16 @@ export function WeekPicker({
               )}
               <span className="text-[14px] font-bold">{w.label}</span>
               <span className="text-[11px] opacity-80">{w.range}</span>
-              {w.note && (
+              {w.note ? (
                 <span className="text-[10px] font-semibold opacity-90">
                   {w.note}
                 </span>
+              ) : (
+                아직 && (
+                  <span className="text-[10px] font-semibold opacity-90">
+                    아직이에요
+                  </span>
+                )
               )}
             </button>
           )

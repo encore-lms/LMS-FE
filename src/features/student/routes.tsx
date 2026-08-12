@@ -7,17 +7,24 @@ import { OnboardingGate } from './onboarding/OnboardingGate'
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
 const CourseHomePage = lazy(() => import('./course/home/CourseHomePage'))
 const MaterialsPage = lazy(() => import('./course/materials/MaterialsPage'))
+const CourseNoticesPage = lazy(() => import('./course/notices/NoticesPage'))
+const CourseNoticeDetailPage = lazy(
+  () => import('./course/notices/NoticeDetailPage'),
+)
 const AssignmentsPage = lazy(
   () => import('./course/assignments/AssignmentsPage'),
 )
 const AssignmentDetailPage = lazy(
   () => import('./course/assignments/AssignmentDetailPage'),
 )
+// 진단 리포트 — LLM 수준 진단 PoV 주간 리포트(교육과정 허브 탭).
+const DiagnosisReportPage = lazy(
+  () => import('./course/diagnosis/DiagnosisReportPage'),
+)
 const MentoringPage = lazy(() => import('./mentoring/MentoringPage'))
 const CertificatePage = lazy(() => import('./certificate/CertificatePage'))
 const CertChangesPage = lazy(() => import('./certificate/ChangesRequestedPage'))
 const CertPublicationPage = lazy(() => import('./certificate/PublicationPage'))
-const CertPreviewPage = lazy(() => import('./certificate/CertPreviewPage'))
 const QuizListPage = lazy(() => import('./quiz/QuizListPage'))
 const AttendanceView = lazy(() => import('./attendance/AttendanceView'))
 const AttendanceFormPage = lazy(
@@ -76,17 +83,28 @@ export const studentRoutes: RouteObject[] = [
       { path: 'dashboard', element: <DashboardPage /> },
       // 사이드바 '나의 과정' → /student/course (강의 홈). 자료실은 하위 탭.
       { path: 'course', element: <CourseHomePage /> },
+      { path: 'course/notices', element: <CourseNoticesPage /> },
+      // 공지 상세 — 스태프 상세와 같은 한 벌(읽기 전용, 2026-08-05).
+      {
+        path: 'course/notices/:noticeId',
+        element: <CourseNoticeDetailPage />,
+      },
       { path: 'course/materials', element: <MaterialsPage /> },
       { path: 'course/assignments', element: <AssignmentsPage /> },
       {
         path: 'course/assignments/:assignmentId',
         element: <AssignmentDetailPage />,
       },
+      { path: 'course/diagnosis', element: <DiagnosisReportPage /> },
       { path: 'mentoring', element: <MentoringPage /> },
       { path: 'certificate', element: <CertificatePage /> },
       { path: 'certificate/changes-requested', element: <CertChangesPage /> },
       { path: 'certificate/publication', element: <CertPublicationPage /> },
       { path: 'quizzes', element: <QuizListPage /> },
+      // 대시보드가 퀴즈 하나를 짚어 보낸다(/student/quizzes/{id}) — 그 퀴즈만 여는 화면은
+      // 없으므로 목록이 받아 해당 줄로 데려간다. 눌렀을 뿐인데 시험이 시작되면 안 되므로
+      // 응시(take)로 바로 보내지 않는다.
+      { path: 'quizzes/:quizId', element: <QuizListPage /> },
       // 이력서 관리 — 목록/작성 현황 + 편집기(Doc/Edit). 셸 안(사이드바 '이력서 관리' 유지).
       { path: 'resume', element: <ResumePage /> },
       { path: 'resume/new', element: <ResumeEditorPage /> },
@@ -118,7 +136,7 @@ export const studentRoutes: RouteObject[] = [
         path: 'troubleshooting/:id/change-requests/new',
         element: <TsChangePage />,
       },
-      // QnA 게시판(목록·작성·상세). FE 선반영 — 실 BE API 없음(mock 전용).
+      // QnA 게시판(목록·작성·상세). learning-service 실 연동(api/qna.ts).
       { path: 'qna', element: <QnaListPage /> },
       { path: 'qna/new', element: <QnaNewPage /> },
       { path: 'qna/:id', element: <QnaDetailPage /> },
@@ -163,5 +181,4 @@ export const studentFullscreenRoutes: RouteObject[] = [
   // 온보딩 마법사 — 자체 헤더·푸터의 풀스크린 플로우라 쉘 밖.
   { path: 'student/onboarding', element: <OnboardingPage /> },
   // 증명서 미리보기 — 사이드바 없이 전체화면으로 증명서 모습만 보여준다(보기 전용).
-  { path: 'student/certificate/preview', element: <CertPreviewPage /> },
 ]

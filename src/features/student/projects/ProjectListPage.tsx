@@ -1,14 +1,15 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useDeleteProject, useProjectList } from '../api/projects'
+import { InvitationCard } from './components/InvitationCard'
 import { ProjectCard } from './components/ProjectCard'
 import { MAX_REPRESENTATIVES, useRepresentatives } from './representatives'
 import { SkeletonCards } from '@/components/ui/Skeleton'
@@ -18,6 +19,8 @@ import {
   useProjectFlow,
   type ProjectPhase,
 } from './workspace/useProjectFlow'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { CourseTabs } from '../course/CourseTabs'
 
 // 생애주기 단계 → 상태 필터 키(작성 중=active는 draft 키 재사용).
 const phaseFilterKey = (phase: ProjectPhase): string =>
@@ -42,7 +45,7 @@ export default function ProjectListPage() {
   const [pendingDelete, setPendingDelete] = useState<ProjectSummary | null>(
     null,
   )
-  usePageHeader(data?.headerTitle ?? '프로젝트', data?.headerSub)
+  useCourseHubHeader()
 
   const phases = useProjectFlow((s) => s.phases)
   const repIds = useRepresentatives((s) => s.ids)
@@ -50,11 +53,17 @@ export default function ProjectListPage() {
   // 각 프로젝트의 현재 단계·대표 후보 여부 — 단계는 진행 단계 우선, 대표 후보는 스토어 기준.
   const projects = useMemo(
     () =>
-      (data?.projects ?? []).map((p) => ({
-        ...p,
-        representative: repIds.includes(p.id),
-        phase: phases[p.id] ?? statusToPhase(p.status),
-      })),
+      (data?.projects ?? []).map((p) => {
+        // 워크스페이스에서 단계를 진행시켰다면 그 단계가 최신이다 — 그때는 서버 이름을 쓰지
+        // 않는다(방금 '작성 완료'로 넘겼는데 카드가 '작성 중'이라고 우기게 된다).
+        const moved = phases[p.id]
+        return {
+          ...p,
+          representative: repIds.includes(p.id),
+          phase: moved ?? statusToPhase(p.status),
+          labelOverride: moved ? undefined : p.statusLabel,
+        }
+      }),
     [data, phases, repIds],
   )
 
@@ -157,6 +166,10 @@ export default function ProjectListPage() {
       className="p-8"
     >
       <div className="flex flex-col gap-5 p-8">
+        <CourseTabs />
+        {/* 받은 초대 — 아직 팀이 아니라 아래 목록에는 없다. 답해야 목록으로 넘어온다. */}
+        <InvitationCard />
+
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
             <h2 className="text-fg text-[16px] font-bold">참여 프로젝트</h2>
@@ -165,16 +178,13 @@ export default function ProjectListPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <label className="border-border text-fg-subtle focus-within:border-brand hidden h-9 items-center gap-2 rounded-lg border bg-white px-3 text-[12px] sm:inline-flex">
-              <Search className="size-3.5 shrink-0" strokeWidth={2} />
-              <input
-                aria-label="프로젝트명·스택 검색"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="프로젝트명·스택 검색"
-                className="placeholder:text-fg-subtle text-fg w-44 bg-transparent outline-none focus-visible:shadow-none"
-              />
-            </label>
+            <SearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="프로젝트명·스택 검색"
+              ariaLabel="프로젝트명·스택 검색"
+              className="hidden w-56 sm:flex"
+            />
             <button
               type="button"
               onClick={() => navigate('/student/projects/new')}
@@ -254,6 +264,7 @@ export default function ProjectListPage() {
                 <ProjectCard
                   project={p}
                   phase={p.phase}
+                  statusLabel={p.labelOverride}
                   onOpen={open}
                   onDelete={setPendingDelete}
                   onToggleRep={onToggleRep}

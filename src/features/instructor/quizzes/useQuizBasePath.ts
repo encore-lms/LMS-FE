@@ -9,3 +9,16 @@ export function useQuizBasePath() {
     ? '/admin/quizzes'
     : '/instructor/quizzes'
 }
+
+/**
+ * 템플릿 화면 경로 — 퀴즈와 같은 역할 프리픽스를 따른다.
+ *
+ * <p>매니저가 /admin 에서 '템플릿 관리'를 눌렀을 때 /instructor 로 보내면 역할 가드에 막혀
+ * 대시보드로 튕긴다.</p>
+ */
+export function useQuizTemplateBasePath() {
+  const { pathname } = useLocation()
+  return pathname.startsWith('/admin')
+    ? '/admin/quiz-templates'
+    : '/instructor/quiz-templates'
+}

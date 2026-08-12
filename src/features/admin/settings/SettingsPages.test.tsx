@@ -5,7 +5,6 @@ import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import AccountsPage from './AccountsPage'
 import HrdApiKeyPage from './HrdApiKeyPage'
-import CourseConfigPage from './CourseConfigPage'
 import CourseAddPage from './CourseAddPage'
 import {
   useOpsAccounts,
@@ -441,47 +440,6 @@ describe('HrdApiKeyPage', () => {
     expect(screen.getByText('API Key 이력 상세')).toBeInTheDocument()
     // '보안 정책' 행 제거됨 → 모달 본문의 '작업/결과' 행으로 모달 렌더 확인
     expect(screen.getByText('작업/결과')).toBeInTheDocument()
-  })
-})
-
-describe('CourseConfigPage', () => {
-  it('과정 목록과 기수별 기능 토글을 렌더한다', () => {
-    renderWith(<CourseConfigPage />)
-    expect(screen.getByText('과정 목록')).toBeInTheDocument()
-    expect(screen.getByText(/기수별 기능 토글 · 2개 기수/)).toBeInTheDocument()
-    // 기수별로 마일리지 토글이 노출된다(36기·35기).
-    expect(
-      screen.getByRole('switch', { name: '36기 마일리지' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('변경 사항 없음')).toBeInTheDocument()
-  })
-
-  it('기수 토글 변경 후 정책 저장은 확인 모달을 거쳐 저장 API를 호출한다', async () => {
-    const user = userEvent.setup()
-    renderWith(<CourseConfigPage />)
-    // 36기 PLAY(true→false) 변경.
-    await user.click(screen.getByRole('switch', { name: '36기 PLAY' }))
-    expect(screen.getByText(/변경 사항 미저장 — 1건/)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /정책 저장/ }))
-    expect(screen.getByText('교육 과정 설정 저장 확인')).toBeInTheDocument()
-    // 저장 확인 → 변경된 기수(36기)만 mileage 유지·play OFF로 전송.
-    await user.click(screen.getByRole('button', { name: '저장' }))
-    expect(updateSettingsMutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        courseId: 'course-sk',
-        cohortId: 'cohort-36',
-        mileageEnabled: true,
-        playEnabled: false,
-      }),
-    )
-  })
-
-  it('취소는 버리기 확인 모달을 연다', async () => {
-    const user = userEvent.setup()
-    renderWith(<CourseConfigPage />)
-    await user.click(screen.getByRole('button', { name: '취소' }))
-    expect(screen.getByText('교육 과정 설정 취소 확인')).toBeInTheDocument()
-    expect(screen.getByText('버린 변경은 복구되지 않음')).toBeInTheDocument()
   })
 })
 

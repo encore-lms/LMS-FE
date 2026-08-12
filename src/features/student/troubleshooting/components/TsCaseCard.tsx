@@ -3,6 +3,7 @@ import { cn } from '@/shared/lib/cn'
 import { InteractiveCard } from '@/components/ui/InteractiveCard'
 import type { TsCase, TsStatus, Tone } from '../types'
 import { TONE_SOFT } from '@/shared/lib/tone'
+import { markdownToText } from '@/components/ui/markdownText'
 
 // 트러블슈팅 사례 카드 — 목록 화면과 프로젝트 워크스페이스(연결된 사례)에서 공용으로 쓴다.
 // 표시는 동일하고, 우상단 액션(라벨/동작)만 사용처가 주입한다.
@@ -10,6 +11,11 @@ const STATUS: Record<TsStatus, Tone> = {
   certified: 'success',
   reviewing: 'warning',
   draft: 'accent',
+}
+
+// 보완 요청·인증 취소는 status 가 draft 라, 톤까지 '작성 중'과 같으면 목록에서 구분되지 않는다.
+function statusTone(c: TsCase): Tone {
+  return c.reviewStatus ? 'danger' : STATUS[c.status]
 }
 
 export function TsCaseCard({
@@ -63,7 +69,7 @@ export function TsCaseCard({
           <span
             className={cn(
               'rounded px-2 py-0.5 text-[11px] font-bold',
-              TONE_SOFT[STATUS[c.status]],
+              TONE_SOFT[statusTone(c)],
             )}
           >
             {c.statusLabel}
@@ -125,8 +131,9 @@ export function TsCaseCard({
               <ArrowRight className="size-3" />
             </button>
           </div>
-          {/* 강사 반려 사례 — 메인 버튼 아래에 '반려 사유' 노출. 클릭=사유 모달, 호버=사유 미리보기. */}
-          {c.rejectionReason && onShowReason && (
+          {/* 강사가 돌려보낸 사례 — 사유를 목록에서 바로 본다. 클릭=사유 모달, 호버=미리보기.
+              예전에는 상세로 들어가야만 무엇을 고쳐야 하는지 알 수 있었다. */}
+          {c.reviewComment && onShowReason && (
             <div className="group/rj relative">
               <button
                 type="button"
@@ -137,13 +144,15 @@ export function TsCaseCard({
                 className="text-danger inline-flex items-center gap-1 text-[11px] font-semibold"
               >
                 <AlertCircle className="size-3" />
-                반려 사유
+                {c.reviewStatus === 'revoked' ? '취소 사유' : '보완 사유'}
               </button>
               <div className="border-border bg-surface text-fg-muted invisible absolute top-full right-0 z-20 mt-1 w-64 rounded-lg border p-3 text-left text-[11px] leading-4 opacity-0 shadow-lg transition group-hover/rj:visible group-hover/rj:opacity-100">
                 <span className="text-danger mb-1 block text-[10px] font-bold">
-                  강사 반려 사유
+                  {c.reviewStatus === 'revoked'
+                    ? '강사 인증 취소 사유'
+                    : '강사 보완 요청 사유'}
                 </span>
-                {c.rejectionReason}
+                {c.reviewComment}
               </div>
             </div>
           )}
@@ -155,9 +164,11 @@ export function TsCaseCard({
       </span>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         {[
-          { label: '상황', text: c.situation },
-          { label: '해결', text: c.resolution },
-          { label: '결과', text: c.result },
+          // 카드는 3줄 요약 — 마크다운을 렌더하면 제목이 카드보다 커지고 목록 마커가 줄을
+          // 먹는다. 기호만 걷어내고 내용을 남긴다.
+          { label: '상황', text: markdownToText(c.situation) },
+          { label: '해결', text: markdownToText(c.resolution) },
+          { label: '결과', text: markdownToText(c.result) },
         ].map((b) => (
           <div
             key={b.label}

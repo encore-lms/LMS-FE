@@ -78,6 +78,20 @@ export function ReputationDetailModal({
             </dl>
           </div>
 
+          {/* 강사가 실제 남긴 추천서 문구 — 수집 여부만으론 내용 확인이 안 돼 함께 보여준다 */}
+          {student.endorsementStatus === 'collected' &&
+            student.endorsementComment && (
+              <div className="border-border rounded-xl border p-4">
+                <p className="text-fg mb-2 text-sm font-bold">강사 추천서 내용</p>
+                <p className="text-fg-subtle mb-2 text-xs">
+                  {student.endorsementBy}
+                </p>
+                <p className="text-fg text-sm leading-6 whitespace-pre-wrap">
+                  {student.endorsementComment}
+                </p>
+              </div>
+            )}
+
           {/* 멘토가 실제 남긴 평가 — 5축 점수·코멘트·추천 사유 */}
           <MentorEvaluationDetail studentId={student.id} />
         </div>

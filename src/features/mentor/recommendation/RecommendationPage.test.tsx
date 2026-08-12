@@ -1,19 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import RecommendationPage from './RecommendationPage'
-import RecommendationsSubmittedPage from './RecommendationsSubmittedPage'
 import {
-  useRecommendationSubmissions,
   useSaveRecommendationDraft,
   useSubmitRecommendation,
   useTeamRecommendation,
 } from '../api/evaluations'
-import {
-  buildRecommendationsData,
-  buildTeamRecommendationSheet,
-} from '../mockDb'
+import { buildTeamRecommendationSheet } from '../mockDb'
 import type { MentorRecommendationSheetData } from '../types'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -42,20 +37,14 @@ function mockSheet(sheet: MentorRecommendationSheetData | null) {
   } as unknown as SheetHook)
 }
 
+const onSubmitted = vi.fn()
+
 function renderPage(teamId: string) {
+  onSubmitted.mockClear()
   return render(
-    <MemoryRouter initialEntries={[`/mentor/teams/${teamId}/recommendation`]}>
+    <MemoryRouter>
       <ToastProvider>
-        <Routes>
-          <Route
-            path="/mentor/teams/:teamId/recommendation"
-            element={<RecommendationPage />}
-          />
-          <Route
-            path="/mentor/recommendations"
-            element={<div>추천 제출 완료 페이지</div>}
-          />
-        </Routes>
+        <RecommendationPage teamId={teamId} onSubmitted={onSubmitted} />
       </ToastProvider>
     </MemoryRouter>,
   )
@@ -120,7 +109,7 @@ describe('RecommendationPage', () => {
     expect(submitButton).toBeEnabled()
     await user.click(submitButton)
 
-    expect(screen.getByText('추천 선택을 최종 제출할까요?')).toBeInTheDocument()
+    expect(screen.getByText('추천 선택을 제출할까요?')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '최종 제출' }))
     expect(submitAsync).toHaveBeenCalledWith({
       teamId: 'team_nlp',
@@ -128,10 +117,12 @@ describe('RecommendationPage', () => {
         mode: 'recommend',
         studentId: 'stu_han_y',
         summary: '분석 파이프라인 전 구간을 주도한 핵심 기여자입니다.',
-        notify: true,
+        // 추천 알림은 발송하지 않는다(2026-08-04) — 초안에 true 가 남아 있어도 꺼서 보낸다.
+        notify: false,
       },
     })
-    expect(await screen.findByText('추천 제출 완료 페이지')).toBeInTheDocument()
+    // 제출 후 화면을 옮기지 않는다 — 팀 상세 탭 안에서 완료 안내로 이어진다(2026-08-05).
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalled())
   })
 
   it("'추천하지 않음' — 팀원 그리드 비활성 + 사유 없이 제출(payload mode none)", async () => {
@@ -151,74 +142,50 @@ describe('RecommendationPage', () => {
     await user.click(screen.getByRole('button', { name: '최종 제출' }))
     expect(submitAsync).toHaveBeenCalledWith({
       teamId: 'team_nlp',
-      payload: { mode: 'none', studentId: null, summary: '', notify: true },
+      payload: { mode: 'none', studentId: null, summary: '', notify: false },
     })
   })
 
-  it('잠금 — 평가 미제출 팀은 추천 대신 평가 작성 이동 안내를 표시한다', () => {
-    // 데이터마트 팀 — 본 테스트 파일 모듈 상태에선 평가 미제출(잠금)
+  // 정책 완화(2026-08-04) — 평가 선행 게이트 폐기, 평가 미작성이어도 폼이 열린다.
+  it('상시 추천 — 평가 미제출 팀도 폼이 열리고 후보 점수는 미작성으로 표시한다', () => {
+    // 데이터마트 팀 — 본 테스트 파일 모듈 상태에선 평가 미제출(점수 없음)
     mockSheet(buildTeamRecommendationSheet('team_dm'))
     renderPage('team_dm')
+    expect(screen.getByText('추천 모드 선택')).toBeInTheDocument()
+    expect(screen.getAllByText('평가 미작성').length).toBeGreaterThan(0)
     expect(
-      screen.getByText('평가 제출 후 추천을 선택할 수 있어요'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: '평가 작성으로 이동' }),
-    ).toHaveAttribute('href', '/mentor/teams/team_dm/evaluation')
+      screen.queryByText('평가 제출 후 추천을 선택할 수 있어요'),
+    ).not.toBeInTheDocument()
   })
 
-  it('제출 후 수정 불가 — 재진입 시 제출 요약 안내만 노출한다', () => {
+  // 계약 종료 마감 — 선택값은 보이되 입력·제출 전부 잠금.
+  it('계약 종료 마감 — 읽기 전용 폼 + 제출 마감 CTA·칩을 보여준다', () => {
+    const base = buildTeamRecommendationSheet('team_nlp')!
+    mockSheet({
+      ...base,
+      submissionClosed: true,
+      submissionDeadlineLabel: '2026-08-01 까지',
+    })
+    renderPage('team_nlp')
+    expect(
+      screen.getByText('제출 마감 — 계약 종료 (2026-08-01 까지)'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /제출 마감 — 계약 종료/ }),
+    ).toBeDisabled()
+    expect(screen.getByRole('radio', { name: /팀원 1명 추천/ })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: '한예린 추천' })).toBeDisabled()
+  })
+
+  // 정책 완화(2026-08-04) — 제출본은 값이 채워진 폼으로 열려 자세히 보기 · 재제출을 겸한다.
+  it('제출본 재진입 — 선택값 채워진 폼 + 수정 재제출 CTA를 노출한다', () => {
     mockSheet(buildTeamRecommendationSheet('team_nlp'))
     renderPage('team_nlp')
-    expect(screen.getByText('추천이 이미 제출되었습니다')).toBeInTheDocument()
+    expect(screen.getByText(/제출됨 · /)).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: '제출 요약 보기' }),
-    ).toHaveAttribute('href', '/mentor/recommendations?teamId=team_nlp')
-    expect(screen.queryByRole('button', { name: /추천 제출/ })).toBeNull()
-  })
-})
-
-describe('RecommendationsSubmittedPage', () => {
-  it('?toast=submitted — 공통 토스트 + 추천 대상·증명서 반영 요약을 렌더한다', async () => {
-    vi.mocked(useRecommendationSubmissions).mockReturnValue({
-      data: buildRecommendationsData(),
-      isPending: false,
-      isError: false,
-    } as unknown as ReturnType<typeof useRecommendationSubmissions>)
-    render(
-      <MemoryRouter
-        initialEntries={[
-          '/mentor/recommendations?teamId=team_nlp&toast=submitted',
-        ]}
-      >
-        <ToastProvider>
-          <Routes>
-            <Route
-              path="/mentor/recommendations"
-              element={<RecommendationsSubmittedPage />}
-            />
-          </Routes>
-        </ToastProvider>
-      </MemoryRouter>,
-    )
-
-    expect(
-      await screen.findByText(
-        '추천 선택이 제출되었습니다. 팀당 1명 추천 정책으로 저장됩니다.',
-      ),
+      screen.getByRole('button', { name: /수정 재제출/ }),
     ).toBeInTheDocument()
-    expect(screen.getByText('추천 선택이 제출되었습니다')).toBeInTheDocument()
-    expect(screen.getByText('한예린 (PM)')).toBeInTheDocument()
-    expect(screen.getByText(/자 · 필수 충족/)).toBeInTheDocument()
-    expect(
-      screen.getByText('증명서 전체 공개 + 인증 완료 + 최신화 스냅샷 기준'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: '평가·추천 목록' }),
-    ).toHaveAttribute('href', '/mentor/evaluations')
-    expect(screen.getByRole('link', { name: /멘토 대시보드/ })).toHaveAttribute(
-      'href',
-      '/mentor',
-    )
+    // 제출본의 추천 대상(한예린)이 라디오에 선택된 채 열린다.
+    expect(screen.getByRole('radio', { name: '한예린 추천' })).toBeChecked()
   })
 })

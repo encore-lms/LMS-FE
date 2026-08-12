@@ -6,11 +6,14 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
+import type { CohortScope } from './scope'
+import { AttendanceIssueCell } from './AttendanceIssueCell'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { HrdAttendanceStatus, StudentAttendanceRow } from '@/shared/types'
 import { useStudentAttendance } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 출결 필터(이전 LMS 기준). 미입실=입실 없음, 미퇴실=퇴실 없음.
 type AttendanceFilter = 'all' | 'late' | 'absent' | 'no_checkin' | 'no_checkout'
@@ -44,10 +47,13 @@ function defaultDate(start: string | null, end: string | null): string {
 }
 
 // 출결 탭 — HRD-Net 일별 출결 관제. 과정/기수/날짜 선택 → 학생별 입퇴실·상태. (Figma 1457:10799)
-export function AttendanceTab() {
+// scope 를 받으면(기수 허브 임베드) 과정·기수는 그 값으로 고정하고 선택 컨트롤을 감춘다 —
+// 기수를 골라 들어온 화면에서 같은 선택을 또 시키면 서로 어긋날 수 있다.
+export function AttendanceTab({ scope }: { scope?: CohortScope }) {
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const courseId =
+    scope?.courseId ?? selectedCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   // 기본 기수 = 오늘이 기간에 포함된 운영 기수(없으면 첫 기수). 시작일 DESC라 [0]은 최신(미개강일 수 있음).
@@ -57,7 +63,7 @@ export function AttendanceTab() {
     const operating = cohorts.find((c) => c.startDate <= t && t <= c.endDate)
     return operating?.id ?? cohorts[0]?.id ?? null
   }, [courseConfig?.cohorts])
-  const cohortId = selectedCohortId ?? defaultCohortId
+  const cohortId = scope?.cohortId ?? selectedCohortId ?? defaultCohortId
 
   const selectedCohort = courseConfig?.cohorts?.find((c) => c.id === cohortId)
   // 기수 기간 기준 기본 일자(기수 바뀌면 자동 갱신).
@@ -161,40 +167,51 @@ export function AttendanceTab() {
         </span>
       ),
     },
+    {
+      // 그 날 낸 출결 폼 — 유형은 바로 보이고 사유·증빙은 아이콘 호버로 편다.
+      key: 'issue',
+      header: '이슈사항',
+      className: 'w-44',
+      cell: (r) => <AttendanceIssueCell issue={r.issue} />,
+    },
   ]
 
-  // 선택 컨트롤(과정·기수·월) — 항상 표시.
+  // 선택 컨트롤(과정·기수·월). 임베드 시 과정·기수는 상위에서 정해져 일자만 남는다.
   const controls = (
     <div className="flex flex-wrap items-center gap-2">
-      <Select
-        aria-label="과정 선택"
-        value={courseId}
-        onChange={(v) => {
-          setSelectedCourseId(v)
-          setSelectedCohortId(null)
-          setSelectedDate(null)
-        }}
-        options={(courses ?? []).map((c) => ({
-          value: c.courseId,
-          label: c.title,
-        }))}
-        placeholder="등록 과정 없음"
-        className="h-11"
-      />
-      <Select
-        aria-label="기수 선택"
-        value={cohortId}
-        onChange={(v) => {
-          setSelectedCohortId(v)
-          setSelectedDate(null)
-        }}
-        options={(courseConfig?.cohorts ?? []).map((c) => ({
-          value: c.id,
-          label: `${c.cohortNo}기`,
-        }))}
-        placeholder="기수 없음"
-        className="h-11"
-      />
+      {!scope && (
+        <>
+          <Select
+            aria-label="과정 선택"
+            value={courseId}
+            onChange={(v) => {
+              setSelectedCourseId(v)
+              setSelectedCohortId(null)
+              setSelectedDate(null)
+            }}
+            options={(courses ?? []).map((c) => ({
+              value: c.courseId,
+              label: c.title,
+            }))}
+            placeholder="등록 과정 없음"
+            className="h-11"
+          />
+          <Select
+            aria-label="기수 선택"
+            value={cohortId}
+            onChange={(v) => {
+              setSelectedCohortId(v)
+              setSelectedDate(null)
+            }}
+            options={(courseConfig?.cohorts ?? []).map((c) => ({
+              value: c.id,
+              label: `${c.cohortNo}기`,
+            }))}
+            placeholder="기수 없음"
+            className="h-11"
+          />
+        </>
+      )}
       {/* DateTimePicker 루트가 w-full이라 폭 고정 래퍼로 한 줄 유지(좁아지면 wrap). */}
       <div className="w-40">
         <DateTimePicker
@@ -280,12 +297,11 @@ export function AttendanceTab() {
                   </button>
                 ))}
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="이름·출결 상태 검색"
-                aria-label="출결 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="출결 검색"
               />
             </div>
 

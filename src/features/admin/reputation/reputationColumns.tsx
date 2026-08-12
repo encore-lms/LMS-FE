@@ -147,8 +147,12 @@ export function buildReputationColumns({
       header: '액션',
       className: 'w-52',
       // 한 줄 유지 — 푸시 버튼은 대상만 짧게(툴팁에 전체 라벨), 상세는 끝에 고정.
+      // 행 전체가 상세 진입점이라, 액션 셀 클릭(푸시 등)은 행 클릭으로 번지지 않게 막는다.
       cell: (s) => (
-        <div className="flex items-center gap-1.5">
+        <div
+          className="flex items-center gap-1.5"
+          onClick={(e) => e.stopPropagation()}
+        >
           {s.pushTargets.length === 0 ? (
             <span className="text-success inline-flex items-center gap-1 text-[13px] font-semibold">
               <Check className="h-3.5 w-3.5" />

@@ -4,8 +4,26 @@
 import type { Tone } from '@/shared/lib/tone'
 export type { Tone }
 
-export type ProjectStatus = 'certified' | 'reviewing' | 'draft'
+// BE 가 보내는 목록 상태 — 'completed'(기간이 끝났을 뿐 인증 요청 전)를 빠뜨리면
+// 그 프로젝트가 전부 '작성 중'으로 떨어진다.
+export type ProjectStatus = 'certified' | 'reviewing' | 'completed' | 'draft'
 export type ProjectKind = 'team' | 'personal'
+
+/**
+ * 내가 받은 프로젝트 초대.
+ *
+ * <p>초대는 제안이라 받아들이기 전에는 프로젝트 목록에 나타나지 않는다 — 아직 팀이 아니다.
+ * 어느 프로젝트인지·누가 불렀는지가 판단의 전부라 그 둘을 함께 받는다.</p>
+ */
+export interface ProjectInvitation {
+  projectId: string
+  title: string
+  /** 부른 사람(PM) 이름 — 모르면 빈 문자열. */
+  invitedBy: string
+  /** 이미 팀이 된 사람 수(초대자 포함). */
+  memberCount: number
+  invitedAt: string
+}
 
 /** 목록 상단 통계 카드 */
 export interface ProjectStat {
@@ -30,7 +48,7 @@ export interface ProjectSummary {
   kind: ProjectKind
   kindLabel: string // "팀" | "개인"
   status: ProjectStatus
-  statusLabel: string // "인증 완료" | "검토 중" | "작성 중"
+  statusLabel: string // "인증 완료" | "검토 중" | "작성 완료" | "보완 요청" | "작성 중"
   representative: boolean // 대표 후보
   accentTone: Tone // 좌측 바 색
   title: string
@@ -102,9 +120,13 @@ export interface WsColumn {
   tasks: WsTask[]
 }
 export interface WsCalEvent {
+  /** 일정 id — 수정·삭제 대상 지목용. 예전 응답엔 없어 optional. */
+  id?: string
   day: number
   label: string
   tone: Tone
+  /** 실제 일정 날짜(YYYY-MM-DD). day 만으로는 다른 달 일정을 가릴 수 없다. */
+  date?: string
 }
 export interface WsUpcoming {
   date: string
@@ -112,12 +134,17 @@ export interface WsUpcoming {
   tone: Tone
 }
 export interface WsMeeting {
+  id?: string
   title: string
   meta: string
+  /** 목록 카드용 — 80자에서 잘린 값. 상세에서는 body 를 쓴다. */
   summary: string
+  /** 회의록 원문. 예전 응답에는 없다 — 없으면 summary 로 물러난다. */
+  body?: string
   status: Badge
 }
 export interface WsDoc {
+  id?: string
   title: string
   meta: string
   status: Badge
@@ -139,8 +166,11 @@ export interface WsMember {
   role: string // "백엔드·인프라"
   kind: 'PM' | '팀원'
   avatarTone: Tone
+  /** 주고받은 상호평가 제출본이 있는 팀원 — 지우면 그 평가가 갈 곳을 잃어 삭제할 수 없다 */
+  hasPeerRecord?: boolean
 }
 export interface WsMetric {
+  id?: string
   label: string
   before: string
   after: string
@@ -151,8 +181,19 @@ export interface WsPeerTarget {
   memberId?: string
   name: string
   role: string
+  /** 팀에서 받은 평균 점수(표시용). 내가 준 점수는 myEval 을 쓴다. */
   axes: { key: string; score: number }[]
   tags: Badge[]
+  /** 내가 이 팀원에게 남긴 점수·코멘트(없으면 null) — 화면 복원용. */
+  myEval?: MyPeerEval | null
+}
+
+/** 내가 남긴 상호평가. draft 면 임시저장본.
+ * scores 는 4축 순서(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감, 2026-08-06 멘토 축 사전 통일) — 미입력 0. */
+export interface MyPeerEval {
+  scores: number[]
+  comment: string | null
+  draft: boolean
 }
 export interface WsCheck {
   label: string

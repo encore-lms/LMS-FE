@@ -17,6 +17,7 @@ import {
   useSaveQuiz,
   useDeleteQuiz,
   useQuizCategoryOptions,
+  useRemindSubmission,
 } from '../api/quizzes'
 import { useQuizTemplates, useQuizTemplateDetail } from '../api/quizTemplates'
 import { useAssignmentCohortOptions } from '../api/assignments'
@@ -268,6 +269,7 @@ function mockAll() {
   vi.mocked(useSaveQuiz).mockReturnValue(mut())
   vi.mocked(useDeleteQuiz).mockReturnValue(mut())
   vi.mocked(useSaveGrading).mockReturnValue(mut())
+  vi.mocked(useRemindSubmission).mockReturnValue(mut())
   vi.mocked(useCohortRoster).mockReturnValue(
     ok([
       { userId: 'u-1', name: '박지훈' },
@@ -315,7 +317,9 @@ describe('QuizListPage (§5)', () => {
     expect(screen.getByText('알고리즘 기초 #3')).toBeInTheDocument()
     expect(screen.getAllByText('MANUAL').length).toBeGreaterThan(0)
     expect(screen.getByText('수동 대기 9')).toBeInTheDocument()
-    expect(screen.getByText(/총 14개 · 수동 대기 15건/)).toBeInTheDocument()
+    // 카운트·수동 대기가 ToolbarCount + 별도 span 으로 나뉘어(2026-08-07 툴바 UX) 따로 확인한다.
+    expect(screen.getByText(/총 14/)).toBeInTheDocument()
+    expect(screen.getByText(/수동 대기 15건/)).toBeInTheDocument()
   })
 
   it('제출 있는 퀴즈는 삭제 비활성, 임시저장은 제출 현황 비활성', () => {
@@ -412,6 +416,26 @@ describe('SubmissionsPage (§8)', () => {
     expect(screen.getByText('박지훈')).toBeInTheDocument()
     expect(screen.queryByText('김민준')).not.toBeInTheDocument()
   })
+
+  it('재독촉 알림은 대상 수강생에게 발송 후 전송됨으로 잠긴다', async () => {
+    const user = userEvent.setup()
+    const mutate = vi.fn((_id: string, opts?: { onSuccess?: () => void }) =>
+      opts?.onSuccess?.(),
+    )
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions', () => {
+      vi.mocked(useRemindSubmission).mockReturnValue({
+        mutate,
+        isPending: false,
+      } as unknown as ReturnType<typeof useRemindSubmission>)
+    })
+    await user.click(screen.getByRole('button', { name: '재독촉 알림' }))
+    // 미제출 행(u-6, 송하늘)의 studentUserId로 발송된다.
+    expect(mutate).toHaveBeenCalledWith('u-6', expect.anything())
+    expect(
+      await screen.findByText(/송하늘 님에게 제출 독촉 알림을 보냈어요/),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '알림 전송됨' })).toBeDisabled()
+  })
 })
 
 describe('GradingPage (§9)', () => {
@@ -429,6 +453,51 @@ describe('GradingPage (§9)', () => {
     expect(completeBtn).toBeDisabled()
     await user.type(screen.getByLabelText('문제 2 점수'), '20')
     expect(completeBtn).toBeEnabled()
+  })
+
+  it('읽기 전용(view=1) — 입력 비활성·저장 버튼 없이 목록 복귀만', () => {
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade?view=1')
+    expect(screen.getByLabelText('문제 2 점수')).toBeDisabled()
+    expect(screen.getByLabelText('문제 2 피드백')).toBeDisabled()
+    expect(screen.queryByRole('button', { name: '채점 완료' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '임시 저장' })).toBeNull()
+    expect(screen.getByRole('button', { name: '목록으로' })).toBeInTheDocument()
+    expect(screen.getByText(/읽기 전용/)).toBeInTheDocument()
+  })
+
+  it('진행률은 수동 채점 기준 라벨이고 미확정이면 임시 점수다', () => {
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade')
+    expect(screen.getByText('수동 채점 진행률')).toBeInTheDocument()
+    // q-3가 pending이라 총점은 아직 임시.
+    expect(screen.getByText('임시 점수')).toBeInTheDocument()
+  })
+
+  it('자동 채점 전용 제출은 대상 없음 표기와 확정 점수를 보여준다', () => {
+    renderAt(
+      '/instructor/quizzes/quiz-algo-3/submissions/sub-1/grade?view=1',
+      () => {
+        vi.mocked(useGradingDetail).mockReturnValue(
+          ok({
+            ...grading,
+            items: [],
+            totalManualCount: 0,
+            provisionalScore: 20,
+            totalScore: 20,
+          }) as unknown as ReturnType<typeof useGradingDetail>,
+        )
+      },
+    )
+    expect(screen.getByText('대상 문항 없음 · 자동 채점')).toBeInTheDocument()
+    expect(screen.getByText('확정 점수')).toBeInTheDocument()
+    expect(screen.queryByText('임시 점수')).toBeNull()
+  })
+
+  it('제출 현황의 [결과 보기]가 읽기 전용 채점 결과를 연다', async () => {
+    const user = userEvent.setup()
+    renderAt('/instructor/quizzes/quiz-algo-3/submissions')
+    await user.click(screen.getByRole('button', { name: '결과 보기' }))
+    expect(await screen.findByText(/읽기 전용/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '채점 완료' })).toBeNull()
   })
 })
 

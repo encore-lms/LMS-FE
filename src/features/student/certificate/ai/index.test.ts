@@ -3,7 +3,7 @@ import type { CertificateScoreResult } from './types'
 import { CERTIFICATE_MOCK_STUDENT_ID, fetchCertificateScore } from './index'
 
 const result: CertificateScoreResult = {
-  policyVersion: '2026.07.21-six-axis-persistence-v4',
+  policyVersion: '2026.08.05-six-axis-four-rater-v2',
   calculatedAt: '2026-07-16',
   student: {
     studentId: 'student-1',
@@ -41,7 +41,7 @@ afterEach(() => {
 })
 
 describe('fetchCertificateScore', () => {
-  it('발급 조건을 충족하는 박준서를 기본 시연 수강생으로 사용한다', () => {
+  it('발급 조건을 충족하는 기본 시연 수강생을 사용한다', () => {
     expect(CERTIFICATE_MOCK_STUDENT_ID).toBe(
       'd9552119-7a27-5be5-b2a4-1d82a709cfb9',
     )
@@ -101,15 +101,195 @@ describe('fetchCertificateScore', () => {
 
     expect(score.status).toBe('READY')
     expect(score.student.studentId).toBe('demo-student')
+    expect(score.student.studentName).toBe('황수빈')
+    expect(score.student.courseName).toBe('SK네트웍스 Family AI 캠프')
+    expect(score.student.cohortName).toBe('34기')
+    // 6축 평균과 일치해야 한다 — 어긋나면 공개 검증 페이지와도 어긋난다.
+    expect(score.overallScore).toBe(94.4)
+    expect(score.overallRelative).toMatchObject({
+      status: 'READY',
+      populationSize: 300,
+    })
+    expect(score.overallRelative.topPercent).not.toBeNull()
+    // 종합 점수는 6축 평균이어야 한다. 어긋나면 수강생 미리보기와 공개 검증(/verify)이
+    // 서로 다른 숫자를 보여주게 되고, 검증자는 문서를 믿지 않는다.
+    const axisAvg =
+      Math.round(
+        (score.axes.reduce((sum, axis) => sum + (axis.score ?? 0), 0) /
+          score.axes.length) *
+          10,
+      ) / 10
+    expect(score.overallScore).toBe(axisAvg)
+
+    expect(score.axes.map((axis) => axis.key)).toEqual([
+      '기술·기술기여',
+      '소통·협업·팀워크',
+      '문제해결',
+      '책임감',
+      '학습지속성',
+      '성취도 평가',
+    ])
     expect(score.axes.every((axis) => axis.evidence.length > 0)).toBe(true)
+    expect(
+      score.axes.every(
+        (axis) =>
+          axis.relative.status === 'READY' &&
+          axis.relative.populationSize === 300 &&
+          axis.relative.percentile !== null &&
+          axis.relative.topPercent !== null,
+      ),
+    ).toBe(true)
+    expect(
+      score.axes
+        .slice(0, 4)
+        .every(
+          (axis) =>
+            axis.comparison.peerScore !== null &&
+            axis.comparison.mentorScore !== null &&
+            axis.comparison.instructorScore !== null &&
+            axis.comparison.managerScore !== null,
+        ),
+    ).toBe(true)
     expect(tabs.studentId).toBe('demo-student')
     expect(tabs.tech.assessments.length).toBeGreaterThan(0)
-    expect(tabs.tech.certifications.length).toBeGreaterThan(0)
+    expect(tabs.tech.assessmentAveragePopulationSize).toBe(300)
+    expect(
+      tabs.tech.assessments.every(
+        (assessment) =>
+          assessment.comparisonCount === 300 &&
+          assessment.cohortAverageScore !== null &&
+          assessment.relativeScore !== null,
+      ),
+    ).toBe(true)
+    expect(
+      tabs.tech.categories.every(
+        (category) =>
+          category.populationSize === 300 && category.topPercent !== null,
+      ),
+    ).toBe(true)
+    // 실측 — 성취도(역량 점검) 2회 + CS 점검 4회.
+    expect(
+      tabs.tech.assessments
+        .filter((assessment) => assessment.assessmentType === 'CS')
+        .map((assessment) => assessment.score),
+    ).toEqual([85, 80, 90, 95])
+    expect(
+      tabs.tech.categories
+        .filter((category) => category.assessmentType === 'ACHIEVEMENT')
+        .map((category) => [category.label, category.score]),
+    ).toEqual([
+      ['Python', 100],
+      ['SQL', 96],
+    ])
+    expect(
+      tabs.tech.categories
+        .filter((category) => category.assessmentType === 'CS')
+        .map((category) => category.label),
+    ).toEqual(['자료구조·알고리즘', '운영체제', '네트워크', '데이터베이스'])
+    expect(
+      tabs.tech.certifications.map(({ name, grade, score, status }) => ({
+        name,
+        grade,
+        score,
+        status,
+      })),
+    ).toEqual([
+      {
+        name: 'SQLD 개발자 자격',
+        grade: '최종합격',
+        score: null,
+        status: 'APPROVED',
+      },
+      {
+        name: 'PCCE 파이썬 코딩 실력 인증 3급',
+        grade: '3급',
+        score: null,
+        status: 'APPROVED',
+      },
+    ])
     expect(tabs.problem.peerTags.length).toBeGreaterThan(0)
+    expect(tabs.problem.cases).toHaveLength(3)
+    expect(
+      tabs.problem.cases.every(
+        (item) =>
+          item.situation.length > 20 &&
+          item.resolution.length > 20 &&
+          item.result.length > 20 &&
+          item.summary?.generatedBy === 'AI',
+      ),
+    ).toBe(true)
+    expect(tabs.problem.cases.filter((item) => item.independent)).toHaveLength(
+      1,
+    )
     expect(analysis.projects.projects.length).toBeGreaterThan(0)
-    expect(analysis.problem.troubleshooting.evidence.length).toBeGreaterThan(0)
+    expect(analysis.troubleshooting.groups).toHaveLength(3)
+    const educationPeriod = ['2026-06-16', '2026-12-08'] as const
+    const isInEducationPeriod = (value: string) =>
+      value.slice(0, 10) >= educationPeriod[0] &&
+      value.slice(0, 10) <= educationPeriod[1]
+    expect(
+      tabs.tech.assessments.every((item) =>
+        isInEducationPeriod(item.submittedAt),
+      ),
+    ).toBe(true)
+    expect(
+      tabs.problem.cases.every((item) => isInEducationPeriod(item.createdAt)),
+    ).toBe(true)
+    expect(
+      analysis.projects.projects.every(
+        (project) =>
+          isInEducationPeriod(project.period.startedAt) &&
+          isInEducationPeriod(project.period.endedAt),
+      ),
+    ).toBe(true)
     expect(analysis.ontology.nodes.length).toBeGreaterThan(0)
     expect(analysis.ontology.edges.length).toBeGreaterThan(0)
+    expect(
+      analysis.ontology.nodes.find((node) => node.kind === 'self')?.label,
+    ).toBe('황수빈')
+    const ontologyNodeIds = analysis.ontology.nodes.map((node) => node.id)
+    // 실측 그래프 — Python 과목 아래 pandas 스킬, 전처리 방법이 프로젝트에 적용됐다.
+    expect(ontologyNodeIds.indexOf('py')).toBeLessThan(
+      ontologyNodeIds.indexOf('pandas'),
+    )
+    expect(
+      analysis.ontology.nodes.find((node) => node.id === 'map')?.label,
+    ).toBe('채용 스택 지도')
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'py',
+        target: 'pandas',
+        type: 'FOLLOWED_BY',
+      }),
+    )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'db',
+        target: 'pg',
+        type: 'FOLLOWED_BY',
+      }),
+    )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'map',
+        target: 'prep',
+        type: 'APPLIED',
+      }),
+    )
+    expect(analysis.ontology.edges).toContainEqual(
+      expect.objectContaining({
+        source: 'map',
+        target: 'jobmkt',
+        type: 'BELONGS_TO',
+      }),
+    )
+    // 학생-방법 직접 연결은 두지 않는다 — 방법은 과목·프로젝트를 거쳐 연결된다.
+    expect(
+      analysis.ontology.edges.some(
+        (edge) => edge.source === 'me' && ['prep', 'cv'].includes(edge.target),
+      ),
+    ).toBe(false)
+    expect(JSON.stringify({ score, tabs, analysis })).not.toContain('박준서')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

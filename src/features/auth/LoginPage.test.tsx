@@ -123,8 +123,8 @@ describe('LoginPage', () => {
         token: 'tok',
         user: {
           id: '1',
-          email: 'rkdtk123@naver.com',
-          name: '박강사',
+          email: 'parkjihoon@playdata.io',
+          name: '박지훈',
           role: 'INSTRUCTOR',
         },
       },
@@ -133,8 +133,8 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: '강사' }))
     await waitFor(() => {
       expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
-        userId: 'rkdtk123@naver.com',
-        password: 'Lms@RAmGcDJBCqw9',
+        userId: 'parkjihoon@playdata.io',
+        password: 'PlaydataDemo2026!',
       })
     })
     expect(useAuthStore.getState().user?.role).toBe('INSTRUCTOR')
@@ -211,7 +211,7 @@ describe('LoginPage', () => {
         user: {
           id: 's1',
           email: '',
-          name: '박수진',
+          name: '황수빈',
           role: 'STUDENT',
           mustChangePassword: true,
         },
@@ -232,7 +232,7 @@ describe('LoginPage', () => {
     )
     await user.type(
       screen.getByPlaceholderText('이메일 또는 수강생 코드'),
-      '100058794696',
+      '100051503818',
     )
     await user.type(screen.getByPlaceholderText('••••••••••'), 'Temp1234!')
     await user.click(screen.getByRole('button', { name: /로그인/ }))

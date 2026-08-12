@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileText, Link2 } from 'lucide-react'
+import { AlertTriangle, FileText, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { Markdown } from '@/components/ui/Markdown'
 import { Modal } from '@/components/ui/Modal'
 import { usePageHeader } from '@/shared/store'
 import { apiClient } from '@/shared/api'
@@ -23,6 +24,7 @@ import {
   type TsListData,
   type TsProjectLink,
 } from './types'
+import { useTsChangeState } from './api/changeRequests'
 import { ProjectLinkModal } from './components/ProjectLinkModal'
 import { CaseContentForm } from './components/CaseContentForm'
 import { TONE_SOFT } from '@/shared/lib/tone'
@@ -71,11 +73,11 @@ export default function CaseDetailPage() {
       : status === 'certified'
         ? '트러블슈팅 사례 상세'
         : status === 'reviewing'
-          ? '트러블슈팅 사례 검토중'
+          ? '트러블슈팅 사례 검토 중'
           : completed
-            ? '트러블슈팅 사례 인증요청'
+            ? '트러블슈팅 사례 인증 요청'
             : inList
-              ? '트러블슈팅 사례 이어작성'
+              ? '트러블슈팅 사례 이어 작성'
               : '새 트러블슈팅 사례',
     viewOnly
       ? '연결된 트러블슈팅 사례의 내용을 확인합니다.'
@@ -89,6 +91,12 @@ export default function CaseDetailPage() {
   )
 
   const isCertified = data?.status === 'certified'
+  // 낸 제안의 지금 상태 — 이걸 보지 않으면 반려돼도 화면이 그대로라 같은 제안을 다시 낸다.
+  const { data: change } = useTsChangeState(
+    data?.id ?? '',
+    !!data?.id && data.status === 'certified',
+  )
+  const changeState = change?.status ?? 'none'
   const isReviewing = data?.status === 'reviewing'
   const isDraft = data?.status === 'draft'
   // draft(작성 중·작성 완료)는 항상 편집 가능. 인증 요청(검토 중)부터 잠금, 인증 완료는 변경 제안만.
@@ -96,8 +104,12 @@ export default function CaseDetailPage() {
   const goChangeRequest = () =>
     navigate(`/student/troubleshooting/${data?.id}/change-requests/new`)
 
-  // 프로젝트 연결 — 서버 값 그대로.
-  const link: TsProjectLink | null = data?.projectLink ?? null
+  // 프로젝트 연결 — 서버 값 그대로. 단 신규 초안(ts_…)은 BE에 사례가 아직 없어
+  // 연결 선택을 로컬에 들고 있다가 저장(create) 바디의 projectId로 함께 보낸다.
+  const [draftLink, setDraftLink] = useState<TsProjectLink | null>(null)
+  const link: TsProjectLink | null = isNew
+    ? draftLink
+    : (data?.projectLink ?? null)
   const projectLinked = !!link
   // 연결 후보 — 수강생 본인 프로젝트(팀·개인 모두). 작성 중 프로젝트에도 미리 연결할 수 있다.
   const linkableProjects: TsLinkableProject[] = (
@@ -109,6 +121,17 @@ export default function CaseDetailPage() {
     desc: p.teamLabel,
   }))
   const onLinkChange = (next: TsProjectLink | null) => {
+    // 신규 초안 — BE 호출 없이 로컬 보관. 임시 저장/작성 완료(create) 시 projectId로 반영된다.
+    if (isNew) {
+      setDraftLink(next)
+      setLinkModal(false)
+      toast.success(
+        next
+          ? `프로젝트에 연결했어요 — ${next.projectTitle} (저장 시 반영)`
+          : '프로젝트 연결을 해제했어요.',
+      )
+      return
+    }
     if (linkProject.isPending) return
     linkProject.mutate(next?.projectId ?? null, {
       onSuccess: () => {
@@ -231,6 +254,38 @@ export default function CaseDetailPage() {
             </div>
           </div>
 
+          {/* 강사가 돌려보낸 사례는 사유가 전부다 — 무엇을 고쳐야 하는지 모르면 다시 낼 수 없다.
+              인증 취소도 같은 자리에 띄운다. 이 상태에서는 편집 폼이 뜨고 상태 이력 영역이
+              렌더되지 않아, 이 배너 말고는 사유를 볼 곳이 없다. */}
+          {data?.reviewStatus && (
+            <section
+              className={cn(
+                'flex flex-col gap-1 rounded-xl p-4',
+                data.reviewStatus === 'revoked'
+                  ? 'bg-danger-bg/70'
+                  : 'bg-warning-bg/70',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex items-center gap-1.5 text-[12px] font-bold',
+                  data.reviewStatus === 'revoked'
+                    ? 'text-danger'
+                    : 'text-warning',
+                )}
+              >
+                <AlertTriangle className="size-3.5" aria-hidden="true" />
+                {data.reviewStatus === 'revoked'
+                  ? '강사가 인증을 취소했어요'
+                  : '강사가 보완을 요청했어요'}
+              </span>
+              <span className="text-fg-muted text-[12px] leading-5">
+                {data.reviewComment?.trim() ||
+                  '강사가 사유를 남기지 않았어요. 담당 강사에게 확인해 주세요.'}
+              </span>
+            </section>
+          )}
+
           {editing ? (
             <CaseContentForm
               caseId={id}
@@ -259,9 +314,8 @@ export default function CaseDetailPage() {
                     <span className="text-fg text-[14px] font-bold">
                       {b.label}
                     </span>
-                    <p className="text-fg-muted text-[13px] leading-6">
-                      {b.text}
-                    </p>
+                    {/* 작성은 마크다운으로 받는다 — 원문 그대로 찍으면 문법이 글자로 보인다. */}
+                    <Markdown className="text-[13px]">{b.text}</Markdown>
                   </div>
                 ))}
                 <div className="border-divider flex items-center gap-2 border-t pt-4">
@@ -375,23 +429,76 @@ export default function CaseDetailPage() {
                   </section>
                 )}
 
-                {/* 인증 완료 — 잠금, 변경 제안만 */}
+                {/* 인증 완료 — 잠금, 변경 제안만. 낸 제안이 있으면 그 상태를 먼저 말한다. */}
                 {!viewOnly && isCertified && (
                   <section className={cn(card, 'flex flex-col gap-3')}>
                     <span className="text-success text-[14px] font-bold">
                       ✓ 인증 완료
                     </span>
-                    <span className="text-fg-subtle text-[11px]">
-                      인증이 완료된 사례예요. 내용은 잠겨 있고, 수정하려면 변경
-                      제안으로 요청하세요.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={goChangeRequest}
-                      className={buttonClass({ size: 'sm' })}
-                    >
-                      변경 제안
-                    </button>
+                    {changeState === 'requested' ||
+                    changeState === 'revision_submitted' ? (
+                      <>
+                        <span className="bg-warning-bg text-warning w-fit rounded px-2 py-0.5 text-[11px] font-bold">
+                          변경 제안 검토 중
+                        </span>
+                        <span className="text-fg-subtle text-[11px]">
+                          강사가 검토하고 있어요. 결과가 나오면 여기에서 확인할
+                          수 있어요.
+                        </span>
+                      </>
+                    ) : changeState === 'applied' ? (
+                      <>
+                        <span className="bg-success-bg text-success w-fit rounded px-2 py-0.5 text-[11px] font-bold">
+                          변경 제안 반영됨
+                        </span>
+                        <span className="text-fg-subtle text-[11px]">
+                          강사가 승인해 사례에 반영했어요. 더 고칠 게 있으면
+                          다시 제안할 수 있어요.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goChangeRequest}
+                          className={buttonClass({ size: 'sm' })}
+                        >
+                          다시 변경 제안
+                        </button>
+                      </>
+                    ) : changeState === 'rejected' ? (
+                      <>
+                        <span className="bg-danger-bg text-danger w-fit rounded px-2 py-0.5 text-[11px] font-bold">
+                          변경 제안 반려됨
+                        </span>
+                        {change?.decisionReason && (
+                          <span className="text-fg-muted text-[12px] leading-5">
+                            {change.decisionReason}
+                          </span>
+                        )}
+                        <span className="text-fg-subtle text-[11px]">
+                          사유를 반영해 다시 제안할 수 있어요.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goChangeRequest}
+                          className={buttonClass({ size: 'sm' })}
+                        >
+                          다시 변경 제안
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-fg-subtle text-[11px]">
+                          인증이 완료된 사례예요. 내용은 잠겨 있고, 수정하려면
+                          변경 제안으로 요청하세요.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goChangeRequest}
+                          className={buttonClass({ size: 'sm' })}
+                        >
+                          변경 제안
+                        </button>
+                      </>
+                    )}
                   </section>
                 )}
 
@@ -431,17 +538,6 @@ export default function CaseDetailPage() {
             </div>
           )}
 
-          {!viewOnly && (
-            <ProjectLinkModal
-              projects={linkableProjects}
-              pending={linkProject.isPending}
-              open={linkModal}
-              current={link}
-              onClose={() => setLinkModal(false)}
-              onLink={onLinkChange}
-            />
-          )}
-
           {certModal && (
             <CertifyModal
               data={data}
@@ -451,6 +547,19 @@ export default function CaseDetailPage() {
             />
           )}
         </div>
+      )}
+
+      {/* 연결 모달은 신규 초안(작성 폼)에서도 열려야 하므로 분기 밖 공통 렌더 —
+          예전엔 기존 사례 분기 안에만 있어 초안에서 버튼을 눌러도 무반응이었다. */}
+      {!viewOnly && (
+        <ProjectLinkModal
+          projects={linkableProjects}
+          pending={linkProject.isPending}
+          open={linkModal}
+          current={link}
+          onClose={() => setLinkModal(false)}
+          onLink={onLinkChange}
+        />
       )}
     </DataBoundary>
   )

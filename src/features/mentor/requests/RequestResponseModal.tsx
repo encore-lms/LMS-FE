@@ -26,7 +26,6 @@ import {
 import type { MentoringRequestSlot } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { RequestStatusChip, RoleBadge, SlotLabelChip } from './RequestChips'
-import type { RequestRespondedState } from './RequestRespondedPage'
 import {
   composeScheduleLabel,
   minutesBetween,
@@ -295,8 +294,21 @@ function ProposalForm({
 // 예약 요청 상세/응답 모달 (/mentor/mentoring-requests/:requestId) — Figma 2553:3942.
 // 목록 위 URL 라우팅 모달(중첩 라우트) — 헤더 타이틀은 부모('멘토링 예약 요청') 유지.
 // 카드 버튼의 ?mode= 로 응답 모드 프리셀렉트. 저장 성공 = 공통 토스트 + 목록 잔류(결정 ③).
-export default function RequestResponseModal() {
-  const { requestId = '' } = useParams()
+export default function RequestResponseModal({
+  requestId: fixedRequestId,
+  mode: fixedMode,
+  onClose,
+  onResponded,
+}: {
+  /** 팀 상세 '예약' 탭처럼 라우트 없이 그 자리에서 열 때 — 주소 대신 값으로 받는다. */
+  requestId?: string
+  mode?: string | null
+  onClose?: () => void
+  /** 응답을 마쳤을 때 — 탭 안에서는 완료 페이지로 나가지 않고 목록으로 돌아온다. */
+  onResponded?: () => void
+} = {}) {
+  const { requestId: paramRequestId = '' } = useParams()
+  const requestId = fixedRequestId ?? paramRequestId
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const toast = useToast()
@@ -304,7 +316,7 @@ export default function RequestResponseModal() {
   const actionMutation = useMentoringRequestAction()
   const detailsMutation = useUpdateConfirmedDetails()
 
-  const paramMode = searchParams.get('mode')
+  const paramMode = fixedMode ?? searchParams.get('mode')
   const [mode, setMode] = useState<ResponseMode>(
     paramMode === 'reject'
       ? 'reject'
@@ -316,13 +328,17 @@ export default function RequestResponseModal() {
   const [rejectNote, setRejectNote] = useState('')
 
   // 공통 Modal 이 onClose 를 effect deps 로 쓰므로 참조 고정 — 입력 중 재렌더 시 포커스 이탈 방지.
-  const close = useCallback(
-    () => navigate('/mentor/mentoring-requests'),
-    [navigate],
-  )
+  const close = useCallback(() => {
+    // 팀 안에서 열었으면 팀 안에서 닫는다 — 목록 페이지로 튕겨 나가지 않는다.
+    if (onClose) onClose()
+    else navigate('/mentor/teams')
+  }, [navigate, onClose])
   const saving = actionMutation.isPending || detailsMutation.isPending
-  const goResponded = (state: RequestRespondedState) =>
-    navigate('/mentor/mentoring-requests/submitted', { state })
+  // 응답을 마치면 목록으로 돌아온다 — 별도 완료 화면은 팀 탭 이관과 함께 걷어냈다.
+  const goResponded = () => {
+    if (onResponded) onResponded()
+    else navigate('/mentor/teams')
+  }
   const onFailed = () =>
     toast.danger('응답 저장에 실패했어요. 잠시 후 다시 시도해 주세요.')
 
@@ -378,27 +394,7 @@ export default function RequestResponseModal() {
       expectedMinutes: values.expectedMinutes,
       mentorResponseNote: values.mentorResponseNote || undefined,
     }
-    const onSuccess = () =>
-      goResponded({
-        outcome: confirmedEditable ? 'updated' : 'counter',
-        submittedAtLabel: '방금',
-        teamLabel: `${data.cohortLabel} · ${data.teamName}`,
-        waitingForStudent: !confirmedEditable,
-        rows: [
-          {
-            label: confirmedEditable ? '확정 일정' : '제안 일정',
-            value: payload.dateTimeLabel,
-          },
-          {
-            label: '장소',
-            value: `${MENTORING_PLACE_TYPE_LABEL[payload.placeType]} · ${payload.placeDetail}`,
-          },
-          { label: '예상 시간', value: `${payload.expectedMinutes}분` },
-          ...(payload.mentorResponseNote
-            ? [{ label: '메모', value: payload.mentorResponseNote }]
-            : []),
-        ],
-      })
+    const onSuccess = () => goResponded()
     if (confirmedEditable) {
       detailsMutation.mutate(
         { requestId, payload },
@@ -414,30 +410,12 @@ export default function RequestResponseModal() {
 
   const directSave = () => {
     if (!respondable) return
-    const teamLabel = `${data.cohortLabel} · ${data.teamName}`
     if (mode === 'confirm') {
       // 확정 = 희망 일정 그대로(서버가 요청 슬롯으로 확정 — ReservationActionRequest 공용 필드)
       actionMutation.mutate(
         { requestId, action: 'confirm' },
         {
-          onSuccess: () =>
-            goResponded({
-              outcome: 'confirmed',
-              submittedAtLabel: '방금',
-              teamLabel,
-              waitingForStudent: false,
-              rows: [
-                { label: '확정 일정', value: data.desired.dateTimeLabel },
-                {
-                  label: '장소',
-                  value: `${MENTORING_PLACE_TYPE_LABEL[data.desired.placeType]} · ${data.desired.placeDetail}`,
-                },
-                {
-                  label: '예상 시간',
-                  value: `${data.desired.expectedMinutes}분`,
-                },
-              ],
-            }),
+          onSuccess: () => goResponded(),
           onError: onFailed,
         },
       )
@@ -449,20 +427,7 @@ export default function RequestResponseModal() {
           payload: { mentorResponseNote: rejectNote.trim() || undefined },
         },
         {
-          onSuccess: () =>
-            goResponded({
-              outcome: 'rejected',
-              submittedAtLabel: '방금',
-              teamLabel,
-              waitingForStudent: false,
-              rows: [
-                { label: '요청자', value: data.requester.name },
-                {
-                  label: '거절 사유',
-                  value: rejectNote.trim() || '사유 미기재',
-                },
-              ],
-            }),
+          onSuccess: () => goResponded(),
           onError: onFailed,
         },
       )

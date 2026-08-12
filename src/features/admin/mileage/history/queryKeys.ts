@@ -3,4 +3,6 @@ export const mileageHistoryKeys = {
   all: ['admin-mileage-history'] as const,
   overview: (cohortId = '') =>
     [...mileageHistoryKeys.all, 'overview', cohortId] as const,
+  student: (studentUserId: string) =>
+    [...mileageHistoryKeys.all, 'student', studentUserId] as const,
 } as const

@@ -3,6 +3,7 @@ import { AlertTriangle, ExternalLink, Link2, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { Modal } from '@/components/ui/Modal'
 import { buttonClass } from '@/components/ui/buttonClass'
+import { RecordDetailBody } from './RecordDetailBody'
 import type { BlogRecord, RecordStatus } from '../types'
 
 // 블로그 기록 카드 — 상태별 표시 + 수정/삭제. 블로그 상세는 우측 iframe 패널, 스터디/자격증은 상세 모달.
@@ -232,6 +233,13 @@ export function BlogRecordCard({
                   </a>
                 </dd>
               </div>
+            )}
+            {/* 시간·활동 내역·증빙은 카드 데이터에 없다 — 상세 API 로 가져온다. */}
+            {detailOpen && (
+              <RecordDetailBody
+                recordId={record.id}
+                category={record.category}
+              />
             )}
             <div className="flex gap-2">
               <dt className="text-fg-subtle w-20 shrink-0">제출/검토</dt>

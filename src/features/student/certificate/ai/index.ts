@@ -8,9 +8,12 @@ import type {
   CertificateScoreResult,
   StudentDerived,
 } from './types'
-import { ANALYSIS_STUBS } from './stubs/analysis'
-import certificateSnapshot from './stubs/certificate.snapshot.json'
 import { DERIVED_STUBS } from './stubs/derived'
+import {
+  createRosterAiAnalysis,
+  createRosterDetailTabs,
+  createRosterScore,
+} from './stubs/roster'
 
 export {
   CERTIFICATE_360_AXIS_KEYS,
@@ -23,7 +26,7 @@ export {
  * TODO(서버 연동): 내부를 LMS-AI 서버 API 호출로 교체.
  */
 export function getAiAnalysis(studentId: string): AiAnalysis {
-  return ANALYSIS_STUBS[studentId] ?? ANALYSIS_STUBS['stu-001']
+  return createRosterAiAnalysis(studentId)
 }
 
 /**
@@ -56,14 +59,7 @@ export async function fetchCertificateScore(
   studentId: string,
 ): Promise<CertificateScoreResult> {
   if (CERTIFICATE_MOCK_MODE) {
-    return {
-      ...(certificateSnapshot.score as CertificateScoreResult),
-      student: {
-        ...(certificateSnapshot.score
-          .student as CertificateScoreResult['student']),
-        studentId,
-      },
-    }
+    return createRosterScore(studentId)
   }
 
   const res = await fetch(
@@ -74,7 +70,7 @@ export async function fetchCertificateScore(
   }
 
   const result = (await res.json()) as CertificateScoreResult
-  if (result.policyVersion !== '2026.07.21-six-axis-persistence-v4') {
+  if (result.policyVersion !== '2026.08.05-six-axis-four-rater-v2') {
     throw new Error('지원하지 않는 수강역량 점수 정책 버전입니다.')
   }
   return result
@@ -85,10 +81,7 @@ export async function fetchCertificateDetailTabs(
   studentId: string,
 ): Promise<CertificateDetailTabsResult> {
   if (CERTIFICATE_MOCK_MODE) {
-    return {
-      ...(certificateSnapshot.tabs as CertificateDetailTabsResult),
-      studentId,
-    }
+    return createRosterDetailTabs(studentId)
   }
 
   const res = await fetch(
@@ -99,7 +92,7 @@ export async function fetchCertificateDetailTabs(
   }
 
   const result = (await res.json()) as CertificateDetailTabsResult
-  if (result.policyVersion !== '2026.07.23-certificate-detail-tabs-v1') {
+  if (result.policyVersion !== '2026.08.05-certificate-detail-tabs-v2') {
     throw new Error('지원하지 않는 수강역량 상세 탭 정책 버전입니다.')
   }
   return result
@@ -130,7 +123,7 @@ export async function fetchAiDerived(
  * 다른 학생이나 정적 mock으로 대체하지 않고 조회 실패를 호출부에 전달한다.
  */
 export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
-  if (CERTIFICATE_MOCK_MODE) return certificateSnapshot.analysis as AiAnalysis
+  if (CERTIFICATE_MOCK_MODE) return createRosterAiAnalysis(studentId)
 
   const res = await fetch(
     `${CERTIFICATE_SCORE_API}/analysis/${encodeURIComponent(studentId)}`,
@@ -143,6 +136,14 @@ export async function fetchAiAnalysis(studentId: string): Promise<AiAnalysis> {
 
 export type {
   AiAnalysis,
+  AiAnalysisStatus,
+  AiAxisAlignment,
+  AiAxisAlignmentAxis,
+  AiAxisAlignmentEvidence,
+  AiAxisAlignmentRelation,
+  AiJobFit,
+  AiJobFitRoleCandidate,
+  AiTroubleshooting,
   AiVerdict,
   AiVerdictItemKey,
   AiPersona,
@@ -154,6 +155,7 @@ export type {
   AiProjectMembershipRole,
   AiProjectOverview,
   AiProjectPersonalEvidence,
+  AiProjectRecruiterInsight,
   AiProjectSnapshot,
   AiProjectStatus,
   AiProjectTeamContext,
@@ -179,6 +181,7 @@ export type {
   Ontology,
   CertificateAxisScore,
   CertificateAssessmentPoint,
+  CertificateAssessmentType,
   CertificateDetailStatus,
   CertificateDetailTabsResult,
   CertificateDomainExperience,

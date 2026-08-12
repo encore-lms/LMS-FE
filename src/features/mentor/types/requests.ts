@@ -45,6 +45,9 @@ export interface MentoringRequestSlot {
   placeDetail: string
   expectedMinutes: number
   memo?: string
+  /** ISO 원본 — 라벨엔 연도가 없어, 일지로 값을 옮길 땐 이 값을 쓴다. */
+  startsAt?: string | null
+  endsAt?: string | null
 }
 
 /** GET /mentor/v1/mentoring-requests 행 — requestId = API reservationId. */

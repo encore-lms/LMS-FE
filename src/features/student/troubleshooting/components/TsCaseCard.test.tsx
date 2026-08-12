@@ -61,3 +61,59 @@ describe('TsCaseCard 삭제 버튼', () => {
     expect(onRemove).not.toHaveBeenCalled()
   })
 })
+
+// 강사가 돌려보낸 사례는 목록에서 바로 사유가 보여야 한다 —
+// 예전에는 상세로 들어가야만 무엇을 고쳐야 하는지 알 수 있었다.
+describe('TsCaseCard 강사 검토 사유', () => {
+  it('보완 요청이면 사유 버튼과 전문을 보여준다', async () => {
+    const user = userEvent.setup()
+    const onShowReason = vi.fn()
+    render(
+      <TsCaseCard
+        c={{
+          ...base,
+          statusLabel: '보완 요청',
+          reviewStatus: 'changes_requested',
+          reviewComment: '재현 원인 분석을 덧붙여 주세요.',
+        }}
+        onOpen={vi.fn()}
+        onShowReason={onShowReason}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: /보완 사유/ }))
+
+    expect(onShowReason).toHaveBeenCalled()
+    expect(
+      screen.getByText('재현 원인 분석을 덧붙여 주세요.'),
+    ).toBeInTheDocument()
+  })
+
+  it('인증 취소면 취소 사유로 라벨이 바뀐다', () => {
+    render(
+      <TsCaseCard
+        c={{
+          ...base,
+          statusLabel: '인증 취소',
+          reviewStatus: 'revoked',
+          reviewComment: '근거 링크가 만료됐습니다.',
+        }}
+        onOpen={vi.fn()}
+        onShowReason={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /취소 사유/ })).toBeInTheDocument()
+    expect(screen.getByText('강사 인증 취소 사유')).toBeInTheDocument()
+  })
+
+  it('검토 이력이 없으면 사유 버튼이 없다', () => {
+    render(
+      <TsCaseCard c={base} onOpen={vi.fn()} onShowReason={vi.fn()} />,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: /사유/ }),
+    ).not.toBeInTheDocument()
+  })
+})

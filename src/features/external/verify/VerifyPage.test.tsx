@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import VerifyPage from './VerifyPage'
 import { useVerifyCertificate } from '../api/verify'
 import { externalPublicRoutes } from '../routes'
@@ -19,12 +20,16 @@ function mockResult(data: ExternalCertificateVerificationResponse) {
 }
 
 function renderPage(token = 'vfy_kp9q4r2nx0') {
+  // 공개 검증도 증명서 탭(useQuery 사용)을 재사용하므로 QueryClient 가 필요하다.
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={[`/verify/${token}`]}>
-      <Routes>
-        <Route path="/verify/:publicToken" element={<VerifyPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={[`/verify/${token}`]}>
+        <Routes>
+          <Route path="/verify/:publicToken" element={<VerifyPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
@@ -86,33 +91,63 @@ describe('VerifyPage — 진입 로딩(pending)', () => {
   })
 })
 
-describe('VerifyPage — certified_public(공개 증명서)', () => {
-  it('Hero 진본 배너·핵심 정보·6축·대표 근거·무결성 필드를 렌더한다', () => {
+describe('VerifyPage — 평가·추천 공개 토글', () => {
+  // 동료 평판·코멘트는 남의 평가다 — 수강생이 켠 경우에만 외부에 보인다.
+  it('토글이 꺼져 있으면 평가·추천 탭을 노출하지 않는다', () => {
     mockResult(publicResult)
     renderPage()
+    expect(screen.queryByRole('button', { name: '평가·추천' })).toBeNull()
+  })
+
+  it('토글이 켜져 있으면 평가·추천 탭이 나타난다', () => {
+    mockResult({
+      ...publicResult,
+      publicPayload: {
+        ...publicResult.publicPayload,
+        peerReputationPublic: true,
+      },
+    })
+    renderPage()
     expect(
-      screen.getByText('이 증명서는 정식으로 발급된 진본입니다'),
+      screen.getByRole('button', { name: '평가·추천' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('certified · 진본 검증 완료')).toBeInTheDocument()
-    // 핵심 정보 — 이름은 이름 행에만 전체로, 아바타는 이니셜(84px 원을 넘기지 않게).
-    expect(screen.getAllByText('이서연')).toHaveLength(1)
-    expect(screen.getByText('이')).toBeInTheDocument()
-    expect(screen.getByText('Lee Seoyeon')).toBeInTheDocument()
-    expect(screen.getByText('DA 5기')).toBeInTheDocument()
-    expect(screen.getByText('96.2%')).toBeInTheDocument()
-    // 6축 점수 + 평균.
-    expect(screen.getByText('6축 점수 — 동결 시점')).toBeInTheDocument()
-    expect(screen.getByText('81.7')).toBeInTheDocument()
-    expect(screen.getByText('문제해결')).toBeInTheDocument()
-    // 대표 근거.
-    expect(screen.getByText('LLM 추천 시스템 v0.3')).toBeInTheDocument()
-    // 검증 정보 — 무결성(해시는 Hero 칩과 필드 박스 2곳).
-    expect(screen.getAllByText(/sha256:a3f9…07e/)).toHaveLength(2)
-    expect(screen.getByText('vfy_kp9q4r2nx0')).toBeInTheDocument()
-    expect(screen.getByText('ver_2026Q2_512')).toBeInTheDocument()
+  })
+})
+
+describe('VerifyPage — certified_public(공개 증명서)', () => {
+  it('증명서 본문만 렌더한다 — 진본 배너는 뺐다', () => {
+    mockResult(publicResult)
+    renderPage()
+    // 진본 배너 제거(2026-08-12) — 인증 상태·검증 ID 는 증명서 히어로가 보여준다.
     expect(
-      screen.getByRole('button', { name: /공개 JSON 다운로드/ }),
-    ).toBeInTheDocument()
+      screen.queryByText('이 증명서는 정식으로 발급된 진본입니다'),
+    ).toBeNull()
+    expect(screen.queryByText('certified · 진본 검증 완료')).toBeNull()
+    // 증명서 본문 — 수강생 미리보기의 히어로를 그대로 쓴다(인증 완료 칩 + 검증 ID).
+    expect(screen.getByText('이서연')).toBeInTheDocument()
+    expect(screen.getByText('정식 인증 완료')).toBeInTheDocument()
+    expect(screen.getByText(/ver_2026Q2_512/)).toBeInTheDocument()
+    // 탭은 미리보기와 같은 컴포넌트(CertTabs). 종합 요약이 기본이다.
+    expect(screen.getByRole('button', { name: '종합 요약' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '기술·검증' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '프로젝트' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '이력서' })).toBeNull()
+    // 종합 요약 본문(도넛·6축)은 미리보기의 SummaryTab 이 그대로 그린다.
+    // 점수 조회가 끝나기 전에는 골격이 뜬다 — 탭이 선택돼 있는 것으로 확인한다.
+    expect(screen.getByRole('button', { name: '종합 요약' })).toHaveClass(
+      'text-brand',
+    )
+    // 해시는 배너와 함께 화면에서 제거됐다.
+    expect(screen.queryByText(/sha256:a3f9…07e/)).toBeNull()
+    // 증명서 본문 밖의 부가 섹션(대표 근거·검증 정보·정책 안내)은 렌더하지 않는다.
+    expect(screen.queryByText('대표 근거')).toBeNull()
+    expect(screen.queryByText(/검증 정보/)).toBeNull()
+    expect(screen.queryByText(/외부 검증 페이지 정책/)).toBeNull()
+    expect(screen.queryByRole('button', { name: /공개 JSON 다운로드/ })).toBeNull()
+    // 본문은 최대 1440 까지 넓히고 그 아래는 화면을 따라 줄인다.
+    expect(document.querySelector('main')?.className).toContain(
+      'max-w-[1440px]',
+    )
   })
 })
 
@@ -124,14 +159,13 @@ describe('VerifyPage — certified_private(비공개 안내)', () => {
       messageCode: 'CERTIFICATE_PRIVATE',
     })
     renderPage('vfy_private_demo')
-    expect(screen.getByText('certified · isPublic = false')).toBeInTheDocument()
+    expect(screen.getByText('비공개 증명서')).toBeInTheDocument()
     expect(
       screen.getByText('이 증명서는 비공개 상태입니다'),
     ).toBeInTheDocument()
-    expect(screen.getByText('certified — 정식 인증 완료')).toBeInTheDocument()
-    expect(
-      screen.getByText('없음 (요청자 식별 불가하게 상세 비표시)'),
-    ).toBeInTheDocument()
+    // 내부 표현(isPublic·payload)은 외부 검증자에게 보여 주지 않는다.
+    expect(screen.queryByText(/isPublic/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/외부 검증 페이지 정책/)).not.toBeInTheDocument()
     // 수강생 이름·점수 등 상세 비노출(명세).
     expect(screen.queryByText('이서연')).not.toBeInTheDocument()
   })
@@ -191,7 +225,7 @@ describe('VerifyPage — 비공개 안내 변형 2종(문서 기반, Figma 변�
     expect(
       screen.getByText('증명서 공개를 준비하고 있습니다'),
     ).toBeInTheDocument()
-    expect(screen.getByText('certified · 공개 준비 중')).toBeInTheDocument()
+    expect(screen.getByText('공개 준비 중')).toBeInTheDocument()
   })
 
   it('verification_disabled이면 검증 불가 안내를 렌더한다', () => {
@@ -203,7 +237,7 @@ describe('VerifyPage — 비공개 안내 변형 2종(문서 기반, Figma 변�
     expect(
       screen.getByText('이 증명서는 검증이 불가합니다'),
     ).toBeInTheDocument()
-    expect(screen.getByText('publicToken 폐기 · 검증 불가')).toBeInTheDocument()
+    expect(screen.getByText('검증 불가')).toBeInTheDocument()
   })
 })
 

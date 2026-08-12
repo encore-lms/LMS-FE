@@ -31,6 +31,8 @@ import {
 } from './logMeta'
 import type { LogSubmittedState } from './LogSubmittedPage'
 import { dateWithDow, round1 } from './logComposeConstants'
+import { isImageField, isTextField } from '../types'
+import { LogImageField } from './LogImageField'
 import { LogArtifactsSection, LogPhotosSection } from './LogAttachmentSections'
 import { LogBasicInfoSection, type ComposeMode } from './LogBasicInfoSection'
 import { LogCalcSection } from './LogCalcSection'
@@ -40,10 +42,13 @@ export function LogComposeForm({
   targets,
   detail,
   presetTeamId,
+  backTo,
 }: {
   targets: MentoringLogTarget[]
   detail: MentoringLogDetailData | null
   presetTeamId: string
+  /** 팀 상세에서 왔으면 그 팀 주소 — 취소·제출 후 그리로 돌아간다. */
+  backTo?: string
 }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -109,6 +114,7 @@ export function LogComposeForm({
   const fieldsQuery = useLogFieldSnapshot(teamId)
   const fields = useMemo(() => fieldsQuery.data ?? [], [fieldsQuery.data])
   fieldsRef.current = fields
+  // 타입으로 가른다 — inputKind 는 어디서도 채워지지 않아 늘 undefined 였다(2026-08-06 QA).
   const textFields = fields.filter((f) => !f.inputKind)
   const filesField = fields.find((f) => f.inputKind === 'files')
   const photosField = fields.find((f) => f.inputKind === 'photos')
@@ -210,6 +216,7 @@ export function LogComposeForm({
             submittedAtLabel: '방금',
             resubmit: mode === 'resubmit',
             rows: summaryRows,
+            backTo: backTo ?? undefined,
           } satisfies LogSubmittedState,
         })
       } catch {
@@ -258,11 +265,11 @@ export function LogComposeForm({
       {/* 브레드크럼 + 저장 상태 칩 */}
       <div className="flex flex-wrap items-center gap-2">
         <Link
-          to="/mentor/mentoring-logs"
+          to={backTo ?? '/mentor/teams'}
           className="border-border text-fg-muted hover:bg-surface-muted flex items-center gap-1 rounded-md border px-2.5 py-[5px] text-xs font-medium"
         >
           <ArrowLeft className="h-3 w-3" />
-          멘토링 일지
+          {backTo ? '팀 상세' : '배정 팀'}
         </Link>
         <span className="text-fg-subtle text-[13px]">›</span>
         <span className="text-fg text-xs font-medium">
@@ -413,7 +420,7 @@ export function LogComposeForm({
               </span>
               <span className="text-fg text-sm font-bold">{field.name}</span>
               <RequiredChip required={field.required} />
-              <span className="ml-auto">
+              <span className={cn('ml-auto', !isTextField(field.type) && 'hidden')}>
                 <CharCounter
                   length={value.length}
                   limit={field.charLimit}
@@ -424,13 +431,26 @@ export function LogComposeForm({
               </span>
             </div>
             <p className="text-fg-subtle text-[11px]">{field.description}</p>
-            <textarea
-              aria-label={field.name}
-              rows={field.charLimit != null && field.charLimit > 1000 ? 10 : 5}
-              {...register(`answers.${field.fieldSnapshotId}` as const)}
-              placeholder={field.description}
-              className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-y rounded-[10px] border px-4 py-3 text-[13px] leading-5 font-medium outline-none"
-            />
+            {isTextField(field.type) && (
+              <textarea
+                aria-label={field.name}
+                rows={field.charLimit != null && field.charLimit > 1000 ? 10 : 5}
+                {...register(`answers.${field.fieldSnapshotId}` as const)}
+                placeholder={field.description}
+                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand w-full resize-y rounded-[10px] border px-4 py-3 text-[13px] leading-5 font-medium outline-none"
+              />
+            )}
+            {isImageField(field.type) && (
+              <LogImageField
+                label={field.name}
+                value={value}
+                onChange={(next) =>
+                  setValue(`answers.${field.fieldSnapshotId}` as const, next, {
+                    shouldValidate: true,
+                  })
+                }
+              />
+            )}
             {error && (
               <p className="text-danger text-[11px]">{String(error.message)}</p>
             )}

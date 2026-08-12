@@ -40,10 +40,7 @@ export default function GradingPage() {
   const { quizId = '', submissionId = '' } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
-  usePageHeader(
-    '수동 채점',
-    '/admin/quizzes/:quizId/submissions/:submissionId/grade',
-  )
+  usePageHeader('수동 채점', '서술형 답안을 확인하고 점수와 피드백을 남깁니다')
 
   const { data, isPending, isError, refetch } = useAdminGradingDetail(
     quizId,

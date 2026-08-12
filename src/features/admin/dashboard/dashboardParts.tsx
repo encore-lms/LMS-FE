@@ -55,8 +55,9 @@ export function DashboardSkeleton() {
   )
 }
 
+/** 지표를 못 채운 기수 — CSV 인입을 걷어낸 뒤로 HRD 집계가 아직 없다는 뜻이다. */
 export function NoData() {
-  return <span className="text-fg-subtle text-[12px]">인입 대기</span>
+  return <span className="text-fg-subtle text-[12px]">집계 없음</span>
 }
 
 export function Panel({

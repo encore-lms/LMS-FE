@@ -6,10 +6,11 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { Tabs } from '@/components/ui/Tabs'
 import { useToast } from '@/components/ui/use-toast'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useRecordsOverview, useDeleteRecord } from '../api/records'
 import { BlogRecordCard } from './components/BlogRecordCard'
 import { DeleteRecordModal } from './components/DeleteRecordModal'
+import { CourseTabs } from '../course/CourseTabs'
 import type {
   BlogRecord,
   RecordCategory,
@@ -49,10 +50,7 @@ function isRecordCategory(value: string | null): value is RecordCategory {
  */
 export default function RecordsPage() {
   const { data, isPending, isError, refetch } = useRecordsOverview()
-  usePageHeader(
-    '기록실',
-    '블로그·스터디·자격증·이력서·GitHub 등 학습 기록을 한 곳에서 관리',
-  )
+  useCourseHubHeader()
 
   return (
     <DataBoundary
@@ -75,6 +73,8 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   const deleteRecord = useDeleteRecord()
   const [params, setParams] = useSearchParams()
   const [activeTab, setActiveTabState] = useState<RecordCategory>(() => {
+    const requested = params.get('category')
+    if (isRecordCategory(requested)) return requested
     try {
       const stored = sessionStorage.getItem(RECORDS_TAB_KEY)
       return isRecordCategory(stored) ? stored : 'blog'
@@ -86,6 +86,9 @@ function RecordsView({ data }: { data: RecordsOverview }) {
   // 탭 변경을 보존 — 기록 보고 돌아와도 마지막 카테고리 탭이 유지된다.
   const setActiveTab = (key: RecordCategory) => {
     setActiveTabState(key)
+    const nextParams = new URLSearchParams(params)
+    nextParams.set('category', key)
+    setParams(nextParams, { replace: true })
     try {
       sessionStorage.setItem(RECORDS_TAB_KEY, key)
     } catch {
@@ -202,7 +205,11 @@ function RecordsView({ data }: { data: RecordsOverview }) {
 
   const closeModal = () => {
     setDeleteId(null)
-    if (modalParam) setParams({}, { replace: true })
+    if (modalParam) {
+      const nextParams = new URLSearchParams(params)
+      nextParams.delete('modal')
+      setParams(nextParams, { replace: true })
+    }
   }
 
   const confirmDelete = () => {
@@ -233,6 +240,7 @@ function RecordsView({ data }: { data: RecordsOverview }) {
 
   return (
     <div className="flex flex-col gap-5 p-8">
+      <CourseTabs />
       {/* 필터 탭 */}
       <Tabs
         aria-label="기록 카테고리"

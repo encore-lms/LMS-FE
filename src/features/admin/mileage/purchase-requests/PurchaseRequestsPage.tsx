@@ -20,6 +20,7 @@ import { CohortScopeSelect } from '../CohortScope'
 import { usePurchaseProcess, usePurchaseQueue } from './api'
 import type { PurchaseRequest, PurchaseStatus, PurchaseType } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const STATUS_META: Record<
   PurchaseStatus,
@@ -172,6 +173,24 @@ export default function PurchaseRequestsPage() {
               <p className="text-warning text-[11px]">구매 링크 미제출</p>
             )
           )}
+          {/* 수정 요청을 받고 다시 낸 건은 무엇이 바뀌었는지 알아야 다시 판단할 수 있다. */}
+          {r.studentNote && (
+            <p
+              className="bg-info-bg/60 text-fg-muted mt-1.5 max-w-[320px] rounded-md px-2 py-1 text-[11px] leading-4"
+              title={r.studentNote}
+            >
+              <span className="text-info font-bold">수강생 메모</span>{' '}
+              {r.studentNote}
+            </p>
+          )}
+          {r.reviewNote && (
+            <p
+              className="text-fg-subtle mt-1 max-w-[320px] truncate text-[11px]"
+              title={r.reviewNote}
+            >
+              내 수정 요청: {r.reviewNote}
+            </p>
+          )}
         </div>
       ),
     },
@@ -302,12 +321,12 @@ export default function PurchaseRequestsPage() {
             ]}
             className="h-9"
           />
-          <input
+          <SearchInput
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
             placeholder="수강생·상품명·키워드 검색"
-            aria-label="수강생·상품명·키워드 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
+            ariaLabel="수강생·상품명·키워드 검색"
+            className="w-64"
           />
         </div>
 

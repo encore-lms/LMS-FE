@@ -16,7 +16,7 @@ export type MentorRecommendationStatus =
 /** 추천 모드 — 팀당 1명 추천 또는 '추천 안 함' 명시 선택(상호배타). */
 export type MentorRecommendationMode = 'recommend' | 'none'
 
-/** 추천 후보 카드 — 제출된 평가의 5축 점수·평균을 그대로 표시(조회 전용). */
+/** 추천 후보 카드 — 제출된 평가의 4축 점수·평균을 그대로 표시(조회 전용). */
 export interface MentorRecommendationCandidate extends MentorTeamMember {
   /** 평가 평균(소수 1자리) — 평가 미제출이면 null */
   average: number | null
@@ -49,6 +49,10 @@ export interface MentorRecommendationSheetData {
   /** 저장된 초안(없으면 기본값) — 제출 후에는 제출본 미러 */
   draft: MentorRecommendationDraftPayload
   submittedAtLabel: string | null
+  /** 계약 종료 마감 — 경과 시 제출·재제출 잠금(읽기 전용) */
+  submissionClosed: boolean
+  /** 마감 라벨 '2026-12-28 까지' — 마감 없으면 null */
+  submissionDeadlineLabel: string | null
 }
 
 /** 제출 완료 페이지 요약 행 — GET /mentor/v1/recommendations. */

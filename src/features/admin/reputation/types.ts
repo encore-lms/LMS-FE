@@ -25,6 +25,8 @@ export interface ReputationStudent {
   endorsementStatus: EndorsementStatus
   /** 강사명·D-day 등 — 예: "김지훈 강사" / "김지훈 강사 · D-2" / "-" */
   endorsementBy: string
+  /** 수집된 추천서 문구 — 미수집이거나 구버전 BE 응답이면 null/없음(상세 모달 표시용) */
+  endorsementComment?: string | null
   mentorEvalStatus: MentorEvalStatus
   /** 멘토명 — 예: "김효원" / "-" */
   mentorBy: string

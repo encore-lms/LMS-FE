@@ -1,4 +1,4 @@
-import { type ComponentPropsWithoutRef, useMemo } from 'react'
+import { memo, type ComponentPropsWithoutRef, useMemo } from 'react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
@@ -6,18 +6,43 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import 'highlight.js/styles/github.css'
 import { getImage } from './markdownImages'
+import {
+  BodyImage,
+  BookmarkCard,
+  FileChip,
+  UploadImage,
+} from './MarkdownEmbeds'
+import { parseEmbedTitle } from './embedMeta'
+import type { UploadScope } from '@/shared/api'
 
 // react-markdown 기본 urlTransform 은 data: URL 을 제거한다(보안 기본값).
 // 추가 허용: (1) 에디터가 붙인 `attachment:id` → 세션 저장소의 base64 로 해석,
-//           (2) base64 인라인 이미지(data:image/*). 그 외는 기본 정책 유지.
-function urlTransform(url: string): string {
+//           (2) base64 인라인 이미지(data:image/*),
+//           (3) 본문 업로드 참조 `upload:id` → 그대로 통과.
+// 그 외는 기본 정책 유지.
+//
+// `upload:id` 를 여기서 실제 경로로 바꾸지 않는다 — 그 경로는 로그인을 요구하는데
+// 브라우저가 스스로 부르는 요청(img src·a download)에는 토큰이 붙지 않아 401 이 된다.
+// 참조를 그대로 넘겨 두고, 아래 컴포넌트가 토큰을 붙여 받아 온다.
+const urlTransform = (url: string): string => {
   if (url.startsWith('attachment:')) {
     const resolved = getImage(url.slice('attachment:'.length))
     return resolved && resolved.startsWith('data:image/') ? resolved : ''
   }
+  if (url.startsWith('upload:')) return url
   if (url.startsWith('data:image/')) return url
   return defaultUrlTransform(url)
 }
+
+/**
+ * 본문에 박힌 업로드를 어느 경로로 받을지 — 읽는 사람의 역할.
+ *
+ * <p>본문에는 접두사 없는 `upload:{id}` 만 담긴다 — 같은 글을 수강생과 강사가 함께 보는데
+ * BE 가 경로 앞머리로 역할을 가르기 때문이다(한쪽 경로를 박으면 다른 역할은 403).</p>
+ */
+export type { UploadScope }
+
+const UPLOAD = 'upload:'
 
 // sanitize 스키마 확장 — raw HTML은 비허용 유지. 추가로 허용하는 것:
 //  · 코드 하이라이트(hljs-*) className (code·span·pre)
@@ -30,15 +55,23 @@ const schema = {
     code: [...(defaultSchema.attributes?.code ?? []), 'className'],
     span: [...(defaultSchema.attributes?.span ?? []), 'className'],
     pre: [...(defaultSchema.attributes?.pre ?? []), 'className'],
-    a: [...(defaultSchema.attributes?.a ?? []), 'className'],
+    // title 은 카드형 링크(북마크·파일)의 메타를 담는 자리라 지워지면 안 된다.
+    a: [...(defaultSchema.attributes?.a ?? []), 'className', 'title'],
     img: [...(defaultSchema.attributes?.img ?? []), 'src', 'alt', 'title'],
   },
   protocols: {
     ...defaultSchema.protocols,
-    // src 허용 프로토콜 확장: base64 이미지(data) + 에디터 첨부 참조(attachment).
-    // attachment 는 urlTransform 이 dataURL 로 해석하기 전에 sanitize 가 지우지 않도록 필요.
+    // src 허용 프로토콜 확장: base64 이미지(data) + 에디터 첨부 참조(attachment·upload).
+    // 둘 다 urlTransform 이 실제 주소로 바꾸기 전에 sanitize 가 지우지 않도록 필요하다.
     // script: 등 위험 프로토콜은 계속 차단된다.
-    src: [...(defaultSchema.protocols?.src ?? []), 'data', 'attachment'],
+    src: [
+      ...(defaultSchema.protocols?.src ?? []),
+      'data',
+      'attachment',
+      'upload',
+    ],
+    // 파일 카드는 링크라 href 에도 같은 참조가 온다.
+    href: [...(defaultSchema.protocols?.href ?? []), 'upload'],
   },
 }
 
@@ -61,14 +94,72 @@ interface MarkdownProps {
   children: string
   /** 강조할 멘션 이름들(없으면 멘션 처리 안 함) */
   mentions?: string[]
+  /** 본문에 박힌 업로드를 어느 경로로 받을지 — 읽는 사람의 역할. */
+  uploadScope?: UploadScope
   className?: string
 }
 
 // QnA 질문·답변·댓글 본문 공용 렌더러. 마크다운 + GFM + 코드 하이라이트 + sanitize.
-export function Markdown({ children, mentions, className }: MarkdownProps) {
+//
+// memo 로 감싼다 — 같은 글 아래 댓글창에 한 글자 칠 때마다 부모가 다시 그려지는데, 그때마다
+// 본문까지 다시 그리면 그림이 깜빡인다(재마운트 → 다시 내려받기).
+export const Markdown = memo(function Markdown({
+  children,
+  mentions,
+  uploadScope = 'student',
+  className,
+}: MarkdownProps) {
   const source = useMemo(
     () => linkifyMentions(children, mentions),
     [children, mentions],
+  )
+  // 렌더마다 새 객체를 넘기면 react-markdown 이 요소 타입이 바뀐 줄 알고 자식을 통째로
+  // 다시 만든다 — 그림이 매번 처음부터 그려진다. 역할이 그대로면 같은 객체를 쓴다.
+  const components = useMemo(
+    () => ({
+      // 올린 이미지는 토큰이 필요해 src 에 주소를 그대로 걸 수 없다.
+      img({ src, alt, ...rest }: ComponentPropsWithoutRef<'img'>) {
+        if (typeof src === 'string' && src.startsWith(UPLOAD)) {
+          return (
+            <UploadImage
+              id={src.slice(UPLOAD.length)}
+              scope={uploadScope}
+              alt={alt ?? ''}
+            />
+          )
+        }
+        // 남의 서버 그림은 언제든 사라질 수 있다 — 빈 상자만 남기지 않는다.
+        return <BodyImage src={src} alt={alt ?? ''} {...rest} />
+      },
+      a({ href, children, title, ...rest }: ComponentPropsWithoutRef<'a'>) {
+        if (typeof href === 'string' && href.startsWith('#mention-')) {
+          return <span className="qna-mention">{children}</span>
+        }
+        // 카드로 그릴 링크인지 title 로 가린다 — 마크다운을 유지한 채 표현을 넓히는 방법이다.
+        const embed = parseEmbedTitle(title)
+        if (embed?.kind === 'bookmark' && href) {
+          return (
+            <BookmarkCard href={href} label={String(children)} meta={embed} />
+          )
+        }
+        if (embed?.kind === 'file' && href) {
+          return (
+            <FileChip
+              href={href}
+              scope={uploadScope}
+              label={String(children)}
+              size={embed.size}
+            />
+          )
+        }
+        return (
+          <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+            {children}
+          </a>
+        )
+      },
+    }),
+    [uploadScope],
   )
   return (
     <div className={`markdown-body ${className ?? ''}`}>
@@ -76,26 +167,10 @@ export function Markdown({ children, mentions, className }: MarkdownProps) {
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, [rehypeSanitize, schema]]}
         urlTransform={urlTransform}
-        components={{
-          a({ href, children, ...rest }: ComponentPropsWithoutRef<'a'>) {
-            if (typeof href === 'string' && href.startsWith('#mention-')) {
-              return <span className="qna-mention">{children}</span>
-            }
-            return (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...rest}
-              >
-                {children}
-              </a>
-            )
-          },
-        }}
+        components={components}
       >
         {source}
       </ReactMarkdown>
     </div>
   )
-}
+})

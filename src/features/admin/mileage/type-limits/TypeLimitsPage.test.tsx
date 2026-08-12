@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import TypeLimitsPage from './TypeLimitsPage'
-import { useTypeLimits } from './api'
+import { useSaveTypeLimits, useTypeLimits } from './api'
 import type { TypeLimitsData } from './types'
 
 vi.mock('./api')
@@ -38,12 +38,24 @@ const overview: TypeLimitsData = {
   ],
 }
 
+// 저장은 서버로 나간다 — 목이 onSuccess 를 불러 줘야 화면이 저장된 것으로 넘어간다.
+const saveMutate = vi.fn(
+  (
+    _limits: { type: string; limit: number }[],
+    opts?: { onSuccess?: () => void },
+  ) => opts?.onSuccess?.(),
+)
+
 function renderPage() {
   vi.mocked(useTypeLimits).mockReturnValue({
     data: overview,
     isPending: false,
     isError: false,
   } as unknown as ReturnType<typeof useTypeLimits>)
+  vi.mocked(useSaveTypeLimits).mockReturnValue({
+    mutate: saveMutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useSaveTypeLimits>)
   return render(
     <ToastProvider>
       <MemoryRouter>
@@ -58,7 +70,6 @@ describe('TypeLimitsPage (마일리지 타입 한도)', () => {
     renderPage()
     expect(screen.getByText('기프티콘')).toBeInTheDocument()
     expect(screen.getByText('도서')).toBeInTheDocument()
-    expect(screen.getByText(/타입 한도를 초과하는 요청은 자동으로 차단/)).toBeInTheDocument()
     // 변경 0건 → 저장 비활성
     expect(
       screen.getByRole('button', { name: /한도 저장 — 변경 0건/ }),

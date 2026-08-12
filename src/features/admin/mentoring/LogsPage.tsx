@@ -15,17 +15,27 @@ import { LOG_STATUS_META, logDisplayStatus } from './statusMeta'
 import { LogReviewModal } from './LogReviewModal'
 import type { AdminMentoringLogRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 // 멘토링 일지 관리 (/admin/mentoring/logs) — 운영(MANAGER/ADMIN) 승인·수정 요청 전용.
 // 검토 모달에서 매니저 승인(POST .../approve)·수정 요청(.../change-requests) 가능,
 // 직접 수정·폐기·반려는 없음(반려 KPI·버튼은 시안 단계라 제외).
 // 상태 = 초안/승인 대기/유효/수정 요청/재제출 후 유효.
-export default function LogsPage() {
+// embedded=true 면 기수 허브의 '멘토링' 탭에 임베드(자체 헤더·바깥 패딩 생략).
+export default function LogsPage({
+  embedded = false,
+  scopeCohortId,
+}: {
+  embedded?: boolean
+  scopeCohortId?: string
+} = {}) {
   usePageHeader(
     '멘토링 일지 관리',
     '운영자 조회·수정 요청 · 직접 수정 불가 · 최종 유효본 기준 인정 시간 계산',
+    !embedded,
   )
-  const { data, isPending, isError, refetch } = useAdminMentoringLogs()
+  const { data, isPending, isError, refetch } =
+    useAdminMentoringLogs(scopeCohortId)
   const [status, setStatus] = useSearchParamState('status', 'all')
   const [q, setQ] = useSearchParamState('q')
   const [reviewId, setReviewId] = useState<string | null>(null)
@@ -119,15 +129,18 @@ export default function LogsPage() {
   ]
 
   return (
-    <div className="p-8">
-      {/* 돌아가기 — 멘토 배정 관리로 */}
-      <Link
-        to="/admin/mentors/assignments"
-        className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        멘토 배정 관리로 돌아가기
-      </Link>
+    <div className={embedded ? '' : 'p-8'}>
+      {/* 돌아가기 — 멘토 배정 관리로. 허브 탭에선 위에 sub-nav 가 있어 필요 없고,
+          누르면 허브 밖으로 나가 버린다. */}
+      {!embedded && (
+        <Link
+          to="/admin/mentors/assignments"
+          className="text-fg-muted hover:text-fg mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          멘토 배정 관리로 돌아가기
+        </Link>
+      )}
 
       <DataBoundary
         isPending={isPending}
@@ -183,12 +196,11 @@ export default function LogsPage() {
                   className="h-9"
                 />
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="팀·멘토 검색"
-                aria-label="팀·멘토 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="팀·멘토 검색"
               />
             </div>
 

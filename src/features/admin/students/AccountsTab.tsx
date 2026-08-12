@@ -7,6 +7,8 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
+import { downloadExcel } from '@/shared/lib/downloadExcel'
+import type { CohortScope } from './scope'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
@@ -17,10 +19,12 @@ import {
   useStudentAccounts,
   useSyncStudents,
 } from '../api/students'
+import { useChangeLoginBlock } from '@/shared/api'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { TempPasswordModal } from '../settings/TempPasswordModal'
 import { StudentDetailModal } from './StudentDetailModal'
 import { TestStudentModal } from './TestStudentModal'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type StatusFilter = 'all' | 'normal' | 'blocked'
 
@@ -34,8 +38,21 @@ function accountBadge(
   return { label: '정상', tone: 'success' }
 }
 
+/**
+ * HRD 훈련상태 배지 — 계정 갱신으로 채워지는 '지금 교육 중인가'.
+ *
+ * <p>계정 탭에서만 이 값을 보여준다. 출결·수강생 명단은 교육 중인 사람만 나오므로,
+ * 조기취업·중도탈락한 사람을 확인할 수 있는 곳이 여기뿐이다(2026-08-06).</p>
+ */
+function trainingBadge(status: string | null): { label: string; tone: BadgeTone } {
+  if (!status) return { label: '동기화 전', tone: 'neutral' }
+  if (status.includes('중도탈락')) return { label: '중도탈락', tone: 'danger' }
+  if (status.includes('조기취업')) return { label: '조기취업', tone: 'info' }
+  return { label: status, tone: 'success' }
+}
+
 // 계정 탭 — HRD 동기화 + 계정 관제 테이블 + 학생 계정 상세 모달. (Figma 1457:10648)
-export function AccountsTab() {
+export function AccountsTab({ scope }: { scope?: CohortScope }) {
   const toast = useToast()
   const [status, setStatus] = useSearchParamState('status', 'all')
   const [q, setQ] = useSearchParamState('q')
@@ -45,7 +62,8 @@ export function AccountsTab() {
   } | null>(null)
   // 비밀번호 초기화 모달 대상 계정 — non-null이면 TempPasswordModal이 열린다(설정 탭과 동일 UX).
   const [pwTarget, setPwTarget] = useState<StudentAccount | null>(null)
-  // 차단/해제 낙관적 반영 — mock이라 영속 없음(새로고침 초기화).
+  const changeBlock = useChangeLoginBlock()
+  // 서버 반영 전 잠깐 쓰는 낙관적 표시 — 정본은 서버 status 다.
   const [blockedOverride, setBlockedOverride] = useState<
     Record<string, boolean>
   >({})
@@ -53,10 +71,15 @@ export function AccountsTab() {
   // HRD 동기화 — 과정/기수 선택 + 마지막 동기화 결과.
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const courseId =
+    scope?.courseId ?? selectedCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
-  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const cohortId =
+    scope?.cohortId ??
+    selectedCohortId ??
+    courseConfig?.cohorts?.[0]?.id ??
+    null
   // 선택 기수의 배정 학생만 조회 — 기수 변경 시 목록 자동 갱신.
   const { data, isPending, isError, refetch } = useStudentAccounts(cohortId)
   const syncStudents = useSyncStudents()
@@ -71,6 +94,54 @@ export function AccountsTab() {
 
   const isBlocked = (a: StudentAccount) =>
     blockedOverride[a.id] ?? a.loginBlocked
+
+  // 파일 이름·안내 문구에 쓸 과정·기수 표기 — 받는 사람이 무엇에 대한 계정인지 알아야 한다.
+  const cohortNo = courseConfig?.cohorts?.find(
+    (c) => c.id === cohortId,
+  )?.cohortNo
+  const cohortLabel = cohortNo ? `${cohortNo}기` : ''
+  const courseTitle =
+    courses?.find((c) => c.courseId === courseId)?.title ?? '교육과정'
+
+  /**
+   * 계정 정보 내려받기 — 화면에 보이는 것과 같은 범위(검색·상태 필터 적용)를 담는다.
+   *
+   * <p>목록을 그대로 받아 가면 필터를 걸어 둔 뜻이 사라지고, 받은 파일과 화면이 달라 어느
+   * 쪽이 맞는지 알 수 없다.</p>
+   */
+  const downloadAccounts = async () => {
+    if (filtered.length === 0) {
+      toast.info('내려받을 계정이 없어요')
+      return
+    }
+    const today = new Date().toISOString().slice(0, 10)
+    try {
+      await downloadExcel(`계정정보_${cohortLabel || '전체'}_${today}.xlsx`, {
+        title: 'PLAYDATA LMS',
+        notice: [
+          `안녕하세요, ${courseTitle} ${cohortLabel} 수강생 여러분.`,
+          '아래는 학습에 사용할 LMS 계정 정보입니다. 아이디와 생년월일로 로그인해 주세요.',
+          {
+            text: '반드시 첫 로그인 후에 비밀번호를 변경해 주세요!',
+            emphasis: true,
+          },
+        ],
+        tableTitle: '계정 정보',
+        // 수강생에게 그대로 나눠 주는 문서라 로그인에 필요한 것만 담는다.
+        // 아이디·생년월일은 글자로 — 그냥 두면 엑셀이 숫자·날짜로 바꿔 값이 뒤틀린다.
+        columns: [
+          { header: '이름', width: 14 },
+          { header: '아이디', width: 20 },
+          { header: '생년월일', width: 16 },
+        ],
+        rows: filtered.map((a) => [a.name, a.studentUuid, a.birthDate]),
+        sheetName: cohortLabel ? `${cohortLabel} 계정` : '계정',
+      })
+      toast.success(`계정 ${filtered.length}건을 내려받았어요`)
+    } catch {
+      toast.danger('계정 정보를 내려받지 못했어요')
+    }
+  }
 
   const filtered = useMemo(() => {
     const items = data?.items ?? []
@@ -97,8 +168,19 @@ export function AccountsTab() {
     if (!modal) return
     const { account, action } = modal
     if (action === '로그인 차단' || action === '로그인 차단 해제') {
-      setBlockedOverride((p) => ({ ...p, [account.id]: !isBlocked(account) }))
-      toast.success(`${account.name} · ${action} 적용 — 감사 로그 기록`)
+      const next = !isBlocked(account)
+      // 서버에 남겨야 새로고침해도 유지되고, 실제 로그인도 막힌다.
+      changeBlock.mutate(
+        { userId: account.id, blocked: next },
+        {
+          onSuccess: () => {
+            setBlockedOverride((p) => ({ ...p, [account.id]: next }))
+            toast.success(`${account.name} · ${action} 적용 — 감사 로그 기록`)
+          },
+          onError: () =>
+            toast.danger(`${action}에 실패했어요. 잠시 후 다시 시도해 주세요.`),
+        },
+      )
     } else {
       toast.success(`${account.name} · 변경 저장 — 감사 로그 기록`)
     }
@@ -124,6 +206,8 @@ export function AccountsTab() {
           studentUuid: t.studentUuid,
           name: t.name,
           birth: t.birth,
+          // HRD 훈련상태를 함께 넘긴다 — 계정 갱신 때마다 '지금 교육 중인가'가 최신이 된다.
+          trainingStatus: t.status,
         })),
       })
       setSyncResult(result)
@@ -164,6 +248,15 @@ export function AccountsTab() {
       className: 'w-28',
       cell: (a) => {
         const b = accountBadge(a, isBlocked(a))
+        return <StatusBadge label={b.label} tone={b.tone} />
+      },
+    },
+    {
+      key: 'training',
+      header: '훈련상태',
+      className: 'w-28',
+      cell: (a) => {
+        const b = trainingBadge(a.hrdTrainingStatus)
         return <StatusBadge label={b.label} tone={b.tone} />
       },
     },
@@ -277,40 +370,43 @@ export function AccountsTab() {
               <p className="text-lg font-bold">
                 HRD-Net 명단 동기화로 학생 계정을 일괄 관리합니다
               </p>
+              {/* 임베드(기수 허브)에선 상위가 정한 기수로 동기화한다 — 선택을 또 시키지 않는다. */}
               <div className="mt-3 flex flex-wrap gap-2">
-                <Select
-                  aria-label="과정 선택"
-                  value={courseId}
-                  onChange={(v) => {
-                    setSelectedCourseId(v)
-                    setSelectedCohortId(null)
-                  }}
-                  options={(courses ?? []).map((c) => ({
-                    value: c.courseId,
-                    label: c.title,
-                  }))}
-                  placeholder="등록 과정 없음"
-                  className="h-9"
-                />
-                <Select
-                  aria-label="기수 선택"
-                  value={cohortId}
-                  onChange={(v) => setSelectedCohortId(v)}
-                  options={(courseConfig?.cohorts ?? []).map((c) => ({
-                    value: c.id,
-                    label: `${c.cohortNo}기`,
-                  }))}
-                  placeholder="기수 없음"
-                  className="h-9"
-                />
+                {!scope && (
+                  <>
+                    <Select
+                      aria-label="과정 선택"
+                      value={courseId}
+                      onChange={(v) => {
+                        setSelectedCourseId(v)
+                        setSelectedCohortId(null)
+                      }}
+                      options={(courses ?? []).map((c) => ({
+                        value: c.courseId,
+                        label: c.title,
+                      }))}
+                      placeholder="등록 과정 없음"
+                      className="h-9"
+                    />
+                    <Select
+                      aria-label="기수 선택"
+                      value={cohortId}
+                      onChange={(v) => setSelectedCohortId(v)}
+                      options={(courseConfig?.cohorts ?? []).map((c) => ({
+                        value: c.id,
+                        label: `${c.cohortNo}기`,
+                      }))}
+                      placeholder="기수 없음"
+                      className="h-9"
+                    />
+                  </>
+                )}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="secondary"
-                onClick={() =>
-                  toast.info('계정 정보 내려받기는 준비 중입니다.')
-                }
+                onClick={() => void downloadAccounts()}
               >
                 <Download className="h-4 w-4" /> 계정 정보 다운로드
               </Button>
@@ -374,12 +470,12 @@ export function AccountsTab() {
                     </button>
                   ))}
                 </div>
-                <input
+                <SearchInput
                   value={q}
-                  onChange={(e) => setQ(e.target.value)}
+                  onChange={setQ}
                   placeholder="이름·UUID·생년월일 검색"
-                  aria-label="학생 계정 검색"
-                  className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-64 rounded-lg border px-3 text-sm outline-none"
+                  ariaLabel="학생 계정 검색"
+                  className="w-64"
                 />
               </div>
 
@@ -402,14 +498,12 @@ export function AccountsTab() {
           <TestStudentModal
             open={testOpen}
             cohortId={cohortId}
-            cohortLabel={
-              (() => {
-                const no = courseConfig?.cohorts?.find(
-                  (c) => c.id === cohortId,
-                )?.cohortNo
-                return no ? `${no}기` : '선택 기수'
-              })()
-            }
+            cohortLabel={(() => {
+              const no = courseConfig?.cohorts?.find(
+                (c) => c.id === cohortId,
+              )?.cohortNo
+              return no ? `${no}기` : '선택 기수'
+            })()}
             onClose={() => setTestOpen(false)}
           />
 

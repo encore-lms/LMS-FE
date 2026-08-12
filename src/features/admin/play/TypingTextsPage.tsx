@@ -8,7 +8,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
-import { usePlayTypingTexts, useUpsertPassage } from './api'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useDeletePassage, usePlayTypingTexts, useUpsertPassage } from './api'
 import { PassageFormModal } from './PassageFormModal'
 import { downloadTypingSampleCsv } from './sampleCsv'
 import type { PassageStatus, TypingPassage, UploadValidationRow } from './types'
@@ -52,6 +53,9 @@ export default function TypingTextsPage() {
   // 제시문 추가·수정 폼 모달(formPassage=null → 추가).
   const [formOpen, setFormOpen] = useState(false)
   const [formPassage, setFormPassage] = useState<TypingPassage | null>(null)
+  // 삭제 확인 대상 — 하드 삭제라 다이얼로그로 한 번 확인한다.
+  const [deleteTarget, setDeleteTarget] = useState<TypingPassage | null>(null)
+  const deletePassage = useDeletePassage()
 
   const passages = useMemo(() => data?.passages ?? [], [data])
   const filtered = useMemo(
@@ -117,7 +121,7 @@ export default function TypingTextsPage() {
     {
       key: 'action',
       header: '액션',
-      className: 'w-24',
+      className: 'w-32',
       cell: (p) => (
         <div className="flex items-center gap-3">
           <button
@@ -132,11 +136,40 @@ export default function TypingTextsPage() {
           </button>
           <button
             type="button"
-            // TODO: 제시문 복제(P0_15)
-            onClick={() => toast.info(`${p.title} 복제는 준비 중입니다.`)}
+            // 복제 — 같은 내용으로 새 행 생성. 실수 노출 방지를 위해 비활성으로 시작한다.
+            onClick={() =>
+              upsert.mutate(
+                {
+                  id: null,
+                  body: {
+                    title: `${p.title} 복사본`.slice(0, 80),
+                    content: p.content ?? '',
+                    language: p.language,
+                    level: p.level,
+                    order: p.order,
+                    active: false,
+                  },
+                },
+                {
+                  onSuccess: () =>
+                    toast.success(
+                      `"${p.title}" 복사본을 만들었습니다 (비활성).`,
+                    ),
+                  onError: () =>
+                    toast.danger('복제에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+                },
+              )
+            }
             className="text-accent-strong text-[12px] font-semibold hover:underline"
           >
             복제
+          </button>
+          <button
+            type="button"
+            onClick={() => setDeleteTarget(p)}
+            className="text-danger text-[12px] font-semibold hover:underline"
+          >
+            삭제
           </button>
         </div>
       ),
@@ -225,7 +258,7 @@ export default function TypingTextsPage() {
         </button>
         <button
           type="button"
-          // CSV/Excel 일괄 업로드 — 검증 미리보기 화면으로 이동
+          // CSV/Excel 일괄 업로드 — 실동작(검증 미리보기 → 정상 행 일괄 등록).
           onClick={() => navigate('/admin/play/typing-texts/bulk')}
           className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
         >
@@ -368,38 +401,66 @@ export default function TypingTextsPage() {
         </div>
       </DataBoundary>
 
+      {/* 제시문 삭제 확인 — 하드 삭제라 danger 톤으로 한 번 확인 */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="제시문 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        confirmDisabled={deletePassage.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          deletePassage.mutate(deleteTarget.id, {
+            onSuccess: () => {
+              toast.success('제시문을 삭제했습니다.')
+              setDeleteTarget(null)
+            },
+            onError: () =>
+              toast.danger('제시문 삭제에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+          })
+        }}
+      >
+        <p className="text-fg-muted text-sm leading-6">
+          “{deleteTarget?.title}” 제시문을 삭제합니다. 삭제하면 복구할 수
+          없어요.
+        </p>
+      </ConfirmDialog>
+
       {/* 제시문 추가·수정 폼 모달 (Figma 1557:11159) */}
       <PassageFormModal
         open={formOpen}
         passage={formPassage}
         onClose={() => setFormOpen(false)}
         onSubmit={(mode, values) => {
-          const status: PassageStatus = values.active ? 'active' : 'inactive'
-          const next: TypingPassage = {
-            id: formPassage?.id ?? crypto.randomUUID(),
-            title: values.title,
-            previewNote: values.content
-              ? values.content.replace(/\s+/g, ' ').slice(0, 80)
-              : (formPassage?.previewNote ?? ''),
-            language: values.language,
-            level: values.level,
-            order: values.order,
-            status,
-          }
-          upsert.mutate(next, {
-            onSuccess: () => {
-              toast.success(
-                mode === 'edit'
-                  ? '제시문을 수정했습니다.'
-                  : '제시문을 추가했습니다.',
-              )
-              setFormOpen(false)
+          // 실 API — 신규는 POST, 수정은 PATCH. 미리보기·상태는 서버가 산출해 내려준다.
+          upsert.mutate(
+            {
+              id: formPassage?.id ?? null,
+              body: {
+                title: values.title,
+                content: values.content,
+                language: values.language,
+                level: values.level,
+                order: values.order,
+                active: values.active,
+              },
             },
-            onError: () =>
-              toast.danger(
-                '제시문 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
-              ),
-          })
+            {
+              onSuccess: () => {
+                toast.success(
+                  mode === 'edit'
+                    ? '제시문을 수정했습니다.'
+                    : '제시문을 추가했습니다.',
+                )
+                setFormOpen(false)
+              },
+              onError: () =>
+                toast.danger(
+                  '제시문 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+                ),
+            },
+          )
         }}
       />
     </div>

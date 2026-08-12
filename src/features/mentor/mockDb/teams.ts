@@ -128,8 +128,6 @@ export function buildTeamDetailData(
   const team = mentorDb.teams.find((t) => t.teamId === teamId)
   if (!team) return null
   const assignment = toAssignment(team)
-  // 평가·추천 게이트: N시간 완료 또는 조기 종료 시에만 활성(422 MENTOR_EVALUATION_NOT_ELIGIBLE).
-  const locked = !(assignment.nHoursDone || team.status === 'early_ended')
   return {
     assignment,
     periodLabel: team.periodLabel,
@@ -138,8 +136,9 @@ export function buildTeamDetailData(
     reservationSummary: team.reservationSummary,
     nextReservation: nextReservationOf(team),
     evaluation: {
-      locked,
-      lockReasonLabel: 'N시간 완료 후 활성',
+      // 정책 완화(2026-08-04) — 상시 작성 가능, 잠금 없음(BE 계약 정합).
+      locked: false,
+      lockReasonLabel: '',
       progressHours: assignment.recognizedHours,
       allocatedHours: assignment.allocatedHours,
       percent:
@@ -148,17 +147,17 @@ export function buildTeamDetailData(
               (assignment.recognizedHours / assignment.allocatedHours) * 100,
             )
           : 0,
-      // M4 제출 상태 연동 — 제출 즉시 '완료'(제출 후 수정 불가, PATCH/DELETE 없음).
+      // 상태 라벨 — 제출됨(재제출 가능) / 미작성(BE 콘솔 라벨 정합).
       evaluationStatusLabel: mentorDb.evaluations.some(
         (e) => e.teamId === teamId,
       )
-        ? '완료'
-        : '대기',
+        ? '제출됨'
+        : '미작성',
       recommendationStatusLabel: mentorDb.recommendations.some(
         (r) => r.teamId === teamId,
       )
-        ? '완료'
-        : '대기',
+        ? '제출됨'
+        : '미작성',
     },
     // 최신순 정렬 — M3에서 초안(작성 중) 일지가 추가돼 배열 순서 대신 진행 일시 기준 파생.
     recentLogs: sortByPerformedAtDesc(team.logs).map((log) => ({

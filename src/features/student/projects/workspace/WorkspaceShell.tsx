@@ -41,6 +41,10 @@ export function WorkspaceShell({
   endDate,
   active,
   onTab,
+  visibleTabs,
+  readOnly = false,
+  teamLocked = false,
+  backTo,
   children,
 }: {
   title: string
@@ -50,9 +54,20 @@ export function WorkspaceShell({
   endDate?: string | null
   active: WsTab
   onTab: (t: WsTab) => void
+  /** 노출할 탭 부분집합 — 미지정 시 전체 10탭(수강생). 검토자는 조회 7탭만 넘긴다. */
+  visibleTabs?: WsTab[]
+  /** 검토자(매니저·강사) 열람 — 히어로의 팀원 초대·인증 요청 액션 미노출(2026-08-04). */
+  readOnly?: boolean
+  /** 팀 구성이 잠긴 상태(PM 아님·종료·상호평가 중) — 히어로 액션을 '팀 관리'로 바꾼다. */
+  teamLocked?: boolean
+  /** 브레드크럼 목록 링크 대체 — 미지정 시 수강생 프로젝트 목록. */
+  backTo?: { label: string; onClick: () => void }
   children: ReactNode
 }) {
   const navigate = useNavigate()
+  const tabs = visibleTabs
+    ? TABS.filter((t) => visibleTabs.includes(t.key))
+    : TABS
   // 위저드와 동일 규약 — 공유 헤더엔 일반 라벨, 구체 식별은 본문 히어로가 담당(제목 중복 방지).
   usePageHeader(
     '프로젝트 워크스페이스',
@@ -75,10 +90,12 @@ export function WorkspaceShell({
         <nav className="flex min-w-0 items-center gap-1.5 text-[12px]">
           <button
             type="button"
-            onClick={() => navigate('/student/projects')}
+            onClick={
+              backTo ? backTo.onClick : () => navigate('/student/projects')
+            }
             className="text-fg-muted hover:text-fg shrink-0"
           >
-            ← 프로젝트 목록
+            ← {backTo ? backTo.label : '프로젝트 목록'}
           </button>
           <span className="text-fg-subtle shrink-0">/</span>
           <span className="text-fg truncate font-semibold">{title}</span>
@@ -114,30 +131,33 @@ export function WorkspaceShell({
             })}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onTab('settings')}
-            aria-label="설정(팀 관리) 탭으로 이동"
-            className="flex items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-white/25"
-          >
-            <Send className="size-3.5" aria-hidden="true" />
-            팀원 초대
-          </button>
-          <button
-            type="button"
-            onClick={() => onTab('certification')}
-            aria-label="인증 요청 탭으로 이동"
-            className="text-brand flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-[13px] font-bold transition-colors hover:bg-white/90"
-          >
-            <CircleCheck className="size-3.5" aria-hidden="true" />
-            인증 요청
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="flex shrink-0 items-center gap-2">
+            {/* 초대가 막힌 상태에서 '팀원 초대'라고 부르면, 눌러 간 곳에서 비활성 버튼을 만난다. */}
+            <button
+              type="button"
+              onClick={() => onTab('settings')}
+              aria-label="설정(팀 관리) 탭으로 이동"
+              className="flex items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-white/25"
+            >
+              <Send className="size-3.5" aria-hidden="true" />
+              {teamLocked ? '팀 관리' : '팀원 초대'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onTab('certification')}
+              aria-label="인증 요청 탭으로 이동"
+              className="text-brand flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-[13px] font-bold transition-colors hover:bg-white/90"
+            >
+              <CircleCheck className="size-3.5" aria-hidden="true" />
+              인증 요청
+            </button>
+          </div>
+        )}
       </div>
 
       <nav className="bg-surface flex gap-1 overflow-x-auto rounded-[14px] p-1.5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const on = t.key === active
           const Icon = t.icon
           return (

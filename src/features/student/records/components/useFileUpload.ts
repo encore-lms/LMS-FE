@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { UploadedFileMeta } from '../types'
 
 // 폼 첨부 파일 상태 — 실제 File 을 선택받아 미리보기/제거를 지원한다.
-// 업로드 자체는 BE 영역이라 제출 시 영속되지 않는다(FE 미리보기 한정).
+// 새로 고른 파일은 file 을 들고 있어야 제출 시 서버로 올릴 수 있다
+// (예전에는 메타만 남겨서 화면에만 보이고 저장되지 않았다).
 export interface UploadItem extends UploadedFileMeta {
   previewUrl?: string // 이미지 미리보기(blob URL) — 새로 선택한 파일만
+  file?: File // 새로 고른 파일 원본 — 기존 첨부(서버 저장분)는 없음
 }
 
 function formatSize(bytes: number): string {
@@ -35,6 +37,7 @@ export function useFileUpload(initial: UploadedFileMeta[] = []) {
         name: f.name,
         size: formatSize(f.size),
         previewUrl,
+        file: f,
       }
     })
     setFiles((prev) => [...prev, ...items])

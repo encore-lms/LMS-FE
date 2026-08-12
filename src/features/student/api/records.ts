@@ -45,25 +45,27 @@ export function useBlogRecord(recordId: string) {
   })
 }
 
-/** 스터디 수정 폼 — 기존 기록 프리필 */
-export function useStudyRecord(recordId: string) {
+/** 스터디 수정 폼 — 기존 기록 프리필. 상세 모달도 같은 응답을 쓴다(닫혀 있으면 안 부른다). */
+export function useStudyRecord(recordId: string, enabled = true) {
   return useQuery({
     queryKey: recordKeys.study(recordId),
     queryFn: () =>
       apiClient
         .get<StudyFormData>(`/student/records/study/${recordId}`)
         .then((r) => r.data),
+    enabled,
   })
 }
 
 /** 자격증 수정 폼 — 기존 기록 프리필 */
-export function useCertRecord(recordId: string) {
+export function useCertRecord(recordId: string, enabled = true) {
   return useQuery({
     queryKey: recordKeys.cert(recordId),
     queryFn: () =>
       apiClient
         .get<CertFormData>(`/student/records/certificate/${recordId}`)
         .then((r) => r.data),
+    enabled,
   })
 }
 
@@ -119,7 +121,16 @@ export function useUpdateBlogRecord(recordId: string) {
 export function useUpdateStudyRecord(recordId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: { title: string; date: string; draft?: boolean }) =>
+    // BE UpdateStudyRequest 는 시간·활동 내역까지 받는다.
+    // 예전에는 title·date 만 보내서 수정 저장 시 활동 내역이 비워졌다.
+    mutationFn: (input: {
+      title: string
+      date: string
+      startTime?: string
+      endTime?: string
+      body?: string
+      draft?: boolean
+    }) =>
       apiClient
         .patch<BlogRecord>(`/student/records/study/${recordId}`, input)
         .then((r) => r.data),
@@ -152,4 +163,52 @@ export function useUpdateCertRecord(recordId: string) {
         .then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: recordKeys.overview() }),
   })
+}
+
+// ── 기록 증빙 첨부(learning-service) ──
+// 그동안 화면에서 파일을 고를 수는 있었지만 서버로 보내는 경로가 없어 저장되지 않았다.
+export function useUploadRecordAttachments() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, files }: { id: string; files: File[] }) => {
+      const form = new FormData()
+      for (const f of files) form.append('files', f)
+      return apiClient.postForm<void>(`/student/records/${id}/attachments`, form)
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: recordKeys.all }),
+  })
+}
+
+export function useDeleteRecordAttachment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, attachmentId }: { id: string; attachmentId: string }) =>
+      apiClient.delete<void>(
+        `/student/records/${id}/attachments/${attachmentId}`,
+      ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: recordKeys.all }),
+  })
+}
+
+/** 증빙 원본 — 상세 모달이 이미지 미리보기를 만들 때 쓴다. */
+export function fetchRecordAttachment(attachmentId: string) {
+  return apiClient.getBlob(`/student/records/attachments/${attachmentId}/file`)
+}
+
+/** 증빙 내려받기 — 본인 또는 담당 기수 운영·강사. */
+export async function downloadRecordAttachment(
+  attachmentId: string,
+  fileName: string,
+) {
+  const blob = await fetchRecordAttachment(attachmentId)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }

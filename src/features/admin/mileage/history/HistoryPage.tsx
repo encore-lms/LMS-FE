@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 
 import { Download } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
-import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
@@ -14,25 +15,14 @@ import { usePageHeader } from '@/shared/store'
 import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
 import { useMileageHistory } from './api'
-import type { AmountSign, MileageTxRow, TxType } from './types'
+import type { MileageTxRow, TxType } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
-
-const TX_META: Record<TxType, { label: string; tone: BadgeTone }> = {
-  grant: { label: '지급', tone: 'success' },
-  deduct: { label: '차감', tone: 'neutral' },
-  partial: { label: '부분', tone: 'warning' },
-  failed: { label: '실패', tone: 'danger' },
-}
-
-const AMOUNT_COLOR: Record<AmountSign, string> = {
-  plus: 'text-success',
-  minus: 'text-danger',
-  zero: 'text-fg-subtle',
-}
+import { SearchInput } from '@/components/ui/SearchInput'
+import { AMOUNT_COLOR, TX_META } from './meta'
 
 // 마일리지 지급 내역 (/admin/mileage/history) — 운영(MANAGER/ADMIN) 신규.
 // Figma 1197:6378. 지급·차감 원장(MileageTransaction) 조회. 마일리지 클러스터 sub-page.
-// 조회 전용 — CSV 내보내기·상세는 별도 시안 미설계 → 토스트 + TODO(P0_16).
+// 조회 전용 — 상세는 수강생 이력 페이지로, CSV 내보내기는 미설계 → 토스트.
 export default function HistoryPage() {
   usePageHeader(
     '마일리지 지급 내역',
@@ -58,7 +48,22 @@ export default function HistoryPage() {
   }, [rows, txType, q])
 
   const summary = data?.summary
-  const footer = data?.footer
+  // 필터를 걸면 표는 줄어드는데 KPI·하단은 서버 전체값이라 숫자가 어긋났다(2026-08-05 QA).
+  // 지금 화면에 보이는 결과로 다시 센다.
+  const footer = useMemo(() => {
+    const grant = filtered.filter((r) => r.txType === 'grant').length
+    const deduct = filtered.filter((r) => r.txType === 'deduct').length
+    const partial = filtered.filter((r) => r.txType === 'partial').length
+    return {
+      total: filtered.length,
+      grant,
+      deduct,
+      partial,
+      failed: filtered.length - grant - deduct - partial,
+    }
+  }, [filtered])
+  const filteredCount = filtered.length
+  const isFiltered = filteredCount !== rows.length
 
   const columns: Column<MileageTxRow>[] = [
     {
@@ -97,20 +102,25 @@ export default function HistoryPage() {
             AMOUNT_COLOR[r.amountSign],
           )}
         >
-          {r.amount} <span className="text-fg-subtle font-normal">M</span>
+          {r.amount}
         </span>
       ),
     },
     {
       key: 'type',
       header: '구분',
-      className: 'w-16',
-      cell: (r) => (
-        <StatusBadge
-          label={TX_META[r.txType].label}
-          tone={TX_META[r.txType].tone}
-        />
-      ),
+      className: 'w-24',
+      // 구매는 요청 즉시 차감이라 승인 전에도 원장에 남는다 — 확정된 차감처럼 보이지 않게
+      // '승인 검토'로 구분한다(2026-08-05 QA).
+      cell: (r) =>
+        r.pending ? (
+          <StatusBadge label="승인 검토" tone="warning" />
+        ) : (
+          <StatusBadge
+            label={TX_META[r.txType].label}
+            tone={TX_META[r.txType].tone}
+          />
+        ),
     },
     {
       key: 'balance',
@@ -118,7 +128,7 @@ export default function HistoryPage() {
       className: 'w-24',
       cell: (r) => (
         <span className="text-fg-muted text-[13px] tabular-nums">
-          {r.balance} M
+          {r.balance}
         </span>
       ),
     },
@@ -137,18 +147,16 @@ export default function HistoryPage() {
       key: 'action',
       header: '',
       className: 'w-16',
-      cell: (r) => (
-        <button
-          type="button"
-          // TODO: 거래 상세(P0_16 BE 계약 확정 후)
-          onClick={() =>
-            toast.info(`${r.studentName} 거래 상세는 준비 중입니다.`)
-          }
-          className="text-brand text-[13px] font-semibold hover:underline"
-        >
-          상세
-        </button>
-      ),
+      // 거래 한 줄만 떼어 보면 잔액이 왜 그 숫자인지 알 수 없다 — 그 수강생의 흐름으로 보낸다.
+      cell: (r) =>
+        r.studentUserId ? (
+          <Link
+            to={`/admin/mileage/history/students/${r.studentUserId}`}
+            className="text-brand text-[13px] font-semibold hover:underline"
+          >
+            상세
+          </Link>
+        ) : null,
     },
   ]
 
@@ -174,26 +182,26 @@ export default function HistoryPage() {
           <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <KpiCard
               label="총 지급"
-              value={`${summary.granted} M`}
+              value={summary.granted}
               hint={summary.grantedHint}
               tone="success"
             />
             <KpiCard
               label="총 차감"
-              value={`${summary.deducted} M`}
+              value={summary.deducted}
               hint={summary.deductedHint}
               tone="danger"
             />
             <KpiCard
               label="순증감"
-              value={`${summary.net} M`}
+              value={summary.net}
               hint={summary.netHint}
               tone="info"
             />
             <KpiCard
               label="내역 건수"
-              value={`${summary.count}건`}
-              hint={summary.countHint}
+              value={`${filteredCount}건`}
+              hint={isFiltered ? `전체 ${summary.count}건 중 조건에 맞는 건수` : summary.countHint}
             />
           </div>
         )}
@@ -213,12 +221,11 @@ export default function HistoryPage() {
             ]}
             className="h-9"
           />
-          <input
+          <SearchInput
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
             placeholder="수강생 이름·사유 검색"
-            aria-label="수강생 이름·사유 검색"
-            className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+            ariaLabel="수강생 이름·사유 검색"
           />
           <button
             type="button"
@@ -239,12 +246,11 @@ export default function HistoryPage() {
             rowKey={(r) => r.id}
             empty="조건에 맞는 거래가 없어요"
           />
-          {footer && (
-            <div className="text-fg-subtle mt-3 text-xs">
-              총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
-              부분 {footer.partial} · 실패 {footer.failed}
-            </div>
-          )}
+          <div className="text-fg-subtle mt-3 text-xs">
+            총 {footer.total}건 · 지급 {footer.grant} · 차감 {footer.deduct} ·
+            부분 {footer.partial} · 실패 {footer.failed}
+            {isFiltered && ` (전체 ${rows.length}건)`}
+          </div>
         </div>
       </DataBoundary>
     </div>

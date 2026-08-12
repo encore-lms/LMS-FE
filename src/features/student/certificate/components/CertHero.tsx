@@ -1,13 +1,13 @@
 import { cn } from '@/shared/lib/cn'
-import type { CertHeader, CertStatus } from '../types'
+import type { CertHeader, CertStage } from '../types'
 
 // 증명서 컴팩트 히어로 — Figma 탭 상세 'compact-hero'.
 // 슬림한 틸 바: ENCORE DATA 씰 + status 칩 + 이름/과정 + 교육 기간.
-const STATUS_CHIP: Record<CertStatus, { dot: string; label: string }> = {
-  draft: { dot: 'bg-warning', label: 'PREVIEW · 정식 인증 전' },
-  under_review: { dot: 'bg-info', label: '검토 중 · 매니저 확인' },
+const STATUS_CHIP: Record<CertStage, { dot: string; label: string }> = {
+  before: { dot: 'bg-warning', label: 'PREVIEW · 정식 인증 전' },
+  reviewing: { dot: 'bg-info', label: '검토 중 · 매니저 확인' },
   changes_requested: { dot: 'bg-danger', label: '보완 요청 · 수정 필요' },
-  issued: { dot: 'bg-success', label: '정식 인증 완료' },
+  certified: { dot: 'bg-success', label: '정식 인증 완료' },
 }
 
 export function CertHero({
@@ -15,7 +15,7 @@ export function CertHero({
   status,
 }: {
   header: CertHeader
-  status: CertStatus
+  status: CertStage
 }) {
   const chip = STATUS_CHIP[status]
   return (
@@ -35,7 +35,7 @@ export function CertHero({
         <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold">
           <span className={cn('size-1.5 rounded-full', chip.dot)} />
           {chip.label}
-          {status === 'issued' && (
+          {status === 'certified' && (
             <span className="ml-1 font-mono text-white/85">
               검증 ID {header.certId}
             </span>
@@ -45,9 +45,14 @@ export function CertHero({
           <span className="text-[26px] leading-none font-bold">
             {header.studentName}
           </span>
-          <span className="text-[13px] font-medium text-white/85">
-            {header.courseName} · {header.cohortName}
-          </span>
+          {/* 과정·기수는 별도 요청이라 늦게 온다 — 오는 동안 구분점만 남지 않게 통째로 감춘다. */}
+          {(header.courseName || header.cohortName) && (
+            <span className="text-[13px] font-medium text-white/85">
+              {[header.courseName, header.cohortName]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
         </div>
         <span className="text-[12px] text-white/75">
           교육 기간 {header.periodLabel}

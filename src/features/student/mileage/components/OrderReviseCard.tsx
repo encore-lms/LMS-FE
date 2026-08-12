@@ -1,0 +1,131 @@
+import { useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import { buttonClass } from '@/components/ui/buttonClass'
+import { inputClass } from '@/components/ui/inputClass'
+import { cn } from '@/shared/lib/cn'
+import { NumberInput } from '@/components/ui/NumberInput'
+import { useToast } from '@/components/ui/use-toast'
+import { useReviseMileageOrder, type MileageOrderRow } from '../../api/mileage'
+
+// 매니저가 수정 요청한 구매 건 — 사유를 보여주고, 수량·구매 링크를 고쳐 다시 낸다.
+// 예전에는 상태가 '검토 대기'로만 보여서 무엇을 요구받았는지도, 무엇을 할 수 있는지도 알 수 없었다.
+export function OrderReviseCard({ order }: { order: MileageOrderRow }) {
+  const toast = useToast()
+  const revise = useReviseMileageOrder()
+  const [lines, setLines] = useState(() =>
+    (order.lines ?? []).map((l) => ({
+      productId: l.productId,
+      productName: l.productName,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice,
+      link: l.link ?? '',
+    })),
+  )
+
+  // 무엇을 고쳤는지 적어 보내지 않으면 매니저는 같은 화면을 다시 보고 또 판단해야 한다.
+  const [memo, setMemo] = useState('')
+
+  const total = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0)
+  const setLine = (i: number, patch: Partial<(typeof lines)[number]>) =>
+    setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)))
+
+  const submit = () => {
+    if (lines.some((l) => l.quantity < 1)) {
+      toast.danger('수량은 1개 이상이어야 해요')
+      return
+    }
+    revise.mutate(
+      {
+        orderId: order.id,
+        items: lines.map((l) => ({
+          productId: l.productId,
+          quantity: l.quantity,
+          // 도서·인터넷 강의는 고정가가 없어 수강생이 넣은 값을 서버가 받아야 한다.
+          // 이걸 빼고 보내던 동안 그 두 종류는 재요청이 422('가격을 입력해 주세요')로
+          // 조용히 실패했다 — 화면에는 금액이 보이는데 서버로는 안 갔다.
+          requestedPrice: l.unitPrice,
+          link: l.link.trim() || undefined,
+        })),
+        memo: memo.trim() || undefined,
+      },
+      {
+        onSuccess: () => toast.success('수정해서 다시 요청했어요'),
+        // 서버가 이유를 준다(가격 누락·잔액 부족·한도 초과 등) — 일반 문구로 덮지 않는다.
+        onError: (err) =>
+          toast.danger(
+            (err as { response?: { data?: { message?: string } } } | undefined)
+              ?.response?.data?.message ?? '다시 요청하지 못했어요',
+          ),
+      },
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-3.5 border-t border-dashed border-divider pt-3.5">
+      <div className="bg-warning-bg/70 flex flex-col gap-1 rounded-xl px-3.5 py-3">
+        <span className="text-warning flex items-center gap-1.5 text-[12px] font-bold">
+          <AlertTriangle className="size-3.5" aria-hidden="true" />
+          매니저가 수정을 요청했어요
+        </span>
+        <span className="text-fg-muted text-[12px] leading-5">
+          {order.reviewNote?.trim() ||
+            '매니저가 사유를 남기지 않았어요. 운영팀에 확인해 주세요.'}
+        </span>
+      </div>
+
+      {lines.map((l, i) => (
+        <div key={l.productId + i} className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-fg min-w-0 flex-1 truncate text-[13px] font-semibold">
+              {l.productName}
+            </span>
+            <NumberInput
+              value={l.quantity}
+              onChange={(v) => setLine(i, { quantity: v })}
+              min={1}
+              className="w-20"
+              aria-label={`${l.productName} 수량`}
+            />
+            <span className="text-fg-muted shrink-0 text-[12px] tabular-nums">
+              {(l.unitPrice * l.quantity).toLocaleString()}M
+            </span>
+          </div>
+          <input
+            value={l.link}
+            onChange={(e) => setLine(i, { link: e.target.value })}
+            placeholder="구매 링크(도서·강의만)"
+            className={inputClass({ size: 'sm' })}
+          />
+        </div>
+      ))}
+
+      <label className="flex flex-col gap-1.5">
+        <span className="text-fg text-[12px] font-semibold">
+          매니저에게 남길 메모
+        </span>
+        <textarea
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          rows={2}
+          placeholder="무엇을 고쳤는지 적어 주세요 (예: 수량 2개로 줄이고 구매 링크를 교체했습니다)"
+          className={cn(inputClass({ size: 'sm' }), 'h-auto resize-y py-2')}
+        />
+      </label>
+
+      <div className="flex items-center justify-between">
+        <span className="text-fg-subtle text-[12px]">
+          변경 후 합계{' '}
+          <b className="text-fg tabular-nums">{total.toLocaleString()}M</b>
+        </span>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={revise.isPending || lines.length === 0}
+          className={buttonClass({ size: 'sm' })}
+        >
+          수정해서 다시 요청
+        </button>
+      </div>
+    </div>
+  )
+}

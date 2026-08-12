@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import RequestResponseModal from './RequestResponseModal'
-import RequestRespondedPage from './RequestRespondedPage'
 import {
   useMentoringRequestAction,
   useMentoringRequestDetail,
@@ -36,10 +35,7 @@ function renderModal(initialEntry: string) {
             path="/mentor/mentoring-requests"
             element={<div>요청 목록</div>}
           />
-          <Route
-            path="/mentor/mentoring-requests/submitted"
-            element={<RequestRespondedPage />}
-          />
+          <Route path="/mentor/teams" element={<div>배정 팀 목록</div>} />
           <Route
             path="/mentor/mentoring-requests/:requestId"
             element={<RequestResponseModal />}
@@ -90,8 +86,8 @@ describe('RequestResponseModal', () => {
       { requestId: 'req_rec_6', action: 'confirm' },
       expect.anything(),
     )
-    // 저장 완료 — 예약 응답 완료 요약 페이지로 이동(확정)
-    expect(await screen.findByText('예약을 확정했습니다')).toBeInTheDocument()
+    // 저장 완료 — 별도 완료 화면은 팀 탭 이관과 함께 걷어냈다(2026-08-04). 목록으로 돌아온다.
+    expect(await screen.findByText('배정 팀 목록')).toBeInTheDocument()
   })
 
   it('조정 제안 모드 — 희망 일정이 공용 날짜·시각 피커에 프리필되고 제출 시 라벨로 합성된다', async () => {

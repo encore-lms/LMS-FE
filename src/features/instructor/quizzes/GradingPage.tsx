@@ -28,6 +28,8 @@ export default function GradingPage() {
   // 허브 진입이면 제출현황 복귀에도 cohortId를 이어붙여 최종 목록이 허브로 가게 한다.
   const fromCohortId = searchParams.get('cohortId')
   const hubQs = fromCohortId ? `?cohortId=${fromCohortId}` : ''
+  // 결과·답안 보기(제출 현황의 [결과 보기]/[답안 보기]) — 같은 화면을 읽기 전용으로 쓴다.
+  const viewOnly = searchParams.get('view') === '1'
   const toast = useToast()
   const { data, isPending, isError, refetch } = useGradingDetail(
     quizId,
@@ -37,7 +39,12 @@ export default function GradingPage() {
   const saveGrading = useSaveGrading(quizId, submissionId)
   // 강사는 계정 목록 조회가 막혀 있어(403), 담당 기수 로스터로 이름을 join한다.
   const { data: roster } = useCohortRoster(fromCohortId)
-  usePageHeader('수동 채점', '문항별 점수·피드백 입력 — 완료 시 점수 확정')
+  usePageHeader(
+    viewOnly ? '채점 결과' : '수동 채점',
+    viewOnly
+      ? '문항별 답안·점수·피드백을 확인합니다 (읽기 전용)'
+      : '문항별 점수·피드백 입력 — 완료 시 점수 확정',
+  )
 
   // 채점 데이터 도착 시 기존 입력값으로 초기화.
   useEffect(() => {
@@ -93,6 +100,11 @@ export default function GradingPage() {
   const total = data?.totalManualCount ?? 0
   const allEntered = gradedCount >= total
   const pct = total > 0 ? Math.round((gradedCount / total) * 100) : 0
+  // 서버 기준 확정 여부 — 수동 문항이 없거나 전부 채점 완료면 총점은 확정이다.
+  // (입력 중 드래프트가 아니라 저장된 상태 기준이라 채점 도중에는 임시로 남는다)
+  const scoreConfirmed =
+    (data?.items ?? []).length === 0 ||
+    (data?.items ?? []).every((it) => it.status === 'done')
   // 학생명 — BE는 studentUserId만 주므로 로스터 join(없으면 BE studentName/대체).
   const studentName =
     (roster ?? []).find((s) => s.userId === data?.studentUserId)?.name ||
@@ -143,14 +155,18 @@ export default function GradingPage() {
               </div>
               <div className="bg-divider h-9 w-px" />
               <div>
-                <p className="text-fg-subtle text-xs">채점 진행률</p>
+                <p className="text-fg-subtle text-xs">수동 채점 진행률</p>
                 <p className="text-fg text-sm font-bold">
-                  {gradedCount} / {total} 문항 · {pct}%
+                  {total > 0
+                    ? `${gradedCount} / ${total} 문항 · ${pct}%`
+                    : '대상 문항 없음 · 자동 채점'}
                 </p>
               </div>
               <div className="bg-divider h-9 w-px" />
               <div>
-                <p className="text-fg-subtle text-xs">임시 점수</p>
+                <p className="text-fg-subtle text-xs">
+                  {scoreConfirmed ? '확정 점수' : '임시 점수'}
+                </p>
                 <p className="text-fg text-lg font-bold">
                   {provisional}{' '}
                   <span className="text-fg-subtle text-xs font-medium">
@@ -168,13 +184,27 @@ export default function GradingPage() {
                 ← 제출 현황으로
               </button>
             </div>
-            <div className="bg-surface-muted mt-3 h-2 w-40 overflow-hidden rounded-full">
-              <div
-                className="bg-accent-strong h-full rounded-full transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
+            {total > 0 && (
+              <div className="bg-surface-muted mt-3 h-2 w-40 overflow-hidden rounded-full">
+                <div
+                  className="bg-accent-strong h-full rounded-full transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            )}
           </div>
+
+          {/* 수동 문항 없음(자동 완료) — 결과 보기에서만 도달 */}
+          {data.items.length === 0 && (
+            <div className="border-border bg-surface mt-4 rounded-xl border px-5 py-8 text-center">
+              <p className="text-fg text-sm font-bold">
+                수동 채점 문항이 없어요
+              </p>
+              <p className="text-fg-subtle mt-1 text-xs">
+                자동 채점 점수로 확정된 제출입니다 — 총점은 상단에서 확인하세요.
+              </p>
+            </div>
+          )}
 
           {/* 문제별 채점 카드 */}
           {data.items.map((it) => {
@@ -248,13 +278,14 @@ export default function GradingPage() {
                       <div className="border-border focus-within:border-brand flex h-11 items-center rounded-lg border bg-white px-3">
                         <input
                           value={draft.score}
+                          disabled={viewOnly}
                           onChange={(e) => {
                             const v = e.target.value
                             if (v !== '' && Number.isNaN(Number(v))) return
                             if (v !== '' && Number(v) > it.points) return
                             update({ score: v })
                           }}
-                          placeholder="입력 필요"
+                          placeholder={viewOnly ? '미입력' : '입력 필요'}
                           aria-label={`문제 ${it.index} 점수`}
                           className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-base font-bold outline-none focus-visible:shadow-none"
                         />
@@ -269,11 +300,12 @@ export default function GradingPage() {
                       </span>
                       <textarea
                         value={draft.feedback}
+                        disabled={viewOnly}
                         onChange={(e) => update({ feedback: e.target.value })}
                         rows={3}
                         placeholder="(피드백 미입력)"
                         aria-label={`문제 ${it.index} 피드백`}
-                        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle w-full rounded-lg border bg-white p-3 text-sm outline-none"
+                        className="border-border focus:border-brand text-fg placeholder:text-fg-subtle disabled:bg-surface-muted/40 w-full rounded-lg border bg-white p-3 text-sm outline-none"
                       />
                     </label>
                     <div className="bg-surface-muted mt-3 flex items-center justify-between rounded-lg px-3 py-2.5">
@@ -288,6 +320,7 @@ export default function GradingPage() {
                       <button
                         type="button"
                         role="switch"
+                        disabled={viewOnly}
                         aria-checked={draft.visible}
                         aria-label={`문제 ${it.index} 피드백 공개`}
                         onClick={() => update({ visible: !draft.visible })}
@@ -310,45 +343,66 @@ export default function GradingPage() {
             )
           })}
 
-          {/* 푸터 */}
+          {/* 푸터 — 읽기 전용에서는 저장 액션 없이 목록 복귀만 */}
           <div className="border-border bg-surface mt-4 flex flex-wrap items-center gap-2 rounded-xl border px-5 py-4">
-            <p
-              className={cn(
-                'text-xs',
-                allEntered
-                  ? 'text-success font-medium'
-                  : 'text-warning font-medium',
-              )}
-            >
-              {allEntered
-                ? `✓ 모든 수동 문항 입력 완료 — 채점 완료 시 점수가 확정됩니다`
-                : `⚠ 모든 수동 문항 점수 입력 후 [채점 완료] 활성 — 현재 ${gradedCount} / ${total} 입력`}
-            </p>
+            {viewOnly ? (
+              <p className="text-fg-muted text-xs font-medium">
+                읽기 전용 — 채점 내용을 확인하는 화면이에요. 수정은 [채점]에서
+                진행합니다.
+              </p>
+            ) : (
+              <p
+                className={cn(
+                  'text-xs',
+                  allEntered
+                    ? 'text-success font-medium'
+                    : 'text-warning font-medium',
+                )}
+              >
+                {allEntered
+                  ? `✓ 모든 수동 문항 입력 완료 — 채점 완료 시 점수가 확정됩니다`
+                  : `⚠ 모든 수동 문항 점수 입력 후 [채점 완료] 활성 — 현재 ${gradedCount} / ${total} 입력`}
+              </p>
+            )}
             <div className="ml-auto flex gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() =>
-                  navigate(`${base}/${quizId}/submissions${hubQs}`)
-                }
-              >
-                취소
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={saveGrading.isPending}
-                onClick={() => handleSave(false)}
-              >
-                임시 저장
-              </Button>
-              <Button
-                type="button"
-                disabled={!allEntered || saveGrading.isPending}
-                onClick={() => handleSave(true)}
-              >
-                채점 완료
-              </Button>
+              {viewOnly ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    navigate(`${base}/${quizId}/submissions${hubQs}`)
+                  }
+                >
+                  목록으로
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      navigate(`${base}/${quizId}/submissions${hubQs}`)
+                    }
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={saveGrading.isPending}
+                    onClick={() => handleSave(false)}
+                  >
+                    임시 저장
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={!allEntered || saveGrading.isPending}
+                    onClick={() => handleSave(true)}
+                  >
+                    채점 완료
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -11,7 +11,7 @@ import {
   type ActionModalSpec,
 } from '@/features/admin/settings/ActionModal'
 import { MileageTabs } from '../MileageTabs'
-import { useTypeLimits } from './api'
+import { useSaveTypeLimits, useTypeLimits } from './api'
 import type { LimitType, TypeLimit } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
@@ -24,6 +24,7 @@ export default function TypeLimitsPage() {
     '상품 타입별 수강생 1인 누적 사용 한도 관리',
   )
   const { data, isPending, isError, refetch } = useTypeLimits()
+  const saveLimits = useSaveTypeLimits()
   const toast = useToast()
   const [saved, setSaved] = useState<Record<string, number>>({})
   const [draft, setDraft] = useState<Record<string, number>>({})
@@ -56,16 +57,28 @@ export default function TypeLimitsPage() {
   }
 
   const save = () => {
-    // TODO: PATCH /api/admin/mileage/product-type-limits — 변경된 타입만 일괄 반영(P0_16)
-    setSaved((prev) => {
-      const next = { ...prev }
-      changed.forEach((l) => {
-        next[l.type] = draftFor(l)
-      })
-      return next
-    })
-    setConfirm(null)
-    toast.success(`타입 한도 ${changeCount}건 저장됨`)
+    // 서버에 저장돼야 수강생 구매가 실제로 막힌다 — 예전에는 화면 상태만 바꿔
+    // '저장됨' 토스트가 떠도 한도는 계속 0 이었다.
+    saveLimits.mutate(
+      changed.map((l) => ({ type: l.type, limit: draftFor(l) })),
+      {
+        onSuccess: () => {
+          setSaved((prev) => {
+            const next = { ...prev }
+            changed.forEach((l) => {
+              next[l.type] = draftFor(l)
+            })
+            return next
+          })
+          setConfirm(null)
+          toast.success(`타입 한도 ${changeCount}건 저장됨`)
+        },
+        onError: () => {
+          setConfirm(null)
+          toast.danger('타입 한도를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+        },
+      },
+    )
   }
 
   return (
@@ -190,25 +203,6 @@ export default function TypeLimitsPage() {
               한도 저장 — 변경 {changeCount}건
             </button>
           </div>
-        </div>
-
-        {/* 타입 한도 사용자 안내 — 스펙 '완료 기준' 카피를 운영자 관점 설명으로 재작성 */}
-        <div className="border-info/30 bg-info-bg/50 mt-6 rounded-xl border p-5">
-          <p className="text-info inline-flex items-center gap-1.5 text-base font-bold">
-            <Info className="h-4 w-4" />
-            타입 한도 안내
-          </p>
-          <ul className="text-info/90 mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed">
-            <li>
-              한도를 수정하면 카드에 &lsquo;변경됨&rsquo; 표시가 붙고, 저장하기
-              전까지는 실제로 반영되지 않습니다
-            </li>
-            <li>저장하면 같은 타입의 모든 상품에 새 한도가 적용됩니다</li>
-            <li>
-              구매 요청을 승인할 때 수강생별 누적 사용액을 검사해, 타입 한도를
-              초과하는 요청은 자동으로 차단됩니다
-            </li>
-          </ul>
         </div>
 
         {/* 저장 확인 모달 — 운영 액션 모달 공통 재사용 */}

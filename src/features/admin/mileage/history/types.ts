@@ -10,6 +10,8 @@ export type AmountSign = 'plus' | 'minus' | 'zero'
 // 원장 거래 한 행.
 export interface MileageTxRow {
   id: string
+  /** 수강생 이력으로 넘어가는 열쇠 — 원장 '상세'에서 쓴다. */
+  studentUserId?: string | null
   /** 일시 — 예: "05-19 14:32" */
   date: string
   studentName: string
@@ -24,6 +26,8 @@ export interface MileageTxRow {
   handler: string
   /** 처리 경로 — 예: "직접 지급" / "구매 승인 → 차감" */
   handlerNote: string
+  /** 매니저가 아직 승인·반려하지 않은 구매 — 확정 차감과 구분해 보여준다. */
+  pending?: boolean
 }
 
 // 상단 KPI 4종.
@@ -54,4 +58,16 @@ export interface MileageHistoryData {
   summary: MileageHistorySummary
   rows: MileageTxRow[]
   footer: MileageHistoryFooter
+}
+
+/** 수강생 1명의 마일리지 이력 — 원장 '상세'에서 연다. */
+export interface StudentMileageHistory {
+  studentUserId: string
+  studentName: string
+  cohortLabel: string
+  balance: string
+  totalEarned: string
+  totalSpent: string
+  summary: MileageHistorySummary
+  rows: MileageTxRow[]
 }

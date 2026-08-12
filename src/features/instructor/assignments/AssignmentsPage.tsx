@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -18,25 +18,49 @@ import {
 import { DeleteAssignmentModal } from './DeleteAssignmentModal'
 import { SUBMISSION_STATUS_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { ListToolbar, ToolbarCount } from '@/components/ui/ListToolbar'
 
-type StatusFilter = 'all' | 'open' | 'closed'
+// 상태 필터 — 진행/마감(강사 원본) + 제출 상태(구 운영 AssignmentsPane에서 이식, 2026-08-03).
+type StatusFilter =
+  | 'all'
+  | 'open'
+  | 'closed'
+  | 'submitted'
+  | 'supplement'
+  | 'done'
 
 // 과제·실습 관리 (/instructor/assignments) — P0 30. (Figma 2236:10561)
 // 점수 없음 — 제출/미제출/보완요청/검토완료 상태 관제만. 마감일 가까운 순 기본 정렬.
 // embedded=true면 과정·기수·교과목 '과제' 탭에 임베드(자체 헤더·탭·기수 필터 생략, 선택 기수로 서버 스코프).
+// source='admin'이면 매니저 허브 공용 소비(2026-08-03) — BE는 같은 강사 엔드포인트(가드: 운영자 통과,
+// 강사는 담당 기수만)를 쓰고, 폼·제출 현황 이동 경로만 운영 허브 기준으로 갈린다.
 export default function AssignmentsPage({
   embedded = false,
   cohortId = null,
+  source = 'instructor',
+  courseId,
 }: {
   embedded?: boolean
   cohortId?: string | null
+  source?: 'instructor' | 'admin'
+  /** source='admin'일 때 폼 복귀 컨텍스트(운영 허브 course 쿼리)용. */
+  courseId?: string
 }) {
+  const isAdmin = source === 'admin'
+  const base = isAdmin
+    ? '/admin/education/assignments'
+    : '/instructor/assignments'
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } =
     useInstructorAssignments(cohortId)
-  // 허브(과정·기수 탭)에서 폼·상세로 진입 시 cohortId를 넘겨, 저장·취소 후 허브로 복귀·기수 고정.
-  const hubQs = embedded && cohortId ? `?cohortId=${cohortId}` : ''
+  // 허브(과정·기수 탭)에서 폼·상세로 진입 시 기수 컨텍스트를 넘겨, 저장·취소 후 허브로 복귀·기수 고정.
+  // 운영은 공용 폼(AssignmentFormPage)의 운영 컨텍스트 계약(course·cohort 쿼리)을 따른다.
+  const hubQs = isAdmin
+    ? `?course=${courseId ?? ''}&cohort=${cohortId ?? ''}`
+    : embedded && cohortId
+      ? `?cohortId=${cohortId}`
+      : ''
   const deleteAssignment = useDeleteAssignment()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -60,6 +84,10 @@ export default function AssignmentsPage({
     return items.filter((r) => {
       if (status === 'open' && r.closed) return false
       if (status === 'closed' && !r.closed) return false
+      if (status === 'submitted' && r.counts.submitted === 0) return false
+      if (status === 'supplement' && r.counts.supplementRequested === 0)
+        return false
+      if (status === 'done' && r.counts.reviewDone === 0) return false
       if (cohort !== '전체' && r.cohortLabel !== cohort) return false
       if (needle) {
         if (!r.title.toLowerCase().includes(needle)) return false
@@ -143,7 +171,7 @@ export default function AssignmentsPage({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/instructor/assignments/${r.id}${hubQs}`)
+              navigate(`${base}/${r.id}${hubQs}`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap"
           >
@@ -163,7 +191,7 @@ export default function AssignmentsPage({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/instructor/assignments/${r.id}/submissions${hubQs}`)
+              navigate(`${base}/${r.id}/submissions${hubQs}`)
             }}
             className="border-border text-fg-muted hover:bg-surface-muted rounded-md border px-2 py-1 text-xs font-medium whitespace-nowrap"
           >
@@ -212,54 +240,60 @@ export default function AssignmentsPage({
             />
           </div>
 
-          {/* 필터 바 */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <div className="border-border focus-within:border-brand flex h-9 w-72 items-center gap-2 rounded-lg border bg-white px-3">
-              <Search className="text-fg-subtle h-4 w-4" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="과제명·과목으로 검색"
-                aria-label="과제 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
-            <label className="flex items-center gap-2 text-xs">
-              <span className="text-fg-subtle">상태</span>
-              <Select
-                value={status}
-                onChange={(v) => setStatus(v as StatusFilter)}
-                aria-label="상태 필터"
-                options={[
-                  { value: 'all', label: '전체' },
-                  { value: 'open', label: '진행 중' },
-                  { value: 'closed', label: '마감됨' },
-                ]}
-              />
-            </label>
-            {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
-            {!embedded && (
-              <label className="flex items-center gap-2 text-xs">
-                <span className="text-fg-subtle">기수</span>
-                <Select
-                  value={cohort}
-                  onChange={(v) => setCohort(v)}
-                  aria-label="기수 필터"
-                  options={cohortOpts.map((c) => ({ value: c, label: c }))}
-                />
-              </label>
-            )}
-            <div className="ml-auto flex items-center gap-3">
-              <span className="text-fg-subtle text-xs">
-                총 {data.total}개 · 마감일 가까운 순
-              </span>
-              <Button
-                size="sm"
-                onClick={() => navigate(`/instructor/assignments/new${hubQs}`)}
-              >
-                <Plus className="h-3.5 w-3.5" /> 과제 생성
-              </Button>
-            </div>
+          {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수·정렬 안내 / 우: 검색·필터·주 액션(2026-08-07 통일). */}
+          <div className="mt-4">
+            <ListToolbar
+              left={
+                <>
+                  <ToolbarCount
+                    filtered={filtered.length}
+                    total={data.total}
+                    unit="개"
+                  />
+                  <span className="text-fg-subtle">· 마감일 가까운 순</span>
+                </>
+              }
+              search={{
+                value: q,
+                onChange: setQ,
+                placeholder: '과제명·과목으로 검색',
+                ariaLabel: '과제 검색',
+              }}
+              filters={
+                <>
+                  <Select
+                    value={status}
+                    onChange={(v) => setStatus(v as StatusFilter)}
+                    aria-label="상태 필터"
+                    options={[
+                      { value: 'all', label: '전체 상태' },
+                      { value: 'open', label: '진행 중' },
+                      { value: 'closed', label: '마감됨' },
+                      { value: 'submitted', label: '제출 있음' },
+                      { value: 'supplement', label: '보완 요청' },
+                      { value: 'done', label: '검토 완료' },
+                    ]}
+                  />
+                  {/* 기수 필터 — 임베드(과정·기수 허브 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
+                  {!embedded && (
+                    <Select
+                      value={cohort}
+                      onChange={(v) => setCohort(v)}
+                      aria-label="기수 필터"
+                      options={cohortOpts.map((c) => ({ value: c, label: c }))}
+                    />
+                  )}
+                </>
+              }
+              actions={
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`${base}/new${hubQs}`)}
+                >
+                  <Plus className="h-3.5 w-3.5" /> 과제 생성
+                </Button>
+              }
+            />
           </div>
 
           <div className="mt-4">
@@ -267,9 +301,7 @@ export default function AssignmentsPage({
               columns={columns}
               rows={filtered}
               rowKey={(r) => r.id}
-              onRowClick={(r) =>
-                navigate(`/instructor/assignments/${r.id}${hubQs}`)
-              }
+              onRowClick={(r) => navigate(`${base}/${r.id}${hubQs}`)}
               empty="조건에 맞는 과제가 없어요"
             />
           </div>

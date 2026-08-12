@@ -1,20 +1,19 @@
 import { useRef, useState } from 'react'
+import { BadgeCheck } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
+import { TechTabSkeleton } from './TabSkeletons'
 import { cn } from '@/shared/lib/cn'
-import { TONE_SOFT, TONE_SOLID } from '@/shared/lib/tone'
+import { TONE_SOLID } from '@/shared/lib/tone'
 import type { CertificateTechDetail } from '../ai'
 import type { Tone } from '../types'
 import { useCertificateDetailTabs } from '../useCertificateDetailTabs'
+import { AssessmentGrowthTimeline } from './GrowthTab'
+import { TabHead } from './TabHead'
+
+export { TabHead } from './TabHead'
 
 const card =
   'bg-surface rounded-2xl p-6 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
-
-const certificationStatus: Record<string, { label: string; tone: Tone }> = {
-  APPROVED: { label: '승인', tone: 'success' },
-  PENDING: { label: '검토 중', tone: 'warning' },
-  SCHEDULED: { label: '응시 예정', tone: 'info' },
-  REJECTED: { label: '반려', tone: 'danger' },
-}
 
 const categoryTones: Tone[] = [
   'brand',
@@ -24,31 +23,7 @@ const categoryTones: Tone[] = [
   'brand',
   'danger',
 ]
-
-const officialCertificationScoreBands: Record<
-  'PCCE' | 'PCCP' | 'PCSQL',
-  Record<string, string>
-> = {
-  PCCE: {
-    'LV.1': '400–599점',
-    'LV.2': '600–749점',
-    'LV.3': '750–899점',
-    'LV.4': '900–1,000점',
-  },
-  PCCP: {
-    'LV.1': '400–499점',
-    'LV.2': '500–599점',
-    'LV.3': '600–749점',
-    'LV.4': '750–899점',
-    'LV.5': '900–1,000점',
-  },
-  PCSQL: {
-    'LV.1': '200–449점',
-    'LV.2': '450–699점',
-    'LV.3': '700–899점',
-    'LV.4': '900–1,000점',
-  },
-}
+const INITIAL_VISIBLE_CATEGORY_COUNT = 5
 
 function formatNumber(value: number | null | undefined) {
   if (value === null || value === undefined) return '-'
@@ -70,81 +45,139 @@ function officialCertificationScoreLabel(
 
   return `${new Intl.NumberFormat('ko-KR', {
     maximumFractionDigits: 1,
-  }).format(certification.score)}/1,000점`
+  }).format(certification.score)} / 1,000점`
 }
 
-function officialCertificationGradeLabel(
-  certification: CertificateTechDetail['certifications'][number],
-) {
-  if (!certification.grade) return null
-  const certificationName = officialCertificationName(certification.name)
-  if (!certificationName) return certification.grade
+type Certification = CertificateTechDetail['certifications'][number]
+type CertificationGroupKey = 'coding-test' | 'credential'
 
-  const grade = certification.grade.trim().toUpperCase()
-  const scoreBand = officialCertificationScoreBands[certificationName][grade]
-  return scoreBand ? `${grade} (${scoreBand})` : certification.grade
+const certificationGroupMeta: Record<
+  CertificationGroupKey,
+  { title: string; emptyMessage: string }
+> = {
+  'coding-test': {
+    title: '코딩테스트',
+    emptyMessage: '인증된 코딩테스트 결과가 없습니다.',
+  },
+  credential: {
+    title: '자격·기술 인증',
+    emptyMessage: '인증된 자격·기술 인증이 없습니다.',
+  },
 }
 
-function formatCertificationDate(value: string) {
-  return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : value
+const certificationGroupOrder: CertificationGroupKey[] = [
+  'coding-test',
+  'credential',
+]
+
+function certificationGroup(certification: Certification) {
+  if (officialCertificationName(certification.name)) return 'coding-test'
+  return 'credential'
 }
 
-function certificationDateLabel(
-  certification: CertificateTechDetail['certifications'][number],
-) {
-  if (certification.status === 'APPROVED') {
-    return certification.issuedAt
-      ? `발급 ${formatCertificationDate(certification.issuedAt)}`
-      : '발급일 정보 없음'
-  }
-  if (certification.status === 'PENDING') {
-    return certification.submittedAt
-      ? `제출 ${formatCertificationDate(certification.submittedAt)}`
-      : '제출일 정보 없음'
-  }
-  if (certification.status === 'SCHEDULED') {
-    return certification.scheduledAt
-      ? `${formatCertificationDate(certification.scheduledAt)} 응시 예정`
-      : '응시 예정일 정보 없음'
-  }
-  return certification.submittedAt
-    ? `제출 ${formatCertificationDate(certification.submittedAt)}`
-    : '일자 정보 없음'
+function certificationScoreLabel(certification: Certification) {
+  return (
+    officialCertificationScoreLabel(certification) ??
+    (certification.score === null
+      ? null
+      : `${formatNumber(certification.score)}점`)
+  )
 }
 
-function certificationDetailLabel(
-  certification: CertificateTechDetail['certifications'][number],
-) {
-  const details: string[] = []
-  if (certification.status === 'APPROVED') {
-    const gradeLabel = officialCertificationGradeLabel(certification)
-    const scoreLabel = officialCertificationScoreLabel(certification)
-    if (gradeLabel) details.push(gradeLabel)
-    if (scoreLabel) details.push(scoreLabel)
-    else if (certification.score !== null)
-      details.push(`${formatNumber(certification.score)}점`)
-  }
-  details.push(certificationDateLabel(certification))
-  details.push(certification.registrationSource || '외부 인증 입력')
-  return details.join(' · ')
+function certificationAcquiredLabel(certification: Certification) {
+  if (!certification.issuedAt) return '취득일 미등록'
+  const issuedAt = /^\d{4}-\d{2}-\d{2}/.test(certification.issuedAt)
+    ? certification.issuedAt.slice(0, 10).replaceAll('-', '.')
+    : certification.issuedAt
+  return `취득일 ${issuedAt}`
 }
 
-function certificationCountLabel(
-  certifications: CertificateTechDetail['certifications'],
-) {
-  const labels = [
-    ['APPROVED', '승인'],
-    ['PENDING', '검토 중'],
-    ['SCHEDULED', '응시 예정'],
-  ] as const
-  return labels
-    .map(([status, label]) => ({
-      label,
-      count: certifications.filter((item) => item.status === status).length,
-    }))
-    .filter((item) => item.count > 0)
-    .map((item) => `${item.label} ${item.count}건`)
+function CertificationItem({
+  certification,
+  showResult,
+}: {
+  certification: Certification
+  showResult: boolean
+}) {
+  const scoreLabel = certificationScoreLabel(certification)
+  const resultLabel = [certification.grade, scoreLabel]
+    .filter(Boolean)
     .join(' · ')
+
+  return (
+    <article
+      data-certification-item={certification.name}
+      className="bg-surface-muted/60 flex min-w-0 flex-col gap-1 rounded-lg px-3 py-2.5"
+    >
+      <div className="flex min-w-0 items-center gap-1.5">
+        <h4 className="text-fg min-w-0 text-[13px] leading-5 font-semibold">
+          {certification.name}
+        </h4>
+        <span
+          className="text-success inline-flex shrink-0"
+          title="운영 인증 완료"
+        >
+          <BadgeCheck aria-hidden="true" className="size-3.5" strokeWidth={2} />
+          <span className="sr-only">운영 인증 완료</span>
+        </span>
+      </div>
+
+      {showResult && resultLabel && (
+        <p
+          data-certification-result
+          className="text-fg-muted text-[10px] font-medium tabular-nums"
+        >
+          {resultLabel}
+        </p>
+      )}
+      <p
+        data-certification-acquired-at
+        className="text-fg-subtle text-[9px] font-medium tabular-nums"
+      >
+        {certificationAcquiredLabel(certification)}
+      </p>
+    </article>
+  )
+}
+
+function CertificationGroup({
+  groupKey,
+  certifications,
+}: {
+  groupKey: CertificationGroupKey
+  certifications: Certification[]
+}) {
+  const meta = certificationGroupMeta[groupKey]
+
+  return (
+    <section
+      data-certification-group={groupKey}
+      className="flex min-w-0 flex-col gap-2.5"
+    >
+      <div className="flex items-center gap-1.5">
+        <h3 className="text-fg text-[13px] font-bold">{meta.title}</h3>
+        <span className="text-fg-subtle text-[10px] font-medium tabular-nums">
+          {certifications.length}건
+        </span>
+      </div>
+
+      {certifications.length === 0 ? (
+        <p className="text-fg-subtle bg-surface-muted/60 rounded-lg px-3 py-5 text-center text-[10px]">
+          {meta.emptyMessage}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {certifications.map((certification) => (
+            <CertificationItem
+              key={`${certification.name}-${certification.issuedAt ?? certification.submittedAt ?? ''}`}
+              certification={certification}
+              showResult={groupKey === 'coding-test'}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
 }
 
 function EmptyData({ children }: { children: React.ReactNode }) {
@@ -168,6 +201,11 @@ function assessmentSubject(title: string) {
       .replace(/\s*(?:성취도|CS)\s*평가$/u, '')
       .trim() || title
   )
+}
+
+function formatAssessmentDate(value: string) {
+  const date = value.slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.replaceAll('-', '.') : value
 }
 
 function buildAssessmentTrendPath(
@@ -199,10 +237,18 @@ export function AssessmentTrendChart({
   assessments,
   averageTopPercent,
   averagePopulationSize,
+  title = '시험 추세',
+  emptyMessage = '표시할 시험 이력이 없습니다.',
+  showAverageRank = true,
+  tone = 'achievement',
 }: {
   assessments: CertificateTechDetail['assessments']
   averageTopPercent: number | null
   averagePopulationSize: number
+  title?: string
+  emptyMessage?: string
+  showAverageRank?: boolean
+  tone?: 'achievement' | 'cs'
 }) {
   const assessmentChartRef = useRef<HTMLDivElement>(null)
   const [focusedAssessmentIndex, setFocusedAssessmentIndex] = useState<
@@ -223,6 +269,28 @@ export function AssessmentTrendChart({
       : assessments.reduce((sum, assessment) => sum + assessment.score, 0) /
         assessments.length
   const trendPath = buildAssessmentTrendPath(assessments)
+  const toneStyle =
+    tone === 'cs'
+      ? {
+          label: 'CS 평가',
+          line: 'stroke-info',
+          pointHalo: 'bg-info/15 group-hover:bg-info/25',
+          point: 'border-info',
+          aboveBar: 'bg-gradient-to-t from-info to-info/65',
+          belowBar: 'border border-info/30 bg-info-bg',
+          text: 'text-info',
+          legend: 'border-info',
+        }
+      : {
+          label: '성취도 평가',
+          line: 'stroke-accent-strong',
+          pointHalo: 'bg-accent-strong/15 group-hover:bg-accent-strong/25',
+          point: 'border-accent-strong',
+          aboveBar: 'bg-gradient-to-t from-accent-strong to-brand',
+          belowBar: 'border border-accent-strong/30 bg-accent-bg',
+          text: 'text-accent-strong',
+          legend: 'border-accent-strong',
+        }
   const hoveredAssessmentSubject =
     subjectHover === null ? null : assessments[subjectHover.index]
 
@@ -249,27 +317,35 @@ export function AssessmentTrendChart({
   }
 
   return (
-    <section className={cn(card, 'flex flex-col gap-5')}>
+    <section
+      data-assessment-trend-tone={tone}
+      className={cn(card, 'flex flex-col gap-5')}
+    >
       <div className="flex flex-col gap-1">
-        <h3 className="text-fg text-[15px] font-bold">시험 추세</h3>
+        <h3 className="text-fg text-[15px] font-bold">{title}</h3>
         <span
           className="text-fg-subtle text-[11px]"
           title={
-            averagePopulationSize > 0
+            showAverageRank && averagePopulationSize > 0
               ? `기수 평균 순위 비교 표본 ${averagePopulationSize}명`
               : undefined
           }
         >
           {assessments.length}회 평가 기록 · 평균{' '}
-          {formatNumber(absoluteAverage)}점 ·{' '}
-          {averageTopPercent === null
-            ? '상위 비율 산출 전'
-            : `상위 ${formatNumber(averageTopPercent)}%`}
+          {formatNumber(absoluteAverage)}점
+          {showAverageRank && (
+            <>
+              {' · '}
+              {averageTopPercent === null
+                ? '상위 비율 산출 전'
+                : `상위 ${formatNumber(averageTopPercent)}%`}
+            </>
+          )}
         </span>
       </div>
 
       {assessments.length === 0 ? (
-        <EmptyData>표시할 성취도평가 이력이 없습니다.</EmptyData>
+        <EmptyData>{emptyMessage}</EmptyData>
       ) : (
         <>
           <div className="w-full min-w-0 pb-1">
@@ -298,7 +374,7 @@ export function AssessmentTrendChart({
                     d={trendPath}
                     fill="none"
                     vectorEffect="non-scaling-stroke"
-                    className="stroke-accent opacity-20"
+                    className={cn(toneStyle.line, 'opacity-20')}
                     strokeWidth="7"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -308,7 +384,7 @@ export function AssessmentTrendChart({
                     d={trendPath}
                     fill="none"
                     vectorEffect="non-scaling-stroke"
-                    className="stroke-accent"
+                    className={toneStyle.line}
                     strokeWidth="1.75"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -396,7 +472,7 @@ export function AssessmentTrendChart({
                                 {assessment.title}
                               </p>
                               <p className="text-surface/60 mt-0.5 text-[9px] font-medium">
-                                {assessment.category} · Q{index + 1} 기수 평균
+                                {assessment.category} · 기수 평균
                               </p>
                               <div className="border-surface/15 mt-2 flex items-end justify-between gap-3 border-t pt-2">
                                 <span className="text-surface/65 text-[10px] font-semibold">
@@ -414,7 +490,7 @@ export function AssessmentTrendChart({
                         <button
                           type="button"
                           data-assessment-trend-point={assessment.id}
-                          aria-label={`Q${index + 1} ${assessment.title} ${formatNumber(assessment.score)}점 추세 비교`}
+                          aria-label={`${assessment.title} ${formatNumber(assessment.score)}점 추세 비교`}
                           className="group focus-visible:ring-ring absolute left-1/2 z-50 flex size-7 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none"
                           style={{
                             bottom: `${clampScore(assessment.score)}%`,
@@ -424,8 +500,18 @@ export function AssessmentTrendChart({
                           onFocus={() => setFocusedAssessmentIndex(index)}
                           onBlur={() => setFocusedAssessmentIndex(null)}
                         >
-                          <span className="bg-accent/15 group-hover:bg-accent/25 flex size-5 items-center justify-center rounded-full transition-colors">
-                            <span className="border-accent bg-surface pointer-events-none size-2.5 rounded-full border-2 shadow-sm transition-transform group-hover:scale-110" />
+                          <span
+                            className={cn(
+                              'flex size-5 items-center justify-center rounded-full transition-colors',
+                              toneStyle.pointHalo,
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'bg-surface pointer-events-none size-2.5 rounded-full border-2 shadow-sm transition-transform group-hover:scale-110',
+                                toneStyle.point,
+                              )}
+                            />
                           </span>
                         </button>
                         {focusedAssessmentIndex === index && (
@@ -456,7 +542,7 @@ export function AssessmentTrendChart({
                               {assessment.title}
                             </p>
                             <p className="text-surface/60 mt-0.5 text-[9px] font-medium">
-                              {assessment.category} · Q{index + 1} 시험 추세
+                              {assessment.category} · 기술 추세
                             </p>
                             <div className="border-surface/15 mt-2.5 grid grid-cols-2 gap-2 border-t pt-2.5">
                               <div className="border-info border-l-2 pl-2">
@@ -472,7 +558,12 @@ export function AssessmentTrendChart({
                                   </span>
                                 </p>
                               </div>
-                              <div className="border-accent border-l-2 pl-2">
+                              <div
+                                className={cn(
+                                  'border-l-2 pl-2',
+                                  toneStyle.point,
+                                )}
+                              >
                                 <p className="text-surface/65 text-[9px] font-semibold">
                                   현재 시험
                                 </p>
@@ -518,13 +609,20 @@ export function AssessmentTrendChart({
                         )}
                         <div
                           data-assessment-bar={assessment.id}
+                          data-average-position={
+                            isAboveAverage === null
+                              ? 'unavailable'
+                              : isAboveAverage
+                                ? 'above'
+                                : 'below'
+                          }
                           className={cn(
                             'relative w-full max-w-7 rounded-t-md',
                             isAboveAverage === null
                               ? 'bg-fg-muted'
                               : isAboveAverage
-                                ? 'bg-brand'
-                                : 'bg-info',
+                                ? toneStyle.aboveBar
+                                : toneStyle.belowBar,
                           )}
                           style={{
                             height: `${clampScore(assessment.score)}%`,
@@ -537,11 +635,7 @@ export function AssessmentTrendChart({
                           <span
                             className={cn(
                               'absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold tabular-nums',
-                              isAboveAverage === null
-                                ? 'text-fg-muted'
-                                : isAboveAverage
-                                  ? 'text-brand'
-                                  : 'text-info',
+                              toneStyle.text,
                             )}
                           >
                             {formatNumber(assessment.score)}
@@ -572,7 +666,12 @@ export function AssessmentTrendChart({
                         <p className="text-[11px] leading-4 font-semibold">
                           {assessmentSubject(hoveredAssessmentSubject.title)}
                         </p>
-                        <span className="text-accent-bg shrink-0 text-[11px] font-bold tabular-nums">
+                        <span
+                          className={cn(
+                            'shrink-0 text-[11px] font-bold tabular-nums',
+                            toneStyle.text,
+                          )}
+                        >
                           {formatNumber(hoveredAssessmentSubject.score)}점
                         </span>
                       </div>
@@ -587,14 +686,17 @@ export function AssessmentTrendChart({
                   gridTemplateColumns: `repeat(${assessments.length}, minmax(0, 1fr))`,
                 }}
               >
-                {assessments.map((assessment, index) => (
+                {assessments.map((assessment) => (
                   <div
                     key={assessment.id}
-                    className="flex min-w-0 items-center justify-center text-center"
+                    className="flex min-w-0 flex-col items-center justify-start gap-0.5 text-center"
                     title={assessment.title}
                   >
-                    <span className="text-fg text-[10px] font-semibold">
-                      Q{index + 1}
+                    <span className="text-fg text-center text-[10px] leading-4 font-semibold break-keep">
+                      {assessmentSubject(assessment.title)}
+                    </span>
+                    <span className="text-fg-subtle text-[9px] leading-3 tabular-nums">
+                      {formatAssessmentDate(assessment.submittedAt)}
                     </span>
                   </div>
                 ))}
@@ -604,18 +706,30 @@ export function AssessmentTrendChart({
 
           <div className="text-fg-muted flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px]">
             <span className="flex items-center gap-1.5">
-              <span className="bg-info size-2.5 rounded-sm" /> 평균 미만
+              <span className={cn('size-2.5 rounded-sm', toneStyle.aboveBar)} />
+              {toneStyle.label} · 평균 이상
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="bg-brand size-2.5 rounded-sm" /> 평균 이상
+              <span className={cn('size-2.5 rounded-sm', toneStyle.belowBar)} />
+              {toneStyle.label} · 평균 미만
             </span>
             <span className="flex items-center gap-1.5">
               <span className="border-danger w-5 border-t-2 border-dashed" />
               시험별 기수 평균
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="border-accent relative w-5 border-t-2 border-solid">
-                <span className="bg-surface border-accent absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2" />
+              <span
+                className={cn(
+                  'relative w-5 border-t-2 border-solid',
+                  toneStyle.legend,
+                )}
+              >
+                <span
+                  className={cn(
+                    'bg-surface absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2',
+                    toneStyle.point,
+                  )}
+                />
               </span>
               실제 점수 추세
             </span>
@@ -657,124 +771,219 @@ function RecentFiveAverage({
   )
 }
 
-function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
-  const approvedCount = tech.certifications.filter(
+function TechCategoryGroup({
+  title,
+  categories,
+  emptyMessage,
+  toneOffset = 0,
+}: {
+  title: string
+  categories: CertificateTechDetail['categories']
+  emptyMessage: string
+  toneOffset?: number
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const hasMore = categories.length > INITIAL_VISIBLE_CATEGORY_COUNT
+  const visibleCategories = expanded
+    ? categories
+    : categories.slice(0, INITIAL_VISIBLE_CATEGORY_COUNT)
+  const averageScore =
+    categories.length === 0
+      ? null
+      : categories.reduce((sum, category) => sum + category.score, 0) /
+        categories.length
+
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <span className="text-fg text-[13px] font-bold">{title}</span>
+        <span className="text-fg-subtle text-[11px]">
+          {categories.length}개 카테고리 · 평균 {formatNumber(averageScore)}점
+        </span>
+      </div>
+      {categories.length === 0 ? (
+        <EmptyData>{emptyMessage}</EmptyData>
+      ) : (
+        visibleCategories.map((category, index) => (
+          <div key={category.label} className="flex flex-col gap-1.5">
+            <div className="flex items-end justify-between gap-4">
+              <div className="flex flex-col">
+                <span className="text-fg text-[13px] font-semibold">
+                  {category.label}
+                </span>
+                <span className="text-fg-subtle text-[11px]">
+                  평가 {category.attemptCount}회
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-fg-subtle text-[10px] font-semibold">
+                  평균 점수
+                </span>
+                <span className="text-fg text-[16px] font-bold">
+                  {formatNumber(category.score)}점
+                </span>
+              </div>
+            </div>
+            <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
+              <div
+                className={cn(
+                  'h-full rounded-full',
+                  TONE_SOLID[
+                    categoryTones[(index + toneOffset) % categoryTones.length]
+                  ],
+                )}
+                style={{ width: `${category.score}%` }}
+              />
+            </div>
+          </div>
+        ))
+      )}
+      {hasMore && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          className="border-divider text-brand focus-visible:ring-ring w-full border-t pt-3 text-[11px] font-bold focus-visible:ring-2 focus-visible:outline-none"
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? '접기' : `전체 ${categories.length}개 보기`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function buildSingleAssessmentCategoryScores(
+  assessments: CertificateTechDetail['assessments'],
+): CertificateTechDetail['categories'] {
+  const seen = new Set<string>()
+
+  return [...assessments]
+    .sort(
+      (left, right) =>
+        left.submittedAt.localeCompare(right.submittedAt) ||
+        left.id.localeCompare(right.id),
+    )
+    .flatMap((assessment) => {
+      const key = `${assessment.assessmentType}:${assessment.category}`
+      if (seen.has(key)) return []
+      seen.add(key)
+
+      return [
+        {
+          assessmentType: assessment.assessmentType,
+          label: assessment.category,
+          score: assessment.score,
+          attemptCount: 1,
+          topPercent: null,
+          populationSize: 0,
+        },
+      ]
+    })
+}
+
+export function TechTabContent({ tech }: { tech: CertificateTechDetail }) {
+  const verifiedCertifications = tech.certifications.filter(
     (certification) => certification.status === 'APPROVED',
-  ).length
+  )
+  const certificationGroups = Object.fromEntries(
+    certificationGroupOrder.map((groupKey) => [
+      groupKey,
+      verifiedCertifications.filter(
+        (certification) => certificationGroup(certification) === groupKey,
+      ),
+    ]),
+  ) as Record<CertificationGroupKey, Certification[]>
+  const chronologicalAssessments = [...tech.assessments].sort(
+    (left, right) =>
+      left.submittedAt.localeCompare(right.submittedAt) ||
+      left.id.localeCompare(right.id),
+  )
+  const categoryScores = buildSingleAssessmentCategoryScores(tech.assessments)
+  const achievementCategories = categoryScores.filter(
+    (category) => category.assessmentType !== 'CS',
+  )
+  const csCategories = categoryScores.filter(
+    (category) => category.assessmentType === 'CS',
+  )
+  const categoryAverage =
+    categoryScores.length === 0
+      ? null
+      : categoryScores.reduce((sum, category) => sum + category.score, 0) /
+        categoryScores.length
 
   return (
     <div className="flex flex-col gap-4">
       <TabHead
         no={2}
         title="기술·검증"
-        sub="퀴즈 카테고리 점수·평가 추세·자격증·과제 제출 근거"
+        sub="성취도·CS 카테고리별 평균 점수와 자격증 근거"
       >
         <span className="text-fg-muted text-[11px] font-semibold">
-          ● 기술 평균 {formatNumber(tech.averageScore)}
+          ● 카테고리 평균 {formatNumber(categoryAverage)}점
         </span>
         <span className="text-fg-muted text-[11px] font-semibold">
-          ● 인증 완료 {approvedCount}건
+          ● 성취도 {achievementCategories.length}개 · CS {csCategories.length}개
+        </span>
+        <span className="text-fg-muted text-[11px] font-semibold">
+          ● 운영 인증 {verifiedCertifications.length}건
         </span>
       </TabHead>
 
-      <section className={cn(card, 'flex flex-col gap-4')}>
-        <span className="text-fg text-[15px] font-bold">
-          카테고리별 기술 점수
-        </span>
-        {tech.categories.length === 0 ? (
-          <EmptyData>산정 가능한 퀴즈 결과가 없습니다.</EmptyData>
-        ) : (
-          tech.categories.map((category, index) => (
-            <div key={category.label} className="flex flex-col gap-1.5">
-              <div className="flex items-end justify-between gap-4">
-                <div className="flex flex-col">
-                  <span className="text-fg text-[13px] font-semibold">
-                    {category.label}
-                  </span>
-                  <span className="text-fg-subtle text-[11px]">
-                    {category.attemptCount}회 평가 · 비교 표본{' '}
-                    {category.populationSize}명
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {category.topPercent !== null && (
-                    <span className="bg-brand/10 text-brand rounded px-1.5 py-0.5 text-[10px] font-bold">
-                      상위 {formatNumber(category.topPercent)}%
-                    </span>
-                  )}
-                  <span className="text-fg text-[16px] font-bold">
-                    {formatNumber(category.score)}점
-                  </span>
-                </div>
-              </div>
-              <div className="bg-surface-muted h-2 w-full overflow-hidden rounded-full">
-                <div
-                  className={cn(
-                    'h-full rounded-full',
-                    TONE_SOLID[categoryTones[index % categoryTones.length]],
-                  )}
-                  style={{ width: `${category.score}%` }}
-                />
-              </div>
-            </div>
-          ))
-        )}
+      <AssessmentGrowthTimeline assessments={chronologicalAssessments} />
+
+      <section
+        data-tech-category-card
+        className={cn(card, 'flex flex-col gap-4')}
+      >
+        <div className="flex flex-col gap-1">
+          <span className="text-fg text-[15px] font-bold">
+            카테고리별 기술 점수
+          </span>
+          <span className="text-fg-subtle text-[11px]">
+            성취도 평가와 CS 평가의 카테고리별 평균 점수를 비교합니다.
+          </span>
+        </div>
+        <div data-tech-category-split className="grid grid-cols-2 items-start">
+          <div className="min-w-0 pr-4">
+            <TechCategoryGroup
+              title="성취도 평가"
+              categories={achievementCategories}
+              emptyMessage="산정 가능한 성취도 평가 결과가 없습니다."
+            />
+          </div>
+          <div className="border-divider min-w-0 border-l pl-4">
+            <TechCategoryGroup
+              title="CS 평가"
+              categories={csCategories}
+              emptyMessage="아직 시행된 CS 평가가 없습니다."
+              toneOffset={achievementCategories.length}
+            />
+          </div>
+        </div>
       </section>
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="min-w-0 flex-1">
-          <AssessmentTrendChart
-            assessments={tech.assessments}
-            averageTopPercent={tech.assessmentAverageTopPercent}
-            averagePopulationSize={tech.assessmentAveragePopulationSize}
-          />
-        </div>
-        <section className={cn(card, 'flex flex-1 flex-col gap-4')}>
-          <div className="flex flex-col gap-1">
-            <span className="text-fg text-[15px] font-bold">
-              자격증 · 외부 인증
-            </span>
-            {tech.certifications.length > 0 && (
-              <span className="text-fg-subtle text-[11px]">
-                {certificationCountLabel(tech.certifications)}
-              </span>
-            )}
+      <section
+        data-tech-certifications
+        className={cn(card, 'flex flex-col gap-4')}
+      >
+        <span className="text-fg text-[15px] font-bold">기술 인증</span>
+        {verifiedCertifications.length === 0 ? (
+          <EmptyData>운영 인증이 완료된 기술 인증이 없습니다.</EmptyData>
+        ) : (
+          <div
+            data-certification-group-grid
+            className="grid items-start gap-4 lg:grid-cols-2"
+          >
+            {certificationGroupOrder.map((groupKey) => (
+              <CertificationGroup
+                key={groupKey}
+                groupKey={groupKey}
+                certifications={certificationGroups[groupKey]}
+              />
+            ))}
           </div>
-          {tech.certifications.length === 0 ? (
-            <EmptyData>등록된 외부 인증이 없습니다.</EmptyData>
-          ) : (
-            tech.certifications.map((certification) => {
-              const status = certificationStatus[certification.status] ?? {
-                label: certification.status,
-                tone: 'info' as const,
-              }
-              return (
-                <div
-                  key={certification.name}
-                  className="flex min-w-0 items-start gap-3"
-                >
-                  <span
-                    className={cn(
-                      'min-w-12 shrink-0 rounded-md px-2 py-1 text-center text-[10px] font-bold',
-                      TONE_SOFT[status.tone],
-                    )}
-                  >
-                    {status.label}
-                  </span>
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-fg text-[13px] font-semibold">
-                      {certification.name}
-                    </span>
-                    <span className="text-fg-subtle text-[11px]">
-                      {certificationDetailLabel(certification)}
-                    </span>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </section>
-      </div>
+        )}
+      </section>
     </div>
   )
 }
@@ -787,37 +996,11 @@ export function TechTab({ studentId }: { studentId?: string }) {
       isPending={query.isPending}
       isError={query.isError || !query.data}
       onRetry={query.refetch}
+      skeleton={<TechTabSkeleton />}
       errorTitle="기술·검증 데이터를 불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >
       {query.data && <TechTabContent tech={query.data.tech} />}
     </DataBoundary>
-  )
-}
-
-export function TabHead({
-  no,
-  title,
-  sub,
-  children,
-}: {
-  no: number
-  title: string
-  sub: string
-  children?: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <span className="bg-brand-deep flex size-6 items-center justify-center rounded-md text-[12px] font-bold text-white">
-          {no}
-        </span>
-        <div className="flex flex-col">
-          <h2 className="text-fg text-[18px] font-bold">{title}</h2>
-          <span className="text-fg-subtle text-[11px]">{sub}</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-3">{children}</div>
-    </div>
   )
 }

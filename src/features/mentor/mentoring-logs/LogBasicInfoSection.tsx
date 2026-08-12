@@ -1,4 +1,5 @@
 // 일지 작성 — 기본 정보 필드 그룹(대상 팀·회차·진행 일시·장소·참석 멘티, LogComposeForm 분리).
+import { useState } from 'react'
 import { ArrowRight, Check, Timer } from 'lucide-react'
 import type {
   FieldErrors,
@@ -9,6 +10,8 @@ import { Avatar } from '@/components/ui/Avatar'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { cn } from '@/shared/lib/cn'
+import { todayYmd } from './logFormSchema'
+import { ReservationPickModal } from './ReservationPickModal'
 import type { MentoringLogTarget } from '../types'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import type { LogFormInput } from './logFormSchema'
@@ -57,15 +60,42 @@ export function LogBasicInfoSection({
   onTeamChange: (teamId: string) => void
   toggleAttendee: (studentId: string) => void
 }) {
+  const [pickOpen, setPickOpen] = useState(false)
   return (
     <section className="bg-surface flex flex-col gap-4 rounded-2xl p-6 shadow-[0_1px_2px_rgba(18,23,38,0.05),0_0_0_1px_rgba(18,23,38,0.05)]">
-      <div className="flex flex-col gap-0.5">
-        <h3 className="text-fg text-[15px] font-bold">기본 정보</h3>
-        <p className="text-fg-muted text-[11px]">
-          진행 일시·장소·실제 시간을 입력하세요 · 실제 시간 기준으로 인정 시간이
-          자동 산정됩니다
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-fg text-[15px] font-bold">기본 정보</h3>
+          <p className="text-fg-muted text-[11px]">
+            진행 일시·장소·실제 시간을 입력하세요 · 실제 시간 기준으로 인정
+            시간이 자동 산정됩니다
+          </p>
+        </div>
+        {/* 확정된 예약에서 일시·장소를 그대로 가져온다 — 손으로 옮겨 적으면 예약과 어긋난다. */}
+        <button
+          type="button"
+          onClick={() => setPickOpen(true)}
+          className="border-border text-fg shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+        >
+          예약 불러오기
+        </button>
       </div>
+      {/* 열렸을 때만 렌더한다 — 닫힌 채로도 예약을 조회하면 폼이 쓸데없이 네트워크를 탄다. */}
+      {pickOpen && (
+        <ReservationPickModal
+          open
+          onClose={() => setPickOpen(false)}
+          onPick={(pick) => {
+            if (mode === 'new' && pick.teamId) onTeamChange(pick.teamId)
+            setValue('sessionDate', pick.sessionDate, { shouldValidate: true })
+            setValue('startTime', pick.startTime, { shouldValidate: true })
+            setValue('endTime', pick.endTime, { shouldValidate: true })
+            setValue('placeType', pick.placeType, { shouldValidate: true })
+            setValue('placeDetail', pick.placeDetail, { shouldValidate: true })
+            setPickOpen(false)
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
         {/* 대상 팀 — 수정 모드에선 고정(작성 시 결정) */}
@@ -119,6 +149,7 @@ export function LogBasicInfoSection({
                 }
                 ariaLabel="진행 일자"
                 placeholder="날짜 선택"
+                max={todayYmd()}
               />
             </div>
             <div className="w-[150px]">

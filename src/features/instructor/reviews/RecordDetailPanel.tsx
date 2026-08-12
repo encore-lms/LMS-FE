@@ -19,12 +19,13 @@ import type {
   StudyRecordDetail,
 } from '@/shared/types'
 
-// 강사 학습 기록 조회 상세 — 우측 슬라이드 패널(블로그·스터디·자격증 공용).
-// 조회 전용: 내용/증빙을 확인하고 "운영 매니저가 내린 결정"을 표시한다. 승인·반려 액션 없음.
+// 학습 기록 상세 — 우측 슬라이드 패널(블로그·스터디·자격증 공용, 강사·매니저 공용 2026-08-03).
+// 강사(기본): 조회 전용 — "운영 매니저 결정"을 표시. 매니저: extraFooter로 검토 액션(승인·보완·반려)을
+// 주입받아 렌더한다(액션 구현·API는 admin 소유 — features/admin/records/RecordReviewActions).
 export type RecordPanelData =
-  | { kind: 'blog'; detail: BlogRecordDetail }
-  | { kind: 'study'; detail: StudyRecordDetail }
-  | { kind: 'cert'; detail: CertRecordDetail }
+  | { kind: 'blog'; recordId: string; detail: BlogRecordDetail }
+  | { kind: 'study'; recordId: string; detail: StudyRecordDetail }
+  | { kind: 'cert'; recordId: string; detail: CertRecordDetail }
 
 const STATUS_BADGE: Record<
   RecordCellStatus,
@@ -41,9 +42,15 @@ const RATIOS = [50, 75, 100] as const
 interface RecordDetailPanelProps {
   data: RecordPanelData | null
   onClose: () => void
+  /** 매니저 검토 액션 등 하단 주입 영역 — 있으면 조회 전용 안내·매니저 결정 박스를 대체한다. */
+  extraFooter?: ReactNode
 }
 
-export function RecordDetailPanel({ data, onClose }: RecordDetailPanelProps) {
+export function RecordDetailPanel({
+  data,
+  onClose,
+  extraFooter,
+}: RecordDetailPanelProps) {
   const [ratio, setRatio] = useState<(typeof RATIOS)[number]>(75)
 
   useEffect(() => {
@@ -132,10 +139,19 @@ export function RecordDetailPanel({ data, onClose }: RecordDetailPanelProps) {
         </div>
 
         {data.kind === 'blog' && (
-          <BlogBody detail={data.detail} ratio={ratio} onRatio={setRatio} />
+          <BlogBody
+            detail={data.detail}
+            ratio={ratio}
+            onRatio={setRatio}
+            extraFooter={extraFooter}
+          />
         )}
-        {data.kind === 'study' && <StudyBody detail={data.detail} />}
-        {data.kind === 'cert' && <CertBody detail={data.detail} />}
+        {data.kind === 'study' && (
+          <StudyBody detail={data.detail} extraFooter={extraFooter} />
+        )}
+        {data.kind === 'cert' && (
+          <CertBody detail={data.detail} extraFooter={extraFooter} />
+        )}
       </aside>
     </div>
   )
@@ -146,10 +162,12 @@ function BlogBody({
   detail,
   ratio,
   onRatio,
+  extraFooter,
 }: {
   detail: BlogRecordDetail
   ratio: (typeof RATIOS)[number]
   onRatio: (r: (typeof RATIOS)[number]) => void
+  extraFooter?: ReactNode
 }) {
   const scale = ratio / 100
   return (
@@ -213,17 +231,25 @@ function BlogBody({
       </div>
 
       <div className="border-divider border-t px-5 py-4">
-        <ManagerDecision
-          status={detail.status}
-          comment={detail.managerComment}
-        />
+        {extraFooter ?? (
+          <ManagerDecision
+            status={detail.status}
+            comment={detail.managerComment}
+          />
+        )}
       </div>
     </div>
   )
 }
 
 // ── 스터디: 제목·상태 + 정보 카드 + 증빙 자료(사진 레이아웃) ──
-function StudyBody({ detail }: { detail: StudyRecordDetail }) {
+function StudyBody({
+  detail,
+  extraFooter,
+}: {
+  detail: StudyRecordDetail
+  extraFooter?: ReactNode
+}) {
   return (
     <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5">
       {/* 제목 + 승인 배지 */}
@@ -257,12 +283,20 @@ function StudyBody({ detail }: { detail: StudyRecordDetail }) {
         <p className="text-fg-subtle mb-1.5 text-xs font-medium">증빙 자료</p>
         <EvidenceBox url={detail.evidenceImageUrl} className="h-64" />
       </div>
+
+      {extraFooter}
     </div>
   )
 }
 
 // ── 자격증: 마일리지 배너 + 자격증 카드(종류·등급·상태·날짜·파일·증빙) ──
-function CertBody({ detail }: { detail: CertRecordDetail }) {
+function CertBody({
+  detail,
+  extraFooter,
+}: {
+  detail: CertRecordDetail
+  extraFooter?: ReactNode
+}) {
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">
       {/* 마일리지 배너 */}
@@ -330,10 +364,12 @@ function CertBody({ detail }: { detail: CertRecordDetail }) {
           </div>
         )}
 
-        {/* 강사 조회 안내 — 승인/반려 버튼 대체 */}
-        <p className="text-fg-subtle mt-4 text-center text-xs">
-          강사는 조회만 가능 — 승인·반려는 운영 매니저가 처리합니다.
-        </p>
+        {extraFooter ?? (
+          // 강사 조회 안내 — 승인/반려 버튼 대체
+          <p className="text-fg-subtle mt-4 text-center text-xs">
+            강사는 조회만 가능 — 승인·반려는 운영 매니저가 처리합니다.
+          </p>
+        )}
       </div>
     </div>
   )

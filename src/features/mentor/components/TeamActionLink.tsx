@@ -25,6 +25,9 @@ export function TeamActionLink({
   return (
     <Link
       to={action.to}
+      // 표에서는 행 전체가 팀 상세로 가는 클릭 대상이다. 전파를 끊지 않으면 '일지 수정'을
+      // 눌러도 행 클릭이 뒤따라 팀 상세로 덮어써진다.
+      onClick={(e) => e.stopPropagation()}
       className={cn(
         'inline-flex items-center justify-center gap-1 whitespace-nowrap',
         block

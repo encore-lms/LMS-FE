@@ -4,19 +4,11 @@ import {
   BadgeCheck,
   BookOpen,
   Check,
-  ClipboardCheck,
   Coins,
-  FileSpreadsheet,
   Gamepad2,
-  HeartHandshake,
-  Inbox,
-  Link2,
-  NotebookPen,
-  PenSquare,
   Plus,
   Settings,
   Star,
-  Users,
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -33,35 +25,34 @@ interface QuickLinkDef {
 }
 
 // 추가 가능한 화면 카탈로그 — 운영 메뉴의 주요 목적지.
+// 기수 허브 탭으로 옮긴 화면(수강생·멘토링 배정/일지·퀴즈)은 넣지 않는다 — 기수를 고른 뒤에
+// 하는 일이라, 기수 없는 단독 화면으로 보내면 들어가서 기수를 또 골라야 한다.
+// 단독 라우트는 딥링크·알림 목적지로 살아 있지만 바로가기의 목적지는 아니다.
 const CATALOG: QuickLinkDef[] = [
-  { to: '/admin/students', label: '학생 관리', icon: Users, tone: 'bg-info-bg text-info' },
-  { to: '/admin/education', label: '과정·기수·교과목', icon: BookOpen, tone: 'bg-success-bg text-success' },
-  { to: '/admin/mentors/assignments', label: '멘토링 관리', icon: HeartHandshake, tone: 'bg-accent-bg text-accent-strong' },
+  { to: '/admin/education', label: '교육과정', icon: BookOpen, tone: 'bg-success-bg text-success' },
   { to: '/admin/mileage', label: '마일리지', icon: Coins, tone: 'bg-warning-bg text-warning' },
-  { to: '/admin/mentoring/logs', label: '멘토링 일지', icon: NotebookPen, tone: 'bg-accent-bg text-accent-strong' },
   { to: '/admin/reputation', label: '평판 관리', icon: Star, tone: 'bg-warning-bg text-warning' },
-  { to: '/admin/education?tab=records', label: '학습 기록', icon: ClipboardCheck, tone: 'bg-success-bg text-success' },
-  { to: '/admin/certificates/reviews', label: '인증 검토', icon: BadgeCheck, tone: 'bg-success-bg text-success' },
-  { to: '/admin/quizzes', label: '퀴즈 관리', icon: PenSquare, tone: 'bg-info-bg text-info' },
-  { to: '/admin/csv-mapping', label: 'CSV 매핑', icon: FileSpreadsheet, tone: 'bg-info-bg text-info' },
-  { to: '/admin/ingestion/quarantine', label: '인입 격리 큐', icon: Inbox, tone: 'bg-danger-bg text-danger' },
-  { to: '/admin/integrations', label: '외부 연동', icon: Link2, tone: 'bg-info-bg text-info' },
+  { to: '/admin/certificates', label: '역량 증명서', icon: BadgeCheck, tone: 'bg-success-bg text-success' },
   { to: '/admin/play/typing-texts', label: 'PLAY 관리', icon: Gamepad2, tone: 'bg-accent-bg text-accent-strong' },
   { to: '/admin/settings', label: '설정', icon: Settings, tone: 'bg-surface-muted text-fg-muted' },
 ]
 
 const STORAGE_KEY = 'admin-quick-links'
-const DEFAULTS = [
-  '/admin/students',
-  '/admin/education',
-  '/admin/mentors/assignments',
-  '/admin/mileage',
-]
+const DEFAULTS = ['/admin/education', '/admin/mileage', '/admin/certificates']
 
 // 낡은 경로 → 새 경로 마이그레이션. 카탈로그 재정비 시 기존 저장값이 사라지지 않게.
-// 학습 기록: 단독 라우트 제거 → 과정·기수·교과목 기록실 탭으로 흡수.
+// 학습 기록: 단독 라우트 제거 → 기수 허브 기록실 탭으로 흡수. 탭은 기수를 고른 뒤라야 열려
+// 바로가기는 담당 과정/기수 목록까지만 데려간다.
 const MIGRATE: Record<string, string> = {
-  '/admin/records/review': '/admin/education?tab=records',
+  '/admin/records/review': '/admin/education',
+  '/admin/education?tab=records': '/admin/education',
+  // 기수 허브 탭으로 흡수 — 바로가기는 담당 과정/기수 목록까지만 데려간다.
+  '/admin/students': '/admin/education',
+  '/admin/mentors/assignments': '/admin/education',
+  '/admin/mentoring/logs': '/admin/education',
+  '/admin/quizzes': '/admin/education',
+  // 인증 검토는 역량 증명서 상세로 흡수(2026-08-06).
+  '/admin/certificates/reviews': '/admin/certificates',
 }
 
 function loadLinks(): string[] {
@@ -123,7 +114,7 @@ export function QuickLinks() {
       {/* 옅은 배경 컨테이너 — 다크 인사이트에서 본문으로 넘어가는 시각적 브릿지 */}
       <div className="bg-surface-muted/50 flex flex-wrap items-start gap-4 rounded-2xl px-5 py-4">
         {items.map(({ to, label, icon: Icon, tone }) => (
-          // 타일 폭은 가장 긴 라벨('과정·기수·교과목')이 한 줄에 들어가는 값.
+          // 타일 폭은 가장 긴 라벨('인입 격리 큐')이 한 줄에 들어가는 값.
           <Link
             key={to}
             to={to}

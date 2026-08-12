@@ -14,16 +14,28 @@ import { Step2 } from './steps/Step2'
 import { Step3 } from './steps/Step3'
 import { Step4 } from './steps/Step4'
 
+/** 기술 스택 상한 — 고르는 자리와 검증이 같은 숫자를 보게 한곳에 둔다. */
+export const MAX_STACKS = 12
+
+/** 오늘(YYYY-MM-DD, 로컬 기준) — sv-SE 로케일이 ISO 형태를 준다. */
+const today = () => new Date().toLocaleDateString('sv-SE')
+
+/**
+ * 새 프로젝트의 빈 폼.
+ *
+ * <p>예전에는 예시 프로젝트의 이름·설명·기간·스택이 그대로 박혀 있어, 지우지 않으면
+ * 남의 프로젝트 내용으로 저장됐다. 기간만 오늘로 채워 두고 나머지는 비운다.</p>
+ */
 const DEFAULT_WIZARD_VALUES = {
-  name: 'Encore Mart — 마이크로서비스 백엔드',
-  desc: '주문/결제 도메인을 마이크로서비스로 분리하고 Kafka 이벤트 라우팅으로 결제 실패율을 안정화하는 백엔드 프로젝트.',
-  start: '2026-06-01',
-  end: '2026-07-15',
+  name: '',
+  desc: '',
+  start: today(),
+  end: today(),
   invited: [],
   teamSearch: '',
-  stacks: ['Java 17', 'Spring Boot', 'PostgreSQL', 'Apache Kafka', 'Docker'],
-  domain: '커머스',
-  deliverables: ['GitHub 리포지토리', '기술 문서·회고', '발표 자료'],
+  stacks: [],
+  domain: '',
+  deliverables: [],
   checks: [false, false, false],
 }
 
@@ -35,7 +47,7 @@ const wizardSchema = z
     end: z.string().min(1),
     invited: z.array(z.string()).max(6),
     teamSearch: z.string().max(60),
-    stacks: z.array(z.string()).min(1).max(12),
+    stacks: z.array(z.string()).min(1).max(MAX_STACKS),
     domain: z.string().min(1),
     deliverables: z.array(z.string()).min(1),
     checks: z.array(z.boolean()).length(3),
@@ -118,7 +130,14 @@ export default function ProjectWizardPage() {
 
   // 스택 토글 — 커스텀 스택을 해제하면 그룹 칩 목록에서도 제거.
   const onStackToggle = (value: string) => {
-    const next = toggleString(watch('stacks'), value)
+    const current = watch('stacks')
+    // 상한을 넘어서도 계속 켜지면 "선택 16 / 12" 처럼 지킬 수 없는 숫자가 남고,
+    // 다음 단계에서야 막혀 무엇을 빼야 하는지 알 수 없다. 직접 추가와 같은 규칙.
+    if (!current.includes(value) && current.length >= MAX_STACKS) {
+      toast.info(`기술 스택은 ${MAX_STACKS}개까지 고를 수 있어요`)
+      return
+    }
+    const next = toggleString(current, value)
     setValue('stacks', next, { shouldDirty: true, shouldValidate: true })
     if (!next.includes(value)) {
       setCustomStacksByGroup((prev) => {
@@ -149,7 +168,7 @@ export default function ProjectWizardPage() {
       }))
     }
     const current = watch('stacks')
-    if (!current.includes(value) && current.length < 12) {
+    if (!current.includes(value) && current.length < MAX_STACKS) {
       setValue('stacks', [...current, value], {
         shouldDirty: true,
         shouldValidate: true,
@@ -247,7 +266,9 @@ export default function ProjectWizardPage() {
       heroTitle: '기술 스택 · 도메인 · 산출물 형태',
       heroSub:
         '선택한 값은 워크스페이스의 성과·기술스택 탭에 자동으로 반영됩니다.',
-      summary: `스택 ${stacks.length} · 도메인 1 · 산출물 ${deliverables.length}건 선택 완료`,
+      // 도메인은 1개 선택이라 예전엔 '1'이 박혀 있었다. 빈 폼에서 시작하면
+      // 고르지도 않은 도메인이 골랐다고 나온다.
+      summary: `스택 ${stacks.length} · 도메인 ${domain ? 1 : 0} · 산출물 ${deliverables.length}건 선택 완료`,
       summarySub: '다음 단계에서 입력값을 요약 확인하고 프로젝트를 생성합니다',
       leftLabel: '← 이전 — 팀 설정',
       rightLabel: '다음 — 생성 확인 →',
@@ -320,7 +341,15 @@ export default function ProjectWizardPage() {
               cohortLabel={data.cohortLabel}
               candidates={candidates}
               searchQuery={teamSearch.trim()}
-              searchInput={register('teamSearch')}
+              search={teamSearch}
+              // register 스프레드 대신 값·핸들러로 넘긴다 — 검색 칸을 공용 컴포넌트로 쓰려면
+              // (value, onChange) 계약이어야 한다. mode:'onChange' 라 검증도 함께 돌린다.
+              onSearchChange={(v) =>
+                setValue('teamSearch', v, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
               invited={invited}
               team={team}
               onToggle={(id) => updateArrayField('invited', id)}

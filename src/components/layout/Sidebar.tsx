@@ -1,7 +1,6 @@
-import { useContext, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import { ToastContext } from '@/components/ui/use-toast'
 import {
   isMenuGroup,
   type MenuGroup,
@@ -66,13 +65,14 @@ function NavGroup({
 export function Sidebar({
   label,
   items,
+  collapsed = false,
 }: {
   label: string
   items: MenuNode[]
+  /** 접힘 — 폭 0으로 슬라이드(내용은 고정폭 래퍼라 접히는 동안 줄바꿈되지 않는다). */
+  collapsed?: boolean
 }) {
   const { pathname } = useLocation()
-  // 준비 중 메뉴의 '준비중' 안내용. Provider 없는 렌더(테스트)에서도 안전하게 optional.
-  const toast = useContext(ToastContext)
   // 모든 leaf(그룹 안 항목 포함) — 첫 leaf=역할 홈, prefix 겹침 판정용.
   const leaves = items.flatMap((node) =>
     isMenuGroup(node) ? node.children : [node],
@@ -93,21 +93,6 @@ export function Sidebar({
   }
 
   const renderLeaf = (item: MenuItem, nested = false): ReactNode => {
-    // 준비 중 메뉴 — 이동 없이 '준비중' 토스트만. Link 대신 버튼으로 렌더.
-    if (item.comingSoon) {
-      return (
-        <button
-          key={item.to}
-          type="button"
-          onClick={() => toast?.info('준비 중인 기능입니다.')}
-          className={`text-fg hover:bg-divider rounded-md py-2 text-left text-[13px] font-medium ${
-            nested ? 'pr-3 pl-7' : 'px-3'
-          }`}
-        >
-          {item.label}
-        </button>
-      )
-    }
     const active = isActive(item)
     return (
       <Link
@@ -119,46 +104,59 @@ export function Sidebar({
         } ${
           active
             ? 'bg-accent-bg text-accent-strong font-semibold'
-            : 'text-fg hover:bg-divider font-medium'
+            : item.comingSoon
+              ? 'text-fg-subtle hover:bg-divider font-medium'
+              : 'text-fg hover:bg-divider font-medium'
         }`}
       >
         {active && (
           <span className="bg-accent absolute top-1/2 left-0 h-[18px] w-[3px] -translate-y-1/2 rounded-full" />
         )}
         {item.label}
+        {/* 준비 중 표기 — 내부 확인·작업을 위해 이동은 허용하고 상태만 명시한다. */}
+        {item.comingSoon && (
+          <span className="text-[11px] font-normal"> (준비 중)</span>
+        )}
       </Link>
     )
   }
 
   return (
-    <aside className="border-border flex w-[200px] shrink-0 flex-col overflow-y-auto border-r bg-white">
-      <Link
-        to={home}
-        aria-label="메인으로"
-        className="px-5 pt-6 pb-4 text-xl font-bold tracking-tight"
-      >
-        <span className="text-brand">PLAY</span>
-        <span className="text-accent">DATA</span>
-      </Link>
-      {label && (
-        <span className="text-fg-subtle px-5 pb-1 text-[10px] font-semibold">
-          {label}
-        </span>
-      )}
-      <nav className="flex flex-col gap-0.5 px-3 py-1">
-        {items.map((node) =>
-          isMenuGroup(node) ? (
-            <NavGroup
-              key={node.label}
-              group={node}
-              hasActive={node.children.some(isActive)}
-              renderLeaf={renderLeaf}
-            />
-          ) : (
-            renderLeaf(node)
-          ),
+    <aside
+      aria-hidden={collapsed || undefined}
+      className={`flex shrink-0 overflow-x-hidden bg-white transition-[width] duration-200 ease-out ${
+        collapsed ? 'w-0' : 'border-border w-[200px] border-r'
+      }`}
+    >
+      <div className="flex w-[200px] shrink-0 flex-col overflow-y-auto">
+        <Link
+          to={home}
+          aria-label="메인으로"
+          className="px-5 pt-6 pb-4 text-xl font-bold tracking-tight"
+        >
+          <span className="text-brand">PLAY</span>
+          <span className="text-accent">DATA</span>
+        </Link>
+        {label && (
+          <span className="text-fg-subtle px-5 pb-1 text-[10px] font-semibold">
+            {label}
+          </span>
         )}
-      </nav>
+        <nav className="flex flex-col gap-0.5 px-3 py-1">
+          {items.map((node) =>
+            isMenuGroup(node) ? (
+              <NavGroup
+                key={node.label}
+                group={node}
+                hasActive={node.children.some(isActive)}
+                renderLeaf={renderLeaf}
+              />
+            ) : (
+              renderLeaf(node)
+            ),
+          )}
+        </nav>
+      </div>
     </aside>
   )
 }

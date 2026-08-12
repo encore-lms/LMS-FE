@@ -7,6 +7,13 @@ import RecordsPage from './RecordsPage'
 import { useDeleteRecord, useRecordsOverview } from '../api/records'
 import type { BlogRecord, RecordsOverview } from './types'
 
+// 교육과정 허브 탭바(2026-08-05) — 페이지 본문 테스트에 집중하도록 껍데기만 둔다.
+vi.mock('../course/CourseTabs', () => ({ CourseTabs: () => null }))
+// 허브 공통 헤더 훅(과정명/기간) — useQuery 의존이라 껍데기로 대체한다.
+vi.mock('../course/useCourseHubHeader', () => ({
+  useCourseHubHeader: () => {},
+}))
+
 vi.mock('../api/records')
 
 const blogRecord: BlogRecord = {
@@ -69,7 +76,10 @@ const overview: RecordsOverview = {
   shownLabel: '3건 중 1건 표시',
 }
 
-function renderPage(data: RecordsOverview = overview) {
+function renderPage(
+  data: RecordsOverview = overview,
+  initialEntry = '/student/records',
+) {
   vi.mocked(useRecordsOverview).mockReturnValue({
     data,
     isPending: false,
@@ -83,7 +93,7 @@ function renderPage(data: RecordsOverview = overview) {
 
   render(
     <ToastProvider>
-      <MemoryRouter initialEntries={['/student/records']}>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route path="/student/records" element={<RecordsPage />} />
         </Routes>
@@ -110,6 +120,17 @@ describe('RecordsPage', () => {
     expect(screen.getByRole('tab', { name: /스터디\s*1/ })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /자격증\s*1/ })).toBeInTheDocument()
     expect(screen.getByText('블로그 기록')).toBeInTheDocument()
+  })
+
+  it('category 딥링크로 요청한 기록 카테고리를 바로 연다', () => {
+    renderPage(overview, '/student/records?category=cert')
+
+    expect(screen.getByRole('tab', { name: /자격증\s*1/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByText('자격증 기록')).toBeInTheDocument()
+    expect(screen.getByText('SQLD 자격증')).toBeInTheDocument()
   })
 
   it('블로그 상세는 모달 대신 우측 iframe 패널로 보여준다', async () => {

@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../useCourseHubHeader'
 import { useAssignments } from '../../api/course'
 import { CourseTabs } from '../CourseTabs'
 import type { AssignmentListItem, AssignmentStatus, DueTone } from './types'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 type Filter = 'all' | AssignmentStatus
 const FILTERS: { key: Filter; label: string }[] = [
@@ -52,7 +52,7 @@ const DUE_TONE: Record<DueTone, string> = {
 export default function AssignmentsPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useAssignments()
-  usePageHeader('과제/실습')
+  useCourseHubHeader()
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
 
@@ -145,15 +145,13 @@ export default function AssignmentsPage() {
             총 <span className="text-brand">{items.length}</span>개 과제
           </span>
           <div className="flex items-center gap-2">
-            <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-[240px] items-center gap-2 rounded-[10px] border px-3.5">
-              <Search className="text-fg-subtle size-4 shrink-0" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="과제·과목 검색"
-                className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none focus-visible:shadow-none"
-              />
-            </div>
+            <SearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="과제·과목 검색"
+              ariaLabel="과제·과목 검색"
+              className="h-[38px] w-[240px] rounded-[10px] px-3.5"
+            />
             <Select
               aria-label="상태 필터"
               value={filter}

@@ -94,6 +94,7 @@ export interface UploadedFileMeta {
   id: string
   name: string
   size: string // "2.1MB"
+  contentType?: string // 이미지면 상세에서 미리보기로 띄운다
 }
 
 /** 스터디 등록/수정 폼 데이터 */
@@ -115,8 +116,7 @@ export interface CertFormData {
   certType: CertType
   title: string
   otherCertName?: string // certType='OTHER'일 때 직접 입력한 자격증명
-  fileName?: string // 수정 시 기존 첨부 파일명
-  fileSize?: string
+  files: UploadedFileMeta[] // 수정 시 기존 증빙 — 여러 장 그대로
   rejectReason?: { title: string; detail: string }
 }
 

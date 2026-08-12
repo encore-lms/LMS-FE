@@ -1,20 +1,48 @@
 import { Link } from 'react-router-dom'
 import { FolderKanban, FolderPlus } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import type { DashboardProject } from '../types'
+import type { DashboardProject, DashboardProjectCounts } from '../types'
 import { SectionCard } from './SectionCard'
 import { MoreLink } from './MoreLink'
 import { Chip } from './Chip'
 import { EmptyState } from './EmptyState'
 import { TONE_SOLID } from './tone'
 
+// 부제는 실제 건수로 말한다 — 예전에는 "3건 진행 · 1건 인증 완료" 가 박혀 있어, 목록이
+// 비어 있어도 자료가 있는 것처럼 보였다. 지금은 서버가 준 전체 건수를 쓴다(카드에 싣는
+// 목록은 상위 몇 개뿐이라 그것만 세면 프로젝트 탭 숫자와 어긋난다).
+function summarize(
+  projects: DashboardProject[],
+  counts?: DashboardProjectCounts | null,
+) {
+  const certified =
+    counts?.certified ??
+    projects.filter((p) => p.status.tone === 'success').length
+  const ongoing = counts?.ongoing ?? projects.length - certified
+  if (certified + ongoing === 0) return '아직 등록한 프로젝트가 없어요'
+  const parts = []
+  if (ongoing > 0) parts.push(`${ongoing}건 진행`)
+  if (certified > 0) parts.push(`${certified}건 인증 완료`)
+  // 다 싣지 못했으면 말해 준다 — 숫자와 보이는 줄이 다른 이유를 알 수 있게.
+  const shown = projects.length
+  const total = counts?.total ?? shown
+  if (total > shown) parts.push(`최근 ${shown}건 표시`)
+  return parts.join(' · ')
+}
+
 // 진행 중 프로젝트 — 좌측 액센트 바 + 제목/역할·주차 + 진행률 바 + 상태 칩. 클릭 시 프로젝트로.
-export function ProjectList({ projects }: { projects: DashboardProject[] }) {
+export function ProjectList({
+  projects,
+  counts,
+}: {
+  projects: DashboardProject[]
+  counts?: DashboardProjectCounts | null
+}) {
   return (
     <SectionCard
       icon={FolderKanban}
       title="진행 중 프로젝트"
-      subtitle="3건 진행 · 1건 인증 완료"
+      subtitle={summarize(projects, counts)}
       action={<MoreLink to="/student/projects" label="프로젝트" />}
     >
       {projects.length === 0 ? (

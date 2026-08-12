@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuizBasePath } from './useQuizBasePath'
-import { FileText, Plus, Search, Settings2 } from 'lucide-react'
+import { useQuizBasePath, useQuizTemplateBasePath } from './useQuizBasePath'
+import { FileText, Plus, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, type Column } from '@/components/data/DataTable'
-import { Select } from '@/components/ui/Select'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
@@ -20,6 +19,9 @@ import { useDeleteQuiz, useInstructorQuizzes } from '../api/quizzes'
 import { useQuizTemplates } from '../api/quizTemplates'
 import { GRADING_MODE_META, VISIBILITY_META } from './meta'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { ListToolbar, ToolbarCount } from '@/components/ui/ListToolbar'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { FilterSelect } from '@/components/ui/FilterSelect'
 
 type ModeFilter = 'all' | GradingMode
 type VisibilityFilter = 'all' | QuizVisibility
@@ -37,6 +39,7 @@ export default function QuizListPage({
 }) {
   const navigate = useNavigate()
   const base = useQuizBasePath()
+  const templateBase = useQuizTemplateBasePath()
   const toast = useToast()
   // 허브(퀴즈 탭) 진입이면 폼·제출현황에 cohortId를 넘겨 저장·취소 후 허브로 복귀·기수 고정.
   const hubQs = embedded && cohortId ? `?cohortId=${cohortId}` : ''
@@ -46,6 +49,9 @@ export default function QuizListPage({
   const [cohort, setCohort] = useState<string>('전체')
   const [mode, setMode] = useState<ModeFilter>('all')
   const [visibility, setVisibility] = useState<VisibilityFilter>('all')
+  // 필터·검색 활성 여부 — 카운트 병기·초기화 버튼 노출 판정.
+  const hasFilter =
+    q !== '' || cohort !== '전체' || mode !== 'all' || visibility !== 'all'
   const [templateOpen, setTemplateOpen] = useState(false)
   const [templateQ, setTemplateQ] = useState('')
   usePageHeader(
@@ -241,40 +247,42 @@ export default function QuizListPage({
     >
       {data && (
         <div className={embedded ? '' : 'p-8'}>
-          {/* 탭 공통 필터 바 규격 — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-fg-muted text-sm">
-              총 {data.total}개 · 수동 대기 {data.manualPendingTotal}건
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-                <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="퀴즈명·과목으로 검색"
-                  aria-label="퀴즈 검색"
-                  className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
+          {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수 / 우: 검색·필터·주 액션 */}
+          <ListToolbar
+            left={
+              <>
+                {/* data.total 은 서버 집계 — 필터·검색이 걸렸을 때만 화면 필터 결과를 병기한다. */}
+                <ToolbarCount
+                  filtered={hasFilter ? filtered.length : data.total}
+                  total={data.total}
+                  unit="개"
                 />
-              </div>
-              {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
-              {!embedded && (
-                <label className="flex items-center gap-2 text-xs">
-                  <span className="text-fg-subtle">기수</span>
-                  <Select
+                <span className="text-fg-subtle">
+                  · 수동 대기 {data.manualPendingTotal}건
+                </span>
+              </>
+            }
+            search={{
+              value: q,
+              onChange: setQ,
+              placeholder: '퀴즈명·과목으로 검색',
+              ariaLabel: '퀴즈 검색',
+            }}
+            filters={
+              <>
+                {/* 기수 필터 — 임베드(과정·기수·교과목 탭)에선 상단에서 이미 기수를 선택하므로 숨김 */}
+                {!embedded && (
+                  <FilterSelect
+                    label="기수"
                     value={cohort}
-                    onChange={(v) => setCohort(v)}
-                    aria-label="기수 필터"
+                    onChange={setCohort}
                     options={cohortOpts.map((c) => ({ value: c, label: c }))}
                   />
-                </label>
-              )}
-              <label className="flex items-center gap-2 text-xs">
-                <span className="text-fg-subtle">채점 모드</span>
-                <Select
+                )}
+                <FilterSelect
+                  label="채점 모드"
                   value={mode}
                   onChange={(v) => setMode(v as ModeFilter)}
-                  aria-label="채점 모드 필터"
                   options={[
                     { value: 'all', label: '전체' },
                     { value: 'AUTO', label: 'AUTO' },
@@ -282,13 +290,10 @@ export default function QuizListPage({
                     { value: 'MIXED', label: 'MIXED' },
                   ]}
                 />
-              </label>
-              <label className="flex items-center gap-2 text-xs">
-                <span className="text-fg-subtle">공개 상태</span>
-                <Select
+                <FilterSelect
+                  label="공개 상태"
                   value={visibility}
                   onChange={(v) => setVisibility(v as VisibilityFilter)}
-                  aria-label="공개 상태 필터"
                   options={[
                     { value: 'all', label: '전체' },
                     { value: 'draft', label: '임시저장' },
@@ -296,28 +301,35 @@ export default function QuizListPage({
                     { value: 'closed', label: '종료' },
                   ]}
                 />
-              </label>
-              {/* 템플릿 관리 — 전역 자산이라 별도 메뉴 없이 퀴즈 영역에서 진입(생성·편집·삭제). */}
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/instructor/quiz-templates')}
-              >
-                <Settings2 className="h-4 w-4" /> 템플릿 관리
-              </Button>
-              <Button variant="secondary" onClick={() => setTemplateOpen(true)}>
-                <FileText className="h-4 w-4" /> 템플릿 열기
-              </Button>
-              <Button
-                onClick={() =>
-                  navigate(
-                    `${base}/new${cohortId ? `?cohortId=${cohortId}` : ''}`,
-                  )
-                }
-              >
-                <Plus className="h-4 w-4" /> 퀴즈 생성
-              </Button>
-            </div>
-          </div>
+              </>
+            }
+            actions={
+              <>
+                {/* 템플릿 관리 — 전역 자산이라 별도 메뉴 없이 퀴즈 영역에서 진입(생성·편집·삭제). */}
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(templateBase)}
+                >
+                  <Settings2 className="h-4 w-4" /> 템플릿 관리
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setTemplateOpen(true)}
+                >
+                  <FileText className="h-4 w-4" /> 템플릿 열기
+                </Button>
+                <Button
+                  onClick={() =>
+                    navigate(
+                      `${base}/new${cohortId ? `?cohortId=${cohortId}` : ''}`,
+                    )
+                  }
+                >
+                  <Plus className="h-4 w-4" /> 퀴즈 생성
+                </Button>
+              </>
+            }
+          />
 
           <div className="mt-4">
             <DataTable
@@ -381,16 +393,13 @@ function TemplatePickerModal({
     >
       <div className="flex flex-col gap-3">
         {/* 검색 */}
-        <div className="border-border focus-within:border-brand flex h-10 items-center gap-2 rounded-lg border bg-white px-3">
-          <Search className="text-fg-subtle h-4 w-4" />
-          <input
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="템플릿명·분류로 검색"
-            aria-label="템플릿 검색"
-            className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-          />
-        </div>
+        <SearchInput
+          value={query}
+          onChange={onQueryChange}
+          placeholder="템플릿명·분류로 검색"
+          ariaLabel="템플릿 검색"
+          className="h-10"
+        />
 
         {/* 목록 */}
         <div className="flex max-h-[360px] flex-col gap-2 overflow-y-auto">

@@ -47,34 +47,14 @@ export interface AssignmentItem {
   createdAt: string
 }
 
-// 이력서(Resume, learning-service /resumes). 정본 §32 lean.
-export type ResumeStatusCode = 'DRAFT' | 'COMPLETED'
-export interface ResumeRow {
-  id: string
-  studentUserId: string
-  title: string
-  status: ResumeStatusCode
-  feedbackCount: number
-  updatedAt: string
-}
-export interface ResumeFeedbackItem {
-  id: string
-  authorUserId: string
-  /** BE가 auth에서 해석한 작성자 실명 — 조회 실패 시 null */
-  authorName: string | null
-  body: string
-  createdAt: string
-}
-export interface ResumeDetail {
-  id: string
-  studentUserId: string
-  title: string
-  status: ResumeStatusCode
-  content: string | null
-  createdAt: string
-  updatedAt: string
-  feedbacks: ResumeFeedbackItem[]
-}
+// 이력서 타입은 3역할(운영·강사·수강생) 교차 계약이라 shared 로 승격(2026-08-01).
+// admin 내부 임포트 표면 유지를 위한 재수출 — 신규 코드는 '@/shared/types'에서 직접 가져온다.
+export type {
+  ResumeStatusCode,
+  ResumeRow,
+  ResumeFeedbackItem,
+  ResumeDetail,
+} from '@/shared/types'
 
 // 강사/운영 공용 과제(/instructor/assignments) — 실 BE. 과제 탭이 선택 기수로 스코프.
 export interface AssignmentCounts {
@@ -151,6 +131,9 @@ export interface CourseDetail {
   manager: string // 담당자
   trainingDays: string // 훈련 일수
   trainingHours: string // 훈련 시간
+  // HRD 상세엔 날짜가 없어 BE 가 LMS 기수 운영 기간을 채워 준다.
+  trainingStart?: string
+  trainingEnd?: string
 }
 
 // 기수 프로젝트(정본 §42 Project·§43 ProjectMember) — 운영 조회
@@ -170,4 +153,103 @@ export interface CohortProject {
   members: CohortProjectMember[]
   /** 동료 평가 개시 여부 — 프로젝트 종료 후 매니저·강사가 켠다(켜야 팀원이 제출 가능) */
   peerEvalEnabled: boolean
+}
+
+/** 동료 평가 결과 — 프로젝트 한 건의 진행 현황과 내용(매니저·강사 조회 전용). */
+export interface PeerEvalResults {
+  projectId: string
+  projectTitle: string
+  peerEvalEnabled: boolean
+  memberCount: number
+  /** 제출 완료 건수(임시저장 제외) */
+  submitted: number
+  /** 팀원이 서로를 모두 평가했을 때의 건수 — n명이면 n*(n-1) */
+  expected: number
+  members: PeerEvalMemberProgress[]
+  evaluations: PeerEvaluation[]
+}
+
+export interface PeerEvalMemberProgress {
+  userId: string | null
+  name: string
+  role: string
+  givenSubmitted: number
+  givenExpected: number
+  receivedSubmitted: number
+  /** 받은 평가 4축 평균(제출본만). 받은 게 없으면 null */
+  receivedAverage: number | null
+}
+
+export interface PeerEvaluation {
+  raterUserId: string | null
+  raterName: string
+  targetUserId: string | null
+  targetName: string
+  /** 4축 순서 = shared EVALUATION_AXIS_LABELS(2026-08-06 멘토 축 사전 통일) */
+  scores: number[]
+  average: number
+  comment: string | null
+  /** 임시저장 — 아직 제출되지 않았다 */
+  draft: boolean
+  submittedAt: string | null
+}
+
+// ── 수강생 평가('수강생 평가' 탭, 2026-08-06 신설) ──
+
+/** 수강생 1명 — scores 는 4축 순서(shared EVALUATION_AXIS_LABELS), 평가 전이면 null. */
+export interface StaffStudentEvalEntry {
+  studentId: string
+  name: string
+  scores: number[] | null
+  comment: string | null
+  updatedAtLabel: string | null
+}
+
+/** 기수 평가 시트 — 로스터 전체 + 평가자 본인이 저장한 평가(강사·매니저 각자 독립). */
+export interface StaffStudentEvalSheet {
+  cohortId: string
+  studentCount: number
+  evaluatedCount: number
+  students: StaffStudentEvalEntry[]
+}
+
+// ── 수강생 종합 데이터 탭(2026-08-07 신설) — 스태프 평가 전 평가자 조회 ──
+
+/** 평가 1건 — 평가자(강사/매니저) 정보 포함. scores 순서 = shared EVALUATION_AXIS_LABELS. */
+export interface StaffEvalRaterEntry {
+  raterUserId: string
+  raterName: string
+  raterRole: string
+  scores: number[]
+  comment: string | null
+  updatedAtLabel: string
+}
+
+export interface StaffEvalStudentEntries {
+  studentId: string
+  entries: StaffEvalRaterEntry[]
+}
+
+/** 기수 전체 — 평가가 있는 수강생만 담긴다. */
+export interface StaffEvalAllData {
+  cohortId: string
+  students: StaffEvalStudentEntries[]
+}
+
+/** 수강생 활동 요약('수강생 종합 데이터' 탭) — 과제·퀴즈·QnA, 수강생 1명 기준. */
+export interface StudentActivitySummary {
+  assignments: {
+    total: number
+    submitted: number
+    supplementRequested: number
+    reviewDone: number
+    notSubmitted: number
+  }
+  quizzes: {
+    totalOpen: number
+    attempted: number
+    finalized: number
+    avgScorePct: number | null
+  }
+  qna: { questionCount: number }
 }

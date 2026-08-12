@@ -11,11 +11,18 @@ const TONE: Record<CourseMiniTone, { dot: string; badge: string }> = {
   info: { dot: 'bg-info', badge: 'bg-info-bg text-info' },
 }
 
-// key → 이동 경로. 없는 key는 비활성(이동 안 함).
+// key → 수강생 이동 경로. 없는 key는 비활성(이동 안 함).
 const KEY_ROUTE: Record<string, string> = {
   quiz: '/student/quizzes',
   assignment: '/student/course/assignments',
   material: '/student/course/materials',
+}
+
+/** 운영·강사가 같은 카드를 볼 때 갈 곳 — 허브의 해당 탭. */
+const KEY_TAB: Record<string, string> = {
+  quiz: 'quizzes',
+  assignment: 'assignments',
+  material: 'materials',
 }
 
 function rowBadgeClass(badge: string) {
@@ -23,9 +30,22 @@ function rowBadgeClass(badge: string) {
   return 'bg-warning-bg text-warning'
 }
 
-export function MiniListCard({ card }: { card: CourseMiniCard }) {
+export function MiniListCard({
+  card,
+  hubTo,
+}: {
+  card: CourseMiniCard
+  /**
+   * 운영·강사가 볼 때의 허브 경로 — 주면 이 카드는 그 허브의 탭으로 간다.
+   *
+   * <p>예전에는 수강생 경로가 박혀 있어, 매니저가 누르면 권한 가드에 막혀 대시보드로
+   * 튕겼다(2026-08-05 QA).</p>
+   */
+  hubTo?: (tab: string) => string
+}) {
   const tone = TONE[card.tone]
-  const to = KEY_ROUTE[card.key]
+  const tab = KEY_TAB[card.key]
+  const to = hubTo ? (tab ? hubTo(tab) : undefined) : KEY_ROUTE[card.key]
   return (
     <section className="bg-surface flex w-full flex-col gap-3 rounded-[14px] p-[18px]">
       <div className="flex items-center justify-between">

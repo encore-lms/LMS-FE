@@ -12,7 +12,12 @@ export type ProjectPhase = 'active' | 'completed' | 'reviewing' | 'certified'
 // 인증 완료 후 "수정 권한 요청" 서브상태 — certified 단계에서만 의미를 가진다(생애주기와 분리).
 // none(수정 잠금) → requested(강사 승인 대기) → approved(시한부 수정 가능)
 //   → submitted(강사 최종 확인 대기) → (최종 확인 시 none 으로 복귀).
-export type EditRequestStatus = 'none' | 'requested' | 'approved' | 'submitted'
+export type EditRequestStatus =
+  | 'none'
+  | 'requested'
+  | 'approved'
+  | 'submitted'
+  | 'rejected'
 
 // 원본↔현재 비교(보조)에 쓰는 프로젝트 핵심 콘텐츠 — 목에서는 대표 2개 필드만.
 export interface ProjectContent {
@@ -20,9 +25,11 @@ export interface ProjectContent {
   산출물: string
 }
 
-export const DEFAULT_PROJECT_CONTENT: ProjectContent = {
-  설명: '주문·결제·재고 도메인을 분리한 MSA 구조의 백엔드 프로젝트입니다.',
-  산출물: 'API 명세서 v1.pdf',
+/** 변경 전/후 한 줄 — 서버 응답 그대로(label·before·after). */
+export interface ChangeDiff {
+  label: string
+  before: string | null
+  after: string | null
 }
 
 export interface EditRequestState {
@@ -33,8 +40,13 @@ export interface EditRequestState {
   editAllowedUntil?: string
   /** 수정 완료 제출 시 작성한 변경 요약 */
   changeSummary?: string
-  /** 승인 시점 원본 스냅샷 — '변경 전' (원본↔현재 보조 비교용). */
-  snapshot?: ProjectContent
+  /** 강사가 승인·반려하며 남긴 사유. 반려됐을 때 무엇이 부족했는지 알려준다. */
+  decisionReason?: string
+  /**
+   * 승인 시점 원본 스냅샷 — 서버가 내려주는 '변경 전'(label·before).
+   * 예전에는 프론트가 하드코딩한 예시 문구를 모든 프로젝트에 똑같이 보여줬다.
+   */
+  changes?: ChangeDiff[]
 }
 
 // approved 상태인데 만료 시각이 지났는지 — true면 잠금(none)으로 자동 복귀시킨다.
@@ -53,10 +65,11 @@ export function formatEditUntil(iso?: string) {
   return formatDateTime(iso) || iso
 }
 
-// 목록의 정적 상태(draft/reviewing/certified) → 시작 단계.
+// 목록의 정적 상태(draft/completed/reviewing/certified) → 시작 단계.
 export function statusToPhase(status: ProjectStatus): ProjectPhase {
   if (status === 'certified') return 'certified'
   if (status === 'reviewing') return 'reviewing'
+  if (status === 'completed') return 'completed'
   return 'active' // draft = 작성 중
 }
 
@@ -68,9 +81,6 @@ interface ProjectFlowState {
   editRequests: Record<string, EditRequestState>
   setEditRequest: (projectId: string, patch: Partial<EditRequestState>) => void
   resetEditRequest: (projectId: string) => void
-  // 프로젝트별 현재 콘텐츠(미설정이면 DEFAULT_PROJECT_CONTENT). 원본↔현재 비교의 '변경 후'.
-  projectContent: Record<string, ProjectContent>
-  setProjectContent: (projectId: string, patch: Partial<ProjectContent>) => void
 }
 
 export const useProjectFlow = create<ProjectFlowState>((set) => ({
@@ -91,15 +101,4 @@ export const useProjectFlow = create<ProjectFlowState>((set) => ({
     set((s) => ({
       editRequests: { ...s.editRequests, [projectId]: { status: 'none' } },
     })),
-  projectContent: {},
-  setProjectContent: (projectId, patch) =>
-    set((s) => {
-      const prev = s.projectContent[projectId] ?? DEFAULT_PROJECT_CONTENT
-      return {
-        projectContent: {
-          ...s.projectContent,
-          [projectId]: { ...prev, ...patch },
-        },
-      }
-    }),
 }))

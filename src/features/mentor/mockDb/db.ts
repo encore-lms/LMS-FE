@@ -143,7 +143,7 @@ export interface MentorMockEvaluation {
   submittedAtLabel?: string
   byStudent: Record<
     string,
-    { axes: [number, number, number, number, number]; comment?: string }
+    { axes: [number, number, number, number]; comment?: string }
   >
 }
 
@@ -158,14 +158,8 @@ export interface MentorMockRecommendation {
   notify?: boolean
 }
 
-/** 학생 상세 '멘토 평가 5축' 고정 축 라벨(05-26 결정 — 운영 커스터마이즈 없음). */
-export const EVALUATION_AXIS_LABELS = [
-  '기술',
-  '책임감',
-  '소통',
-  '성장',
-  '팀워크',
-] as const
+/** 멘토 평가 고정 4축 라벨 — 정본은 shared(멘토 작성·운영 평판 화면과 공유), 임포트 표면 유지 재수출. */
+export { EVALUATION_AXIS_LABELS } from '@/shared/constants'
 
 // Figma 2553:4166/2582:6514 '운영 설정 항목' 6종 — 팀 템플릿 6개 · 필수 3 · 선택 3.
 // 텍스트 항목 타입은 SHORT_TEXT/LONG_TEXT만(계약). 작성 산출물·활동 기록은 첨부형 —
@@ -867,27 +861,27 @@ export const mentorDb: MentorMockDb = {
         // 한예린 — 평균 4.6(Figma 2659:1772 대표값). 줄글 코멘트는 수강생별 필수(05-29 확정)
         // — M3 mock 의 미작성분(4명)을 M4 정책 정합으로 보강했다.
         stu_han_y: {
-          axes: [5, 4, 5, 5, 4],
+          axes: [5, 4, 5, 5],
           comment:
             '코퍼스 수집 전략과 토픽 모델링 해석 기준을 본인이 주도적으로 정리하면서, 분석 결과를 발표 구조로 옮기는 과정에서 팀의 결정을 끌어냈습니다. 코드 리뷰 코멘트 품질이 안정적이고, 다섯 명 협업에서 신뢰감을 주는 발표를 보여줍니다. 본인 영역에 머무르지 않고 지표 정의·일정 동기화에도 능동적으로 기여.',
         },
         stu_kim_d: {
-          axes: [4, 4, 4, 5, 4],
+          axes: [4, 4, 4, 5],
           comment:
             '토픽 모델링 실험 설계를 안정적으로 수행했고, 새 기법 적용 전 비교 실험을 스스로 챙기는 학습 태도가 돋보입니다.',
         },
         stu_park_s: {
-          axes: [4, 5, 4, 4, 5],
+          axes: [4, 5, 4, 4],
           comment:
             '코퍼스 수집·전처리 일정을 끝까지 책임지고, 팀원 작업이 막힐 때 데이터 이슈를 먼저 정리해 공유했습니다.',
         },
         stu_lee_g: {
-          axes: [4, 4, 5, 4, 4],
+          axes: [4, 4, 5, 4],
           comment:
             'API 설계 논의에서 의견 전달이 명확하고, 분석 결과를 서비스 응답 구조로 옮기는 협업 커뮤니케이션이 좋았습니다.',
         },
         stu_jo: {
-          axes: [3, 4, 4, 4, 5],
+          axes: [3, 4, 4, 4],
           comment:
             '시각화 화면 구현은 보강이 필요하지만, 발표 자료 협업과 팀 일정 조율에서 꾸준히 팀을 지원했습니다.',
         },
@@ -911,24 +905,24 @@ export const mentorDb: MentorMockDb = {
       entries: [
         {
           studentId: 'stu_seo',
-          scores: [5, 4, 5, 5, 4],
+          scores: [5, 4, 5, 5],
           comment:
             '집계 마트 성능 점검과 지표 정의 검토를 주도하며 팀 일정도 체계적으로 챙겼습니다.',
         },
         {
           studentId: 'stu_lee_d',
-          scores: [4, 5, 4, 4, 5],
+          scores: [4, 5, 4, 4],
           comment:
             'ETL 파이프라인 리뷰 후속 액션을 끝까지 마무리. 데이터 검증 문서화가 꼼꼼합니다.',
         },
         {
           studentId: 'stu_kim_n',
-          scores: [5, 4, null, null, null],
+          scores: [5, 4, null, null],
           comment: '',
         },
         {
           studentId: 'stu_jung',
-          scores: [null, null, null, null, null],
+          scores: [null, null, null, null],
           comment: '',
         },
       ],

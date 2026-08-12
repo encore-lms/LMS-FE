@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
@@ -12,6 +12,7 @@ import {
   useDeleteAssignment,
   useRenameTeam,
   useUpdateAllocatedHours,
+  useUpdateContractEnd,
 } from './api'
 import type { MentorAssignmentRow, MentorAssignmentsData } from './types'
 
@@ -42,10 +43,17 @@ export function AssignmentManageModal({
   const createAssignment = useCreateMentorAssignment()
   const renameTeam = useRenameTeam()
   const deleteAssignment = useDeleteAssignment()
+  const updateContractEnd = useUpdateContractEnd()
   const [teamName, setTeamName] = useState(row.teamName)
   const [hoursInput, setHoursInput] = useState(String(row.allocatedHours ?? ''))
   const [mentorId, setMentorId] = useState(row.mentor?.mentorId ?? '')
   const [templateId, setTemplateId] = useState(row.logTemplateId ?? '')
+  const [contractEnd, setContractEnd] = useState(row.contractEndDate ?? '')
+  // 기존 계약 종료일을 폼에서 바로 보이게 — 모달이 열려 있는 동안 저장·보드 갱신으로
+  // row가 바뀌어도 입력값을 최신 설정값과 동기화한다(2026-08-04 QA).
+  useEffect(() => {
+    setContractEnd(row.contractEndDate ?? '')
+  }, [row.contractEndDate])
   // 409 MENTOR_ASSIGNMENT_HAS_LOGS 수신 후 새 배정 생성 안내 노출
   const [replaceGuide, setReplaceGuide] = useState(false)
   // 배정 삭제 인라인 확인(파괴적이라 즉시 삭제 방지)
@@ -109,6 +117,25 @@ export function AssignmentManageModal({
     )
   }
 
+  // 계약 종료일 저장 — 빈 값 저장은 마감 해제(null).
+  const saveContractEnd = () => {
+    updateContractEnd.mutate(
+      { assignmentId, contractEndDate: contractEnd || null },
+      {
+        onSuccess: (updated) =>
+          toast.success(
+            updated.contractEndDate
+              ? `계약 종료일 설정 — ${updated.teamName} · ${updated.contractEndDate} 까지 제출 가능`
+              : `계약 종료일 해제 — ${updated.teamName} · 마감 없음`,
+          ),
+        onError: (error) =>
+          toast.danger(
+            apiErrorOf(error).message ?? '계약 종료일 수정에 실패했어요.',
+          ),
+      },
+    )
+  }
+
   const saveMentor = () => {
     if (!mentorId || mentorId === row.mentor?.mentorId) return
     changeMentor.mutate(
@@ -147,7 +174,9 @@ export function AssignmentManageModal({
           )
         },
         onError: (error) =>
-          toast.danger(apiErrorOf(error).message ?? '템플릿 교체에 실패했어요.'),
+          toast.danger(
+            apiErrorOf(error).message ?? '템플릿 교체에 실패했어요.',
+          ),
       },
     )
   }
@@ -245,6 +274,38 @@ export function AssignmentManageModal({
           <p className="text-fg-subtle text-xs">
             감소 — 기존 인정 시간 유지(새 기준 충족 시 즉시 완료) · 증가 — 최신
             유효 일지 기준 재계산(완료 팀도 진행 중 복귀)
+          </p>
+        </section>
+
+        <section className="flex flex-col gap-1.5">
+          <label htmlFor="manage-contract-end" className={FIELD_LABEL}>
+            계약 종료일 (제출 마감)
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="manage-contract-end"
+              type="date"
+              value={contractEnd}
+              onChange={(e) => setContractEnd(e.target.value)}
+              className={INPUT_CLASS}
+            />
+            <Button
+              onClick={saveContractEnd}
+              disabled={
+                updateContractEnd.isPending ||
+                contractEnd === (row.contractEndDate ?? '')
+              }
+              className="shrink-0"
+            >
+              저장
+            </Button>
+          </div>
+          <p className="text-fg-subtle text-xs">
+            {row.contractEndDate
+              ? `현재 설정 — ${row.contractEndDate} 까지 제출 가능`
+              : '현재 설정 — 마감 없음(무기한)'}
+            {' · '}종료일 당일까지 멘토가 평가·추천을 제출·수정할 수 있어요 ·
+            비우고 저장하면 마감 해제
           </p>
         </section>
 

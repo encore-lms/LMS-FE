@@ -28,6 +28,12 @@ export const ASSIGNMENT_STATUS_META: Record<
   n_hours_done: { label: 'N시간 완료', tone: 'success' },
 }
 
+/** 'N시간 완료'의 N을 실제 배정 시간으로 — 10 → '10시간 완료', 1.5 → '1.5시간 완료'(2026-08-04 QA). */
+export function nHoursDoneLabel(allocatedHours: number | null): string {
+  if (allocatedHours == null || allocatedHours <= 0) return '배정 시간 완료'
+  return `${allocatedHours}시간 완료`
+}
+
 export function assignmentDisplayStatus(
   row: MentorAssignmentRow,
 ): AssignmentDisplayStatus {
@@ -70,7 +76,7 @@ export function progressFillClass(pct: number) {
 
 // ───────────────────────── 일지 항목·템플릿 (§31~32) ─────────────────────────
 
-/** 항목 타입 배지 — 텍스트=info/success 틴트 · 이미지=warning · 텍스트+이미지=accent. */
+/** 항목 타입 배지 — 텍스트=info/success 틴트 · 이미지=warning. */
 export const FIELD_TYPE_META: Record<
   AdminTemplateFieldType,
   { label: string; tone: BadgeTone }
@@ -78,7 +84,21 @@ export const FIELD_TYPE_META: Record<
   long_text: { label: '긴 텍스트', tone: 'info' },
   short_text: { label: '짧은 텍스트', tone: 'success' },
   image: { label: '이미지', tone: 'warning' },
-  text_image: { label: '텍스트+이미지', tone: 'accent' },
+}
+
+/**
+ * 배지에 쓸 항목 타입 표기 — 모르는 타입이면 값을 그대로 보여준다.
+ *
+ * 서버가 아는 타입은 FE 보다 넓을 수 있다(배포 순서가 어긋나거나 타입이 늘어날 때).
+ * 맵을 바로 인덱싱하다 undefined.label 로 화면 전체가 죽은 적이 있다(2026-08-06).
+ */
+export function fieldTypeMeta(type: string): { label: string; tone: BadgeTone } {
+  return (
+    FIELD_TYPE_META[type as AdminTemplateFieldType] ?? {
+      label: type,
+      tone: 'neutral',
+    }
+  )
 }
 
 /**
@@ -100,13 +120,16 @@ export function requiredChangedLabel(nowRequired: boolean) {
 
 // ───────────────────────── 멘토 통계 (§33) ─────────────────────────
 
-/** 상태 요약·필터 라벨 — 통계 노출 5종(진행 중/일지 필요/수정 요청/평가 필요/완료). */
+/**
+ * 상태 요약·필터 라벨 — 통계 노출 5종(진행 중/일지 필요/수정 요청/평가 필요/시간 완료).
+ * completed 는 인정 시간을 다 채웠다는 뜻이지 배정이 끝났다는 뜻이 아니다(멘토 화면과 같은 기준).
+ */
 export const STAT_TEAM_STATUS_LABEL: Record<MentoringTeamStatKey, string> = {
   in_progress: '진행 중',
   log_needed: '일지 필요',
   change_requested: '수정 요청',
   evaluation_needed: '평가 필요',
-  completed: '완료',
+  completed: '시간 완료',
 }
 
 export const STAT_TEAM_STATUS_KEYS = Object.keys(

@@ -2,33 +2,21 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Eye, EyeOff, Info, Lock, Mail } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
-import { apiClient } from '@/shared/api'
-import { useAuthActions } from '@/shared/store'
-import { ROLE_HOME } from '@/shared/constants'
-import type { User } from '@/shared/types'
-import { PROFILE_PATH } from '@/features/profile/paths'
 import { AuthLayout } from './AuthLayout'
 import { DemoQuickLogin } from './DemoQuickLogin'
 import { DEMO_LOGIN_ENABLED, type DemoAccount } from './demoAccounts'
+import { QA_ACCOUNTS } from './qaAccounts'
 import { loginSchema, type LoginInput } from './login.schema'
-
-interface LoginResponse {
-  token: string
-  user: User
-  nextRoute?: string
-}
+import { useLoginSubmit } from './useLoginSubmit'
 
 export function LoginPage() {
-  const navigate = useNavigate()
-  const { setSession, clearSession } = useAuthActions()
+  const { submit, submitError } = useLoginSubmit()
   const [rememberEmail, setRememberEmail] = useState(false)
   const [capsLockOn, setCapsLockOn] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -37,14 +25,14 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
-  // 데모 빠른 로그인: 선택한 실제 계정으로 폼을 채우고 즉시 로그인 → 역할 홈으로 이동.
+  // 빠른 로그인: 선택한 실제 계정으로 폼을 채우고 즉시 로그인 → 역할 홈으로 이동.
   async function quickLogin(acc: DemoAccount) {
     setValue('email', acc.email, { shouldValidate: true, shouldDirty: true })
     setValue('password', acc.password, {
       shouldValidate: true,
       shouldDirty: true,
     })
-    await onSubmit({ email: acc.email, password: acc.password })
+    await submit({ email: acc.email, password: acc.password })
   }
 
   useEffect(() => {
@@ -59,42 +47,28 @@ export function LoginPage() {
     }
   }, [])
 
-  // 폼 패턴: handleSubmit이 zod 검증 통과 후에만 onSubmit 호출. 제출 단계 에러는 submitError로 분리.
-  async function onSubmit({ email, password }: LoginInput) {
-    setSubmitError(null)
-    try {
-      const res = await apiClient.post<LoginResponse>('/auth/login', {
-        userId: email,
-        password,
-      })
-      // 로그아웃 없이 /login에서 계정을 교체하는 경우(데모 빠른 로그인 등) 이전 세션의
-      // 쿼리 캐시·로컬 알림이 새 사용자에게 남지 않도록 세션을 먼저 정리한다(스토어 구독이 정리 수행).
-      clearSession()
-      setSession(res.data.token, res.data.user)
-      // 임시 비밀번호(매니저 발급) 상태면 역할 홈 대신 마이 프로필로 보내 비밀번호 변경을 유도한다(P0-01 계약).
-      // 단, 온보딩이 먼저 필요한 수강생은 온보딩부터 — 프로필이 OnboardingGate 하위라 어차피 튕기고,
-      // 온보딩 완료 화면이 mustChangePassword를 이어받아 프로필로 보낸다.
-      const needsOnboarding = res.data.nextRoute === '/student/onboarding'
-      navigate(
-        res.data.user.mustChangePassword && !needsOnboarding
-          ? PROFILE_PATH[res.data.user.role]
-          : (res.data.nextRoute ?? ROLE_HOME[res.data.user.role]),
-        { replace: true },
-      )
-    } catch {
-      setSubmitError('이메일 또는 비밀번호를 확인해주세요.')
-    }
-  }
-
   return (
     <AuthLayout
       brandSlot={
-        DEMO_LOGIN_ENABLED ? <DemoQuickLogin onPick={quickLogin} /> : undefined
+        DEMO_LOGIN_ENABLED ? (
+          // 데모(시연 데이터)와 QA(개발·테스트) 두 그룹 — /login2 폐쇄(08-11 시연 종료)로
+          // 한 입구에 모았다. 단일 세션 정책상 같은 계정 동시 로그인은 서로를 끊으므로
+          // 여럿이 쓸 때는 서로 다른 계정을 잡는다.
+          <div className="flex flex-col gap-5">
+            <DemoQuickLogin onPick={quickLogin} />
+            <DemoQuickLogin
+              onPick={quickLogin}
+              accounts={QA_ACCOUNTS}
+              title="QA 계정 · 개발·테스트용"
+              showStyleguideLink={false}
+            />
+          </div>
+        ) : undefined
       }
     >
       <form
         noValidate
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(submit)}
         className="flex w-[420px] flex-col gap-6"
       >
         <div className="flex flex-col gap-2">

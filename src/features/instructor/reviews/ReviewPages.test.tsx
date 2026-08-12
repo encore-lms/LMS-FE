@@ -30,7 +30,8 @@ vi.mock('../api/reviews')
 // 상세 패널·그리드의 이름 join 훅 — QueryClient 없이 동작하도록 기수 로스터를 고정 반환.
 // 강사는 계정 목록(/users/students)이 막혀(403) 담당 기수 로스터로 실명을 붙인다.
 // 기록실 그리드 뼈대이기도 하다 — s1(기록 있음)·stu-1(검토 상세 팀원) 둘을 명단에 둔다.
-vi.mock('../api/console', () => ({
+vi.mock('@/shared/api/students', () => ({
+  useStudentAccounts: () => ({ data: undefined, isLoading: false }),
   useCohortRoster: () => ({
     data: [
       { userId: 's1', name: '김은진' },
@@ -246,7 +247,9 @@ function renderWith(ui: React.ReactElement) {
     mutationStub() as unknown as ReturnType<typeof useRequestTsChanges>,
   )
   vi.mocked(useRevokeProjectCertification).mockReturnValue(
-    mutationStub() as unknown as ReturnType<typeof useRevokeProjectCertification>,
+    mutationStub() as unknown as ReturnType<
+      typeof useRevokeProjectCertification
+    >,
   )
   vi.mocked(useRevokeTsCertification).mockReturnValue(
     mutationStub() as unknown as ReturnType<typeof useRevokeTsCertification>,
@@ -261,15 +264,18 @@ function renderWith(ui: React.ReactElement) {
 describe('RecordReviewPage (§13)', () => {
   it('초기 조회는 서버 기본 필터로 요청한다', () => {
     renderWith(<RecordReviewPage />)
-    expect(useRecordReviews).toHaveBeenNthCalledWith(1, 'none', 'none')
+    expect(useRecordReviews).toHaveBeenNthCalledWith(
+      1,
+      'none',
+      'none',
+      'instructor',
+    )
   })
 
   it('담당 과정·기수를 단일 고정으로 표시하고 조회 전용 안내를 렌더한다', () => {
     renderWith(<RecordReviewPage />)
     // 과정 드롭다운·기수 탭이 아닌 고정 텍스트로 표시(강사는 한 교육만 담당).
-    expect(
-      screen.getByText(/SK네트웍스 Family AI 캠프/),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/SK네트웍스 Family AI 캠프/)).toBeInTheDocument()
     expect(screen.getByText('29기')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: '29기' }),
@@ -346,7 +352,9 @@ describe('ProjectReviewPage (§14)', () => {
     const dialog = screen.getByRole('dialog', { name: '검토 상세' })
     expect(dialog).toBeInTheDocument()
     // 인증 대기(requested) 행이므로 처리 액션이 상세 안에 노출된다.
-    expect(within(dialog).getByRole('button', { name: '인증' })).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('button', { name: '인증' }),
+    ).toBeInTheDocument()
     expect(
       within(dialog).getByRole('button', { name: '보완 요청' }),
     ).toBeInTheDocument()
@@ -383,6 +391,8 @@ describe('TsReviewPage (§15)', () => {
     expect(screen.queryByRole('button', { name: '상세' })).toBeNull()
 
     await user.click(screen.getByText('Airflow DAG 메모리 누수 추적'))
-    expect(screen.getByRole('dialog', { name: '검토 상세' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('dialog', { name: '검토 상세' }),
+    ).toBeInTheDocument()
   })
 })

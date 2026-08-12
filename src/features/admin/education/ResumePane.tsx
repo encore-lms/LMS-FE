@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { formatDateTime } from '@/shared/lib/date'
-import { useStudentAccounts } from '../api/students'
+import { useStudentAccounts, useCohortRoster } from '@/shared/api/students'
 import type { ResumeRow } from './types'
 import { useResumes } from './api'
+import { ListToolbar, ToolbarCount } from '@/components/ui/ListToolbar'
+import { useInstructorResumes } from '@/features/instructor/education/api'
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: '작성 중',
@@ -15,29 +16,46 @@ const STATUS_LABEL: Record<string, string> = {
 }
 const fmt = (iso: string | null) => (iso ? formatDateTime(iso) : '-')
 
-// 이력서 탭 — 기수 이력서 현황(학생명 join) + 검색 + 상세(페이지 전환). 정본 §32 lean.
+// 이력서 탭 — 기수 이력서 현황(수강생명 join) + 검색 + 상세(페이지 전환). 정본 §32 lean.
+// source: 매니저(admin, 기본)·강사(instructor) 공용 — 데이터·이름 join·상세 경로만 역할 미러(MaterialsPane 규약).
 export function ResumePane({
   courseId,
   cohortId,
+  source = 'admin',
 }: {
-  courseId: string
+  /** 매니저(source='admin')만 필요. */
+  courseId?: string
   cohortId: string
+  source?: 'admin' | 'instructor'
 }) {
-  const { data, isPending, isError, refetch } = useResumes(courseId, cohortId)
-  const { data: students } = useStudentAccounts(cohortId)
+  const isAdmin = source === 'admin'
+  const adminQuery = useResumes(
+    isAdmin ? (courseId ?? null) : null,
+    isAdmin ? cohortId : null,
+  )
+  const instructorQuery = useInstructorResumes(isAdmin ? null : cohortId)
+  const { data, isPending, isError, refetch } = isAdmin
+    ? adminQuery
+    : instructorQuery
+  // 수강생명 join — 매니저는 계정 목록, 강사는 계정 목록이 403이라 담당 기수 로스터.
+  const { data: students } = useStudentAccounts(cohortId, isAdmin)
+  const { data: roster } = useCohortRoster(isAdmin ? null : cohortId)
   const navigate = useNavigate()
   const [q, setQ] = useState('')
 
   const nameOf = useMemo(() => {
     const map = new Map<string, string>()
-    for (const s of students?.items ?? []) map.set(s.id, s.name)
+    if (isAdmin) for (const s of students?.items ?? []) map.set(s.id, s.name)
+    else for (const r of roster ?? []) map.set(r.userId, r.name)
     return (userId: string) => map.get(userId) ?? '(이름 미확인)'
-  }, [students])
+  }, [isAdmin, students, roster])
 
-  // 상세는 페이지 전환 — courseId/cohortId는 쿼리로 넘긴다.
+  // 상세는 페이지 전환 — 매니저는 courseId/cohortId를 쿼리로, 강사는 기수 스코프 경로로.
   const openDetail = (resumeId: string) =>
     navigate(
-      `/admin/education/resume/${resumeId}?courseId=${courseId}&cohortId=${cohortId}`,
+      isAdmin
+        ? `/admin/education/resume/${resumeId}?courseId=${courseId}&cohortId=${cohortId}`
+        : `/instructor/cohorts/${cohortId}/resumes/${resumeId}`,
     )
 
   const columns: Column<ResumeRow>[] = [
@@ -128,24 +146,23 @@ export function ResumePane({
       errorDescription="일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
     >
       <div>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-fg-muted text-sm">
-            총 {rows.length}개 이력서
-            {needle && data && (
-              <span className="text-fg-subtle"> · 전체 {data.length}</span>
-            )}
-          </p>
-          {/* 탭 공통 필터 바 규격 — 검색은 우측·아이콘 포함·w-56 */}
-          <div className="border-border focus-within:border-brand bg-surface flex h-9 w-56 items-center gap-2 rounded-lg border px-3">
-            <Search className="text-fg-subtle h-4 w-4 shrink-0" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="이름·이력서 제목 검색"
-              aria-label="이력서 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-            />
-          </div>
+        {/* 탭 공통 툴바(ListToolbar) — 좌: 총 개수 / 우: 검색(2026-08-07 통일). */}
+        <div className="mb-3">
+          <ListToolbar
+            left={
+              <ToolbarCount
+                filtered={rows.length}
+                total={data?.length ?? 0}
+                unit="개 이력서"
+              />
+            }
+            search={{
+              value: q,
+              onChange: setQ,
+              placeholder: '이름·이력서 제목 검색',
+              ariaLabel: '이력서 검색',
+            }}
+          />
         </div>
         <DataTable
           columns={columns}

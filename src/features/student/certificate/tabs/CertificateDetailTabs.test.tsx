@@ -2,20 +2,25 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
-import type { CertificateDetailTabsResult } from '../ai'
-import { fetchCertificateDetailTabs } from '../ai'
+import type { CertificateDetailTabsResult, CertificateScoreResult } from '../ai'
+import { fetchCertificateDetailTabs, fetchCertificateScore } from '../ai'
 import type { CertGrowthTab } from '../types'
-import { GrowthTab } from './GrowthTab'
+import { GrowthTab, GrowthTabData } from './GrowthTab'
 import { ProblemTab } from './ProblemTab'
 import { TechTab } from './TechTab'
 
-vi.mock('../ai', () => ({
-  CERTIFICATE_MOCK_STUDENT_ID: 'student-1',
-  fetchCertificateDetailTabs: vi.fn(),
-}))
+vi.mock('../ai', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ai')>()
+  return {
+    ...actual,
+    CERTIFICATE_MOCK_STUDENT_ID: 'student-1',
+    fetchCertificateDetailTabs: vi.fn(),
+    fetchCertificateScore: vi.fn(),
+  }
+})
 
 const result: CertificateDetailTabsResult = {
-  policyVersion: '2026.07.23-certificate-detail-tabs-v1',
+  policyVersion: '2026.08.05-certificate-detail-tabs-v2',
   calculatedAt: '2026-07-20',
   studentId: 'student-1',
   tech: {
@@ -25,6 +30,7 @@ const result: CertificateDetailTabsResult = {
     assessmentAveragePopulationSize: 40,
     categories: [
       {
+        assessmentType: 'ACHIEVEMENT',
         label: '프론트엔드',
         score: 86,
         attemptCount: 2,
@@ -36,6 +42,7 @@ const result: CertificateDetailTabsResult = {
       {
         id: 'quiz-1',
         title: 'React 평가',
+        assessmentType: 'ACHIEVEMENT',
         category: '프론트엔드',
         score: 86,
         cohortAverageScore: 80,
@@ -53,7 +60,7 @@ const result: CertificateDetailTabsResult = {
         scheduledAt: null,
         submittedAt: '2026-05-10',
         issuedAt: '2026-05-12',
-        registrationSource: '자가 등록',
+        registrationSource: '운영 인증 · 제출 증빙 확인',
       },
       {
         name: 'PCCP',
@@ -149,6 +156,47 @@ const result: CertificateDetailTabsResult = {
   },
 }
 
+const scoreResult = {
+  axes: [
+    {
+      key: '기술·기술기여',
+      comparison: {
+        peerScore: 80,
+        mentorScore: 75,
+        managerScore: 70,
+        instructorScore: 85,
+      },
+    },
+    {
+      key: '소통·협업·팀워크',
+      comparison: {
+        peerScore: 70,
+        mentorScore: 80,
+        managerScore: 75,
+        instructorScore: 90,
+      },
+    },
+    {
+      key: '문제해결',
+      comparison: {
+        peerScore: 90,
+        mentorScore: 85,
+        managerScore: 80,
+        instructorScore: 75,
+      },
+    },
+    {
+      key: '책임감',
+      comparison: {
+        peerScore: 85,
+        mentorScore: 90,
+        managerScore: 88,
+        instructorScore: 92,
+      },
+    },
+  ],
+} as CertificateScoreResult
+
 const growth: CertGrowthTab = {
   timeline: [
     {
@@ -239,45 +287,64 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     renderWithQuery(<TechTab />)
 
     expect(await screen.findByText('프론트엔드')).toBeInTheDocument()
-    expect(screen.getByText('상위 12.5%')).toBeInTheDocument()
+    expect(screen.getByText('평가 1회')).toBeInTheDocument()
+    expect(screen.getByText('평균 점수')).toBeInTheDocument()
+    expect(screen.queryByText('상위 12.5%')).not.toBeInTheDocument()
     expect(screen.getByText('PCCE')).toBeInTheDocument()
+    expect(screen.getByText('코딩테스트')).toBeInTheDocument()
+    expect(screen.getByText('LV.4 · 1,000 / 1,000점')).toBeInTheDocument()
+    expect(screen.getByTitle('운영 인증 완료')).toBeInTheDocument()
+    expect(screen.getByText('취득일 2026.05.12')).toBeInTheDocument()
     expect(
-      screen.getByText('승인 1건 · 검토 중 1건 · 응시 예정 1건'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'LV.4 (900–1,000점) · 1,000/1,000점 · 발급 2026-05-12 · 자가 등록',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('제출 2026-06-01 · 자가 등록')).toBeInTheDocument()
-    expect(
-      screen.getByText('2026-07-12 응시 예정 · 자가 등록'),
-    ).toBeInTheDocument()
+      screen.queryByText('운영 인증 · 제출 증빙 확인'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('PCCP')).not.toBeInTheDocument()
+    expect(screen.queryByText('PCSQL')).not.toBeInTheDocument()
     expect(screen.queryByText('과제 / 실습 검증')).not.toBeInTheDocument()
     expect(
       screen.queryByText('Spring REST API + JWT 인증'),
     ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: '성장 곡선' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('성취도 평가 기술 추세')).not.toBeInTheDocument()
+    expect(screen.queryByText('CS 평가 기술 추세')).not.toBeInTheDocument()
+    expect(
+      document.querySelector('[data-growth-type-summary="ACHIEVEMENT"]'),
+    ).toHaveTextContent('성취도 평가 1회 · 평균 86점')
+    expect(
+      document.querySelector('[data-growth-timeline]')?.nextElementSibling,
+    ).toBe(document.querySelector('[data-tech-category-card]'))
   })
 
-  it('인증 문제해결 사례·문제 분포·PeerTag 클라우드만 표시한다', async () => {
+  it('인증 문제해결 사례를 카테고리와 해결 흐름으로 표시한다', async () => {
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(result)
     renderWithQuery(<ProblemTab />)
 
     expect(await screen.findByText('쿼리 지연 해결')).toBeInTheDocument()
-    expect(screen.getByText('#협업')).toBeInTheDocument()
-    expect(screen.getByText('PeerTag 클라우드')).toBeInTheDocument()
-    expect(screen.getByText('대표 트러블슈팅 사례')).toBeInTheDocument()
+    expect(screen.getByText('전체 트러블슈팅 카테고리')).toBeInTheDocument()
+    expect(screen.queryByText('선택한 카테고리')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '전체 카테고리 1건' }),
+    ).toHaveTextContent('1건 · 100%')
+    expect(
+      screen.getByRole('button', { name: '성능 카테고리 1건' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('#협업')).not.toBeInTheDocument()
+    expect(screen.queryByText('PeerTag 클라우드')).not.toBeInTheDocument()
     expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
-    expect(screen.queryByText('인증 사례')).not.toBeInTheDocument()
+    expect(screen.getByText('인증 사례 01')).toBeInTheDocument()
     expect(screen.queryByText('평균 소요 일수')).not.toBeInTheDocument()
     expect(screen.queryByText('협업 태그')).not.toBeInTheDocument()
     expect(screen.queryByText('동료 평가자')).not.toBeInTheDocument()
     expect(screen.queryByText('독립 해결 비율')).not.toBeInTheDocument()
-    expect(screen.queryByText('독립 해결')).not.toBeInTheDocument()
+    expect(
+      screen.getByText('독립 해결', { selector: 'span' }),
+    ).toBeInTheDocument()
     expect(screen.queryByText(/검토·보완/)).not.toBeInTheDocument()
     expect(screen.getByText('소요 2일')).toBeInTheDocument()
-    expect(screen.getByText('상황')).toBeInTheDocument()
-    expect(screen.getByText('해결')).toBeInTheDocument()
+    expect(screen.getByText('문제 상황')).toBeInTheDocument()
+    expect(screen.getByText('해결 과정')).toBeInTheDocument()
     expect(screen.getByText('결과')).toBeInTheDocument()
     expect(
       screen.getByText('인덱스 부재로 목록 조회가 지연됨'),
@@ -287,16 +354,16 @@ describe('수강생 증명서 상세 데이터 탭', () => {
         'API 조회를 점검했습니다. 인덱스가 없어 목록 조회가 지연됐습니다.',
       ),
     ).not.toBeInTheDocument()
-    expect(screen.getByLabelText('#협업 3회')).toBeInTheDocument()
-    expect(screen.getByLabelText('#소통 1회')).toBeInTheDocument()
+    expect(screen.queryByLabelText('#협업 3회')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('#소통 1회')).not.toBeInTheDocument()
 
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: '쿼리 지연 해결 상황 상세보기',
-      }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: '작성 원문 보기' }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('수강생 작성 원문')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '수강생이 작성하고 강사가 인증한 내용을 그대로 보여줍니다.',
+      ),
+    ).toBeInTheDocument()
     expect(
       screen.getByText(
         'API 조회를 점검했습니다. 인덱스가 없어 목록 조회가 지연됐습니다.',
@@ -304,28 +371,53 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     ).toBeInTheDocument()
   })
 
-  it('대표 트러블슈팅 사례를 최대 3건만 상황·해결·결과로 표시한다', async () => {
+  it('가장 많이 해결한 카테고리부터 유형별 인증 사례를 탐색한다', async () => {
     const cases = Array.from({ length: 4 }, (_, index) => ({
       ...result.problem.cases[0],
       id: `case-${index + 1}`,
-      title: `대표 후보 ${index + 1}`,
+      title: `인증 사례 ${index + 1}`,
+      category: index === 0 ? '성능최적화' : '배포·인프라',
+      independent: index % 2 === 0,
     }))
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue({
       ...result,
       problem: {
         ...result.problem,
         certifiedCount: 4,
+        categories: [
+          { label: '성능최적화', count: 1, percentage: 25 },
+          { label: '배포·인프라', count: 3, percentage: 75 },
+        ],
         cases,
       },
     })
 
     renderWithQuery(<ProblemTab />)
 
-    expect(await screen.findByText('대표 후보 1')).toBeInTheDocument()
+    expect(await screen.findByText('인증 사례 2')).toBeInTheDocument()
     expect(
       document.querySelectorAll('[data-troubleshooting-case]'),
     ).toHaveLength(3)
-    expect(screen.queryByText('대표 후보 4')).not.toBeInTheDocument()
+    expect(screen.getByText('인증 사례 4')).toBeInTheDocument()
+    expect(screen.queryByText('인증 사례 1')).not.toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '성능최적화 카테고리 1건' }),
+    )
+    expect(
+      document.querySelectorAll('[data-troubleshooting-case]'),
+    ).toHaveLength(1)
+    expect(
+      screen.getByRole('heading', { name: '성능최적화 해결 사례' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('인증 사례 1')).toBeInTheDocument()
+    expect(screen.queryByText('인증 사례 2')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '전체 카테고리 4건' }))
+    expect(
+      document.querySelectorAll('[data-troubleshooting-case]'),
+    ).toHaveLength(4)
+    expect(screen.getByText('인증 사례 4')).toBeInTheDocument()
   })
 
   it('AI 요약이 없으면 원문을 잘라 요약처럼 표시하지 않는다', async () => {
@@ -339,67 +431,62 @@ describe('수강생 증명서 상세 데이터 탭', () => {
 
     renderWithQuery(<ProblemTab />)
 
-    expect(
-      await screen.findAllByText('AI 요약을 생성하지 못했습니다.'),
-    ).toHaveLength(3)
+    expect(await screen.findAllByText('요약을 준비 중입니다.')).toHaveLength(3)
     expect(screen.queryByText(/API 조회를 점검했습니다.*…/)).toBeNull()
   })
 
-  it('성장 궤적·동료 평판·추천서를 증명서 형식으로 표시한다', () => {
-    renderWithQuery(<GrowthTab g={growth} />)
+  it('역할별 4축 평가 옆에 추천서와 코멘트를 세로로 표시한다', () => {
+    renderWithQuery(<GrowthTab g={growth} score={scoreResult} />)
 
-    expect(screen.getByText('6개월 평가 6회 +32점')).toBeInTheDocument()
-    expect(screen.getByText('동료 5축 평균 4.6')).toBeInTheDocument()
     expect(
-      screen.getByText('Skill360 · 누적 12회 동료 평가'),
+      screen.getByRole('heading', { name: '평가·추천' }),
     ).toBeInTheDocument()
+    expect(screen.getByText('4평가자 · 공통 4축 비교')).toBeInTheDocument()
+    expect(document.querySelector('[data-growth-evaluation-row]')).toHaveClass(
+      'xl:grid-cols-2',
+    )
+    expect(document.querySelector('[data-evaluator-role-grid]')).toHaveClass(
+      'sm:grid-cols-2',
+    )
+    expect(document.querySelectorAll('[data-evaluator-role]')).toHaveLength(4)
+    expect(
+      document.querySelector('[data-evaluator-role="peerScore"]'),
+    ).toHaveTextContent('동료완료 프로젝트 평가4.3/ 5.0')
+    expect(
+      document.querySelector('[data-evaluator-role="mentorScore"]'),
+    ).toHaveTextContent('멘토최신 멘토 평가4.3/ 5.0')
+    expect(
+      document.querySelector('[data-evaluator-role="managerScore"]'),
+    ).toHaveTextContent('운영(매니저)최신 운영 평가4.1/ 5.0')
+    expect(
+      document.querySelector('[data-evaluator-role="instructorScore"]'),
+    ).toHaveTextContent('강사최신 강사 평가4.4/ 5.0')
     expect(screen.getByText('#논리적설득')).toBeInTheDocument()
     expect(screen.getByText('추천서 2건')).toBeInTheDocument()
     expect(screen.getByText('강사·멘토 추천서')).toBeInTheDocument()
     expect(screen.getByText('이정훈 강사')).toBeInTheDocument()
     expect(screen.getByText('황설현 멘토')).toBeInTheDocument()
-
-    expect(document.querySelector('[data-growth-trend-line]')).toBeTruthy()
-    const growthBar = document.querySelector(
-      '[data-growth-bar="2024-07-09"]',
-    ) as HTMLElement
-    fireEvent.mouseMove(growthBar, { clientX: 160, clientY: 120 })
-    const subjectTooltip = document.querySelector(
-      '[data-growth-subject-tooltip="2024-07-09"]',
-    )
-    expect(subjectTooltip).toHaveTextContent('머신러닝')
-    expect(subjectTooltip).toHaveTextContent('75점')
-    expect(subjectTooltip).not.toHaveTextContent('2024-07-09')
-    expect(subjectTooltip).not.toHaveTextContent('성취도 평가')
-    fireEvent.mouseLeave(growthBar)
-    fireEvent.mouseMove(
-      document.querySelector('[data-growth-chart-area]') as HTMLElement,
-      { clientX: 160, clientY: 40 },
-    )
     expect(
-      document.querySelector('[data-growth-subject-tooltip]'),
-    ).not.toBeInTheDocument()
+      document.querySelector('[data-evaluation-support-panel]'),
+    ).toHaveClass('flex-col')
+    expect(screen.queryByRole('heading', { name: '성장 곡선' })).toBeNull()
+  })
 
-    fireEvent.mouseEnter(
-      screen.getByRole('button', {
-        name: '2024-07-09 머신러닝 성취도 평가 75점 성장 추세 비교',
-      }),
+  it('평가·추천 데이터는 4축 점수만 조회한다', async () => {
+    vi.mocked(fetchCertificateDetailTabs).mockClear()
+    vi.mocked(fetchCertificateScore).mockClear()
+    vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(result)
+    vi.mocked(fetchCertificateScore).mockResolvedValue(scoreResult)
+
+    renderWithQuery(
+      <GrowthTabData g={{ ...growth, timeline: [] }} studentId="student-1" />,
     )
-    const growthTooltip = screen.getByRole('tooltip')
-    expect(growthTooltip).toHaveTextContent('머신러닝 성취도 평가')
-    expect(growthTooltip).toHaveTextContent('2024-07-09 · 성취도 평가')
-    expect(growthTooltip).toHaveTextContent('현재 시험')
-    expect(growthTooltip).toHaveTextContent('직전 시험')
-    expect(growthTooltip.textContent?.indexOf('직전 시험')).toBeLessThan(
-      growthTooltip.textContent?.indexOf('현재 시험') ?? 0,
-    )
-    expect(growthTooltip).toHaveTextContent('7점')
-    expect(document.querySelector('[data-growth-chart-area]')).toHaveClass(
-      'z-auto',
-    )
-    expect(screen.getByText('04.17')).toBeInTheDocument()
-    expect(screen.getByText('08.28')).toBeInTheDocument()
-    expect(screen.queryByText(/W\d+/)).not.toBeInTheDocument()
+
+    expect(
+      await screen.findByText('4평가자 · 공통 4축 비교'),
+    ).toBeInTheDocument()
+    expect(fetchCertificateDetailTabs).not.toHaveBeenCalled()
+    expect(fetchCertificateScore).toHaveBeenCalledWith('student-1')
   })
 
   it('팀원 한줄 코멘트를 기본 비공개로 두고 최대 5개까지만 공개한다', () => {

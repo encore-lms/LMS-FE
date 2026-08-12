@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useAttendanceOverview } from '../api/attendance'
 import { HrdAttendanceCalendar } from './components/calendar/HrdAttendanceCalendar'
 import { SubmissionHistory } from './components/history/SubmissionHistory'
+import { CourseTabs } from '../course/CourseTabs'
 
 /**
  * 출결 / 태도 (/student/attendance) — 조회 화면.
@@ -18,7 +19,7 @@ export default function AttendanceView() {
     view?.year,
     view?.month,
   )
-  usePageHeader('출결 / 태도')
+  useCourseHubHeader()
 
   return (
     <DataBoundary
@@ -32,9 +33,12 @@ export default function AttendanceView() {
     >
       {data && (
         <div className="flex flex-col gap-6 p-8">
+          <CourseTabs />
           <HrdAttendanceCalendar
             calendar={data.calendar}
             onMove={(year, month) => setView({ year, month })}
+            // 폼은 HRD 출결과 별개 데이터라, 낸 날짜를 캘린더에 겹쳐 보여 준다.
+            formDates={new Set(data.submissions.map((s) => s.targetDate))}
           />
           <SubmissionHistory
             submissions={data.submissions}

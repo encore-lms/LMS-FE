@@ -21,6 +21,7 @@
   --color-danger-bg: #fce3e3;
   --color-warning: #b27300;
   --color-warning-bg: #fff2c7;
+  --color-brown: #765548;
 
   --color-accent: #6b5cff;
   --color-accent-bg: #f0eafe;
@@ -162,14 +163,152 @@ body {
 .markdown-body h3 {
   font-size: 1.1em;
 }
+.markdown-body h4 {
+  font-size: 1em;
+}
+/* 할 일 목록(GFM) — 체크박스가 있는 항목은 글머리 점을 지우고 체크박스에 자리를 준다. */
+.markdown-body ul:has(> li > input[type='checkbox']) {
+  list-style: none;
+  padding-left: 0.2em;
+}
+.markdown-body li > input[type='checkbox'] {
+  margin-right: 0.45em;
+  vertical-align: middle;
+  accent-color: var(--color-brand);
+}
+/* 표(GFM) — 공지의 일정·준비물처럼 줄 맞춰 읽어야 하는 내용에 쓴다. */
+.markdown-body table {
+  margin: 0 0 0.75em;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--color-border);
+  padding: 0.45em 0.7em;
+  text-align: left;
+}
+.markdown-body th {
+  background: var(--color-surface-muted);
+  font-weight: 700;
+}
+.markdown-body hr {
+  margin: 1.2em 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+/* 위지윅 편집기 — 본문은 읽는 화면과 같은 .markdown-body 규칙을 쓰고,
+   편집할 때만 필요한 것(빈 문단 안내·할 일 체크박스 정렬)을 여기서 더한다. */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-fg-subtle);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0.2em;
+}
+.ProseMirror ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45em;
+}
+.ProseMirror ul[data-type='taskList'] li > label {
+  margin-top: 0.15em;
+}
+.ProseMirror ul[data-type='taskList'] input[type='checkbox'] {
+  accent-color: var(--color-brand);
+}
+/* 편집기 안의 카드형 링크 — 읽는 화면과 같은 모양으로 보이게 한다.
+   (읽는 화면은 컴포넌트로 그리지만, 편집기에서는 링크 그대로라 CSS 로 맞춘다.) */
+.ProseMirror a[title^='bookmark::'],
+.ProseMirror a[title^='file::'] {
+  align-items: center;
+  gap: 0.4em;
+  color: var(--color-fg);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ProseMirror a[title^='bookmark::'] {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.5em 0.8em;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+/* 파일은 테두리 없이 한 줄을 다 쓴다 — 읽는 화면의 칩과 같은 모양. */
+.ProseMirror a[title^='file::'] {
+  display: flex;
+  padding: 0.35em 0.5em;
+  border-radius: 6px;
+}
+.ProseMirror a[title^='file::']:hover {
+  background: var(--color-surface-muted);
+}
+.ProseMirror a[title^='bookmark::']::before {
+  content: '🔖';
+}
+.ProseMirror a[title^='file::']::before {
+  content: '📎';
+}
+
+.ProseMirror table {
+  table-layout: fixed;
+  position: relative;
+}
+.ProseMirror th,
+.ProseMirror td {
+  position: relative;
+}
+/* 열 경계선을 끌어 너비를 조절한다 — 잡을 수 있는 곳임을 색으로 알린다. */
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--color-brand);
+  pointer-events: none;
+}
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+/* 선택한 칸 표시 — 어느 행·열에 작업하는지 보이게. */
+.ProseMirror .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+  pointer-events: none;
+}
 .markdown-body a {
   color: var(--color-brand);
   text-decoration: underline;
 }
+/* 카드형 링크(북마크·파일)는 글자가 아니라 상자로 읽힌다 — 밑줄·링크색을 걷는다. */
+.markdown-body a.no-underline,
+.markdown-body a.no-underline * {
+  text-decoration: none;
+}
+/* Tailwind preflight 가 ol·ul 의 list-style 을 없애 두므로 본문에서는 되살린다.
+   (되살리지 않으면 글머리 점도 번호도 없이 들여쓰기만 된 문단처럼 보인다.) */
 .markdown-body ul,
 .markdown-body ol {
   margin: 0 0 0.75em;
   padding-left: 1.4em;
+}
+.markdown-body ul {
+  list-style: disc;
+}
+.markdown-body ul ul {
+  list-style: circle;
+}
+.markdown-body ol {
+  list-style: decimal;
 }
 .markdown-body li {
   margin: 0.2em 0;
@@ -201,7 +340,9 @@ body {
   font-size: 0.85em;
   line-height: 1.5;
 }
-.markdown-body img {
+/* data-embed 는 제외 — 북마크 카드 안의 파비콘·썸네일은 자기 자리에 맞춰 이미 크기가
+   정해져 있는데, 아래 규칙(width/height auto)이 더 세서 원본 크기로 부풀려 카드를 무너뜨린다. */
+.markdown-body img:not([data-embed]) {
   /* 원본 해상도(세로 폰 사진 등)가 본문을 꽉 채워 레이아웃을 망치지 않도록
      너비·높이 모두 상한을 두고 비율은 유지. */
   display: block;
@@ -212,6 +353,19 @@ body {
   border-radius: 8px;
   border: 1px solid var(--color-border);
   margin: 0.4em 0;
+}
+/* 못 그린 그림 — 빈 상자만 남으면 무엇이 있었는지도 알 수 없다.
+   alt 를 읽을 수 있게 자리를 넓히고, 고칠 거리라는 걸 점선으로 알린다.
+   위 규칙과 선택자 무게가 같으므로 반드시 그 뒤에 둔다. */
+.markdown-body img[data-broken] {
+  display: block;
+  min-height: 56px;
+  width: 100%;
+  padding: 1em 1.1em;
+  border-style: dashed;
+  background: color-mix(in srgb, var(--color-surface-muted) 50%, transparent);
+  color: var(--color-fg-subtle);
+  font-size: 13px;
 }
 .markdown-body table {
   margin: 0 0 0.75em;

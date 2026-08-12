@@ -4,11 +4,14 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/shared/api'
 import {
   useAddArtifact,
+  useEditArtifact,
+  useDeleteArtifact,
   useUploadArtifactFile,
   wsWriteError,
 } from '../../../api/projects'
@@ -16,12 +19,23 @@ import type { WorkspaceData, WsDoc } from '../../types'
 import { Chip, DetailRow, SectionHead } from '../components/ws-shared'
 import { card, parseDocMeta } from '../components/ws-style'
 
-export function DocsTab({ d }: { d: WorkspaceData }) {
+export function DocsTab({
+  d,
+  readOnly = false,
+}: {
+  d: WorkspaceData
+  /** 검토자(매니저·강사) 열람 — 추가·수정·삭제·업로드 미노출(2026-08-04). */
+  readOnly?: boolean
+}) {
   const toast = useToast()
   const [activeCategory, setActiveCategory] = useState('전체')
   const docs = d.docs
   const [adding, setAdding] = useState(false)
   const addArtifactM = useAddArtifact(d.id)
+  const editArtifactM = useEditArtifact(d.id)
+  const deleteArtifactM = useDeleteArtifact(d.id)
+  const [editing, setEditing] = useState<WsDoc | null>(null)
+  const [deleting, setDeleting] = useState<WsDoc | null>(null)
   const uploadFileM = useUploadArtifactFile(d.id)
   const [openDoc, setOpenDoc] = useState<WsDoc | null>(null)
   const visibleDocs =
@@ -32,8 +46,8 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
     <div className="flex flex-col gap-4">
       <SectionHead
         title="문서·파일·위키"
-        action="문서 추가"
-        onAction={() => setAdding(true)}
+        action={readOnly ? undefined : '문서 추가'}
+        onAction={readOnly ? undefined : () => setAdding(true)}
       />
       <div className="flex flex-col gap-4 lg:flex-row">
         <section className={cn(card, 'flex flex-col gap-1.5 lg:w-[180px]')}>
@@ -55,18 +69,45 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
         </section>
         <div className="grid flex-1 grid-cols-1 content-start gap-3 sm:grid-cols-2">
           {visibleDocs.map((doc, i) => (
-            <div key={i} className={cn(card, 'flex flex-col gap-2')}>
-              <span className="text-fg text-[14px] font-bold">{doc.title}</span>
-              <span className="text-fg-subtle text-[11px]">{doc.meta}</span>
-              <div className="mt-auto flex items-center justify-between pt-1">
+            <div key={i} className={cn(card, 'flex min-w-0 flex-col gap-2')}>
+              {/* 제목·링크는 자유 입력 — 칸 안에서 접고, 끊을 데가 없으면 어디서든 끊는다. */}
+              <span className="text-fg text-[14px] font-bold [overflow-wrap:anywhere]">
+                {doc.title}
+              </span>
+              <span className="text-fg-subtle text-[11px] [overflow-wrap:anywhere]">
+                {doc.meta}
+              </span>
+              <div className="mt-auto flex items-center justify-between gap-2 pt-1">
                 <Chip badge={doc.status} />
-                <button
-                  type="button"
-                  onClick={() => setOpenDoc(doc)}
-                  className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
-                >
-                  열기
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                  {!readOnly && doc.id && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`${doc.title} 수정`}
+                        onClick={() => setEditing(doc)}
+                        className="text-fg-subtle hover:text-fg hover:bg-surface-muted rounded px-2 py-1 text-[12px] font-semibold"
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`${doc.title} 삭제`}
+                        onClick={() => setDeleting(doc)}
+                        className="text-danger hover:bg-danger-bg rounded px-2 py-1 text-[12px] font-semibold"
+                      >
+                        삭제
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setOpenDoc(doc)}
+                    className="border-border text-fg-muted rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
+                  >
+                    열기
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -75,6 +116,56 @@ export function DocsTab({ d }: { d: WorkspaceData }) {
       {openDoc && (
         <DocDetailModal doc={openDoc} onClose={() => setOpenDoc(null)} />
       )}
+      {editing && (
+        <AddDocModal
+          categories={d.docCategories.filter((category) => category !== '전체')}
+          editing={editing}
+          onClose={() => setEditing(null)}
+          onAdd={(doc, artifactType, url) => {
+            editArtifactM.mutate(
+              {
+                artifactId: editing.id!,
+                artifactType,
+                title: doc.title,
+                url: url || undefined,
+              },
+              {
+                onSuccess: () => {
+                  toast.success('문서를 수정했습니다')
+                  setEditing(null)
+                },
+                onError: (e) =>
+                  toast.danger(wsWriteError(e, '문서 수정에 실패했어요.')),
+              },
+            )
+          }}
+        />
+      )}
+      <ConfirmDialog
+        open={!!deleting}
+        title="문서 삭제"
+        confirmLabel="삭제"
+        tone="danger"
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting?.id) return
+          deleteArtifactM.mutate(
+            { artifactId: deleting.id },
+            {
+              onSuccess: () => {
+                toast.success('문서를 삭제했습니다')
+                setDeleting(null)
+              },
+              onError: (e) =>
+                toast.danger(wsWriteError(e, '문서 삭제에 실패했어요.')),
+            },
+          )
+        }}
+      >
+        <p className="text-fg-muted text-[13px]">
+          '{deleting?.title ?? ''}' 문서를 삭제할까요? 되돌릴 수 없어요.
+        </p>
+      </ConfirmDialog>
       {adding && (
         <AddDocModal
           categories={d.docCategories.filter((category) => category !== '전체')}
@@ -122,10 +213,13 @@ const CATEGORY_TO_TYPE: Record<string, string> = {
 }
 function AddDocModal({
   categories,
+  editing,
   onClose,
   onAdd,
 }: {
   categories: string[]
+  /** 주면 수정 모드 — 기존 값으로 채워 시작한다. 파일 교체는 다시 올리는 쪽이라 다루지 않는다. */
+  editing?: WsDoc
   onClose: () => void
   onAdd: (
     doc: WsDoc,
@@ -134,9 +228,11 @@ function AddDocModal({
     file: File | null,
   ) => void
 }) {
-  const [title, setTitle] = useState('')
-  const [category, setCategory] = useState(categories[0] ?? '위키')
-  const [url, setUrl] = useState('')
+  const [title, setTitle] = useState(editing?.title ?? '')
+  const [category, setCategory] = useState(
+    editing?.category ?? categories[0] ?? '위키',
+  )
+  const [url, setUrl] = useState(editing?.url ?? '')
   const [file, setFile] = useState<File | null>(null)
   const field = inputClass()
   const submit = () => {
@@ -158,7 +254,7 @@ function AddDocModal({
     <Modal
       open
       onClose={onClose}
-      title="문서 추가"
+      title={editing ? '문서 수정' : '문서 추가'}
       footer={
         <>
           <button
@@ -174,7 +270,7 @@ function AddDocModal({
             disabled={!title.trim() && !file}
             className={buttonClass({ size: 'sm' })}
           >
-            추가
+            {editing ? '저장' : '추가'}
           </button>
         </>
       }

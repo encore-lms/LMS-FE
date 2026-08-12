@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import type { CourseWeek } from '../../types'
 import { WeekRow } from './WeekRow'
 
 // 주차별 학습 카드(좌측) — 제목/부제 + '전체 주차 보기' + 주차 행 목록.
-// 전체 주차는 '전체 주차 보기'로 보고, 카드에는 현재 주차 n 기준 n-2 ~ n+2(최대 5주)만 노출한다.
+// 카드에는 현재 주차 n 기준 n-2 ~ n+2(최대 5주)만 노출하고,
+// '전체 주차 보기'는 카드 안에서 전체 주차를 펼친다(수강생·강사·운영 공통).
 export function WeekLearningCard({
   title,
   subtitle,
@@ -15,9 +16,12 @@ export function WeekLearningCard({
   weeks: CourseWeek[]
   currentWeek: number
 }) {
-  const visibleWeeks = weeks.filter(
-    (w) => w.weekNo >= currentWeek - 2 && w.weekNo <= currentWeek + 2,
-  )
+  const [showAll, setShowAll] = useState(false)
+  const visibleWeeks = showAll
+    ? weeks
+    : weeks.filter(
+        (w) => w.weekNo >= currentWeek - 2 && w.weekNo <= currentWeek + 2,
+      )
   return (
     <section className="bg-surface flex flex-1 flex-col gap-3.5 rounded-2xl p-6">
       <div className="flex items-center justify-between gap-2">
@@ -25,12 +29,13 @@ export function WeekLearningCard({
           <h2 className="text-fg text-[15px] font-bold">{title}</h2>
           <p className="text-fg-muted text-[11px]">{subtitle}</p>
         </div>
-        <Link
-          to="/student/course/materials"
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
           className="text-brand shrink-0 text-[12px] font-semibold"
         >
-          전체 주차 보기 →
-        </Link>
+          {showAll ? '현재 주차만 보기 ←' : '전체 주차 보기 →'}
+        </button>
       </div>
       {visibleWeeks.map((w) => (
         <WeekRow key={w.weekNo} week={w} />

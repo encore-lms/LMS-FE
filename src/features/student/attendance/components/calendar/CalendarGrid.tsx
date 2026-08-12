@@ -10,9 +10,17 @@ interface CalendarGridProps {
   month: number // 1~12
   days: HrdAttendanceDay[]
   today?: string // YYYY-MM-DD — 당일 셀 강조
+  /** 출결 폼을 낸 날짜들 — 사유가 필요한 날에 제출 여부를 표시한다. */
+  formDates?: Set<string>
 }
 
-export function CalendarGrid({ year, month, days, today }: CalendarGridProps) {
+export function CalendarGrid({
+  year,
+  month,
+  days,
+  today,
+  formDates,
+}: CalendarGridProps) {
   const statusByDate = new Map<string, HrdAttendanceStatus | null>(
     days.map((d) => [d.date, d.status]),
   )
@@ -68,6 +76,7 @@ export function CalendarGrid({ year, month, days, today }: CalendarGridProps) {
             inMonth={c.inMonth}
             status={c.status}
             isToday={c.isToday}
+            formSubmitted={c.inMonth && !!formDates?.has(c.key)}
           />
         ))}
       </div>

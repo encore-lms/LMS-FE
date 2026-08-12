@@ -18,6 +18,8 @@ import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/shared/lib/cn'
 import { useMentoringLogDetail } from '../api/logs'
 import type { MentoringLogDetailData } from '../types'
+import { isImageField, splitImageAnswer } from '../types'
+import { LogImage } from './LogImage'
 import { MENTORING_PLACE_TYPE_LABEL } from '../types'
 import { CharCounter, LogStateChip, RequiredChip } from './LogChips'
 import { TemplateFieldList } from './TemplateFieldList'
@@ -33,14 +35,23 @@ const META_LABEL = 'text-fg-subtle text-[10px] font-medium tracking-[0.6px]'
 // 수정 버튼은 초안(이어 작성)·수정 요청(일지 수정 — 재제출)에만 노출:
 // 제출 즉시 자동 유효 + 제출 후 임의 수정·삭제 불가 정책(05-31 확정)이라 Figma 의
 // '유효 일지 24h 수정 가능' 표기는 채택하지 않는다(결정 기록).
-export default function LogDetailModal() {
-  const { logId = '' } = useParams()
+export default function LogDetailModal({
+  logId: fixedLogId,
+  onClose,
+}: {
+  /** 팀 상세 '일지' 탭처럼 라우트 없이 그 자리에서 열 때 — 주소 대신 값으로 받는다. */
+  logId?: string
+  onClose?: () => void
+} = {}) {
+  const { logId: paramLogId = '' } = useParams()
+  const logId = fixedLogId ?? paramLogId
   const navigate = useNavigate()
   const { data, isPending, isError } = useMentoringLogDetail(logId)
-  const close = useCallback(
-    () => navigate('/mentor/mentoring-logs'),
-    [navigate],
-  )
+  const close = useCallback(() => {
+    // 팀 안에서 열었으면 팀 안에서 닫는다 — 목록 페이지로 튕겨 나가지 않는다.
+    if (onClose) onClose()
+    else navigate('/mentor/teams')
+  }, [navigate, onClose])
   const [showTemplate, setShowTemplate] = useState(false)
 
   if (!data) {
@@ -430,6 +441,39 @@ function AnswerContent({
   value: string
   photos: MentoringLogDetailData['photos']
 }) {
+  // 이미지 항목 — 값이 곧 업로드한 이미지 id 목록이다.
+  // 첨부를 못 붙이던 시절 이 자리에 적어 둔 텍스트가 남아 있어, 갈라서 함께 보여준다.
+  if (isImageField(field.type)) {
+    const { ids, text } = splitImageAnswer(value)
+    return (
+      <div className="flex flex-col gap-2">
+        {ids.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {ids.map((imageId) => (
+              <div
+                key={imageId}
+                className="border-border h-24 w-24 overflow-hidden rounded-lg border"
+              >
+                <LogImage
+                  imageId={imageId}
+                  alt={`${field.name} 첨부`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        {text && (
+          <p className="bg-surface-muted text-fg rounded-[10px] px-4 py-3 text-[13px] leading-5 font-medium">
+            {text}
+          </p>
+        )}
+        {ids.length === 0 && !text && (
+          <span className="text-fg-subtle text-[11px]">첨부된 이미지 없음</span>
+        )}
+      </div>
+    )
+  }
   if (field.inputKind === 'files') {
     // 업로드 계약 미확정(DB 스키마 갭) — 첨부 빈 상태 고정 표시(원문).
     return (

@@ -28,7 +28,7 @@ import {
   useSetTemplateStatus,
   useUpdateTemplateFields,
 } from './api'
-import { FIELD_TYPE_META } from './statusMeta'
+import { fieldTypeMeta } from './statusMeta'
 import { newFieldId } from './fieldDiff'
 import { FieldFormModal, type FieldFormValues } from './FieldFormModal'
 import { TemplateFormModal } from './TemplateFormModal'
@@ -43,10 +43,15 @@ const TEMPLATE_NOTICE =
 // 멘토링 일지 템플릿 (/admin/mentoring/log-templates) — 운영(MANAGER/ADMIN).
 // 항목명·설명·필수·순서·추가·비활성화 관리(§31). 변경은 기존 팀 자동 반영 없음 —
 // 신규 배정 팀에만 기본 적용, 기존 일지·초안은 스냅샷 보존. (Figma 2746:7909)
-export default function LogTemplatesPage() {
+export default function LogTemplatesPage({
+  embedded = false,
+}: {
+  embedded?: boolean
+} = {}) {
   usePageHeader(
     '멘토링 일지 템플릿',
     '짧은/긴 텍스트 항목 · 신규 배정 팀에만 기본 적용 · 기존 팀은 팀별 일지 항목 설정에서 직접 수정',
+    !embedded,
   )
   const toast = useToast()
   const { data, isPending, isError, refetch } = useLogTemplates()
@@ -220,7 +225,7 @@ export default function LogTemplatesPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className={embedded ? '' : 'p-8'}>
       {/* 돌아가기 — 멘토 배정 관리로 */}
       <Link
         to="/admin/mentors/assignments"
@@ -526,8 +531,8 @@ export default function LogTemplatesPage() {
                                     tone={field.required ? 'danger' : 'neutral'}
                                   />
                                   <StatusBadge
-                                    label={FIELD_TYPE_META[field.type].label}
-                                    tone={FIELD_TYPE_META[field.type].tone}
+                                    label={fieldTypeMeta(field.type).label}
+                                    tone={fieldTypeMeta(field.type).tone}
                                   />
                                 </p>
                                 {field.helpText && (

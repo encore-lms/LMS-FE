@@ -4,72 +4,43 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import BulkUploadPage from './BulkUploadPage'
-import { usePlayBulkPreview } from './api'
-import type { BulkUploadData } from './types'
+import { useBulkCreatePassages } from './api'
+import { usePlayTypingTexts } from '../api'
 
 vi.mock('./api')
+vi.mock('../api')
 // 샘플 다운로드 helper는 실제 anchor click(jsdom 미지원) → 모킹해 토스트만 검증.
 vi.mock('../sampleCsv')
 
-// 타자 일괄 업로드 — KPI·필드 표·검증 항목·처리 기준 렌더 + 액션 토스트.
+// 타자 일괄 업로드 — CSV 파일 파싱·검증 미리보기·정상 행 일괄 등록.
 
-const overview: BulkUploadData = {
-  file: {
-    fileName: 'typing_texts_2026-05.csv',
-    detail: 'UTF-8 · comma · header 포함',
-  },
-  summary: {
-    uploadFiles: 2,
-    uploadFilesHint: 'CSV 1 · XLSX 1',
-    normalRows: 238,
-    normalHint: '등록 가능',
-    errorRows: 7,
-    errorHint: '필수 열 누락',
-    dupCandidates: 13,
-    dupHint: '기존 제목',
-    estimated: 225,
-    estimatedHint: '활성 등록',
-  },
-  fields: [
-    {
-      id: 'language',
-      field: 'language',
-      sample: 'ko',
-      validation: 'normal',
-      action: 'pin',
-    },
-    {
-      id: 'sortOrder',
-      field: 'sortOrder',
-      sample: '12',
-      validation: 'dup_candidate',
-      action: 'edit',
-    },
-  ],
-  validations: [
-    {
-      id: 'required',
-      item: '필수 열',
-      normal: 238,
-      error: 0,
-      handling: 'pass',
-    },
-    {
-      id: 'level',
-      item: '난이도 값',
-      normal: 236,
-      error: 2,
-      handling: 'map_needed',
-    },
-  ],
-}
+const CSV =
+  'language,level,title,content,sortOrder\n' +
+  'Python,쉬움,정상 제목,정상 본문,10\n' +
+  'Java,보통,,본문만 있음,20\n'
+
+const bulkMutateSpy = vi.fn(
+  (
+    items: unknown[],
+    opts?: { onSuccess?: (r: { created: number }) => void },
+  ) => opts?.onSuccess?.({ created: (items as unknown[]).length }),
+)
 
 function renderPage() {
-  vi.mocked(usePlayBulkPreview).mockReturnValue({
-    data: overview,
+  vi.mocked(usePlayTypingTexts).mockReturnValue({
+    data: {
+      summary: { active: 0, inactive: 0, error: 0, disabledCourses: 0 },
+      passages: [],
+      uploadValidation: [],
+      uploadErrorRows: 0,
+    },
     isPending: false,
     isError: false,
-  } as unknown as ReturnType<typeof usePlayBulkPreview>)
+  } as unknown as ReturnType<typeof usePlayTypingTexts>)
+  vi.mocked(useBulkCreatePassages).mockReturnValue({
+    mutate: bulkMutateSpy,
+    isPending: false,
+  } as unknown as ReturnType<typeof useBulkCreatePassages>)
   return render(
     <ToastProvider>
       <MemoryRouter>
@@ -79,43 +50,66 @@ function renderPage() {
   )
 }
 
+async function uploadCsv(text: string) {
+  const user = userEvent.setup()
+  const file = new File([text], 'passages.csv', { type: 'text/csv' })
+  await user.upload(screen.getByLabelText('CSV 파일 선택'), file)
+  return user
+}
+
 describe('BulkUploadPage (타자 일괄 업로드)', () => {
-  it('KPI·파일·필드 표·검증 항목·처리 기준을 렌더한다', () => {
+  it('파일 선택 전 — 등록 버튼 비활성 + 대기 상태를 렌더한다', () => {
     renderPage()
-    // '238'은 KPI(정상 행)·검증 표(필수 열) 양쪽 등장 → KPI 힌트로 조회
-    expect(screen.getByText('등록 가능')).toBeInTheDocument()
-    expect(screen.getByText('typing_texts_2026-05.csv')).toBeInTheDocument()
-    expect(screen.getByText('sortOrder')).toBeInTheDocument()
-    // '중복 후보'는 KPI 라벨·필드 배지 양쪽 등장
-    expect(screen.getAllByText('중복 후보').length).toBeGreaterThan(0)
-    expect(screen.getByText('매핑 필요')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /필수 열은 language, level, title, content, sortOrder입니다/,
-      ),
+      screen.getByRole('button', { name: '정상 행 0건 등록' }),
+    ).toBeDisabled()
+    expect(screen.getByText('선택된 파일 없음')).toBeInTheDocument()
+  })
+
+  it('CSV 업로드 — 정상·오류 행을 검증해 요약과 오류 사유를 보여준다', async () => {
+    renderPage()
+    await uploadCsv(CSV)
+    // 토스트와 결과 배너 양쪽에 표시된다.
+    expect(await screen.findAllByText(/정상 1행 · 오류 1행/)).not.toHaveLength(
+      0,
+    )
+    // 오류 행 상세 — 행 번호와 사유
+    expect(screen.getByText(/3행/)).toBeInTheDocument()
+    expect(screen.getByText(/title 필수/)).toBeInTheDocument()
+    expect(screen.getByText(/language는 Python·한글·영문/)).toBeInTheDocument()
+  })
+
+  it('정상 행 등록 — 정상 행만 일괄 등록을 호출한다', async () => {
+    renderPage()
+    const user = await uploadCsv(CSV)
+    // 파일 읽기(FileReader)가 비동기라 파싱 반영을 기다린다.
+    await user.click(
+      await screen.findByRole('button', { name: '정상 행 1건 등록' }),
+    )
+    expect(bulkMutateSpy).toHaveBeenCalledWith(
+      [
+        {
+          title: '정상 제목',
+          content: '정상 본문',
+          language: 'Python',
+          level: '쉬움',
+          order: 10,
+          active: true,
+        },
+      ],
+      expect.anything(),
+    )
+    expect(
+      await screen.findByText('제시문 1건을 등록했습니다.'),
     ).toBeInTheDocument()
   })
 
-  it('검증 실행 — 결과 배너·성공 토스트 노출 후 버튼이 재검증으로 전환', async () => {
+  it('필수 열 누락 파일 — 파일 수준 오류를 보여주고 등록을 막는다', async () => {
     renderPage()
-    const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: '검증 실행' }))
+    await uploadCsv('title,content\nA,B\n')
+    expect(await screen.findAllByText(/필수 열이 없어요/)).not.toHaveLength(0)
     expect(
-      await screen.findByText('검증 완료 — 정상 238행 · 오류 7행'),
-    ).toBeInTheDocument()
-    // 결과 배너(중복 후보·예상 반영 카운트)
-    expect(
-      screen.getByText(/중복 후보 13건 · 예상 반영 225행/),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '재검증' })).toBeInTheDocument()
-  })
-
-  it('샘플 다운로드 — 성공 토스트를 띄운다', async () => {
-    renderPage()
-    const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: '샘플 다운로드' }))
-    expect(
-      await screen.findByText('샘플 CSV 양식을 내려받았습니다.'),
-    ).toBeInTheDocument()
+      screen.getByRole('button', { name: '정상 행 0건 등록' }),
+    ).toBeDisabled()
   })
 })

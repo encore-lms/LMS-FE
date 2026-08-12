@@ -14,13 +14,13 @@ import {
   STAT_TEAM_STATUS_LABEL,
   evaluationCellMeta,
 } from './statusMeta'
-import { MentoringTabs } from './MentoringTabs'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import type {
   MentorTeamStatRow,
   StatEvaluationState,
   StatRecommendationState,
 } from './types'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const EVAL_FILTER_LABEL: Record<StatEvaluationState, string> = {
   submitted: '평가 완료',
@@ -38,10 +38,21 @@ const RECOMMEND_FILTER_LABEL: Record<StatRecommendationState, string> = {
 // 평가·추천 원문 수정, 변경 요청, 직접 보정 액션 미제공(403 MENTORING_STATISTICS_READ_ONLY)
 // — mutation 버튼·훅 자체가 없다. 데이터는 A1 배정·일지 mock 상태에서 파생(즉시 반영).
 // (Figma 3206:3024 — 본문 정식 스펙은 오버레이 패널 3206:3440, 평판 관리 잔재 본문 제외)
-export default function StatisticsPage() {
+// embedded=true 면 기수 허브의 '멘토링' 탭에 임베드(자체 헤더·sub-nav·바깥 패딩 생략).
+export default function StatisticsPage({
+  embedded = false,
+  scopeCourseName,
+  scopeCohortLabel,
+}: {
+  embedded?: boolean
+  /** 임베드 시 이 과정·기수 행만. 통계 응답엔 cohortId 가 없어 표시 라벨로 맞춘다. */
+  scopeCourseName?: string
+  scopeCohortLabel?: string
+} = {}) {
   usePageHeader(
     '멘토 통계',
     '멘토/팀별 N시간 · 일지 · 평가·추천 · 증명서 반영 상태 조회',
+    !embedded,
   )
   const { data, isPending, isError, refetch } = useMentoringStatistics()
   const [course, setCourse] = useSearchParamState('course', 'all')
@@ -54,7 +65,19 @@ export default function StatisticsPage() {
   )
   const [q, setQ] = useSearchParamState('q')
 
-  const rows = useMemo(() => data?.rows ?? [], [data])
+  const allRows = useMemo(() => data?.rows ?? [], [data])
+  // 허브 탭은 그 기수만 — 배정·일지가 한 기수인데 통계만 전체면 같은 화면에서 수가 어긋난다.
+  const rows = useMemo(
+    () =>
+      scopeCourseName && scopeCohortLabel
+        ? allRows.filter(
+            (r) =>
+              r.courseName === scopeCourseName &&
+              r.cohortLabel === scopeCohortLabel,
+          )
+        : allRows,
+    [allRows, scopeCourseName, scopeCohortLabel],
+  )
   const courses = useMemo(
     () => [...new Set(rows.map((r) => r.courseName))],
     [rows],
@@ -163,8 +186,7 @@ export default function StatisticsPage() {
   ]
 
   return (
-    <div className="p-8">
-      <MentoringTabs />
+    <div className={embedded ? '' : 'p-8'}>
       {/* 접근 경계 + 조회 전용 안내 칩 */}
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <span className="bg-info-bg text-info inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold">
@@ -190,16 +212,19 @@ export default function StatisticsPage() {
             {/* 필터 — 과정/기수 · 멘토 · 팀 상태 · 평가 상태 · 추천 상태 · 팀/멘토 검색 */}
             <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5">
               <div className="flex flex-wrap items-center gap-2">
-                <Select
-                  value={course}
-                  onChange={(v) => setCourse(v)}
-                  aria-label="과정/기수 필터"
-                  options={[
-                    { value: 'all', label: '과정 전체' },
-                    ...courses.map((c) => ({ value: c, label: c })),
-                  ]}
-                  className="h-9"
-                />
+                {/* 허브 탭은 기수가 이미 정해져 들어온다 — 같은 선택을 또 시키지 않는다. */}
+                {!embedded && (
+                  <Select
+                    value={course}
+                    onChange={(v) => setCourse(v)}
+                    aria-label="과정/기수 필터"
+                    options={[
+                      { value: 'all', label: '과정 전체' },
+                      ...courses.map((c) => ({ value: c, label: c })),
+                    ]}
+                    className="h-9"
+                  />
+                )}
                 <Select
                   value={mentor}
                   onChange={(v) => setMentor(v)}
@@ -259,12 +284,12 @@ export default function StatisticsPage() {
                   className="h-9"
                 />
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="팀/멘토 검색"
-                aria-label="팀/멘토 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-52 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="팀/멘토 검색"
+                className="w-52"
               />
             </div>
 

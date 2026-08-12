@@ -10,11 +10,22 @@ import { QnaQuestionCard } from './components/QnaQuestionCard'
 import type { QnaQuestion } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { TONE_SOLID } from '@/shared/lib/tone'
+import { ListToolbar } from '@/components/ui/ListToolbar'
+import { CourseTabs } from '../course/CourseTabs'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 
 const PAGE_SIZE = 4
 
 // 수강생 QnA 게시판 목록 (/student/qna) — 트러블슈팅 목록 패턴 차용(검색·필터·페이지네이션).
-export default function QnaListPage() {
+// embedded=true 면 기수 허브의 'QnA' 탭에 임베드(자체 헤더·바깥 패딩 생략).
+export default function QnaListPage({
+  embedded = false,
+  backTo,
+}: {
+  embedded?: boolean
+  /** 임베드 시 상세에서 돌아올 곳. 없으면 상세가 자기 마운트 위치의 목록으로 돌아간다. */
+  backTo?: string
+} = {}) {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch } = useQnaList()
   const [active, setActive] = useState('all')
@@ -27,14 +38,24 @@ export default function QnaListPage() {
   // 질문 작성은 수강생 전용이라 나머지 역할에선 숨긴다(BE도 작성 엔드포인트를 열지 않는다).
   const base = useQnaBase()
   const canAsk = base === '/student/qna'
+  // 수강생 마운트는 허브 공통 헤더(과정명/기간, 3역할 통일 2026-08-05),
+  // 스태프 단독 라우트(/admin·/instructor/qna)는 기존 화면 제목 유지. 훅 규칙상 둘 다 호출하고 enabled 로 가른다.
+  useCourseHubHeader(!embedded && canAsk)
   usePageHeader(
     'QnA 게시판',
     base === '/instructor/qna'
       ? '담당 기수 수강생이 올린 질문을 확인하고 답변해 주세요.'
       : '강의·과제·환경설정·진로 궁금증을 동료·멘토·강사와 함께 풀어요.',
+    !embedded && !canAsk,
   )
 
-  const open = (q: QnaQuestion) => navigate(`${base}/${q.id}`)
+  // 상세는 허브 밖 라우트라, 허브에서 열었으면 돌아올 곳을 들려 보낸다.
+  const open = (q: QnaQuestion) =>
+    navigate(
+      backTo
+        ? `${base}/${q.id}?from=${encodeURIComponent(backTo)}`
+        : `${base}/${q.id}`,
+    )
 
   const q = query.trim().toLowerCase()
   const visible = (data?.questions ?? []).filter((item) => {
@@ -62,46 +83,47 @@ export default function QnaListPage() {
       skeleton={<SkeletonListPage columns={4} className="" />}
       errorTitle="불러오지 못했어요"
       errorDescription="잠시 후 다시 시도해 주세요."
-      className="p-8"
+      className={embedded ? '' : 'p-8'}
     >
       {data && (
-        <div className="flex flex-col gap-5 p-8">
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>
-              <span className="text-fg-subtle text-[12px]">
-                {data.questions.length}건
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative hidden sm:block">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3-3" strokeLinecap="round" />
-                </svg>
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="제목·내용·태그 검색"
-                  className="border-border bg-surface text-fg placeholder:text-fg-subtle focus:border-brand w-[220px] rounded-lg border py-2 pr-3 pl-8 text-[12px] focus:outline-none"
-                />
-              </div>
-              {canAsk && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/student/qna/new')}
-                  className={buttonClass({ size: 'md' })}
-                >
-                  + 질문하기
-                </button>
-              )}
-            </div>
+        <div
+          className={
+            embedded ? 'flex flex-col gap-5' : 'flex flex-col gap-5 p-8'
+          }
+        >
+          {/* 교육과정 허브 탭바 — 수강생 단독 화면에서만(허브 임베드는 바깥 탭이 담당). */}
+          {!embedded && <CourseTabs />}
+          {/* 탭 공통 툴바(ListToolbar) — 좌: 제목·카운트 / 우: [검색][질문하기](2026-08-07 통일). */}
+          <div className="pt-1">
+            <ListToolbar
+              left={
+                <>
+                  <h2 className="text-fg text-[16px] font-bold">질문 목록</h2>
+                  <span className="text-fg-subtle text-[12px]">
+                    {visible.length}건
+                    {visible.length !== data.questions.length &&
+                      ` (전체 ${data.questions.length})`}
+                  </span>
+                </>
+              }
+              search={{
+                value: query,
+                onChange: setQuery,
+                placeholder: '제목·내용·태그 검색',
+                ariaLabel: '질문 검색',
+              }}
+              actions={
+                canAsk && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/student/qna/new')}
+                    className={buttonClass({ size: 'md' })}
+                  >
+                    + 질문하기
+                  </button>
+                )
+              }
+            />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">

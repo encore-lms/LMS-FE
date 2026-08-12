@@ -16,6 +16,8 @@ export interface LogSubmittedState {
   submittedAtLabel: string
   resubmit: boolean
   rows: { label: string; value: string }[]
+  /** 어디서 왔는지 — 팀 상세에서 왔으면 그 팀으로 돌려보낸다(기본은 일지 목록). */
+  backTo?: string
 }
 
 // 멘토링 일지 제출 완료 (/mentor/mentoring-logs/submitted) — Figma 2582:6348.
@@ -31,7 +33,7 @@ export default function LogSubmittedPage() {
   const toastShownRef = useRef(false)
   useEffect(() => {
     if (!state) {
-      navigate('/mentor/mentoring-logs', { replace: true })
+      navigate('/mentor/teams', { replace: true })
       return
     }
     if (toastShownRef.current) return
@@ -40,6 +42,10 @@ export default function LogSubmittedPage() {
   }, [state, navigate, toast])
 
   if (!state) return null
+
+  // 팀 안에서 쓰기 시작했으면 팀으로 돌아간다 — 사이드바에서 사라진 목록으로 내보내지 않는다.
+  const backTo = state.backTo ?? '/mentor/teams'
+  const backLabel = state.backTo ? '팀으로 돌아가기' : '배정 팀'
 
   return (
     <div className="flex flex-col gap-5 p-8">
@@ -55,7 +61,7 @@ export default function LogSubmittedPage() {
         rows={state.rows}
       />
       <NextStepBar
-        secondary={{ label: '일지 목록', to: '/mentor/mentoring-logs' }}
+        secondary={{ label: backLabel, to: backTo }}
         primary={{ label: '새 일지 작성', to: '/mentor/mentoring-logs/new' }}
       />
       <InfoNotice>

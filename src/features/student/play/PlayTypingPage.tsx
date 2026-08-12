@@ -7,7 +7,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { usePageHeader } from '@/shared/store'
-import { usePlayTyping } from '../api/play'
+import { usePlayTyping, useSubmitTypingResult } from '../api/play'
 import { CharCompare } from './CharCompare'
 import { PlayResultModal } from './PlayResultModal'
 import { StatStrip } from './StatStrip'
@@ -23,6 +23,7 @@ export default function PlayTypingPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isPending, isError, refetch } = usePlayTyping()
+  const submitResult = useSubmitTypingResult()
   usePageHeader('타자 게임', '제시문을 정확하고 빠르게 입력해 점수를 겨룹니다.')
 
   // 현재 제시문 + 다른 제시문을 하나의 목록으로 다룬다.
@@ -88,7 +89,8 @@ export default function PlayTypingPage() {
     }
   }, [input, active, status, toast])
 
-  // 종료되면 결과를 1회 계산해 결과 모달을 띄운다(서버 계산 결과 상태). 페이지 이동 대신 모달.
+  // 종료되면 결과를 1회 계산해 서버에 제출하고 결과 모달을 띄운다.
+  // best 판정은 서버 응답이 정본 — 제출 실패 시에만 클라 판정으로 폴백(기록은 남지 않음).
   useEffect(() => {
     if (status !== 'finished' || submittedRef.current || !data || !active)
       return
@@ -112,7 +114,28 @@ export default function PlayTypingPage() {
       detail: `${payload.cpm}타 · ${payload.accuracy.toFixed(1)}% · ${payload.score.toLocaleString()}`,
       score: payload.score,
     })
-    setResult(payload)
+    submitResult.mutate(
+      {
+        promptName: payload.promptName,
+        durationSec: payload.durationSec,
+        elapsedSec: payload.elapsedSec,
+        cpm: payload.cpm,
+        wpm: payload.wpm,
+        accuracy: payload.accuracy,
+        typos: payload.typos,
+        backspaces: payload.backspaces,
+        comboBonus: payload.comboBonus,
+        score: payload.score,
+      },
+      {
+        onSuccess: (receipt) => setResult({ ...payload, best: receipt.best }),
+        onError: () => {
+          toast.danger('기록 저장에 실패했어요 — 이번 결과는 랭킹에 반영되지 않아요.')
+          setResult(payload)
+        },
+      },
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, data, active, elapsedSec, m])
 
   const others = prompts

@@ -18,10 +18,11 @@ import type { OnlineCourse } from '../course/online/types'
 // 수강생 "나의 과정" 훅 — 엔드포인트가 /student/* 라 학생 feature 소유.
 // baseURL이 /api 이므로 경로 앞에 /api 를 붙이지 않는다(언래핑은 .then(r => r.data)).
 
-/** 강의 홈 — /student/course */
-export function useCourseHome() {
+/** 강의 홈 — /student/course. enabled=false 면 미조회(스태프 마운트를 겸하는 화면 가드) */
+export function useCourseHome(enabled = true) {
   return useQuery({
     queryKey: courseKeys.home(),
+    enabled,
     queryFn: () =>
       apiClient.get<CourseHome>('/student/course').then((r) => r.data),
   })
@@ -33,6 +34,27 @@ export function useOnlineCourse() {
     queryKey: courseKeys.online(),
     queryFn: () =>
       apiClient.get<OnlineCourse>('/student/course/online').then((r) => r.data),
+  })
+}
+
+/**
+ * 자료 즐겨찾기 표시/해제.
+ *
+ * <p>예전에는 화면 상태로만 별을 켜 새로고침하면 사라졌다. 서버에 남기고 목록 캐시를 무효화해
+ * 다시 들어와도 표시가 유지된다.</p>
+ */
+export function useToggleMaterialFavorite() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (materialId: string) =>
+      apiClient
+        .post<{
+          favorited: boolean
+        }>(`/student/course/materials/${materialId}/favorite`, {})
+        .then((r) => r.data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: courseKeys.materials() })
+    },
   })
 }
 

@@ -1,19 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
+import type { CohortProject } from '@/features/admin/education/types'
+import type { WorkspaceData } from '@/features/student/projects/types'
 import type {
   CohortMaterialItem,
   StudentAttendanceData,
-} from '@/shared/types'
-import type {
   ResumeDetail,
   ResumeRow,
-} from '@/features/admin/education/types'
+} from '@/shared/types'
 
 // 수강생 탭 출석 현황 요약(BE CohortAttendanceSummaryResponse 미러).
 export interface CohortAttendanceSummary {
   cohortLabel: string
   date: string
-  students: { total: number; active: number; dropout: number }
+  students: {
+    total: number
+    active: number
+    dropout: number
+    /** 조기취업 — 취업으로 교육을 마쳤다. 중도탈락과 사유가 달라 따로 센다. */
+    earlyEmployed?: number
+  }
   todayPresent: number | null
   todayTotal: number | null
   todayAbsentees: { studentUuid: string; name: string; detail: string }[]
@@ -88,6 +94,53 @@ export function useInstructorMaterials(cohortId: string | null) {
   })
 }
 
+// 자료실 탭 — 자료 등록(강사 담당 기수, 2026-08-03 개방). 운영 훅과 같은 multipart 계약.
+export function useCreateInstructorMaterial(cohortId: string) {
+  const qc = useQueryClient()
+  return useMutation<
+    CohortMaterialItem,
+    Error,
+    {
+      title: string
+      body?: string
+      materialType: string
+      url?: string
+      file?: File
+    }
+  >({
+    mutationFn: ({ title, body, materialType, url, file }) => {
+      const form = new FormData()
+      form.append('title', title)
+      form.append('materialType', materialType)
+      if (body) form.append('body', body)
+      if (url) form.append('url', url)
+      if (file) form.append('file', file)
+      // multipart 전송은 postForm — Content-Type을 비워 boundary를 자동 설정(운영 훅과 동일).
+      return apiClient
+        .postForm<CohortMaterialItem>(
+          `/instructor/cohorts/${cohortId}/materials`,
+          form,
+        )
+        .then((r) => r.data)
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: keys.materials(cohortId) }),
+  })
+}
+
+// 자료실 탭 — 자료 삭제(강사는 본인 등록분만, BE 가드).
+export function useDeleteInstructorMaterial(cohortId: string) {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (materialId) =>
+      apiClient
+        .delete<void>(`/instructor/cohorts/${cohortId}/materials/${materialId}`)
+        .then(() => undefined),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: keys.materials(cohortId) }),
+  })
+}
+
 // 자료실 탭 — 파일형 자료 다운로드(브라우저 앵커).
 export async function downloadInstructorMaterialFile(
   cohortId: string,
@@ -139,7 +192,11 @@ export function useInstructorResume(
 // 이력서 탭 — 피드백 작성(담당 기수 강사). BE는 requireCohortReviewer로 타 기수를 403 처리.
 export function useAddInstructorResumeFeedback() {
   const qc = useQueryClient()
-  return useMutation<void, Error, { cohortId: string; resumeId: string; body: string }>({
+  return useMutation<
+    void,
+    Error,
+    { cohortId: string; resumeId: string; body: string }
+  >({
     mutationFn: ({ cohortId, resumeId, body }) =>
       apiClient
         .post<void>(
@@ -172,5 +229,35 @@ export function useDeleteInstructorResumeFeedback() {
       qc.invalidateQueries({ queryKey: keys.resume(cohortId, resumeId) })
       qc.invalidateQueries({ queryKey: keys.resumes(cohortId) })
     },
+  })
+}
+
+/**
+ * 강사 기수 프로젝트 목록 미러 — GET /instructor/cohorts/{cohortId}/projects.
+ * 운영 목록(CohortProject)과 한 계약 — ProjectsPane이 양 역할을 한 화면으로 서빙(2026-08-05).
+ */
+export function useInstructorCohortProjects(cohortId?: string | null) {
+  return useQuery({
+    queryKey: ['instructor', 'education', 'projects', cohortId ?? ''],
+    enabled: !!cohortId,
+    queryFn: () =>
+      apiClient
+        .get<CohortProject[]>(`/instructor/cohorts/${cohortId}/projects`)
+        .then((r) => r.data),
+  })
+}
+
+/**
+ * 강사 프로젝트 워크스페이스 상세 미러 — GET /instructor/projects/{id}/workspace.
+ * 담당 기수만(BE requireCohortReviewer, 타 기수 403). 응답은 수강생 워크스페이스와 한 계약.
+ */
+export function useInstructorProjectWorkspace(projectId?: string | null) {
+  return useQuery({
+    queryKey: ['instructor', 'education', 'project-workspace', projectId ?? ''],
+    enabled: !!projectId,
+    queryFn: () =>
+      apiClient
+        .get<WorkspaceData>(`/instructor/projects/${projectId}/workspace`)
+        .then((r) => r.data),
   })
 }

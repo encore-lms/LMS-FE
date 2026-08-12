@@ -1,15 +1,16 @@
-import { Fragment, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Fragment, useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../course/useCourseHubHeader'
 import { useStudentQuizzes } from '../api/quiz'
 import { CourseTabs } from '../course/CourseTabs'
 import type { StudentQuizListItem } from './types'
 import { QuizStatusChips, type QuizStatus } from './list/QuizStatusChips'
 import { AvailableQuizRow } from './list/AvailableQuizRow'
 import { OtherStatusRow } from './list/OtherStatusRow'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const STATUS_LABEL: Record<QuizStatus, string> = {
   available: '응시 가능',
@@ -25,13 +26,28 @@ const STATUS_LABEL: Record<QuizStatus, string> = {
  */
 export default function QuizListPage() {
   const navigate = useNavigate()
+  // 대시보드('마감 임박 퀴즈'·'이번 주 할 일')가 퀴즈 하나를 짚어 보낸다 — 그 퀴즈만 여는
+  // 화면은 없으므로 목록에서 찾아 준다.
+  const { quizId } = useParams()
   const { data, isPending, isError, refetch } = useStudentQuizzes()
-  usePageHeader('퀴즈')
+  useCourseHubHeader()
   const [status, setStatus] = useState<QuizStatus>('available')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
 
   const items = (data as StudentQuizListItem[]) ?? []
+
+  // 짚어 온 퀴즈가 지금 칩에 없으면 안 보인다 — 그 퀴즈가 있는 칩으로 옮기고 그 줄로 데려간다.
+  const focused = quizId ? items.find((it) => it.quiz.id === quizId) : undefined
+  useEffect(() => {
+    if (focused) setStatus(focused.state as QuizStatus)
+  }, [focused])
+  useEffect(() => {
+    if (!quizId) return
+    document
+      .querySelector(`[data-quiz-id="${CSS.escape(quizId)}"]`)
+      ?.scrollIntoView?.({ block: 'center' })
+  }, [quizId, status, items.length])
   const counts: Record<QuizStatus, number> = {
     available: items.filter((q) => q.state === 'available').length,
     scheduled: items.filter((q) => q.state === 'scheduled').length,
@@ -46,6 +62,10 @@ export default function QuizListPage() {
   const available = items.filter((it) => it.state === 'available' && match(it))
   const others = items.filter((it) => it.state !== 'available' && match(it))
   const single = items.filter((it) => it.state === status && match(it))
+
+  // 짚어 온 줄만 옅게 물들인다 — 목록이 길어 어느 줄을 보라는 건지 알기 어렵다.
+  const focusRing = (it: StudentQuizListItem) =>
+    it.quiz.id === quizId ? 'bg-brand/[0.06]' : undefined
 
   const goTake = (id: string) => navigate(`/student/quizzes/${id}/take`)
   const goResult = (id: string) => navigate(`/student/quizzes/${id}/result`)
@@ -71,24 +91,13 @@ export default function QuizListPage() {
             active={status}
             onChange={setStatus}
           />
-          <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-[260px] items-center gap-2 rounded-[10px] border px-3.5">
-            <svg
-              viewBox="0 0 24 24"
-              className="text-fg-subtle size-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3-3" strokeLinecap="round" />
-            </svg>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="퀴즈명 검색"
-              className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none focus-visible:shadow-none"
-            />
-          </div>
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="퀴즈명 검색"
+            ariaLabel="퀴즈 검색"
+            className="h-[38px] w-[260px] rounded-[10px] px-3.5"
+          />
         </div>
 
         {status === 'available' ? (
@@ -117,10 +126,12 @@ export default function QuizListPage() {
                 available.map((it, i) => (
                   <Fragment key={it.quiz.id}>
                     {i > 0 && <div className="bg-divider h-px w-full" />}
-                    <AvailableQuizRow
-                      item={it}
-                      onTake={() => goTake(it.quiz.id)}
-                    />
+                    <div data-quiz-id={it.quiz.id} className={focusRing(it)}>
+                      <AvailableQuizRow
+                        item={it}
+                        onTake={() => goTake(it.quiz.id)}
+                      />
+                    </div>
                   </Fragment>
                 ))
               )}
@@ -145,10 +156,12 @@ export default function QuizListPage() {
                 {others.map((it, i) => (
                   <Fragment key={it.quiz.id}>
                     {i > 0 && <div className="bg-divider h-px w-full" />}
-                    <OtherStatusRow
-                      item={it}
-                      onResult={() => goResult(it.quiz.id)}
-                    />
+                    <div data-quiz-id={it.quiz.id} className={focusRing(it)}>
+                      <OtherStatusRow
+                        item={it}
+                        onResult={() => goResult(it.quiz.id)}
+                      />
+                    </div>
                   </Fragment>
                 ))}
               </section>
@@ -173,10 +186,12 @@ export default function QuizListPage() {
               single.map((it, i) => (
                 <Fragment key={it.quiz.id}>
                   {i > 0 && <div className="bg-divider h-px w-full" />}
-                  <OtherStatusRow
-                    item={it}
-                    onResult={() => goResult(it.quiz.id)}
-                  />
+                  <div data-quiz-id={it.quiz.id} className={focusRing(it)}>
+                    <OtherStatusRow
+                      item={it}
+                      onResult={() => goResult(it.quiz.id)}
+                    />
+                  </div>
                 </Fragment>
               ))
             )}

@@ -132,6 +132,17 @@ export interface DashboardProject {
   to: string
 }
 
+/**
+ * 자르기 전 프로젝트 건수 — 카드에 싣는 목록은 상위 몇 개뿐이다.
+ *
+ * <p>목록만 세면 대시보드가 "3건 진행"이라 말하는데 프로젝트 탭에는 8건이 있는 일이 생긴다.</p>
+ */
+export interface DashboardProjectCounts {
+  total: number
+  ongoing: number
+  certified: number
+}
+
 /** 최근 트러블슈팅 1건 */
 export interface DashboardTroubleshooting {
   id: string
@@ -154,5 +165,7 @@ export interface StudentDashboardSummary {
   notices: DashboardNotice[]
   notifications: DashboardNotification[]
   projects: DashboardProject[]
+  // 예전 응답에는 없다 — 없으면 목록에서 센다.
+  projectCounts?: DashboardProjectCounts | null
   troubleshooting: DashboardTroubleshooting[]
 }

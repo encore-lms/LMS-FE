@@ -1,14 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import {
-  Check,
-  ChevronDown,
-  FileText,
-  FileWarning,
-  Plus,
-  Search,
-} from 'lucide-react'
+import { Check, ChevronDown, FileText, FileWarning, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
@@ -21,6 +14,9 @@ import {
   useCreateMentorAssignmentFromStudents,
 } from './api'
 import type { AdminLogTemplateOption, AdminMentorLoadOption } from './types'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { Select } from '@/components/ui/Select'
+import { useCohortProjects } from '@/features/admin/education/api'
 
 const FIELD_LABEL = 'text-fg-muted text-xs font-bold'
 const INPUT_CLASS = inputClass()
@@ -28,6 +24,8 @@ const INPUT_CLASS = inputClass()
 interface AssignmentCreateModalProps {
   open: boolean
   onClose: () => void
+  /** 프로젝트 목록 조회용 — 없으면 '프로젝트로 채우기'가 비어 보인다. */
+  courseId?: string | null
   /** 상단 셀렉터로 고정된 반/기수 */
   cohortId: string
   cohortLabel: string
@@ -312,6 +310,7 @@ function MentorPicker({
 export function AssignmentCreateModal({
   open,
   onClose,
+  courseId,
   cohortId,
   cohortLabel,
   existingTeamCount,
@@ -319,13 +318,17 @@ export function AssignmentCreateModal({
 }: AssignmentCreateModalProps) {
   const toast = useToast()
   const options = useCohortStudents(cohortId)
+  // 프로젝트로 팀을 통째로 데려오는 길 — 같은 팀이 그대로 멘토링을 받는 경우가 잦다.
+  const projects = useCohortProjects(courseId, cohortId)
   const createFromStudents = useCreateMentorAssignmentFromStudents()
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [mentorId, setMentorId] = useState('')
   const [hours, setHours] = useState('')
+  const [contractEnd, setContractEnd] = useState('')
   const [templateId, setTemplateId] = useState('')
   const [q, setQ] = useState('')
+  const [projectId, setProjectId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   // 기본 템플릿 자동 선택(로드 후 1회).
@@ -347,6 +350,28 @@ export function AssignmentCreateModal({
     return students.filter((s) => s.name.toLowerCase().includes(needle))
   }, [students, q])
 
+  /** 검색창에서 Enter — 첫 결과를 바로 집고 검색어를 비운다(연속 선택). */
+  const pickFirstMatch = () => {
+    const first = filteredStudents.find((st) => !selectedIds.includes(st.userId))
+    if (!first) return
+    setSelectedIds((prev) => [...prev, first.userId])
+    setQ('')
+  }
+
+  /** 프로젝트를 고르면 그 팀원을 한 번에 담는다 — 담은 뒤 개별로 빼거나 더할 수 있다. */
+  const applyProject = (id: string) => {
+    setProjectId(id)
+    if (!id) return
+    const picked = (projects.data ?? []).find((p) => p.id === id)
+    if (!picked) return
+    const inCohort = new Set(students.map((st) => st.userId))
+    const ids = picked.members.map((m) => m.userId).filter((uid) => inCohort.has(uid))
+    setSelectedIds(ids)
+    if (ids.length < picked.members.length) {
+      toast.info('이 기수에 없는 팀원은 제외했어요.')
+    }
+  }
+
   const toggle = (userId: string) =>
     setSelectedIds((prev) =>
       prev.includes(userId)
@@ -358,8 +383,10 @@ export function AssignmentCreateModal({
     setSelectedIds([])
     setMentorId('')
     setHours('')
+    setContractEnd('')
     setTemplateId('')
     setQ('')
+    setProjectId('')
     setError(null)
     onClose()
   }
@@ -387,6 +414,7 @@ export function AssignmentCreateModal({
         mentorId,
         allocatedHours: h,
         logTemplateId: templateId,
+        contractEndDate: contractEnd || null,
       },
       {
         onSuccess: (row) => {
@@ -434,18 +462,37 @@ export function AssignmentCreateModal({
           <span className="text-fg-muted">{autoName}</span>
         </div>
 
+        {/* 프로젝트로 팀 데려오기 — 고르면 팀원이 한 번에 담기고, 아래에서 고칠 수 있다. */}
+        <div className="flex flex-col gap-1.5">
+          <label className={FIELD_LABEL}>프로젝트로 채우기</label>
+          <Select
+            aria-label="프로젝트 선택"
+            value={projectId}
+            onChange={applyProject}
+            options={[
+              { value: '', label: '직접 고르기' },
+              ...(projects.data ?? []).map((p) => ({
+                value: p.id,
+                label: `${p.title} (${p.memberCount}명)`,
+              })),
+            ]}
+            placeholder="프로젝트를 고르면 팀원이 채워져요"
+          />
+        </div>
+
         {/* 수강생 다중 선택 */}
         <div className="flex flex-col gap-1.5">
           <label className={FIELD_LABEL}>
             수강생 선택 * ({selectedIds.length}명 선택됨)
           </label>
           <div className="relative">
-            <Search className="text-fg-subtle pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <input
+            <SearchInput
               value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="이름 검색"
-              className={`${INPUT_CLASS} pl-9`}
+              onChange={setQ}
+              onEnter={pickFirstMatch}
+              placeholder="이름 검색 후 Enter 로 바로 선택"
+              ariaLabel="수강생 이름 검색"
+              className="h-10 w-full"
             />
           </div>
           <div className="border-border max-h-56 overflow-y-auto rounded-lg border">
@@ -514,6 +561,24 @@ export function AssignmentCreateModal({
             value={hours}
             onChange={(e) => setHours(e.target.value)}
           />
+        </div>
+
+        {/* 계약 종료일 — 선택. 지나면 멘토 평가·추천 제출 마감(당일까지 제출 가능). */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="create-contract-end" className={FIELD_LABEL}>
+            계약 종료일 (선택)
+          </label>
+          <input
+            id="create-contract-end"
+            type="date"
+            className={INPUT_CLASS}
+            value={contractEnd}
+            onChange={(e) => setContractEnd(e.target.value)}
+          />
+          <p className="text-fg-subtle text-xs">
+            종료일 당일까지 멘토가 평가·추천을 제출·수정할 수 있어요 · 비워 두면
+            마감 없음
+          </p>
         </div>
 
         {/* 기본 일지 템플릿 — 필수(§31): 템플릿 없이는 배정 불가 */}

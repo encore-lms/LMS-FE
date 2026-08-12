@@ -5,7 +5,6 @@ import {
   filterMenuByFeatures,
   useStudentCourseFeatures,
 } from '@/features/student/api/courseFeatures'
-import { useMentoringAssigned } from '@/features/student/api/mentoring'
 import { MENUS } from './menus'
 
 // 역할 메뉴 + 수강생 과정 기능 토글 반영 후 AppShell에 주입.
@@ -15,19 +14,14 @@ export function AppShellWithMenu() {
   const { role } = useAuth()
   const isStudent = role === 'STUDENT'
   const { data } = useStudentCourseFeatures(isStudent)
-  const mentoringAssigned = useMentoringAssigned(isStudent).data
+  // 멘토링은 사이드바에서 빠지고 교육과정 허브 탭으로 옮겨(2026-08-05) featureKey 가 없다 —
+  // 여기서 mentoring:false 를 주입해도 걸러낼 항목이 없었다. 탭 노출은 CourseTabs 가 판단한다.
   const menus = useMemo(() => {
-    if (!isStudent) return MENUS
-    const mentoringOff = mentoringAssigned === false
-    if (!data && !mentoringOff) return MENUS
-    const features = {
-      ...(data?.features ?? {}),
-      ...(mentoringOff ? { mentoring: false } : {}),
-    }
+    if (!isStudent || !data) return MENUS
     return {
       ...MENUS,
-      STUDENT: filterMenuByFeatures(MENUS.STUDENT, features),
+      STUDENT: filterMenuByFeatures(MENUS.STUDENT, data.features ?? {}),
     }
-  }, [isStudent, data, mentoringAssigned])
+  }, [isStudent, data])
   return <AppShell menus={menus} />
 }

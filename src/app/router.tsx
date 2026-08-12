@@ -12,10 +12,7 @@ import {
 import { instructorRoutes } from '@/features/instructor/routes'
 import { mentorRoutes } from '@/features/mentor/routes'
 import { adminRoutes } from '@/features/admin/routes'
-import {
-  externalRoutes,
-  externalPublicRoutes,
-} from '@/features/external/routes'
+import { externalPublicRoutes } from '@/features/external/routes'
 import { notificationRoutes } from '@/features/notifications/routes'
 import type { Role } from '@/shared/types'
 
@@ -65,7 +62,6 @@ export const router = createBrowserRouter([
               guarded(['MANAGER', 'ADMIN'], adminRoutes),
               // 알림 전체 화면 — 전 역할 공용이라 가드 없이 로그인 사용자 모두에게 연다.
               ...notificationRoutes,
-              ...externalRoutes,
             ],
           },
         ],

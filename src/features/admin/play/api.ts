@@ -15,41 +15,38 @@ export function usePlayTypingTexts() {
   })
 }
 
-// 추가/수정 후 활성·비활성·오류 카운트를 재계산한다(목록 갱신).
-function recount(passages: TypingPassage[], prev: PlayOverview): PlayOverview {
-  const by = (s: TypingPassage['status']) =>
-    passages.filter((p) => p.status === s).length
-  return {
-    ...prev,
-    passages,
-    summary: {
-      ...prev.summary,
-      active: by('active'),
-      inactive: by('inactive'),
-      error: by('error'),
-    },
-  }
+/** 제시문 생성·수정 공용 바디 — BE PassageWriteRequest 계약. */
+export interface PassageWriteBody {
+  title: string
+  content: string
+  language: string
+  level: string
+  order: number
+  active: boolean
 }
 
-// 제시문 추가·수정 훅 — 성공 시 목록 캐시에 추가(신규) 또는 교체(수정) + 카운트 재계산.
-// BE 계약(P0_15 GameContent) 미확정 → 네트워크 없이 클라이언트 낙관 반영으로 시뮬레이션한다.
-// 계약 확정 시 mutationFn 을 apiClient.post/patch('/admin/play/typing-texts', ...) 로 교체한다.
+// 제시문 추가·수정 — 실 API(POST/PATCH). 성공 시 목록을 무효화해 서버 산출(요약 카운트 포함)로 갱신한다.
+// 예전에는 BE 미확정이라 네트워크 없이 캐시 반영만 해 새로고침하면 사라졌다.
 export function useUpsertPassage() {
   const queryClient = useQueryClient()
-  return useMutation<void, Error, TypingPassage>({
-    mutationFn: async () => {},
-    onSuccess: (_result, passage) => {
-      queryClient.setQueryData<PlayOverview>(
-        adminPlayKeys.overview(),
-        (prev) => {
-          if (!prev) return prev
-          const exists = prev.passages.some((p) => p.id === passage.id)
-          const passages = exists
-            ? prev.passages.map((p) => (p.id === passage.id ? passage : p))
-            : [passage, ...prev.passages]
-          return recount(passages, prev)
-        },
-      )
-    },
+  return useMutation<TypingPassage, Error, { id: string | null; body: PassageWriteBody }>({
+    mutationFn: ({ id, body }) =>
+      (id
+        ? apiClient.patch<TypingPassage>(`/admin/play/typing-texts/${id}`, body)
+        : apiClient.post<TypingPassage>('/admin/play/typing-texts', body)
+      ).then((r) => r.data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminPlayKeys.overview() }),
+  })
+}
+
+// 제시문 삭제 — DELETE /{id}(204). 세션·기록과 연결 없는 카탈로그 행이라 하드 삭제.
+export function useDeletePassage() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: (id) =>
+      apiClient.delete(`/admin/play/typing-texts/${id}`).then(() => undefined),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: adminPlayKeys.overview() }),
   })
 }

@@ -16,6 +16,7 @@ import {
 import { EditMemberModal } from './team/EditMemberModal'
 import { InviteMemberModal } from './team/InviteMemberModal'
 import { MemberProfileModal } from './team/MemberProfileModal'
+import { teamGuard } from '../teamGuard'
 
 export function TeamTab({ d }: { d: WorkspaceData }) {
   const toast = useToast()
@@ -32,13 +33,21 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
   const [removing, setRemoving] = useState<number | null>(null)
   // 본인 = 첫 멤버(작성자·PM, PM 위임해도 목록 인덱스 0 유지).
   const SELF_INDEX = 0
+
+  // 팀 구성 변경 가드 — 판정은 히어로 액션(WorkspaceShell)과 공유한다.
+  const { invite: inviteBlocked, remove: removeBlocked } = teamGuard(d)
+
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
         title="팀원 관리"
         action="팀원 초대"
         onAction={() => setInviting(true)}
+        actionBlockedReason={inviteBlocked}
       />
+      {inviteBlocked && (
+        <p className="text-fg-muted text-[12px]">{inviteBlocked}</p>
+      )}
       <section className={cn(card, 'flex flex-col py-2')}>
         {members.map((m, i) => (
           <div
@@ -100,11 +109,15 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
               <button
                 type="button"
                 onClick={() => setRemoving(i)}
-                disabled={m.kind === 'PM'}
+                disabled={
+                  m.kind === 'PM' || !!removeBlocked || m.hasPeerRecord === true
+                }
                 title={
                   m.kind === 'PM'
                     ? 'PM은 삭제할 수 없어요. 다른 팀원에게 PM을 위임한 뒤 삭제하세요.'
-                    : undefined
+                    : m.hasPeerRecord
+                      ? '상호평가 기록이 있는 팀원은 삭제할 수 없어요'
+                      : (removeBlocked ?? undefined)
                 }
                 className="border-border text-danger hover:bg-danger-bg rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
               >
@@ -209,7 +222,9 @@ export function TeamTab({ d }: { d: WorkspaceData }) {
               {
                 onSuccess: () => {
                   setInviting(false)
-                  toast.success(`${label} 님을 초대했습니다`)
+                  toast.success(
+                    `${label} 님에게 초대를 보냈어요 · 수락하면 팀원이 됩니다`,
+                  )
                 },
                 onError: (e) =>
                   toast.danger(wsWriteError(e, '팀원 초대에 실패했어요.')),

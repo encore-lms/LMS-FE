@@ -1,6 +1,5 @@
-// ⚠️ 자동 생성 파일 — 직접 수정 금지.
-// 원본(SSOT): LMS-AI/src/contract.ts
-// 재생성: pnpm sync:ai-contract   (LMS-AI가 형제 폴더에 있거나 LMS_AI_DIR 지정)
+// LMS-AI Python 응답 계약의 FE 소비 타입.
+// 원본(SSOT): LMS-AI/API.md와 src/lms_ai 응답 구현.
 
 // 증명서 AI 엔진 ↔ FE 공유 계약(SSOT). 순수 데이터 타입, 프레임워크·엔진 내부 의존 0.
 //
@@ -46,22 +45,21 @@ export interface StudentDerived {
 
 // ── 수강역량증명서 종합점수·6축 + 상대 위치 ──
 export const CERTIFICATE_AXIS_KEYS = [
-  "기술",
-  "소통",
-  "팀워크",
-  "책임감",
+  "기술·기술기여",
+  "소통·협업·팀워크",
   "문제해결",
+  "책임감",
   "학습지속성",
+  "성취도 평가",
 ] as const;
 export type CertificateAxisKey = (typeof CERTIFICATE_AXIS_KEYS)[number];
 
 /** 종합요약 동료평가 비교에 노출하는 축과 고정 순서. */
 export const CERTIFICATE_360_AXIS_KEYS = [
-  "기술",
-  "팀워크",
-  "책임감",
-  "소통",
+  "기술·기술기여",
+  "소통·협업·팀워크",
   "문제해결",
+  "책임감",
 ] as const satisfies readonly CertificateAxisKey[];
 export type Certificate360AxisKey = (typeof CERTIFICATE_360_AXIS_KEYS)[number];
 
@@ -74,7 +72,7 @@ export type CertificateRelativeScope = "COHORT" | "ALL_STUDENTS";
 
 export interface CertificateRelativePosition {
   status: CertificateRelativeStatus;
-  /** 축은 동일 기수, 종합점수는 전체 산출 가능 수강생을 모집단으로 사용한다. */
+  /** 축과 종합점수 모두 전체 산출 가능 수강생을 모집단으로 사용한다. */
   scope: CertificateRelativeScope;
   /** 레이더 표시용 백분위. 0~100이며 클수록 상대 위치가 높다. */
   percentile: number | null;
@@ -89,6 +87,10 @@ export interface CertificateScoreComparison {
   peerScore: number | null;
   /** 최종 멘토평가를 1~5점에서 0~100점으로 환산한 값. 비교 원천이 없으면 null. */
   mentorScore: number | null;
+  /** 강사 평가자 그룹의 1~5점 평균을 0~100점으로 환산한 값. 비평가축은 생략한다. */
+  instructorScore?: number | null;
+  /** 운영 평가자 그룹의 1~5점 평균을 0~100점으로 환산한 값. 비평가축은 생략한다. */
+  managerScore?: number | null;
 }
 
 export interface CertificateAxisEvidenceItem {
@@ -127,7 +129,9 @@ export type CertificateMetricKey =
   | "assessment"
   | "blog"
   | "certifiedProject"
-  | "certifiedTroubleshooting";
+  | "certifiedTroubleshooting"
+  | "certifiedCertificate"
+  | "evaluatorAverage";
 
 export interface CertificateScoreMetric {
   key: CertificateMetricKey;
@@ -175,7 +179,7 @@ export interface CertificateProjectNavigation {
 }
 
 export interface CertificateScoreResult {
-  policyVersion: "2026.07.21-six-axis-persistence-v4";
+  policyVersion: "2026.08.05-six-axis-four-rater-v2";
   calculatedAt: string;
   student: {
     studentId: string;
@@ -199,8 +203,10 @@ export interface CertificateScoreResult {
 
 // ── 수강역량증명서 데이터 탭 상세(기술·검증 / 문제해결·협업 / 성장·평판) ──
 export type CertificateDetailStatus = "READY" | "PARTIAL" | "NOT_READY";
+export type CertificateAssessmentType = "ACHIEVEMENT" | "CS";
 
 export interface CertificateTechCategory {
+  assessmentType: CertificateAssessmentType;
   label: string;
   score: number;
   attemptCount: number;
@@ -211,8 +217,9 @@ export interface CertificateTechCategory {
 export interface CertificateAssessmentPoint {
   id: string;
   title: string;
+  assessmentType: CertificateAssessmentType;
   category: string;
-  /** 수강생의 최신 유효 성취도평가 점수(0~100). */
+  /** 수강생의 최신 유효 성취도·CS 평가 점수(0~100). */
   score: number;
   /** 같은 시험을 치른 기수 수강생의 최신 유효 점수 평균(0~100). */
   cohortAverageScore: number | null;
@@ -337,7 +344,7 @@ export interface CertificateGrowthDetail {
 }
 
 export interface CertificateDetailTabsResult {
-  policyVersion: "2026.07.23-certificate-detail-tabs-v1";
+  policyVersion: "2026.08.05-certificate-detail-tabs-v2";
   calculatedAt: string;
   studentId: string;
   tech: CertificateTechDetail;
@@ -365,6 +372,130 @@ export type Tone =
   | "danger"
   | "accent"
   | "success";
+
+export type AiAnalysisStatus = "READY" | "PARTIAL" | "NOT_READY";
+
+export interface AiJobFitProjectRoleEvidence {
+  label: string;
+  taskCount: number;
+  projectCount: number;
+}
+
+export interface AiJobFitTagEvidence {
+  label: string;
+  count: number;
+}
+
+export interface AiJobFitAchievementEvidence {
+  category: string;
+  score: number;
+}
+
+export interface AiJobFitEvidence {
+  projectRoles: AiJobFitProjectRoleEvidence[];
+  troubleshooting: {
+    certifiedCaseCount: number;
+    independentCaseCount: number;
+    independentRate: number | null;
+    tags: AiJobFitTagEvidence[];
+  };
+  highAchievements: AiJobFitAchievementEvidence[];
+}
+
+export interface AiJobFitRoleCandidate {
+  rank: number;
+  role: PersonaBase;
+  jobLabel: string;
+  roleLabel: string;
+  workType: string;
+  fitScore: number;
+  confidence: AiProfileConfidence;
+  summary: string;
+  evidence: string[];
+  fitEvidence: AiJobFitEvidence;
+  evidenceCodes: string[];
+  limitations: string[];
+}
+
+export interface AiJobFit {
+  policyVersion: string;
+  status: AiAnalysisStatus;
+  summary: string;
+  primaryRole: AiJobFitRoleCandidate | null;
+  roleCandidates: AiJobFitRoleCandidate[];
+  confidence: AiProfileConfidence;
+  limitations: string[];
+  sourcePolicies: string[];
+  generatedBy: "AI" | "FALLBACK";
+}
+
+export type AiAxisAlignmentRelation =
+  | "ALIGNED"
+  | "MIXED"
+  | "DIVERGENT"
+  | "NOT_READY";
+
+export interface AiAxisAlignmentEvidence {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+  weightPercent: number;
+  detail: string;
+  sourceType: string;
+}
+
+export interface AiAxisAlignmentAxis {
+  key: CertificateAxisKey;
+  status: "READY" | "NOT_READY";
+  axisScore: number | null;
+  evidenceScore: number | null;
+  difference: number | null;
+  relation: AiAxisAlignmentRelation;
+  summary: string;
+  reason: string[];
+  evidence: AiAxisAlignmentEvidence[];
+}
+
+export interface AiAxisAlignment {
+  policyVersion: string;
+  status: "READY" | "NOT_READY";
+  summary: string;
+  thresholds: {
+    alignedMaxDifference: number;
+    divergentMinDifference: number;
+  };
+  axes: AiAxisAlignmentAxis[];
+  highlights: {
+    alignedAxes: CertificateAxisKey[];
+    divergentAxes: CertificateAxisKey[];
+    largestGapAxis: CertificateAxisKey | null;
+  };
+  limitations: string[];
+}
+
+export interface AiTroubleshooting {
+  policyVersion: string;
+  status: AiProblemStatus;
+  summary: string;
+  certifiedCaseCount: number;
+  independentCaseCount: number;
+  independentRate: number | null;
+  period: { startedAt: string; endedAt: string } | null;
+  axes: ProblemCap[];
+  steps: ProblemSolvingStep[];
+  groups: ProblemEvidenceGroup[];
+  growth: {
+    status: "READY" | "NOT_READY";
+    summary: string;
+    newDomains: string[];
+    repeatedDomains: string[];
+    newTechnologies: string[];
+    repeatedTechnologies: string[];
+    confidence: AiProblemConfidence;
+  } | null;
+  limitations: string[];
+}
 
 // 블록1 — 기술 종합 판단
 export type AiVerdictItemKey = "strength" | "growth" | "gap" | "unique";
@@ -475,6 +606,16 @@ export interface AiProjectPersonalEvidence {
   troubleshootingCases: string[];
   artifacts: string[];
 }
+export interface AiProjectRecruiterInsight {
+  role: string;
+  challenge: string | null;
+  action: string | null;
+  outcome: string | null;
+  strength: string;
+  summary: string;
+  evidenceCodes: string[];
+  generatedBy: "AI" | "FALLBACK";
+}
 export interface AiProjectSnapshot {
   projectId: string;
   order: number;
@@ -486,6 +627,7 @@ export interface AiProjectSnapshot {
   teamContext: AiProjectTeamContext;
   personalEvidence: AiProjectPersonalEvidence;
   analysis: string;
+  recruiterInsight: AiProjectRecruiterInsight;
   evidenceCodes: string[];
   limitations: string[];
   generatedBy: "AI" | "FALLBACK";
@@ -516,6 +658,13 @@ export interface AiProjects {
   status: AiProjectStatus;
   projects: AiProjectSnapshot[];
   overview: AiProjectOverview;
+  recruiterSummary: {
+    headline: string;
+    summary: string;
+    strengths: string[];
+    evidenceCodes: string[];
+    generatedBy: "AI" | "FALLBACK";
+  };
   projectCount: number;
   period: { startedAt: string; endedAt: string } | null;
   evidenceCodes: string[];
@@ -725,11 +874,11 @@ export interface Ontology {
 
 // 최종 분석 결과 (getAnalysis 반환 / 서버 /analysis 응답)
 export interface AiAnalysis {
-  verdict: AiVerdict;
-  profile: AiProfile;
-  personas: AiPersona[];
+  policyVersion: string;
+  jobFit: AiJobFit;
+  axisAlignment: AiAxisAlignment;
   projects: AiProjects;
-  problem: ProblemAi;
+  troubleshooting: AiTroubleshooting;
   sentiment: Sentiment;
   ontology: Ontology;
 }

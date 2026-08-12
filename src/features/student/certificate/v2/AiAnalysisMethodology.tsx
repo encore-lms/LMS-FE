@@ -1,583 +1,552 @@
-import { useMemo, useState } from 'react'
-import { Tabs } from '@/components/ui/Tabs'
+import { useState, type KeyboardEvent } from 'react'
+import { ArrowRight, Database, GitBranch, Sparkles } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import type { AiAnalysis, OntologyKind } from '../ai'
+import type { AiAnalysis } from '../ai'
 
-type AnalysisSectionId =
-  | 'profile'
-  | 'persona'
-  | 'verdict'
-  | 'project'
-  | 'problem'
-  | 'sentiment'
-  | 'ontology'
+type MethodTone = 'accent' | 'info' | 'brown'
+type MethodKey = 'job-fit' | 'project' | 'troubleshooting'
 
-interface MethodItem {
-  id: string
+interface DataGroup {
+  source: string
+  items: string[]
+}
+
+interface MethodStep {
   label: string
-  data: string[]
-  basis: string[]
-  calculation: string[]
-  result: string[]
+  description: string
 }
 
-interface MethodSection {
-  id: AnalysisSectionId
+interface OutputDefinition {
   label: string
-  policyVersion?: string
-  items: MethodItem[]
+  description: string
 }
 
-const profileDataSource: Record<string, string[]> = {
-  업무: [
-    '프로젝트 참여 정보',
-    '프로젝트 역할 입력',
-    '본인 수행업무',
-    '개인 활용기술',
-    '프로젝트 상호평가 책임감 점수',
-    '인증 트러블슈팅',
-  ],
-  리더십: [
-    '프로젝트 역할 입력',
-    '본인 수행업무',
-    '프로젝트 상호평가 협업·소통 점수',
-    '프로젝트 상호평가 코멘트',
-    '최종 멘토평가',
-  ],
-  학습: [
-    '성취도 평가 전체 평균',
-    'CS 평가 전체 평균',
-    '평가 시점별 점수 추이',
-    '출석·블로그 제출',
-    '과제·스터디·멘토링 가산점',
-  ],
-  소통: [
-    '프로젝트 상호평가 소통·협업 점수',
-    '최종 멘토평가 소통',
-    '본인 수행업무',
-    '프로젝트 상호평가 코멘트',
-  ],
-  기술: [
-    '성취도 평가 전체 평균',
-    'CS 평가 전체 평균',
-    '외부 인증 코딩테스트',
-    '본인 수행업무',
-    '개인 활용기술',
-    '인증 트러블슈팅',
-  ],
+const TONE_STYLE: Record<
+  MethodTone,
+  { border: string; background: string; text: string; badge: string }
+> = {
+  accent: {
+    border: 'border-accent/25',
+    background: 'bg-accent-bg/25',
+    text: 'text-accent-strong',
+    badge: 'bg-accent-strong text-on-color',
+  },
+  info: {
+    border: 'border-info/25',
+    background: 'bg-info-bg/25',
+    text: 'text-info',
+    badge: 'bg-info text-on-color',
+  },
+  brown: {
+    border: 'border-brown/25',
+    background: 'bg-surface',
+    text: 'text-brown',
+    badge: 'bg-brown text-on-color',
+  },
 }
 
-const profileFormula: Record<string, string[]> = {
-  업무: [
-    '구조화 = 설계·정리 업무 + 프로젝트 역할·단계 정보',
-    '실행·완결 = 완료 프로젝트 수행업무 + 상호평가 책임감',
-    '검증·정리 = 인증 트러블슈팅 + 테스트·문서화·검토 업무',
-  ],
-  리더십: [
-    '방향 설정 = 프로젝트 역할·수행업무 + 멘토평가',
-    '조율·합의 = 상호평가 협업·소통 + 조율 표현',
-    '지원·촉진 = 협업 점수 + 코드리뷰·지원·문서화 표현',
-  ],
-  학습: [
-    '향상도 = 첫·마지막 완료 평가의 절대·상대 변화',
-    '숙련유지도 = 같은 범주의 재평가 점수 변화 평균',
-    '학습지속성 = 출석·블로그 기본점수 + 과제·스터디·멘토링 가산',
-  ],
-  소통: [
-    '명료성 = 설명 표현 + 프로젝트 상호평가 소통 점수',
-    '공유 적시성 = 진행 공유·문서화 표현 + 소통 점수',
-    '피드백 = 리뷰·피드백 표현 + 소통 점수',
-  ],
-  기술: [
-    '기초 역량 = 성취도·CS 평가 + 외부 인증 코딩테스트',
-    '기술 적용 = 본인 수행업무·개인 활용기술 + 인증 트러블슈팅',
-    '운영·배포 = 운영 업무 + 운영 문제 트러블슈팅',
-  ],
-}
-
-const ontologyLabel: Record<OntologyKind, string> = {
-  self: '본인',
-  subject: '과목',
-  project: '프로젝트',
-  domain: '도메인',
-  skill: '기술',
-  method: '방법론',
-}
-
-const ontologySource: Record<OntologyKind, string[]> = {
-  self: ['수강생 기본정보', '수강역량증명서 발급 대상자'],
-  subject: ['성취도 평가', 'CS 평가'],
-  project: ['인증 프로젝트', '프로젝트 참여 정보', '본인 수행업무'],
-  domain: ['인증 프로젝트 도메인'],
-  skill: ['개인 활용기술', '본인 수행업무', '인증 트러블슈팅 기술 태그'],
-  method: ['인증 트러블슈팅 문제 유형', '인증 트러블슈팅 해결 과정'],
-}
-
-function compact(items: Array<string | undefined>, max = 5) {
-  const values = [...new Set(items.filter((item): item is string => !!item))]
-  if (values.length <= max) return values
-  return [...values.slice(0, max), `외 ${values.length - max}개 근거`]
-}
-
-function profileItems(analysis: AiAnalysis): MethodItem[] {
-  return [
-    ...analysis.profile.rows.map((row) => ({
-      id: row.label,
-      label: row.label,
-      data: profileDataSource[row.label] ?? ['AI 역량 프로파일링 사용 데이터'],
-      basis: [
-        `${row.label} 안의 3개 하위 항목을 각각 별도 판정`,
-        '사용 데이터가 확인되는 경우에만 칸 수에 반영',
-        '데이터가 부족하면 점수를 억지로 만들지 않음',
-      ],
-      calculation: [
-        ...(profileFormula[row.label] ?? [
-          '유효 사용 데이터를 하위 차원별로 계산',
-        ]),
-        '70점 이상 3칸, 45~69점 2칸, 1~44점 1칸, 산출 불가 0칸',
-      ],
-      result: [
-        `${row.label}의 3칸 수준과 유형명을 산출`,
-        '실제 점수·근거 문장은 해당 카드의 판단 근거에서 표시',
-      ],
-    })),
-    {
-      id: 'profile-summary',
-      label: 'PROFILE SUMMARY',
-      data: [
-        'AI 역량 프로파일링 5개 카드',
-        '본인 수행업무',
-        '인증 트러블슈팅',
-        '프로젝트 상호평가·최종 멘토평가',
-      ],
-      basis: [
-        '산출 완료된 역량 카드 중 서로 다른 화면 데이터를 우선 선택',
-        '직접 확인된 근거가 함께 있는 문구만 사용',
-      ],
-      calculation: ['강한 근거 2~3개 선택 → 같은 의미 중복 제거 → 한 줄 요약'],
-      result: [
-        'AI 역량 프로파일링 전체를 한 줄로 압축',
-        '실제 요약은 PROFILE SUMMARY 판단 근거에서 표시',
-      ],
-    },
-  ]
-}
-
-function personaItems(analysis: AiAnalysis): MethodItem[] {
-  return analysis.personas.map((persona) => ({
-    id: `persona-${persona.rank}`,
-    label: `${persona.rank}순위`,
-    data: [
-      '성취도 평가·CS 평가',
-      '외부 인증 코딩테스트',
-      '인증 트러블슈팅',
-      '본인 수행업무·개인 활용기술',
-      '인증 프로젝트 반복 근거',
-      '희망직무·관심기술',
-    ],
-    basis: compact([
-      '추천 분야 후보별로 같은 항목을 같은 방식으로 비교',
-      '개인 직접 근거와 보강 근거가 함께 있는 후보만 표시',
-      ...(persona.limitations ?? []),
-    ]),
-    calculation: [
-      '직무 연관 평가 30% + 트러블슈팅 30% + 수행업무·활용기술 20% + 프로젝트 반복 15% + 관심 정보 5%',
-      '직접 근거가 부족한 후보 제외 → 점수순 정렬',
-    ],
-    result: [
-      `${persona.rank}순위 후보와 적합도 점수를 산출`,
-      '후보명·점수·설명은 페르소나 판단 근거에서 표시',
-    ],
-  }))
-}
-
-function verdictItems(analysis: AiAnalysis): MethodItem[] {
-  return (
-    [
-      ['strength', '핵심 강점'],
-      ['growth', '성장 포인트'],
-      ['gap', '보완'],
-      ['unique', '특이형'],
-    ] as const
-  ).map(([key, label]) => {
-    return {
-      id: key,
-      label,
-      data: [
-        'AI 기술 역량 종합 판단 점수',
-        '성취도 평가·CS 평가',
-        '본인 수행업무·개인 활용기술',
-        '인증 트러블슈팅',
-      ],
-      basis: compact([
-        '기초·적용·운영·문제해결 점수를 함께 확인',
-        ...analysis.verdict.limitations,
-      ]),
-      calculation: [
-        key === 'growth'
-          ? '완료 평가를 시간순 정렬 → 연속 상승·첫/마지막 차이·카테고리 격차 판정'
-          : key === 'gap'
-            ? '현재 강점 근거와 보강 가능한 유효 항목을 연결'
-            : key === 'unique'
-              ? '기술 적용·운영 점수와 과업 집중도·인증 문제 영역 비교'
-              : '서로 다른 사용 데이터 2종 이상이 있는 후보를 점수순 선택',
-      ],
-      result: [
-        `${label} 문장을 산출`,
-        '실제 판단 문장과 점수는 기술 판단 카드의 판단 근거에서 표시',
-      ],
-    }
-  })
-}
-
-function projectItems(analysis: AiAnalysis): MethodItem[] {
-  const projects = analysis.projects.projects.map((project) => ({
-    id: project.projectId,
-    label: `${project.order}차 프로젝트`,
-    data: [
-      '인증 프로젝트',
-      '프로젝트 참여 정보',
-      '본인 수행업무',
-      '개인 활용기술',
-      '프로젝트 상호평가',
-      '인증 트러블슈팅',
-    ],
-    basis: [
-      '완료·인증되고 본인 참여가 확인된 프로젝트만 사용',
-      '본인 수행업무와 개인 활용기술이 있을 때 개인 기여로 연결',
-    ],
-    calculation: [
-      '본인 수행업무·개인 활용기술 분류 → 상호평가·트러블슈팅을 프로젝트 ID로 교차 확인',
-      '프로젝트별 점수나 기여율은 만들지 않음',
-    ],
-    result: [
-      `${project.name}의 개인 기여 요약을 산출`,
-      '프로젝트명·기여 문장은 프로젝트 카드 판단 근거에서 표시',
-    ],
-  }))
-  const aggregate: MethodItem[] = [
-    {
-      id: 'project-summary',
-      label: '전체 궤적',
-      data: [
-        '인증 프로젝트 전체 목록',
-        '프로젝트 참여 정보',
-        '본인 수행업무',
-        '개인 활용기술',
-        '프로젝트 상호평가',
-        '인증 트러블슈팅',
-      ],
-      basis: ['프로젝트별 근거에서 공통 수행축·확장·검증 근거를 종합'],
-      calculation: [
-        '프로젝트별 표시 내용 → 공통·확장·검증 선택 → 서로 다른 프로젝트 근거 교차 확인',
-      ],
-      result: [
-        '프로젝트 전체 궤적 요약을 산출',
-        '실제 궤적 문장은 전체 궤적 판단 근거에서 표시',
-      ],
-    },
-    ...analysis.projects.groups.map((group, index) => ({
-      id: `project-group-${index}`,
-      label: group.label,
-      data: [
-        '인증 프로젝트',
-        '본인 수행업무',
-        '개인 활용기술',
-        '프로젝트 상호평가',
-        '인증 트러블슈팅',
-      ],
-      basis: [
-        '같은 기준으로 연결 가능한 프로젝트만 묶음',
-        ...analysis.projects.limitations,
-      ],
-      calculation: [
-        index === 0
-          ? '2개 이상 프로젝트에서 반복된 개인 수행업무·활용기술 집계'
-          : index === 1
-            ? '첫 프로젝트 이후 새로 등장한 수행업무·활용기술 비교'
-            : '개인 수행업무·상호평가·트러블슈팅을 프로젝트 ID로 교차 확인',
-      ],
-      result: [
-        `${group.label} 문장을 산출`,
-        '실제 프로젝트 묶음과 설명은 판단 근거에서 표시',
-      ],
-    })),
-  ]
-  return [...projects, ...aggregate]
-}
-
-function problemItems(analysis: AiAnalysis): MethodItem[] {
-  return [
-    {
-      id: 'problem-solving',
-      label: '핵심 문제해결 능력',
-      data: ['인증 트러블슈팅 본문', '문제 유형', '해결 과정', '해결 결과'],
-      basis: [
-        '강사 인증이 완료된 트러블슈팅의 상황·해결·결과만 사용',
-        ...analysis.problem.limitations,
-      ],
-      calculation: [
-        '반복 해결 행동 추출 → 문제 파악·해결 적용·결과 검증으로 정리 → 원문 밖 내용 차단',
-      ],
-      result: [
-        '핵심 문제해결 능력 유형과 요약 문장을 산출',
-        '실제 사례 수·문장 근거는 문제해결 판단 근거에서 표시',
-      ],
-    },
-    {
-      id: 'problem-groups',
-      label: '많이 다룬 문제·근거 태그',
-      data: ['인증 트러블슈팅 문제 유형', '인증 트러블슈팅 기술 태그'],
-      basis: [
-        '저장된 문제 카테고리와 인증 사례의 기술 태그를 그대로 집계',
-        '동률이면 모두 최다 문제로 유지',
-      ],
-      calculation: [
-        '카테고리 건수 = 해당 카테고리 인증 사례 수',
-        '태그 건수 = 해당 태그가 연결된 인증 사례 수',
-      ],
-      result: [
-        '많이 다룬 문제 유형과 연결 태그를 산출',
-        '실제 문제 유형·태그는 문제해결 판단 근거에서 표시',
-      ],
-    },
-    {
-      id: 'collaboration',
-      label: '협업 스타일',
-      data: [
-        '프로젝트 상호평가 태그',
-        '프로젝트 상호평가 코멘트',
-        '프로젝트 상호평가 협업 점수',
-      ],
-      basis: [
-        '완료 프로젝트의 유효 상호평가만 사용',
-        '태그와 코멘트가 같은 협업 행동을 가리킬 때 우선 반영',
-        ...analysis.problem.collaboration.limitations,
-      ],
-      calculation: [
-        '동료평가 태그·코멘트 반복 확인 → 관찰 행동만 해석',
-        '고정 성격이나 모든 상황의 행동으로 확대하지 않음',
-      ],
-      result: [
-        '협업 스타일 유형과 요약 문장을 산출',
-        '실제 태그·코멘트 근거는 협업 판단 근거에서 표시',
-      ],
-    },
-  ]
-}
-
-function sentimentItems(analysis: AiAnalysis): MethodItem[] {
-  const dates = [
-    ...new Set(
-      analysis.sentiment.bubbles.flatMap(
-        (bubble) => bubble.evidence?.map((item) => item.at) ?? [],
-      ),
-    ),
-  ].sort()
-  return dates.map((date, index) => ({
-    id: `counsel-${date}`,
-    label: `${index + 1}차 상담`,
-    data: ['상담 기록', '상담 감성 키워드', '상담 일자', '신호 강도'],
-    basis: [
-      '상담 날짜와 감성 키워드가 모두 있는 상담만 사용',
-      '같은 키워드가 반복되면 신호 강도를 높임',
-    ],
-    calculation: [
-      '상담일 정렬 → 초기·중기·후기 배정 → 근거 문장과 일치하는 키워드 선택',
-      '신호 강도를 버블 크기·배치로 변환',
-    ],
-    result: [
-      `${index + 1}차 상담 감성 키워드 버블을 산출`,
-      '실제 상담일·키워드·문장은 상담 감성 판단 근거에서 표시',
-    ],
-  }))
-}
-
-function ontologyItems(): MethodItem[] {
-  return (Object.keys(ontologyLabel) as OntologyKind[]).map((kind) => ({
-    id: `ontology-${kind}`,
-    label: ontologyLabel[kind],
-    data: ontologySource[kind],
-    basis: [
-      '근거가 확인된 항목만 표시',
-      '중복되거나 직접 연결이 약한 항목은 생략',
-    ],
-    calculation: [
-      '사용 데이터 중복 제거 → 과목·프로젝트·기술·방법론·도메인 관계 묶음',
-      '같은 프로젝트에서 확인된 관계만 연결',
-    ],
-    result: [
-      `${ontologyLabel[kind]} 노드와 연결 관계를 산출`,
-      '실제 노드명·연결 수는 온톨로지 판단 근거에서 표시',
-    ],
-  }))
-}
-
-function buildSections(analysis: AiAnalysis): MethodSection[] {
-  return [
-    { id: 'profile', label: '역량 프로파일링', items: profileItems(analysis) },
-    { id: 'persona', label: '페르소나 TOP3', items: personaItems(analysis) },
-    {
-      id: 'verdict',
-      label: '기술 판단',
-      policyVersion: analysis.verdict.policyVersion,
-      items: verdictItems(analysis),
-    },
-    {
-      id: 'project',
-      label: '프로젝트',
-      policyVersion: analysis.projects.policyVersion,
-      items: projectItems(analysis),
-    },
-    {
-      id: 'problem',
-      label: '문제해결·협업',
-      policyVersion: analysis.problem.policyVersion,
-      items: problemItems(analysis),
-    },
-    {
-      id: 'sentiment',
-      label: '상담 감성',
-      policyVersion: analysis.sentiment.policyVersion,
-      items: sentimentItems(analysis),
-    },
-    {
-      id: 'ontology',
-      label: '온톨로지',
-      policyVersion: analysis.ontology.policyVersion,
-      items: ontologyItems(),
-    },
-  ]
-}
-
-function DetailBlock({
+function MethodCard({
+  tabKey,
+  active,
   index,
   title,
-  items,
+  summary,
+  tone,
+  dataGroups,
+  steps,
+  outputs,
+  ruleNote,
 }: {
-  index: number
+  tabKey: MethodKey
+  active: boolean
+  index: string
   title: string
-  items: string[]
+  summary: string
+  tone: MethodTone
+  dataGroups: DataGroup[]
+  steps: MethodStep[]
+  outputs: OutputDefinition[]
+  ruleNote: string
 }) {
+  const toneStyle = TONE_STYLE[tone]
+
   return (
-    <div className="border-divider bg-surface flex min-w-0 flex-col gap-2 rounded-xl border p-3.5">
-      <span className="text-brand text-[11px] font-bold">
-        {index}. {title}
-      </span>
-      <ul className="flex flex-col gap-1.5">
-        {(items.length > 0 ? items : ['해당 근거 없음']).map((item) => (
-          <li
-            key={item}
-            className="text-fg-muted flex min-w-0 gap-2 text-[11px] leading-5"
-          >
-            <span
+    <article
+      id={`analysis-method-panel-${tabKey}`}
+      role="tabpanel"
+      aria-labelledby={`analysis-method-tab-${tabKey}`}
+      hidden={!active}
+      data-analysis-method={title}
+      className={cn(
+        'bg-surface overflow-hidden rounded-2xl border',
+        toneStyle.border,
+      )}
+    >
+      <header
+        className={cn(
+          'flex items-start gap-3 border-b px-4 py-4 sm:px-5',
+          toneStyle.border,
+          toneStyle.background,
+        )}
+      >
+        <span
+          className={cn(
+            'flex size-8 shrink-0 items-center justify-center rounded-lg text-[12px] font-extrabold',
+            toneStyle.badge,
+          )}
+        >
+          {index}
+        </span>
+        <div>
+          <h3 className="text-fg text-[16px] leading-6 font-bold">{title}</h3>
+          <p className="text-fg-muted mt-0.5 text-[13px] leading-5">
+            {summary}
+          </p>
+        </div>
+      </header>
+
+      <div className="flex flex-col gap-5 p-4 sm:p-5">
+        <section>
+          <div className="flex items-center gap-2">
+            <Database
+              className={cn('size-4', toneStyle.text)}
               aria-hidden="true"
-              className="bg-brand mt-2 size-1 shrink-0 rounded-full"
             />
-            <span className="min-w-0 [overflow-wrap:anywhere]">{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+            <h4 className="text-fg text-[13px] font-bold">사용 데이터</h4>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {dataGroups.map((group) => (
+              <div
+                key={group.source}
+                className="border-border bg-surface-muted rounded-xl border px-3.5 py-3"
+              >
+                <span className={cn('text-[12px] font-bold', toneStyle.text)}>
+                  {group.source}
+                </span>
+                <ul className="text-fg-muted mt-1.5 flex flex-col gap-1 text-[12px] leading-5">
+                  {group.items.map((item) => (
+                    <li key={item}>· {item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-center gap-2">
+            <GitBranch
+              className={cn('size-4', toneStyle.text)}
+              aria-hidden="true"
+            />
+            <h4 className="text-fg text-[13px] font-bold">분석 방식</h4>
+          </div>
+          <ol className="mt-3 grid gap-2 lg:grid-cols-4">
+            {steps.map((step, stepIndex) => (
+              <li key={step.label} className="relative flex min-w-0 gap-2">
+                <div className="border-border bg-surface-muted min-w-0 flex-1 rounded-xl border px-3.5 py-3">
+                  <span className={cn('text-[11px] font-bold', toneStyle.text)}>
+                    STEP {stepIndex + 1}
+                  </span>
+                  <strong className="text-fg mt-0.5 block text-[13px] font-bold">
+                    {step.label}
+                  </strong>
+                  <p className="text-fg-muted mt-1 text-[12px] leading-5">
+                    {step.description}
+                  </p>
+                </div>
+                {stepIndex < steps.length - 1 && (
+                  <ArrowRight
+                    className={cn(
+                      'mt-10 hidden size-4 shrink-0 lg:block',
+                      toneStyle.text,
+                    )}
+                    aria-hidden="true"
+                  />
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section>
+          <div className="flex items-center gap-2">
+            <Sparkles
+              className={cn('size-4', toneStyle.text)}
+              aria-hidden="true"
+            />
+            <h4 className="text-fg text-[13px] font-bold">산출 결과</h4>
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {outputs.map((output) => (
+              <div
+                key={output.label}
+                className={cn(
+                  'rounded-xl border px-3.5 py-3',
+                  toneStyle.border,
+                  toneStyle.background,
+                )}
+              >
+                <strong className="text-fg text-[13px] font-bold">
+                  {output.label}
+                </strong>
+                <p className="text-fg-muted mt-1 text-[12px] leading-5">
+                  {output.description}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="border-border text-fg-muted mt-3 border-t pt-3 text-[11px] leading-5">
+            {ruleNote}
+          </p>
+        </section>
+      </div>
+    </article>
   )
 }
 
 export function AiAnalysisMethodology({ analysis }: { analysis: AiAnalysis }) {
-  const sections = useMemo(() => buildSections(analysis), [analysis])
-  const [selectedId, setSelectedId] = useState<AnalysisSectionId>('profile')
-  const [selectedItemBySection, setSelectedItemBySection] = useState<
-    Partial<Record<AnalysisSectionId, string>>
-  >({})
-  const selectedSection =
-    sections.find((section) => section.id === selectedId) ?? sections[0]
-  const selectedItemId =
-    selectedItemBySection[selectedSection.id] ?? selectedSection.items[0]?.id
-  const selectedItem =
-    selectedSection.items.find((item) => item.id === selectedItemId) ??
-    selectedSection.items[0]
+  void analysis
+  const [selectedKey, setSelectedKey] = useState<MethodKey>('job-fit')
+  const tabs: Array<{ key: MethodKey; label: string; tone: MethodTone }> = [
+    { key: 'job-fit', label: '직무 적합도', tone: 'accent' },
+    { key: 'project', label: '프로젝트 분석', tone: 'info' },
+    { key: 'troubleshooting', label: '문제해결 역량 분석', tone: 'brown' },
+  ]
+
+  const selectByKeyboard = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) => {
+    let nextIndex: number | undefined
+    if (event.key === 'Home') nextIndex = 0
+    if (event.key === 'End') nextIndex = tabs.length - 1
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextIndex = (currentIndex + 1) % tabs.length
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length
+    }
+    if (nextIndex === undefined) return
+
+    event.preventDefault()
+    const nextKey = tabs[nextIndex].key
+    setSelectedKey(nextKey)
+    document.getElementById(`analysis-method-tab-${nextKey}`)?.focus()
+  }
 
   return (
-    <section className="border-brand/20 bg-surface flex flex-col gap-4 rounded-2xl border p-5">
-      <div className="flex flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-fg text-[15px] font-bold">AI 분석 산출 근거</h3>
-          <span className="bg-brand/10 text-brand rounded-md px-2 py-0.5 text-[10px] font-bold">
-            항목별 추적
-          </span>
-          {selectedSection.policyVersion && (
-            <span className="text-fg-subtle text-[10px]">
-              정책 {selectedSection.policyVersion}
-            </span>
-          )}
-        </div>
-        <p className="text-fg-muted text-[11px] leading-5">
-          항목을 선택하면 공통 사용 데이터부터 결과 산출 방식까지 핵심 흐름만
-          표시합니다.
-        </p>
-      </div>
-
-      <div className="max-w-full overflow-x-auto pb-1">
-        <Tabs
-          aria-label="AI 분석 산출 근거 영역"
-          items={sections.map((section) => ({
-            value: section.id,
-            label: section.label,
-          }))}
-          value={selectedSection.id}
-          onChange={(value) => setSelectedId(value as AnalysisSectionId)}
-        />
-      </div>
+    <section className="border-accent/20 bg-accent-bg/20 rounded-2xl border p-4 sm:p-5">
+      <h2 className="text-fg text-[17px] font-bold">AI 분석 기준</h2>
+      <p className="text-fg-muted mt-1 max-w-4xl text-[13px] leading-5">
+        현재 결과값이 아니라, 각 분석이 어떤 데이터를 어떤 흐름으로 처리해
+        라벨·순위·요약을 만드는지 설명합니다. 실제 판단 근거는 분석 결과 옆
+        <strong className="text-fg mx-1">!</strong>에서 확인할 수 있습니다.
+      </p>
 
       <div
-        className="flex flex-wrap gap-2"
-        aria-label={`${selectedSection.label} 세부 항목`}
+        role="tablist"
+        aria-label="AI 분석 기준 항목"
+        className="border-border bg-surface-muted mt-4 grid gap-2 rounded-xl border p-2 sm:grid-cols-3"
       >
-        {selectedSection.items.map((item) => {
-          const selected = item.id === selectedItem?.id
+        {tabs.map((tab, index) => {
+          const active = tab.key === selectedKey
+          const toneStyle = TONE_STYLE[tab.tone]
+
           return (
             <button
-              key={item.id}
+              key={tab.key}
+              id={`analysis-method-tab-${tab.key}`}
               type="button"
-              aria-pressed={selected}
-              onClick={() =>
-                setSelectedItemBySection((current) => ({
-                  ...current,
-                  [selectedSection.id]: item.id,
-                }))
-              }
+              role="tab"
+              aria-selected={active}
+              aria-controls={`analysis-method-panel-${tab.key}`}
+              tabIndex={active ? 0 : -1}
+              onClick={() => setSelectedKey(tab.key)}
+              onKeyDown={(event) => selectByKeyboard(event, index)}
               className={cn(
-                'focus-visible:ring-brand rounded-lg border px-3 py-2 text-[11px] font-bold outline-none focus-visible:ring-2',
-                selected
-                  ? 'border-brand bg-brand text-white'
-                  : 'border-divider bg-surface-muted text-fg-muted hover:text-fg',
+                'focus-visible:ring-brand rounded-lg border px-3 py-2.5 text-[13px] font-bold transition-colors outline-none focus-visible:ring-2',
+                active
+                  ? cn(toneStyle.border, toneStyle.background, toneStyle.text)
+                  : 'bg-surface text-fg-muted hover:bg-surface-muted border-transparent',
               )}
             >
-              {item.label}
+              {tab.label}
             </button>
           )
         })}
       </div>
 
-      {selectedItem ? (
-        <div role="tabpanel" className="grid gap-3 lg:grid-cols-2">
-          <DetailBlock
-            index={1}
-            title="사용 데이터"
-            items={selectedItem.data}
-          />
-          <DetailBlock index={2} title="판단 근거" items={selectedItem.basis} />
-          <DetailBlock
-            index={3}
-            title="계산 흐름"
-            items={selectedItem.calculation}
-          />
-          <DetailBlock index={4} title="결과" items={selectedItem.result} />
-        </div>
-      ) : (
-        <p className="text-fg-muted py-4 text-center text-[12px]">
-          산출 가능한 항목이 없습니다.
-        </p>
-      )}
+      <div className="mt-4">
+        <MethodCard
+          tabKey="job-fit"
+          active={selectedKey === 'job-fit'}
+          index="01"
+          title="직무 적합도"
+          summary="프로필·프로젝트·평가·자격증 신호를 고정 직무군에 연결해 후보와 점수를 산정합니다."
+          tone="accent"
+          dataGroups={[
+            {
+              source: '프로필',
+              items: ['관심 직무', '기술 태그'],
+            },
+            {
+              source: '프로젝트',
+              items: [
+                '인증 프로젝트 도메인',
+                '담당 역할·업무',
+                '개인 수행이 확인된 결과',
+              ],
+            },
+            {
+              source: '퀴즈·평가',
+              items: ['성취도 평가 카테고리·점수', 'CS 평가 카테고리·점수'],
+            },
+            {
+              source: '자격증',
+              items: ['승인 완료 자격증만 사용'],
+            },
+            {
+              source: '인증 문제해결 기록',
+              items: [
+                '반복 해결 영역·기술',
+                '독립·협업 해결 경향',
+                '검증 결과',
+              ],
+            },
+          ]}
+          steps={[
+            {
+              label: '직무군 매핑',
+              description:
+                '모든 신호를 백엔드·프론트엔드·풀스택·데이터 엔지니어·데이터 분석·ML/AI·DevOps/인프라 7개 직무군에 연결합니다.',
+            },
+            {
+              label: '근거별 연관도 계산',
+              description:
+                '프로필·평가·자격증·프로젝트 수행·문제해결 신호를 직무별로 비교하고, 같은 방향이 서로 다른 출처에서 반복되는지 확인합니다.',
+            },
+            {
+              label: '점수·신뢰도 분리',
+              description:
+                '직무 관련성과 수행 검증의 일치 정도를 0~100점으로 보정하고, 출처 수와 검증 수준은 별도의 근거 충분도·신뢰도로 관리합니다.',
+            },
+            {
+              label: 'TOP3 선정',
+              description:
+                '서로 다른 출처 2종 이상과 평가·자격증 중 검증 근거 1종 이상이 있는 후보를 점수순으로 정렬합니다.',
+            },
+          ]}
+          outputs={[
+            {
+              label: '직무 후보 TOP3',
+              description:
+                '직무 점수 내림차순으로 최대 3개를 표시합니다. 동점이면 검증 근거 연관도 → 출처 다양성 → 관심 직무 일치 순으로 정렬합니다.',
+            },
+            {
+              label: '직무 적합도 점수',
+              description:
+                '기술·이론·자격·프로젝트·문제해결 신호의 직무 관련도를 종합한 뒤, 여러 출처에서 반복되고 수행 결과로 검증된 신호를 높게 보정합니다.',
+            },
+            {
+              label: '개발자 유형',
+              description:
+                '가장 강하게 겹친 기술 태그·평가 카테고리·자격증 조합을 유형 라벨로 만듭니다.',
+            },
+            {
+              label: '핵심 강점',
+              description:
+                '서로 다른 출처에서 두 번 이상 반복된 직무 관련 신호를 강점 문장으로 요약합니다.',
+            },
+            {
+              label: '관련 이론 이해도',
+              description:
+                '선택 직무와 연결된 성취도·CS 평가 카테고리 점수를 카테고리별 반영 비중으로 가중 평균합니다.',
+            },
+          ]}
+          ruleNote="관심 직무는 보조 지표이며 미선택해도 불이익이 없습니다. 프로젝트 도메인과 기존 AI 요약은 맥락·교차 검증에만 사용하고 같은 원천 신호를 점수에 중복 반영하지 않습니다."
+        />
+
+        <MethodCard
+          tabKey="project"
+          active={selectedKey === 'project'}
+          index="02"
+          title="프로젝트 분석"
+          summary="전체 프로젝트에서 반복된 역할·업무·기여와 동료평가를 묶어 수행 스타일과 성장 범위를 분석합니다."
+          tone="info"
+          dataGroups={[
+            {
+              source: '프로젝트 보드',
+              items: ['전체 업무 수', '본인 담당 업무', '담당 업무 완료 상태'],
+            },
+            {
+              source: '본인 작성 상호평가',
+              items: ['맡은 업무', '본인이 설명한 기여 내용'],
+            },
+            {
+              source: '프로젝트 역할',
+              items: ['프로젝트별 담당 역할', '담당 기술·업무·산출물'],
+            },
+            {
+              source: '동료평가',
+              items: [
+                '기술/기술기여',
+                '소통·협업·팀워크',
+                '문제해결',
+                '책임감',
+              ],
+            },
+            {
+              source: '기존 프로젝트 기록',
+              items: [
+                '도메인·범위·기술 스택',
+                '인증 결과·문제해결 사례',
+                '기존 역할·문제·판단·결과 해석',
+              ],
+            },
+          ]}
+          steps={[
+            {
+              label: '유효 프로젝트 확정',
+              description:
+                '완료·인증된 프로젝트만 포함하고 보드 담당자, 본인 작성 내용, 역할, 기존 프로젝트 기록을 프로젝트 ID로 연결합니다.',
+            },
+            {
+              label: '역할·업무 반복 집계',
+              description:
+                '프로젝트 수와 담당 업무 수를 함께 비교해 주 역할과 반복해서 맡은 업무를 찾습니다.',
+            },
+            {
+              label: '기여·4축 집계',
+              description:
+                '담당 업무/전체 업무와 담당 완료율을 계산하고, 동료 4축은 프로젝트별 유효 평가자 평균을 다시 동일 가중 평균합니다.',
+            },
+            {
+              label: '성장·확장 비교',
+              description:
+                '프로젝트 순서에 따라 역할 범위와 담당 업무 종류가 새롭게 늘거나 깊어진 부분을 비교합니다.',
+            },
+          ]}
+          outputs={[
+            {
+              label: 'AI 전체 요약',
+              description:
+                '전체 프로젝트에서 반복된 역할·업무·기여·동료평가 신호를 2~3문장으로 요약합니다.',
+            },
+            {
+              label: '주로 맡은 역할·업무',
+              description:
+                '가장 많은 프로젝트에서 반복된 역할과 담당 업무를 우선 표시합니다.',
+            },
+            {
+              label: '프로젝트 기여',
+              description:
+                '전체 보드 중 담당 업무 수와 담당 업무 완료율을 함께 보여주고 본인 작성 기여 내용으로 맥락을 보완합니다.',
+            },
+            {
+              label: '동료평가 4축 유형',
+              description:
+                '각 축 평균과 본인 기여 내용을 함께 읽어 기술 주도형·조율형·검증형·완결형처럼 축별 수행 스타일을 라벨링합니다.',
+            },
+            {
+              label: '프로젝트별 성장·확장',
+              description:
+                '이전 프로젝트보다 역할 범위·업무 종류·책임 범위가 새롭게 늘어난 부분을 프로젝트별로 설명합니다.',
+            },
+            {
+              label: '핵심 강점',
+              description:
+                '보드·본인 작성 내용·동료평가 중 두 출처 이상에서 함께 확인된 신호만 강점으로 요약합니다.',
+            },
+          ]}
+          ruleNote="동료평가만 사용합니다. 멘토·강사·운영 평가는 프로젝트 스타일 계산과 근거에서 모두 제외합니다. 기존 AI 해석은 원천 수행 기록과 일치하는지 확인하는 용도로만 사용하며 임의의 프로젝트 종합점수는 만들지 않습니다."
+        />
+
+        <MethodCard
+          tabKey="troubleshooting"
+          active={selectedKey === 'troubleshooting'}
+          index="03"
+          title="문제해결 역량 분석"
+          summary="인증 문제해결 기록의 내용·기간·해결 방식을 연결해 반복 패턴과 확장 방향을 분석합니다."
+          tone="brown"
+          dataGroups={[
+            {
+              source: '문제해결 분류',
+              items: ['문제해결 카테고리'],
+            },
+            {
+              source: '본문 내용',
+              items: ['문제 상황 요약', '해결 과정 요약', '결과 및 검증 요약'],
+            },
+            {
+              source: '해결 기간',
+              items: ['사례별 소요일'],
+            },
+            {
+              source: '해결 방식',
+              items: ['독립 해결 여부', '협업·지원 활용 여부'],
+            },
+            {
+              source: '기존 인증 분석 기록',
+              items: [
+                '인증 사례 수·분석 기간',
+                '문제 영역·기술 태그',
+                '검증 수치·성장 영역',
+              ],
+            },
+          ]}
+          steps={[
+            {
+              label: '유효 사례 확정',
+              description:
+                '인증되고 상황·해결·결과가 모두 있는 사례만 포함하며, 기존 인증 분석 기록과 연결해 개인·보안 정보를 제외한 핵심 내용을 분석합니다.',
+            },
+            {
+              label: '행동 패턴 추출',
+              description:
+                '상황에서 문제 구조화, 해결에서 적용 행동, 결과에서 검증 행동을 각각 추출합니다.',
+            },
+            {
+              label: '빈도·기간·방식 집계',
+              description:
+                '카테고리 빈도, 중앙·평균 소요일, 독립 해결 비율과 협업 활용 분포를 계산합니다.',
+            },
+            {
+              label: '성향·확장 라벨링',
+              description:
+                '반복 패턴과 시점별 새 카테고리·기술을 비교해 해결 성향, 강점 영역, 확장 범위를 라벨링합니다.',
+            },
+          ]}
+          outputs={[
+            {
+              label: 'AI가 읽은 문제해결 성향',
+              description:
+                '독립 해결 70% 이상은 독립 주도형, 40~69%는 균형형, 40% 미만은 협업 해결형으로 분류하고 내용 패턴으로 설명합니다.',
+            },
+            {
+              label: '문제 구조화·해결 적용·결과 검증',
+              description:
+                '상황·해결·결과에서 반복된 행동을 세 단계의 해결 패턴으로 각각 요약합니다.',
+            },
+            {
+              label: '가장 선명한 해결 영역',
+              description:
+                '인증 사례가 가장 많이 반복된 카테고리를 선택하고, 동률이면 확인 가능한 결과가 다양한 영역을 우선합니다.',
+            },
+            {
+              label: '해결 소요일 특성',
+              description:
+                '평균은 전체 부담을, 중앙값은 보통 걸리는 기간을 설명하며 둘의 차이가 크면 장기 사례 영향을 함께 표시합니다.',
+            },
+            {
+              label: '확장되는 문제해결 범위',
+              description:
+                '최근 사례에서 처음 등장한 카테고리·도메인·기술을 기존 반복 영역과 구분해 확장으로 설명합니다.',
+            },
+          ]}
+          ruleNote="문제해결 기록 개수만으로 역량 점수를 만들지 않습니다. 사례 내용과 검증 결과가 없는 기록은 패턴 근거에서 제외합니다. 기존 분류·요약은 원천 사례와 교차 검증하고, 화면에는 문제 상황·해결 과정·결과를 이해할 수 있는 핵심 요약을 근거로 제공합니다."
+        />
+      </div>
     </section>
   )
 }

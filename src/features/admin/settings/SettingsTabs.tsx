@@ -9,10 +9,11 @@ interface TabDef {
 // 설정 하위 화면 공통 sub-route 탭 (Figma 허브 1284:8852 'tr' 행).
 // URL 반영 정책: 탭별 sub-route — 활성 탭은 현재 경로로 판정.
 // 계정 관리는 설정 탭 랜딩(/admin/settings)으로 통합 — 별도 운영 계정 권한 페이지 폐지.
+// '교육 과정 설정'은 기수 허브(/admin/education/:cohortId)의 설정 탭으로 흡수 — 마일리지·PLAY
+// 사용 여부는 기수 단위 설정이라, 과정을 고르고 기수 줄을 찾는 대신 그 기수를 연 자리에서 켠다.
 const TABS: TabDef[] = [
   { label: '계정 관리', to: '/admin/settings' },
   { label: 'HRD API Key', to: '/admin/settings/hrd-api-key' },
-  { label: '교육 과정 설정', to: '/admin/settings/course-config' },
   { label: '교육 과정 추가', to: '/admin/settings/courses/new' },
 ]
 

@@ -7,12 +7,15 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
+import type { CohortScope } from './scope'
 import { cn } from '@/shared/lib/cn'
 import { formatDateTime } from '@/shared/lib/date'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import type { AttendanceFormRow, AttendanceFormType } from '@/shared/types'
 import { useStudentAccounts, useStudentAttendanceForms } from '../api/students'
 import { useCourseConfig, useCourseList } from '../api/settings'
+import { AttendanceAttachmentLinks } from './AttendanceAttachmentLinks'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 const TYPE_META: Record<
   AttendanceFormType,
@@ -36,20 +39,26 @@ function today() {
 }
 
 // 출결 폼 탭 — 수강생 제출 출결 폼 조회(조회 전용). 과정/기수 필터. (Figma 1457:10955)
-export function AttendanceFormTab() {
+export function AttendanceFormTab({ scope }: { scope?: CohortScope }) {
   const { data: courses } = useCourseList()
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const courseId = selectedCourseId ?? courses?.[0]?.courseId ?? null
+  const courseId =
+    scope?.courseId ?? selectedCourseId ?? courses?.[0]?.courseId ?? null
   const { data: courseConfig } = useCourseConfig(courseId)
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
-  const cohortId = selectedCohortId ?? courseConfig?.cohorts?.[0]?.id ?? null
+  const cohortId =
+    scope?.cohortId ??
+    selectedCohortId ??
+    courseConfig?.cohorts?.[0]?.id ??
+    null
 
   const { data, isPending, isError, refetch } = useStudentAttendanceForms(
     courseId,
     cohortId,
   )
-  // 제출자 이름·생년월일 join용 — 전체 학생 계정(출결폼은 이미 기수로 필터됨).
-  const { data: students } = useStudentAccounts()
+  // 제출자 이름·생년월일 join용 — 선택 기수로 좁혀 받는다.
+  // 인자 없이 부르면 전 기수에서 앞 100명만 와서, 그 밖의 수강생은 이름이 '(미배정)'으로 떨어졌다.
+  const { data: students } = useStudentAccounts(cohortId)
   const studentMap = useMemo(() => {
     const m = new Map<string, { name: string; birth: string }>()
     for (const s of students?.items ?? []) {
@@ -141,6 +150,13 @@ export function AttendanceFormTab() {
       cell: (r) => <span className="text-fg text-sm">{r.reason}</span>,
     },
     {
+      // 진단서·경조사 증빙은 매니저가 실제로 열어봐야 하는 자료다.
+      key: 'attachments',
+      header: '증빙',
+      className: 'w-44',
+      cell: (r) => <AttendanceAttachmentLinks files={r.attachments ?? []} />,
+    },
+    {
       key: 'submittedAt',
       header: '제출 시각',
       className: 'w-32',
@@ -158,8 +174,8 @@ export function AttendanceFormTab() {
     { key: 'pick', label: '날짜 선택' },
   ]
 
-  // 과정/기수 선택 컨트롤 — 항상 표시.
-  const controls = (
+  // 과정/기수 선택 컨트롤. 임베드(기수 허브)에선 상위가 정한 기수를 쓰므로 감춘다.
+  const controls = scope ? null : (
     <div className="flex flex-wrap items-center gap-2">
       <Select
         aria-label="과정 선택"
@@ -261,12 +277,11 @@ export function AttendanceFormTab() {
                   </div>
                 )}
               </div>
-              <input
+              <SearchInput
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={setQ}
                 placeholder="이름·생년월일·사유 검색"
-                aria-label="출결 폼 검색"
-                className="border-border text-fg placeholder:text-fg-subtle focus:border-brand bg-surface h-9 w-56 rounded-lg border px-3 text-sm outline-none"
+                ariaLabel="출결 폼 검색"
               />
             </div>
 

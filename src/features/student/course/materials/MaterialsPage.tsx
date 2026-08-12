@@ -5,11 +5,12 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Empty } from '@/components/ui/Empty'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { buttonClass } from '@/components/ui/buttonClass'
-import { usePageHeader } from '@/shared/store'
+import { useCourseHubHeader } from '../useCourseHubHeader'
 import {
   useCourseMaterials,
   useShareMaterial,
   useDeleteMaterial,
+  useToggleMaterialFavorite,
 } from '../../api/course'
 import type { MaterialItem } from '../types'
 import { CourseTabs } from '../CourseTabs'
@@ -26,6 +27,7 @@ import { MaterialDetailModal } from './components/MaterialDetailModal'
 import { EditMaterialModal } from './components/EditMaterialModal'
 import { MaterialPagination } from './components/MaterialPagination'
 import { ShareMaterialModal } from './components/ShareMaterialModal'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 /**
  * 강의 자료실 (/student/course/materials) — 나의 과정 자료실 탭.
@@ -39,9 +41,11 @@ export default function MaterialsPage() {
   // 상세 모달 대상 — 행을 클릭하면 열리고, 다운로드·링크 열기·삭제를 그 안에서 한다.
   const [detailTarget, setDetailTarget] = useState<MaterialItem | null>(null)
   const [editTarget, setEditTarget] = useState<MaterialItem | null>(null)
-  usePageHeader('자료실')
+  useCourseHubHeader()
   const [query, setQuery] = useState('')
+  // 서버 응답이 돌아오기 전까지만 쓰는 낙관적 표시 — 별을 누른 즉시 화면이 반응해야 한다.
   const [favOverride, setFavOverride] = useState<Record<string, boolean>>({})
+  const toggleFavoriteMutation = useToggleMaterialFavorite()
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState<SortKey>('latest')
   const [sortOpen, setSortOpen] = useState(false)
@@ -65,18 +69,28 @@ export default function MaterialsPage() {
     .map((it) => ({ ...it, favorited: favOverride[it.id] ?? it.favorited }))
     .filter((it) => q === '' || it.title.toLowerCase().includes(q))
 
-  const toggleFavorite = (id: string) =>
-    setFavOverride((prev) => {
-      const current =
-        prev[id] ?? data?.items.find((it) => it.id === id)?.favorited ?? false
-      return { ...prev, [id]: !current }
+  const toggleFavorite = (id: string) => {
+    const current =
+      favOverride[id] ??
+      data?.items.find((it) => it.id === id)?.favorited ??
+      false
+    setFavOverride((prev) => ({ ...prev, [id]: !current }))
+    toggleFavoriteMutation.mutate(id, {
+      // 서버가 확정한 값으로 맞춘다. 실패하면 눌렀던 것을 되돌린다.
+      onSuccess: (res) =>
+        setFavOverride((prev) => ({ ...prev, [id]: res.favorited })),
+      onError: () => setFavOverride((prev) => ({ ...prev, [id]: current })),
     })
+  }
 
   // 정렬(최신=기본 순서 / 오래된=역순 / 이름=가나다) → 페이지 슬라이싱
   const sorted = [...items]
   if (sort === 'oldest') sorted.reverse()
   else if (sort === 'title')
     sorted.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+  // 즐겨찾기는 어떤 정렬에서도 맨 위로. 표시해 둔 자료를 페이지를 넘겨 가며 찾게 두면
+  // 표시하는 의미가 없다. 같은 그룹 안에서는 위에서 정한 순서를 지킨다(안정 정렬).
+  sorted.sort((a, b) => Number(b.favorited) - Number(a.favorited))
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
   const curPage = Math.min(page, pageCount)
   const pageItems = sorted.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE)
@@ -108,27 +122,16 @@ export default function MaterialsPage() {
             {/* 필터 행 — 검색/공유. 분류 칩은 없앴다(자료를 나누는 기준이 되지 못해 늘 한 칸에 몰렸다). */}
             <div className="flex flex-wrap items-center justify-end gap-3">
               <div className="flex items-center gap-2">
-                <div className="border-border bg-surface focus-within:border-brand flex h-[38px] w-60 items-center gap-2 rounded-[10px] border px-3.5">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="text-fg-subtle size-4 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3-3" strokeLinecap="round" />
-                  </svg>
-                  <input
-                    value={query}
-                    onChange={(e) => {
-                      setQuery(e.target.value)
-                      setPage(1)
-                    }}
-                    placeholder="자료 제목·키워드 검색"
-                    className="text-fg placeholder:text-fg-subtle w-full bg-transparent text-[13px] outline-none focus-visible:shadow-none"
-                  />
-                </div>
+                <SearchInput
+                  value={query}
+                  onChange={(v) => {
+                    setQuery(v)
+                    setPage(1)
+                  }}
+                  placeholder="자료 제목·키워드 검색"
+                  ariaLabel="자료 검색"
+                  className="h-[38px] w-60 rounded-[10px] px-3.5"
+                />
                 <button
                   type="button"
                   onClick={() => setShareOpen(true)}

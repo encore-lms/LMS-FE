@@ -4,6 +4,7 @@ import { apiClient } from '@/shared/api'
 import { useAuth } from '@/shared/store/auth'
 import { projectKeys } from '../projects/queryKeys'
 import type {
+  ProjectInvitation,
   ProjectListData,
   ProjectSummary,
   ProjectWizardData,
@@ -28,6 +29,45 @@ export function useProjectList() {
     queryKey: projectKeys.list(),
     queryFn: () =>
       apiClient.get<ProjectListData>('/student/projects').then((r) => r.data),
+  })
+}
+
+/**
+ * 내가 받은 초대 — 아직 답하지 않은 것만.
+ *
+ * <p>받아들이기 전에는 프로젝트 목록에도 워크스페이스에도 없다(팀이 아니니까). 알림을
+ * 지우면 초대받은 사실로 가는 길이 끊기므로 목록 화면이 따로 들고 있어야 한다.</p>
+ */
+export function useProjectInvitations() {
+  return useQuery({
+    queryKey: projectKeys.invitations(),
+    queryFn: () =>
+      apiClient
+        .get<{
+          invitations: ProjectInvitation[]
+        }>('/student/projects/invitations')
+        .then((r) => r.data.invitations),
+  })
+}
+
+/** 초대에 답한다 — 수락하면 그때부터 팀원, 거절하면 목록에서 사라진다. */
+export function useAnswerInvitation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      answer,
+    }: {
+      projectId: string
+      answer: 'accept' | 'decline'
+    }) => apiClient.post(`/student/projects/${projectId}/invitation/${answer}`),
+    onSuccess: () => {
+      // 수락하면 프로젝트가 하나 늘어난다 — 목록도 함께 새로 받는다.
+      void queryClient.invalidateQueries({
+        queryKey: projectKeys.invitations(),
+      })
+      void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
+    },
   })
 }
 
@@ -169,20 +209,33 @@ export function useAddArtifact(projectId: string) {
     projectId,
   )
 }
+/** 상호평가 제출 — scores 는 4축 순서(기술/기술기여 · 소통·협업·팀워크 · 문제해결 · 책임감), 전 축 1~5 필수. */
 export function useSubmitPeerEval(projectId: string) {
   return useWsMutation<{
     targetMemberId: string
-    collaboration: number
-    communication: number
-    responsibility: number
-    problemSolving: number
-    technicalContribution: number
+    scores: number[]
     comment?: string
   }>(
     (id, v) => apiClient.post(`/student/projects/${id}/peer-evaluations`, v),
     projectId,
   )
 }
+/** 상호평가 임시저장 — 자기 수행 내용 + 팀원별 점수(미입력 0)·코멘트를 함께 보관(제출로 세지 않음). */
+export function useSavePeerEvalDraft(projectId: string) {
+  return useWsMutation<{
+    selfReview: string
+    evaluations: {
+      targetMemberId: string
+      scores: number[]
+      comment?: string
+    }[]
+  }>(
+    (id, v) =>
+      apiClient.post(`/student/projects/${id}/peer-evaluations/draft`, v),
+    projectId,
+  )
+}
+
 export function useSaveSelfReview(projectId: string) {
   return useWsMutation<{ content: string }>(
     (id, v) => apiClient.put(`/student/projects/${id}/self-review`, v),
@@ -247,6 +300,113 @@ export function useAddMetric(projectId: string) {
     changeDirection?: string
   }>((id, v) => apiClient.post(`/student/projects/${id}/metrics`, v), projectId)
 }
+
+// ── 워크스페이스 항목 수정·삭제 ──────────────────────────────────────────
+// 추가만 있던 탓에 오타 하나도 고칠 수 없었다. 권한은 추가와 같은 기준(참여 멤버·인증 전).
+
+export function useEditTask(projectId: string) {
+  return useWsMutation<{
+    taskId: string
+    title: string
+    description?: string
+    status?: string
+    startAt?: string
+    dueAt?: string
+    assigneeMemberIds?: string[]
+  }>(
+    (id, { taskId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/tasks/${taskId}`, body),
+    projectId,
+  )
+}
+export function useDeleteTask(projectId: string) {
+  return useWsMutation<{ taskId: string }>(
+    (id, v) => apiClient.delete(`/student/projects/${id}/tasks/${v.taskId}`),
+    projectId,
+  )
+}
+export function useEditMeeting(projectId: string) {
+  return useWsMutation<{
+    meetingId: string
+    title: string
+    body?: string
+    heldAt?: string
+  }>(
+    (id, { meetingId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/meetings/${meetingId}`, body),
+    projectId,
+  )
+}
+export function useDeleteMeeting(projectId: string) {
+  return useWsMutation<{ meetingId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/meetings/${v.meetingId}`),
+    projectId,
+  )
+}
+export function useEditArtifact(projectId: string) {
+  return useWsMutation<{
+    artifactId: string
+    artifactType?: string
+    title: string
+    url?: string
+  }>(
+    (id, { artifactId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/artifacts/${artifactId}`, body),
+    projectId,
+  )
+}
+export function useDeleteArtifact(projectId: string) {
+  return useWsMutation<{ artifactId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/artifacts/${v.artifactId}`),
+    projectId,
+  )
+}
+export function useEditSchedule(projectId: string) {
+  return useWsMutation<{
+    scheduleId: string
+    title: string
+    description?: string
+    startsAt: string
+    /** 비우면 하루짜리 일정으로 저장된다. */
+    endsAt?: string
+  }>(
+    (id, { scheduleId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/schedules/${scheduleId}`, body),
+    projectId,
+  )
+}
+export function useDeleteSchedule(projectId: string) {
+  return useWsMutation<{ scheduleId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/schedules/${v.scheduleId}`),
+    projectId,
+  )
+}
+export function useEditMetric(projectId: string) {
+  return useWsMutation<{
+    metricId: string
+    label: string
+    description?: string
+    beforeValue?: string
+    afterValue?: string
+    changeLabel?: string
+    changeDirection?: string
+  }>(
+    (id, { metricId, ...body }) =>
+      apiClient.put(`/student/projects/${id}/metrics/${metricId}`, body),
+    projectId,
+  )
+}
+export function useDeleteMetric(projectId: string) {
+  return useWsMutation<{ metricId: string }>(
+    (id, v) =>
+      apiClient.delete(`/student/projects/${id}/metrics/${v.metricId}`),
+    projectId,
+  )
+}
+
 // 트러블슈팅 연결/해제(§52)
 export function useLinkTroubleshooting(projectId: string) {
   return useWsMutation<{ troubleshootingCaseId: string }>(

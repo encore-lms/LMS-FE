@@ -16,6 +16,7 @@ import {
   useSaveQuizTemplate,
 } from '../api/quizTemplates'
 import { GRADING_MODE_META } from '../quizzes/meta'
+import { useQuizTemplateBasePath } from '../quizzes/useQuizBasePath'
 import { templateSchema, type TemplateInput } from './template.schema'
 
 const CATEGORY_OPTIONS = [
@@ -71,10 +72,12 @@ function ToggleRow({
   )
 }
 
-// 퀴즈 템플릿 생성/편집 (/instructor/quiz-templates/new · /:templateId/edit) — §10. (Figma 1392:10014)
+// 퀴즈 템플릿 생성/편집 (/instructor|/admin quiz-templates/new · /:templateId/edit) — §10. (Figma 1392:10014)
 // §6 폼 패턴 차용한 Edit-default 통합 프레임 — 응시 기간·대상 기수·공개 설정은 인스턴스 단계 결정이라 제외.
 // 변경은 기존 파생 퀴즈에 자동 전파되지 않고 다음 복제부터 반영.
 export default function TemplateFormPage() {
+  // 강사·운영이 같은 화면을 쓴다 — 마운트 위치의 역할 프리픽스를 따라 이동한다.
+  const templateBase = useQuizTemplateBasePath()
   const { templateId } = useParams()
   const isEdit = !!templateId
   const navigate = useNavigate()
@@ -139,8 +142,8 @@ export default function TemplateFormPage() {
               '변경은 기존 파생 퀴즈에 전파되지 않고 다음 복제부터 반영됩니다',
             )
           if (thenQuestions)
-            navigate(`/instructor/quiz-templates/${detail.id}/questions`)
-          else navigate('/instructor/quiz-templates')
+            navigate(`${templateBase}/${detail.id}/questions`)
+          else navigate(templateBase)
         },
         onError: () =>
           toast.danger('템플릿 저장에 실패했어요. 다시 시도해 주세요.'),
@@ -348,7 +351,7 @@ export default function TemplateFormPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => navigate('/instructor/quiz-templates')}
+              onClick={() => navigate(templateBase)}
             >
               취소
             </Button>

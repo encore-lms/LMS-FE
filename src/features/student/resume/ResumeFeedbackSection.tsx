@@ -1,7 +1,7 @@
 import { MessageSquarePlus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { formatDateTime } from '@/shared/lib/date'
-import type { ResumeFeedbackItem } from '@/features/admin/education/types'
+import type { ResumeFeedbackItem } from '@/shared/types'
 
 /**
  * 이력서 피드백 목록(+작성) — 강사·운영 상세와 수강생 편집 화면이 함께 쓴다.

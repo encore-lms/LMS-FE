@@ -89,8 +89,11 @@ export function buildDraftWorkspace(opts: {
     peerDue: '완료 확정 후 안내',
     peerMyStatus: { label: '완료 확정 전', tone: 'info' },
     peerTeamStatus: { label: '완료 확정 전', tone: 'info' },
-    peerEvalEnabled: true,
+    // 신규는 작성 중이라 상호평가가 열릴 수 없다(개시는 완료 이후 매니저·강사가 켠다).
+    peerEvalEnabled: false,
     peerTargets: [],
+    // 만든 사람이 곧 PM — 팀원 초대·삭제 게이트가 이 값을 본다.
+    isOwner: true,
     certChecklist: [
       {
         label: '프로젝트 기본 정보 입력',

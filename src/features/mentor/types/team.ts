@@ -14,15 +14,32 @@ export type MentorTeamStatus =
   | 'completed'
   | 'early_ended'
 
-/** 팀 상태 화면 표기 — 진행 중·예약 대기·일지 필요·평가 필요·수정 요청·완료(+조기 종료). */
+/**
+ * 팀 상태 화면 표기 — 진행 중·예약 대기·일지 필요·평가 필요·수정 요청·시간 완료(+조기 종료).
+ *
+ * completed 는 '배정이 끝났다'가 아니라 '인정 시간을 다 채웠다'는 뜻이다(recognizedHours >= allocated).
+ * 시간을 채운 뒤에도 배정은 살아 있어 멘토링을 더 할 수 있고, 초과분은 excessHours 로 잡힌다.
+ * 그냥 '완료'라고 부르면 기간 표기('~ 진행 중')와 나란히 놓였을 때 모순처럼 읽힌다.
+ */
 export const MENTOR_TEAM_STATUS_LABEL: Record<MentorTeamStatus, string> = {
   in_progress: '진행 중',
   reservation_waiting: '예약 대기',
   log_needed: '일지 필요',
   change_requested: '수정 요청',
   evaluation_needed: '평가 필요',
-  completed: '완료',
+  completed: '시간 완료',
   early_ended: '조기 종료',
+}
+
+/**
+ * '배정 시간 완료' 표기 — 10 → '10시간 완료', 1 → '1시간 완료'.
+ *
+ * <p>화면에 변수 이름 그대로 'N시간 완료'가 나오던 것을 실제 배정 시간으로 바꾼다.
+ * 운영(매니저) 화면은 2026-08-04에 같은 처리를 했는데 멘토 화면만 남아 있었다(2026-08-06 QA).</p>
+ */
+export function hoursDoneLabel(allocatedHours: number | null | undefined) {
+  if (allocatedHours == null || allocatedHours <= 0) return '배정 시간 완료'
+  return `${allocatedHours}시간 완료`
 }
 
 /** 멘토-팀 배정 + 시간 집계 read model — 대시보드·내 배정 팀 공용 행. */
@@ -123,6 +140,16 @@ export interface MentorTeamMember {
   role: MentorTeamMemberRole
   /** 담당 파트 태그 — 'AI/ML'·'백엔드' 등(Figma 학생 상세·일지 참석 칩, 선택) */
   tagLabel?: string
+  /**
+   * 참석한 회차 수 — 제출된 팀 일지 기준(2026-08-05 참석 기록 신설).
+   *
+   * <p>참석 표가 생기기 전 일지에는 기록이 없어 서버가 전원 참석으로 센다.</p>
+   */
+  attendedCount?: number
+  /** 분모 — 제출된 팀 일지 수 */
+  sessionCount?: number
+  /** 마지막 참석 회차 '7/22' — 한 번도 없으면 null */
+  lastAttendedLabel?: string | null
 }
 
 export interface MentorNextReservation {

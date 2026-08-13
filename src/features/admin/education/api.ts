@@ -250,8 +250,10 @@ export function useDeleteResumeFeedback() {
 
 // 기수 프로젝트 목록(정본 §42·§43) — 운영 조회
 /**
- * 검토자 프로젝트 워크스페이스 상세(운영) — GET /admin/projects/{id}/workspace.
+ * 검토자 프로젝트 워크스페이스 상세 — GET /instructor/projects/{id}/workspace.
  * 응답은 수강생 워크스페이스(WorkspaceData)와 한 계약 — 화면을 읽기 전용으로 재사용한다.
+ * 경로가 /instructor/* 인 이유는 그쪽만 강사·운영을 함께 허용하기 때문이다(/admin/* 은 강사 배제).
+ * 서비스는 같은 requireCohortReviewer 를 거치므로 운영자 권한은 그대로다.
  */
 export function useAdminProjectWorkspace(projectId?: string | null) {
   return useQuery({
@@ -259,11 +261,15 @@ export function useAdminProjectWorkspace(projectId?: string | null) {
     enabled: !!projectId,
     queryFn: () =>
       apiClient
-        .get<WorkspaceData>(`/admin/projects/${projectId}/workspace`)
+        .get<WorkspaceData>(`/instructor/projects/${projectId}/workspace`)
         .then((r) => r.data),
   })
 }
 
+/**
+ * 기수 프로젝트 목록 — GET /instructor/cohorts/{cohortId}/projects.
+ * courseId 는 캐시 키에만 쓴다(서버는 기수만으로 조회한다).
+ */
 export function useCohortProjects(
   courseId?: string | null,
   cohortId?: string | null,
@@ -273,9 +279,7 @@ export function useCohortProjects(
     enabled: !!courseId && !!cohortId,
     queryFn: () =>
       apiClient
-        .get<
-          CohortProject[]
-        >(`/admin/courses/${courseId}/cohorts/${cohortId}/projects`)
+        .get<CohortProject[]>(`/instructor/cohorts/${cohortId}/projects`)
         .then((r) => r.data),
   })
 }

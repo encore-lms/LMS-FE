@@ -1,3 +1,7 @@
+import {
+  isUnlimitedTimeLimit,
+  UNLIMITED_TIME_LABEL,
+} from '@/shared/lib/quizTimeLimit'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -90,9 +94,13 @@ export default function QuizTakePage() {
   }, [blocker])
 
   // 제한 시간 카운트다운(분 → 초). quiz 로드 시 1회 초기화.
+  // 제한 시간 0(무제한)이면 카운트다운을 걸지 않는다 — 0을 그대로 시작값으로 두면
+  // 첫 렌더에 remain === 0 이 되어 응시하자마자 자동 제출됐다(2026-08-13 QA).
+  const unlimited = isUnlimitedTimeLimit(quiz?.timeLimitMinutes)
   useEffect(() => {
-    if (quiz && remain === null) setRemain(quiz.timeLimitMinutes * 60)
-  }, [quiz, remain])
+    if (quiz && !unlimited && remain === null)
+      setRemain(quiz.timeLimitMinutes * 60)
+  }, [quiz, unlimited, remain])
   useEffect(() => {
     if (remain === null) return
     const t = setInterval(
@@ -160,6 +168,7 @@ export default function QuizTakePage() {
   const goPrev = () => setIdx((i) => Math.max(0, i - 1))
 
   // 시간 초과 시 자동 제출(미답 포함). 응시 중일 때만 1회 동작.
+  // 무제한이면 remain 이 계속 null 이라 여기로 들어오지 않는다.
   useEffect(() => {
     if (remain === 0 && lock.phase === 'active') finalize()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -278,19 +287,26 @@ export default function QuizTakePage() {
                   남은 시간
                 </span>
                 <span className="text-fg text-[22px] font-bold tracking-[0.5px]">
-                  {remain === null ? '--:--:--' : fmt(remain)}
+                  {unlimited
+                    ? UNLIMITED_TIME_LABEL
+                    : remain === null
+                      ? '--:--:--'
+                      : fmt(remain)}
                 </span>
               </div>
-              <div className="bg-border h-1 w-[280px] overflow-hidden rounded-full">
-                <div
-                  className="bg-warning h-1 rounded-full"
-                  style={{
-                    width: quiz
-                      ? `${Math.max(0, Math.min(100, ((remain ?? 0) / (quiz.timeLimitMinutes * 60)) * 100))}%`
-                      : '0%',
-                  }}
-                />
-              </div>
+              {/* 무제한이면 줄어들 막대가 없다 — 남은 시간이 0인 것처럼 보이면 안 된다. */}
+              {!unlimited && (
+                <div className="bg-border h-1 w-[280px] overflow-hidden rounded-full">
+                  <div
+                    className="bg-warning h-1 rounded-full"
+                    style={{
+                      width: quiz
+                        ? `${Math.max(0, Math.min(100, ((remain ?? 0) / (quiz.timeLimitMinutes * 60)) * 100))}%`
+                        : '0%',
+                    }}
+                  />
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-fg-muted text-[11px] font-medium">

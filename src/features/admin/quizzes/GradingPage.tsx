@@ -1,3 +1,4 @@
+import { isUnlimitedTimeLimit } from '@/shared/lib/quizTimeLimit'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
@@ -286,9 +287,11 @@ export default function GradingPage() {
               {data.student.name} · {data.student.cohort} · {data.quizTitle}
             </p>
             <p className="text-fg-muted mt-1 text-sm">
-              제출 {data.submittedAt} · 제한 시간 {data.timeLimitMinutes}분 중{' '}
-              {data.timeUsedMinutes}분 사용 · 자동 채점 {data.autoGradedCount}/
-              {data.totalQuestionCount} 완료
+              제출 {data.submittedAt} ·{' '}
+              {isUnlimitedTimeLimit(data.timeLimitMinutes)
+                ? `제한 없음 · ${data.timeUsedMinutes}분 사용`
+                : `제한 시간 ${data.timeLimitMinutes}분 중 ${data.timeUsedMinutes}분 사용`}{' '}
+              · 자동 채점 {data.autoGradedCount}/{data.totalQuestionCount} 완료
             </p>
           </div>
 

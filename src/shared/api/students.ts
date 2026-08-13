@@ -106,7 +106,9 @@ export interface CohortStudent {
 export function useCohortRoster(cohortId?: string | null) {
   return useQuery({
     queryKey: [...instructorKeys.all, 'cohort-roster', cohortId ?? ''],
-    enabled: !!cohortId,
+    // 'all' 은 기수 선택 UI 의 센티널(cohortContext 기본값)이라 API 로 보내면 안 된다 —
+    // BE 는 UUID 만 받아 400 이 났다. 전체 탭에서는 로스터 없이 응답의 이름(studentName)으로 표시한다.
+    enabled: !!cohortId && cohortId !== 'all',
     queryFn: () =>
       apiClient
         .get<{ items: CohortStudent[] }>('/users/cohort-students', { cohortId })

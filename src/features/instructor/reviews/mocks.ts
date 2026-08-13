@@ -645,25 +645,81 @@ function buildProjectDetail(id: string): ProjectReviewDetail | null {
   }
 }
 
-function buildTsDetail(id: string): TsReviewDetail | null {
-  const row = tsReviews.rows.find((r) => r.id === id)
-  if (!row) return null
-  return {
-    id: row.id,
-    title: row.title,
-    studentUserId: 'stu-1',
-    cohortLabel: row.cohortLabel,
-    status: row.status,
-    independent: row.solvedBy === '독립',
-    daysSpent: Number.parseInt(row.durationDays ?? '0', 10) || 0,
-    createdAt: '2026.07.10',
+// 사례별 STAR 본문 — 목록 제목과 짝이 맞아야 한다.
+// 예전에는 모든 id가 같은 OOM 본문을 돌려줘 "검토 버튼이 전부 같은 상세로 간다"로 보였다(2026-08-13 QA).
+const tsBodies: Record<
+  string,
+  { situation: string; resolution: string; result: string; stack: string[] }
+> = {
+  'ts-1': {
     situation:
       '배치 파이프라인 실행 중 워커 메모리가 지속 증가해 OOM으로 태스크가 실패했다.',
     resolution:
       '힙 덤프로 누수 지점을 특정하고 커넥션 풀 반환 누락을 수정, 배치 크기를 조정했다.',
     result: '메모리 사용량이 안정화되어 전체 파이프라인이 재실행 없이 완주했다.',
-    tags: [row.category],
     stack: ['Python', 'Airflow'],
+  },
+  'ts-2': {
+    situation:
+      '배포 직후 파드가 반복해서 OOMKilled로 재시작해 서비스가 간헐적으로 끊겼다.',
+    resolution:
+      'requests/limits와 JVM 힙 설정이 어긋난 것을 확인해 컨테이너 메모리 한도에 맞춰 힙을 다시 잡았다.',
+    result: '재시작이 멈추고 파드가 하루 이상 무중단으로 유지됐다.',
+    stack: ['Kubernetes', 'Java'],
+  },
+  'ts-3': {
+    situation:
+      '문서를 늘렸는데 오히려 RAG 응답의 근거 문단이 어긋나 정확도가 떨어졌다.',
+    resolution:
+      '청크 경계가 문장을 자르는 것을 확인해 분할 기준을 문단 단위로 바꾸고 임베딩 모델을 교체해 재색인했다.',
+    result: '샘플 질의 50건의 근거 적중률이 눈에 띄게 올라가 재색인 기준을 문서로 남겼다.',
+    stack: ['Python', 'LangChain'],
+  },
+  'ts-4': {
+    situation:
+      '팀원마다 같은 화면에서 서로 다른 목록이 보이거나 저장이 거부됐다.',
+    resolution:
+      'RLS 정책이 역할별로 중복 정의돼 서로를 가리는 것을 찾아 정책을 하나로 합치고 테스트 계정으로 검증했다.',
+    result: '역할별 접근 범위가 의도대로 정리되고 저장 거부가 사라졌다.',
+    stack: ['Supabase', 'PostgreSQL'],
+  },
+  'ts-5': {
+    situation:
+      '월별 누적 집계 쿼리가 데이터가 늘면서 응답이 수십 초까지 늘어졌다.',
+    resolution:
+      '윈도우 함수의 정렬 범위를 좁히고 사전 집계 테이블을 두어 스캔량을 줄였다.',
+    result: '같은 결과를 유지하면서 조회 시간이 크게 줄어 대시보드가 즉시 뜨게 됐다.',
+    stack: ['DuckDB', 'SQL'],
+  },
+  'ts-6': {
+    situation:
+      '동시 주문 처리에서 간헐적으로 deadlock이 나 결제 트랜잭션이 실패했다.',
+    resolution:
+      '로그에서 잠금 획득 순서가 트랜잭션마다 다른 것을 확인해 갱신 순서를 한 방향으로 통일했다.',
+    result: '재현 스크립트로 동시 100건을 돌려도 deadlock이 나지 않았다.',
+    stack: ['MySQL', 'Spring'],
+  },
+}
+
+function buildTsDetail(id: string): TsReviewDetail | null {
+  const row = tsReviews.rows.find((r) => r.id === id)
+  if (!row) return null
+  const body = tsBodies[row.id] ?? tsBodies['ts-1']
+  return {
+    id: row.id,
+    title: row.title,
+    studentUserId: `stu-${row.id.replace('ts-', '')}`,
+    studentName: row.studentName,
+    cohortLabel: row.cohortLabel,
+    status: row.status,
+    independent: row.solvedBy === '독립',
+    daysSpent: Number.parseInt(row.durationDays ?? '0', 10) || 0,
+    createdAt: '2026.07.10',
+    situation: body.situation,
+    resolution: body.resolution,
+    result: body.result,
+    tags: [row.category],
+    stack: body.stack,
     attachments: [
       {
         id: 'att-1',

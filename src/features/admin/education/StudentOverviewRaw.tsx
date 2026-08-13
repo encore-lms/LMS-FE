@@ -281,7 +281,7 @@ export function StudentOverviewRaw({
       </RawTable>
 
       <RawTable
-        table="learning.records(review-grid)"
+        table="learning.records(records/review)"
         desc="기록실 — 블로그/스터디/자격증 그리드 행 원본(이름 조인)"
       >
         <KV

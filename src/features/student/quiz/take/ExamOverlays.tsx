@@ -1,3 +1,4 @@
+import { timeLimitLabel } from '@/shared/lib/quizTimeLimit'
 import { Button } from '@/components/ui/Button'
 
 // 응시 집중 모드 오버레이 2종 — 시작 게이트(인트로)와 전체화면 이탈 시 재진입 오버레이.
@@ -36,7 +37,8 @@ export function ExamIntro({
           </span>
           <h1 className="text-fg text-[22px] font-bold">{title}</h1>
           <p className="text-fg-subtle text-[13px]">
-            총 {total > 0 ? total : '—'}문항 · 제한 시간 {timeLimitMinutes}분
+            총 {total > 0 ? total : '—'}문항 · 제한 시간{' '}
+            {timeLimitLabel(timeLimitMinutes)}
           </p>
         </div>
 

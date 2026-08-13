@@ -100,19 +100,15 @@ export default function RequestsPage({
     })
   }, [requests, periodDays, q, anchorMs])
 
-  // 탭 안에서는 활동 시각 최신순 — BE는 요청 일시 하나로만 정렬해 내려주므로
-  // '확정' 탭에서도 확정 일시가 아닌 요청 순으로 섞여 보였다. activityAt 은 상태별로
-  // 의미 있는 시각(확정=확정 일시, 조정 제안=제안 일시, 그 외=요청 일시)이다.
-  const visible = useMemo(
-    () =>
-      searched
-        .filter((r) => matchRequestTab(r, tab))
-        .sort(
-          (a, b) =>
-            new Date(b.activityAt).getTime() - new Date(a.activityAt).getTime(),
-        ),
-    [searched, tab],
-  )
+  // 앞으로 할 일은 임박한 순으로 본다 — BE가 이미 일정(확정=확정 일시, 조정 제안=제안 일시,
+  // 그 밖에는 희망 일시) 오름차순으로 내려주므로 그 순서를 그대로 쓴다.
+  // 예전에는 여기서 activityAt 내림차순으로 다시 정렬해, 가장 먼 예약이 맨 위에 왔다(2026-08-13 QA).
+  // 지나간 탭(완료·거절/취소)만 최근 순이 자연스러워 뒤집는다.
+  const visible = useMemo(() => {
+    const rows = searched.filter((r) => matchRequestTab(r, tab))
+    const past = tab === 'completed' || tab === 'closed'
+    return past ? [...rows].reverse() : rows
+  }, [searched, tab])
 
   // KPI — 상태 집계(완료만 캡션과 동일한 '최근 30일' 고정 창 기준).
   const kpis = {

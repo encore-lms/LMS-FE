@@ -18,7 +18,12 @@ import {
 import { MileageTabs } from '../MileageTabs'
 import { CohortScopeSelect } from '../CohortScope'
 import { usePurchaseProcess, usePurchaseQueue } from './api'
-import type { PurchaseRequest, PurchaseStatus, PurchaseType } from './types'
+import type {
+  PurchaseProcessAction,
+  PurchaseRequest,
+  PurchaseStatus,
+  PurchaseType,
+} from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { SearchInput } from '@/components/ui/SearchInput'
 
@@ -57,7 +62,7 @@ export default function PurchaseRequestsPage() {
   const [process, setProcess] = useState<{
     spec: ActionModalSpec
     id: string
-    next: PurchaseStatus
+    next: PurchaseProcessAction
   } | null>(null)
 
   const requests = useMemo(() => data?.requests ?? [], [data])
@@ -83,10 +88,14 @@ export default function PurchaseRequestsPage() {
       limitExceededCount: 0,
     }
 
-  const NEXT_STATUS: Record<'승인' | '수정 요청' | '반려', PurchaseStatus> = {
-    승인: 'approved',
-    '수정 요청': 'revision',
-    반려: 'rejected',
+  // 버튼 → 전송 액션. 표시용 상태(STATUS_META)와 토큰이 다르다.
+  const NEXT_ACTION: Record<
+    '승인' | '수정 요청' | '반려',
+    PurchaseProcessAction
+  > = {
+    승인: 'approve',
+    '수정 요청': 'request_changes',
+    반려: 'reject',
   }
   const openProcess = (
     r: PurchaseRequest,
@@ -94,7 +103,7 @@ export default function PurchaseRequestsPage() {
   ) => {
     setProcess({
       id: r.id,
-      next: NEXT_STATUS[action],
+      next: NEXT_ACTION[action],
       spec: {
         title: `구매 요청 ${action}`,
         subtitle: `${r.studentName} · ${r.productName}`,

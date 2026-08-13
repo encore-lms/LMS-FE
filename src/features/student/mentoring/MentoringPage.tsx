@@ -273,6 +273,10 @@ function MentoringView({ data }: { data: MentoringData }) {
               onCancel={() => setCancelTarget(request)}
               onReject={() => setCancelTarget(request)}
               onAccept={() => acceptProposal(request)}
+              busy={
+                cancelRequestMutation.isPending ||
+                acceptProposalMutation.isPending
+              }
             />
           ))}
           {(display.reservations ?? []).map((reservation) => (
@@ -310,6 +314,7 @@ function MentoringView({ data }: { data: MentoringData }) {
         requester={cancelTarget?.student.person}
         onClose={() => setCancelTarget(null)}
         onConfirm={cancelRequest}
+        busy={cancelRequestMutation.isPending}
       />
     </div>
   )

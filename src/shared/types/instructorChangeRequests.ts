@@ -10,11 +10,15 @@ export type ChangeRequestStatus =
   | 'approved'
   | 'rejected'
 
-/** 변경 제안 검토 결과 — 승인(사유 없음) / 반려(사유 필수) */
-export type ChangeRequestAction = 'approved' | 'rejected'
+/**
+ * 변경 제안 검토 결과 — 승인(사유 없음) / 반려(사유 필수).
+ *
+ * 전송용 액션 토큰이라 상태(ChangeRequestStatus)와 값이 다르다 — BE 정본은 명령형 snake 다.
+ */
+export type ChangeRequestAction = 'approve' | 'reject'
 
 /** 재인증 검토 결과 — 재인증 승인(사유 없음) / 보완요청(사유 필수) */
-export type RecertificationAction = 'approved' | 'changes_requested'
+export type RecertificationAction = 'approve' | 'request_changes'
 
 /** 변경된 내역 1건 — 접힘 카드에서 이전/변경 값 비교 */
 export interface ChangeDiffItem {

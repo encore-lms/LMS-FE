@@ -67,7 +67,7 @@ export default function ChangeRequestsPage() {
     try {
       await resolveMutation.mutateAsync({
         id: row.id,
-        action: verdict === '승인' ? 'approved' : 'rejected',
+        action: verdict === '승인' ? 'approve' : 'reject',
         reason,
       })
       toast.success(`${row.target} 변경 제안 ${verdict}`)

@@ -62,7 +62,7 @@ export default function RecertificationsPage() {
     try {
       await resolveMutation.mutateAsync({
         id: row.id,
-        action: verdict === '재인증 승인' ? 'approved' : 'changes_requested',
+        action: verdict === '재인증 승인' ? 'approve' : 'request_changes',
         reason,
       })
       toast.success(`${row.target} ${verdict}`)

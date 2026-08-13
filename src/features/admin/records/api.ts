@@ -28,10 +28,10 @@ export function useRecordSubmissionDetail(
   })
 }
 
-// 결정 → API 액션 세그먼트 (P0_15_24 API명세: approve / request-changes / reject)
-const ACTION_PATH: Record<RecordDecision, string> = {
+// 결정 → 액션 토큰(승인 상태머신 정본). 예전에는 URL 세그먼트로 결정을 보냈다.
+const ACTION_TOKEN: Record<RecordDecision, string> = {
   approve: 'approve',
-  changes: 'request-changes',
+  changes: 'request_changes',
   reject: 'reject',
 }
 
@@ -43,7 +43,7 @@ export interface RecordReviewActionVariables {
 }
 
 /**
- * 검토 처리 mutation — POST /admin/records/review/:recordId/{approve|request-changes|reject}.
+ * 검토 처리 mutation — PATCH /admin/records/review/:recordId (액션은 본문).
  * 반려·보완은 studentVisibleComment 필수(누락 시 422 REVIEW_REASON_REQUIRED — FE는 버튼 disabled로 선차단).
  * 성공 시 검토 큐 + 해당 상세 캐시 무효화(adminKeys SSOT).
  */
@@ -56,13 +56,13 @@ export function useRecordReviewAction() {
       payload,
     }: RecordReviewActionVariables) =>
       apiClient
-        .post<{
+        .patch<{
           id: string
           status: string
-        }>(
-          `/admin/records/review/${recordId}/${ACTION_PATH[decision]}`,
-          payload,
-        )
+        }>(`/admin/records/review/${recordId}`, {
+          action: ACTION_TOKEN[decision],
+          ...payload,
+        })
         .then((r) => r.data),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({

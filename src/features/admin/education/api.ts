@@ -449,7 +449,11 @@ export function useCohortAttendanceIssues(cohortId: string | null) {
   })
 }
 
-/** 기록실 그리드('수강생 종합 데이터' 탭) — 수강생별 블로그/스터디/자격증 진행 요약용(admin 미러). */
+/**
+ * 기록실 그리드('수강생 종합 데이터' 탭) — 수강생별 블로그/스터디/자격증 진행 요약.
+ * 경로는 /instructor 정본 — BE가 운영자+명시 기수를 탭으로 좁히지 않고 그대로 조회한다
+ * (구 /admin/records/review-grid 미러 수렴, LMS-BE#626).
+ */
 export function useAdminRecordGrid(cohortId: string | null) {
   return useQuery({
     queryKey: [
@@ -459,9 +463,9 @@ export function useAdminRecordGrid(cohortId: string | null) {
     ] as const,
     queryFn: () =>
       apiClient
-        .get<InstructorRecordReviewData>('/admin/records/review-grid', {
-          cohortId: cohortId ?? undefined,
-        })
+        .get<InstructorRecordReviewData>(
+          `/instructor/records/review?cohortId=${encodeURIComponent(cohortId ?? '')}`,
+        )
         .then((r) => r.data),
     enabled: !!cohortId,
   })

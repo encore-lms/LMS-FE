@@ -198,6 +198,34 @@ describe('MentoringPage 다건 요청 정책', () => {
     expect(cancelMutate).toHaveBeenCalledWith('request-2', expect.anything())
   })
 
+  // 전송 중에는 액션을 막는다 — 연타하면 두 번째 호출이 서버에서
+  // "확정 전 요청만 취소할 수 있습니다"(422)로 떨어져 실패 토스트만 뜬다(2026-08-13 QA).
+  it('취소·수락 전송 중에는 카드와 모달 버튼을 비활성화한다', async () => {
+    const user = userEvent.setup()
+    vi.mocked(useCancelMentoringRequest).mockReturnValue({
+      mutate: cancelMutate,
+      isPending: true,
+    } as unknown as ReturnType<typeof useCancelMentoringRequest>)
+    const request = activeRequest('request-1', '박수진', 'proposed')
+    renderPage(
+      mentoringData({
+        activeRequest: request,
+        activeRequests: [request],
+        requestPolicy: policy({ inUse: 1, proposedCount: 1 }),
+      }),
+    )
+
+    expect(screen.getByRole('button', { name: '요청 취소' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: '제안 거절 후 새로 요청' }),
+    ).toBeDisabled()
+    expect(screen.getByRole('button', { name: '처리 중…' })).toBeDisabled()
+
+    // 모달을 열려면 카드 버튼이 막혀 있으므로 제안 수락 경로 대신 직접 확인한다.
+    await user.click(screen.getByRole('button', { name: '요청 취소' }))
+    expect(cancelMutate).not.toHaveBeenCalled()
+  })
+
   it('요청 대기와 확정 예약으로 한도에 도달한 원인을 구분한다', () => {
     const requests = [
       activeRequest('request-1', '박수진'),

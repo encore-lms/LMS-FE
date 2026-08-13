@@ -52,11 +52,14 @@ export function ActiveRequestCard({
   onCancel,
   onReject,
   onAccept,
+  busy = false,
 }: {
   request: MentoringActiveRequest
   onCancel: () => void
   onReject: () => void
   onAccept: () => void
+  // 요청 취소·제안 수락이 진행 중 — 연타로 같은 요청을 두 번 보내면 두 번째가 422로 떨어진다.
+  busy?: boolean
 }) {
   const hasProposal = request.status === 'proposed' && !!request.proposal
   const title = hasProposal
@@ -132,7 +135,8 @@ export function ActiveRequestCard({
             <button
               type="button"
               onClick={onCancel}
-              className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3.5 py-[9px] text-[12px] font-medium transition-colors"
+              disabled={busy}
+              className="border-border text-fg-muted hover:bg-surface-muted rounded-lg border px-3.5 py-[9px] text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               요청 취소
             </button>
@@ -141,16 +145,18 @@ export function ActiveRequestCard({
                 <button
                   type="button"
                   onClick={onReject}
-                  className="border-danger text-danger hover:bg-danger-bg rounded-lg border px-3.5 py-[9px] text-[12px] font-medium transition-colors"
+                  disabled={busy}
+                  className="border-danger text-danger hover:bg-danger-bg rounded-lg border px-3.5 py-[9px] text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   제안 거절 후 새로 요청
                 </button>
                 <button
                   type="button"
                   onClick={onAccept}
-                  className="bg-warning hover:bg-warning/90 rounded-lg px-[18px] py-[9px] text-[12px] font-bold text-white transition-colors"
+                  disabled={busy}
+                  className="bg-warning hover:bg-warning/90 rounded-lg px-[18px] py-[9px] text-[12px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  제안 수락 후 확정
+                  {busy ? '처리 중…' : '제안 수락 후 확정'}
                 </button>
               </>
             )}

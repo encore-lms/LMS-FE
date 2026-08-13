@@ -42,13 +42,15 @@ beforeEach(() => {
 
 describe('RequestsPage', () => {
   // QA: "요청대기·조정제안·확정·완료·거절·취소가 시간순으로 뜨도록 필요."
-  // BE는 요청 일시 하나로만 정렬해 내려주므로 '확정' 탭도 확정 일시 순이 아니었다.
-  it('탭 안에서 활동 시각 최신순으로 정렬한다', () => {
+  // BE가 일정(확정=확정 일시, 조정 제안=제안 일시, 그 밖은 희망 일시) 오름차순으로 내려주므로
+  // FE는 그 순서를 그대로 쓴다. 예전에는 여기서 최신순으로 되뒤집어 가장 먼 예약이 맨 위에 왔다.
+  it('앞으로 할 일 탭은 BE가 내려준 임박한 순서를 그대로 쓴다', () => {
     const base = buildMentoringRequestsData()
     const [first, second] = base.requests.filter(
       (r) => r.status === 'requested',
     )
-    // 서버 순서를 일부러 역순으로 준다 — FE 정렬이 없으면 그대로 렌더된다.
+    // BE 순서 = 임박한 순. activityAt(최신순 키)은 일부러 반대로 준다 —
+    // FE가 다시 정렬하면 순서가 뒤집혀 실패한다.
     mockList({
       data: {
         ...base,
@@ -63,8 +65,8 @@ describe('RequestsPage', () => {
     renderPage()
 
     const rendered = screen.getAllByText(/팀$/).map((el) => el.textContent)
-    expect(rendered.indexOf(second.teamName)).toBeLessThan(
-      rendered.indexOf(first.teamName),
+    expect(rendered.indexOf(first.teamName)).toBeLessThan(
+      rendered.indexOf(second.teamName),
     )
   })
 

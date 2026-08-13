@@ -582,10 +582,10 @@ let tsReviews: TsReviewData = {
   ],
 }
 
-// 인증/보완 액션 본문 — certify(사유 없음) / requestChanges(사유 필수).
+// 인증/보완 액션 본문 — certify(사유 없음) / request_changes(사유 필수).
 type ReviewAction =
   | { action: 'certify' }
-  | { action: 'requestChanges'; reason: string }
+  | { action: 'request_changes'; reason: string }
 
 // 프로젝트 카운트 재계산 — requested/supplementing/certified 분포.
 function recountProjects(
@@ -764,7 +764,7 @@ export const handlers = [
       : HttpResponse.json({ message: 'not found' }, { status: 404 })
   }),
 
-  // §14 프로젝트 인증/보완 — certify: requested→certified / requestChanges: →supplementing(보완 중).
+  // §14 프로젝트 인증/보완 — certify: requested→certified / request_changes: →supplementing(보완 중).
   http.patch(
     '/api/instructor/projects/review/:id',
     async ({ params, request }) => {
@@ -787,7 +787,7 @@ export const handlers = [
     },
   ),
 
-  // §15 트러블슈팅 인증/보완 — certify: pending→certified / requestChanges: →supplementing(보완 중).
+  // §15 트러블슈팅 인증/보완 — certify: pending→certified / request_changes: →supplementing(보완 중).
   http.patch(
     '/api/instructor/troubleshooting/review/:id',
     async ({ params, request }) => {

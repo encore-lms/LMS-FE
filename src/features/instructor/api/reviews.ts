@@ -74,7 +74,8 @@ export function useTsReviewDetail(caseId: string | null) {
 }
 
 // ── 인증/보완 요청 (mutations) — 실 BE(InstructorReviewActionController) 연동. ──
-// 액션 계약: certify(사유 없음) → 인증 완료 / requestChanges(사유 필수) → 보완 요청.
+// 액션 계약: certify(사유 없음) → 인증 완료 / request_changes(사유 필수) → 보완 요청.
+// 토큰은 BE 정본(명령형 snake) — BE 는 구 토큰(requestChanges)도 당분간 받지만 보내지 않는다.
 
 interface CertifyInput {
   id: string
@@ -105,7 +106,7 @@ export function useRequestProjectChanges() {
     mutationFn: ({ id, reason }) =>
       apiClient
         .patch<void>(`/instructor/projects/review/${id}`, {
-          action: 'requestChanges',
+          action: 'request_changes',
           reason,
         })
         .then(() => undefined),
@@ -175,7 +176,7 @@ export function useRequestTsChanges() {
     mutationFn: ({ id, reason }) =>
       apiClient
         .patch<void>(`/instructor/troubleshooting/review/${id}`, {
-          action: 'requestChanges',
+          action: 'request_changes',
           reason,
         })
         .then(() => undefined),

@@ -1,3 +1,4 @@
+import { timeLimitLabel } from '@/shared/lib/quizTimeLimit'
 import { cn } from '@/shared/lib/cn'
 import type { StudentQuizListItem } from '../types'
 import { CATEGORY_BADGE, GRADING_LABEL, dDayTone } from './quizDisplay'
@@ -76,7 +77,7 @@ export function AvailableQuizRow({
         <div className="text-fg-muted flex items-center gap-3.5 text-[11px] font-medium">
           <span className="flex items-center gap-1">
             {Clock}
-            {item.quiz.timeLimitMinutes}분
+            {timeLimitLabel(item.quiz.timeLimitMinutes)}
           </span>
           <Sep />
           <span className="flex items-center gap-1">

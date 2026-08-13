@@ -85,7 +85,7 @@ describe('cloneTemplateQuestions', () => {
 
     const r = await cloneTemplateQuestions('tpl-1', 'quiz-9')
 
-    expect(r).toEqual({ copied: 4, skipped: 0, total: 4 })
+    expect(r).toEqual({ copied: 4, skipped: 0, failed: 0, total: 4 })
     const calls = vi.mocked(apiClient.post).mock.calls
     // 문항 4개 + 사용 마킹 1회
     expect(calls).toHaveLength(5)
@@ -128,6 +128,23 @@ describe('cloneTemplateQuestions', () => {
 
     const r = await cloneTemplateQuestions('tpl-1', 'quiz-9')
 
-    expect(r).toEqual({ copied: 1, skipped: 1, total: 2 })
+    expect(r).toEqual({ copied: 1, skipped: 1, failed: 0, total: 2 })
+  })
+
+  // 정답 미보관과 저장 실패는 원인이 달라 안내 문구도 달라야 한다.
+  it('저장이 실패한 문항은 failed로 따로 센다', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: pool } as never)
+    let n = 0
+    vi.mocked(apiClient.post).mockImplementation((url: string) => {
+      if (url.endsWith('/use')) return Promise.resolve({ data: {} } as never)
+      n += 1
+      return n === 2
+        ? Promise.reject(new Error('500'))
+        : Promise.resolve({ data: {} } as never)
+    })
+
+    const r = await cloneTemplateQuestions('tpl-1', 'quiz-9')
+
+    expect(r).toEqual({ copied: 3, skipped: 1, failed: 1, total: 4 })
   })
 })

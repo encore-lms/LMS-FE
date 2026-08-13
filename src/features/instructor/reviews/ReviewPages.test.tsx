@@ -395,4 +395,54 @@ describe('TsReviewPage (§15)', () => {
       screen.getByRole('dialog', { name: '검토 상세' }),
     ).toBeInTheDocument()
   })
+
+  // 상세의 '수강생'은 실명이어야 한다. BE 상세 응답이 이름을 주면 그대로 쓰고,
+  // 없으면 담당 기수 로스터로 join 한다. 예전에는 화면이 기수를 넘기지 않아 늘 '수강생' 폴백이었다(2026-08-13 QA).
+  it('상세의 수강생은 BE 이름을 쓰고, 없으면 기수 로스터로 실명을 붙인다', async () => {
+    const user = userEvent.setup()
+    const detail = {
+      id: 'ts-1',
+      title: 'Airflow DAG 메모리 누수 추적',
+      studentUserId: 'stu-1',
+      studentName: '황수빈',
+      cohortLabel: 'DA 4기',
+      status: 'pending' as const,
+      independent: true,
+      daysSpent: 3,
+      createdAt: '2026.07.10',
+      situation: '상황',
+      resolution: '해결',
+      result: '결과',
+      tags: ['성능최적화'],
+      stack: ['Python'],
+      attachments: [],
+      project: null,
+      certifiedAt: null,
+      reviewComment: null,
+    }
+    const { unmount } = renderWith(<TsReviewPage />)
+    // renderWith 가 상세 훅을 미조회 상태로 되돌리므로 그 뒤에 덮어쓴다.
+    vi.mocked(useTsReviewDetail).mockReturnValue({
+      data: detail,
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useTsReviewDetail>)
+    await user.click(screen.getByText('Airflow DAG 메모리 누수 추적'))
+    const panel = await screen.findByRole('dialog', { name: '검토 상세' })
+    expect(within(panel).getByText('황수빈')).toBeInTheDocument()
+    unmount()
+
+    // BE 이름이 없으면 로스터(stu-1 = 박지훈)로 붙인다 (라벨과 겹치는 '수강생' 폴백이 뜨면 안 된다).
+    renderWith(<TsReviewPage />)
+    vi.mocked(useTsReviewDetail).mockReturnValue({
+      data: { ...detail, studentName: undefined },
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useTsReviewDetail>)
+    await user.click(screen.getByText('Airflow DAG 메모리 누수 추적'))
+    const panel2 = await screen.findByRole('dialog', { name: '검토 상세' })
+    expect(within(panel2).getByText('박지훈')).toBeInTheDocument()
+  })
 })

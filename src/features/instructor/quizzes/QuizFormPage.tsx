@@ -271,12 +271,19 @@ export default function QuizFormPage() {
         toast.danger(
           '템플릿 문항 복제에 실패했어요 — 문항을 직접 추가해 주세요',
         )
-      } else if (r.copied > 0) {
-        toast.success(
-          `템플릿 문항 ${r.copied}개 복제됨${
-            r.skipped ? ` · ${r.skipped}개 제외(정답 미보관)` : ''
-          }`,
+      } else if (r.skipped > 0) {
+        // 일부만 넘어온 건 성공이 아니다 — 빠진 문항 수와 사유를 그대로 알린다.
+        const reason =
+          r.failed === r.skipped
+            ? '저장 실패'
+            : r.failed > 0
+              ? `정답 미보관 ${r.skipped - r.failed}개 · 저장 실패 ${r.failed}개`
+              : '정답 미보관'
+        toast.warning(
+          `템플릿 문항 ${r.copied}개 복제 · ${r.skipped}개 제외(${reason}) — 빠진 문항은 직접 추가해 주세요`,
         )
+      } else if (r.copied > 0) {
+        toast.success(`템플릿 문항 ${r.copied}개 복제됨`)
       }
     }
     navigate(editUrl(savedId, openAdd))
@@ -507,13 +514,19 @@ export default function QuizFormPage() {
               <FieldLabel required>제한 시간(분)</FieldLabel>
               <input
                 type="number"
+                min={0}
                 className={FIELD}
                 placeholder="90"
                 {...register('timeLimitMin')}
               />
-              {errors.timeLimitMin && (
+              {errors.timeLimitMin ? (
                 <span className="text-danger mt-1 block text-xs">
                   {errors.timeLimitMin.message}
+                </span>
+              ) : (
+                // 템플릿(제한 시간 기본값)과 같은 규칙 — 0이면 시간 제한 없이 응시한다.
+                <span className="text-fg-subtle mt-1 block text-xs">
+                  0을 넣으면 제한 없음
                 </span>
               )}
             </div>

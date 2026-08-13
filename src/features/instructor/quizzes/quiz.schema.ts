@@ -11,10 +11,12 @@ export const quizSchema = z
     category: z.string().trim().max(50, '카테고리는 50자 이내로 입력해주세요').optional(),
     startAt: z.string().trim().min(1, '시작일을 입력해주세요'),
     endAt: z.string().trim().min(1, '종료일을 입력해주세요'),
+    // 0 = 무제한. 템플릿(defaultTimeLimitMin)이 0을 허용하는데 여기서 1분 이상만 받아
+    // 무제한 템플릿으로 복제하면 저장이 조용히 막혔다(2026-08-13 QA).
     timeLimitMin: z.coerce
       .number({ invalid_type_error: '제한 시간을 분 단위 숫자로 입력해주세요' })
       .int('제한 시간은 분 단위 정수로 입력해주세요')
-      .min(1, '제한 시간은 1분 이상이어야 해요'),
+      .min(0, '제한 시간은 0(무제한) 이상이어야 해요'),
   })
   .refine((v) => v.startAt < v.endAt, {
     path: ['endAt'],

@@ -7,6 +7,8 @@ export interface CloneResult {
   copied: number
   /** 정답 미보관(구버전 데이터) 또는 저장 실패로 건너뛴 문항 수 */
   skipped: number
+  /** 그중 저장이 실패한 수 — 원인이 달라 안내 문구도 달라야 한다. */
+  failed: number
   total: number
 }
 
@@ -22,6 +24,7 @@ export async function cloneTemplateQuestions(
   )
   let copied = 0
   let skipped = 0
+  let failed = 0
   for (const q of data.questions) {
     const answer = parseAnswerDraft(q.type, q.choices, q.answerKey)
     // 템플릿 서술형 채점 기준은 modelAnswer 컬럼에 보관.
@@ -44,6 +47,7 @@ export async function cloneTemplateQuestions(
       copied++
     } catch {
       skipped++
+      failed++
     }
   }
   // 사용 마킹(useCount·lastUsedAt) — 마킹 실패가 복제 자체를 깨면 안 되므로 무시.
@@ -52,5 +56,5 @@ export async function cloneTemplateQuestions(
   } catch {
     /* noop */
   }
-  return { copied, skipped, total: data.questions.length }
+  return { copied, skipped, failed, total: data.questions.length }
 }

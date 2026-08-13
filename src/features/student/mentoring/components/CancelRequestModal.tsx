@@ -8,11 +8,14 @@ export function CancelRequestModal({
   requester,
   onClose,
   onConfirm,
+  busy = false,
 }: {
   open: boolean
   requester?: string
   onClose: () => void
   onConfirm: () => void
+  // 취소 요청 전송 중 — 연타하면 두 번째 호출이 "확정 전 요청만 취소할 수 있습니다"로 실패한다.
+  busy?: boolean
 }) {
   return (
     <Modal
@@ -24,16 +27,18 @@ export function CancelRequestModal({
           <button
             type="button"
             onClick={onClose}
-            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold"
+            disabled={busy}
+            className="border-border text-fg h-10 rounded-[10px] border px-[18px] text-[14px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
           >
             돌아가기
           </button>
           <button
             type="button"
             onClick={onConfirm}
+            disabled={busy}
             className={buttonClass({ variant: 'danger', size: 'md' })}
           >
-            요청 취소
+            {busy ? '취소 처리 중…' : '요청 취소'}
           </button>
         </>
       }

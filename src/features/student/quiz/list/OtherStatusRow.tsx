@@ -1,3 +1,4 @@
+import { timeLimitLabel } from '@/shared/lib/quizTimeLimit'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import type { StudentQuizListItem } from '../types'
@@ -28,7 +29,7 @@ export function OtherStatusRow({
   const closed = item.state === 'closed'
   const status =
     STATUS_META[item.state as keyof typeof STATUS_META] ?? STATUS_META.closed
-  const meta = `${item.periodLabel} · ${item.quiz.timeLimitMinutes}분 · ${item.questionCount}문항 · ${GRADING_LABEL[item.quiz.gradingMode]}`
+  const meta = `${item.periodLabel} · ${timeLimitLabel(item.quiz.timeLimitMinutes)} · ${item.questionCount}문항 · ${GRADING_LABEL[item.quiz.gradingMode]}`
 
   return (
     <div className="flex w-full items-center gap-4 px-6 py-3.5">

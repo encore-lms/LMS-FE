@@ -218,6 +218,7 @@ export interface TsReviewDetail {
   id: string
   title: string
   studentUserId: string
+  studentName?: string // 실 BE 제공 — 없으면 담당 기수 로스터로 join
   cohortLabel: string
   status: TsReviewStatus | 'draft'
   independent: boolean

@@ -355,7 +355,11 @@ function TsBody({
         <StatusBadge label={detail.cohortLabel} tone="info" />
       </div>
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <MetaItem label="수강생" value={nameOf(detail.studentUserId)} />
+        {/* BE가 이름을 주면 그대로, 아니면 담당 기수 로스터 join. */}
+        <MetaItem
+          label="수강생"
+          value={detail.studentName || nameOf(detail.studentUserId)}
+        />
         <MetaItem
           label="해결 방식"
           value={detail.independent ? '독립 해결' : '협업 해결'}

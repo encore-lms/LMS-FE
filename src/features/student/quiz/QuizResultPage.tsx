@@ -1,3 +1,4 @@
+import { timeLimitLabel } from '@/shared/lib/quizTimeLimit'
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
@@ -112,7 +113,10 @@ export default function QuizResultPage() {
               value={`${data.submission.attemptNo} / ${quiz?.maxAttempts ?? '-'}`}
             />
             {quiz && (
-              <Meta label="제한 시간" value={`${quiz.timeLimitMinutes}분`} />
+              <Meta
+                label="제한 시간"
+                value={timeLimitLabel(quiz.timeLimitMinutes)}
+              />
             )}
             {pendingManual && (
               <span className="bg-warning-bg text-warning ml-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold">

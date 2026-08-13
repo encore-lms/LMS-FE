@@ -237,6 +237,7 @@ export default function TsReviewPage() {
 
           <ReviewDetailPanel
             target={detailTarget}
+            cohortId={cohortId}
             onClose={() => setDetailTarget(null)}
             actions={
               detailRow

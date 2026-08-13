@@ -62,15 +62,63 @@ export function useStartCertReview(cohortId: string | null) {
   return useReviewMutation<never>((id) => `/admin/certificates/${id}/review`, cohortId)
 }
 
+/**
+ * 심사 결정(보완 요청·인증) — PATCH /admin/certificates/:id 로 액션을 본문에 싣는다.
+ *
+ * data-ready·review 는 결정이 아니라 진행 단계라 기존 경로를 그대로 쓴다.
+ */
+function useDecisionMutation(cohortId: string | null) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      studentId,
+      action,
+      reason,
+    }: {
+      studentId: string
+      action: 'certify' | 'request_changes'
+      reason?: string
+    }) =>
+      apiClient
+        .patch<CertReviewRow>(`/admin/certificates/${studentId}`, {
+          action,
+          reason,
+        })
+        .then((r) => r.data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.list(cohortId ?? '') })
+    },
+  })
+}
+
 /** 보완 요청 — 코멘트만 보낸다(2026-08-07 결정). */
 export function useRequestCertChanges(cohortId: string | null) {
-  return useReviewMutation<{ comment: string }>(
-    (id) => `/admin/certificates/${id}/change-request`,
-    cohortId,
-  )
+  const m = useDecisionMutation(cohortId)
+  return {
+    ...m,
+    mutate: (
+      vars: { studentId: string; body?: { comment: string } },
+      opts?: Parameters<typeof m.mutate>[1],
+    ) =>
+      m.mutate(
+        {
+          studentId: vars.studentId,
+          action: 'request_changes',
+          reason: vars.body?.comment,
+        },
+        opts,
+      ),
+  }
 }
 
 /** → certified. */
 export function useCertifyCertificate(cohortId: string | null) {
-  return useReviewMutation<never>((id) => `/admin/certificates/${id}/certify`, cohortId)
+  const m = useDecisionMutation(cohortId)
+  return {
+    ...m,
+    mutate: (
+      vars: { studentId: string },
+      opts?: Parameters<typeof m.mutate>[1],
+    ) => m.mutate({ studentId: vars.studentId, action: 'certify' }, opts),
+  }
 }

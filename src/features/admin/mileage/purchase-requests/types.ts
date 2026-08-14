@@ -13,7 +13,7 @@ export type PurchaseStatus =
  * 구매 요청 처리 액션(전송용) — 표시용 상태(PurchaseStatus)와 값이 다르다.
  *
  * 예전에는 목표 상태를 그대로 실어 보내 상태와 액션이 한 타입을 공유했다. BE 정본은
- * 명령형 snake 토큰이라 여기서 갈라 둔다(요청 body 키는 아직 next — M3 에서 action 으로).
+ * 명령형 snake 토큰이라 여기서 갈라 둔다. 요청 body 키도 action 으로 맞췄다(다른 검토 화면과 동일).
  */
 export type PurchaseProcessAction = 'approve' | 'request_changes' | 'reject'
 

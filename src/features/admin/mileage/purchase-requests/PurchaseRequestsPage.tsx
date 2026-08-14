@@ -62,7 +62,7 @@ export default function PurchaseRequestsPage() {
   const [process, setProcess] = useState<{
     spec: ActionModalSpec
     id: string
-    next: PurchaseProcessAction
+    action: PurchaseProcessAction
   } | null>(null)
 
   const requests = useMemo(() => data?.requests ?? [], [data])
@@ -89,7 +89,7 @@ export default function PurchaseRequestsPage() {
     }
 
   // 버튼 → 전송 액션. 표시용 상태(STATUS_META)와 토큰이 다르다.
-  const NEXT_ACTION: Record<
+  const PROCESS_ACTION: Record<
     '승인' | '수정 요청' | '반려',
     PurchaseProcessAction
   > = {
@@ -103,7 +103,7 @@ export default function PurchaseRequestsPage() {
   ) => {
     setProcess({
       id: r.id,
-      next: NEXT_ACTION[action],
+      action: PROCESS_ACTION[action],
       spec: {
         title: `구매 요청 ${action}`,
         subtitle: `${r.studentName} · ${r.productName}`,
@@ -361,7 +361,7 @@ export default function PurchaseRequestsPage() {
             if (!process) return
             const label = process.spec.confirmLabel
             processReq.mutate(
-              { id: process.id, next: process.next, memo },
+              { id: process.id, action: process.action, memo },
               {
                 onSuccess: () => {
                   setProcess(null)

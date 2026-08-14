@@ -21,7 +21,7 @@ export function usePurchaseQueue(cohortId = '') {
 /** 구매 요청 처리(승인·수정 요청·반려) 입력 */
 export interface PurchaseProcessInput {
   id: string
-  next: PurchaseProcessAction
+  action: PurchaseProcessAction
   memo?: string
 }
 
@@ -29,9 +29,9 @@ export interface PurchaseProcessInput {
 export function usePurchaseProcess() {
   const queryClient = useQueryClient()
   return useMutation<void, Error, PurchaseProcessInput>({
-    mutationFn: ({ id, next, memo }) =>
+    mutationFn: ({ id, action, memo }) =>
       apiClient
-        .patch(`/admin/mileage/purchase-requests/${id}`, { next, memo })
+        .patch(`/admin/mileage/purchase-requests/${id}`, { action, memo })
         .then(() => undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mileagePurchaseKeys.all })

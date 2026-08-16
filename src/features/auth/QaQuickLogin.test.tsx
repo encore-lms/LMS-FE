@@ -7,7 +7,7 @@ import { useAuthStore } from '@/shared/store'
 import { apiClient } from '@/shared/api'
 
 vi.mock('@/shared/api', () => ({
-  apiClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
+  apiClient: { post: vi.fn(), postCredentialed: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }))
 
 function renderLogin() {
@@ -45,7 +45,7 @@ describe('LoginPage 빠른 로그인 그룹', () => {
   })
 
   it('QA 버튼을 누르면 해당 QA 계정으로 로그인을 요청한다', async () => {
-    vi.mocked(apiClient.post).mockResolvedValue({
+    vi.mocked(apiClient.postCredentialed).mockResolvedValue({
       data: {
         token: 't',
         user: { id: 'u1', name: 'QA 수강생', role: 'STUDENT' },
@@ -55,7 +55,7 @@ describe('LoginPage 빠른 로그인 그룹', () => {
     renderLogin()
     await user.click(screen.getByRole('button', { name: 'QA 수강생' }))
     await waitFor(() =>
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+      expect(apiClient.postCredentialed).toHaveBeenCalledWith('/auth/login', {
         userId: 'qa-student',
         password: 'LmsQa2026!',
       }),

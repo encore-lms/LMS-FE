@@ -8,7 +8,7 @@ import { apiClient } from '@/shared/api'
 import { queryClient } from '@/app/queryClient'
 
 vi.mock('@/shared/api', () => ({
-  apiClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
+  apiClient: { post: vi.fn(), postCredentialed: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }))
 
 function renderLogin() {
@@ -69,7 +69,7 @@ describe('LoginPage', () => {
 
   it('로그인 성공 시 apiClient 호출 후 store에 세션을 저장한다', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.post).mockResolvedValue({
+    vi.mocked(apiClient.postCredentialed).mockResolvedValue({
       data: {
         token: 'tok',
         user: { id: '1', email: 'a@b.com', name: '김수강', role: 'STUDENT' },
@@ -86,7 +86,7 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(useAuthStore.getState().user?.role).toBe('STUDENT')
     })
-    expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+    expect(apiClient.postCredentialed).toHaveBeenCalledWith('/auth/login', {
       userId: 'a@b.com',
       password: 'pw1234',
     })
@@ -94,7 +94,7 @@ describe('LoginPage', () => {
 
   it('이메일이 아닌 숫자 수강생 코드도 검증을 통과해 제출된다', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.post).mockResolvedValue({
+    vi.mocked(apiClient.postCredentialed).mockResolvedValue({
       data: {
         token: 'tok',
         user: { id: '1', email: '', name: '수강생', role: 'STUDENT' },
@@ -109,7 +109,7 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: /로그인/ }))
 
     await waitFor(() => {
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+      expect(apiClient.postCredentialed).toHaveBeenCalledWith('/auth/login', {
         userId: '109012389',
         password: 'pw1234',
       })
@@ -118,7 +118,7 @@ describe('LoginPage', () => {
 
   it('데모 빠른 로그인 버튼을 누르면 해당 실제 계정으로 즉시 로그인한다', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.post).mockResolvedValue({
+    vi.mocked(apiClient.postCredentialed).mockResolvedValue({
       data: {
         token: 'tok',
         user: {
@@ -132,7 +132,7 @@ describe('LoginPage', () => {
     renderLogin()
     await user.click(screen.getByRole('button', { name: '강사' }))
     await waitFor(() => {
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+      expect(apiClient.postCredentialed).toHaveBeenCalledWith('/auth/login', {
         userId: 'parkjihoon@playdata.io',
         password: 'PlaydataDemo2026!',
       })
@@ -150,7 +150,7 @@ describe('LoginPage', () => {
       role: 'MANAGER',
     })
     queryClient.setQueryData(['profile', 'me'], { name: '이전유저' })
-    vi.mocked(apiClient.post).mockResolvedValue({
+    vi.mocked(apiClient.postCredentialed).mockResolvedValue({
       data: {
         token: 'tok',
         user: { id: '1', email: 'a@b.com', name: '김수강', role: 'STUDENT' },
@@ -171,7 +171,7 @@ describe('LoginPage', () => {
 
   it('임시 비밀번호(mustChangePassword) 사용자는 역할 홈 대신 마이 프로필로 이동한다', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.post).mockResolvedValue({
+    vi.mocked(apiClient.postCredentialed).mockResolvedValue({
       data: {
         token: 'tok',
         user: {
@@ -205,7 +205,7 @@ describe('LoginPage', () => {
 
   it('온보딩이 필요한 수강생은 임시 비밀번호여도 온보딩부터 진행한다', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiClient.post).mockResolvedValue({
+    vi.mocked(apiClient.postCredentialed).mockResolvedValue({
       data: {
         token: 'tok',
         user: {

@@ -23,7 +23,10 @@ export function useLoginSubmit() {
   async function submit({ email, password }: LoginInput) {
     setSubmitError(null)
     try {
-      const res = await apiClient.post<LoginResponse>('/auth/login', {
+      // credentials 없이 부르면 크로스 오리진 배포(FE ↔ API CloudFront)에서 브라우저가
+      // 응답의 refresh 쿠키(Set-Cookie)를 버린다 — silent refresh 가 시작부터 불가능해
+      // 30분(access TTL)마다 강제 로그아웃됐다(2026-08-16 실측: 로그인 후 쿠키 저장 0건).
+      const res = await apiClient.postCredentialed<LoginResponse>('/auth/login', {
         userId: email,
         password,
       })

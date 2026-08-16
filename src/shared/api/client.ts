@@ -76,6 +76,9 @@ instance.interceptors.response.use(
 export interface ApiClient {
   get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>>
   post<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
+  // 쿠키를 주고받는 POST(로그인). 크로스 오리진 배포(FE ↔ API CloudFront)에서 응답의
+  // refresh 쿠키(Set-Cookie)를 브라우저가 저장하려면 credentials 포함이 필수다.
+  postCredentialed<T>(url: string, body?: unknown): Promise<ApiResponse<T>>
   // 응답 body가 없는 POST(201 Created/204 No Content). ApiResponse 래퍼를 기대하지 않는다.
   postNoContent(url: string, body?: unknown): Promise<void>
   // multipart/form-data 전송(파일 업로드). Content-Type을 비워 axios가 boundary를 자동 설정.
@@ -96,6 +99,10 @@ export const apiClient: ApiClient = {
   },
   async post<T>(url: string, body?: unknown) {
     const res = await instance.post<ApiResponse<T>>(url, body)
+    return res.data
+  },
+  async postCredentialed<T>(url: string, body?: unknown) {
+    const res = await instance.post<ApiResponse<T>>(url, body, { withCredentials: true })
     return res.data
   },
   async postNoContent(url: string, body?: unknown) {

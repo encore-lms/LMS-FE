@@ -1,6 +1,8 @@
 // 과정·기수·교과목 (/admin/education) 도메인 타입 — 기능 로컬.
 // BE 계약(P0_22 운영 과정·기수·교과목 마스터) 확정 전이라 mock 가정 + TODO 주석으로 선행한다.
 
+import type { Tone } from '@/shared/lib/tone'
+
 // 상단 KPI 4종 — 과정 / 기수 / 교과목·모듈 / 주차 기준.
 export interface EducationSummary {
   /** 과정 수 */
@@ -140,12 +142,18 @@ export interface CourseDetail {
 export interface CohortProjectMember {
   userId: string
   role: string // OWNER | MEMBER
+  /** 표시 이름 — 서버가 채운다(못 푼 계정은 null). */
+  name: string | null
 }
 export interface CohortProject {
   id: string
   title: string
+  /** 원본 진행 상태 — 종료·동료평가 게이팅용. 인증 상태는 여기 섞이지 않는다. */
   status: string // PLANNED | IN_PROGRESS | COMPLETED
-  statusLabel: string // 예정 | 진행 중 | 완료
+  /** 배지 문구 — 인증을 요청했으면 인증 사이클(인증 완료·검토 중·보완 요청), 아니면 진행 상태. */
+  statusLabel: string
+  /** 인증 라벨의 색조(수강생 목록과 동일). 진행 상태 라벨이면 null — 화면 고유 색을 쓴다. */
+  statusTone: Tone | null
   createdAt: string
   period: string // "2026.09.01 ~ 2026.10.31"(일정 없으면 빈 문자열)
   tags: string[] // 기술 스택

@@ -59,6 +59,8 @@ describe('DocsTab 산출물 상세', () => {
     expect(link).toHaveAttribute('href', linkDoc.url)
     expect(link).toHaveAttribute('target', '_blank')
     expect(screen.queryByRole('button', { name: /다운로드/ })).toBeNull()
+    // meta 가 URL 인 링크 산출물에서 '형식: https://…' 로 읽히던 행.
+    expect(screen.getByText('형식').closest('div')).toHaveTextContent('링크')
   })
 
   it('파일 산출물은 검토자에게 다운로드를 막고 이유를 말한다', async () => {

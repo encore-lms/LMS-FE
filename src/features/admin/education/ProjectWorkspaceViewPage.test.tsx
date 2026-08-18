@@ -71,4 +71,14 @@ describe('ProjectWorkspaceViewPage (검토자 읽기 전용)', () => {
     expect(screen.queryByRole('button', { name: /완료 처리/ })).toBeNull()
     expect(screen.queryByText(/\(본인\)/)).toBeNull()
   })
+
+  // 검토자는 팀원이 아니라 배정된 작업이 없다 — '내 할 일'은 늘 빈 카드였다.
+  // 같은 자리에 운영이 실제로 볼 것(팀의 남은 작업)을 담당자와 함께 보여준다.
+  it('홈의 내 할 일 자리에 팀의 남은 작업을 보여준다', () => {
+    renderPage()
+    expect(screen.getByText('팀 작업 현황')).toBeInTheDocument()
+    expect(screen.queryByText('내 할 일')).toBeNull()
+    expect(screen.getByText('결제 실패 재시도 로직 구현')).toBeInTheDocument()
+    expect(screen.getByText(/최유나 · D-6/)).toBeInTheDocument()
+  })
 })

@@ -348,7 +348,11 @@ function DocDetailModal({
   onClose: () => void
 }) {
   const toast = useToast()
-  const { type, detail } = parseDocMeta(doc.meta)
+  // 링크 산출물의 meta 는 URL 그 자체다 — 그대로 쪼개면 '형식: https://…' 처럼 읽힌다.
+  // 주소는 아래 링크 행이 맡고, 여기서는 무엇인지만 말한다.
+  const parsed = parseDocMeta(doc.meta)
+  const type = doc.url ? '링크' : parsed.type
+  const detail = doc.url ? '' : parsed.detail
   const handleDownload = async () => {
     if (!doc.downloadUrl) return
     try {

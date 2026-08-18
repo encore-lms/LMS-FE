@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, ClipboardList, ExternalLink, Users } from 'lucide-react'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -6,22 +6,22 @@ import { Empty } from '@/components/ui/Empty'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { formatDate } from '@/shared/lib/date'
+import { TONE_SOFT } from '@/shared/lib/tone'
 import {
   useCohortProjects,
   usePeerEvalToggle,
   useProjectCompletion,
 } from './api'
-import { useStudentAccounts } from '../api/students'
-import { useCohortRoster } from '@/shared/api/students'
 import { useInstructorCohortProjects } from '@/features/instructor/education/api'
 import type { CohortProject } from './types'
 import { PeerEvalResultsModal } from './PeerEvalResultsModal'
 
-// 기수 프로젝트 목록(정본 §42·§43) — 운영 조회. 멤버 이름은 useStudentAccounts로 join.
-const STATUS_META: Record<string, { label: string; cls: string }> = {
-  PLANNED: { label: '예정', cls: 'bg-surface-muted text-fg-muted' },
-  IN_PROGRESS: { label: '진행 중', cls: 'bg-accent-bg text-accent-strong' },
-  COMPLETED: { label: '완료', cls: 'bg-success-bg text-success' },
+// 기수 프로젝트 목록(정본 §42·§43) — 운영 조회. 라벨·멤버 이름은 서버가 채운다.
+// 진행 상태 색은 이 화면 고유 — 인증 라벨일 때만 서버가 준 색조(수강생 목록과 같은 값)를 쓴다.
+const STATUS_CLS: Record<string, string> = {
+  PLANNED: 'bg-surface-muted text-fg-muted',
+  IN_PROGRESS: 'bg-accent-bg text-accent-strong',
+  COMPLETED: 'bg-success-bg text-success',
 }
 
 /**
@@ -152,6 +152,10 @@ function PeerEvalToggle({
   )
 }
 
+// 서버가 이름을 못 푼 계정 — 행을 지우면 팀 인원이 어긋나므로 자리는 남기고 이름만 비운 것으로 말한다.
+const nameOf = (m: CohortProject['members'][number]) =>
+  m.name || '(이름 미확인)'
+
 // source: 매니저(admin, 기본)·강사(instructor) 공용 — 데이터만 역할별 미러로 갈리고 화면은
 // 한 코드다(MaterialsPane 규약). 강사는 조회 전용 — 종료·동료평가 토글은 운영 액션이라 숨긴다.
 export function ProjectsPane({
@@ -174,17 +178,7 @@ export function ProjectsPane({
   const { data, isPending, isError, refetch } = isAdmin
     ? adminQuery
     : instructorQuery
-  // 멤버 이름 — 매니저는 수강생 계정 목록, 강사는 계정 목록이 403이라 담당 기수 로스터(MaterialsPane 선례).
-  const { data: students } = useStudentAccounts(isAdmin ? cohortId : null)
-  const { data: roster } = useCohortRoster(isAdmin ? null : cohortId)
   const [resultsOf, setResultsOf] = useState<CohortProject | null>(null)
-
-  const nameOf = useMemo(() => {
-    const m = new Map<string, string>()
-    if (isAdmin) for (const s of students?.items ?? []) m.set(s.id, s.name)
-    else for (const r of roster ?? []) m.set(r.userId, r.name)
-    return (id: string) => m.get(id) || '(이름 미확인)'
-  }, [isAdmin, students, roster])
 
   // 상세(워크스페이스 읽기 전용) 진입 — 역할별 라우트.
   const workspacePath = (projectId: string) =>
@@ -213,7 +207,6 @@ export function ProjectsPane({
             <div className="text-fg-subtle text-sm">전체 {data.length}개</div>
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {data.map((p) => {
-                const st = STATUS_META[p.status] ?? STATUS_META.PLANNED
                 const owner = p.members.find((m) => m.role === 'OWNER')
                 return (
                   <div
@@ -225,16 +218,16 @@ export function ProjectsPane({
                       <span
                         className={cn(
                           'shrink-0 rounded-full px-2.5 py-1 text-xs font-bold',
-                          st.cls,
+                          p.statusTone
+                            ? TONE_SOFT[p.statusTone]
+                            : STATUS_CLS[p.status],
                         )}
                       >
-                        {st.label}
+                        {p.statusLabel}
                       </span>
                     </div>
                     <div className="text-fg-muted flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                      <span>
-                        대표 {owner ? nameOf(owner.userId) : '미지정'}
-                      </span>
+                      <span>대표 {owner ? nameOf(owner) : '미지정'}</span>
                       <span className="text-fg-subtle">·</span>
                       <span>멤버 {p.memberCount}명</span>
                       {p.period && (
@@ -267,7 +260,7 @@ export function ProjectsPane({
                               : 'bg-surface-muted text-fg-muted',
                           )}
                         >
-                          {nameOf(m.userId)}
+                          {nameOf(m)}
                           {m.role === 'OWNER' ? ' · 대표' : ''}
                         </span>
                       ))}

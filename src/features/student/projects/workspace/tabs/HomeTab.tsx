@@ -30,7 +30,7 @@ import type {
 import { Avatar, Chip } from '../components/ws-shared'
 import { GithubContributionSection } from '../components/GithubContributionSection'
 import { TONE_SOFT, TONE_SOLID, TONE_TEXT } from '@/shared/lib/tone'
-import { card, phaseCertBadge } from '../components/ws-style'
+import { card, phaseCertBadge, toneOf } from '../components/ws-style'
 
 function kpiIcon(label: string): LucideIcon {
   if (label.includes('이슈')) return TriangleAlert
@@ -128,8 +128,14 @@ export function HomeTab({
       },
     )
   }
+  // 검토자에겐 '내 할 일'이 늘 비어 있다 — 팀원이 아니라 배정받은 작업이 없기 때문이다.
+  // 껍데기 카드를 두는 대신 운영이 실제로 볼 것(팀의 미완료 작업)을 같은 자리에 보여준다.
+  const teamTasks = d.columns
+    .filter((c) => c.key.toUpperCase() !== 'DONE')
+    .flatMap((c) => c.tasks)
+  const tasks = readOnly ? teamTasks : d.myTasks
   // 마감 임박 = 미완료 + 마감(D-n) 표기가 있는 할 일.
-  const dueSoonCount = d.myTasks.filter(
+  const dueSoonCount = tasks.filter(
     (t) => /D-\d/.test(t.due) && !doneTasks.has(t.title),
   ).length
 
@@ -219,7 +225,9 @@ export function HomeTab({
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">
                 <ListChecks className="text-brand size-4" aria-hidden="true" />
-                <h2 className="text-fg text-[15px] font-bold">내 할 일</h2>
+                <h2 className="text-fg text-[15px] font-bold">
+                  {readOnly ? '팀 작업 현황' : '내 할 일'}
+                </h2>
                 {dueSoonCount > 0 && (
                   <span className="bg-danger-bg text-danger rounded-full px-2 py-0.5 text-[11px] font-bold">
                     마감 임박 {dueSoonCount}건
@@ -235,7 +243,7 @@ export function HomeTab({
                 <ArrowRight className="size-3" aria-hidden="true" />
               </button>
             </div>
-            {d.myTasks.map((t, i) => {
+            {tasks.map((t, i) => {
               const done = doneTasks.has(t.title)
               const urgent = t.tags.some((tg) => tg.tone === 'danger')
               const category =
@@ -250,15 +258,13 @@ export function HomeTab({
                 >
                   {readOnly ? (
                     <span
-                      aria-hidden
                       className={cn(
-                        'flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold',
-                        done
-                          ? 'bg-success border-success text-white'
-                          : 'border-border text-fg-subtle',
+                        'flex size-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold',
+                        TONE_SOFT[toneOf(t.assignee)],
                       )}
+                      title={t.assignee}
                     >
-                      {done ? '✓' : ''}
+                      {t.assignee.slice(0, 1)}
                     </span>
                   ) : (
                     <button
@@ -285,7 +291,9 @@ export function HomeTab({
                     >
                       {t.title}
                     </span>
-                    <span className="text-fg-subtle text-[11px]">{t.due}</span>
+                    <span className="text-fg-subtle text-[11px]">
+                      {readOnly ? `${t.assignee} · ${t.due}` : t.due}
+                    </span>
                   </div>
                   {urgent && !done && (
                     <span className="bg-danger-bg text-danger flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold">
@@ -296,66 +304,76 @@ export function HomeTab({
                 </div>
               )
             })}
+            {tasks.length === 0 && (
+              <p className="text-fg-subtle py-6 text-center text-[12px]">
+                {readOnly
+                  ? '남은 팀 작업이 없어요'
+                  : '나에게 배정된 작업이 없어요'}
+              </p>
+            )}
           </section>
 
-          <section className={cn(card, 'flex flex-col')}>
-            <div className="flex items-center justify-between pb-1">
-              <div className="flex items-center gap-2">
-                <Timer className="text-fg-muted size-4" aria-hidden="true" />
-                <h2 className="text-fg text-[15px] font-bold">최근 활동</h2>
-                <span className="bg-surface-muted text-fg-subtle rounded-full px-2 py-0.5 text-[11px] font-semibold">
-                  최근 7일
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => onTab('board')}
-                className="text-fg-subtle hover:text-brand flex items-center gap-0.5 text-[12px] font-semibold"
-              >
-                전체 보기
-                <ArrowRight className="size-3" aria-hidden="true" />
-              </button>
-            </div>
-            {d.activities.map((a, i) => {
-              const { Icon, tone } = activityVisual(a)
-              return (
-                <div
-                  key={i}
-                  className={cn(
-                    'flex items-center gap-3 py-3',
-                    i > 0 && 'border-divider border-t',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                      TONE_SOFT[tone],
-                    )}
-                  >
-                    <Icon className="size-4" aria-hidden="true" />
-                  </span>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-fg text-[12px] font-bold">
-                        {a.who}
-                      </span>
-                      {a.kind && (
-                        <span className="bg-surface-muted text-fg-subtle rounded px-1.5 py-0.5 text-[10px] font-bold">
-                          {a.kind}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-fg-muted truncate text-[12px]">
-                      {a.action}
-                    </span>
-                  </div>
-                  <span className="text-fg-subtle shrink-0 text-[11px]">
-                    {a.when}
+          {/* 활동 기록은 아직 서버가 채우지 않는다 — 늘 빈 카드를 두면 고장처럼 보여, 생기면 그때 나온다. */}
+          {d.activities.length > 0 && (
+            <section className={cn(card, 'flex flex-col')}>
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-center gap-2">
+                  <Timer className="text-fg-muted size-4" aria-hidden="true" />
+                  <h2 className="text-fg text-[15px] font-bold">최근 활동</h2>
+                  <span className="bg-surface-muted text-fg-subtle rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                    최근 7일
                   </span>
                 </div>
-              )
-            })}
-          </section>
+                <button
+                  type="button"
+                  onClick={() => onTab('board')}
+                  className="text-fg-subtle hover:text-brand flex items-center gap-0.5 text-[12px] font-semibold"
+                >
+                  전체 보기
+                  <ArrowRight className="size-3" aria-hidden="true" />
+                </button>
+              </div>
+              {d.activities.map((a, i) => {
+                const { Icon, tone } = activityVisual(a)
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      'flex items-center gap-3 py-3',
+                      i > 0 && 'border-divider border-t',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'flex size-8 shrink-0 items-center justify-center rounded-lg',
+                        TONE_SOFT[tone],
+                      )}
+                    >
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-fg text-[12px] font-bold">
+                          {a.who}
+                        </span>
+                        {a.kind && (
+                          <span className="bg-surface-muted text-fg-subtle rounded px-1.5 py-0.5 text-[10px] font-bold">
+                            {a.kind}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-fg-muted truncate text-[12px]">
+                        {a.action}
+                      </span>
+                    </div>
+                    <span className="text-fg-subtle shrink-0 text-[11px]">
+                      {a.when}
+                    </span>
+                  </div>
+                )
+              })}
+            </section>
+          )}
 
           {/* GitHub 기여도 — 미연동이면 스스로 숨김. 데이터가 수강생 소유 API라 검토자는 미노출. */}
           {!readOnly && <GithubContributionSection projectId={d.id} />}

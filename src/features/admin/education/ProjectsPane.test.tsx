@@ -9,7 +9,6 @@ import {
   usePeerEvalToggle,
   useProjectCompletion,
 } from './api'
-import { useStudentAccounts } from '../api/students'
 
 // 공용화(2026-08-05)로 추가된 강사 미러·로스터 훅 — 매니저 경로 테스트에선 조회가 꺼져 있어 빈 값 mock.
 vi.mock('@/features/instructor/education/api', async (importOriginal) => ({
@@ -28,20 +27,20 @@ vi.mock('@/shared/api/students', async (importOriginal) => ({
 import type { CohortProject } from './types'
 
 vi.mock('./api')
-vi.mock('../api/students')
 
 const team: CohortProject = {
   id: 'p1',
   title: '팀 프로젝트 A',
   status: 'COMPLETED',
   statusLabel: '완료',
+  statusTone: null,
   createdAt: '2026.05.01',
   period: '2026.05.01 ~ 2026.06.30',
   tags: [],
   memberCount: 4,
   members: [
-    { userId: 'u1', role: 'OWNER' },
-    { userId: 'u2', role: 'MEMBER' },
+    { userId: 'u1', role: 'OWNER', name: '김민준' },
+    { userId: 'u2', role: 'MEMBER', name: null },
   ],
   peerEvalEnabled: false,
 }
@@ -51,7 +50,7 @@ const solo: CohortProject = {
   id: 'p2',
   title: '개인 프로젝트',
   memberCount: 1,
-  members: [{ userId: 'u1', role: 'OWNER' }],
+  members: [{ userId: 'u1', role: 'OWNER', name: '김민준' }],
 }
 
 function renderPane(
@@ -65,9 +64,6 @@ function renderPane(
     isError: false,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useCohortProjects>)
-  vi.mocked(useStudentAccounts).mockReturnValue({
-    data: { items: [{ id: 'u1', name: '김민준' }] },
-  } as unknown as ReturnType<typeof useStudentAccounts>)
   vi.mocked(usePeerEvalToggle).mockReturnValue({
     mutate,
     isPending: false,

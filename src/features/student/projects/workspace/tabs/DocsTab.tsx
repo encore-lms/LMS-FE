@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, FileText, Files } from 'lucide-react'
+import { Download, ExternalLink, FileText, Files } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
@@ -114,7 +114,11 @@ export function DocsTab({
         </div>
       </div>
       {openDoc && (
-        <DocDetailModal doc={openDoc} onClose={() => setOpenDoc(null)} />
+        <DocDetailModal
+          doc={openDoc}
+          readOnly={readOnly}
+          onClose={() => setOpenDoc(null)}
+        />
       )}
       {editing && (
         <AddDocModal
@@ -326,49 +330,42 @@ function AddDocModal({
   )
 }
 
-// 문서 상세 — 형식·정보·카테고리·상태 + 미리보기 영역.
-// 다운로드: 백엔드 바이너리 대신 문서 메타로 생성한 데모 파일을 실제로 내려받는다(모든 프로젝트 동일).
-function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
+/**
+ * 문서 상세 — 형식·정보·카테고리 + 실제 산출물로 가는 길.
+ *
+ * <p>예전에는 링크로 등록한 산출물에도 '다운로드'가 문서 메타로 만든 데모 txt 를 내려줬다.
+ * 정작 등록된 링크는 화면 어디에도 없어, 열어도 산출물에 닿을 수 없었다.
+ * 링크는 링크로 열고, 파일은 파일을 내려받고, 둘 다 없으면 아무 버튼도 두지 않는다.</p>
+ */
+function DocDetailModal({
+  doc,
+  readOnly,
+  onClose,
+}: {
+  doc: WsDoc
+  /** 검토자(매니저·강사) 열람 — 파일 본문은 수강생 소유 API라 내려받을 수 없다. */
+  readOnly: boolean
+  onClose: () => void
+}) {
   const toast = useToast()
   const { type, detail } = parseDocMeta(doc.meta)
   const handleDownload = async () => {
-    // 파일 산출물(downloadUrl)이면 실제 업로드 파일을 blob으로 내려받는다.
-    if (doc.downloadUrl) {
-      try {
-        const blob = await apiClient.getBlob(doc.downloadUrl)
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = doc.title
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        URL.revokeObjectURL(url)
-        toast.success(`${doc.title} 다운로드를 시작했어요`)
-        onClose()
-      } catch {
-        toast.danger('파일을 내려받지 못했어요.')
-      }
-      return
+    if (!doc.downloadUrl) return
+    try {
+      const blob = await apiClient.getBlob(doc.downloadUrl)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = doc.title
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success(`${doc.title} 다운로드를 시작했어요`)
+      onClose()
+    } catch {
+      toast.danger('파일을 내려받지 못했어요.')
     }
-    const content =
-      `# ${doc.title}\n\n` +
-      `카테고리: ${doc.category}\n` +
-      `형식: ${type}\n` +
-      `정보: ${detail || '-'}\n` +
-      `상태: ${doc.status.label}\n\n` +
-      `(데모 파일입니다. 실제 산출물 바이너리는 백엔드 연동 시 제공됩니다.)\n`
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${doc.title.replace(/[\\/:*?"<>|]/g, '_')}.txt`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-    toast.success(`${doc.title} 다운로드를 시작했어요`)
-    onClose()
   }
   return (
     <Modal
@@ -384,14 +381,37 @@ function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
           >
             닫기
           </button>
-          <button
-            type="button"
-            onClick={handleDownload}
-            className={buttonClass({ size: 'sm' })}
-          >
-            <Download className="size-4" aria-hidden="true" />
-            다운로드
-          </button>
+          {doc.url && (
+            <a
+              href={doc.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className={buttonClass({ size: 'sm' })}
+            >
+              <ExternalLink className="size-4" aria-hidden="true" />
+              링크 열기
+            </a>
+          )}
+          {doc.downloadUrl && (
+            // 검토자는 눌러도 403이다(파일 본문이 /student 소유 API) — 눌러 보고 실패하는 대신 미리 막는다.
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={readOnly}
+              title={
+                readOnly
+                  ? '파일 본문은 수강생 화면에서만 내려받을 수 있어요.'
+                  : undefined
+              }
+              className={cn(
+                buttonClass({ size: 'sm' }),
+                'disabled:cursor-not-allowed disabled:opacity-50',
+              )}
+            >
+              <Download className="size-4" aria-hidden="true" />
+              다운로드
+            </button>
+          )}
         </>
       }
     >
@@ -418,10 +438,26 @@ function DocDetailModal({ doc, onClose }: { doc: WsDoc; onClose: () => void }) {
           <DetailRow label="상태" value={doc.status.label} />
         </div>
 
-        <div className="border-border text-fg-subtle flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed py-8 text-center">
-          <Files className="size-7" aria-hidden="true" />
-          <span className="text-[12px]">{type} 미리보기 영역</span>
-        </div>
+        {doc.url ? (
+          <a
+            href={doc.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="border-border text-brand hover:bg-surface-muted flex items-center gap-2 rounded-xl border border-dashed px-4 py-4 text-[12px] [overflow-wrap:anywhere]"
+          >
+            <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+            {doc.url}
+          </a>
+        ) : (
+          <div className="border-border text-fg-subtle flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed py-8 text-center">
+            <Files className="size-7" aria-hidden="true" />
+            <span className="text-[12px]">
+              {doc.downloadUrl
+                ? `${type} 파일 — 내려받아 확인해요`
+                : '등록된 링크나 파일이 없어요'}
+            </span>
+          </div>
+        )}
       </div>
     </Modal>
   )

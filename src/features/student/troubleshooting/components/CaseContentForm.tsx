@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { tsKeys } from '../queryKeys'
 import { projectKeys } from '../../projects/queryKeys'
@@ -13,7 +12,6 @@ import {
   useUploadTsAttachment,
   type TsUpsertBody,
 } from '../../api/troubleshooting'
-import { buildTimeline } from '../detail'
 import {
   TS_CATEGORIES,
   type TsCaseDetail,
@@ -35,7 +33,7 @@ import { CaseTagsAttachments } from './CaseTagsAttachments'
 
 // 트러블슈팅 사례 내용 편집 폼 — 상세 페이지의 '작성 중(draft·미완료)' 모드에서만 쓰인다.
 // 하단 바 = [임시 저장](→이어 작성, 계속 작성) · [작성 완료](→draft·완료로 저장 후 목록으로).
-// 작성 완료 사례는 목록에서 '사례 열기' → 상세의 '인증 요청 준비'에서 인증 요청. 삭제는 목록에서.
+// 인증 제도 폐기(2026-08-19) — 작성 완료는 '팀이 볼 수 있는 상태'일 뿐, 뒤따르는 요청 절차가 없다.
 // 첨부 파일 임시 id 시퀀스 — addFiles에서 증가시키므로(let 재할당) 이 모듈에 둔다.
 let fileSeq = 0
 
@@ -50,7 +48,6 @@ interface CaseContentFormProps {
   /** 저장을 마치고 돌아갈 곳(프로젝트 이슈 탭). 미지정 시 트러블슈팅 목록. */
   returnTo?: string | null
   /** 인증 요청 — 내용 저장 후 상세 페이지의 인증 요청(체크리스트) 모달을 연다. */
-  onRequestCert: () => void
 }
 
 export function CaseContentForm({
@@ -59,7 +56,6 @@ export function CaseContentForm({
   onConnectProject,
   projectLocked = false,
   returnTo = null,
-  onRequestCert,
 }: CaseContentFormProps) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -283,23 +279,6 @@ export function CaseContentForm({
     })
   }
 
-  const prepChecklist = [
-    { label: '제목·카테고리 입력', done: !!title.trim() },
-    { label: '상황·해결·결과 작성', done: filled === 3 },
-    { label: '프로젝트 연결', done: projectLinked },
-    { label: '태그 추가', done: tags.length > 0 },
-  ]
-  // 인증 요청 게이트 — BE 필수는 제목·STAR(프로젝트 연결·태그는 권장, 표시만).
-  const canRequestCert = !!title.trim() && filled === 3
-  const openCertRequest = () => {
-    persist(true, (id) => {
-      // 신규는 먼저 저장(create)해 실 id 상세로 이동 — 그 화면에서 인증 요청한다.
-      if (isNew) navigate(`/student/troubleshooting/${id}`, { replace: true })
-      else onRequestCert()
-    })
-  }
-  const timeline = buildTimeline('draft')
-
   return (
     <>
       <div className="flex flex-col gap-4 lg:flex-row">
@@ -342,30 +321,10 @@ export function CaseContentForm({
         </div>
 
         <div className="flex flex-col gap-4 lg:w-[320px]">
+          {/* 인증 제도 폐기(2026-08-19) — 요청 준비 체크리스트·인증 요청 버튼을 걷어냈다.
+              남는 건 이 사례가 어느 프로젝트에 남는지뿐이다. */}
           <section className={cn(card, 'flex flex-col gap-3')}>
-            <span className="text-fg text-[14px] font-bold">
-              인증 요청 준비
-            </span>
-            <span className="text-fg-subtle text-[11px]">
-              아래 항목을 채우고 ‘작성 완료’ 후 상세에서 인증을 요청해요.
-            </span>
-            {prepChecklist.map((c, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <span
-                  className={cn(
-                    'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold',
-                    c.done
-                      ? 'bg-success text-white'
-                      : 'bg-warning-bg text-warning',
-                  )}
-                >
-                  {c.done ? '✓' : '!'}
-                </span>
-                <span className="text-fg flex-1 text-[12px] font-medium">
-                  {c.label}
-                </span>
-              </div>
-            ))}
+            <span className="text-fg text-[14px] font-bold">기록되는 곳</span>
             <div
               className={cn(
                 'flex items-start gap-2 rounded-lg p-2.5 text-[11px] leading-4',
@@ -382,61 +341,17 @@ export function CaseContentForm({
                 {projectLinked ? certProjectValue : '연결된 프로젝트가 없어요'}
               </span>
             </div>
-            <div className="flex gap-2">
-              {/* 프로젝트에서 시작한 작성은 연결 대상이 정해져 있다 — 바꿀 버튼을 두면
-                  이 사례가 어디에 남는지 흔들린다. */}
-              {!projectLocked && (
-                <button
-                  type="button"
-                  onClick={onConnectProject}
-                  className="border-border text-fg flex-1 rounded-lg border py-2.5 text-[12px] font-semibold"
-                >
-                  {projectLinked ? '연결 변경' : '프로젝트 연결'}
-                </button>
-              )}
+            {/* 프로젝트에서 시작한 작성은 연결 대상이 정해져 있다 — 바꿀 버튼을 두면
+                이 사례가 어디에 남는지 흔들린다. */}
+            {!projectLocked && (
               <button
                 type="button"
-                onClick={openCertRequest}
-                disabled={!canRequestCert}
-                title={
-                  canRequestCert
-                    ? undefined
-                    : '인증 요청 준비 항목을 모두 충족해야 인증 요청할 수 있어요'
-                }
-                className={buttonClass({ size: 'sm', className: 'flex-1' })}
+                onClick={onConnectProject}
+                className="border-border text-fg rounded-lg border py-2.5 text-[12px] font-semibold"
               >
-                인증 요청
+                {projectLinked ? '연결 변경' : '프로젝트 연결'}
               </button>
-            </div>
-          </section>
-
-          <section className={cn(card, 'flex flex-col gap-3')}>
-            <span className="text-fg text-[14px] font-bold">상태 이력</span>
-            {timeline.map((t) => (
-              <div key={t.key} className="flex items-start gap-2.5">
-                <span
-                  className={cn(
-                    'mt-1 size-2.5 shrink-0 rounded-full',
-                    t.state === 'current'
-                      ? 'bg-brand'
-                      : t.state === 'done'
-                        ? 'bg-success'
-                        : 'bg-border',
-                  )}
-                />
-                <div className="flex flex-col">
-                  <span
-                    className={cn(
-                      'text-[13px] font-semibold',
-                      t.state === 'todo' ? 'text-fg-subtle' : 'text-fg',
-                    )}
-                  >
-                    {t.label}
-                  </span>
-                  <span className="text-fg-subtle text-[11px]">{t.sub}</span>
-                </div>
-              </div>
-            ))}
+            )}
           </section>
         </div>
       </div>

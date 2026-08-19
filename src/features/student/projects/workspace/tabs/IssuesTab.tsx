@@ -19,7 +19,7 @@ import type { TsCase } from '../../../troubleshooting/types'
 import type { WorkspaceData, WsTsCase } from '../../types'
 import { SectionHead } from '../components/ws-shared'
 
-// 이슈 탭 — 이 프로젝트에서 해결한 트러블슈팅 중 "인증 완료" 사례를 연결해 보여준다.
+// 이슈 탭 — 이 프로젝트에서 겪은 트러블슈팅을 쓰고 읽는 곳(게시판형 CRUD).
 //
 // 목록은 서버가 만든다(d.troubleshootingCases). 예전에는 응답이 사례 id 배열뿐이라 화면이
 // 그 id를 '내가 쓴 사례 목록'에서 되찾아 그렸고, 그래서 같은 프로젝트인데도 사람마다 목록이
@@ -41,7 +41,7 @@ export function IssuesTab({
   const navigate = useNavigate()
   const toast = useToast()
   const queryClient = useQueryClient()
-  // 연결 피커는 '내가 쓴 인증 사례' 중에서 고르는 화면이라 수강생 목록이 그대로 필요하다.
+  // 연결 피커는 '내가 쓴 사례' 중에서 고르는 화면이라 수강생 목록이 그대로 필요하다.
   const { data } = useTsList(!readOnly)
   const linked = d.troubleshootingCases ?? []
   const linkedIds = linked.map((c) => c.id)
@@ -88,8 +88,8 @@ export function IssuesTab({
       />
       <div className="-mt-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-fg-subtle text-[12px]">
-          이 프로젝트에서 겪은 문제를 기록해요. 인증을 받지 않아도 팀이 바로 볼
-          수 있고, 인증은 사례를 열어 따로 요청해요.
+          이 프로젝트에서 겪은 문제를 기록해요. 저장하는 즉시 팀이 볼 수 있고,
+          내가 쓴 기록은 언제든 고치거나 지울 수 있어요.
         </p>
         {/* 다른 데서 쓰던 사례를 이 프로젝트로 가져오는 길 — 새 사례는 위 버튼으로 쓴다. */}
         {!readOnly && (
@@ -209,7 +209,7 @@ export function IssuesTab({
   )
 }
 
-// 연결 피커 — 인증 완료된 사례만 토글로 연결/해제한다.
+// 연결 피커 — 다른 데서 쓴 내 사례를 이 프로젝트로 토글해 연결/해제한다.
 function TsLinkPickerModal({
   projectId,
   cases,
@@ -224,7 +224,7 @@ function TsLinkPickerModal({
   const toast = useToast()
   const linkM = useLinkTroubleshooting(projectId)
   const unlinkM = useUnlinkTroubleshooting(projectId)
-  // 인증 여부와 무관하게 내 사례를 붙일 수 있다 — 인증은 사례를 열어 따로 요청한다.
+  // 상태와 무관하게 내 사례를 붙일 수 있다.
   const linkable = cases
   const toggle = (c: TsCase) => {
     if (linkedIds.includes(c.id)) {

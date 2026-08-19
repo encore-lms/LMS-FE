@@ -31,7 +31,6 @@ export const studentMenu: MenuItem[] = [
     ],
   },
   { label: roleTag(TERMS.certificate, '수강생'), to: '/student/certificate' },
-  { label: roleTag('트러블슈팅', '수강생'), to: '/student/troubleshooting' },
   // 과정 기능 토글(정본 CohortFeatureConfig: mileage·play)로 노출 제어.
   {
     label: roleTag('마일리지', '수강생'),

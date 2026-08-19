@@ -208,11 +208,11 @@ export default function CaseDetailPage() {
                 onClick={() =>
                   viewOnly
                     ? navigate(-1)
-                    : navigate(backTo ?? '/student/troubleshooting')
+                    : navigate(backTo ?? '/student/projects')
                 }
                 className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
               >
-                {viewOnly ? '뒤로' : backTo ? '프로젝트로' : '목록으로'}
+                {viewOnly ? '뒤로' : '프로젝트로'}
               </button>
             </div>
           </div>

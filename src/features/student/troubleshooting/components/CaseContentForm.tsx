@@ -274,7 +274,8 @@ export function CaseContentForm({
           ? '저장했어요 · 이슈 탭에서 확인할 수 있어요'
           : '저장했어요 · 프로젝트 이슈 탭에서 볼 수 있어요',
       )
-      navigate(returnTo ?? '/student/troubleshooting')
+      // 트러블슈팅 목록은 폐기됐다 — 돌아갈 곳이 없으면 프로젝트 목록으로 보낸다.
+      navigate(returnTo ?? '/student/projects')
     })
   }
 

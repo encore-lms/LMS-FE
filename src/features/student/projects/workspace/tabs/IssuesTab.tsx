@@ -52,13 +52,15 @@ export function IssuesTab({
   const deleteCase = useDeleteTsCase()
 
   const cases = data?.cases ?? []
-  // 내 사례는 이어 쓰거나 인증을 요청해야 하므로 편집 화면으로, 팀원 사례는 보기 전용으로 연다.
+  // 내 사례는 편집 화면으로, 팀원 사례는 보기 전용으로 연다.
+  // 편집에도 projectId 를 실어야 저장 뒤 이 탭으로 돌아온다 — 없으면 사라진 트러블슈팅
+  // 목록 주소로 떨어져 404 를 만난다.
   const open = (c: WsTsCase) =>
     onOpenCase
       ? onOpenCase(c.id)
       : navigate(
           c.mine
-            ? `/student/troubleshooting/${c.id}`
+            ? `/student/troubleshooting/${c.id}?projectId=${d.id}`
             : `/student/troubleshooting/${c.id}?view=1`,
         )
 

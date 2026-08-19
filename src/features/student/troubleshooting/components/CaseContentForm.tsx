@@ -6,6 +6,7 @@ import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
 import { tsKeys } from '../queryKeys'
+import { projectKeys } from '../../projects/queryKeys'
 import {
   useCreateTsCase,
   useUpdateTsCase,
@@ -215,8 +216,19 @@ export function CaseContentForm({
       return
     }
     const body = buildBody(completed)
+    // 사례를 저장하면 그 프로젝트의 이슈 탭 목록도 달라진다 — 워크스페이스 캐시를 비우지 않으면
+    // 저장 후 돌아간 이슈 탭에 방금 쓴 사례가 없다(팀원·검토자 화면에는 보이는데 정작 작성자만 못 본다).
+    const refreshWorkspace = () => {
+      const projectId = projectLink?.projectId
+      if (projectId) {
+        queryClient.invalidateQueries({
+          queryKey: projectKeys.workspace(projectId),
+        })
+      }
+    }
     const pending = files.filter((f) => f.file)
     const afterSave = (id: string) => {
+      refreshWorkspace()
       if (pending.length === 0) {
         onDone?.(id)
         return

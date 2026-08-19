@@ -47,7 +47,6 @@ interface CaseContentFormProps {
   projectLocked?: boolean
   /** 저장을 마치고 돌아갈 곳(프로젝트 이슈 탭). 미지정 시 트러블슈팅 목록. */
   returnTo?: string | null
-  /** 인증 요청 — 내용 저장 후 상세 페이지의 인증 요청(체크리스트) 모달을 연다. */
 }
 
 export function CaseContentForm({
@@ -273,7 +272,7 @@ export function CaseContentForm({
       toast.success(
         returnTo
           ? '저장했어요 · 이슈 탭에서 확인할 수 있어요'
-          : '저장했어요 · 목록에서 ‘사례 열기’로 인증 요청하세요',
+          : '저장했어요 · 프로젝트 이슈 탭에서 볼 수 있어요',
       )
       navigate(returnTo ?? '/student/troubleshooting')
     })
@@ -364,7 +363,7 @@ export function CaseContentForm({
             {projectLinked ? '연결됨' : '미연결'}
           </span>
           <span className="text-[11px] text-white/70">
-            임시 저장 → 이어 작성 · 작성 완료 → 상세에서 인증 요청
+            임시 저장 → 이어 작성 · 작성 완료 → 팀이 볼 수 있는 기록
           </span>
         </div>
         <div className="flex items-center gap-2">

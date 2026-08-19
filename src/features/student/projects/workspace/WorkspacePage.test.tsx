@@ -162,7 +162,7 @@ describe('WorkspacePage home', () => {
     await user.click(screen.getByRole('button', { name: '홈' }))
     await user.click(screen.getByRole('button', { name: /열린 이슈/ }))
     expect(
-      screen.getByRole('button', { name: '트러블슈팅 관리' }),
+      screen.getByRole('button', { name: '트러블슈팅 작성' }),
     ).toBeInTheDocument()
   })
 
@@ -252,23 +252,24 @@ describe('WorkspacePage home', () => {
     expect(await screen.findByText('문서를 추가했습니다')).toBeInTheDocument()
   })
 
-  it('이슈 탭에서 인증 완료 트러블슈팅만 연결 후보로 뜨고 연결할 수 있다', async () => {
+  // 인증 여부와 무관하게 내 사례를 붙일 수 있다 — 인증은 사례를 열어 따로 요청한다.
+  it('이슈 탭에서 기존 사례를 연결할 수 있다', async () => {
     const user = userEvent.setup()
     // 연결 없이 시작 — 워크스페이스 응답(troubleshootingCases)이 빈 목록이라 그대로 빈 상태다.
     renderPage('/student/projects/p1?tab=issues')
 
     expect(
-      screen.getByText('연결된 인증 트러블슈팅이 없어요'),
+      screen.getByText('아직 기록한 트러블슈팅이 없어요'),
     ).toBeInTheDocument()
 
-    // 연결 피커 — 인증 완료(ts1)만 후보, 작성 중(ts3)은 제외.
-    await user.click(screen.getByRole('button', { name: '트러블슈팅 관리' }))
+    await user.click(screen.getByRole('button', { name: '기존 사례 연결' }))
     expect(
       screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
     ).toBeInTheDocument()
+    // 작성 중 사례도 후보다(예전에는 인증 완료만 골랐다).
     expect(
-      screen.queryByText('Redis 캐시 stampede로 DB 부하 급증'),
-    ).not.toBeInTheDocument()
+      screen.getByText('Redis 캐시 stampede로 DB 부하 급증'),
+    ).toBeInTheDocument()
 
     // 연결 후 완료 — 연결된 카드로 노출.
     await user.click(

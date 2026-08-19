@@ -118,12 +118,15 @@ export default function TroubleshootingListPage() {
                 ariaLabel="사례 검색"
                 className="hidden w-[220px] sm:flex"
               />
+              {/* 새 사례는 프로젝트 이슈 탭에서 쓴다 — 사례는 어느 프로젝트에서 겪은
+                  문제인지가 함께 남아야 증명서 근거로 쓸 수 있다. 여기서 시작하면
+                  연결을 나중에 고르게 되고, 고르지 않은 사례가 그대로 쌓였다. */}
               <button
                 type="button"
-                onClick={() => navigate('/student/troubleshooting/new')}
-                className={buttonClass({ size: 'sm' })}
+                onClick={() => navigate('/student/projects')}
+                className={buttonClass({ variant: 'secondary', size: 'sm' })}
               >
-                + 새 사례 작성
+                프로젝트에서 작성
               </button>
             </div>
           </div>

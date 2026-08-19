@@ -35,6 +35,8 @@ import { TONE_SOFT } from '@/shared/lib/tone'
 //   - 검토 중(reviewing)      : 상세(잠금). 내용 수정 불가, 강사 승인 대기.
 //   - 인증 완료(certified)    : 상세(잠금) + '인증 완료' 배지 + 변경 제안만.
 //   - 보기 전용(?view=1)      : 프로젝트 워크스페이스 연결 사례에서 진입. 액션 없이 내용만.
+//   - 프로젝트 작성(?projectId=): 프로젝트 이슈 탭에서 진입. 그 프로젝트로 고정해 작성하고
+//                                저장하면 이슈 탭으로 돌아간다(연결 대상은 바꾸지 않는다).
 const card =
   'bg-surface rounded-2xl p-5 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]'
 
@@ -55,6 +57,11 @@ export default function CaseDetailPage() {
   const toast = useToast()
   // 프로젝트 연결 사례에서 들어오면 보기 전용 — 편집/요청/FAB를 모두 숨긴다.
   const viewOnly = params.get('view') === '1'
+  // 프로젝트 이슈 탭에서 시작한 작성 — 연결 대상이 이미 정해져 있다.
+  const boundProjectId = params.get('projectId')
+  const backTo = boundProjectId
+    ? `/student/projects/${boundProjectId}?tab=issues`
+    : null
 
   // 페이지 제목 — 진입 맥락별로 다르게.
   const status = data?.status
@@ -107,8 +114,17 @@ export default function CaseDetailPage() {
   // 프로젝트 연결 — 서버 값 그대로. 단 신규 초안(ts_…)은 BE에 사례가 아직 없어
   // 연결 선택을 로컬에 들고 있다가 저장(create) 바디의 projectId로 함께 보낸다.
   const [draftLink, setDraftLink] = useState<TsProjectLink | null>(null)
+  // 프로젝트에서 시작했으면 그 프로젝트가 곧 연결 대상이다 — 고를 것도, 고를 수도 없다.
+  const boundLink: TsProjectLink | null = boundProjectId
+    ? {
+        projectId: boundProjectId,
+        projectTitle:
+          projectList?.projects.find((p) => p.id === boundProjectId)?.title ??
+          '연결된 프로젝트',
+      }
+    : null
   const link: TsProjectLink | null = isNew
-    ? draftLink
+    ? (boundLink ?? draftLink)
     : (data?.projectLink ?? null)
   const projectLinked = !!link
   // 연결 후보 — 수강생 본인 프로젝트(팀·개인 모두). 작성 중 프로젝트에도 미리 연결할 수 있다.
@@ -196,6 +212,8 @@ export default function CaseDetailPage() {
           <CaseContentForm
             caseId={id}
             projectLink={link}
+            projectLocked={!!boundLink}
+            returnTo={backTo}
             onConnectProject={() => setLinkModal(true)}
             onRequestCert={() => setCertModal(true)}
           />
@@ -245,11 +263,13 @@ export default function CaseDetailPage() {
               <button
                 type="button"
                 onClick={() =>
-                  viewOnly ? navigate(-1) : navigate('/student/troubleshooting')
+                  viewOnly
+                    ? navigate(-1)
+                    : navigate(backTo ?? '/student/troubleshooting')
                 }
                 className="border-border text-fg-muted rounded-lg border px-4 py-2 text-[12px] font-semibold"
               >
-                {viewOnly ? '뒤로' : '목록으로'}
+                {viewOnly ? '뒤로' : backTo ? '프로젝트로' : '목록으로'}
               </button>
             </div>
           </div>
@@ -290,6 +310,7 @@ export default function CaseDetailPage() {
             <CaseContentForm
               caseId={id}
               projectLink={link}
+              returnTo={backTo}
               onConnectProject={() => setLinkModal(true)}
               onRequestCert={() => setCertModal(true)}
             />

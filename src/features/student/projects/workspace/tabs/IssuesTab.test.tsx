@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -37,6 +37,11 @@ const teammates: WsTsCase = {
   mine: false,
 }
 
+function Here() {
+  const loc = useLocation()
+  return <div data-testid="here">{loc.pathname + loc.search}</div>
+}
+
 function renderTab(
   cases: WsTsCase[],
   props: Partial<{ readOnly: boolean; onOpenCase: (id: string) => void }> = {},
@@ -48,9 +53,16 @@ function renderTab(
         new QueryClient({ defaultOptions: { queries: { retry: false } } })
       }
     >
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/student/projects/p1?tab=issues']}>
         <ToastProvider>
-          <IssuesTab d={d} {...props} />
+          <Routes>
+            <Route
+              path="/student/projects/:id"
+              element={<IssuesTab d={d} {...props} />}
+            />
+            {/* 이동한 곳을 그대로 찍어 확인한다 — 작성·열람 진입점이 이 탭의 핵심이다. */}
+            <Route path="*" element={<Here />} />
+          </Routes>
         </ToastProvider>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -79,6 +91,38 @@ describe('IssuesTab 연결된 트러블슈팅', () => {
     expect(screen.getByText(teammates.title)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '트러블슈팅 관리' })).toBeNull()
     expect(screen.queryByRole('button', { name: '연결 해제' })).toBeNull()
+  })
+
+  // 작성은 프로젝트에서 시작한다 — 사례가 어느 프로젝트에서 나온 문제인지 함께 남아야 한다.
+  it('[트러블슈팅 작성]은 이 프로젝트에 묶어 작성 화면으로 보낸다', async () => {
+    const user = userEvent.setup()
+    renderTab([])
+
+    await user.click(screen.getByRole('button', { name: '트러블슈팅 작성' }))
+
+    expect(screen.getByTestId('here')).toHaveTextContent(
+      '/student/troubleshooting/new?projectId=p1',
+    )
+  })
+
+  // 내 사례는 이어 쓰거나 인증을 요청해야 한다 — 보기 전용으로 열면 막다른 길이다.
+  it('내 사례는 편집으로, 팀원 사례는 보기 전용으로 연다', async () => {
+    const user = userEvent.setup()
+    renderTab([mine])
+    await user.click(screen.getByRole('button', { name: '이어 쓰기' }))
+    expect(screen.getByTestId('here')).toHaveTextContent(
+      '/student/troubleshooting/ts1',
+    )
+    expect(screen.getByTestId('here')).not.toHaveTextContent('view=1')
+  })
+
+  it('팀원 사례는 보기 전용으로 연다', async () => {
+    const user = userEvent.setup()
+    renderTab([teammates])
+    await user.click(screen.getByRole('button', { name: '보기' }))
+    expect(screen.getByTestId('here')).toHaveTextContent(
+      '/student/troubleshooting/ts2?view=1',
+    )
   })
 
   it('검토자가 [보기]를 누르면 넘겨받은 열람 함수를 부른다', async () => {

@@ -109,7 +109,7 @@ export function useLinkTsProject(id: string) {
   })
 }
 
-/** 사례 삭제(DELETE) — 인증 완료 전만(BE 게이트). */
+/** 사례 삭제(DELETE) — 작성자 본인만(BE 게이트). */
 export function useDeleteTsCase() {
   const qc = useQueryClient()
   return useMutation({

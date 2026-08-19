@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, FileText, Link2 } from 'lucide-react'
+import { FileText, Link2 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { Markdown } from '@/components/ui/Markdown'
@@ -23,9 +23,7 @@ import { TONE_SOFT } from '@/shared/lib/tone'
 
 // 트러블슈팅 사례 상세 (/student/troubleshooting/:id) — 트러블슈팅 흐름의 단일 페이지.
 //   - 작성 중(draft·미완료)   : 편집 폼(임시 저장·작성 완료). 프로젝트 연결 가능.
-//   - 작성 완료(draft·완료)   : 상세(보기) + '인증 요청 준비'에서 인증 요청 / '수정'으로 복귀.
 //   - 검토 중(reviewing)      : 상세(잠금). 내용 수정 불가, 강사 승인 대기.
-//   - 인증 완료(certified)    : 상세(잠금) + '인증 완료' 배지 + 변경 제안만.
 //   - 보기 전용(?view=1)      : 프로젝트 워크스페이스 연결 사례에서 진입. 액션 없이 내용만.
 //   - 프로젝트 작성(?projectId=): 프로젝트 이슈 탭에서 진입. 그 프로젝트로 고정해 작성하고
 //                                저장하면 이슈 탭으로 돌아간다(연결 대상은 바꾸지 않는다).
@@ -55,8 +53,6 @@ export default function CaseDetailPage() {
     : null
 
   // 페이지 제목 — 진입 맥락별로 다르게.
-  const status = data?.status
-  const completed = !!data?.completed
   const inList = !!queryClient
     .getQueryData<TsListData>(tsKeys.list())
     ?.cases.some((c) => c.id === id)
@@ -68,24 +64,12 @@ export default function CaseDetailPage() {
   usePageHeader(
     viewOnly
       ? '트러블슈팅 사례'
-      : status === 'certified'
-        ? '트러블슈팅 사례 상세'
-        : status === 'reviewing'
-          ? '트러블슈팅 사례 검토 중'
-          : completed
-            ? '트러블슈팅 사례 인증 요청'
-            : inList
-              ? '트러블슈팅 사례 이어 작성'
-              : '새 트러블슈팅 사례',
+      : inList
+        ? '트러블슈팅 사례 이어 작성'
+        : '새 트러블슈팅 사례',
     viewOnly
       ? '연결된 트러블슈팅 사례의 내용을 확인합니다.'
-      : status === 'certified'
-        ? '인증 완료된 사례예요. 수정은 변경 제안으로 진행해요.'
-        : status === 'reviewing'
-          ? '강사 인증 검토 중이에요. 완료 전까지 내용은 잠깁니다.'
-          : completed
-            ? '작성을 마쳤어요. 프로젝트 연결을 확인하고 인증을 요청하세요.'
-            : '상황·해결·결과를 기록하고 프로젝트 연결·작성 완료를 진행해요.',
+      : '상황·해결·결과를 기록해요. 프로젝트 이슈 탭에 바로 남습니다.',
   )
 
   // 인증 제도 폐기(2026-08-19) — 잠금 상태가 없다. 본인 사례는 언제든 고칠 수 있고,
@@ -232,38 +216,6 @@ export default function CaseDetailPage() {
               </button>
             </div>
           </div>
-
-          {/* 강사가 돌려보낸 사례는 사유가 전부다 — 무엇을 고쳐야 하는지 모르면 다시 낼 수 없다.
-              인증 취소도 같은 자리에 띄운다. 이 상태에서는 편집 폼이 뜨고 상태 이력 영역이
-              렌더되지 않아, 이 배너 말고는 사유를 볼 곳이 없다. */}
-          {data?.reviewStatus && (
-            <section
-              className={cn(
-                'flex flex-col gap-1 rounded-xl p-4',
-                data.reviewStatus === 'revoked'
-                  ? 'bg-danger-bg/70'
-                  : 'bg-warning-bg/70',
-              )}
-            >
-              <span
-                className={cn(
-                  'flex items-center gap-1.5 text-[12px] font-bold',
-                  data.reviewStatus === 'revoked'
-                    ? 'text-danger'
-                    : 'text-warning',
-                )}
-              >
-                <AlertTriangle className="size-3.5" aria-hidden="true" />
-                {data.reviewStatus === 'revoked'
-                  ? '강사가 인증을 취소했어요'
-                  : '강사가 보완을 요청했어요'}
-              </span>
-              <span className="text-fg-muted text-[12px] leading-5">
-                {data.reviewComment?.trim() ||
-                  '강사가 사유를 남기지 않았어요. 담당 강사에게 확인해 주세요.'}
-              </span>
-            </section>
-          )}
 
           {editing ? (
             <CaseContentForm

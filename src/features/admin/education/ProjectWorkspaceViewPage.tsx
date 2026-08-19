@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { DataBoundary } from '@/components/ui/DataBoundary'
 import { WorkspaceShell } from '@/features/student/projects/workspace/WorkspaceShell'
@@ -10,6 +11,7 @@ import { IssuesTab } from '@/features/student/projects/workspace/tabs/IssuesTab'
 import { OutcomesTab } from '@/features/student/projects/workspace/tabs/OutcomesTab'
 import type { WsTab } from '@/features/student/projects/types'
 import { useInstructorProjectWorkspace } from '@/features/instructor/education/api'
+import { ReviewDetailPanel } from '@/features/instructor/reviews/ReviewDetailPanel'
 import { useAdminProjectWorkspace } from './api'
 
 /** 검토자 노출 탭 — 조회 7탭. 상호평가·인증·설정은 제외(인증 검토는 /instructor/projects/review). */
@@ -47,6 +49,9 @@ export default function ProjectWorkspaceViewPage({
     ? adminQuery
     : instructorQuery
 
+  // 이슈 탭에서 연 사례 원문 — 수강생 상세는 /student/** 라 403이다. 검토 큐가 쓰는
+  // 상세 패널을 액션 없이(조회 전용) 그대로 재사용한다.
+  const [caseId, setCaseId] = useState<string | null>(null)
   const raw = params.get('tab')
   const tab: WsTab = (REVIEW_TABS as string[]).includes(raw ?? '')
     ? (raw as WsTab)
@@ -88,10 +93,17 @@ export default function ProjectWorkspaceViewPage({
           {tab === 'calendar' && <CalendarTab d={data} readOnly />}
           {tab === 'meetings' && <MeetingsTab d={data} readOnly />}
           {tab === 'docs' && <DocsTab d={data} readOnly />}
-          {tab === 'issues' && <IssuesTab d={data} readOnly />}
+          {tab === 'issues' && (
+            <IssuesTab d={data} readOnly onOpenCase={setCaseId} />
+          )}
           {tab === 'outcomes' && <OutcomesTab d={data} readOnly />}
         </WorkspaceShell>
       )}
+      <ReviewDetailPanel
+        target={caseId ? { kind: 'ts', id: caseId } : null}
+        cohortId={cohortId}
+        onClose={() => setCaseId(null)}
+      />
     </DataBoundary>
   )
 }

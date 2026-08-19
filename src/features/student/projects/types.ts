@@ -104,6 +104,23 @@ export interface Badge {
   label: string
   tone: Tone
 }
+/**
+ * 연결된 트러블슈팅 한 건.
+ *
+ * 예전에는 id만 내려와, 화면이 그 id를 '내가 쓴 사례 목록'에서 되찾아 그렸다 —
+ * 그래서 같은 프로젝트인데 사람마다 목록이 달랐다. 이제 서버가 목록을 만든다.
+ */
+export interface WsTsCase {
+  id: string
+  title: string
+  /** 작성자 이름 — 서버가 채운다. */
+  author: string | null
+  status: Badge
+  /** 인증일(없으면 작성일) */
+  date: string
+  /** 내가 쓴 사례인지 — 연결 해제는 작성자 본인만 할 수 있다. */
+  mine: boolean
+}
 export interface WsTask {
   id?: string
   title: string
@@ -261,5 +278,5 @@ export interface WorkspaceData {
   certRecentChange: { label: string; status: Badge; date: string }
   /** 인증 요청 진행 정보(검토 중일 때) — 홈 인증 상태 카드. 없으면 최근 변경 제안으로 폴백. */
   certInfo?: { requestedAt: string; reviewer: string; eta: string }
-  troubleshootingCaseIds?: string[] // §52 BE 연결 사례 id
+  troubleshootingCases?: WsTsCase[] // §52 연결된 트러블슈팅(서버가 제목·작성자까지 채운다)
 }

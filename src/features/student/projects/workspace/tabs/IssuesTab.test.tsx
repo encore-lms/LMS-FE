@@ -12,6 +12,7 @@ vi.mock('../../../api/projects')
 // 연결 피커용 목록만 쓰는 훅 — 이 화면의 목록은 워크스페이스 응답에서 온다.
 vi.mock('../../../api/troubleshooting', () => ({
   useTsList: () => ({ data: { cases: [] }, isPending: false }),
+  useDeleteTsCase: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 
 /**
@@ -83,6 +84,13 @@ describe('IssuesTab 연결된 트러블슈팅', () => {
     renderTab([mine, teammates])
 
     expect(screen.getAllByRole('button', { name: '연결 해제' })).toHaveLength(1)
+  })
+
+  // 게시판형 CRUD — 내 기록만 지울 수 있다.
+  it('삭제는 내가 쓴 사례에만 뜬다', () => {
+    renderTab([mine, teammates])
+
+    expect(screen.getAllByRole('button', { name: '삭제' })).toHaveLength(1)
   })
 
   it('검토자는 연결 관리도 해제도 없이 목록만 본다', () => {

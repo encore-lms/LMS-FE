@@ -146,7 +146,7 @@ describe('ProblemTab 상세 API 연결', () => {
 
     expect(
       screen.getByText(
-        '수강생이 작성하고 강사가 인증한 내용을 그대로 보여줍니다.',
+        '수강생이 프로젝트에서 기록한 내용을 그대로 보여줍니다.',
       ),
     ).toBeInTheDocument()
     expect(screen.getAllByText('문제 상황')).toHaveLength(2)

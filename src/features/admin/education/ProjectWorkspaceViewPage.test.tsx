@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -11,6 +12,41 @@ import { useAdminProjectWorkspace } from './api'
 vi.mock('@/features/student/api/projects')
 vi.mock('@/features/student/api/peers')
 vi.mock('./api')
+// 검토 상세 패널 — 이슈 탭에서 사례 원문을 여는 경로(수강생 API 대신 검토 API).
+vi.mock('@/features/instructor/api/reviews', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useTsReviewDetail: (caseId: string | null) => ({
+    data: caseId
+      ? {
+          id: caseId,
+          title: '환불 행 중복 문제',
+          studentUserId: 'u1',
+          studentName: '황수빈',
+          cohortLabel: '34기',
+          status: 'certified',
+          independent: true,
+          daysSpent: 2,
+          createdAt: '2026.08.14',
+          situation: '상황',
+          resolution: '해결',
+          result: '결과',
+          tags: [],
+          stack: [],
+          attachments: [],
+          project: '구독 서비스 고객 이탈 예측',
+          certifiedAt: '2026.08.14',
+          reviewComment: null,
+        }
+      : undefined,
+    isPending: false,
+    isError: false,
+  }),
+  useProjectReviewDetail: () => ({
+    data: undefined,
+    isPending: false,
+    isError: false,
+  }),
+}))
 vi.mock('@/features/instructor/education/api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   useInstructorProjectWorkspace: () => ({
@@ -21,9 +57,9 @@ vi.mock('@/features/instructor/education/api', async (importOriginal) => ({
   }),
 }))
 
-function renderPage() {
+function renderPage(data: typeof mockWorkspace = mockWorkspace) {
   vi.mocked(useAdminProjectWorkspace).mockReturnValue({
-    data: mockWorkspace,
+    data,
     isPending: false,
     isError: false,
     refetch: vi.fn(),
@@ -80,5 +116,30 @@ describe('ProjectWorkspaceViewPage (검토자 읽기 전용)', () => {
     expect(screen.queryByText('내 할 일')).toBeNull()
     expect(screen.getByText('결제 실패 재시도 로직 구현')).toBeInTheDocument()
     expect(screen.getByText(/최유나 · D-6/)).toBeInTheDocument()
+  })
+
+  // 예전에는 검토자에게 목록 자체가 없었다 — 수강생 전용 API라 건수만 셌다.
+  it('이슈 탭에서 연결 사례를 작성자와 함께 보고 원문을 연다', async () => {
+    const user = userEvent.setup()
+    renderPage({
+      ...mockWorkspace,
+      troubleshootingCases: [
+        {
+          id: 'ts9',
+          title: '환불 행 중복 문제',
+          author: '황수빈',
+          status: { label: '인증 완료', tone: 'success' },
+          date: '2026.08.14',
+          mine: false,
+        },
+      ],
+    })
+
+    await user.click(screen.getByRole('button', { name: '이슈' }))
+    expect(screen.getByText('환불 행 중복 문제')).toBeInTheDocument()
+    expect(screen.getByText(/황수빈/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '보기' }))
+    expect(await screen.findByText('트러블슈팅 검토 상세')).toBeInTheDocument()
   })
 })

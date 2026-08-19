@@ -150,7 +150,7 @@ function CaseFlow({ item }: { item: ProblemCase }) {
           </dd>
         </div>
         <span className="text-success text-[10px] font-semibold">
-          강사 인증으로 확인된 결과
+          기록으로 확인된 결과
         </span>
       </div>
     </dl>
@@ -161,7 +161,7 @@ function OriginalDetail({ item }: { item: ProblemCase }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-fg-subtle m-0 text-[11px] leading-5">
-        수강생이 작성하고 강사가 인증한 내용을 그대로 보여줍니다.
+        수강생이 프로젝트에서 기록한 내용을 그대로 보여줍니다.
       </p>
       <dl className="divide-divider border-divider divide-y overflow-hidden rounded-xl border">
         {summaryFields(item).map((field) => (
@@ -190,7 +190,11 @@ function OriginalDetail({ item }: { item: ProblemCase }) {
   )
 }
 
-export function ProblemTabContent({ problem }: { problem: CertificateProblemDetail }) {
+export function ProblemTabContent({
+  problem,
+}: {
+  problem: CertificateProblemDetail
+}) {
   const sortedCategories = [...problem.categories].sort(
     (a, b) => b.count - a.count,
   )
@@ -210,13 +214,13 @@ export function ProblemTabContent({ problem }: { problem: CertificateProblemDeta
       <TabHead
         no={4}
         title="문제해결"
-        sub="인증된 경험을 문제 유형과 해결 흐름으로 확인합니다."
+        sub="기록한 경험을 문제 유형과 해결 흐름으로 확인합니다."
       />
 
       <section className={cn(card, 'overflow-hidden p-0')}>
         {problem.cases.length === 0 ? (
           <div className="p-6">
-            <EmptyData>인증된 트러블슈팅 사례가 없습니다.</EmptyData>
+            <EmptyData>기록한 트러블슈팅 사례가 없습니다.</EmptyData>
           </div>
         ) : (
           <>
@@ -230,7 +234,7 @@ export function ProblemTabContent({ problem }: { problem: CertificateProblemDeta
                     전체 트러블슈팅 카테고리
                   </h2>
                   <p className="text-fg-subtle m-0 mt-1 text-[10px]">
-                    카테고리를 선택하면 아래 인증 사례가 바뀌니다.
+                    카테고리를 선택하면 아래 사례가 바뀝니다.
                   </p>
                 </div>
                 <span className="text-fg-muted text-[11px] font-bold">
@@ -287,7 +291,7 @@ export function ProblemTabContent({ problem }: { problem: CertificateProblemDeta
 
               {visibleCases.length === 0 ? (
                 <div className="mt-5">
-                  <EmptyData>선택한 카테고리의 인증 사례가 없습니다.</EmptyData>
+                  <EmptyData>선택한 카테고리의 사례가 없습니다.</EmptyData>
                 </div>
               ) : (
                 <div className="divide-divider divide-y">
@@ -301,7 +305,7 @@ export function ProblemTabContent({ problem }: { problem: CertificateProblemDeta
                         <div className="flex min-w-0 flex-1 flex-col gap-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-fg-subtle text-[10px] font-bold">
-                              인증 사례 {String(index + 1).padStart(2, '0')}
+                              사례 {String(index + 1).padStart(2, '0')}
                             </span>
                             <span
                               className={cn(

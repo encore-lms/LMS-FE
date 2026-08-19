@@ -44,6 +44,10 @@ interface CaseContentFormProps {
   projectLink: TsProjectLink | null
   /** 프로젝트 연결 모달 열기(상세 페이지 소유). */
   onConnectProject: () => void
+  /** 프로젝트 이슈 탭에서 시작한 작성 — 연결 대상이 이미 정해져 바꿀 수 없다. */
+  projectLocked?: boolean
+  /** 저장을 마치고 돌아갈 곳(프로젝트 이슈 탭). 미지정 시 트러블슈팅 목록. */
+  returnTo?: string | null
   /** 인증 요청 — 내용 저장 후 상세 페이지의 인증 요청(체크리스트) 모달을 연다. */
   onRequestCert: () => void
 }
@@ -52,6 +56,8 @@ export function CaseContentForm({
   caseId,
   projectLink,
   onConnectProject,
+  projectLocked = false,
+  returnTo = null,
   onRequestCert,
 }: CaseContentFormProps) {
   const queryClient = useQueryClient()
@@ -245,14 +251,23 @@ export function CaseContentForm({
   const saveDraft = () => {
     persist(false, (id) => {
       toast.success('저장했어요 · 이어서 작성할 수 있어요')
-      // 신규는 BE 발급 실 id 상세로 교체(이후 수정은 PUT).
-      if (isNew) navigate(`/student/troubleshooting/${id}`, { replace: true })
+      // 신규는 BE 발급 실 id 상세로 교체(이후 수정은 PUT). 프로젝트에서 시작했다면
+      // 그 맥락(돌아갈 곳)도 유지한다 — 잃으면 '프로젝트로'가 '목록으로'로 바뀐다.
+      if (isNew) {
+        const bound =
+          returnTo && projectLink ? `?projectId=${projectLink.projectId}` : ''
+        navigate(`/student/troubleshooting/${id}${bound}`, { replace: true })
+      }
     })
   }
   const complete = () => {
     persist(true, () => {
-      toast.success('저장했어요 · 목록에서 ‘사례 열기’로 인증 요청하세요')
-      navigate('/student/troubleshooting')
+      toast.success(
+        returnTo
+          ? '저장했어요 · 이슈 탭에서 확인할 수 있어요'
+          : '저장했어요 · 목록에서 ‘사례 열기’로 인증 요청하세요',
+      )
+      navigate(returnTo ?? '/student/troubleshooting')
     })
   }
 
@@ -356,13 +371,17 @@ export function CaseContentForm({
               </span>
             </div>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onConnectProject}
-                className="border-border text-fg flex-1 rounded-lg border py-2.5 text-[12px] font-semibold"
-              >
-                {projectLinked ? '연결 변경' : '프로젝트 연결'}
-              </button>
+              {/* 프로젝트에서 시작한 작성은 연결 대상이 정해져 있다 — 바꿀 버튼을 두면
+                  이 사례가 어디에 남는지 흔들린다. */}
+              {!projectLocked && (
+                <button
+                  type="button"
+                  onClick={onConnectProject}
+                  className="border-border text-fg flex-1 rounded-lg border py-2.5 text-[12px] font-semibold"
+                >
+                  {projectLinked ? '연결 변경' : '프로젝트 연결'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={openCertRequest}

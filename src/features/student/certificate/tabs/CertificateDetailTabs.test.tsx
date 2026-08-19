@@ -317,7 +317,7 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     ).toBe(document.querySelector('[data-tech-category-card]'))
   })
 
-  it('인증 문제해결 사례를 카테고리와 해결 흐름으로 표시한다', async () => {
+  it('문제해결 사례를 카테고리와 해결 흐름으로 표시한다', async () => {
     vi.mocked(fetchCertificateDetailTabs).mockResolvedValue(result)
     renderWithQuery(<ProblemTab />)
 
@@ -333,7 +333,7 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.queryByText('#협업')).not.toBeInTheDocument()
     expect(screen.queryByText('PeerTag 클라우드')).not.toBeInTheDocument()
     expect(screen.queryByText('태그 ↔ 사례 연결')).not.toBeInTheDocument()
-    expect(screen.getByText('인증 사례 01')).toBeInTheDocument()
+    expect(screen.getByText('사례 01')).toBeInTheDocument()
     expect(screen.queryByText('평균 소요 일수')).not.toBeInTheDocument()
     expect(screen.queryByText('협업 태그')).not.toBeInTheDocument()
     expect(screen.queryByText('동료 평가자')).not.toBeInTheDocument()
@@ -361,7 +361,7 @@ describe('수강생 증명서 상세 데이터 탭', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(
       screen.getByText(
-        '수강생이 작성하고 강사가 인증한 내용을 그대로 보여줍니다.',
+        '수강생이 프로젝트에서 기록한 내용을 그대로 보여줍니다.',
       ),
     ).toBeInTheDocument()
     expect(

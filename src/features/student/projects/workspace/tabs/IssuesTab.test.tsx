@@ -118,8 +118,9 @@ describe('IssuesTab 연결된 트러블슈팅', () => {
     const user = userEvent.setup()
     renderTab([mine])
     await user.click(screen.getByRole('button', { name: '이어 쓰기' }))
+    // 저장 뒤 이 탭으로 돌아오려면 편집에도 프로젝트가 실려야 한다.
     expect(screen.getByTestId('here')).toHaveTextContent(
-      '/student/troubleshooting/ts1',
+      '/student/troubleshooting/ts1?projectId=p1',
     )
     expect(screen.getByTestId('here')).not.toHaveTextContent('view=1')
   })

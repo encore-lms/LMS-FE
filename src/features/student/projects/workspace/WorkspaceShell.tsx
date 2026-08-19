@@ -75,7 +75,6 @@ export function WorkspaceShell({
   )
   // meta("팀 프로젝트 · 4명 · 기간 · PM …") 파싱 — 이브로우 태그 + 아이콘 메타 행.
   const metaParts = meta.split(' · ')
-  const memberCount = meta.match(/(\d+)\s*명/)?.[1]
   // 기간은 구조 필드(startDate·endDate) 우선 — 실 BE meta엔 기간이 없어 문자열 파싱만으론 표시 불가.
   const metaRow = [...metaParts.slice(1)]
   if (startDate && endDate && !metaRow.some((s) => s.includes('~'))) {
@@ -85,29 +84,21 @@ export function WorkspaceShell({
     seg.includes('~') ? Calendar : seg.startsWith('PM') ? Flag : Send
   return (
     <div className="flex flex-col gap-5 p-8">
-      {/* 빵부스러기 + 상태 */}
-      <div className="flex items-center justify-between gap-3">
-        <nav className="flex min-w-0 items-center gap-1.5 text-[12px]">
-          <button
-            type="button"
-            onClick={
-              backTo ? backTo.onClick : () => navigate('/student/projects')
-            }
-            className="text-fg-muted hover:text-fg shrink-0"
-          >
-            ← {backTo ? backTo.label : '프로젝트 목록'}
-          </button>
-          <span className="text-fg-subtle shrink-0">/</span>
-          <span className="text-fg truncate font-semibold">{title}</span>
-        </nav>
-        <span className="text-success flex shrink-0 items-center gap-1.5 text-[11px] font-semibold">
-          <span
-            className="bg-success size-1.5 rounded-full"
-            aria-hidden="true"
-          />
-          워크스페이스 활성{memberCount && ` · ${memberCount}명 참여 중`}
-        </span>
-      </div>
+      {/* 빵부스러기 — 우측 '워크스페이스 활성 · N명 참여 중' 배지는 정적 멤버 수를
+          실시간 참여로 오인시키고 종료·인증된 프로젝트에도 '활성'으로 떠 제거(2026-08-19). */}
+      <nav className="flex min-w-0 items-center gap-1.5 text-[12px]">
+        <button
+          type="button"
+          onClick={
+            backTo ? backTo.onClick : () => navigate('/student/projects')
+          }
+          className="text-fg-muted hover:text-fg shrink-0"
+        >
+          ← {backTo ? backTo.label : '프로젝트 목록'}
+        </button>
+        <span className="text-fg-subtle shrink-0">/</span>
+        <span className="text-fg truncate font-semibold">{title}</span>
+      </nav>
 
       {/* 히어로 밴드 */}
       <div className="bg-brand flex flex-col gap-4 rounded-2xl p-6 sm:flex-row sm:items-center sm:justify-between">

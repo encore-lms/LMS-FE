@@ -45,10 +45,15 @@ export function IssuesTab({
   const [picking, setPicking] = useState(false)
 
   const cases = data?.cases ?? []
-  const open = (caseId: string) =>
+  // 내 사례는 이어 쓰거나 인증을 요청해야 하므로 편집 화면으로, 팀원 사례는 보기 전용으로 연다.
+  const open = (c: WsTsCase) =>
     onOpenCase
-      ? onOpenCase(caseId)
-      : navigate(`/student/troubleshooting/${caseId}?view=1`)
+      ? onOpenCase(c.id)
+      : navigate(
+          c.mine
+            ? `/student/troubleshooting/${c.id}`
+            : `/student/troubleshooting/${c.id}?view=1`,
+        )
 
   const unlink = (c: WsTsCase) =>
     unlinkM.mutate(
@@ -64,21 +69,37 @@ export function IssuesTab({
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
-        title="연결된 트러블슈팅"
-        action={readOnly ? undefined : '트러블슈팅 관리'}
-        onAction={readOnly ? undefined : () => setPicking(true)}
+        title="트러블슈팅"
+        action={readOnly ? undefined : '트러블슈팅 작성'}
+        onAction={
+          readOnly
+            ? undefined
+            : () => navigate(`/student/troubleshooting/new?projectId=${d.id}`)
+        }
       />
-      <p className="text-fg-subtle -mt-2 text-[12px]">
-        이 프로젝트에서 해결한 트러블슈팅 중 인증 완료된 사례만 연결해 보여줘요.
-        카드를 누르면 사례 내용을 자세히 볼 수 있어요.
-      </p>
+      <div className="-mt-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-fg-subtle text-[12px]">
+          이 프로젝트에서 겪은 문제를 기록해요. 인증을 받지 않아도 팀이 바로 볼
+          수 있고, 인증은 사례를 열어 따로 요청해요.
+        </p>
+        {/* 다른 데서 쓰던 사례를 이 프로젝트로 가져오는 길 — 새 사례는 위 버튼으로 쓴다. */}
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setPicking(true)}
+            className="text-fg-subtle hover:text-brand shrink-0 text-[12px] font-semibold underline-offset-2 hover:underline"
+          >
+            기존 사례 연결
+          </button>
+        )}
+      </div>
       {linked.length === 0 ? (
         <Empty
-          title="연결된 인증 트러블슈팅이 없어요"
+          title="아직 기록한 트러블슈팅이 없어요"
           description={
             readOnly
-              ? '팀이 인증받은 사례를 연결하면 여기에 쌓여요.'
-              : '‘트러블슈팅 관리’로 인증 완료된 사례를 연결하세요.'
+              ? '팀이 사례를 기록하면 여기에 쌓여요.'
+              : '‘트러블슈팅 작성’으로 이 프로젝트에서 겪은 문제를 남겨보세요.'
           }
         />
       ) : (
@@ -112,10 +133,10 @@ export function IssuesTab({
               <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => open(c.id)}
+                  onClick={() => open(c)}
                   className={buttonClass({ variant: 'secondary', size: 'sm' })}
                 >
-                  보기
+                  {!readOnly && c.mine ? '이어 쓰기' : '보기'}
                 </button>
                 {/* 연결 해제는 사례 주인만 — 남의 사례를 걷어낼 수는 없다. */}
                 {!readOnly && c.mine && (
@@ -159,7 +180,8 @@ function TsLinkPickerModal({
   const toast = useToast()
   const linkM = useLinkTroubleshooting(projectId)
   const unlinkM = useUnlinkTroubleshooting(projectId)
-  const certified = cases.filter((c) => c.status === 'certified')
+  // 인증 여부와 무관하게 내 사례를 붙일 수 있다 — 인증은 사례를 열어 따로 요청한다.
+  const linkable = cases
   const toggle = (c: TsCase) => {
     if (linkedIds.includes(c.id)) {
       unlinkM.mutate(
@@ -190,14 +212,15 @@ function TsLinkPickerModal({
     >
       <div className="flex flex-col gap-2">
         <p className="text-fg-subtle text-[12px]">
-          인증 완료된 트러블슈팅 사례만 연결할 수 있어요.
+          내가 쓴 사례를 이 프로젝트에 연결해요. 사례는 한 번에 한 프로젝트에만
+          연결돼요.
         </p>
-        {certified.length === 0 ? (
+        {linkable.length === 0 ? (
           <div className="text-fg-subtle py-6 text-center text-[13px]">
-            연결할 인증 완료 사례가 없어요.
+            연결할 사례가 없어요.
           </div>
         ) : (
-          certified.map((c) => {
+          linkable.map((c) => {
             const on = linkedIds.includes(c.id)
             return (
               <button
@@ -225,8 +248,15 @@ function TsLinkPickerModal({
                     {c.category} · {c.days}
                   </span>
                 </div>
-                <span className="bg-success-bg text-success shrink-0 rounded px-2 py-0.5 text-[10px] font-bold">
-                  인증 완료
+                <span
+                  className={cn(
+                    'shrink-0 rounded px-2 py-0.5 text-[10px] font-bold',
+                    c.status === 'certified'
+                      ? 'bg-success-bg text-success'
+                      : 'bg-surface-muted text-fg-muted',
+                  )}
+                >
+                  {c.statusLabel}
                 </span>
               </button>
             )

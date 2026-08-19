@@ -45,7 +45,6 @@ describe('CaseContentForm 저장', () => {
               projectLocked
               returnTo="/student/projects/p1?tab=issues"
               onConnectProject={vi.fn()}
-              onRequestCert={vi.fn()}
             />
           </ToastProvider>
         </MemoryRouter>

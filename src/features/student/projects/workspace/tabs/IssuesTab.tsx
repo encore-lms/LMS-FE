@@ -6,7 +6,10 @@ import { Empty } from '@/components/ui/Empty'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { TONE_SOFT } from '@/shared/lib/tone'
-import { useTsList } from '../../../api/troubleshooting'
+import { useQueryClient } from '@tanstack/react-query'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useDeleteTsCase, useTsList } from '../../../api/troubleshooting'
+import { projectKeys } from '../../queryKeys'
 import {
   useLinkTroubleshooting,
   useUnlinkTroubleshooting,
@@ -37,12 +40,16 @@ export function IssuesTab({
 }) {
   const navigate = useNavigate()
   const toast = useToast()
+  const queryClient = useQueryClient()
   // 연결 피커는 '내가 쓴 인증 사례' 중에서 고르는 화면이라 수강생 목록이 그대로 필요하다.
   const { data } = useTsList(!readOnly)
   const linked = d.troubleshootingCases ?? []
   const linkedIds = linked.map((c) => c.id)
   const unlinkM = useUnlinkTroubleshooting(d.id)
   const [picking, setPicking] = useState(false)
+  // 삭제는 되돌릴 수 없다 — 한 번 묻고 지운다.
+  const [deleting, setDeleting] = useState<WsTsCase | null>(null)
+  const deleteCase = useDeleteTsCase()
 
   const cases = data?.cases ?? []
   // 내 사례는 이어 쓰거나 인증을 요청해야 하므로 편집 화면으로, 팀원 사례는 보기 전용으로 연다.
@@ -138,20 +145,55 @@ export function IssuesTab({
                 >
                   {!readOnly && c.mine ? '이어 쓰기' : '보기'}
                 </button>
-                {/* 연결 해제는 사례 주인만 — 남의 사례를 걷어낼 수는 없다. */}
+                {/* 연결 해제·삭제는 사례 주인만 — 남의 기록을 치울 수는 없다. */}
                 {!readOnly && c.mine && (
-                  <button
-                    type="button"
-                    onClick={() => unlink(c)}
-                    className="text-fg-subtle hover:text-danger rounded px-2 py-1 text-[12px] font-semibold"
-                  >
-                    연결 해제
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => unlink(c)}
+                      className="text-fg-subtle hover:text-fg rounded px-2 py-1 text-[12px] font-semibold"
+                    >
+                      연결 해제
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(c)}
+                      className="text-fg-subtle hover:text-danger rounded px-2 py-1 text-[12px] font-semibold"
+                    >
+                      삭제
+                    </button>
+                  </>
                 )}
               </div>
             </div>
           ))}
         </div>
+      )}
+      {deleting && (
+        <ConfirmDialog
+          open
+          title="이 트러블슈팅을 삭제할까요?"
+          confirmLabel="삭제"
+          tone="danger"
+          onConfirm={() => {
+            const target = deleting
+            setDeleting(null)
+            deleteCase.mutate(target.id, {
+              onSuccess: () => {
+                toast.info('사례를 삭제했어요')
+                queryClient.invalidateQueries({
+                  queryKey: projectKeys.workspace(d.id),
+                })
+              },
+              onError: () => toast.danger('삭제하지 못했어요.'),
+            })
+          }}
+          onClose={() => setDeleting(null)}
+        >
+          <p className="text-fg-muted text-[13px]">
+            ‘{deleting.title}’ 기록이 사라져요. 되돌릴 수 없어요.
+          </p>
+        </ConfirmDialog>
       )}
       {picking && (
         <TsLinkPickerModal

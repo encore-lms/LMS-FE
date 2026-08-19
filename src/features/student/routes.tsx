@@ -49,14 +49,8 @@ const ProjectWizardPage = lazy(
 )
 const WorkspacePage = lazy(() => import('./projects/workspace/WorkspacePage'))
 const ChangeRequestPage = lazy(() => import('./projects/ChangeRequestPage'))
-const TsListPage = lazy(
-  () => import('./troubleshooting/TroubleshootingListPage'),
-)
 const TsDetailPage = lazy(() => import('./troubleshooting/CaseDetailPage'))
 const TsNewPage = lazy(() => import('./troubleshooting/forms/NewCasePage'))
-const TsChangePage = lazy(
-  () => import('./troubleshooting/forms/ChangeRequestPage'),
-)
 // QnA 게시판 — 목록·작성·상세(FE 선반영). 기수 게시판 폐기(2026-05-21) 이후 재도입 프로토타입.
 const QnaListPage = lazy(() => import('./qna/QnaListPage'))
 const QnaNewPage = lazy(() => import('./qna/forms/NewQuestionPage'))
@@ -128,14 +122,10 @@ export const studentRoutes: RouteObject[] = [
         path: 'projects/:projectId/change-requests/new',
         element: <ChangeRequestPage />,
       },
-      // 트러블슈팅(목록·상세·새 작성·변경 제안).
-      { path: 'troubleshooting', element: <TsListPage /> },
+      // 트러블슈팅 — 별도 탭을 폐기하고(2026-08-19) 프로젝트 이슈 탭에서 쓰고 읽는다.
+      // 남는 라우트는 그 이슈 탭이 여는 작성·상세 화면뿐이다.
       { path: 'troubleshooting/new', element: <TsNewPage /> },
       { path: 'troubleshooting/:id', element: <TsDetailPage /> },
-      {
-        path: 'troubleshooting/:id/change-requests/new',
-        element: <TsChangePage />,
-      },
       // QnA 게시판(목록·작성·상세). learning-service 실 연동(api/qna.ts).
       { path: 'qna', element: <QnaListPage /> },
       { path: 'qna/new', element: <QnaNewPage /> },

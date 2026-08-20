@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { DataBoundary } from '@/components/ui/DataBoundary'
@@ -16,6 +16,7 @@ import { LogReviewModal } from './LogReviewModal'
 import type { AdminMentoringLogRow } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { useMyCohorts } from '../api/dashboard'
 
 // 멘토링 일지 관리 (/admin/mentoring/logs) — 운영(MANAGER/ADMIN) 승인·수정 요청 전용.
 // 검토 모달에서 매니저 승인(POST .../approve)·수정 요청(.../change-requests) 가능,
@@ -34,8 +35,15 @@ export default function LogsPage({
     '운영자 조회·수정 요청 · 직접 수정 불가 · 최종 유효본 기준 인정 시간 계산',
     !embedded,
   )
+  const [searchParams] = useSearchParams()
+  const myCohorts = useMyCohorts()
+  const requestedCohortId =
+    scopeCohortId ??
+    searchParams.get('cohort') ??
+    myCohorts.data?.[0]?.cohortId ??
+    null
   const { data, isPending, isError, refetch } =
-    useAdminMentoringLogs(scopeCohortId)
+    useAdminMentoringLogs(requestedCohortId)
   const [status, setStatus] = useSearchParamState('status', 'all')
   const [q, setQ] = useSearchParamState('q')
   const [reviewId, setReviewId] = useState<string | null>(null)

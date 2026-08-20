@@ -5,8 +5,10 @@ import { MemoryRouter } from 'react-router-dom'
 import StatisticsPage from './StatisticsPage'
 import { useMentoringStatistics } from './api'
 import type { AdminMentoringStatisticsData } from './types'
+import { useMyCohorts } from '../api/dashboard'
 
 vi.mock('./api')
+vi.mock('../api/dashboard')
 
 // 멘토 통계 — 조회 전용 렌더 검증(§33). 요약·행 라벨·읽기 전용 문구 노출 +
 // 수정·변경 요청·보정 액션 부재 + 필터 동작.
@@ -60,6 +62,9 @@ const stats: AdminMentoringStatisticsData = {
 }
 
 function renderPage() {
+  vi.mocked(useMyCohorts).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useMyCohorts>)
   vi.mocked(useMentoringStatistics).mockReturnValue({
     data: stats,
     isPending: false,
@@ -67,12 +72,18 @@ function renderPage() {
   } as unknown as ReturnType<typeof useMentoringStatistics>)
   return render(
     <MemoryRouter>
-      <StatisticsPage />
+      <StatisticsPage scopeCohortId="cohort-ai-5" />
     </MemoryRouter>,
   )
 }
 
 describe('StatisticsPage (조회 전용)', () => {
+  it('현재 기수를 통계 API에 명시한다', () => {
+    renderPage()
+
+    expect(useMentoringStatistics).toHaveBeenCalledWith('cohort-ai-5')
+  })
+
   it('상태 요약 5종 + 조회 전용 캡션 + 비공개 기준을 렌더한다', () => {
     renderPage()
     // 요약 라벨은 팀 상태 필터 option 에도 등장 — 요약 카드 스코프(span)로 조회

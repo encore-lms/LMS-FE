@@ -252,35 +252,6 @@ describe('WorkspacePage home', () => {
     expect(await screen.findByText('문서를 추가했습니다')).toBeInTheDocument()
   })
 
-  // 인증 여부와 무관하게 내 사례를 붙일 수 있다 — 인증은 사례를 열어 따로 요청한다.
-  it('이슈 탭에서 기존 사례를 연결할 수 있다', async () => {
-    const user = userEvent.setup()
-    // 연결 없이 시작 — 워크스페이스 응답(troubleshootingCases)이 빈 목록이라 그대로 빈 상태다.
-    renderPage('/student/projects/p1?tab=issues')
-
-    expect(
-      screen.getByText('아직 기록한 트러블슈팅이 없어요'),
-    ).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: '기존 사례 연결' }))
-    expect(
-      screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
-    ).toBeInTheDocument()
-    // 작성 중 사례도 후보다(예전에는 인증 완료만 골랐다).
-    expect(
-      screen.getByText('Redis 캐시 stampede로 DB 부하 급증'),
-    ).toBeInTheDocument()
-
-    // 연결 후 완료 — 연결된 카드로 노출.
-    await user.click(
-      screen.getByText('Kafka 컨슈머 리밸런싱으로 메시지 중복 처리'),
-    )
-    expect(
-      await screen.findByText('트러블슈팅을 연결했어요'),
-    ).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '완료' }))
-  })
-
   // 부르는 것까지가 초대다 — 팀이 되는 건 상대가 받아들였을 때다.
   it('팀원 초대 모달로 초대를 보낸다', async () => {
     const user = userEvent.setup()

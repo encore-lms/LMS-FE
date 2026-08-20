@@ -3,23 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/shared/lib/cn'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { Empty } from '@/components/ui/Empty'
-import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/use-toast'
 import { TONE_SOFT } from '@/shared/lib/tone'
 import { useQueryClient } from '@tanstack/react-query'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { useDeleteTsCase, useTsList } from '../../../api/troubleshooting'
+import { useDeleteTsCase } from '../../../api/troubleshooting'
 import { projectKeys } from '../../queryKeys'
-import {
-  useLinkTroubleshooting,
-  useUnlinkTroubleshooting,
-  wsWriteError,
-} from '../../../api/projects'
-import type { TsCase } from '../../../troubleshooting/types'
 import type { WorkspaceData, WsTsCase } from '../../types'
 import { SectionHead } from '../components/ws-shared'
 
 // 이슈 탭 — 이 프로젝트에서 겪은 트러블슈팅을 쓰고 읽는 곳(게시판형 CRUD).
+//
+// 사례는 이 프로젝트에 속한 기록이다. 예전에는 다른 데서 쓴 사례를 골라 붙이는
+// '기존 사례 연결' 피커가 있었는데, 작성 자체가 프로젝트에서 시작하도록 바뀐 뒤로는
+// 붙일 게 없다(2026-08-19 폐기). 떼어내는 '연결 해제'도 같이 없앴다 — 떼면 그 기록은
+// 어느 화면에도 뜨지 않는다. 프로젝트에서 지우고 싶으면 삭제한다.
 //
 // 목록은 서버가 만든다(d.troubleshootingCases). 예전에는 응답이 사례 id 배열뿐이라 화면이
 // 그 id를 '내가 쓴 사례 목록'에서 되찾아 그렸고, 그래서 같은 프로젝트인데도 사람마다 목록이
@@ -42,16 +40,11 @@ export function IssuesTab({
   const toast = useToast()
   const queryClient = useQueryClient()
   // 연결 피커는 '내가 쓴 사례' 중에서 고르는 화면이라 수강생 목록이 그대로 필요하다.
-  const { data } = useTsList(!readOnly)
   const linked = d.troubleshootingCases ?? []
-  const linkedIds = linked.map((c) => c.id)
-  const unlinkM = useUnlinkTroubleshooting(d.id)
-  const [picking, setPicking] = useState(false)
   // 삭제는 되돌릴 수 없다 — 한 번 묻고 지운다.
   const [deleting, setDeleting] = useState<WsTsCase | null>(null)
   const deleteCase = useDeleteTsCase()
 
-  const cases = data?.cases ?? []
   // 내 사례는 편집 화면으로, 팀원 사례는 보기 전용으로 연다.
   // 편집에도 projectId 를 실어야 저장 뒤 이 탭으로 돌아온다 — 없으면 사라진 트러블슈팅
   // 목록 주소로 떨어져 404 를 만난다.
@@ -64,17 +57,6 @@ export function IssuesTab({
             : `/student/troubleshooting/${c.id}?view=1`,
         )
 
-  const unlink = (c: WsTsCase) =>
-    unlinkM.mutate(
-      { caseId: c.id },
-      {
-        onSuccess: () =>
-          toast.info('프로젝트 연결을 해제했어요 (사례는 그대로예요)'),
-        onError: (e) =>
-          toast.danger(wsWriteError(e, '연결 해제에 실패했어요.')),
-      },
-    )
-
   return (
     <div className="flex flex-col gap-4">
       <SectionHead
@@ -86,22 +68,10 @@ export function IssuesTab({
             : () => navigate(`/student/troubleshooting/new?projectId=${d.id}`)
         }
       />
-      <div className="-mt-2 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-fg-subtle text-[12px]">
-          이 프로젝트에서 겪은 문제를 기록해요. 저장하는 즉시 팀이 볼 수 있고,
-          내가 쓴 기록은 언제든 고치거나 지울 수 있어요.
-        </p>
-        {/* 다른 데서 쓰던 사례를 이 프로젝트로 가져오는 길 — 새 사례는 위 버튼으로 쓴다. */}
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={() => setPicking(true)}
-            className="text-fg-subtle hover:text-brand shrink-0 text-[12px] font-semibold underline-offset-2 hover:underline"
-          >
-            기존 사례 연결
-          </button>
-        )}
-      </div>
+      <p className="text-fg-subtle -mt-2 text-[12px]">
+        이 프로젝트에서 겪은 문제를 기록해요. 저장하는 즉시 팀이 볼 수 있고,
+        내가 쓴 기록은 언제든 고치거나 지울 수 있어요.
+      </p>
       {linked.length === 0 ? (
         <Empty
           title="아직 기록한 트러블슈팅이 없어요"
@@ -152,13 +122,6 @@ export function IssuesTab({
                   <>
                     <button
                       type="button"
-                      onClick={() => unlink(c)}
-                      className="text-fg-subtle hover:text-fg rounded px-2 py-1 text-[12px] font-semibold"
-                    >
-                      연결 해제
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => setDeleting(c)}
                       className="text-fg-subtle hover:text-danger rounded px-2 py-1 text-[12px] font-semibold"
                     >
@@ -197,116 +160,6 @@ export function IssuesTab({
           </p>
         </ConfirmDialog>
       )}
-      {picking && (
-        <TsLinkPickerModal
-          projectId={d.id}
-          cases={cases}
-          linkedIds={linkedIds}
-          onClose={() => setPicking(false)}
-        />
-      )}
     </div>
-  )
-}
-
-// 연결 피커 — 다른 데서 쓴 내 사례를 이 프로젝트로 토글해 연결/해제한다.
-function TsLinkPickerModal({
-  projectId,
-  cases,
-  linkedIds,
-  onClose,
-}: {
-  projectId: string
-  cases: TsCase[]
-  linkedIds: string[]
-  onClose: () => void
-}) {
-  const toast = useToast()
-  const linkM = useLinkTroubleshooting(projectId)
-  const unlinkM = useUnlinkTroubleshooting(projectId)
-  // 상태와 무관하게 내 사례를 붙일 수 있다.
-  const linkable = cases
-  const toggle = (c: TsCase) => {
-    if (linkedIds.includes(c.id)) {
-      unlinkM.mutate(
-        { caseId: c.id },
-        { onSuccess: () => toast.info('연결을 해제했어요') },
-      )
-    } else {
-      linkM.mutate(
-        { troubleshootingCaseId: c.id },
-        { onSuccess: () => toast.success('트러블슈팅을 연결했어요') },
-      )
-    }
-  }
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      title="트러블슈팅 관리"
-      footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className={buttonClass({ size: 'sm' })}
-        >
-          완료
-        </button>
-      }
-    >
-      <div className="flex flex-col gap-2">
-        <p className="text-fg-subtle text-[12px]">
-          내가 쓴 사례를 이 프로젝트에 연결해요. 사례는 한 번에 한 프로젝트에만
-          연결돼요.
-        </p>
-        {linkable.length === 0 ? (
-          <div className="text-fg-subtle py-6 text-center text-[13px]">
-            연결할 사례가 없어요.
-          </div>
-        ) : (
-          linkable.map((c) => {
-            const on = linkedIds.includes(c.id)
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => toggle(c)}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left',
-                  on ? 'border-brand bg-brand/5' : 'border-border',
-                )}
-              >
-                <span
-                  className={cn(
-                    'flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white',
-                    on ? 'bg-brand' : 'border-border bg-surface border',
-                  )}
-                >
-                  {on && '✓'}
-                </span>
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-fg truncate text-[13px] font-semibold">
-                    {c.title}
-                  </span>
-                  <span className="text-fg-subtle text-[11px]">
-                    {c.category} · {c.days}
-                  </span>
-                </div>
-                <span
-                  className={cn(
-                    'shrink-0 rounded px-2 py-0.5 text-[10px] font-bold',
-                    c.status === 'certified'
-                      ? 'bg-success-bg text-success'
-                      : 'bg-surface-muted text-fg-muted',
-                  )}
-                >
-                  {c.statusLabel}
-                </span>
-              </button>
-            )
-          })
-        )}
-      </div>
-    </Modal>
   )
 }

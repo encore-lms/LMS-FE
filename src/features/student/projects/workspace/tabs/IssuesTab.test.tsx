@@ -79,13 +79,6 @@ describe('IssuesTab 연결된 트러블슈팅', () => {
     expect(screen.getByText(/황수빈 \(본인\)/)).toBeInTheDocument()
   })
 
-  // 남의 사례를 프로젝트에서 걷어낼 수는 없다 — 열람만 열어 준 것이다.
-  it('연결 해제는 내가 쓴 사례에만 뜬다', () => {
-    renderTab([mine, teammates])
-
-    expect(screen.getAllByRole('button', { name: '연결 해제' })).toHaveLength(1)
-  })
-
   // 게시판형 CRUD — 내 기록만 지울 수 있다.
   it('삭제는 내가 쓴 사례에만 뜬다', () => {
     renderTab([mine, teammates])
@@ -93,12 +86,12 @@ describe('IssuesTab 연결된 트러블슈팅', () => {
     expect(screen.getAllByRole('button', { name: '삭제' })).toHaveLength(1)
   })
 
-  it('검토자는 연결 관리도 해제도 없이 목록만 본다', () => {
+  it('검토자는 쓰기 버튼 없이 목록만 본다', () => {
     renderTab([mine, teammates], { readOnly: true, onOpenCase: vi.fn() })
 
     expect(screen.getByText(teammates.title)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '트러블슈팅 관리' })).toBeNull()
-    expect(screen.queryByRole('button', { name: '연결 해제' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '트러블슈팅 작성' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '삭제' })).toBeNull()
   })
 
   // 작성은 프로젝트에서 시작한다 — 사례가 어느 프로젝트에서 나온 문제인지 함께 남아야 한다.

@@ -407,23 +407,6 @@ export function useDeleteMetric(projectId: string) {
   )
 }
 
-// 트러블슈팅 연결/해제(§52)
-export function useLinkTroubleshooting(projectId: string) {
-  return useWsMutation<{ troubleshootingCaseId: string }>(
-    (id, v) =>
-      apiClient.post(`/student/projects/${id}/troubleshooting-links`, v),
-    projectId,
-  )
-}
-export function useUnlinkTroubleshooting(projectId: string) {
-  return useWsMutation<{ caseId: string }>(
-    (id, v) =>
-      apiClient.delete(
-        `/student/projects/${id}/troubleshooting-links/${v.caseId}`,
-      ),
-    projectId,
-  )
-}
 // 팀원 초대/삭제(§43)
 export function useInviteMember(projectId: string) {
   return useWsMutation<{ userId: string; role?: string }>(

@@ -7,6 +7,8 @@ import { apiErrorOf, useCreateLogTemplate, useUpdateTemplateMeta } from './api'
 
 interface TemplateFormModalProps {
   open: boolean
+  /** 생성 응답의 적용 팀 수를 현재 화면 기수와 같은 기준으로 계산한다. */
+  cohortId?: string | null
   onClose: () => void
   /** 생성 직후 우측 편집 영역에 선택 — 항목은 빈 상태에서 '항목 추가'로 시작 */
   onCreated: (templateId: string) => void
@@ -20,12 +22,13 @@ interface TemplateFormModalProps {
  */
 export function TemplateFormModal({
   open,
+  cohortId,
   onClose,
   onCreated,
   editTemplate,
 }: TemplateFormModalProps) {
   const toast = useToast()
-  const createTemplate = useCreateLogTemplate()
+  const createTemplate = useCreateLogTemplate(cohortId)
   const updateMeta = useUpdateTemplateMeta()
   const isEdit = !!editTemplate
   const [name, setName] = useState(editTemplate?.name ?? '')

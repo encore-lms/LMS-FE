@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowDown,
   ArrowLeft,
@@ -35,6 +35,7 @@ import { TemplateFormModal } from './TemplateFormModal'
 import { ActionModal, type ActionModalSpec } from '../settings/ActionModal'
 import type { AdminLogTemplate, AdminTemplateField } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
+import { useMyCohorts } from '../api/dashboard'
 
 /** §31 보존 정책 — 항목 폼 모달 하단 안내(작업 요구 고정 문구). */
 const TEMPLATE_NOTICE =
@@ -45,8 +46,10 @@ const TEMPLATE_NOTICE =
 // 신규 배정 팀에만 기본 적용, 기존 일지·초안은 스냅샷 보존. (Figma 2746:7909)
 export default function LogTemplatesPage({
   embedded = false,
+  scopeCohortId,
 }: {
   embedded?: boolean
+  scopeCohortId?: string
 } = {}) {
   usePageHeader(
     '멘토링 일지 템플릿',
@@ -54,7 +57,15 @@ export default function LogTemplatesPage({
     !embedded,
   )
   const toast = useToast()
-  const { data, isPending, isError, refetch } = useLogTemplates()
+  const [searchParams] = useSearchParams()
+  const myCohorts = useMyCohorts()
+  const requestedCohortId =
+    scopeCohortId ??
+    searchParams.get('cohort') ??
+    myCohorts.data?.[0]?.cohortId ??
+    null
+  const { data, isPending, isError, refetch } =
+    useLogTemplates(requestedCohortId)
   const duplicateTemplate = useDuplicateLogTemplate()
   const setStatus = useSetTemplateStatus()
   const deleteTemplate = useDeleteLogTemplate()
@@ -195,8 +206,14 @@ export default function LogTemplatesPage({
           '템플릿과 항목을 삭제합니다. 기본 템플릿이거나 사용 중인 배정이 있으면 삭제할 수 없어요(작성된 일지는 스냅샷으로 보존).',
         rows: [
           { label: '템플릿', value: deleteTemplateTarget.name },
-          { label: '항목 수', value: `${deleteTemplateTarget.fields.length}개` },
-          { label: '적용 팀', value: `${deleteTemplateTarget.appliedTeamCount}팀` },
+          {
+            label: '항목 수',
+            value: `${deleteTemplateTarget.fields.length}개`,
+          },
+          {
+            label: '적용 팀',
+            value: `${deleteTemplateTarget.appliedTeamCount}팀`,
+          },
         ],
         confirmLabel: '삭제',
       }
@@ -611,6 +628,7 @@ export default function LogTemplatesPage({
             {templateFormOpen && (
               <TemplateFormModal
                 open
+                cohortId={requestedCohortId}
                 onClose={() => setTemplateFormOpen(false)}
                 onCreated={setSelectedId}
               />
@@ -618,6 +636,7 @@ export default function LogTemplatesPage({
             {renameTemplate && (
               <TemplateFormModal
                 open
+                cohortId={requestedCohortId}
                 onClose={() => setRenameTemplate(null)}
                 onCreated={setSelectedId}
                 editTemplate={{

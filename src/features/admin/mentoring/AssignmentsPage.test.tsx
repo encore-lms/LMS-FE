@@ -132,10 +132,20 @@ describe('AssignmentsPage 관리 툴바', () => {
     ).toBeInTheDocument()
     expect(
       within(toolbar).getByRole('link', { name: '템플릿 관리' }),
-    ).toHaveAttribute('href', '/admin/mentoring/log-templates')
+    ).toHaveAttribute(
+      'href',
+      '/admin/mentoring/log-templates?cohort=cohort-ai-5',
+    )
     expect(
       within(toolbar).getByRole('button', { name: '새 배정 추가' }),
     ).toBeEnabled()
+  })
+
+  it('선택한 기수를 배정과 일지 API에 모두 명시한다', () => {
+    renderPage()
+
+    expect(useMentorAssignments).toHaveBeenCalledWith('cohort-ai-5')
+    expect(useAdminMentoringLogs).toHaveBeenCalledWith('cohort-ai-5')
   })
 
   // 허브 탭 공통 툴바 통일(2026-08-07) — 브랜드 카드·하드코딩 hex 를 걷어내고

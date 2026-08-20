@@ -12,8 +12,10 @@ import {
   useUpdateTemplateFields,
 } from './api'
 import type { AdminLogTemplatesData, AdminTemplateField } from './types'
+import { useMyCohorts } from '../api/dashboard'
 
 vi.mock('./api')
+vi.mock('../api/dashboard')
 
 // 일지 템플릿 페이지 — 비활성화/복원 플로우 + 목록·메타 렌더(§31).
 
@@ -79,6 +81,9 @@ function stubMutation() {
 }
 
 function renderPage() {
+  vi.mocked(useMyCohorts).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useMyCohorts>)
   vi.mocked(useLogTemplates).mockReturnValue({
     data,
     isPending: false,
@@ -100,7 +105,7 @@ function renderPage() {
   return render(
     <ToastProvider>
       <MemoryRouter>
-        <LogTemplatesPage />
+        <LogTemplatesPage scopeCohortId="cohort-ai-5" />
       </MemoryRouter>
     </ToastProvider>,
   )
@@ -108,6 +113,12 @@ function renderPage() {
 
 describe('LogTemplatesPage (§31)', () => {
   beforeEach(() => setStatusMutate.mockClear())
+
+  it('현재 기수를 템플릿 목록 API에 명시한다', () => {
+    renderPage()
+
+    expect(useLogTemplates).toHaveBeenCalledWith('cohort-ai-5')
+  })
 
   it('목록·요약 — 총계 칩과 비활성 배지, 돌아가기 링크를 렌더한다', () => {
     renderPage()

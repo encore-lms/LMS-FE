@@ -21,6 +21,8 @@ import type {
   StatRecommendationState,
 } from './types'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { useSearchParams } from 'react-router-dom'
+import { useMyCohorts } from '../api/dashboard'
 
 const EVAL_FILTER_LABEL: Record<StatEvaluationState, string> = {
   submitted: '평가 완료',
@@ -41,20 +43,25 @@ const RECOMMEND_FILTER_LABEL: Record<StatRecommendationState, string> = {
 // embedded=true 면 기수 허브의 '멘토링' 탭에 임베드(자체 헤더·sub-nav·바깥 패딩 생략).
 export default function StatisticsPage({
   embedded = false,
-  scopeCourseName,
-  scopeCohortLabel,
+  scopeCohortId,
 }: {
   embedded?: boolean
-  /** 임베드 시 이 과정·기수 행만. 통계 응답엔 cohortId 가 없어 표시 라벨로 맞춘다. */
-  scopeCourseName?: string
-  scopeCohortLabel?: string
+  scopeCohortId?: string
 } = {}) {
   usePageHeader(
     '멘토 통계',
     '멘토/팀별 N시간 · 일지 · 평가·추천 · 증명서 반영 상태 조회',
     !embedded,
   )
-  const { data, isPending, isError, refetch } = useMentoringStatistics()
+  const [searchParams] = useSearchParams()
+  const myCohorts = useMyCohorts()
+  const requestedCohortId =
+    scopeCohortId ??
+    searchParams.get('cohort') ??
+    myCohorts.data?.[0]?.cohortId ??
+    null
+  const { data, isPending, isError, refetch } =
+    useMentoringStatistics(requestedCohortId)
   const [course, setCourse] = useSearchParamState('course', 'all')
   const [mentor, setMentor] = useSearchParamState('mentor', 'all')
   const [teamStatus, setTeamStatus] = useSearchParamState('teamStatus', 'all')
@@ -65,19 +72,8 @@ export default function StatisticsPage({
   )
   const [q, setQ] = useSearchParamState('q')
 
-  const allRows = useMemo(() => data?.rows ?? [], [data])
-  // 허브 탭은 그 기수만 — 배정·일지가 한 기수인데 통계만 전체면 같은 화면에서 수가 어긋난다.
-  const rows = useMemo(
-    () =>
-      scopeCourseName && scopeCohortLabel
-        ? allRows.filter(
-            (r) =>
-              r.courseName === scopeCourseName &&
-              r.cohortLabel === scopeCohortLabel,
-          )
-        : allRows,
-    [allRows, scopeCourseName, scopeCohortLabel],
-  )
+  // 서버가 cohortId로 범위를 확정하므로 표시 라벨 재필터링으로 정상 행을 잃지 않는다.
+  const rows = useMemo(() => data?.rows ?? [], [data])
   const courses = useMemo(
     () => [...new Set(rows.map((r) => r.courseName))],
     [rows],

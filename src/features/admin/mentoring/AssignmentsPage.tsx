@@ -232,9 +232,17 @@ export default function AssignmentsPage({
   const [searchParams, setSearchParams] = useSearchParams()
   const course = scopeCourseId ?? searchParams.get('course') ?? 'all' // 'all' | courseId
   const cohort = scopeCohortId ?? searchParams.get('cohort') ?? 'all' // 'all' | cohortId
-  // 보드는 상단 선택 기수 기준으로 조회(선택 없으면 담당/폴백 기수).
-  const { data, isPending, isError, refetch } = useMentorAssignments(cohort)
-  const logs = useAdminMentoringLogs()
+  const myCohorts = useMyCohorts()
+  // 직접 URL 진입도 BE의 저장 순서에 기대지 않도록 FE가 결정한 기수를 항상 명시한다.
+  const requestedCohortId =
+    cohort !== 'all'
+      ? cohort
+      : course === 'all'
+        ? (myCohorts.data?.[0]?.cohortId ?? null)
+        : null
+  const { data, isPending, isError, refetch } =
+    useMentorAssignments(requestedCohortId)
+  const logs = useAdminMentoringLogs(requestedCohortId)
   // 상단 과정·기수 셀렉터 — 과정·기수·교과목 페이지와 동일하게 교육 과정 카탈로그(learning-service)에서 가져온다.
   const courseList = useCourseList()
   const pickCourse = (next: string) =>
@@ -264,8 +272,7 @@ export default function AssignmentsPage({
       ? null
       : (courseList.data?.find((c) => c.courseId === course)?.title ?? null)
 
-  // 최초 진입 시 URL에 선택이 없으면 멘토링 보드가 실제로 조회한 기수를 기본 선택한다.
-  const myCohorts = useMyCohorts()
+  // 최초 진입 시 URL에 선택이 없으면 담당/전체 기수 목록의 첫 항목을 명시적으로 기본 선택한다.
   const didDefaultCohort = useRef(false)
   useEffect(() => {
     if (didDefaultCohort.current) return
@@ -278,28 +285,19 @@ export default function AssignmentsPage({
       didDefaultCohort.current = true // 딥링크/직접 선택은 존중
       return
     }
-    const defaultCohortId = data?.cohorts[0]?.cohortId
-    const first =
-      myCohorts.data?.find((ref) => ref.cohortId === defaultCohortId) ??
-      myCohorts.data?.[0]
-    if (!first || !defaultCohortId) return
+    const first = myCohorts.data?.[0]
+    if (!first) return
     didDefaultCohort.current = true
     setSearchParams(
       (prev) => {
         const p = new URLSearchParams(prev)
         p.set('course', first.courseId)
-        p.set('cohort', defaultCohortId)
+        p.set('cohort', first.cohortId)
         return p
       },
       { replace: true },
     )
-  }, [
-    data?.cohorts,
-    myCohorts.data,
-    searchParams,
-    setSearchParams,
-    scopeCohortId,
-  ])
+  }, [myCohorts.data, searchParams, setSearchParams, scopeCohortId])
   const [mentorFilter, setMentorFilter] = useSearchParamState('mentor', 'all')
   const [q, setQ] = useSearchParamState('q')
   const [formTeamId, setFormTeamId] = useState<string | null>(null)
@@ -453,7 +451,11 @@ export default function AssignmentsPage({
                   튕겨 나가지 않게 임베드일 때는 감춘다. */}
               {!embedded && (
                 <Link
-                  to="/admin/mentoring/log-templates"
+                  to={
+                    requestedCohortId
+                      ? `/admin/mentoring/log-templates?cohort=${encodeURIComponent(requestedCohortId)}`
+                      : '/admin/mentoring/log-templates'
+                  }
                   className={buttonClass({ variant: 'secondary', size: 'sm' })}
                 >
                   <FileText className="h-4 w-4" />

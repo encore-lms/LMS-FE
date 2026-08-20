@@ -25,18 +25,18 @@ import type {
 
 /**
  * GET /admin/mentors/assignments — 배정 보드(미배정 팀 포함).
- * cohortId 를 주면 그 기수(상단 셀렉터) 보드, 없으면 담당/폴백 기수.
+ * cohortId 를 주면 그 기수(상단 셀렉터) 보드. 기수 후보가 정해질 때까지 요청하지 않는다.
  */
 export function useMentorAssignments(cohortId?: string | null) {
   const scope = cohortId && cohortId !== 'all' ? cohortId : null
   return useQuery({
     queryKey: [...adminMentoringKeys.assignments(), scope ?? 'default'],
+    enabled: !!scope,
     queryFn: () =>
       apiClient
-        .get<MentorAssignmentsData>(
-          '/admin/mentors/assignments',
-          scope ? { cohort: scope } : undefined,
-        )
+        .get<MentorAssignmentsData>('/admin/mentors/assignments', {
+          cohort: scope,
+        })
         .then((r) => r.data),
   })
 }
@@ -321,16 +321,17 @@ export function useDeleteAssignment() {
 
 /** GET /admin/mentoring/logs — 일지 목록(KPI·요약 포함). */
 /**
- * 일지 목록. cohortId 를 주면 그 기수(기수 허브 탭), 없으면 요청자 담당/폴백 기수.
+ * 일지 목록. cohortId 를 주면 그 기수(기수 허브 탭), 후보가 정해질 때까지 요청하지 않는다.
  */
 export function useAdminMentoringLogs(cohortId?: string | null) {
   const scope = cohortId && cohortId !== 'all' ? cohortId : null
   return useQuery({
     queryKey: [...adminMentoringKeys.logs(), scope ?? ''],
+    enabled: !!scope,
     queryFn: () =>
       apiClient
         .get<AdminMentoringLogsData>('/admin/mentoring/logs', {
-          cohortId: scope ?? undefined,
+          cohortId: scope,
         })
         .then((r) => r.data),
   })
@@ -430,12 +431,16 @@ export function useDeleteMentoringLog() {
 // ───────────────────────── 일지 템플릿 (§31) ─────────────────────────
 
 /** GET /admin/mentoring/log-templates — 템플릿 목록(항목 포함, 비활성 포함). */
-export function useLogTemplates() {
+export function useLogTemplates(cohortId?: string | null) {
+  const scope = cohortId && cohortId !== 'all' ? cohortId : null
   return useQuery({
-    queryKey: adminMentoringKeys.logTemplates(),
+    queryKey: [...adminMentoringKeys.logTemplates(), scope ?? ''],
+    enabled: !!scope,
     queryFn: () =>
       apiClient
-        .get<AdminLogTemplatesData>('/admin/mentoring/log-templates')
+        .get<AdminLogTemplatesData>('/admin/mentoring/log-templates', {
+          cohortId: scope,
+        })
         .then((r) => r.data),
   })
 }
@@ -455,12 +460,16 @@ function useInvalidateTemplates() {
 }
 
 /** POST /admin/mentoring/log-templates — 새 템플릿(이름 필수 422). */
-export function useCreateLogTemplate() {
+export function useCreateLogTemplate(cohortId?: string | null) {
+  const scope = cohortId && cohortId !== 'all' ? cohortId : null
   const invalidate = useInvalidateTemplates()
   return useMutation({
     mutationFn: (payload: TemplateCreatePayload) =>
       apiClient
-        .post<AdminLogTemplate>('/admin/mentoring/log-templates', payload)
+        .post<AdminLogTemplate>(
+          `/admin/mentoring/log-templates${scope ? `?cohortId=${encodeURIComponent(scope)}` : ''}`,
+          payload,
+        )
         .then((r) => r.data),
     onSuccess: invalidate,
   })
@@ -622,12 +631,16 @@ export function useResetTeamLogFields() {
 // ───────────────────────── 멘토 통계 (§33) — 조회 전용 ─────────────────────────
 
 /** GET /admin/mentoring/statistics — 조회 전용(mutation 훅 없음, 403 READ_ONLY 정책). */
-export function useMentoringStatistics() {
+export function useMentoringStatistics(cohortId?: string | null) {
+  const scope = cohortId && cohortId !== 'all' ? cohortId : null
   return useQuery({
-    queryKey: adminMentoringKeys.statistics(),
+    queryKey: [...adminMentoringKeys.statistics(), scope ?? ''],
+    enabled: !!scope,
     queryFn: () =>
       apiClient
-        .get<AdminMentoringStatisticsData>('/admin/mentoring/statistics')
+        .get<AdminMentoringStatisticsData>('/admin/mentoring/statistics', {
+          cohortId: scope,
+        })
         .then((r) => r.data),
   })
 }

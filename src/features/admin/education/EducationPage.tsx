@@ -180,12 +180,7 @@ export default function EducationPage() {
           !courseId || !cohortId ? (
             <NeedCourse />
           ) : (
-            <MentoringPane
-              courseId={courseId}
-              cohortId={cohortId}
-              courseName={row?.courseTitle}
-              cohortLabel={row?.cohortLabel}
-            />
+            <MentoringPane courseId={courseId} cohortId={cohortId} />
           )
         ) : tab === 'qna' ? (
           // 사이드바 'QnA 게시판' 흡수 — 열람·답변(작성은 수강생 전용).

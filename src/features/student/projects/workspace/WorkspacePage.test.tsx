@@ -16,8 +16,6 @@ import {
   useRequestCertification,
   useAddSchedule,
   useAddMetric,
-  useLinkTroubleshooting,
-  useUnlinkTroubleshooting,
   useInviteMember,
   useRemoveMember,
   useUpdateMember,
@@ -112,8 +110,6 @@ function renderPage(
   vi.mocked(useRequestCertification).mockReturnValue(writeMock as never)
   vi.mocked(useAddSchedule).mockReturnValue(writeMock as never)
   vi.mocked(useAddMetric).mockReturnValue(writeMock as never)
-  vi.mocked(useLinkTroubleshooting).mockReturnValue(writeMock as never)
-  vi.mocked(useUnlinkTroubleshooting).mockReturnValue(writeMock as never)
   vi.mocked(useInviteMember).mockReturnValue(writeMock as never)
   vi.mocked(useRemoveMember).mockReturnValue(writeMock as never)
   vi.mocked(useUpdateMember).mockReturnValue(writeMock as never)

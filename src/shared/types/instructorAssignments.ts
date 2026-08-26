@@ -67,8 +67,12 @@ export interface AssignmentFeedbackItem {
 
 export interface AssignmentSubmissionRow {
   id: string
-  /** 제출자 사용자 ID — FE에서 이름/코드 join */
+  /** 제출자 사용자 ID */
   studentUserId: string
+  /** 제출자 실명 — 서버가 기수 로스터에서 붙인다(실패·구 응답은 null → FE 폴백). */
+  studentName?: string | null
+  /** 학번(studentUuid) — 없으면 null → userId 앞 8자 폴백. */
+  studentNo?: string | null
   status: AssignmentSubmissionStatus
   /** 제출 시각 — 미제출은 null */
   submittedAtLabel: string | null

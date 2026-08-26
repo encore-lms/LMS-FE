@@ -34,6 +34,16 @@ const COPY = {
     submit: '재제출',
     footer: '수정 제출 후에는 운영 검토 상태로 전환됩니다.',
   },
+  // 임시저장 건 수정 — 제출한 적 없는 작성 중 기록이라 반려·재제출 문구를 쓰지 않는다.
+  draft: {
+    crumbs: ['기록실', '자격증', '수정'],
+    title: '자격증 기록 수정',
+    sub: '작성 중인 자격증 기록을 이어서 작성',
+    back: '목록으로',
+    submit: '제출',
+    footer:
+      '제출 후 검토에서 사진과 자격증 종류·취득 일자를 확인합니다. 반려 시 사유와 함께 기록실 자격증에 표시됩니다.',
+  },
 }
 
 export function CertForm({
@@ -49,7 +59,7 @@ export function CertForm({
   isDraft?: boolean
 }) {
   const navigate = useNavigate()
-  const c = COPY[mode]
+  const c = mode === 'edit' && isDraft ? COPY.draft : COPY[mode]
   const createMutation = useCreateCertRecord()
   const updateMutation = useUpdateCertRecord(recordId ?? '')
   // 새로 고른 파일만 올린다 — 기존 첨부(서버 저장분)는 file 이 없다.

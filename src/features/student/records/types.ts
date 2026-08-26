@@ -137,6 +137,8 @@ export interface CreateStudyRecordInput {
   date: string
   startTime: string
   endTime: string
+  /** 활동 내용 본문 — 임시저장 후 다시 열었을 때 그대로 보이려면 등록 시점에 함께 보내야 한다 */
+  body: string
   fileCount: number
   draft?: boolean
 }

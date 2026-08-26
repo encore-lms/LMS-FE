@@ -28,6 +28,21 @@ export const REVIEW_STATUSES: CompetencyCertStatus[] = [
   'changes_requested',
 ]
 
+export type CertificateGoldStatus =
+  | 'UNKNOWN'
+  | 'READY'
+  | 'PARTIAL'
+  | 'NOT_READY'
+  | 'UNAVAILABLE'
+  | 'CHECK_FAILED'
+
+export interface CertificateGoldIssue {
+  code: string
+  label: string
+  source: string
+  resolution: string
+}
+
 /** 목록 한 줄 — 수강생 한 명의 역량 증명서 현황. */
 export interface CompetencyCertRow {
   studentId: string
@@ -41,6 +56,10 @@ export interface CompetencyCertRow {
   overallScore: number | null
   /** 재료가 갖춰진 뒤부터 상세를 열 수 있다 — 검토하려면 먼저 봐야 한다. */
   openable: boolean
+  goldStatus: CertificateGoldStatus
+  goldIssues: CertificateGoldIssue[]
+  goldCheckedAt: string | null
+  managerNotifiedAt: string | null
   /** 상세에서 보여줄 데모 인물 id — BE 연동 시 실제 증명서 id 로 바뀐다. */
   demoStudentId: string
   /** 서버 상태로 병합할 때 점수를 재계산하기 위한 데모 원본 점수. */

@@ -5,14 +5,13 @@ import { Select } from '@/components/ui/Select'
 import { StatusBadge, type BadgeTone } from '@/components/ui/StatusBadge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
 import { useSearchParamState } from '@/shared/hooks/useSearchParamState'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useDeletePassage, usePlayTypingTexts, useUpsertPassage } from './api'
 import { PassageFormModal } from './PassageFormModal'
 import { downloadTypingSampleCsv } from './sampleCsv'
-import type { PassageStatus, TypingPassage, UploadValidationRow } from './types'
+import type { PassageStatus, TypingPassage } from './types'
 import { SkeletonListPage } from '@/components/ui/Skeleton'
 
 const STATUS_META: Record<PassageStatus, { label: string; tone: BadgeTone }> = {
@@ -70,10 +69,8 @@ export default function TypingTextsPage() {
   )
 
   // DataBoundary children은 eager 평가 — 로딩/에러 중에도 크래시하지 않게 기본값 폴백.
-  const { summary, uploadValidation, uploadErrorRows } = data ?? {
+  const { summary } = data ?? {
     summary: { active: 0, inactive: 0, error: 0, disabledCourses: 0 },
-    uploadValidation: [],
-    uploadErrorRows: 0,
   }
 
   const columns: Column<TypingPassage>[] = [
@@ -172,72 +169,6 @@ export default function TypingTextsPage() {
             삭제
           </button>
         </div>
-      ),
-    },
-  ]
-
-  const uploadColumns: Column<UploadValidationRow>[] = [
-    {
-      key: 'rowNo',
-      header: '행',
-      className: 'w-14',
-      cell: (r) => (
-        <span className="text-fg text-[12px] tabular-nums">{r.rowNo}</span>
-      ),
-    },
-    {
-      key: 'title',
-      header: 'title',
-      cell: (r) => (
-        <span
-          className={cn(
-            'text-[12px]',
-            r.titleError ? 'text-danger' : 'text-fg',
-          )}
-        >
-          {r.title}
-        </span>
-      ),
-    },
-    {
-      key: 'content',
-      header: 'content',
-      cell: (r) => (
-        <span
-          className={cn(
-            'text-[12px]',
-            r.contentError ? 'text-danger' : 'text-fg',
-          )}
-        >
-          {r.content}
-        </span>
-      ),
-    },
-    {
-      key: 'language',
-      header: 'language',
-      className: 'w-24',
-      cell: (r) => <span className="text-fg text-[12px]">{r.language}</span>,
-    },
-    {
-      key: 'level',
-      header: 'level',
-      className: 'w-20',
-      cell: (r) => <span className="text-fg text-[12px]">{r.level}</span>,
-    },
-    {
-      key: 'result',
-      header: '검증 결과',
-      className: 'w-28',
-      cell: (r) => (
-        <span
-          className={cn(
-            'text-[12px] font-semibold',
-            r.ok ? 'text-success' : 'text-danger',
-          )}
-        >
-          {r.result}
-        </span>
       ),
     },
   ]
@@ -358,47 +289,6 @@ export default function TypingTextsPage() {
           </aside>
         </div>
 
-        {/* 일괄 업로드 검증 */}
-        <div className="mt-6 flex flex-col gap-6 lg:flex-row">
-          <div className="border-border bg-surface min-w-0 flex-1 rounded-xl border p-5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-fg text-base font-bold">일괄 업로드 검증</p>
-                <p className="text-fg-muted mt-1 text-xs">
-                  CSV/Excel 업로드 후 필수 열, 중복 제목, 빈 내용, 잘못된
-                  난이도를 저장 전에 검증합니다.
-                </p>
-              </div>
-              <StatusBadge label={`오류 ${uploadErrorRows}행`} tone="danger" />
-            </div>
-            <div className="mt-4">
-              <DataTable
-                columns={uploadColumns}
-                rows={uploadValidation}
-                rowKey={(r) => r.id}
-                empty="검증할 행이 없어요"
-              />
-            </div>
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                // TODO: 오류 행만 CSV로 추출(P0_15)
-                onClick={() => toast.info('오류 행 내려받기는 준비 중입니다.')}
-                className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors"
-              >
-                오류 행 내려받기
-              </button>
-              <button
-                type="button"
-                // TODO: 정상 행만 저장(오류 행 제외 인입, P0_15)
-                onClick={() => toast.info('정상 행만 저장은 준비 중입니다.')}
-                className="bg-brand hover:bg-brand/90 text-on-color h-9 rounded-lg px-4 text-[13px] font-semibold transition-colors"
-              >
-                정상 행만 저장
-              </button>
-            </div>
-          </div>
-        </div>
       </DataBoundary>
 
       {/* 제시문 삭제 확인 — 하드 삭제라 danger 톤으로 한 번 확인 */}

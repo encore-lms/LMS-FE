@@ -190,7 +190,13 @@ export default function CertificatePage() {
                 />
               )}
               {tab === 'ai-analysis' && CERT_V2 && (
-                <AiTab studentId={selectedStudent.id} />
+                <AiTab
+                  target={
+                    CERTIFICATE_DEMO_MODE
+                      ? { scope: 'demo', studentId: selectedStudent.id }
+                      : { scope: 'student' }
+                  }
+                />
               )}
             </>
           )}

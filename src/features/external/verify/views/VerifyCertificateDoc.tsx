@@ -12,14 +12,12 @@ import { TechTabContent } from '@/features/student/certificate/tabs/TechTab'
 import { ProblemTabContent } from '@/features/student/certificate/tabs/ProblemTab'
 import { ProjectsTab } from '@/features/student/certificate/tabs/ProjectsTab'
 import { GrowthTab } from '@/features/student/certificate/tabs/GrowthTab'
-import { AiTab } from '@/features/student/certificate/tabs/AiTab'
 import {
   ProblemTabSkeleton,
   TechTabSkeleton,
 } from '@/features/student/certificate/tabs/TabSkeletons'
 import { mockOverview } from '@/features/student/certificate/mocks'
 import { CertPublicDocContext } from '@/features/student/certificate/publicDoc'
-import { CERT_V2 } from '@/features/student/certificate/config'
 import type { CertTab } from '@/features/student/certificate/types'
 import type { PublicCertificatePayload } from '../types'
 
@@ -72,7 +70,7 @@ export function VerifyCertificateDoc({
     ...(payload.peerReputationPublic
       ? (['growth-reputation'] as CertTab[])
       : []),
-    ...(CERT_V2 ? (['ai-analysis'] as CertTab[]) : []),
+    // AI 결과는 인증 시점 snapshot API가 붙기 전까지 공개 문서에 mock으로 대신하지 않는다.
   ]
 
   const detail = useQuery({
@@ -108,10 +106,6 @@ export function VerifyCertificateDoc({
         )}
 
         {tab === 'projects' && <ProjectsTab p={mockOverview.projects} />}
-
-        {tab === 'ai-analysis' && CERT_V2 && (
-          <AiTab studentId={PUBLIC_STUDENT_ID} />
-        )}
 
         {tab === 'growth-reputation' && (
           <DataBoundary

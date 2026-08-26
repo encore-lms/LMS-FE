@@ -1,14 +1,18 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { BriefcaseBusiness, FolderKanban, ShieldCheck } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import type { AiAnalysis } from '../ai'
+import type { CertificateAiAnalysis } from '../analysis'
 import { AiJobFit } from './AiJobFit'
 import { AiProjectAnalysis } from './AiProjectAnalysis'
 import { AiTroubleshootingAnalysis } from './AiTroubleshootingAnalysis'
 
 type AnalysisKey = 'job-fit' | 'projects' | 'troubleshooting'
 
-export function AiAnalysisOverview({ analysis }: { analysis: AiAnalysis }) {
+export function AiAnalysisOverview({
+  analysis,
+}: {
+  analysis: CertificateAiAnalysis
+}) {
   const items = [
     {
       key: 'job-fit' as const,

@@ -183,7 +183,9 @@ export default function CompetencyCertificateDetailPage() {
       {tab === 'projects' && <ProjectsTab p={data.projects} />}
       {tab === 'problem-solving' && <ProblemTab studentId={student.id} />}
       {tab === 'growth-reputation' && <GrowthTab g={data.growth} />}
-      {tab === 'ai-analysis' && CERT_V2 && <AiTab studentId={student.id} />}
+      {tab === 'ai-analysis' && CERT_V2 && (
+        <AiTab target={{ scope: 'admin', studentId }} />
+      )}
 
       <ApproveModal
         open={modal === 'approve'}

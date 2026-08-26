@@ -146,6 +146,8 @@ export interface CohortMaterialItem {
   fileName: string | null
   fileSize: number | null
   uploadedByUserId: string
+  /** 작성자 실명 — 서버가 auth 에서 붙여 준다(구 응답·목업은 없음 → FE 폴백). */
+  uploadedByName?: string | null
   createdAt: string
 }
 

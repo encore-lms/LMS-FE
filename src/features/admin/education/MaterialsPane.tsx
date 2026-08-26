@@ -84,9 +84,12 @@ export function MaterialsPane({
     const map = new Map<string, string>()
     if (isAdmin) for (const o of ops?.items ?? []) map.set(o.id, o.name)
     else for (const r of roster ?? []) map.set(r.userId, r.name)
+    // 서버가 붙인 실명(uploadedByName)을 우선 — 로스터·운영 계정 목록에 없는 작성자
+    // (강사·매니저·중도탈락자)가 "(이름 미확인)"으로 나오던 문제. 구 응답·목업만 join 폴백.
     // 폴백을 '운영자'로 두면 수강생·강사가 올린 자료가 운영 화면에서 운영자 것으로
     // 잘못 표시된다(맵이 운영 모드일 땐 운영 계정만 담는다). ResumePane 과 같은 표기.
-    return (userId: string) => map.get(userId) ?? '(이름 미확인)'
+    return (m: Pick<CohortMaterialItem, 'uploadedByUserId' | 'uploadedByName'>) =>
+      m.uploadedByName || map.get(m.uploadedByUserId) || '(이름 미확인)'
   }, [isAdmin, ops, roster])
 
   const [detail, setDetail] = useState<CohortMaterialItem | null>(null)
@@ -246,7 +249,7 @@ export function MaterialsPane({
       className: 'w-28',
       cell: (m) => (
         <span className="text-fg-muted text-[13px]">
-          {nameOf(m.uploadedByUserId)}
+          {nameOf(m)}
         </span>
       ),
     },
@@ -399,7 +402,7 @@ export function MaterialsPane({
               ]}
               title={detail.title}
               metaItems={[
-                nameOf(detail.uploadedByUserId),
+                nameOf(detail),
                 formatDate(detail.createdAt) || '-',
               ]}
               body={detail.body}

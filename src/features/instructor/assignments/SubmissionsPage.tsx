@@ -58,13 +58,14 @@ export default function SubmissionsPage() {
     '제출 내용을 확인하고 보완요청 또는 검토완료 상태를 처리합니다',
   )
 
-  // 제출자 사용자 ID → 이름(로스터 join). 코드(학번)는 로스터에 없어 userId 앞자리로 폴백.
+  // 제출자 이름·학번 — 서버가 붙인 값(studentName/studentNo)을 우선. 구 응답·목업만 로스터 join,
+  // 학번이 없을 때만 userId 앞자리로 폴백(이름 뒤에 내부 ID 조각이 붙던 문제).
   const student = useMemo(() => {
     const map = new Map<string, string>()
     for (const s of roster ?? []) map.set(s.userId, s.name)
-    return (userId: string) => ({
-      name: map.get(userId) ?? '수강생',
-      code: userId.slice(0, 8),
+    return (r: Pick<AssignmentSubmissionRow, 'studentUserId' | 'studentName' | 'studentNo'>) => ({
+      name: r.studentName || map.get(r.studentUserId) || '수강생',
+      code: r.studentNo || r.studentUserId.slice(0, 8),
     })
   }, [roster])
 
@@ -183,7 +184,7 @@ export default function SubmissionsPage() {
                       )}
                     >
                       <span className="text-fg w-24 shrink-0 truncate text-[15px] font-semibold">
-                        {student(r.studentUserId).name}
+                        {student(r).name}
                       </span>
                       <StatusBadge
                         label={SUBMISSION_STATUS_META[r.status].label}
@@ -212,8 +213,8 @@ export default function SubmissionsPage() {
                 <>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
                     <p className="text-fg-muted text-sm">
-                      {student(selected.studentUserId).name} ·{' '}
-                      {student(selected.studentUserId).code}
+                      {student(selected).name} ·{' '}
+                      {student(selected).code}
                     </p>
                     <div className="ml-auto">
                       <StatusBadge
@@ -285,7 +286,7 @@ export default function SubmissionsPage() {
                             >
                               <p className="text-fg-muted text-xs font-semibold">
                                 {fb.byStudent
-                                  ? student(selected.studentUserId).name
+                                  ? student(selected).name
                                   : '운영/강사'}
                                 {fb.timeLabel && ` · ${fb.timeLabel}`}
                               </p>
@@ -336,7 +337,7 @@ export default function SubmissionsPage() {
 
           <SupplementRequestModal
             open={supplementOpen}
-            studentName={selected ? student(selected.studentUserId).name : ''}
+            studentName={selected ? student(selected).name : ''}
             onClose={() => setSupplementOpen(false)}
             onConfirm={(reason) => {
               setSupplementOpen(false)
@@ -345,7 +346,7 @@ export default function SubmissionsPage() {
           />
           <ReviewCompleteModal
             open={reviewOpen}
-            studentName={selected ? student(selected.studentUserId).name : ''}
+            studentName={selected ? student(selected).name : ''}
             onClose={() => setReviewOpen(false)}
             onConfirm={(feedback) => {
               setReviewOpen(false)

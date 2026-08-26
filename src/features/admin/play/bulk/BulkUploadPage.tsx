@@ -7,10 +7,15 @@ import { KpiCard } from '@/components/data/KpiCard'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/shared/lib/cn'
 import { usePageHeader } from '@/shared/store'
-import { downloadTypingSampleCsv } from '../sampleCsv'
+import { downloadCsv, downloadTypingSampleCsv } from '../sampleCsv'
 import { usePlayTypingTexts } from '../api'
 import { useBulkCreatePassages } from './api'
-import { parseTypingCsv, type ParsedCsv, type ParsedCsvRow } from './csv'
+import {
+  parseTypingCsv,
+  toErrorRowsCsv,
+  type ParsedCsv,
+  type ParsedCsvRow,
+} from './csv'
 
 // 검증 항목 집계 행 — 파싱 결과에서 파생(서버 미리보기였던 시절의 표 구조 유지).
 interface CheckRow {
@@ -258,6 +263,18 @@ export default function BulkUploadPage() {
 
       {/* 액션 툴바 */}
       <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+        {/* 오류 행만 CSV로 — 사유 열 포함. 고쳐서 다시 올리는 용도. */}
+        <button
+          type="button"
+          disabled={errorRows === 0}
+          onClick={() => {
+            downloadCsv('play-typing-error-rows.csv', toErrorRowsCsv(rows))
+            toast.success(`오류 행 ${errorRows}건을 내려받았습니다.`)
+          }}
+          className="border-border bg-surface text-fg hover:bg-surface-muted h-9 rounded-lg border px-4 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          오류 행 내려받기
+        </button>
         <button
           type="button"
           onClick={() => {

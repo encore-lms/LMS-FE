@@ -146,3 +146,25 @@ export function parseTypingCsv(text: string): ParsedCsv {
 
   return { rows, headers }
 }
+
+// CSV 셀 이스케이프 — 콤마·따옴표·개행이 있으면 따옴표로 감싼다(RFC 4180).
+function csvCell(value: string | number): string {
+  const s = String(value)
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+/**
+ * 오류 행만 CSV로 — 업로드 양식과 같은 열 순서 뒤에 행 번호·사유 열을 붙인다.
+ * 사유를 보고 고친 뒤 rowNo·errors 열만 지우면 그대로 다시 올릴 수 있다.
+ */
+export function toErrorRowsCsv(rows: ParsedCsvRow[]): string {
+  const header = 'language,level,title,content,sortOrder,rowNo,errors'
+  const lines = rows
+    .filter((r) => r.errors.length > 0)
+    .map((r) =>
+      [r.language, r.level, r.title, r.content, r.order, r.rowNo, r.errors.join(' · ')]
+        .map(csvCell)
+        .join(','),
+    )
+  return [header, ...lines].join('\n') + '\n'
+}

@@ -97,7 +97,7 @@ function renderPage() {
 }
 
 describe('TypingTextsPage (PLAY 타자 관리)', () => {
-  it('제시문 목록·폼 기준·업로드 검증을 렌더하고, 스펙 배너는 노출하지 않는다', () => {
+  it('제시문 목록·폼 기준을 렌더하고, 스펙 배너·업로드 검증 스텁은 노출하지 않는다', () => {
     renderPage()
     // 스펙 마커성 상주 배너 제거(2026-07-28) — 노출 조건·활성 변경 확인 문구가 없어야 한다.
     expect(
@@ -106,10 +106,11 @@ describe('TypingTextsPage (PLAY 타자 관리)', () => {
     expect(screen.queryByText('활성 변경 확인 필요')).not.toBeInTheDocument()
     expect(screen.getByText('리팩터링 원칙')).toBeInTheDocument()
     expect(screen.getByText('활성 18 · 비활성 4 · 오류 2')).toBeInTheDocument()
-    // 폼 기준 패널 + 업로드 검증 결과
+    // 폼 기준 패널
     expect(screen.getByText('제시문 폼 모달 기준')).toBeInTheDocument()
-    expect(screen.getByText('title 필수')).toBeInTheDocument()
-    expect(screen.getByText('오류 3행')).toBeInTheDocument()
+    // 업로드 검증 패널은 서버가 항상 빈 결과를 주던 죽은 UI — 제거(일괄 업로드 화면으로 일원화).
+    expect(screen.queryByText('일괄 업로드 검증')).toBeNull()
+    expect(screen.queryByRole('button', { name: '정상 행만 저장' })).toBeNull()
   })
 
   it('활성 상태 필터 — 오류만 보면 활성 제시문이 사라진다', async () => {

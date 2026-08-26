@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
-import type { CompetencyCertStatus } from './types'
+import type {
+  CertificateGoldIssue,
+  CertificateGoldStatus,
+  CompetencyCertStatus,
+} from './types'
 
 /**
  * 역량 증명서 심사 API.
@@ -17,6 +21,10 @@ export interface CertReviewRow {
   pendingComment: string | null
   /** 외부 공개 여부 — BE가 publication 을 함께 조회해 내려준다. */
   published?: boolean
+  goldStatus: CertificateGoldStatus
+  goldIssues: CertificateGoldIssue[]
+  goldCheckedAt: string | null
+  managerNotifiedAt: string | null
 }
 
 const keys = {
@@ -45,21 +53,31 @@ function useReviewMutation<TBody>(
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ studentId, body }: { studentId: string; body?: TBody }) =>
-      apiClient.post<CertReviewRow>(path(studentId), body ?? {}).then((r) => r.data),
+      apiClient
+        .post<CertReviewRow>(path(studentId), body ?? {})
+        .then((r) => r.data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: keys.list(cohortId ?? '') })
+      void queryClient.invalidateQueries({
+        queryKey: keys.list(cohortId ?? ''),
+      })
     },
   })
 }
 
 /** 재료가 갖춰졌다고 표시 — 기수 종료 자동 판정 외의 수동 경로. */
 export function useMarkCertDataReady(cohortId: string | null) {
-  return useReviewMutation<never>((id) => `/admin/certificates/${id}/data-ready`, cohortId)
+  return useReviewMutation<never>(
+    (id) => `/admin/certificates/${id}/data-ready`,
+    cohortId,
+  )
 }
 
 /** requested → reviewing. */
 export function useStartCertReview(cohortId: string | null) {
-  return useReviewMutation<never>((id) => `/admin/certificates/${id}/review`, cohortId)
+  return useReviewMutation<never>(
+    (id) => `/admin/certificates/${id}/review`,
+    cohortId,
+  )
 }
 
 /**
@@ -86,7 +104,9 @@ function useDecisionMutation(cohortId: string | null) {
         })
         .then((r) => r.data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: keys.list(cohortId ?? '') })
+      void queryClient.invalidateQueries({
+        queryKey: keys.list(cohortId ?? ''),
+      })
     },
   })
 }

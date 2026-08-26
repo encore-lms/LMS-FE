@@ -17,6 +17,7 @@ import { readLastCohort, writeLastCohort } from '../education/lastCohort'
 import { toCertRow } from './mocks'
 import {
   REVIEW_STATUSES,
+  type CertificateGoldStatus,
   type CompetencyCertRow,
   type CompetencyCertStatus,
 } from './types'
@@ -37,6 +38,18 @@ const STATUS_META: Record<
   reviewing: { label: '검토 중', tone: 'info' },
   changes_requested: { label: '보완 요청', tone: 'warning' },
   certified: { label: '인증 완료', tone: 'success' },
+}
+
+const GOLD_STATUS_META: Record<
+  CertificateGoldStatus,
+  { label: string; tone: BadgeTone }
+> = {
+  UNKNOWN: { label: '확인 전', tone: 'neutral' },
+  READY: { label: 'Gold 준비 완료', tone: 'success' },
+  PARTIAL: { label: '일부 데이터 누락', tone: 'warning' },
+  NOT_READY: { label: '데이터 미준비', tone: 'warning' },
+  UNAVAILABLE: { label: 'Gold 없음', tone: 'danger' },
+  CHECK_FAILED: { label: '상태 확인 실패', tone: 'danger' },
 }
 
 export default function CompetencyCertificatesPage() {
@@ -97,14 +110,21 @@ export default function CompetencyCertificatesPage() {
           const served = reviewRows?.find((r) => r.studentUserId === s.id)
           if (!served) return row
           // 서버 심사 행이 정본 — 상태에 맞춰 점수·공개도 다시 계산한다.
+          const goldStatus = served.goldStatus ?? 'UNKNOWN'
           const ready =
-            served.status !== 'cohort_open' && served.status !== 'data_pending'
+            goldStatus === 'READY' &&
+            served.status !== 'cohort_open' &&
+            served.status !== 'data_pending'
           return {
             ...row,
             status: served.status,
             openable: ready,
             overallScore: ready ? row.demoOverallScore : null,
             published: served.published ?? false,
+            goldStatus,
+            goldIssues: served.goldIssues ?? [],
+            goldCheckedAt: served.goldCheckedAt ?? null,
+            managerNotifiedAt: served.managerNotifiedAt ?? null,
           }
         })
         .filter(
@@ -127,6 +147,9 @@ export default function CompetencyCertificatesPage() {
       // 운영자가 지금 손댈 건 — 인증 요청·검토 중·보완 요청을 한 숫자로 본다.
       review: REVIEW_STATUSES.reduce((n, st) => n + by(st), 0),
       published: rows.filter((r) => r.published).length,
+      goldFailed: rows.filter(
+        (r) => r.goldStatus !== 'READY' && r.goldStatus !== 'UNKNOWN',
+      ).length,
     }
   }, [rows])
 
@@ -169,6 +192,40 @@ export default function CompetencyCertificatesPage() {
             {r.overallScore}
           </span>
         ),
+    },
+    {
+      key: 'goldStatus',
+      header: 'Gold 준비 상태 · 실패 사유',
+      cell: (r: CompetencyCertRow) => {
+        const meta = GOLD_STATUS_META[r.goldStatus]
+        const visibleIssues = r.goldIssues.slice(0, 2)
+        return (
+          <div className="flex min-w-64 flex-col items-start gap-1.5 py-1">
+            <StatusBadge tone={meta.tone} label={meta.label} />
+            {visibleIssues.map((issue) => (
+              <div
+                key={issue.code}
+                className="text-fg-subtle text-[11px] leading-4"
+              >
+                <span className="text-fg font-medium">{issue.label}</span>
+                <span className="block">
+                  {issue.source} · {issue.resolution}
+                </span>
+              </div>
+            ))}
+            {r.goldIssues.length > visibleIssues.length && (
+              <span className="text-fg-subtle text-[11px]">
+                외 {r.goldIssues.length - visibleIssues.length}건
+              </span>
+            )}
+            {r.managerNotifiedAt && (
+              <span className="text-warning text-[11px]">
+                담당 매니저 알림 {r.managerNotifiedAt}
+              </span>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: 'published',
@@ -220,8 +277,13 @@ export default function CompetencyCertificatesPage() {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <KpiCard label="대상 수강생" value={`${summary.total}명`} />
+        <KpiCard
+          label="Gold 확인 필요"
+          value={`${summary.goldFailed}명`}
+          tone="warning"
+        />
         <KpiCard
           label="검토 대기"
           value={`${summary.review}명`}
@@ -239,7 +301,7 @@ export default function CompetencyCertificatesPage() {
         isPending={isPending}
         isError={isError}
         onRetry={refetch}
-        skeleton={<SkeletonListPage columns={5} className="" />}
+        skeleton={<SkeletonListPage columns={6} className="" />}
         errorTitle="수강생 명단을 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >

@@ -66,6 +66,10 @@ export function toCertRow(
     // 서버 상태로 병합할 때 점수를 다시 계산할 수 있도록 원본을 함께 나른다.
     demoOverallScore: demo.overallScore,
     openable: ready,
+    goldStatus: 'UNKNOWN',
+    goldIssues: [],
+    goldCheckedAt: null,
+    managerNotifiedAt: null,
     demoStudentId: demo.id,
   }
 }

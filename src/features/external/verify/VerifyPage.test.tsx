@@ -6,6 +6,7 @@ import VerifyPage from './VerifyPage'
 import { useVerifyCertificate } from '../api/verify'
 import { externalPublicRoutes } from '../routes'
 import type { ExternalCertificateVerificationResponse } from './types'
+import { createCertificateSevenTabFixture } from '@/features/student/certificate/analysis/sevenTabFixture'
 
 vi.mock('../api/verify')
 
@@ -33,45 +34,19 @@ function renderPage(token = 'vfy_kp9q4r2nx0') {
   )
 }
 
+const fixtureTabs = createCertificateSevenTabFixture()
+const { growthReputation: fixtureGrowthReputation, ...publicTabs } = fixtureTabs
+
 const publicResult: ExternalCertificateVerificationResponse = {
   resultType: 'certified_public',
   verificationId: 'ver_2026Q2_512',
   snapshotVersion: '2026.05',
   snapshotHash: 'sha256:a3f9…07e',
-  publicSchemaVersion: '2026.06',
+  publicSchemaVersion: '2026.08.26-certificate-seven-tab-result-v1',
   publicPayload: {
-    issuer: 'PLAYDATA',
-    certifiedDate: '2026-05-19',
-    issuedAt: '2026-05-19 11:24 KST',
-    student: {
-      nameKo: '이서연',
-      nameEn: 'Lee Seoyeon',
-      cohort: 'DA 5기',
-      courseSummary: 'PLAYDATA 데이터 분석 과정 · 480h · 2025-12 ~ 2026-05',
-    },
-    stats: {
-      coreCompetencyGrade: 'A',
-      attendanceRate: '96.2%',
-      examAverage: '84.7',
-      submissionRate: '91%',
-    },
-    skills: [
-      { label: '기술', score: 82 },
-      { label: '책임감', score: 76 },
-      { label: '소통', score: 88 },
-      { label: '성장', score: 79 },
-      { label: '팀워크', score: 84 },
-      { label: '문제해결', score: 81 },
-    ],
-    skillAvg: 81.7,
-    evidenceSummary: '프로젝트 1 · 트러블슈팅 1 · 기록실 12',
-    evidence: [
-      {
-        category: '프로젝트',
-        title: 'LLM 추천 시스템 v0.3',
-        description: 'DA 5기 · 강사 김지훈 승인',
-      },
-    ],
+    schemaVersion: '2026.08.26-certificate-seven-tab-result-v1',
+    generatedAt: '2026-05-19T02:24:00Z',
+    tabs: publicTabs,
   },
 }
 
@@ -104,7 +79,10 @@ describe('VerifyPage — 평가·추천 공개 토글', () => {
       ...publicResult,
       publicPayload: {
         ...publicResult.publicPayload,
-        peerReputationPublic: true,
+        tabs: {
+          ...publicResult.publicPayload.tabs,
+          growthReputation: fixtureGrowthReputation,
+        },
       },
     })
     renderPage()
@@ -124,16 +102,22 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
     ).toBeNull()
     expect(screen.queryByText('certified · 진본 검증 완료')).toBeNull()
     // 증명서 본문 — 수강생 미리보기의 히어로를 그대로 쓴다(인증 완료 칩 + 검증 ID).
-    expect(screen.getByText('이서연')).toBeInTheDocument()
+    expect(screen.getByText('수강역량증명서')).toBeInTheDocument()
     expect(screen.getByText('정식 인증 완료')).toBeInTheDocument()
     expect(screen.getByText(/ver_2026Q2_512/)).toBeInTheDocument()
     // 탭은 미리보기와 같은 컴포넌트(CertTabs). 종합 요약이 기본이다.
-    expect(screen.getByRole('button', { name: '종합 요약' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '기술·검증' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '종합 요약' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '기술·검증' }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '프로젝트' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '이력서' })).toBeNull()
-    // 종합 요약 본문(도넛·6축)은 미리보기의 SummaryTab 이 그대로 그린다.
-    // 점수 조회가 끝나기 전에는 골격이 뜬다 — 탭이 선택돼 있는 것으로 확인한다.
+    expect(screen.getByRole('button', { name: '이력서' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '✦ AI 분석' }),
+    ).toBeInTheDocument()
+    // 종합 요약 본문은 별도 점수 API가 아니라 공개 Snapshot을 바로 그린다.
     expect(screen.getByRole('button', { name: '종합 요약' })).toHaveClass(
       'text-brand',
     )
@@ -143,7 +127,9 @@ describe('VerifyPage — certified_public(공개 증명서)', () => {
     expect(screen.queryByText('대표 근거')).toBeNull()
     expect(screen.queryByText(/검증 정보/)).toBeNull()
     expect(screen.queryByText(/외부 검증 페이지 정책/)).toBeNull()
-    expect(screen.queryByRole('button', { name: /공개 JSON 다운로드/ })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: /공개 JSON 다운로드/ }),
+    ).toBeNull()
     // 본문은 최대 1440 까지 넓히고 그 아래는 화면을 따라 줄인다.
     expect(document.querySelector('main')?.className).toContain(
       'max-w-[1440px]',

@@ -38,6 +38,8 @@ function view(
       failure: null,
     },
     snapshot: null,
+    resultSchemaVersion: null,
+    tabs: null,
     analysis: getAiAnalysis('stu-001'),
     ...overrides,
   }

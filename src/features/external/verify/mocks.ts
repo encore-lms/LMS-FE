@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { createCertificateSevenTabFixture } from '@/features/student/certificate/analysis/sevenTabFixture'
 import type {
   ExternalCertificateVerificationResponse,
   PublicCertificatePayload,
@@ -13,52 +14,14 @@ const ok = <T>(data: T) => HttpResponse.json({ data })
 // 스냅샷 상세 'URL 복사 → /verify 접속' 데모 서사를 일관시킨다.
 const PUBLIC_TOKEN = 'vfy_kp9q4r2nx0'
 
-// 공개 payload — 운영 스냅샷 mock(이서연·DA 5기·6축 82/76/88/79/84/81·avg 81.7)과 동일 값.
-// Figma 543:2909 대표값과 일치.
+// 공개 payload — 실제 CertificateSnapshot 공개 계약과 같은 7개 탭 구조다.
+const { growthReputation: _privateGrowth, ...publicTabs } =
+  createCertificateSevenTabFixture()
+void _privateGrowth
 const publicPayload: PublicCertificatePayload = {
-  issuer: 'PLAYDATA',
-  certifiedDate: '2026-05-19',
-  issuedAt: '2026-05-19 11:24 KST',
-  student: {
-    nameKo: '이서연',
-    nameEn: 'Lee Seoyeon',
-    cohort: 'DA 5기',
-    courseSummary: 'PLAYDATA 데이터 분석 과정 · 480h · 2025-12 ~ 2026-05',
-  },
-  stats: {
-    coreCompetencyGrade: 'A',
-    attendanceRate: '96.2%',
-    examAverage: '84.7',
-    submissionRate: '91%',
-  },
-  skills: [
-    { label: '기술', score: 82 },
-    { label: '책임감', score: 76 },
-    { label: '소통', score: 88 },
-    { label: '성장', score: 79 },
-    { label: '팀워크', score: 84 },
-    { label: '문제해결', score: 81 },
-  ],
-  skillAvg: 81.7,
-  evidenceSummary: '프로젝트 1 · 트러블슈팅 1 · 기록실 12',
-  evidence: [
-    {
-      category: '프로젝트',
-      title: 'LLM 추천 시스템 v0.3',
-      description:
-        'DA 5기 · 강사 김지훈 승인 · LangGraph 기반 Intent/QA/Recommend 분기 설계',
-    },
-    {
-      category: '트러블슈팅',
-      title: '#042 Airflow 분산 트레이싱 장애 회고',
-      description: '강사 박지영 승인 · DAG 17회 실패 원인 추적·X-Trace 도입',
-    },
-    {
-      category: '기록실',
-      title: '블로그 12편 일괄',
-      description: '매니저 황설현 승인 · 회고·정리·튜토리얼 다양',
-    },
-  ],
+  schemaVersion: '2026.08.26-certificate-seven-tab-result-v1',
+  generatedAt: '2026-05-19T02:24:00Z',
+  tabs: publicTabs,
 }
 
 const publicResult: ExternalCertificateVerificationResponse = {
@@ -66,7 +29,7 @@ const publicResult: ExternalCertificateVerificationResponse = {
   verificationId: 'ver_2026Q2_512',
   snapshotVersion: '2026.05',
   snapshotHash: 'sha256:a3f9…07e',
-  publicSchemaVersion: '2026.06',
+  publicSchemaVersion: '2026.08.26-certificate-seven-tab-result-v1',
   publicPayload,
 }
 

@@ -151,6 +151,7 @@ export function StudyForm({
         date,
         startTime,
         endTime,
+        body,
         fileCount: files.length,
         draft: false,
       },
@@ -182,7 +183,15 @@ export function StudyForm({
       return
     }
     createMutation.mutate(
-      { title, date, startTime, endTime, fileCount: files.length, draft: true },
+      {
+        title,
+        date,
+        startTime,
+        endTime,
+        body,
+        fileCount: files.length,
+        draft: true,
+      },
       {
         onSuccess: (created) =>
           uploadThen(created.id, () =>

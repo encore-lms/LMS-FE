@@ -305,7 +305,7 @@ const mockDashboard: StudentDashboardSummary = {
       title: 'JWT 토큰 만료 시 무한 호출 디버깅',
       resolved: true,
       dayLabel: '3일',
-      to: '/student/troubleshooting',
+      to: '/student/projects/p1?tab=issues',
     },
     {
       id: 'ts2',
@@ -314,7 +314,7 @@ const mockDashboard: StudentDashboardSummary = {
       title: 'Docker Compose 네트워크 충돌 해결',
       resolved: true,
       dayLabel: '2일',
-      to: '/student/troubleshooting',
+      to: '/student/projects/p1?tab=issues',
     },
     {
       id: 'ts3',
@@ -323,7 +323,7 @@ const mockDashboard: StudentDashboardSummary = {
       title: 'Spring Batch 진행 사이즈 튜닝',
       resolved: true,
       dayLabel: '1일',
-      to: '/student/troubleshooting',
+      to: '/student/projects/p1?tab=issues',
     },
     {
       id: 'ts4',
@@ -332,7 +332,7 @@ const mockDashboard: StudentDashboardSummary = {
       title: '멤버 백포워드 평가 카드 도착 처리',
       resolved: false,
       dayLabel: '2일',
-      to: '/student/troubleshooting',
+      to: '/student/projects/p1?tab=issues',
     },
   ],
 }

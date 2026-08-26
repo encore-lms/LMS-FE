@@ -18,7 +18,7 @@ function renderAiTab() {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <AiTab studentId="stu-001" />
+      <AiTab target={{ scope: 'demo', studentId: 'stu-001' }} />
     </QueryClientProvider>,
   )
 }

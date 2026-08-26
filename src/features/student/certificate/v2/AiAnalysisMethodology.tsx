@@ -1,7 +1,7 @@
 import { useState, type KeyboardEvent } from 'react'
 import { ArrowRight, Database, GitBranch, Sparkles } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
-import type { AiAnalysis } from '../ai'
+import type { CertificateAiAnalysis } from '../analysis'
 
 type MethodTone = 'accent' | 'info' | 'brown'
 type MethodKey = 'job-fit' | 'project' | 'troubleshooting'
@@ -205,7 +205,11 @@ function MethodCard({
   )
 }
 
-export function AiAnalysisMethodology({ analysis }: { analysis: AiAnalysis }) {
+export function AiAnalysisMethodology({
+  analysis,
+}: {
+  analysis: CertificateAiAnalysis
+}) {
   void analysis
   const [selectedKey, setSelectedKey] = useState<MethodKey>('job-fit')
   const tabs: Array<{ key: MethodKey; label: string; tone: MethodTone }> = [

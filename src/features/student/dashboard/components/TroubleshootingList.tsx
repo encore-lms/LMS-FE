@@ -26,15 +26,16 @@ export function TroubleshootingList({
       icon={Wrench}
       title="최근 트러블슈팅"
       subtitle={summarize(items)}
-      action={<MoreLink to="/student/troubleshooting" label="트러블슈팅" />}
+      // 트러블슈팅 별도 탭은 폐기됐다(2026-08-19) — 사례는 각 프로젝트 이슈 탭에서 쓰고 읽는다.
+      action={<MoreLink to="/student/projects" label="프로젝트" />}
     >
       {items.length === 0 ? (
         <EmptyState
           icon={Wrench}
           title="최근 트러블슈팅이 없어요"
           sub="문제 해결 경험을 기록해 보세요"
-          ctaLabel="기록하러 가기"
-          ctaTo="/student/troubleshooting"
+          ctaLabel="프로젝트에서 기록하기"
+          ctaTo="/student/projects"
         />
       ) : (
         <ul className="flex flex-col">

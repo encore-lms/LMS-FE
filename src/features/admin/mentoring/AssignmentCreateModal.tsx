@@ -325,6 +325,8 @@ export function AssignmentCreateModal({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [mentorId, setMentorId] = useState('')
   const [hours, setHours] = useState('')
+  // 팀명 — 비우면 자동 생성(autoName), 적으면 적은 이름으로 저장.
+  const [teamName, setTeamName] = useState('')
   const [contractEnd, setContractEnd] = useState('')
   const [templateId, setTemplateId] = useState('')
   const [q, setQ] = useState('')
@@ -383,6 +385,7 @@ export function AssignmentCreateModal({
     setSelectedIds([])
     setMentorId('')
     setHours('')
+    setTeamName('')
     setContractEnd('')
     setTemplateId('')
     setQ('')
@@ -409,7 +412,7 @@ export function AssignmentCreateModal({
     createFromStudents.mutate(
       {
         cohortId,
-        name: autoName,
+        name: teamName.trim() || autoName,
         studentUserIds: selectedIds,
         mentorId,
         allocatedHours: h,
@@ -459,7 +462,7 @@ export function AssignmentCreateModal({
           <span className="text-fg-muted">{cohortLabel}</span>
           <span className="text-fg-subtle">·</span>
           <span className="font-bold">팀명</span>
-          <span className="text-fg-muted">{autoName}</span>
+          <span className="text-fg-muted">{teamName.trim() || autoName}</span>
         </div>
 
         {/* 프로젝트로 팀 데려오기 — 고르면 팀원이 한 번에 담기고, 아래에서 고칠 수 있다. */}
@@ -543,6 +546,22 @@ export function AssignmentCreateModal({
             mentors={mentors}
             value={mentorId}
             onChange={setMentorId}
+          />
+        </div>
+
+        {/* 팀명 — 선택. 비우면 자동 생성 이름 그대로. */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="create-team-name" className={FIELD_LABEL}>
+            팀명 (선택)
+          </label>
+          <input
+            id="create-team-name"
+            type="text"
+            maxLength={120}
+            placeholder={autoName}
+            className={INPUT_CLASS}
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
           />
         </div>
 

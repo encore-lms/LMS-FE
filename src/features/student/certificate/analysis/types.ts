@@ -1,4 +1,5 @@
 import type { AiAnalysis } from '../ai'
+import type { CertificateSevenTabs } from './sevenTabContract'
 
 /** LMS-SV가 외부에 공개하도록 선별한 AI 증명서 분석 블록. */
 export type CertificateAiAnalysis = Pick<
@@ -37,7 +38,7 @@ export interface CertificateAnalysisView {
   sourceVersion: string | null
   analysisVersion: string | null
   generatedAt: string | null
-  mode: 'PREVIEW' | 'CERTIFIED_SNAPSHOT'
+  mode: 'PREVIEW' | 'CERTIFIED'
   statusDetail: {
     runId: string | null
     queuedAt: string | null
@@ -49,10 +50,12 @@ export interface CertificateAnalysisView {
     failure: CertificateAnalysisFailure | null
   }
   snapshot: {
-    version: number
+    version: string
     certifiedAt: string
     snapshotHash: string
   } | null
+  resultSchemaVersion: '2026.08.26-certificate-seven-tab-result-v1' | null
+  tabs: CertificateSevenTabs | null
   analysis: CertificateAiAnalysis | null
 }
 

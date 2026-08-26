@@ -21,6 +21,7 @@ import { ProblemTab } from './tabs/ProblemTab'
 import { GrowthTabData } from './tabs/GrowthTab'
 import { ResumeTab } from './tabs/ResumeTab'
 import { AiTab } from './tabs/AiTab'
+import { CertificateSevenTabPanel } from './tabs/seven-tab/CertificateSevenTabPanel'
 import { CERT_V2 } from './config'
 import {
   applyCertificateDemoStudent,
@@ -32,6 +33,55 @@ import { TERMS } from '@/shared/constants'
 
 const CERTIFICATE_DEMO_MODE =
   import.meta.env.DEV && import.meta.env.VITE_CERTIFICATE_DEMO_MODE === 'true'
+
+function DemoCertificateTabContent({
+  tab,
+  data,
+  isPending,
+  isError,
+  onRetry,
+  studentId,
+}: {
+  tab: CertTab
+  data: ReturnType<typeof applyCertificateDemoStudent> | undefined
+  isPending: boolean
+  isError: boolean
+  onRetry: () => unknown
+  studentId: string
+}) {
+  if (tab === 'projects') return <ProjectsTab />
+  if (tab === 'resume') return <ResumeTab />
+
+  return (
+    <DataBoundary
+      isPending={isPending}
+      isError={isError || !data}
+      onRetry={onRetry}
+      errorTitle="데모 증명서를 불러오지 못했어요"
+      errorDescription="잠시 후 다시 시도해 주세요."
+    >
+      {data && (
+        <>
+          {tab === 'summary' && (
+            <SummaryTab
+              s={data.summary}
+              studentId={studentId}
+              recommendations={data.growth.recommendations}
+            />
+          )}
+          {tab === 'tech' && <TechTab studentId={studentId} />}
+          {tab === 'problem-solving' && <ProblemTab studentId={studentId} />}
+          {tab === 'growth-reputation' && (
+            <GrowthTabData g={data.growth} studentId={studentId} />
+          )}
+          {tab === 'ai-analysis' && CERT_V2 && (
+            <AiTab target={{ scope: 'demo', studentId }} />
+          )}
+        </>
+      )}
+    </DataBoundary>
+  )
+}
 
 /**
  * 수강 역량 증명서 (/student/certificate) — 인셸 작업 화면.
@@ -157,50 +207,18 @@ export default function CertificatePage() {
 
       <CertTabs active={tab} onChange={setTab} />
 
-      {/* 프로젝트·이력서 탭은 overview가 아닌 전용 API를 쓴다 — 자체 DataBoundary 보유 */}
-      {tab === 'projects' ? (
-        <ProjectsTab />
-      ) : tab === 'resume' ? (
-        <ResumeTab />
-      ) : (
-        <DataBoundary
+      {/* 데모만 기존 mock 경로를 쓴다. 일반 화면의 7개 탭은 단일 LMS-SV BFF 결과만 소비한다. */}
+      {CERTIFICATE_DEMO_MODE ? (
+        <DemoCertificateTabContent
+          tab={tab}
+          data={certificateData}
           isPending={isPending}
-          isError={isError || !certificateData}
+          isError={isError}
           onRetry={refetch}
-          errorTitle="증명서를 불러오지 못했어요"
-          errorDescription="잠시 후 다시 시도해 주세요."
-        >
-          {certificateData && (
-            <>
-              {tab === 'summary' && (
-                <SummaryTab
-                  s={certificateData.summary}
-                  studentId={selectedStudent.id}
-                  recommendations={certificateData.growth.recommendations}
-                />
-              )}
-              {tab === 'tech' && <TechTab studentId={selectedStudent.id} />}
-              {tab === 'problem-solving' && (
-                <ProblemTab studentId={selectedStudent.id} />
-              )}
-              {tab === 'growth-reputation' && (
-                <GrowthTabData
-                  g={certificateData.growth}
-                  studentId={selectedStudent.id}
-                />
-              )}
-              {tab === 'ai-analysis' && CERT_V2 && (
-                <AiTab
-                  target={
-                    CERTIFICATE_DEMO_MODE
-                      ? { scope: 'demo', studentId: selectedStudent.id }
-                      : { scope: 'student' }
-                  }
-                />
-              )}
-            </>
-          )}
-        </DataBoundary>
+          studentId={selectedStudent.id}
+        />
+      ) : (
+        <CertificateSevenTabPanel active={tab} target={{ scope: 'student' }} />
       )}
 
       {CERTIFICATE_DEMO_MODE && (

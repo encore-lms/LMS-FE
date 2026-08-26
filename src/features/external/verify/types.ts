@@ -1,38 +1,15 @@
+import type { PublicCertificateSevenTabs } from '@/features/student/certificate/analysis'
+
 // 외부 검증 응답 타입 — feature-local(shared 페어 규칙 회피). BE 계약 확정 시 shared 승격.
 // 계약 원천: LMS-DOCS P0_02_03_04 증명서 API 명세 — GET /verify/{publicToken}은
 // '가능한 한 resultType 응답'(200) 7종 판별 유니언. 실패도 4xx 대신 resultType으로 받는다.
 
 /** 공개 증명서 본문 — 활성 CertificateSnapshot.publicPayload만 사용(내부 근거·결측 경고 비포함). */
 export interface PublicCertificatePayload {
-  issuer: string
-  /** 인증일(YYYY-MM-DD) — Hero 메타. */
-  certifiedDate: string
-  /** 발급 시점 표시 문자열(예: '2026-05-19 11:24 KST') — 검증 정보 카드. */
-  issuedAt: string
-  student: {
-    nameKo: string
-    nameEn: string
-    cohort: string
-    /** 과정 요약(예: 'PLAYDATA 데이터 분석 과정 · 480h · 2025-12 ~ 2026-05'). */
-    courseSummary: string
-  }
-  stats: {
-    coreCompetencyGrade: string
-    attendanceRate: string
-    examAverage: string
-    submissionRate: string
-  }
-  skills: { label: string; score: number }[]
-  skillAvg: number
-  /** 동료 평판·코멘트 공개 여부 — 수강생이 공개 설정에서 켠 값. '평가·추천' 탭 노출을 가른다. */
-  peerReputationPublic?: boolean
-  /** 대표 근거 요약(예: '프로젝트 1 · 트러블슈팅 1 · 기록실 12'). */
-  evidenceSummary: string
-  evidence: {
-    category: '프로젝트' | '트러블슈팅' | '기록실'
-    title: string
-    description: string
-  }[]
+  schemaVersion: '2026.08.26-certificate-seven-tab-result-v1'
+  generatedAt: string
+  /** Snapshot 공개 정책을 적용한 결과라 growthReputation만 없을 수 있다. */
+  tabs: PublicCertificateSevenTabs
 }
 
 export interface CertifiedPublicResult {

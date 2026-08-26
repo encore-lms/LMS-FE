@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import BulkUploadPage from './BulkUploadPage'
 import { useBulkCreatePassages } from './api'
+import { downloadCsv } from '../sampleCsv'
 import { usePlayTypingTexts } from '../api'
 
 vi.mock('./api')
@@ -77,6 +78,23 @@ describe('BulkUploadPage (타자 일괄 업로드)', () => {
     expect(screen.getByText(/3행/)).toBeInTheDocument()
     expect(screen.getByText(/title 필수/)).toBeInTheDocument()
     expect(screen.getByText(/language는 Python·한글·영문/)).toBeInTheDocument()
+  })
+
+  it('오류 행 내려받기 — 오류 행이 생기면 활성화되고 사유 열이 담긴 CSV를 내려받는다', async () => {
+    renderPage()
+    const btn = screen.getByRole('button', { name: '오류 행 내려받기' })
+    expect(btn).toBeDisabled()
+    const user = await uploadCsv(CSV)
+    // 파일 읽기(FileReader)는 비동기 — 파싱이 끝나 오류 행이 생길 때까지 기다린다.
+    await waitFor(() => expect(btn).toBeEnabled())
+    await user.click(btn)
+    expect(vi.mocked(downloadCsv)).toHaveBeenCalledWith(
+      'play-typing-error-rows.csv',
+      expect.stringContaining('3,title 필수 · language는 Python·한글·영문'),
+    )
+    expect(
+      (await screen.findAllByText('오류 행 1건을 내려받았습니다.')).length,
+    ).toBeGreaterThan(0)
   })
 
   it('정상 행 등록 — 정상 행만 일괄 등록을 호출한다', async () => {

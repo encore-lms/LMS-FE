@@ -41,6 +41,16 @@ const COPY = {
     footer:
       '수정 제출 후에는 운영 검토 상태로 전환되며, 승인 전까지 다시 수정할 수 있습니다.',
   },
+  // 임시저장 건 수정 — 제출한 적 없는 작성 중 기록이라 반려·재제출 문구를 쓰지 않는다.
+  draft: {
+    crumbs: ['기록실', '스터디', '수정'],
+    title: '스터디 기록 수정',
+    sub: '작성 중인 스터디 기록을 이어서 작성',
+    back: '목록으로',
+    submit: '제출',
+    footer:
+      '제출 후 검토된 스터디 활동 내역과 증빙 사진은 기록실에 표시됩니다.',
+  },
 }
 
 // 스터디 등록 기본값 — 오늘 날짜 / 현재 시각(5분 슬롯에 맞춰 floor) / 시작+1시간.
@@ -82,7 +92,7 @@ export function StudyForm({
   isDraft?: boolean
 }) {
   const navigate = useNavigate()
-  const c = COPY[mode]
+  const c = mode === 'edit' && isDraft ? COPY.draft : COPY[mode]
   const createMutation = useCreateStudyRecord()
   const updateMutation = useUpdateStudyRecord(recordId ?? '')
   const [title, setTitle] = useState(initial?.title ?? '')

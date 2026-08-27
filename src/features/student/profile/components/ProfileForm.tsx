@@ -22,6 +22,7 @@ function toDefaults(p: StudentProfile): ProfileFormValues {
     linkedinUrl: p.linkedinUrl,
     skills: p.skills,
     interests: p.interests,
+    promise: p.promise ?? '',
     publicSettings: p.publicSettings,
   }
 }

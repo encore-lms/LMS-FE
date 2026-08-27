@@ -4,7 +4,6 @@ import type {
   InstructorRecordReviewData,
   ProjectReviewData,
   ProjectReviewDetail,
-  TsReviewData,
   TsReviewDetail,
 } from '@/shared/types'
 
@@ -36,16 +35,6 @@ export function useProjectReviews() {
     queryFn: () =>
       apiClient
         .get<ProjectReviewData>('/instructor/projects/review')
-        .then((r) => r.data),
-  })
-}
-
-export function useTsReviews() {
-  return useQuery({
-    queryKey: instructorKeys.tsReviews(),
-    queryFn: () =>
-      apiClient
-        .get<TsReviewData>('/instructor/troubleshooting/review')
         .then((r) => r.data),
   })
 }
@@ -132,56 +121,6 @@ export function useRevokeProjectCertification() {
         .then(() => undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: instructorKeys.projectReviews() })
-    },
-  })
-}
-
-/** 트러블슈팅 인증 취소 — 인증된 것만. 사유 필수. */
-export function useRevokeTsCertification() {
-  const qc = useQueryClient()
-  return useMutation<void, Error, RequestChangesInput>({
-    mutationFn: ({ id, reason }) =>
-      apiClient
-        .patch<void>(`/instructor/troubleshooting/review/${id}`, {
-          action: 'revoke',
-          reason,
-        })
-        .then(() => undefined),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: instructorKeys.tsReviews() })
-    },
-  })
-}
-
-// §15 트러블슈팅 인증 — status pending → certified. TroubleshootingCertification 생성.
-export function useCertifyTroubleshooting() {
-  const qc = useQueryClient()
-  return useMutation<void, Error, CertifyInput>({
-    mutationFn: ({ id }) =>
-      apiClient
-        .patch<void>(`/instructor/troubleshooting/review/${id}`, {
-          action: 'certify',
-        })
-        .then(() => undefined),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: instructorKeys.tsReviews() })
-    },
-  })
-}
-
-// §15 트러블슈팅 보완 요청 — status → supplementing(보완 중). 사유 필수.
-export function useRequestTsChanges() {
-  const qc = useQueryClient()
-  return useMutation<void, Error, RequestChangesInput>({
-    mutationFn: ({ id, reason }) =>
-      apiClient
-        .patch<void>(`/instructor/troubleshooting/review/${id}`, {
-          action: 'request_changes',
-          reason,
-        })
-        .then(() => undefined),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: instructorKeys.tsReviews() })
     },
   })
 }

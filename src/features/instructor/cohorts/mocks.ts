@@ -69,7 +69,7 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
         dday: 'D+1',
         urgent: false,
         actionLabel: '검토',
-        to: '/instructor/troubleshooting/review',
+        to: '/instructor/projects/review',
       },
       {
         id: 'pri-6',
@@ -173,7 +173,7 @@ const dashboardByCohort: Record<string, InstructorDashboardData> = {
         dday: 'D+1',
         urgent: false,
         actionLabel: '검토',
-        to: '/instructor/troubleshooting/review',
+        to: '/instructor/projects/review',
       },
     ],
     shortcuts: {

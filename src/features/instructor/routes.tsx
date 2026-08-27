@@ -24,7 +24,6 @@ const InstructorNoticeFormPage = lazy(
   () => import('./education/NoticeFormPage'),
 )
 const ProjectReviewPage = lazy(() => import('./reviews/ProjectReviewPage'))
-const TsReviewPage = lazy(() => import('./reviews/TsReviewPage'))
 const EndorsementDetailPage = lazy(
   () => import('./endorsements/EndorsementDetailPage'),
 )
@@ -93,9 +92,9 @@ export const instructorRoutes: RouteObject[] = [
         element: <InstructorNoticeFormPage />,
       },
       // 수강생 목록·상세 단독 화면은 폐기 — 허브 '수강생' 탭(StudentsPane)으로 일원화.
-      // 검토 2종 (§14~§15) — 사이드바 '검토' 묶음. 학습 기록 조회는 허브 '기록실' 탭으로 이관.
+      // 검토 — 사이드바 '검토' 묶음. 학습 기록 조회는 허브 '기록실' 탭으로 이관.
+      // 트러블슈팅 인증 검토(§15)는 2026-08-19 직접 인증 제도 폐기로 삭제 — 사례는 프로젝트 검토 상세·이슈 탭에서 본다.
       { path: 'projects/review', element: <ProjectReviewPage /> },
-      { path: 'troubleshooting/review', element: <TsReviewPage /> },
       // 인증 후 통합 검토 (P0 29 §11~§12 대체) — 변경 제안·재인증, 사이드바 '인증 후 변경 제안' 묶음.
       { path: 'change-requests', element: <ChangeRequestsPage /> },
       { path: 'recertifications', element: <RecertificationsPage /> },

@@ -187,7 +187,8 @@ export interface ProjectReviewData {
   rows: ProjectReviewRow[]
 }
 
-// ── §15 트러블슈팅 검토 (Figma 1422:10543) — STAR 사례 인증 큐 ──
+// ── 트러블슈팅 사례 상세(강사 검토 패널) — 인증 큐(§15)는 2026-08-19 직접 인증 폐기로 제거,
+// BE 도 상세 GET 만 남겼다. 상태값은 과거 인증 사례 호환용.
 export type TsReviewStatus =
   | 'pending' // 검토 대기
   | 'supplementing' // 보완 중
@@ -235,13 +236,3 @@ export interface TsReviewDetail {
   reviewComment: string | null
 }
 
-export interface TsReviewData {
-  stats: ReviewStat[] // 검토 대기·독립해결 비율·평균 소요일수·이번 달 인증
-  counts: {
-    all: number
-    pending: number
-    supplementing: number
-    certified: number
-  }
-  rows: TsReviewRow[]
-}

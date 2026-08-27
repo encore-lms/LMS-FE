@@ -175,7 +175,6 @@ export type {
   ProjectReviewDetail,
   TsReviewStatus,
   TsReviewRow,
-  TsReviewData,
   TsReviewAttachment,
   TsReviewDetail,
 } from './instructorReviews'

@@ -24,6 +24,7 @@ const profile: StudentProfile = {
   linkedinUrl: '',
   skills: [],
   interests: [],
+  promise: '매일 한 문제씩 풀고 기록하기',
   publicSettings: {
     profileImage: true,
     githubUrl: true,

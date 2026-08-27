@@ -24,6 +24,15 @@ export function BasicInfoSection({ profile }: { profile: StudentProfile }) {
         value={`${profile.courseName} · ${profile.cohortName}`}
         hint="HRD-Net 연동 · 변경 불가"
       />
+      {/* 온보딩에서 적은 학습 다짐 — 안내 문구대로 여기서 보고 고친다. */}
+      <ProfileField
+        name="promise"
+        label="학습 다짐"
+        placeholder="어떤 학습자가 되고 싶은지 짧게 적어 주세요"
+        hint="온보딩에서 입력한 다짐 · 300자 이내"
+        multiline
+        maxLength={300}
+      />
     </ProfileCard>
   )
 }

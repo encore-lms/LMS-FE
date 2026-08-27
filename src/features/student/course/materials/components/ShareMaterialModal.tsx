@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { URL_FORMAT_MESSAGE, isHttpUrl } from '@/shared/lib/url'
 import type { ChangeEvent, DragEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { buttonClass } from '@/components/ui/buttonClass'
@@ -34,6 +35,7 @@ export function ShareMaterialModal({
   // 설명·주차는 예전엔 화면에만 있고 서버로 가지 않아 늘 비어 있었다 — 상태에 묶어 함께 보낸다.
   const [body, setBody] = useState('')
   const [link, setLink] = useState('')
+  const [linkError, setLinkError] = useState<string | null>(null)
   // 초기값은 비어 있어야 한다 — 예전엔 mock 파일이 하나 박혀 있어, 올리지도 않은 자료가 공유됐다.
   const [files, setFiles] = useState<ShareFile[]>([])
   const [dragOver, setDragOver] = useState(false)
@@ -54,6 +56,11 @@ export function ShareMaterialModal({
       })
       setFiles([])
     } else {
+      // 주소가 아닌 값이 그대로 저장되던 문제 — http(s) 형식만 공유한다.
+      if (link.trim() && !isHttpUrl(link)) {
+        setLinkError(URL_FORMAT_MESSAGE)
+        return
+      }
       onShared({
         title: title.trim() || '공유 링크',
         fileType: 'LINK',
@@ -256,10 +263,15 @@ export function ShareMaterialModal({
           <Field label="공유 링크">
             <input
               value={link}
-              onChange={(e) => setLink(e.target.value)}
+              onChange={(e) => {
+                setLink(e.target.value)
+                setLinkError(null)
+              }}
               placeholder="https://github.com/... 또는 블로그 URL"
+              aria-invalid={!!linkError}
               className="border-border text-fg placeholder:text-fg-subtle focus:border-brand h-11 w-full rounded-[10px] border px-3.5 text-[13px] outline-none"
             />
+            {linkError && <p className="text-danger text-xs">{linkError}</p>}
           </Field>
         )}
       </div>

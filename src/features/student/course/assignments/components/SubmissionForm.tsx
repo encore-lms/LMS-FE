@@ -3,6 +3,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react'
 import { FileText, Link2, Paperclip, X } from 'lucide-react'
 import { buttonClass } from '@/components/ui/buttonClass'
 import type { AssignmentDraft } from '../types'
+import { URL_FORMAT_MESSAGE, isHttpUrl } from '@/shared/lib/url'
 
 // 과제 제출 폼 — 본문(textarea)·제출 URL(input)·첨부 자산(파일 업로드·링크 추가) + 목록으로/제출 저장.
 // 카드 박스 없이 문서처럼 흐르고, 입력은 muted 채움 필드를 쓴다(2026-08-11 참조 이미지 정본).
@@ -24,6 +25,7 @@ export function SubmissionForm({
   const [url, setUrl] = useState(draft?.url ?? '')
   const [assets, setAssets] = useState<string[]>(draft?.assets ?? [])
   const [link, setLink] = useState('')
+  const [linkError, setLinkError] = useState<string | null>(null)
   // 새로 고른 파일의 용량 표시용 — 저장 계약(assets: string[])은 이름만 나르므로 표시에만 쓴다.
   const [sizeByName, setSizeByName] = useState<Record<string, string>>({})
   const fileRef = useRef<HTMLInputElement>(null)
@@ -45,8 +47,16 @@ export function SubmissionForm({
     e.target.value = '' // 같은 파일 재선택 허용
   }
   const addLink = () => {
-    if (link.trim()) addAssets([link.trim()])
+    const v = link.trim()
+    if (!v) return
+    // 링크 자산은 실제 주소여야 한다 — http(s) 형식만 추가한다.
+    if (!isHttpUrl(v)) {
+      setLinkError(URL_FORMAT_MESSAGE)
+      return
+    }
+    addAssets([v])
     setLink('')
+    setLinkError(null)
   }
   const onLinkKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -56,8 +66,11 @@ export function SubmissionForm({
   }
   const removeAsset = (a: string) =>
     setAssets((prev) => prev.filter((x) => x !== a))
+  // 제출 URL은 비우거나 http(s) 주소여야 한다 — 주소가 아닌 값이 그대로 저장되던 문제(2026-08-21 QA).
+  const urlError = url.trim() && !isHttpUrl(url) ? URL_FORMAT_MESSAGE : null
   const canSubmit =
-    body.trim().length > 0 || url.trim().length > 0 || assets.length > 0
+    (body.trim().length > 0 || url.trim().length > 0 || assets.length > 0) &&
+    !urlError
 
   return (
     <section className="flex flex-col gap-6">
@@ -80,8 +93,10 @@ export function SubmissionForm({
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://github.com/..."
+          aria-invalid={!!urlError}
           className={`${filled} h-12 px-4 text-[14px]`}
         />
+        {urlError && <p className="text-danger text-xs">{urlError}</p>}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -163,8 +178,12 @@ export function SubmissionForm({
           </button>
           <input
             value={link}
-            onChange={(e) => setLink(e.target.value)}
+            onChange={(e) => {
+              setLink(e.target.value)
+              setLinkError(null)
+            }}
             onKeyDown={onLinkKey}
+            aria-invalid={!!linkError}
             placeholder="GitHub PR · 배포 링크 URL"
             className={`${filled} h-12 min-w-0 flex-1 px-4 text-[13px]`}
           />
@@ -177,6 +196,7 @@ export function SubmissionForm({
             링크 추가
           </button>
         </div>
+        {linkError && <p className="text-danger text-xs">{linkError}</p>}
       </div>
 
       <div className="flex items-center justify-end gap-2.5">

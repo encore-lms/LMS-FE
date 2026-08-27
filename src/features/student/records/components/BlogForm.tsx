@@ -8,15 +8,8 @@ import { useCreateBlogRecord, useUpdateBlogRecord } from '../../api/records'
 import { Crumbs, FieldLabel, FormBar, TextInput } from './FormParts'
 import { WeekPicker } from './WeekPicker'
 
-// 외부 블로그 URL은 http(s) 형식만 허용한다.
-function isHttpUrl(value: string): boolean {
-  try {
-    const u = new URL(value.trim())
-    return u.protocol === 'http:' || u.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
+// 외부 블로그 URL은 http(s) 형식만 허용한다 — 공용 규칙.
+import { isHttpUrl } from '@/shared/lib/url'
 
 // 블로그 등록/수정 폼 본문 — 주차 선택 + 제목 + 외부 URL. mode 로 등록/수정 분기.
 // (블로그는 임시저장 없이 제출만 — 주차당 1개)

@@ -1,14 +1,15 @@
 import { z } from 'zod'
+import { URL_FORMAT_MESSAGE, isHttpUrl } from '@/shared/lib/url'
 
 // 마이 프로필 편집 폼 스키마 — 표시명(필수 2~30) · GitHub/블로그 URL(필수) · 포트폴리오/LinkedIn(선택).
+// zod .url() 은 ftp:// 같은 스킴도 통과시켜 http(s) 규칙으로 직접 검사한다.
 const requiredUrl = z
   .string()
   .min(1, '필수 항목입니다')
-  .url('올바른 URL 형식이 아닙니다')
+  .refine(isHttpUrl, URL_FORMAT_MESSAGE)
 const optionalUrl = z
   .string()
-  .url('올바른 URL 형식이 아닙니다')
-  .or(z.literal(''))
+  .refine((v) => v === '' || isHttpUrl(v), URL_FORMAT_MESSAGE)
 
 export const profileSchema = z.object({
   // 프로필 이미지 — 업로드 시 data URL, 미설정이면 null(이니셜 아바타)

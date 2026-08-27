@@ -60,12 +60,5 @@ export interface StudentOnboardingPayload {
   githubUrl: string | null
 }
 
-/** http/https URL 형식 검증 — 빈 문자열 허용 여부는 호출 측(선택 입력)에서 판단. */
-export function isValidUrl(value: string): boolean {
-  try {
-    const u = new URL(value.trim())
-    return u.protocol === 'http:' || u.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
+/** http/https URL 형식 검증 — 공용 규칙(@/shared/lib/url)으로 위임. 빈 문자열 허용 여부는 호출 측에서 판단. */
+export { isHttpUrl as isValidUrl } from '@/shared/lib/url'

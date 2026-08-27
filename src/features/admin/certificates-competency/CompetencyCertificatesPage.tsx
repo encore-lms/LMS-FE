@@ -14,18 +14,17 @@ import { useStudentAccounts } from '@/shared/api'
 import { useCourseConfig, useCourseList } from '../api/settings'
 import { useCertReviewList } from './api'
 import { readLastCohort, writeLastCohort } from '../education/lastCohort'
-import { toCertRow } from './mocks'
+import { toCertRow } from './rows'
 import {
   REVIEW_STATUSES,
-  type CertificateGoldStatus,
   type CompetencyCertRow,
   type CompetencyCertStatus,
 } from './types'
 import { TERMS } from '@/shared/constants'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { CertificateReadinessCell } from './CertificateReadinessCell'
 
-// 역량 증명서 관리 (/admin/certificates) — 과정·기수별 수강생 증명서 현황.
-// 명단은 실제 로스터, 증명서 값은 아직 목데이터(BE 연동은 후속).
+// 역량 증명서 관리 — 실제 로스터와 서버의 Gold·AI·심사 정본을 한 행에서 본다.
 
 const STATUS_META: Record<
   CompetencyCertStatus,
@@ -38,18 +37,6 @@ const STATUS_META: Record<
   reviewing: { label: '검토 중', tone: 'info' },
   changes_requested: { label: '보완 요청', tone: 'warning' },
   certified: { label: '인증 완료', tone: 'success' },
-}
-
-const GOLD_STATUS_META: Record<
-  CertificateGoldStatus,
-  { label: string; tone: BadgeTone }
-> = {
-  UNKNOWN: { label: '확인 전', tone: 'neutral' },
-  READY: { label: 'Gold 준비 완료', tone: 'success' },
-  PARTIAL: { label: '일부 데이터 누락', tone: 'warning' },
-  NOT_READY: { label: '데이터 미준비', tone: 'warning' },
-  UNAVAILABLE: { label: 'Gold 없음', tone: 'danger' },
-  CHECK_FAILED: { label: '상태 확인 실패', tone: 'danger' },
 }
 
 export default function CompetencyCertificatesPage() {
@@ -109,22 +96,29 @@ export default function CompetencyCertificatesPage() {
           const row = toCertRow(s, cohortLabel)
           const served = reviewRows?.find((r) => r.studentUserId === s.id)
           if (!served) return row
-          // 서버 심사 행이 정본 — 상태에 맞춰 점수·공개도 다시 계산한다.
+          // 목록에서 상세를 열 수 있는 최소 계약은 Gold와 현재 원천의 AI 7개 탭이 모두 READY다.
           const goldStatus = served.goldStatus ?? 'UNKNOWN'
           const ready =
             goldStatus === 'READY' &&
+            served.analysisStatus === 'READY' &&
+            !!served.analysisSourceVersion &&
             served.status !== 'cohort_open' &&
             served.status !== 'data_pending'
           return {
             ...row,
             status: served.status,
             openable: ready,
-            overallScore: ready ? row.demoOverallScore : null,
             published: served.published ?? false,
             goldStatus,
             goldIssues: served.goldIssues ?? [],
             goldCheckedAt: served.goldCheckedAt ?? null,
-            managerNotifiedAt: served.managerNotifiedAt ?? null,
+            goldManagerNotifiedAt: served.goldManagerNotifiedAt ?? null,
+            analysisStatus: served.analysisStatus ?? 'UNKNOWN',
+            analysisRunId: served.analysisRunId ?? null,
+            analysisSourceVersion: served.analysisSourceVersion ?? null,
+            analysisFailure: served.analysisFailure ?? null,
+            analysisCheckedAt: served.analysisCheckedAt ?? null,
+            analysisManagerNotifiedAt: served.analysisManagerNotifiedAt ?? null,
           }
         })
         .filter(
@@ -147,8 +141,8 @@ export default function CompetencyCertificatesPage() {
       // 운영자가 지금 손댈 건 — 인증 요청·검토 중·보완 요청을 한 숫자로 본다.
       review: REVIEW_STATUSES.reduce((n, st) => n + by(st), 0),
       published: rows.filter((r) => r.published).length,
-      goldFailed: rows.filter(
-        (r) => r.goldStatus !== 'READY' && r.goldStatus !== 'UNKNOWN',
+      readinessBlocked: rows.filter(
+        (r) => r.status !== 'cohort_open' && !r.openable,
       ).length,
     }
   }, [rows])
@@ -182,50 +176,9 @@ export default function CompetencyCertificatesPage() {
       ),
     },
     {
-      key: 'overallScore',
-      header: '종합 점수',
-      cell: (r: CompetencyCertRow) =>
-        r.overallScore === null ? (
-          <span className="text-fg-subtle text-[13px]">—</span>
-        ) : (
-          <span className="text-fg text-[13px] font-semibold tabular-nums">
-            {r.overallScore}
-          </span>
-        ),
-    },
-    {
-      key: 'goldStatus',
-      header: 'Gold 준비 상태 · 실패 사유',
-      cell: (r: CompetencyCertRow) => {
-        const meta = GOLD_STATUS_META[r.goldStatus]
-        const visibleIssues = r.goldIssues.slice(0, 2)
-        return (
-          <div className="flex min-w-64 flex-col items-start gap-1.5 py-1">
-            <StatusBadge tone={meta.tone} label={meta.label} />
-            {visibleIssues.map((issue) => (
-              <div
-                key={issue.code}
-                className="text-fg-subtle text-[11px] leading-4"
-              >
-                <span className="text-fg font-medium">{issue.label}</span>
-                <span className="block">
-                  {issue.source} · {issue.resolution}
-                </span>
-              </div>
-            ))}
-            {r.goldIssues.length > visibleIssues.length && (
-              <span className="text-fg-subtle text-[11px]">
-                외 {r.goldIssues.length - visibleIssues.length}건
-              </span>
-            )}
-            {r.managerNotifiedAt && (
-              <span className="text-warning text-[11px]">
-                담당 매니저 알림 {r.managerNotifiedAt}
-              </span>
-            )}
-          </div>
-        )
-      },
+      key: 'readiness',
+      header: '발급 준비 상태 · 실패 원인 · 조치',
+      cell: (r: CompetencyCertRow) => <CertificateReadinessCell row={r} />,
     },
     {
       key: 'published',
@@ -280,8 +233,8 @@ export default function CompetencyCertificatesPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <KpiCard label="대상 수강생" value={`${summary.total}명`} />
         <KpiCard
-          label="Gold 확인 필요"
-          value={`${summary.goldFailed}명`}
+          label="발급 준비 확인 필요"
+          value={`${summary.readinessBlocked}명`}
           tone="warning"
         />
         <KpiCard
@@ -301,7 +254,7 @@ export default function CompetencyCertificatesPage() {
         isPending={isPending}
         isError={isError}
         onRetry={refetch}
-        skeleton={<SkeletonListPage columns={6} className="" />}
+        skeleton={<SkeletonListPage columns={5} className="" />}
         errorTitle="수강생 명단을 불러오지 못했어요"
         errorDescription="잠시 후 다시 시도해 주세요."
       >
@@ -322,11 +275,11 @@ export default function CompetencyCertificatesPage() {
             columns={columns}
             rows={rows}
             rowKey={(r) => r.studentId}
-            // 증명서가 나온 건만 상세로 들어간다 — 준비 중인 행은 열어도 볼 게 없다.
+            // 원천 버전과 7개 탭 준비가 확인된 행만 상세 심사로 들어간다.
             onRowClick={(r) =>
               r.openable &&
               navigate(
-                `/admin/certificates/${r.studentId}?demo=${r.demoStudentId}&cohortId=${cohortId ?? ''}`,
+                `/admin/certificates/${r.studentId}?courseId=${encodeURIComponent(courseId ?? '')}&cohortId=${encodeURIComponent(cohortId ?? '')}`,
               )
             }
             rowClassName={(r) =>

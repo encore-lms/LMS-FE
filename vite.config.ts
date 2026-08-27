@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 // dev 프록시 대상 — 서비스별 포트가 달라(auth:8081, learning:8082, ops:8083) blanket
 // 프록시를 두지 않고, 실연동이 끝난 경로만 골라 붙인다. 그 외 /api/* 는 MSW mock이 계속 가로챈다.
@@ -71,6 +71,13 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       '/api/admin/courses': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // 역량 증명서 심사·7개 탭 BFF는 learning-service가 권한과 발급 상태를 판정한다.
+      // LMS-AI를 브라우저에서 직접 호출하면 관리자/수강생 경계와 Snapshot 동결을 우회한다.
+      '/api/admin/certificates': {
         target: HRD_API_TARGET,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
@@ -199,6 +206,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/api/student/certificate': {
+        target: HRD_API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 수강생 출결 폼(me — 메타/제출/증빙)도 learning-service 실연동.
       '/api/student/attendance-forms/me': {
         target: HRD_API_TARGET,
@@ -276,6 +288,8 @@ export default defineConfig({
     },
   },
   test: {
+    // Playwright 시나리오는 실 API와 브라우저가 필요한 별도 계층이라 jsdom 단위 테스트에 섞지 않는다.
+    exclude: [...configDefaults.exclude, 'e2e/**'],
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

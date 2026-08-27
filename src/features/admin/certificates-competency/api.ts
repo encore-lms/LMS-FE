@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
+import { certificateAnalysisKey } from '@/features/student/certificate/analysis/hooks'
 import type {
+  CertificateAdminAnalysisStatus,
+  CertificateAnalysisIssue,
   CertificateGoldIssue,
   CertificateGoldStatus,
   CompetencyCertStatus,
@@ -24,7 +27,13 @@ export interface CertReviewRow {
   goldStatus: CertificateGoldStatus
   goldIssues: CertificateGoldIssue[]
   goldCheckedAt: string | null
-  managerNotifiedAt: string | null
+  goldManagerNotifiedAt: string | null
+  analysisStatus: CertificateAdminAnalysisStatus
+  analysisRunId: string | null
+  analysisSourceVersion: string | null
+  analysisFailure: CertificateAnalysisIssue | null
+  analysisCheckedAt: string | null
+  analysisManagerNotifiedAt: string | null
 }
 
 const keys = {
@@ -56,9 +65,12 @@ function useReviewMutation<TBody>(
       apiClient
         .post<CertReviewRow>(path(studentId), body ?? {})
         .then((r) => r.data),
-    onSuccess: () => {
+    onSuccess: (_data, { studentId }) => {
       void queryClient.invalidateQueries({
         queryKey: keys.list(cohortId ?? ''),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: certificateAnalysisKey({ scope: 'admin', studentId }),
       })
     },
   })
@@ -103,9 +115,12 @@ function useDecisionMutation(cohortId: string | null) {
           reason,
         })
         .then((r) => r.data),
-    onSuccess: () => {
+    onSuccess: (_data, { studentId }) => {
       void queryClient.invalidateQueries({
         queryKey: keys.list(cohortId ?? ''),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: certificateAnalysisKey({ scope: 'admin', studentId }),
       })
     },
   })

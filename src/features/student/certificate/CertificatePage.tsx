@@ -22,6 +22,8 @@ import { GrowthTabData } from './tabs/GrowthTab'
 import { ResumeTab } from './tabs/ResumeTab'
 import { AiTab } from './tabs/AiTab'
 import { CertificateSevenTabPanel } from './tabs/seven-tab/CertificateSevenTabPanel'
+import { useCertificateAnalysis } from './analysis'
+import { canRequestCertificate } from './issuancePolicy'
 import { CERT_V2 } from './config'
 import {
   applyCertificateDemoStudent,
@@ -102,6 +104,11 @@ export default function CertificatePage() {
   const selectedStudent = getCertificateDemoStudent(
     CERTIFICATE_DEMO_MODE ? params.get('demoStudent') : null,
   )
+  const analysisTarget = CERTIFICATE_DEMO_MODE
+    ? ({ scope: 'demo', studentId: selectedStudent.id } as const)
+    : ({ scope: 'student' } as const)
+  // 본문 패널과 같은 Query key를 공유해 요청 버튼도 동일한 현재 원천 버전을 판정한다.
+  const { data: certificateAnalysis } = useCertificateAnalysis(analysisTarget)
   const demoApplied =
     data && CERTIFICATE_DEMO_MODE
       ? applyCertificateDemoStudent(data, selectedStudent)
@@ -175,7 +182,7 @@ export default function CertificatePage() {
 
       {/* 정식 인증 요청 — 재료가 갖춰지면(canRequest) 여기서 낸다.
           API 는 있는데 누를 자리가 없어 흐름이 시작되지 않았다(2026-08-07 QA). */}
-      {cert?.canRequest && cert.stage === 'before' && (
+      {canRequestCertificate(cert, certificateAnalysis) && (
         <div className="bg-surface flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-4 shadow-[0px_4px_16px_0px_rgba(18,23,38,0.06)]">
           <span className="flex flex-col">
             <span className="text-fg text-[14px] font-bold">

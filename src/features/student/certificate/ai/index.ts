@@ -42,9 +42,7 @@ const AI_API = import.meta.env.VITE_AI_API_URL as string | undefined
 const CERTIFICATE_SCORE_API =
   (import.meta.env.VITE_AI_API_URL as string | undefined)?.replace(/\/$/, '') ??
   '/lms-ai'
-const CERTIFICATE_MOCK_MODE =
-  import.meta.env.MODE === 'development' ||
-  import.meta.env.VITE_ENABLE_MOCK === 'true'
+const CERTIFICATE_MOCK_MODE = import.meta.env.VITE_ENABLE_MOCK === 'true'
 
 /** 발급 조건과 점수 산출 원천을 충족하는 기본 개발 수강생. */
 export const CERTIFICATE_MOCK_STUDENT_ID =

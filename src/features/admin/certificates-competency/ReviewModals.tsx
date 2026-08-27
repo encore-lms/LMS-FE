@@ -8,7 +8,6 @@ interface Student {
   cohort: string
 }
 
-
 // 보완 요청 모달 — reviewing → changes_requested.
 // 사유 코드·대상 섹션·권장 기한은 두지 않는다(2026-08-07 결정: 코멘트만, 길이 제한 없음).
 export function ChangesRequestModal({
@@ -64,7 +63,8 @@ export function ChangesRequestModal({
             코멘트 <span className="text-danger">*</span>
           </p>
           <p className="text-fg-subtle mb-2 text-xs">
-            무엇을 어떻게 고쳐야 하는지 적어 주세요 — 수강생에게 이 글이 그대로 보입니다
+            무엇을 어떻게 고쳐야 하는지 적어 주세요 — 수강생에게 이 글이 그대로
+            보입니다
           </p>
           <textarea
             value={comment}
@@ -79,16 +79,10 @@ export function ChangesRequestModal({
   )
 }
 
-const APPROVE_META = [
-  { k: 'CertificateSnapshot', v: 'snr_8b2a0f3' },
-  { k: 'publicToken', v: 'vfy_kp8q4r2nv0' },
-  { k: 'verificationId', v: 'ver_202602_512' },
-  { k: 'snapshotHash', v: 'sha256:a3f8…07e' },
-]
 const APPROVE_CHECKS = [
   '공개 payload에 민감정보 없음 확인',
-  '6축 confirmed · 산출물 강사·매니저 승인 확인',
-  '승인 직후 mart 스냅샷 동결 · 되돌리기 불가 확인',
+  '현재 원천 버전의 7개 탭 READY 확인',
+  '승인 직후 증명서 스냅샷 동결 · 되돌리기 불가 확인',
 ]
 
 // 정식 인증 승인 확인 모달 — reviewing → certified.
@@ -96,17 +90,28 @@ export function ApproveModal({
   open,
   onClose,
   student,
+  analysis,
   pending,
   onSubmit,
 }: {
   open: boolean
   onClose: () => void
   student: Student
+  analysis: {
+    sourceVersion: string | null
+    analysisVersion: string | null
+    runId: string | null
+  }
   pending?: boolean
   onSubmit: () => void
 }) {
   const [checks, setChecks] = useState([false, false, false])
   const allChecked = checks.every(Boolean)
+  const approveMeta = [
+    { k: '원천 버전', v: analysis.sourceVersion ?? '-' },
+    { k: '분석 버전', v: analysis.analysisVersion ?? '-' },
+    { k: '분석 실행 ID', v: analysis.runId ?? '-' },
+  ]
 
   const submit = () => {
     onSubmit()
@@ -140,12 +145,12 @@ export function ApproveModal({
           <span className="text-fg text-sm font-medium">
             {student.name} · {student.cohort}
           </span>
-          <StatusBadge label="6 / 6 충족" tone="success" />
+          <StatusBadge label="7개 탭 READY" tone="success" />
         </div>
         <div>
           <p className="text-fg mb-2 text-sm font-bold">생성 항목</p>
           <ul className="flex flex-col gap-2">
-            {APPROVE_META.map((m) => (
+            {approveMeta.map((m) => (
               <li
                 key={m.k}
                 className="border-border flex items-center justify-between rounded-lg border px-3 py-2"
@@ -186,4 +191,3 @@ export function ApproveModal({
     </Modal>
   )
 }
-

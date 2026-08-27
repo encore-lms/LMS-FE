@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Download, ExternalLink, FileText, Files } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
+import { URL_FORMAT_MESSAGE, isHttpUrl } from '@/shared/lib/url'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { inputClass } from '@/components/ui/inputClass'
 import { Modal } from '@/components/ui/Modal'
@@ -237,10 +238,16 @@ function AddDocModal({
     editing?.category ?? categories[0] ?? '위키',
   )
   const [url, setUrl] = useState(editing?.url ?? '')
+  const [urlError, setUrlError] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const field = inputClass()
   const submit = () => {
     if (!title.trim() && !file) return
+    // 파일이 없을 때 링크는 실제 주소여야 한다(파일 첨부 시 링크는 무시).
+    if (!file && url.trim() && !isHttpUrl(url)) {
+      setUrlError(URL_FORMAT_MESSAGE)
+      return
+    }
     onAdd(
       {
         title: (title.trim() || file?.name) ?? '',
@@ -304,11 +311,18 @@ function AddDocModal({
           <span className="text-fg text-[12px] font-bold">링크 URL</span>
           <input
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value)
+              setUrlError(null)
+            }}
             placeholder="https://github.com/... (선택)"
+            aria-invalid={!!urlError}
             className={field}
             disabled={!!file}
           />
+          {urlError && !file && (
+            <span className="text-danger text-[11px]">{urlError}</span>
+          )}
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg text-[12px] font-bold">

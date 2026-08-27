@@ -24,6 +24,8 @@ export const profileSchema = z.object({
   linkedinUrl: optionalUrl,
   skills: z.array(z.string()),
   interests: z.array(z.string()),
+  // 학습 다짐 — 온보딩 PLEDGE_MAX(300)와 같은 상한, 비워도 된다.
+  promise: z.string().trim().max(300, '학습 다짐은 300자 이하여야 합니다'),
   publicSettings: z.object({
     profileImage: z.boolean(),
     githubUrl: z.boolean(),

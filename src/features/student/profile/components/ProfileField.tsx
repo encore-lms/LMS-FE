@@ -2,7 +2,7 @@ import { useFormContext, useWatch } from 'react-hook-form'
 import { cn } from '@/shared/lib/cn'
 import type { ProfileFormValues } from '../profileSchema'
 
-// 텍스트 입력 필드(RHF) — 라벨 + 필수 배지 + 힌트/에러. 표시명·외부 URL에 사용.
+// 텍스트 입력 필드(RHF) — 라벨 + 필수 배지 + 힌트/에러. 표시명·외부 URL·학습 다짐에 사용.
 // 필수인데 비어 있으면 테두리·힌트를 danger로 표시(증명서 필수 안내).
 type TextField =
   | 'displayName'
@@ -10,6 +10,7 @@ type TextField =
   | 'blogUrl'
   | 'portfolioUrl'
   | 'linkedinUrl'
+  | 'promise'
 
 export function ProfileField({
   name,
@@ -17,12 +18,17 @@ export function ProfileField({
   required,
   placeholder,
   hint,
+  multiline,
+  maxLength,
 }: {
   name: TextField
   label: string
   required?: boolean
   placeholder?: string
   hint?: string
+  /** 여러 줄 입력(학습 다짐) — textarea 로 그린다 */
+  multiline?: boolean
+  maxLength?: number
 }) {
   const {
     register,
@@ -45,14 +51,28 @@ export function ProfileField({
           </span>
         )}
       </label>
-      <input
-        {...register(name)}
-        placeholder={placeholder}
-        className={cn(
-          'text-fg placeholder:text-fg-subtle h-[52px] w-full rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none focus-visible:shadow-none',
-          invalid ? 'border-danger' : 'border-border focus:border-brand',
-        )}
-      />
+      {multiline ? (
+        <textarea
+          {...register(name)}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          rows={3}
+          className={cn(
+            'text-fg placeholder:text-fg-subtle min-h-[96px] w-full resize-y rounded-[10px] border-2 bg-white px-4 py-3 text-[15px] font-medium outline-none focus-visible:shadow-none',
+            invalid ? 'border-danger' : 'border-border focus:border-brand',
+          )}
+        />
+      ) : (
+        <input
+          {...register(name)}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className={cn(
+            'text-fg placeholder:text-fg-subtle h-[52px] w-full rounded-[10px] border-2 bg-white px-4 text-[15px] font-medium outline-none focus-visible:shadow-none',
+            invalid ? 'border-danger' : 'border-border focus:border-brand',
+          )}
+        />
+      )}
       {error ? (
         <p className="text-danger text-xs">{error}</p>
       ) : (

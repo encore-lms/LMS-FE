@@ -36,6 +36,8 @@ export interface StudentProfile {
   // 스킬
   skills: string[] // 기술 태그
   interests: string[] // 관심 직무
+  // 학습 다짐 — 온보딩에서 적은 값. "대시보드 상단과 마이 프로필에서 수정 가능" 안내와 정합.
+  promise: string
   // 공개 설정
   publicSettings: ProfilePublicSettings
   // 완성도(파생, 읽기 전용)
@@ -52,5 +54,6 @@ export interface ProfileUpdatePayload {
   linkedinUrl: string
   skills: string[]
   interests: string[]
+  promise: string
   publicSettings: ProfilePublicSettings
 }

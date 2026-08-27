@@ -3,6 +3,7 @@ import type { ChangeEvent, DragEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { buttonClass } from '@/components/ui/buttonClass'
 import { useToast } from '@/components/ui/use-toast'
+import { URL_FORMAT_MESSAGE, isHttpUrl } from '@/shared/lib/url'
 import { cn } from '@/shared/lib/cn'
 import { useUpdateMaterial } from '../../../api/course'
 import type { MaterialItem } from '../../types'
@@ -56,6 +57,10 @@ export function EditMaterialModal({
   const submit = () => {
     if (!title.trim()) {
       toast.danger('제목을 입력해 주세요')
+      return
+    }
+    if (isLink && link.trim() && !isHttpUrl(link)) {
+      toast.danger(URL_FORMAT_MESSAGE)
       return
     }
     update.mutate(

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/use-toast'
+import { URL_FORMAT_MESSAGE, isHttpUrl } from '@/shared/lib/url'
 import { usePageHeader } from '@/shared/store'
 import { apiClient } from '@/shared/api'
 import type { AssignmentFileRef } from '@/shared/types'
@@ -154,13 +155,18 @@ export default function AssignmentFormPage() {
     saveAssignment.isPending || uploadFile.isPending || deleteFile.isPending
 
   const onSave = handleSubmit(async (input) => {
+    const links = urls.map((u) => u.trim()).filter(Boolean)
+    if (links.some((u) => !isHttpUrl(u))) {
+      toast.danger(`참고 링크: ${URL_FORMAT_MESSAGE}`)
+      return
+    }
     try {
       const saved = await saveAssignment.mutateAsync({
         cohortId: input.cohortId,
         title: input.title,
         dueAt: input.dueAt,
         description: input.description,
-        urls: urls.map((u) => u.trim()).filter(Boolean),
+        urls: links,
       })
       const id = assignmentId ?? saved.id
       // 삭제 예정 파일 제거 → 새 파일 업로드(실 id 확보 후).

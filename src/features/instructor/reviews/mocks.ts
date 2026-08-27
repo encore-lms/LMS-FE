@@ -13,7 +13,7 @@ import type {
   RecordWeek,
   StudyGridRow,
   StudyRecordDetail,
-  TsReviewData,
+  TsReviewRow,
   ProjectReviewDetail,
   TsReviewDetail,
 } from '@/shared/types'
@@ -503,15 +503,9 @@ let projectReviews: ProjectReviewData = {
   ],
 }
 
-// ── §15 트러블슈팅 검토 (Figma 1422:10543) ──
-let tsReviews: TsReviewData = {
-  stats: [
-    { label: '검토 대기', value: '5', unit: '건' },
-    { label: '독립해결 비율', value: '68', unit: '%' },
-    { label: '평균 소요일수', value: '4.5', unit: '일' },
-    { label: '이번 달 인증', value: '9', unit: '건' },
-  ],
-  counts: { all: 18, pending: 5, supplementing: 4, certified: 9 },
+// ── 트러블슈팅 사례 시드 — 상세(GET /instructor/troubleshooting/review/:id) 전용.
+// 인증 검토 큐·결정 API 는 2026-08-19 직접 인증 폐기로 BE 에서 삭제됐고 FE 탭도 제거했다.
+const tsReviews: { rows: TsReviewRow[] } = {
   rows: [
     {
       id: 'ts-1',
@@ -594,16 +588,6 @@ function recountProjects(
   return {
     all: rows.length,
     requested: rows.filter((r) => r.status === 'requested').length,
-    supplementing: rows.filter((r) => r.status === 'supplementing').length,
-    certified: rows.filter((r) => r.status === 'certified').length,
-  }
-}
-
-// 트러블슈팅 카운트 재계산 — pending/supplementing/certified 분포.
-function recountTs(rows: TsReviewData['rows']): TsReviewData['counts'] {
-  return {
-    all: rows.length,
-    pending: rows.filter((r) => r.status === 'pending').length,
     supplementing: rows.filter((r) => r.status === 'supplementing').length,
     certified: rows.filter((r) => r.status === 'certified').length,
   }
@@ -748,9 +732,6 @@ export const handlers = [
   http.get('/api/instructor/projects/review', () =>
     ok<ProjectReviewData>(projectReviews),
   ),
-  http.get('/api/instructor/troubleshooting/review', () =>
-    ok<TsReviewData>(tsReviews),
-  ),
   http.get('/api/instructor/projects/review/:id', ({ params }) => {
     const detail = buildProjectDetail(String(params.id))
     return detail
@@ -783,25 +764,6 @@ export const handlers = [
         rows: next,
         counts: recountProjects(next),
       }
-      return HttpResponse.json({ data: null })
-    },
-  ),
-
-  // §15 트러블슈팅 인증/보완 — certify: pending→certified / request_changes: →supplementing(보완 중).
-  http.patch(
-    '/api/instructor/troubleshooting/review/:id',
-    async ({ params, request }) => {
-      const id = String(params.id)
-      const body = (await request.json()) as ReviewAction
-      const next: TsReviewData['rows'] = tsReviews.rows.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              status: body.action === 'certify' ? 'certified' : 'supplementing',
-            }
-          : r,
-      )
-      tsReviews = { ...tsReviews, rows: next, counts: recountTs(next) }
       return HttpResponse.json({ data: null })
     },
   ),

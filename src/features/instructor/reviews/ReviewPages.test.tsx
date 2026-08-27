@@ -5,25 +5,19 @@ import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import RecordReviewPage from './RecordReviewPage'
 import ProjectReviewPage from './ProjectReviewPage'
-import TsReviewPage from './TsReviewPage'
 import {
   useRecordReviews,
   useProjectReviews,
-  useTsReviews,
   useProjectReviewDetail,
   useTsReviewDetail,
   useCertifyProject,
   useRequestProjectChanges,
-  useCertifyTroubleshooting,
-  useRequestTsChanges,
   useRevokeProjectCertification,
-  useRevokeTsCertification,
 } from '../api/reviews'
 import type {
   InstructorRecordReviewData,
   ProjectReviewData,
   ProjectReviewDetail,
-  TsReviewData,
 } from '@/shared/types'
 
 vi.mock('../api/reviews')
@@ -166,40 +160,6 @@ const projects: ProjectReviewData = {
   ],
 }
 
-const ts: TsReviewData = {
-  stats: [
-    { label: '검토 대기', value: '5', unit: '건' },
-    { label: '독립해결 비율', value: '68', unit: '%' },
-    { label: '평균 소요일수', value: '4.5', unit: '일' },
-    { label: '이번 달 인증', value: '9', unit: '건' },
-  ],
-  counts: { all: 18, pending: 5, supplementing: 4, certified: 9 },
-  rows: [
-    {
-      id: 'ts-1',
-      studentName: '박지훈',
-      cohortLabel: 'DA 4기',
-      title: 'Airflow DAG 메모리 누수 추적',
-      category: '성능최적화',
-      solvedBy: '독립',
-      durationDays: '3일',
-      project: '팀 Nexus',
-      status: 'pending',
-    },
-    {
-      id: 'ts-3',
-      studentName: '이준영',
-      cohortLabel: 'DA 4기',
-      title: 'RAG 임베딩 정확도 저하',
-      category: '모델',
-      solvedBy: '협업',
-      durationDays: '7일',
-      project: '팀 Aurora',
-      status: 'supplementing',
-    },
-  ],
-}
-
 function ok(data: unknown) {
   return { data, isPending: false, isError: false }
 }
@@ -220,9 +180,6 @@ function renderWith(ui: React.ReactElement) {
   vi.mocked(useProjectReviews).mockReturnValue(
     ok(projects) as unknown as ReturnType<typeof useProjectReviews>,
   )
-  vi.mocked(useTsReviews).mockReturnValue(
-    ok(ts) as unknown as ReturnType<typeof useTsReviews>,
-  )
   // 상세 패널 훅 — 기본은 미조회 상태(패널 닫힘). 패널 테스트에서 개별 override.
   vi.mocked(useProjectReviewDetail).mockReturnValue({
     data: undefined,
@@ -240,19 +197,10 @@ function renderWith(ui: React.ReactElement) {
   vi.mocked(useRequestProjectChanges).mockReturnValue(
     mutationStub() as unknown as ReturnType<typeof useRequestProjectChanges>,
   )
-  vi.mocked(useCertifyTroubleshooting).mockReturnValue(
-    mutationStub() as unknown as ReturnType<typeof useCertifyTroubleshooting>,
-  )
-  vi.mocked(useRequestTsChanges).mockReturnValue(
-    mutationStub() as unknown as ReturnType<typeof useRequestTsChanges>,
-  )
   vi.mocked(useRevokeProjectCertification).mockReturnValue(
     mutationStub() as unknown as ReturnType<
       typeof useRevokeProjectCertification
     >,
-  )
-  vi.mocked(useRevokeTsCertification).mockReturnValue(
-    mutationStub() as unknown as ReturnType<typeof useRevokeTsCertification>,
   )
   return render(
     <ToastProvider>
@@ -362,87 +310,5 @@ describe('ProjectReviewPage (§14)', () => {
     expect(screen.getByText('박지훈')).toBeInTheDocument()
     expect(screen.getByText('BigQuery')).toBeInTheDocument()
     expect(screen.getByText('데이터 파이프라인 GitHub')).toBeInTheDocument()
-  })
-})
-
-describe('TsReviewPage (§15)', () => {
-  it('독립해결·소요와 상태 탭 필터를 렌더한다', () => {
-    renderWith(<TsReviewPage />)
-    expect(screen.getByText('독립해결 비율')).toBeInTheDocument()
-    expect(screen.getByText('Airflow DAG 메모리 누수 추적')).toBeInTheDocument()
-    expect(screen.getByText('독립')).toBeInTheDocument()
-  })
-
-  it('보완 중 탭은 해당 사례만 남긴다', async () => {
-    const user = userEvent.setup()
-    renderWith(<TsReviewPage />)
-    await user.click(screen.getByRole('button', { name: /보완 중 \(4\)/ }))
-    expect(screen.getByText('RAG 임베딩 정확도 저하')).toBeInTheDocument()
-    expect(
-      screen.queryByText('Airflow DAG 메모리 누수 추적'),
-    ).not.toBeInTheDocument()
-  })
-
-  it('목록에는 액션 버튼을 두지 않고 행 클릭으로 상세를 연다', async () => {
-    const user = userEvent.setup()
-    renderWith(<TsReviewPage />)
-    // '결과'·'확인'·'상세'가 모두 같은 상세를 열던 중복을 없앴다.
-    expect(screen.queryByRole('button', { name: '결과' })).toBeNull()
-    expect(screen.queryByRole('button', { name: '상세' })).toBeNull()
-
-    await user.click(screen.getByText('Airflow DAG 메모리 누수 추적'))
-    expect(
-      screen.getByRole('dialog', { name: '검토 상세' }),
-    ).toBeInTheDocument()
-  })
-
-  // 상세의 '수강생'은 실명이어야 한다. BE 상세 응답이 이름을 주면 그대로 쓰고,
-  // 없으면 담당 기수 로스터로 join 한다. 예전에는 화면이 기수를 넘기지 않아 늘 '수강생' 폴백이었다(2026-08-13 QA).
-  it('상세의 수강생은 BE 이름을 쓰고, 없으면 기수 로스터로 실명을 붙인다', async () => {
-    const user = userEvent.setup()
-    const detail = {
-      id: 'ts-1',
-      title: 'Airflow DAG 메모리 누수 추적',
-      studentUserId: 'stu-1',
-      studentName: '황수빈',
-      cohortLabel: 'DA 4기',
-      status: 'pending' as const,
-      independent: true,
-      daysSpent: 3,
-      createdAt: '2026.07.10',
-      situation: '상황',
-      resolution: '해결',
-      result: '결과',
-      tags: ['성능최적화'],
-      stack: ['Python'],
-      attachments: [],
-      project: null,
-      certifiedAt: null,
-      reviewComment: null,
-    }
-    const { unmount } = renderWith(<TsReviewPage />)
-    // renderWith 가 상세 훅을 미조회 상태로 되돌리므로 그 뒤에 덮어쓴다.
-    vi.mocked(useTsReviewDetail).mockReturnValue({
-      data: detail,
-      isPending: false,
-      isError: false,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useTsReviewDetail>)
-    await user.click(screen.getByText('Airflow DAG 메모리 누수 추적'))
-    const panel = await screen.findByRole('dialog', { name: '검토 상세' })
-    expect(within(panel).getByText('황수빈')).toBeInTheDocument()
-    unmount()
-
-    // BE 이름이 없으면 로스터(stu-1 = 박지훈)로 붙인다 (라벨과 겹치는 '수강생' 폴백이 뜨면 안 된다).
-    renderWith(<TsReviewPage />)
-    vi.mocked(useTsReviewDetail).mockReturnValue({
-      data: { ...detail, studentName: undefined },
-      isPending: false,
-      isError: false,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useTsReviewDetail>)
-    await user.click(screen.getByText('Airflow DAG 메모리 누수 추적'))
-    const panel2 = await screen.findByRole('dialog', { name: '검토 상세' })
-    expect(within(panel2).getByText('박지훈')).toBeInTheDocument()
   })
 })

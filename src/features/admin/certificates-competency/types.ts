@@ -36,11 +36,23 @@ export type CertificateGoldStatus =
   | 'UNAVAILABLE'
   | 'CHECK_FAILED'
 
+export type CertificateAdminAnalysisStatus =
+  | 'UNKNOWN'
+  | 'NOT_STARTED'
+  | 'QUEUED'
+  | 'GENERATING'
+  | 'READY'
+  | 'FAILED'
+
 export interface CertificateGoldIssue {
   code: string
   label: string
   source: string
   resolution: string
+}
+
+export interface CertificateAnalysisIssue extends CertificateGoldIssue {
+  retryable: boolean
 }
 
 /** 목록 한 줄 — 수강생 한 명의 역량 증명서 현황. */
@@ -52,16 +64,16 @@ export interface CompetencyCertRow {
   status: CompetencyCertStatus
   /** 외부 공개 여부 — 정식 인증 뒤에만 켤 수 있다. */
   published: boolean
-  /** 재료가 갖춰지기 전에는 점수가 없다. */
-  overallScore: number | null
-  /** 재료가 갖춰진 뒤부터 상세를 열 수 있다 — 검토하려면 먼저 봐야 한다. */
+  /** 현재 sourceVersion의 7개 탭이 전부 READY일 때만 상세를 연다. */
   openable: boolean
   goldStatus: CertificateGoldStatus
   goldIssues: CertificateGoldIssue[]
   goldCheckedAt: string | null
-  managerNotifiedAt: string | null
-  /** 상세에서 보여줄 데모 인물 id — BE 연동 시 실제 증명서 id 로 바뀐다. */
-  demoStudentId: string
-  /** 서버 상태로 병합할 때 점수를 재계산하기 위한 데모 원본 점수. */
-  demoOverallScore: number
+  goldManagerNotifiedAt: string | null
+  analysisStatus: CertificateAdminAnalysisStatus
+  analysisRunId: string | null
+  analysisSourceVersion: string | null
+  analysisFailure: CertificateAnalysisIssue | null
+  analysisCheckedAt: string | null
+  analysisManagerNotifiedAt: string | null
 }

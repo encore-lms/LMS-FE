@@ -16,6 +16,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:list": "playwright test --list",
     "sync:ai-contract": "node scripts/sync-ai-contract.mjs",
     "sync:certificate-snapshot": "node scripts/sync-certificate-snapshot.mjs",
     "prepare": "husky"
@@ -55,6 +57,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@playwright/test": "1.62.1",
     "@tailwindcss/vite": "^4.3.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",

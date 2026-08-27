@@ -30,6 +30,8 @@ dist-ssr
 
 # Test
 coverage
+playwright-report
+test-results
 
 .mcp.json
 

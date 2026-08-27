@@ -261,6 +261,17 @@ export const publicCertificateSevenTabsSchema = certificateSevenTabsSchema
       certificateSevenTabsSchema.shape.growthReputation.optional(),
   })
   .strict()
+  .superRefine((tabs, context) => {
+    Object.entries(tabs).forEach(([key, tab]) => {
+      if (tab && tab.readinessStatus !== 'READY') {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key, 'readinessStatus'],
+          message: '공개 인증 Snapshot에는 READY 탭만 허용됩니다.',
+        })
+      }
+    })
+  })
 
 export type CertificateSevenTabs = z.infer<typeof certificateSevenTabsSchema>
 export type PublicCertificateSevenTabs = z.infer<

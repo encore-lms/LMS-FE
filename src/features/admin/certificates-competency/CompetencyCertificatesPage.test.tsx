@@ -98,7 +98,19 @@ function renderPage() {
           },
         ],
         goldCheckedAt: '2026-08-26T18:00:00+09:00',
-        managerNotifiedAt: '2026-08-26T18:01:00+09:00',
+        goldManagerNotifiedAt: '2026-08-26T18:01:00+09:00',
+        analysisStatus: 'FAILED',
+        analysisRunId: '00000000-0000-0000-0000-000000000001',
+        analysisSourceVersion: 'gold-v1',
+        analysisFailure: {
+          code: 'AI_OUTPUT_INVALID',
+          label: '7개 탭 결과 형식이 올바르지 않습니다.',
+          source: 'LMS_AI',
+          resolution: '원천 데이터를 확인한 뒤 분석을 다시 실행해 주세요.',
+          retryable: true,
+        },
+        analysisCheckedAt: '2026-08-26T18:02:00+09:00',
+        analysisManagerNotifiedAt: null,
       },
     ],
   } as unknown as ReturnType<typeof useCertReviewList>)
@@ -110,11 +122,11 @@ function renderPage() {
   )
 }
 
-describe('CompetencyCertificatesPage Gold 실패 표시', () => {
-  it('증명서를 열지 않고 실패 원인·조치·담당 매니저 알림 상태를 보여준다', () => {
+describe('CompetencyCertificatesPage 발급 준비 상태 표시', () => {
+  it('Gold와 AI 실패 원인·조치·담당 매니저 알림 상태를 함께 보여준다', () => {
     renderPage()
 
-    expect(screen.getByText('일부 데이터 누락')).toBeInTheDocument()
+    expect(screen.getByText('Gold 일부 누락')).toBeInTheDocument()
     expect(
       screen.getByText(
         '출결 데이터가 과정 시작일부터 종료일까지의 범위를 덮지 못합니다.',
@@ -125,10 +137,18 @@ describe('CompetencyCertificatesPage Gold 실패 표시', () => {
         /과정 시작 월부터 종강 월까지 HRD-Net 누적 출결을 다시 동기화/,
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText(/담당 매니저 알림/)).toBeInTheDocument()
-    const goldKpi =
-      screen.getByText('Gold 확인 필요').parentElement?.parentElement
-    expect(goldKpi).not.toBeNull()
-    expect(within(goldKpi as HTMLElement).getByText('1명')).toBeInTheDocument()
+    expect(screen.getByText('AI 생성 실패')).toBeInTheDocument()
+    expect(
+      screen.getByText('7개 탭 결과 형식이 올바르지 않습니다.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('재실행 가능')).toBeInTheDocument()
+    expect(screen.getByText(/담당 매니저 알림 2026-08-26/)).toBeInTheDocument()
+    expect(screen.getByText('담당 매니저 알림 대기')).toBeInTheDocument()
+    const readinessKpi =
+      screen.getByText('발급 준비 확인 필요').parentElement?.parentElement
+    expect(readinessKpi).not.toBeNull()
+    expect(
+      within(readinessKpi as HTMLElement).getByText('1명'),
+    ).toBeInTheDocument()
   })
 })

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api'
 import { certKeys } from '../certificate/queryKeys'
+import { certificateAnalysisKey } from '../certificate/analysis/hooks'
 import type {
   CertChangesData,
   CertProjectsTab,
@@ -60,6 +61,9 @@ export function useRequestCertification() {
         .then((r) => r.data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: certKeys.status() })
+      void queryClient.invalidateQueries({
+        queryKey: certificateAnalysisKey({ scope: 'student' }),
+      })
     },
   })
 }

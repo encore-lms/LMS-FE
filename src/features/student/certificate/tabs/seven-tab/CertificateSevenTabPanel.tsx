@@ -3,6 +3,7 @@ import { DataBoundary } from '@/components/ui/DataBoundary'
 import {
   useCertificateAnalysis,
   useCreateCertificateAnalysis,
+  isCertificateAnalysisReady,
   type CertificateAnalysisTarget,
   type CertificateAnalysisView,
 } from '../../analysis'
@@ -55,6 +56,18 @@ function lifecycleMessage(view: CertificateAnalysisView) {
       description:
         view.statusDetail.missingRequirements[0]?.resolution ??
         '과정 종료 데이터 준비가 끝난 뒤 다시 확인해 주세요.',
+      icon: Clock3,
+    }
+  }
+  if (view.tabs) {
+    const incompleteTab = Object.values(view.tabs).find(
+      (tab) => tab.readinessStatus !== 'READY',
+    )
+    return {
+      title: '7개 탭 데이터가 모두 준비되지 않았어요',
+      description:
+        incompleteTab?.missingRequirements[0]?.detail ??
+        '누락된 데이터를 보완한 뒤 최신 원천으로 다시 분석해 주세요.',
       icon: Clock3,
     }
   }
@@ -132,7 +145,7 @@ export function CertificateSevenTabPanel({
       errorDescription="잠시 후 다시 시도해 주세요. 문제가 계속되면 운영 담당자에게 문의해 주세요."
     >
       {query.data &&
-        (query.data.tabs ? (
+        (isCertificateAnalysisReady(query.data) ? (
           <CertificateSevenTabContent active={active} tabs={query.data.tabs} />
         ) : (
           <AnalysisLifecycle

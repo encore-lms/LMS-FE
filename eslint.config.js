@@ -61,6 +61,12 @@ export default tseslint.config(
     files: ['**/*.test.{ts,tsx}'],
     rules: { 'no-restricted-imports': 'off' },
   },
+  {
+    files: ['playwright.config.ts', 'e2e/**/*.ts'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
   // prettier와 충돌하는 포맷 규칙 비활성 (항상 마지막)
   prettier,
 )

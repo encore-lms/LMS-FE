@@ -137,7 +137,6 @@ export const instructorKeys = {
   projectReviews: () => [...instructorKeys.all, 'project-reviews'] as const,
   projectReviewDetail: (projectId: string) =>
     [...instructorKeys.all, 'project-reviews', projectId] as const,
-  tsReviews: () => [...instructorKeys.all, 'ts-reviews'] as const,
   tsReviewDetail: (caseId: string) =>
     [...instructorKeys.all, 'ts-reviews', caseId] as const,
   changeRequests: () => [...instructorKeys.all, 'change-requests'] as const,

@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { useToast } from '@/components/ui/use-toast'
 import type { CohortMaterialItem } from '@/shared/types'
 import { formatDate } from '@/shared/lib/date'
+import { URL_FORMAT_MESSAGE, isHttpUrl } from '@/shared/lib/url'
 import {
   downloadCohortMaterialFile,
   useCohortMaterials,
@@ -134,6 +135,10 @@ export function MaterialsPane({
     }
     if (kind === 'link' && !url.trim()) {
       toast.danger('링크(URL)를 입력해 주세요')
+      return
+    }
+    if (kind === 'link' && !isHttpUrl(url)) {
+      toast.danger(URL_FORMAT_MESSAGE)
       return
     }
     if (kind === 'file' && !file) {

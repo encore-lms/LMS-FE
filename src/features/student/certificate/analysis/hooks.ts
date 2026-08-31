@@ -21,10 +21,14 @@ export function certificateAnalysisKey(target: CertificateAnalysisTarget) {
   ] as const
 }
 
-export function useCertificateAnalysis(target: CertificateAnalysisTarget) {
+export function useCertificateAnalysis(
+  target: CertificateAnalysisTarget,
+  enabled = true,
+) {
   return useQuery({
     queryKey: certificateAnalysisKey(target),
     queryFn: () => fetchCertificateAnalysis(target),
+    enabled,
     // 실행 중인 분석만 3초마다 확인해 평상시 불필요한 요청을 만들지 않는다.
     refetchInterval: (query) =>
       certificateAnalysisPollInterval(query.state.data),

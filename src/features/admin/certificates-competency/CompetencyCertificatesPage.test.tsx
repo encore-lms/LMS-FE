@@ -13,7 +13,7 @@ vi.mock('@/shared/api', async (importOriginal) => ({
 vi.mock('../api/settings')
 vi.mock('./api')
 
-function renderPage() {
+function renderPage(analysisStatus: 'FAILED' | 'WAITING_FOR_GOLD' = 'FAILED') {
   vi.mocked(useCourseList).mockReturnValue({
     data: [
       {
@@ -99,7 +99,7 @@ function renderPage() {
         ],
         goldCheckedAt: '2026-08-26T18:00:00+09:00',
         goldManagerNotifiedAt: '2026-08-26T18:01:00+09:00',
-        analysisStatus: 'FAILED',
+        analysisStatus,
         analysisRunId: '00000000-0000-0000-0000-000000000001',
         analysisSourceVersion: 'gold-v1',
         analysisFailure: {
@@ -150,5 +150,12 @@ describe('CompetencyCertificatesPage 발급 준비 상태 표시', () => {
     expect(
       within(readinessKpi as HTMLElement).getByText('1명'),
     ).toBeInTheDocument()
+  })
+
+  it('Gold가 없으면 AI 실행 대신 Gold 준비 대기 상태를 보여준다', () => {
+    renderPage('WAITING_FOR_GOLD')
+
+    expect(screen.getByText('Gold 준비 대기')).toBeInTheDocument()
+    expect(screen.queryByText('AI 생성 실패')).not.toBeInTheDocument()
   })
 })

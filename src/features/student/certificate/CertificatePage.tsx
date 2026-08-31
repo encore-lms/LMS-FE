@@ -24,7 +24,7 @@ import { AiTab } from './tabs/AiTab'
 import { CertificateSevenTabPanel } from './tabs/seven-tab/CertificateSevenTabPanel'
 import { useCertificateAnalysis } from './analysis'
 import { canRequestCertificate } from './issuancePolicy'
-import { CERT_V2 } from './config'
+import { CERTIFICATE_DEMO_MODE, CERT_V2 } from './config'
 import {
   applyCertificateDemoStudent,
   CERTIFICATE_DEMO_STUDENTS,
@@ -32,9 +32,6 @@ import {
 } from './demoStudents'
 import type { CertTab } from './types'
 import { TERMS } from '@/shared/constants'
-
-const CERTIFICATE_DEMO_MODE =
-  import.meta.env.DEV && import.meta.env.VITE_CERTIFICATE_DEMO_MODE === 'true'
 
 function DemoCertificateTabContent({
   tab,

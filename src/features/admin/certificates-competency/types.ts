@@ -38,11 +38,13 @@ export type CertificateGoldStatus =
 
 export type CertificateAdminAnalysisStatus =
   | 'UNKNOWN'
+  | 'WAITING_FOR_GOLD'
   | 'NOT_STARTED'
   | 'QUEUED'
   | 'GENERATING'
   | 'READY'
   | 'FAILED'
+  | 'CHECK_FAILED'
 
 export interface CertificateGoldIssue {
   code: string

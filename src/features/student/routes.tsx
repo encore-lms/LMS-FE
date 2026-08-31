@@ -2,6 +2,7 @@ import { lazy } from 'react'
 import { Navigate } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
 import { OnboardingGate } from './onboarding/OnboardingGate'
+import { CertificateAccessGate } from './certificate/CertificateAccessGate'
 
 // 수강생 라우트 — features/student 소유자만 편집(결합 해소: 공유 router.tsx를 건드리지 않는다).
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'))
@@ -91,9 +92,15 @@ export const studentRoutes: RouteObject[] = [
       },
       { path: 'course/diagnosis', element: <DiagnosisReportPage /> },
       { path: 'mentoring', element: <MentoringPage /> },
-      { path: 'certificate', element: <CertificatePage /> },
-      { path: 'certificate/changes-requested', element: <CertChangesPage /> },
-      { path: 'certificate/publication', element: <CertPublicationPage /> },
+      {
+        path: 'certificate',
+        element: <CertificateAccessGate />,
+        children: [
+          { index: true, element: <CertificatePage /> },
+          { path: 'changes-requested', element: <CertChangesPage /> },
+          { path: 'publication', element: <CertPublicationPage /> },
+        ],
+      },
       { path: 'quizzes', element: <QuizListPage /> },
       // 대시보드가 퀴즈 하나를 짚어 보낸다(/student/quizzes/{id}) — 그 퀴즈만 여는 화면은
       // 없으므로 목록이 받아 해당 줄로 데려간다. 눌렀을 뿐인데 시험이 시작되면 안 되므로

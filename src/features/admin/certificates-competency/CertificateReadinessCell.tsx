@@ -23,11 +23,13 @@ const ANALYSIS_META: Record<
   { label: string; tone: BadgeTone }
 > = {
   UNKNOWN: { label: 'AI 확인 전', tone: 'neutral' },
+  WAITING_FOR_GOLD: { label: 'Gold 준비 대기', tone: 'warning' },
   NOT_STARTED: { label: 'AI 실행 전', tone: 'neutral' },
   QUEUED: { label: 'AI 대기 중', tone: 'info' },
   GENERATING: { label: 'AI 생성 중', tone: 'info' },
   READY: { label: '7개 탭 준비', tone: 'success' },
   FAILED: { label: 'AI 생성 실패', tone: 'danger' },
+  CHECK_FAILED: { label: 'AI 상태 확인 실패', tone: 'danger' },
 }
 
 function CheckedAt({ value }: { value: string | null }) {
